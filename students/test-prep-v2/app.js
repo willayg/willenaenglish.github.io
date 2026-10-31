@@ -1,12 +1,12 @@
 import {assignmentOverview} from './assignment-overview.js?v=2.25.180';
-import {assignmentMetrics,loadAssignmentResults} from './assignment-results.js?v=2';
+import {assignmentMetrics,loadAssignmentResults} from './assignment-results.js?v=2.25.181';
 import {QuestionRenderer} from './question-renderer-accessible.js?v=20261025-shared-unified-v1';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.4.1';
 import {createQuestionSession} from './question-session.js?v=2.0.10';
 import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.js?v=2.0.5';
 import {createPerfDebug} from './perf-debug.js?v=1.0.0';
 import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=20261026-multi-answer-fix';
-import {initTracking,refreshTrackingState,refreshPlanSnapshot,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17t';
+import {initTracking,refreshTrackingState,refreshPlanSnapshot,setTrackingContext,startSession,recordAttempt,completeSession,homeworkSet,trackingState} from './tracking-client.js?v=2.17t';
 import {startVocabularyLearning} from './vocab-learning.js?v=2.15.1';
 import {startSentencePracticeV1,stopSentencePracticeV1} from './sentence-practice-v1.js?v=1.2.0';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
@@ -89,7 +89,24 @@ async function refreshAfterPracticeExit({sessionClosed=false}={}){
   back();
 }
 
-async function startPracticeRoute(plan,lesson,practice,taskId=null){const config=PRACTICES[practice];if(!config){return replaceRoute({view:'lesson',planId:plan.id,lesson})}const task=taskId?taskById(plan,taskId):null;state.plan=plan;state.lesson=lesson;state.practice=practice;state.queue=[];state.index=0;state.score=0;state.wrongIds=[];state.checked=false;state.renderer=null;root.innerHTML='<div class="loading">문제를 불러오는 중...</div>';setBottom('');try{const ids=await resolveContentIds(plan,lesson,task?.unit_id||null);if(!practiceRouteMatches(practice,plan.id,lesson))return;state.ids=ids;setTrackingContext(plan,lesson);if(practice==='sentences'){root.innerHTML='<div id="sentencePracticeHost"></div>';const host=$('#sentencePracticeHost');await startSentencePracticeV1({host,plan,lesson,unitId:ids.unitId,onExit:refreshAfterSentencePractice});return}const loaded=await loadPracticeContent({kind:config.kind,practice,unitId:ids.unitId,studentId:trackingState().user?.id||null,planId:plan.id,lesson,count:task?Math.max(1,Number(task.target_count)||10):20});if(!practiceRouteMatches(practice,plan.id,lesson))return;if(loaded.mode==='workflow'&&loaded.kind==='vocab-learning'){root.innerHTML='<div id="vocabActivityHost"></div>';const host=$('#vocabActivityHost');await startVocabularyLearning({host,plan,lesson,unitId:ids.unitId,onExit:()=>refreshAfterPracticeExit({sessionClosed:true})});return}if(!loaded.rawCount){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}if(!loaded.pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">선택할 수 있는 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}state.queue=loaded.pool;await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;renderQuestion()}catch(e){if(!practiceRouteMatches(state.practice))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}}
+async function startPracticeRoute(plan,lesson,practice,taskId=null){const config=PRACTICES[practice];if(!config){return replaceRoute({view:'lesson',planId:plan.id,lesson})}const task=taskId?taskById(plan,taskId):null;state.plan=plan;state.lesson=lesson;state.practice=practice;state.queue=[];state.index=0;state.score=0;state.wrongIds=[];state.checked=false;state.renderer=null;root.innerHTML='<div class="loading">문제를 불러오는 중...</div>';setBottom('');try{const ids=await resolveContentIds(plan,lesson,task?.unit_id||null);if(!practiceRouteMatches(practice,plan.id,lesson))return;state.ids=ids;setTrackingContext(plan,lesson);if(practice==='sentences'){root.innerHTML='<div id="sentencePracticeHost"></div>';const host=$('#sentencePracticeHost');await startSentencePracticeV1({host,plan,lesson,unitId:ids.unitId,onExit:refreshAfterSentencePractice});return}const loaded=await loadPracticeContent({kind:config.kind,practice,unitId:ids.unitId,studentId:trackingState().user?.id||null,planId:plan.id,lesson,count:task?Math.max(1,Number(task.target_count)||10):20});if(!practiceRouteMatches(practice,plan.id,lesson))return;if(loaded.mode==='workflow'&&loaded.kind==='vocab-learning'){root.innerHTML='<div id="vocabActivityHost"></div>';const host=$('#vocabActivityHost');await startVocabularyLearning({host,plan,lesson,unitId:ids.unitId,onExit:()=>refreshAfterPracticeExit({sessionClosed:true})});return}if(!loaded.rawCount){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}if(!loaded.pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">선택할 수 있는 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}state.queue=loaded.pool;
+if(task){
+ if(['sentences','vocabulary'].includes(practice))throw Error('이 숙제 유형의 고정 문제 세트는 아직 지원하지 않습니다.');
+ let hw=await homeworkSet(task.id);
+ if(!hw.initialized){
+   const chosen=[...new Map(loaded.pool.map(q=>[trackingId(q),q])).values()];
+   const target=Math.max(1,Number(task.target_count)||10);
+   if(chosen.length<target)throw Error('숙제 문제 수가 부족합니다 ('+chosen.length+'/'+target+')');
+   hw=await homeworkSet(task.id,chosen.slice(0,target).map(trackingId));
+ }
+ if(hw.complete){await refreshTrackingState();await loadAssignmentResults().catch(()=>{});return homeworkCompleteScreen(hw)}
+ const ids=hw.next_question_ids||[];
+ const map=new Map(loaded.pool.map(q=>[trackingId(q),q]));
+ const next=ids.map(id=>map.get(String(id)));
+ if(!next.length||next.some(q=>!q))throw Error('저장된 숙제 문제를 찾을 수 없습니다. 선생님에게 알려 주세요.');
+ state.queue=next;state.homeworkTaskId=task.id;state.homeworkPool=loaded.pool;
+}else state.homeworkTaskId=null;
+await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;renderQuestion()}catch(e){if(!practiceRouteMatches(state.practice))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}}
 function current(){return state.queue[state.index]||null}
 function headerFor(q){const code=q.source?.code||'',source=code?`<span class="badge ${code.toLowerCase()}" title="${code==='Z'?'Zocbo':code==='W'?'Willena authored':'Book reference'}">${code}</span>`:'';return `<div class="practice-head"><div><button class="back" id="practiceBack" data-session-back>← ${esc(state.lesson)}</button><div class="practice-meta">${source}<span>${esc(state.plan.book_label||'')}</span><span>·</span><span>${esc(PRACTICES[state.practice]?.label||state.practice)}</span></div></div><strong>${state.index+1} / ${state.queue.length}</strong></div><div class="progress"><i style="width:${Math.round(state.index/Math.max(1,state.queue.length)*100)}%"></i></div>`}
 let practiceQuestionSession=null;
@@ -97,7 +114,40 @@ function getPracticeQuestionSession(){if(practiceQuestionSession)return practice
 function renderQuestion(){return getPracticeQuestionSession().render()}
 async function checkAnswer(){return getPracticeQuestionSession().check()}
 async function skipQuestion(){return getPracticeQuestionSession().skip()}
-async function finishPractice(){const route=currentRoute();if(route.view!=='practice')return;setBottom('');try{await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);await refreshTrackingState();await loadAssignmentResults().catch(e=>console.warn('[test-prep-v2] assignment results refresh unavailable',e));const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan)}catch(e){console.warn('[test-prep-v2] finish/refresh failed',e)}if(!practiceRouteMatches(state.practice,route.planId,route.lesson))return;const pct=state.queue.length?Math.round(state.score/state.queue.length*100):0;state.lastResult={planId:route.planId,lesson:route.lesson,practice:route.practice,score:state.score,total:state.queue.length,wrong:state.wrongIds.length,pct};await replaceRoute({view:'result',planId:route.planId,lesson:route.lesson,practice:route.practice})}
+function homeworkCompleteScreen(hw){
+ state.homeworkTaskId=null;setBottom('');
+ root.innerHTML='<div class="card result homework-gold-result"><div class="score">★ GOLD ★</div><h2>숙제 완료!</h2><div class="statline">최종 완료 100% · 전체 정확도 '+(hw.overall_accuracy_percent??'—')+'%</div><button class="tile" id="homeworkDone" style="min-height:auto;margin-top:20px">숙제 바구니로 돌아가기</button></div>';
+ $('#homeworkDone').onclick=()=>navigate({view:'home'});
+}
+async function finishPractice(){
+ const route=currentRoute();if(route.view!=='practice')return;
+ setBottom('');
+ if(state.homeworkTaskId){
+  const id=state.homeworkTaskId;
+  try{
+   const result=await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});
+   if(result?.queued)throw Error('답안이 아직 저장되지 않았어요.');
+   let hw=await homeworkSet(id);
+   if(hw.complete){await refreshTrackingState();await loadAssignmentResults().catch(()=>{});return homeworkCompleteScreen(hw)}
+   const lookup=new Map(state.homeworkPool.map(q=>[trackingId(q),q]));
+   const ids=hw.next_question_ids||[],next=ids.map(x=>lookup.get(String(x)));
+   if(!next.length||next.some(q=>!q))throw Error('복습 문제를 다시 불러오지 못했습니다.');
+   state.queue=next;state.index=0;state.score=0;state.wrongIds=[];state.checked=false;state.renderer=null;
+   await startSession(state.practice);
+   renderQuestion();
+   return;
+  }catch(e){
+   root.innerHTML='<div class="error">숙제 답안 저장을 확인하지 못했습니다. '+esc(e.message)+'</div><button class="tile" id="retryHomeworkSave">다시 시도</button>';
+   $('#retryHomeworkSave').onclick=finishPractice;
+   return;
+  }
+ }
+ try{await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);await refreshTrackingState();await loadAssignmentResults().catch(e=>console.warn('[test-prep-v2] assignment results refresh unavailable',e));const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan)}catch(e){console.warn('[test-prep-v2] finish/refresh failed',e)}
+ if(!practiceRouteMatches(state.practice,route.planId,route.lesson))return;
+ const pct=state.queue.length?Math.round(state.score/state.queue.length*100):0;
+ state.lastResult={planId:route.planId,lesson:route.lesson,practice:route.practice,score:state.score,total:state.queue.length,wrong:state.wrongIds.length,pct};
+ await replaceRoute({view:'result',planId:route.planId,lesson:route.lesson,practice:route.practice});
+}
 async function returnToLessonFresh(plan,route){
   const btn=$('#resultBack');if(btn){btn.disabled=true;btn.textContent='업데이트 중...'}
   try{
