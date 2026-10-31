@@ -49,9 +49,19 @@ function planCompact(plan){
  return `<section class="tp-plan-compact" style="margin:0 0 18px;padding:16px 18px;border:1.5px solid var(--tp-line);border-radius:20px;background:var(--tp-card);box-shadow:var(--tp-shadow);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--tp-ink)"><div style="min-width:0;flex:1 1 260px"><div style="font-size:20px;font-weight:800;line-height:1.15;letter-spacing:-.025em">${esc(planSchool(plan))}</div><div style="margin-top:5px;font-size:12px;font-weight:700;color:var(--tp-muted);line-height:1.45">${esc([exam,book].filter(Boolean).join(' · '))}</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">${dd?`<span style="border:1.25px solid var(--tp-line);border-radius:999px;padding:8px 11px;background:#fff;font-size:11px;font-weight:800;white-space:nowrap">${esc(dd)}</span>`:''}${plan?.exam_date?`<span style="border:1.25px solid var(--tp-line);border-radius:999px;padding:8px 11px;background:#fff;color:var(--tp-pink);font-size:11px;font-weight:800;white-space:nowrap">${esc(plan.exam_date)}</span>`:''}</div></section>`;
 }
 function taskShelf(allPlans){
- const all=(allPlans||[]).flatMap(p=>activeTasks(p).map(t=>({p,t}))).sort((a,b)=>new Date(a.t.due_at||'2999-01-01')-new Date(b.t.due_at||'2999-01-01'));
+ const all=(allPlans||[]).flatMap(p=>(p.tasks||[]).filter(t=>t.active!==false).map(t=>({p,t})))
+  .sort((a,b)=>new Date(a.t.due_at||'2999-01-01')-new Date(b.t.due_at||'2999-01-01'));
  if(!all.length)return'';
- return `<div class="tp-task-shelf">${all.slice(0,6).map(({p,t})=>`<button class="tp-task-chip" data-task-plan="${esc(p.id)}" data-task-lesson="${esc(t.lesson)}" data-task-skill="${esc(t.practice_type)}" data-task-id="${esc(t.id)}"><span class="arrow">→</span><span class="k">선생님 과제</span><b>${esc(t.title||`${t.lesson} ${t.practice_type||''}`)}</b><small>완료 ${clamp(t.progress?.percent)}% · 전체 정확도 ${t.progress?.overall_accuracy_percent==null?'—':clamp(t.progress.overall_accuracy_percent)+'%'}</small></button>`).join('')}</div>`;
+ return '<div class="tp-task-shelf">'+all.slice(0,12).map(({p,t})=>{
+   const gold=t.progress?.complete===true||t.progress?.gold===true;
+   const completion=clamp(t.progress?.final_completion_percent??t.progress?.percent);
+   const accuracy=t.progress?.overall_accuracy_percent==null?'—':clamp(t.progress.overall_accuracy_percent)+'%';
+   return '<button class="tp-task-chip'+(gold?' tp-task-gold':'')+'" '+(gold?'style="background:#fff5c8;border:2px solid #d9ad39;color:#78580e"':'')+
+      ' data-task-plan="'+esc(p.id)+'" data-task-lesson="'+esc(t.lesson)+'" data-task-skill="'+esc(t.practice_type)+'" data-task-id="'+esc(t.id)+'">'+
+      '<span class="arrow">'+(gold?'★':'→')+'</span><span class="k">'+(gold?'GOLD · 완료':'선생님 과제')+'</span>'+
+      '<b>'+esc(t.title||t.lesson+' '+(t.practice_type||''))+'</b>'+
+      '<small>최종 완료 '+completion+'% · 전체 정확도 '+accuracy+'</small></button>';
+ }).join('')+'</div>';
 }
 async function hydrateHome(allPlans,run){
  await Promise.all((allPlans||[]).map(async plan=>{
