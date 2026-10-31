@@ -269,8 +269,25 @@ async function recordCompletedActivity(id,source='genius'){
    method:'POST',headers:{'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates,return=representation'},
    body:JSON.stringify({student_id:who,source:app,activity_key:key})
   });
+  try{await refreshStreakSnapshot()}catch(snapshotError){console.warn('[streak] snapshot update unavailable',snapshotError)}
   void window.WillenaAchievements?.refresh?.();
  }catch(e){console.warn('[streak] completed activity save failed',e)}
+}
+async function getStreakSnapshot(){
+ const rows=await authed(SUPA+'/rest/v1/student_achievement_snapshots?select=current_streak,best_streak,last_completed_day,streak_updated_at&limit=1');
+ if(Array.isArray(rows)&&rows[0]){
+  const row=rows[0];
+  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const yesterday=new Date(Date.parse(today+'T12:00:00Z')-86400000).toISOString().slice(0,10);
+  const current=(row.last_completed_day===today||row.last_completed_day===yesterday)?Number(row.current_streak)||0:0;
+  return {current,best:Number(row.best_streak)||0,last:row.last_completed_day};
+ }
+ return null;
+}
+async function refreshStreakSnapshot(){
+ const rows=await authed(SUPA+'/rest/v1/rpc/refresh_student_streak_snapshot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_student:JSON.parse(atob((await token()).split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub})});
+ if(!Array.isArray(rows)||!rows[0])throw Error('Streak snapshot refresh unavailable');
+ return {current:Number(rows[0].current_streak)||0,best:Number(rows[0].best_streak)||0,last:rows[0].last_completed_day};
 }
 async function getCompletedActivityDays(){
  // Read only the authenticated student's completed sessions. No attempts,
@@ -310,7 +327,7 @@ async function getCompletedActivityDays(){
  if(!successful)throw Error('No completed session sources readable');
  return [...dates];
 }
-window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits,getCompletedActivityDays,recordCompletedActivity};
+window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits,getCompletedActivityDays,recordCompletedActivity,getStreakSnapshot,refreshStreakSnapshot};
 // Any student app may mount this shared widget on a chosen container.
 
 })();
