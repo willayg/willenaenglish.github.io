@@ -74,7 +74,7 @@
         <div id="vocabFrontBookList" class="vocab-front-book-list"></div>
       </section>
 
-      <section id="vocabFrontAchievements" class="vocab-front-achievements" hidden aria-label="Vocabulary achievements">
+      <section id="vocabFrontAchievements" data-shared-achievements class="vocab-front-achievements" hidden aria-label="Vocabulary achievements">
         <div class="vocab-front-achievement">
           <img src="/shared/svgs/streak.svg?v=20260927-icons1" alt="" aria-hidden="true">
           <div><strong id="vocabFrontStreakCurrent">0</strong><small>연속 학습</small></div>
@@ -255,6 +255,7 @@ import('./vocab-study.js?v=20261031-inline-coach-keyboard1').catch(error=>{
 </script>
 
 <script src="/students/components/mission-basket.js?v=20261031-app-uniform12"></script>
+<script src="/students/components/student-achievements.js?v=20261031-shared1"></script>
 <script>document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('appMissionBasket');if(el)window.WillenaMissionBasket?.mount(el,{app:'Word Genius'})});</script>
 </body>
 </html>
