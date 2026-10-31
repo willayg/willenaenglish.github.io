@@ -754,3 +754,15 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-expression-line{display:flex;flex-wrap:wrap;gap:5px 12px;border-bottom:1px solid #e5f2f3;padding:8px 0;font-size:.85rem}
 .writing-genius #wgDiaryFlow .df-expression-line strong{color:#bd4c86}
 .writing-genius #wgDiaryFlow .df-expression-line span{color:#849196;font-size:.81rem}
+
+/* Diary topic picker */
+.writing-genius #wgDiaryFlow .df-topic-picker{position:relative;margin:0 0 12px}
+.writing-genius #wgDiaryFlow .df-topic-trigger{width:100%;text-align:left;min-height:58px;padding:13px 48px 13px 16px;border:2px solid #c5eef1;border-radius:15px;background:#fff;color:#315e64;font:750 1rem Poppins,system-ui,sans-serif;cursor:pointer;position:relative}
+.writing-genius #wgDiaryFlow .df-topic-trigger::after{content:'⌄';position:absolute;right:16px;top:50%;transform:translateY(-50%);color:#e75c9d;font-size:1.35rem}
+.writing-genius #wgDiaryFlow .df-topic-menu:not([hidden]){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:9px;padding:9px;border:2px solid #c5eef1;border-radius:15px;background:#fff;max-height:360px;overflow-y:auto}
+.writing-genius #wgDiaryFlow .df-topic-menu[hidden],.writing-genius #wgDiaryFlow .df-topic-example[hidden],.writing-genius #wgDiaryFlow .df-input[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow .df-topic-option{min-height:48px;padding:9px 10px;text-align:left;border:1.5px solid #d4edf0;border-radius:11px;background:#fff;color:#426770;font:750 .82rem Poppins,system-ui,sans-serif;cursor:pointer}
+.writing-genius #wgDiaryFlow .df-topic-option.is-selected{background:#fff0f7;border-color:#e75c9d;color:#b9427c}
+.writing-genius #wgDiaryFlow .df-topic-guide{margin:13px 0 18px}
+.writing-genius #wgDiaryFlow .df-topic-example{margin-top:12px}
+@media(max-width:450px){.writing-genius #wgDiaryFlow .df-topic-menu:not([hidden]){grid-template-columns:1fr}}
