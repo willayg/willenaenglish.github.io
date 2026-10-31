@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261025-wg-v1.13.0">
+<link rel="stylesheet" href="./styles.css?v=20261031-wg-clean-cards1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -59,11 +59,12 @@
         <div><strong>GOLD</strong><span>5문장만 있는 단원도 모두 맞히면 골드!</span></div>
         <div><strong>AI 20</strong><span>AI Willi 하루 20회 · 저장된 정답은 차감 없음</span></div>
       </div>
-      <div class="wg-library-head">
-        <div><h2 class="wg-section-title">내가 쓴 글</h2><p id="wgSummary">나의 글을 불러오는 중…</p></div>
+      <!-- Keep state bindings for editor/history logic; this library is no longer shown on the home screen. -->
+      <div class="wg-library-head" hidden aria-hidden="true">
+        <div><h2 class="wg-section-title">내가 쓴 글</h2><p id="wgSummary"></p></div>
         <select id="wgHistoryFilter" aria-label="글 종류 선택"><option value="all">전체</option><option value="draft">임시 저장</option><option value="submitted">제출 완료</option></select>
       </div>
-      <div id="wgLibrary" class="wg-library"></div>
+      <div id="wgLibrary" class="wg-library" hidden aria-hidden="true"></div>
     </section>
     <section id="wgEditor" class="wg-editor" aria-label="Writing editor" hidden>
       <div class="wg-editor-nav">
