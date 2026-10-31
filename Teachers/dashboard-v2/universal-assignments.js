@@ -2,9 +2,9 @@
 (()=>{'use strict';
 const root=document.getElementById('universalAssignments');if(!root)return;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const apps=[{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
-let active='naesin',loading=false,groups=[];
-const subviews={naesin:'manage',word:'manage',grammar:'manage',sentence:'manage',puzzles:'manage'};
+const apps=[{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'All',sub:'All homework',icon:'▦'},{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
+let active='my',loading=false,groups=[];
+const subviews={my:'manage',all:'manage',naesin:'manage',word:'manage',grammar:'manage',sentence:'manage',puzzles:'manage'};
 let wordPanel=null,wordHome=null;
 function restoreWordPanel(){if(wordPanel&&wordHome&&wordPanel.parentElement!==wordHome)wordHome.appendChild(wordPanel)}
 function showWordPanel(body){const panel=document.querySelector('[data-vocab-subview="assignments"]');if(!panel){body.innerHTML='<div class="ua-empty">Word Genius tracking unavailable.</div>';return}if(!wordPanel){wordPanel=panel;wordHome=panel.parentElement}panel.classList.add('ua-mounted-word');panel.classList.add('active');body.appendChild(panel);window.dispatchEvent(new CustomEvent('vocab:assignments-open'))}
@@ -19,6 +19,11 @@ function render(){
  root.querySelectorAll('[data-ua-tab]').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.uaTab;render()}));
  root.querySelectorAll('[data-ua-sub]').forEach(b=>b.addEventListener('click',()=>{subviews[active]=b.dataset.uaSub;render()}));
  const body=root.querySelector('#uaAppBody');
+ if(active==='my'||active==='all'){
+   body.innerHTML='<div id="uaOverview" aria-live="polite">Loading cross-app homework…</div>';
+   window.UniversalAssignmentTracker?.loadOverview?.(active);
+   return;
+ }
  if(active==='naesin'&&sub==='manage'){body.innerHTML='<div id="uaProgress" aria-live="polite">Loading homework results…</div>';window.UniversalAssignmentTracker?.load?.();return}
  if(active==='naesin'){
   body.innerHTML='<div class="ua-actions"><p>Choose an exam group to open its assignment settings.</p><button type="button" class="control ua-outline" id="uaRefresh">'+(loading?'Refreshing…':'↻ Refresh groups')+'</button></div>'+
