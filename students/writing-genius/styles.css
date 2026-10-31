@@ -786,3 +786,9 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 @keyframes df-ai-read{to{stroke:#53c7d0;opacity:.6}}
 @keyframes df-ai-dot{to{transform:translateY(-8px);opacity:.3}}
 @media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-ai-ring-active,.writing-genius #wgDiaryFlow .df-ai-lines,.writing-genius #wgDiaryFlow .df-ai-loading-dots i{animation:none}}
+
+.writing-genius #wgDiaryFlow .df-ai-robot{transform-origin:90px 90px;animation:df-ai-robot-bob 1.8s ease-in-out infinite}
+.writing-genius #wgDiaryFlow .df-ai-robot-eyes{animation:df-ai-robot-blink 3.2s ease-in-out infinite;transform-origin:90px 86px}
+@keyframes df-ai-robot-bob{50%{transform:translateY(-5px)}}
+@keyframes df-ai-robot-blink{0%,43%,49%,100%{transform:scaleY(1)}46%{transform:scaleY(.12)}}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-ai-robot,.writing-genius #wgDiaryFlow .df-ai-robot-eyes{animation:none}}
