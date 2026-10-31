@@ -19,6 +19,9 @@
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261025-sg-mission-v5b"></script>
+
+<link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261031-app-uniform12">
+<style>.app-mission-basket-slot .dashboard-mission-basket{width:100%;max-width:none;margin:12px 0 20px}.app-mission-basket-slot:empty{display:none}</style>
 </head><body>
 <div class="study-app writing-genius">
   <student-header title="쓰기 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
@@ -36,6 +39,7 @@
     </div>
     <div id="wgNotice" class="wg-notice" role="status" aria-live="polite"></div>
     <section id="wgHome" aria-label="Writing home" hidden>
+      <section id="appMissionBasket" class="app-mission-basket-slot"></section>
       <div class="wg-mode-grid">
         <button class="wg-mode vocab-front-book-card" type="button" data-start="sentence">
           <span class="wg-mode-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="7" y="9" width="34" height="30" rx="7"/><path d="M14 20h20M14 28h14"/></svg></span>
@@ -192,4 +196,8 @@
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
 <script src="/students/vocab-study/theme-pips.js?v=20260927-v0005"></script>
 <script type="module" src="./app.js?v=20261025-wg-v1.13.0"></script>
+
+<script src="/students/components/mission-basket.js?v=20261031-app-uniform12"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('appMissionBasket');if(el)window.WillenaMissionBasket?.mount(el,{app:'Writing Genius'})});</script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const home=document.getElementById('wgHome'),ach=document.querySelector('#spPicker > .vocab-motivation');if(home&&ach){home.appendChild(ach);ach.classList.add('wg-home-achievements')}});</script>
 </body></html>
