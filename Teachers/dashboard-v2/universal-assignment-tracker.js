@@ -79,26 +79,30 @@ function render(){
  host.querySelector('#uaProgressRefresh').onclick=load;
 }
 let overviewStage='active';
-async function changeHomework(row,action,scopeName){
+const overviewSelections=new Set();
+const homeworkKey=row=>row._table+':'+row.id;
+async function changeHomework(row){
  const table=row._table;
  if(!['homework_assignments','grammar_foundation_homework','sentence_genius_homework','test_prep_tasks'].includes(table))throw Error('This app does not support changes here yet');
- const deleting=action==='remove';
- if(!confirm(deleting?'Remove this homework from active assignments? Student results will be preserved.':'Mark this homework complete?'))return;
  const update={active:false};
- if(table==='homework_assignments'){update.status=deleting?'cancelled':'completed';update.ended_at=new Date().toISOString();}
+ if(table==='homework_assignments'){update.status='completed';update.ended_at=new Date().toISOString();}
  if(table==='grammar_foundation_homework')update.closed_at=new Date().toISOString();
- if(table==='test_prep_tasks'&&!deleting)update.completed_at=new Date().toISOString();
+ if(table==='test_prep_tasks')update.completed_at=new Date().toISOString();
  const changed=await get(table+'?id=eq.'+encodeURIComponent(row.id),{
   method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(update)
  });
  if(!Array.isArray(changed)||changed.length!==1)throw Error('Assignment was not updated; check teacher permissions');
- await loadOverview(scopeName);
+ row.isActive=false;
+ row.active=false;
+ Object.assign(row,changed[0]);
+ overviewSelections.delete(homeworkKey(row));
 }
 async function loadOverview(scopeName='my'){
  const host=document.querySelector('#uaOverview');if(!host)return;
  host.textContent='Loading assignments across apps…';
  try{
   const teacher=await teacherIdentity();
+  overviewSelections.clear();
   const sources=[
    {app:'Word Genius',table:'homework_assignments',select:'id,created_by,class,title,status,active,created_at,due_at,ended_at',label:r=>r.title||r.class||'Vocabulary homework',isActive:r=>r.active!==false&&r.status!=='closed'&&r.status!=='completed'&&r.status!=='cancelled'},
    {app:'Grammar Genius',table:'grammar_foundation_homework',select:'id,created_by,class_name,module_title,stage_title,active,created_at,due_at,closed_at',label:r=>[r.module_title,r.stage_title].filter(Boolean).join(' · '),isActive:r=>r.active!==false},
@@ -132,42 +136,84 @@ async function loadOverview(scopeName='my'){
    });
    if(Array.isArray(results))progress=new Map(results.map(x=>[id(x.task_id),x]));
   }catch(e){errors.push('내신 progress: '+e.message)}
-  const now=Date.now();
-  const overdue=r=>r.due_at&&Date.parse(r.due_at)<now;
-  const finished=r=>!r.isActive||overdue(r);
-  const owned=rows.filter(r=>scopeName==='all'||id(r.created_by)===teacher);
-  const active=owned.filter(r=>!finished(r));
-  const complete=owned.filter(finished);
-  const visible=(overviewStage==='complete'?complete:active)
-   .sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
-  host.innerHTML='<div class="ua-scope-tabs" role="tablist" aria-label="Homework status"><button type="button" class="'+(overviewStage==='active'?'active':'')+'" data-ua-stage="active">Active ('+active.length+')</button><button type="button" class="'+(overviewStage==='complete'?'active':'')+'" data-ua-stage="complete">Complete ('+complete.length+')</button></div>'+
-    '<div class="ua-toolbar"><strong>'+(scopeName==='my'?'My homework':'All teachers’ homework')+'</strong><button type="button" class="control" id="uaOverviewRefresh">Refresh</button></div>'+
-    (errors.length?'<p class="ua-note" style="color:#b04b40">Some sources unavailable: '+esc(errors.join('; '))+'</p>':'')+
-    '<div class="ua-homework-cards">'+visible.map((row,i)=>{
-     const result=progress.get(id(row.id));
-     const done=result?Number(result.done)||0:0;
-     const target=Number(row.target_count)||0;
-     const pct=target?Math.min(100,Math.round(done/target*100)):null;
-     const detail=result?'Completed '+done+'/'+target+' questions · Accuracy '+(result.accuracy_percent??'—')+'%':'Progress not connected for this app';
-     const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
-     return '<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
-       '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden>'+esc(detail)+'</div>'+
-       (overviewStage==='active'?'<div class="ua-homework-actions"><button type="button" data-ua-action="complete" data-ua-index="'+i+'" aria-label="Mark homework complete" title="Complete" >✓</button><button type="button" data-ua-action="remove" data-ua-index="'+i+'" aria-label="Remove homework" title="Remove" >✕</button></div>':'')+'</article>';
-    }).join('')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
-    '<p class="ua-note">Past-due assignments appear in Complete automatically in this dashboard; their database records are preserved. ✓ closes an assignment; ✕ removes it from active homework without deleting results. Detailed progress is currently connected for 내신; other apps need their own progress sources integrated.</p>';
-  host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName);
-  host.querySelectorAll('[data-ua-stage]').forEach(button=>button.onclick=()=>{overviewStage=button.dataset.uaStage;loadOverview(scopeName)});
-  host.querySelectorAll('[data-ua-detail]').forEach(button=>button.onclick=()=>{
-   const panel=host.querySelector('#uaExpanded'+button.dataset.uaDetail);
-   panel.hidden=!panel.hidden;button.setAttribute('aria-expanded',String(!panel.hidden));
-  });
-  host.querySelectorAll('[data-ua-action]').forEach(button=>button.onclick=async()=>{
-   const row=visible[Number(button.dataset.uaIndex)];
-   if(id(row.created_by)!==teacher){alert('Only the assigning teacher can change this homework.');return}
-   button.disabled=true;
-   try{await changeHomework(row,button.dataset.uaAction,scopeName)}
-   catch(e){alert('Homework was not updated: '+e.message);button.disabled=false}
-  });
+  function renderOverview(){
+   const now=Date.now();
+   const overdue=r=>r.due_at&&Date.parse(r.due_at)<now;
+   const finished=r=>!r.isActive||overdue(r);
+   const owned=rows.filter(r=>scopeName==='all'||id(r.created_by)===teacher);
+   const active=owned.filter(r=>!finished(r));
+   const complete=owned.filter(finished);
+   const visible=(overviewStage==='complete'?complete:active)
+    .sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+   const selectable=visible.filter(r=>id(r.created_by)===teacher);
+   const checked=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
+   host.innerHTML='<div class="ua-scope-tabs" role="tablist" aria-label="Homework status"><button type="button" class="'+(overviewStage==='active'?'active':'')+'" data-ua-stage="active">Active ('+active.length+')</button><button type="button" class="'+(overviewStage==='complete'?'active':'')+'" data-ua-stage="complete">Complete ('+complete.length+')</button></div>'+
+     '<div class="ua-toolbar"><strong>'+(scopeName==='my'?'My homework':'All teachers’ homework')+'</strong>'+
+     (overviewStage==='active'?'<label class="ua-bulk-select"><input type="checkbox" id="uaSelectAll" '+(selectable.length&&checked===selectable.length?'checked':'')+' '+(!selectable.length?'disabled':'')+'> Select all</label><button type="button" class="control ua-bulk-complete" id="uaCompleteSelected" '+(!checked?'disabled':'')+'>✓ Complete selected ('+checked+')</button>':'')+
+     '<button type="button" class="control" id="uaOverviewRefresh">Refresh</button></div>'+
+     (errors.length?'<p class="ua-note" style="color:#b04b40">Some sources unavailable: '+esc(errors.join('; '))+'</p>':'')+
+     '<p id="uaBulkStatus" class="ua-note" role="status" aria-live="polite" hidden></p>'+
+     '<div class="ua-homework-cards">'+visible.map((row,i)=>{
+      const result=progress.get(id(row.id));
+      const done=result?Number(result.done)||0:0;
+      const target=Number(row.target_count)||0;
+      const pct=target?Math.min(100,Math.round(done/target*100)):null;
+      const detail=result?'Completed '+done+'/'+target+' questions · Accuracy '+(result.accuracy_percent??'—')+'%':'Progress not connected for this app';
+      const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
+      const ownedByMe=id(row.created_by)===teacher;
+      return '<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
+        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden>'+esc(detail)+'</div>'+
+        (overviewStage==='active'&&ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework for bulk completion" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label><button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button></div>':'')+'</article>';
+     }).join('')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
+     '<p class="ua-note">Past-due homework appears in Complete automatically. ✓ closes one assignment; check boxes and Complete selected close several. Student attempts and results remain preserved.</p>';
+   host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName);
+   host.querySelectorAll('[data-ua-stage]').forEach(button=>button.onclick=()=>{overviewStage=button.dataset.uaStage;overviewSelections.clear();renderOverview()});
+   host.querySelectorAll('[data-ua-detail]').forEach(button=>button.onclick=()=>{
+    const panel=host.querySelector('#uaExpanded'+button.dataset.uaDetail);
+    panel.hidden=!panel.hidden;button.setAttribute('aria-expanded',String(!panel.hidden));
+   });
+   function updateSelectionUI(){
+    const selectedCount=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
+    const bulk=host.querySelector('#uaCompleteSelected');
+    if(bulk){bulk.disabled=selectedCount===0;bulk.textContent='✓ Complete selected ('+selectedCount+')';}
+    const allBox=host.querySelector('#uaSelectAll');
+    if(allBox){allBox.checked=selectable.length>0&&selectedCount===selectable.length;allBox.indeterminate=selectedCount>0&&selectedCount<selectable.length;}
+   }
+   host.querySelectorAll('[data-ua-select]').forEach(box=>box.onchange=()=>{
+    const row=visible[Number(box.dataset.uaSelect)];
+    if(box.checked)overviewSelections.add(homeworkKey(row));else overviewSelections.delete(homeworkKey(row));
+    updateSelectionUI();
+   });
+   const selectAll=host.querySelector('#uaSelectAll');
+   if(selectAll)selectAll.onchange=()=>{
+    selectable.forEach(row=>{if(selectAll.checked)overviewSelections.add(homeworkKey(row));else overviewSelections.delete(homeworkKey(row))});
+    host.querySelectorAll('[data-ua-select]').forEach(box=>box.checked=selectAll.checked);
+    updateSelectionUI();
+   };
+   async function completeRows(items){
+    if(!items.length)return;
+    if(!confirm('Mark '+items.length+' homework assignment'+(items.length===1?'':'s')+' complete?'))return;
+    const controls=host.querySelectorAll('[data-ua-complete],#uaCompleteSelected,[data-ua-select],#uaSelectAll');
+    controls.forEach(el=>el.disabled=true);
+    const notice=host.querySelector('#uaBulkStatus');notice.hidden=false;notice.textContent='Completing '+items.length+' assignments…';
+    let success=0,failed=[];
+    // Small parallel batches avoid overwhelming the REST API.
+    for(let i=0;i<items.length;i+=5){
+     const results=await Promise.allSettled(items.slice(i,i+5).map(changeHomework));
+     results.forEach((r,j)=>{if(r.status==='fulfilled')success++;else failed.push(items[i+j].label+': '+r.reason.message)});
+    }
+    renderOverview();
+    const status=host.querySelector('#uaBulkStatus');
+    if(status){status.hidden=false;status.textContent=success+' completed.'+(failed.length?' '+failed.length+' failed: '+failed.slice(0,3).join('; '):'');}
+   }
+   host.querySelectorAll('[data-ua-complete]').forEach(button=>button.onclick=()=>{
+    const row=visible[Number(button.dataset.uaComplete)];
+    completeRows([row]);
+   });
+   const bulk=host.querySelector('#uaCompleteSelected');
+   if(bulk)bulk.onclick=()=>completeRows(selectable.filter(row=>overviewSelections.has(homeworkKey(row))));
+  }
+  renderOverview();
  }catch(e){host.innerHTML='<p class="ua-empty">Could not load homework: '+esc(e.message)+'</p>'}
 }
 window.UniversalAssignmentTracker={load,loadOverview};
