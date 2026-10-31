@@ -32,6 +32,7 @@ export function createQuestionSession({
   onWrong=()=>{},
   onFinished=()=>{},
   onBack=()=>{},
+  disableSavedProgress=()=>false,
   checkedState,
   indexState,
   startedAtState,
@@ -98,6 +99,7 @@ export function createQuestionSession({
   }
 
   function restoreOnce(){
+    if(disableSavedProgress())return;
     const route=currentActivityRoute(),key=routeKey(route);if(!route||!key)return;
     const saved=restoreActivityProgress(route);if(!saved)return;
     if(key===restoredRouteKey&&indexState.get()!==0)return;
@@ -120,7 +122,7 @@ export function createQuestionSession({
     }
     const entry=getEntry(),q=getQuestion(entry);
     if(!q){clearActivitySnapshotFor(currentActivityRoute());return finishSession()}
-    saveActivityPosition(indexState.get());
+    if(!disableSavedProgress())saveActivityPosition(indexState.get());
     grading=false;nextPointerArmed=false;warningShown=false;
     checkedState.set(false);onBeforeRender(entry,q);
     root.innerHTML=`${renderHeader(entry,q)}<div class="question-card" id="questionHost"></div>`;
@@ -186,8 +188,7 @@ export function createQuestionSession({
 
     // Once feedback is visible, this question is consumed. Persist locally before
     // remote tracking so leaving immediately cannot reopen the same question.
-    saveActivityOutcome(answeredIndex,!!result.correct);
-    saveActivityPosition(answeredIndex+1);
+    if(!disableSavedProgress()){saveActivityOutcome(answeredIndex,!!result.correct);saveActivityPosition(answeredIndex+1)}
 
     try{await recordAttempt({question:q,response,result,practiceType,...getAttemptExtras(entry,q,false)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} tracking failed`,e)}
@@ -207,8 +208,7 @@ export function createQuestionSession({
     if(isLastQuestion)showFinishOverlay();
 
     // Skips are consumed too. Save before remote tracking for the same reason.
-    saveActivityOutcome(answeredIndex,false);
-    saveActivityPosition(answeredIndex+1);
+    if(!disableSavedProgress()){saveActivityOutcome(answeredIndex,false);saveActivityPosition(answeredIndex+1)}
 
     try{await recordAttempt({question:q,response,result,practiceType:getPracticeType(entry,q),skipped:true,...getAttemptExtras(entry,q,true)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} skip tracking failed`,e)}
