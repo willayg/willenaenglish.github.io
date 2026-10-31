@@ -670,3 +670,10 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-record-fallback{display:block;margin:12px auto;min-width:100px;min-height:100px;border:3px solid #bdebef;border-radius:999px;background:#fff url('/shared/svgs/mic.svg') center 24px/37px 37px no-repeat;color:#e75c9d;font-weight:850;padding:64px 9px 12px;cursor:pointer}
 .writing-genius #wgDiaryFlow .df-record-fallback.is-recording{background-color:#ffeff6;border-color:#e75c9d;animation:wg-headphones-pulse .7s ease-in-out infinite alternate}
 @media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-listen.is-loading .df-headphones,.writing-genius #wgDiaryFlow .df-record-fallback.is-recording{animation:none}}
+
+/* One shared Speak/Write mode toggle: Speak is the default. */
+.writing-genius #wgDiaryFlow .df-mode-buttons{display:flex;justify-content:center;margin:18px auto 22px}
+.writing-genius #wgDiaryFlow .df-mode-toggle{display:grid;grid-template-columns:1fr 1fr;min-width:280px;max-width:380px;width:min(100%,380px);min-height:64px;padding:5px;align-items:stretch;gap:4px;border:3px solid #bcebef;border-radius:20px;background:#fff;color:#e75c9d;cursor:pointer;font:900 1.08rem Poppins,system-ui,sans-serif}
+.writing-genius #wgDiaryFlow .df-mode-toggle span{display:grid;place-items:center;border-radius:13px;transition:background .12s ease}
+.writing-genius #wgDiaryFlow .df-mode-toggle.is-speaking .df-toggle-speak,.writing-genius #wgDiaryFlow .df-mode-toggle.is-writing .df-toggle-write{background:#fff0f7;box-shadow:inset 0 0 0 2px #e75c9d}
+.writing-genius #wgDiaryFlow .df-mode-toggle:focus-visible{outline:3px solid #e75c9d;outline-offset:3px}
