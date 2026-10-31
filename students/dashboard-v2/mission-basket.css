@@ -26,3 +26,6 @@ html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-item,html[data-das
 html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button{background:#1e333d;color:#bce8e8;border-color:#3b7179}
 html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button[aria-pressed=true],html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button[aria-pressed=true]{background:#215963}
 @media(max-width:560px){.dashboard-mission-basket{margin:12px auto 16px;padding:0 10px}.dashboard-mission-basket .dm-toggle{min-height:68px;padding:10px 12px}.dashboard-mission-basket .dm-item{min-height:94px}}
+
+/* rev1.17: clean white mission basket background */
+.dashboard-mission-basket .dm-head{background:#fff}
