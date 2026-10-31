@@ -56,3 +56,9 @@
 .tp-v1-header .willena-menu-logout{color:#df5893}
 .tp-v1-header .willena-menu-logout>span{background:#fff0f6;color:#df5893}
 @media(max-width:560px){.tp-v1-header .profile-menu.willena-unified-menu{right:0;max-height:calc(100dvh - 128px)}}
+
+/* Keep the unified profile dropdown above the theme dock and all app chrome. */
+.tp-v1-header{position:relative;z-index:2147483000;isolation:isolate}
+.tp-v1-header .header-inner{z-index:2147483000}
+.tp-v1-header .profile-menu-wrap{z-index:2147483001}
+.tp-v1-header .profile-menu.willena-unified-menu{z-index:2147483002}
