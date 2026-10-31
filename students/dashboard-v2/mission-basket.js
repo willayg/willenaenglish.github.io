@@ -45,7 +45,7 @@ async function sentences(){
  });
 }
 async function grammar(){
- const rows=await authed(SUPA+'/rest/v1/grammar_foundation_homework?select=id,module_title,stage_title,module_id,stage_id,completion_percent,due_at,created_at&active=eq.true&order=due_at.desc&limit=300');
+ const rows=await authed(SUPA+'/rest/v1/grammar_foundation_homework?select=id,module_title,stage_title,module_id,stage_id,completion_percent,due_at&active=eq.true&order=due_at.desc&limit=300');
  return (Array.isArray(rows)?rows:[]).map(a=>item('grammar:'+a.id,'Grammar Genius',(a.module_title||'Grammar')+' · '+(a.stage_title||'Stage'),'/students/grammar-foundations/',a.created_at||a.due_at,false,'목표 '+(a.completion_percent||80)+'%'));
 }
 async function naesin(){
