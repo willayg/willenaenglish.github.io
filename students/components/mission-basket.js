@@ -182,6 +182,7 @@ function render(){
   }
   await celebrate(card,true);
   state.archives.add(x.id);x.archived=true;saveLocalMedal(x.id);
+  void recordCompletedActivity(x.id,'homework');
   try{
    const key=archiveStorageKey();
    if(key){
@@ -265,7 +266,7 @@ async function recordCompletedActivity(id,source='genius'){
   const who=JSON.parse(atob(access.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub;
   if(!who)throw Error('No authenticated student');
   await authed(SUPA+'/rest/v1/student_completed_activity_events?on_conflict=student_id,source,activity_key',{
-   method:'POST',headers:{'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates'},
+   method:'POST',headers:{'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates,return=representation'},
    body:JSON.stringify({student_id:who,source:app,activity_key:key})
   });
   void window.WillenaAchievements?.refresh?.();
