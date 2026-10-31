@@ -52,3 +52,19 @@ button.homework-basket-head{appearance:none;width:100%;border:0;background:trans
 .homework-basket-card.gold .homework-basket-score b{color:#b58a13}
 .homework-basket-card.gold .homework-basket-score.accuracy b{color:#d08643}
 @media(max-width:600px){.homework-basket-card{grid-template-columns:minmax(0,1fr) minmax(142px,45%);gap:8px;min-height:112px}.homework-basket-card-main strong{font-size:14px}.homework-basket-card-main small{font-size:10px}.homework-basket-score b{font-size:clamp(23px,6vw,30px)}.homework-basket-score small{font-size:10px}.homework-basket-score{padding:2px 3px}}
+
+/* v2.25.184: saved homework archive + gold burst */
+.homework-basket-content[hidden]{display:none!important}
+.homework-basket-tabs{display:flex;gap:8px;margin:0 0 12px}
+.homework-basket-tabs button{flex:1;min-height:44px;border:1.5px solid #badfe2;background:#f8ffff;border-radius:12px;color:#47757c;font:800 13px Poppins,sans-serif;cursor:pointer}
+.homework-basket-tabs button[aria-selected="true"]{border-color:#158a91;color:#096d74;background:#e0f5f5}
+.homework-basket-tabs b{margin-left:4px}
+.homework-basket-empty{padding:24px 12px;text-align:center;color:#64858b;font-weight:700}
+.homework-basket-card.gold:not([data-home-archived="1"]){position:relative}
+.homework-basket-card.gold:not([data-home-archived="1"])::after{content:"★ 터치하여 보관";position:absolute;right:8px;bottom:4px;color:#ac7a16;font-size:9px;font-weight:900}
+.homework-basket-card.homework-burst{animation:homeworkCardPop .6s ease-in forwards;pointer-events:none}
+@keyframes homeworkCardPop{0%{transform:scale(1);opacity:1}45%{transform:scale(1.06);opacity:1}100%{transform:scale(.2);opacity:0}}
+.homework-burst-particles{position:fixed;z-index:2147483000;pointer-events:none;width:0;height:0}
+.homework-burst-particles span{position:absolute;font-size:22px;color:#e8b33c;animation:homeworkParticle .65s ease-out forwards}
+@keyframes homeworkParticle{0%{transform:rotate(var(--angle)) translateX(0) scale(.4);opacity:1}100%{transform:rotate(var(--angle)) translateX(130px) scale(1.1);opacity:0}}
+@media(prefers-reduced-motion:reduce){.homework-basket-card.homework-burst,.homework-burst-particles span{animation:none}}
