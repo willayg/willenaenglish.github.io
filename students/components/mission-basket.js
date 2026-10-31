@@ -135,7 +135,7 @@ function render(){
 }
 async function mount(host){
  if(!host||host.dataset.missionMounted==='true')return;
- if(!document.getElementById('willenaMissionBasketStyles')){const link=document.createElement('link');link.id='willenaMissionBasketStyles';link.rel='stylesheet';link.href='/students/dashboard-v2/mission-basket.css?v=20261031-medals5';document.head.appendChild(link)}
+ if(!document.getElementById('willenaMissionBasketStyles')){const link=document.createElement('link');link.id='willenaMissionBasketStyles';link.rel='stylesheet';link.href='/students/dashboard-v2/mission-basket.css?v=20261031-goldtouch7';document.head.appendChild(link)}
  state.host=host;host.dataset.missionMounted='true';host.classList.add('dashboard-mission-basket');host.setAttribute('aria-label','미션함');
  state.collapsed=true;
  host.innerHTML='<div class="dm-loading">미션을 확인하고 있어요…</div>';
