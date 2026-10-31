@@ -112,3 +112,16 @@
  .ua-preview-heading strong{font-size:14px}
  .ua-preview-word-list li{gap:8px}
 }
+
+/* Compact assignment app switcher: one horizontal strip, no card grid. */
+#view-assignments #universalAssignments{padding:14px 18px}
+#view-assignments .ua-app-tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin:0 0 14px;padding:2px 2px 6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+#view-assignments .ua-app-tab{display:inline-flex;flex:0 0 auto;min-width:0;width:auto;padding:8px 12px;gap:7px;border-width:1px;border-radius:10px;box-shadow:none}
+#view-assignments .ua-app-icon{width:23px;height:23px;flex:0 0 23px;border-radius:5px;font-size:12px}
+#view-assignments .ua-app-label{display:block}
+#view-assignments .ua-app-label b{font-size:12px;white-space:nowrap}
+#view-assignments .ua-app-label small,#view-assignments .ua-topline{display:none!important}
+#view-assignments .ua-workspace{padding:14px;border-radius:12px}
+#view-assignments #uaProgress{overflow-x:auto}
+#view-assignments .ua-progress-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media(max-width:600px){#view-assignments #universalAssignments{padding:10px}#view-assignments .ua-app-tab{padding:7px 9px}#view-assignments .ua-workspace{padding:10px}}
