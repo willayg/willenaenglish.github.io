@@ -226,8 +226,21 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()}
 async function getAchievementMissions(){
  const results=await Promise.allSettled([standardHomework(),sentences(),naesin()]);
  const rows=results.flatMap(r=>r.status==='fulfilled'?r.value:[]);
- const unique=new Map(rows.map(x=>[x.id,x]));
- return [...unique.values()].map(x=>({id:x.id,done:x.done===true}));
+ const unique=new Map(rows.map(x=>[x.id,{id:x.id,done:x.done===true||x.archived===true,created:x.created||''}]));
+ // Archived medals are genuine completed homework. They may disappear from
+ // active assignment feeds; keep them in the achievement count.
+ const key=archiveStorageKey();
+ if(key){
+   try{
+     const ids=JSON.parse(localStorage.getItem(key)||'[]');
+     if(Array.isArray(ids))for(const id of ids){
+       if(typeof id!=='string'||! /^(standard|sentence|grammar|naesin):/.test(id))continue;
+       const previous=unique.get(id);
+       unique.set(id,{id,done:true,created:previous?.created||''});
+     }
+   }catch(e){console.warn('[achievements] medal archive unavailable',e)}
+ }
+ return [...unique.values()];
 }
 async function getWritingGoldUnits(){
  const rows=await authed(SUPA+'/rest/v1/rpc/wg_sentence_unit_rewards_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
