@@ -700,7 +700,16 @@ body.system-kb-open .crossword-stage{
   position:relative;z-index:1;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
   background:#fff;border:3px solid #efafd0;color:#b84479;font-size:1.35rem;font-weight:900
 }
-.mix-card-front{transform:rotateY(180deg);background:#fff;color:#315e64}
+/* Explicit face visibility prevents diamond artwork bleeding through on mobile 3D rendering. */
+.mix-card:not(.flipped):not(.matched) .mix-card-front{visibility:hidden}
+.mix-card.flipped .mix-card-back,.mix-card.matched .mix-card-back{visibility:hidden}
+.mix-card-front{
+  transform:rotateY(180deg);background:#fff;color:#173b43;
+  z-index:2;text-align:center;overflow-wrap:anywhere;word-break:normal;
+  font-size:clamp(.92rem,2.4vw,1.2rem);line-height:1.3;
+}
+.mix-card-front>span{display:block;width:100%;max-width:100%;white-space:normal}
+.mix-card.ko .mix-card-front{color:#9c2d64}
 .mix-card.ko .mix-card-front{border-color:#f0bfd7;background:#fffafd;color:#a94474}
 .mix-card.selected .mix-card-front{border-color:#7dd8df;background:#f3ffff}
 .mix-card.ko.selected .mix-card-front{border-color:#ee8dbb;background:#fff3f9}
