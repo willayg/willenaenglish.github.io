@@ -253,6 +253,7 @@ async function saveEntry({submit=false,force=false}={}){
     if(submit){
       if(entry.rev!==snapshotRev){notice('글이 변경되어 다시 제출해야 해요.',true);return false}
       setReadOnly(true);notice('선생님에게 글을 제출했어요 ✓');
+      void window.WillenaMissionBasket?.recordCompletedActivity?.(entry.kind+':'+entry.id,'writing-genius');
     }else if(entry.dirty){
       state.timer=setTimeout(()=>void saveEntry(),350);
     }
