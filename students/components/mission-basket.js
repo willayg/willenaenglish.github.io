@@ -89,6 +89,18 @@ async function resolveTeacherNames(){
  }catch(err){console.warn('[mission basket] Teacher names unavailable',err)}
 }
 function firstTeacherName(name){const first=String(name||'').trim().split(/\s+/)[0]||'';return first==='Will'?'William':first}
+
+async function celebrate(element,collect){
+ if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+ const rect=element.getBoundingClientRect();
+ const burst=document.createElement('div');burst.className='dm-gold-particles';burst.setAttribute('aria-hidden','true');
+ burst.style.left=(rect.left+rect.width/2)+'px';burst.style.top=(rect.top+rect.height/2)+'px';
+ for(let i=0;i<16;i++){const spark=document.createElement('span');spark.textContent=i%4===0?'★':'✦';spark.style.setProperty('--a',i*22.5+'deg');burst.appendChild(spark)}
+ document.body.appendChild(burst);
+ element.classList.add(collect?'dm-gold-collect':'dm-medal-shine');
+ await new Promise(resolve=>setTimeout(resolve,collect?640:470));
+ burst.remove();element.classList.remove('dm-gold-collect','dm-medal-shine');
+}
 function render(){
  const host=state.host;if(!host)return;
  const open=state.items.filter(x=>!state.archives.has(x.id)&&!x.archived);
@@ -101,6 +113,25 @@ function render(){
  '<a class="dm-item '+(x.done?'dm-done':'')+'" href="'+esc(x.link)+'"><span class="dm-app">'+esc(x.app)+(x.done?' · ★ GOLD':'')+'</span><strong>'+esc(x.title)+'</strong>'+(x.detail?'<small>'+esc(x.detail)+'</small>':'')+(!x.done&&x.teacherName?'<small class="dm-teacher">'+esc(firstTeacherName(x.teacherName))+' Teacher</small>':'')+'<span class="dm-action">'+(x.done?'✓':'→')+'</span></a>').join(''):'<p class="dm-empty">'+(state.tab==='archive'?'보관한 미션이 없어요.':'현재 미션이 없어요.')+'</p>')+'</div></div>');
  host.querySelector('.dm-toggle')?.addEventListener('click',()=>{state.collapsed=!state.collapsed;try{sessionStorage.setItem('dashboard-mission-collapsed',state.collapsed?'1':'0')}catch{}render()});
  host.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;render()}));
+ host.querySelectorAll('[data-mission-id]').forEach(card=>card.addEventListener('click',async event=>{
+  const x=state.items.find(v=>v.id===card.dataset.missionId);
+  if(!x?.done)return;
+  event.preventDefault();
+  if(card.dataset.collecting)return;
+  card.dataset.collecting='1';
+  if(x.id.startsWith('naesin:')){
+   try{
+    const result=await authed(SUPA+'/functions/v1/test-prep-student-rev47e?action=archive_homework',{
+     method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:x.id.slice(7)})
+    });
+    if(!result.success)throw Error('Archive failed');
+   }catch(e){delete card.dataset.collecting;console.warn('[mission basket] archive failed',e);alert('보관할 수 없습니다. 다시 시도해 주세요.');return}
+  }
+  await celebrate(card,true);
+  state.archives.add(x.id);x.archived=true;render();
+ }));
+ host.querySelectorAll('[data-medal-id]').forEach(button=>button.addEventListener('click',()=>celebrate(button,false)));
+
 }
 async function mount(host){
  if(!host||host.dataset.missionMounted==='true')return;
