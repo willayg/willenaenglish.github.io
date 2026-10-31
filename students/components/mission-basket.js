@@ -151,7 +151,7 @@ async function celebrate(element,collect){
 function progressMeter(entry){
  const percent=entry.done?100:Number.isFinite(entry.progress)?Math.max(0,Math.min(100,entry.progress)):null;
  if(percent===null)return '';
- return '<span class="dm-progress-copy">'+percent+'%</span><span class="dm-progress" role="progressbar" aria-label="숙제 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+percent+'"><span style="width:'+percent+'%"></span></span>';
+ return '<span class="dm-progress-ring" style="--dm-pct:'+percent+'" role="progressbar" aria-label="숙제 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+percent+'"><span>'+percent+'%</span></span>';
 }
 function render(){
  const host=state.host;if(!host)return;
