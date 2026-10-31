@@ -353,19 +353,20 @@ function setDiaryStep(step){
 function showCurrentCorrection(){
  const item=corrections[correctionIndex];
  if(!item){setDiaryStep(4);$('wgDiarySpeaking').scrollIntoView({behavior:'smooth',block:'nearest'});return}
- $('wgDiaryCorrectionTarget').textContent=item.better||item.english||'';
+ $('wgDiaryCorrectionTarget').textContent=(item.original?item.original+'\n': '')+(item.why_ko||item.meaning_ko||'');
+ $('wgDiaryCorrectionTarget').dataset.answer=item.better||item.english||'';
  $('wgDiaryCorrectionInput').value='';
  $('wgDiaryCorrectionStatus').textContent=(correctionIndex+1)+' / '+corrections.length;
  setDiaryStep(4);
 }
-function normalizeDiarySentence(s){return String(s||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\\s+/g,' ').trim()}
+function normalizeDiarySentence(s){return String(s||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim()}
 function acceptCorrection(answer){
  const target=corrections[correctionIndex]?.better||corrections[correctionIndex]?.english||'';
  if(normalizeDiarySentence(answer)!==normalizeDiarySentence(target)){
   $('wgDiaryCorrectionStatus').textContent='문장을 다시 확인해 주세요. / Try the improved sentence again.';return;
  }
  correctionIndex++;showCurrentCorrection();
- $('wgDiaryCorrection').scrollIntoView({behavior:'smooth',block:'nearest'});
+ if(correctionIndex<corrections.length)$('wgDiaryCorrection').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 async function diaryRequest(action,entryId,transcript){
  const call=async access=>fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',
@@ -380,18 +381,9 @@ async function diaryRequest(action,entryId,transcript){
 function showDiaryFeedback(feedback){
  const root=$('wgDiaryFeedback');root.replaceChildren();
  const p=el('p','wg-diary-praise',feedback.praise_ko||'좋은 일기예요!');root.append(p);
- const improvements=Array.isArray(feedback.improvements)?feedback.improvements:[];
- if(!improvements.length)root.append(el('p','wg-diary-success','잘 쓴 문장은 고칠 필요가 없어요!'));
- for(const row of improvements){
-  const card=el('div','wg-diary-improvement');
-  card.append(el('strong','',row.original||''),el('p','',row.better||''),el('small','',row.why_ko||''));root.append(card);
- }
- const expressions=Array.isArray(feedback.expressions)?feedback.expressions:[];
- if(expressions.length){
-  root.append(el('h4','','새로운 표현 · Useful Expressions'));
-  for(const row of expressions)root.append(el('p','wg-diary-expression',(row.english||'')+' — '+(row.meaning_ko||'')));
- }
- if(feedback.tip_ko)root.append(el('p','wg-diary-tip',feedback.tip_ko));
+ const count=(feedback.improvements||[]).length+(feedback.expressions||[]).length;
+ root.append(el('p','wg-diary-tip',feedback.tip_ko||''));
+ root.append(el('p','wg-diary-success',count?count+' sentences to practise':'좋은 문장은 그대로 유지해요.'));
  $('wgDiaryReview').hidden=false;
 }
 async function restoreDiaryReview(entry){
