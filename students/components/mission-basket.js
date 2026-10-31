@@ -181,7 +181,18 @@ function render(){
    }catch(e){delete card.dataset.collecting;console.warn('[mission basket] archive failed',e);alert('보관할 수 없습니다. 다시 시도해 주세요.');return}
   }
   await celebrate(card,true);
-  state.archives.add(x.id);x.archived=true;saveLocalMedal(x.id);render();
+  state.archives.add(x.id);x.archived=true;saveLocalMedal(x.id);
+  try{
+   const key=archiveStorageKey();
+   if(key){
+    const calendar=JSON.parse(localStorage.getItem(key+':completion-days')||'{}');
+    const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
+    calendar[x.id]=parts.year+'-'+parts.month+'-'+parts.day;
+    localStorage.setItem(key+':completion-days',JSON.stringify(calendar));
+   }
+   void window.WillenaAchievements?.refresh?.();
+  }catch(e){console.warn('[streak] completion day save failed',e)}
+  render();
   const medalTab=state.host?.querySelector('[data-tab="archive"]');
   if(medalTab&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){medalTab.classList.remove('dm-tab-grow');void medalTab.offsetWidth;medalTab.classList.add('dm-tab-grow');medalTab.addEventListener('animationend',()=>medalTab.classList.remove('dm-tab-grow'),{once:true})}
  }));
@@ -256,6 +267,17 @@ async function getCompletedActivityDays(){
  ];
  const settled=await Promise.allSettled(requests.map(url=>authed(url)));
  const dates=new Set();
+ // Homework counts on its recorded completion date, not its assignment date.
+ // Store the day of medal collection for future collections where source feeds
+ // do not provide a completed timestamp.
+ try{
+  const key=archiveStorageKey();
+  if(key){
+   const calendar=JSON.parse(localStorage.getItem(key+':completion-days')||'{}');
+   for(const date of Object.values(calendar))if(/^\d{4}-\d{2}-\d{2}$/.test(String(date)))dates.add(date);
+  }
+ }catch(e){console.warn('[streak] homework completion dates unavailable',e)}
+
  let successful=0;
  settled.forEach((r,i)=>{
   if(r.status!=='fulfilled'){console.warn('[streak] completed activity source unavailable',i,r.reason);return;}
