@@ -441,3 +441,38 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 /* Do not override Word Genius's shared unit button and golden-unit design. */
 .writing-genius .wg-page{width:min(920px,100%)}
 .writing-genius #spPicker .vocab-unit-selector{margin-top:24px}
+
+/* Writing Genius home: match the Word/Sentence Genius book-card treatment. */
+.writing-genius #wgHome .wg-library-head,
+.writing-genius #wgHome #wgLibrary{display:none!important}
+.writing-genius #wgHome .wg-mode-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0 24px}
+.writing-genius #wgHome .wg-mode.vocab-front-book-card{
+ display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+ position:relative;gap:14px;min-height:146px;padding:20px;
+ border:3px solid var(--vocab-border,#c9f1f4);border-radius:23px;
+ background:var(--vocab-card,#fff);box-shadow:0 9px 26px rgba(34,106,116,.09);
+ text-align:left;color:var(--ink,#173f46)
+}
+.writing-genius #wgHome .wg-mode:nth-child(2){border-color:var(--vocab-border,#c9f1f4)}
+.writing-genius #wgHome .wg-mode-icon,
+.writing-genius #wgHome .wg-mode:nth-child(2) .wg-mode-icon,
+.writing-genius #wgHome .wg-mode:nth-child(3) .wg-mode-icon{
+ display:grid;place-items:center;width:52px;height:52px;flex:0 0 52px;
+ background:transparent!important;border:0;border-radius:0;box-shadow:none
+}
+.writing-genius #wgHome .wg-mode:nth-child(1) .wg-mode-icon{color:var(--cyan-strong,#25b8c4)}
+.writing-genius #wgHome .wg-mode:nth-child(2) .wg-mode-icon{color:var(--pink,#e85198)}
+.writing-genius #wgHome .wg-mode:nth-child(3) .wg-mode-icon{color:#ba821b}
+.writing-genius #wgHome .wg-mode-icon svg{width:43px;height:43px;fill:none;stroke:currentColor;stroke-width:3.5}
+.writing-genius #wgHome .wg-mode-copy strong{font-size:clamp(1.05rem,2.3vw,1.36rem);font-weight:900}
+.writing-genius #wgHome .wg-mode-copy small{display:none}
+.writing-genius #wgHome .wg-mode .vocab-front-arrow{
+ position:absolute;top:50%;right:18px;transform:translateY(-50%);
+ font-size:1.8rem;color:var(--cyan-strong,#25b8c4)
+}
+@media(max-width:700px){
+ .writing-genius #wgHome .wg-mode-grid{grid-template-columns:1fr;gap:12px}
+ .writing-genius #wgHome .wg-mode.vocab-front-book-card{min-height:93px;flex-direction:row;justify-content:flex-start;align-items:center;gap:16px;padding:15px 19px;border-radius:22px}
+ .writing-genius #wgHome .wg-mode-icon{width:52px;height:52px;flex-basis:52px}
+ .writing-genius #wgHome .wg-mode-copy{padding-right:22px}
+}
