@@ -24,7 +24,9 @@ export async function loadPracticeContent({
   studentId=null,
   planId=null,
   lesson=null,
-  count=20
+  count=20,
+  fixedQuestionIds=null,
+  homework=false
 }){
   if(kind==='vocab-learning'){
     return {mode:'workflow',kind,unitId};
@@ -32,7 +34,7 @@ export async function loadPracticeContent({
 
   const route={view:'practice',planId,lesson,practice};
   const saved=loadActivitySnapshot(route);
-  if(saved?.queue?.length){
+  if(!homework&&saved?.queue?.length){
     const filteredSaved=saved.queue.filter(q=>questionAllowedForStudent(q,studentId));
     if(filteredSaved.length===saved.queue.length)return {mode:'questions',pool:saved.queue,rawCount:saved.queue.length,resumed:true};
     clearActivitySnapshotFor(route);
@@ -47,8 +49,14 @@ export async function loadPracticeContent({
   pool=pool.filter(q=>questionAllowedForStudent(q,studentId));
   if(!pool.length)return {mode:'questions',pool:[],rawCount:0};
   const rawCount=pool.length;
+  if(homework&&Array.isArray(fixedQuestionIds)&&fixedQuestionIds.length){
+    const byId=new Map(pool.map(q=>[String(q?.tracking?.questionId||q.id),q]));
+    const selected=fixedQuestionIds.map(id=>byId.get(String(id)));
+    if(selected.some(q=>!q))throw new Error('저장된 숙제 문제가 콘텐츠에서 사라졌습니다.');
+    return {mode:'questions',pool:selected,rawCount};
+  }
   const queue=await buildQuestionQueue(pool,{studentId,planId,lesson,practiceType:practice,count});
   const selected=Array.isArray(queue)?queue:[];
-  if(selected.length)saveActivityQueue(route,selected);
+  if(selected.length&&!homework)saveActivityQueue(route,selected);
   return {mode:'questions',pool:selected,rawCount};
 }
