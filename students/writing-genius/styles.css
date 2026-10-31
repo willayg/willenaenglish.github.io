@@ -607,3 +607,27 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
  .writing-genius #wgEditor{border-radius:26px;padding:17px 13px 23px;border-width:3px}
  .writing-genius #wgEditor .wg-diary-steps{padding:6px}
 }
+
+/* New diary flow owns the entire editor surface. Legacy editor controls remain for topic writing only. */
+.writing-genius #wgEditor:has(#wgDiaryFlow:not([hidden])) > :not(#wgDiaryFlow){display:none!important}
+.writing-genius #wgDiaryFlow[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow{display:block;min-width:0}
+.writing-genius #wgDiaryFlow .wg-diary-flow-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;color:#e75c9d}
+.writing-genius #wgDiaryFlow .wg-diary-flow-stage{border:2px solid #c5eef1;border-radius:22px;background:#fff;padding:clamp(16px,3vw,30px);min-height:210px}
+.writing-genius #wgDiaryFlow .df-heading{font-size:clamp(1.2rem,3vw,1.6rem);color:#e75c9d;margin:0 0 17px}
+.writing-genius #wgDiaryFlow .df-muted{color:#55787e;font-size:.9rem;line-height:1.6}
+.writing-genius #wgDiaryFlow .df-praise{color:#e75c9d;font-weight:750}
+.writing-genius #wgDiaryFlow .df-input,.writing-genius #wgDiaryFlow .df-textarea{width:100%;box-sizing:border-box;border:2px solid #c5eef1;border-radius:15px;padding:14px;font:inherit;color:#244f56;background:#fff}
+.writing-genius #wgDiaryFlow .df-textarea{min-height:290px;line-height:1.8;resize:vertical}
+.writing-genius #wgDiaryFlow .df-count{display:block;text-align:right;color:#e75c9d;margin-bottom:9px;font-weight:850}
+.writing-genius #wgDiaryFlow .df-example{padding:14px;margin:10px 0;border:2px solid #c5eef1;border-radius:15px}
+.writing-genius #wgDiaryFlow .df-example p{line-height:1.8;margin:8px 0 0}
+.writing-genius #wgDiaryFlow .df-original{color:#667d82}
+.writing-genius #wgDiaryFlow .df-hint{color:#405c62}
+.writing-genius #wgDiaryFlow .df-target{display:block;font-size:1.1rem;font-weight:850;color:#e75c9d;margin:14px 0}
+.writing-genius #wgDiaryFlow .df-question-host .answer{border:2px solid #c5eef1}
+.writing-genius #wgDiaryFlow .df-question-host .speaking-mic{width:88px;height:88px}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:16px}
+.writing-genius #wgDiaryFlow .wg-diary-flow-message{font-size:.95rem;color:#52747b;margin-top:9px}
+.writing-genius #wgDiaryFlow .wg-diary-flow-message.is-error{color:#b13c68}
+@media(max-width:560px){.writing-genius #wgDiaryFlow .wg-diary-flow-stage{padding:14px}.writing-genius #wgDiaryFlow .wg-diary-flow-actions .wg-button{min-height:46px}}
