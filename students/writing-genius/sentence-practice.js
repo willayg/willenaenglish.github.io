@@ -198,7 +198,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  function renderGoldenCount(){
   const book=field('spBook');
   const count=state.units.filter(u=>state.rewards.get(book+'|'+u.id)?.golden).length;
-  txt('spGoldCount',count);
+  if(!window.WillenaAchievements)txt('spGoldCount',count);
  }
  async function fetchUnitRewards(){
   try{
@@ -228,6 +228,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
     '연습 점수는 저장됐어요. 전체 별 동기화는 다음 접속에 다시 시도해요.');
   }finally{
    await fetchUnitRewards();
+   void window.WillenaAchievements?.refresh?.();
    if(state.session?.id===id){
     const award=state.rewards.get(session.book_id+'|'+session.unit_id);
     $('spGoldAward').hidden=!award?.golden;
