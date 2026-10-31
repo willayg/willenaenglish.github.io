@@ -137,9 +137,16 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
     <svg viewBox="0 0 180 180" fill="none" role="presentation">
       <circle cx="90" cy="90" r="73" class="df-ai-ring"/>
       <circle cx="90" cy="90" r="73" class="df-ai-ring-active"/>
-      <path d="M52 49h60l19 19v68H52V49Z" class="df-ai-paper"/>
-      <path d="M111 49v20h20M67 85h48M67 101h41M67 117h29" class="df-ai-lines"/>
-      <path d="m112 119 11 11 22-28" class="df-ai-tick"/>
+      <g class="df-ai-robot">
+        <path d="M90 33v13" stroke="#249aa5" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="90" cy="29" r="6" fill="#e75c9d"/>
+        <rect x="49" y="47" width="82" height="83" rx="23" fill="#fff" stroke="#249aa5" stroke-width="5"/>
+        <rect x="61" y="65" width="58" height="42" rx="13" fill="#e8fbfc" stroke="#8adce2" stroke-width="3"/>
+        <g class="df-ai-robot-eyes"><rect x="70" y="79" width="10" height="14" rx="5" fill="#e75c9d"/><rect x="100" y="79" width="10" height="14" rx="5" fill="#e75c9d"/></g>
+        <path d="M84 99q6 6 12 0" stroke="#249aa5" stroke-width="3" stroke-linecap="round"/>
+        <path d="M49 79H39v24h10M131 79h10v24h-10" stroke="#249aa5" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M70 130v10m40-10v10" stroke="#249aa5" stroke-width="5" stroke-linecap="round"/>
+      </g>
     </svg>
    </div>
    <h2>AI Willi</h2>
