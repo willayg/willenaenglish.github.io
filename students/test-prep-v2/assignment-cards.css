@@ -38,3 +38,17 @@ button.homework-basket-head{appearance:none;width:100%;border:0;background:trans
 .homework-basket-list[hidden]{display:none!important}
 .homework-gold-result{border:2px solid #d9b142!important;background:#fff8d7!important}
 .homework-gold-result .score{color:#a47a06!important}
+
+/* v2.25.183: lesson-style large side-by-side homework statistics */
+.homework-basket-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,42%);align-items:center;gap:14px;min-height:118px}
+.homework-basket-card-main{display:grid;gap:6px}
+.homework-basket-card-main strong{font-size:clamp(15px,2vw,19px);line-height:1.35}
+.homework-basket-scores{display:grid;grid-template-columns:1fr 1fr;align-items:center;width:100%;min-width:0}
+.homework-basket-score{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;text-align:center;gap:3px;padding:2px 5px}
+.homework-basket-score+.homework-basket-score{border-left:1px solid #c9e0e3}
+.homework-basket-score b{font-size:clamp(24px,4vw,38px);font-weight:900;letter-spacing:-.04em;line-height:1.1;color:#078d92;white-space:nowrap}
+.homework-basket-score.accuracy b{color:#e95f99}
+.homework-basket-score small{font-size:clamp(10px,1.2vw,12px);font-weight:900;color:#62868d;white-space:nowrap}
+.homework-basket-card.gold .homework-basket-score b{color:#b58a13}
+.homework-basket-card.gold .homework-basket-score.accuracy b{color:#d08643}
+@media(max-width:600px){.homework-basket-card{grid-template-columns:minmax(0,1fr) minmax(142px,45%);gap:8px;min-height:112px}.homework-basket-card-main strong{font-size:14px}.homework-basket-card-main small{font-size:10px}.homework-basket-score b{font-size:clamp(23px,6vw,30px)}.homework-basket-score small{font-size:10px}.homework-basket-score{padding:2px 3px}}
