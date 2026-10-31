@@ -448,32 +448,8 @@ async function reviewDiary(){
  }catch(error){diaryStatus('AI Willi 오류: '+error.message,true);console.error('[Writing Genius] diary review failed',error)}
  finally{diaryBusy=false;$('wgSubmit').disabled=false}
 }
-function beginDiarySpeech(){
- const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!Speech){$('wgDiarySpeechStatus').textContent='이 브라우저는 음성 인식을 지원하지 않아요. Chrome 브라우저를 이용해 주세요.';return}
- if(state.active?.kind!=='diary'||diaryReviewBody!==$('wgBody').value)return;
- if(diaryRecognition)return;
- const rec=new Speech();diaryRecognition=rec;
- rec.lang='en-US';rec.continuous=true;rec.interimResults=true;
- $('wgDiarySpeakStart').disabled=true;$('wgDiarySpeakStop').disabled=false;
- $('wgDiarySpeechStatus').textContent='듣고 있어요. 일기를 끝까지 읽어 주세요.';
- rec.onresult=e=>{
-  const finals=[];const partials=[];
-  for(let i=e.resultIndex;i<e.results.length;i++){
-   const text=e.results[i][0]?.transcript?.trim()||'';
-   if(e.results[i].isFinal)finals.push(text);else partials.push(text);
-  }
-  if(finals.length){diaryTranscript=(diaryTranscript+' '+finals.join(' ')).trim();}
-  diaryInterim=partials.join(' ');
-  $('wgDiaryTranscript').textContent=(diaryTranscript+' '+diaryInterim).trim();
- };
- rec.onerror=e=>{$('wgDiarySpeechStatus').textContent='마이크 오류: '+e.error+' · 다시 시도할 수 있어요.'};
- rec.onend=()=>{diaryRecognition=null;$('wgDiarySpeakStart').disabled=false;$('wgDiarySpeakStop').disabled=true;diaryInterim='';$('wgDiaryTranscript').textContent=diaryTranscript;};
- try{rec.start()}catch(e){rec.onend();$('wgDiarySpeechStatus').textContent='마이크를 시작할 수 없어요.'}
-}
 async function checkDiarySpeech(){
  if(diaryBusy||state.active?.kind!=='diary')return;
- diaryRecognition?.stop();
  const entry=state.active;
  if(diaryReviewBody!==$('wgBody').value){notice('일기가 수정됐어요. 다시 AI Willi의 확인을 받아 주세요.',true);return}
  const fullTranscript=diaryFullRenderer?.getResponse?.()||'';
@@ -505,8 +481,6 @@ for(const example of exampleDiaries){
 }
 $('wgDiaryExamplesOpen').addEventListener('click',()=>$('wgDiaryExamples').showModal());
 $('wgDiaryExamplesClose').addEventListener('click',()=>$('wgDiaryExamples').close());
-$('wgDiarySpeakStart').addEventListener('click',beginDiarySpeech);
-$('wgDiarySpeakStop').addEventListener('click',()=>diaryRecognition?.stop());
 $('wgDiarySpeakCheck').addEventListener('click',()=>void checkDiarySpeech());
 async function writingGrade(sessionId,questionIndex,answer){
   const call=async token=>fetch('/api/writing-genius-grade',{method:'POST',
