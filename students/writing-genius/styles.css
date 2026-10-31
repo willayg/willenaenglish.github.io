@@ -661,3 +661,12 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-listen{display:block;margin:4px auto 8px;border:2px solid #c5eef1;background:#fff;color:#e75c9d}
 .writing-genius #wgDiaryFlow .df-target{text-align:center;font-size:clamp(1.25rem,4.3vw,1.75rem);line-height:1.5;margin:8px 0 16px}
 .writing-genius #wgDiaryFlow .df-question-host .prompt:empty,.writing-genius #wgDiaryFlow .df-question-host .context:empty{display:none}
+
+.writing-genius #wgDiaryFlow .df-listen{display:flex;align-items:center;justify-content:center;gap:9px;min-width:118px;min-height:50px}
+.writing-genius #wgDiaryFlow .df-listen .df-headphones{width:26px;height:26px}
+.writing-genius #wgDiaryFlow .df-listen.is-loading .df-headphones{animation:wg-headphones-pulse .7s ease-in-out infinite alternate}
+.writing-genius #wgDiaryFlow .df-listen.is-loading .df-listen-label::after{content:'…'}
+@keyframes wg-headphones-pulse{from{opacity:.4;transform:scale(.9)}to{opacity:1;transform:scale(1.09)}}
+.writing-genius #wgDiaryFlow .df-record-fallback{display:block;margin:12px auto;min-width:100px;min-height:100px;border:3px solid #bdebef;border-radius:999px;background:#fff url('/shared/svgs/mic.svg') center 24px/37px 37px no-repeat;color:#e75c9d;font-weight:850;padding:64px 9px 12px;cursor:pointer}
+.writing-genius #wgDiaryFlow .df-record-fallback.is-recording{background-color:#ffeff6;border-color:#e75c9d;animation:wg-headphones-pulse .7s ease-in-out infinite alternate}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-listen.is-loading .df-headphones,.writing-genius #wgDiaryFlow .df-record-fallback.is-recording{animation:none}}
