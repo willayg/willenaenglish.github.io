@@ -111,7 +111,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
   const p=practice[index];if(!p){index=0;lineSpeech();return}
   screen('question',(index+1)+' / '+practice.length);
   stage.append(el('p','df-target',p.target));
-  const listen=el('button','wg-button df-listen');listen.append(el('img','df-headphones'));listen.querySelector('img').src='/shared/svgs/headphones.svg';listen.querySelector('img').alt='';listen.append(el('span','df-listen-label','듣기'));listen.type='button';listen.addEventListener('click',()=>void playTarget(p.target,listen));stage.append(listen);
+  const listen=el('button','wg-button df-listen');listen.append(el('img','df-headphones'));listen.querySelector('img').src='/shared/svgs/headphones.svg';listen.querySelector('img').alt='';listen.setAttribute('aria-label','듣기');listen.title='듣기';listen.type='button';listen.addEventListener('click',()=>void playTarget(p.target,listen));stage.append(listen);
   const modes=el('div','df-mode-buttons');
   const toggle=el('button','df-mode-toggle');
   toggle.type='button';
