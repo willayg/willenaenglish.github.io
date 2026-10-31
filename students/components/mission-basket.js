@@ -191,7 +191,7 @@ function render(){
     calendar[x.id]=parts.year+'-'+parts.month+'-'+parts.day;
     localStorage.setItem(key+':completion-days',JSON.stringify(calendar));
    }
-   void window.WillenaAchievements?.refresh?.();
+   void (window.WillenaAchievements?.invalidateGold?.()||window.WillenaAchievements?.refresh?.());
   }catch(e){console.warn('[streak] completion day save failed',e)}
   render();
   const medalTab=state.host?.querySelector('[data-tab="archive"]');
@@ -270,7 +270,7 @@ async function recordCompletedActivity(id,source='genius'){
    body:JSON.stringify({student_id:who,source:app,activity_key:key})
   });
   try{await refreshStreakSnapshot()}catch(snapshotError){console.warn('[streak] snapshot update unavailable',snapshotError)}
-  void window.WillenaAchievements?.refresh?.();
+  void (window.WillenaAchievements?.invalidateGold?.()||window.WillenaAchievements?.refresh?.());
  }catch(e){console.warn('[streak] completed activity save failed',e)}
 }
 async function getGoldSnapshot(){
