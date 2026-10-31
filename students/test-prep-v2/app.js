@@ -2,7 +2,7 @@ import {assignmentOverview} from './assignment-overview.js?v=2.25.181';
 import {assignmentMetrics,loadAssignmentResults} from './assignment-results.js?v=2.25.181';
 import {QuestionRenderer} from './question-renderer-accessible.js?v=20261025-shared-unified-v1';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.4.1';
-import {createQuestionSession} from './question-session.js?v=2.0.10';
+import {createQuestionSession} from './question-session.js?v=2.25.181';
 import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.js?v=2.25.181';
 import {createPerfDebug} from './perf-debug.js?v=1.0.0';
 import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=20261026-multi-answer-fix';
@@ -127,7 +127,7 @@ await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))r
 function current(){return state.queue[state.index]||null}
 function headerFor(q){const code=q.source?.code||'',source=code?`<span class="badge ${code.toLowerCase()}" title="${code==='Z'?'Zocbo':code==='W'?'Willena authored':'Book reference'}">${code}</span>`:'';return `<div class="practice-head"><div><button class="back" id="practiceBack" data-session-back>← ${esc(state.lesson)}</button><div class="practice-meta">${source}<span>${esc(state.plan.book_label||'')}</span><span>·</span><span>${esc(PRACTICES[state.practice]?.label||state.practice)}</span></div></div><strong>${state.index+1} / ${state.queue.length}</strong></div><div class="progress"><i style="width:${Math.round(state.index/Math.max(1,state.queue.length)*100)}%"></i></div>`}
 let practiceQuestionSession=null;
-function getPracticeQuestionSession(){if(practiceQuestionSession)return practiceQuestionSession;practiceQuestionSession=createQuestionSession({root,bottom,Renderer:QuestionRenderer,gradeQuestion,recordAttempt,isActive:()=>practiceRouteMatches(state.practice),getEntry:current,getQuestion:q=>q,renderHeader:(_,q)=>headerFor(q),getPracticeType:()=>state.practice,onCorrect:()=>{state.score++},onWrong:(_,q)=>{state.wrongIds.push(trackingId(q))},onFinished:finishPractice,onBack:()=>refreshAfterPracticeExit(),checkedState:fieldState('checked'),indexState:fieldState('index'),startedAtState:fieldState('startedAt'),rendererState:fieldState('renderer'),queueLength:()=>state.queue.length,buttonIds:{skip:'skipQuestion',check:'checkAnswer'},logLabel:'practice'});return practiceQuestionSession}
+function getPracticeQuestionSession(){if(practiceQuestionSession)return practiceQuestionSession;practiceQuestionSession=createQuestionSession({root,bottom,Renderer:QuestionRenderer,gradeQuestion,recordAttempt,isActive:()=>practiceRouteMatches(state.practice),getEntry:current,getQuestion:q=>q,renderHeader:(_,q)=>headerFor(q),getPracticeType:()=>state.practice,onCorrect:()=>{state.score++},onWrong:(_,q)=>{state.wrongIds.push(trackingId(q))},onFinished:finishPractice,disableSavedProgress:()=>!!state.homeworkTaskId,onBack:()=>refreshAfterPracticeExit(),checkedState:fieldState('checked'),indexState:fieldState('index'),startedAtState:fieldState('startedAt'),rendererState:fieldState('renderer'),queueLength:()=>state.queue.length,buttonIds:{skip:'skipQuestion',check:'checkAnswer'},logLabel:'practice'});return practiceQuestionSession}
 function renderQuestion(){return getPracticeQuestionSession().render()}
 async function checkAnswer(){return getPracticeQuestionSession().check()}
 async function skipQuestion(){return getPracticeQuestionSession().skip()}
