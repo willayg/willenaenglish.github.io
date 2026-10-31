@@ -3,7 +3,7 @@
 'use strict';
 const SUPA='https://fiieuiktlsivwfgyivai.supabase.co';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const state={items:[],tab:'active',collapsed:true,archives:new Set(),errors:[]};
+const state={items:[],tab:'active',collapsed:true,archives:new Set(),errors:[],appFilter:null};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const api=(url,options={})=>window.WillenaAPI?.fetch?window.WillenaAPI.fetch(url,{cache:'no-store',...options}):fetch(url,{credentials:'include',cache:'no-store',...options});
 async function token(refresh=false){
@@ -155,8 +155,9 @@ function progressMeter(entry){
 }
 function render(){
  const host=state.host;if(!host)return;
- const open=state.items.filter(x=>!state.archives.has(x.id)&&!x.archived);
- const archive=state.items.filter(x=>state.archives.has(x.id)||x.archived);
+ const visible=state.appFilter?state.items.filter(x=>x.app===state.appFilter):state.items;
+ const open=visible.filter(x=>!state.archives.has(x.id)&&!x.archived);
+ const archive=visible.filter(x=>state.archives.has(x.id)||x.archived);
  const displayed=state.tab==='archive'?archive:open;
  const pending=open.filter(x=>!x.done).length;
  host.innerHTML='<div class="dm-head"><button class="dm-toggle" aria-expanded="'+(!state.collapsed)+'" type="button"><svg viewBox="0 0 48 48" width="35" height="35" aria-hidden="true"><path d="M8 19h32v20a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V19Z" fill="#DBF6F3" stroke="#16848C" stroke-width="2.5"/><path d="M6 14h36v7H6v-7Z" fill="#8BDFD7" stroke="#16848C" stroke-width="2.5"/><path d="m24 25 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7L24 25Z" fill="#EAB84B" stroke="#BA8D2D" stroke-width="1.2"/></svg><strong>미션함</strong><span class="dm-count">'+pending+'개 남음</span><span class="dm-arrow">'+(state.collapsed?'▸':'▾')+'</span></button></div>'+
@@ -187,14 +188,14 @@ function render(){
  host.querySelectorAll('[data-medal-id]').forEach(button=>button.addEventListener('click',()=>celebrate(button,false)));
 
 }
-async function mount(host){
+async function mount(host,options={}){
  if(!host||host.dataset.missionMounted==='true')return;
  if(!document.getElementById('willenaMissionBasketStyles')){const link=document.createElement('link');link.id='willenaMissionBasketStyles';link.rel='stylesheet';link.href='/students/dashboard-v2/mission-basket.css?v=20261031-rings11';document.head.appendChild(link)}
- state.host=host;host.dataset.missionMounted='true';host.classList.add('dashboard-mission-basket');host.setAttribute('aria-label','미션함');
+ state.host=host;state.appFilter=options.app||null;host.dataset.missionMounted='true';host.classList.add('dashboard-mission-basket');host.setAttribute('aria-label','미션함');
  state.collapsed=true;
  restoreLocalMedals();
  host.innerHTML='<div class="dm-loading">미션을 확인하고 있어요…</div>';
- const results=await Promise.allSettled([standardHomework(),sentences(),grammar(),naesin()]);
+ const results=await Promise.allSettled([state.appFilter&&state.appFilter!=='Word Genius'?Promise.resolve([]):standardHomework(),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()]);
  for(const result of results){if(result.status==='fulfilled')state.items.push(...result.value);else state.errors.push(String(result.reason))}
  const unique=new Map(state.items.map(x=>[x.id,x]));
  state.items=[...unique.values()].sort((a,b)=>(Date.parse(b.created)||0)-(Date.parse(a.created)||0));
@@ -207,7 +208,7 @@ async function refresh(){
  if(refreshing||!state.host)return;
  refreshing=true;
  try{
-  const results=await Promise.allSettled([standardHomework(),sentences(),grammar(),naesin()]);
+  const results=await Promise.allSettled([state.appFilter&&state.appFilter!=='Word Genius'?Promise.resolve([]):standardHomework(),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()]);
   const prefixes=['standard:','sentence:','grammar:','naesin:'];
   results.forEach((result,index)=>{
    if(result.status!=='fulfilled')return;
