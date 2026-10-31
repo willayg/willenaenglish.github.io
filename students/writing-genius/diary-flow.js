@@ -67,7 +67,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
    const card=el('article','df-review-item');
    card.append(el('small','df-review-label','STUDENT · 내가 쓴 문장'),el('p','df-review-original',change.original||''));
    card.append(el('small','df-review-label','AI WILLI · 더 좋은 문장'),el('p','df-review-better',change.better||''));
-   if(change.translation_ko)card.append(el('p','df-review-korean',change.translation_ko));
+   card.append(el('p','df-review-korean',change.translation_ko||change.why_ko||''));
    if(change.why_ko)card.append(el('p','df-review-explanation',change.why_ko));
    fixes.append(card);
   }
