@@ -577,3 +577,6 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgEditor #wgDiaryCorrection .answer{min-height:100px;border:2px solid #c5eef1}
 .writing-genius #wgEditor .wg-diary-review{border-color:#c5eef1}
 .writing-genius #wgEditor .wg-diary-praise,.writing-genius #wgEditor .wg-diary-success{color:var(--diary-pink)}
+
+/* Version appears below the entire Writing Genius page, not above the cards. */
+.writing-genius .wg-version-row{display:flex;justify-content:center;align-items:center;gap:7px;margin:24px auto 0;text-align:center}
