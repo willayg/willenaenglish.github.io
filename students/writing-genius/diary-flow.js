@@ -81,7 +81,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
   }
   if(feedback?.tip_ko)stage.append(el('p','df-review-tip',feedback.tip_ko));
   stage.append(el('strong','df-summary-count',practice.length+' sentences to practise'));
-  button('이전',write);button('연습 시작',()=>{index=0;mode='write';if(practice.length)question();else{index=0;lineSpeech()}},true);
+  button('이전',write);button('연습 시작',()=>{index=0;mode='speaking';if(practice.length)question();else{index=0;lineSpeech()}},true);
  }
  function rendererHost(q){
   const host=el('div','df-question-host sp-shared-question question-card');stage.append(host);renderer=new QuestionRenderer(host);renderer.render(q);
@@ -113,16 +113,22 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
   stage.append(el('p','df-target',p.target));
   const listen=el('button','wg-button df-listen');listen.append(el('img','df-headphones'));listen.querySelector('img').src='/shared/svgs/headphones.svg';listen.querySelector('img').alt='';listen.append(el('span','df-listen-label','듣기'));listen.type='button';listen.addEventListener('click',()=>void playTarget(p.target,listen));stage.append(listen);
   const modes=el('div','df-mode-buttons');
-  const writeBtn=el('button','df-mode-button'+(mode==='write'?' is-active':''),'쓰기');
-  const speakBtn=el('button','df-mode-button'+(mode==='speaking'?' is-active':''),'말하기');
-  for(const b of [writeBtn,speakBtn])b.type='button';
-  writeBtn.addEventListener('click',()=>{mode='write';question()});
-  speakBtn.addEventListener('click',()=>{mode='speaking';question()});
-  modes.append(writeBtn,speakBtn);stage.append(modes);
+  const toggle=el('button','df-mode-toggle');
+  toggle.type='button';
+  toggle.setAttribute('role','switch');
+  toggle.setAttribute('aria-label','말하기 또는 쓰기 선택');
+  toggle.setAttribute('aria-checked',String(mode==='speaking'));
+  const speak=el('span','df-toggle-speak','말하기');
+  const write=el('span','df-toggle-write','쓰기');
+  toggle.append(speak,write);
+  toggle.classList.toggle('is-speaking',mode==='speaking');
+  toggle.classList.toggle('is-writing',mode==='write');
+  toggle.addEventListener('click',()=>{mode=mode==='speaking'?'write':'speaking';question()});
+  modes.append(toggle);stage.append(modes);
   rendererHost({form:mode==='speaking'?'speaking':'write',prompt:'',context:{},input:{language:'en'},answer:[p.target]});
   button('확인',()=>{
    if(norm(renderer.getResponse())!==norm(p.target)){status('다시 시도해 주세요.',true);return}
-   index++;mode='write';question();
+   index++;mode='speaking';question();
   },true);
  }
  async function aiSpeechTranscribe(blob){
