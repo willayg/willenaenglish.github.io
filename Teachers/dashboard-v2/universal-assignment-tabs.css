@@ -130,3 +130,17 @@
 #view-assignments .ua-scope-tabs{display:flex;gap:6px;margin:0 0 14px;border-bottom:1px solid #dbe8ec;padding-bottom:9px}
 #view-assignments .ua-scope-tabs button{border:1px solid #cbdfe4;border-radius:9px;background:white;padding:7px 18px;font:700 13px inherit;color:#3a6370;cursor:pointer}
 #view-assignments .ua-scope-tabs button.active{background:#e4f7fa;border-color:#52b5c3;color:#146677}
+
+/* Cross-app homework cards, collapsible detail and action controls */
+#view-assignments .ua-homework-cards{display:grid;gap:9px}
+#view-assignments .ua-homework-card{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border:1px solid #dce8ea;border-radius:12px;background:#fff;padding:10px}
+#view-assignments .ua-homework-detail{flex:1 1 280px;min-width:0;text-align:left;border:0;background:transparent;color:#344b56;cursor:pointer;display:grid;gap:5px;padding:5px}
+#view-assignments .ua-homework-detail span{font-size:13px;line-height:1.4}
+#view-assignments .ua-homework-detail small{font-size:11px;color:#6d858d}
+#view-assignments .ua-homework-detail strong{font-size:12px;color:#28838c}
+#view-assignments .ua-homework-expanded{order:3;flex-basis:100%;padding:10px;background:#f2f8fa;border-radius:8px;color:#466a72;font-size:12px}
+#view-assignments .ua-homework-expanded[hidden]{display:none}
+#view-assignments .ua-homework-actions{display:flex;gap:6px;margin-left:auto}
+#view-assignments .ua-homework-actions button{width:36px;height:36px;background:white;border:1px solid #bfd8de;border-radius:9px;color:#2b8085;font-size:19px;font-weight:700;cursor:pointer}
+#view-assignments .ua-homework-actions button:nth-child(2){color:#b6534f;border-color:#e5c9c9}
+#view-assignments .ua-homework-actions button:disabled{opacity:.35;cursor:not-allowed}
