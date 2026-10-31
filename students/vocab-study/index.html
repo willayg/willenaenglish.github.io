@@ -22,6 +22,9 @@
 <script src="./auth-guard.js?v=20260925-v0004"></script>
 <script type="module" src="/students/components/student-header.js?v=20261005-mission-shared1"></script>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
+
+<link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261031-app-uniform12">
+<style>.app-mission-basket-slot .dashboard-mission-basket{width:100%;max-width:none;margin:12px 0 20px}.app-mission-basket-slot:empty{display:none}</style>
 </head>
 <body>
 <div class="study-app">
@@ -42,6 +45,7 @@
       <button type="button" onclick="location.reload()">다시 불러오기</button>
     </section>
     <section id="vocabFrontMenu" class="vocab-front-menu">
+      <section id="appMissionBasket" class="app-mission-basket-slot"></section>
       <section id="vocabAdminPicker" class="vocab-admin" hidden>
         <span class="eyebrow">ADMIN PREVIEW</span>
         <select id="vocabAdminBookSelect" aria-label="Choose book">
@@ -49,7 +53,7 @@
         </select>
       </section>
 
-      <button id="vocabFrontWordTestCard" class="vocab-front-wordtest" type="button" hidden>
+      <button style="display:none!important" id="vocabFrontWordTestCard" class="vocab-front-wordtest" type="button" hidden>
         <span class="vocab-front-card-main">          <span class="vocab-front-card-copy">
               <strong>숙제 / Homework</strong>
             <small id="vocabFrontWordTestMeta"></small>
@@ -249,5 +253,8 @@ import('./vocab-study.js?v=20261031-inline-coach-keyboard1').catch(error=>{
   if(loader){loader.hidden=true;loader.setAttribute('aria-hidden','true');}
 });
 </script>
+
+<script src="/students/components/mission-basket.js?v=20261031-app-uniform12"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('appMissionBasket');if(el)window.WillenaMissionBasket?.mount(el,{app:'Word Genius'})});</script>
 </body>
 </html>
