@@ -338,7 +338,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
  async function complete(){
   screen('finish','Complete');stage.append(el('h2','df-heading','일기 완료'));
   if(busy)return;busy=true;status('저장 중…');
-  try{await speech(current,spoken.join(' '));await finish(current);status('완료했습니다.');button('글쓰기 메뉴',close,true)}
+  try{await speech(current,spoken.join(' '),finalLines);await finish(current);status('완료했습니다.');button('글쓰기 메뉴',close,true)}
   catch(e){status(e.message,true);button('다시 저장',complete,true)}
   finally{busy=false}
  }
