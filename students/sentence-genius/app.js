@@ -78,7 +78,7 @@ const session=createSession({
   onBack:()=>navigation.back(),
   onHome:()=>navigation.home(),
   onProgress:()=>screens.progress(),
-  onFinish:()=>{screens.progress();void refreshStudentHomework()},
+  onFinish:()=>{screens.progress();void refreshStudentHomework();void refreshHomeAchievements()},
   onMessage:message=>screens.notice(message)
 });
 function currentContext(){
