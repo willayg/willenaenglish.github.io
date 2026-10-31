@@ -21,7 +21,7 @@ async function authed(url,options={}){
  let r=await call(await token());
  if(r.status===401)r=await call(await token(true));
  if(!r.ok)throw Error('Assignments unavailable ('+r.status+')');
- return r.json();
+ const body=await r.text();return body?JSON.parse(body):null;
 }
 function item(id,app,title,link,created,done=false,detail=''){
  return {id:String(id),app,title:String(title||'과제'),link,created:String(created||''),done:!!done,detail,teacherId:null,teacherName:''};
