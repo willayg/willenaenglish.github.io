@@ -18,7 +18,10 @@ export function assignmentOverview(plans,esc,expanded=true){
       '<span class="homework-basket-card-main"><span class="homework-basket-type">'+safe(t.practice_type||'내신')+(done?' · ★ GOLD':'')+'</span>'+
       '<strong>'+safe(t.title||t.lesson||'내신 과제')+'</strong>'+
       '<small>'+safe(plan.book_label||'')+(due?' · 마감 '+safe(due):'')+'</small>'+
-      '<span class="homework-basket-metrics">최종 완료 '+completion+'% · 전체 정확도 '+(accuracy==null?'—':safe(Math.round(Number(accuracy)))+'%')+'</span></span>'+
-      '<span class="homework-basket-status">'+(done?'★ 완료':'→ 계속하기')+'</span></button>';
+      '</span>'+
+      '<span class="homework-basket-scores">'+
+      '<span class="homework-basket-score"><b>'+completion+'%</b><small>최종 완료</small></span>'+
+      '<span class="homework-basket-score accuracy"><b>'+(accuracy==null?'—':safe(Math.round(Number(accuracy)))+'%')+'</b><small>전체 정확도</small></span>'+
+      '</span></button>';
   }).join('')+'</div></section>';
 }
