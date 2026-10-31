@@ -18,7 +18,7 @@ function scopeFor(plan){
  if(Array.isArray(ls)&&ls.length)return ls.filter(x=>x?.lesson);
  return (plan?.units||[]).map(lesson=>({lesson,sections:plan.practice_types||[]}));
 }
-function activeTasks(plan){return(plan?.tasks||[]).filter(t=>t.active!==false&&!t.completed_at&&Number(t.progress?.remaining)>0)}
+function activeTasks(plan){return(plan?.tasks||[]).filter(t=>t.active!==false&&!t.completed_at&&t.progress?.complete!==true&&(Number(t.progress?.remaining)>0||Number(t.progress?.corrections_remaining)>0||Number(t.progress?.percent)<100))}
 function sameRoute(a,b){return ['tp','planId','lesson','skill','returnTo'].every(k=>String(a?.[k]||'')===String(b?.[k]||''))}
 function setRoute(next,{replace=false,render=true}={}){
  const s={...next};if(!s.tp)s.tp='home';
@@ -51,7 +51,7 @@ function planCompact(plan){
 function taskShelf(allPlans){
  const all=(allPlans||[]).flatMap(p=>activeTasks(p).map(t=>({p,t}))).sort((a,b)=>new Date(a.t.due_at||'2999-01-01')-new Date(b.t.due_at||'2999-01-01'));
  if(!all.length)return'';
- return `<div class="tp-task-shelf">${all.slice(0,6).map(({p,t})=>`<button class="tp-task-chip" data-task-plan="${esc(p.id)}" data-task-lesson="${esc(t.lesson)}" data-task-skill="${esc(t.practice_type)}"><span class="arrow">→</span><span class="k">선생님 과제</span><b>${esc(t.title||`${t.lesson} ${t.practice_type||''}`)}</b><small>${Number(t.progress?.remaining)||0}개 남음</small></button>`).join('')}</div>`;
+ return `<div class="tp-task-shelf">${all.slice(0,6).map(({p,t})=>`<button class="tp-task-chip" data-task-plan="${esc(p.id)}" data-task-lesson="${esc(t.lesson)}" data-task-skill="${esc(t.practice_type)}" data-task-id="${esc(t.id)}"><span class="arrow">→</span><span class="k">선생님 과제</span><b>${esc(t.title||`${t.lesson} ${t.practice_type||''}`)}</b><small>완료 ${clamp(t.progress?.percent)}% · 전체 정확도 ${t.progress?.overall_accuracy_percent==null?'—':clamp(t.progress.overall_accuracy_percent)+'%'}</small></button>`).join('')}</div>`;
 }
 async function hydrateHome(allPlans,run){
  await Promise.all((allPlans||[]).map(async plan=>{
@@ -72,7 +72,7 @@ function renderHome(){
  const all=plans();
  h.innerHTML=`${wrongMount()}${all.map(plan=>planCompact(plan)).join('')}${taskShelf(all)}${all.length?all.map(plan=>`<section class="tp-exam-section"><div class="tp-lessons">${scopeFor(plan).map(l=>lessonCard(plan,l)).join('')}</div></section>`).join(''):'<div class="tp-review-empty">지정된 시험 대비가 없습니다.</div>'}`;
  $$('.tp-lesson-card',h).forEach(b=>b.onclick=()=>renderLesson(b.dataset.lessonPlan,b.dataset.lesson));
- $$('[data-task-plan]',h).forEach(b=>b.onclick=()=>openPractice(b.dataset.taskPlan,b.dataset.taskLesson,b.dataset.taskSkill,'home'));
+ $$('[data-task-plan]',h).forEach(b=>b.onclick=()=>openPractice(b.dataset.taskPlan,b.dataset.taskLesson,b.dataset.taskSkill,'home',b.dataset.taskId));
  const run=++homeHydration;hydrateHome(all,run);window.dispatchEvent(new CustomEvent('testprep:home-rendered'));
 }
 function renderLesson(planId,lesson,focusSkill=null){
@@ -83,9 +83,9 @@ function renderLesson(planId,lesson,focusSkill=null){
  return false;
 }
 function showWrongCenter(){showHomeSurface();if(window.WillenaReviewV49?.show){window.WillenaReviewV49.show();return}const h=home();if(h)h.innerHTML='<div class="tp-review-empty">오답 복습을 불러오는 중...</div>'}
-async function openPractice(planId,lesson,skill,returnTo='lesson'){
+async function openPractice(planId,lesson,skill,returnTo='lesson',taskId=null){
  setRoute({tp:'practice',planId:String(planId),lesson:String(lesson),skill:String(skill),returnTo},{render:false});
- try{await window.WillenaAssignedTestPrep?.startSelection?.(planId,lesson,skill)}catch(e){console.error('[TP-LITE] practice start',e);setRoute(returnTo==='lesson'?{tp:'lesson',planId,lesson,skill,safeFix4:true}:{tp:'home'},{replace:true})}
+ try{await window.WillenaAssignedTestPrep?.startSelection?.(planId,lesson,skill,taskId?{homeworkTaskId:taskId}:{})}catch(e){console.error('[TP-LITE] practice start',e);setRoute(returnTo==='lesson'?{tp:'lesson',planId,lesson,skill,safeFix4:true}:{tp:'home'},{replace:true})}
 }
 function returnFromPractice(selection){
  const s=route(),planId=selection?.plan?.id||s.planId,lesson=selection?.lesson||s.lesson,skill=selection?.section||s.skill;
