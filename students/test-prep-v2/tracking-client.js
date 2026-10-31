@@ -54,6 +54,9 @@ async function edge(action,opts={}){
   if(r.status===401)throw new Error('AUTH_REQUIRED');if(!r.ok||data.success===false)throw new Error(data.error||`Request failed (${r.status})`);return data;
 }
 
+export async function homeworkSet(taskId,questionIds=[]){
+ return edge('homework_set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:taskId,question_ids:questionIds})});
+}
 function syncStateFromMe(d){state.user=d.user||null;state.plans=Array.isArray(d.plans)?d.plans:[];return state}
 export async function initTracking(){
   try{
