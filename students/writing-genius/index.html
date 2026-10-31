@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261031-wg-white-shell2">
+<link rel="stylesheet" href="./styles.css?v=20261031-diary-flow1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -84,6 +84,15 @@
         </label>
         <div id="wgPromptHelp" class="wg-prompt-help" aria-live="polite"></div>
       </div>
+      <section id="wgDiaryGuide" class="wg-diary-guide" hidden>
+        <div class="wg-diary-guide-top"><strong>오늘의 영어 일기 · 6–30문장</strong><button id="wgDiaryExamplesOpen" class="wg-button wg-secondary" type="button">예시 일기 보기</button></div>
+        <p>하루에 일기 하나를 쓸 수 있어요. AI Willi의 피드백을 읽은 후 일기 전체를 영어로 말해야 제출할 수 있어요.</p>
+      </section>
+      <dialog id="wgDiaryExamples" class="wg-diary-dialog" aria-label="예시 영어 일기">
+        <div class="wg-diary-dialog-top"><strong>예시 일기 · Example Diaries</strong><button id="wgDiaryExamplesClose" type="button" class="wg-button wg-secondary">닫기</button></div>
+        <div id="wgDiaryExamplesList" class="wg-diary-example-list"></div>
+        <p class="wg-diary-example-hint">예시를 참고하되, 오늘 있었던 일을 자신의 영어로 써 보세요.</p>
+      </dialog>
       <section class="wg-paper" aria-label="Write in English">
         <div class="wg-paper-head"><span>MY WRITING</span><span id="wgCounts">0 words · 0 sentences</span></div>
         <label for="wgBody" class="wg-visually-hidden">Write your English sentences</label>
@@ -100,6 +109,21 @@
             <label><input type="checkbox"> 마침표나 물음표를 썼나요?</label>
             <label><input type="checkbox"> 내 생각을 더 자세히 설명했나요?</label>
           </div>
+        </div>
+      </section>
+      <section id="wgDiaryReview" class="wg-diary-review" hidden aria-live="polite">
+        <h3>AI Willi의 일기 피드백</h3>
+        <div id="wgDiaryFeedback"></div>
+        <div class="wg-diary-speaking">
+          <h3>🎤 일기 전체 말하기</h3>
+          <p>좋은 문장은 그대로 읽어도 좋아요. 쓴 일기를 처음부터 끝까지 소리 내어 읽어 주세요.</p>
+          <div class="wg-diary-speech-buttons">
+            <button id="wgDiarySpeakStart" class="wg-button wg-primary" type="button">🎤 말하기 시작 / 이어서</button>
+            <button id="wgDiarySpeakStop" class="wg-button wg-secondary" type="button" disabled>■ 녹음 중지</button>
+            <button id="wgDiarySpeakCheck" class="wg-button wg-secondary" type="button">말하기 확인</button>
+          </div>
+          <p id="wgDiarySpeechStatus" role="status">마이크를 켜고 전체 일기를 읽어 주세요.</p>
+          <div id="wgDiaryTranscript" class="wg-diary-transcript" aria-label="인식된 영어"></div>
         </div>
       </section>
       <div class="wg-submit-note">임시 저장은 나만 볼 수 있어요. 제출한 글은 선생님이 볼 수 있어요.</div>
