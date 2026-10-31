@@ -86,12 +86,40 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
  function rendererHost(q){
   const host=el('div','df-question-host sp-shared-question question-card');stage.append(host);renderer=new QuestionRenderer(host);renderer.render(q);
  }
+ async function playTarget(text,control){
+  if(control.disabled)return;
+  control.disabled=true;status('음성을 불러오고 있어요.');
+  try{
+   const headers={'Content-Type':'application/json'};
+   const token=window.WillenaAPI?.getLocalAccessToken?.();
+   if(token)headers.Authorization='Bearer '+token;
+   const response=await fetch('/api/vocab-ai-speech',{method:'POST',headers,credentials:'include',cache:'no-store',body:JSON.stringify({action:'listen',text}),signal:AbortSignal.timeout(35000)});
+   if(!response.ok)throw Error('듣기 음성을 불러오지 못했어요.');
+   const result=await response.json();
+   let url=result.audio_url;
+   let objectUrl=null;
+   if(!url&&result.audio){const bytes=Uint8Array.from(atob(result.audio),c=>c.charCodeAt(0));url=objectUrl=URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'}))}
+   if(!url)throw Error('듣기 음성이 없어요.');
+   const audio=new Audio(url);
+   try{await audio.play();await new Promise((resolve,reject)=>{audio.onended=resolve;audio.onerror=()=>reject(Error('재생할 수 없어요.'))})}
+   finally{if(objectUrl)URL.revokeObjectURL(objectUrl)}
+   status('');
+  }catch(e){status(e.message,true)}
+  finally{control.disabled=false}
+ }
  function question(){
   const p=practice[index];if(!p){index=0;lineSpeech();return}
-  screen('question',(index+1)+' / '+practice.length+' · '+p.kind);
-  stage.append(el('h2','df-heading',p.kind==='Correction'?'문장 고치기':'새로운 표현'));
-  rendererHost({form:mode==='speaking'?'speaking':'write',prompt:mode==='speaking'?'말하기':'영어로 쓰기',context:{...(p.original?{original:p.original}:{}),...(p.meaning?{korean:p.meaning}:{}) ,sentence:p.target},input:{language:'en'},answer:[p.target]});
-  button('쓰기',()=>{mode='write';question()});button('말하기',()=>{mode='speaking';question()});
+  screen('question',(index+1)+' / '+practice.length);
+  stage.append(el('p','df-target',p.target));
+  const listen=el('button','wg-button df-listen','듣기');listen.type='button';listen.addEventListener('click',()=>void playTarget(p.target,listen));stage.append(listen);
+  const modes=el('div','df-mode-buttons');
+  const writeBtn=el('button','df-mode-button'+(mode==='write'?' is-active':''),'쓰기');
+  const speakBtn=el('button','df-mode-button'+(mode==='speaking'?' is-active':''),'말하기');
+  for(const b of [writeBtn,speakBtn])b.type='button';
+  writeBtn.addEventListener('click',()=>{mode='write';question()});
+  speakBtn.addEventListener('click',()=>{mode='speaking';question()});
+  modes.append(writeBtn,speakBtn);stage.append(modes);
+  rendererHost({form:mode==='speaking'?'speaking':'write',prompt:'',context:{},input:{language:'en'},answer:[p.target]});
   button('확인',()=>{
    if(norm(renderer.getResponse())!==norm(p.target)){status('다시 시도해 주세요.',true);return}
    index++;mode='write';question();
