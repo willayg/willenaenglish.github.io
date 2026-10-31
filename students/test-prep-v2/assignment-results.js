@@ -21,7 +21,7 @@ export function assignmentMetrics(task){
  const saved=byId.get(String(task?.id)),basic=task?.progress||{};
  const target=Math.max(1,Number(saved?.target)||Number(basic.target)||Number(task?.target_count)||10);
  const done=Math.max(0,Number(saved?.done??basic.done)||0);
- const complete=done>=target;
+ const complete=done>=target&&(saved?Number(saved.unresolved||0)===0:basic.complete===true);
  const verified=!!saved;
  const correct=verified?Number(saved.correct)||0:null;
  const wrong=verified?Number(saved.wrong)||0:null;
@@ -29,6 +29,6 @@ export function assignmentMetrics(task){
  const accuracy=verified&&done>0?Number(saved.accuracy_percent):null;
  const due=task?.due_at?new Date(task.due_at).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'}):'';
  return{done,target,complete,verified,correct,wrong,unresolved,accuracy,due,
-   statusLabel:complete?'완료':'진행 중',
+   statusLabel:complete?'완료':(done>=target?'오답 복습 필요':'진행 중'),
    resultLabel:verified?(done?('정답 '+correct+'/'+done+' · 정확도 '+accuracy+'% · 오답 '+wrong+' (미해결 '+unresolved+')'):'아직 풀이 없음'):(status==='unavailable'?'정확도 불러오기 실패':'정확도 확인 중')};
 }
