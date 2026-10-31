@@ -144,3 +144,11 @@
 #view-assignments .ua-homework-actions button{width:36px;height:36px;background:white;border:1px solid #bfd8de;border-radius:9px;color:#2b8085;font-size:19px;font-weight:700;cursor:pointer}
 #view-assignments .ua-homework-actions button:nth-child(2){color:#b6534f;border-color:#e5c9c9}
 #view-assignments .ua-homework-actions button:disabled{opacity:.35;cursor:not-allowed}
+
+/* Multi-select homework completion */
+#view-assignments .ua-bulk-select{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#476b76;white-space:nowrap}
+#view-assignments .ua-bulk-select input,#view-assignments .ua-homework-checkbox input{width:19px;height:19px;accent-color:#268c99;cursor:pointer}
+#view-assignments .ua-bulk-complete{font-weight:700;background:#e4f8f9;border-color:#5bb9c2}
+#view-assignments .ua-bulk-complete:disabled{opacity:.45;cursor:not-allowed}
+#view-assignments .ua-homework-checkbox{display:inline-flex;align-items:center;padding:8px}
+#view-assignments .ua-toolbar{flex-wrap:wrap}
