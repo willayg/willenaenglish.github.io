@@ -534,3 +534,18 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius .wg-diary-review-status{margin:12px 0;padding:13px 16px;border:2px solid #99dbe0;border-radius:14px;background:#effcfc;color:#196d76;font-weight:800;line-height:1.55}
 .writing-genius .wg-diary-review-status.is-error{border-color:#e69aa9;background:#fff1f4;color:#a02f53}
 .writing-genius .wg-diary-review-status[hidden]{display:none!important}
+
+/* Diary wizard: each step is a separate screen within the existing editor. */
+.writing-genius .wg-diary-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 24px}
+.writing-genius .wg-diary-steps[hidden],.writing-genius .wg-diary-navigation[hidden],
+.writing-genius .wg-diary-correction[hidden],.writing-genius .wg-diary-speaking[hidden],
+.writing-genius #wgPaperScreen[hidden]{display:none!important}
+.writing-genius .wg-diary-steps span{padding:11px 4px;text-align:center;border:2px solid #d2eff1;border-radius:12px;color:#648287;background:#fff;font-weight:800;font-size:.76rem}
+.writing-genius .wg-diary-steps span.is-current{background:#e7fbfc;color:#147b83;border-color:#49c3cc}
+.writing-genius .wg-diary-navigation{display:flex;justify-content:space-between;gap:12px;margin:22px 0}
+.writing-genius .wg-diary-correction{padding:16px;border:2px solid #d2eef0;border-radius:18px;margin:14px 0}
+.writing-genius .wg-diary-correction input{width:100%;box-sizing:border-box;border:2px solid #bde8eb;border-radius:13px;padding:15px;font-size:1rem;margin:10px 0}
+.writing-genius .wg-diary-correction-actions{display:flex;gap:10px;flex-wrap:wrap}
+.writing-genius .wg-diary-correction-actions img,.writing-genius .wg-diary-speech-buttons img{width:22px;height:22px;vertical-align:middle;margin-right:7px}
+.writing-genius .wg-diary-review[hidden],.writing-genius #wgDiaryGuide[hidden],.writing-genius #wgPromptRow[hidden]{display:none!important}
+@media(max-width:560px){.writing-genius .wg-diary-steps span{font-size:.67rem;padding:8px 1px}.writing-genius .wg-diary-navigation .wg-button{flex:1}}
