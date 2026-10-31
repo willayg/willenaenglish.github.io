@@ -111,6 +111,13 @@ async function loadOverview(scopeName='my'){
   }));
   const errors=[],rows=[];
   fetched.forEach((result,index)=>{if(result.status==='fulfilled')rows.push(...result.value);else errors.push(sources[index].app+': '+result.reason.message)});
+  // Resolve per-student assignments to the actual student profile and class.
+  const studentIds=[...new Set(rows.map(r=>id(r.student_id)).filter(Boolean))];
+  let students=new Map();
+  if(studentIds.length)try{
+   const profiles=await get('profiles?select=id,name,username,korean_name,class&id=in.('+studentIds.join(',')+')');
+   students=new Map(profiles.map(p=>[id(p.id),p]));
+  }catch(e){errors.push('Student names: '+e.message)}
   const creators=[...new Set(rows.map(r=>id(r.created_by)).filter(Boolean))];
   let authors=new Map();
   if(creators.length)try{
@@ -143,7 +150,7 @@ async function loadOverview(scopeName='my'){
      const pct=target?Math.min(100,Math.round(done/target*100)):null;
      const detail=result?'Completed '+done+'/'+target+' questions · Accuracy '+(result.accuracy_percent??'—')+'%':'Progress not connected for this app';
      const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
-     return '<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc(row.class||row.class_name||(row.student_id?'Student assignment':'—'))+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
+     return '<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden>'+esc(detail)+'</div>'+
        (overviewStage==='active'?'<div class="ua-homework-actions"><button type="button" data-ua-action="complete" data-ua-index="'+i+'" aria-label="Mark homework complete" title="Complete" '+(row._table==='sentence_genius_homework'?'disabled':'')+'>✓</button><button type="button" data-ua-action="remove" data-ua-index="'+i+'" aria-label="Remove homework" title="Remove" '+(row._table==='sentence_genius_homework'?'disabled':'')+'>✕</button></div>':'')+'</article>';
     }).join('')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
