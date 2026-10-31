@@ -18,39 +18,8 @@ let goldBookRefresh=0;
 let achievementsRefresh=0;
 async function refreshHomeAchievements(){
  if(state.teacher||!state.student?.id)return;
- const token=++achievementsRefresh;
- const root=document.getElementById('frontAchievements');
- try{
-  const response=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/progress_summary?section=vocab_motivation&_='+Date.now()):fetch('/.netlify/functions/progress_summary?section=vocab_motivation&_='+Date.now(),{credentials:'include'}));
-  if(response.ok){
-   const d=await response.json();
-   if(token!==achievementsRefresh)return;
-   document.getElementById('vocabFrontStreakCurrent').textContent=String(Math.max(0,Number(d.current_streak)||0));
-   document.getElementById('vocabFrontStreakBest').textContent=String(Math.max(0,Number(d.best_streak)||0));
-  }
- }catch(e){console.warn('[Sentence Genius] streak status unavailable',e)}
- if(root)root.hidden=false;
- let gold=0,queue=[];
- try{
-  for(const book of state.books){
-   if(token!==achievementsRefresh)return;
-   const units=await loadUnits(book.id);
-   for(const unit of units)queue.push({book,unit});
-  }
-  let cursor=0;
-  async function worker(){
-   while(cursor<queue.length&&token===achievementsRefresh){
-    const {book,unit}=queue[cursor++];
-    try{
-     const [items,rows]=await Promise.all([loadSentences(book.id,unit.id,unit),getSentenceMastery(book.id,unit.id)]);
-     if(token!==achievementsRefresh)return;
-     const mastery=openUnit(state.student.id,unit.id);mastery.hydrateServer(rows);
-     if(items.length&&mastery.gold(items)){gold++;document.getElementById('frontGoldenCount').textContent=String(gold)}
-    }catch(e){console.warn('[Sentence Genius] gold count unit unavailable',unit.id,e)}
-   }
-  }
-  await Promise.all(Array.from({length:Math.min(3,queue.length)},()=>worker()));
- }catch(e){console.warn('[Sentence Genius] gold count unavailable',e)}
+ try{await window.WillenaAchievements?.refresh?.()}
+ catch(e){console.warn('[Sentence Genius] shared achievements unavailable',e)}
 }
 
 async function refreshStudentHomework(){
