@@ -358,23 +358,30 @@ async function restoreDiaryReview(entry){
   if(rows[0].spoken_at){$('wgDiarySpeechStatus').textContent='말하기를 완료했어요. 제출 버튼을 눌러 주세요.';$('wgSubmit').textContent='일기 제출 완료하기';}
  }catch(error){console.warn('[Writing Genius] saved diary feedback unavailable',error)}
 }
+function diaryStatus(message='',error=false){
+ const node=$('wgDiaryReviewStatus');if(!node)return;
+ node.hidden=!message;node.textContent=message;node.classList.toggle('is-error',error);
+}
 async function reviewDiary(){
  if(diaryBusy||!state.active||state.active.kind!=='diary')return;
+ diaryStatus('');
  const lines=fullDiarySentences($('wgBody').value);
  if(lines.length<6||lines.length>30||lines.some(line=>wordCount(line)<2)){
-  notice('6~30개의 완성된 영어 문장을 써 주세요. 각 문장에 마침표, 물음표 또는 느낌표가 필요해요.',true);
+  diaryStatus('6~30개의 완성된 영어 문장을 써 주세요. 각 문장에 마침표, 물음표 또는 느낌표가 필요해요.',true);
+  $('wgDiaryReviewStatus').scrollIntoView({block:'nearest'});
   $('wgBody').focus();return;
  }
  diaryBusy=true;$('wgSubmit').disabled=true;
+ diaryStatus('일기를 저장하고 AI Willi에게 보내고 있어요…');
  try{
   const saved=await saveEntry({force:true});
-  if(!saved)return;
+  if(!saved){diaryStatus('일기 저장에 실패했어요. 다시 시도해 주세요.',true);return;}
   const current=state.active;
   const old=await databaseApi('writing_genius_diary_reviews','GET','?select=original_body,feedback,spoken_at&entry_id=eq.'+encodeURIComponent(current.id)+'&limit=1').catch(()=>null);
   if(Array.isArray(old)&&old[0]?.original_body===$('wgBody').value&&old[0].spoken_at){
     await saveEntry({submit:true,force:true});return;
   }
-  notice('AI Willi가 일기를 읽고 있어요…');
+  diaryStatus('AI Willi (Luna)가 일기를 검토하고 있어요…');
   const result=await diaryRequest('review',current.id);
   if(state.active?.id!==current.id)return;
   diaryReviewBody=$('wgBody').value;
@@ -383,8 +390,8 @@ async function reviewDiary(){
   $('wgDiaryTranscript').textContent='';
   diaryTranscript='';diaryInterim='';
   $('wgDiaryReview').scrollIntoView({behavior:'smooth',block:'start'});
-  notice('AI 피드백을 읽고 말하기까지 완료해 주세요.');
- }catch(error){notice(error.message,true)}
+  diaryStatus('AI 피드백을 확인하고 일기 전체를 말해 주세요.');
+ }catch(error){diaryStatus('AI Willi 오류: '+error.message,true);console.error('[Writing Genius] diary review failed',error)}
  finally{diaryBusy=false;$('wgSubmit').disabled=false}
 }
 function beginDiarySpeech(){
