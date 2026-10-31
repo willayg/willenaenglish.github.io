@@ -30,11 +30,19 @@ async function standardHomework(){
  const r=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&_='+Date.now());
  if(!r.ok)throw Error('Shared homework unavailable');
  const d=await r.json();if(!d.success)throw Error('Shared homework unavailable');
- return (d.assignments||[]).map(a=>{
-  const source=String(a.source_type||a.list_meta?.source_type||'wordlist').toLowerCase();
-  const app=source==='vocab_study'?'Word Genius':'English Arcade';
-  const url=app==='Word Genius'?'/students/vocab-study/?open=wordtest':'/Games/english_arcade/index.html?openHomework=1';
-  return item('standard:'+a.id,app,a.title||a.list_title||'숙제',url,a.created_at||a.assigned_at||a.due_at,false,a.due_at?'기한 '+new Date(a.due_at).toLocaleDateString('ko-KR'):'');
+ return (d.assignments||[]).flatMap(a=>{
+  const source=String(a.source_type||a.list_meta?.source_type||a.list_meta?.app||'').toLowerCase().trim();
+  // Sentence Genius has its own live feed below. Never misroute its rows to Arcade.
+  if(source==='sentence_genius')return [];
+  let app,url;
+  if(source==='vocab_study'){app='Word Genius';url='/students/vocab-study/?open=wordtest'}
+  else if(['wordlist','english_arcade','arcade','saved_game','grammar','phonics'].includes(source)){
+    app='English Arcade';url='/Games/english_arcade/index.html?openHomework=1';
+  }else{
+    console.warn('[mission basket] Unrecognised homework source, omitting unsafe link:',source,a.id);
+    return [];
+  }
+  return [item('standard:'+a.id,app,a.title||a.list_title||'숙제',url,a.created_at||a.assigned_at||a.due_at,false,a.due_at?'기한 '+new Date(a.due_at).toLocaleDateString('ko-KR'):'')];
  });
 }
 async function sentences(){
