@@ -549,3 +549,16 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius .wg-diary-correction-actions img,.writing-genius .wg-diary-speech-buttons img{width:22px;height:22px;vertical-align:middle;margin-right:7px}
 .writing-genius .wg-diary-review[hidden],.writing-genius #wgDiaryGuide[hidden],.writing-genius #wgPromptRow[hidden]{display:none!important}
 @media(max-width:560px){.writing-genius .wg-diary-steps span{font-size:.67rem;padding:8px 1px}.writing-genius .wg-diary-navigation .wg-button{flex:1}}
+
+/* Compact diary screens; no duplicated editor title/date chrome. */
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-editor-top{display:none!important}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-editor-nav{margin-bottom:8px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-steps{margin:0 0 12px;gap:5px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-steps span{padding:7px 2px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-review{margin:8px 0;padding:13px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-review h3{margin:0 0 8px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-guide{margin:8px 0;padding:13px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-guide>p{display:none}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-submit-note{display:none}
+.writing-genius #wgDiaryReview:has(#wgDiaryCorrection:not([hidden])) #wgDiaryFeedback{display:none!important}
+.writing-genius #wgDiaryReview:has(#wgDiarySpeaking:not([hidden])) #wgDiaryFeedback{display:none!important}
