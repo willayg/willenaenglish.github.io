@@ -31,3 +31,10 @@
 .homework-basket-card.gold{background:#fff9de;border-color:#e1b744;color:#6d5010}
 .homework-basket-card.gold .homework-basket-status,.homework-basket-card.gold .homework-basket-type{color:#9a700d}
 @media(max-width:600px){.homework-basket{padding:13px;border-radius:18px}.homework-basket-head{gap:9px}.homework-basket-head h2{font-size:17px}.homework-basket-icon{width:40px;height:40px;font-size:25px}.homework-basket-head h2 span{display:block;margin-top:2px}.homework-basket-card{padding:12px 11px}.homework-basket-card-main strong{font-size:13px}.homework-basket-status{font-size:11px}}
+
+/* v2.25.181 — collapsible homework basket */
+button.homework-basket-head{appearance:none;width:100%;border:0;background:transparent;text-align:left;padding:0;cursor:pointer;color:inherit}
+.homework-basket-chevron{font-size:23px;font-weight:900;color:#16848c;min-width:18px;text-align:center}
+.homework-basket-list[hidden]{display:none!important}
+.homework-gold-result{border:2px solid #d9b142!important;background:#fff8d7!important}
+.homework-gold-result .score{color:#a47a06!important}
