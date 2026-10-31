@@ -81,7 +81,7 @@ function render(){
 let overviewStage='active';
 async function changeHomework(row,action,scopeName){
  const table=row._table;
- if(!['homework_assignments','grammar_foundation_homework','test_prep_tasks'].includes(table))throw Error('This app does not support changes here yet');
+ if(!['homework_assignments','grammar_foundation_homework','sentence_genius_homework','test_prep_tasks'].includes(table))throw Error('This app does not support changes here yet');
  const deleting=action==='remove';
  if(!confirm(deleting?'Remove this homework from active assignments? Student results will be preserved.':'Mark this homework complete?'))return;
  const update={active:false};
@@ -152,7 +152,7 @@ async function loadOverview(scopeName='my'){
      const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
      return '<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden>'+esc(detail)+'</div>'+
-       (overviewStage==='active'?'<div class="ua-homework-actions"><button type="button" data-ua-action="complete" data-ua-index="'+i+'" aria-label="Mark homework complete" title="Complete" '+(row._table==='sentence_genius_homework'?'disabled':'')+'>✓</button><button type="button" data-ua-action="remove" data-ua-index="'+i+'" aria-label="Remove homework" title="Remove" '+(row._table==='sentence_genius_homework'?'disabled':'')+'>✕</button></div>':'')+'</article>';
+       (overviewStage==='active'?'<div class="ua-homework-actions"><button type="button" data-ua-action="complete" data-ua-index="'+i+'" aria-label="Mark homework complete" title="Complete" >✓</button><button type="button" data-ua-action="remove" data-ua-index="'+i+'" aria-label="Remove homework" title="Remove" >✕</button></div>':'')+'</article>';
     }).join('')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
     '<p class="ua-note">Past-due assignments appear in Complete automatically in this dashboard; their database records are preserved. ✓ closes an assignment; ✕ removes it from active homework without deleting results. Detailed progress is currently connected for 내신; other apps need their own progress sources integrated.</p>';
   host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName);
