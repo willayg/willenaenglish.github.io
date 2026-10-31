@@ -229,7 +229,11 @@ async function getAchievementMissions(){
  const unique=new Map(rows.map(x=>[x.id,x]));
  return [...unique.values()].map(x=>({id:x.id,done:x.done===true}));
 }
-window.WillenaMissionBasket={mount,refresh,getAchievementMissions};
+async function getWritingGoldUnits(){
+ const rows=await authed(SUPA+'/rest/v1/rpc/wg_sentence_unit_rewards_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+ return (Array.isArray(rows)?rows:[]).filter(row=>row.golden===true).map(row=>'writing:'+String(row.book_id)+'|'+String(row.unit_id));
+}
+window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits};
 // Any student app may mount this shared widget on a chosen container.
 
 })();
