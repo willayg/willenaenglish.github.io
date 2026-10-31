@@ -93,7 +93,26 @@ export async function onRequestPost({request,env}){
    const review=await db('writing_genius_diary_reviews?select=original_body,feedback&entry_id=eq.'+id+'&limit=1',auth.token);
    if(!review.ok||!review.data?.[0]||review.data[0].original_body!==entry.body)return json(409,{error:'먼저 AI Willi 피드백을 확인해 주세요.'});
    const transcript=String(input.transcript||'').trim().slice(0,15000);
-   const said=words(transcript),written=words(entry.body);
+   // The approved script can contain the student's original, first AI correction,
+   // or their one clarified correction. Validate each line against those choices.
+   let expected=entry.body;
+   const chosen=Array.isArray(input.chosen_lines)?input.chosen_lines:null;
+   if(chosen){
+    const reviewFeedback=review.data[0].feedback||{};
+    const improvements=Array.isArray(reviewFeedback.improvements)?reviewFeedback.improvements:[];
+    if(chosen.length!==lines.length)return json(422,{error:'일기 문장 수가 맞지 않아요.'});
+    const canonical=t=>String(t||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\\s+/g,' ').trim();
+    const approved=lines.every((line,i)=>{
+     const alternatives=[line];
+     for(const x of improvements){
+      if(canonical(x.original)===canonical(line))alternatives.push(x.better,x.clarified_better);
+     }
+     return alternatives.some(t=>t&&canonical(t)===canonical(chosen[i]));
+    });
+    if(!approved)return json(422,{error:'선택한 문장을 다시 확인해 주세요.'});
+    expected=chosen.join(' ');
+   }
+   const said=words(transcript),written=words(expected);
    const recognized=new Set(said);
    const covered=written.filter(w=>recognized.has(w)).length/Math.max(1,written.length);
    if(said.length<Math.max(15,Math.round(written.length*.75))||covered<.75)return json(422,{error:'일기 전체를 읽어 주세요. 빠뜨린 문장이 있다면 다시 말해 보세요.',coverage:Math.round(covered*100)});
