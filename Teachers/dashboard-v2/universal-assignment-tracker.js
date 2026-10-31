@@ -55,7 +55,7 @@ async function load(){
    return {...t,name:names.get(id(t.student_id))||id(t.student_id).slice(0,8),done,target,
     correct:result?Number(result.correct)||0:0,wrong:result?Number(result.wrong)||0:0,
     unresolved:result?Number(result.unresolved)||0:0,retries:result?Number(result.retries)||0:0,
-    accuracy:result?.accuracy_percent??null,verified:!!result,complete:done>=target};
+    accuracy:result?.accuracy_percent??null,verified:!!result,complete:done>=target&&(Number(result?.unresolved)||0)===0};
   });
   render();
  }catch(e){host.innerHTML='<p class="empty">Could not load assignment results: '+esc(e.message)+'</p>'}
@@ -157,7 +157,7 @@ async function loadOverview(scopeName='my'){
       const result=progress.get(id(row.id));
       const done=result?Number(result.done)||0:0;
       const target=Number(row.target_count)||0;
-      const pct=target?Math.min(100,Math.round(done/target*100)):null;
+      const pct=target?((done>=target&&(Number(result?.unresolved)||0)>0)?99:Math.min(100,Math.round(done/target*100))):null;
       const detail=result?'Completed '+done+'/'+target+' questions · Accuracy '+(result.accuracy_percent??'—')+'%':'Progress not connected for this app';
       const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
       const ownedByMe=id(row.created_by)===teacher;
