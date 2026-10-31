@@ -30,6 +30,20 @@ function applyTheme(name,{save=true}={}){
 
 function boot(){
   const dock=document.getElementById('vocabThemeDock');
+  // A single app-level footer for theme selection: never use the session's action footer.
+  if(dock){
+    const app=dock.closest('.study-app')||dock.closest('.app-shell');
+    if(app){
+      let footer=app.querySelector(':scope > .vocab-theme-footer');
+      if(!footer){
+        footer=document.createElement('footer');
+        footer.className='vocab-theme-footer';
+        footer.setAttribute('aria-label','App color theme');
+        app.appendChild(footer);
+      }
+      footer.appendChild(dock);
+    }
+  }
   dock?.addEventListener('click',event=>{
     const button=event.target.closest('.vocab-theme-pip[data-theme]');
     if(button)applyTheme(button.dataset.theme);
