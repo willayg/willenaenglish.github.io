@@ -88,7 +88,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
  }
  async function playTarget(text,control){
   if(control.disabled)return;
-  control.disabled=true;status('음성을 불러오고 있어요.');
+  control.disabled=true;control.classList.add('is-loading');control.setAttribute('aria-busy','true');status('음성을 불러오고 있어요.');
   try{
    const headers={'Content-Type':'application/json'};
    const token=window.WillenaAPI?.getLocalAccessToken?.();
@@ -105,13 +105,13 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
    finally{if(objectUrl)URL.revokeObjectURL(objectUrl)}
    status('');
   }catch(e){status(e.message,true)}
-  finally{control.disabled=false}
+  finally{control.disabled=false;control.classList.remove('is-loading');control.removeAttribute('aria-busy')}
  }
  function question(){
   const p=practice[index];if(!p){index=0;lineSpeech();return}
   screen('question',(index+1)+' / '+practice.length);
   stage.append(el('p','df-target',p.target));
-  const listen=el('button','wg-button df-listen','듣기');listen.type='button';listen.addEventListener('click',()=>void playTarget(p.target,listen));stage.append(listen);
+  const listen=el('button','wg-button df-listen');listen.append(el('img','df-headphones'));listen.querySelector('img').src='/shared/svgs/headphones.svg';listen.querySelector('img').alt='';listen.append(el('span','df-listen-label','듣기'));listen.type='button';listen.addEventListener('click',()=>void playTarget(p.target,listen));stage.append(listen);
   const modes=el('div','df-mode-buttons');
   const writeBtn=el('button','df-mode-button'+(mode==='write'?' is-active':''),'쓰기');
   const speakBtn=el('button','df-mode-button'+(mode==='speaking'?' is-active':''),'말하기');
@@ -125,16 +125,54 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
    index++;mode='write';question();
   },true);
  }
+ async function aiSpeechTranscribe(blob){
+  const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=reject;reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.readAsDataURL(blob)});
+  const token=window.WillenaAPI?.getLocalAccessToken?.();
+  const response=await fetch('/api/vocab-ai-speech',{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},credentials:'include',cache:'no-store',body:JSON.stringify({action:'transcribe',audio_base64:base64,mime_type:blob.type}),signal:AbortSignal.timeout(35000)});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.success)throw Error(data.error||'음성 확인에 실패했어요.');
+  return data.transcript||'';
+ }
+ async function fallbackRecord(target,control,onSuccess){
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){status('이 브라우저는 마이크 녹음을 지원하지 않아요.',true);return}
+  const mime=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus','audio/ogg'].find(x=>MediaRecorder.isTypeSupported(x));
+  if(!mime){status('오디오 형식을 지원하지 않아요.',true);return}
+  let stream,recorder;
+  try{
+   stream=await navigator.mediaDevices.getUserMedia({audio:true});
+   recorder=new MediaRecorder(stream,{mimeType:mime});const chunks=[];
+   recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+   const ended=new Promise(resolve=>{recorder.onstop=resolve});
+   recorder.start();control.classList.add('is-recording');control.textContent='녹음 중지';status('말해 주세요.');
+   await new Promise(resolve=>{const stop=()=>{control.removeEventListener('click',stop);resolve()};control.addEventListener('click',stop,{once:true});setTimeout(()=>{control.removeEventListener('click',stop);resolve()},12000)});
+   if(recorder.state==='recording')recorder.stop();await ended;
+   control.classList.remove('is-recording');control.textContent='다시 말하기';status('음성을 확인하고 있어요.');
+   const transcript=await aiSpeechTranscribe(new Blob(chunks,{type:mime}));
+   if(norm(transcript)!==norm(target)){status('다시 말해 주세요.',true);return}
+   status('');onSuccess(transcript);
+  }catch(error){status(error.message||'마이크 오류',true)}
+  finally{stream?.getTracks().forEach(t=>t.stop());control.classList.remove('is-recording');control.textContent='말하기'}
+ }
  function lineSpeech(){
   if(index>=finalLines.length){complete();return}
   screen('speech','Speak · '+(index+1)+' / '+finalLines.length);
   stage.append(el('h2','df-heading','한 문장씩 말하기'),el('p','df-target',finalLines[index]));
   rendererHost({form:'speaking',prompt:'',context:{},input:{language:'en'},answer:[finalLines[index]]});
-  button('확인',()=>{
-   const spokenLine=String(renderer.getResponse()||'').trim();
-   if(norm(spokenLine)!==norm(finalLines[index])){status('다시 말해 주세요.',true);return}
-   spoken.push(spokenLine);index++;lineSpeech();
-  },true);
+  const target=finalLines[index];
+  const success=answer=>{spoken.push(answer);index++;lineSpeech()};
+  if(!(window.SpeechRecognition||window.webkitSpeechRecognition)){
+   const mic=stage.querySelector('[data-speaking-mic]');if(mic)mic.hidden=true;
+   const text=stage.querySelector('[data-speaking-status]');if(text)text.textContent='마이크를 눌러 말해 주세요.';
+   const fallback=el('button','df-record-fallback','말하기');fallback.type='button';
+   stage.querySelector('.speaking-control')?.append(fallback);
+   fallback.addEventListener('click',()=>{if(fallback.classList.contains('is-recording'))return;void fallbackRecord(target,fallback,success)});
+  }else{
+   button('확인',()=>{
+    const answer=String(renderer.getResponse()||'').trim();
+    if(norm(answer)!==norm(target)){status('다시 말해 주세요.',true);return}
+    success(answer);
+   },true);
+  }
  }
  async function complete(){
   screen('finish','Complete');stage.append(el('h2','df-heading','일기 완료'));
