@@ -2,7 +2,8 @@
 (()=>{'use strict';
 const endpoint='/.netlify/functions/progress_summary?section=vocab_motivation&_='; 
 const api=(url)=>window.WillenaAPI?.fetch?window.WillenaAPI.fetch(url,{cache:'no-store'}):fetch(url,{credentials:'include',cache:'no-store'});
-let current=null, busy=null;
+let current=null, busy=null, lastLoadAt=0;
+const CACHE_MS=60000;
 const icons=['streak.svg','best-streak.svg','golden-unit.svg'];
 function draw(host){
  host.hidden=false;
@@ -58,8 +59,9 @@ function streakFromDays(values){
  }
  return {current,best};
 }
-async function load(){
+async function load(force=false){
  if(busy)return busy;
+ if(!force&&current&&Date.now()-lastLoadAt<CACHE_MS){update();return current;}
  busy=(async()=>{
   let d={};
   try{
@@ -74,21 +76,22 @@ async function load(){
    missions?.getAchievementMissions?.()||Promise.resolve([]),
    missions?.getWritingGoldUnits?.()||Promise.resolve([]),
    sentenceGoldUnits(),
-   missions?.getCompletedActivityDays?.()||Promise.resolve([])
+   (async()=>{const cached=await missions?.getStreakSnapshot?.();return cached||await missions?.refreshStreakSnapshot?.()||null})()
   ]);
   if(results[0].status==='fulfilled')for(const x of results[0].value||[])if(x.done===true)units.add('homework:'+String(x.id));
   if(results[1].status==='fulfilled')for(const key of results[1].value||[])units.add(key);
   if(results[2].status==='fulfilled')for(const key of results[2].value||[])units.add(key);
   results.forEach((result,index)=>{if(result.status==='rejected')console.warn('[achievements] source '+index+' unavailable',result.reason)});
-  const verified=results[3]?.status==='fulfilled'?streakFromDays(results[3].value||[]):null;
+  let verified=results[3]?.status==='fulfilled'?results[3].value:null;
+  if(!verified){try{verified=streakFromDays(await missions?.getCompletedActivityDays?.()||[])}catch(e){console.warn('[achievements] historical streak fallback failed',e)}}
   current={current:verified?Math.max(verified.current,Math.max(0,+d.current_streak||0)):Math.max(0,+d.current_streak||0),best:verified?Math.max(verified.best,Math.max(0,+d.best_streak||0)):Math.max(0,+d.best_streak||0),gold:units.size};
-  update();return current;
+  lastLoadAt=Date.now();update();return current;
  })().finally(()=>{busy=null});
  return busy;
 }
 function mount(host){if(!host)return;draw(host);load().catch(e=>console.warn('[achievements]',e));}
 function mountAll(){document.querySelectorAll('[data-shared-achievements]').forEach(mount);}
-window.WillenaAchievements={mount,mountAll,refresh:load};
+window.WillenaAchievements={mount,mountAll,refresh:()=>load(true)};
 document.addEventListener('DOMContentLoaded',mountAll);
 window.addEventListener('focus',()=>{if(document.querySelector('[data-shared-achievements]'))load().catch(()=>{});});
 })();
