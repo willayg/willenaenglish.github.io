@@ -146,7 +146,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
    card.append(header);
    card.append(el('p','df-review-original',change.original||''));
    const suggestion=el('p','df-review-better');changedText(change.original,change.better,suggestion);
-   if(correctionType(change)==='Punctuation')suggestion.append(el('small','df-inline-note',' · comma / punctuation'));
+   if(correctionType(change)==='Punctuation')suggestion.append(el('small','df-inline-note',change.better.includes(',')&&!change.original.includes(',')?' · comma':' · punctuation'));
    card.append(suggestion);
    if(change.translation_ko)card.append(el('p','df-review-korean',change.translation_ko));
    if(change.why_ko&&correctionType(change)!=='Punctuation')card.append(el('p','df-review-explanation',change.why_ko));
