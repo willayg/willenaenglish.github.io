@@ -101,7 +101,7 @@ export async function onRequestPost({request,env}){
     const reviewFeedback=review.data[0].feedback||{};
     const improvements=Array.isArray(reviewFeedback.improvements)?reviewFeedback.improvements:[];
     if(chosen.length!==lines.length)return json(422,{error:'일기 문장 수가 맞지 않아요.'});
-    const canonical=t=>String(t||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\\s+/g,' ').trim();
+    const canonical=t=>String(t||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim();
     const approved=lines.every((line,i)=>{
      const alternatives=[line];
      for(const x of improvements){
