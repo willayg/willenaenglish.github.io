@@ -1,6 +1,6 @@
 /* Shared, student-wide achievements. Does not mutate awards or assignment records. */
 (()=>{'use strict';
-const endpoint='/\.netlify/functions/progress_summary?section=vocab_motivation&_='; 
+const endpoint='/.netlify/functions/progress_summary?section=vocab_motivation&_='; 
 const api=(url)=>window.WillenaAPI?.fetch?window.WillenaAPI.fetch(url,{cache:'no-store'}):fetch(url,{credentials:'include',cache:'no-store'});
 let current=null, busy=null;
 const icons=['streak.svg','best-streak.svg','golden-unit.svg'];
