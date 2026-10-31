@@ -257,17 +257,19 @@ async function getWritingGoldUnits(){
  const rows=await authed(SUPA+'/rest/v1/rpc/wg_sentence_unit_rewards_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
  return (Array.isArray(rows)?rows:[]).filter(row=>row.golden===true).map(row=>'writing:'+String(row.book_id)+'|'+String(row.unit_id));
 }
-function recordCompletedActivity(id){
- const key=archiveStorageKey();
- if(!key||!id)return;
- const calendarKey=key+':completion-days';
+async function recordCompletedActivity(id,source='genius'){
+ if(!id)return;
+ const key=String(id).slice(0,160), app=String(source).slice(0,60);
  try{
-  const calendar=JSON.parse(localStorage.getItem(calendarKey)||'{}');
-  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
-  calendar[String(id)]=parts.year+'-'+parts.month+'-'+parts.day;
-  localStorage.setItem(calendarKey,JSON.stringify(calendar));
+  const access=await token();
+  const who=JSON.parse(atob(access.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub;
+  if(!who)throw Error('No authenticated student');
+  await authed(SUPA+'/rest/v1/student_completed_activity_events?on_conflict=student_id,source,activity_key',{
+   method:'POST',headers:{'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates'},
+   body:JSON.stringify({student_id:who,source:app,activity_key:key})
+  });
   void window.WillenaAchievements?.refresh?.();
- }catch(e){console.warn('[streak] completion date unavailable',e)}
+ }catch(e){console.warn('[streak] completed activity save failed',e)}
 }
 async function getCompletedActivityDays(){
  // Read only the authenticated student's completed sessions. No attempts,
@@ -275,7 +277,8 @@ async function getCompletedActivityDays(){
  const requests=[
   SUPA+'/rest/v1/writing_genius_sentence_sessions?select=completed_at&status=eq.completed&completed_at=not.is.null&order=completed_at.desc&limit=1000',
   SUPA+'/rest/v1/daily_study_sessions?select=completed_at&status=eq.completed&completed_at=not.is.null&order=completed_at.desc&limit=1000',
-  SUPA+'/rest/v1/progress_sessions?select=ended_at&ended_at=not.is.null&order=ended_at.desc&limit=1000'
+  SUPA+'/rest/v1/progress_sessions?select=ended_at&ended_at=not.is.null&order=ended_at.desc&limit=1000',
+  SUPA+'/rest/v1/student_completed_activity_events?select=completed_at&order=completed_at.desc&limit=1000'
  ];
  const settled=await Promise.allSettled(requests.map(url=>authed(url)));
  const dates=new Set();
