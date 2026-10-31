@@ -39,7 +39,7 @@ async function sentenceGoldUnits(){
  return [...keys];
 }
 function streakFromDays(values){
- const valid=[...new Set(values.filter(v=>/^\\d{4}-\\d{2}-\\d{2}$/.test(v)))].sort();
+ const valid=[...new Set(values.filter(v=>/^\d{4}-\d{2}-\d{2}$/.test(v)))].sort();
  let best=0,run=0,previous=null;
  for(const day of valid){
   const stamp=Date.parse(day+'T12:00:00Z');
