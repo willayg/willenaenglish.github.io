@@ -1,6 +1,6 @@
 const U='https://gxwfsqxyuufqtitspfqg.supabase.co',K=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join(''),H={apikey:K,Authorization:`Bearer ${K}`,'Content-Type':'application/json'};
 const card=document.getElementById('card'),bar=document.getElementById('bar'),overlay=document.getElementById('overlay'),reasonsEl=document.getElementById('reasons'),flagNote=document.getElementById('flagNote');
-let section='communication',bank=[],questions=[],index=0,selected=new Set(),checked=false,score=0,wrongIds=[],flagReason='',runtimeSingle=false;
+let section='communication',bank=[],questions=[],index=0,selected=new Set(),checked=false,score=0,wrongIds=[],flagReason='',runtimeSingle=false,homeworkRetryRound=false,homeworkSet=null;
 const flagReasons=['정답이 이상함','문제가 애매함','영어가 이상함','시험 범위와 안 맞음','너무 쉬움','너무 어려움','반복 문제','화면/표시 문제','기타'];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function norm(v){let s=String(v??'').replace(/\r\n?/g,'\n');for(let i=0;i<4;i++)s=s.replace(/\\+n/g,'\n');return s}
@@ -17,12 +17,72 @@ function isW(q){return q.content_status==='willena_published'}
 function sourceLabel(q){return isW(q)?'응용 문제':'유형별 문제'}
 function sourceNumber(q){return isW(q)?`W${q.metadata?.willena_question_number||q.source_question_number}`:`Q${q.source_question_number}`}
 function renderableChoiceQuestion(q){return !!q&&Array.isArray(q.choices)&&q.choices.length>0&&['single_choice','single_select','multi_select'].includes(String(q.answer_mode||''))}
-async function applyFilter(){runtimeSingle=false;const sel=window.WillenaAssignedTestPrep?.selection,session=window.WillenaTestPrepSession;if(sel?.reviewMode){questions=shuffle(bank)}else if(session?.smartSelect&&sel?.plan?.id){questions=await session.smartSelect(bank,{planId:sel.plan.id,lesson:sel.lesson,practice:section,typeBalance:true,typeFn:q=>q.question_type||'other'})}else{questions=shuffle(bank).slice(0,20)}index=0;score=0;wrongIds=[];selected=new Set();checked=false;render()}
+async function applyFilter(){
+ runtimeSingle=false;
+ const sel=window.WillenaAssignedTestPrep?.selection,session=window.WillenaTestPrepSession;
+ homeworkRetryRound=false;homeworkSet=null;
+ if(sel?.homeworkTaskId){
+  const api=window.WillenaTestPrepAuth?.edge;
+  if(!api)throw Error('Homework API unavailable');
+  let hw=await api('homework_set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:sel.homeworkTaskId,question_ids:[]})});
+  if(!hw.initialized){
+   const target=Number(hw.target)||10;
+   if(bank.length<target)throw Error('Not enough usable questions for this homework ('+bank.length+'/'+target+')');
+   const chosen=session?.smartSelect&&sel?.plan?.id
+    ?await session.smartSelect(bank,{planId:sel.plan.id,lesson:sel.lesson,practice:section,typeBalance:true,typeFn:q=>q.question_type||'other'})
+    :shuffle(bank);
+   const chosenIds=[...new Set(chosen.map(q=>String(q.id)))].slice(0,target);
+   if(chosenIds.length!==target)throw Error('Could not prepare a complete fixed homework set');
+   hw=await api('homework_set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:sel.homeworkTaskId,question_ids:chosenIds})});
+  }
+  if(!hw.initialized)throw Error('Homework question set was not saved');
+  homeworkSet=hw;
+  if(hw.complete){questions=[];index=0;return homeworkGold(hw)}
+  const lookup=new Map(bank.map(q=>[String(q.id),q]));
+  const wanted=hw.next_question_ids||[];
+  questions=wanted.map(id=>lookup.get(String(id))).filter(Boolean);
+  if(questions.length!==wanted.length)throw Error('Some saved homework questions are unavailable. Please contact your teacher.');
+  homeworkRetryRound=hw.stage==='corrections';
+ }else if(sel?.reviewMode){questions=shuffle(bank)}
+ else if(session?.smartSelect&&sel?.plan?.id){questions=await session.smartSelect(bank,{planId:sel.plan.id,lesson:sel.lesson,practice:section,typeBalance:true,typeFn:q=>q.question_type||'other'})}
+ else{questions=shuffle(bank).slice(0,20)}
+ index=0;score=0;wrongIds=[];selected=new Set();checked=false;render();
+}
 function render(){if(!questions.length){card.innerHTML='<div class="empty">이 영역에 해당하는 문제가 없습니다.</div>';bar.style.width='0';return}if(index>=questions.length)return result();const q=questions[index];selected=new Set();checked=false;bar.style.width=`${index/questions.length*100}%`;const w=isW(q),u=spans(q.context||{});card.innerHTML=`<div class="card-head"><div class="qnum">${index+1} / ${questions.length}</div><div style="display:flex;align-items:center;gap:4px"><span class="source ${w?'w':''}">${sourceLabel(q)} · ${sourceNumber(q)}</span><button class="flag" id="flagBtn">🚩</button></div></div><div class="body"><div class="prompt">${esc(q.prompt_text||'')}</div>${ctx(q)}<div class="choices">${(q.choices||[]).map((x,i)=>`<button class="choice" data-i="${i+1}"><span class="n">${['①','②','③','④','⑤','⑥'][i]||i+1}</span><span class="t">${text(typeof x==='string'?x:(x.text||JSON.stringify(x)),u)}</span></button>`).join('')}</div><div class="feedback" id="feedback"></div><div class="explanation" id="explanation"></div><div class="actions"><button class="primary" id="check" disabled>정답 확인</button></div></div>`;card.querySelectorAll('.choice').forEach(b=>b.onclick=()=>choose(b,q));document.getElementById('check').onclick=()=>check(q);document.getElementById('flagBtn').onclick=openFlag}
 function choose(b,q){if(checked)return;const n=b.dataset.i;if(q.answer_mode==='multi_select'){selected.has(n)?selected.delete(n):selected.add(n);b.classList.toggle('selected')}else{selected=new Set([n]);card.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')}document.getElementById('check').disabled=!selected.size}
 function same(a,b){return a.length===b.length&&a.every(x=>b.includes(x))}
-function check(q){if(checked){if(runtimeSingle)return window.WillenaTestPrepAuth?.completeSession?.(score,1,wrongIds);index++;return render()}checked=true;const ans=(q.correct_answer||[]).map(String),mine=[...selected].map(String),ok=same(mine,ans);if(ok)score++;else wrongIds.push(q.id);const reviewMode=!!window.WillenaAssignedTestPrep?.selection?.reviewMode;window.WillenaTestPrepAuth?.recordAttempt({practice_type:section,question_id:q.id,selected_answer:mine,correct_answer:ans,is_correct:ok,source_question_number:q.source_question_number,question_type:q.question_type,source_label:q.student_source_label,targets:Array.isArray(q.targets)?q.targets:[],metadata:reviewMode?{review_mode:true,source:'wrong-review'}:{}});card.querySelectorAll('.choice').forEach(b=>{const n=b.dataset.i;if(ans.includes(n))b.classList.add('correct');else if(selected.has(n))b.classList.add('wrong')});const f=document.getElementById('feedback');f.className='feedback '+(ok?'ok':'bad');f.textContent=ok?'정답입니다!':'정답: '+ans.join(', ')+'번';if(!ok&&q.metadata?.source_explanation_ko){const e=document.getElementById('explanation');e.innerHTML=`<strong>해설</strong>${text(q.metadata.source_explanation_ko)}`;e.classList.add('show')}const c=document.getElementById('check');c.disabled=false;c.textContent=runtimeSingle?'다음 문제':(index===questions.length-1?'결과 보기':'다음 문제')}
-function result(){window.WillenaTestPrepAuth?.completeSession(score,questions.length,wrongIds);bar.style.width='100%';const p=questions.length?Math.round(score/questions.length*100):0;card.innerHTML=`<div class="result"><div class="score">${score}/${questions.length}</div><h2>${p>=80?'좋아요! 시험 준비가 잘 되고 있어요.':'틀린 문제를 한 번 더 보면 좋아요.'}</h2><p>정답률 ${p}% · 틀린 문제 ${wrongIds.length}개</p><div class="actions"><button class="secondary" id="again">새 문제 세트</button>${wrongIds.length?'<button class="primary" id="retry">오답하기</button>':''}</div></div>`;document.getElementById('again').onclick=()=>applyFilter();if(wrongIds.length)document.getElementById('retry').onclick=()=>{questions=shuffle(questions.filter(q=>wrongIds.includes(q.id)));index=0;score=0;wrongIds=[];render()}}
+function check(q){if(checked){if(runtimeSingle)return window.WillenaTestPrepAuth?.completeSession?.(score,1,wrongIds);index++;return render()}checked=true;const ans=(q.correct_answer||[]).map(String),mine=[...selected].map(String),ok=same(mine,ans);if(ok)score++;else wrongIds.push(q.id);const homeworkId=window.WillenaAssignedTestPrep?.selection?.homeworkTaskId;const reviewMode=!!window.WillenaAssignedTestPrep?.selection?.reviewMode||homeworkRetryRound;window.WillenaTestPrepAuth?.recordAttempt({practice_type:section,question_id:q.id,selected_answer:mine,correct_answer:ans,is_correct:ok,source_question_number:q.source_question_number,question_type:q.question_type,source_label:q.student_source_label,targets:Array.isArray(q.targets)?q.targets:[],metadata:homeworkId?{homework_task_id:homeworkId,review_mode:homeworkRetryRound,source:'homework'}:reviewMode?{review_mode:true,source:'wrong-review'}:{}});card.querySelectorAll('.choice').forEach(b=>{const n=b.dataset.i;if(ans.includes(n))b.classList.add('correct');else if(selected.has(n))b.classList.add('wrong')});const f=document.getElementById('feedback');f.className='feedback '+(ok?'ok':'bad');f.textContent=ok?'정답입니다!':'정답: '+ans.join(', ')+'번';if(!ok&&q.metadata?.source_explanation_ko){const e=document.getElementById('explanation');e.innerHTML=`<strong>해설</strong>${text(q.metadata.source_explanation_ko)}`;e.classList.add('show')}const c=document.getElementById('check');c.disabled=false;c.textContent=runtimeSingle?'다음 문제':(index===questions.length-1?'결과 보기':'다음 문제')}
+function homeworkGold(hw){
+ bar.style.width='100%';
+ card.innerHTML='<div class="result" style="border:2px solid #d6b357;background:#fff8d9;border-radius:18px;padding:28px"><div class="score">★ GOLD ★</div><h2>숙제 완료!</h2><p>최종 완료 '+hw.final_completion_percent+'% · 전체 정확도 '+(hw.overall_accuracy_percent??'—')+'%</p><p>모든 문제를 정답으로 마쳤어요.</p><div class="actions"><button class="primary" id="hwFinish">돌아가기</button></div></div>';
+ document.getElementById('hwFinish').onclick=()=>{window.WillenaAssignedTestPrep?.renderHome?.();window.WillenaTestPrepUX?.returnFromPractice?.(window.WillenaAssignedTestPrep?.selection)};
+ window.WillenaTestPrepAuth?.refreshStats?.();
+}
+async function homeworkNextRound(){
+ const auth=window.WillenaTestPrepAuth,taskId=window.WillenaAssignedTestPrep?.selection?.homeworkTaskId;
+ card.innerHTML='<div class="loading">숙제 답안을 저장하고 있어요…</div>';
+ try{
+  const completed=await auth.completeSession(score,questions.length,wrongIds);
+  if(!completed)throw Error('Answers were not saved. Please retry.');
+  const hw=await auth.edge('homework_set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:taskId,question_ids:[]})});
+  homeworkSet=hw;
+  if(hw.complete)return homeworkGold(hw);
+  const lookup=new Map(bank.map(q=>[String(q.id),q]));
+  const next=hw.next_question_ids||[];
+  const resolved=next.map(x=>lookup.get(String(x)));
+  if(resolved.some(x=>!x)||!resolved.length)throw Error('Saved correction questions unavailable');
+  questions=resolved;homeworkRetryRound=hw.stage==='corrections';index=0;score=0;wrongIds=[];selected=new Set();checked=false;
+  toast(homeworkRetryRound?'틀린 문제를 다시 풀어 봅시다!':'남은 숙제를 이어서 풀어요!');
+  render();
+ }catch(e){
+  card.innerHTML='<div class="empty">숙제 저장에 문제가 발생했습니다.<br><small>'+esc(e.message)+'</small><br><button class="primary" id="hwTryAgain">다시 시도</button></div>';
+  document.getElementById('hwTryAgain').onclick=homeworkNextRound;
+ }
+}
+function result(){
+ if(window.WillenaAssignedTestPrep?.selection?.homeworkTaskId)return homeworkNextRound();
+ window.WillenaTestPrepAuth?.completeSession(score,questions.length,wrongIds);bar.style.width='100%';const p=questions.length?Math.round(score/questions.length*100):0;card.innerHTML=`<div class="result"><div class="score">${score}/${questions.length}</div><h2>${p>=80?'좋아요! 시험 준비가 잘 되고 있어요.':'틀린 문제를 한 번 더 보면 좋아요.'}</h2><p>정답률 ${p}% · 틀린 문제 ${wrongIds.length}개</p><div class="actions"><button class="secondary" id="again">새 문제 세트</button>${wrongIds.length?'<button class="primary" id="retry">오답하기</button>':''}</div></div>`;document.getElementById('again').onclick=()=>applyFilter();if(wrongIds.length)document.getElementById('retry').onclick=()=>{questions=shuffle(questions.filter(q=>wrongIds.includes(q.id)));index=0;score=0;wrongIds=[];render()}
+}
 function openFlag(){flagReason='';flagNote.value='';reasonsEl.innerHTML=flagReasons.map(r=>`<button class="reason">${r}</button>`).join('');reasonsEl.querySelectorAll('.reason').forEach(b=>b.onclick=()=>{flagReason=b.textContent;reasonsEl.querySelectorAll('.reason').forEach(x=>x.classList.toggle('on',x===b))});overlay.classList.add('open')}
 document.getElementById('cancelFlag').onclick=()=>overlay.classList.remove('open');
 overlay.onclick=e=>{if(e.target===overlay)overlay.classList.remove('open')};
