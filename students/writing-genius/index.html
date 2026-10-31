@@ -71,6 +71,7 @@
         <button id="wgBack" class="vocab-screen-back" type="button">← 내 글</button>
         <span id="wgSaveState" class="wg-save-state" aria-live="polite"></span>
       </div>
+      <nav id="wgDiarySteps" class="wg-diary-steps" hidden aria-label="Diary steps"><span>1. Topic</span><span>2. Write</span><span>3. Review</span><span>4. Practise</span></nav>
       <div class="wg-editor-top">
         <div><span id="wgKind" class="wg-kind"></span><h2 id="wgHeading">글쓰기</h2></div>
         <span id="wgDate" class="wg-date"></span>
@@ -114,12 +115,13 @@
       <section id="wgDiaryReview" class="wg-diary-review" hidden aria-live="polite">
         <h3>AI Willi의 일기 피드백</h3>
         <div id="wgDiaryFeedback"></div>
-        <div class="wg-diary-speaking">
+        <div id="wgDiaryCorrection" class="wg-diary-correction" hidden><h3>문장 다시 연습하기 · Sentence Practice</h3><p id="wgDiaryCorrectionTarget"></p><input id="wgDiaryCorrectionInput" type="text" autocomplete="off" placeholder="수정한 문장을 다시 쓰세요"><div class="wg-diary-correction-actions"><button id="wgDiaryCorrectionMic" class="wg-button wg-secondary" type="button"><img src="/shared/svgs/mic.svg" alt=""> 말하기</button><button id="wgDiaryCorrectionCheck" class="wg-button wg-primary" type="button">확인</button></div><p id="wgDiaryCorrectionStatus" role="status"></p></div>
+        <div id="wgDiarySpeaking" class="wg-diary-speaking">
           <h3>🎤 일기 전체 말하기</h3>
           <p>좋은 문장은 그대로 읽어도 좋아요. 쓴 일기를 처음부터 끝까지 소리 내어 읽어 주세요.</p>
           <div class="wg-diary-speech-buttons">
-            <button id="wgDiarySpeakStart" class="wg-button wg-primary" type="button">🎤 말하기 시작 / 이어서</button>
-            <button id="wgDiarySpeakStop" class="wg-button wg-secondary" type="button" disabled>■ 녹음 중지</button>
+            <button id="wgDiarySpeakStart" class="wg-button wg-primary" type="button"><img src="/shared/svgs/mic.svg" alt=""> 말하기 시작 / 이어서</button>
+            <button id="wgDiarySpeakStop" class="wg-button wg-secondary" type="button" disabled>녹음 중지</button>
             <button id="wgDiarySpeakCheck" class="wg-button wg-secondary" type="button">말하기 확인</button>
           </div>
           <p id="wgDiarySpeechStatus" role="status">마이크를 켜고 전체 일기를 읽어 주세요.</p>
@@ -127,6 +129,7 @@
         </div>
       </section>
       <p id="wgDiaryReviewStatus" class="wg-diary-review-status" role="status" aria-live="polite" hidden></p>
+      <div id="wgDiaryNavigation" class="wg-diary-navigation" hidden><button id="wgDiaryPrev" type="button" class="wg-button wg-secondary">이전</button><button id="wgDiaryNext" type="button" class="wg-button wg-primary">다음</button></div>
       <div class="wg-submit-note">임시 저장은 나만 볼 수 있어요. 제출한 글은 선생님이 볼 수 있어요.</div>
       <div class="wg-actions">
         <button id="wgSave" type="button" class="wg-button wg-secondary">임시 저장</button>
