@@ -257,6 +257,18 @@ async function getWritingGoldUnits(){
  const rows=await authed(SUPA+'/rest/v1/rpc/wg_sentence_unit_rewards_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
  return (Array.isArray(rows)?rows:[]).filter(row=>row.golden===true).map(row=>'writing:'+String(row.book_id)+'|'+String(row.unit_id));
 }
+function recordCompletedActivity(id){
+ const key=archiveStorageKey();
+ if(!key||!id)return;
+ const calendarKey=key+':completion-days';
+ try{
+  const calendar=JSON.parse(localStorage.getItem(calendarKey)||'{}');
+  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
+  calendar[String(id)]=parts.year+'-'+parts.month+'-'+parts.day;
+  localStorage.setItem(calendarKey,JSON.stringify(calendar));
+  void window.WillenaAchievements?.refresh?.();
+ }catch(e){console.warn('[streak] completion date unavailable',e)}
+}
 async function getCompletedActivityDays(){
  // Read only the authenticated student's completed sessions. No attempts,
  // started sessions or uncollected assignments may count as completed work.
@@ -294,7 +306,7 @@ async function getCompletedActivityDays(){
  if(!successful)throw Error('No completed session sources readable');
  return [...dates];
 }
-window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits,getCompletedActivityDays};
+window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits,getCompletedActivityDays,recordCompletedActivity};
 // Any student app may mount this shared widget on a chosen container.
 
 })();
