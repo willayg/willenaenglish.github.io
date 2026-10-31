@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const endpoint='/.netlify/functions/progress_summary?section=vocab_motivation&_='; 
 const api=(url)=>window.WillenaAPI?.fetch?window.WillenaAPI.fetch(url,{cache:'no-store'}):fetch(url,{credentials:'include',cache:'no-store'});
-let current=null, busy=null, lastLoadAt=0;
+let current=null, busy=null, lastLoadAt=0, goldDirty=false;
 const CACHE_MS=60000;
 const icons=['streak.svg','best-streak.svg','golden-unit.svg'];
 function draw(host){
@@ -70,28 +70,44 @@ async function load(force=false){
    else console.warn('[achievements] legacy motivation source unavailable',response.status);
   }catch(error){console.warn('[achievements] legacy motivation source unavailable',error)}
 
-  const units=new Set((d.golden_units||[]).map(x=>'word:'+String(x.unit_id)).filter(x=>!x.endsWith('undefined')));
   const missions=window.WillenaMissionBasket;
+  let goldTotal=null;
+  if(!goldDirty){
+   try{const saved=await missions?.getGoldSnapshot?.();if(saved)goldTotal=saved.total}
+   catch(error){console.warn('[achievements] Gold snapshot read unavailable',error)}
+  }
   const results=await Promise.allSettled([
-   missions?.getAchievementMissions?.()||Promise.resolve([]),
-   missions?.getWritingGoldUnits?.()||Promise.resolve([]),
-   sentenceGoldUnits(),
+   goldTotal===null?(async()=>{
+    const units=new Set((d.golden_units||[]).map(x=>'word:'+String(x.unit_id)).filter(x=>!x.endsWith('undefined')));
+    const [hw,writing,sentence]=await Promise.allSettled([
+     missions?.getAchievementMissions?.()||Promise.resolve([]),
+     missions?.getWritingGoldUnits?.()||Promise.resolve([]),
+     sentenceGoldUnits()
+    ]);
+    const counts={word:units.size,sentence:0,writing:0,homework:0};
+    if(hw.status==='fulfilled')counts.homework=new Set((hw.value||[]).filter(x=>x.done===true).map(x=>String(x.id))).size;
+    if(writing.status==='fulfilled')counts.writing=new Set(writing.value||[]).size;
+    if(sentence.status==='fulfilled')counts.sentence=new Set(sentence.value||[]).size;
+    if([hw,writing,sentence].every(x=>x.status==='fulfilled')){
+      void missions?.saveGoldSnapshot?.(counts).catch(error=>console.warn('[achievements] Gold cache save unavailable',error));
+      goldDirty=false;
+    }else console.warn('[achievements] Incomplete Gold source; refusing to overwrite cache');
+    return counts.word+counts.sentence+counts.writing+counts.homework;
+   })():Promise.resolve(goldTotal),
    (async()=>{const cached=await missions?.getStreakSnapshot?.();return cached||await missions?.refreshStreakSnapshot?.()||null})()
   ]);
-  if(results[0].status==='fulfilled')for(const x of results[0].value||[])if(x.done===true)units.add('homework:'+String(x.id));
-  if(results[1].status==='fulfilled')for(const key of results[1].value||[])units.add(key);
-  if(results[2].status==='fulfilled')for(const key of results[2].value||[])units.add(key);
-  results.forEach((result,index)=>{if(result.status==='rejected')console.warn('[achievements] source '+index+' unavailable',result.reason)});
-  let verified=results[3]?.status==='fulfilled'?results[3].value:null;
+  if(results[0].status==='rejected')console.warn('[achievements] Gold calculation failed',results[0].reason);
+  goldTotal=results[0].status==='fulfilled'?results[0].value:(current?.gold??0);
+  let verified=results[1]?.status==='fulfilled'?results[1].value:null;
   if(!verified){try{verified=streakFromDays(await missions?.getCompletedActivityDays?.()||[])}catch(e){console.warn('[achievements] historical streak fallback failed',e)}}
-  current={current:verified?Math.max(verified.current,Math.max(0,+d.current_streak||0)):Math.max(0,+d.current_streak||0),best:verified?Math.max(verified.best,Math.max(0,+d.best_streak||0)):Math.max(0,+d.best_streak||0),gold:units.size};
+  current={current:verified?Math.max(verified.current,Math.max(0,+d.current_streak||0)):Math.max(0,+d.current_streak||0),best:verified?Math.max(verified.best,Math.max(0,+d.best_streak||0)):Math.max(0,+d.best_streak||0),gold:goldTotal};
   lastLoadAt=Date.now();update();return current;
  })().finally(()=>{busy=null});
  return busy;
 }
 function mount(host){if(!host)return;draw(host);load().catch(e=>console.warn('[achievements]',e));}
 function mountAll(){document.querySelectorAll('[data-shared-achievements]').forEach(mount);}
-window.WillenaAchievements={mount,mountAll,refresh:()=>load(true)};
+window.WillenaAchievements={mount,mountAll,refresh:()=>load(true),invalidateGold:()=>{goldDirty=true;return load(true)}};
 document.addEventListener('DOMContentLoaded',mountAll);
 window.addEventListener('focus',()=>{if(document.querySelector('[data-shared-achievements]'))load().catch(()=>{});});
 })();
