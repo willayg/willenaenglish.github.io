@@ -16,13 +16,14 @@ function draw(host){
 }
 function update(){if(!current)return;document.querySelectorAll('[data-achievement-index]').forEach(el=>{const n=+el.dataset.achievementIndex;el.textContent=String([current.current,current.best,current.gold][n]);});}
 async function sentenceGoldUnits(){
- const [{studentIdentity,assignedBooks,loadUnits,loadSentences},{getSentenceMastery},{openUnit}]=await Promise.all([
+ const [{studentIdentity,signedInProfile,assignedBooks,loadUnits,loadSentences},{getSentenceMastery},{openUnit}]=await Promise.all([
  import('/students/sentence-genius/content.js?v=sg-no-approval-v4.1'),
  import('/students/sentence-genius/tracking.js'),
  import('/students/sentence-genius/scoring.js?v=sg-coach-gold-v3')
  ]);
  const student=await studentIdentity();
- const books=await assignedBooks(student.id);
+ const profile=await signedInProfile(student.id);
+ const books=await assignedBooks(profile.className);
  const keys=new Set();
  for(const book of books){
    const units=await loadUnits(book.id);
