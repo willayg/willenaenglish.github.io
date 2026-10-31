@@ -55,8 +55,7 @@ function check(q){if(checked){if(runtimeSingle)return window.WillenaTestPrepAuth
 function homeworkGold(hw){
  bar.style.width='100%';
  card.innerHTML='<div class="result" style="border:2px solid #d6b357;background:#fff8d9;border-radius:18px;padding:28px"><div class="score">★ GOLD ★</div><h2>숙제 완료!</h2><p>최종 완료 '+hw.final_completion_percent+'% · 전체 정확도 '+(hw.overall_accuracy_percent??'—')+'%</p><p>모든 문제를 정답으로 마쳤어요.</p><div class="actions"><button class="primary" id="hwFinish">돌아가기</button></div></div>';
- document.getElementById('hwFinish').onclick=()=>{window.WillenaTestPrepUX?.returnFromPractice?.(window.WillenaAssignedTestPrep?.selection)};
- window.WillenaTestPrepAuth?.refreshStats?.();
+ document.getElementById('hwFinish').onclick=async()=>{await window.WillenaTestPrepAuth?.refreshStats?.();window.WillenaTestPrepUX?.returnFromPractice?.(window.WillenaAssignedTestPrep?.selection)};
 }
 async function homeworkNextRound(){
  const auth=window.WillenaTestPrepAuth,taskId=window.WillenaAssignedTestPrep?.selection?.homeworkTaskId;
