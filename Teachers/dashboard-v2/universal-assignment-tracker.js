@@ -275,6 +275,11 @@ async function loadOverview(scopeName='my'){
    const stats=await get('rpc/teacher_creative_writing_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    if(Array.isArray(stats))writingProgress=new Map(stats.map(x=>[id(x.id),x]));
   }catch(e){errors.push('Writing progress: '+e.message)}
+  let puzzleProgress=new Map();
+  try{
+   const stats=await get('rpc/teacher_puzzle_homework_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   if(Array.isArray(stats))puzzleProgress=new Map(stats.map(x=>[id(x.id),x]));
+  }catch(e){errors.push('Puzzle progress: '+e.message)}
   const naesin=rows.filter(r=>r.app==='내신');
   let progress=new Map();
   if(naesin.length)try{
@@ -316,8 +321,11 @@ async function loadOverview(scopeName='my'){
     const writing=g.items.filter(row=>row.app==='Writing Genius').map(row=>writingProgress.get(id(row.id))).filter(x=>x&&Number(x.students)>0);
     const writingTotal=writing.reduce((n,x)=>n+Number(x.students),0);
     const writingDone=writing.reduce((n,x)=>n+Number(x.completed),0);
-    const average=tracked.length?Math.round(tracked.reduce((a,b)=>a+b,0)/tracked.length):grammarStudents?Math.round(grammarPassed*100/grammarStudents):writingTotal?Math.round(writingDone*100/writingTotal):null;
-    const label=tracked.length?average+'% correct':grammarStudents?grammarPassed+'/'+grammarStudents+' grammar passes':writingTotal?writingDone+'/'+writingTotal+' submitted':'Progress not available';
+    const puzzles=g.items.filter(row=>row.app==='Puzzles').map(row=>puzzleProgress.get(id(row.id))).filter(x=>x&&Number(x.students)>0);
+    const puzzleTotal=puzzles.reduce((n,x)=>n+Number(x.students),0);
+    const puzzleDone=puzzles.reduce((n,x)=>n+Number(x.completed),0);
+    const average=tracked.length?Math.round(tracked.reduce((a,b)=>a+b,0)/tracked.length):grammarStudents?Math.round(grammarPassed*100/grammarStudents):writingTotal?Math.round(writingDone*100/writingTotal):puzzleTotal?Math.round(puzzleDone*100/puzzleTotal):null;
+    const label=tracked.length?average+'% correct':grammarStudents?grammarPassed+'/'+grammarStudents+' grammar passes':writingTotal?writingDone+'/'+writingTotal+' submitted':puzzleTotal?puzzleDone+'/'+puzzleTotal+' puzzles finished':'Progress not available';
     return '<div class="ua-group" data-ua-group="'+esc(g.key)+'"><button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(g.key)+'" aria-expanded="false"><span><b>'+esc(g.title)+'</b><small>'+esc(g.sub)+' · '+g.items.length+' assignment'+(g.items.length===1?'':'s')+'</small></span><strong>'+esc(label)+' ▾</strong></button>'+
       (average===null?'':'<div class="ua-group-meter" role="progressbar" aria-label="Tracked question completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+average+'"><i style="width:'+average+'%"></i></div>')+
       '<div class="ua-group-body" hidden>';
@@ -342,15 +350,17 @@ async function loadOverview(scopeName='my'){
       const grammarResult=classProgress.get(id(row.id));
       const wordResult=row.app==='Word Genius'?wordClassProgress.get(id(row.id)):null;
       const writingResult=row.app==='Writing Genius'?writingProgress.get(id(row.id)):null;
+      const puzzleResult=row.app==='Puzzles'?puzzleProgress.get(id(row.id)):null;
       const detail=result?'Correct '+done+'/'+target+' · Attempted '+(result.attempted??'—')+' · First-try accuracy '+(result.accuracy_percent??'—')+'% · 오답 remaining '+(result.unresolved??'—')
         :grammarResult?grammarResult.passed+'/'+grammarResult.students+' students passed'
         :wordResult?wordResult.started+'/'+wordResult.students+' students attempted (not a pass rate)'
         :writingResult?writingResult.completed+'/'+writingResult.students+' exact homework submissions'
+        :puzzleResult?puzzleResult.completed+'/'+puzzleResult.students+' completed puzzles'
         :'Completion data not available for this app';
       const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
       const ownedByMe=id(row.created_by)===teacher;
       return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(dday(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
-        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden><p>'+esc(detail)+'</p>'+(grammarResult?.student_rows?'<div class="ua-student-results">'+grammarResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.passed?'✓ Passed':'Not passed')+'</div>').join('')+'</div>':'')+(wordResult?.student_rows?'<div class="ua-student-results">'+wordResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+p.solved+' correctly answered / '+p.attempted+' attempted</div>').join('')+'</div>':'')+(writingResult?.student_rows?'<div class="ua-student-results">'+writingResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.completed?'✓ Submitted':'Not submitted')+'</div>').join('')+'</div>':'')+'<div class="ua-attempt-results" data-ua-attempts="'+i+'"></div></div>'+
+        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden><p>'+esc(detail)+'</p>'+(grammarResult?.student_rows?'<div class="ua-student-results">'+grammarResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.passed?'✓ Passed':'Not passed')+'</div>').join('')+'</div>':'')+(wordResult?.student_rows?'<div class="ua-student-results">'+wordResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+p.solved+' correctly answered / '+p.attempted+' attempted</div>').join('')+'</div>':'')+(writingResult?.student_rows?'<div class="ua-student-results">'+writingResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.completed?'✓ Submitted':'Not submitted')+'</div>').join('')+'</div>':'')+(puzzleResult?.student_rows?'<div class="ua-student-results">'+puzzleResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.completed?'✓ Completed · '+p.stars+'★':'Not completed')+'</div>').join('')+'</div>':'')+'<div class="ua-attempt-results" data-ua-attempts="'+i+'"></div></div>'+
         (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
         (overviewStage==='active'&&ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework for bulk completion" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label><button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button></div>':'')+'</article>';
      }).join('')+(visible.length?'</div></div>':'')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
