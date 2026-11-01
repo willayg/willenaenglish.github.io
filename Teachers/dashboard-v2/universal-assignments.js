@@ -15,7 +15,7 @@ function showWordPanel(body){const panel=document.querySelector('[data-vocab-sub
 
 
 const newHomeworkApps={
- writing:{heading:'Assign writing homework',types:[['diary','Daily diary'],['topic','Topic writing']]},
+ writing:{heading:'Assign writing homework',types:[['diary','Daily diary'],['topic','Topic writing'],['sentence','Sentence writing (textbook)']]},
  puzzles:{heading:'Assign puzzle homework',types:[['boggle','Boggle'],['wordsearch','Word Search'],['crossword','Crossword'],['mixmatch','Mix & Match']]}
 };
 function homeworkForm(app,body){
@@ -26,11 +26,58 @@ function homeworkForm(app,body){
  '<h4>'+spec.heading+'</h4><label>Class <select class="control" name="class" required><option value="">Choose class</option>'+classes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></label>'+
  '<label>Homework type <select class="control" name="kind">'+spec.types.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('')+'</select></label>'+
  '<label>Title <input class="control" name="title" required maxlength="120" placeholder="Homework title"></label>'+
+ (app==='writing'?'<div id="uaSentenceBookFields" hidden><label>Textbook <select class="control" name="book"><option value="">Choose textbook</option></select></label><label>Unit <select class="control" name="unit"><option value="">Choose unit</option></select></label><p id="uaSentenceBookStatus" class="ua-note"></p></div>':'')+
  (app==='writing'?'<label>Writing instructions / topic <textarea class="control" name="prompt" rows="4" maxlength="1500" placeholder="What should students write about?"></textarea></label>':'')+
  '<label>Due date <input class="control" name="due" type="date" required></label>'+ 
  '<label>Repeat <select class="control" name="repeat"><option value="none">One time</option><option value="daily">Every day</option><option value="weekly">Every week</option></select></label>'+
  '<button class="control ua-primary" type="submit">Assign homework →</button><div id="uaNewHomeworkStatus" role="status"></div></form>';
  const form=body.querySelector('form'),date=form.elements.due;
+ if(app==='writing'){
+  const fields=body.querySelector('#uaSentenceBookFields'),message=body.querySelector('#uaSentenceBookStatus');
+  const OP='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
+  const OPKEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+  const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co/rest/v1/';
+  const CONTENTKEY='sb_publishable_G-FYhHfDL4OGdL892gY1Zg_epdbEeqO';
+  async function records(url,key){
+   const response=await fetch(url,{headers:{apikey:key,Authorization:'Bearer '+key},cache:'no-store'});
+   if(!response.ok)throw Error('Could not load textbook data ('+response.status+')');
+   const result=await response.json();return Array.isArray(result)?result:[];
+  }
+  const populate=(node,items,label)=>{node.replaceChildren(new Option(label,''));items.forEach(x=>node.add(new Option(x.title||x.book_title||x.name||x.id,x.id||x.book_id)))};
+  let loadId=0;
+  async function loadClassBooks(){
+   const stamp=++loadId;
+   if(fields.hidden)return;
+   message.textContent='Loading assigned textbooks…';
+   populate(form.elements.book,[],'Choose textbook');populate(form.elements.unit,[],'Choose unit');
+   try{
+    const chosen=form.elements['class'].value;
+    if(!chosen){message.textContent='Choose a class first.';return}
+    const classes=await records(OP+'classes?select=id,name&name=eq.'+encodeURIComponent(chosen),OPKEY);
+    if(!classes.length){message.textContent='Class not found.';return}
+    const list=await records(OP+'class_book_assignments?select=book_id,book_title&class_id=eq.'+encodeURIComponent(classes[0].id)+'&status=neq.finished',OPKEY);
+    if(stamp!==loadId)return;
+    const unique=[...new Map(list.map(x=>[x.book_id,x])).values()];
+    populate(form.elements.book,unique,'Choose textbook');message.textContent=unique.length?'Choose a textbook and unit.':'No assigned textbooks found.';
+   }catch(e){if(stamp===loadId)message.textContent=e.message}
+  }
+  async function loadBookUnits(){
+   const stamp=++loadId;
+   populate(form.elements.unit,[],'Choose unit');
+   if(!form.elements.book.value)return;
+   message.textContent='Loading textbook units…';
+   try{
+    const units=await records(CONT+'content_units?select=id,title,unit_number&book_id=eq.'+encodeURIComponent(form.elements.book.value)+'&status=in.(published,review)&order=unit_number.asc',CONTENTKEY);
+    if(stamp!==loadId)return;
+    populate(form.elements.unit,units.map(x=>({...x,title:'Unit '+x.unit_number+' · '+(x.title||'')})),'Choose unit');
+    message.textContent=units.length?'Select the unit students should practise.':'No available units in this textbook.';
+   }catch(e){if(stamp===loadId)message.textContent=e.message}
+  }
+  form.elements.kind.addEventListener('change',()=>{fields.hidden=form.elements.kind.value!=='sentence';if(!fields.hidden)void loadClassBooks()});
+  form.elements['class'].addEventListener('change',()=>{if(!fields.hidden)void loadClassBooks()});
+  form.elements.book.addEventListener('change',()=>void loadBookUnits());
+ }
+
  const tomorrow=new Date(Date.now()+86400000);date.value=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
  form.onsubmit=async e=>{
   e.preventDefault();
@@ -40,7 +87,13 @@ function homeworkForm(app,body){
    const cls=form.elements['class'].value,kind=form.elements.kind.value,title=form.elements.title.value.trim(),prompt=app==='writing'?form.elements.prompt.value.trim():'';
    if(!cls||!title||!date.value)throw Error('Select a class, title and due date.');
    const due=new Date(date.value+'T23:59:59+09:00').toISOString();
+   if(app==='writing'&&kind==='sentence'&&(!form.elements.book.value||!form.elements.unit.value))throw Error('Choose a textbook and unit.');
    const meta={source_type:'wordlist',creative_type:app==='writing'?'writing_genius':'puzzles',kind,app:app==='writing'?'writing_genius':'puzzles',prompt_text:prompt,required_count:1};
+   if(app==='writing'&&kind==='sentence'){
+    meta.book_id=form.elements.book.value;meta.unit_id=form.elements.unit.value;
+    meta.book_title=form.elements.book.selectedOptions[0]?.textContent||'Textbook';
+    meta.unit_label=form.elements.unit.selectedOptions[0]?.textContent||'Unit';
+   }
    const payload={class:cls,title,description:prompt||null,list_key:(app==='writing'?'writing_genius:':'puzzles:')+kind,list_title:title,list_meta:meta,due_at:due,goal_type:'completions',goal_value:1};
    const url=window.WillenaAPI?.getApiUrl?.('/.netlify/functions/homework_api?action=create_assignment')||'/.netlify/functions/homework_api?action=create_assignment';
    const response=await fetch(url,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
