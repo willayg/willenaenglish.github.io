@@ -65,7 +65,7 @@ const diaryTopics=[
  {title:'나의 꿈',en:'My Dream',guide:'What do you want to be or do? Why? How can you work toward it?',example:'I want to become a scientist. I enjoy learning about space. I read books about planets. I want to build a robot one day. I will study hard at school. I hope my dream comes true.'}
 ];
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
-export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedback,onExit}){
+export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedback,claimBonus,onExit}){
  const root=$('wgDiaryFlow'),stage=$('dfStage'),actions=$('dfActions'),message=$('dfMessage'),progress=$('dfProgress');
  let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],busy=false,autosaveTimer=null,transitionTimer=null,choices={};
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
@@ -157,16 +157,40 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  }
  function showTeacherFeedback(){
   if(!current?.id||!teacherFeedback)return;
-  const id=current.id;
-  void teacherFeedback(current).then(data=>{
-   if(!data||id!==current?.id||step!=='finish')return;
+  const entry={...current};
+  void teacherFeedback(entry).then(data=>{
+   if(entry.id!==current?.id||step!=='finish'||!data)return;
    stage.querySelector('.df-teacher-feedback')?.remove();
-   if(!data.feedback&&!data.bonus_points)return;
-   const box=el('section','df-teacher-feedback');
-   box.append(el('h3','','Teacher feedback · 선생님 코멘트'));
-   if(data.feedback)box.append(el('p','',data.feedback));
-   if(data.bonus_points)box.append(el('strong','','+'+data.bonus_points+' bonus points'));
-   stage.append(box);
+   if(!data.feedback&&!(data.bonus_points>0))return;
+   const panel=el('section','df-teacher-feedback');
+   panel.append(el('h3','','선생님 알림 · Teacher update'));
+   if(data.feedback){
+    const messageButton=el('button','df-teacher-alert','선생님이 메시지를 보냈어요 · 보기');
+    messageButton.type='button';const body=el('p','df-teacher-message',data.feedback);body.hidden=true;
+    messageButton.onclick=()=>{body.hidden=!body.hidden;messageButton.setAttribute('aria-expanded',String(!body.hidden))};
+    panel.append(messageButton,body);
+   }
+   const pending=Math.max(0,Number(data.bonus_points||0)-Number(data.claimed_points||0));
+   if(pending>0){
+    const claim=el('button','df-bonus-claim');claim.type='button';
+    const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 64 64');icon.setAttribute('aria-hidden','true');
+    icon.innerHTML='<path d="M32 5 38 22 56 23 42 34 47 52 32 42 17 52 22 34 8 23 26 22Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><circle cx="32" cy="32" r="5" fill="currentColor"/>';
+    claim.append(icon,el('span','','선생님 보너스 +'+pending+'점 · 받기'));
+    const result=el('div','df-bonus-result');panel.append(claim,result);
+    claim.onclick=async()=>{
+     claim.disabled=true;claim.classList.add('is-claiming');
+     try{
+      const reward=await claimBonus(entry);
+      claim.remove();
+      if(reward.awarded>0){
+       const big=el('strong','df-bonus-reveal','+'+reward.awarded+' POINTS!');
+       result.append(big,el('p','','보너스 포인트를 받았어요!'));
+       try{window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:0}}));localStorage.setItem('stars:refresh',String(Date.now()))}catch{}
+      }else result.textContent='이미 받은 보너스예요.';
+     }catch(e){claim.disabled=false;claim.classList.remove('is-claiming');result.textContent=e.message||'다시 시도해 주세요.'}
+    };
+   }else if(data.bonus_points>0)panel.append(el('p','df-bonus-received','보너스 '+data.bonus_points+'점 받음 ✓'));
+   stage.append(panel);
   }).catch(()=>{});
  }
  function choiceKey(){return 'willena-diary-choices:'+current.id+':'+current.body.length+':'+current.body.slice(0,32)}
@@ -427,10 +451,10 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    stage.append(el('p','df-reward-breakdown',reward.sentences+' sentences × 5 points'));
    status('완료했습니다!');
    showTeacherFeedback();
-   button('글쓰기 메뉴',close,true);
+   button('메인 메뉴',close,true);
   }
-  catch(e){status(e.message,true);button('다시 저장',complete,true)}
+  catch(e){status(e.message,true);button('다시 저장',complete);button('메인 메뉴',close,true)}
   finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};loadChoices();spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));showTeacherFeedback();button('글쓰기 메뉴',close,true)}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};loadChoices();spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));showTeacherFeedback();button('메인 메뉴',close,true)}else if(feedback)summary();else topic()},close};
 }
