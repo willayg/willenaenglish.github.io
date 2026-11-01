@@ -27,7 +27,8 @@ function homeworkForm(app,body){
  '<label>Homework type <select class="control" name="kind">'+spec.types.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('')+'</select></label>'+
  '<label>Title <input class="control" name="title" required maxlength="120" placeholder="Homework title"></label>'+
  (app==='writing'?'<label>Writing instructions / topic <textarea class="control" name="prompt" rows="4" maxlength="1500" placeholder="What should students write about?"></textarea></label>':'')+
- '<label>Due date <input class="control" name="due" type="date" required></label>'+
+ '<label>Due date <input class="control" name="due" type="date" required></label>'+ 
+ '<label>Repeat <select class="control" name="repeat"><option value="none">One time</option><option value="daily">Every day</option><option value="weekly">Every week</option></select></label>'+
  '<button class="control ua-primary" type="submit">Assign homework →</button><div id="uaNewHomeworkStatus" role="status"></div></form>';
  const form=body.querySelector('form'),date=form.elements.due;
  const tomorrow=new Date(Date.now()+86400000);date.value=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
@@ -45,7 +46,20 @@ function homeworkForm(app,body){
    const response=await fetch(url,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
    const result=await response.json().catch(()=>({}));
    if(!response.ok||!result.success)throw Error(result.error||'Homework could not be created');
-   status.textContent='Homework created. Check student progress under Manage Homework.';
+   if(form.elements.repeat.value!=='none'){
+    const assignmentId=result.assignment_id||result.id||result.assignment?.id;
+    if(!assignmentId)throw Error('Homework created, but the API did not return an assignment ID for repeating it.');
+    const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+    if(!token)throw Error('Homework created, but teacher login must be refreshed to configure recurrence.');
+    const interval=form.elements.repeat.value==='daily'?1:7;
+    const nextDue=new Date(new Date(due).getTime()+interval*86400000).toISOString();
+    const scheduleResp=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/homework_recurring_schedules',{
+     method:'POST',headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json',Prefer:'return=minimal'},
+     body:JSON.stringify({source_assignment_id:assignmentId,created_by:localStorage.getItem('userId'),cadence:form.elements.repeat.value,interval_days:interval,next_due_at:nextDue})
+    });
+    if(!scheduleResp.ok)throw Error('Homework created, but the recurring schedule could not be saved: '+(await scheduleResp.text()).slice(0,180));
+   }
+   status.textContent=form.elements.repeat.value==='none'?'Homework created. Check student progress under Manage Homework.':'Homework created and repeating schedule saved.';
    window.dispatchEvent(new CustomEvent('willena:assignment-created',{detail:{message:title+' · '+cls}}));
    form.reset();date.value=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
   }catch(error){status.textContent=error.message}finally{button.disabled=false}
