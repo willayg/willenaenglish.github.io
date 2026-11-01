@@ -96,42 +96,69 @@ async function load(){
   if(list)list.replaceChildren(make('p','wg-t-empty','Could not load submissions: '+e.message));
  }finally{state.loading=false}
 }
+function reviewLines(entry){
+ const feedback=entry.ai_feedback;
+ const changes=Array.isArray(feedback?.improvements)?feedback.improvements:[];
+ const original=String(entry.body||'');
+ let corrected=original;
+ for(const x of changes){
+  const before=String(x.original||'').trim(),after=String(x.better||'').trim();
+  if(!before||!after)continue;
+  const index=corrected.indexOf(before);
+  if(index>=0)corrected=corrected.slice(0,index)+after+corrected.slice(index+before.length);
+ }
+ return {corrected,changes};
+}
 function render(){
  const container=$('#wgTeacherList'),count=$('#wgTeacherCount');if(!container)return;
  const q=($('#wgTeacherSearch')?.value||'').trim().toLowerCase();
  const kind=$('#wgTeacherKind')?.value||'';
- const rows=state.rows.filter(e=>(!kind||e.kind===kind)&&
-  (!q||[e.name,e.korean_name,e.title,e.class_name,e.body].some(v=>String(v||'').toLowerCase().includes(q))));
+ const rows=state.rows.filter(e=>(!kind||e.kind===kind)&&(!q||[e.name,e.korean_name,e.title,e.class_name,e.body].some(v=>String(v||'').toLowerCase().includes(q))))
+  .sort((a,b)=>new Date(b.submitted_at||0)-new Date(a.submitted_at||0));
  container.replaceChildren();count.textContent=String(rows.length);
- if(!rows.length){
-  container.append(make('p','wg-t-empty',state.loaded?'No matching submitted writing.':'No writing loaded.'));
-  detail();return;
- }
+ if(!rows.length){container.append(make('p','wg-t-empty',state.loaded?'No matching submitted writing.':'No writing loaded.'));detail();return}
+ let previousDate='';
+ const dateLabel=timestamp=>timestamp?new Date(timestamp).toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric',timeZone:'Asia/Seoul'}):'Unknown date';
  for(const e of rows){
-  const b=make('button','wg-t-item'+(e.id===state.activeId?' is-selected':''));b.type='button';
-  const top=make('span','wg-t-item-name',e.korean_name||e.name||'Student');
-  const title=make('strong','',e.title||kindName[e.kind]||'Writing');
-  const meta=make('span','wg-t-item-meta',(e.class_name||'')+' · '+(kindName[e.kind]||e.kind)+' · '+formatDate(e.submitted_at));
-  const excerpt=make('small','',String(e.body||'').replace(/\s+/g,' ').slice(0,120));
-  b.dataset.entryId=e.id;b.append(top,title,meta,excerpt);b.onclick=()=>{state.activeId=e.id;render()};
+  const date=dateLabel(e.submitted_at);
+  if(date!==previousDate){const group=make('h3','wg-t-date-heading',date);container.append(group);previousDate=date}
+  const b=make('button','wg-t-item wg-t-submission-card'+(e.id===state.activeId?' is-selected':''));b.type='button';
+  b.dataset.entryId=e.id;
+  const header=make('span','wg-t-card-head');
+  header.append(make('strong','wg-t-item-name',e.korean_name||e.name||'Student'),make('span','wg-t-card-time',e.submitted_at?new Date(e.submitted_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Seoul'}):''));
+  b.append(header,make('strong','wg-t-card-title',e.title||kindName[e.kind]||'Writing'));
+  b.append(make('span','wg-t-item-meta',[(e.class_name||''),(kindName[e.kind]||e.kind)].filter(Boolean).join(' · ')));
+  b.append(make('small','wg-t-card-excerpt',String(e.body||'').replace(/\s+/g,' ').slice(0,115)));
+  b.onclick=()=>{state.activeId=e.id;render();if(window.matchMedia('(max-width:850px)').matches)$('#wgTeacherDetail')?.scrollIntoView({behavior:'smooth',block:'start'})};
   container.append(b);
  }
  if(!rows.some(e=>e.id===state.activeId))state.activeId=rows[0].id;
- const chosen=rows.find(e=>e.id===state.activeId);
- detail(chosen);
- for(const b of container.children)b.classList.toggle('is-selected',b.dataset.entryId===chosen?.id);
+ detail(rows.find(e=>e.id===state.activeId));
+ for(const b of container.querySelectorAll('[data-entry-id]'))b.classList.toggle('is-selected',b.dataset.entryId===state.activeId);
 }
 function detail(entry){
  const host=$('#wgTeacherDetail');if(!host)return;host.replaceChildren();
  if(!entry){host.append(make('div','wg-t-empty','Choose submitted writing to read it.'));return}
- const heading=make('div','wg-t-detail-head');
- heading.append(make('span','wg-t-tag',kindName[entry.kind]||entry.kind));
- heading.append(make('h2','',entry.title||kindName[entry.kind]));
- heading.append(make('p','',(entry.korean_name||entry.name||'Student')+' · '+(entry.class_name||'')+' · '+formatDate(entry.submitted_at)));
- host.append(heading);
+ const head=make('div','wg-t-detail-head');
+ head.append(make('span','wg-t-tag',kindName[entry.kind]||entry.kind));
+ head.append(make('h2','',entry.title||kindName[entry.kind]));
+ head.append(make('p','',(entry.korean_name||entry.name||'Student')+' · '+(entry.class_name||'')+' · '+formatDate(entry.submitted_at)));
+ host.append(head);
  if(entry.prompt_text)host.append(make('div','wg-t-prompt',entry.prompt_text));
- host.append(make('div','wg-t-paper',entry.body||''));
- host.append(make('p','wg-t-note','Submitted writing · Read-only'));
+ const section=(title,body,cls)=>{const wrapper=make('section','wg-t-version');wrapper.append(make('h3','wg-t-version-title',title),make('div','wg-t-paper '+(cls||''),body));host.append(wrapper)};
+ section('Original · 학생이 쓴 글',entry.body||'');
+ if(entry.ai_feedback){
+  const {corrected,changes}=reviewLines(entry);
+  section('AI Willi · Corrected version',corrected,'wg-t-corrected');
+  if(changes.some(x=>x.clarified_better)){
+   const alternatives=make('section','wg-t-version');
+   alternatives.append(make('h3','wg-t-version-title','Clarified alternatives'));
+   changes.forEach((x,i)=>{if(!x.clarified_better)return;const card=make('div','wg-t-alternative');card.append(make('small','', 'Sentence '+(i+1)),make('p','',x.clarified_better));alternatives.append(card)});
+   host.append(alternatives);
+  }
+  if(!changes.length)host.append(make('p','wg-t-note','AI Willi suggested no corrections.'));
+  else host.append(make('p','wg-t-note','AI suggestions shown; the student’s final choices are not yet stored centrally.'));
+ }else host.append(make('p','wg-t-note','No saved AI correction is available for this submission.'));
 }
 function openView(){show();if(!state.loaded)void load()}
 function boot(){
