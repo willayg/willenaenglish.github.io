@@ -283,7 +283,16 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   preview.append(el('small','df-muted',changeCount?changeCount+' sentences corrected · 분홍색 부분은 AI 수정':'문장 수정 없이 구조만 고칠 수 있어요.'));
   stage.append(preview);
   const structure=feedback?.structure||{};
-  if(!feedback?.structure){stage.append(el('p','df-revision-legacy-note','이 글은 이전 AI 리뷰로 확인했어요. 구체적인 시작·가운데·마무리 진단이 저장되지 않아 일반 안내만 표시됩니다.'))}
+  if(!feedback?.structure){
+   const note=el('aside','df-revision-legacy-note');
+   note.append(el('p','','이전 AI 리뷰에는 글의 구성 진단이 없어요. 아래 버튼으로 시작·가운데·마무리 안내를 새로 확인해 보세요.'));
+   const reload=el('button','wg-button wg-secondary','구성 피드백 새로 확인');reload.type='button';
+   reload.onclick=async()=>{if(busy)return;busy=true;reload.disabled=true;
+    try{const updated=await review(current);feedback=updated;secondDraft()}
+    catch(e){reload.disabled=false;status(e.message||'구성 피드백을 불러오지 못했어요.',true)}
+    finally{busy=false}
+   };note.append(reload);stage.append(note);
+  }
   const roles=['beginning','middle','ending'];
   const titles=['Beginning · 시작','Middle · 가운데','Ending · 마무리'];
   const defaults=[
