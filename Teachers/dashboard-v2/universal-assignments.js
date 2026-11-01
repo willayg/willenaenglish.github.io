@@ -39,7 +39,7 @@ function homeworkForm(app,body){
    const cls=form.elements['class'].value,kind=form.elements.kind.value,title=form.elements.title.value.trim(),prompt=app==='writing'?form.elements.prompt.value.trim():'';
    if(!cls||!title||!date.value)throw Error('Select a class, title and due date.');
    const due=new Date(date.value+'T23:59:59+09:00').toISOString();
-   const meta={source_type:app==='writing'?'writing_genius':'puzzles',kind,app:app==='writing'?'writing_genius':'puzzles',prompt_text:prompt,required_count:1};
+   const meta={source_type:'wordlist',creative_type:app==='writing'?'writing_genius':'puzzles',kind,app:app==='writing'?'writing_genius':'puzzles',prompt_text:prompt,required_count:1};
    const payload={class:cls,title,description:prompt||null,list_key:(app==='writing'?'writing_genius:':'puzzles:')+kind,list_title:title,list_meta:meta,due_at:due,goal_type:'completions',goal_value:1};
    const url=window.WillenaAPI?.getApiUrl?.('/.netlify/functions/homework_api?action=create_assignment')||'/.netlify/functions/homework_api?action=create_assignment';
    const response=await fetch(url,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -66,7 +66,7 @@ async function creativeManage(app,body){
  try{
   const data=await get(route('list_assignments'));
   if(!body.isConnected)return;
-  const rows=(data.assignments||[]).filter(a=>a.list_meta?.source_type===(app==='writing'?'writing_genius':'puzzles'));
+  const rows=(data.assignments||[]).filter(a=>(a.list_meta?.creative_type||a.list_meta?.source_type)===(app==='writing'?'writing_genius':'puzzles'));
   const activeRows=rows.filter(a=>a.active!==false&&!a.ended_at);
   body.innerHTML='<div class="ua-actions"><h4>'+label+' homework ('+activeRows.length+' active)</h4><button type="button" class="control ua-outline" id="uaCreativeRefresh">↻ Refresh</button></div>'+
    (rows.length?'<div class="ua-grid">'+rows.map(a=>
