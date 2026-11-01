@@ -333,6 +333,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  }
  async function loadBooks(){
   state.books=await bounded(getAssignedPracticeBooks(state.student.className));
+  if(state.homework?.bookId && !state.books.find(b=>b.id===state.homework.bookId)) state.books.push({id:state.homework.bookId,title:state.homework.bookTitle||'Homework book'});
   const select=$('spBook');select.replaceChildren();
   const tabs=$('spBookTabs');tabs.replaceChildren();
   if(!state.books.length){
