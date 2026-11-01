@@ -2,9 +2,9 @@
 (()=>{'use strict';
 const root=document.getElementById('universalAssignments');if(!root)return;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const apps=[{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'All',sub:'All homework',icon:'▦'},{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
+const apps=[{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'All',sub:'All homework',icon:'▦'},{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'},{id:'writing',label:'Writing Genius',sub:'Diaries & topic writing',icon:'✎'}];
 let active='my',loading=false,groups=[];
-const subviews={my:'manage',all:'manage',naesin:'manage',word:'manage',grammar:'manage',sentence:'manage',puzzles:'manage'};
+const subviews={my:'manage',all:'manage',naesin:'manage',word:'manage',grammar:'manage',sentence:'manage',puzzles:'manage',writing:'manage'};
 let wordPanel=null,wordHome=null;
 function restoreWordPanel(){if(wordPanel&&wordHome&&wordPanel.parentElement!==wordHome)wordHome.appendChild(wordPanel)}
 function showWordPanel(body){const panel=document.querySelector('[data-vocab-subview="assignments"]');if(!panel){body.innerHTML='<div class="ua-empty">Word Genius tracking unavailable.</div>';return}if(!wordPanel){wordPanel=panel;wordHome=panel.parentElement}panel.classList.add('ua-mounted-word');panel.classList.add('active');body.appendChild(panel);window.dispatchEvent(new CustomEvent('vocab:assignments-open'))}
@@ -39,6 +39,11 @@ function render(){
  if(active==='grammar'){
    body.innerHTML='<div id="uaGrammarHomework"></div>';
    window.dispatchEvent(new CustomEvent('ua:grammar-mounted',{detail:{sub}}));
+   return;
+ }
+ if(active==='writing'){
+   body.innerHTML='<div class="ua-feature"><div class="ua-feature-symbol">✎</div><div class="ua-feature-copy"><h4>Writing Genius · Diaries & topic writing</h4><p>Read student writing and teacher feedback in Writing Genius. Homework assignment creation is not connected yet.</p><button type="button" class="control ua-primary" id="uaOpenWriting">Open Writing Genius →</button></div></div>';
+   body.querySelector('#uaOpenWriting')?.addEventListener('click',()=>{window.WritingGeniusTeacher?.openTeacher?.()||document.querySelector('[data-view="writing-genius"]')?.click()});
    return;
  }
  if(active==='sentence'){
