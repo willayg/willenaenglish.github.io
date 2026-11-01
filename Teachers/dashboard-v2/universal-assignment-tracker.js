@@ -54,7 +54,7 @@ async function load(){
    const result=resultMap.get(id(t.id));
    const done=result?Number(result.done)||0:0,target=Math.max(1,Number(t.target_count)||10);
    return {...t,name:names.get(id(t.student_id))||id(t.student_id).slice(0,8),done,target,
-    correct:result?Number(result.correct)||0:0,wrong:result?Number(result.wrong)||0:0,
+    attempted:result?Number(result.attempted)||0:0,correct:result?Number(result.correct)||0:0,wrong:result?Number(result.wrong)||0:0,
     unresolved:result?Number(result.unresolved)||0:0,retries:result?Number(result.retries)||0:0,
     accuracy:result?.accuracy_percent??null,verified:!!result,complete:done>=target&&(Number(result?.unresolved)||0)===0};
   });
@@ -71,10 +71,10 @@ function render(){
  options.map(g=>'<option value="'+esc(g.id)+'" '+(id(g.id)===selected?'selected':'')+'>'+esc(g.school||'')+' · '+esc(g.book_label||'')+'</option>').join('')+
  '</select><button class="control" id="uaProgressRefresh">Refresh results</button></div>'+
  '<p class="ua-tracker-summary">'+rows.length+' assignments · '+completed+' completed · '+(scope==='my'?'Current teacher · active assignments':'All teachers · active and inactive assignments')+' · Completion is not a score</p>'+
- '<div class="ua-progress-table-wrap"><table class="ua-progress-table"><thead><tr><th>Student</th><th>Assigned by</th><th>Lesson / Skill</th><th>Work completed</th><th>Accuracy</th><th>Correct</th><th>Wrong</th><th>오답 remaining</th><th>Retries</th><th>Due</th></tr></thead><tbody>'+
- rows.map(t=>'<tr><td>'+esc(t.name)+'</td><td>'+esc(teacherNames.get(id(t.created_by))||'Unknown')+'</td><td>'+esc(t.lesson)+'<small>'+esc(t.practice_type)+'</small></td><td><b>'+t.done+'/'+t.target+' questions</b><small>'+(t.complete?'완료':'진행 중')+'</small><div class="ua-track"><i style="width:'+Math.min(100,Math.round(t.done/t.target*100))+'%"></i></div></td><td class="ua-accuracy">'+(t.verified&&t.done?esc(t.accuracy)+'%':'—')+'</td><td>'+t.correct+'/'+t.done+'</td><td>'+t.wrong+'</td><td>'+t.unresolved+'</td><td>'+t.retries+'</td><td>'+esc(fmt(t.due_at))+'</td></tr>').join('')+
+ '<div class="ua-progress-table-wrap"><table class="ua-progress-table"><thead><tr><th>Student</th><th>Assigned by</th><th>Lesson / Skill</th><th>Questions corrected</th><th>Accuracy</th><th>Correct</th><th>Wrong</th><th>오답 remaining</th><th>Retries</th><th>Due</th></tr></thead><tbody>'+
+ rows.map(t=>'<tr><td>'+esc(t.name)+'</td><td>'+esc(teacherNames.get(id(t.created_by))||'Unknown')+'</td><td>'+esc(t.lesson)+'<small>'+esc(t.practice_type)+'</small></td><td><b>'+t.done+'/'+t.target+' correct</b><small>'+(t.complete?'완료':'진행 중')+'</small><div class="ua-track"><i style="width:'+Math.min(100,Math.round(t.done/t.target*100))+'%"></i></div></td><td class="ua-accuracy">'+(t.verified&&t.done?esc(t.accuracy)+'%':'—')+'</td><td>'+t.correct+'/'+t.done+'</td><td>'+t.wrong+'</td><td>'+t.unresolved+'</td><td>'+t.retries+'</td><td>'+esc(fmt(t.due_at))+'</td></tr>').join('')+
  '</tbody></table></div>'+(rows.length?'':'<p class="empty">No assignments found.</p>')+
- '<p class="ua-note">Work completed = distinct questions attempted after assignment creation. Accuracy = correct on the first answer to each question in this assignment (not completion %). Wrong = incorrect first answers; 오답 remaining = still unresolved. Reattempts are shown separately.</p>';
+ '<p class="ua-note">Completion counts distinct questions answered correctly, including successful retries. Accuracy records first attempts separately. 오답 remaining must reach zero to pass.</p>';
  host.querySelectorAll('[data-ua-scope]').forEach(b=>b.onclick=()=>{scope=b.dataset.uaScope;render()});
  host.querySelector('#uaGroupFilter').onchange=e=>{selected=e.target.value;render()};
  host.querySelector('#uaProgressRefresh').onclick=load;
@@ -254,7 +254,7 @@ async function loadOverview(scopeName='my'){
      return outcome&&total>0?Math.max(0,Math.min(100,Math.round((Number(outcome.done)||0)/total*100))):null;
     }).filter(p=>p!==null);
     const average=tracked.length?Math.round(tracked.reduce((a,b)=>a+b,0)/tracked.length):null;
-    const label=average===null?'Progress not available':average+'% of tracked work';
+    const label=average===null?'Progress not available':average+'% correct';
     return '<div class="ua-group" data-ua-group="'+esc(g.key)+'"><button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(g.key)+'" aria-expanded="false"><span><b>'+esc(g.title)+'</b><small>'+esc(g.sub)+' · '+g.items.length+' assignment'+(g.items.length===1?'':'s')+'</small></span><strong>'+esc(label)+' ▾</strong></button>'+
       (average===null?'':'<div class="ua-group-meter" role="progressbar" aria-label="Tracked question completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+average+'"><i style="width:'+average+'%"></i></div>')+
       '<div class="ua-group-body" hidden>';
@@ -275,8 +275,8 @@ async function loadOverview(scopeName='my'){
       const result=progress.get(id(row.id));
       const done=result?Number(result.done)||0:0;
       const target=Number(row.target_count)||0;
-      const pct=target?((done>=target&&(Number(result?.unresolved)||0)>0)?99:Math.min(100,Math.round(done/target*100))):null;
-      const detail=result?'Completed '+done+'/'+target+' questions · Accuracy '+(result.accuracy_percent??'—')+'%':'Progress not connected for this app';
+      const pct=target?(done>=target&&(Number(result?.unresolved)||0)>0?99:Math.min(100,Math.round(done/target*100))):null;
+      const detail=result?'Correct '+done+'/'+target+' · Attempted '+(result.attempted??'—')+' · First-try accuracy '+(result.accuracy_percent??'—')+'% · 오답 remaining '+(result.unresolved??'—'):'Progress not connected for this app';
       const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
       const ownedByMe=id(row.created_by)===teacher;
       return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
