@@ -4,17 +4,15 @@ const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 async function assigned(className){
  if(!className)return new Set();
- let token=window.WillenaAPI?.getLocalAccessToken?.();
- if(!token)return new Set();
- async function read(query){
-  let r=await fetch(API+query,{headers:{apikey:KEY,Authorization:'Bearer '+token},cache:'no-store'});
-  if(!r.ok)throw Error('Class books unavailable ('+r.status+')');
-  return r.json();
- }
- const classes=await read('classes?select=id&name=eq.'+encodeURIComponent(className)+'&limit=1');
- if(!classes.length)return new Set();
- const rows=await read('class_book_assignments?select=book_id&class_id=eq.'+encodeURIComponent(classes[0].id)+'&limit=500');
- return new Set(rows.map(x=>String(x.book_id)));
+ const token=window.WillenaAPI?.getLocalAccessToken?.();
+ if(!token)throw Error('Teacher login unavailable');
+ const response=await fetch(API+'rpc/teacher_assigned_books_for_class_v1',{
+  method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+  body:JSON.stringify({p_class:className}),cache:'no-store'
+ });
+ if(!response.ok)throw Error('Assigned book lookup failed ('+response.status+')');
+ const rows=await response.json();
+ return new Set((Array.isArray(rows)?rows:[]).map(row=>String(row.id)));
 }
 function bind({classSelect,bookSelect,books,onChange}){
  if(!classSelect||!bookSelect)return;
