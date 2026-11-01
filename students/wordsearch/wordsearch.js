@@ -812,6 +812,22 @@ async function finishPuzzle(){
   if(typeof completeCard.showModal==='function')completeCard.showModal();
   else completeCard.setAttribute('open','');
   await saveReward();
+  await markAssignedPuzzleCompleted();
+}
+async function markAssignedPuzzleCompleted(){
+  const assignmentId=new URLSearchParams(location.search).get('homework');
+  if(!assignmentId||state.cheatCompletion||CHEAT_MODE)return;
+  const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+  if(!token||!state.sessionId)return;
+  try{
+    const response=await fetch(OP_URL+'/rest/v1/rpc/student_complete_puzzle_homework_v1',{
+      method:'POST',cache:'no-store',
+      headers:{apikey:OP_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+      body:JSON.stringify({p_assignment_id:assignmentId,p_mode:state.mode,p_session_id:state.sessionId,p_stars:earnedPuzzleStars()})
+    });
+    if(!response.ok)throw Error('Puzzle mission record HTTP '+response.status);
+    window.dispatchEvent(new CustomEvent('willena:homework-progress',{detail:{assignment_id:assignmentId,completed:true}}));
+  }catch(error){console.warn('[Puzzle homework] completion could not be recorded',error)}
 }
 async function resolvePuzzleRewardContext(){
   if(state.rewardContext)return state.rewardContext;
