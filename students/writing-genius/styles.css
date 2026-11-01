@@ -862,3 +862,9 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-revision-expression small{color:#69858b;flex:1 1 140px}
 .writing-genius #wgDiaryFlow .df-expression-line .df-revision-starter{margin-left:auto}
 .writing-genius #wgDiaryFlow .df-revision-starter:disabled{opacity:.55;cursor:default}
+
+.writing-genius #wgDiaryFlow .df-topic-rubric{width:100%;box-sizing:border-box;margin:14px auto;padding:16px;border:2px solid #bfe8ed;border-radius:17px;background:#fff}
+.writing-genius #wgDiaryFlow .df-topic-rubric h3{margin:0 0 12px;color:#cb4c8d;font-size:1.2rem}
+.writing-genius #wgDiaryFlow .df-topic-rubric-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 0;border-top:1px solid #e3f1f2;color:#48666c;font-size:.89rem}
+.writing-genius #wgDiaryFlow .df-topic-rubric-row strong{white-space:nowrap;color:#7b9297}
+.writing-genius #wgDiaryFlow .df-topic-rubric-row.is-earned strong{color:#cf8a19}
