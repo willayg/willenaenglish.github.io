@@ -644,9 +644,13 @@ function renderManage(root){
  const visible=state.assignments.filter(a=>chosen==='all'||a.class_name===chosen);
  holder.innerHTML=visible.length?visible.map(a=>{
   const count=(a.target_sentence_ids||[]).length,modes=(a.required_modes||[]).map(m=>types[m]||m).join(' · ');
-  return '<article class="sgt-assignment-card ua-genius-manage-card"><div class="ua-genius-manage-card-head"><strong>'+escapeHtml(a.title)+'</strong><small>'+escapeHtml(a.class_name)+' · '+count+' sentences · '+escapeHtml(modes)+' · Due '+escapeHtml(String(a.due_at).slice(0,10))+'</small></div>'+
-    '<div class="sgt-actions"><button class="control" type="button" data-sg-progress="'+escapeHtml(a.id)+'">Student progress</button>'+
-    '<button class="control" type="button" data-sg-toggle="'+escapeHtml(a.id)+'" data-active="'+a.active+'">'+(a.active?'Cancel':'Reactivate')+'</button></div><div class="sgt-progress" id="sgtProgress-'+escapeHtml(a.id)+'" hidden></div></article>';
+  const shared=window.WillenaGeniusHomeworkCard;
+  const task=String(a.title||'Sentence homework').replace(/^.+?\s*[·|—–-]\s*(?=Unit\s*\d)/i,'');
+  return shared.card({id:a.id,className:a.class_name,task,dueAt:a.due_at,
+    teacher:a.teacher_name||a.created_by_name||'',progressLabel:'Student progress',
+    body:'<div class="sgt-actions"><button class="control" type="button" data-sg-progress="'+escapeHtml(a.id)+'">Load student results</button>'+
+    '<button class="control" type="button" data-sg-toggle="'+escapeHtml(a.id)+'" data-active="'+a.active+'">'+(a.active?'Cancel':'Reactivate')+'</button></div>'+
+    '<div class="sgt-progress" id="sgtProgress-'+escapeHtml(a.id)+'" hidden></div>'});
  }).join(''):'<div class="sgt-result">No Sentence Genius assignments found.</div>';
  holder.querySelectorAll('[data-sg-toggle]').forEach(b=>b.onclick=async()=>{
   b.disabled=true;try{
