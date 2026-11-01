@@ -39,7 +39,8 @@ function homeworkForm(app,body){
   const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co/rest/v1/';
   const CONTENTKEY='sb_publishable_G-FYhHfDL4OGdL892gY1Zg_epdbEeqO';
   async function records(url,key){
-   const response=await fetch(url,{headers:{apikey:key,Authorization:'Bearer '+key},cache:'no-store'});
+   const auth=key===OPKEY?(window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||key):key;
+   const response=await fetch(url,{headers:{apikey:key,Authorization:'Bearer '+auth},cache:'no-store'});
    if(!response.ok)throw Error('Could not load textbook data ('+response.status+')');
    const result=await response.json();return Array.isArray(result)?result:[];
   }
