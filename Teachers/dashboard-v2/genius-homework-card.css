@@ -25,3 +25,11 @@
 @media(max-width:600px){.genius-homework-card{padding:14px 15px}.ghc-class{font-size:18px}.ghc-task{font-size:15px}.ua-genius-manage-toolbar>.control:first-child{width:auto}}
 
 .ghc-load-action[hidden]{display:none!important}
+
+/* Small ring on the card's right edge, separate from the expanded details. */
+.genius-homework-card{position:relative;padding-right:95px}
+.ghc-ring{position:absolute;right:17px;top:58px;width:62px;height:62px;border-radius:50%;box-sizing:border-box;background:conic-gradient(#279ca5 var(--ghc-pct,0%),#e6f1f2 0);display:grid;place-items:center}
+.ghc-ring:before{content:"";position:absolute;inset:7px;background:#fff;border-radius:50%}
+.ghc-ring span{position:relative;font-weight:800;font-size:14px;color:#2c6870}
+.ghc-ring:not(.has-data) span{color:#87979d}
+@media(max-width:600px){.genius-homework-card{padding-right:82px}.ghc-ring{width:54px;height:54px;right:12px;top:59px}.ghc-ring:before{inset:6px}.ghc-ring span{font-size:12px}}
