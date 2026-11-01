@@ -223,6 +223,11 @@ async function loadOverview(scopeName='my'){
    const stats=await get('rpc/teacher_homework_class_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    if(Array.isArray(stats))classProgress=new Map(stats.map(x=>[id(x.id),x]));
   }catch(e){errors.push('Class progress: '+e.message)}
+  let wordClassProgress=new Map();
+  try{
+   const stats=await get('rpc/teacher_word_homework_class_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   if(Array.isArray(stats))wordClassProgress=new Map(stats.map(x=>[id(x.id),x]));
+  }catch(e){errors.push('Word class activity: '+e.message)}
   const naesin=rows.filter(r=>r.app==='내신');
   let progress=new Map();
   if(naesin.length)try{
@@ -285,13 +290,15 @@ async function loadOverview(scopeName='my'){
       const target=Number(row.target_count)||0;
       const pct=target?(done>=target&&(Number(result?.unresolved)||0)>0?99:Math.min(100,Math.round(done/target*100))):null;
       const grammarResult=classProgress.get(id(row.id));
+      const wordResult=row.app==='Word Genius'?wordClassProgress.get(id(row.id)):null;
       const detail=result?'Correct '+done+'/'+target+' · Attempted '+(result.attempted??'—')+' · First-try accuracy '+(result.accuracy_percent??'—')+'% · 오답 remaining '+(result.unresolved??'—')
         :grammarResult?grammarResult.passed+'/'+grammarResult.students+' students passed'
+        :wordResult?wordResult.started+'/'+wordResult.students+' students attempted (not a pass rate)'
         :'Completion data not available for this app';
       const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
       const ownedByMe=id(row.created_by)===teacher;
       return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
-        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden><p>'+esc(detail)+'</p>'+(grammarResult?.student_rows?'<div class="ua-student-results">'+grammarResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.passed?'✓ Passed':'Not passed')+'</div>').join('')+'</div>':'')+'<div class="ua-attempt-results" data-ua-attempts="'+i+'"></div></div>'+
+        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden><p>'+esc(detail)+'</p>'+(grammarResult?.student_rows?'<div class="ua-student-results">'+grammarResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.passed?'✓ Passed':'Not passed')+'</div>').join('')+'</div>':'')+(wordResult?.student_rows?'<div class="ua-student-results">'+wordResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+p.solved+' correctly answered / '+p.attempted+' attempted</div>').join('')+'</div>':'')+'<div class="ua-attempt-results" data-ua-attempts="'+i+'"></div></div>'+
         (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
         (overviewStage==='active'&&ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework for bulk completion" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label><button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button></div>':'')+'</article>';
      }).join('')+(visible.length?'</div></div>':'')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
