@@ -183,7 +183,9 @@ async function creativeManage(app,body){
    try{
     if(app==='writing'){
      const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
-     const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/teacher_creative_writing_progress_v1',{method:'POST',headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
+     const record=rows.find(x=>x.id===button.dataset.creativeProgress);
+     const endpoint=record?.list_key==='writing_genius:sentence'?'teacher_writing_sentence_homework_progress_v1':'teacher_creative_writing_progress_v1';
+     const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/'+endpoint,{method:'POST',headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
      if(!response.ok)throw Error('Writing progress unavailable');
      const matches=await response.json();
      const result=matches.find(x=>x.id===button.dataset.creativeProgress);
