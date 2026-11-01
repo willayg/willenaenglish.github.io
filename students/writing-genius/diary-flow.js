@@ -274,14 +274,16 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   preview.append(el('h3','','AI Corrections · 수정된 문장'));
   const paper=el('div','df-revision-paper');
   for(const line of corrected){
-    const span=el('span',line.changed?'df-revision-changed':'',line.text);
-    paper.append(span,document.createTextNode(' '));
+    if(line.changed){const original=originalLines[corrected.indexOf(line)]||'';changedText(original,line.text,paper)}
+    else paper.append(document.createTextNode(line.text));
+    paper.append(document.createTextNode(' '));
   }
   preview.append(paper);
   const changeCount=corrected.filter(x=>x.changed).length;
   preview.append(el('small','df-muted',changeCount?changeCount+' sentences corrected · 분홍색 부분은 AI 수정':'문장 수정 없이 구조만 고칠 수 있어요.'));
   stage.append(preview);
   const structure=feedback?.structure||{};
+  if(!feedback?.structure){stage.append(el('p','df-revision-legacy-note','이 글은 이전 AI 리뷰로 확인했어요. 구체적인 시작·가운데·마무리 진단이 저장되지 않아 일반 안내만 표시됩니다.'))}
   const roles=['beginning','middle','ending'];
   const titles=['Beginning · 시작','Middle · 가운데','Ending · 마무리'];
   const defaults=[
