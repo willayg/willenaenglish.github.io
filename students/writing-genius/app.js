@@ -390,7 +390,7 @@ function showWholeDiary(){
 async function diaryRequest(action,entryId,transcript,chosenLines){
  const call=async access=>fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',
   headers:{Authorization:'Bearer '+access,'Content-Type':'application/json'},
-  body:JSON.stringify({action,entry_id:entryId,...(transcript?{transcript}:{}),...(chosenLines?{chosen_lines:chosenLines}:{})}),signal:AbortSignal.timeout(action==='review'?50000:20000)});
+  body:JSON.stringify({action,entry_id:entryId,...(transcript?{transcript}:{}),...(chosenLines?{chosen_lines:chosenLines}:{})}),signal:AbortSignal.timeout(action==='review'?80000:20000)});
  let response=await call(await authToken());
  if(response.status===401)response=await call(await authToken(true));
  const data=await response.json().catch(()=>({}));
