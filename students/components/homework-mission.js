@@ -38,40 +38,24 @@ async function sentenceGeniusMissions() {
   }));
 }
 
-function sourceType(assignment) {
-  return String(assignment?.source_type || assignment?.list_meta?.source_type || assignment?.list_meta?.app || '').trim().toLowerCase() || 'wordlist';
+function sourceType(a){
+ const creative=String(a?.list_meta?.creative_type||a?.list_meta?.app||'').trim().toLowerCase();
+ if(creative==='writing_genius'||creative==='puzzles')return creative;
+ return String(a?.source_type||a?.list_meta?.source_type||'').trim().toLowerCase()||'unknown';
 }
-
-function destinationFor(assignment) {
-  const source = sourceType(assignment);
-  if (source === 'sentence_genius') {
-    const meta=assignment?.list_meta||{};
-    const book=meta.source_book_id||'';
-    const unit=meta.source_unit_id||'';
-    const q=new URLSearchParams();
-    if(book)q.set('book',book);
-    if(unit)q.set('unit',unit);
-    return {
-      app: 'Sentence Genius',
-      href: '/students/sentence-genius/'+(q.toString()?'?'+q.toString():''),
-      buttonLabel: 'Sentence Genius에서 숙제 시작하기'
-    };
-  }
-  if (source === 'vocab_study') {
-    return {
-      app: 'Word Genius',
-      href: '/students/vocab-study/?open=wordtest',
-      buttonLabel: 'Word Genius에서 숙제 시작하기'
-    };
-  }
-  if (['wordlist', 'english_arcade', 'arcade', 'saved_game', 'grammar', 'phonics'].includes(source)) {
-    return {
-      app: 'English Arcade',
-      href: '/Games/english_arcade/index.html?openHomework=1',
-      buttonLabel: 'English Arcade에서 숙제 시작하기'
-    };
-  }
-  return null;
+function destinationFor(a){
+ const source=sourceType(a);
+ if(source==='writing_genius')return {app:'Writing Genius',href:'/students/writing-genius/?homework='+encodeURIComponent(a.id),buttonLabel:'Writing Genius에서 숙제 시작하기'};
+ if(source==='puzzles')return {app:'Puzzles',href:'/students/wordsearch/?homework='+encodeURIComponent(a.id)+'&mode='+encodeURIComponent(a.list_meta?.kind||'boggle'),buttonLabel:'Puzzles에서 숙제 시작하기'};
+ if(source==='sentence_genius'){
+  const meta=a?.list_meta||{},q=new URLSearchParams(),book=meta.source_book_id||a.book_id,unit=meta.source_unit_id||a.unit_id;
+  if(book)q.set('book',book);if(unit)q.set('unit',unit);
+  return {app:'Sentence Genius',href:'/students/sentence-genius/'+(q.size?'?'+q:''),buttonLabel:'Sentence Genius에서 숙제 시작하기'};
+ }
+ if(source==='vocab_study')return {app:'Word Genius',href:'/students/vocab-study/?open=wordtest',buttonLabel:'Word Genius에서 숙제 시작하기'};
+ if(['english_arcade','arcade','saved_game','grammar','phonics'].includes(source))return {app:'English Arcade',href:'/Games/english_arcade/index.html?openHomework=1',buttonLabel:'English Arcade에서 숙제 시작하기'};
+ // A generic wordlist is not proof of an Arcade assignment.
+ return null;
 }
 
 function modalIsActuallyVisible(node) {
@@ -133,6 +117,20 @@ async function currentStudentId() {
 }
 
 async function assignmentIsComplete(assignment, uid) {
+  if(['writing_genius','puzzles'].includes(sourceType(assignment))){
+   try{
+    const jwt=window.WillenaAPI?.getLocalAccessToken?.();
+    if(!jwt)return false;
+    const kind=String(assignment.list_meta?.kind||'');
+    const endpoint=sourceType(assignment)==='puzzles'
+      ? 'puzzle_homework_completions?select=assignment_id&assignment_id=eq.'+encodeURIComponent(assignment.id)+'&limit=1'
+      :kind==='sentence'
+      ? 'writing_genius_sentence_sessions?select=id&assignment_id=eq.'+encodeURIComponent(assignment.id)+'&status=eq.completed&limit=1'
+      : 'writing_genius_entries?select=id&prompt_key=eq.'+encodeURIComponent('homework-'+assignment.id)+'&status=eq.submitted&limit=1';
+    const res=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/'+endpoint,{headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+jwt},cache:'no-store'});
+    if(!res.ok)return false;const rows=await res.json();return Array.isArray(rows)&&rows.length>0;
+   }catch{return false}
+  }
   if(sourceType(assignment)==='sentence_genius'){
     const total=Number(assignment.total)||0;
     return total>0&&Number(assignment.done)>=total;
