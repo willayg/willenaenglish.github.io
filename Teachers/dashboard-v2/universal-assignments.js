@@ -54,9 +54,11 @@ function homeworkForm(app,body){
    try{
     const chosen=form.elements['class'].value;
     if(!chosen){message.textContent='Choose a class first.';return}
-    const classes=await records(OP+'classes?select=id,name&name=eq.'+encodeURIComponent(chosen),OPKEY);
-    if(!classes.length){message.textContent='Class not found.';return}
-    const list=await records(OP+'class_book_assignments?select=book_id,book_title&class_id=eq.'+encodeURIComponent(classes[0].id)+'&status=neq.finished',OPKEY);
+    const token=window.WillenaAPI?.getLocalAccessToken?.();
+    if(!token)throw Error('Teacher login unavailable');
+    const response=await fetch(OP+'rpc/teacher_assigned_books_for_class_v1',{method:'POST',headers:{apikey:OPKEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({p_class:chosen}),cache:'no-store'});
+    if(!response.ok)throw Error('Class textbooks unavailable ('+response.status+')');
+    const list=(await response.json()).map(book=>({book_id:book.id,book_title:book.title}));
     if(stamp!==loadId)return;
     const unique=[...new Map(list.map(x=>[x.book_id,x])).values()];
     populate(form.elements.book,unique,'Choose textbook');form.elements.book.add(new Option('Other book — all textbooks','__other__'));message.textContent=unique.length?'Assigned textbooks shown first.':'Use Other book to browse all textbooks.';
