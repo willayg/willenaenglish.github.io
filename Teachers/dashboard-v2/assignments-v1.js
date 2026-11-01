@@ -147,7 +147,7 @@
     const teacher=a.teacher_name||a.created_by_name||'';
     const shared=window.WillenaGeniusHomeworkCard;
     if(!shared)return '<div class="empty">Homework card component unavailable.</div>';
-    return shared.card({id:a.id,className:a.class,task,dueAt:a.due_at,teacher,
+    return shared.card({id:a.id,className:a.class,task,dueAt:a.due_at,teacher,createdBy:a.created_by,
       progressLabel:'Student progress',body:cardSummaryMarkup(a)+
       '<button type="button" class="control ghc-open" data-assignment-id="'+esc(a.id)+'">Open details</button>'});
   }
@@ -172,6 +172,7 @@
     }
     list.innerHTML=rows.map(assignmentCard).join('');
     document.querySelectorAll('#assignmentList .ghc-open').forEach(button=>button.addEventListener('click',()=>openAssignment(button.dataset.assignmentId)));
+    void window.WillenaGeniusHomeworkCard?.hydrateTeachers(list);
     void loadVisibleCardProgress(rows,generation);
   }
 
