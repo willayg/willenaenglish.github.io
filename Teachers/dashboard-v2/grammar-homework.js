@@ -4,7 +4,7 @@ const OP='https://fiieuiktlsivwfgyivai.supabase.co',KEY='sb_publishable_e-K50Pqu
 const CATALOG='https://gxwfsqxyuufqtitspfqg.supabase.co/functions/v1/grammar-foundations-catalog';
 const EDGE=OP+'/functions/v1/grammar-foundations-teacher-v1';
 const $=(s,r=document)=>r.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const state={catalog:null,classes:null,items:[],mode:'manage',filter:'current',manageView:'students',studentRows:[],studentSearch:'',studentClass:'',expandedStudentId:'',loading:false,details:new Map()};
+const state={catalog:null,classes:null,items:[],mode:'manage',filter:'current',manageView:'batches',studentRows:[],studentSearch:'',studentClass:'',expandedStudentId:'',loading:false,details:new Map()};
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 async function refreshToken(){const r=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh'):fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include'}));const d=await r.json();if(!r.ok||!d.access_token)throw Error('Please sign in again');window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');return d.access_token}
 async function request(url,options={}){
@@ -106,25 +106,38 @@ function paintStudentView(){
 function paintBatchView(){
  const el=$('#gfHwManageBody');if(!el)return;
  const entries=state.items.filter(a=>state.filter==='history'?!a.active:a.active);
- const groups=new Map();entries.forEach(a=>{const id=a.batch_id||a.id;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(a)});
- el.innerHTML='<div class="gf-hw-groups">'+([...groups.values()].map(rows=>{const first=rows[0];return '<section class="gf-hw-group"><header><div><strong>'+esc(first.class_name)+' · '+esc(rows.length===1?first.module_title:'Grammar Genius')+'</strong><small>Due '+esc(new Date(first.due_at).toLocaleDateString())+' · '+esc(first.completion_percent)+'% required · '+rows.length+' level(s)</small></div></header><div class="gf-hw-group-items">'+rows.map(a=>'<div class="gf-hw-assignment"><button type="button" class="gf-hw-row" data-progress="'+esc(a.id)+'"><span><b>'+esc(a.module_title)+'</b><small>'+esc(a.stage_title)+'</small></span><span>View progress →</span></button><div id="gfHwDetail-'+esc(a.id)+'"></div></div>').join('')+'</div><div class="gf-hw-group-actions"><button type="button" class="control" data-toggle-batch="'+esc(first.batch_id)+'" data-active="'+(!first.active)+'">'+(first.active?'Close homework':'Reopen homework')+'</button></div></section>'}).join('')||'<div class="ua-empty">No '+(state.filter==='current'?'current':'past')+' Grammar Genius assignments.</div>')+'</div>';
- el.querySelectorAll('[data-progress]').forEach(b=>b.onclick=()=>showProgress(b.dataset.progress));
- el.querySelectorAll('[data-toggle-batch]').forEach(b=>b.onclick=async()=>{
-   b.disabled=true;
+ const shared=window.WillenaGeniusHomeworkCard;
+ if(!shared){el.innerHTML='<div class="gf-hw-error">Shared homework cards unavailable.</div>';return}
+ el.innerHTML='<div class="ua-genius-manage-list">'+entries.map(a=>shared.card({
+  id:a.id,className:a.class_name,
+  task:[a.module_title,a.stage_title].filter(Boolean).join(' · '),
+  dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Student progress',
+  body:'<div id="gfHwDetail-'+esc(a.id)+'" class="gf-hw-students"></div>'
+ })).join('')+'</div>';
+ void shared.hydrateTeachers(el);
+ const cards=[...el.querySelectorAll('.genius-homework-card')];
+ // Class progress is calculated from each assignment's actual pass records.
+ let index=0;
+ async function work(){
+  while(index<entries.length){
+   const a=entries[index++],card=cards.find(c=>c.dataset.geniusCard===String(a.id));
+   if(!card||!card.isConnected)return;
    try{
-     await table('?batch_id=eq.'+encodeURIComponent(b.dataset.toggleBatch),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({active:b.dataset.active==='true',closed_at:b.dataset.active==='true'?null:new Date().toISOString()})});
-     await renderManage();
-   }catch(e){alert('Unable to update homework: '+e.message);b.disabled=false}
- });
-}
-async function showProgress(id){
- const el=document.getElementById('gfHwDetail-'+id);if(!el)return;
- if(el.dataset.open==='yes'){el.innerHTML='';el.dataset.open='';return}
- el.innerHTML='<div class="gf-hw-loading">Loading student progress…</div>';el.dataset.open='yes';
- try{const data=await request(OP+'/rest/v1/rpc/gf_hw_progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_id:id})});
- if(!el.isConnected)return;
- el.innerHTML='<div class="gf-hw-progress-summary">'+data.completed+'/'+data.total+' students completed</div><div class="gf-hw-students">'+(data.students||[]).map(st=>'<div class="gf-hw-student"><span>'+esc(st.korean_name||st.name||'Student')+'</span><span>'+esc(st.attempts?'Best '+st.best_score+'/'+st.total:'Not started')+'</span><strong class="'+(st.complete?'gf-hw-done':'')+'">'+(st.complete?'Complete':esc(st.percent)+'%')+'</strong></div>').join('')+'</div>';
- }catch(e){el.innerHTML='<div class="gf-hw-error">'+esc(e.message)+'</div>'}
+    const data=await request(OP+'/rest/v1/rpc/gf_hw_progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_id:a.id})});
+    if(!card.isConnected)return;
+    const total=Number(data.total)||0,done=Number(data.completed)||0;
+    shared.updateRing(a.id,total>0?100*done/total:null,el);
+    const detail=card.querySelector('#gfHwDetail-'+CSS.escape(String(a.id)));
+    if(detail){
+     detail.innerHTML='<div class="gf-hw-progress-summary">'+done+'/'+total+' students completed</div>'+
+      '<div class="gf-hw-students">'+(data.students||[]).map(st=>'<div class="gf-hw-student"><span>'+esc(st.korean_name||st.name||'Student')+'</span><span>'+esc(st.attempts?'Best '+st.best_score+'/'+st.total:'Not started')+'</span><strong class="'+(st.complete?'gf-hw-done':'')+'">'+(st.complete?'Complete':esc(st.percent)+'%')+'</strong></div>').join('')+'</div>';
+    }
+   }catch(e){
+    const detail=card.querySelector('.ghc-content');if(detail)detail.textContent='Unable to load progress: '+e.message;
+   }
+  }
+ }
+ void Promise.all(Array.from({length:Math.min(4,entries.length)},work));
 }
 window.addEventListener('ua:grammar-mounted',e=>{void mount(e.detail?.sub||'manage')});
 })();
