@@ -311,21 +311,24 @@ async function loadOverview(scopeName='my'){
    const groups=[...grouping.values()];
    const groupByKey=new Map(groups.map(g=>[g.key,g]));
    const groupHeader=(g)=>{
-    const tracked=g.items.map(row=>{
-     const outcome=progress.get(id(row.id)),total=Number(row.target_count)||0;
-     return outcome&&total>0?Math.max(0,Math.min(100,Math.round((Number(outcome.done)||0)/total*100))):null;
-    }).filter(p=>p!==null);
-    const grammar=g.items.filter(r=>r.app==='Grammar Genius').map(r=>classProgress.get(id(r.id))).filter(x=>x&&Number(x.students)>0);
-    const grammarStudents=grammar.reduce((n,x)=>n+Number(x.students),0);
-    const grammarPassed=grammar.reduce((n,x)=>n+Number(x.passed),0);
-    const writing=g.items.filter(row=>row.app==='Writing Genius').map(row=>writingProgress.get(id(row.id))).filter(x=>x&&Number(x.students)>0);
-    const writingTotal=writing.reduce((n,x)=>n+Number(x.students),0);
-    const writingDone=writing.reduce((n,x)=>n+Number(x.completed),0);
-    const puzzles=g.items.filter(row=>row.app==='Puzzles').map(row=>puzzleProgress.get(id(row.id))).filter(x=>x&&Number(x.students)>0);
-    const puzzleTotal=puzzles.reduce((n,x)=>n+Number(x.students),0);
-    const puzzleDone=puzzles.reduce((n,x)=>n+Number(x.completed),0);
-    const average=tracked.length?Math.round(tracked.reduce((a,b)=>a+b,0)/tracked.length):grammarStudents?Math.round(grammarPassed*100/grammarStudents):writingTotal?Math.round(writingDone*100/writingTotal):puzzleTotal?Math.round(puzzleDone*100/puzzleTotal):null;
-    const label=tracked.length?average+'% correct':grammarStudents?grammarPassed+'/'+grammarStudents+' grammar passes':writingTotal?writingDone+'/'+writingTotal+' submitted':puzzleTotal?puzzleDone+'/'+puzzleTotal+' puzzles finished':'Progress not available';
+    // Only completed homework or corrected-question evidence contributes to the aggregate.
+    // Apps without validated completion data remain explicitly untracked.
+    const fractions=g.items.map(row=>{
+     const outcome=progress.get(id(row.id)),target=Number(row.target_count)||0;
+     if(row.app==='내신'&&outcome&&target>0)return Math.min(1,(Number(outcome.done)||0)/target);
+     if(row.app==='Grammar Genius'){
+      const x=classProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.passed)/Number(x.students):null;
+     }
+     if(row.app==='Writing Genius'){
+      const x=writingProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
+     }
+     if(row.app==='Puzzles'){
+      const x=puzzleProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
+     }
+     return null;
+    }).filter(x=>x!==null);
+    const average=fractions.length?Math.round(100*fractions.reduce((a,b)=>a+b,0)/fractions.length):null;
+    const label=average===null?'Progress not available':average+'% · '+fractions.length+'/'+g.items.length+' tracked';
     return '<div class="ua-group" data-ua-group="'+esc(g.key)+'"><button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(g.key)+'" aria-expanded="false"><span><b>'+esc(g.title)+'</b><small>'+esc(g.sub)+' · '+g.items.length+' assignment'+(g.items.length===1?'':'s')+'</small></span><strong>'+esc(label)+' ▾</strong></button>'+
       (average===null?'':'<div class="ua-group-meter" role="progressbar" aria-label="Tracked question completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+average+'"><i style="width:'+average+'%"></i></div>')+
       '<div class="ua-group-body" hidden>';
