@@ -239,6 +239,7 @@ async function loadOverview(scopeName='my'){
    host.innerHTML='<div class="ua-scope-tabs" role="tablist" aria-label="Homework status"><button type="button" class="'+(overviewStage==='active'?'active':'')+'" data-ua-stage="active">Active ('+active.length+')</button><button type="button" class="'+(overviewStage==='complete'?'active':'')+'" data-ua-stage="complete">Complete ('+complete.length+')</button></div>'+
      '<div class="ua-toolbar"><strong>'+(scopeName==='my'?'My homework':'All teachers’ homework')+'</strong>'+
      (overviewStage==='active'?'<label class="ua-bulk-select"><input type="checkbox" id="uaSelectAll" '+(selectable.length&&checked===selectable.length?'checked':'')+' '+(!selectable.length?'disabled':'')+'> Select all</label><button type="button" class="control ua-bulk-complete" id="uaCompleteSelected" '+(!checked?'disabled':'')+'>✓ Complete selected ('+checked+')</button>':'')+
+     '<button type="button" class="control" id="uaDeleteSelected" '+(!checked?'disabled':'')+' style="color:#a44d4d;border:1px solid #d9a6a6;background:#fff">× Delete selected ('+checked+')</button>'+ 
      '<button type="button" class="control" id="uaOverviewRefresh">Refresh</button></div>'+
      (errors.length?'<p class="ua-note" style="color:#b04b40">Some sources unavailable: '+esc(errors.join('; '))+'</p>':'')+
      '<p id="uaBulkStatus" class="ua-note" role="status" aria-live="polite" hidden></p>'+
@@ -252,7 +253,7 @@ async function loadOverview(scopeName='my'){
       const ownedByMe=id(row.created_by)===teacher;
       return '<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
         '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden>'+esc(detail)+'</div>'+
-        (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit assignment</button><button type="button" class="control ua-delete-homework" data-ua-delete="'+i+'" aria-label="Delete assignment '+esc(row.label)+'" style="border:1px solid #d9a6a6;color:#aa4949;background:#fff;padding:6px 12px;font-size:12px">Delete assignment</button></div>':'')+
+        (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
         (overviewStage==='active'&&ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework for bulk completion" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label><button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button></div>':'')+'</article>';
      }).join('')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
      '<p class="ua-note">Past-due homework appears in Complete automatically. ✓ closes one assignment; check boxes and Complete selected close several. Student attempts and results remain preserved.</p>';
@@ -266,6 +267,7 @@ async function loadOverview(scopeName='my'){
     const selectedCount=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
     const bulk=host.querySelector('#uaCompleteSelected');
     if(bulk){bulk.disabled=selectedCount===0;bulk.textContent='✓ Complete selected ('+selectedCount+')';}
+    const deleteBulk=host.querySelector('#uaDeleteSelected');if(deleteBulk){deleteBulk.disabled=selectedCount===0;deleteBulk.textContent='× Delete selected ('+selectedCount+')';}
     const allBox=host.querySelector('#uaSelectAll');
     if(allBox){allBox.checked=selectable.length>0&&selectedCount===selectable.length;allBox.indeterminate=selectedCount>0&&selectedCount<selectable.length;}
    }
@@ -303,6 +305,19 @@ async function loadOverview(scopeName='my'){
      catch(err){const n=host.querySelector('#uaBulkStatus');n.hidden=false;n.textContent='Edit unavailable: '+err.message}
      finally{button.disabled=false}
    });
+   const bulkDelete=host.querySelector('#uaDeleteSelected');
+   if(bulkDelete)bulkDelete.onclick=async()=>{
+     const chosen=selectable.filter(row=>overviewSelections.has(homeworkKey(row)));
+     if(!chosen.length)return;
+     if(!confirm('Delete/remove '+chosen.length+' selected assignment'+(chosen.length===1?'':'s')+'? This cannot be undone for deletable records.'))return;
+     bulkDelete.disabled=true;
+     let succeeded=0;const failed=[];
+     for(const row of chosen){
+       try{await deleteHomework(row);const index=rows.indexOf(row);if(index!==-1)rows.splice(index,1);overviewSelections.delete(homeworkKey(row));succeeded++}
+       catch(e){failed.push((row.label||row.id)+': '+e.message)}
+     }
+     renderOverview();const status=host.querySelector('#uaBulkStatus');if(status){status.hidden=false;status.textContent=succeeded+' removed.'+(failed.length?' '+failed.length+' failed: '+failed.slice(0,2).join('; '):'')}
+   };
    host.querySelectorAll('[data-ua-delete]').forEach(button=>button.onclick=async()=>{
     const row=visible[Number(button.dataset.uaDelete)];
     if(!row||id(row.created_by)!==teacher)return;
