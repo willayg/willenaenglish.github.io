@@ -21,9 +21,9 @@ function message(t,warning=false){const node=$('#gfHwMessage');if(node){node.tex
 async function catalog(){if(state.catalog)return state.catalog;const r=await fetch(CATALOG+'?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('Grammar catalog unavailable');const d=await r.json();state.catalog=Array.isArray(d.sets)?d.sets:[];return state.catalog}
 async function classes(){
  if(state.classes)return state.classes;
- try{const d=await request(EDGE+'?action=students&_='+Date.now());const c=[...new Set((d.students||[]).filter(s=>s.class&&String(s.class).toLowerCase()!=='test').map(s=>String(s.class)))];if(c.length)return state.classes=c.sort()}catch(e){console.warn('[Grammar homework] student class lookup',e)}
+ try{const d=await request(EDGE+'?action=students&_='+Date.now());const c=[...new Set((d.students||[]).filter(s=>s.class).map(s=>String(s.class)))];if(c.length)return state.classes=[...new Set([...c,'Test'])].sort()}catch(e){console.warn('[Grammar homework] student class lookup',e)}
  const rows=await api('classes?select=name&status=eq.active&order=sort_order.asc');
- state.classes=[...new Set(rows.map(c=>c.name).filter(Boolean))];return state.classes;
+ state.classes=[...new Set([...rows.map(c=>c.name).filter(Boolean),'Test'])];return state.classes;
 }
 function root(){return $('#uaGrammarHomework')}
 async function mount(sub){
