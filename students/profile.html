@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/students/dashboard-v2/dashboard-header-p4.css?v=20260915p4d">
-<link rel="stylesheet" href="/students/dashboard-v2/dashboard-theme-pips.css?v=20260915p6d">
+<link rel="stylesheet" href="/students/dashboard-v2/dashboard-theme-pips.css?v=20261101-footer2">
 <link rel="stylesheet" href="/students/profile-v2.css?v=20260916p3">
 <link rel="stylesheet" href="/students/profile-v2-rewards.css?v=20260915p1">
 <link rel="stylesheet" href="/students/dashboard-v2/shared-header-menu.css?v=20260916p1">
@@ -17,7 +17,7 @@
 <script src="/js/api-config.js?v=20260113c"></script>
 <script src="/students/language.js"></script>
 <script src="/students/theme.js"></script>
-</head>
+<style>.profile-home-link{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:0 13px;border:2px solid #b6e5e9;border-radius:13px;background:var(--dash-card,#fff);color:var(--ink,#35565b);font:800 13px Poppins,system-ui,sans-serif;text-decoration:none;white-space:nowrap}.profile-home-link:focus-visible{outline:2px solid var(--cyan,#72dce3);outline-offset:3px}.dashboard-teacher-message{border:2px solid #b6e5e9;border-radius:13px;background:var(--dash-card,#fff);color:var(--ink,#35565b);padding:8px 11px;min-height:42px;font:800 13px Poppins,system-ui;cursor:pointer}.dashboard-teacher-message.has-messages{border-color:#e87cb3;background:#fff0f7;color:#b33b80}@media(max-width:440px){.profile-home-link span{display:none}.dashboard-teacher-message{font-size:12px;padding:7px 8px}}</style></head>
 <body>
 <div class="page">
   <header class="header">
@@ -31,6 +31,7 @@
       <strong id="headerName">Student</strong>
       <span id="headerClass">Willena English</span>
     </div>
+    <a class="profile-home-link" href="/students/dashboard" aria-label="Home"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/></svg><span>Home</span></a>
     <button class="avatar" type="button" aria-label="Open settings">S</button>
   </header>
 
@@ -109,8 +110,8 @@
   </div>
 </div>
 
-<script src="/students/dashboard-v2/dashboard-theme-pips.js?v=20260915p6b"></script>
+<script src="/students/dashboard-v2/dashboard-theme-pips.js?v=20261101-footer2"></script>
 <script src="/students/dashboard-v2/shared-header-menu.js?v=20261025-sg-homework1"></script>
 <script src="/students/profile-v2.js?v=20260916p6"></script>
-</body>
+<script type="module" src="/students/components/dashboard-inbox-bridge.js?v=20261101-two-pages1"></script></body>
 </html>
