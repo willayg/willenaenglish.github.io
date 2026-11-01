@@ -112,6 +112,80 @@ async function deleteHomework(row){
  const updated=await get(table+'?id=eq.'+encodeURIComponent(row.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(update)});
  if(!Array.isArray(updated)||updated.length!==1)throw Error('Could not remove assignment; check permissions');
 }
+
+const editDate=v=>{if(!v)return'';const d=new Date(v);if(!Number.isFinite(d.getTime()))return'';return new Date(d.getTime()+9*3600000).toISOString().slice(0,16)};
+const fromEditDate=v=>v?new Date(v+':00+09:00').toISOString():null;
+async function editHomework(row,teacher,afterSave){
+ if(String(row.created_by)!==String(teacher))return;
+ const table=row._table;
+ const supported=['homework_assignments','grammar_foundation_homework','sentence_genius_homework','test_prep_tasks'];
+ if(!supported.includes(table))return;
+ const detailRows=await get(table+'?id=eq.'+encodeURIComponent(row.id)+'&select=*');
+ const original=detailRows?.[0];if(!original)throw Error('Assignment not found.');
+ const fieldClass=table==='homework_assignments'?'class':table==='test_prep_tasks'?null:'class_name';
+ const dialog=document.createElement('dialog');
+ dialog.className='ua-edit-modal';
+ dialog.style.cssText='border:0;border-radius:24px;padding:0;width:min(94vw,560px);max-height:90vh;box-shadow:0 20px 60px #25394744;color:#313846';
+ const backdropStyle=document.createElement('style');
+ backdropStyle.textContent='.ua-edit-modal::backdrop{background:#182a38a8}.ua-edit-modal label{display:grid;gap:6px;font-weight:700;font-size:13px}.ua-edit-modal input,.ua-edit-modal textarea,.ua-edit-modal select{width:100%;min-width:0;padding:12px;border:1px solid #cbdadd;border-radius:12px;font:inherit;background:#fff;color:#293747;box-sizing:border-box}.ua-edit-modal form{display:grid;gap:14px;padding:24px}.ua-edit-modal menu{display:flex;justify-content:flex-end;gap:10px;margin:0;padding:10px 0 0}.ua-edit-modal button{cursor:pointer;border-radius:12px;padding:11px 15px;border:1px solid #afd1d5;background:#fff;font:inherit}.ua-edit-modal button[type=submit]{background:#e7f9fa;color:#247f88;font-weight:800}';
+ const form=document.createElement('form');form.method='dialog';
+ const title=document.createElement('h2');title.textContent='Edit assignment';title.style.margin='0';
+ form.append(title);
+ const add=(name,value,type='text',options=null)=>{
+  const label=document.createElement('label');label.textContent=name;
+  const node=options?document.createElement('select'):type==='textarea'?document.createElement('textarea'):document.createElement('input');
+  if(node.tagName==='INPUT')node.type=type;
+  if(options){options.forEach(x=>{const option=document.createElement('option');option.value=x;option.textContent=x;node.append(option)})}
+  node.value=value??'';node.dataset.field=name;label.append(node);form.append(label);return node;
+ };
+ let classInput=null;
+ if(fieldClass){
+  const all=await get('classes?select=name&order=name.asc&limit=300').catch(()=>[]);
+  const names=[...new Set([original[fieldClass],'Test',...all.map(x=>x.name)].filter(Boolean))];
+  classInput=add('Class',original[fieldClass],'text',names);
+ }else{
+  const note=document.createElement('p');note.textContent='내신 homework is assigned to an individual student. Reassignment to a different class requires a new assignment.';note.style.fontSize='13px';form.append(note);
+ }
+ const titleInput=('title'in original)?add('Title',original.title):null;
+ let contentInput=null;
+ if(table==='homework_assignments')contentInput=add('Instructions / content',original.list_meta?.prompt_text||original.description||'','textarea');
+ if(table==='grammar_foundation_homework'){
+  const select=add('Completion requirement',String(original.completion_percent||80),'text',['80','100']);contentInput=select;
+ }else if(table==='sentence_genius_homework'){
+  const note=document.createElement('p');note.textContent='Sentence content stays linked to its original book and unit. Change the title, class or deadline here; assign a new task to change the sentence set.';note.style.fontSize='13px';form.append(note);
+ }else if(table==='test_prep_tasks'){
+  contentInput=add('Number of questions',String(original.target_count||10),'number');
+ }
+ const startInput=('start_at'in original)?add('Available from',editDate(original.start_at),'datetime-local'):null;
+ const dueInput=add('Due date',editDate(original.due_at),'datetime-local');
+ dueInput.required=true;
+ const status=document.createElement('p');status.setAttribute('role','status');status.style.cssText='font-size:13px;color:#ad5151;margin:0';
+ const menu=document.createElement('menu');const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';cancel.onclick=()=>dialog.close();const save=document.createElement('button');save.type='submit';save.textContent='Save changes';menu.append(cancel,save);form.append(status,menu);dialog.append(backdropStyle,form);document.body.append(dialog);
+ dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const due=fromEditDate(dueInput.value);const start=startInput?fromEditDate(startInput.value):null;
+  if(!due||start&&new Date(start)>new Date(due)){status.textContent='Please check the availability and due dates.';return}
+  const updates={due_at:due};
+  if(classInput)updates[fieldClass]=classInput.value;
+  if(titleInput)updates.title=titleInput.value.trim();
+  if(startInput)updates.start_at=start;
+  if(table==='homework_assignments'){
+   updates.description=contentInput.value;
+   updates.list_meta={...(original.list_meta||{}),prompt_text:contentInput.value};
+   if(original.list_meta?.creative_type==='writing_genius'&&original.list_meta?.kind==='topic'&&!contentInput.value.trim()){status.textContent='Add a topic or writing instructions.';return}
+  }else if(table==='grammar_foundation_homework')updates.completion_percent=Number(contentInput.value);
+  else if(table==='test_prep_tasks')updates.target_count=Math.max(1,Math.min(500,Number(contentInput.value)||10));
+  if(classInput&&!classInput.value){status.textContent='Select a class.';return}
+  if(titleInput&&!updates.title){status.textContent='Enter a title.';return}
+  save.disabled=true;status.textContent='Saving…';
+  try{
+   const changed=await get(table+'?id=eq.'+encodeURIComponent(row.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(updates)});
+   if(!Array.isArray(changed)||changed.length!==1)throw Error('Update was not saved. Check teacher permissions.');
+   Object.assign(row,changed[0]);dialog.close();afterSave();
+  }catch(err){status.textContent=err.message;save.disabled=false}
+ });
+}
 async function loadOverview(scopeName='my'){
  const host=document.querySelector('#uaOverview');if(!host)return;
  host.textContent='Loading assignments across apps…';
@@ -178,7 +252,7 @@ async function loadOverview(scopeName='my'){
       const ownedByMe=id(row.created_by)===teacher;
       return '<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
         '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden>'+esc(detail)+'</div>'+
-        (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control ua-delete-homework" data-ua-delete="'+i+'" aria-label="Delete assignment '+esc(row.label)+'" style="border:1px solid #d9a6a6;color:#aa4949;background:#fff;padding:6px 12px;font-size:12px">Delete assignment</button></div>':'')+
+        (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit assignment</button><button type="button" class="control ua-delete-homework" data-ua-delete="'+i+'" aria-label="Delete assignment '+esc(row.label)+'" style="border:1px solid #d9a6a6;color:#aa4949;background:#fff;padding:6px 12px;font-size:12px">Delete assignment</button></div>':'')+
         (overviewStage==='active'&&ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework for bulk completion" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label><button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button></div>':'')+'</article>';
      }).join('')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
      '<p class="ua-note">Past-due homework appears in Complete automatically. ✓ closes one assignment; check boxes and Complete selected close several. Student attempts and results remain preserved.</p>';
@@ -222,6 +296,13 @@ async function loadOverview(scopeName='my'){
     const status=host.querySelector('#uaBulkStatus');
     if(status){status.hidden=false;status.textContent=success+' completed.'+(failed.length?' '+failed.length+' failed: '+failed.slice(0,3).join('; '):'');}
    }
+   host.querySelectorAll('[data-ua-edit]').forEach(button=>button.onclick=async()=>{
+     const row=visible[Number(button.dataset.uaEdit)];if(!row)return;
+     button.disabled=true;
+     try{await editHomework(row,teacher,()=>renderOverview())}
+     catch(err){const n=host.querySelector('#uaBulkStatus');n.hidden=false;n.textContent='Edit unavailable: '+err.message}
+     finally{button.disabled=false}
+   });
    host.querySelectorAll('[data-ua-delete]').forEach(button=>button.onclick=async()=>{
     const row=visible[Number(button.dataset.uaDelete)];
     if(!row||id(row.created_by)!==teacher)return;
