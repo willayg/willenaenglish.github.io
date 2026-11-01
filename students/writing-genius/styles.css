@@ -851,3 +851,6 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-revision-input{display:block;box-sizing:border-box;width:100%;min-height:115px;resize:vertical;border:1.5px solid #bde4e9;border-radius:11px;padding:12px 14px;background:white;color:#35565b;font:500 1rem/1.7 Poppins,system-ui,sans-serif;margin:12px 0}
 .writing-genius #wgDiaryFlow .df-revision-input:focus{outline:2px solid #64ccd5;outline-offset:1px}
 .writing-genius #wgDiaryFlow .df-revision-starter{border:1px solid #e8adce;border-radius:10px;background:#fff3fa;color:#b83b7f;padding:10px 13px;text-align:left;font:700 .83rem Poppins,system-ui,sans-serif;cursor:pointer}
+
+/* Conditional, topic-specific AI structure example, shown only when a section needs help. */
+.writing-genius #wgDiaryFlow .df-revision-example{margin:8px 0 13px;padding:10px 12px;border-left:3px solid #e895c4;background:#fff5fa;color:#94436c;font-size:.9rem;line-height:1.6;border-radius:7px}
