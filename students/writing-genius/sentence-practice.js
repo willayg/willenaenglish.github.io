@@ -452,7 +452,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  }
  async function startSession(){
   if(state.loading)return;
-  if(state.today?.status==='in_progress'){
+  if(!state.homework?.assignmentId&&state.today?.status==='in_progress'){
    state.session=structuredClone(state.today);showRound();return;
   }
   const book=state.books.find(b=>b.id===field('spBook')),unit=field('spUnit');
