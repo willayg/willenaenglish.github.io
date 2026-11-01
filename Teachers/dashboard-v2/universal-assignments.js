@@ -162,9 +162,12 @@ async function creativeManage(app,body){
     '<div class="ua-genius-current-history"><button type="button" data-period="current" class="'+(view==='current'?'active':'')+'">Current</button><button type="button" data-period="history" class="'+(view==='history'?'active':'')+'">History</button></div>'+
     '<button type="button" class="control" id="uaCreativeRefresh">Refresh</button></div>'+
     (chosen.length?'<div class="ua-genius-manage-list">'+chosen.map(a=>
-     '<article class="ua-genius-manage-card"><div class="ua-genius-manage-card-head"><strong>'+esc(a.title||'Homework')+'</strong><span>'+esc(a.class||'')+' · '+(a.due_at?'Due '+esc(new Date(a.due_at).toLocaleDateString('en-GB')):'No deadline')+'</span></div>'+
-     '<div class="ua-genius-manage-card-body"><b>'+esc(a.class||'')+'</b><p>'+esc(label)+' · '+esc(a.list_meta?.kind||'')+'</p><span class="ua-genius-status">'+(a.active===false||a.ended_at?'HISTORY':'CURRENT')+'</span>'+
-     '<button type="button" class="control ua-assign" data-creative-progress="'+esc(a.id)+'">Student progress →</button><div data-creative-results="'+esc(a.id)+'" aria-live="polite"></div></div></article>'
+     window.WillenaGeniusHomeworkCard.card({id:a.id,className:a.class,
+     task:(a.list_meta?.kind==='sentence'?(a.list_meta?.unit_label||a.title):(a.title||'Homework')),
+     dueAt:a.due_at,teacher:a.teacher_name||a.created_by_name||'',
+     progressLabel:'Student progress',
+     body:'<button type="button" class="control ua-assign" data-creative-progress="'+esc(a.id)+'">Load student results</button>'+
+      '<div data-creative-results="'+esc(a.id)+'" aria-live="polite"></div>'})
     ).join('')+'</div>':'<div class="ua-empty">No '+label+' homework in this view.</div>')+'</div>';
    body.querySelector('#uaCreativeClass').value=classChoice;
    body.querySelector('#uaCreativeClass').onchange=e=>{classChoice=e.target.value;paint()};
