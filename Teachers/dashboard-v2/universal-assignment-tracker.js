@@ -218,6 +218,11 @@ async function loadOverview(scopeName='my'){
    const profiles=await get('profiles?select=id,name,username&id=in.('+creators.join(',')+')');
    authors=new Map(profiles.map(p=>[id(p.id),p.name||p.username||'Unknown']));
   }catch(e){errors.push('Teacher names: '+e.message)}
+  let classProgress=new Map();
+  try{
+   const stats=await get('rpc/teacher_homework_class_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   if(Array.isArray(stats))classProgress=new Map(stats.map(x=>[id(x.id),x]));
+  }catch(e){errors.push('Class progress: '+e.message)}
   const naesin=rows.filter(r=>r.app==='내신');
   let progress=new Map();
   if(naesin.length)try{
@@ -253,8 +258,11 @@ async function loadOverview(scopeName='my'){
      const outcome=progress.get(id(row.id)),total=Number(row.target_count)||0;
      return outcome&&total>0?Math.max(0,Math.min(100,Math.round((Number(outcome.done)||0)/total*100))):null;
     }).filter(p=>p!==null);
-    const average=tracked.length?Math.round(tracked.reduce((a,b)=>a+b,0)/tracked.length):null;
-    const label=average===null?'Progress not available':average+'% correct';
+    const grammar=g.items.filter(r=>r.app==='Grammar Genius').map(r=>classProgress.get(id(r.id))).filter(x=>x&&Number(x.students)>0);
+    const grammarStudents=grammar.reduce((n,x)=>n+Number(x.students),0);
+    const grammarPassed=grammar.reduce((n,x)=>n+Number(x.passed),0);
+    const average=tracked.length?Math.round(tracked.reduce((a,b)=>a+b,0)/tracked.length):grammarStudents?Math.round(grammarPassed*100/grammarStudents):null;
+    const label=tracked.length?average+'% correct':grammarStudents?grammarPassed+'/'+grammarStudents+' grammar passes':'Progress not available';
     return '<div class="ua-group" data-ua-group="'+esc(g.key)+'"><button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(g.key)+'" aria-expanded="false"><span><b>'+esc(g.title)+'</b><small>'+esc(g.sub)+' · '+g.items.length+' assignment'+(g.items.length===1?'':'s')+'</small></span><strong>'+esc(label)+' ▾</strong></button>'+
       (average===null?'':'<div class="ua-group-meter" role="progressbar" aria-label="Tracked question completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+average+'"><i style="width:'+average+'%"></i></div>')+
       '<div class="ua-group-body" hidden>';
@@ -276,11 +284,14 @@ async function loadOverview(scopeName='my'){
       const done=result?Number(result.done)||0:0;
       const target=Number(row.target_count)||0;
       const pct=target?(done>=target&&(Number(result?.unresolved)||0)>0?99:Math.min(100,Math.round(done/target*100))):null;
-      const detail=result?'Correct '+done+'/'+target+' · Attempted '+(result.attempted??'—')+' · First-try accuracy '+(result.accuracy_percent??'—')+'% · 오답 remaining '+(result.unresolved??'—'):'Progress not connected for this app';
+      const grammarResult=classProgress.get(id(row.id));
+      const detail=result?'Correct '+done+'/'+target+' · Attempted '+(result.attempted??'—')+' · First-try accuracy '+(result.accuracy_percent??'—')+'% · 오답 remaining '+(result.unresolved??'—')
+        :grammarResult?grammarResult.passed+'/'+grammarResult.students+' students passed'
+        :'Completion data not available for this app';
       const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
       const ownedByMe=id(row.created_by)===teacher;
       return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
-        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden>'+esc(detail)+'</div>'+
+        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden><p>'+esc(detail)+'</p>'+(grammarResult?.student_rows?'<div class="ua-student-results">'+grammarResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.passed?'✓ Passed':'Not passed')+'</div>').join('')+'</div>':'')+'<div class="ua-attempt-results" data-ua-attempts="'+i+'"></div></div>'+
         (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
         (overviewStage==='active'&&ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework for bulk completion" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label><button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button></div>':'')+'</article>';
      }).join('')+(visible.length?'</div></div>':'')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
@@ -295,9 +306,20 @@ async function loadOverview(scopeName='my'){
    });
    host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName);
    host.querySelectorAll('[data-ua-stage]').forEach(button=>button.onclick=()=>{overviewStage=button.dataset.uaStage;overviewSelections.clear();renderOverview()});
-   host.querySelectorAll('[data-ua-detail]').forEach(button=>button.onclick=()=>{
-    const panel=host.querySelector('#uaExpanded'+button.dataset.uaDetail);
+   host.querySelectorAll('[data-ua-detail]').forEach(button=>button.onclick=async()=>{
+    const index=Number(button.dataset.uaDetail),row=visible[index];
+    const panel=host.querySelector('#uaExpanded'+index);
     panel.hidden=!panel.hidden;button.setAttribute('aria-expanded',String(!panel.hidden));
+    if(panel.hidden||!['내신','Word Genius'].includes(row.app))return;
+    const area=panel.querySelector('[data-ua-attempts]');
+    if(area.dataset.loaded)return;
+    area.textContent='Loading saved answers…';
+    try{
+     const attempts=await get('rpc/teacher_homework_detail_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_app:row.app,p_assignment_id:row.id})});
+     if(!Array.isArray(attempts))throw Error('Invalid response');
+     area.dataset.loaded='true';
+     area.innerHTML='<h4>Answer history (latest 200)</h4>'+(attempts.length?attempts.map(a=>'<div class="ua-attempt-item"><b>'+esc(a.student||a.question||'Question')+'</b> · '+(a.correct?'✓ Correct':'✕ Incorrect')+(a.retry?' · Retry':'')+'<small>'+esc(fmt(a.at))+'</small><div>Student: '+esc(a.answer??'—')+'</div><div>Target: '+esc(a.correct_answer??'—')+'</div></div>').join(''):'<p>No matching saved attempts for this assignment.</p>');
+    }catch(e){area.textContent='Could not load answers: '+e.message}
    });
    function updateSelectionUI(){
     const selectedCount=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
