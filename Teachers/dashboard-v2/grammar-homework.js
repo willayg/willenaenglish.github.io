@@ -55,6 +55,7 @@ async function submit(e){
   const confirmed=await table('?select=id&batch_id=eq.'+encodeURIComponent(batch)+'&limit='+rows.length);
   if(!Array.isArray(confirmed)||confirmed.length!==rows.length)throw Error('The server did not confirm all '+rows.length+' items. Please check Manage Homework before retrying.');
   message('Assigned '+confirmed.length+' separate homework item'+(confirmed.length===1?'':'s')+' to '+klass+'.');
+  window.dispatchEvent(new CustomEvent('willena:assignment-created',{detail:{message:confirmed.length+' Grammar Genius items · '+klass}}));
   el.querySelectorAll('[data-stage],[data-all]').forEach(x=>x.checked=false);
   $('#gfHwSelected',el).textContent='0 selected';
   $('#gfHwView',el).hidden=false;
