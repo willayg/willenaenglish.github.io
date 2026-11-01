@@ -298,6 +298,12 @@ function homeworkStudentProgress(item,id){
   const a=item.assignment,p=item.progress;
   if(item.error)return {unknown:true,error:item.error};
   if(!p)return {unknown:true};
+  const creativeSource=String(a.list_meta?.source_type||'').toLowerCase();
+  if(['writing_genius','puzzles'].includes(creativeSource)){
+    const row=(p.students||[]).find(s=>String(s.id)===String(id));
+    if(!row||row.error)return {unknown:true};
+    return {percent:row.completed?100:0,complete:!!row.completed,started:!!row.completed,done:row.completed?1:0,total:1,sections:[]};
+  }
   if(String(a.source_type||'').toLowerCase()==='sentence_genius'){
     const row=(p.students||[]).find(s=>String(s.id||s.student_id||s.user_id)===String(id));
     if(!row)return {unknown:true};
@@ -360,7 +366,7 @@ async function loadRosterAssignments(className){
     await Promise.all(Array.from({length:Math.min(4,assignments.length)},async()=>{
       while(cursor<assignments.length){const index=cursor++,item=rosterAssignments.items[index];
         if(request!==rosterAssignments.request)return;
-        try{const progress=await api(homeworkRoute('assignment_progress',{assignment_id:item.assignment.id,class:className}));if(request!==rosterAssignments.request)return;item.progress=progress}catch(e){if(request!==rosterAssignments.request)return;item.error=e.message}
+        try{const action=['writing_genius','puzzles'].includes(String(item.assignment.list_meta?.source_type||''))?'creative_assignment_progress':'assignment_progress';const progress=await api(homeworkRoute(action,{assignment_id:item.assignment.id,class:className}));if(request!==rosterAssignments.request)return;item.progress=progress}catch(e){if(request!==rosterAssignments.request)return;item.error=e.message}
       }
     }));
     // Merge Sentence Genius homework into the canonical student roster view.
@@ -400,7 +406,7 @@ function renderHomeworkDetails(id){
   return rows.map(({assignment:a,result:r})=>{
     const overdue=a.due_at&&Date.parse(a.due_at)<Date.now()&&!r.complete;
     const status=r.unknown?'Progress unavailable':r.complete?'Complete':r.started?'In progress':'Not started';
-    return `<div class="roster-assignment-detail"><div class="roster-assignment-head"><strong>${esc(a.title||a.list_title||'Assignment')}</strong><span>${status}${r.unknown?'':` · ${r.percent}%`}</span></div><small>${String(a.source_type||'').toLowerCase()==='vocab_study'?'Word Genius':String(a.source_type||'').toLowerCase()==='sentence_genius'?'Sentence Genius':'Homework'}${a.due_at?` · Due ${esc(fmtDate(a.due_at))}${overdue?' · Past due':''}`:''}</small>${r.unknown?'':`<div class="roster-progress"><i style="width:${r.percent}%"></i></div><div class="roster-sections">${r.sections.length?r.sections.map(s=>`<span><b>${esc(s.label)}</b> ${s.done}/${s.total} ${String(a.source_type||'').toLowerCase()==='sentence_genius'?'sentence steps mastered':'words completed'} · ${Math.max(0,s.total-s.done)} remaining</span>`).join(''):`<span>${esc(r.detail)}</span>`}</div>`}</div>`;
+    return `<div class="roster-assignment-detail"><div class="roster-assignment-head"><strong>${esc(a.title||a.list_title||'Assignment')}</strong><span>${status}${r.unknown?'':` · ${r.percent}%`}</span></div><small>${a.list_meta?.source_type==='writing_genius'?'Writing Genius':a.list_meta?.source_type==='puzzles'?'Puzzles':String(a.source_type||'').toLowerCase()==='vocab_study'?'Word Genius':String(a.source_type||'').toLowerCase()==='sentence_genius'?'Sentence Genius':'Homework'}${a.due_at?` · Due ${esc(fmtDate(a.due_at))}${overdue?' · Past due':''}`:''}</small>${r.unknown?'':`<div class="roster-progress"><i style="width:${r.percent}%"></i></div><div class="roster-sections">${r.sections.length?r.sections.map(s=>`<span><b>${esc(s.label)}</b> ${s.done}/${s.total} ${String(a.source_type||'').toLowerCase()==='sentence_genius'?'sentence steps mastered':'words completed'} · ${Math.max(0,s.total-s.done)} remaining</span>`).join(''):`<span>${esc(r.detail)}</span>`}</div>`}</div>`;
   }).join('');
 }
 function renderStudents(){
