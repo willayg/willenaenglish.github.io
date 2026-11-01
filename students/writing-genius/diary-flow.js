@@ -65,7 +65,7 @@ const diaryTopics=[
  {title:'나의 꿈',en:'My Dream',guide:'What do you want to be or do? Why? How can you work toward it?',example:'I want to become a scientist. I enjoy learning about space. I read books about planets. I want to build a robot one day. I will study hard at school. I hope my dream comes true.'}
 ];
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
-export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
+export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedback,onExit}){
  const root=$('wgDiaryFlow'),stage=$('dfStage'),actions=$('dfActions'),message=$('dfMessage'),progress=$('dfProgress');
  let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],busy=false,autosaveTimer=null,transitionTimer=null,choices={};
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
@@ -154,6 +154,20 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
    <div class="df-ai-loading-dots" aria-hidden="true"><i></i><i></i><i></i></div>
   `;
   stage.append(splash);
+ }
+ function showTeacherFeedback(){
+  if(!current?.id||!teacherFeedback)return;
+  const id=current.id;
+  void teacherFeedback(current).then(data=>{
+   if(!data||id!==current?.id||step!=='finish')return;
+   stage.querySelector('.df-teacher-feedback')?.remove();
+   if(!data.feedback&&!data.bonus_points)return;
+   const box=el('section','df-teacher-feedback');
+   box.append(el('h3','','Teacher feedback · 선생님 코멘트'));
+   if(data.feedback)box.append(el('p','',data.feedback));
+   if(data.bonus_points)box.append(el('strong','','+'+data.bonus_points+' bonus points'));
+   stage.append(box);
+  }).catch(()=>{});
  }
  function choiceKey(){return 'willena-diary-choices:'+current.id+':'+current.body.length+':'+current.body.slice(0,32)}
  function saveChoices(){try{localStorage.setItem(choiceKey(),JSON.stringify(choices))}catch{}}
@@ -412,10 +426,11 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
    stage.append(award);
    stage.append(el('p','df-reward-breakdown',reward.sentences+' sentences × 5 points'));
    status('완료했습니다!');
+   showTeacherFeedback();
    button('글쓰기 메뉴',close,true);
   }
   catch(e){status(e.message,true);button('다시 저장',complete,true)}
   finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};loadChoices();spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));button('글쓰기 메뉴',close,true)}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};loadChoices();spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));showTeacherFeedback();button('글쓰기 메뉴',close,true)}else if(feedback)summary();else topic()},close};
 }
