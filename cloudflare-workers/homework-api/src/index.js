@@ -475,7 +475,6 @@ export default {
           title,
           description: description || null,
           list_key: effectiveListKey,
-          source_type: ['writing_genius','puzzles'].includes(String(sourceMeta.source_type || '')) ? sourceMeta.source_type : undefined,
           list_title: list_title || null,
           list_meta: sourceMeta,
           start_at: start_at || new Date().toISOString(),
