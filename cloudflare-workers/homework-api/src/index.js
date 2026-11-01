@@ -713,7 +713,7 @@ export default {
             }else{
               const q='user_id=eq.'+encodeURIComponent(student.id)
                 +'&mode=eq.'+encodeURIComponent(kind)+'&ended_at=gte.'+encodeURIComponent(since)
-                +'&summary->>completed=eq.true&select=id,ended_at&limit=1';
+                +'&select=id,ended_at&limit=1';
               evidence=await supabaseSelect(env,'progress_sessions',q);
             }
             return {id:student.id,name:student.korean_name||student.name||'Student',completed:evidence.length>0};
