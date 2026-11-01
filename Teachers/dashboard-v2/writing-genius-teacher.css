@@ -21,3 +21,18 @@
 #view-writing-genius .wg-t-empty{padding:36px 16px;text-align:center;color:#72858d;font-size:.83rem;line-height:1.6}
 @media(max-width:830px){#view-writing-genius .wg-t-grid{grid-template-columns:1fr}#view-writing-genius .wg-t-list{max-height:320px;min-height:0}#view-writing-genius .wg-t-filter{gap:8px}#view-writing-genius .wg-t-filter>select{max-width:45%}}
 @media(max-width:480px){#view-writing-genius .wg-t-filter input{flex-basis:100%}#view-writing-genius .wg-t-filter>select{max-width:none;flex:1}#view-writing-genius .wg-t-filter>button{flex:0 0 auto}}
+
+/* Submission timeline and original/corrected reading panes */
+.wg-t-date-heading{margin:18px 5px 9px;color:#537b84;font-size:.82rem;font-weight:900;letter-spacing:.025em}
+.wg-t-submission-card{display:block;width:100%;text-align:left;margin:7px 0;padding:14px 15px;border-radius:15px}
+.wg-t-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.wg-t-card-time{font-size:.74rem;color:#81949a;font-weight:700}
+.wg-t-card-title{display:block;margin:6px 0 2px;font-size:1rem}
+.wg-t-card-excerpt{display:block;margin-top:7px;line-height:1.45;color:#81949a}
+.wg-t-version{margin:16px 0 22px}
+.wg-t-version-title{font-size:.95rem;margin:0 0 9px;color:#2e6974}
+.wg-t-version .wg-t-paper{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75}
+.wg-t-corrected{border-color:#edb9d5!important;background:#fffafd!important}
+.wg-t-alternative{padding:10px 13px;border:1px solid #d2e9eb;border-radius:12px;margin:8px 0}
+.wg-t-alternative small{color:#73949c;font-weight:800}
+.wg-t-alternative p{margin:6px 0;line-height:1.6}
