@@ -352,7 +352,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    }catch(error){console.warn('[Writing Genius] book preview unavailable',book.title,error)}
   }));
   // Retain original assignment order after asynchronous checks.
-  state.books=state.books.filter(book=>available.some(ok=>ok.id===book.id));
+  state.books=state.books.filter(book=>available.some(ok=>ok.id===book.id)||String(book.id)===String(state.homework?.bookId));
   for(const b of state.books){
    select.append(Object.assign(node('option',b.title),{value:b.id}));
    const btn=node('button',b.title);btn.type='button';
@@ -440,8 +440,8 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
     $('spBook').value=String(book.id);renderBookTabs();await loadUnits();
     const unit=state.units.find(x=>String(x.id)===String(homework.unitId));
     if(unit){$('spUnit').value=String(unit.id);renderUnitButtons();void previewUnit()}
-    else notify('이 숙제의 단원을 현재 교재에서 찾을 수 없어요.',true);
-   }else notify('이 숙제의 교재가 현재 수업에 배정되어 있지 않아요.',true);
+    else {state.catalogError=true;notify('숙제 단원을 찾지 못했어요. 선생님에게 알려주세요.',true);}
+   }else {state.catalogError=true;notify('숙제 교재를 불러오지 못했어요. 선생님에게 알려주세요.',true);}
   }
   refreshStartButton();
   // A successful request previously left the initial "loading" message
