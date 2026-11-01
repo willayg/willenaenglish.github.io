@@ -54,7 +54,9 @@ async function standardHomework(){
     // This also works before the optional Cloudflare worker progress endpoint deploys.
     if(!entry.done){
       const kind=String(a.list_meta?.kind||'');
-      const query=app==='Writing Genius'
+      const query=app==='Writing Genius'&&kind==='sentence'
+        ?'writing_genius_sentence_sessions?select=id&assignment_id=eq.'+encodeURIComponent(a.id)+'&status=eq.completed&limit=1'
+        :app==='Writing Genius'
         ?'writing_genius_entries?select=id&kind=eq.'+encodeURIComponent(kind)+'&status=eq.submitted&prompt_key=eq.'+encodeURIComponent('homework-'+a.id)+'&limit=1'
         :'puzzle_homework_completions?select=assignment_id&assignment_id=eq.'+encodeURIComponent(a.id)+'&limit=1';
       try{
