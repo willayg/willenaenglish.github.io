@@ -334,6 +334,28 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     field.setAttribute('aria-label',titles[i]);field.addEventListener('input',update);fields.push(field);box.append(field);
     stage.append(box);
   });
+  const suggestions=(feedback?.expressions||[]).filter(x=>x.english);
+  if(suggestions.length){
+   const box=el('section','df-revision-expressions');box.append(el('h3','','New Expressions · 새 표현'));
+   box.append(el('p','df-muted','원하는 문장을 골라 알맞은 부분에 추가한 다음, 자신의 글에 맞게 고쳐 보세요.'));
+   for(const item of suggestions){
+    const card=el('div','df-revision-expression');
+    card.append(el('strong','',item.english));
+    if(item.meaning_ko)card.append(el('small','',item.meaning_ko));
+    const add=el('button','df-revision-starter','글에 추가하기 · Add');
+    add.type='button';
+    add.onclick=()=>{
+     const destination=fields[1]||fields[0];
+     if(!destination)return;
+     const sentence=String(item.english||'').trim();
+     if(!sentence)return;
+     destination.value+=(destination.value.trim()?' ':'')+sentence;
+     destination.focus();update();add.textContent='추가됨 ✓';add.disabled=true;
+    };
+    card.append(add);box.append(card);
+   }
+   stage.append(box);
+  }
   stage.append(counter);update();
   button('이전',summary);
   button('Final AI Review · 마지막 확인',async()=>{
@@ -413,7 +435,29 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   if(expressions.length){
    const section=el('section','df-review-group');
    section.append(el('h3','df-review-heading','New Expressions'));
-   expressions.forEach(x=>{const line=el('div','df-expression-line');line.append(el('strong','',x.english||''),el('span','',x.meaning_ko||''));section.append(line)});
+   expressions.forEach(x=>{
+    const line=el('div','df-expression-line');
+    line.append(el('strong','',x.english||''),el('span','',x.meaning_ko||''));
+    if(current.kind==='diary'){
+     const add=el('button','df-revision-starter','일기에 추가하고 다시 확인');
+     add.type='button';
+     add.onclick=async()=>{
+      const sentence=String(x.english||'').trim();
+      if(!sentence||busy)return;
+      if(split(current.body).length>=30){status('최대 30문장까지 쓸 수 있어요.',true);return}
+      busy=true;add.disabled=true;
+      const before=current.body;
+      try{
+       current.body=before.trim()+(before.trim()?' ':'')+sentence;
+       await persist();
+       reviewLoading();feedback=await review(current);choices={};saveChoices();summary();
+      }catch(e){current.body=before;summary();status(e.message||'다시 확인해 주세요.',true)}
+      finally{busy=false}
+     };
+     line.append(add);
+    }
+    section.append(line)
+   });
    stage.append(section);
   }
   refreshProgress();
