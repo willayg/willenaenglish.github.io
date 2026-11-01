@@ -50,7 +50,20 @@ async function standardHomework(){
   if(app==='Writing Genius'||app==='Puzzles'){
     entry.progress=Number(a.creative_progress?.percent)||0;
     entry.done=a.creative_progress?.completed===true;
-    if(a.creative_progress?.unavailable)entry.detail='진행 상황을 확인할 수 없어요';
+    // RLS-scoped read of the current student's own submitted work.
+    // This also works before the optional Cloudflare worker progress endpoint deploys.
+    if(!entry.done){
+      const kind=String(a.list_meta?.kind||'');
+      const since=encodeURIComponent(a.created_at||a.start_at||'1970-01-01T00:00:00Z');
+      const query=app==='Writing Genius'
+        ?'writing_genius_entries?select=id&kind=eq.'+encodeURIComponent(kind)+'&status=eq.submitted&submitted_at=gte.'+since
+          +(kind==='topic'?'&prompt_key=eq.'+encodeURIComponent('homework-'+a.id):'')+'&limit=1'
+        :'progress_sessions?select=id&mode=eq.'+encodeURIComponent(kind)+'&ended_at=gte.'+since+'&limit=1';
+      try{
+        const evidence=await authed(SUPA+'/rest/v1/'+query);
+        if(Array.isArray(evidence)&&evidence.length){entry.done=true;entry.progress=100}
+      }catch(error){entry.detail='진행 상황 확인 중';console.warn('[mission basket] Creative homework evidence unavailable',a.id,error)}
+    }
   }
   if(app==='Word Genius'){
    try{
