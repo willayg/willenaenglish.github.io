@@ -175,6 +175,25 @@ async function creativeManage(app,body){
    body.querySelector('#uaCreativeRefresh').onclick=()=>void creativeManage(app,body);
    attachProgress();
    void window.WillenaGeniusHomeworkCard?.hydrateTeachers(body);
+   // Reuse real submission/completion records for each visible class ring.
+   void (async()=>{
+    const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+    if(!token)return;
+    const endpoints=app==='writing'?['teacher_creative_writing_progress_v1','teacher_writing_sentence_homework_progress_v1']:['teacher_puzzle_homework_progress_v1'];
+    const results=await Promise.allSettled(endpoints.map(async endpoint=>{
+     const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/'+endpoint,{
+      method:'POST',headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
+     if(!response.ok)throw Error('Progress unavailable');
+     return response.json();
+    }));
+    const progress=new Map();
+    results.forEach(result=>{if(result.status==='fulfilled'&&Array.isArray(result.value))result.value.forEach(x=>progress.set(String(x.id),x))});
+    for(const item of chosen){
+     const stat=progress.get(String(item.id));
+     window.WillenaGeniusHomeworkCard?.updateRing(item.id,stat&&Number(stat.students)>0?100*Number(stat.completed||0)/Number(stat.students):null,body);
+    }
+   })();
+
   };
   const attachProgress=()=>{body.querySelectorAll('[data-creative-progress]').forEach(button=>button.addEventListener('click',async()=>{
    const host=body.querySelector('[data-creative-results="'+button.dataset.creativeProgress+'"]');
