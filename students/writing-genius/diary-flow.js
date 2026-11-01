@@ -467,5 +467,5 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    showTeacherFeedback();
   }finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};loadChoices();spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));button('메인 메뉴',close,true);showTeacherFeedback();button('보상 확인',complete)}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};loadChoices();spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
 }
