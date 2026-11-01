@@ -285,11 +285,10 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const roles=['beginning','middle','ending'];
   const titles=['Beginning · 시작','Middle · 가운데','Ending · 마무리'];
   const defaults=[
-   'Introduce your topic, setting or characters. Why should the reader keep reading?',
-   'Add details, examples, or what happens next. Develop the main idea.',
-   'How does the story or explanation finish? What should the reader remember?'
+   '글의 주제나 등장인물을 간단히 소개해 보세요.',
+   '무슨 일이 있었는지 또는 중요한 내용을 한두 문장 더 써 보세요.',
+   '어떻게 끝났는지 또는 마지막 생각을 간단히 써 보세요.'
   ];
-  const starters=['One day, …','The most important thing is …','In the end, …'];
   // Prefer existing student paragraph breaks. For a single paragraph, provide editable sections
   // using a suggested split without pretending AI has identified exact boundaries.
   let sections;
@@ -316,16 +315,12 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     if(advice.needs_work)head.append(el('span','df-revision-needs','Add or improve · 보완하기'));
     box.append(head);
     if(advice.needs_work){
-      box.append(el('p','df-revision-prompt',advice.advice_ko||defaults[i]));
-    }else box.append(el('p','df-muted',advice.advice_ko||defaults[i]));
+      box.append(el('p','df-revision-prompt',String(advice.advice_ko||defaults[i]).trim()));
+      const example=String(advice.example_en||'').trim();
+      if(example)box.append(el('p','df-revision-example','예시 · '+example));
+    }
     const field=el('textarea','df-revision-input');field.value=sections[i]||'';field.maxLength=12000;field.placeholder=advice.needs_work?'Write your '+role+' here…':'Write your '+role+' here…';
     field.setAttribute('aria-label',titles[i]);field.addEventListener('input',update);fields.push(field);box.append(field);
-    if(advice.needs_work||!field.value.trim()){
-      const starter=String(advice.starter_en||starters[i]).trim();
-      const help=el('button','df-revision-starter','Try a starting idea · '+starter);help.type='button';
-      help.onclick=()=>{field.focus();field.value+=(field.value.trim()?'\n':'')+starter;update()};
-      box.append(help);
-    }
     stage.append(box);
   });
   stage.append(counter);update();
