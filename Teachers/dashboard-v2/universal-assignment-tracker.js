@@ -5,6 +5,15 @@ const ROOT='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=x=>x?new Date(x).toLocaleDateString('ko-KR'):'—';
+const dday=x=>{
+ if(!x)return 'No deadline';
+ const due=new Date(x);if(Number.isNaN(due.getTime()))return 'No deadline';
+ const today=new Date();
+ const day=Date.UTC(today.getFullYear(),today.getMonth(),today.getDate());
+ const target=Date.UTC(due.getFullYear(),due.getMonth(),due.getDate());
+ const offset=Math.round((target-day)/86400000);
+ return offset===0?'D-Day':offset>0?'D-'+offset:'D+'+Math.abs(offset);
+};
 const id=x=>String(x||'');
 let loading=false,selected='',all=[],scope='my',currentTeacherId='',teacherNames=new Map();
 const access=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
@@ -194,14 +203,26 @@ async function loadOverview(scopeName='my'){
   const teacher=await teacherIdentity();
   overviewSelections.clear();
   const sources=[
-   {app:'Word Genius',table:'homework_assignments',select:'id,created_by,class,title,status,active,created_at,due_at,ended_at',label:r=>r.title||r.class||'Vocabulary homework',isActive:r=>r.active!==false&&!['ended','archived','closed','completed','cancelled'].includes(r.status)},
+   {app:'Word Genius',table:'homework_assignments',select:'id,created_by,class,title,status,active,created_at,due_at,ended_at,list_key,list_meta,source_type',label:r=>r.title||r.class||'Vocabulary homework',isActive:r=>r.active!==false&&!['ended','archived','closed','completed','cancelled'].includes(r.status)},
    {app:'Grammar Genius',table:'grammar_foundation_homework',select:'id,created_by,class_name,module_title,stage_title,active,created_at,due_at,closed_at',label:r=>[r.module_title,r.stage_title].filter(Boolean).join(' · '),isActive:r=>r.active!==false},
    {app:'Sentence Genius',table:'sentence_genius_homework',select:'id,created_by,class_name,title,book_title,unit_label,active,created_at,due_at',label:r=>r.title||r.book_title||'Sentence homework',isActive:r=>r.active!==false},
    {app:'내신',table:'test_prep_tasks',select:'id,created_by,title,lesson,practice_type,active,created_at,due_at,completed_at,student_id,target_count',label:r=>r.title||[r.lesson,r.practice_type].filter(Boolean).join(' · '),isActive:r=>r.active!==false}
   ];
   const fetched=await Promise.allSettled(sources.map(async source=>{
    const rows=await get(source.table+'?select='+encodeURIComponent(source.select)+'&order=created_at.desc&limit=1000');
-   return rows.map(row=>({...row,_table:source.table,app:source.app,label:source.label(row),isActive:source.isActive(row)}));
+   return rows.map(row=>{
+    let app=source.app;
+    if(source.table==='homework_assignments'){
+     const meta=row.list_meta&&typeof row.list_meta==='object'?row.list_meta:{};
+     const kind=String(meta.creative_type||meta.app||'').toLowerCase();
+     const key=String(row.list_key||'').toLowerCase();
+     const sourceKind=String(row.source_type||'').toLowerCase();
+     if(kind.includes('writing')||key.startsWith('writing_genius:'))app='Writing Genius';
+     else if(kind.includes('puzzle')||key.startsWith('puzzles:'))app='Puzzles';
+     else if(kind.includes('sentence')||sourceKind==='sentence_genius')app='Sentence Genius';
+    }
+    return {...row,_table:source.table,app,label:source.label(row),isActive:source.isActive(row)};
+   });
   }));
   const errors=[],rows=[];
   fetched.forEach((result,index)=>{if(result.status==='fulfilled')rows.push(...result.value);else errors.push(sources[index].app+': '+result.reason.message)});
@@ -297,7 +318,7 @@ async function loadOverview(scopeName='my'){
         :'Completion data not available for this app';
       const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
       const ownedByMe=id(row.created_by)===teacher;
-      return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
+      return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(dday(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
         '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden><p>'+esc(detail)+'</p>'+(grammarResult?.student_rows?'<div class="ua-student-results">'+grammarResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.passed?'✓ Passed':'Not passed')+'</div>').join('')+'</div>':'')+(wordResult?.student_rows?'<div class="ua-student-results">'+wordResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+p.solved+' correctly answered / '+p.attempted+' attempted</div>').join('')+'</div>':'')+'<div class="ua-attempt-results" data-ua-attempts="'+i+'"></div></div>'+
         (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
         (overviewStage==='active'&&ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework for bulk completion" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label><button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button></div>':'')+'</article>';
