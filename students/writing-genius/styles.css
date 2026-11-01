@@ -798,3 +798,17 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-teacher-feedback h3{font-size:1rem;color:#cc508a;margin:0 0 8px}
 .writing-genius #wgDiaryFlow .df-teacher-feedback p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;margin:6px 0}
 .writing-genius #wgDiaryFlow .df-teacher-feedback strong{display:block;margin-top:9px;color:#cf6692}
+
+/* Teacher message and tap-to-claim diary bonus. */
+.writing-genius #wgDiaryFlow .df-teacher-feedback{display:grid;gap:10px}
+.writing-genius #wgDiaryFlow .df-teacher-alert,.writing-genius #wgDiaryFlow .df-bonus-claim{display:flex;align-items:center;gap:12px;text-align:left;width:100%;min-height:56px;border:2px solid #b9e9ed;border-radius:14px;background:#fff;padding:12px 16px;color:#2d7580;font:800 .91rem Poppins,system-ui,sans-serif;cursor:pointer}
+.writing-genius #wgDiaryFlow .df-teacher-alert{border-color:#ebc5dc;color:#bb4d84;background:#fff7fb}
+.writing-genius #wgDiaryFlow .df-teacher-message{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border-radius:11px;padding:13px;margin:0!important;line-height:1.7}
+.writing-genius #wgDiaryFlow .df-teacher-message[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow .df-bonus-claim svg{width:34px;height:34px;flex:none;color:#e7b22c}
+.writing-genius #wgDiaryFlow .df-bonus-claim.is-claiming svg{animation:df-bonus-spin .75s linear infinite}
+.writing-genius #wgDiaryFlow .df-bonus-reveal{display:block;text-align:center;font-size:clamp(2rem,8vw,3.2rem);font-weight:900;color:#e7aa20;animation:df-bonus-pop .75s cubic-bezier(.2,1.5,.4,1) both}
+.writing-genius #wgDiaryFlow .df-bonus-result{text-align:center;color:#47777c;font-weight:800}
+@keyframes df-bonus-pop{0%{transform:scale(.15) rotate(-18deg);opacity:0}65%{transform:scale(1.28) rotate(7deg);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes df-bonus-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-bonus-reveal,.writing-genius #wgDiaryFlow .df-bonus-claim.is-claiming svg{animation:none}}
