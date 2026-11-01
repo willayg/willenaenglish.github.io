@@ -352,6 +352,12 @@ async function bootstrap(){
             draft.title=custom.title;draft.prompt_key=key;draft.prompt_text=custom.help;
             openEditor(draft);
           }
+        }else if(kind==='sentence'){
+          const bookId=hw.list_meta?.book_id,unitId=hw.list_meta?.unit_id;
+          if(!bookId||!unitId)throw Error('교재 또는 단원이 지정되지 않은 문장 숙제예요.');
+          show('practice');
+          if(!(history.state?.[NAV]&&history.state.screen==='practice'))history.pushState(navState('practice'),'');
+          await practice.open(state.student,{assignmentId:hw.id,bookId,unitId});
         }else if(kind==='diary'){
           const key='homework-'+hw.id;
           const custom={key,title:hw.title||'Daily diary',help:hw.list_meta?.prompt_text||hw.description||'Write your diary.',starters:[]};
