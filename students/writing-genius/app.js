@@ -578,6 +578,7 @@ window.addEventListener('beforeunload',event=>{
   if(state.active?.dirty){event.preventDefault();event.returnValue='';}
 });
 
+async function previewRewardSound(){try{const sfx=await import('/students/shared/student-sfx.js?v=20260927-startup2');sfx.playStudentSfx('complete');setTimeout(()=>sfx.playStudentSfx('star'),220)}catch{}}
 function installTeacherRewardPreview(){
  if(new URLSearchParams(location.search).get('rewardPreview')!=='1')return;
  const layer=document.createElement('div');layer.className='wg-reward-demo-layer';
@@ -587,7 +588,7 @@ function installTeacherRewardPreview(){
  layer.querySelector('.wg-demo-close').onclick=close;
  layer.querySelector('.wg-demo-message').onclick=()=>{const body=layer.querySelector('.wg-demo-message-body');body.hidden=!body.hidden};
  const claim=layer.querySelector('.wg-demo-claim'),result=layer.querySelector('.wg-demo-result');
- claim.onclick=()=>{claim.hidden=true;result.textContent='+20 POINTS!';result.classList.remove('is-playing');void result.offsetWidth;result.classList.add('is-playing')};
+ claim.onclick=()=>{void previewRewardSound();claim.hidden=true;result.textContent='+20 POINTS!';result.classList.remove('is-playing');void result.offsetWidth;result.classList.add('is-playing')};
  layer.querySelector('.wg-demo-reset').onclick=()=>{claim.hidden=false;result.textContent='';result.classList.remove('is-playing');layer.querySelector('.wg-demo-message-body').hidden=true};
 }
 installTeacherRewardPreview();
