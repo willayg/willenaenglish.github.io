@@ -1,7 +1,7 @@
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
-import {createDiaryFlow} from './diary-flow.js?v=20261101-robot1';
+import {createDiaryFlow} from './diary-flow.js?v=20261101-full-diary-review2';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {createSentencePractice} from './sentence-practice.js?v=20261031-streak-reset-fix3';
 const API_BASE='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
