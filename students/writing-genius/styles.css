@@ -836,3 +836,18 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 
 .writing-genius #wgDiaryFlow .df-topic-write-guide,.writing-genius #wgDiaryFlow .df-topic-structure-tip{border:1.5px solid #bce8ed;background:#f5fcfd;border-radius:14px;padding:13px 16px;color:#4c7580;font-size:.84rem;line-height:1.6;margin:0 0 16px}
 .writing-genius #wgDiaryFlow .df-topic-structure-tip strong{color:#c04b88}.writing-genius #wgDiaryFlow .df-topic-structure-tip p{margin:6px 0 0}
+
+/* Topic Draft 2: editable composition sections and visible AI corrections. */
+.writing-genius #wgDiaryFlow .df-revision-preview{border:1.5px solid #bfe6ec;border-radius:15px;background:#fcfefe;padding:14px 17px;margin:14px 0 20px}
+.writing-genius #wgDiaryFlow .df-revision-preview h3{font-size:.97rem;color:#2d7480;margin:0 0 9px}
+.writing-genius #wgDiaryFlow .df-revision-paper{font-size:1rem;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere;color:#36575e}
+.writing-genius #wgDiaryFlow .df-revision-changed{background:#fff0f7;color:#d23f8b;border-radius:5px;padding:2px 3px;font-weight:800}
+.writing-genius #wgDiaryFlow .df-revision-section{border:1.5px solid #c6e9ec;border-radius:15px;padding:15px;margin:15px 0;background:#fff}
+.writing-genius #wgDiaryFlow .df-revision-section.needs-work{border:2px solid #e895c4;background:#fff8fc}
+.writing-genius #wgDiaryFlow .df-revision-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.writing-genius #wgDiaryFlow .df-revision-section h3{margin:0;color:#277b86;font-size:1.03rem}
+.writing-genius #wgDiaryFlow .df-revision-needs{color:#bd437e;background:#ffe5f2;border-radius:99px;font-weight:800;padding:5px 10px;font-size:.75rem}
+.writing-genius #wgDiaryFlow .df-revision-prompt{color:#a73d75;margin:10px 0;line-height:1.6;font-size:.88rem}
+.writing-genius #wgDiaryFlow .df-revision-input{display:block;box-sizing:border-box;width:100%;min-height:115px;resize:vertical;border:1.5px solid #bde4e9;border-radius:11px;padding:12px 14px;background:white;color:#35565b;font:500 1rem/1.7 Poppins,system-ui,sans-serif;margin:12px 0}
+.writing-genius #wgDiaryFlow .df-revision-input:focus{outline:2px solid #64ccd5;outline-offset:1px}
+.writing-genius #wgDiaryFlow .df-revision-starter{border:1px solid #e8adce;border-radius:10px;background:#fff3fa;color:#b83b7f;padding:10px 13px;text-align:left;font:700 .83rem Poppins,system-ui,sans-serif;cursor:pointer}
