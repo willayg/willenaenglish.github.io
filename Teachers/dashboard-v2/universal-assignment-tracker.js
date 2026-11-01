@@ -503,6 +503,13 @@ async function loadCalendar(){
    if(source)entries.push({...source,id:'recurring:'+item.id,at:item.next_due_at,label:source.label+' ↻'});
   });
  }catch(_){}
+ try{
+  const recurring=await get('homework_recurring_app_schedules?select=id,source_table,source_id,next_due_at,active&active=eq.true');
+  recurring.forEach(item=>{
+   const source=entries.find(x=>id(x.id)===id(item.source_id));
+   if(source)entries.push({...source,id:'recurring-app:'+item.id,at:item.next_due_at,label:source.label+' ↻'});
+  });
+ }catch(_){}
  const dateKey=x=>{const d=new Date(x);return Number.isNaN(d.getTime())?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
  function renderCalendar(){
   const year=month.getFullYear(),m=month.getMonth(),days=new Date(year,m+1,0).getDate();
