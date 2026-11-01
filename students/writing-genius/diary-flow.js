@@ -85,7 +85,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  function status(text='',error=false){message.textContent=text;message.classList.toggle('is-error',error)}
  function screen(name,label){clearTimeout(transitionTimer);step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false}
  async function persist(){clearTimeout(autosaveTimer);await draft(current)}
- function close(){clearTimeout(transitionTimer);clearTimeout(autosaveTimer);root.hidden=true;current=null;onExit()}
+ async function close(){if(busy)return;clearTimeout(transitionTimer);clearTimeout(autosaveTimer);if(current?.status!=='submitted'){busy=true;status('저장 중…');try{await persist()}catch(e){status('저장 실패: '+(e.message||'다시 시도해 주세요.'),true);busy=false;return}busy=false}root.hidden=true;current=null;await onExit()}
  $('dfExit').addEventListener('click',close);
  function topic(){
   screen('topic','1 · Topic');
@@ -144,7 +144,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   function update(){current.body=area.value;const n=split(area.value).length;count.textContent=n+' sentences';count.classList.toggle('is-invalid',n<(current.kind==='topic'?8:6)||n>30)}
   area.addEventListener('input',()=>{update();clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{void persist().catch(e=>status(e.message,true))},1800)});update();stage.append(area,count);
   button('이전',topic);
-  button('저장',async()=>{try{await persist();status('저장됨')}catch(e){status(e.message,true)}});
+  button('저장',async()=>{if(busy)return;busy=true;try{await persist();status('임시 저장됨 ✓')}catch(e){status(e.message,true)}finally{busy=false}});
   button('AI Willi 확인',async()=>{
    const count=split(current.body).length;if(count<(current.kind==='topic'?8:6)||count>30){status(current.kind==='topic'?'완성된 영어 문장을 8–30개 작성해 주세요.':'완성된 영어 문장 6–30개 작성해 주세요.',true);return}
    if(busy)return;busy=true;
@@ -358,6 +358,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   }
   stage.append(counter);update();
   button('이전',summary);
+  button('임시 저장',async()=>{if(busy)return;busy=true;try{current.body=allText();await persist();status('임시 저장됨 ✓')}catch(e){status(e.message,true)}finally{busy=false}});
   button('Final AI Review · 마지막 확인',async()=>{
     const body=allText(),n=split(body).length;
     if(n<8||n>30){status('8–30개의 완성된 문장이 필요해요.',true);return}
