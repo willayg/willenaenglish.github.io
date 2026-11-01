@@ -40,6 +40,9 @@ export async function onRequestPost({request,env}){
    if(old.ok&&old.data?.[0]?.original_body===entry.body&&old.data[0].feedback?.review_version===2&&(entry.kind!=='topic'||old.data[0].feedback.reviewed_title===entry.title)&&(entry.kind!=='topic'||(old.data[0].feedback.review_round&&old.data[0].feedback.structure)))return json(200,{success:true,feedback:old.data[0].feedback,cached:true});
    const reviewRound=entry.kind==='topic'?Math.max(0,Number(old.data?.[0]?.feedback?.review_round||(old.data?.[0]?.feedback?.review_version?1:0))):0;
    if(entry.kind==='topic'&&reviewRound>=2&&old.data?.[0]?.feedback?.reviewed_title===entry.title)return json(409,{error:'두 번의 AI 리뷰를 모두 사용했어요. 이제 연습으로 넘어가세요.'});
+   const gate=await db('rpc/writing_genius_claim_ai_v1',auth.token,'POST',{});
+   if(!gate.ok||!gate.data)return json(503,{error:'글쓰기 이용 제한을 확인하지 못했어요.'});
+   if(gate.data.allowed!==true)return json(403,{error:gate.data.reason==='daily_limit'?'오늘 AI 글쓰기 확인 4회를 모두 사용했어요. 내일 다시 시도해 주세요.':'이 활동은 레벨 4 이상 학생을 위한 활동이에요.'});
    const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
    if(!apiKey)return json(503,{error:'AI Willi를 사용할 수 없어요.'});
    const quota=await db('rpc/wg_sentence_ai_quota_v1',auth.token,'POST',{p_claim:true});
