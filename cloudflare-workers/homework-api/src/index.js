@@ -475,6 +475,7 @@ export default {
           title,
           description: description || null,
           list_key: effectiveListKey,
+          source_type: ['writing_genius','puzzles'].includes(String(sourceMeta.source_type || '')) ? sourceMeta.source_type : undefined,
           list_title: list_title || null,
           list_meta: sourceMeta,
           start_at: start_at || new Date().toISOString(),
@@ -630,11 +631,41 @@ export default {
             return !targetStudentIds.length || targetStudentIds.includes(authUserId);
           });
           
+          // Evidence-based completion for Writing Genius and Puzzles homework.
+          // Only query the authenticated student's own evidence; never award
+          // completion merely for opening an activity.
+          const enrichedAssignments = await Promise.all(assignmentsForStudent.map(async (assignment) => {
+            const source = String(assignment.list_meta?.source_type || assignment.source_type || '').toLowerCase();
+            if (source !== 'writing_genius' && source !== 'puzzles') return assignment;
+            const kind = String(assignment.list_meta?.kind || '').toLowerCase();
+            const since = assignment.created_at || assignment.start_at || nowIso;
+            try {
+              let evidence = [];
+              if (source === 'writing_genius' && ['diary','topic'].includes(kind)) {
+                const query = 'student_id=eq.' + encodeURIComponent(authUserId)
+                  + '&kind=eq.' + encodeURIComponent(kind)
+                  + '&status=eq.submitted&submitted_at=gte.' + encodeURIComponent(since)
+                  + (kind === 'topic' ? '&prompt_key=eq.' + encodeURIComponent('homework-' + assignment.id) : '')
+                  + '&select=id,submitted_at&limit=1';
+                evidence = await supabaseSelect(env, 'writing_genius_entries', query);
+              } else if (source === 'puzzles' && ['wordsearch','crossword','boggle','mixmatch','wordle'].includes(kind)) {
+                const query = 'user_id=eq.' + encodeURIComponent(authUserId)
+                  + '&mode=eq.' + encodeURIComponent(kind)
+                  + '&ended_at=gte.' + encodeURIComponent(since)
+                  + '&select=id,ended_at&limit=1';
+                evidence = await supabaseSelect(env, 'progress_sessions', query);
+              }
+              return { ...assignment, creative_progress: { completed: evidence.length > 0, percent: evidence.length > 0 ? 100 : 0 } };
+            } catch (error) {
+              console.warn('Creative homework evidence unavailable', assignment.id, error);
+              return { ...assignment, creative_progress: { completed: false, percent: 0, unavailable: true } };
+            }
+          }));
           return jsonResponse({
             success: true,
             class: prof.class,
             student_name: prof.name || prof.korean_name || null,
-            assignments: assignmentsForStudent,
+            assignments: enrichedAssignments,
           }, 200, origin);
         }
         
