@@ -140,9 +140,6 @@ async function creativeManage(app,body){
     }
     host.textContent='Puzzles do not yet report assignment-linked completion. No pass result can be verified.';
     return;
-    const result=await get(route('creative_assignment_progress','&assignment_id='+encodeURIComponent(button.dataset.creativeProgress)));
-    host.innerHTML='<p><b>'+result.completed+' / '+result.total+'</b> complete</p>'+
-     (result.students||[]).map(st=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #e6eff0"><span>'+esc(st.name)+'</span><span>'+(st.error?'Unavailable':st.completed?'✓ Complete':'Not yet')+'</span></div>').join('');
    }catch(e){host.textContent=e.message}
   }));
  }catch(e){if(body.isConnected)body.innerHTML='<div class="ua-empty">'+esc(e.message)+'</div>'}
