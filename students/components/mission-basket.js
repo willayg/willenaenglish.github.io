@@ -147,12 +147,13 @@ function restoreLocalMedals(){
  const key=archiveStorageKey();if(!key)return;
  try{const ids=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(ids))state.archives=new Set(ids.filter(v=>typeof v==='string'))}catch{}
 }
-function saveLocalMedal(id){
+function saveLocalMedal(id,entry){
  const key=archiveStorageKey();if(!key)return;
  try{
   const stored=JSON.parse(localStorage.getItem(key)||'[]');
   const ids=new Set(Array.isArray(stored)?stored:[]);ids.add(id);
   localStorage.setItem(key,JSON.stringify([...ids]));
+  if(entry){const recordKey=key+':details';const old=JSON.parse(localStorage.getItem(recordKey)||'{}');old[id]={id,app:entry.app,title:entry.title,link:entry.link,created:entry.created,done:true,archived:true};localStorage.setItem(recordKey,JSON.stringify(old))}
  }catch(e){console.warn('[mission basket] local medal save unavailable',e)}
 }
 function firstTeacherName(name){const first=String(name||'').trim().split(/\s+/)[0]||'';return first==='Will'?'William':first}
@@ -175,6 +176,8 @@ function progressMeter(entry){
 }
 function render(){
  const host=state.host;if(!host)return;
+ const savedKey=archiveStorageKey();
+ if(savedKey){try{const details=JSON.parse(localStorage.getItem(savedKey+':details')||'{}');for(const [id,item] of Object.entries(details)){if(state.archives.has(id)&&!state.items.some(x=>x.id===id))state.items.push({...item,archived:true,done:true})}}catch(e){console.warn('[mission basket] medal restoration',e)}}
  const visible=state.appFilter?state.items.filter(x=>x.app===state.appFilter):state.items;
  const open=visible.filter(x=>!state.archives.has(x.id)&&!x.archived);
  const archive=visible.filter(x=>state.archives.has(x.id)||x.archived);
@@ -201,7 +204,7 @@ function render(){
    }catch(e){delete card.dataset.collecting;console.warn('[mission basket] archive failed',e);alert('보관할 수 없습니다. 다시 시도해 주세요.');return}
   }
   await celebrate(card,true);
-  state.archives.add(x.id);x.archived=true;saveLocalMedal(x.id);
+  state.archives.add(x.id);x.archived=true;saveLocalMedal(x.id,x);
   void recordCompletedActivity(x.id,'homework');
   try{
    const key=archiveStorageKey();
@@ -240,7 +243,7 @@ async function refresh(){
  if(refreshing||!state.host)return;
  refreshing=true;
  try{
-  const results=await Promise.allSettled([state.appFilter&&state.appFilter!=='Word Genius'?Promise.resolve([]):standardHomework(),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()]);
+  const results=await Promise.allSettled([standardHomework().then(rows=>state.appFilter?rows.filter(row=>row.app===state.appFilter):rows),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()]);
   const prefixes=['standard:','sentence:','grammar:','naesin:'];
   results.forEach((result,index)=>{
    if(result.status!=='fulfilled')return;
