@@ -634,7 +634,7 @@ export default {
           // Only query the authenticated student's own evidence; never award
           // completion merely for opening an activity.
           const enrichedAssignments = await Promise.all(assignmentsForStudent.map(async (assignment) => {
-            const source = String(assignment.list_meta?.source_type || assignment.source_type || '').toLowerCase();
+            const source = String(assignment.list_meta?.creative_type || assignment.list_meta?.source_type || assignment.source_type || '').toLowerCase();
             if (source !== 'writing_genius' && source !== 'puzzles') return assignment;
             const kind = String(assignment.list_meta?.kind || '').toLowerCase();
             const since = assignment.created_at || assignment.start_at || nowIso;
@@ -693,7 +693,7 @@ export default {
         const found=await supabaseSelect(env,'homework_assignments','id=eq.'+encodeURIComponent(assignmentId)+'&select=*');
         const assignment=found?.[0];
         if(!assignment)return jsonResponse({success:false,error:'Assignment not found'},404,origin);
-        const source=String(assignment.list_meta?.source_type||'');
+        const source=String(assignment.list_meta?.creative_type||assignment.list_meta?.source_type||'');
         const kind=String(assignment.list_meta?.kind||'');
         if(!['writing_genius','puzzles'].includes(source))return jsonResponse({success:false,error:'Unsupported assignment type'},400,origin);
         const students=await supabaseSelect(env,'profiles','class=eq.'+encodeURIComponent(assignment.class)+'&role=eq.student&select=id,name,korean_name');
