@@ -54,11 +54,9 @@ async function standardHomework(){
     // This also works before the optional Cloudflare worker progress endpoint deploys.
     if(!entry.done){
       const kind=String(a.list_meta?.kind||'');
-      const since=encodeURIComponent(a.created_at||a.start_at||'1970-01-01T00:00:00Z');
       const query=app==='Writing Genius'
-        ?'writing_genius_entries?select=id&kind=eq.'+encodeURIComponent(kind)+'&status=eq.submitted&submitted_at=gte.'+since
-          +(kind==='topic'?'&prompt_key=eq.'+encodeURIComponent('homework-'+a.id):'')+'&limit=1'
-        :'progress_sessions?select=id&mode=eq.'+encodeURIComponent(kind)+'&ended_at=gte.'+since+'&limit=1';
+        ?'writing_genius_entries?select=id&kind=eq.'+encodeURIComponent(kind)+'&status=eq.submitted&prompt_key=eq.'+encodeURIComponent('homework-'+a.id)+'&limit=1'
+        :'puzzle_homework_completions?select=assignment_id&assignment_id=eq.'+encodeURIComponent(a.id)+'&limit=1';
       try{
         const evidence=await authed(SUPA+'/rest/v1/'+query);
         if(Array.isArray(evidence)&&evidence.length){entry.done=true;entry.progress=100}
