@@ -652,6 +652,15 @@ function renderManage(root){
     '<div class="sgt-progress" id="sgtProgress-'+escapeHtml(a.id)+'" hidden></div>'});
  }).join(''):'<div class="sgt-result">No Sentence Genius assignments found.</div>';
  void window.WillenaGeniusHomeworkCard?.hydrateTeachers(holder);
+ // Load class completion for each visible assignment without opening student details.
+ void Promise.allSettled(visible.map(async a=>{
+  const data=await rpc('sg_homework_progress_v1',{p_id:a.id});
+  const students=Array.isArray(data.students)?data.students:[];
+  const total=students.reduce((v,x)=>v+Math.max(0,Number(x.total)||0),0);
+  const done=students.reduce((v,x)=>v+Math.min(Math.max(0,Number(x.done)||0),Math.max(0,Number(x.total)||0)),0);
+  window.WillenaGeniusHomeworkCard?.updateRing(a.id,total?100*done/total:null,holder);
+ }));
+
  holder.querySelectorAll('[data-sg-toggle]').forEach(b=>b.onclick=async()=>{
   b.disabled=true;try{
    await rpc('sg_homework_set_active_v1',{p_id:b.dataset.sgToggle,p_active:b.dataset.active!=='true'});
