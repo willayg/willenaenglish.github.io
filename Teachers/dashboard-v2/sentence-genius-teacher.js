@@ -39,7 +39,7 @@ async function books(){
 async function classes(){
  if(state.classes)return state.classes;
  const result=await rpc('get_sentence_genius_teacher_classes',{});
- state.classes=Array.isArray(result.classes)?result.classes:[];return state.classes;
+ state.classes=Array.isArray(result.classes)?result.classes:[];if(!state.classes.some(c=>String(c.name).toLowerCase()==='test'))state.classes.push({name:'Test',display_name:'Test'});return state.classes;
 }
 async function units(bookId){
  if(!bookId)return[];
