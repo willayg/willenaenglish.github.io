@@ -22,8 +22,8 @@ function homeworkForm(app,body){
  const spec=newHomeworkApps[app];
  const select=document.getElementById('classSelect');
  const classes=[...new Set([...[...(select?.options||[])].map(o=>o.value).filter(Boolean),'Test'])];
- body.innerHTML='<form id="uaNewHomework" class="ua-feature" style="display:grid;gap:12px;max-width:580px;margin:12px auto;padding:24px">'+
- '<h4>'+spec.heading+'</h4><label>Class <select class="control" name="class" required><option value="">Choose class</option>'+classes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></label>'+
+ body.innerHTML='<form id="uaNewHomework" class="ua-feature ua-genius-assign">'+
+ '<h3>'+spec.heading+'</h3>'<label>Class <select class="control" name="class" required><option value="">Choose class</option>'+classes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></label>'+
  '<label>Homework type <select class="control" name="kind">'+spec.types.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('')+'</select></label>'+
  '<label>Title <input class="control" name="title" required maxlength="120" placeholder="Homework title"></label>'+
  (app==='writing'?'<div id="uaSentenceBookFields" hidden><label>Textbook <select class="control" name="book"><option value="">Choose textbook</option></select></label><label>Unit <select class="control" name="unit"><option value="">Choose unit</option></select></label><p id="uaSentenceBookStatus" class="ua-note"></p></div>':'')+
