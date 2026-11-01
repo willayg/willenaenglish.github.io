@@ -211,7 +211,7 @@ function detailPractice(entry){
 }
 function openView(){show();if(!state.loaded)void load()}
 function boot(){
- const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261101-submissions1';
+ const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261101-practice1';
  document.head.append(css);mount();addNav();
 }
 window.WritingGeniusTeacher={openView,refresh:load};
