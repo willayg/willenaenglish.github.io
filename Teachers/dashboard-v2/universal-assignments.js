@@ -70,7 +70,7 @@ function homeworkForm(app,body){
    if(!form.elements.book.value)return;
    message.textContent='Loading textbook units…';
    try{
-    const units=await records(CONT+'content_units?select=id,title,unit_number&book_id=eq.'+encodeURIComponent(form.elements.book.value)+'&status=in.(published,review)&order=unit_number.asc',CONTENTKEY);
+    const units=await records(CONTENT+'content_units?select=id,title,unit_number&book_id=eq.'+encodeURIComponent(form.elements.book.value)+'&status=in.(published,review)&order=unit_number.asc',CONTENTKEY);
     if(stamp!==loadId)return;
     populate(form.elements.unit,units.map(x=>({...x,title:'Unit '+x.unit_number+' · '+(x.title||'')})),'Choose unit');
     message.textContent=units.length?'Select the unit students should practise.':'No available units in this textbook.';
@@ -82,7 +82,7 @@ function homeworkForm(app,body){
    if(form.elements.book.value==='__other__'){
     message.textContent='Loading all textbooks…';
     try{
-     const books=await records(CONT+'content_books?select=id,title&status=in.(published,review)&order=title.asc&limit=1000',CONTENTKEY);
+     const books=await records(CONTENT+'content_books?select=id,title&status=in.(published,review)&order=title.asc&limit=1000',CONTENTKEY);
      populate(form.elements.book,books,'Choose any textbook');
      message.textContent='Full textbook catalogue';
     }catch(e){message.textContent=e.message}
