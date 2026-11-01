@@ -138,7 +138,14 @@ async function creativeManage(app,body){
       (result.student_rows||[]).map(st=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #e6eff0"><span>'+esc(st.name)+'</span><span>'+(st.completed?'✓ Submitted':'Not submitted')+'</span></div>').join('');
      return;
     }
-    host.textContent='Puzzles do not yet report assignment-linked completion. No pass result can be verified.';
+    const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+    const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/teacher_puzzle_homework_progress_v1',{method:'POST',headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
+    if(!response.ok)throw Error('Puzzle progress unavailable');
+    const matches=await response.json();
+    const result=matches.find(x=>x.id===button.dataset.creativeProgress);
+    if(!result){host.textContent='No matching puzzle homework found.';return}
+    host.innerHTML='<p><b>'+result.completed+' / '+result.students+'</b> puzzles finished</p>'+
+     (result.student_rows||[]).map(st=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #e6eff0"><span>'+esc(st.name)+'</span><span>'+(st.completed?'✓ Completed · '+Number(st.stars||0)+'★':'Not completed')+'</span></div>').join('');
     return;
    }catch(e){host.textContent=e.message}
   }));
