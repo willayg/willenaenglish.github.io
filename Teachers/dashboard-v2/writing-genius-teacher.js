@@ -221,7 +221,7 @@ function detailPractice(entry){
 }
 function openView(){show();if(!state.loaded)void load()}
 function boot(){
- const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261101-diary-modal-feedback1';
+ const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261101-feedback-sent1';
  document.head.append(css);addNav();mount();
 }
 window.WritingGeniusTeacher={openView,refresh:load};
