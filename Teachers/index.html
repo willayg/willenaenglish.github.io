@@ -628,5 +628,30 @@ window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 <script src="./grammar-foundations-teacher.js?v=20261019-grammar-genius1"></script>
 <script src="./writing-genius-teacher.js?v=20261101-view-restore1"></script>
 <script src="./dashboard-history.js?v=20261008-student-nav1"></script>
+<style id="willena-assignment-success-style">
+.willena-assignment-success{position:fixed;inset:0;z-index:2147483645;display:grid;place-items:center;background:rgba(25,40,48,.20);padding:20px;animation:was-fade .2s ease}
+.willena-assignment-success[hidden]{display:none}
+.willena-assignment-success-card{width:min(340px,92vw);border:2px solid #68cad3;border-radius:25px;background:#fff;padding:30px 24px;text-align:center;box-shadow:0 18px 46px rgba(17,52,62,.19);font-family:Poppins,sans-serif}
+.willena-assignment-success-icon{display:grid;place-items:center;width:66px;height:66px;margin:0 auto 15px;border-radius:50%;background:#e7f9f9;color:#258c94;font-size:36px;font-weight:800}
+.willena-assignment-success-card strong{display:block;color:#247f87;font-size:23px}
+.willena-assignment-success-card p{font-size:14px;margin:10px 0 0;color:#56646e}
+@keyframes was-fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.willena-assignment-success{animation:none}}
+</style>
+<script>
+(()=>{let timer=null,overlay=null;
+window.WillenaAssignmentSuccess=(detail={})=>{
+ if(!overlay){overlay=document.createElement('div');overlay.className='willena-assignment-success';overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');overlay.addEventListener('click',()=>{overlay.hidden=true;clearTimeout(timer)});document.body.append(overlay)}
+ const subtitle=String(detail.message||'Homework is ready for your students.');
+ overlay.replaceChildren();const card=document.createElement('div');card.className='willena-assignment-success-card';
+ const icon=document.createElement('span');icon.className='willena-assignment-success-icon';icon.textContent='✓';
+ const title=document.createElement('strong');title.textContent='Assigned successfully!';
+ const message=document.createElement('p');message.textContent=subtitle;
+ card.append(icon,title,message);overlay.append(card);overlay.hidden=false;
+ clearTimeout(timer);timer=setTimeout(()=>{overlay.hidden=true},2100);
+};
+window.addEventListener('willena:assignment-created',e=>window.WillenaAssignmentSuccess(e.detail||{}));
+})();
+</script>
 </body>
 </html>
