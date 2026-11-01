@@ -166,7 +166,7 @@ function showEditor(entry){
   updateCounts();saveState(a.persisted?'저장됨':'새 글');
   if(a.kind==='diary'&&a.persisted&&a.status!=='submitted')void restoreDiaryReview(a);
   show('editor');window.scrollTo({top:0,behavior:'auto'});
-  if(a.kind==='diary')diaryFlow.open(a);
+  if(a.kind==='diary'||a.kind==='topic')diaryFlow.open(a);
   else $('wgDiaryFlow').hidden=true;
 }
 function createEntry(kind){
@@ -209,7 +209,7 @@ function readForm(){
 function markDirty(){
   const active=state.active;if(!active||active.status==='submitted')return;
   active.rev++;active.dirty=true;
-  if(active.kind==='diary'){$('wgDiaryReview').hidden=true;diaryReviewBody='';diaryTranscript='';}
+  if(active.kind==='diary'||active.kind==='topic'){$('wgDiaryReview').hidden=true;diaryReviewBody='';diaryTranscript='';}
   saveState('저장 전…');updateCounts();clearTimeout(state.timer);
   state.timer=setTimeout(()=>{void saveEntry()},1100);
 }
@@ -331,7 +331,7 @@ async function bootstrap(){
 let diaryStep=1,correctionIndex=0,corrections=[],diaryMode='write';
 let diaryQuestionRenderer=null,diaryFullRenderer=null;
 function setDiaryStep(step){
- if(state.active?.kind!=='diary')return;
+ if(!['diary','topic'].includes(state.active?.kind))return;
  diaryStep=step;
  $('wgDiarySteps').hidden=false;
  [...$('wgDiarySteps').children].forEach((node,i)=>node.classList.toggle('is-current',i===step-1));
@@ -490,7 +490,7 @@ const diaryFlow=createDiaryFlow({
    const submitted=await saveEntry({submit:true,force:true});
    if(!submitted)throw Error('제출에 실패했어요.');
   }
-  const reward=await databaseApi('rpc/award_writing_diary_v1','POST','',{p_entry_id:entry.id});
+  const reward=await databaseApi(entry.kind==='topic'?'rpc/award_writing_topic_v1':'rpc/award_writing_diary_v1','POST','',{p_entry_id:entry.id});
   window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.awarded?reward.stars:0}}));
   try{localStorage.setItem('stars:refresh',String(Date.now()))}catch{}
   return reward;
