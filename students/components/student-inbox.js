@@ -21,11 +21,15 @@ export function mountStudentInbox(header){
  const menu=header.shadowRoot?.getElementById('avatarMenu');if(!menu)return;
  const button=make('button','dd-item','✉ 선생님 메시지');button.type='button';button.setAttribute('role','menuitem');
  menu.prepend(button);
+ button.classList.add('inbox-prominent');
+ button.innerHTML='<span aria-hidden="true" class="inbox-envelope">✉</span><strong>선생님 메시지</strong><span class="inbox-menu-count" hidden></span>';
  const avatar=header.shadowRoot.getElementById('avatarBtn');
  const badge=make('button','inbox-header-badge');badge.type='button';badge.hidden=true;badge.setAttribute('aria-label','Unread teacher messages');
  avatar?.parentElement?.append(badge);
  badge.onclick=e=>{e.preventDefault();e.stopPropagation();void refresh(true)};
  const style=make('style');style.textContent=`
+ .inbox-prominent{background:#fff0f7!important;border:2px solid #efabd1!important;color:#ac3270!important;padding:13px 12px!important;align-items:center!important;font-size:1rem!important;font-weight:900!important;box-shadow:0 2px 8px #d983ac25}
+ .inbox-envelope{font-size:1.35rem;line-height:1}.inbox-menu-count{margin-left:auto;background:#e9529c;color:white;border-radius:99px;padding:3px 9px;font-weight:900}.inbox-menu-count[hidden]{display:none}
  .inbox-header-badge[hidden]{display:none!important}.inbox-header-badge{position:absolute;right:-7px;top:-9px;z-index:5;display:grid;place-items:center;min-width:25px;height:25px;padding:0 5px;border-radius:50%;border:2px solid #fff;background:#e9529c;color:#fff;font:900 12px Poppins,system-ui;box-shadow:0 2px 8px #ca3b8266;cursor:pointer;animation:inbox-badge-bounce 1s ease-out 2}
  .avatar-btn.has-inbox-alert{box-shadow:0 0 0 3px #f6b6db!important}
  @keyframes inbox-badge-bounce{50%{transform:translateY(-5px) scale(1.1)}}
@@ -53,7 +57,7 @@ export function mountStudentInbox(header){
    const pendingMessages=messages.filter(x=>!x.is_read||Number(x.bonus_points)>Number(x.claimed_points));
    const unread=pendingMessages.length;
    badge.hidden=!unread;badge.textContent=String(Math.min(unread,99));avatar?.classList.toggle('has-inbox-alert',!!unread);
-   button.textContent='✉ 선생님 메시지'+(unread?' ('+unread+')':'');
+   const menuCount=button.querySelector('.inbox-menu-count');if(menuCount){menuCount.hidden=!unread;menuCount.textContent=String(unread)}
    if(!open){
     if(initial&&pendingMessages.length&&document.visibilityState==='visible'){
      const unseen=pendingMessages.filter(item=>{
