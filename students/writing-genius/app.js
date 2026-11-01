@@ -577,4 +577,18 @@ window.addEventListener('popstate',()=>void popRoute());
 window.addEventListener('beforeunload',event=>{
   if(state.active?.dirty){event.preventDefault();event.returnValue='';}
 });
+
+function installTeacherRewardPreview(){
+ if(new URLSearchParams(location.search).get('rewardPreview')!=='1')return;
+ const layer=document.createElement('div');layer.className='wg-reward-demo-layer';
+ layer.innerHTML='<section class="wg-reward-demo" role="dialog" aria-modal="true" aria-label="Teacher feedback reward preview"><button type="button" class="wg-demo-close" aria-label="Close preview">×</button><small>TEST PREVIEW · 실제 포인트는 지급되지 않습니다</small><h2>선생님 알림</h2><button class="wg-demo-message" type="button">선생님이 메시지를 보냈어요 · 보기</button><p class="wg-demo-message-body" hidden>Great work! I enjoyed reading your diary. Keep practising your English!</p><button class="wg-demo-claim" type="button"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 5 38 22 56 23 42 34 47 52 32 42 17 52 22 34 8 23 26 22Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><circle cx="32" cy="32" r="5" fill="currentColor"/></svg>선생님 보너스 +20점 · 받기</button><div class="wg-demo-result" aria-live="polite"></div><button class="wg-demo-reset" type="button">다시 테스트</button></section>';
+ document.body.append(layer);
+ const close=()=>{layer.remove();const url=new URL(location.href);url.searchParams.delete('rewardPreview');history.replaceState({},'',url)};
+ layer.querySelector('.wg-demo-close').onclick=close;
+ layer.querySelector('.wg-demo-message').onclick=()=>{const body=layer.querySelector('.wg-demo-message-body');body.hidden=!body.hidden};
+ const claim=layer.querySelector('.wg-demo-claim'),result=layer.querySelector('.wg-demo-result');
+ claim.onclick=()=>{claim.hidden=true;result.textContent='+20 POINTS!';result.classList.remove('is-playing');void result.offsetWidth;result.classList.add('is-playing')};
+ layer.querySelector('.wg-demo-reset').onclick=()=>{claim.hidden=false;result.textContent='';result.classList.remove('is-playing');layer.querySelector('.wg-demo-message-body').hidden=true};
+}
+installTeacherRewardPreview();
 void bootstrap();
