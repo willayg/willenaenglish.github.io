@@ -13,7 +13,8 @@ function card({className,task,dueAt,teacher,progressLabel='Progress',progressPer
  return '<article class="genius-homework-card" data-genius-card="'+esc(id)+'">'+
  '<div class="ghc-top"><strong class="ghc-class">'+esc(className||'Class unavailable')+'</strong><span class="ghc-day">'+esc(dday(dueAt))+'</span></div>'+
  '<div class="ghc-task">'+esc(task||'Homework')+'</div>'+
- '<div class="ghc-teacher" data-ghc-teacher="'+esc(createdBy)+'">'+esc(teacher||'Teacher')+'</div>'+
+ '<div class="ghc-teacher" data-ghc-teacher="'+esc(createdBy)+'">'+esc(teacher||'Teacher')+'</div>'+ 
+ '<div class="ghc-ring" data-ghc-ring="'+esc(id)+'" role="img" aria-label="Class progress not available"><span>—</span></div>'+
  (valid?'<div class="ghc-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.max(0,Math.min(100,pct))+'"><span style="width:'+Math.max(0,Math.min(100,pct))+'%"></span></div>':'')+
  '<details class="ghc-details"><summary><span>'+esc(progressLabel)+'</span><span class="ghc-chevron">▾</span></summary><div class="ghc-content">'+body+action+'</div></details></article>';
 }
@@ -47,6 +48,14 @@ async function hydrateTeachers(scope=document){
   for(const node of nodes){const name=names.get(node.dataset.ghcTeacher);if(name)node.textContent=name+' Teacher'}
  }catch(e){console.warn('[Genius cards] teacher names',e)}
 }
-window.WillenaGeniusHomeworkCard={card,dday,escape:esc,hydrateTeachers};
+function updateRing(id,value,root=document){
+ const node=[...root.querySelectorAll('[data-ghc-ring]')].find(n=>n.dataset.ghcRing===String(id));
+ if(!node)return;
+ const pct=Number(value),valid=value!==null&&value!==undefined&&Number.isFinite(pct);
+ if(!valid){node.classList.remove('has-data');node.style.removeProperty('--ghc-pct');node.querySelector('span').textContent='—';node.setAttribute('aria-label','Class progress not available');return}
+ const bounded=Math.max(0,Math.min(100,Math.round(pct)));
+ node.classList.add('has-data');node.style.setProperty('--ghc-pct',bounded+'%');node.querySelector('span').textContent=bounded+'%';node.setAttribute('aria-label','Class progress '+bounded+'%');
+}
+window.WillenaGeniusHomeworkCard={card,dday,escape:esc,hydrateTeachers,updateRing};
 
 })();
