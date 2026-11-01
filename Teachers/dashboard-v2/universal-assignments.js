@@ -16,7 +16,7 @@ function showWordPanel(body){const panel=document.querySelector('[data-vocab-sub
 
 const newHomeworkApps={
  writing:{heading:'Assign writing homework',types:[['diary','Daily diary'],['topic','Topic writing']]},
- puzzles:{heading:'Assign puzzle homework',types:[['boggle','Boggle'],['wordsearch','Word Search'],['crossword','Crossword'],['mixmatch','Mix & Match'],['wordle','Wordle']]}
+ puzzles:{heading:'Assign puzzle homework',types:[['boggle','Boggle'],['wordsearch','Word Search'],['crossword','Crossword'],['mixmatch','Mix & Match']]}
 };
 function homeworkForm(app,body){
  const spec=newHomeworkApps[app];
