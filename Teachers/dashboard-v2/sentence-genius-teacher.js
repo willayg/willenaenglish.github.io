@@ -603,6 +603,7 @@ async function mountCreate(root){
     }
     for(const payload of payloads){await rpc('sg_homework_create_v1',payload);saved++}
     status(root,'Assigned '+saved+' unit'+(saved===1?'':'s')+' to '+className+'.');
+    if(saved)window.dispatchEvent(new CustomEvent('willena:assignment-created',{detail:{message:saved+' Sentence Genius units · '+className}}));
    }catch(e){status(root,'Saved '+saved+' units. '+e.message)}
    finally{btn.disabled=false}
   };
