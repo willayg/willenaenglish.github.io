@@ -496,21 +496,29 @@ async function loadCalendar(){
   });
  }));
  settled.forEach((r,i)=>{if(r.status==='fulfilled')entries.push(...r.value);else errors.push(sources[i][0])});
- try{
-  const recurring=await get('homework_recurring_schedules?select=id,source_assignment_id,next_due_at,active&active=eq.true');
-  recurring.forEach(item=>{
-   const source=entries.find(x=>id(x.id)===id(item.source_assignment_id));
-   if(source)entries.push({...source,id:'recurring:'+item.id,at:item.next_due_at,label:source.label+' ↻'});
-  });
- }catch(_){}
- try{
-  const recurring=await get('homework_recurring_app_schedules?select=id,source_table,source_id,next_due_at,active&active=eq.true');
-  recurring.forEach(item=>{
-   const source=entries.find(x=>id(x.id)===id(item.source_id));
-   if(source)entries.push({...source,id:'recurring-app:'+item.id,at:item.next_due_at,label:source.label+' ↻'});
-  });
- }catch(_){}
+ const templates=[];
+ for(const [table,foreignKey] of [['homework_recurring_schedules','source_assignment_id'],['homework_recurring_app_schedules','source_id']]){
+  try{
+   const list=await get(table+'?select=id,'+foreignKey+',next_due_at,interval_days,active&active=eq.true');
+   for(const item of list){
+    const source=entries.find(x=>id(x.id)===id(item[foreignKey]));
+    if(source)templates.push({source,first:new Date(item.next_due_at),days:Number(item.interval_days)||7,id:item.id});
+   }
+  }catch(_){}
+ }
  const dateKey=x=>{const d=new Date(x);return Number.isNaN(d.getTime())?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+ const assignmentsForDate=key=>{
+  const found=entries.filter(x=>dateKey(x.at)===key);
+  const target=new Date(key+'T12:00:00');
+  for(const rule of templates){
+   const first=new Date(rule.first.getFullYear(),rule.first.getMonth(),rule.first.getDate(),12);
+   const delta=Math.round((target-first)/86400000);
+   if(delta>=0&&delta%(rule.days)===0){
+    found.push({...rule.source,id:'repeat:'+rule.id+':'+key,at:key+'T23:59:59',label:rule.source.label+' ↻'});
+   }
+  }
+  return found;
+ };
  function renderCalendar(){
   const year=month.getFullYear(),m=month.getMonth(),days=new Date(year,m+1,0).getDate();
   const first=new Date(year,m,1).getDay();
@@ -519,7 +527,7 @@ async function loadCalendar(){
   for(let i=0;i<first;i++)cells+='<div class="ua-calendar-empty"></div>';
   for(let n=1;n<=days;n++){
    const key=year+'-'+String(m+1).padStart(2,'0')+'-'+String(n).padStart(2,'0');
-   const matches=entries.filter(x=>dateKey(x.at)===key);
+   const matches=assignmentsForDate(key);
    cells+='<button type="button" class="ua-calendar-day'+(key===today?' is-today':'')+'" data-cal-date="'+key+'"><b>'+n+'</b>'+(matches.length?'<span>'+matches.length+' homework</span>':'')+'</button>';
   }
   host.innerHTML='<div class="ua-calendar-toolbar"><button class="control" type="button" id="calPrev">‹</button><strong>'+year+' · '+String(m+1).padStart(2,'0')+'</strong><button class="control" type="button" id="calNext">›</button><button class="control" type="button" id="calToday">Today</button></div>'+
@@ -530,7 +538,7 @@ async function loadCalendar(){
   host.querySelector('#calToday').onclick=()=>{month=new Date();month.setDate(1);renderCalendar()};
   host.querySelectorAll('[data-cal-date]').forEach(b=>b.onclick=()=>{
    host.querySelectorAll('[data-cal-date]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
-   const matches=entries.filter(x=>dateKey(x.at)===b.dataset.calDate);
+   const matches=assignmentsForDate(b.dataset.calDate);
    host.querySelector('#uaCalendarDay').innerHTML='<h4>'+esc(b.dataset.calDate)+' · '+matches.length+' assignments</h4>'+
     (matches.length?matches.map(x=>'<article class="ua-calendar-item"><b>'+esc(x.app)+' · '+esc(x.label)+'</b><small>'+esc(x.className)+' · '+esc(dday(x.at))+'</small></article>').join(''):'<p>No assignments on this date.</p>');
   });
