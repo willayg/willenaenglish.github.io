@@ -46,6 +46,7 @@ function homeworkForm(app,body){
    const result=await response.json().catch(()=>({}));
    if(!response.ok||!result.success)throw Error(result.error||'Homework could not be created');
    status.textContent='Homework created. Check student progress under Manage Homework.';
+   window.dispatchEvent(new CustomEvent('willena:assignment-created',{detail:{message:title+' · '+cls}}));
    form.reset();date.value=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
   }catch(error){status.textContent=error.message}finally{button.disabled=false}
  };
