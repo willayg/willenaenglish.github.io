@@ -377,6 +377,11 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  }
  function summary(){
   construct();screen('review','3 · Review');
+  if(current.kind==='topic'&&feedback?.on_topic===false){
+   const warning=el('aside','df-topic-structure-tip df-offtopic-warning');
+   warning.append(el('strong','','주제 확인 · Topic Check'),el('p','','선택한 주제와 글의 내용이 조금 다른 것 같아요. 계속 쓸 수 있어요! 다만 마지막 평가에서 ‘주제에 맞게 글을 썼어요’의 별 2개와 5점은 받지 못할 수 있어요.'));
+   stage.append(warning);
+  }
   if(feedback?.praise_ko)stage.append(el('p','df-review-praise',feedback.praise_ko));
   if(current.kind==='topic'&&feedback?.tip_ko){const tip=el('aside','df-topic-structure-tip');tip.append(el('strong','','Beginning · Middle · Ending'),el('p','',feedback.tip_ko));stage.append(tip)}
   const improvements=Array.isArray(feedback?.improvements)?feedback.improvements:[];
@@ -657,5 +662,5 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    showTeacherFeedback();
   }finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];reviewSkipped=false;speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];reviewSkipped=false;speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
 }
