@@ -36,3 +36,8 @@
 .wg-t-alternative{padding:10px 13px;border:1px solid #d2e9eb;border-radius:12px;margin:8px 0}
 .wg-t-alternative small{color:#73949c;font-weight:800}
 .wg-t-alternative p{margin:6px 0;line-height:1.6}
+
+.wg-t-tabs{display:flex;gap:8px;margin:12px 0 17px;flex-wrap:wrap}
+.wg-t-tab{border:1px solid #cfe7ec;background:#fff;color:#54727a;padding:10px 15px;border-radius:12px;cursor:pointer;font:800 .9rem Poppins,system-ui,sans-serif}
+.wg-t-tab.is-active{background:#e7f9fb;border-color:#46bec9;color:#246e79}
+.wg-t-practice-question{padding-bottom:12px;border-bottom:1px solid #dceef0}
