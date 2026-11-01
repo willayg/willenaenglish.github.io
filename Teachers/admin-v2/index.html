@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="/Teachers/admin/admin-level-test-pips.css?v=20260812-pips3">
 <link rel="stylesheet" href="./admin-v2.css?v=1.28">
 <link rel="stylesheet" href="./admin-v2-level-tests.css?v=1.32">
+<link rel="stylesheet" href="./biweekly-report.css?v=20261101-v1">
 </head>
 <body>
 <div id="teacher-header"></div>
@@ -29,6 +30,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
     <button class="nav active" data-view="students"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg></span><span>Students</span></button>
     <button class="nav" data-view="classes"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v16M16 4v16M4 9h16M4 15h16"/></svg></span><span>Classes</span></button>
     <button class="nav" data-view="level-tests" data-page="levelTests"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Level Tests</span></button>
+    <button class="nav" data-view="biweekly"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Biweekly Reports</span></button>
     <div class="rail-spacer"></div>
   </aside>
   <main class="workspace">
@@ -38,19 +40,66 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
     </section>
     <section class="view" id="view-classes"><div class="page-head"><div><h1>Classes</h1></div><div class="admin-class-toolbar"><span class="class-order-status" id="classOrderStatusV2"></span><button class="control class-order-toolbar-button" id="classOrderEditV2" type="button">Edit order</button><button class="control class-order-toolbar-button" id="classOrderCancelV2" type="button" hidden>Cancel</button><button class="control admin-primary class-order-toolbar-button" id="classOrderDoneV2" type="button" hidden>Done</button><button class="control" id="classRefreshV2" type="button">Refresh</button><button class="control admin-primary" id="classAddV2" type="button">+ Add class</button></div></div><div class="class-grid" id="classGridV2"><div class="empty">Open Classes to load class management.</div></div></section>
     <section class="view" id="view-level-tests"><div class="page-head"><div><h1>Level Tests</h1></div></div><div class="level-test-mode-tabs" role="tablist" aria-label="Level test input mode"><button type="button" class="active" data-level-test-mode="auto" role="tab" aria-selected="true">Auto Input</button><button type="button" data-level-test-mode="manual" role="tab" aria-selected="false">Manual Input</button></div><div id="levelTestAutoPane" class="level-test-mode-pane active"><div class="level-test-toolbar"><div class="search"><input id="levelTestSearch" placeholder="Search student, class or school"></div><button class="btn" id="levelTestRefresh">Refresh</button></div><div class="level-test-filters" id="levelTestFilters" aria-label="Filter level tests"><button class="active" data-test-filter="all">All</button><button data-test-filter="prospective">Online test</button><button data-test-filter="internal">Willena Student</button><button data-test-filter="visitor">Face-to-face test</button><button class="new-filter" data-test-filter="new"><i></i> New <b id="levelTestNewCount">0</b></button><button class="archived-filter" data-test-filter="archived">Archived <b id="levelTestArchivedCount">0</b></button></div><div class="panel level-test-table-wrap"><table class="level-test-table"><thead><tr><th>Name</th><th>Date</th><th>Level</th><th>Status</th><th>Source</th></tr></thead><tbody id="levelTestRows"><tr><td colspan="5" class="empty">Open Level Tests to load records.</td></tr></tbody></table></div></div><div id="levelTestManualPane" class="level-test-mode-pane" hidden><iframe id="manualLevelReportFrame" class="manual-level-report-frame" title="Manual level report" data-src="/Teachers/tools/manual-level-report/?embed=1"></iframe></div></section>
+    
+    <section class="view" id="view-biweekly">
+      <div class="page-head"><div><h1>Biweekly Reports</h1><p class="bw-subtitle">14-day learning evidence · parent-ready reports</p></div>
+        <div class="filters"><select id="bwRunPicker" class="control" aria-label="Select saved period"><option value="">Select report period</option></select><button id="bwReload" type="button" class="control">Refresh</button></div>
+      </div>
+      <div class="panel bw-setup">
+        <div class="panel-head"><div><div class="panel-title">Reporting period</div><div class="panel-sub">Generate once the final day has passed. Reports are frozen and can be sent unchanged.</div></div><span id="bwRunState" class="admin-pill">Not generated</span></div>
+        <div class="bw-toolbar">
+          <label class="bw-date-label">First day <input id="bwStart" class="control" type="date" aria-label="Period first day"></label>
+          <span class="bw-period-arrow">→</span>
+          <label class="bw-date-label">Last day <input id="bwEnd" class="control" type="date" readonly aria-label="Period last day"></label>
+          <button id="bwGenerate" type="button" class="control admin-primary">Generate 14-day snapshot</button>
+          <button id="bwPublish" type="button" class="control" disabled>Publish / Lock</button>
+        </div>
+        <div id="bwStatus" class="bw-status" role="status" aria-live="polite">Select a saved period or generate one.</div>
+      </div>
+      <div class="bw-stats" id="bwStats"></div>
+      <div class="panel bw-directory">
+        <div class="panel-head"><div><div class="panel-title">Student reports</div><div class="panel-sub">Select a student to preview, edit the note and share the report.</div></div>
+          <div class="bw-list-filters"><select id="bwClass" class="control"><option value="">All classes</option></select><input id="bwSearch" class="control search" type="search" placeholder="Find student…" aria-label="Search students"></div>
+        </div>
+        <div id="bwStudentList" class="bw-student-list"><div class="empty">No report period selected yet.</div></div>
+      </div>
+    </section>
   </main>
 </div>
-<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="level-tests" data-page="levelTests"><b>◫</b>Tests</button></nav>
+<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="level-tests" data-page="levelTests"><b>◫</b>Tests</button><button class="mobile-tab" data-view="biweekly"><b>▤</b>Reports</button></nav>
 <div class="drawer-bg" id="studentDrawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeStudentDrawer" type="button">×</button></div><div class="drawer-body" id="drawerBody"></div></aside></div>
 <div class="drawer-bg" id="addStudentDrawerBg"><aside class="drawer admin-add-drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name">Add student</div><div class="drawer-meta">Create a new student account</div></div><button class="close" id="closeAddStudentDrawer" type="button">×</button></div><div class="drawer-body"><form id="addStudentForm" class="admin-add-form" novalidate><div class="detail"><h3>Student details</h3><div class="admin-form-grid"><label class="admin-form-field"><span>English name</span><input id="addName" type="text"></label><label class="admin-form-field"><span>Korean name</span><input id="addKorean" type="text"></label><label class="admin-form-field"><span>Username</span><input id="addUsername" type="text" autocomplete="off"></label><label class="admin-form-field"><span>Temporary password</span><input id="addPassword" type="text" autocomplete="new-password"></label><label class="admin-form-field"><span>Class</span><select id="addClass"><option value="">No class</option></select></label><label class="admin-form-field"><span>Grade</span><input id="addGrade" type="text"></label><label class="admin-form-field"><span>School</span><input id="addSchool" type="text"></label><label class="admin-form-field"><span>Phone</span><input id="addPhone" type="text"></label></div><p class="admin-form-note">Username uses lowercase letters, numbers, dots, dashes or underscores.</p><div class="admin-modal-error" id="addStudentError"></div></div></form></div><div class="admin-add-foot"><button type="button" class="cancel" id="cancelAddStudent">Cancel</button><button type="submit" form="addStudentForm" class="create" id="createStudentButton">Create student</button></div></aside></div>
 <div class="admin-class-backdrop" id="classDrawerBgV2"></div><aside class="admin-class-drawer" id="classDrawerV2"><div class="admin-class-head"><div><h2 id="classDrawerTitleV2">Class</h2><p id="classDrawerMetaV2"></p></div><button id="classDrawerCloseV2" type="button">×</button></div><div class="admin-class-body" id="classDrawerBodyV2"></div></aside>
 <div class="level-test-drawer" id="levelTestDrawer" aria-hidden="true"><button class="level-test-drawer-backdrop" data-close-level-test aria-label="Close"></button><aside><div class="level-test-drawer-head"><div><span class="level-test-source" id="levelTestDetailSource"></span><h2 id="levelTestDetailName">Level test</h2><p id="levelTestDetailMeta"></p></div><button class="close" data-close-level-test>×</button></div><div class="level-test-drawer-body" id="levelTestDetailBody"></div><div class="level-test-drawer-actions"><button class="btn level-test-archive-action" id="levelTestArchive" disabled>Archive</button><button class="btn" id="levelTestManualOverride" disabled>Manual override</button><button class="btn" id="levelTestFullReport" disabled>Full report</button><button class="btn primary" id="levelTestFullResults" disabled>Full test results</button></div><section class="level-test-results" id="levelTestResults" aria-hidden="true"><div class="level-test-results-head"><button class="btn" id="levelTestResultsBack">← Mini report</button><div><h2>Full test results</h2><p id="levelTestResultsMeta"></p></div></div><div id="levelTestResultsBody"></div></section></aside></div>
+
+<div class="drawer-bg bw-drawer-bg" id="bwDrawerBg" aria-hidden="true">
+  <aside class="drawer bw-drawer" role="dialog" aria-modal="true" aria-labelledby="bwDrawerTitle">
+    <div class="drawer-head">
+      <div class="drawer-head-main"><div class="drawer-name" id="bwDrawerTitle">Biweekly report</div><div class="drawer-meta" id="bwDrawerMeta">Learning activity · 14 days</div></div>
+      <button class="close" id="bwClose" type="button" aria-label="Close report">×</button>
+    </div>
+    <div class="bw-drawer-actions">
+      <button id="bwCopyImage" type="button" class="control admin-primary">Copy image</button>
+      <button id="bwDownloadImage" type="button" class="control">Download PNG</button>
+      <button id="bwCopyMessage" type="button" class="control">Copy message</button>
+      <button id="bwPrint" type="button" class="control">Print</button>
+    </div>
+    <div class="drawer-body bw-drawer-scroll">
+      <p class="bw-helper" id="bwCopyHint">Use “Copy image”, then paste directly into your parent message app. Download PNG works when clipboard image permission is unavailable.</p>
+      <div class="bw-report-area"><div id="bwReportCard" class="bw-report-card"></div></div>
+      <label class="bw-note-label" for="bwNote">Teacher's note <span>(optional, appears on parent report)</span></label>
+      <textarea id="bwNote" class="control bw-note-input" rows="3" maxlength="1500" placeholder="Write a verified observation or next learning goal…"></textarea>
+      <div class="bw-note-actions"><button id="bwSaveNote" type="button" class="control admin-primary">Save note</button><span id="bwNoteState" role="status"></span></div>
+    </div>
+  </aside>
+</div>
 <div class="admin-v2-boot hidden" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Checking admin access…</span></div>
 <div class="admin-v2-rev">Admin V2 · 1.33</div>
 
 <script src="/free-level-test/js/report-calculation.js?v=1.27"></script>
 <script src="./admin-v2-visitor-qr.js?v=1.28"></script>
 <script type="module" src="./admin-v2.js?v=1.33"></script>
+<script type="module" src="./biweekly-report.js?v=20261101-v1"></script>
 <script>
 (function(){
   function bindManualLevelTabs(){
