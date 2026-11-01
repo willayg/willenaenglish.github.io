@@ -17,5 +17,13 @@ function card({className,task,dueAt,teacher,progressLabel='Progress',progressPer
  (valid?'<div class="ghc-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.max(0,Math.min(100,pct))+'"><span style="width:'+Math.max(0,Math.min(100,pct))+'%"></span></div>':'')+
  '<details class="ghc-details"><summary><span>'+esc(progressLabel)+'</span><span class="ghc-chevron">▾</span></summary><div class="ghc-content">'+body+action+'</div></details></article>';
 }
+document.addEventListener('toggle',event=>{
+ const details=event.target;
+ if(!(details instanceof HTMLDetailsElement)||!details.matches('.ghc-details')||!details.open)return;
+ const content=details.querySelector('.ghc-content');
+ if(!content||content.dataset.loaded==='true')return;
+ const trigger=content.querySelector('[data-sg-progress],[data-creative-progress]');
+ if(trigger){content.dataset.loaded='true';trigger.click()}
+},true);
 window.WillenaGeniusHomeworkCard={card,dday,escape:esc};
 })();
