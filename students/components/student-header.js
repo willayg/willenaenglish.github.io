@@ -601,7 +601,7 @@ class StudentHeader extends HTMLElement {
           <div class="menu-anchor">
             <button class="avatar avatar-btn" id="avatarBtn" part="avatar" aria-haspopup="menu" aria-expanded="false" title="Account">${avatar}</button>
             <div class="dropdown" id="avatarMenu" role="menu" aria-label="Account menu">
-              <a class="dd-item" role="menuitem" href="/students/dashboard/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">▦</span>Dashboard</a>
+              <a class="dd-item" role="menuitem" href="/students/dashboard/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">⌂</span>Home</a>
               <a class="dd-item" role="menuitem" href="/students/wordsearch/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">▧</span>Puzzles</a>
               <a class="dd-item" role="menuitem" href="/students/vocab-study/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">★</span>Word Genius</a>
               <a class="dd-item" role="menuitem" href="/students/sentence-genius/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">✎</span>Sentence Genius</a>
