@@ -112,6 +112,21 @@ function respond(event, statusCode, bodyObj, extraHeaders = {}, cookies /* strin
   return resp;
 }
 
+
+async function requireOwnProfile(event, client, requestedId) {
+  const hdrs = event.headers || {};
+  const cookieHeader = String(hdrs.cookie || hdrs.Cookie || '');
+  const match = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
+  const authorization = String(hdrs.authorization || hdrs.Authorization || '');
+  const bearer = authorization.match(/^Bearer\s+(.+)$/i);
+  const token = bearer?.[1] || (match ? decodeURIComponent(match[1]) : '');
+  if (!token) return null;
+  const { data, error } = await client.auth.getUser(token);
+  if (error || !data?.user?.id) return null;
+  if (requestedId && data.user.id !== requestedId) return null;
+  return data.user.id;
+}
+
 exports.handler = async (event) => {
   // Preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -201,7 +216,7 @@ exports.handler = async (event) => {
           : rawBody && bodyType !== 'undefined'
             ? JSON.stringify(rawBody).slice(0, 100)
             : '';
-        console.log('[supabase_auth] login: raw body type:', bodyType, 'length:', rawBody?.length || 0, 'preview:', preview || '(empty)');
+        // Do not log the submitted login body.
 
         if (rawBody === undefined || rawBody === null || rawBody === 'undefined' || rawBody === 'null') {
           console.error('[supabase_auth] login: body is missing', rawBody);
@@ -227,7 +242,7 @@ exports.handler = async (event) => {
           return respond(event, 400, { success: false, error: 'Invalid request body' });
         }
       } catch (parseErr) {
-        console.error('[supabase_auth] login: JSON parse error:', parseErr.message, 'body preview:', (event.body || '').substring(0, 100));
+        console.error('[supabase_auth] login: invalid JSON body');
         return respond(event, 400, { success: false, error: 'Invalid JSON body' });
       }
       const { email, password } = body;
@@ -311,6 +326,7 @@ exports.handler = async (event) => {
     if (action === 'get_role') {
       const userId = qs.user_id;
       if (!userId) return respond(event, 400, { success: false, error: 'Missing user_id' });
+      if (!await requireOwnProfile(event, supabase, userId)) return respond(event, 403, { success: false, error: 'Forbidden' });
 
       const { data, error } = await supabase
         .from('profiles')
@@ -325,6 +341,7 @@ exports.handler = async (event) => {
     if (action === 'get_profile_id') {
       const authUserId = qs.auth_user_id;
       if (!authUserId) return respond(event, 400, { success: false, error: 'Missing auth_user_id' });
+      if (!await requireOwnProfile(event, supabase, authUserId)) return respond(event, 403, { success: false, error: 'Forbidden' });
 
       const { data, error } = await supabase
         .from('profiles')
@@ -372,6 +389,7 @@ exports.handler = async (event) => {
     // Get profile (full profile data with email, role, etc.)
     if (action === 'get_profile' && event.httpMethod === 'GET') {
       let userId = qs.user_id;
+      if (!await requireOwnProfile(event, supabase, userId || null)) return respond(event, 403, { success: false, error: 'Forbidden' });
       if (!userId) {
         // Extract user ID from cookie like whoami does
         const hdrs = event.headers || {};
