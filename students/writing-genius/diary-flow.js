@@ -257,6 +257,27 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   if(changed)container.append(el('mark','df-diff',changed));
   container.append(document.createTextNode(b.slice(bj+1).join('')));
  }
+ function secondDraft(){
+  construct();screen('second-draft','Draft 2 · Revision');
+  stage.append(el('h2','df-heading','두 번째 초안 · Draft 2'));
+  const guide=el('aside','df-topic-structure-tip');guide.append(el('strong','','Beginning · Middle · Ending'),el('p','',feedback.tip_ko||'Improve your opening, development and conclusion.'));stage.append(guide);
+  stage.append(el('p','df-muted','AI corrections are included. Add sentences or paragraphs where needed. One final AI check remains.'));
+  const textarea=el('textarea','df-textarea');textarea.maxLength=12000;
+  const changes=feedback.improvements||[];
+  textarea.value=current.body.split(/(\n\s*\n)/).map(part=>/^\s*\n/.test(part)?part:split(part).map(line=>{const i=changes.findIndex(x=>norm(x.original)===norm(line));return i>=0?selectedText(changes[i],i):line}).join(' ')).join('').trim();
+  const counter=el('p','df-count');
+  const update=()=>{const n=split(textarea.value).length;counter.textContent=n+' sentences';counter.classList.toggle('is-invalid',n<8||n>30)};
+  textarea.addEventListener('input',update);stage.append(textarea,counter);update();
+  button('이전',summary);
+  button('Final AI Review · 마지막 확인',async()=>{
+   const n=split(textarea.value).length;
+   if(n<8||n>30){status('8–30개의 완성된 문장이 필요해요.',true);return}
+   if(busy)return;busy=true;
+   try{current.body=textarea.value.trim();await persist();reviewLoading();feedback=await review(current);choices={};saveChoices();summary()}
+   catch(e){secondDraft();status(e.message||'AI 리뷰 오류',true)}
+   finally{busy=false}
+  },true);
+ }
  function summary(){
   construct();screen('review','3 · Review');
   if(feedback?.praise_ko)stage.append(el('p','df-review-praise',feedback.praise_ko));
@@ -325,7 +346,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   }
   refreshProgress();
   button('이전',write);
-  button('Finish Review · 연습 시작',()=>{construct();index=0;mode='speaking';if(practice.length)question();else speakingTransition()},true);
+  if(current.kind==='topic'&&Number(feedback?.review_round||1)<2)button('Draft 2 · 글 고치기',secondDraft,true);
+  else button('Finish Review · 연습 시작',()=>{construct();index=0;mode='speaking';if(practice.length)question();else speakingTransition()},true);
  }
  function rendererHost(q){
   const host=el('div','df-question-host sp-shared-question question-card');stage.append(host);renderer=new QuestionRenderer(host);renderer.render(q);
