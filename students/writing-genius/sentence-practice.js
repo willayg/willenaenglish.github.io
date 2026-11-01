@@ -24,7 +24,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  const state={student:null,books:[],units:[],session:null,recent:[],today:null,bookReq:0,
   queue:Promise.resolve(),timer:null,loading:false,active:false,screen:'picker',catalogError:false,
   rewards:new Map(),rewardInflight:new Set(),renderer:null,hydrating:false,quota:null,
-  previewReq:0,previewKey:'',previewCount:null};
+  previewReq:0,previewKey:'',previewCount:null,homework:null};
  const answerInput=()=>state.renderer?.host?.querySelector('[data-write]')||null;
  const answerValue=()=>answerInput()?.value||'';
  function showQuota(quota){
@@ -389,7 +389,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   }catch(error){console.warn('[Writing Genius] Could not refresh AI checks',error)}
  }
  async function loadSessions(){
-  const list=await api('GET','?select=id,student_id,exercise_type,book_id,book_title,unit_id,questions,responses,current_index,status,practice_day,created_at,updated_at&order=created_at.desc&limit=25');
+  const list=await api('GET','?select=id,student_id,exercise_type,book_id,book_title,unit_id,assignment_id,questions,responses,current_index,status,practice_day,created_at,updated_at&order=created_at.desc&limit=25');
   if(!Array.isArray(list))throw Error('연습 기록을 불러오지 못했어요.');
   state.recent=list.filter(x=>x.student_id===state.student.id&&x.exercise_type==='make');
   state.today=state.recent.find(x=>x.status==='in_progress')||null;
@@ -416,7 +416,8 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   if(state.today&&state.today.status!=='completed')await loadChecks(state.today);
   refreshStartButton();
  }
- async function open(student){
+ async function open(student,homework=null){
+  state.homework=homework;
   state.student=student;state.active=true;state.loading=true;state.session=null;
   state.catalogError=false;setScreen('picker');saveLabel('');
   $('spStart').disabled=true;notify('오늘의 연습을 불러오는 중…');
@@ -432,11 +433,20 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   }else if(outcomes[1].status==='rejected'){
    state.catalogError=true;notify('연습 기록을 불러오지 못했어요. '+outcomes[1].reason?.message,true);
   }
+  if(homework?.bookId&&homework?.unitId&&!state.catalogError){
+   const book=state.books.find(x=>String(x.id)===String(homework.bookId));
+   if(book){
+    $('spBook').value=String(book.id);renderBookTabs();await loadUnits();
+    const unit=state.units.find(x=>String(x.id)===String(homework.unitId));
+    if(unit){$('spUnit').value=String(unit.id);renderUnitButtons();void previewUnit()}
+    else notify('이 숙제의 단원을 현재 교재에서 찾을 수 없어요.',true);
+   }else notify('이 숙제의 교재가 현재 수업에 배정되어 있지 않아요.',true);
+  }
   refreshStartButton();
   // A successful request previously left the initial "loading" message
   // onscreen indefinitely, even though the textbook buttons were ready.
   if(!state.catalogError)notify('');
-  if(state.today?.status==='in_progress'){
+  if(!state.homework?.assignmentId&&state.today?.status==='in_progress'){
    state.session=structuredClone(state.today);showRound();
   }
  }
@@ -446,6 +456,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    state.session=structuredClone(state.today);showRound();return;
   }
   const book=state.books.find(b=>b.id===field('spBook')),unit=field('spUnit');
+  if(state.homework?.assignmentId&&(String(book?.id)!==String(state.homework.bookId)||String(unit)!==String(state.homework.unitId))){notify('숙제에 지정된 교재와 단원을 선택하세요.',true);return}
   if(!book||!unit||state.catalogError)return;
   state.loading=true;$('spStart').disabled=true;
   notify('선택한 단원의 문장을 가져오는 중…');
@@ -457,7 +468,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
     notify('이 단원에는 연습할 수 있는 문장이 없어요. 다른 단원을 선택해 주세요.',true);return;
    }
    const made=await api('POST','',{
-    student_id:state.student.id,exercise_type:'make',book_id:book.id,
+    student_id:state.student.id,exercise_type:'make',assignment_id:state.homework?.assignmentId||null,book_id:book.id,
     book_title:book.title,unit_id:unit,questions:cards,
     responses:[],current_index:0,status:'in_progress'});
    if(!Array.isArray(made)||!made[0])throw Error('연습 시작 기록을 저장하지 못했어요.');
