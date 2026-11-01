@@ -439,24 +439,33 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    });
   }
  }
+ function rewardCard(reward){
+  stage.replaceChildren();
+  const award=document.createElement('student-reward-celebration');
+  award.setAttribute('label','DAILY DIARY COMPLETE');
+  award.setAttribute('percent','100');award.setAttribute('star-max','5');
+  award.setAttribute('stars',String(reward.stars||5));
+  award.setAttribute('points',String(reward.points||0));
+  stage.append(award,el('p','df-reward-breakdown',(reward.sentences||split(current.body).length)+' sentences × 5 points'));
+ }
  async function complete(){
+  if(busy)return;busy=true;
   screen('finish','Complete');stage.append(el('h2','df-heading','일기 완료'));
-  if(busy)return;busy=true;status('저장 중…');
+  status('보상을 확인하고 있어요…');
+  button('메인 메뉴',close,true);
   try{
-   await speech(current,spoken.join(' '),finalLines);
+   if(!current._speechSaved){await speech(current,spoken.join(' '),finalLines);current._speechSaved=true}
    const reward=await finish(current);
-   const award=document.createElement('student-reward-celebration');
-   award.setAttribute('label','DAILY DIARY COMPLETE');
-   award.setAttribute('percent','100');award.setAttribute('star-max','5');
-   award.setAttribute('stars',String(reward.stars));award.setAttribute('points',String(reward.points));
-   stage.append(award);
-   stage.append(el('p','df-reward-breakdown',reward.sentences+' sentences × 5 points'));
+   rewardCard(reward);
    status('완료했습니다!');
    showTeacherFeedback();
-   button('메인 메뉴',close,true);
-  }
-  catch(e){status(e.message,true);button('다시 저장',complete);button('메인 메뉴',close,true)}
-  finally{busy=false}
+  }catch(e){
+   // Submission may already be committed; never imply the entire diary failed.
+   const submitted=current?.status==='submitted'||String(e?.message||'').includes('reward');
+   status(submitted?'일기는 제출됐어요. 보상을 다시 확인해 주세요.':'저장 또는 보상 확인에 실패했어요. 다시 시도해 주세요.',true);
+   button('보상 다시 확인',complete);
+   showTeacherFeedback();
+  }finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};loadChoices();spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));showTeacherFeedback();button('메인 메뉴',close,true)}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};loadChoices();spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));button('메인 메뉴',close,true);showTeacherFeedback();button('보상 확인',complete)}else if(feedback)summary();else topic()},close};
 }
