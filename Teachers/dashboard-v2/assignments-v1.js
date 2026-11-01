@@ -108,8 +108,8 @@
     return '<div class="assignment-card-summary" data-card-progress="'+esc(a.id)+'">'+
       '<div class="assignment-card-summary-top"><span>Class progress <strong>'+avg+'%</strong></span><span>'+done+'/'+rows.length+' complete · '+notStarted+' not started</span></div>'+
       '<div class="assignment-card-track"><span style="width:'+avg+'%"></span></div>'+
-      '<details class="assignment-students-dropdown"><summary>Student progress ('+rows.length+')</summary>'+
-      '<div class="assignment-students-list">'+rows.map(x=>'<div class="assignment-students-line"><span>'+esc(x.student.name||x.student.korean_name||'Student')+'</span><div class="assignment-card-track"><span style="width:'+x.overall+'%"></span></div><strong>'+x.overall+'%</strong></div>').join('')+'</div></details></div>';
+      '<div class="assignment-students-list-wrap">'+
+      '<div class="assignment-students-list">'+rows.map(x=>'<div class="assignment-students-line"><span>'+esc(x.student.name||x.student.korean_name||'Student')+'</span><div class="assignment-card-track"><span style="width:'+x.overall+'%"></span></div><strong>'+x.overall+'%</strong></div>').join('')+'</div></div></div>';
   }
 
   async function loadVisibleCardProgress(rows,generation){
