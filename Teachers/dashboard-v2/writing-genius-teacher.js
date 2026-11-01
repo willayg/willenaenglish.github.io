@@ -27,7 +27,7 @@ function mount(){
   '<div id="wgTeacherList" class="wg-t-list"><p class="wg-t-empty">Select Writing Genius to load submissions.</p></div></section>'+
   '</div><div class="wg-t-modal" id="wgTeacherModal" hidden><div class="wg-t-modal-backdrop" data-wg-close></div><section class="wg-t-modal-dialog" role="dialog" aria-modal="true" aria-label="Student writing"><button type="button" class="wg-t-modal-close" id="wgTeacherModalClose" aria-label="Close">×</button><div id="wgTeacherDetail"></div></section></div>';
  workspace.append(view);
- $$('.wg-t-tab',view).forEach(b=>b.onclick=()=>{state.tab=b.dataset.wgTab;state.activeId=null;state.activeSessionId=null;closeDiaryModal();$('.wg-t-tab',view).forEach(x=>x.classList.toggle('is-active',x===b));$('#wgTeacherKind').hidden=state.tab==='practice';render()});
+ $$$('.wg-t-tab',view).forEach(b=>b.onclick=()=>{state.tab=b.dataset.wgTab;state.activeId=null;state.activeSessionId=null;closeDiaryModal();$$('.wg-t-tab',view).forEach(x=>x.classList.toggle('is-active',x===b));$('#wgTeacherKind').hidden=state.tab==='practice';render()});
  $('#wgTeacherClass').onchange=()=>void load();
  $('#wgTeacherKind').onchange=render;
  $('#wgTeacherSearch').oninput=render;
