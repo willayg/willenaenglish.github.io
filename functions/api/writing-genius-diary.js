@@ -80,6 +80,9 @@ export async function onRequestPost({request,env}){
    if(clarification.length<2)return json(400,{error:'원래 뜻을 설명해 주세요.'});
    const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
    if(!apiKey)return json(503,{error:'AI Willi를 사용할 수 없어요.'});
+   const gate=await db('rpc/writing_genius_claim_ai_v1',auth.token,'POST',{});
+   if(!gate.ok||!gate.data)return json(503,{error:'글쓰기 이용 제한을 확인하지 못했어요.'});
+   if(gate.data.allowed!==true)return json(403,{error:gate.data.reason==='daily_limit'?'오늘 AI 글쓰기 확인 4회를 모두 사용했어요. 내일 다시 시도해 주세요.':'이 활동은 레벨 4 이상 학생을 위한 활동이에요.'});
    const quota=await db('rpc/wg_sentence_ai_quota_v1',auth.token,'POST',{p_claim:true});
    if(!quota.ok||!quota.data||quota.data.allowed===false)return json(429,{error:'오늘 AI Willi 사용 횟수를 모두 사용했어요.'});
    const ai=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},body:JSON.stringify({
