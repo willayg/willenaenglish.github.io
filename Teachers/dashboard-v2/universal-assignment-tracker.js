@@ -439,5 +439,62 @@ async function loadOverview(scopeName='my'){
   renderOverview();
  }catch(e){host.innerHTML='<p class="ua-empty">Could not load homework: '+esc(e.message)+'</p>'}
 }
-window.UniversalAssignmentTracker={load,loadOverview};
+async function loadCalendar(){
+ const host=document.querySelector('#uaCalendar');if(!host)return;
+ host.textContent='Loading assignment calendar…';
+ const sources=[
+  ['homework_assignments','id,title,class,due_at,created_by,list_key,list_meta'],
+  ['grammar_foundation_homework','id,module_title,stage_title,class_name,due_at,created_by'],
+  ['sentence_genius_homework','id,title,class_name,due_at,created_by'],
+  ['test_prep_tasks','id,title,lesson,practice_type,student_id,due_at,created_by']
+ ];
+ let month=new Date();month.setDate(1);
+ const entries=[],errors=[];
+ const settled=await Promise.allSettled(sources.map(async ([table,fields])=>{
+  const data=await get(table+'?select='+encodeURIComponent(fields)+'&due_at=not.is.null&order=due_at.asc&limit=1000');
+  return data.map(x=>{
+   let app=table==='test_prep_tasks'?'내신':table==='grammar_foundation_homework'?'Grammar Genius':table==='sentence_genius_homework'?'Sentence Genius':'Word Genius';
+   if(table==='homework_assignments'){
+    const tag=String(x.list_meta?.creative_type||x.list_meta?.app||x.list_key||'').toLowerCase();
+    if(tag.includes('writing'))app='Writing Genius';else if(tag.includes('puzzle'))app='Puzzles';else if(tag.includes('sentence'))app='Sentence Genius';
+   }
+   return {...x,app,label:x.title||x.module_title||x.lesson||'Homework',className:x.class||x.class_name||'',at:x.due_at};
+  });
+ }));
+ settled.forEach((r,i)=>{if(r.status==='fulfilled')entries.push(...r.value);else errors.push(sources[i][0])});
+ try{
+  const recurring=await get('homework_recurring_schedules?select=id,source_assignment_id,next_due_at,active&active=eq.true');
+  recurring.forEach(item=>{
+   const source=entries.find(x=>id(x.id)===id(item.source_assignment_id));
+   if(source)entries.push({...source,id:'recurring:'+item.id,at:item.next_due_at,label:source.label+' ↻'});
+  });
+ }catch(_){}
+ const dateKey=x=>{const d=new Date(x);return Number.isNaN(d.getTime())?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+ function renderCalendar(){
+  const year=month.getFullYear(),m=month.getMonth(),days=new Date(year,m+1,0).getDate();
+  const first=new Date(year,m,1).getDay();
+  const today=dateKey(new Date());
+  let cells='';
+  for(let i=0;i<first;i++)cells+='<div class="ua-calendar-empty"></div>';
+  for(let n=1;n<=days;n++){
+   const key=year+'-'+String(m+1).padStart(2,'0')+'-'+String(n).padStart(2,'0');
+   const matches=entries.filter(x=>dateKey(x.at)===key);
+   cells+='<button type="button" class="ua-calendar-day'+(key===today?' is-today':'')+'" data-cal-date="'+key+'"><b>'+n+'</b>'+(matches.length?'<span>'+matches.length+' homework</span>':'')+'</button>';
+  }
+  host.innerHTML='<div class="ua-calendar-toolbar"><button class="control" type="button" id="calPrev">‹</button><strong>'+year+' · '+String(m+1).padStart(2,'0')+'</strong><button class="control" type="button" id="calNext">›</button><button class="control" type="button" id="calToday">Today</button></div>'+
+   (errors.length?'<p class="ua-note">Some sources unavailable: '+esc(errors.join(', '))+'</p>':'')+
+   '<div class="ua-calendar-grid">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<div class="ua-calendar-weekday">'+d+'</div>').join('')+cells+'</div><div id="uaCalendarDay" class="ua-calendar-results"><p>Select a day to see its assignments.</p></div>';
+  host.querySelector('#calPrev').onclick=()=>{month.setMonth(month.getMonth()-1);renderCalendar()};
+  host.querySelector('#calNext').onclick=()=>{month.setMonth(month.getMonth()+1);renderCalendar()};
+  host.querySelector('#calToday').onclick=()=>{month=new Date();month.setDate(1);renderCalendar()};
+  host.querySelectorAll('[data-cal-date]').forEach(b=>b.onclick=()=>{
+   host.querySelectorAll('[data-cal-date]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
+   const matches=entries.filter(x=>dateKey(x.at)===b.dataset.calDate);
+   host.querySelector('#uaCalendarDay').innerHTML='<h4>'+esc(b.dataset.calDate)+' · '+matches.length+' assignments</h4>'+
+    (matches.length?matches.map(x=>'<article class="ua-calendar-item"><b>'+esc(x.app)+' · '+esc(x.label)+'</b><small>'+esc(x.className)+' · '+esc(dday(x.at))+'</small></article>').join(''):'<p>No assignments on this date.</p>');
+  });
+ }
+ renderCalendar();
+}
+window.UniversalAssignmentTracker={load,loadOverview,loadCalendar};
 })();
