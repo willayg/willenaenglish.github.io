@@ -153,14 +153,40 @@ async function creativeManage(app,body){
   if(!body.isConnected)return;
   const rows=(data.assignments||[]).filter(a=>(a.list_meta?.creative_type||a.list_meta?.source_type)===(app==='writing'?'writing_genius':'puzzles'));
   const activeRows=rows.filter(a=>a.active!==false&&!a.ended_at);
-  body.innerHTML='<div class="ua-actions"><h4>'+label+' homework ('+activeRows.length+' active)</h4><button type="button" class="control ua-outline" id="uaCreativeRefresh">↻ Refresh</button></div>'+
-   (rows.length?'<div class="ua-grid">'+rows.map(a=>
-    '<article class="ua-card"><strong>'+esc(a.title||'Homework')+'</strong>'+
-    '<div class="ua-card-sub">'+esc(a.class||'')+' · '+esc(a.list_meta?.kind||'')+'</div>'+
-    '<small>Due '+esc(a.due_at?new Date(a.due_at).toLocaleDateString('ko-KR'):'—')+' · '+(a.active===false||a.ended_at?'Ended':'Active')+'</small>'+
-    '<button type="button" class="control ua-assign" data-creative-progress="'+esc(a.id)+'">Student progress →</button>'+
-    '<div data-creative-results="'+esc(a.id)+'" aria-live="polite"></div></article>'
-   ).join('')+'</div>':'<div class="ua-empty">No '+label+' homework assigned yet.</div>');
+  let view='current',classChoice='all';
+  const paint=()=>{
+   const chosen=rows.filter(a=>(classChoice==='all'||a.class===classChoice)&&(view==='history'?(a.active===false||!!a.ended_at):(a.active!==false&&!a.ended_at)));
+   const classes=[...new Set(rows.map(a=>a.class).filter(Boolean))].sort();
+   body.innerHTML='<div class="ua-genius-manage"><h3>Assignments</h3><p>'+label+' homework progress</p>'+
+    '<div class="ua-genius-manage-toolbar"><select class="control" id="uaCreativeClass"><option value="all">All classes</option>'+classes.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('')+'</select>'+
+    '<div class="ua-genius-current-history"><button type="button" data-period="current" class="'+(view==='current'?'active':'')+'">Current</button><button type="button" data-period="history" class="'+(view==='history'?'active':'')+'">History</button></div>'+
+    '<button type="button" class="control" id="uaCreativeRefresh">Refresh</button></div>'+
+    (chosen.length?'<div class="ua-genius-manage-list">'+chosen.map(a=>
+     '<article class="ua-genius-manage-card"><div class="ua-genius-manage-card-head"><strong>'+esc(a.title||'Homework')+'</strong><span>'+esc(a.class||'')+' · '+(a.due_at?'Due '+esc(new Date(a.due_at).toLocaleDateString('en-GB')):'No deadline')+'</span></div>'+
+     '<div class="ua-genius-manage-card-body"><b>'+esc(a.class||'')+'</b><p>'+esc(label)+' · '+esc(a.list_meta?.kind||'')+'</p><span class="ua-genius-status">'+(a.active===false||a.ended_at?'HISTORY':'CURRENT')+'</span>'+
+     '<button type="button" class="control ua-assign" data-creative-progress="'+esc(a.id)+'">Student progress →</button><div data-creative-results="'+esc(a.id)+'" aria-live="polite"></div></div></article>'
+    ).join('')+'</div>':'<div class="ua-empty">No '+label+' homework in this view.</div>')+'</div>';
+   body.querySelector('#uaCreativeClass').value=classChoice;
+   body.querySelector('#uaCreativeClass').onchange=e=>{classChoice=e.target.value;paint()};
+   body.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{view=b.dataset.period;paint()});
+   body.querySelector('#uaCreativeRefresh').onclick=()=>void creativeManage(app,body);
+   attachProgress();
+  };
+  const attachProgress=()=>{body.querySelectorAll('[data-creative-progress]').forEach(button=>button.addEventListener('click',async()=>{
+   const host=body.querySelector('[data-creative-results="'+button.dataset.creativeProgress+'"]');
+   if(!host)return;host.textContent='Checking submitted work…';
+   try{
+    const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+    const record=rows.find(x=>x.id===button.dataset.creativeProgress);
+    const endpoint=app==='writing'?(record?.list_key==='writing_genius:sentence'?'teacher_writing_sentence_homework_progress_v1':'teacher_creative_writing_progress_v1'):'teacher_puzzle_homework_progress_v1';
+    const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/'+endpoint,{method:'POST',headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
+    if(!response.ok)throw Error('Progress unavailable');
+    const matches=await response.json(),result=matches.find(x=>x.id===button.dataset.creativeProgress);
+    if(!result){host.textContent='No linked student progress yet.';return}
+    host.innerHTML='<p><b>'+result.completed+' / '+result.students+'</b> completed</p>'+(result.student_rows||[]).map(st=>'<div class="ua-creative-student-row"><span>'+esc(st.name)+'</span><span>'+(st.completed?'✓ Completed':'Not completed')+'</span></div>').join('');
+   }catch(e){host.textContent=e.message}
+  }))};
+  paint();
   // Recurrences are independent templates, so pausing one never deletes earlier homework.
   const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
   if(token){
@@ -189,35 +215,6 @@ async function creativeManage(app,body){
     }
    }catch(e){console.warn('Recurring homework controls unavailable',e)}
   }
-  body.querySelector('#uaCreativeRefresh')?.addEventListener('click',()=>void creativeManage(app,body));
-  body.querySelectorAll('[data-creative-progress]').forEach(button=>button.addEventListener('click',async()=>{
-   const host=body.querySelector('[data-creative-results="'+button.dataset.creativeProgress+'"]');
-   if(!host)return;host.textContent='Checking submitted work…';
-   try{
-    if(app==='writing'){
-     const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
-     const record=rows.find(x=>x.id===button.dataset.creativeProgress);
-     const endpoint=record?.list_key==='writing_genius:sentence'?'teacher_writing_sentence_homework_progress_v1':'teacher_creative_writing_progress_v1';
-     const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/'+endpoint,{method:'POST',headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
-     if(!response.ok)throw Error('Writing progress unavailable');
-     const matches=await response.json();
-     const result=matches.find(x=>x.id===button.dataset.creativeProgress);
-     if(!result){host.textContent='No linked writing mission data.';return}
-     host.innerHTML='<p><b>'+result.completed+' / '+result.students+'</b> submitted</p>'+
-      (result.student_rows||[]).map(st=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #e6eff0"><span>'+esc(st.name)+'</span><span>'+(st.completed?'✓ Submitted':'Not submitted')+'</span></div>').join('');
-     return;
-    }
-    const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
-    const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/teacher_puzzle_homework_progress_v1',{method:'POST',headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
-    if(!response.ok)throw Error('Puzzle progress unavailable');
-    const matches=await response.json();
-    const result=matches.find(x=>x.id===button.dataset.creativeProgress);
-    if(!result){host.textContent='No matching puzzle homework found.';return}
-    host.innerHTML='<p><b>'+result.completed+' / '+result.students+'</b> puzzles finished</p>'+
-     (result.student_rows||[]).map(st=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #e6eff0"><span>'+esc(st.name)+'</span><span>'+(st.completed?'✓ Completed · '+Number(st.stars||0)+'★':'Not completed')+'</span></div>').join('');
-    return;
-   }catch(e){host.textContent=e.message}
-  }));
  }catch(e){if(body.isConnected)body.innerHTML='<div class="ua-empty">'+esc(e.message)+'</div>'}
 }
 
@@ -250,7 +247,7 @@ function render(){
   body.querySelectorAll('[data-ua-group]').forEach(b=>b.addEventListener('click',()=>{if(!window.NaesinV2Assignment?.open){alert('내신 assignment module is unavailable.');return}window.NaesinV2Assignment.open(b.dataset.uaGroup)}));return;
  }
  if(active==='word'){
- if(sub==='manage'){body.innerHTML='<div class="ua-word-actions"><div><h4>Manage Word Genius homework</h4><p>Current assignments, history and student progress.</p></div></div>';showWordPanel(body)}
+ if(sub==='manage'){showWordPanel(body)}
  else{body.innerHTML='<div class="ua-word-actions"><div><h4>Assign Word Genius homework</h4><p>Choose database books and units or use Word Builder.</p></div><a class="control ua-primary" href="/Teachers/tools/wordtest/wordtest2.html">Open Word Builder →</a></div><div class="ua-catalog-host"></div>';window.dispatchEvent(new CustomEvent('ua:word-mounted'))}
  return;
  }
