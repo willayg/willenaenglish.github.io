@@ -352,7 +352,18 @@ async function bootstrap(){
             draft.title=custom.title;draft.prompt_key=key;draft.prompt_text=custom.help;
             openEditor(draft);
           }
-        }else if(kind==='diary')start('diary');
+        }else if(kind==='diary'){
+          const key='homework-'+hw.id;
+          const custom={key,title:hw.title||'Daily diary',help:hw.list_meta?.prompt_text||hw.description||'Write your diary.',starters:[]};
+          if(!prompts.diary.some(p=>p.key===key))prompts.diary.push(custom);
+          const existing=state.entries.find(e=>e.kind==='diary'&&e.prompt_key===key);
+          if(existing)openEditor(existing);
+          else{
+            const draft=createEntry('diary');
+            draft.prompt_key=key;draft.prompt_text=custom.help;draft.title=custom.title;
+            openEditor(draft);
+          }
+        }
         else throw Error('지원하지 않는 글쓰기 숙제예요.');
         return;
       }catch(e){notice(e.message,true)}
