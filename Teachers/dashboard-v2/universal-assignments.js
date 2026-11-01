@@ -166,7 +166,7 @@ async function creativeManage(app,body){
      task:(a.list_meta?.kind==='sentence'?(a.list_meta?.unit_label||a.title):(a.title||'Homework')),
      dueAt:a.due_at,teacher:a.teacher_name||a.created_by_name||'',
      progressLabel:'Student progress',
-     body:'<button type="button" class="control ua-assign" data-creative-progress="'+esc(a.id)+'">Load student results</button>'+
+     body:'<button type="button" class="control ua-assign ghc-load-action" data-creative-progress="'+esc(a.id)+'" hidden>Load student results</button>'+
       '<div data-creative-results="'+esc(a.id)+'" aria-live="polite"></div>'})
     ).join('')+'</div>':'<div class="ua-empty">No '+label+' homework in this view.</div>')+'</div>';
    body.querySelector('#uaCreativeClass').value=classChoice;
