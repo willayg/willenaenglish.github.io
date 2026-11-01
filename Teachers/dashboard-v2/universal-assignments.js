@@ -13,6 +13,44 @@ let wordPanel=null,wordHome=null;
 function restoreWordPanel(){if(wordPanel&&wordHome&&wordPanel.parentElement!==wordHome)wordHome.appendChild(wordPanel)}
 function showWordPanel(body){const panel=document.querySelector('[data-vocab-subview="assignments"]');if(!panel){body.innerHTML='<div class="ua-empty">Word Genius tracking unavailable.</div>';return}if(!wordPanel){wordPanel=panel;wordHome=panel.parentElement}panel.classList.add('ua-mounted-word');panel.classList.add('active');body.appendChild(panel);window.dispatchEvent(new CustomEvent('vocab:assignments-open'))}
 
+
+const newHomeworkApps={
+ writing:{heading:'Assign writing homework',types:[['diary','Daily diary'],['topic','Topic writing']]},
+ puzzles:{heading:'Assign puzzle homework',types:[['boggle','Boggle'],['wordsearch','Word Search'],['crossword','Crossword'],['mixmatch','Mix & Match'],['wordle','Wordle']]}
+};
+function homeworkForm(app,body){
+ const spec=newHomeworkApps[app];
+ const select=document.getElementById('classSelect');
+ const classes=[...new Set([...select?.options||[]].map(o=>o.value).filter(Boolean))];
+ body.innerHTML='<form id="uaNewHomework" class="ua-feature" style="display:grid;gap:12px;max-width:580px;margin:12px auto;padding:24px">'+
+ '<h4>'+spec.heading+'</h4><label>Class <select class="control" name="class" required><option value="">Choose class</option>'+classes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></label>'+
+ '<label>Homework type <select class="control" name="kind">'+spec.types.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('')+'</select></label>'+
+ '<label>Title <input class="control" name="title" required maxlength="120" placeholder="Homework title"></label>'+
+ (app==='writing'?'<label>Writing instructions / topic <textarea class="control" name="prompt" rows="4" maxlength="1500" placeholder="What should students write about?"></textarea></label>':'')+
+ '<label>Due date <input class="control" name="due" type="date" required></label>'+
+ '<button class="control ua-primary" type="submit">Assign homework →</button><div id="uaNewHomeworkStatus" role="status"></div></form>';
+ const form=body.querySelector('form'),date=form.elements.due;
+ const tomorrow=new Date(Date.now()+86400000);date.value=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
+ form.onsubmit=async e=>{
+  e.preventDefault();
+  const button=form.querySelector('button[type="submit"]'),status=form.querySelector('#uaNewHomeworkStatus');
+  button.disabled=true;status.textContent='Assigning…';
+  try{
+   const cls=form.elements['class'].value,kind=form.elements.kind.value,title=form.elements.title.value.trim(),prompt=app==='writing'?form.elements.prompt.value.trim():'';
+   if(!cls||!title||!date.value)throw Error('Select a class, title and due date.');
+   const due=new Date(date.value+'T23:59:59+09:00').toISOString();
+   const meta={source_type:app==='writing'?'writing_genius':'puzzles',kind,app:app==='writing'?'writing_genius':'puzzles',prompt_text:prompt,required_count:1};
+   const payload={class:cls,title,description:prompt||null,list_key:(app==='writing'?'writing_genius:':'puzzles:')+kind,list_title:title,list_meta:meta,due_at:due,goal_type:'completions',goal_value:1};
+   const url=window.WillenaAPI?.getApiUrl?.('/.netlify/functions/homework_api?action=create_assignment')||'/.netlify/functions/homework_api?action=create_assignment';
+   const response=await fetch(url,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+   const result=await response.json().catch(()=>({}));
+   if(!response.ok||!result.success)throw Error(result.error||'Homework could not be created');
+   status.textContent='Homework created. Student completion tracking for this type is not connected yet.';
+   form.reset();date.value=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
+  }catch(error){status.textContent=error.message}finally{button.disabled=false}
+ };
+}
+
 function groupRows(){return window.NaesinV2Data?.getCachedGroups?.()||[]}
 function render(){
  restoreWordPanel();
@@ -46,6 +84,7 @@ function render(){
    return;
  }
  if(active==='writing'){
+   if(sub==='create'){homeworkForm('writing',body);return}
    body.innerHTML='<div class="ua-feature"><div class="ua-feature-symbol">✎</div><div class="ua-feature-copy"><h4>Writing Genius · Diaries & topic writing</h4><p>Read student writing and teacher feedback in Writing Genius. Homework assignment creation is not connected yet.</p><button type="button" class="control ua-primary" id="uaOpenWriting">Open Writing Genius →</button></div></div>';
    body.querySelector('#uaOpenWriting')?.addEventListener('click',()=>{window.WritingGeniusTeacher?.openView?.()});
    return;
@@ -55,6 +94,7 @@ function render(){
    window.dispatchEvent(new CustomEvent('ua:sentence-mounted',{detail:{sub}}));
    return;
  }
+ if(active==='puzzles'&&sub==='create'){homeworkForm('puzzles',body);return}
  const desc=sub==='manage'?'Homework tracking is not connected for this app yet.':active==='grammar'?'Grammar step assignment creation is not connected yet.':'Puzzle assignment creation is not connected yet.';
  body.innerHTML='<div class="ua-feature ua-unavailable"><div class="ua-feature-symbol">'+(active==='grammar'?'G':'◇')+'</div><div class="ua-feature-copy"><span class="ua-coming-label">Assignment integration pending</span><h4>'+selected.label+' assignments</h4><p>'+desc+' The assignment connection is not built yet; existing student progress is unaffected.</p></div></div>';
 }
