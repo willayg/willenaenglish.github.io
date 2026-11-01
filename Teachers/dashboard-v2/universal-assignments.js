@@ -51,11 +51,14 @@ function homeworkForm(app,body){
     if(!assignmentId)throw Error('Homework created, but the API did not return an assignment ID for repeating it.');
     const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
     if(!token)throw Error('Homework created, but teacher login must be refreshed to configure recurrence.');
+    const meResp=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/auth/v1/user',{headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token}});
+    const me=meResp.ok?await meResp.json():null;
+    if(!me?.id)throw Error('Homework created; unable to verify teacher identity to save recurrence.');
     const interval=form.elements.repeat.value==='daily'?1:7;
     const nextDue=new Date(new Date(due).getTime()+interval*86400000).toISOString();
     const scheduleResp=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/homework_recurring_schedules',{
      method:'POST',headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json',Prefer:'return=minimal'},
-     body:JSON.stringify({source_assignment_id:assignmentId,created_by:localStorage.getItem('userId'),cadence:form.elements.repeat.value,interval_days:interval,next_due_at:nextDue})
+     body:JSON.stringify({source_assignment_id:assignmentId,created_by:me.id,cadence:form.elements.repeat.value,interval_days:interval,next_due_at:nextDue})
     });
     if(!scheduleResp.ok)throw Error('Homework created, but the recurring schedule could not be saved: '+(await scheduleResp.text()).slice(0,180));
    }
