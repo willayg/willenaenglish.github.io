@@ -67,3 +67,31 @@
 #view-writing-genius .wg-t-version .wg-t-corrected{border-color:#efd4e1!important;background:#fffafd!important}
 @media(max-width:850px){#view-writing-genius .wg-t-grid{grid-template-columns:1fr}#view-writing-genius .wg-t-list{max-height:360px}#view-writing-genius .wg-t-reader{padding:17px}}
 @media(max-width:520px){#view-writing-genius .wg-t-tabs{display:flex;width:100%}#view-writing-genius .wg-t-tab{flex:1;padding:9px 8px;font-size:.76rem}#view-writing-genius .wg-t-filter{padding:10px;gap:8px}#view-writing-genius .wg-t-filter>.control{min-width:0}#view-writing-genius .wg-t-filter input{flex-basis:100%}}
+
+/* Concise diary cards and full-screen reader modal */
+#view-writing-genius .wg-t-grid{display:block}
+#view-writing-genius .wg-t-list-panel{max-width:none}
+#view-writing-genius .wg-t-list{max-height:none;min-height:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;padding:12px 16px 20px}
+#view-writing-genius .wg-t-date-heading{grid-column:1/-1;margin:14px 0 2px}
+#view-writing-genius .wg-t-submission-card{margin:0;display:flex;flex-direction:column;gap:4px;min-height:103px;border:1.5px solid #d5e9ed!important;border-radius:14px!important;box-shadow:none!important;padding:13px 15px!important}
+#view-writing-genius .wg-t-submission-card:before{content:none!important}
+#view-writing-genius .wg-t-submission-card .wg-t-item-name{font-size:1rem}
+#view-writing-genius .wg-t-submission-card .wg-t-item-meta{font-size:.74rem;color:#70848b}
+#view-writing-genius .wg-t-submission-card .wg-t-card-title{font-size:.84rem;margin:3px 0 0;color:#394553}
+#view-writing-genius .wg-t-submission-card:hover,#view-writing-genius .wg-t-submission-card:focus-visible{background:#f4fcfd;border-color:#76ced7!important;outline:none}
+.wg-modal-open{overflow:hidden}
+.wg-t-modal[hidden]{display:none!important}
+.wg-t-modal{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:18px}
+.wg-t-modal-backdrop{position:absolute;inset:0;background:rgba(22,35,42,.62)}
+.wg-t-modal-dialog{position:relative;width:min(900px,100%);max-height:min(92dvh,1050px);overflow-y:auto;overscroll-behavior:contain;background:#fff;border:1px solid #bfe4e9;border-radius:20px;padding:26px;box-shadow:0 25px 80px rgba(0,0,0,.22)}
+.wg-t-modal-close{position:sticky;top:0;float:right;z-index:1;border:1px solid #cde6ea;border-radius:12px;background:#fff;color:#46747d;font-size:1.5rem;cursor:pointer;width:42px;height:42px}
+.wg-t-modal-dialog .wg-t-version .wg-t-paper{white-space:pre-wrap;overflow-wrap:anywhere;min-height:0}
+.wg-t-feedback{padding:17px;border:1px solid #cbe7ec;border-radius:15px;background:#f8fcfd;margin:22px 0 8px}
+.wg-t-feedback h3{margin:0 0 12px;font-size:1rem}
+.wg-t-feedback-input{width:100%;min-height:105px;resize:vertical;padding:12px;border:1.5px solid #c6e4ea;border-radius:11px;box-sizing:border-box;font:inherit}
+.wg-t-bonus-label{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:.84rem;font-weight:700;margin:13px 0}
+.wg-t-bonus-input{max-width:92px;border:1.5px solid #c6e4ea;border-radius:9px;padding:8px;font:inherit}
+.wg-t-save-feedback{border:0;border-radius:11px;padding:12px 16px;background:#36b6c3;color:#fff;font:800 .85rem Poppins,system-ui,sans-serif;cursor:pointer}
+.wg-t-save-feedback:disabled{opacity:.55}
+.wg-t-feedback-note{color:#607981;font-size:.78rem;margin:9px 0 0}
+@media(max-width:600px){.wg-t-modal{padding:6px}.wg-t-modal-dialog{max-height:96dvh;padding:17px;border-radius:15px}#view-writing-genius .wg-t-list{grid-template-columns:1fr}}
