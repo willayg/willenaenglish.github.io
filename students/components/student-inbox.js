@@ -21,7 +21,14 @@ export function mountStudentInbox(header){
  const menu=header.shadowRoot?.getElementById('avatarMenu');if(!menu)return;
  const button=make('button','dd-item','✉ 선생님 메시지');button.type='button';button.setAttribute('role','menuitem');
  menu.prepend(button);
+ const avatar=header.shadowRoot.getElementById('avatarBtn');
+ const badge=make('button','inbox-header-badge');badge.type='button';badge.hidden=true;badge.setAttribute('aria-label','Unread teacher messages');
+ avatar?.parentElement?.append(badge);
+ badge.onclick=e=>{e.preventDefault();e.stopPropagation();void refresh(true)};
  const style=make('style');style.textContent=`
+ .inbox-header-badge[hidden]{display:none!important}.inbox-header-badge{position:absolute;right:-7px;top:-9px;z-index:5;display:grid;place-items:center;min-width:25px;height:25px;padding:0 5px;border-radius:50%;border:2px solid #fff;background:#e9529c;color:#fff;font:900 12px Poppins,system-ui;box-shadow:0 2px 8px #ca3b8266;cursor:pointer;animation:inbox-badge-bounce 1s ease-out 2}
+ .avatar-btn.has-inbox-alert{box-shadow:0 0 0 3px #f6b6db!important}
+ @keyframes inbox-badge-bounce{50%{transform:translateY(-5px) scale(1.1)}}
  .inbox-cover[hidden]{display:none}.inbox-cover{position:fixed;inset:0;z-index:100000;background:#16353bb3;display:grid;place-items:center;padding:12px;font-family:Poppins,system-ui,sans-serif}
  .inbox-panel{position:relative;background:white;width:min(520px,100%);max-height:88dvh;overflow-y:auto;border:3px solid #bfe8ed;border-radius:20px;padding:22px;box-sizing:border-box;color:#315961;box-shadow:0 22px 70px #1235}
  .inbox-panel h2{color:#dc5898;margin:2px 45px 14px 0;font-size:1.35rem}.inbox-close{position:absolute;right:12px;top:12px;background:#fff;border:1px solid #c5e6ea;border-radius:12px;font-size:22px;width:42px;height:42px}
@@ -38,14 +45,29 @@ export function mountStudentInbox(header){
  const close=make('button','inbox-close','×');close.type='button';close.onclick=()=>{cover.hidden=true};const title=make('h2','','선생님 메시지');const body=make('div','inbox-body');
  panel.append(close,title,body);cover.append(panel);header.shadowRoot.append(cover);
  cover.addEventListener('click',e=>{if(e.target===cover)cover.hidden=true});
- async function refresh(open=false){
+ async function refresh(open=false,initial=false){
   if(open){cover.hidden=false;body.replaceChildren(make('p','','메시지를 확인하고 있어요…'))}
   try{
    const data=await call('student_inbox_v1');
    const messages=Array.isArray(data.messages)?data.messages:[];
-   const unread=messages.filter(x=>!x.is_read||Number(x.bonus_points)>Number(x.claimed_points)).length;
+   const pendingMessages=messages.filter(x=>!x.is_read||Number(x.bonus_points)>Number(x.claimed_points));
+   const unread=pendingMessages.length;
+   badge.hidden=!unread;badge.textContent=String(Math.min(unread,99));avatar?.classList.toggle('has-inbox-alert',!!unread);
    button.textContent='✉ 선생님 메시지'+(unread?' ('+unread+')':'');
-   if(!open)return;
+   if(!open){
+    if(initial&&pendingMessages.length&&document.visibilityState==='visible'){
+     const unseen=pendingMessages.filter(item=>{
+      const key='willena:inbox:intro:'+item.entry_id+':'+item.updated_at;
+      try{return localStorage.getItem(key)!=='1'}catch{return false}
+     });
+     if(unseen.length){
+      unseen.forEach(item=>{try{localStorage.setItem('willena:inbox:intro:'+item.entry_id+':'+item.updated_at,'1')}catch{}});
+      // Show once after login or app arrival, not during subsequent background checks.
+      await refresh(true);
+     }
+    }
+    return;
+   }
    body.replaceChildren();
    if(!messages.length){body.append(make('p','','새로운 메시지가 없어요.'));return}
    for(const item of messages){
@@ -71,6 +93,6 @@ export function mountStudentInbox(header){
   }catch{if(open)body.replaceChildren(make('p','','메시지를 불러오지 못했어요. 다시 열어 주세요.'))}
  }
  button.onclick=()=>{header.shadowRoot.getElementById('avatarBtn')?.click();void refresh(true)};
- setTimeout(()=>void refresh(false),1500);
+ setTimeout(()=>void refresh(false,true),2000);
  header._inboxTimer=setInterval(()=>{if(document.visibilityState==='visible')void refresh(false)},90000);
 }
