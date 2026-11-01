@@ -188,6 +188,7 @@ function openEditor(entry,fromPop=false){
   }
 }
 function start(kind){
+  if(document.querySelector('[data-start]')?.disabled){notice('Writing Genius는 레벨 4 이상 학생만 이용할 수 있어요.',true);return}
   kind=validKind(kind);
   if(kind==='sentence'){
     state.active=null;show('practice');
@@ -321,7 +322,7 @@ async function bootstrap(){
     const eligibility=await requestDeadline(databaseApi('rpc/writing_genius_access_v1','POST','',{}));
     if(eligibility?.allowed!==true){
       show('home');
-      document.querySelectorAll('[data-wg-start]').forEach(button=>button.disabled=true);
+      document.querySelectorAll('[data-start]').forEach(button=>button.disabled=true);
       const msg='Writing Genius는 레벨 4 이상 교재를 공부하는 학생만 이용할 수 있어요. 선생님에게 문의해 주세요.';
       notice(msg,true);
       const library=$('wgLibrary');
