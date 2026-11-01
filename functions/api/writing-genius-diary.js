@@ -37,7 +37,7 @@ export async function onRequestPost({request,env}){
   const reviewPath='writing_genius_diary_reviews?on_conflict=entry_id';
   if(action==='review'){
    const old=await db('writing_genius_diary_reviews?select=original_body,feedback&entry_id=eq.'+id+'&limit=1',auth.token);
-   if(old.ok&&old.data?.[0]?.original_body===entry.body&&old.data[0].feedback?.review_version===2&&(!entry.kind||entry.kind!=='topic'||old.data[0].feedback.review_round))return json(200,{success:true,feedback:old.data[0].feedback,cached:true});
+   if(old.ok&&old.data?.[0]?.original_body===entry.body&&old.data[0].feedback?.review_version===2&&(entry.kind!=='topic'||(old.data[0].feedback.review_round&&old.data[0].feedback.structure)))return json(200,{success:true,feedback:old.data[0].feedback,cached:true});
    const reviewRound=entry.kind==='topic'?Math.max(0,Number(old.data?.[0]?.feedback?.review_round||(old.data?.[0]?.feedback?.review_version?1:0))):0;
    if(entry.kind==='topic'&&reviewRound>=2)return json(409,{error:'두 번의 AI 리뷰를 모두 사용했어요. 이제 연습으로 넘어가세요.'});
    const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
@@ -56,7 +56,7 @@ export async function onRequestPost({request,env}){
    }
    const model=await ai.json();
    let feedback;try{feedback=JSON.parse(model.choices[0].message.content)}catch{return json(503,{error:'AI 피드백을 읽지 못했어요.'})}
-   feedback={review_version:2,review_round:entry.kind==='topic'?(reviewRound+1):1,praise_ko:String(feedback.praise_ko||'좋은 일기예요!').slice(0,500),tip_ko:String(feedback.tip_ko||'').slice(0,450),
+   feedback={review_version:2,review_round:entry.kind==='topic'?(old.data?.[0]?.original_body===entry.body&&!old.data?.[0]?.feedback?.structure&&reviewRound===1?1:reviewRound+1):1,praise_ko:String(feedback.praise_ko||'좋은 일기예요!').slice(0,500),tip_ko:String(feedback.tip_ko||'').slice(0,450),
     structure:entry.kind==='topic'?Object.fromEntries(['beginning','middle','ending'].map(k=>[k,{needs_work:feedback.structure?.[k]?.needs_work===true,advice_ko:String(feedback.structure?.[k]?.advice_ko||'').slice(0,250),example_en:feedback.structure?.[k]?.needs_work===true?String(feedback.structure?.[k]?.example_en||'').slice(0,220):''}])):null,
     improvements:(Array.isArray(feedback.improvements)?feedback.improvements:[]).slice(0,30).map(x=>({original:String(x.original||'').slice(0,300),better:String(x.better||'').slice(0,300),translation_ko:String(x.translation_ko||'').slice(0,300),why_ko:String(x.why_ko||'').slice(0,300)})),
     expressions:(Array.isArray(feedback.expressions)?feedback.expressions:[]).slice(0,3).map(x=>({english:String(x.english||'').slice(0,180),meaning_ko:String(x.meaning_ko||'').slice(0,180)}))};
