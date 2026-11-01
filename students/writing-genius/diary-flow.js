@@ -140,6 +140,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  function write(){
   screen('write','2 · Write');
   const count=el('span','df-count');const area=el('textarea','df-textarea');area.value=current.body||'';area.placeholder=current.kind==='topic'?'Write at least 8 sentences. Use paragraphs for the beginning, middle and ending.':'Write 6–30 complete sentences.';area.maxLength=12000;
+  if(current.kind==='topic'){const guide=el('p','df-topic-write-guide','Beginning: introduce your idea or characters. Middle: develop the story or explain with details. Ending: finish clearly. Start a new paragraph for each part.');stage.append(guide)}
   function update(){current.body=area.value;const n=split(area.value).length;count.textContent=n+' sentences';count.classList.toggle('is-invalid',n<(current.kind==='topic'?8:6)||n>30)}
   area.addEventListener('input',()=>{update();clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{void persist().catch(e=>status(e.message,true))},1800)});update();stage.append(area,count);
   button('이전',topic);
@@ -259,6 +260,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  function summary(){
   construct();screen('review','3 · Review');
   if(feedback?.praise_ko)stage.append(el('p','df-review-praise',feedback.praise_ko));
+  if(current.kind==='topic'&&feedback?.tip_ko){const tip=el('aside','df-topic-structure-tip');tip.append(el('strong','','Beginning · Middle · Ending'),el('p','',feedback.tip_ko));stage.append(tip)}
   const improvements=Array.isArray(feedback?.improvements)?feedback.improvements:[];
   const expressions=Array.isArray(feedback?.expressions)?feedback.expressions:[];
   const heading=el('div','df-review-top');
