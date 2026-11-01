@@ -490,13 +490,7 @@ const diaryFlow=createDiaryFlow({
    const submitted=await saveEntry({submit:true,force:true});
    if(!submitted)throw Error('제출에 실패했어요.');
   }
-  const token=await authToken();
-  const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/award_writing_diary_v1',{
-   method:'POST',credentials:'include',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+token},
-   body:JSON.stringify({p_entry_id:entry.id}),signal:AbortSignal.timeout(15000)
-  });
-  if(!response.ok)throw Error('일기는 제출됐지만 보상 저장에 실패했어요. 다시 시도해 주세요.');
-  const reward=await response.json();
+  const reward=await databaseApi('rpc/award_writing_diary_v1','POST','',{p_entry_id:entry.id});
   window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.awarded?reward.stars:0}}));
   try{localStorage.setItem('stars:refresh',String(Date.now()))}catch{}
   return reward;
