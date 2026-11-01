@@ -85,7 +85,7 @@ async function changeHomework(row){
  const table=row._table;
  if(!['homework_assignments','grammar_foundation_homework','sentence_genius_homework','test_prep_tasks'].includes(table))throw Error('This app does not support changes here yet');
  const update={active:false};
- if(table==='homework_assignments'){update.status='completed';update.ended_at=new Date().toISOString();}
+ if(table==='homework_assignments'){update.status='ended';update.ended_at=new Date().toISOString();}
  if(table==='grammar_foundation_homework')update.closed_at=new Date().toISOString();
  if(table==='test_prep_tasks')update.completed_at=new Date().toISOString();
  const changed=await get(table+'?id=eq.'+encodeURIComponent(row.id),{
@@ -97,6 +97,21 @@ async function changeHomework(row){
  Object.assign(row,changed[0]);
  overviewSelections.delete(homeworkKey(row));
 }
+async function deleteHomework(row){
+ const table=row._table;
+ // Where hard deletes are unsupported by RLS, remove the assignment
+ // from students' active workload without destroying attempt history.
+ if(!['homework_assignments','grammar_foundation_homework','sentence_genius_homework','test_prep_tasks'].includes(table))throw Error('Unsupported homework type');
+ if(table==='homework_assignments'||table==='test_prep_tasks'){
+  const result=await get(table+'?id=eq.'+encodeURIComponent(row.id),{method:'DELETE',headers:{Prefer:'return=representation'}});
+  if(!Array.isArray(result)||result.length!==1)throw Error('Could not delete assignment; check permissions');
+  return;
+ }
+ const update={active:false};
+ if(table==='grammar_foundation_homework')update.closed_at=new Date().toISOString();
+ const updated=await get(table+'?id=eq.'+encodeURIComponent(row.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(update)});
+ if(!Array.isArray(updated)||updated.length!==1)throw Error('Could not remove assignment; check permissions');
+}
 async function loadOverview(scopeName='my'){
  const host=document.querySelector('#uaOverview');if(!host)return;
  host.textContent='Loading assignments across apps…';
@@ -104,7 +119,7 @@ async function loadOverview(scopeName='my'){
   const teacher=await teacherIdentity();
   overviewSelections.clear();
   const sources=[
-   {app:'Word Genius',table:'homework_assignments',select:'id,created_by,class,title,status,active,created_at,due_at,ended_at',label:r=>r.title||r.class||'Vocabulary homework',isActive:r=>r.active!==false&&r.status!=='closed'&&r.status!=='completed'&&r.status!=='cancelled'},
+   {app:'Word Genius',table:'homework_assignments',select:'id,created_by,class,title,status,active,created_at,due_at,ended_at',label:r=>r.title||r.class||'Vocabulary homework',isActive:r=>r.active!==false&&!['ended','archived','closed','completed','cancelled'].includes(r.status)},
    {app:'Grammar Genius',table:'grammar_foundation_homework',select:'id,created_by,class_name,module_title,stage_title,active,created_at,due_at,closed_at',label:r=>[r.module_title,r.stage_title].filter(Boolean).join(' · '),isActive:r=>r.active!==false},
    {app:'Sentence Genius',table:'sentence_genius_homework',select:'id,created_by,class_name,title,book_title,unit_label,active,created_at,due_at',label:r=>r.title||r.book_title||'Sentence homework',isActive:r=>r.active!==false},
    {app:'내신',table:'test_prep_tasks',select:'id,created_by,title,lesson,practice_type,active,created_at,due_at,completed_at,student_id,target_count',label:r=>r.title||[r.lesson,r.practice_type].filter(Boolean).join(' · '),isActive:r=>r.active!==false}
@@ -163,6 +178,7 @@ async function loadOverview(scopeName='my'){
       const ownedByMe=id(row.created_by)===teacher;
       return '<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(fmt(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
         '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden>'+esc(detail)+'</div>'+
+        (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control ua-delete-homework" data-ua-delete="'+i+'" aria-label="Delete assignment '+esc(row.label)+'" style="border:1px solid #d9a6a6;color:#aa4949;background:#fff;padding:6px 12px;font-size:12px">Delete assignment</button></div>':'')+
         (overviewStage==='active'&&ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework for bulk completion" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label><button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button></div>':'')+'</article>';
      }).join('')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
      '<p class="ua-note">Past-due homework appears in Complete automatically. ✓ closes one assignment; check boxes and Complete selected close several. Student attempts and results remain preserved.</p>';
@@ -206,6 +222,21 @@ async function loadOverview(scopeName='my'){
     const status=host.querySelector('#uaBulkStatus');
     if(status){status.hidden=false;status.textContent=success+' completed.'+(failed.length?' '+failed.length+' failed: '+failed.slice(0,3).join('; '):'');}
    }
+   host.querySelectorAll('[data-ua-delete]').forEach(button=>button.onclick=async()=>{
+    const row=visible[Number(button.dataset.uaDelete)];
+    if(!row||id(row.created_by)!==teacher)return;
+    const soft=['grammar_foundation_homework','sentence_genius_homework'].includes(row._table);
+    const action=soft?'Remove':'Delete';
+    if(!confirm(action+' "'+row.label+'" from '+(row.class||row.class_name||'this class')+'? '+(soft?'It will disappear from active homework; recorded work is retained.':'This cannot be undone.')))return;
+    button.disabled=true;
+    const status=host.querySelector('#uaBulkStatus');status.hidden=false;status.textContent=action+' in progress…';
+    try{
+      await deleteHomework(row);
+      const index=rows.indexOf(row);if(index!==-1)rows.splice(index,1);
+      overviewSelections.delete(homeworkKey(row));renderOverview();
+      const msg=host.querySelector('#uaBulkStatus');if(msg){msg.hidden=false;msg.textContent=soft?'Assignment removed from active homework.':'Assignment deleted.'}
+    }catch(error){button.disabled=false;status.textContent=action+' failed: '+error.message}
+   });
    host.querySelectorAll('[data-ua-complete]').forEach(button=>button.onclick=()=>{
     const row=visible[Number(button.dataset.uaComplete)];
     completeRows([row]);
