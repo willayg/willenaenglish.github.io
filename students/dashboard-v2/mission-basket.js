@@ -32,8 +32,18 @@ async function standardHomework(){
  const d=await r.json();if(!d.success)throw Error('Shared homework unavailable');
  return (d.assignments||[]).map(a=>{
   const source=String(a.source_type||a.list_meta?.source_type||'wordlist').toLowerCase();
-  const app=source==='vocab_study'?'Word Genius':'English Arcade';
-  const url=app==='Word Genius'?'/students/vocab-study/?open=wordtest':'/Games/english_arcade/index.html?openHomework=1';
+  const tag=String(a.list_meta?.creative_type||a.list_meta?.app||a.list_key||'').toLowerCase();
+  const mode=String(a.list_meta?.kind||String(a.list_key||'').split(':')[1]||'boggle');
+  let app='English Arcade',url='/Games/english_arcade/index.html?openHomework=1';
+  if(tag.includes('writing')){
+   app='Writing Genius';url='/students/writing-genius/?homework='+encodeURIComponent(a.id);
+  }else if(tag.includes('puzzle')){
+   app='Puzzles';url='/students/wordsearch/?mode='+encodeURIComponent(mode)+'&homework='+encodeURIComponent(a.id);
+  }else if(tag.includes('sentence')){
+   app='Sentence Genius';url='/students/sentence-genius/?homework='+encodeURIComponent(a.id);
+  }else if(source==='vocab_study'){
+   app='Word Genius';url='/students/vocab-study/?open=wordtest';
+  }
   return item('standard:'+a.id,app,a.title||a.list_title||'숙제',url,a.created_at||a.assigned_at||a.due_at,false,a.due_at?'기한 '+new Date(a.due_at).toLocaleDateString('ko-KR'):'');
  });
 }
