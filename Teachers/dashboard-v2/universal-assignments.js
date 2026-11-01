@@ -94,11 +94,52 @@ async function creativeManage(app,body){
     '<button type="button" class="control ua-assign" data-creative-progress="'+esc(a.id)+'">Student progress →</button>'+
     '<div data-creative-results="'+esc(a.id)+'" aria-live="polite"></div></article>'
    ).join('')+'</div>':'<div class="ua-empty">No '+label+' homework assigned yet.</div>');
+  // Recurrences are independent templates, so pausing one never deletes earlier homework.
+  const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+  if(token){
+   try{
+    const base='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/homework_recurring_schedules';
+    const headers={apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token};
+    const res=await fetch(base+'?select=id,source_assignment_id,cadence,active,next_due_at&order=created_at.desc',{headers,cache:'no-store'});
+    if(res.ok){
+     const templates=await res.json(), ids=new Set(rows.map(x=>x.id));
+     const relevant=templates.filter(x=>ids.has(x.source_assignment_id));
+     if(relevant.length){
+      const section=document.createElement('section');section.className='ua-feature';
+      section.innerHTML='<h4>Recurring homework ('+relevant.length+')</h4>'+
+       relevant.map(item=>'<div class="ua-actions" style="margin:10px 0;gap:12px"><span>'+esc(rows.find(x=>x.id===item.source_assignment_id)?.title||'Homework')+' · '+esc(item.cadence)+' · '+esc(new Date(item.next_due_at).toLocaleDateString('ko-KR'))+'</span><button type="button" class="control" data-repeat-toggle="'+esc(item.id)+'">'+(item.active?'Pause':'Resume')+'</button></div>').join('');
+      body.prepend(section);
+      section.querySelectorAll('[data-repeat-toggle]').forEach(button=>button.addEventListener('click',async()=>{
+       const item=relevant.find(x=>x.id===button.dataset.repeatToggle);if(!item)return;
+       button.disabled=true;
+       try{
+        const resp=await fetch(base+'?id=eq.'+encodeURIComponent(item.id),{method:'PATCH',headers:{...headers,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({active:!item.active})});
+        if(!resp.ok)throw Error('Could not update schedule');
+        item.active=!item.active;button.textContent=item.active?'Pause':'Resume';
+       }catch(e){alert(e.message)}finally{button.disabled=false}
+      }));
+     }
+    }
+   }catch(e){console.warn('Recurring homework controls unavailable',e)}
+  }
   body.querySelector('#uaCreativeRefresh')?.addEventListener('click',()=>void creativeManage(app,body));
   body.querySelectorAll('[data-creative-progress]').forEach(button=>button.addEventListener('click',async()=>{
    const host=body.querySelector('[data-creative-results="'+button.dataset.creativeProgress+'"]');
    if(!host)return;host.textContent='Checking submitted work…';
    try{
+    if(app==='writing'){
+     const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+     const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/teacher_creative_writing_progress_v1',{method:'POST',headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
+     if(!response.ok)throw Error('Writing progress unavailable');
+     const matches=await response.json();
+     const result=matches.find(x=>x.id===button.dataset.creativeProgress);
+     if(!result){host.textContent='No linked writing mission data.';return}
+     host.innerHTML='<p><b>'+result.completed+' / '+result.students+'</b> submitted</p>'+
+      (result.student_rows||[]).map(st=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #e6eff0"><span>'+esc(st.name)+'</span><span>'+(st.completed?'✓ Submitted':'Not submitted')+'</span></div>').join('');
+     return;
+    }
+    host.textContent='Puzzles do not yet report assignment-linked completion. No pass result can be verified.';
+    return;
     const result=await get(route('creative_assignment_progress','&assignment_id='+encodeURIComponent(button.dataset.creativeProgress)));
     host.innerHTML='<p><b>'+result.completed+' / '+result.total+'</b> complete</p>'+
      (result.students||[]).map(st=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #e6eff0"><span>'+esc(st.name)+'</span><span>'+(st.error?'Unavailable':st.completed?'✓ Complete':'Not yet')+'</span></div>').join('');
