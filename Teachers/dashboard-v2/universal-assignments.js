@@ -23,7 +23,7 @@ function homeworkForm(app,body){
  const select=document.getElementById('classSelect');
  const classes=[...new Set([...[...(select?.options||[])].map(o=>o.value).filter(Boolean),'Test'])];
  body.innerHTML='<form id="uaNewHomework" class="ua-feature ua-genius-assign">'+
- '<h3>'+spec.heading+'</h3>'<label>Class <select class="control" name="class" required><option value="">Choose class</option>'+classes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></label>'+
+ '<h3>'+spec.heading+'</h3>'+ '<label>Class <select class="control" name="class" required><option value="">Choose class</option>'+classes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></label>'+
  '<label>Homework type <select class="control" name="kind">'+spec.types.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('')+'</select></label>'+
  '<label>Title <input class="control" name="title" required maxlength="120" placeholder="Homework title"></label>'+
  (app==='writing'?'<div id="uaSentenceBookFields" hidden><label>Textbook <select class="control" name="book"><option value="">Choose textbook</option></select></label><label>Unit <select class="control" name="unit"><option value="">Choose unit</option></select></label><p id="uaSentenceBookStatus" class="ua-note"></p></div>':'')+
@@ -59,7 +59,7 @@ function homeworkForm(app,body){
     const list=await records(OP+'class_book_assignments?select=book_id,book_title&class_id=eq.'+encodeURIComponent(classes[0].id)+'&status=neq.finished',OPKEY);
     if(stamp!==loadId)return;
     const unique=[...new Map(list.map(x=>[x.book_id,x])).values()];
-    populate(form.elements.book,unique,'Choose textbook');message.textContent=unique.length?'Choose a textbook and unit.':'No assigned textbooks found.';
+    populate(form.elements.book,unique,'Choose textbook');form.elements.book.add(new Option('Other book — all textbooks','__other__'));message.textContent=unique.length?'Assigned textbooks shown first.':'Use Other book to browse all textbooks.';
    }catch(e){if(stamp===loadId)message.textContent=e.message}
   }
   async function loadBookUnits(){
@@ -76,7 +76,18 @@ function homeworkForm(app,body){
   }
   form.elements.kind.addEventListener('change',()=>{fields.hidden=form.elements.kind.value!=='sentence';if(!fields.hidden)void loadClassBooks()});
   form.elements['class'].addEventListener('change',()=>{if(!fields.hidden)void loadClassBooks()});
-  form.elements.book.addEventListener('change',()=>void loadBookUnits());
+  form.elements.book.addEventListener('change',async()=>{
+   if(form.elements.book.value==='__other__'){
+    message.textContent='Loading all textbooks…';
+    try{
+     const books=await records(CONT+'content_books?select=id,title&status=in.(published,review)&order=title.asc&limit=1000',CONTENTKEY);
+     populate(form.elements.book,books,'Choose any textbook');
+     message.textContent='Full textbook catalogue';
+    }catch(e){message.textContent=e.message}
+    return;
+   }
+   void loadBookUnits();
+  });
  }
 
  const tomorrow=new Date(Date.now()+86400000);date.value=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
