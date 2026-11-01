@@ -700,24 +700,30 @@ export default {
         const targets=getAssignmentTargetStudentIds(assignment);
         const eligible=(students||[]).filter(student=>!targets.length||targets.includes(student.id)).slice(0,150);
         const since=assignment.created_at||assignment.start_at;
-        const rows=await Promise.all(eligible.map(async student=>{
+        // Batch RLS-safe evidence reads by class instead of one DB request per student.
+        const results=new Map();
+        let evidenceUnavailable=false;
+        for(let offset=0;offset<eligible.length;offset+=20){
+          const batch=eligible.slice(offset,offset+20);
+          const ids=batch.map(student=>student.id);
           try{
-            let evidence=[];
-            if(source==='writing_genius'){
-              const q='student_id=eq.'+encodeURIComponent(student.id)
-                +'&kind=eq.'+encodeURIComponent(kind)+'&status=eq.submitted'
+            const filter=(source==='writing_genius'?'student_id':'user_id')+'=in.('+ids.join(',')+')';
+            const q= source==='writing_genius'
+              ?filter+'&kind=eq.'+encodeURIComponent(kind)+'&status=eq.submitted'
                 +'&submitted_at=gte.'+encodeURIComponent(since)
                 +(kind==='topic'?'&prompt_key=eq.'+encodeURIComponent('homework-'+assignment.id):'')
-                +'&select=id,submitted_at&limit=1';
-              evidence=await supabaseSelect(env,'writing_genius_entries',q);
-            }else{
-              const q='user_id=eq.'+encodeURIComponent(student.id)
-                +'&mode=eq.'+encodeURIComponent(kind)+'&ended_at=gte.'+encodeURIComponent(since)
-                +'&select=id,ended_at&limit=1';
-              evidence=await supabaseSelect(env,'progress_sessions',q);
-            }
-            return {id:student.id,name:student.korean_name||student.name||'Student',completed:evidence.length>0};
-          }catch(e){return {id:student.id,name:student.korean_name||student.name||'Student',completed:false,error:true}}
+                +'&select=student_id&limit=1000'
+              :filter+'&mode=eq.'+encodeURIComponent(kind)
+                +'&ended_at=gte.'+encodeURIComponent(since)+'&select=user_id&limit=1000';
+            const evidence=await supabaseSelect(env,source==='writing_genius'?'writing_genius_entries':'progress_sessions',q);
+            for(const row of evidence||[])results.set(String(row.student_id||row.user_id),true);
+          }catch(e){evidenceUnavailable=true;for(const student of batch)results.set(String(student.id),null)}
+        }
+        const rows=eligible.map(student=>({
+          id:student.id,
+          name:student.korean_name||student.name||'Student',
+          completed:results.get(String(student.id))===true,
+          error:results.get(String(student.id))===null
         }));
         return jsonResponse({success:true,assignment,students:rows,total:rows.length,completed:rows.filter(r=>r.completed).length},200,origin);
       }
