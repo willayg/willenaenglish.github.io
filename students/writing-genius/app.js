@@ -485,12 +485,12 @@ const diaryFlow=createDiaryFlow({
  speech:async(entry,transcript,chosenLines)=>diaryRequest('speech',entry.id,transcript,chosenLines),
  teacherFeedback:async entry=>databaseApi('rpc/writing_genius_student_feedback_v1','POST','',{p_entry_id:entry.id}),
  claimBonus:async entry=>databaseApi('rpc/writing_genius_claim_bonus_v1','POST','',{p_entry_id:entry.id}),
- finish:async entry=>{
+ finish:async(entry,completion={})=>{
   if(state.active?.status!=='submitted'){
    const submitted=await saveEntry({submit:true,force:true});
    if(!submitted)throw Error('제출에 실패했어요.');
   }
-  const reward=await databaseApi(entry.kind==='topic'?'rpc/award_writing_topic_v1':'rpc/award_writing_diary_v1','POST','',{p_entry_id:entry.id});
+  const reward=await databaseApi(entry.kind==='topic'?'rpc/award_writing_topic_v1':'rpc/award_writing_diary_v1','POST','',entry.kind==='topic'?{p_entry_id:entry.id,p_review_complete:completion.reviewComplete===true,p_spoken_complete:completion.speakingComplete===true}:{p_entry_id:entry.id});
   window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.awarded?reward.stars:0}}));
   try{localStorage.setItem('stars:refresh',String(Date.now()))}catch{}
   return reward;
