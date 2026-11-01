@@ -574,7 +574,7 @@ async function mountCreate(root){
  try{
   const [cls,b]=await Promise.all([classes(),books()]);
   classEl.innerHTML='<option value="">Choose a class</option>'+cls.map(c=>'<option value="'+escapeHtml(c.name)+'">'+escapeHtml(c.display_name||c.name)+'</option>').join('');
-  bookEl.innerHTML=options(b,'Choose a textbook');$('#sgtDue',root).value=dateDefault();
+  bookEl.innerHTML=options(b,'Choose a textbook');window.WillenaGeniusBooks?.bind({classSelect:classEl,bookSelect:bookEl,books:()=>state.books||[],onChange:()=>{state.units=[];unitHost.textContent='Choose a textbook.'}});$('#sgtDue',root).value=dateDefault();
   bookEl.onchange=async()=>{
    unitHost.textContent='Loading units…';
    try{
