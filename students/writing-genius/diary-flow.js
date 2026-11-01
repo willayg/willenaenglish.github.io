@@ -65,6 +65,18 @@ const diaryTopics=[
  {title:'가고 싶은 곳',en:'A Place I Want to Visit',guide:'Where do you want to go? Why? What would you do there?',example:'I want to visit Jeju Island. I would like to see the sea. I want to walk on the beach. I hope to try delicious food. I would take lots of pictures. I think the trip would be exciting.'},
  {title:'나의 꿈',en:'My Dream',guide:'What do you want to be or do? Why? How can you work toward it?',example:'I want to become a scientist. I enjoy learning about space. I read books about planets. I want to build a robot one day. I will study hard at school. I hope my dream comes true.'}
 ];
+const topicWritingIdeas=[
+ {title:'A Mysterious Door',guide:'Fiction · Who finds the door? What happens next? How does the story end?',example:'I found a tiny door behind our school library. Nobody had noticed it before.\n\nI opened it and stepped into a garden full of glowing trees. A small fox asked me to help find its lost key. We searched under the flowers and beside a pond. Finally, I found the key inside an old wooden box.\n\nThe fox thanked me and showed me the way home. I will never forget that strange afternoon.'},
+ {title:'Should Kids Have Pets?',guide:'Opinion · State your opinion, give reasons and examples, then conclude.',example:'I think having a pet can be good for children. Pets can teach us how to be responsible.\n\nFirst, children must remember to give pets food and water. They also learn to care for another living thing. For example, my friend walks her dog every morning. However, pets also need time and money.\n\nIn my opinion, families should think carefully before getting a pet. A pet is a friend, but it is also a responsibility.'},
+ {title:'The Best Place in My Town',guide:'Description · Introduce the place, describe it with details, and finish with your thoughts.',example:'My favorite place in my town is the park near my house. I go there whenever I have free time.\n\nThe park has tall trees and a small lake. Children ride their bicycles along the paths. There is a playground beside the lake. I like sitting on a bench and watching the ducks.\n\nThis park helps me relax after a busy day. I hope it stays beautiful for many years.'},
+ {title:'The Day Everything Turned Blue',guide:'Fiction · Introduce the strange event, show the problem and solution, and end the story.',example:'When I woke up, everything in my room was blue. Even my breakfast looked like blue paint.\n\nAt school, my friends were surprised too. We discovered that a strange cloud was floating over the town. I climbed the hill with my sister to see it. We found a tiny robot that was making blue smoke. I helped the robot fix its broken machine.\n\nThe cloud disappeared before sunset. The next morning, the world had its normal colors again.'},
+ {title:'My Dream Invention',guide:'Nonfiction or imagination · Explain your invention, how it works, and why it matters.',example:'I would like to invent a robot that cleans the ocean. Many sea animals are hurt by plastic waste.\n\nMy robot would swim under the water and collect rubbish. It would use a camera to avoid fish. A small boat could collect the plastic from the robot. People could use these robots near beaches and islands.\n\nI hope my invention could help protect sea animals. Even a small invention can make a big difference.'},
+ {title:'A Letter to My Future Self',guide:'Personal writing · Introduce your future self, share your hopes, and finish with a message.',example:'Dear future me, I wonder what your life is like now. I hope you are happy and healthy.\n\nToday I enjoy playing guitar and spending time with my friends. I sometimes worry about difficult schoolwork. I hope you still try new things even when they are hard. Please remember the people who helped you grow.\n\nI want you to stay kind and curious. From your younger self, good luck!'},
+ {title:'A Trip to Another Planet',guide:'Fiction · Set the scene, describe the adventure, and give the story an ending.',example:'Our spaceship landed on a purple planet. I looked out of the window and saw three moons.\n\nMy team walked carefully across the strange ground. We discovered a river that shone in the dark. Suddenly, a friendly alien appeared beside us. It showed us a beautiful city inside a mountain. We took pictures and thanked our new friend.\n\nAt last, we flew back toward Earth. I knew I would always remember my first space adventure.'},
+ {title:'Why Exercise Is Important',guide:'Explanation · Introduce the subject, give reasons and examples, and summarize.',example:'Exercise is important for our bodies and minds. There are many ways to be active every day.\n\nFirst, exercise helps us stay strong and healthy. Running and cycling can also improve our energy. Playing sports with friends teaches us teamwork. Even a short walk can help us feel calmer.\n\nWe do not need to be great athletes to exercise. Small healthy habits can make a difference.'},
+ {title:'The Missing School Lunch',guide:'Mystery · Introduce a problem, follow clues, and reveal what happened.',example:'My lunch disappeared from my bag on Monday morning. I was sure I had packed it before school.\n\nI checked my classroom and asked my friends for help. We found a trail of crumbs near the hallway. The crumbs led us to the music room. Behind a chair, we discovered a hungry kitten beside my lunchbox. I gave the kitten some water and called a teacher.\n\nThe mystery was finally solved. I brought an extra sandwich the next day.'},
+ {title:'A Person Who Inspires Me',guide:'Nonfiction · Introduce the person, give specific examples, and end with what you learned.',example:'My grandmother is someone I admire. She is kind and always ready to help.\n\nShe grows vegetables in a small garden. Every weekend, she shares them with our family. She also listens carefully when I have a problem. Last year, she taught me how to plant tomatoes.\n\nMy grandmother shows me that little acts of kindness matter. I hope to help others as she does.'}
+];
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
 export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedback,claimBonus,onExit}){
  const root=$('wgDiaryFlow'),stage=$('dfStage'),actions=$('dfActions'),message=$('dfMessage'),progress=$('dfProgress');
@@ -77,8 +89,9 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  $('dfExit').addEventListener('click',close);
  function topic(){
   screen('topic','1 · Topic');
-  const heading=el('h2','df-heading','오늘의 일기');stage.append(heading);
-  const selected=diaryTopics.find(t=>t.title===current.title||t.en===current.title);
+  const isTopic=current.kind==='topic';const ideas=isTopic?topicWritingIdeas:diaryTopics;
+  const heading=el('h2','df-heading',isTopic?'주제 글쓰기':'오늘의 일기');stage.append(heading);
+  const selected=ideas.find(t=>t.title===current.title||t.en===current.title);
   const picker=el('div','df-topic-picker');
   const choose=el('button','df-topic-trigger');choose.type='button';choose.setAttribute('aria-expanded','false');
   const menu=el('div','df-topic-menu');menu.hidden=true;
@@ -89,24 +102,35 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const exampleTitle=el('strong',''),exampleText=el('p','');exampleBox.append(exampleTitle,exampleText);
   let active=selected||null;
   function render(){
-   choose.textContent=active?(active.title+' · '+active.en):'직접 제목 쓰기';
+   choose.textContent=active?(active.title+(active.en?' · '+active.en:'')):'직접 제목 쓰기';
    titleInput.hidden=!!active;
    if(active)current.title=active.title;
    else titleInput.value=current.title||'';
    guide.textContent=active?active.guide:'Write about anything you like. What happened? How did you feel?';
-   const example=active||diaryTopics[0];
-   exampleTitle.textContent=example.en;exampleText.textContent=example.example;
-   [...menu.querySelectorAll('[data-topic-index]')].forEach(btn=>btn.classList.toggle('is-selected',btn.dataset.topicIndex===String(active?diaryTopics.indexOf(active):-1)));
+   const example=active||ideas[0];
+   exampleTitle.textContent=example.en||example.title;exampleText.textContent=example.example;
+   [...menu.querySelectorAll('[data-topic-index]')].forEach(btn=>btn.classList.toggle('is-selected',btn.dataset.topicIndex===String(active?ideas.indexOf(active):-1)));
   }
   const closeMenu=()=>{menu.hidden=true;choose.setAttribute('aria-expanded','false')};
   choose.addEventListener('click',()=>{menu.hidden=!menu.hidden;choose.setAttribute('aria-expanded',String(!menu.hidden))});
-  diaryTopics.forEach((item,i)=>{
-   const option=el('button','df-topic-option',item.title+' · '+item.en);option.type='button';option.dataset.topicIndex=String(i);
+  ideas.forEach((item,i)=>{
+   const option=el('button','df-topic-option',item.title+(item.en?' · '+item.en:''));option.type='button';option.dataset.topicIndex=String(i);
    option.addEventListener('click',()=>{active=item;render();closeMenu()});menu.append(option);
   });
   const custom=el('button','df-topic-option','✎ 직접 제목 쓰기 · My Own Topic');custom.type='button';custom.dataset.topicIndex='-1';
   custom.addEventListener('click',()=>{active=null;current.title='';render();closeMenu();titleInput.focus()});menu.append(custom);
   titleInput.addEventListener('input',()=>{current.title=titleInput.value});
+  if(isTopic){
+   const random=el('button','df-random-topic','Random Topic · 랜덤 주제');random.type='button';random.setAttribute('aria-label','Choose a random writing topic');
+   random.onclick=()=>{
+    if(random.disabled)return;random.disabled=true;random.classList.add('is-spinning');
+    let spins=0;const timer=setInterval(()=>{
+     active=ideas[Math.floor(Math.random()*ideas.length)];render();
+     if(++spins>=12){clearInterval(timer);random.disabled=false;random.classList.remove('is-spinning');closeMenu()}
+    },90);
+   };
+   stage.append(random);
+  }
   picker.append(choose,menu);
   stage.append(picker,titleInput,guide,examplesBtn,exampleBox);
   examplesBtn.addEventListener('click',()=>{exampleBox.hidden=!exampleBox.hidden;examplesBtn.setAttribute('aria-expanded',String(!exampleBox.hidden))});
@@ -115,13 +139,13 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  }
  function write(){
   screen('write','2 · Write');
-  const count=el('span','df-count');const area=el('textarea','df-textarea');area.value=current.body||'';area.placeholder='Write 6–30 complete sentences.';area.maxLength=12000;
-  function update(){current.body=area.value;const n=split(area.value).length;count.textContent=n+' sentences';count.classList.toggle('is-invalid',n<6||n>30)}
+  const count=el('span','df-count');const area=el('textarea','df-textarea');area.value=current.body||'';area.placeholder=current.kind==='topic'?'Write at least 8 sentences. Use paragraphs for the beginning, middle and ending.':'Write 6–30 complete sentences.';area.maxLength=12000;
+  function update(){current.body=area.value;const n=split(area.value).length;count.textContent=n+' sentences';count.classList.toggle('is-invalid',n<(current.kind==='topic'?8:6)||n>30)}
   area.addEventListener('input',()=>{update();clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{void persist().catch(e=>status(e.message,true))},1800)});update();stage.append(area,count);
   button('이전',topic);
   button('저장',async()=>{try{await persist();status('저장됨')}catch(e){status(e.message,true)}});
   button('AI Willi 확인',async()=>{
-   const count=split(current.body).length;if(count<6||count>30){status('완성된 영어 문장을 6–30개 작성해 주세요.',true);return}
+   const count=split(current.body).length;if(count<(current.kind==='topic'?8:6)||count>30){status(current.kind==='topic'?'완성된 영어 문장을 8–30개 작성해 주세요.':'완성된 영어 문장 6–30개 작성해 주세요.',true);return}
    if(busy)return;busy=true;
    reviewLoading();
    try{await persist();feedback=await review(current);summary()}
@@ -442,7 +466,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  function rewardCard(reward){
   stage.replaceChildren();
   const award=document.createElement('student-reward-celebration');
-  award.setAttribute('label','DAILY DIARY COMPLETE');
+  award.setAttribute('label',current.kind==='topic'?'TOPIC WRITING COMPLETE':'DAILY DIARY COMPLETE');
   award.setAttribute('percent','100');award.setAttribute('star-max','5');
   award.setAttribute('stars',String(reward.stars||5));
   award.setAttribute('points',String(reward.points||0));
@@ -450,7 +474,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  }
  async function complete(){
   if(busy)return;busy=true;
-  screen('finish','Complete');stage.append(el('h2','df-heading','일기 완료'));
+  screen('finish','Complete');stage.append(el('h2','df-heading',current.kind==='topic'?'글쓰기 완료':'일기 완료'));
   status('보상을 확인하고 있어요…');
   button('메인 메뉴',close,true);
   try{
