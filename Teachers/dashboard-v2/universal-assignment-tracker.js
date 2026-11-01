@@ -275,6 +275,11 @@ async function loadOverview(scopeName='my'){
    const stats=await get('rpc/teacher_creative_writing_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    if(Array.isArray(stats))writingProgress=new Map(stats.map(x=>[id(x.id),x]));
   }catch(e){errors.push('Writing progress: '+e.message)}
+  let writingSentenceProgress=new Map();
+  try{
+   const stats=await get('rpc/teacher_writing_sentence_homework_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   if(Array.isArray(stats))writingSentenceProgress=new Map(stats.map(x=>[id(x.id),x]));
+  }catch(e){errors.push('Sentence writing progress: '+e.message)}
   let puzzleProgress=new Map();
   try{
    const stats=await get('rpc/teacher_puzzle_homework_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
@@ -320,7 +325,7 @@ async function loadOverview(scopeName='my'){
       const x=classProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.passed)/Number(x.students):null;
      }
      if(row.app==='Writing Genius'){
-      const x=writingProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
+      const x=row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
      }
      if(row.app==='Puzzles'){
       const x=puzzleProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
@@ -352,7 +357,7 @@ async function loadOverview(scopeName='my'){
       const pct=target?(done>=target&&(Number(result?.unresolved)||0)>0?99:Math.min(100,Math.round(done/target*100))):null;
       const grammarResult=classProgress.get(id(row.id));
       const wordResult=row.app==='Word Genius'?wordClassProgress.get(id(row.id)):null;
-      const writingResult=row.app==='Writing Genius'?writingProgress.get(id(row.id)):null;
+      const writingResult=row.app==='Writing Genius'?(row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id))):null;
       const puzzleResult=row.app==='Puzzles'?puzzleProgress.get(id(row.id)):null;
       const detail=result?'Correct '+done+'/'+target+' · Attempted '+(result.attempted??'—')+' · First-try accuracy '+(result.accuracy_percent??'—')+'% · 오답 remaining '+(result.unresolved??'—')
         :grammarResult?grammarResult.passed+'/'+grammarResult.students+' students passed'
