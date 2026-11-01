@@ -833,3 +833,6 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-topic-example p{white-space:pre-line;line-height:1.8}
 @keyframes wg-topic-shuffle{from{transform:rotate(-2deg) scale(.98)}to{transform:rotate(2deg) scale(1.04)}}
 @media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-random-topic.is-spinning{animation:none}}
+
+.writing-genius #wgDiaryFlow .df-topic-write-guide,.writing-genius #wgDiaryFlow .df-topic-structure-tip{border:1.5px solid #bce8ed;background:#f5fcfd;border-radius:14px;padding:13px 16px;color:#4c7580;font-size:.84rem;line-height:1.6;margin:0 0 16px}
+.writing-genius #wgDiaryFlow .df-topic-structure-tip strong{color:#c04b88}.writing-genius #wgDiaryFlow .df-topic-structure-tip p{margin:6px 0 0}
