@@ -292,8 +292,11 @@ async function loadOverview(scopeName='my'){
     const grammar=g.items.filter(r=>r.app==='Grammar Genius').map(r=>classProgress.get(id(r.id))).filter(x=>x&&Number(x.students)>0);
     const grammarStudents=grammar.reduce((n,x)=>n+Number(x.students),0);
     const grammarPassed=grammar.reduce((n,x)=>n+Number(x.passed),0);
-    const average=tracked.length?Math.round(tracked.reduce((a,b)=>a+b,0)/tracked.length):grammarStudents?Math.round(grammarPassed*100/grammarStudents):null;
-    const label=tracked.length?average+'% correct':grammarStudents?grammarPassed+'/'+grammarStudents+' grammar passes':'Progress not available';
+    const writing=g.items.filter(row=>row.app==='Writing Genius').map(row=>writingProgress.get(id(row.id))).filter(x=>x&&Number(x.students)>0);
+    const writingTotal=writing.reduce((n,x)=>n+Number(x.students),0);
+    const writingDone=writing.reduce((n,x)=>n+Number(x.completed),0);
+    const average=tracked.length?Math.round(tracked.reduce((a,b)=>a+b,0)/tracked.length):grammarStudents?Math.round(grammarPassed*100/grammarStudents):writingTotal?Math.round(writingDone*100/writingTotal):null;
+    const label=tracked.length?average+'% correct':grammarStudents?grammarPassed+'/'+grammarStudents+' grammar passes':writingTotal?writingDone+'/'+writingTotal+' submitted':'Progress not available';
     return '<div class="ua-group" data-ua-group="'+esc(g.key)+'"><button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(g.key)+'" aria-expanded="false"><span><b>'+esc(g.title)+'</b><small>'+esc(g.sub)+' · '+g.items.length+' assignment'+(g.items.length===1?'':'s')+'</small></span><strong>'+esc(label)+' ▾</strong></button>'+
       (average===null?'':'<div class="ua-group-meter" role="progressbar" aria-label="Tracked question completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+average+'"><i style="width:'+average+'%"></i></div>')+
       '<div class="ua-group-body" hidden>';
