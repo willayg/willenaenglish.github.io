@@ -140,7 +140,10 @@
 
   function assignmentCard(a){
     const meta=assignmentMeta(a),fullTitle=String(a.title||'Vocabulary Study');
-    const task=fullTitle.replace(/^.+?\s*[·|—–-]\s*(?=Unit\s*\d)/i,'');
+    const unit=fullTitle.match(/Unit\s*\d+(?:\s*[—–-]\s*[^·|]+)?/i)?.[0]||fullTitle;
+    const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
+    const modes=(Array.isArray(meta.required_modes)?meta.required_modes:[]).map(m=>labels[m]||m).filter(Boolean);
+    const task=unit+(modes.length?' · '+modes.join(' · '):'');
     const teacher=a.teacher_name||a.created_by_name||'';
     const shared=window.WillenaGeniusHomeworkCard;
     if(!shared)return '<div class="empty">Homework card component unavailable.</div>';
