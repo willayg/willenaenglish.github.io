@@ -219,7 +219,7 @@ function detailPractice(entry){
   host.append(card);
  });
 }
-function openView(){try{sessionStorage.setItem('willena.teachers.activeView.v1','writing-genius')}catch{};show();if(!state.loaded)void load()}
+function openView(){try{localStorage.setItem('willena.teachers.activeView.v1','writing-genius')}catch{};show();if(!state.loaded)void load()}
 function boot(){
  const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261101-feedback-sent1';
  document.head.append(css);addNav();mount();
