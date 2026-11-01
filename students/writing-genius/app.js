@@ -330,6 +330,33 @@ async function bootstrap(){
       return;
     }
     await requestDeadline(reloadEntries());
+    // Open the exact writing task selected in Mission HAM.
+    const homeworkId=new URLSearchParams(location.search).get('homework');
+    if(homeworkId){
+      try{
+        const route='/.netlify/functions/homework_api?action=list_assignments&mode=student';
+        const response=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch(route,{credentials:'include'}):fetch(route,{credentials:'include'}));
+        const data=await response.json();
+        if(!response.ok||!data.success)throw Error('숙제를 확인할 수 없어요.');
+        const hw=(data.assignments||[]).find(a=>a.id===homeworkId);
+        if(!hw||String(hw.list_meta?.source_type)!=='writing_genius')throw Error('이 글쓰기 숙제를 찾을 수 없어요.');
+        const kind=hw.list_meta?.kind;
+        if(kind==='topic'){
+          const key='homework-'+hw.id;
+          const custom={key,title:hw.title||'Topic writing',help:hw.list_meta?.prompt_text||hw.description||hw.title||'Write about this topic.',starters:[]};
+          if(!prompts.topic.some(p=>p.key===key))prompts.topic.push(custom);
+          const existing=state.entries.find(e=>e.kind==='topic'&&e.prompt_key===key);
+          if(existing)openEditor(existing);
+          else{
+            const draft=createEntry('topic');
+            draft.title=custom.title;draft.prompt_key=key;draft.prompt_text=custom.help;
+            openEditor(draft);
+          }
+        }else if(kind==='diary')start('diary');
+        else throw Error('지원하지 않는 글쓰기 숙제예요.');
+        return;
+      }catch(e){notice(e.message,true)}
+    }
     if(!history.state?.[NAV])history.replaceState(navState('home'),'');
     const route=history.state;
     if(route?.screen==='practice'){show('practice');await practice.open(state.student);return}
