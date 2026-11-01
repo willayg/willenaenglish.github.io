@@ -150,7 +150,8 @@ async function submit(ev){
    const payload={class:className,title,list_title:title,description:'Word Genius textbook vocabulary',source_type:'vocab_study',list_key:'vocab_catalog:'+bookId+':'+unit.id,list_meta:{source_app:'vocab_catalog',source_book_id:bookId,source_unit_ids:[unit.id],unit_id:unit.id,source_unit_id:unit.id,assignment_group_id:groupId,assignment_group_title:book.title+' · '+chosen.map(u=>'Unit '+u.unit_number).join(', '),required_modes:modes,workload_mode:'all'},due_at,goal_type:'clean_pass',goal_value:100,targets};
    try{const result=await homework(payload);created.push(result.assignment?.id)}catch(e){throw Error('Saved '+created.length+' of '+prepared.length+' unit assignments. Remaining units were not saved: '+e.message)}
   }
-  message('Assigned '+created.length+' separate units to '+className+'. Each unit has its own progress.');window.WillenaAssignmentsV1?.reload?.();
+  message('Assigned '+created.length+' separate units to '+className+'. Each unit has its own progress.');
+  window.dispatchEvent(new CustomEvent('willena:assignment-created',{detail:{message:created.length+' Word Genius units · '+className}}));window.WillenaAssignmentsV1?.reload?.();
  }catch(e){message('Assignment issue: '+e.message)}finally{busy=false;p.querySelector('#uaCreate').disabled=!previewReady}
 }
 
