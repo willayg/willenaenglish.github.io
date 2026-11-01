@@ -31,7 +31,7 @@ async function standardHomework(){
  if(!r.ok)throw Error('Shared homework unavailable');
  const d=await r.json();if(!d.success)throw Error('Shared homework unavailable');
  const entries=await Promise.all((d.assignments||[]).map(async a=>{
-  const source=String(a.list_meta?.source_type||a.source_type||a.list_meta?.app||'').toLowerCase().trim();
+  const source=String(a.list_meta?.creative_type||a.list_meta?.source_type||a.source_type||a.list_meta?.app||'').toLowerCase().trim();
   // Sentence Genius has its own live feed below. Never misroute its rows to Arcade.
   if(source==='sentence_genius')return null;
   let app,url;
