@@ -16,3 +16,18 @@
 .ua-group-body .ua-homework-card{margin:0;box-shadow:none}
 .ua-group-heading:focus-visible{outline:3px solid #268f9b;outline-offset:-3px}
 @media(max-width:520px){.ua-group-heading{padding:14px}.ua-group-heading b{font-size:16px}.ua-group-heading strong{max-width:45%}.ua-group-body{padding:8px}}
+
+.ua-calendar-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 18px}
+.ua-calendar-toolbar strong{margin:0 auto;font-size:20px}
+.ua-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid #d7e7e9;border-radius:14px;overflow:hidden;background:#fff}
+.ua-calendar-weekday{text-align:center;background:#f2f8f9;color:#52737b;padding:10px 2px;font-size:12px;font-weight:700}
+.ua-calendar-day,.ua-calendar-empty{min-height:76px;border:0;border-right:1px solid #edf1f3;border-top:1px solid #edf1f3;background:#fff;text-align:left;padding:9px 5px;font:inherit;color:#32464d}
+.ua-calendar-day{cursor:pointer;display:flex;flex-direction:column;gap:5px}
+.ua-calendar-day b{font-size:14px}
+.ua-calendar-day span{font-size:10px;color:#237d87;overflow-wrap:anywhere}
+.ua-calendar-day.is-today{background:#ebf9fa}
+.ua-calendar-day.selected{outline:2px solid #288f99;outline-offset:-2px;background:#eefafb}
+.ua-calendar-results{margin-top:16px}
+.ua-calendar-item{padding:13px;border-bottom:1px solid #e6eef0;display:flex;flex-direction:column;gap:4px}
+.ua-calendar-item small{color:#607980}
+@media(max-width:600px){.ua-calendar-day,.ua-calendar-empty{min-height:57px;padding:5px 3px}.ua-calendar-day span{font-size:9px}.ua-calendar-toolbar strong{font-size:17px}}
