@@ -227,7 +227,7 @@ async function mount(host,options={}){
  state.collapsed=true;
  restoreLocalMedals();
  host.innerHTML='<div class="dm-loading">미션을 확인하고 있어요…</div>';
- const results=await Promise.allSettled([state.appFilter&&state.appFilter!=='Word Genius'?Promise.resolve([]):standardHomework(),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()]);
+ const results=await Promise.allSettled([standardHomework().then(rows=>state.appFilter?rows.filter(row=>row.app===state.appFilter):rows),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()]);
  for(const result of results){if(result.status==='fulfilled')state.items.push(...result.value);else state.errors.push(String(result.reason))}
  const unique=new Map(state.items.map(x=>[x.id,x]));
  state.items=[...unique.values()].sort((a,b)=>(Date.parse(b.created)||0)-(Date.parse(a.created)||0));
