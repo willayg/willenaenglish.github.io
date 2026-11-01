@@ -648,8 +648,7 @@ function renderManage(root){
   const task=String(a.title||'Sentence homework').replace(/^.+?\s*[·|—–-]\s*(?=Unit\s*\d)/i,'');
   return shared.card({id:a.id,className:a.class_name,task,dueAt:a.due_at,
     teacher:a.teacher_name||a.created_by_name||'',progressLabel:'Student progress',
-    body:'<div class="sgt-actions"><button class="control" type="button" data-sg-progress="'+escapeHtml(a.id)+'">Load student results</button>'+
-    '<button class="control" type="button" data-sg-toggle="'+escapeHtml(a.id)+'" data-active="'+a.active+'">'+(a.active?'Cancel':'Reactivate')+'</button></div>'+
+    body:'<div class="sgt-actions"><button class="control ghc-load-action" type="button" data-sg-progress="'+escapeHtml(a.id)+'" hidden>Load student results</button></div>'+
     '<div class="sgt-progress" id="sgtProgress-'+escapeHtml(a.id)+'" hidden></div>'});
  }).join(''):'<div class="sgt-result">No Sentence Genius assignments found.</div>';
  holder.querySelectorAll('[data-sg-toggle]').forEach(b=>b.onclick=async()=>{
