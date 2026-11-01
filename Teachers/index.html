@@ -597,10 +597,10 @@ async function loadClassOverview(force=false){
 }
 async function openClassFromOverview(name,days){$('#classSelect').value=name;$('#daysSelect').value=String(days);state.className=name;state.days=days;switchView('students');await loadClass()}
 const teacherViewKey='willena.teachers.activeView.v1';
-function switchView(v){try{sessionStorage.setItem(teacherViewKey,v)}catch{};if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='assignments'){window.UniversalAssignments?.refresh?.();window.UniversalAssignmentTracker?.load?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
+function switchView(v){try{localStorage.setItem(teacherViewKey,v)}catch{};if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='assignments'){window.UniversalAssignments?.refresh?.();window.UniversalAssignmentTracker?.load?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#rosterAssignmentFilter').onchange=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#leaderScope').onchange=()=>loadTeacherLeaderboard(true);$('#leaderMetric').onchange=()=>loadTeacherLeaderboard(true);$('#leaderRefreshBtn').onclick=()=>loadTeacherLeaderboard(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
-(async()=>{if(await auth()){loadClasses();let restored='students';try{restored=sessionStorage.getItem(teacherViewKey)||'students'}catch{};if(restored==='writing-genius')window.WritingGeniusTeacher?.openView?.();else if(document.getElementById('view-'+restored))switchView(restored)}})();
+(async()=>{if(await auth()){loadClasses();let restored='students';try{restored=localStorage.getItem(teacherViewKey)||sessionStorage.getItem(teacherViewKey)||'students'}catch{};if(restored==='writing-genius')window.WritingGeniusTeacher?.openView?.();else if(document.getElementById('view-'+restored))switchView(restored)}})();
 </script>
 <script src="./vocab-v1.js?v=20261025-genius-snapshot-v1"></script>
 <script src="./word-genius-mastery.js?v=20261019-goldunits1"></script>
@@ -619,9 +619,9 @@ window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 <script src="./naesin-v2/naesin-v2-overview.js?v=20261030-5"></script>
 <script data-na2-auto-refresh src="./naesin-v2/naesin-v2-auto-refresh.js?v=20260917-r14-03"></script>
 
-<script src="./universal-assignments.js?v=20261101-creative-homework2"></script>
-<script src="./sentence-genius-teacher.js?v=20261025-short-copy-v10"></script>
-<script src="./grammar-homework.js?v=20261019-studentcards1"></script>
+<script src="./universal-assignments.js?v=20261101-scroll-and-test2"></script>
+<script src="./sentence-genius-teacher.js?v=20261101-testclass1"></script>
+<script src="./grammar-homework.js?v=20261101-testclass1"></script>
 <script src="./grammar-homework-students.js?v=20261019-studentcards1"></script>
 <script src="./word-genius-catalog-assignment.js?v=20261021-word-preview2"></script>
 <script src="./universal-assignment-tracker.js?v=20261031-retry-mastery1"></script>
