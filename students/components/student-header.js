@@ -1,4 +1,4 @@
-import {mountStudentInbox} from './student-inbox.js?v=20261101-inbox2';
+import {mountStudentInbox} from './student-inbox.js?v=20261101-header-alert2';
 // Student session repair bootstrap.
 if (typeof window !== 'undefined' && window.location.hostname === 'students.willenaenglish.com') {
   import('/students/auth-refresh.js?v=20260726a')
