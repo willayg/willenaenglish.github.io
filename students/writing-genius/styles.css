@@ -854,3 +854,11 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 
 /* Conditional, topic-specific AI structure example, shown only when a section needs help. */
 .writing-genius #wgDiaryFlow .df-revision-example{margin:8px 0 13px;padding:10px 12px;border-left:3px solid #e895c4;background:#fff5fa;color:#94436c;font-size:.9rem;line-height:1.6;border-radius:7px}
+
+.writing-genius #wgDiaryFlow .df-revision-expressions{border:1.5px solid #bfe6ea;border-radius:15px;padding:15px;margin:15px 0;background:#f8fdfe}
+.writing-genius #wgDiaryFlow .df-revision-expressions h3{color:#bd4587;margin:0 0 6px;font-size:1.05rem}
+.writing-genius #wgDiaryFlow .df-revision-expression{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #d9eff1}
+.writing-genius #wgDiaryFlow .df-revision-expression strong{color:#325962;flex:1 1 180px}
+.writing-genius #wgDiaryFlow .df-revision-expression small{color:#69858b;flex:1 1 140px}
+.writing-genius #wgDiaryFlow .df-expression-line .df-revision-starter{margin-left:auto}
+.writing-genius #wgDiaryFlow .df-revision-starter:disabled{opacity:.55;cursor:default}
