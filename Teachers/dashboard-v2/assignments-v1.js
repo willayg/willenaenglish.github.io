@@ -124,6 +124,14 @@
         catch(error){entry={error:String(error.message||error)}}
         if(generation!==state.listGeneration)return;
         state.cardProgress.set(String(a.id),entry);
+        if(!entry.error){
+         const all=Array.isArray(entry.data?.students)?entry.data.students:[];
+         const ids=new Set((Array.isArray(a.list_meta?.target_student_ids)?a.list_meta.target_student_ids:[]).map(String));
+         const students=ids.size?all.filter(x=>ids.has(String(x.student_id||''))):all;
+         const modes=Array.isArray(a.list_meta?.required_modes)&&a.list_meta.required_modes.length?a.list_meta.required_modes:(entry.data.assignment?.required_modes||[]);
+         const rows=students.length&&modes.length?students.map(x=>adjustedStudentSummary({...a,...(entry.data.assignment||{}),list_meta:assignmentMeta(a)},x,modes)):[];
+         window.WillenaGeniusHomeworkCard?.updateRing(a.id,rows.length?rows.reduce((sum,x)=>sum+x.overall,0)/rows.length:null);
+        }
         const host=$('[data-card-progress="'+CSS.escape(String(a.id))+'"]');
         if(host){const temp=document.createElement('div');temp.innerHTML=cardSummaryMarkup(a);host.replaceWith(temp.firstElementChild)}
       }
