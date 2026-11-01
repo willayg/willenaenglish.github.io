@@ -6,7 +6,7 @@ const apps=[{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'A
 const stateKey='willena.teachers.assignments.v2';
 let saved={};try{saved=JSON.parse(sessionStorage.getItem(stateKey)||'{}')||{}}catch{}
 let active=apps.some(a=>a.id===saved.active)?saved.active:'my',loading=false,groups=[];
-const remember=()=>{try{sessionStorage.setItem(stateKey,JSON.stringify({active,subviews}))}catch{}};
+const remember=()=>{try{sessionStorage.setItem(stateKey,JSON.stringify({active,subviews,scrollLeft:(root.querySelector('.ua-app-tabs')?.scrollLeft??Number(saved.scrollLeft)??0)}))}catch{}};
 const subviews={my:'manage',all:'manage',naesin:'manage',word:'manage',grammar:'manage',sentence:'manage',puzzles:'manage',writing:'manage'};
 Object.keys(subviews).forEach(k=>{if(saved.subviews?.[k]==='create'||saved.subviews?.[k]==='manage')subviews[k]=saved.subviews[k]});
 let wordPanel=null,wordHome=null;
