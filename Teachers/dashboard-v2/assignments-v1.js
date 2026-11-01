@@ -139,26 +139,14 @@
   }
 
   function assignmentCard(a){
-    const required=Array.isArray(a?.list_meta?.required_modes)?a.list_meta.required_modes:[];
-    const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
-    const targetStudents=Array.isArray(a?.list_meta?.target_students)?a.list_meta.target_students:[];
-    const className=a.class||'No class';
-    const targetLabel=targetStudents.length
-      ? targetStudents.map(s=>s?.name||s?.korean_name||'Student').filter(Boolean).join(', ')
-      : '';
-    const detailBits=[
-      a.title||'Vocabulary Study',
-      targetLabel?('Students: '+targetLabel):'',
-      required.map(x=>labels[x]||x).join(' · ')||'Vocabulary Study',
-      assignmentWorkloadMode(a)==='split'?'Split workload':''
-    ].filter(Boolean);
-    return '<div class="assignment-card-with-summary"><button type="button" class="assignment-card" data-assignment-id="'+esc(a.id)+'">'+
-      '<div class="assignment-card-head">'+
-        '<div><strong>'+esc(className)+'</strong><span>'+esc(detailBits.join(' · '))+'</span></div>'+
-        '<span class="assignment-state '+(isCurrent(a)?'is-current':'is-history')+'">'+(isCurrent(a)?'Current':(a.ended_at?'Cancelled':'History'))+'</span>'+
-      '</div>'+
-      '<div class="assignment-card-meta">'+(a.teacher_name?'<span>Teacher <b>'+esc(a.teacher_name)+'</b></span>':'')+'<span>Due <b>'+esc(fmtDate(a.due_at))+'</b></span><span>Created <b>'+esc(fmtDate(a.created_at))+'</b></span></div>'+
-    '</button>'+cardSummaryMarkup(a)+'</div>';
+    const meta=assignmentMeta(a),fullTitle=String(a.title||'Vocabulary Study');
+    const task=fullTitle.replace(/^.+?\s*[·|—–-]\s*(?=Unit\s*\d)/i,'');
+    const teacher=a.teacher_name||a.created_by_name||'';
+    const shared=window.WillenaGeniusHomeworkCard;
+    if(!shared)return '<div class="empty">Homework card component unavailable.</div>';
+    return shared.card({id:a.id,className:a.class,task,dueAt:a.due_at,teacher,
+      progressLabel:'Student progress',body:cardSummaryMarkup(a)+
+      '<button type="button" class="control ghc-open" data-assignment-id="'+esc(a.id)+'">Open details</button>'});
   }
 
   function renderList(){
@@ -179,17 +167,8 @@
       list.innerHTML='<div class="empty">No '+(state.filter==='current'?'current':'past')+' Vocabulary Study assignments'+(state.className?' for '+esc(state.className):'')+'.</div>';
       return;
     }
-    const groups=new Map(), singles=[];
-    rows.forEach(a=>{const id=a?.list_meta?.assignment_group_id;if(!id){singles.push(a);return}if(!groups.has(id))groups.set(id,[]);groups.get(id).push(a)});
-    const renderedGroups=new Set();
-    list.innerHTML=rows.map(a=>{
-      const id=a?.list_meta?.assignment_group_id;if(!id)return assignmentCard(a);
-      if(renderedGroups.has(id))return '';
-      renderedGroups.add(id);
-      const members=groups.get(id)||[];
-      return '<section class="assignment-unit-group"><div class="assignment-unit-group-header"><strong>'+esc(a?.list_meta?.assignment_group_title||a.title)+'</strong><small>'+esc(a.class||'')+' · '+members.length+' units · Due '+esc(fmtDate(a.due_at))+'</small></div><div class="assignment-unit-group-items">'+members.map(assignmentCard).join('')+'</div></section>';
-    }).join('');
-    document.querySelectorAll('#assignmentList .assignment-card').forEach(card=>card.addEventListener('click',()=>openAssignment(card.dataset.assignmentId)));
+    list.innerHTML=rows.map(assignmentCard).join('');
+    document.querySelectorAll('#assignmentList .ghc-open').forEach(button=>button.addEventListener('click',()=>openAssignment(button.dataset.assignmentId)));
     void loadVisibleCardProgress(rows,generation);
   }
 
