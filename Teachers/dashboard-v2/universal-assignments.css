@@ -1,1 +1,24 @@
 #view-assignments .ua-toolbar{display:flex;align-items:center;gap:14px;margin-bottom:18px}#view-assignments .ua-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:14px}#view-assignments .ua-card{display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid #cfe5e9;border-radius:14px;padding:18px}#view-assignments .ua-card span,#view-assignments .ua-card small{color:#637880}#view-assignments .ua-card button{margin-top:auto}
+/* Unified homework management — Word Genius reference. Excludes Grammar and 내신. */
+.ua-genius-manage{padding:4px 0 18px;color:#323747}
+.ua-genius-manage>h3{font-size:24px;line-height:1.25;margin:0 0 2px;font-weight:800}
+.ua-genius-manage>p{font-size:15px;color:#75828e;margin:0 0 22px}
+.ua-genius-manage-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.ua-genius-manage-toolbar>.control:first-child{min-width:180px;max-width:260px;flex:1}
+.ua-genius-current-history{display:flex;border:1px solid #d6e1e5;border-radius:14px;overflow:hidden;min-height:54px}
+.ua-genius-current-history button{border:0;background:#fff;color:#60747c;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer}
+.ua-genius-current-history button.active{background:#004e55;color:#fff}
+.ua-genius-manage-list{display:grid;gap:16px}
+.ua-genius-manage-card{border:1px solid #d4e6e7;border-radius:20px;background:#f4fbfb;padding:18px 20px}
+.ua-genius-manage-card-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:15px}
+.ua-genius-manage-card-head strong{font-size:18px;color:#124a50}
+.ua-genius-manage-card-head span{color:#72858d;font-size:14px}
+.ua-genius-manage-card-body{background:#fff;border:1px solid #e0e8e9;border-radius:17px;padding:18px}
+.ua-genius-manage-card-body>b{font-size:18px}
+.ua-genius-manage-card-body p{color:#72828b;margin:8px 0}
+.ua-genius-status{display:inline-block;background:#e2f7ec;color:#137658;border-radius:14px;font-weight:800;font-size:12px;padding:7px 13px}
+.ua-genius-manage-card-body [data-creative-progress]{display:block;margin-top:14px}
+.ua-creative-student-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #e6eff0}
+.ua-genius-manage .sgt-assignment-card{background:#f4fbfb;border:1px solid #d4e6e7;border-radius:20px;padding:20px}
+.ua-genius-manage .sgt-assignment-card>div:first-child{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+@media(max-width:580px){.ua-genius-manage-toolbar{align-items:stretch}.ua-genius-manage-toolbar>.control:first-child{max-width:none;width:100%}.ua-genius-manage-card{padding:14px}}
