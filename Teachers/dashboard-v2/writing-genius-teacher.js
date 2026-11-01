@@ -25,13 +25,16 @@ function mount(){
   '<div class="wg-t-grid"><section class="panel wg-t-list-panel" aria-label="Writing submissions">'+
   '<div class="panel-head"><div class="panel-title">Submitted writing</div><span id="wgTeacherCount" class="count-pill">0</span></div>'+
   '<div id="wgTeacherList" class="wg-t-list"><p class="wg-t-empty">Select Writing Genius to load submissions.</p></div></section>'+
-  '<article class="panel wg-t-reader" aria-label="Selected writing"><div id="wgTeacherDetail" class="wg-t-empty">Choose a student writing submission to read it.</div></article></div>';
+  '</div><div class="wg-t-modal" id="wgTeacherModal" hidden><div class="wg-t-modal-backdrop" data-wg-close></div><section class="wg-t-modal-dialog" role="dialog" aria-modal="true" aria-label="Student writing"><button type="button" class="wg-t-modal-close" id="wgTeacherModalClose" aria-label="Close">×</button><div id="wgTeacherDetail"></div></section></div>';
  workspace.append(view);
  $$('.wg-t-tab',view).forEach(b=>b.onclick=()=>{state.tab=b.dataset.wgTab;state.activeId=null;state.activeSessionId=null;$$('.wg-t-tab',view).forEach(x=>x.classList.toggle('is-active',x===b));$('#wgTeacherKind').hidden=state.tab==='practice';render()});
  $('#wgTeacherClass').onchange=()=>void load();
  $('#wgTeacherKind').onchange=render;
  $('#wgTeacherSearch').oninput=render;
  $('#wgTeacherRefresh').onclick=()=>void load();
+ $('#wgTeacherModalClose').onclick=closeDiaryModal;
+ $('#wgTeacherModal').addEventListener('click',e=>{if(e.target.hasAttribute('data-wg-close'))closeDiaryModal()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDiaryModal()});
 }
 function addNav(){
  const rail=$('.rail');
@@ -121,26 +124,24 @@ function render(){
  const rows=state.rows.filter(e=>(!kind||e.kind===kind)&&(!q||[e.name,e.korean_name,e.title,e.class_name,e.body].some(v=>String(v||'').toLowerCase().includes(q))))
   .sort((a,b)=>new Date(b.submitted_at||0)-new Date(a.submitted_at||0));
  container.replaceChildren();count.textContent=String(rows.length);
- if(!rows.length){container.append(make('p','wg-t-empty',state.loaded?'No matching submitted writing.':'No writing loaded.'));detail();return}
+ if(!rows.length){container.append(make('p','wg-t-empty',state.loaded?'No matching submitted writing.':'No writing loaded.'));return}
  let previousDate='';
  const dateLabel=timestamp=>timestamp?new Date(timestamp).toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric',timeZone:'Asia/Seoul'}):'Unknown date';
  for(const e of rows){
   const date=dateLabel(e.submitted_at);
   if(date!==previousDate){const group=make('h3','wg-t-date-heading',date);container.append(group);previousDate=date}
-  const b=make('button','wg-t-item wg-t-submission-card'+(e.id===state.activeId?' is-selected':''));b.type='button';
-  b.dataset.entryId=e.id;
-  const header=make('span','wg-t-card-head');
-  header.append(make('strong','wg-t-item-name',e.korean_name||e.name||'Student'),make('span','wg-t-card-time',e.submitted_at?new Date(e.submitted_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Seoul'}):''));
-  b.append(header,make('strong','wg-t-card-title',e.title||kindName[e.kind]||'Writing'));
-  b.append(make('span','wg-t-item-meta',[(e.class_name||''),(kindName[e.kind]||e.kind)].filter(Boolean).join(' · ')));
-  b.append(make('small','wg-t-card-excerpt',String(e.body||'').replace(/\s+/g,' ').slice(0,115)));
-  b.onclick=()=>{state.activeId=e.id;render();if(window.matchMedia('(max-width:850px)').matches)$('#wgTeacherDetail')?.scrollIntoView({behavior:'smooth',block:'start'})};
+  const b=make('button','wg-t-item wg-t-submission-card');b.type='button';b.dataset.entryId=e.id;
+  b.append(make('strong','wg-t-item-name',e.korean_name||e.name||'Student'));
+  b.append(make('span','wg-t-item-meta',kindName[e.kind]||'Writing'));
+  b.append(make('strong','wg-t-card-title',e.title||'Untitled'));
+  b.onclick=()=>{state.activeId=e.id;detail(e);const modal=$('#wgTeacherModal');modal.hidden=false;document.body.classList.add('wg-modal-open');$('#wgTeacherModalClose').focus()};
   container.append(b);
  }
  if(!rows.some(e=>e.id===state.activeId))state.activeId=rows[0].id;
- detail(rows.find(e=>e.id===state.activeId));
- for(const b of container.querySelectorAll('[data-entry-id]'))b.classList.toggle('is-selected',b.dataset.entryId===state.activeId);
+
 }
+function closeDiaryModal(){const modal=$('#wgTeacherModal');if(modal)modal.hidden=true;document.body.classList.remove('wg-modal-open')}
+async function feedbackApi(entryId,feedback,bonus){const access=await token();const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/writing_genius_teacher_feedback_v1',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+access,'Content-Type':'application/json'},body:JSON.stringify({p_entry_id:entryId,...(feedback!==undefined?{p_text:feedback}:{}),...(bonus!==undefined?{p_bonus:bonus}:{})})});const result=await response.json();if(!response.ok)throw Error(result.message||result.error||'Could not save feedback');return result}
 function detail(entry){
  const host=$('#wgTeacherDetail');if(!host)return;host.replaceChildren();
  if(!entry){host.append(make('div','wg-t-empty','Choose submitted writing to read it.'));return}
@@ -164,8 +165,17 @@ function detail(entry){
   if(!changes.length)host.append(make('p','wg-t-note','AI Willi suggested no corrections.'));
   else host.append(make('p','wg-t-note','AI suggestions shown; the student’s final choices are not yet stored centrally.'));
  }else host.append(make('p','wg-t-note','No saved AI correction is available for this submission.'));
+ const form=make('section','wg-t-feedback');form.append(make('h3','','Teacher feedback'));
+ const textarea=make('textarea','wg-t-feedback-input');textarea.placeholder='Write a message to the student…';textarea.maxLength=1500;
+ const label=make('label','wg-t-bonus-label','Extra points (0–50, cumulative)');
+ const input=make('input','wg-t-bonus-input');input.type='number';input.min='0';input.max='50';input.step='5';input.value='0';
+ const note=make('p','wg-t-feedback-note','Loading feedback…');
+ const save=make('button','wg-t-save-feedback','Send feedback & award points');save.type='button';
+ label.append(input);form.append(textarea,label,save,note);host.append(form);
+ feedbackApi(entry.id).then(result=>{textarea.value=result.feedback||'';input.value=result.bonus_points||0;note.textContent=result.bonus_points?'Already awarded: '+result.bonus_points+' points':'No teacher feedback yet.'}).catch(e=>note.textContent=e.message);
+ save.onclick=async()=>{const bonus=Number(input.value);if(!Number.isInteger(bonus)||bonus<0||bonus>50){note.textContent='Choose 0–50 points.';return}save.disabled=true;note.textContent='Saving…';try{const data=await feedbackApi(entry.id,textarea.value,bonus);note.textContent='Saved · Total bonus: '+data.bonus_points+' points'}catch(e){note.textContent=e.message}finally{save.disabled=false}};
 }
-function renderPractice(){
+function renderPractice(){closeDiaryModal();
  const container=$('#wgTeacherList'),count=$('#wgTeacherCount');if(!container)return;
  const query=($('#wgTeacherSearch')?.value||'').trim().toLowerCase();
  const rows=state.sessions.filter(e=>!query||[e.name,e.korean_name,e.class_name,e.book_title,e.unit_id].some(x=>String(x||'').toLowerCase().includes(query)))
