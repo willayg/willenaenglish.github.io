@@ -43,7 +43,7 @@ function render(){
  }
  if(active==='writing'){
    body.innerHTML='<div class="ua-feature"><div class="ua-feature-symbol">✎</div><div class="ua-feature-copy"><h4>Writing Genius · Diaries & topic writing</h4><p>Read student writing and teacher feedback in Writing Genius. Homework assignment creation is not connected yet.</p><button type="button" class="control ua-primary" id="uaOpenWriting">Open Writing Genius →</button></div></div>';
-   body.querySelector('#uaOpenWriting')?.addEventListener('click',()=>{window.WritingGeniusTeacher?.openTeacher?.()||document.querySelector('[data-view="writing-genius"]')?.click()});
+   body.querySelector('#uaOpenWriting')?.addEventListener('click',()=>{window.WritingGeniusTeacher?.openView?.()});
    return;
  }
  if(active==='sentence'){
