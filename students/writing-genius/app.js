@@ -484,6 +484,7 @@ const diaryFlow=createDiaryFlow({
  clarify:async(entry,i,clarification)=>{const token=await authToken();const response=await fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({action:'clarify',entry_id:entry.id,correction_index:i,clarification}),signal:AbortSignal.timeout(45000)});const data=await response.json().catch(()=>({}));if(!response.ok||!data.success)throw Error(data.error||'다시 확인하지 못했어요.');return data},
  speech:async(entry,transcript,chosenLines)=>diaryRequest('speech',entry.id,transcript,chosenLines),
  teacherFeedback:async entry=>databaseApi('rpc/writing_genius_student_feedback_v1','POST','',{p_entry_id:entry.id}),
+ claimBonus:async entry=>databaseApi('rpc/writing_genius_claim_bonus_v1','POST','',{p_entry_id:entry.id}),
  finish:async entry=>{
   if(state.active?.status!=='submitted'){
    const submitted=await saveEntry({submit:true,force:true});
