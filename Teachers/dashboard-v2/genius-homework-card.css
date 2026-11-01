@@ -23,3 +23,5 @@
 .ua-genius-manage>h3{font-size:22px!important}
 .ua-genius-manage>p{margin-bottom:15px!important}
 @media(max-width:600px){.genius-homework-card{padding:14px 15px}.ghc-class{font-size:18px}.ghc-task{font-size:15px}.ua-genius-manage-toolbar>.control:first-child{width:auto}}
+
+.ghc-load-action[hidden]{display:none!important}
