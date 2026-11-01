@@ -339,7 +339,7 @@ async function bootstrap(){
         const data=await response.json();
         if(!response.ok||!data.success)throw Error('숙제를 확인할 수 없어요.');
         const hw=(data.assignments||[]).find(a=>a.id===homeworkId);
-        if(!hw||String(hw.list_meta?.source_type)!=='writing_genius')throw Error('이 글쓰기 숙제를 찾을 수 없어요.');
+        if(!hw||String(hw.list_meta?.creative_type||hw.list_meta?.source_type)!=='writing_genius')throw Error('이 글쓰기 숙제를 찾을 수 없어요.');
         const kind=hw.list_meta?.kind;
         if(kind==='topic'){
           const key='homework-'+hw.id;
