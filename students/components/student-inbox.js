@@ -16,7 +16,8 @@ async function call(name,data={}){
 const make=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n};
 function play(name){try{const a=new Audio(audioUrl+name+'.wav');a.volume=.6;void a.play().catch(()=>{})}catch{}}
 export function mountStudentInbox(header){
- if(header._studentInboxMounted)return;header._studentInboxMounted=true;
+ if(header.shadowRoot?.querySelector('.inbox-cover'))return;
+ clearInterval(header._inboxTimer);header._studentInboxMounted=true;
  const menu=header.shadowRoot?.getElementById('avatarMenu');if(!menu)return;
  const button=make('button','dd-item','✉ 선생님 메시지');button.type='button';button.setAttribute('role','menuitem');
  menu.prepend(button);
