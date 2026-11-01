@@ -169,6 +169,12 @@ async function editHomework(row,teacher,afterSave){
  const startInput=('start_at'in original)?add('Available from',editDate(original.start_at),'datetime-local'):null;
  const dueInput=add('Due date',editDate(original.due_at),'datetime-local');
  dueInput.required=true;
+ const recurrenceTable=table==='homework_assignments'?'homework_recurring_schedules':'homework_recurring_app_schedules';
+ const scheduleFilter=table==='homework_assignments'?'source_assignment_id=eq.'+encodeURIComponent(row.id):'source_table=eq.'+encodeURIComponent(table)+'&source_id=eq.'+encodeURIComponent(row.id);
+ const scheduleRows=await get(recurrenceTable+'?select=*&'+scheduleFilter).catch(()=>[]);
+ const currentSchedule=scheduleRows[0]||null;
+ const repeatInput=add('Repeat',currentSchedule?(currentSchedule.active?currentSchedule.cadence:'paused'):'none','text',['none','daily','weekly','paused']);
+ if(!currentSchedule)repeatInput.querySelector('option[value="paused"]')?.remove();
  const status=document.createElement('p');status.setAttribute('role','status');status.style.cssText='font-size:13px;color:#ad5151;margin:0';
  const menu=document.createElement('menu');const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';cancel.onclick=()=>dialog.close();const save=document.createElement('button');save.type='submit';save.textContent='Save changes';menu.append(cancel,save);form.append(status,menu);dialog.append(backdropStyle,form);document.body.append(dialog);
  dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
@@ -192,6 +198,21 @@ async function editHomework(row,teacher,afterSave){
   try{
    const changed=await get(table+'?id=eq.'+encodeURIComponent(row.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(updates)});
    if(!Array.isArray(changed)||changed.length!==1)throw Error('Update was not saved. Check teacher permissions.');
+   const repeat=repeatInput.value;
+   if(repeat==='none'||repeat==='paused'){
+    if(currentSchedule)await get(recurrenceTable+'?id=eq.'+encodeURIComponent(currentSchedule.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({active:false})});
+   }else{
+    const days=repeat==='daily'?1:7;
+    const nextDue=new Date(new Date(due).getTime()+days*86400000).toISOString();
+    const fields={cadence:repeat,interval_days:days,next_due_at:nextDue,active:true};
+    if(currentSchedule){
+     await get(recurrenceTable+'?id=eq.'+encodeURIComponent(currentSchedule.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(fields)});
+    }else{
+     const identity=await teacherIdentity();
+     const template=table==='homework_assignments'?{source_assignment_id:row.id,created_by:identity}:{source_table:table,source_id:row.id,created_by:identity};
+     await get(recurrenceTable,{method:'POST',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({...template,...fields})});
+    }
+   }
    Object.assign(row,changed[0]);dialog.close();afterSave();
   }catch(err){status.textContent=err.message;save.disabled=false}
  });
