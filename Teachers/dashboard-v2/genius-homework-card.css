@@ -1,0 +1,25 @@
+/* Shared compact cards for Word, Sentence, Writing and Puzzles only. */
+.genius-homework-card{box-sizing:border-box;background:#fff;border:1px solid #d7e8e9;border-radius:17px;padding:17px 20px;margin:0 0 12px;color:#33434a;font:inherit;box-shadow:none}
+.ghc-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;min-width:0}
+.ghc-class{font-size:20px;font-weight:800;color:#124b51}
+.ghc-day{font-size:14px;font-weight:800;color:#a45382;white-space:nowrap}
+.ghc-task{font-size:16px;font-weight:650;line-height:1.4;color:#3b4c55;margin-top:6px;overflow-wrap:anywhere}
+.ghc-teacher{font-size:13px;color:#73858c;margin-top:5px}
+.ghc-meter{height:6px;background:#e9f1f2;border-radius:12px;margin:13px 0 0;overflow:hidden}
+.ghc-meter span{display:block;height:100%;background:#269ba4;border-radius:12px}
+.ghc-details{margin-top:13px;border-top:1px solid #e6eeee}
+.ghc-details>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;padding-top:12px;cursor:pointer;color:#277e85;font-size:14px;font-weight:750}
+.ghc-details>summary::-webkit-details-marker{display:none}
+.ghc-chevron{transition:transform .15s ease}
+.ghc-details[open] .ghc-chevron{transform:rotate(180deg)}
+.ghc-content{margin-top:12px;font-size:14px;overflow-wrap:anywhere}
+.ghc-content .control{max-width:100%}
+.ua-genius-manage-list{gap:12px!important}
+.ua-genius-manage{max-width:100%}
+.ua-genius-manage-toolbar{gap:8px!important}
+.ua-genius-manage-toolbar>.control{min-height:43px!important}
+.ua-genius-current-history{min-height:43px!important}
+.ua-genius-current-history button{padding:8px 13px!important}
+.ua-genius-manage>h3{font-size:22px!important}
+.ua-genius-manage>p{margin-bottom:15px!important}
+@media(max-width:600px){.genius-homework-card{padding:14px 15px}.ghc-class{font-size:18px}.ghc-task{font-size:15px}.ua-genius-manage-toolbar>.control:first-child{width:auto}}
