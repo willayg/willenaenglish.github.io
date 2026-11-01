@@ -32,7 +32,7 @@ function mount(){
  $('#wgTeacherKind').onchange=render;
  $('#wgTeacherSearch').oninput=render;
  $('#wgTeacherRefresh').onclick=()=>void load();
- $('#wgTeacherModalClose').onclick=closeDiaryModal;
+ $('#wgTeacherModalClose').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeDiaryModal()});
  $('#wgTeacherModal').addEventListener('click',e=>{if(e.target.hasAttribute('data-wg-close'))closeDiaryModal()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDiaryModal()});
 }
