@@ -45,10 +45,48 @@ function homeworkForm(app,body){
    const response=await fetch(url,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
    const result=await response.json().catch(()=>({}));
    if(!response.ok||!result.success)throw Error(result.error||'Homework could not be created');
-   status.textContent='Homework created. Student completion tracking for this type is not connected yet.';
+   status.textContent='Homework created. Check student progress under Manage Homework.';
    form.reset();date.value=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
   }catch(error){status.textContent=error.message}finally{button.disabled=false}
  };
+}
+
+
+async function creativeManage(app,body){
+ const label=app==='writing'?'Writing Genius':'Puzzles';
+ body.innerHTML='<div class="ua-empty">Loading '+label+' homework…</div>';
+ const route=(action,extra='')=>'/.netlify/functions/homework_api?action='+action+extra;
+ const get=async(url,options={})=>{
+  const resolved=window.WillenaAPI?.getApiUrl?.(url)||url;
+  const response=await fetch(resolved,{credentials:'include',cache:'no-store',...options});
+  const value=await response.json().catch(()=>({}));
+  if(!response.ok||!value.success)throw Error(value.error||'Homework unavailable');
+  return value;
+ };
+ try{
+  const data=await get(route('list_assignments'));
+  if(!body.isConnected)return;
+  const rows=(data.assignments||[]).filter(a=>a.list_meta?.source_type===(app==='writing'?'writing_genius':'puzzles'));
+  const activeRows=rows.filter(a=>a.active!==false&&!a.ended_at);
+  body.innerHTML='<div class="ua-actions"><h4>'+label+' homework ('+activeRows.length+' active)</h4><button type="button" class="control ua-outline" id="uaCreativeRefresh">↻ Refresh</button></div>'+
+   (rows.length?'<div class="ua-grid">'+rows.map(a=>
+    '<article class="ua-card"><strong>'+esc(a.title||'Homework')+'</strong>'+
+    '<div class="ua-card-sub">'+esc(a.class||'')+' · '+esc(a.list_meta?.kind||'')+'</div>'+
+    '<small>Due '+esc(a.due_at?new Date(a.due_at).toLocaleDateString('ko-KR'):'—')+' · '+(a.active===false||a.ended_at?'Ended':'Active')+'</small>'+
+    '<button type="button" class="control ua-assign" data-creative-progress="'+esc(a.id)+'">Student progress →</button>'+
+    '<div data-creative-results="'+esc(a.id)+'" aria-live="polite"></div></article>'
+   ).join('')+'</div>':'<div class="ua-empty">No '+label+' homework assigned yet.</div>');
+  body.querySelector('#uaCreativeRefresh')?.addEventListener('click',()=>void creativeManage(app,body));
+  body.querySelectorAll('[data-creative-progress]').forEach(button=>button.addEventListener('click',async()=>{
+   const host=body.querySelector('[data-creative-results="'+button.dataset.creativeProgress+'"]');
+   if(!host)return;host.textContent='Checking submitted work…';
+   try{
+    const result=await get(route('creative_assignment_progress','&assignment_id='+encodeURIComponent(button.dataset.creativeProgress)));
+    host.innerHTML='<p><b>'+result.completed+' / '+result.total+'</b> complete</p>'+
+     (result.students||[]).map(st=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #e6eff0"><span>'+esc(st.name)+'</span><span>'+(st.error?'Unavailable':st.completed?'✓ Complete':'Not yet')+'</span></div>').join('');
+   }catch(e){host.textContent=e.message}
+  }));
+ }catch(e){if(body.isConnected)body.innerHTML='<div class="ua-empty">'+esc(e.message)+'</div>'}
 }
 
 function groupRows(){return window.NaesinV2Data?.getCachedGroups?.()||[]}
@@ -85,6 +123,8 @@ function render(){
  }
  if(active==='writing'){
    if(sub==='create'){homeworkForm('writing',body);return}
+   void creativeManage('writing',body);return;
+   // Legacy writing-submissions shortcut follows.
    body.innerHTML='<div class="ua-feature"><div class="ua-feature-symbol">✎</div><div class="ua-feature-copy"><h4>Writing Genius · Diaries & topic writing</h4><p>Read student writing and teacher feedback in Writing Genius. Homework assignment creation is not connected yet.</p><button type="button" class="control ua-primary" id="uaOpenWriting">Open Writing Genius →</button></div></div>';
    body.querySelector('#uaOpenWriting')?.addEventListener('click',()=>{window.WritingGeniusTeacher?.openView?.()});
    return;
@@ -94,7 +134,7 @@ function render(){
    window.dispatchEvent(new CustomEvent('ua:sentence-mounted',{detail:{sub}}));
    return;
  }
- if(active==='puzzles'&&sub==='create'){homeworkForm('puzzles',body);return}
+ if(active==='puzzles'){if(sub==='create')homeworkForm('puzzles',body);else void creativeManage('puzzles',body);return}
  const desc=sub==='manage'?'Homework tracking is not connected for this app yet.':active==='grammar'?'Grammar step assignment creation is not connected yet.':'Puzzle assignment creation is not connected yet.';
  body.innerHTML='<div class="ua-feature ua-unavailable"><div class="ua-feature-symbol">'+(active==='grammar'?'G':'◇')+'</div><div class="ua-feature-copy"><span class="ua-coming-label">Assignment integration pending</span><h4>'+selected.label+' assignments</h4><p>'+desc+' The assignment connection is not built yet; existing student progress is unaffected.</p></div></div>';
 }
