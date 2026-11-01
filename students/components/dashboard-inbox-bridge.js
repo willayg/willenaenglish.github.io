@@ -3,7 +3,7 @@ function setupInbox(){
  if(document.documentElement.classList.contains('leaderboard-only'))return;
  const user=document.querySelector('.header .user')||document.querySelector('.header');
  if(!user||document.querySelector('.dashboard-teacher-message'))return;
- const host=document.createElement('div');
+ const host=document.createElement('div');host.style.display='contents';
  const shadow=host.attachShadow({mode:'open'});
  shadow.innerHTML='<div class="menu-anchor"><button id="avatarBtn" hidden type="button"></button><div id="avatarMenu"></div></div>';
  document.body.append(host);
