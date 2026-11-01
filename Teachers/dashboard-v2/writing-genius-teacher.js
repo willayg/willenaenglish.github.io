@@ -27,7 +27,7 @@ function mount(){
   '<div id="wgTeacherList" class="wg-t-list"><p class="wg-t-empty">Select Writing Genius to load submissions.</p></div></section>'+
   '</div><div class="wg-t-modal" id="wgTeacherModal" hidden><div class="wg-t-modal-backdrop" data-wg-close></div><section class="wg-t-modal-dialog" role="dialog" aria-modal="true" aria-label="Student writing"><button type="button" class="wg-t-modal-close" id="wgTeacherModalClose" aria-label="Close">×</button><div id="wgTeacherDetail"></div></section></div>';
  workspace.append(view);
- $$('.wg-t-tab',view).forEach(b=>b.onclick=()=>{state.tab=b.dataset.wgTab;state.activeId=null;state.activeSessionId=null;$$('.wg-t-tab',view).forEach(x=>x.classList.toggle('is-active',x===b));$('#wgTeacherKind').hidden=state.tab==='practice';render()});
+ $$('.wg-t-tab',view).forEach(b=>b.onclick=()=>{state.tab=b.dataset.wgTab;state.activeId=null;state.activeSessionId=null;closeDiaryModal();$('.wg-t-tab',view).forEach(x=>x.classList.toggle('is-active',x===b));$('#wgTeacherKind').hidden=state.tab==='practice';render()});
  $('#wgTeacherClass').onchange=()=>void load();
  $('#wgTeacherKind').onchange=render;
  $('#wgTeacherSearch').oninput=render;
@@ -175,7 +175,7 @@ function detail(entry){
  feedbackApi(entry.id).then(result=>{textarea.value=result.feedback||'';input.value=result.bonus_points||0;note.textContent=result.bonus_points?'Already awarded: '+result.bonus_points+' points':'No teacher feedback yet.'}).catch(e=>note.textContent=e.message);
  save.onclick=async()=>{const bonus=Number(input.value);if(!Number.isInteger(bonus)||bonus<0||bonus>50){note.textContent='Choose 0–50 points.';return}save.disabled=true;note.textContent='Saving…';try{const data=await feedbackApi(entry.id,textarea.value,bonus);note.textContent='Saved · Total bonus: '+data.bonus_points+' points'}catch(e){note.textContent=e.message}finally{save.disabled=false}};
 }
-function renderPractice(){closeDiaryModal();
+function renderPractice(){
  const container=$('#wgTeacherList'),count=$('#wgTeacherCount');if(!container)return;
  const query=($('#wgTeacherSearch')?.value||'').trim().toLowerCase();
  const rows=state.sessions.filter(e=>!query||[e.name,e.korean_name,e.class_name,e.book_title,e.unit_id].some(x=>String(x||'').toLowerCase().includes(query)))
@@ -192,11 +192,11 @@ function renderPractice(){closeDiaryModal();
   const b=make('button','wg-t-item wg-t-submission-card'+(e.id===state.activeSessionId?' is-selected':''));b.type='button';
   b.append(make('strong','wg-t-item-name',e.korean_name||e.name||'Student'),make('strong','wg-t-card-title',(e.book_title||e.book_id||'Book')+' · '+(e.unit_id||'Unit')));
   b.append(make('span','wg-t-item-meta',[e.class_name,e.status,completed+' / '+total+' correct'].filter(Boolean).join(' · ')));
-  b.onclick=()=>{state.activeSessionId=e.id;renderPractice();if(window.matchMedia('(max-width:850px)').matches)$('#wgTeacherDetail')?.scrollIntoView({behavior:'smooth',block:'start'})};
+  b.onclick=()=>{state.activeSessionId=e.id;detailPractice(e);$('#wgTeacherModal').hidden=false;document.body.classList.add('wg-modal-open');$('#wgTeacherModalClose').focus()};
   container.append(b);
  }
  if(!rows.some(e=>e.id===state.activeSessionId))state.activeSessionId=rows[0].id;
- detailPractice(rows.find(e=>e.id===state.activeSessionId));
+
 }
 function detailPractice(entry){
  const host=$('#wgTeacherDetail');if(!host)return;host.replaceChildren();
