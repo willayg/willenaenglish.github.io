@@ -615,7 +615,28 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   award.setAttribute('stars',String(reward.stars??5));
   award.setAttribute('points',String(reward.points||0));
   stage.append(award);
-  if(current.kind==='topic'&&reward.rubric){const box=el('section','df-topic-rubric');box.append(el('h3','','글쓰기 평가표'));for(const [key,label] of [['topic','주제에 맞게 글을 썼어요'],['structure','시작·가운데·마무리를 사용했어요'],['review','건너뛰지 않고 복습했어요'],['speaking','수정한 글을 끝까지 읽었어요']]){const ok=reward.rubric[key]===true;const row=el('div','df-topic-rubric-row');row.append(el('span','',label),el('strong',ok?'✓ +5점 · ★★':'— 0점'));row.classList.toggle('is-earned',ok);box.append(row)}stage.append(box)}else stage.append(el('p','df-reward-breakdown',(reward.sentences||split(current.body).length)+' sentences × 5 points'));
+  if(current.kind==='topic'&&reward.rubric){
+   const box=el('section','df-topic-rubric');
+   box.append(el('h3','','글쓰기 평가표'));
+   const table=el('table','df-topic-rubric-table');
+   const head=el('thead','');const header=el('tr','');
+   for(const name of ['평가 기준','별','점수'])header.append(el('th','',name));
+   head.append(header);table.append(head);
+   const body=el('tbody','');
+   let earnedStars=0,earnedPoints=0;
+   for(const [key,label] of [['topic','주제에 맞게 글을 썼어요'],['structure','시작·가운데·마무리를 사용했어요'],['review','건너뛰지 않고 복습했어요'],['speaking','수정한 글을 끝까지 읽었어요']]){
+    const ok=reward.rubric[key]===true;
+    const row=el('tr',ok?'is-earned':'is-missed');
+    const reason=el('td','',label);
+    const stars=el('td','df-rubric-stars',ok?'★★':'—');
+    const points=el('td','df-rubric-points',ok?'+5점':'0점');
+    row.append(reason,stars,points);body.append(row);
+    if(ok){earnedStars+=2;earnedPoints+=5}
+   }
+   const total=el('tr','df-rubric-total');
+   total.append(el('th','','합계'),el('th','',earnedStars+' / 8 ★'),el('th','',earnedPoints+' / 20점'));
+   body.append(total);table.append(body);box.append(table);stage.append(box);
+  }else stage.append(el('p','df-reward-breakdown',(reward.sentences||split(current.body).length)+' sentences × 5 points'));
  }
  async function complete(){
   if(busy)return;busy=true;
