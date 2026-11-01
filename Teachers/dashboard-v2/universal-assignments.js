@@ -164,7 +164,7 @@ async function creativeManage(app,body){
     (chosen.length?'<div class="ua-genius-manage-list">'+chosen.map(a=>
      window.WillenaGeniusHomeworkCard.card({id:a.id,className:a.class,
      task:(a.list_meta?.kind==='sentence'?(a.list_meta?.unit_label||a.title):(a.title||'Homework')),
-     dueAt:a.due_at,teacher:a.teacher_name||a.created_by_name||'',
+     dueAt:a.due_at,teacher:a.teacher_name||a.created_by_name||'',createdBy:a.created_by,
      progressLabel:'Student progress',
      body:'<button type="button" class="control ua-assign ghc-load-action" data-creative-progress="'+esc(a.id)+'" hidden>Load student results</button>'+
       '<div data-creative-results="'+esc(a.id)+'" aria-live="polite"></div>'})
@@ -174,6 +174,7 @@ async function creativeManage(app,body){
    body.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{view=b.dataset.period;paint()});
    body.querySelector('#uaCreativeRefresh').onclick=()=>void creativeManage(app,body);
    attachProgress();
+   void window.WillenaGeniusHomeworkCard?.hydrateTeachers(body);
   };
   const attachProgress=()=>{body.querySelectorAll('[data-creative-progress]').forEach(button=>button.addEventListener('click',async()=>{
    const host=body.querySelector('[data-creative-results="'+button.dataset.creativeProgress+'"]');
