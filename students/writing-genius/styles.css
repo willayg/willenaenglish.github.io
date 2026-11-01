@@ -792,3 +792,9 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 @keyframes df-ai-robot-bob{50%{transform:translateY(-5px)}}
 @keyframes df-ai-robot-blink{0%,43%,49%,100%{transform:scaleY(1)}46%{transform:scaleY(.12)}}
 @media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-ai-robot,.writing-genius #wgDiaryFlow .df-ai-robot-eyes{animation:none}}
+
+/* Teacher diary message on completed student diary. */
+.writing-genius #wgDiaryFlow .df-teacher-feedback{margin:18px 0;padding:17px;border:2px solid #c5e9ee;border-radius:15px;background:#f7fcfd;color:#365b64;text-align:left}
+.writing-genius #wgDiaryFlow .df-teacher-feedback h3{font-size:1rem;color:#cc508a;margin:0 0 8px}
+.writing-genius #wgDiaryFlow .df-teacher-feedback p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;margin:6px 0}
+.writing-genius #wgDiaryFlow .df-teacher-feedback strong{display:block;margin-top:9px;color:#cf6692}
