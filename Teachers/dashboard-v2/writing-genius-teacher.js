@@ -173,7 +173,7 @@ function detail(entry){
  const save=make('button','wg-t-save-feedback','Send feedback & award points');save.type='button';
  label.append(input);form.append(textarea,label,save,note);host.append(form);
  feedbackApi(entry.id).then(result=>{textarea.value=result.feedback||'';input.value=result.bonus_points||0;note.textContent=result.bonus_points?'Already awarded: '+result.bonus_points+' points':'No teacher feedback yet.'}).catch(e=>note.textContent=e.message);
- save.onclick=async()=>{const bonus=Number(input.value);if(!Number.isInteger(bonus)||bonus<0||bonus>50){note.textContent='Choose 0–50 points.';return}save.disabled=true;note.textContent='Saving…';try{const data=await feedbackApi(entry.id,textarea.value,bonus);note.textContent='Saved · Total bonus: '+data.bonus_points+' points'}catch(e){note.textContent=e.message}finally{save.disabled=false}};
+ save.onclick=async()=>{const bonus=Number(input.value);if(!Number.isInteger(bonus)||bonus<0||bonus>50){note.textContent='Choose 0–50 points.';return}save.disabled=true;note.textContent='Saving…';try{const data=await feedbackApi(entry.id,textarea.value,bonus);note.textContent='Feedback sent!';const splash=make('div','wg-t-sent-splash');splash.setAttribute('role','status');splash.innerHTML='<span class="wg-t-sent-check" aria-hidden="true">✓</span><strong>Feedback sent!</strong><span>학생에게 전달했어요.</span>';const dialog=$('.wg-t-modal-dialog');dialog?.append(splash);setTimeout(()=>{splash.remove();closeDiaryModal()},1200)}catch(e){note.textContent=e.message}finally{save.disabled=false}};
 }
 function renderPractice(){
  const container=$('#wgTeacherList'),count=$('#wgTeacherCount');if(!container)return;
