@@ -80,7 +80,7 @@ const topicWritingIdeas=[
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
 export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedback,claimBonus,onExit}){
  const root=$('wgDiaryFlow'),stage=$('dfStage'),actions=$('dfActions'),message=$('dfMessage'),progress=$('dfProgress');
- let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],busy=false,autosaveTimer=null,transitionTimer=null,choices={};
+ let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],reviewSkipped=false,speechSkipped=false,busy=false,autosaveTimer=null,transitionTimer=null,choices={};
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
  function status(text='',error=false){message.textContent=text;message.classList.toggle('is-error',error)}
  function screen(name,label){clearTimeout(transitionTimer);step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false}
@@ -513,7 +513,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    if(norm(renderer.getResponse())!==norm(p.target)){status('다시 시도해 주세요.',true);return}
    index++;mode='speaking';question();
   },true);
-  button('건너뛰기 · Skip',()=>{index++;mode='speaking';question()});
+  button('건너뛰기 · Skip',()=>{reviewSkipped=true;index++;mode='speaking';question()});
  }
  async function aiSpeechTranscribe(blob){
   const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=reject;reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.readAsDataURL(blob)});
@@ -569,6 +569,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   rendererHost({form:'speaking',prompt:'',context:{},input:{language:'en'},answer:[target]});
   const mic=stage.querySelector('[data-speaking-mic]');
   const speechStatus=stage.querySelector('[data-speaking-status]');
+  if(current.kind==='topic')button('건너뛰기 · Skip',()=>{speechSkipped=true;index++;lineSpeech()});
   if(!mic)return;
   mic.classList.add('df-tele-mic');
   let accepted=false;
@@ -607,10 +608,11 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   stage.replaceChildren();
   const award=document.createElement('student-reward-celebration');
   award.setAttribute('label',current.kind==='topic'?'TOPIC WRITING COMPLETE':'DAILY DIARY COMPLETE');
-  award.setAttribute('percent','100');award.setAttribute('star-max','5');
-  award.setAttribute('stars',String(reward.stars||5));
+  award.setAttribute('percent','100');award.setAttribute('star-max',current.kind==='topic'?'8':'5');
+  award.setAttribute('stars',String(reward.stars??5));
   award.setAttribute('points',String(reward.points||0));
-  stage.append(award,el('p','df-reward-breakdown',(reward.sentences||split(current.body).length)+' sentences × 5 points'));
+  stage.append(award);
+  if(current.kind==='topic'&&reward.rubric){const box=el('section','df-topic-rubric');box.append(el('h3','','글쓰기 평가표'));for(const [key,label] of [['topic','주제에 맞게 글을 썼어요'],['structure','시작·가운데·마무리를 사용했어요'],['review','건너뛰지 않고 복습했어요'],['speaking','수정한 글을 끝까지 읽었어요']]){const ok=reward.rubric[key]===true;const row=el('div','df-topic-rubric-row');row.append(el('span','',label),el('strong',ok?'✓ +5점 · ★★':'— 0점'));row.classList.toggle('is-earned',ok);box.append(row)}stage.append(box)}else stage.append(el('p','df-reward-breakdown',(reward.sentences||split(current.body).length)+' sentences × 5 points'));
  }
  async function complete(){
   if(busy)return;busy=true;
@@ -618,8 +620,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   status('보상을 확인하고 있어요…');
   button('메인 메뉴',close,true);
   try{
-   if(!current._speechSaved){await speech(current,spoken.join(' '),finalLines);current._speechSaved=true}
-   const reward=await finish(current);
+   if(!current._speechSaved){if(current.kind==='topic'&&speechSkipped){current._speechSaved=true}else{await speech(current,spoken.join(' '),finalLines);current._speechSaved=true}}
+   const reward=await finish(current,{reviewComplete:!reviewSkipped,speakingComplete:!speechSkipped&&spoken.length===finalLines.length});
    rewardCard(reward);
    status('완료했습니다!');
    showTeacherFeedback();
@@ -631,5 +633,5 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    showTeacherFeedback();
   }finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};loadChoices();spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};loadChoices();spoken=[];reviewSkipped=false;speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
 }
