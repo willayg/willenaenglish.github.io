@@ -21,7 +21,7 @@ const newHomeworkApps={
 function homeworkForm(app,body){
  const spec=newHomeworkApps[app];
  const select=document.getElementById('classSelect');
- const classes=[...new Set([...select?.options||[]].map(o=>o.value).filter(Boolean))];
+ const classes=[...new Set([...[...(select?.options||[])].map(o=>o.value).filter(Boolean),'Test'])];
  body.innerHTML='<form id="uaNewHomework" class="ua-feature" style="display:grid;gap:12px;max-width:580px;margin:12px auto;padding:24px">'+
  '<h4>'+spec.heading+'</h4><label>Class <select class="control" name="class" required><option value="">Choose class</option>'+classes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select></label>'+
  '<label>Homework type <select class="control" name="kind">'+spec.types.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('')+'</select></label>'+
@@ -92,10 +92,13 @@ async function creativeManage(app,body){
 function groupRows(){return window.NaesinV2Data?.getCachedGroups?.()||[]}
 function render(){
  restoreWordPanel();
+ const strip=root.querySelector('.ua-app-tabs');
+ const previousScroll=strip?strip.scrollLeft:(Number(saved.scrollLeft)||0);
  const selected=apps.find(a=>a.id===active),sub=subviews[active];
  root.innerHTML=
  '<div class="ua-app-tabs" role="tablist" aria-label="Assignment app">'+apps.map(a=>'<button type="button" role="tab" aria-selected="'+(active===a.id)+'" class="ua-app-tab'+(active===a.id?' active':'')+'" data-ua-tab="'+a.id+'"><span class="ua-app-icon" aria-hidden="true">'+a.icon+'</span><span class="ua-app-label"><b>'+a.label+'</b></span></button>').join('')+'</div>'+
  '<section class="ua-workspace" aria-label="'+selected.label+' assignments"><div class="ua-section-heading"><div><div class="ua-eyebrow">CREATE & MANAGE</div><h3>'+selected.label+'</h3></div><span class="ua-section-count" id="uaStatus">'+(active==='naesin'?groups.length+' exam groups':active==='word'?'Word Genius homework':active==='grammar'?'Connected · Grammar Genius':active==='sentence'?'Connected · Sentence Genius':'Not yet connected')+'</span></div><div class="ua-subtabs" role="tablist" aria-label="Homework workflow"><button type="button" role="tab" data-ua-sub="manage" class="ua-subtab'+(sub==='manage'?' active':'')+'" aria-selected="'+(sub==='manage')+'">Manage Homework</button><button type="button" role="tab" data-ua-sub="create" class="ua-subtab'+(sub==='create'?' active':'')+'" aria-selected="'+(sub==='create')+'">Assign Homework</button></div><div class="ua-app-body" id="uaAppBody"></div></section>';
+ const nextStrip=root.querySelector('.ua-app-tabs');if(nextStrip){nextStrip.scrollLeft=previousScroll;nextStrip.addEventListener('scroll',()=>{try{const value=JSON.parse(sessionStorage.getItem(stateKey)||'{}');value.scrollLeft=nextStrip.scrollLeft;sessionStorage.setItem(stateKey,JSON.stringify(value))}catch{}},{passive:true})}
  root.querySelectorAll('[data-ua-tab]').forEach(b=>b.addEventListener('click',()=>{const next=b.dataset.uaTab;subviews[next]=subviews[active];active=next;remember();render()}));
  root.querySelectorAll('[data-ua-sub]').forEach(b=>b.addEventListener('click',()=>{subviews[active]=b.dataset.uaSub;remember();render()}));
  const body=root.querySelector('#uaAppBody');
