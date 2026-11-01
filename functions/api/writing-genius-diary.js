@@ -38,7 +38,7 @@ export async function onRequestPost({request,env}){
   if(action==='review'){
    const old=await db('writing_genius_diary_reviews?select=original_body,feedback&entry_id=eq.'+id+'&limit=1',auth.token);
    if(old.ok&&old.data?.[0]?.original_body===entry.body&&old.data[0].feedback?.review_version===2&&(!entry.kind||entry.kind!=='topic'||old.data[0].feedback.review_round))return json(200,{success:true,feedback:old.data[0].feedback,cached:true});
-   const reviewRound=entry.kind==='topic'?Math.max(0,Number(old.data?.[0]?.feedback?.review_round||0)):0;
+   const reviewRound=entry.kind==='topic'?Math.max(0,Number(old.data?.[0]?.feedback?.review_round||(old.data?.[0]?.feedback?.review_version?1:0))):0;
    if(entry.kind==='topic'&&reviewRound>=2)return json(409,{error:'두 번의 AI 리뷰를 모두 사용했어요. 이제 연습으로 넘어가세요.'});
    const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
    if(!apiKey)return json(503,{error:'AI Willi를 사용할 수 없어요.'});
