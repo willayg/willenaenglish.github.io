@@ -868,3 +868,12 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-topic-rubric-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 0;border-top:1px solid #e3f1f2;color:#48666c;font-size:.89rem}
 .writing-genius #wgDiaryFlow .df-topic-rubric-row strong{white-space:nowrap;color:#7b9297}
 .writing-genius #wgDiaryFlow .df-topic-rubric-row.is-earned strong{color:#cf8a19}
+
+.writing-genius #wgDiaryFlow .df-topic-rubric-table{width:100%;border-collapse:collapse;font-size:.89rem;table-layout:auto}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table th,.writing-genius #wgDiaryFlow .df-topic-rubric-table td{padding:12px 6px;border-top:1px solid #e2eff0;text-align:left;vertical-align:middle}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table th:nth-child(n+2),.writing-genius #wgDiaryFlow .df-topic-rubric-table td:nth-child(n+2){text-align:center;white-space:nowrap}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table thead th{color:#64838a;font-size:.8rem}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table .df-rubric-stars{color:#c8cfd1;font-size:1.2rem;letter-spacing:1px}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table .is-earned .df-rubric-stars{color:#f5ad19}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table .is-earned .df-rubric-points{font-weight:800;color:#d64e90}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table .df-rubric-total{background:#f2fbfb;color:#2b6871;font-weight:900}
