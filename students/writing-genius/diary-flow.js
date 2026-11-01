@@ -80,12 +80,12 @@ const topicWritingIdeas=[
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
 export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedback,claimBonus,onExit}){
  const root=$('wgDiaryFlow'),stage=$('dfStage'),actions=$('dfActions'),message=$('dfMessage'),progress=$('dfProgress');
- let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],reviewSkipped=false,speechSkipped=false,busy=false,autosaveTimer=null,transitionTimer=null,choices={};
+ let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],reviewSkipped=false,speechSkipped=false,busy=false,autosaveTimer=null,transitionTimer=null,choices={},captureDraft=null;
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
  function status(text='',error=false){message.textContent=text;message.classList.toggle('is-error',error)}
- function screen(name,label){clearTimeout(transitionTimer);step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false}
+ function screen(name,label){clearTimeout(transitionTimer);captureDraft=null;step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false}
  async function persist(){clearTimeout(autosaveTimer);await draft(current)}
- async function close(){if(busy)return;clearTimeout(transitionTimer);clearTimeout(autosaveTimer);if(current?.status!=='submitted'){busy=true;status('저장 중…');try{await persist()}catch(e){status('저장 실패: '+(e.message||'다시 시도해 주세요.'),true);busy=false;return}busy=false}root.hidden=true;current=null;await onExit()}
+ async function close(){if(busy)return;clearTimeout(transitionTimer);clearTimeout(autosaveTimer);if(current?.status!=='submitted'){captureDraft?.();busy=true;status('저장 중…');try{await persist()}catch(e){status('저장 실패: '+(e.message||'다시 시도해 주세요.'),true);busy=false;return}busy=false}root.hidden=true;current=null;await onExit()}
  $('dfExit').addEventListener('click',close);
  function topic(){
   screen('topic','1 · Topic');
@@ -142,6 +142,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const count=el('span','df-count');const area=el('textarea','df-textarea');area.value=current.body||'';area.placeholder=current.kind==='topic'?'Write at least 8 sentences. Use paragraphs for the beginning, middle and ending.':'Write 6–30 complete sentences.';area.maxLength=12000;
   if(current.kind==='topic'){const guide=el('p','df-topic-write-guide','Beginning: introduce your idea or characters. Middle: develop the story or explain with details. Ending: finish clearly. Start a new paragraph for each part.');stage.append(guide)}
   function update(){current.body=area.value;const n=split(area.value).length;count.textContent=n+' sentences';count.classList.toggle('is-invalid',n<(current.kind==='topic'?8:6)||n>30)}
+  captureDraft=()=>{current.body=area.value};
   area.addEventListener('input',()=>{update();clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{void persist().catch(e=>status(e.message,true))},1800)});update();stage.append(area,count);
   button('이전',topic);
   button('저장',async()=>{if(busy)return;busy=true;try{await persist();status('임시 저장됨 ✓')}catch(e){status(e.message,true)}finally{busy=false}});
@@ -318,6 +319,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const cacheKey='wg:topic:draft2:'+current.id+':'+String(feedback.review_round||1);
   try{const saved=JSON.parse(localStorage.getItem(cacheKey)||'null');if(Array.isArray(saved)&&saved.length===3&&saved.every(x=>typeof x==='string'))sections=saved;else sections=initial}catch{sections=initial}
   const allText=()=>fields.map(x=>x.value.trim()).filter(Boolean).join('\n\n');
+  captureDraft=()=>{current.body=allText()};
   function update(){const n=split(allText()).length;counter.textContent=n+' sentences';counter.classList.toggle('is-invalid',n<8||n>30);try{localStorage.setItem(cacheKey,JSON.stringify(fields.map(x=>x.value)))}catch{}}
   roles.forEach((role,i)=>{
     const advice=structure[role]||{};
@@ -634,5 +636,5 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    showTeacherFeedback();
   }finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};loadChoices();spoken=[];reviewSkipped=false;speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];reviewSkipped=false;speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
 }
