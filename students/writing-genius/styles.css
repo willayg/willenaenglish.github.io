@@ -812,3 +812,17 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 @keyframes df-bonus-pop{0%{transform:scale(.15) rotate(-18deg);opacity:0}65%{transform:scale(1.28) rotate(7deg);opacity:1}100%{transform:scale(1);opacity:1}}
 @keyframes df-bonus-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-bonus-reveal,.writing-genius #wgDiaryFlow .df-bonus-claim.is-claiming svg{animation:none}}
+
+.wg-reward-demo-layer{position:fixed;inset:0;z-index:99999;background:#20333bc9;display:grid;place-items:center;padding:16px}
+.wg-reward-demo{position:relative;width:min(500px,100%);background:#fff;border:3px solid #bde9ed;border-radius:24px;padding:25px 20px;text-align:center;font-family:Poppins,system-ui,sans-serif;box-shadow:0 18px 60px #1a353666}
+.wg-reward-demo h2{color:#dc5898;margin:12px 0 20px}
+.wg-reward-demo small{color:#68858b;font-weight:800}
+.wg-reward-demo button:not(.wg-demo-close){display:flex;width:100%;align-items:center;justify-content:center;gap:10px;border:2px solid #b8e9ee;border-radius:13px;background:#f4fcfd;padding:13px;margin:12px 0;color:#326c76;font:800 .9rem Poppins,system-ui;cursor:pointer}
+.wg-reward-demo .wg-demo-close{position:absolute;right:10px;top:10px;border:0;background:#fff;font-size:1.7rem;color:#53747c}
+.wg-reward-demo .wg-demo-claim svg{width:31px;height:31px;color:#daa71f}
+.wg-reward-demo .wg-demo-message-body{white-space:pre-wrap;text-align:left;background:#fff3f9;border-radius:12px;padding:14px}
+.wg-reward-demo [hidden]{display:none!important}
+.wg-reward-demo .wg-demo-result{font-size:2.4rem;font-weight:900;color:#dca416}
+.wg-reward-demo .wg-demo-result.is-playing{animation:wg-demo-pop .7s cubic-bezier(.17,1.5,.35,1) both}
+@keyframes wg-demo-pop{0%{opacity:0;transform:scale(.15) rotate(-12deg)}70%{opacity:1;transform:scale(1.25)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.wg-reward-demo .wg-demo-result.is-playing{animation:none}}
