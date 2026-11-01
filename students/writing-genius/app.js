@@ -318,6 +318,16 @@ async function bootstrap(){
     if(!['student','teacher','admin'].includes(profile.role))throw Error('학생 계정으로 로그인해 주세요.');
     if(!state.student.className)state.student.className=profile.className;
     await requestDeadline(authToken());
+    const eligibility=await requestDeadline(databaseApi('rpc/writing_genius_access_v1','POST','',{}));
+    if(eligibility?.allowed!==true){
+      show('home');
+      document.querySelectorAll('[data-wg-start]').forEach(button=>button.disabled=true);
+      const msg='Writing Genius는 레벨 4 이상 교재를 공부하는 학생만 이용할 수 있어요. 선생님에게 문의해 주세요.';
+      notice(msg,true);
+      const library=$('wgLibrary');
+      if(library){library.replaceChildren();library.append(el('p','wg-empty',msg));}
+      return;
+    }
     await requestDeadline(reloadEntries());
     if(!history.state?.[NAV])history.replaceState(navState('home'),'');
     const route=history.state;
