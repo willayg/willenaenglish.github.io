@@ -1,3 +1,4 @@
+import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 const $=id=>document.getElementById(id);
 const norm=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim();
@@ -183,6 +184,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
       const reward=await claimBonus(entry);
       claim.remove();
       if(reward.awarded>0){
+       playStudentSfx('complete');setTimeout(()=>playStudentSfx('star'),250);
        const big=el('strong','df-bonus-reveal','+'+reward.awarded+' POINTS!');
        result.append(big,el('p','','보너스 포인트를 받았어요!'));
        try{window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:0}}));localStorage.setItem('stars:refresh',String(Date.now()))}catch{}
