@@ -260,22 +260,88 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  function secondDraft(){
   construct();screen('second-draft','Draft 2 · Revision');
   stage.append(el('h2','df-heading','두 번째 초안 · Draft 2'));
-  const guide=el('aside','df-topic-structure-tip');guide.append(el('strong','','Beginning · Middle · Ending'),el('p','',feedback.tip_ko||'Improve your opening, development and conclusion.'));stage.append(guide);
-  stage.append(el('p','df-muted','AI corrections are included. Add sentences or paragraphs where needed. One final AI check remains.'));
-  const textarea=el('textarea','df-textarea');textarea.maxLength=12000;
-  const changes=feedback.improvements||[];
-  textarea.value=current.body.split(/(\n\s*\n)/).map(part=>/^\s*\n/.test(part)?part:split(part).map(line=>{const i=changes.findIndex(x=>norm(x.original)===norm(line));return i>=0?selectedText(changes[i],i):line}).join(' ')).join('').trim();
-  const counter=el('p','df-count');
-  const update=()=>{const n=split(textarea.value).length;counter.textContent=n+' sentences';counter.classList.toggle('is-invalid',n<8||n>30)};
-  textarea.addEventListener('input',update);stage.append(textarea,counter);update();
+  const info=el('p','df-muted','AI가 고친 문장은 분홍색으로 표시돼요. 아래에서 내용을 추가하거나 바꿔 보세요.');
+  stage.append(info);
+  const changes=feedback?.improvements||[];
+  const sourceParagraphs=String(current.body||'').split(/\n\s*\n/).filter(x=>x.trim());
+  const correctedLine=line=>{
+    const i=changes.findIndex(x=>norm(x.original)===norm(line));
+    return i>=0?{text:selectedText(changes[i],i),changed:selectedText(changes[i],i)!==line}: {text:line,changed:false};
+  };
+  const originalLines=split(current.body);
+  const corrected=originalLines.map(correctedLine);
+  const preview=el('section','df-revision-preview');
+  preview.append(el('h3','','AI Corrections · 수정된 문장'));
+  const paper=el('div','df-revision-paper');
+  for(const line of corrected){
+    const span=el('span',line.changed?'df-revision-changed':'',line.text);
+    paper.append(span,document.createTextNode(' '));
+  }
+  preview.append(paper);
+  const changeCount=corrected.filter(x=>x.changed).length;
+  preview.append(el('small','df-muted',changeCount?changeCount+' sentences corrected · 분홍색 부분은 AI 수정':'문장 수정 없이 구조만 고칠 수 있어요.'));
+  stage.append(preview);
+  const structure=feedback?.structure||{};
+  const roles=['beginning','middle','ending'];
+  const titles=['Beginning · 시작','Middle · 가운데','Ending · 마무리'];
+  const defaults=[
+   'Introduce your topic, setting or characters. Why should the reader keep reading?',
+   'Add details, examples, or what happens next. Develop the main idea.',
+   'How does the story or explanation finish? What should the reader remember?'
+  ];
+  const starters=['One day, …','The most important thing is …','In the end, …'];
+  // Prefer existing student paragraph breaks. For a single paragraph, provide editable sections
+  // using a suggested split without pretending AI has identified exact boundaries.
+  let sections;
+  if(sourceParagraphs.length>=3){
+    sections=[sourceParagraphs[0],sourceParagraphs.slice(1,-1).join('\n\n'),sourceParagraphs.at(-1)];
+  }else if(sourceParagraphs.length===2){
+    sections=[sourceParagraphs[0],sourceParagraphs[1],''];
+  }else{
+    const lines=originalLines;
+    const start=Math.min(2,lines.length),end=Math.max(start,lines.length-2);
+    sections=[lines.slice(0,start).join(' '),lines.slice(start,end).join(' '),lines.slice(end).join(' ')];
+  }
+  const correctedSection=text=>split(text).map(line=>correctedLine(line).text).join(' ');
+  const fields=[];const counter=el('p','df-count');
+  const initial=sections.map(correctedSection);
+  const cacheKey='wg:topic:draft2:'+current.id+':'+String(feedback.review_round||1);
+  try{const saved=JSON.parse(localStorage.getItem(cacheKey)||'null');if(Array.isArray(saved)&&saved.length===3&&saved.every(x=>typeof x==='string'))sections=saved;else sections=initial}catch{sections=initial}
+  const allText=()=>fields.map(x=>x.value.trim()).filter(Boolean).join('\n\n');
+  function update(){const n=split(allText()).length;counter.textContent=n+' sentences';counter.classList.toggle('is-invalid',n<8||n>30);try{localStorage.setItem(cacheKey,JSON.stringify(fields.map(x=>x.value)))}catch{}}
+  roles.forEach((role,i)=>{
+    const advice=structure[role]||{};
+    const box=el('section','df-revision-section'+(advice.needs_work?' needs-work':''));
+    const head=el('div','df-revision-section-heading');head.append(el('h3','',titles[i]));
+    if(advice.needs_work)head.append(el('span','df-revision-needs','Add or improve · 보완하기'));
+    box.append(head);
+    if(advice.needs_work){
+      box.append(el('p','df-revision-prompt',advice.advice_ko||defaults[i]));
+    }else box.append(el('p','df-muted',advice.advice_ko||defaults[i]));
+    const field=el('textarea','df-revision-input');field.value=sections[i]||'';field.maxLength=12000;field.placeholder=advice.needs_work?'Write your '+role+' here…':'Write your '+role+' here…';
+    field.setAttribute('aria-label',titles[i]);field.addEventListener('input',update);fields.push(field);box.append(field);
+    if(advice.needs_work||!field.value.trim()){
+      const starter=String(advice.starter_en||starters[i]).trim();
+      const help=el('button','df-revision-starter','Try a starting idea · '+starter);help.type='button';
+      help.onclick=()=>{field.focus();field.value+=(field.value.trim()?'\n':'')+starter;update()};
+      box.append(help);
+    }
+    stage.append(box);
+  });
+  stage.append(counter);update();
   button('이전',summary);
   button('Final AI Review · 마지막 확인',async()=>{
-   const n=split(textarea.value).length;
-   if(n<8||n>30){status('8–30개의 완성된 문장이 필요해요.',true);return}
-   if(busy)return;busy=true;
-   try{current.body=textarea.value.trim();await persist();reviewLoading();feedback=await review(current);choices={};saveChoices();summary()}
-   catch(e){secondDraft();status(e.message||'AI 리뷰 오류',true)}
-   finally{busy=false}
+    const body=allText(),n=split(body).length;
+    if(n<8||n>30){status('8–30개의 완성된 문장이 필요해요.',true);return}
+    if(busy)return;busy=true;
+    try{
+      current.body=body;await persist();reviewLoading();
+      const checked=await review(current);
+      feedback=checked;choices={};saveChoices();
+      try{localStorage.removeItem(cacheKey)}catch{}
+      summary();
+    }catch(e){secondDraft();status(e.message||'AI 리뷰 오류',true)}
+    finally{busy=false}
   },true);
  }
  function summary(){
