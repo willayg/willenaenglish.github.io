@@ -178,7 +178,7 @@ function renderPractice(){
   if(date!==lastDate){container.append(make('h3','wg-t-date-heading',date));lastDate=date}
   const responses=Array.isArray(e.responses)?e.responses:[];
   const total=Array.isArray(e.questions)?e.questions.length:0;
-  const completed=responses.filter(x=>x?.feedback?.grade==='correct').length;
+  const completed=responses.filter(x=>(x?.firstFeedback||x?.feedback)?.grade==='correct').length;
   const b=make('button','wg-t-item wg-t-submission-card'+(e.id===state.activeSessionId?' is-selected':''));b.type='button';
   b.append(make('strong','wg-t-item-name',e.korean_name||e.name||'Student'),make('strong','wg-t-card-title',(e.book_title||e.book_id||'Book')+' · '+(e.unit_id||'Unit')));
   b.append(make('span','wg-t-item-meta',[e.class_name,e.status,completed+' / '+total+' correct'].filter(Boolean).join(' · ')));
@@ -198,12 +198,12 @@ function detailPractice(entry){
  const questions=Array.isArray(entry.questions)?entry.questions:[],responses=Array.isArray(entry.responses)?entry.responses:[];
  if(!questions.length){host.append(make('p','wg-t-empty','No questions saved for this session.'));return}
  questions.forEach((q,i)=>{
-  const result=responses[i]||{},feedback=result.feedback||{};
+  const result=responses[i]||{},feedback=result.firstFeedback||result.feedback||{};
   const card=make('section','wg-t-version wg-t-practice-question');
   card.append(make('h3','wg-t-version-title','Sentence '+(i+1)+' · '+(feedback.grade||'Not checked')));
-  const target=q?.target||q?.sentence||q?.english||q?.answer||'';
+  const target=q?.model||q?.target||q?.sentence||q?.english||q?.answer||'';
   if(target)card.append(make('p','wg-t-prompt','Target: '+String(target)));
-  const answer=result.checked_text||result.answer||result.answer_text||'';
+  const answer=result.revised||result.initial||result.draft||result.checked_text||result.answer||result.answer_text||'';
   card.append(make('div','wg-t-paper',answer?String(answer):'No answer recorded'));
   if(feedback.corrected_sentence||feedback.better)card.append(make('p','wg-t-note','AI suggestion: '+(feedback.corrected_sentence||feedback.better)));
   host.append(card);
