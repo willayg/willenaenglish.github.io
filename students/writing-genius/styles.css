@@ -879,6 +879,6 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-topic-rubric-table .df-rubric-total{background:#f2fbfb;color:#2b6871;font-weight:900}
 
 /* Random Topic jackpot button */
-.writing-genius .df-random-topic{border:2px solid #24b5c5;background:#fff;color:#df4d95;box-shadow:0 2px 0 rgba(36,181,197,.12)}
+.writing-genius #wgDiaryFlow .df-random-topic{border:2px solid #24b5c5;background:#fff;color:#df4d95;box-shadow:0 2px 0 rgba(36,181,197,.12)}
 .writing-genius .df-random-topic:focus-visible{outline:3px solid #81dfe7;outline-offset:3px}
-.writing-genius .df-random-topic.is-spinning{background:#f1fcfd;color:#df4d95;border-color:#24b5c5}
+.writing-genius #wgDiaryFlow .df-random-topic.is-spinning{background:#f1fcfd;color:#df4d95;border-color:#24b5c5}
