@@ -610,15 +610,18 @@ async function mountCreate(root){
  }catch(e){status(root,e.message)}
 }
 function manageShell(){
- return wrapper('Manage Sentence Genius','Student completion is based on saved independent full-credit mastery, not merely attempts.')+
- '<div class="sgt-actions"><button type="button" id="sgtRefresh" class="control">↻ Refresh</button>'+
- '<select id="sgtHistory" class="control"><option value="current">Current</option><option value="history">All / history</option></select></div>'+
- '<div data-sg-status role="status"></div><div id="sgtAssignments" class="sgt-assignment-list"></div>';
+ return '<div class="ua-genius-manage"><h3>Assignments</h3><p>Sentence Genius homework progress</p>'+
+ '<div class="ua-genius-manage-toolbar"><select id="sgtClassFilter" class="control"><option value="all">All classes</option></select>'+
+ '<div class="ua-genius-current-history"><button type="button" data-sg-period="current">Current</button><button type="button" data-sg-period="history">History</button></div>'+
+ '<button type="button" id="sgtRefresh" class="control">Refresh</button></div>'+
+ '<div data-sg-status role="status"></div><div id="sgtAssignments" class="sgt-assignment-list ua-genius-manage-list"></div></div>';
 }
 async function mountManage(root){
  $('#sgtRefresh',root).onclick=()=>void fetchManage(root);
- $('#sgtHistory',root).value=state.assignmentFilter;
- $('#sgtHistory',root).onchange=()=>{state.assignmentFilter=$('#sgtHistory',root).value;void fetchManage(root)};
+ $('#sgtClassFilter',root).onchange=()=>renderManage(root);
+ root.querySelectorAll('[data-sg-period]').forEach(btn=>btn.onclick=()=>{
+  state.assignmentFilter=btn.dataset.sgPeriod;void fetchManage(root);
+ });
  await fetchManage(root);
 }
 async function fetchManage(root){
@@ -626,14 +629,22 @@ async function fetchManage(root){
  try{
   const data=await rpc('sg_homework_list_v1',{p_history:state.assignmentFilter==='history'});
   if(!root.isConnected||state.managerMode!=='manage')return;
-  state.assignments=data.assignments||[];renderManage(root);status(root,state.assignments.length+' assignments');
+  state.assignments=data.assignments||[];
+  const filter=$('#sgtClassFilter',root),previous=filter.value;
+  const classes=[...new Set(state.assignments.map(a=>a.class_name).filter(Boolean))].sort();
+  filter.innerHTML='<option value="all">All classes</option>'+classes.map(name=>'<option value="'+escapeHtml(name)+'">'+escapeHtml(name)+'</option>').join('');
+  if(classes.includes(previous))filter.value=previous;
+  root.querySelectorAll('[data-sg-period]').forEach(btn=>btn.classList.toggle('active',btn.dataset.sgPeriod===state.assignmentFilter));
+  renderManage(root);status(root,state.assignments.length+' assignments');
  }catch(e){status(root,e.message)}
 }
 function renderManage(root){
  const holder=$('#sgtAssignments',root);if(!holder)return;
- holder.innerHTML=state.assignments.length?state.assignments.map(a=>{
+ const chosen=$('#sgtClassFilter',root)?.value||'all';
+ const visible=state.assignments.filter(a=>chosen==='all'||a.class_name===chosen);
+ holder.innerHTML=visible.length?visible.map(a=>{
   const count=(a.target_sentence_ids||[]).length,modes=(a.required_modes||[]).map(m=>types[m]||m).join(' · ');
-  return '<article class="sgt-assignment-card"><div><strong>'+escapeHtml(a.title)+'</strong><small>'+escapeHtml(a.class_name)+' · '+count+' sentences · '+escapeHtml(modes)+' · Due '+escapeHtml(String(a.due_at).slice(0,10))+'</small></div>'+
+  return '<article class="sgt-assignment-card ua-genius-manage-card"><div class="ua-genius-manage-card-head"><strong>'+escapeHtml(a.title)+'</strong><small>'+escapeHtml(a.class_name)+' · '+count+' sentences · '+escapeHtml(modes)+' · Due '+escapeHtml(String(a.due_at).slice(0,10))+'</small></div>'+
     '<div class="sgt-actions"><button class="control" type="button" data-sg-progress="'+escapeHtml(a.id)+'">Student progress</button>'+
     '<button class="control" type="button" data-sg-toggle="'+escapeHtml(a.id)+'" data-active="'+a.active+'">'+(a.active?'Cancel':'Reactivate')+'</button></div><div class="sgt-progress" id="sgtProgress-'+escapeHtml(a.id)+'" hidden></div></article>';
  }).join(''):'<div class="sgt-result">No Sentence Genius assignments found.</div>';
