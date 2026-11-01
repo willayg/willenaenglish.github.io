@@ -680,6 +680,48 @@ export default {
         return jsonResponse({ success: true, assignments: data || [] }, 200, origin);
       }
       
+      // ===== CREATIVE HOMEWORK PROGRESS (TEACHERS) =====
+      if (action === 'creative_assignment_progress') {
+        const teacherId = await getUserIdFromRequest(request, env);
+        if (!teacherId) return jsonResponse({success:false,error:'Not signed in'},401,origin);
+        const teacher = await fetchProfile(env, teacherId);
+        if (!teacher || !['teacher','admin'].includes(String(teacher.role||'').toLowerCase()) || teacher.approved===false) {
+          return jsonResponse({success:false,error:'Teacher access required'},403,origin);
+        }
+        const assignmentId=url.searchParams.get('assignment_id');
+        if(!assignmentId)return jsonResponse({success:false,error:'Missing assignment_id'},400,origin);
+        const found=await supabaseSelect(env,'homework_assignments','id=eq.'+encodeURIComponent(assignmentId)+'&select=*');
+        const assignment=found?.[0];
+        if(!assignment)return jsonResponse({success:false,error:'Assignment not found'},404,origin);
+        const source=String(assignment.list_meta?.source_type||'');
+        const kind=String(assignment.list_meta?.kind||'');
+        if(!['writing_genius','puzzles'].includes(source))return jsonResponse({success:false,error:'Unsupported assignment type'},400,origin);
+        const students=await supabaseSelect(env,'profiles','class=eq.'+encodeURIComponent(assignment.class)+'&role=eq.student&select=id,name,korean_name');
+        const targets=getAssignmentTargetStudentIds(assignment);
+        const eligible=(students||[]).filter(student=>!targets.length||targets.includes(student.id)).slice(0,150);
+        const since=assignment.created_at||assignment.start_at;
+        const rows=await Promise.all(eligible.map(async student=>{
+          try{
+            let evidence=[];
+            if(source==='writing_genius'){
+              const q='student_id=eq.'+encodeURIComponent(student.id)
+                +'&kind=eq.'+encodeURIComponent(kind)+'&status=eq.submitted'
+                +'&submitted_at=gte.'+encodeURIComponent(since)
+                +(kind==='topic'?'&prompt_key=eq.'+encodeURIComponent('homework-'+assignment.id):'')
+                +'&select=id,submitted_at&limit=1';
+              evidence=await supabaseSelect(env,'writing_genius_entries',q);
+            }else{
+              const q='user_id=eq.'+encodeURIComponent(student.id)
+                +'&mode=eq.'+encodeURIComponent(kind)+'&ended_at=gte.'+encodeURIComponent(since)
+                +'&summary->>completed=eq.true&select=id,ended_at&limit=1';
+              evidence=await supabaseSelect(env,'progress_sessions',q);
+            }
+            return {id:student.id,name:student.korean_name||student.name||'Student',completed:evidence.length>0};
+          }catch(e){return {id:student.id,name:student.korean_name||student.name||'Student',completed:false,error:true}}
+        }));
+        return jsonResponse({success:true,assignment,students:rows,total:rows.length,completed:rows.filter(r=>r.completed).length},200,origin);
+      }
+
       // ===== END ASSIGNMENT =====
       if (action === 'end_assignment') {
         const authUserId = await getUserIdFromRequest(request, env);
