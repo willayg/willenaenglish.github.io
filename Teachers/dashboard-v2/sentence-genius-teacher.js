@@ -647,10 +647,11 @@ function renderManage(root){
   const shared=window.WillenaGeniusHomeworkCard;
   const task=String(a.title||'Sentence homework').replace(/^.+?\s*[·|—–-]\s*(?=Unit\s*\d)/i,'');
   return shared.card({id:a.id,className:a.class_name,task,dueAt:a.due_at,
-    teacher:a.teacher_name||a.created_by_name||'',progressLabel:'Student progress',
+    teacher:a.teacher_name||a.created_by_name||'',createdBy:a.created_by,progressLabel:'Student progress',
     body:'<div class="sgt-actions"><button class="control ghc-load-action" type="button" data-sg-progress="'+escapeHtml(a.id)+'" hidden>Load student results</button></div>'+
     '<div class="sgt-progress" id="sgtProgress-'+escapeHtml(a.id)+'" hidden></div>'});
  }).join(''):'<div class="sgt-result">No Sentence Genius assignments found.</div>';
+ void window.WillenaGeniusHomeworkCard?.hydrateTeachers(holder);
  holder.querySelectorAll('[data-sg-toggle]').forEach(b=>b.onclick=async()=>{
   b.disabled=true;try{
    await rpc('sg_homework_set_active_v1',{p_id:b.dataset.sgToggle,p_active:b.dataset.active!=='true'});
