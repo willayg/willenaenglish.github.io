@@ -1,0 +1,39 @@
+/* Sentence Genius is the reference layout; leave 내신 untouched. */
+#universalAssignments .ua-genius-assign,
+#universalAssignments #uaCatalogForm,
+#universalAssignments #gfHwForm,
+#universalAssignments #sgtAssignForm{
+ display:flex;flex-direction:column;gap:22px;width:100%;max-width:none;margin:0;
+ padding:24px 0;background:transparent;box-sizing:border-box;
+ font-family:inherit;color:#313747;font-size:16px;line-height:1.5;
+}
+#universalAssignments .ua-genius-assign h3{font-size:23px;font-weight:800;margin:0 0 8px}
+#universalAssignments .ua-genius-assign>label,
+#universalAssignments .ua-genius-assign #uaSentenceBookFields label,
+#universalAssignments .ua-catalog-fields label,
+#universalAssignments .gf-hw-form-grid label,
+#universalAssignments .sgt-fields label{
+ display:flex;flex-direction:column;align-items:stretch;gap:9px;width:100%;
+ font-size:15px;font-weight:750;color:#617681;
+}
+#universalAssignments .ua-genius-assign .control,
+#universalAssignments .ua-catalog-fields .control,
+#universalAssignments .gf-hw-form-grid .control,
+#universalAssignments .sgt-fields .control{
+ display:block;width:100%;min-height:57px;box-sizing:border-box;
+ padding:13px 20px;border:1px solid #d9e3e6;border-radius:17px;
+ background:#fff;color:#343747;font:inherit;font-size:16px;font-weight:600;
+}
+#universalAssignments .ua-genius-assign textarea.control{min-height:115px;resize:vertical}
+#universalAssignments .ua-genius-assign #uaSentenceBookFields{display:flex;flex-direction:column;gap:19px}
+#universalAssignments .ua-genius-assign #uaSentenceBookFields[hidden]{display:none}
+#universalAssignments .ua-catalog-fields,#universalAssignments .gf-hw-form-grid,#universalAssignments .sgt-fields{display:flex;flex-direction:column;gap:20px}
+#universalAssignments .ua-genius-assign button.ua-primary,
+#universalAssignments #uaCatalogForm button.ua-primary,
+#universalAssignments #gfHwForm button.ua-primary,
+#universalAssignments #sgtAssignForm button.ua-primary{
+ width:100%;min-height:68px;border:3px solid #4db3bf;border-radius:18px;
+ background:#e9f9fa;color:#277d86;font-size:20px;font-weight:800;
+ text-align:left;padding:14px 22px;
+}
+#universalAssignments .ua-genius-assign .ua-note{font-weight:450;font-size:13px}
