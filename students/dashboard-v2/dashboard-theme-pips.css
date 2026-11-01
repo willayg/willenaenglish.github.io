@@ -9,3 +9,7 @@ html,body,.page,.header{background:var(--dash-page)!important;color:var(--ink)}
 
 /* Footer theme selector for live dashboard and profile (not header floating). */
 .page > #dashboardThemeDock{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;width:max-content;margin:32px auto 20px!important;z-index:1}
+
+/* Keep theme pips visible at bottom of screen instead of under the header. */
+.page > #dashboardThemeDock{position:fixed!important;left:50%!important;bottom:calc(14px + env(safe-area-inset-bottom,0px))!important;transform:translateX(-50%)!important;margin:0!important;z-index:65!important}
+.page{padding-bottom:72px!important}
