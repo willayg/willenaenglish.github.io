@@ -94,7 +94,7 @@ try{
 </section>
 <section class="view" id="view-class-leaders"><div class="class-leaders-tabs"><button class="class-leaders-tab" id="leaderTabEverybody2" type="button">Leaderboard</button><button class="class-leaders-tab active" id="leaderTabClasses2" type="button">Leaders By Class</button></div>
   <div class="page-head"><div><h1>Leaders By Class</h1><div class="panel-sub">One class winner, plus any other overall top-10 students.</div></div>
-    <div class="filters"><select class="control" id="classLeaderMonth" aria-label="Snapshot month"><option value="2026-10">October 2026</option><option value="2026-09">September 2026</option></select><button class="control" id="classLeaderRefresh" type="button">Refresh</button></div></div>
+    <div class="filters"><select class="control" id="classLeaderMonth" aria-label="Snapshot month"><option value="current">Current Month (Live)</option><option value="2026-10">October 2026</option><option value="2026-09">September 2026</option></select><button class="control" id="classLeaderRefresh" type="button">Refresh</button></div></div>
   <div class="panel"><div class="panel-head"><div><div class="panel-title">Monthly Super Points</div><div class="panel-sub">Historical months are frozen snapshots.</div></div><span class="count-pill" id="classLeaderCount">—</span></div>
   <div class="student-list" id="classLeaderRows"><div class="empty">Open Leaders By Class to load the winners.</div></div></div>
 </section>
@@ -559,10 +559,12 @@ async function loadTeacherLeaderboard(force=false){
 }
 const CLASS_LEADER_ORDER=['Brown','Stanford','Manchester','New York','Hawaii','Boston','Sydney','Berkeley','Chicago','Cambridge','Yale','Princeton','Oxford','MIT','Pre-Harvard'];
 async function loadClassLeaders(){
- const root=$('#classLeaderRows'),month=$('#classLeaderMonth').value;
+ const root=$('#classLeaderRows'),chosen=$('#classLeaderMonth').value,month=chosen==='current'?new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'}).slice(0,7):chosen;
  root.innerHTML='<div class="empty">Loading monthly snapshot…</div>';
  try{
-  const data=await api(endpoint('teacher_class_leaders',{month}));
+  const currentKey=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'}).slice(0,7);
+  const isCurrent=month===currentKey;
+  const data=await api(endpoint('teacher_class_leaders',{month, ...(isCurrent?{live:'1'}:{})}));
   const rows=Array.isArray(data.rows)?data.rows:[];
   const byClass=new Map();
   for(const row of rows){const key=String(row.class_name||'').toLowerCase();if(!byClass.has(key))byClass.set(key,[]);byClass.get(key).push(row)}
