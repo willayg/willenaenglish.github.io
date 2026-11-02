@@ -17,10 +17,10 @@ label{display:flex;gap:10px;align-items:center;padding:12px 0}input{width:19px;h
 .notice{border-left:4px solid #ee7e93;padding:10px 14px;background:#fff5f7}
 @media(max-width:520px){.grid{grid-template-columns:1fr}main{margin:20px auto}}
 </style></head><body><main>
-<header><div><div class="muted">WILLENA · ADMIN UTILITIES</div><h1>Load Tester</h1></div><span class="pill">Read-only v1</span></header>
-<p class="muted">Measure concurrent production Test Prep review calculations without changing student scores. Only authenticated administrators can run tests.</p>
+<header><div><div class="muted">WILLENA · ADMIN UTILITIES</div><h1>Load Tester</h1></div><span class="pill">Mixed reads v2</span></header>
+<p class="muted">Measure mixed Test Prep review, overview and teacher dashboard requests without changing scores. Only authenticated administrators can run tests.</p>
 <section class="card"><strong>Access</strong><p id="status" role="status">Checking administrator session…</p>
-<div class="notice"><b>Production database.</b> Use outside class hours. This test submits genuine read-only review requests for five Test-class plans; 15, 30 and 50 are concurrent requests, not distinct student accounts.</div>
+<div class="notice"><b>Production database.</b> Use outside class hours. This sends real read-only API requests. Counts represent concurrent requests, not distinct students. Score-writing mode remains locked.</div>
 <label><input type="checkbox" id="confirm" disabled> I understand this sends concurrent requests to production.</label>
 <div class="grid"><button data-count="15" disabled>Run 15</button><button data-count="30" disabled>Run 30</button><button data-count="50" disabled>Run 50</button></div>
 <p class="muted">Progression is gated: 30 unlocks only after 15 succeeds; 50 unlocks only after 30 succeeds. A stage fails if any request fails or p95 exceeds 5 seconds.</p></section>
@@ -28,7 +28,7 @@ label{display:flex;gap:10px;align-items:center;padding:12px 0}input{width:19px;h
 <section class="card"><strong>Run history</strong><pre id="log">Awaiting admin verification…</pre></section>
 </main>
 <script type="module">
-const ENDPOINT="https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/willena-admin-load-test-v1";
+const ENDPOINT="https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/willena-admin-mixed-load-v2";
 const $=id=>document.getElementById(id),buttons=[...document.querySelectorAll('button[data-count]')];
 let ready=false,busy=false,level=15;
 const log=s=>{$('log').textContent=new Date().toLocaleTimeString()+' · '+s+'\n'+$('log').textContent};
