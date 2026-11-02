@@ -35,3 +35,11 @@
 #grammarRound .willena-question-renderer .choice{font-size:clamp(15px,2vw,18px)!important;line-height:1.4!important;min-height:54px}
 #grammarRound .willena-question-renderer .context{font-size:15px!important}
 #grammarRound .willena-question-renderer .prompt .u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+
+/* Only the explainer dialog is app-specific. Unit strip and activity cards inherit Word Genius unchanged. */
+.grammar-guide-dialog{border:2px solid var(--cyan,#66d6df);border-radius:24px;width:min(560px,calc(100vw - 32px));max-height:80dvh;padding:0;color:var(--ink,#173f46);background:var(--vocab-card,#fff)}
+.grammar-guide-dialog::backdrop{background:rgba(14,40,47,.55)}
+.grammar-guide-inner{padding:24px;line-height:1.75}
+.grammar-guide-inner h2{font-size:22px;margin:10px 0 15px}
+#grammarGuideContent{white-space:pre-line;font-size:16px}
+#grammarGuideClose{float:right}
