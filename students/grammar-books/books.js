@@ -4,7 +4,7 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const modes=[{id:'choose',label:'Choose',ko:'빈칸 선택',icon:'◉'},{id:'check',label:'Sentence Check',ko:'문장 판단',icon:'✓'},{id:'hunt',label:'Error Hunt',ko:'오류 찾기',icon:'⌕'}];
-let books=[],catalog=null,activeBook=null,activeMode=null,position=0,selected=-1,checked=false,correct=0;
+let books=[],catalog=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null;
 const questionBank=()=>catalog?.modes||{};
 function updateUrl(bookId=''){const p=new URLSearchParams(location.search);bookId?p.set('book',bookId):p.delete('book');const u=location.pathname+(p.size?'?'+p.toString():'');history.pushState({},'',u)}
 function bookCard(book){return '<button class="vocab-front-book-card" type="button" data-grammar-book="'+esc(book.id)+'"><span class="vocab-front-card-main"><span class="vocab-front-card-copy"><strong>'+esc(book.title)+'</strong></span></span><span class="vocab-front-arrow" aria-hidden="true">›</span></button>'}
@@ -47,45 +47,40 @@ function showBook(book,push=true){
  window.scrollTo(0,0);
 }
 function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;if(push)updateUrl();window.scrollTo(0,0)}
+function toSharedQuestion(q){
+ return {id:q.id,form:'choice',prompt:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:activeMode==='hunt'?{underlined_spans:q.options}: {},metadata:{sourceKey:q.id,practiceType:'grammar_books'}};
+}
 function renderQuestion(){
  const questions=questionBank()[activeMode]||[],q=questions[position];
  if(!q)return finishRound();
  const mode=modes.find(m=>m.id===activeMode);
  $('grammarRoundTitle').textContent=mode.label+' · '+mode.ko;
  $('grammarRoundCounter').textContent=(position+1)+' / '+questions.length;
- $('grammarRoundProgress').style.width=((position)/questions.length*100)+'%';
- $('grammarQuestionPrompt').textContent=q.prompt;
- $('grammarAnswerChoices').classList.toggle('grammar-hunt-choices',activeMode==='hunt');
- $('grammarAnswerChoices').innerHTML=q.options.map((option,i)=>'<button class="grammar-answer-choice" type="button" data-option="'+i+'"><span class="grammar-answer-letter">'+String.fromCharCode(65+i)+'</span><span class="grammar-choice-text">'+esc(option)+'</span></button>').join('');
- $('grammarFeedback').hidden=true;$('grammarFeedback').textContent='';
+ $('grammarRoundProgress').style.width=(position/questions.length*100)+'%';
+ const host=$('grammarSharedQuestionHost');
+ renderer=new grammarEngine.QuestionRenderer(host).render(toSharedQuestion(q),{onChange:(_,has)=>{if(!checked)$('grammarCheck').disabled=!has}});
  $('grammarNext').hidden=true;$('grammarCheck').hidden=false;$('grammarCheck').disabled=true;
- selected=-1;checked=false;
+ checked=false;
 }
 function startMode(mode){
  if(!modes.some(x=>x.id===mode)||!activeBook)return;
  const panel=$('grammarModeCards');panel.setAttribute('aria-busy','true');
  loadQuestions().then(()=>{
-  activeMode=mode;position=0;correct=0;selected=-1;checked=false;
+  activeMode=mode;position=0;correct=0;checked=false;
   $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;
   renderQuestion();window.scrollTo(0,0);
  }).catch(err=>{console.error(err);$('grammarNotReady').textContent='문제를 불러오지 못했어요. 다시 시도해 주세요.';$('grammarNotReady').hidden=false}).finally(()=>panel.removeAttribute('aria-busy'));
 }
-function chooseOption(i){
- if(checked)return;selected=i;
- $('grammarAnswerChoices').querySelectorAll('[data-option]').forEach(el=>{const on=Number(el.dataset.option)===i;el.classList.toggle('selected',on);el.setAttribute('aria-pressed',String(on))});
- $('grammarCheck').disabled=false;
-}
-function checkAnswer(){
- if(checked||selected<0)return;
- checked=true;const q=questionBank()[activeMode][position],isCorrect=selected===q.answerIndex;
- if(isCorrect)correct++;
- $('grammarAnswerChoices').querySelectorAll('[data-option]').forEach(el=>{
-  const i=Number(el.dataset.option);el.disabled=true;
-  el.classList.toggle('correct',i===q.answerIndex);
-  el.classList.toggle('incorrect',i===selected&&!isCorrect);
- });
- const fb=$('grammarFeedback');fb.hidden=false;fb.className='grammar-feedback '+(isCorrect?'correct':'incorrect');fb.textContent=(isCorrect?'정답! ':'다시 확인해 봐요. ')+q.explanation;
- $('grammarCheck').hidden=true;$('grammarNext').hidden=false;
+async function checkAnswer(){
+ if(checked||!renderer)return;
+ const q=questionBank()[activeMode][position],shared=toSharedQuestion(q),response=renderer.getResponse();
+ if(!Array.isArray(response)||!response.length)return;
+ const btn=$('grammarCheck');btn.disabled=true;renderer.setDisabled(true);
+ let result;
+ try{result=await grammarEngine.gradeQuestion(shared,response)}catch(e){console.error('[grammar books] grading failed',e);renderer.setDisabled(false);btn.disabled=false;return}
+ checked=true;if(result.correct)correct++;
+ renderer.showFeedback(result);
+ btn.hidden=true;$('grammarNext').hidden=false;
  $('grammarNext').textContent=position===questionBank()[activeMode].length-1?'결과 보기':'다음 문제';
 }
 function finishRound(){
@@ -101,7 +96,6 @@ function goToModes(){
 }
 list?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-book]');if(el)showBook(books.find(b=>String(b.id)===el.dataset.grammarBook))});
 $('grammarModeCards')?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-mode]');if(el)startMode(el.dataset.grammarMode)});
-$('grammarAnswerChoices')?.addEventListener('click',e=>{const el=e.target.closest('[data-option]');if(el)chooseOption(Number(el.dataset.option))});
 $('grammarCheck')?.addEventListener('click',checkAnswer);
 $('grammarNext')?.addEventListener('click',()=>{position++;renderQuestion()});
 $('grammarRetry')?.addEventListener('click',()=>{if(activeMode)startMode(activeMode)});
