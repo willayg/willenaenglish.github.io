@@ -405,6 +405,22 @@ export default {
     const section = (url.searchParams.get('section') || 'kpi').toLowerCase();
     
     try {
+      // Teacher-only immutable monthly class-leader snapshots.
+      if (section === 'teacher_class_leaders') {
+        const month = url.searchParams.get('month') || '2026-10';
+        if (!/^20\\d{2}-(0[1-9]|1[0-2])$/.test(month) || month < '2026-09') {
+          return jsonResponse({ error: 'Invalid month' }, 400, origin);
+        }
+        const profile = await supabaseSelect(env,'profiles',
+          'id=eq.'+encodeURIComponent(userId)+'&select=role,approved&limit=1');
+        const who = profile[0];
+        if (!who || !['teacher','admin'].includes(String(who.role||'').toLowerCase())) {
+          return jsonResponse({error:'Teacher access required'},403,origin);
+        }
+        const rows = await supabaseSelect(env,'teacher_class_leader_snapshots',
+          'month_start=eq.'+month+'-01&selected=eq.true&select=class_name,student_name,korean_name,super_points,class_rank,global_rank&order=class_rank.asc&limit=100');
+        return jsonResponse({success:true,month,rows},200,origin);
+      }
       // ===== KPI (basic stats for current user) =====
       if (section === 'kpi') {
         // Get user's recent sessions
