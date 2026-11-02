@@ -566,7 +566,7 @@ async function loadClassLeaders(){
   const isCurrent=month===currentKey;
   let data;
   try {
-    data=await api(endpoint('teacher_class_leaders',{month, ...(isCurrent?{live:'1'}:{})}));
+    data=await api(`${FN('test_prep_teacher_insights')}?${new URLSearchParams({action:'class_leaders',month})}`);
   } catch(primaryError) {
     // The teacher-insights gateway does not yet recognize this newer section.
     // For the LIVE month, reuse the same authenticated working endpoint as the
