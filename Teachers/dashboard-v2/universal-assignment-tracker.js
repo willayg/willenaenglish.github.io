@@ -287,7 +287,12 @@ function invalidateOverviewCache(){
 }
 function overviewGet(path,options={}){
  const method=String(options.method||'GET').toUpperCase();
- const key=[access().split('.')[1]||'',method,path,options.body||''].join('|');
+ // Only cache reads. Never cache a new write endpoint that may be added later.
+ const isRead=method==='GET'||(method==='POST'&&/^rpc\/(teacher_homework_class_progress_v1|teacher_word_homework_class_progress_v1|teacher_creative_writing_progress_v1|teacher_writing_sentence_homework_progress_v1|teacher_puzzle_homework_progress_v1|test_prep_assignment_results_v1)$/.test(path));
+ if(!isRead)return get(path,options);
+ const token=access();
+ if(!token)return get(path,options);
+ const key=[token.split('.')[1]||token,method,path,options.body||''].join('|');
  const existing=overviewReadCache.get(key);
  if(existing&&existing.expires>Date.now())return existing.promise;
  const entry={expires:Date.now()+OVERVIEW_CACHE_MS,promise:get(path,options)};
