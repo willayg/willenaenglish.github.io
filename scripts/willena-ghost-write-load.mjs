@@ -4,7 +4,7 @@ import {writeFileSync} from "node:fs";
 const BASE=(process.env.SUPABASE_URL||"").replace(/\/$/,"");
 const KEY=process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY||"";
 const LEVEL=Number(process.env.TEST_LEVEL||15),ROUNDS=Number(process.env.TEST_ROUNDS||2);
-if(!BASE.startsWith("https://")||!KEY||![15,30,50].includes(LEVEL)||!Number.isInteger(ROUNDS)||ROUNDS<1||ROUNDS>10)throw Error("Missing credentials or invalid limits");
+if(!BASE.startsWith("https://")||!KEY||![1,15,30,50].includes(LEVEL)||!Number.isInteger(ROUNDS)||ROUNDS<1||ROUNDS>10)throw Error("Missing credentials or invalid limits");
 const headers={apikey:KEY,authorization:"Bearer "+KEY,"Content-Type":"application/json"};
 const uuid=()=>crypto.randomUUID();
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -54,7 +54,7 @@ for(let round=0;round<ROUNDS&&!halted;round++){
  }));
  report.results.push(...stage.map(x=>({...x,round:round+1})));
  const done=stage.filter(x=>x.ok),lat=done.map(x=>x.ms),p95=percentile(lat,.95);
- console.log("Round",round+1,":",done.length,"/",stage.length,"saved, p95",p95,"ms");
+ console.log("Round",round+1,":",done.length,"/",stage.length,"saved, p95",p95,"ms");\n for(const problem of stage.filter(x=>!x.ok).slice(0,5))console.error("FAILED",problem.label,problem.skill,problem.error||problem.reason||"unknown");
  if(done.length!==stage.length||p95>5000){console.log("HALT: failure or p95 above 5000ms");halted=true}
  if(!halted&&round+1<ROUNDS)await sleep(2500);
 }
