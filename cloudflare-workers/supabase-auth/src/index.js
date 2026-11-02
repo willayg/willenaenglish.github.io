@@ -505,6 +505,26 @@ export default {
         return jsonResponse({ success: true }, 200, origin);
       }
       
+      // Install an already validated passwordless student session as same-site
+      // HttpOnly cookies. Never accept an unverified bearer credential.
+      if (action === 'adopt_student_session' && request.method === 'POST') {
+        const body = await request.json().catch(() => ({}));
+        const access = String(body.access_token || '');
+        const refresh = String(body.refresh_token || '');
+        if (!access || !refresh) return jsonResponse({success:false,error:'Missing session'},400,origin);
+        const user = await verifyToken(env,access);
+        if (!user?.id) return jsonResponse({success:false,error:'Invalid session'},401,origin);
+        const profile = await fetch(`${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=id,role,approved`, {
+          headers:{apikey:env.SUPABASE_SERVICE_KEY,Authorization:`Bearer ${env.SUPABASE_SERVICE_KEY}`}
+        }).then(r=>r.ok?r.json():[]).catch(()=>[]);
+        if(profile?.[0]?.role!=='student' || !profile[0].approved)
+          return jsonResponse({success:false,error:'Student access required'},403,origin);
+        return jsonResponse({success:true,user_id:user.id},200,origin,[
+          makeCookie('sb_access',access,cookieOpts),
+          makeCookie('sb_refresh',refresh,cookieOpts),
+        ]);
+      }
+
       // ===== LOGOUT =====
       if (action === 'logout') {
         const clearOpts = { ...cookieOpts, maxAge: 0 };
