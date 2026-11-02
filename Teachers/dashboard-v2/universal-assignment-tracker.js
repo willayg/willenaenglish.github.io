@@ -66,7 +66,7 @@ async function get(path,options={}){
  }
  const body=await response.json().catch(()=>null);
  if(!response.ok)throw Error(body?.message||body?.error||'Request failed '+response.status);
- if(['PATCH','DELETE','PUT'].includes(String(options.method||'GET').toUpperCase()) || (String(options.method||'GET').toUpperCase()==='POST'&&!path.startsWith('rpc/')))invalidateOverviewCache();
+ if(['PATCH','DELETE','PUT'].includes(String(options.method||'GET').toUpperCase()) || (String(options.method||'GET').toUpperCase()==='POST'&&!path.startsWith('rpc/')))invalidateOverviewCache(true);
  return body;
 }
 async function teacherIdentity(){
@@ -283,10 +283,17 @@ const OVERVIEW_CACHE_MS=60000;
 const OVERVIEW_CACHE_MAX=32;
 const overviewPerf={loads:0,cacheHits:0,cacheMisses:0,lastLoadMs:null,lastCompletedAt:null};
 let overviewGeneration=0;
-function invalidateOverviewCache(){
+const ASSIGNMENT_INVALIDATION_KEY='willena:assignments:changed:v1';
+function invalidateOverviewCache(broadcast=false){
  overviewReadCache.clear();
  overviewGeneration++;
+ if(broadcast){
+  try{localStorage.setItem(ASSIGNMENT_INVALIDATION_KEY,String(Date.now()));}catch(_){}
+ }
 }
+window.addEventListener('storage',event=>{
+ if(event.key===ASSIGNMENT_INVALIDATION_KEY)invalidateOverviewCache();
+});
 function overviewCachePrune(){
  const now=Date.now();
  for(const [key,item] of overviewReadCache)if(item.expires<=now)overviewReadCache.delete(key);
@@ -311,8 +318,8 @@ function overviewGet(path,options={}){
  entry.promise.catch(()=>{if(overviewReadCache.get(key)===entry)overviewReadCache.delete(key)});
  return entry.promise;
 }
-window.addEventListener('ua:assignments-changed',invalidateOverviewCache);
-window.addEventListener('willena:assignment-created',invalidateOverviewCache);
+window.addEventListener('ua:assignments-changed',()=>invalidateOverviewCache(true));
+window.addEventListener('willena:assignment-created',()=>invalidateOverviewCache(true));
 async function loadOverview(scopeName='my',force=false){
  const host=document.querySelector('#uaOverview');if(!host)return;
  const loadStarted=performance.now();
