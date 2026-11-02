@@ -67,7 +67,7 @@ try{
   }
 }catch{}
 </script>
-<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="leaderboard"><span class="nav-icon">★</span><span>Leaderboard</span></button><button class="nav" data-view="assignments"><span class="nav-icon">☑</span><span>Assignments</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Word Genius</span></button><button class="nav" data-view="sentence-genius"><span class="nav-icon">S</span><span>Sentence Genius</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><button class="nav" data-view="achievement-tests"><span class="nav-icon">▤</span><span>Achievement Tests</span></button><button class="nav" data-view="english-arcade"><span class="nav-icon">EA</span><span>English Arcade</span></button><div class="rail-spacer"></div></aside>
+<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="leaderboard"><span class="nav-icon">★</span><span>Leaderboard</span></button><button class="nav" data-view="class-leaders"><span class="nav-icon">★</span><span>Leaders By Class</span></button><button class="nav" data-view="assignments"><span class="nav-icon">☑</span><span>Assignments</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Word Genius</span></button><button class="nav" data-view="sentence-genius"><span class="nav-icon">S</span><span>Sentence Genius</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><button class="nav" data-view="achievement-tests"><span class="nav-icon">▤</span><span>Achievement Tests</span></button><button class="nav" data-view="english-arcade"><span class="nav-icon">EA</span><span>English Arcade</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace"><section class="view" id="view-sentence-genius"><div class="page-head"><div><h1>Sentence Genius</h1><div class="panel-sub">Student statistics, textbook mastery, and grading tools</div></div></div><div class="panel sgt-dashboard" id="sgTeacherWorkspace"></div></section>
 <section class="view" id="view-achievement-tests"><div class="page-head"><div><h1 style="display:flex;align-items:center;gap:12px">Achievement Tests <a href="/Teachers/tools/assessment_grid/" target="_blank" rel="noopener noreferrer" aria-label="Open Achievement Tests in full page" title="Open full page" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #d4e0e6;border-radius:7px;background:#fff;color:#486b7b;font-size:17px;font-weight:500;text-decoration:none;flex-shrink:0">↗</a></h1><div class="panel-sub">Assessment scores and report cards</div></div></div><iframe id="achievementTestsFrame" title="Achievement Tests" loading="lazy" style="width:100%;height:calc(100vh - 190px);min-height:720px;border:1px solid #d9e5ed;border-radius:12px;background:white"></iframe></section>
 <section class="view active" id="view-students">
@@ -92,7 +92,17 @@ try{
     <div class="student-list" id="teacherLeaderboard"><div class="empty">Open Leaderboard to load rankings.</div></div>
   </div>
 </section>
-<section class="view" id="view-vocab">
+<section class="view" id="view-class-leaders">
+  <div class="page-head"><div><h1>Leaders By Class</h1><div class="panel-sub">One class winner, plus any other overall top-10 students.</div></div>
+    <div class="filters"><select class="control" id="classLeaderMonth" aria-label="Snapshot month"><option value="2026-10">October 2026</option><option value="2026-09">September 2026</option></select><button class="control" id="classLeaderRefresh" type="button">Refresh</button></div></div>
+  <div class="panel"><div class="panel-head"><div><div class="panel-title">Monthly Super Points</div><div class="panel-sub">Historical months are frozen snapshots.</div></div><span class="count-pill" id="classLeaderCount">—</span></div>
+  <div class="student-list" id="classLeaderRows"><div class="empty">Open Leaders By Class to load the winners.</div></div></div>
+</section>
+<style>
+.class-leaders-tabs{display:flex;gap:8px;margin:12px 0 16px;flex-wrap:wrap}.class-leaders-tab{border:1px solid #d3e6e8;border-radius:13px;background:#fff;padding:9px 14px;font:600 13px Poppins,sans-serif;cursor:pointer;color:#354c57}.class-leaders-tab.active{border-color:#36bbc8;color:#138996;background:#eafafb}
+.class-leader-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(150px,1.5fr) 105px 90px;gap:12px;align-items:center;border-bottom:1px solid #edf0f4;padding:13px 18px}.class-leader-row:last-child{border:0}.class-leader-row .cl-name{font-weight:700;color:#273b51}.class-leader-row .cl-kr{font-size:12px;color:#74818a;margin-left:6px}.class-leader-row .cl-score{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}.class-leader-row .cl-rank{text-align:right;color:#667788;font-size:12px}.class-leader-row .cl-top{color:#ba398c;font-size:11px;font-weight:700}.class-leader-row .cl-extra{padding-left:10px}
+@media(max-width:650px){.class-leader-row{grid-template-columns:90px minmax(115px,1fr) 70px;gap:7px;padding:12px 8px;font-size:12px}.class-leader-row .cl-rank{grid-column:2 / 4;text-align:left}.class-leader-row .cl-kr{display:block;margin:0}}
+</style><section class="view" id="view-vocab">
   <div class="page-head">
     <div><h1>Word Genius</h1><div class="panel-sub">Word Genius progress and homework</div></div>
   </div>
@@ -547,6 +557,25 @@ async function loadTeacherLeaderboard(force=false){
     $('#teacherLeaderboard').innerHTML=`<div class="empty">${esc(e.message)}</div>`;
   }
 }
+const CLASS_LEADER_ORDER=['Brown','Stanford','Manchester','New York','Hawaii','Boston','Sydney','Berkeley','Chicago','Cambridge','Yale','Princeton','Oxford','MIT','Pre-Harvard'];
+async function loadClassLeaders(){
+ const root=$('#classLeaderRows'),month=$('#classLeaderMonth').value;
+ root.innerHTML='<div class="empty">Loading monthly snapshot…</div>';
+ try{
+  const data=await api(endpoint('teacher_class_leaders',{month}));
+  const rows=Array.isArray(data.rows)?data.rows:[];
+  const byClass=new Map();
+  for(const row of rows){const key=String(row.class_name||'').toLowerCase();if(!byClass.has(key))byClass.set(key,[]);byClass.get(key).push(row)}
+  root.innerHTML=CLASS_LEADER_ORDER.map(cls=>{
+    const group=byClass.get(cls.toLowerCase())||[];
+    if(!group.length)return '<div class="class-leader-row"><strong>'+esc(cls)+'</strong><span class="cl-kr">No qualifying activity</span><span></span><span></span></div>';
+    return group.map((r,i)=>'<div class="class-leader-row"><strong>'+(!i?esc(cls):'<span class="cl-extra">↳ Top 10</span>')+'</strong><div><span class="cl-name">'+esc(r.student_name)+'</span><span class="cl-kr">'+esc(r.korean_name||'')+'</span>'+((Number(r.global_rank)<=10)?'<div class="cl-top">Overall top 10</div>':'')+'</div><span class="cl-score">'+Number(r.super_points||0).toLocaleString()+'</span><span class="cl-rank">#'+esc(r.global_rank)+' overall</span></div>').join('');
+  }).join('');
+  $('#classLeaderCount').textContent=rows.length+' winners';
+ }catch(err){root.innerHTML='<div class="empty">'+esc(err.message)+'</div>';$('#classLeaderCount').textContent='Unavailable'}
+}
+$('#classLeaderMonth').onchange=loadClassLeaders;
+$('#classLeaderRefresh').onclick=loadClassLeaders;
 function renderArcadeRecent(rows){
   if(!rows?.length)return'<div class="empty">No English Arcade activity in this period.</div>';
   return rows.slice(0,12).map((r,i)=>`<div class="puzzle-rank-row"><span class="puzzle-rank-num">${i+1}</span><div><b>${esc(r.name||'Student')}</b><small>${esc(r.mode_name||'Arcade')}${r.list_name?' · '+esc(r.list_name):''}${r.class?' · '+esc(r.class):''}</small></div><strong>${esc(fmtDate(r.ended_at))}</strong></div>`).join('');
@@ -599,7 +628,7 @@ async function loadClassOverview(force=false){
 }
 async function openClassFromOverview(name,days){$('#classSelect').value=name;$('#daysSelect').value=String(days);state.className=name;state.days=days;switchView('students');await loadClass()}
 const teacherViewKey='willena.teachers.activeView.v1';
-function switchView(v){try{localStorage.setItem(teacherViewKey,v)}catch{};if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='assignments'){window.UniversalAssignments?.refresh?.();window.UniversalAssignmentTracker?.load?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
+function switchView(v){try{localStorage.setItem(teacherViewKey,v)}catch{};if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='assignments'){window.UniversalAssignments?.refresh?.();window.UniversalAssignmentTracker?.load?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='class-leaders')loadClassLeaders();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#rosterAssignmentFilter').onchange=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#leaderScope').onchange=()=>loadTeacherLeaderboard(true);$('#leaderMetric').onchange=()=>loadTeacherLeaderboard(true);$('#leaderRefreshBtn').onclick=()=>loadTeacherLeaderboard(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 (async()=>{if(await auth()){loadClasses();let restored='students';try{restored=localStorage.getItem(teacherViewKey)||sessionStorage.getItem(teacherViewKey)||'students'}catch{};if(restored==='writing-genius')window.WritingGeniusTeacher?.openView?.();else if(document.getElementById('view-'+restored))switchView(restored)}})();
