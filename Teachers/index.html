@@ -575,6 +575,18 @@ async function loadClassLeaders(){
  }catch(err){root.innerHTML='<div class="empty">'+esc(err.message)+'</div>';$('#classLeaderCount').textContent='Unavailable'}
 }
 $('#leaderTabEverybody').onclick=()=>{switchView('leaderboard')};$('#leaderTabEverybody2').onclick=()=>{switchView('leaderboard')};$('#leaderTabClasses').onclick=()=>{switchView('class-leaders')};$('#leaderTabClasses2').onclick=()=>{switchView('class-leaders')};
+(() => {
+ const dropdown=$('#classLeaderMonth');
+ const today=new Date();
+ for(let y=2026;y<=today.getUTCFullYear();y++)for(let m=(y===2026?11:1);m<=12;m++){
+   if(y===today.getUTCFullYear()&&m>=today.getUTCMonth()+1)break;
+   const key=y+'-'+String(m).padStart(2,'0');
+   if([...dropdown.options].some(o=>o.value===key))continue;
+   const opt=document.createElement('option');
+   opt.value=key;opt.textContent=new Date(Date.UTC(y,m-1,1)).toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+   dropdown.add(opt,0);
+ }
+})();
 $('#classLeaderMonth').onchange=loadClassLeaders;
 $('#classLeaderRefresh').onclick=loadClassLeaders;
 function renderArcadeRecent(rows){
