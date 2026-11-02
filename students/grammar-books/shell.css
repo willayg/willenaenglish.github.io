@@ -1,0 +1,11 @@
+/* Textbook Grammar Genius shell: reuse Word Genius layout and shared theme. */
+.grammar-book-shell{min-height:100vh;display:flex;flex-direction:column}
+.grammar-book-shell .vocab-page{flex:1;width:100%}
+.grammar-book-shell .vocab-front-menu{max-width:920px;margin:0 auto}
+.grammar-empty-card{margin:14px auto 28px;min-height:250px;border:2px solid var(--vocab-border,#c9f1f4);border-radius:22px;background:var(--vocab-card,#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;color:var(--vocab-heading,#244f56);box-shadow:0 8px 22px rgba(31,91,100,.06)}
+.grammar-empty-icon{width:70px;height:70px;color:var(--pink,#ff0a8a)}
+.grammar-empty-icon svg{width:100%;height:100%}
+.grammar-empty-card strong{font-size:1.4rem;font-weight:900}
+.grammar-empty-card p{margin:0;color:var(--muted,#6f8190);font-size:.91rem}
+.grammar-shell-version{text-align:center;padding:10px 12px 60px;color:var(--muted,#6f8190);font-size:11px}
+.grammar-book-shell .vocab-theme-footer{margin-top:auto}
