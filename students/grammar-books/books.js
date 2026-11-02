@@ -52,6 +52,7 @@ function renderQuestion(){
  $('grammarRoundCounter').textContent=(position+1)+' / '+questions.length;
  $('grammarRoundProgress').style.width=((position)/questions.length*100)+'%';
  $('grammarQuestionPrompt').textContent=q.prompt;
+ $('grammarAnswerChoices').classList.toggle('grammar-hunt-choices',activeMode==='hunt');
  $('grammarAnswerChoices').innerHTML=q.options.map((option,i)=>'<button class="grammar-answer-choice" type="button" data-option="'+i+'"><span class="grammar-answer-letter">'+String.fromCharCode(65+i)+'</span><span class="grammar-choice-text">'+esc(option)+'</span></button>').join('');
  $('grammarFeedback').hidden=true;$('grammarFeedback').textContent='';
  $('grammarNext').hidden=true;$('grammarCheck').hidden=false;$('grammarCheck').disabled=true;
