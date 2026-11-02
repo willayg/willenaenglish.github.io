@@ -155,3 +155,50 @@ This verified the **database/catalog import**, not full live Word Genius gamepla
 - A term can have different senses (e.g. `play`, `fall`, `light`); a simplistic normalized-text join is not always sufficient.
 - Prefer compact, scoped SQL reads and clear verification queries over re-querying `information_schema` repeatedly.
 - Never claim the student app or homework works until it has been tested.
+
+## Sentence Genius: adding curriculum-aligned sentences (verified 2026-11-02)
+
+After vocabulary import, Sentence Genius needs actual **sentences linked to the book's units**. Vocabulary targets alone do not create sentence activities.
+
+- Content database: `gxwfsqxyuufqtitspfqg`.
+- Relevant tables: `sentences` and `source_content_occurrences`, plus `content_books` / `content_units`.
+- Student app on the `students` branch: `students/sentence-genius/content.js`. Its `loadSentences(bookId,unitId,unit)` selects published/review `source_content_occurrences` having non-null `sentence_id`, then loads associated published/review `sentences` with complete English and Korean pairs. It additionally loads sentence patterns and policy overrides; absence of those links does not by itself prevent basic sentence exercises.
+- Each supplied textbook unit can be expanded to **8–10 original sentences**. Use the table of contents' actual grammar focus and wordlist vocabulary in natural context; use accurate Korean translations; avoid reproducing copyrighted textbook example sentences.
+- Preserve original words / grammar level. Include statements, questions, and negatives where useful. Avoid ungrammatical, ambiguous, or unnatural examples.
+- Generate stable unique `source_key` per book/unit/sequence (e.g. `buzz6:sentence:3:7`). Insert idempotently into `sentences(text,translation_ko,source_key,status,metadata)` with `status='published'`, `metadata` noting book, unit and `source='original curriculum-aligned example'`.
+- Link each sentence using `source_content_occurrences(book_id,unit_id,occurrence_type,source_text,sentence_id,public_level,skill,source_key,status,metadata)` with `occurrence_type='sentence'`, `skill='speaking'`, `status='published'`, and a separate stable occurrence key (e.g. `buzz6:sentence-occurrence:3:7`). Resolve the `sentences.id` from the stable source key. Use NOT EXISTS checks to avoid duplicate rows.
+- **Working pattern:** stage `(unit_no,position_no,en,ko)` in a temp table within `BEGIN ... COMMIT`, insert missing sentences, insert missing occurrences by joining staged unit number to `content_units`, book source key to `content_books`, and sentence source key to `sentences`.
+- Verification:
+
+```sql
+SELECT u.unit_number,
+       count(DISTINCT o.sentence_id) AS linked,
+       count(DISTINCT o.sentence_id) FILTER (
+         WHERE s.translation_ko IS NOT NULL
+           AND s.status IN ('review','published')
+       ) AS usable
+FROM content_units u
+LEFT JOIN source_content_occurrences o
+  ON o.unit_id=u.id AND o.sentence_id IS NOT NULL
+LEFT JOIN sentences s ON s.id=o.sentence_id
+WHERE u.book_id=(SELECT id FROM content_books
+                 WHERE source_key='book:YOUR_SERIES:YOUR_BOOK')
+GROUP BY u.unit_number
+ORDER BY u.unit_number;
+```
+
+- For Oxford Buzz 6 the final database query returned **10 linked / 10 usable per unit, 80 in total**. Originally four per unit were created, then six per unit were added in a second idempotent batch, bringing the total to 80.
+- **Important:** a successful count does *not* verify authenticated student gameplay or a production deployment.
+
+## Writing Genius: unit-based topic prompts (verified code workflow, not deployed)
+
+- We authored **24 original Buzz 6 writing topics** (3 per unit) in `content/oxford-buzz-6-writing-prompts.json` on the repository's `main` branch. Prompts contain `id`, `book_key`, `unit`, `title`, `prompt`, `grammar_focus` and hints.
+- The **actual** Writing Genius frontend is on the `students` branch, at `students/writing-genius/app.js`, not necessarily on `main`. Always inspect the relevant branch; previous searches of `main` misleadingly made this app appear missing.
+- In that app, there is a `const prompts={ sentence:[...], diary:[...], topic:[...] }` list. We appended the 24 Buzz 6 topics to `prompts.topic` using `prompts.topic.push(...[ {key,title,help,starters}, ... ])`, immediately after the `prompts` object and before `const exampleDiaries=[`. This preserved the built-in topics and custom topic freedom.
+- Committed on the `students` branch as `268f857`. **Check whether that commit reached production** before claiming students see the topics.
+- This was a static in-app topic bank, **not** a per-book filtered list. If building textbook-specific selection later, inspect `setPromptOptions`, `createEntry`, and the topic-selection flow rather than assuming a book selection is available.
+- The student's title must remain editable. Never reject an off-topic or custom title solely because it differs from a suggested title.
+
+## Critical branch distinction
+
+`main` and `students` contain materially different app files. For student app modifications, inspect `students` explicitly; for teacher UI inspect `teachers` explicitly. Do not assume a file missing on `main` is missing from the active app. Check the deployed branch and confirm the commit actually reached the live site before declaring an app fixed.
