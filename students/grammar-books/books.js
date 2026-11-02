@@ -1,3 +1,4 @@
+import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 import {grammarEngine} from './engine.js?v=1';
 const DB='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -66,6 +67,7 @@ function renderQuestion(){
  checked=false;
 }
 function startMode(mode){
+ preloadStudentSfx();
  if(!modes.some(x=>x.id===mode)||!activeBook)return;
  const panel=$('grammarModeCards');panel.setAttribute('aria-busy','true');
  loadQuestions().then(()=>{
@@ -82,11 +84,13 @@ async function checkAnswer(){
  let result;
  try{result=await grammarEngine.gradeQuestion(shared,response)}catch(e){console.error('[grammar books] grading failed',e);renderer.setDisabled(false);btn.disabled=false;return}
  checked=true;if(result.correct)correct++;
+ playStudentSfx(result.correct?'correct':'wrong');
  renderer.showFeedback(result);
  btn.hidden=true;$('grammarSkip').hidden=true;$('grammarNext').hidden=false;$('grammarNext').classList.add('is-next');
  $('grammarNext').textContent=position===questionBank()[activeMode].length-1?'Finish':'Next Question →';
 }
 function finishRound(){
+ playStudentSfx('complete');
  $('grammarRound').hidden=true;$('grammarResult').hidden=false;
  const total=questionBank()[activeMode].length;
  $('grammarResultScore').textContent=correct+' / '+total;
