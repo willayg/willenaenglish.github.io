@@ -280,11 +280,20 @@ async function editHomework(row,teacher,afterSave){
 // Pass 1: shared 60-second read cache for the My/All assignment overview.
 const overviewReadCache=new Map();
 const OVERVIEW_CACHE_MS=60000;
+const OVERVIEW_CACHE_MAX=32;
+const overviewPerf={loads:0,cacheHits:0,cacheMisses:0,lastLoadMs:null,lastCompletedAt:null};
 let overviewGeneration=0;
 function invalidateOverviewCache(){
  overviewReadCache.clear();
  overviewGeneration++;
 }
+function overviewCachePrune(){
+ const now=Date.now();
+ for(const [key,item] of overviewReadCache)if(item.expires<=now)overviewReadCache.delete(key);
+ while(overviewReadCache.size>=OVERVIEW_CACHE_MAX)overviewReadCache.delete(overviewReadCache.keys().next().value);
+}
+// Read-only, in-memory diagnostics. No student content or tokens are reported.
+window.WillenaAssignmentPerformance=Object.freeze({getSummary:()=>({...overviewPerf,cacheEntries:overviewReadCache.size,ttlSeconds:OVERVIEW_CACHE_MS/1000})});
 function overviewGet(path,options={}){
  const method=String(options.method||'GET').toUpperCase();
  // Only cache reads. Never cache a new write endpoint that may be added later.
@@ -294,7 +303,9 @@ function overviewGet(path,options={}){
  if(!token)return get(path,options);
  const key=[token.split('.')[1]||token,method,path,options.body||''].join('|');
  const existing=overviewReadCache.get(key);
- if(existing&&existing.expires>Date.now())return existing.promise;
+ if(existing&&existing.expires>Date.now()){overviewPerf.cacheHits++;return existing.promise;}
+ overviewPerf.cacheMisses++;
+ overviewCachePrune();
  const entry={expires:Date.now()+OVERVIEW_CACHE_MS,promise:get(path,options)};
  overviewReadCache.set(key,entry);
  entry.promise.catch(()=>{if(overviewReadCache.get(key)===entry)overviewReadCache.delete(key)});
@@ -304,6 +315,8 @@ window.addEventListener('ua:assignments-changed',invalidateOverviewCache);
 window.addEventListener('willena:assignment-created',invalidateOverviewCache);
 async function loadOverview(scopeName='my',force=false){
  const host=document.querySelector('#uaOverview');if(!host)return;
+ const loadStarted=performance.now();
+ overviewPerf.loads++;
  if(force)invalidateOverviewCache();
  const generation=++overviewGeneration;
  host.textContent='Loading assignments across apps…';
@@ -571,6 +584,8 @@ async function loadOverview(scopeName='my',force=false){
    if(bulk)bulk.onclick=()=>completeRows(selectable.filter(row=>overviewSelections.has(homeworkKey(row))));
   }
   renderOverview();
+  overviewPerf.lastLoadMs=Math.round(performance.now()-loadStarted);
+  overviewPerf.lastCompletedAt=new Date().toISOString();
  }catch(e){if(generation===overviewGeneration&&host.isConnected)host.innerHTML='<p class="ua-empty">Could not load homework: '+esc(e.message)+'</p>'}
 }
 async function loadCalendar(){
