@@ -285,6 +285,35 @@ export default {
     checkRate(RATE.ip, clientIp, true);
     checkRate(RATE.user, userKey, true);
 
+    // Passwordless easy login: issue a real Supabase session without changing
+    // the student's password. A password change invalidates other devices.
+    if (body.login === true) {
+      if (!match.email) return jsonResponse({ success: false, error: 'Student email is missing.' }, 400, origin);
+      try {
+        const generated = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/generate_link`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json',apikey:env.SUPABASE_SERVICE_KEY,
+            Authorization:`Bearer ${env.SUPABASE_SERVICE_KEY}`},
+          body: JSON.stringify({type:'magiclink',email:match.email})
+        });
+        const link = await generated.json();
+        if (!generated.ok || !link.hashed_token) throw Error('Could not create sign-in token');
+        const verified = await fetch(`${env.SUPABASE_URL}/auth/v1/verify`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json',apikey:env.SUPABASE_ANON_KEY},
+          body:JSON.stringify({type:'magiclink',token_hash:link.hashed_token})
+        });
+        const session=await verified.json();
+        if(!verified.ok || !session.access_token || !session.refresh_token || session.user?.id!==match.id)
+          throw Error('Could not establish student session');
+        return jsonResponse({success:true,student:{id:match.id,username:match.username,email:match.email,
+          name:match.name,korean_name:match.korean_name},session:{access_token:session.access_token,refresh_token:session.refresh_token}},200,origin);
+      } catch (e) {
+        console.error('[verify-student] passwordless login failed',e);
+        return jsonResponse({success:false,error:'Could not establish student session'},502,origin);
+      }
+    }
+
     return jsonResponse({
       success: true,
       student: {
