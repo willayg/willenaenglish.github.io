@@ -20,16 +20,9 @@
 /* Cards, unit strip, skill journey and golden-unit styles come exclusively from /students/vocab-study/vocab-study.css and /students/study-v2/v2.css. */
 .grammar-progress-track{height:9px;border-radius:99px;overflow:hidden;background:var(--vocab-track,#dff3f5);margin:17px 0}
 .grammar-progress-fill{height:100%;width:0;background:var(--pink,#ff0a8a);transition:width .2s}
-.grammar-question-card{padding:clamp(16px,4vw,28px)}.grammar-question-card h2{font-size:clamp(19px,4vw,26px);line-height:1.45;margin:16px 0 23px}
-.grammar-answer-choices{display:grid;gap:10px}.grammar-answer-choice{display:flex;align-items:center;gap:14px;width:100%;border:2px solid var(--vocab-border,#c9f1f4);background:var(--vocab-card,#fff);color:var(--ink,#173f46);border-radius:15px;padding:13px 15px;font:inherit;text-align:left;cursor:pointer;min-height:56px}
-.grammar-answer-letter{display:grid;place-items:center;flex:0 0 33px;width:33px;height:33px;border-radius:50%;background:var(--vocab-page,#eef9fa);color:var(--pink,#ff0a8a);font-weight:900}
-.grammar-answer-choice.selected{border-color:var(--pink,#ff0a8a)}.grammar-answer-choice.correct{border-color:#24b88c;background:rgba(36,184,140,.09)}.grammar-answer-choice.incorrect{border-color:#e86c83;background:rgba(232,108,131,.09)}
-.grammar-answer-choice:disabled{cursor:default;opacity:1}
-.grammar-feedback{border:2px solid var(--vocab-border,#c9f1f4);border-radius:14px;padding:13px;margin:18px 0 0;line-height:1.5}.grammar-feedback.correct{border-color:#24b88c}.grammar-feedback.incorrect{border-color:#e86c83}
-.grammar-action-bar{margin:20px auto 35px;display:flex;justify-content:center}
+.grammar-question-card{padding:clamp(16px,4vw,28px)}.grammar-action-bar{margin:20px auto 35px;display:flex;justify-content:center}
 .grammar-primary,.grammar-secondary{padding:13px 28px;border:2px solid var(--cyan,#66d6df);border-radius:14px;background:var(--vocab-card,#fff);color:var(--pink,#ff0a8a);font:850 16px Poppins,sans-serif;cursor:pointer;min-height:51px}
 .grammar-primary:disabled{opacity:.45;cursor:default}.grammar-secondary{color:var(--vocab-heading,#244f56)}
 .grammar-result-card{text-align:center;margin:25px 0 50px;padding:35px 20px}.grammar-result-card h2{font-size:38px;margin:15px 0}.grammar-result-card>strong{color:var(--pink,#ff0a8a);font-size:24px}
 .grammar-result-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:25px}
 
-.grammar-hunt-choices .grammar-choice-text{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
