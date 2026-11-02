@@ -59,7 +59,7 @@ function renderQuestion(){
  $('grammarRoundProgress').style.width=(position/questions.length*100)+'%';
  const host=$('grammarSharedQuestionHost');
  renderer=new grammarEngine.QuestionRenderer(host).render(toSharedQuestion(q),{onChange:(_,has)=>{if(!checked)$('grammarCheck').disabled=!has}});
- $('grammarNext').hidden=true;$('grammarCheck').hidden=false;$('grammarCheck').disabled=true;
+ $('grammarNext').hidden=true;$('grammarNext').classList.remove('is-next');$('grammarCheck').hidden=false;$('grammarCheck').disabled=true;$('grammarSkip').hidden=false;
  checked=false;
 }
 function startMode(mode){
@@ -80,7 +80,7 @@ async function checkAnswer(){
  try{result=await grammarEngine.gradeQuestion(shared,response)}catch(e){console.error('[grammar books] grading failed',e);renderer.setDisabled(false);btn.disabled=false;return}
  checked=true;if(result.correct)correct++;
  renderer.showFeedback(result);
- btn.hidden=true;$('grammarNext').hidden=false;
+ btn.hidden=true;$('grammarSkip').hidden=true;$('grammarNext').hidden=false;$('grammarNext').classList.add('is-next');
  $('grammarNext').textContent=position===questionBank()[activeMode].length-1?'Finish':'Next Question →';
 }
 function finishRound(){
@@ -97,6 +97,7 @@ function goToModes(){
 list?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-book]');if(el)showBook(books.find(b=>String(b.id)===el.dataset.grammarBook))});
 $('grammarModeCards')?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-mode]');if(el)startMode(el.dataset.grammarMode)});
 $('grammarCheck')?.addEventListener('click',checkAnswer);
+$('grammarSkip')?.addEventListener('click',()=>{if(checked||!activeMode)return;position++;renderQuestion()});
 $('grammarNext')?.addEventListener('click',()=>{position++;renderQuestion()});
 $('grammarRetry')?.addEventListener('click',()=>{if(activeMode)startMode(activeMode)});
 $('grammarResultBack')?.addEventListener('click',goToModes);
