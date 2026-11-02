@@ -296,6 +296,7 @@ function overviewGet(path,options={}){
  return entry.promise;
 }
 window.addEventListener('ua:assignments-changed',invalidateOverviewCache);
+window.addEventListener('willena:assignment-created',invalidateOverviewCache);
 async function loadOverview(scopeName='my',force=false){
  const host=document.querySelector('#uaOverview');if(!host)return;
  if(force)invalidateOverviewCache();
