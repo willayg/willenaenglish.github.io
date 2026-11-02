@@ -7,7 +7,7 @@ on:
         required: true
         type: choice
         default: '15'
-        options: ['15','30','50']
+        options: ['1','15','30','50']
       rounds:
         description: Answers per ghost (1 to 10)
         required: true
