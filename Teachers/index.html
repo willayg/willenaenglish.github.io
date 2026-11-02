@@ -566,7 +566,13 @@ async function loadClassLeaders(){
   const isCurrent=month===currentKey;
   let data;
   try {
-    data=await api(`${FN('test_prep_teacher_insights')}?${new URLSearchParams({action:'class_leaders',month})}`);
+    const token=window.WillenaAPI?.getLocalAccessToken?.() || (()=>{try{return document.cookie.split('; ').find(c=>c.startsWith('sb_access='))?.split('=').slice(1).join('=')||null}catch{return null}})();
+    if(!token)throw new Error('Teacher access token unavailable. Sign in again to view snapshots.');
+    const url='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-insights?'+new URLSearchParams({action:'class_leaders',month});
+    const response=await fetch(url,{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+    const payload=await response.json().catch(()=>({}));
+    if(!response.ok||payload.success===false)throw new Error(payload.error||'Snapshot request failed ('+response.status+')');
+    data=payload;
   } catch(primaryError) {
     // The teacher-insights gateway does not yet recognize this newer section.
     // For the LIVE month, reuse the same authenticated working endpoint as the
