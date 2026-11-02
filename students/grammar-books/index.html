@@ -6,6 +6,8 @@
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
+<link rel="stylesheet" href="/students/test-prep-v2/question-renderer-accessibility.css?v=2.25.93">
+<link rel="stylesheet" href="/students/test-prep-v2/styles.css?v=2.21.2">
 <link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261031-app-uniform12"><link rel="stylesheet" href="./shell.css?v=4">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -41,15 +43,15 @@
 <section id="grammarRound" hidden>
  <div class="vocab-subscreen-head"><button id="grammarRoundBack" class="vocab-screen-back" type="button">← 모드 선택</button><span id="grammarRoundCounter">1 / 8</span></div>
  <div class="grammar-progress-track"><div id="grammarRoundProgress" class="grammar-progress-fill"></div></div>
- <div class="grammar-question-card"><span id="grammarRoundTitle" class="eyebrow"></span><h2 id="grammarQuestionPrompt"></h2><div id="grammarAnswerChoices" class="grammar-answer-choices"></div><p id="grammarFeedback" class="grammar-feedback" role="status" hidden></p></div>
+ <div class="grammar-question-card"><span id="grammarRoundTitle" class="eyebrow"></span><div id="grammarSharedQuestionHost" class="willena-question-renderer"></div></div>
  <div class="grammar-action-bar"><button id="grammarCheck" class="grammar-primary" type="button" disabled>정답 확인</button><button id="grammarNext" class="grammar-primary" type="button" hidden>다음 문제</button></div>
 </section>
 <section id="grammarResult" class="grammar-result-card" hidden><span class="eyebrow">ROUND COMPLETE</span><h2 id="grammarResultScore">8 / 8</h2><strong id="grammarResultPercent">100%</strong><p id="grammarResultText"></p><div class="grammar-result-actions"><button id="grammarRetry" class="grammar-primary" type="button">다시 풀기</button><button id="grammarResultBack" class="grammar-secondary" type="button">모드 선택</button></div></section>
 </section>
 <section id="grammarQuestionEngineMount" hidden aria-hidden="true"></section>
 </main>
-<footer class="grammar-shell-version">Grammar Genius · Books · v1.3</footer>
+<footer class="grammar-shell-version">Grammar Genius · Books · v1.4</footer>
 </div>
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
-<script src="/students/components/mission-basket.js?v=20261102-medals-fix4"></script><script type="module" src="./engine.js?v=1"></script><script type="module" src="./books.js?v=3"></script>
+<script src="/students/components/mission-basket.js?v=20261102-medals-fix4"></script><script type="module" src="./engine.js?v=1"></script><script type="module" src="./books.js?v=4"></script>
 </body></html>
