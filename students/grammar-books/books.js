@@ -4,8 +4,8 @@ const DB='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const modes=[{id:'choose',label:'Choose',ko:'빈칸 선택',icon:'◉'},{id:'check',label:'Sentence Check',ko:'문장 판단',icon:'✓'},{id:'hunt',label:'Error Hunt',ko:'오류 찾기',icon:'⌕'}];
-let books=[],catalog=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null;
+const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 고르시오.',icon:'◉'},{id:'check',label:'문장 판단',ko:'어법에 맞는 문장이나 틀린 문장을 고르시오.',icon:'✓'},{id:'hunt',label:'오류 찾기',ko:'밑줄 친 부분 중 어법상 틀린 것을 고르시오.',icon:'⌕'}];
+let books=[],catalog=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1;
 const questionBank=()=>catalog?.modes||{};
 function updateUrl(bookId=''){const p=new URLSearchParams(location.search);bookId?p.set('book',bookId):p.delete('book');const u=location.pathname+(p.size?'?'+p.toString():'');history.pushState({},'',u)}
 function bookCard(book){return '<button class="vocab-front-book-card" type="button" data-grammar-book="'+esc(book.id)+'"><span class="vocab-front-card-main"><span class="vocab-front-card-copy"><strong>'+esc(book.title)+'</strong></span></span><span class="vocab-front-arrow" aria-hidden="true">›</span></button>'}
@@ -29,22 +29,41 @@ async function loadQuestions(){
  for(const mode of modes){const qs=data.modes?.[mode.id];if(!Array.isArray(qs)||qs.length!==8||qs.some(q=>q.options?.length!==4||!Number.isInteger(q.answerIndex)||q.answerIndex<0||q.answerIndex>=4))throw Error('Invalid '+mode.id+' questions')}
  catalog=data;return data;
 }
+async function loadBookUnits(book){
+ const match=book.title.trim()==='Grammar Ten 완성 2';
+ const bookId=match?'1e3a2112-07be-45e2-a8fc-ce20011e0e57':book.id;
+ try{
+  const response=await fetch(DB+'/rest/v1/content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(bookId)+'&status=eq.published&order=unit_number.asc&limit=100',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
+  if(!response.ok)throw Error('Unit catalog '+response.status);
+  const rows=await response.json();return rows.length?rows:[];
+ }catch(error){console.warn('[grammar books] unit catalog',error);return match?[{unit_number:1,title:'be동사의 현재형',metadata:{}}]:[]}
+}
+function selectUnit(number){
+ activeUnit=number;const unit=units.find(u=>Number(u.unit_number)===number);
+ $('grammarUnitStrip').querySelectorAll('[data-unit]').forEach(el=>{const active=Number(el.dataset.unit)===number;el.classList.toggle('is-active',active);active?el.setAttribute('aria-current','true'):el.removeAttribute('aria-current')});
+ $('grammarUnitTitle').textContent=unit?'Unit '+number+' · '+unit.title:'Unit '+number;
+ const playable=activeBook?.title.trim()==='Grammar Ten 완성 2'&&number===1;
+ $('grammarModeCards').hidden=!playable;$('grammarNotReady').hidden=playable;
+ $('grammarGuideOpen').disabled=!unit;
+ if(playable)renderModeCards();
+}
 function renderModeCards(){
  const mount=$('grammarModeCards');if(!mount)return;
- mount.innerHTML=modes.map((mode,i)=>'<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:0"><span>0%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">STEP '+(i+1)+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">'+mode.ko+' · 8문제</span></span></button>').join('');
+ mount.innerHTML=modes.map((mode,i)=>'<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:0"><span>0%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">STEP '+(i+1)+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">★ 0/5</span></span></button>').join('');
 }
-function showBook(book,push=true){
+async function showBook(book,push=true){
  if(!book)return;activeBook=book;activeMode=null;
  title.textContent=book.title;home.hidden=true;detail.hidden=false;
  $('grammarModePanel').hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;
- const playable=book.title.trim()==='Grammar Ten 완성 2';
- $('grammarUnitTitle').textContent=playable?'CHAPTER 1 · UNIT 01 · be동사의 현재형':'이 교재의 문법 활동은 준비 중이에요.';
+ $('grammarModeCards').hidden=true;
+ $('grammarUnitTitle').textContent='단원을 불러오는 중…';
+ units=await loadBookUnits(book);
+ if(activeBook!==book)return;
  const strip=$('grammarUnitStrip');
- strip.innerHTML=playable?'<button type="button" class="study-v2-unit-pill is-active" aria-current="true">1</button>':'';
- strip.hidden=!playable;
- $('grammarModeCards').hidden=!playable;
- $('grammarNotReady').hidden=playable;
- if(playable)renderModeCards();
+ strip.innerHTML=units.map(u=>'<button type="button" class="study-v2-unit-pill" data-unit="'+Number(u.unit_number)+'">Unit '+Number(u.unit_number)+'</button>').join('');
+ strip.hidden=!units.length;
+ if(units.length)selectUnit(Number(units[0].unit_number));
+ else {$('grammarUnitTitle').textContent='등록된 단원이 없습니다.';$('grammarNotReady').hidden=false;}
  if(push)updateUrl(book.id);
  window.scrollTo(0,0);
 }
@@ -52,7 +71,8 @@ function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;
 function toSharedQuestion(q){
  const hunt=activeMode==='hunt';
  const sentence=hunt?q.options.join(' ').replace(/\s+([,.!?])/g,'$1'):'';
- return {id:q.id,form:'choice',prompt:hunt?'밑줄 친 부분 중 어법상 틀린 것을 고르세요.\n'+sentence:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:q.options}: {},metadata:{sourceKey:q.id,practiceType:'grammar_books'}};
+ const instruction=hunt?'다음 문장에서 어법상 틀린 부분을 고르시오.':activeMode==='choose'?'빈칸에 들어갈 알맞은 말을 고르시오.':/incorrect|wrong/i.test(q.prompt)?'다음 중 어법상 틀린 문장을 고르시오.':'다음 중 어법상 올바른 문장을 고르시오.';
+ return {id:q.id,form:'choice',prompt:instruction+(hunt?'\\n'+sentence:activeMode==='choose'?'\\n'+q.prompt:''),choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:q.options}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books'}};
 }
 function renderQuestion(){
  const questions=questionBank()[activeMode]||[],q=questions[position];
@@ -103,6 +123,9 @@ function finishRound(){
 function goToModes(){
  $('grammarRound').hidden=true;$('grammarResult').hidden=true;$('grammarModePanel').hidden=false;activeMode=null;window.scrollTo(0,0);
 }
+$('grammarUnitStrip')?.addEventListener('click',event=>{const el=event.target.closest('[data-unit]');if(el)selectUnit(Number(el.dataset.unit))});
+$('grammarGuideOpen')?.addEventListener('click',()=>{const unit=units.find(u=>Number(u.unit_number)===activeUnit);$('grammarGuideHeading').textContent=unit?.title||'문법 설명';$('grammarGuideContent').textContent=activeBook?.title==='Grammar Ten 완성 2'&&activeUnit===1?'be동사는 주어에 따라 am, is, are를 사용합니다. I am / He·She·It is / You·We·They are. 부정문은 be동사 뒤에 not을 붙이고, 의문문은 be동사를 주어 앞으로 옮깁니다.':'이 단원의 문법 설명을 준비 중입니다.';$('grammarGuideDialog').showModal()});
+$('grammarGuideClose')?.addEventListener('click',()=>$('grammarGuideDialog').close());
 list?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-book]');if(el)showBook(books.find(b=>String(b.id)===el.dataset.grammarBook))});
 $('grammarModeCards')?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-mode]');if(el)startMode(el.dataset.grammarMode)});
 $('grammarCheck')?.addEventListener('click',checkAnswer);
