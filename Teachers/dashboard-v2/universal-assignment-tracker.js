@@ -9,6 +9,11 @@ const assignmentDateStyle=document.createElement('style');
 assignmentDateStyle.textContent='.ua-date-groups{display:grid;gap:12px;margin:12px 0}.ua-date-card{background:#fff;border:1px solid #dce8eb;border-radius:12px;overflow:hidden}.ua-date-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;padding:15px 18px;border:0;background:#f8fcfd;color:#234456;cursor:pointer}.ua-date-toggle:hover{background:#edf8fa}.ua-date-toggle>span:first-child{display:flex;flex-direction:column;gap:3px}.ua-date-toggle small{font-size:12px;color:#647d88;font-weight:400}.ua-date-chevron{font-size:19px;color:#367f8a}.ua-date-body[hidden]{display:none}.ua-date-body .ua-progress-table-wrap{margin:0;border-radius:0}';
 assignmentDateStyle.textContent += '.ua-simple-date-divider{display:flex;align-items:center;gap:14px;font-size:14px;font-weight:700;color:#56717b;margin:24px 0 12px}.ua-simple-date-divider:after{content:"";height:1px;background:#cfdee3;flex:1}.ua-simple-date-divider:first-child{margin-top:8px}';
 assignmentDateStyle.textContent += '.ua-group-top{display:flex;align-items:center;gap:8px}.ua-group-top>.ua-group-heading{flex:1;min-width:0}.ua-group-select{display:flex;align-items:center;padding:12px 0 12px 14px;cursor:pointer}.ua-group-select input{width:19px;height:19px;accent-color:#2a9eaa;cursor:pointer}';
+const assignmentCardStyle=document.createElement('link');
+assignmentCardStyle.rel='stylesheet';
+assignmentCardStyle.href='/Teachers/dashboard-v2/genius-homework-card.css';
+document.head.appendChild(assignmentCardStyle);
+assignmentDateStyle.textContent += '.ua-overview-genius-card{width:100%;margin:0;min-height:210px;overflow:hidden;position:relative;border:1px solid #d7e8e9;border-radius:17px;padding:17px 95px 17px 20px;background:#fff;box-sizing:border-box}.ua-overview-heading{display:flex;align-items:center;gap:10px;min-height:30px}.ua-overview-heading>.ghc-class{flex:1;min-width:0}.ua-overview-genius-card .ghc-task{margin-top:10px}.ua-overview-genius-card .ghc-teacher{margin-bottom:23px}.ua-overview-genius-card .ghc-ring{top:65px}.ua-overview-genius-card>.ghc-details{margin-right:-75px}.ua-overview-progress-toggle{font:inherit;font-size:14px;font-weight:750;color:#277e85;border:0;background:transparent;cursor:pointer;display:flex;justify-content:space-between;width:100%;padding:12px 0 0;text-align:left}.ua-overview-genius-card .ua-group-body{padding:14px 0 0;margin-right:-75px}.ua-overview-genius-card .ua-group-select{padding:0;flex:none}.ua-overview-genius-card .ghc-day{margin-left:auto}.ua-overview-genius-card .ua-homework-card{width:100%}@media(max-width:600px){.ua-overview-genius-card{padding:14px 82px 14px 15px;min-height:200px}.ua-overview-genius-card .ghc-ring{top:65px}.ua-overview-genius-card>.ghc-details,.ua-overview-genius-card .ua-group-body{margin-right:-67px}}';
 document.head.appendChild(assignmentDateStyle);
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -24,7 +29,18 @@ const dday=x=>{
  return offset===0?'D-Day':offset>0?'D-'+offset:'D+'+Math.abs(offset);
 };
 const id=x=>String(x||'');
-function sharedHomeworkGroupStart({key,title,sub,label,average=null,checkbox=''}) {
+function sharedHomeworkGroupStart({key,title,sub,label,average=null,checkbox='',overviewStyle=false,due='',teacher=''}) {
+ if(overviewStyle){
+  const valid=Number.isFinite(average);
+  const pct=valid?Math.max(0,Math.min(100,average)):0;
+  return '<div class="ua-group genius-homework-card ua-overview-genius-card" data-ua-group="'+esc(key)+'">'+
+   '<div class="ua-overview-heading">'+checkbox+'<strong class="ghc-class">'+esc(title)+'</strong><span class="ghc-day">'+esc(due)+'</span></div>'+
+   '<div class="ghc-task">'+esc(sub)+'</div>'+
+   '<div class="ghc-teacher">'+esc(teacher)+'</div>'+
+   '<div class="ghc-ring'+(valid?' has-data':'')+'" style="'+(valid?'--ghc-pct:'+pct+'%;':'')+'" role="img" aria-label="'+esc(valid?'Tracked homework progress '+pct+'%':'Progress not available')+'"><span>'+(valid?pct+'%':'—')+'</span></div>'+
+   '<div class="ghc-details"><button type="button" class="ua-overview-progress-toggle" data-ua-group-toggle="'+esc(key)+'" aria-expanded="false"><span>Student progress</span><span class="ghc-chevron">▾</span></button></div>'+
+   '<div class="ua-group-body" hidden>';
+ }
  return '<div class="ua-group" data-ua-group="'+esc(key)+'"><div class="ua-group-top">'+checkbox+'<button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(key)+'" aria-expanded="false"><span><b>'+esc(title)+'</b><small>'+esc(sub)+'</small></span><strong>'+esc(label)+' ▾</strong></button></div>'+
  (average===null?'':'<div class="ua-group-meter" role="progressbar" aria-label="Tracked question completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+average+'"><i style="width:'+average+'%"></i></div>')+
  '<div class="ua-group-body" hidden>';
@@ -381,7 +397,10 @@ async function loadOverview(scopeName='my'){
      const eligible=g.items.filter(row=>id(row.created_by)===teacher);
      const selected=eligible.filter(row=>overviewSelections.has(homeworkKey(row))).length;
      const groupSelect=eligible.length?'<label class="ua-group-select"><input type="checkbox" data-ua-select-group="'+esc(g.key)+'" aria-label="Select all homework for '+esc(g.title)+'" '+(selected===eligible.length?'checked':'')+'></label>':'';
-    return sharedHomeworkGroupStart({key:g.key,title:g.title,sub:g.sub+' · '+g.items.length+' assignment'+(g.items.length===1?'':'s'),label,average,checkbox:groupSelect});
+    const dueDates=g.items.map(row=>row.due_at).filter(Boolean).sort();
+    const dueLabel=dueDates.length?(new Set(dueDates.map(x=>assignedDateKey(x))).size===1?dday(dueDates[0]):'Next '+dday(dueDates[0])):'';
+    const teacherLabels=[...new Set(g.items.map(row=>authors.get(id(row.created_by))||'Unknown'))];
+    return sharedHomeworkGroupStart({key:g.key,title:g.title,sub:g.items.length+' assignment'+(g.items.length===1?'':'s')+' · '+g.sub,label,average,checkbox:groupSelect,overviewStyle:true,due:dueLabel,teacher:teacherLabels.length===1?teacherLabels[0]+' Teacher':teacherLabels.length+' teachers'});
    };
    const selectable=visible.filter(r=>id(r.created_by)===teacher);
    const checked=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
