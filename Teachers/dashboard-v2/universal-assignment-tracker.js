@@ -429,7 +429,8 @@ async function loadOverview(scopeName='my'){
     const index=Number(button.dataset.uaDetail),row=visible[index];
     const panel=host.querySelector('#uaExpanded'+index);
     panel.hidden=!panel.hidden;button.setAttribute('aria-expanded',String(!panel.hidden));
-    if(panel.hidden||!['내신','Word Genius'].includes(row.app))return;
+    // Keep Word Genius overview concise: student totals only, not per-word answer logs.
+    if(panel.hidden||row.app!=='내신')return;
     const area=panel.querySelector('[data-ua-attempts]');
     if(area.dataset.loaded)return;
     area.textContent='Loading saved answers…';
