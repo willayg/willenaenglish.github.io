@@ -27,7 +27,4 @@
 .grammar-result-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:25px}
 
 
-/* Same action bar controls as Word Genius, pinned throughout a grammar round. */
-.grammar-book-shell #grammarQuestionBottom.vocab-session-bottom{position:fixed;bottom:0;left:0;right:0;z-index:80}
-.grammar-book-shell #grammarQuestionBottom .vocab-action-row{display:flex;align-items:center}
-.grammar-book-shell #grammarRound{padding-bottom:100px}
+/* Word Genius vocab-session CSS owns the fixed screen, scrolling content, and persistent footer. */
