@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Willena · Admin Load Tester</title><script src="/js/api-config.js"></script>
+<style>
+:root{font-family:Inter,Poppins,system-ui,sans-serif;color:#22283b;background:#f6f9fd}
+*{box-sizing:border-box}body{margin:0}main{max-width:850px;margin:42px auto;padding:0 18px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:27px;margin:0}.muted{color:#65758c}p{line-height:1.55}
+.card{background:#fff;border:1px solid #d8eaf1;border-radius:20px;padding:22px;margin:18px 0}
+.pill{background:#e7f9f7;color:#087e77;font-weight:700;padding:7px 12px;border-radius:24px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+button{min-height:55px;background:#fff;color:#ed4380;border:2px solid #90dce5;border-radius:14px;font:700 17px inherit;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}button:hover:not(:disabled){background:#f0fbfd}
+strong.metric{font-size:28px;display:block;margin:8px 0}.metricBox{background:#f5f9fc;padding:15px;border-radius:13px}
+label{display:flex;gap:10px;align-items:center;padding:12px 0}input{width:19px;height:19px}
+#log{white-space:pre-wrap;font:13px/1.65 ui-monospace,monospace;background:#101c2b;color:#ddf5f8;padding:16px;border-radius:12px;max-height:250px;overflow:auto}
+.notice{border-left:4px solid #ee7e93;padding:10px 14px;background:#fff5f7}
+@media(max-width:520px){.grid{grid-template-columns:1fr}main{margin:20px auto}}
+</style></head><body><main>
+<header><div><div class="muted">WILLENA · ADMIN UTILITIES</div><h1>Load Tester</h1></div><span class="pill">Read-only v1</span></header>
+<p class="muted">Measure concurrent production Test Prep review calculations without changing student scores. Only authenticated administrators can run tests.</p>
+<section class="card"><strong>Access</strong><p id="status" role="status">Checking administrator session…</p>
+<div class="notice"><b>Production database.</b> Use outside class hours. This test submits genuine read-only review requests for five Test-class plans; 15, 30 and 50 are concurrent requests, not distinct student accounts.</div>
+<label><input type="checkbox" id="confirm" disabled> I understand this sends concurrent requests to production.</label>
+<div class="grid"><button data-count="15" disabled>Run 15</button><button data-count="30" disabled>Run 30</button><button data-count="50" disabled>Run 50</button></div>
+<p class="muted">Progression is gated: 30 unlocks only after 15 succeeds; 50 unlocks only after 30 succeeds. A stage fails if any request fails or p95 exceeds 5 seconds.</p></section>
+<section class="card"><strong>Results</strong><div class="grid" style="margin-top:12px"><div class="metricBox">Completed<strong class="metric" id="success">—</strong></div><div class="metricBox">p95 latency<strong class="metric" id="p95">—</strong></div><div class="metricBox">Failures<strong class="metric" id="fail">—</strong></div></div><p id="summary" role="status" class="muted">No test run yet.</p></section>
+<section class="card"><strong>Run history</strong><pre id="log">Awaiting admin verification…</pre></section>
+</main>
+<script type="module">
+const ENDPOINT="https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/willena-admin-load-test-v1";
+const $=id=>document.getElementById(id),buttons=[...document.querySelectorAll('button[data-count]')];
+let ready=false,busy=false,level=15;
+const log=s=>{$('log').textContent=new Date().toLocaleTimeString()+' · '+s+'\n'+$('log').textContent};
+const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+async function call(body){const t=token();if(!t)throw Error("Sign in to the Teachers Dashboard first");const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify(body)});const p=await r.json().catch(()=>({}));if(!r.ok)throw Error(p.error||'Request failed');return p}
+function update(){for(const b of buttons)b.disabled=!ready||busy||!$('confirm').checked||Number(b.dataset.count)>level}
+async function init(){try{const mod=await import('/Teachers/auth-refresh.js');await mod.ensureTeacherSession();const r=await call({action:'status'});if(!r.ready)throw Error('Service not ready');ready=true;$('confirm').disabled=false;$('status').textContent='Administrator verified. Read-only requests only.';log('Admin verified; ready for 15-request stage.')}catch(e){$('status').textContent='Access denied or session unavailable: '+e.message;log('Access unavailable: '+e.message)}update()}
+async function run(n){if(!ready||busy||n>level||!$('confirm').checked)return;busy=true;update();$('summary').textContent='Running '+n+' concurrent read-only requests…';log('Stage '+n+' started');try{const r=await call({action:'run',students:n});$('success').textContent=r.success+'/'+r.stage;$('p95').textContent=r.p95_ms+' ms';$('fail').textContent=r.failed;$('summary').textContent='Wall: '+r.wall_ms+' ms · Median: '+r.median_ms+' ms · '+(r.failed===0&&r.p95_ms<=5000?'PASSED':'STOP: threshold exceeded');log(JSON.stringify(r));if(r.failed===0&&r.p95_ms<=5000)level=n===15?30:n===30?50:50;else {ready=false;$('status').textContent='Stopped: stage failed. Reload to start again at 15.'}}catch(e){ready=false;$('summary').textContent='Stopped: '+e.message;$('status').textContent='Stage error: reload to restart';log('ERROR '+e.message)}finally{busy=false;update()}}
+buttons.forEach(b=>b.addEventListener('click',()=>run(Number(b.dataset.count))));$('confirm').addEventListener('change',update);init();
+</script></body></html>
