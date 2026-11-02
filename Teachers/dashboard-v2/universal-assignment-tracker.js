@@ -7,6 +7,7 @@ const assignedDateKey=value=>{const d=new Date(value);return Number.isNaN(d.getT
 const assignedDateLabel=key=>key==='unknown'?'Date unavailable':new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',day:'numeric',month:'long',year:'numeric'}).format(new Date(key+'T12:00:00Z'));
 const assignmentDateStyle=document.createElement('style');
 assignmentDateStyle.textContent='.ua-date-groups{display:grid;gap:12px;margin:12px 0}.ua-date-card{background:#fff;border:1px solid #dce8eb;border-radius:12px;overflow:hidden}.ua-date-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;padding:15px 18px;border:0;background:#f8fcfd;color:#234456;cursor:pointer}.ua-date-toggle:hover{background:#edf8fa}.ua-date-toggle>span:first-child{display:flex;flex-direction:column;gap:3px}.ua-date-toggle small{font-size:12px;color:#647d88;font-weight:400}.ua-date-chevron{font-size:19px;color:#367f8a}.ua-date-body[hidden]{display:none}.ua-date-body .ua-progress-table-wrap{margin:0;border-radius:0}';
+assignmentDateStyle.textContent += '.ua-simple-date-divider{display:flex;align-items:center;gap:14px;font-size:14px;font-weight:700;color:#56717b;margin:24px 0 12px}.ua-simple-date-divider:after{content:"";height:1px;background:#cfdee3;flex:1}.ua-simple-date-divider:first-child{margin-top:8px}';
 document.head.appendChild(assignmentDateStyle);
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -315,9 +316,10 @@ async function loadOverview(scopeName='my'){
    // Only include verified question progress in aggregate percentages.
    const groupOf=row=>{
     const person=students.get(id(row.student_id));
-    return row.student_id
-      ? {key:'student:'+id(row.student_id),title:person?(person.name||person.username||person.korean_name||'Student'):'Student name unavailable',sub:person?.class||'Student homework'}
-      : {key:'class:'+String(row.class||row.class_name||'Unassigned'),title:String(row.class||row.class_name||'Unassigned class'),sub:'Class homework'};
+    const day=assignedDateKey(row.created_at);
+     return row.student_id
+      ? {key:day+':student:'+id(row.student_id),title:person?(person.name||person.username||person.korean_name||'Student'):'Student name unavailable',sub:person?.class||'Student homework'}
+      : {key:day+':class:'+String(row.class||row.class_name||'Unassigned'),title:String(row.class||row.class_name||'Unassigned class'),sub:'Class homework'};
    };
    const grouping=new Map();
    visible.forEach(row=>{const group=groupOf(row);if(!grouping.has(group.key))grouping.set(group.key,{...group,items:[]});grouping.get(group.key).items.push(row)});
@@ -359,7 +361,10 @@ async function loadOverview(scopeName='my'){
      '<div class="ua-homework-cards">'+visible.map((row,i)=>{
       const thisGroup=groupOf(row),previous=i?groupOf(visible[i-1]):null;
       const open=!previous||previous.key!==thisGroup.key;
-      const prefix=(open&&i?'</div></div>':'')+(open?groupHeader(groupByKey.get(thisGroup.key)):'');
+      const day=assignedDateKey(row.created_at);
+       const priorDay=i?assignedDateKey(visible[i-1].created_at):null;
+       const divider=day!==priorDay?'<div class="ua-simple-date-divider" role="heading" aria-level="4"><span>'+esc(assignedDateLabel(day))+'</span></div>':'';
+       const prefix=(open&&i?'</div></div>':'')+divider+(open?groupHeader(groupByKey.get(thisGroup.key)):'');
       const result=progress.get(id(row.id));
       const done=result?Number(result.done)||0:0;
       const target=Number(row.target_count)||0;
