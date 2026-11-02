@@ -1,0 +1,302 @@
+{
+  "book": "Grammar Ten 완성 2",
+  "unit": "Chapter 1 · Unit 1 · be동사의 현재형",
+  "source": "Original Willena practice, aligned to textbook topics; not reproduced from source PDF",
+  "defaultRoundSize": 8,
+  "modes": {
+    "choose": [
+      {
+        "id": "gt2-c1u1-choose-1",
+        "prompt": "My brother ___ a student.",
+        "options": [
+          "am",
+          "is",
+          "are",
+          "be"
+        ],
+        "answerIndex": 1,
+        "explanation": "My brother는 3인칭 단수이므로 is를 사용해요."
+      },
+      {
+        "id": "gt2-c1u1-choose-2",
+        "prompt": "The children ___ in the classroom.",
+        "options": [
+          "is",
+          "am",
+          "are",
+          "be"
+        ],
+        "answerIndex": 2,
+        "explanation": "The children은 복수 주어이므로 are를 사용해요."
+      },
+      {
+        "id": "gt2-c1u1-choose-3",
+        "prompt": "I ___ not late for school.",
+        "options": [
+          "are",
+          "is",
+          "am",
+          "be"
+        ],
+        "answerIndex": 2,
+        "explanation": "I am not이 올바른 형태예요."
+      },
+      {
+        "id": "gt2-c1u1-choose-4",
+        "prompt": "These shoes ___ very comfortable.",
+        "options": [
+          "is",
+          "are",
+          "am",
+          "be"
+        ],
+        "answerIndex": 1,
+        "explanation": "These shoes는 복수이므로 are를 사용해요."
+      },
+      {
+        "id": "gt2-c1u1-choose-5",
+        "prompt": "___ your father at home now?",
+        "options": [
+          "Are",
+          "Am",
+          "Is",
+          "Be"
+        ],
+        "answerIndex": 2,
+        "explanation": "Your father는 3인칭 단수이므로 Is로 질문해요."
+      },
+      {
+        "id": "gt2-c1u1-choose-6",
+        "prompt": "Jina and I ___ good friends.",
+        "options": [
+          "am",
+          "is",
+          "are",
+          "was"
+        ],
+        "answerIndex": 2,
+        "explanation": "Jina and I는 we와 같은 복수 주어예요."
+      },
+      {
+        "id": "gt2-c1u1-choose-7",
+        "prompt": "The weather ___ sunny today.",
+        "options": [
+          "are",
+          "am",
+          "is",
+          "be"
+        ],
+        "answerIndex": 2,
+        "explanation": "The weather는 단수로 취급하므로 is를 사용해요."
+      },
+      {
+        "id": "gt2-c1u1-choose-8",
+        "prompt": "They ___ not interested in the game.",
+        "options": [
+          "is",
+          "are",
+          "am",
+          "be"
+        ],
+        "answerIndex": 1,
+        "explanation": "They are not이 올바른 부정문이에요."
+      }
+    ],
+    "check": [
+      {
+        "id": "gt2-c1u1-check-1",
+        "prompt": "Which sentence is grammatically incorrect?",
+        "options": [
+          "She is my cousin.",
+          "We are ready.",
+          "They is at school.",
+          "I am hungry."
+        ],
+        "answerIndex": 2,
+        "explanation": "They are at school이 올바른 문장이에요."
+      },
+      {
+        "id": "gt2-c1u1-check-2",
+        "prompt": "Which sentence is grammatically correct?",
+        "options": [
+          "He are tired.",
+          "I is excited.",
+          "The dogs is loud.",
+          "You are kind."
+        ],
+        "answerIndex": 3,
+        "explanation": "You에는 are를 사용해요."
+      },
+      {
+        "id": "gt2-c1u1-check-3",
+        "prompt": "Choose the incorrect sentence.",
+        "options": [
+          "My parents are doctors.",
+          "The cat is asleep.",
+          "Emma and Mina is sisters.",
+          "I am sixteen."
+        ],
+        "answerIndex": 2,
+        "explanation": "Emma and Mina are sisters가 맞아요."
+      },
+      {
+        "id": "gt2-c1u1-check-4",
+        "prompt": "Choose the correct sentence.",
+        "options": [
+          "My friends is here.",
+          "This book is interesting.",
+          "They am late.",
+          "She are happy."
+        ],
+        "answerIndex": 1,
+        "explanation": "This book은 단수이므로 is가 맞아요."
+      },
+      {
+        "id": "gt2-c1u1-check-5",
+        "prompt": "Which sentence is incorrect?",
+        "options": [
+          "We aren't cold.",
+          "It isn't far.",
+          "I'm not angry.",
+          "He aren't here."
+        ],
+        "answerIndex": 3,
+        "explanation": "He isn't here가 올바른 문장이에요."
+      },
+      {
+        "id": "gt2-c1u1-check-6",
+        "prompt": "Which sentence is correct?",
+        "options": [
+          "Are she at home?",
+          "Is they busy?",
+          "Am I early?",
+          "Is you ready?"
+        ],
+        "answerIndex": 2,
+        "explanation": "Am I early?가 올바른 be동사 의문문이에요."
+      },
+      {
+        "id": "gt2-c1u1-check-7",
+        "prompt": "Choose the incorrect sentence.",
+        "options": [
+          "The boys are hungry.",
+          "These bags are heavy.",
+          "My sister are ten.",
+          "Their teacher is nice."
+        ],
+        "answerIndex": 2,
+        "explanation": "My sister is ten으로 써야 해요."
+      },
+      {
+        "id": "gt2-c1u1-check-8",
+        "prompt": "Choose the correct sentence.",
+        "options": [
+          "I am not tired.",
+          "I amn't tired.",
+          "I isn't tired.",
+          "I aren't tired."
+        ],
+        "answerIndex": 0,
+        "explanation": "I am not이 올바른 부정형이에요."
+      }
+    ],
+    "hunt": [
+      {
+        "id": "gt2-c1u1-hunt-1",
+        "prompt": "Pick the incorrect expression.",
+        "options": [
+          "My sister",
+          "are",
+          "very",
+          "kind."
+        ],
+        "answerIndex": 1,
+        "explanation": "My sister is very kind가 맞아요."
+      },
+      {
+        "id": "gt2-c1u1-hunt-2",
+        "prompt": "Pick the incorrect expression.",
+        "options": [
+          "The students",
+          "is",
+          "in",
+          "the library."
+        ],
+        "answerIndex": 1,
+        "explanation": "The students are in the library가 맞아요."
+      },
+      {
+        "id": "gt2-c1u1-hunt-3",
+        "prompt": "Pick the incorrect expression.",
+        "options": [
+          "I",
+          "isn't",
+          "ready",
+          "yet."
+        ],
+        "answerIndex": 1,
+        "explanation": "I'm not ready yet이 올바른 표현이에요."
+      },
+      {
+        "id": "gt2-c1u1-hunt-4",
+        "prompt": "Pick the incorrect expression.",
+        "options": [
+          "Are",
+          "he",
+          "your",
+          "teacher?"
+        ],
+        "answerIndex": 0,
+        "explanation": "Is he your teacher?로 물어봐야 해요."
+      },
+      {
+        "id": "gt2-c1u1-hunt-5",
+        "prompt": "Pick the incorrect expression.",
+        "options": [
+          "The apples",
+          "is",
+          "on",
+          "the table."
+        ],
+        "answerIndex": 1,
+        "explanation": "The apples are on the table가 맞아요."
+      },
+      {
+        "id": "gt2-c1u1-hunt-6",
+        "prompt": "Pick the incorrect expression.",
+        "options": [
+          "You",
+          "am",
+          "a",
+          "good friend."
+        ],
+        "answerIndex": 1,
+        "explanation": "You are a good friend가 맞아요."
+      },
+      {
+        "id": "gt2-c1u1-hunt-7",
+        "prompt": "Pick the incorrect expression.",
+        "options": [
+          "My parents",
+          "isn't",
+          "at",
+          "home."
+        ],
+        "answerIndex": 1,
+        "explanation": "My parents aren't at home이 맞아요."
+      },
+      {
+        "id": "gt2-c1u1-hunt-8",
+        "prompt": "Pick the incorrect expression.",
+        "options": [
+          "There",
+          "are",
+          "a book",
+          "on the desk."
+        ],
+        "answerIndex": 1,
+        "explanation": "There is a book on the desk가 맞아요."
+      }
+    ]
+  }
+}
