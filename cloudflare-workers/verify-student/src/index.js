@@ -300,7 +300,7 @@ export default {
         if (!generated.ok || !link.hashed_token) throw Error('Could not create sign-in token');
         const verified = await fetch(`${env.SUPABASE_URL}/auth/v1/verify`, {
           method:'POST',
-          headers:{'Content-Type':'application/json',apikey:env.SUPABASE_ANON_KEY},
+          headers:{'Content-Type':'application/json',apikey:env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_KEY},
           body:JSON.stringify({type:'magiclink',token_hash:link.hashed_token})
         });
         const session=await verified.json();
