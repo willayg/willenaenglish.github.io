@@ -1,0 +1,47 @@
+name: Willena Ghost Write Load Test
+on:
+  workflow_dispatch:
+    inputs:
+      students:
+        description: Ghost students in this run
+        required: true
+        type: choice
+        default: '15'
+        options: ['15','30','50']
+      rounds:
+        description: Answers per ghost (1 to 10)
+        required: true
+        default: '2'
+        type: choice
+        options: ['1','2','3','5','10']
+      confirmation:
+        description: Type RUN GHOST WRITES to authorize live score writes
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: willena-production-load-test
+  cancel-in-progress: false
+jobs:
+  ghost-write-test:
+    if: ${{ github.ref == 'refs/heads/main' && inputs.confirmation == 'RUN GHOST WRITES' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify ghost identities, record actual scoring attempts, verify persistence
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_LEVEL: ${{ inputs.students }}
+          TEST_ROUNDS: ${{ inputs.rounds }}
+        run: node scripts/willena-ghost-write-load.mjs
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghost-write-results
+          path: willena-ghost-write-report.json
+          if-no-files-found: warn
