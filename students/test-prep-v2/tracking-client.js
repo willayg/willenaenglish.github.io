@@ -38,9 +38,37 @@ function saveSessionRecord(){
   write(SESSION_KEY,{session:state.session,planId:state.plan?.id||null,lesson:state.lesson||null,practice:state.practice||null,startedAt:state.startedAt||Date.now(),activeTimeMs:getActiveTimeMs(),savedAt:new Date().toISOString()});
 }
 
+let refreshInFlight=null;
 async function refreshToken(){
-  try{const r=await routedFetch(`/.netlify/functions/supabase_auth?action=refresh&_=${Date.now()}`),d=await r.json().catch(()=>({}));if(r.ok&&d?.success&&d.access_token){window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');return d.access_token}}catch(_){}
-  return'';
+  if(refreshInFlight)return refreshInFlight;
+  refreshInFlight=(async()=>{
+    // Prefer the HttpOnly-cookie session, but mobile browsers may not send it.
+    try{
+      const r=await routedFetch(`/.netlify/functions/supabase_auth?action=refresh&_=${Date.now()}`);
+      const d=await r.json().catch(()=>({}));
+      if(r.ok&&d?.success&&d.access_token){
+        window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');
+        return d.access_token;
+      }
+    }catch(e){console.warn('[test-prep-v2] cookie refresh unavailable',e)}
+    // The student's existing login also saves a refresh token locally.
+    // Use it only when the cookie route fails; Supabase rotates it on success.
+    const localRefresh=localStorage.getItem('sb_refresh_token')||'';
+    if(!localRefresh)return '';
+    try{
+      const r=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/auth/v1/token?grant_type=refresh_token',{
+        method:'POST',headers:{apikey:API_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({refresh_token:localRefresh}),cache:'no-store',credentials:'omit'
+      });
+      const d=await r.json().catch(()=>({}));
+      if(r.ok&&d.access_token){
+        window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');
+        return d.access_token;
+      }
+    }catch(e){console.warn('[test-prep-v2] local refresh unavailable',e)}
+    return '';
+  })();
+  try{return await refreshInFlight}finally{refreshInFlight=null}
 }
 async function requestEdge(action,opts,access){
   const headers={...(opts.headers||{}),Authorization:`Bearer ${access}`,apikey:API_KEY};
