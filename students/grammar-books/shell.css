@@ -28,3 +28,10 @@
 
 
 /* Word Genius vocab-session CSS owns the fixed screen, scrolling content, and persistent footer. */
+
+/* Text size adjustment for Grammar Books only; shared renderer remains unchanged. */
+#grammarRound .willena-question-renderer .prompt{font-size:clamp(17px,2.8vw,23px)!important;line-height:1.5!important;font-weight:750!important;white-space:pre-line}
+#grammarRound .willena-question-renderer .choices{grid-template-columns:1fr!important}
+#grammarRound .willena-question-renderer .choice{font-size:clamp(15px,2vw,18px)!important;line-height:1.4!important;min-height:54px}
+#grammarRound .willena-question-renderer .context{font-size:15px!important}
+#grammarRound .willena-question-renderer .prompt .u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
