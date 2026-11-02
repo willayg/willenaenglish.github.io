@@ -417,6 +417,31 @@ export default {
         if (!who || !['teacher','admin'].includes(String(who.role||'').toLowerCase())) {
           return jsonResponse({error:'Teacher access required'},403,origin);
         }
+        const thisMonth = new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'}).slice(0,7);
+        if(month === thisMonth){
+          const next=new Date(Date.UTC(+month.slice(0,4),+month.slice(5),1)).toISOString().slice(0,10);
+          const daily=await supabaseSelect(env,'student_daily_stats','date=gte.'+month+'-01&date=lt.'+next+'&select=user_id,class,points_earned,stars_earned,date&limit=10000');
+          const permitted=new Set(['brown','stanford','manchester','new york','hawaii','boston','sydney','berkeley','chicago','cambridge','yale','princeton','oxford','mit','pre-harvard']);
+          const byUser=new Map();
+          daily.forEach(d=>{
+            const cls=String(d.class||'').toLowerCase().trim();
+            if(!permitted.has(cls)||!d.user_id)return;
+            const row=byUser.get(d.user_id)||{user_id:d.user_id,class_name:d.class,points:0,stars:0,last:''};
+            row.points+=Number(d.points_earned)||0;row.stars+=Number(d.stars_earned)||0;
+            if(d.date>=row.last){row.class_name=d.class;row.last=d.date}
+            byUser.set(d.user_id,row);
+          });
+          const ranked=[...byUser.values()];
+          const profiles=[];
+          for(let i=0;i<ranked.length;i+=90)
+            profiles.push(...await supabaseSelect(env,'profiles','id=in.('+ranked.slice(i,i+90).map(x=>x.user_id).join(',')+')&select=id,name,korean_name&limit=100'));
+          const names=new Map(profiles.map(p=>[p.id,p]));
+          ranked.forEach(x=>{x.student_name=names.get(x.user_id)?.name||'Student';x.korean_name=names.get(x.user_id)?.korean_name||'';x.super_points=Math.round(x.points*x.stars/1000)});
+          ranked.sort((a,b)=>b.points*b.stars-a.points*a.stars||b.points-a.points);
+          const counts=new Map();let previous=null,rank=0;
+          ranked.forEach((x,i)=>{const score=x.points*x.stars;if(score!==previous){rank=i+1;previous=score}x.global_rank=rank;const key=x.class_name.toLowerCase().trim();x.class_rank=(counts.get(key)||0)+1;counts.set(key,x.class_rank)});
+          return jsonResponse({success:true,month,live:true,rows:ranked.filter(x=>x.class_rank===1||x.global_rank<=10)},200,origin);
+        }
         const rows = await supabaseSelect(env,'teacher_class_leader_snapshots',
           'month_start=eq.'+month+'-01&selected=eq.true&select=class_name,student_name,korean_name,super_points,class_rank,global_rank&order=class_rank.asc&limit=100');
         return jsonResponse({success:true,month,rows},200,origin);
