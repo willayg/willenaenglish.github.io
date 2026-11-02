@@ -9,3 +9,12 @@
 .grammar-empty-card p{margin:0;color:var(--muted,#6f8190);font-size:.91rem}
 .grammar-shell-version{text-align:center;padding:10px 12px 60px;color:var(--muted,#6f8190);font-size:11px}
 .grammar-book-shell .vocab-theme-footer{margin-top:auto}
+
+/* Reuse Word Genius book card and shared mission basket proportions. */
+.grammar-book-shell .app-mission-basket-slot .dashboard-mission-basket{width:100%;max-width:none;margin:12px 0 20px}
+.grammar-book-shell .app-mission-basket-slot:empty{display:none}
+.grammar-book-shell [hidden]{display:none!important}
+.grammar-book-shell .grammar-book-title{font-size:clamp(20px,4vw,28px);color:var(--vocab-heading,#244f56);margin:20px 0 0}
+.grammar-book-shell .vocab-front-book-list{display:grid;gap:12px}
+.grammar-book-shell .vocab-front-book-card{width:100%;text-align:left}
+.grammar-book-shell .vocab-front-empty{padding:20px;text-align:center;color:var(--muted,#6f8190)}
