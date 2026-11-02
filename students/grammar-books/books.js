@@ -35,7 +35,7 @@ function renderModeCards(){
 function showBook(book,push=true){
  if(!book)return;activeBook=book;activeMode=null;
  title.textContent=book.title;home.hidden=true;detail.hidden=false;
- $('grammarModePanel').hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;$('grammarQuestionBottom').hidden=true;
+ $('grammarModePanel').hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;
  const playable=book.title.trim()==='Grammar Ten 완성 2';
  $('grammarUnitTitle').textContent=playable?'CHAPTER 1 · UNIT 01 · be동사의 현재형':'이 교재의 문법 활동은 준비 중이에요.';
  const strip=$('grammarUnitStrip');
@@ -47,7 +47,7 @@ function showBook(book,push=true){
  if(push)updateUrl(book.id);
  window.scrollTo(0,0);
 }
-function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;$('grammarQuestionBottom').hidden=true;if(push)updateUrl();window.scrollTo(0,0)}
+function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;if(push)updateUrl();window.scrollTo(0,0)}
 function toSharedQuestion(q){
  return {id:q.id,form:'choice',prompt:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:activeMode==='hunt'?{underlined_spans:q.options}: {},metadata:{sourceKey:q.id,practiceType:'grammar_books'}};
 }
@@ -62,7 +62,7 @@ function renderQuestion(){
  const host=old.cloneNode(false);old.replaceWith(host);
  renderer=new grammarEngine.QuestionRenderer(host).render(toSharedQuestion(q),{onChange:(_,has)=>{if(!checked)$('grammarCheck').disabled=!has}});
  $('grammarNext').hidden=true;$('grammarNext').classList.remove('is-next');$('grammarCheck').hidden=false;$('grammarCheck').disabled=true;$('grammarSkip').hidden=false;
- $('grammarQuestionBottom').hidden=false;
+ 
  checked=false;
 }
 function startMode(mode){
@@ -70,7 +70,7 @@ function startMode(mode){
  const panel=$('grammarModeCards');panel.setAttribute('aria-busy','true');
  loadQuestions().then(()=>{
   activeMode=mode;position=0;correct=0;checked=false;
-  $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;$('grammarQuestionBottom').hidden=false;
+  $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;
   renderQuestion();window.scrollTo(0,0);
  }).catch(err=>{console.error(err);$('grammarNotReady').textContent='문제를 불러오지 못했어요. 다시 시도해 주세요.';$('grammarNotReady').hidden=false}).finally(()=>panel.removeAttribute('aria-busy'));
 }
@@ -87,7 +87,7 @@ async function checkAnswer(){
  $('grammarNext').textContent=position===questionBank()[activeMode].length-1?'Finish':'Next Question →';
 }
 function finishRound(){
- $('grammarRound').hidden=true;$('grammarResult').hidden=false;$('grammarQuestionBottom').hidden=true;
+ $('grammarRound').hidden=true;$('grammarResult').hidden=false;
  const total=questionBank()[activeMode].length;
  $('grammarResultScore').textContent=correct+' / '+total;
  $('grammarResultPercent').textContent=Math.round(correct/total*100)+'%';
@@ -95,7 +95,7 @@ function finishRound(){
  window.scrollTo(0,0);
 }
 function goToModes(){
- $('grammarRound').hidden=true;$('grammarResult').hidden=true;$('grammarQuestionBottom').hidden=true;$('grammarModePanel').hidden=false;activeMode=null;window.scrollTo(0,0);
+ $('grammarRound').hidden=true;$('grammarResult').hidden=true;$('grammarModePanel').hidden=false;activeMode=null;window.scrollTo(0,0);
 }
 list?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-book]');if(el)showBook(books.find(b=>String(b.id)===el.dataset.grammarBook))});
 $('grammarModeCards')?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-mode]');if(el)startMode(el.dataset.grammarMode)});
