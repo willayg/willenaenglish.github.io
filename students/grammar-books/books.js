@@ -40,7 +40,7 @@ async function loadBookUnits(book){
 }
 function selectUnit(number){
  activeUnit=number;const unit=units.find(u=>Number(u.unit_number)===number);
- $('grammarUnitStrip').querySelectorAll('[data-unit]').forEach(el=>{const active=Number(el.dataset.unit)===number;el.classList.toggle('is-active',active);active?el.setAttribute('aria-current','true'):el.removeAttribute('aria-current')});
+ $('grammarUnitStrip').querySelectorAll('[data-unit]').forEach(el=>{const active=Number(el.dataset.unit)===number;el.classList.toggle('is-current',active);active?el.setAttribute('aria-current','true'):el.removeAttribute('aria-current')});
  $('grammarUnitTitle').textContent=unit?'Unit '+number+' · '+unit.title:'Unit '+number;
  const playable=activeBook?.title.trim()==='Grammar Ten 완성 2'&&number===1;
  $('grammarModeCards').hidden=!playable;$('grammarNotReady').hidden=playable;
@@ -60,7 +60,7 @@ async function showBook(book,push=true){
  units=await loadBookUnits(book);
  if(activeBook!==book)return;
  const strip=$('grammarUnitStrip');
- strip.innerHTML=units.map(u=>'<button type="button" class="study-v2-unit-pill" data-unit="'+Number(u.unit_number)+'">Unit '+Number(u.unit_number)+'</button>').join('');
+ strip.innerHTML=units.map(u=>'<button type="button" class="study-v2-unit" data-unit="'+Number(u.unit_number)+'">Unit '+Number(u.unit_number)+'</button>').join('');
  strip.hidden=!units.length;
  if(units.length)selectUnit(Number(units[0].unit_number));
  else {$('grammarUnitTitle').textContent='등록된 단원이 없습니다.';$('grammarNotReady').hidden=false;}
