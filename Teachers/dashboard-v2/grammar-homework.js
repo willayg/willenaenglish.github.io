@@ -103,7 +103,7 @@ function paintStudentView(){
    el.querySelectorAll('[data-gf-student]').forEach(next=>{if(next.dataset.gfStudent===id)next.focus({preventScroll:true})});
  });
 }
-function paintBatchView(){
+async function paintBatchView(){
  const el=$('#gfHwManageBody');if(!el)return;
  const entries=state.items.filter(a=>state.filter==='history'?!a.active:a.active);
  const shared=window.WillenaGeniusHomeworkCard;
@@ -116,6 +116,25 @@ function paintBatchView(){
  })).join('')+'</div>';
  void shared.hydrateTeachers(el);
  const cards=[...el.querySelectorAll('.genius-homework-card')];
+ // Batch existing authorized per-assignment results; use original RPCs on failure.
+ if(entries.length){
+  try{
+   const batch=await request(OP+'/rest/v1/rpc/gf_hw_progress_batch_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_ids:entries.map(a=>a.id)})});
+   if(!Array.isArray(batch))throw Error('Invalid batch response');
+   const lookup=new Map(batch.map(data=>[String(data.assignment_id),data]));
+   for(const a of entries){
+    const card=cards.find(c=>c.dataset.geniusCard===String(a.id));
+    if(!card||!card.isConnected)continue;
+    const data=lookup.get(String(a.id));if(!data)continue;
+    const total=Number(data.total)||0,done=Number(data.completed)||0;
+    shared.updateRing(a.id,total>0?100*done/total:null,el);
+    const detail=card.querySelector('#gfHwDetail-'+CSS.escape(String(a.id)));
+    if(detail)detail.innerHTML='<div class="gf-hw-progress-summary">'+done+'/'+total+' students completed</div>'+
+     '<div class="gf-hw-students">'+(data.students||[]).map(st=>'<div class="gf-hw-student"><span>'+esc(st.korean_name||st.name||'Student')+'</span><span>'+esc(st.attempts?'Best '+st.best_score+'/'+st.total:'Not started')+'</span><strong class="'+(st.complete?'gf-hw-done':'')+'">'+(st.complete?'Complete':esc(st.percent)+'%')+'</strong></div>').join('')+'</div>';
+   }
+   return;
+  }catch(error){console.warn('Grammar batch unavailable, falling back',error);}
+ }
  // Class progress is calculated from each assignment's actual pass records.
  let index=0;
  async function work(){
