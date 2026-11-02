@@ -24,7 +24,8 @@ label{display:flex;gap:10px;align-items:center;padding:12px 0}input{width:19px;h
 <label><input type="checkbox" id="confirm" disabled> I understand this sends concurrent requests to production.</label>
 <div class="grid"><button data-count="15" disabled>Run 15</button><button data-count="30" disabled>Run 30</button><button data-count="50" disabled>Run 50</button></div>
 <p class="muted">Progression is gated: 30 unlocks only after 15 succeeds; 50 unlocks only after 30 succeeds. A stage fails if any request fails or p95 exceeds 5 seconds.</p></section>
-<section class="card"><strong>Ghost account setup</strong><p id="ghostStatus" role="status">Checking provisioning service…</p><p id="ghostProgress" class="muted">0 of 50 created</p><button type="button" id="ghostCreate" disabled>Create 50 Ghosts</button> <button type="button" id="ghostStop" disabled>Stop</button><p class="muted">Creates accounts one at a time. If interrupted, reload and resume. The server must be installed first; no secret keys are stored here.</p></section><section class="card"><strong>Results</strong><div class="grid" style="margin-top:12px"><div class="metricBox">Completed<strong class="metric" id="success">—</strong></div><div class="metricBox">p95 latency<strong class="metric" id="p95">—</strong></div><div class="metricBox">Failures<strong class="metric" id="fail">—</strong></div></div><p id="summary" role="status" class="muted">No test run yet.</p></section>
+<section class="card"><strong>Ghost account setup</strong><p id="ghostStatus" role="status">Checking provisioning service…</p><p id="ghostProgress" class="muted">0 of 50 created</p><button type="button" id="ghostCreate" disabled>Create 50 Ghosts</button> <button type="button" id="ghostStop" disabled>Stop</button><p class="muted">Creates accounts one at a time. If interrupted, reload and resume. The server must be installed first; no secret keys are stored here.</p></section><section class="card"><strong>Endurance test · 1,000 requests</strong><p class="muted">20 batches of 50 mixed read-only RPC requests, with an 8-second rest between batches. Aborts on any failed request or p95 above 5,000 ms. No score writes.</p><p id="enduranceStatus" role="status">Ready after admin verification.</p><button id="enduranceStart" type="button" disabled>Run 1,000 requests</button> <button id="enduranceStop" type="button" disabled>Stop</button><div id="enduranceProgress" class="muted" style="margin-top:12px">0 / 1,000 completed</div></section>
+<section class="card"><strong>Results</strong><div class="grid" style="margin-top:12px"><div class="metricBox">Completed<strong class="metric" id="success">—</strong></div><div class="metricBox">p95 latency<strong class="metric" id="p95">—</strong></div><div class="metricBox">Failures<strong class="metric" id="fail">—</strong></div></div><p id="summary" role="status" class="muted">No test run yet.</p></section>
 <section class="card"><strong>Run history</strong><pre id="log">Awaiting admin verification…</pre></section>
 </main>
 <script type="module">
@@ -35,7 +36,7 @@ const log=s=>{$('log').textContent=new Date().toLocaleTimeString()+' · '+s+'\n'
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 async function call(body){const t=token();if(!t)throw Error("Sign in to the Teachers Dashboard first");const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify(body)});const p=await r.json().catch(()=>({}));if(!r.ok)throw Error(p.error||'Request failed');return p}
 function update(){for(const b of buttons)b.disabled=!ready||busy||!$('confirm').checked||Number(b.dataset.count)>level}
-async function init(){try{const mod=await import('/Teachers/auth-refresh.js');await mod.ensureTeacherSession();const r=await call({action:'status'});if(!r.ready)throw Error('Service not ready');ready=true;$('confirm').disabled=false;$('status').textContent='Administrator verified. Read-only requests only.';log('Admin verified; ready for 15-request stage.')}catch(e){$('status').textContent='Access denied or session unavailable: '+e.message;log('Access unavailable: '+e.message)}update()}
+async function init(){try{const mod=await import('/Teachers/auth-refresh.js');await mod.ensureTeacherSession();const r=await call({action:'status'});if(!r.ready)throw Error('Service not ready');ready=true;$('confirm').disabled=false;$('enduranceStart').disabled=false;$('status').textContent='Administrator verified. Read-only requests only.';log('Admin verified; ready for 15-request stage.')}catch(e){$('status').textContent='Access denied or session unavailable: '+e.message;log('Access unavailable: '+e.message)}update()}
 async function run(n){if(!ready||busy||n>level||!$('confirm').checked)return;busy=true;update();$('summary').textContent='Running '+n+' concurrent read-only requests…';log('Stage '+n+' started');try{const r=await call({action:'run',students:n});$('success').textContent=r.success+'/'+r.stage;$('p95').textContent=r.p95_ms+' ms';$('fail').textContent=r.failed;$('summary').textContent='Wall: '+r.wall_ms+' ms · Median: '+r.median_ms+' ms · '+(r.failed===0&&r.p95_ms<=5000?'PASSED':'STOP: threshold exceeded');log(JSON.stringify(r));if(r.failed===0&&r.p95_ms<=5000)level=n===15?30:n===30?50:50;else {ready=false;$('status').textContent='Stopped: stage failed. Reload to start again at 15.'}}catch(e){ready=false;$('summary').textContent='Stopped: '+e.message;$('status').textContent='Stage error: reload to restart';log('ERROR '+e.message)}finally{busy=false;update()}}
 
 const GHOST_URL="https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/willena-ghost-provision-one-v1";
@@ -45,5 +46,30 @@ async function checkGhosts(){try{const d=await ghostApi("status");if(!d.ready)th
 $("ghostCreate").addEventListener("click",async()=>{if(!ghostReady||ghostWorking)return;ghostWorking=true;ghostStopping=false;$("ghostCreate").disabled=true;$("ghostStop").disabled=false;try{for(let i=0;i<50&&!ghostStopping;i++){const d=await ghostApi("create_one");$("ghostProgress").textContent=d.created+" of "+d.total+" created";$("ghostStatus").textContent=d.complete?"All accounts created":"Last created: "+d.label;if(d.complete)break;await new Promise(r=>setTimeout(r,400))}}catch(e){$("ghostStatus").textContent="Stopped: "+e.message}finally{ghostWorking=false;$("ghostStop").disabled=true;$("ghostCreate").disabled=!ghostReady}});
 $("ghostStop").addEventListener("click",()=>{ghostStopping=true;$("ghostStatus").textContent="Stopping after current account…"});
 
+
+let enduranceRunning=false,enduranceStop=false;
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function enduranceTest(){
+if(!ready||busy||enduranceRunning||!$('confirm').checked)return;
+enduranceRunning=true;enduranceStop=false;busy=true;update();
+$('enduranceStart').disabled=true;$('enduranceStop').disabled=false;
+let sent=0,successful=0;const started=performance.now();
+try{
+for(let batch=1;batch<=20&&!enduranceStop;batch++){
+$('enduranceStatus').textContent='Batch '+batch+' / 20 in progress';
+const r=await call({action:'run',students:50});
+sent+=r.stage||50;successful+=r.success||0;
+$('enduranceProgress').textContent=sent+' / 1,000 attempted · '+successful+' successful · '+Math.round(performance.now()-started)+' ms elapsed';
+log('Endurance '+batch+'/20: '+JSON.stringify({successful:r.success,failed:r.failed,p95_ms:r.p95_ms,median_ms:r.median_ms}));
+if(r.failed>0||r.p95_ms>5000){$('enduranceStatus').textContent='Automatic stop: errors or p95 over 5 seconds at batch '+batch;break}
+if(batch<20){$('enduranceStatus').textContent='Batch '+batch+' passed. Cooling down…';await sleep(8000);}
+}
+if(enduranceStop)$('enduranceStatus').textContent='Stopped by admin after '+sent+' requests';
+else if(sent===1000&&successful===1000)$('enduranceStatus').textContent='PASSED: 1,000 / 1,000 successful';
+}catch(e){$('enduranceStatus').textContent='Stopped: '+e.message;log('Endurance error: '+e.message)}
+finally{enduranceRunning=false;busy=false;$('enduranceStop').disabled=true;$('enduranceStart').disabled=!ready;update();}
+}
+$('enduranceStart').addEventListener('click',enduranceTest);
+$('enduranceStop').addEventListener('click',()=>{enduranceStop=true;$('enduranceStatus').textContent='Stop requested; finishing current batch…';});
 buttons.forEach(b=>b.addEventListener('click',()=>run(Number(b.dataset.count))));$('confirm').addEventListener('change',update);init();checkGhosts();
 </script></body></html>
