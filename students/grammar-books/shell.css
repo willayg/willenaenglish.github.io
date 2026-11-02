@@ -15,19 +15,9 @@
 .grammar-book-shell .app-mission-basket-slot:empty{display:none}
 .grammar-book-shell [hidden]{display:none!important}
 .grammar-book-shell .grammar-book-title{font-size:clamp(20px,4vw,28px);color:var(--vocab-heading,#244f56);margin:20px 0 0}
-.grammar-book-shell .vocab-front-book-list{display:grid;gap:12px}
-.grammar-book-shell .vocab-front-book-card{width:100%;text-align:left}
 .grammar-book-shell .vocab-front-empty{padding:20px;text-align:center;color:var(--muted,#6f8190)}
 
-/* Three Grammar Genius textbook modes, using Word Genius visual tokens. */
-.grammar-unit-card,.grammar-question-card,.grammar-result-card{background:var(--vocab-card,#fff);border:2px solid var(--vocab-border,#c9f1f4);border-radius:20px;padding:20px;margin:18px 0;color:var(--ink,#173f46)}
-.grammar-unit-card{display:flex;flex-direction:column;gap:8px}.grammar-unit-card strong{font-size:17px}
-.grammar-mode-heading{display:flex;flex-direction:column;gap:4px;margin:24px 0 12px;color:var(--vocab-heading,#244f56)}.grammar-mode-heading strong{font-size:18px}
-.grammar-mode-cards{display:grid;gap:12px}
-.grammar-mode-card{display:flex;gap:14px;align-items:center;width:100%;padding:17px 20px;border:2px solid var(--vocab-border,#c9f1f4);border-radius:20px;background:var(--vocab-card,#fff);color:var(--ink,#173f46);cursor:pointer;text-align:left}
-.grammar-mode-card:hover,.grammar-mode-card:focus-visible{border-color:var(--pink,#ff0a8a);transform:translateY(-1px)}
-.grammar-mode-icon{display:grid;place-items:center;width:54px;height:54px;flex:0 0 54px;border:2px solid var(--vocab-border,#c9f1f4);border-radius:16px;font-size:26px;color:var(--pink,#ff0a8a);font-weight:900}
-.grammar-mode-copy{display:flex;flex-direction:column;gap:4px;flex:1}.grammar-mode-copy strong{font-size:17px}.grammar-mode-copy small{color:var(--muted,#6f8190);font-size:13px}
+/* Cards, unit strip, skill journey and golden-unit styles come exclusively from /students/vocab-study/vocab-study.css and /students/study-v2/v2.css. */
 .grammar-progress-track{height:9px;border-radius:99px;overflow:hidden;background:var(--vocab-track,#dff3f5);margin:17px 0}
 .grammar-progress-fill{height:100%;width:0;background:var(--pink,#ff0a8a);transition:width .2s}
 .grammar-question-card{padding:clamp(16px,4vw,28px)}.grammar-question-card h2{font-size:clamp(19px,4vw,26px);line-height:1.45;margin:16px 0 23px}
