@@ -66,6 +66,7 @@ async function get(path,options={}){
  }
  const body=await response.json().catch(()=>null);
  if(!response.ok)throw Error(body?.message||body?.error||'Request failed '+response.status);
+ if(['PATCH','DELETE','PUT'].includes(String(options.method||'GET').toUpperCase()) || (String(options.method||'GET').toUpperCase()==='POST'&&!path.startsWith('rpc/')))invalidateOverviewCache();
  return body;
 }
 async function teacherIdentity(){
@@ -276,8 +277,29 @@ async function editHomework(row,teacher,afterSave){
   }catch(err){status.textContent=err.message;save.disabled=false}
  });
 }
-async function loadOverview(scopeName='my'){
+// Pass 1: shared 60-second read cache for the My/All assignment overview.
+const overviewReadCache=new Map();
+const OVERVIEW_CACHE_MS=60000;
+let overviewGeneration=0;
+function invalidateOverviewCache(){
+ overviewReadCache.clear();
+ overviewGeneration++;
+}
+function overviewGet(path,options={}){
+ const method=String(options.method||'GET').toUpperCase();
+ const key=[access().split('.')[1]||'',method,path,options.body||''].join('|');
+ const existing=overviewReadCache.get(key);
+ if(existing&&existing.expires>Date.now())return existing.promise;
+ const entry={expires:Date.now()+OVERVIEW_CACHE_MS,promise:get(path,options)};
+ overviewReadCache.set(key,entry);
+ entry.promise.catch(()=>{if(overviewReadCache.get(key)===entry)overviewReadCache.delete(key)});
+ return entry.promise;
+}
+window.addEventListener('ua:assignments-changed',invalidateOverviewCache);
+async function loadOverview(scopeName='my',force=false){
  const host=document.querySelector('#uaOverview');if(!host)return;
+ if(force)invalidateOverviewCache();
+ const generation=++overviewGeneration;
  host.textContent='Loading assignments across apps…';
  try{
   const teacher=await teacherIdentity();
@@ -289,7 +311,7 @@ async function loadOverview(scopeName='my'){
    {app:'내신',table:'test_prep_tasks',select:'id,created_by,title,lesson,practice_type,active,created_at,due_at,completed_at,student_id,target_count',label:r=>r.title||[r.lesson,r.practice_type].filter(Boolean).join(' · '),isActive:r=>r.active!==false}
   ];
   const fetched=await Promise.allSettled(sources.map(async source=>{
-   const rows=await get(source.table+'?select='+encodeURIComponent(source.select)+'&order=created_at.desc&limit=1000');
+   const rows=await overviewGet(source.table+'?select='+encodeURIComponent(source.select)+'&order=created_at.desc&limit=1000');
    return rows.map(row=>{
     let app=source.app;
     if(source.table==='homework_assignments'){
@@ -310,48 +332,49 @@ async function loadOverview(scopeName='my'){
   const studentIds=[...new Set(rows.map(r=>id(r.student_id)).filter(Boolean))];
   let students=new Map();
   if(studentIds.length)try{
-   const profiles=await get('profiles?select=id,name,username,korean_name,class&id=in.('+studentIds.join(',')+')');
+   const profiles=await overviewGet('profiles?select=id,name,username,korean_name,class&id=in.('+studentIds.join(',')+')');
    students=new Map(profiles.map(p=>[id(p.id),p]));
   }catch(e){errors.push('Student names: '+e.message)}
   const creators=[...new Set(rows.map(r=>id(r.created_by)).filter(Boolean))];
   let authors=new Map();
   if(creators.length)try{
-   const profiles=await get('profiles?select=id,name,username&id=in.('+creators.join(',')+')');
+   const profiles=await overviewGet('profiles?select=id,name,username&id=in.('+creators.join(',')+')');
    authors=new Map(profiles.map(p=>[id(p.id),p.name||p.username||'Unknown']));
   }catch(e){errors.push('Teacher names: '+e.message)}
   let classProgress=new Map();
   try{
-   const stats=await get('rpc/teacher_homework_class_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   const stats=await overviewGet('rpc/teacher_homework_class_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    if(Array.isArray(stats))classProgress=new Map(stats.map(x=>[id(x.id),x]));
   }catch(e){errors.push('Class progress: '+e.message)}
   let wordClassProgress=new Map();
   try{
-   const stats=await get('rpc/teacher_word_homework_class_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   const stats=await overviewGet('rpc/teacher_word_homework_class_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    if(Array.isArray(stats))wordClassProgress=new Map(stats.map(x=>[id(x.id),x]));
   }catch(e){errors.push('Word class activity: '+e.message)}
   let writingProgress=new Map();
   try{
-   const stats=await get('rpc/teacher_creative_writing_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   const stats=await overviewGet('rpc/teacher_creative_writing_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    if(Array.isArray(stats))writingProgress=new Map(stats.map(x=>[id(x.id),x]));
   }catch(e){errors.push('Writing progress: '+e.message)}
   let writingSentenceProgress=new Map();
   try{
-   const stats=await get('rpc/teacher_writing_sentence_homework_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   const stats=await overviewGet('rpc/teacher_writing_sentence_homework_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    if(Array.isArray(stats))writingSentenceProgress=new Map(stats.map(x=>[id(x.id),x]));
   }catch(e){errors.push('Sentence writing progress: '+e.message)}
   let puzzleProgress=new Map();
   try{
-   const stats=await get('rpc/teacher_puzzle_homework_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   const stats=await overviewGet('rpc/teacher_puzzle_homework_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    if(Array.isArray(stats))puzzleProgress=new Map(stats.map(x=>[id(x.id),x]));
   }catch(e){errors.push('Puzzle progress: '+e.message)}
   const naesin=rows.filter(r=>r.app==='내신');
   let progress=new Map();
   if(naesin.length)try{
-   const results=await get('rpc/test_prep_assignment_results_v1',{
+   const results=await overviewGet('rpc/test_prep_assignment_results_v1',{
     method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_group_id:null})
    });
    if(Array.isArray(results))progress=new Map(results.map(x=>[id(x.task_id),x]));
   }catch(e){errors.push('내신 progress: '+e.message)}
+  if(generation!==overviewGeneration||!host.isConnected)return;
   function renderOverview(){
    const now=Date.now();
    const overdue=r=>r.due_at&&Date.parse(r.due_at)<now;
@@ -442,7 +465,7 @@ async function loadOverview(scopeName='my'){
      }).join('')+(visible.length?'</div></div>':'')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
      '<p class="ua-note">Past-due homework appears in Complete automatically. ✓ closes one assignment; check boxes and Complete selected close several. Student attempts and results remain preserved.</p>';
    attachHomeworkGroupToggles(host);
-   host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName);
+   host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName,true);
    host.querySelectorAll('[data-ua-stage]').forEach(button=>button.onclick=()=>{overviewStage=button.dataset.uaStage;overviewSelections.clear();renderOverview()});
    host.querySelectorAll('[data-ua-detail]').forEach(button=>button.onclick=()=>{
     const index=Number(button.dataset.uaDetail);
@@ -544,7 +567,7 @@ async function loadOverview(scopeName='my'){
    if(bulk)bulk.onclick=()=>completeRows(selectable.filter(row=>overviewSelections.has(homeworkKey(row))));
   }
   renderOverview();
- }catch(e){host.innerHTML='<p class="ua-empty">Could not load homework: '+esc(e.message)+'</p>'}
+ }catch(e){if(generation===overviewGeneration&&host.isConnected)host.innerHTML='<p class="ua-empty">Could not load homework: '+esc(e.message)+'</p>'}
 }
 async function loadCalendar(){
  const host=document.querySelector('#uaCalendar');if(!host)return;
