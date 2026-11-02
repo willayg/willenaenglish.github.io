@@ -412,6 +412,14 @@ async function navigationGuard(prev,next){
   setSessionProtection(true);
   const ok=await confirmSessionExit();if(ok)sessionStore.setActive(false);return ok;
 }
+const grammarPath=new URLSearchParams(location.search).get('path')==='books'?'books':'naesin';
+const grammarBookOutline=[["현재시제",["be동사의 현재형","일반동사의 현재형","현재시제의 의문문"]],["과거시제",["be동사의 과거형","일반동사의 과거형"]],["진행시제, 미래시제",["현재진행시제, 과거진행시제","진행시제의 부정문과 의문문","미래를 나타내는 will, be going to"]],["조동사",["can, may","must, have to, should"]],["명사",["명사","관사","인칭대명사"]],["형용사, 부사",["형용사","부사","비교 표현 (원급, 비교급, 최상급)"]],["to부정사, 동명사",["to부정사의 명사적 용법","to부정사의 형용사적 & 부사적 용법","동명사"]],["전치사",["시간을 나타내는 전치사","장소를 나타내는 전치사, 기타 전치사"]],["접속사",["and, but, or, so","when, before, after","because, if, that"]],["문장의 형태",["There is/are, 감각동사+형용사","수여동사+간접목적어+직접목적어","동사+목적어+목적격보어"]],["의문사 의문문, 명령문, 감탄문",["의문사가 있는 의문문 1","의문사가 있는 의문문 2","부가의문문, 선택의문문, 부정의문문","명령문, 감탄문"]]];
+function renderBookHome(){
+ setBottom('');
+ document.querySelector('.header-title').textContent='Grammar Genius';
+ document.getElementById('gfHomeButton')?.setAttribute('aria-label','Textbook grammar home');
+ root.innerHTML='<h1 class="gf-title">Grammar Genius</h1><div class="gf-kicker">교재별 문법 학습 · Textbooks</div><p class="gf-subtitle">Choose your textbook. Grammar Ten 2 is registered; practice questions are being prepared.</p><section class="gf-book-browser"><div class="gf-book-header"><strong>Grammar Ten 완성 2</strong><span>11 chapters · 31 units</span></div>'+grammarBookOutline.map(([chapter,units],i)=>'<details class="gf-book-chapter"><summary>Chapter '+(i+1)+' · '+esc(chapter)+'</summary>'+units.map((t,j)=>'<div class="gf-book-unit"><span>'+esc(t)+'</span><small>준비 중</small></div>').join('')+'</details>').join('')+'</section><p class="gf-book-note">Existing Grammar Genius 내신 exercises remain available through the other dashboard icon.</p>';
+}
 function renderRoute(route,meta={}){
   hideWillenaKeyboard();
   window.dispatchEvent(new CustomEvent('grammar-genius:route-change',{detail:{view:route.view}}));
@@ -430,6 +438,7 @@ function renderRoute(route,meta={}){
 }
 
 document.getElementById('gfHomeButton')?.addEventListener('click',()=>{
+  if(grammarPath==='books'){renderBookHome();window.scrollTo({top:0,behavior:'smooth'});return;}
   if(!nav)return;
   if(nav.currentRoute()?.view==='home'){
     window.scrollTo({top:0,behavior:'smooth'});
@@ -448,6 +457,7 @@ subscribeStudentHeaderData(data=>{
 });
 
 async function boot(){
+  if(grammarPath==='books'){renderBookHome();return;}
   root.innerHTML='<div class="loading">Loading Grammar Genius…</div>';
   try{
     await Promise.all([loadCatalog(),loadProgress()]);
