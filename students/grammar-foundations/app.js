@@ -223,8 +223,9 @@ function savedSessionHomeCard(){
   return '<button type="button" class="gf-resume-card" id="gfResumeSession"><span class="gf-resume-icon" aria-hidden="true">↪</span><span><strong>이어서 학습하기 · Continue</strong><small>'+esc(koTitle(mod))+' · Level '+esc(stage.number)+' · '+position+'/'+stage.questions.length+'</small></span><span class="gf-resume-arrow" aria-hidden="true">→</span></button>';
 }
 function renderHome(){
+  document.querySelector('.header-title').textContent='Grammar Genius 내신';
   state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};setBottom('');
-  root.innerHTML=`<h1 class="gf-title">Grammar Genius</h1><div class="gf-kicker gf-title-en">중학교 문법 기초 학습</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p>${savedSessionHomeCard()}${homeworkCards(grammarHomework,progressMap)}<div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
+  root.innerHTML=`<h1 class="gf-title">Grammar Genius 내신</h1><div class="gf-kicker gf-title-en">중학교 문법 기초 학습</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p>${savedSessionHomeCard()}${homeworkCards(grammarHomework,progressMap)}<div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
   root.querySelectorAll('[data-open-group]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'group',group:Number(btn.dataset.openGroup)}));
   root.querySelectorAll('[data-homework-stage]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'practice',moduleId:btn.dataset.homeworkModule,stageId:btn.dataset.homeworkStage}));
   document.getElementById('gfResumeSession')?.addEventListener('click',()=>{
