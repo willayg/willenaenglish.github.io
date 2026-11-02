@@ -27,10 +27,14 @@ const ids=actors.map(x=>x.profile_id);
 const filter="("+ids.join(",")+")";
 const ghosts=(await api("/rest/v1/profiles?select=id,is_ghost,role,class&id=in."+encodeURIComponent(filter))).data;
 if(ghosts.length!==LEVEL||ghosts.some(p=>p.is_ghost!==true||p.role!=="student"||p.class!=="Load Test"))throw Error("Ghost-only verification failed");
-const fixtures=(await api("/rest/v1/study_attempts?select=book_id,unit_id,content_id,mastery_content_id,content_type,skill,response_type,activity_id&book_id=not.is.null&unit_id=not.is.null&content_id=not.is.null&limit=250")).data.filter(x=>x.book_id&&x.unit_id&&x.content_id&&x.mastery_content_id);
-if(fixtures.length<2)throw Error("Insufficient genuine study fixtures");
-const choices=fixtures.filter(x=>["grammar","spelling","speaking","vocabulary","reading","conversation","listening"].includes(x.skill));
-if(!choices.length)throw Error("No usable study fixture skills");
+const skillKinds=["vocabulary","spelling","speaking","grammar","sentence_building","sentence_unscramble","sentence_coach","listening","conversation"];
+const fixtures=[];
+for(const skill of skillKinds){
+ const rows=(await api("/rest/v1/study_attempts?select=book_id,unit_id,content_id,mastery_content_id,content_type,skill,response_type,activity_id&book_id=not.is.null&unit_id=not.is.null&content_id=not.is.null&skill=eq."+skill+"&limit=18")).data;
+ fixtures.push(...rows.filter(x=>x.book_id&&x.unit_id&&x.content_id&&x.mastery_content_id));
+}
+if(fixtures.length<9)throw Error("Insufficient genuine study fixtures");
+const choices=fixtures;
 console.log("Verified",LEVEL,"ghost-only profiles. Fixture skills:",[...new Set(choices.map(x=>x.skill))].join(", "));
 const report={started_at:new Date().toISOString(),actors:LEVEL,rounds:ROUNDS,mode:"study_rpc_real_writes",results:[],notes:["No genuine profile IDs are used.","Test Prep answer-write path not included in this version."]};
 function percentile(vals,n){const x=vals.slice().sort((a,b)=>a-b);return x[Math.max(0,Math.ceil(x.length*n)-1)]||0}
