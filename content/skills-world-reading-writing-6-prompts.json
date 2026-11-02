@@ -1,0 +1,269 @@
+{
+  "book": "Oxford Skills World Reading with Writing 6",
+  "prompts": [
+    {
+      "id": "skillsworld6-u1-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 1,
+      "title": "Describe an Amazing Sea Animal",
+      "prompt": "Write about \"Describe an Amazing Sea Animal\". Follow the Unit 1 writing goal: Detailed description. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Detailed description",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u1-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 1,
+      "title": "Describe an Underwater Exhibit",
+      "prompt": "Write about \"Describe an Underwater Exhibit\". Follow the Unit 1 writing goal: Detailed description. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Detailed description",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u2-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 2,
+      "title": "My First Diving Adventure",
+      "prompt": "Write about \"My First Diving Adventure\". Follow the Unit 2 writing goal: Sequencing. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Sequencing",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u2-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 2,
+      "title": "A Surprising Sea Animal",
+      "prompt": "Write about \"A Surprising Sea Animal\". Follow the Unit 2 writing goal: Sequencing. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Sequencing",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u3-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 3,
+      "title": "A Safety Magazine Article",
+      "prompt": "Write about \"A Safety Magazine Article\". Follow the Unit 3 writing goal: Magazine article. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Magazine article",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u3-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 3,
+      "title": "What to Wear on an Adventure",
+      "prompt": "Write about \"What to Wear on an Adventure\". Follow the Unit 3 writing goal: Magazine article. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Magazine article",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u4-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 4,
+      "title": "A Magazine Guide to Winter Clothes",
+      "prompt": "Write about \"A Magazine Guide to Winter Clothes\". Follow the Unit 4 writing goal: Headlines, pictures, hook. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Headlines, pictures, hook",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u4-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 4,
+      "title": "The Best Tips for a School Trip",
+      "prompt": "Write about \"The Best Tips for a School Trip\". Follow the Unit 4 writing goal: Headlines, pictures, hook. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Headlines, pictures, hook",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u5-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 5,
+      "title": "How to Get to My School",
+      "prompt": "Write about \"How to Get to My School\". Follow the Unit 5 writing goal: Process essay. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Process essay",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u5-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 5,
+      "title": "Directions to a Museum",
+      "prompt": "Write about \"Directions to a Museum\". Follow the Unit 5 writing goal: Process essay. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Process essay",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u6-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 6,
+      "title": "How to Walk Across Town",
+      "prompt": "Write about \"How to Walk Across Town\". Follow the Unit 6 writing goal: Purpose phrases. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Purpose phrases",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u6-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 6,
+      "title": "Finding a Place by the River",
+      "prompt": "Write about \"Finding a Place by the River\". Follow the Unit 6 writing goal: Purpose phrases. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Purpose phrases",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u7-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 7,
+      "title": "A Review of a Language App",
+      "prompt": "Write about \"A Review of a Language App\". Follow the Unit 7 writing goal: Review. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Review",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u7-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 7,
+      "title": "Languages Spoken in My Community",
+      "prompt": "Write about \"Languages Spoken in My Community\". Follow the Unit 7 writing goal: Review. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Review",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u8-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 8,
+      "title": "Review a Bilingual Learning Tool",
+      "prompt": "Write about \"Review a Bilingual Learning Tool\". Follow the Unit 8 writing goal: Examples. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Examples",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u8-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 8,
+      "title": "My Favorite Foreign Language",
+      "prompt": "Write about \"My Favorite Foreign Language\". Follow the Unit 8 writing goal: Examples. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Examples",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u9-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 9,
+      "title": "Compare Two Friends",
+      "prompt": "Write about \"Compare Two Friends\". Follow the Unit 9 writing goal: Comparative report. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Comparative report",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u9-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 9,
+      "title": "How Our Personalities Are Different",
+      "prompt": "Write about \"How Our Personalities Are Different\". Follow the Unit 9 writing goal: Comparative report. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Comparative report",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u10-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 10,
+      "title": "Two People I Admire",
+      "prompt": "Write about \"Two People I Admire\". Follow the Unit 10 writing goal: Contrasts. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Contrasts",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u10-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 10,
+      "title": "An Active Person and a Quiet Person",
+      "prompt": "Write about \"An Active Person and a Quiet Person\". Follow the Unit 10 writing goal: Contrasts. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Contrasts",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u11-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 11,
+      "title": "Research an Amazing National Park",
+      "prompt": "Write about \"Research an Amazing National Park\". Follow the Unit 11 writing goal: Research report. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Research report",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u11-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 11,
+      "title": "Research a Famous Landmark",
+      "prompt": "Write about \"Research a Famous Landmark\". Follow the Unit 11 writing goal: Research report. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Research report",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u12-w1",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 12,
+      "title": "An Expedition to Antarctica",
+      "prompt": "Write about \"An Expedition to Antarctica\". Follow the Unit 12 writing goal: Synonyms. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Synonyms",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    },
+    {
+      "id": "skillsworld6-u12-w2",
+      "book_key": "book:skills_world:reading_writing:6",
+      "unit": 12,
+      "title": "Could People Live on Mars?",
+      "prompt": "Write about \"Could People Live on Mars?\". Follow the Unit 12 writing goal: Synonyms. Include an introduction, supporting details and conclusion.",
+      "grammar_focus": "Synonyms",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned prompt"
+    }
+  ]
+}
