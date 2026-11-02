@@ -652,8 +652,9 @@
             setTimeout(()=>{location.href=getNextDest()},250);
             return;
           }
-          // Backward compatibility only until both authentication Workers deploy.
-          await completeEasyLogin();
+          // Never reset passwords as a login fallback: doing so revokes
+          // otherwise valid sessions on the student's other devices.
+          throw new Error('Passwordless login session was not returned');
         } else {
           let message = (data && data.error) ? data.error : mt('notFound');
           if (typeof message === 'string') {
