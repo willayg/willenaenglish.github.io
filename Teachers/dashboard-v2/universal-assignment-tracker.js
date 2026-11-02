@@ -24,6 +24,21 @@ const dday=x=>{
  return offset===0?'D-Day':offset>0?'D-'+offset:'D+'+Math.abs(offset);
 };
 const id=x=>String(x||'');
+function sharedHomeworkGroupStart({key,title,sub,label,average=null,checkbox=''}) {
+ return '<div class="ua-group" data-ua-group="'+esc(key)+'"><div class="ua-group-top">'+checkbox+'<button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(key)+'" aria-expanded="false"><span><b>'+esc(title)+'</b><small>'+esc(sub)+'</small></span><strong>'+esc(label)+' ▾</strong></button></div>'+
+ (average===null?'':'<div class="ua-group-meter" role="progressbar" aria-label="Tracked question completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+average+'"><i style="width:'+average+'%"></i></div>')+
+ '<div class="ua-group-body" hidden>';
+}
+function attachHomeworkGroupToggles(host){
+ host.querySelectorAll('[data-ua-group-toggle]').forEach(button=>{
+  const key=button.dataset.uaGroupToggle,body=button.closest('.ua-group')?.querySelector('.ua-group-body');
+  if(!body)return;
+  body.hidden=!expandedHomeworkGroups.has(key);
+  button.setAttribute('aria-expanded',String(!body.hidden));
+  button.onclick=()=>{body.hidden=!body.hidden;button.setAttribute('aria-expanded',String(!body.hidden));if(body.hidden)expandedHomeworkGroups.delete(key);else expandedHomeworkGroups.add(key)};
+ });
+}
+
 let loading=false,selected='',all=[],scope='my',currentTeacherId='',teacherNames=new Map();
 const access=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 async function get(path,options={}){
@@ -92,9 +107,26 @@ function render(){
  options.map(g=>'<option value="'+esc(g.id)+'" '+(id(g.id)===selected?'selected':'')+'>'+esc(g.school||'')+' · '+esc(g.book_label||'')+'</option>').join('')+
  '</select><button class="control" id="uaProgressRefresh">Refresh results</button></div>'+
  '<p class="ua-tracker-summary">'+rows.length+' assignments · '+completed+' completed · '+(scope==='my'?'Current teacher · active assignments':'All teachers · active and inactive assignments')+' · Completion is not a score</p>'+
- '<div class="ua-date-groups">'+dateGroups.map(([key,items])=>'<section class="ua-date-card"><button type="button" class="ua-date-toggle" data-ua-date="'+esc(key)+'" aria-expanded="'+expandedAssignmentDates.has(key)+'"><span><strong>'+esc(assignedDateLabel(key))+'</strong><small>'+items.length+' assignments · '+new Set(items.map(t=>id(t.student_id))).size+' students</small></span><span class="ua-date-chevron">'+(expandedAssignmentDates.has(key)?'▴':'▾')+'</span></button><div class="ua-date-body" '+(expandedAssignmentDates.has(key)?'':'hidden')+'><div class="ua-progress-table-wrap"><table class="ua-progress-table"><thead><tr><th>Student</th><th>Assigned by</th><th>Lesson / Skill</th><th>Questions corrected</th><th>Accuracy</th><th>Correct</th><th>Wrong</th><th>오답 remaining</th><th>Retries</th><th>Due</th></tr></thead><tbody>'+items.map(t=>'<tr><td>'+esc(t.name)+'</td><td>'+esc(teacherNames.get(id(t.created_by))||'Unknown')+'</td><td>'+esc(t.lesson)+'<small>'+esc(t.practice_type)+'</small></td><td><b>'+t.done+'/'+t.target+' correct</b><small>'+(t.complete?'완료':'진행 중')+'</small><div class="ua-track"><i style="width:'+Math.min(100,Math.round(t.done/t.target*100))+'%"></i></div></td><td class="ua-accuracy">'+(t.verified&&t.done?esc(t.accuracy)+'%':'—')+'</td><td>'+t.correct+'/'+t.done+'</td><td>'+t.wrong+'</td><td>'+t.unresolved+'</td><td>'+t.retries+'</td><td>'+esc(dday(t.due_at))+'</td></tr>').join('')+'</tbody></table></div></div></section>').join('')+'</div>'+ (rows.length?'':'<p class="empty">No assignments found.</p>')+
+ '<div class="ua-homework-cards">'+dateGroups.map(([date,items])=>{
+   const studentMap=new Map();
+   items.forEach(t=>{const studentKey=id(t.student_id)||'unknown:'+t.name;if(!studentMap.has(studentKey))studentMap.set(studentKey,{name:t.name,items:[]});studentMap.get(studentKey).items.push(t)});
+   return '<section class="ua-naesin-date"><div class="ua-simple-date-divider"><span>'+esc(assignedDateLabel(date))+'</span></div>'+
+    [...studentMap.entries()].sort((a,b)=>a[1].name.localeCompare(b[1].name,'ko')).map(([studentId,student])=>{
+     const completedCount=student.items.filter(t=>t.complete).length;
+     const percentage=Math.round(100*student.items.reduce((sum,t)=>sum+Math.min(1,t.done/t.target),0)/student.items.length);
+     return sharedHomeworkGroupStart({key:'naesin:'+date+':'+studentId,title:student.name,sub:student.items.length+' assignments · '+completedCount+' completed',label:percentage+'% complete',average:percentage})+
+      student.items.map(t=>{
+       const pct=Math.min(100,Math.round(t.done/t.target*100));
+       return '<article class="ua-homework-card"><button class="ua-homework-detail" type="button" data-naesin-detail="'+esc(t.id)+'" aria-expanded="false"><span><b>'+esc(t.lesson||'Lesson')+'</b> · '+esc(t.practice_type||'Practice')+'</span><small>'+esc(teacherNames.get(id(t.created_by))||'Unknown')+' · '+esc(dday(t.due_at))+'</small><strong>'+t.done+'/'+t.target+' correct · '+pct+'% ▾</strong></button>'+
+        '<div class="ua-homework-expanded" hidden><p>First-try accuracy: '+(t.verified&&t.done?esc(t.accuracy)+'%':'—')+' · Correct: '+t.correct+' · Wrong: '+t.wrong+' · 오답 remaining: '+t.unresolved+' · Retries: '+t.retries+'</p><div class="ua-track"><i style="width:'+pct+'%"></i></div></div></article>';
+      }).join('')+'</div></div>';
+    }).join('')+'</section>';
+  }).join('')+'</div>'+(rows.length?'':'<p class="empty">No assignments found.</p>')+
  '<p class="ua-note">Completion counts distinct questions answered correctly, including successful retries. Accuracy records first attempts separately. 오답 remaining must reach zero to pass.</p>';
- host.querySelectorAll('[data-ua-date]').forEach(button=>{button.onclick=()=>{const key=button.dataset.uaDate,body=button.nextElementSibling;if(expandedAssignmentDates.has(key)){expandedAssignmentDates.delete(key);body.hidden=true}else{expandedAssignmentDates.add(key);body.hidden=false}button.setAttribute('aria-expanded',String(!body.hidden));button.querySelector('.ua-date-chevron').textContent=body.hidden?'▾':'▴';};});
+ attachHomeworkGroupToggles(host);
+ host.querySelectorAll('[data-naesin-detail]').forEach(button=>button.onclick=()=>{
+  const body=button.nextElementSibling;body.hidden=!body.hidden;button.setAttribute('aria-expanded',String(!body.hidden));
+ });
  host.querySelectorAll('[data-ua-scope]').forEach(b=>b.onclick=()=>{scope=b.dataset.uaScope;render()});
  host.querySelector('#uaGroupFilter').onchange=e=>{selected=e.target.value;render()};
  host.querySelector('#uaProgressRefresh').onclick=load;
@@ -349,9 +381,7 @@ async function loadOverview(scopeName='my'){
      const eligible=g.items.filter(row=>id(row.created_by)===teacher);
      const selected=eligible.filter(row=>overviewSelections.has(homeworkKey(row))).length;
      const groupSelect=eligible.length?'<label class="ua-group-select"><input type="checkbox" data-ua-select-group="'+esc(g.key)+'" aria-label="Select all homework for '+esc(g.title)+'" '+(selected===eligible.length?'checked':'')+'></label>':'';
-    return '<div class="ua-group" data-ua-group="'+esc(g.key)+'"><div class="ua-group-top">'+groupSelect+'<button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(g.key)+'" aria-expanded="false"><span><b>'+esc(g.title)+'</b><small>'+esc(g.sub)+' · '+g.items.length+' assignment'+(g.items.length===1?'':'s')+'</small></span><strong>'+esc(label)+' ▾</strong></button></div>'+
-      (average===null?'':'<div class="ua-group-meter" role="progressbar" aria-label="Tracked question completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+average+'"><i style="width:'+average+'%"></i></div>')+
-      '<div class="ua-group-body" hidden>';
+    return sharedHomeworkGroupStart({key:g.key,title:g.title,sub:g.sub+' · '+g.items.length+' assignment'+(g.items.length===1?'':'s'),label,average,checkbox:groupSelect});
    };
    const selectable=visible.filter(r=>id(r.created_by)===teacher);
    const checked=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
@@ -392,14 +422,7 @@ async function loadOverview(scopeName='my'){
         (ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label>'+(overviewStage==='active'?'<button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button>':'')+'</div>':'')+'</article>';
      }).join('')+(visible.length?'</div></div>':'')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
      '<p class="ua-note">Past-due homework appears in Complete automatically. ✓ closes one assignment; check boxes and Complete selected close several. Student attempts and results remain preserved.</p>';
-   host.querySelectorAll('[data-ua-group-toggle]').forEach(button=>{
-    const key=button.dataset.uaGroupToggle;
-    const container=button.closest('.ua-group'),body=container?.querySelector('.ua-group-body');
-    if(!body)return;
-    const isOpen=expandedHomeworkGroups.has(key);
-    body.hidden=!isOpen;button.setAttribute('aria-expanded',String(isOpen));
-    button.onclick=()=>{body.hidden=!body.hidden;button.setAttribute('aria-expanded',String(!body.hidden));if(body.hidden)expandedHomeworkGroups.delete(key);else expandedHomeworkGroups.add(key)};
-   });
+   attachHomeworkGroupToggles(host);
    host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName);
    host.querySelectorAll('[data-ua-stage]').forEach(button=>button.onclick=()=>{overviewStage=button.dataset.uaStage;overviewSelections.clear();renderOverview()});
    host.querySelectorAll('[data-ua-detail]').forEach(button=>button.onclick=async()=>{
