@@ -70,12 +70,31 @@ async function get(path,options={}){
  return body;
 }
 async function teacherIdentity(){
- const token=access();if(!token)throw Error('Teacher login required');
- const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/auth/v1/user',{headers:{apikey:KEY,Authorization:'Bearer '+token},cache:'no-store'});
- if(!response.ok)throw Error('Could not verify current teacher');
- const me=await response.json();
- if(!me?.id)throw Error('Teacher identity unavailable');
- return id(me.id);
+ // Dashboard session restoration can finish shortly after the Assignments tab
+ // first mounts. Retry verification briefly, but never bypass auth.
+ for(let attempt=0;attempt<4;attempt++){
+  const token=access();
+  if(token){
+   try{
+    const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/auth/v1/user',{headers:{apikey:KEY,Authorization:'Bearer '+token},cache:'no-store'});
+    if(response.ok){
+     const me=await response.json();
+     if(me?.id)return id(me.id);
+    }else if(response.status===401&&attempt===0){
+     // The existing shared API client owns token refresh; use it when available.
+     try{
+      const refresh=await window.WillenaAPI?.fetch?.('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'});
+      if(refresh?.ok){
+       const data=await refresh.json();
+       if(data?.access_token)window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');
+      }
+     }catch(_){}
+    }else if(response.status!==401)throw Error('Could not verify current teacher');
+   }catch(error){if(attempt===3)throw error}
+  }
+  if(attempt<3)await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));
+ }
+ throw Error('Could not verify current teacher');
 }
 async function load(){
  if(loading)return;const host=document.querySelector('#uaProgress');if(!host)return;
