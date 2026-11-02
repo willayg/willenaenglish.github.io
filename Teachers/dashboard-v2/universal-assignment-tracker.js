@@ -130,7 +130,7 @@ function render(){
     [...studentMap.entries()].sort((a,b)=>a[1].name.localeCompare(b[1].name,'ko')).map(([studentId,student])=>{
      const completedCount=student.items.filter(t=>t.complete).length;
      const percentage=Math.round(100*student.items.reduce((sum,t)=>sum+Math.min(1,t.done/t.target),0)/student.items.length);
-     return sharedHomeworkGroupStart({key:'naesin:'+date+':'+studentId,title:student.name,sub:student.items.length+' assignments · '+completedCount+' completed',label:percentage+'% complete',average:percentage})+
+     return sharedHomeworkGroupStart({key:'naesin:'+date+':'+studentId,title:student.name,sub:student.items.length+' assignments · '+completedCount+' completed',label:percentage+'% complete',average:percentage,overviewStyle:true,teacher:'내신 homework'})+
       student.items.map(t=>{
        const pct=Math.min(100,Math.round(t.done/t.target*100));
        return '<article class="ua-homework-card"><button class="ua-homework-detail" type="button" data-naesin-detail="'+esc(t.id)+'" aria-expanded="false"><span><b>'+esc(t.lesson||'Lesson')+'</b> · '+esc(t.practice_type||'Practice')+'</span><small>'+esc(teacherNames.get(id(t.created_by))||'Unknown')+' · '+esc(dday(t.due_at))+'</small><strong>'+t.done+'/'+t.target+' correct · '+pct+'% ▾</strong></button>'+
