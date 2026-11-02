@@ -1,0 +1,269 @@
+{
+  "book": "Everybody Up 5, 3rd Edition",
+  "prompts": [
+    {
+      "id": "eu3e5-u1-w1",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 1,
+      "title": "My Best Vacation",
+      "prompt": "Write about \"My Best Vacation\" using vocabulary from Everybody Up 5 Unit 1. Try to include past experiences and feelings.",
+      "grammar_focus": "past experiences and feelings",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u1-w2",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 1,
+      "title": "An Exciting Ride",
+      "prompt": "Write about \"An Exciting Ride\" using vocabulary from Everybody Up 5 Unit 1. Try to include past experiences and feelings.",
+      "grammar_focus": "past experiences and feelings",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u1-w3",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 1,
+      "title": "A Day I'll Remember",
+      "prompt": "Write about \"A Day I'll Remember\" using vocabulary from Everybody Up 5 Unit 1. Try to include past experiences and feelings.",
+      "grammar_focus": "past experiences and feelings",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u2-w1",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 2,
+      "title": "Camping in the Forest",
+      "prompt": "Write about \"Camping in the Forest\" using vocabulary from Everybody Up 5 Unit 2. Try to include past progressive and comparisons.",
+      "grammar_focus": "past progressive and comparisons",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u2-w2",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 2,
+      "title": "Our Campfire",
+      "prompt": "Write about \"Our Campfire\" using vocabulary from Everybody Up 5 Unit 2. Try to include past progressive and comparisons.",
+      "grammar_focus": "past progressive and comparisons",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u2-w3",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 2,
+      "title": "A Cave Adventure",
+      "prompt": "Write about \"A Cave Adventure\" using vocabulary from Everybody Up 5 Unit 2. Try to include past progressive and comparisons.",
+      "grammar_focus": "past progressive and comparisons",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u3-w1",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 3,
+      "title": "Planning Our Class Party",
+      "prompt": "Write about \"Planning Our Class Party\" using vocabulary from Everybody Up 5 Unit 3. Try to include party plans and future intentions.",
+      "grammar_focus": "party plans and future intentions",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u3-w2",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 3,
+      "title": "A Surprise for My Friend",
+      "prompt": "Write about \"A Surprise for My Friend\" using vocabulary from Everybody Up 5 Unit 3. Try to include party plans and future intentions.",
+      "grammar_focus": "party plans and future intentions",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u3-w3",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 3,
+      "title": "My Perfect Party",
+      "prompt": "Write about \"My Perfect Party\" using vocabulary from Everybody Up 5 Unit 3. Try to include party plans and future intentions.",
+      "grammar_focus": "party plans and future intentions",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u4-w1",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 4,
+      "title": "Protect the Rainforest",
+      "prompt": "Write about \"Protect the Rainforest\" using vocabulary from Everybody Up 5 Unit 4. Try to include animal comparisons and habitats.",
+      "grammar_focus": "animal comparisons and habitats",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u4-w2",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 4,
+      "title": "My Favorite Wild Animal",
+      "prompt": "Write about \"My Favorite Wild Animal\" using vocabulary from Everybody Up 5 Unit 4. Try to include animal comparisons and habitats.",
+      "grammar_focus": "animal comparisons and habitats",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u4-w3",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 4,
+      "title": "The World's Fastest Animals",
+      "prompt": "Write about \"The World's Fastest Animals\" using vocabulary from Everybody Up 5 Unit 4. Try to include animal comparisons and habitats.",
+      "grammar_focus": "animal comparisons and habitats",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u5-w1",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 5,
+      "title": "How I Study Well",
+      "prompt": "Write about \"How I Study Well\" using vocabulary from Everybody Up 5 Unit 5. Try to include adverbs and study habits.",
+      "grammar_focus": "adverbs and study habits",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u5-w2",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 5,
+      "title": "A Busy School Day",
+      "prompt": "Write about \"A Busy School Day\" using vocabulary from Everybody Up 5 Unit 5. Try to include adverbs and study habits.",
+      "grammar_focus": "adverbs and study habits",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u5-w3",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 5,
+      "title": "My Healthy Habits",
+      "prompt": "Write about \"My Healthy Habits\" using vocabulary from Everybody Up 5 Unit 5. Try to include adverbs and study habits.",
+      "grammar_focus": "adverbs and study habits",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u6-w1",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 6,
+      "title": "How to Make Something",
+      "prompt": "Write about \"How to Make Something\" using vocabulary from Everybody Up 5 Unit 6. Try to include quantities and instructions.",
+      "grammar_focus": "quantities and instructions",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u6-w2",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 6,
+      "title": "My Favorite Recipe",
+      "prompt": "Write about \"My Favorite Recipe\" using vocabulary from Everybody Up 5 Unit 6. Try to include quantities and instructions.",
+      "grammar_focus": "quantities and instructions",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u6-w3",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 6,
+      "title": "Build a Model",
+      "prompt": "Write about \"Build a Model\" using vocabulary from Everybody Up 5 Unit 6. Try to include quantities and instructions.",
+      "grammar_focus": "quantities and instructions",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u7-w1",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 7,
+      "title": "A Country I'd Like to Visit",
+      "prompt": "Write about \"A Country I'd Like to Visit\" using vocabulary from Everybody Up 5 Unit 7. Try to include travel experiences and the present perfect.",
+      "grammar_focus": "travel experiences and the present perfect",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u7-w2",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 7,
+      "title": "My Travel Adventure",
+      "prompt": "Write about \"My Travel Adventure\" using vocabulary from Everybody Up 5 Unit 7. Try to include travel experiences and the present perfect.",
+      "grammar_focus": "travel experiences and the present perfect",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u7-w3",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 7,
+      "title": "A Trip to Australia",
+      "prompt": "Write about \"A Trip to Australia\" using vocabulary from Everybody Up 5 Unit 7. Try to include travel experiences and the present perfect.",
+      "grammar_focus": "travel experiences and the present perfect",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u8-w1",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 8,
+      "title": "How I Use Computers",
+      "prompt": "Write about \"How I Use Computers\" using vocabulary from Everybody Up 5 Unit 8. Try to include computer actions and the present perfect.",
+      "grammar_focus": "computer actions and the present perfect",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u8-w2",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 8,
+      "title": "Technology at Home",
+      "prompt": "Write about \"Technology at Home\" using vocabulary from Everybody Up 5 Unit 8. Try to include computer actions and the present perfect.",
+      "grammar_focus": "computer actions and the present perfect",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    },
+    {
+      "id": "eu3e5-u8-w3",
+      "book_key": "book:everybody_up_3e:5",
+      "unit": 8,
+      "title": "My Favorite Website",
+      "prompt": "Write about \"My Favorite Website\" using vocabulary from Everybody Up 5 Unit 8. Try to include computer actions and the present perfect.",
+      "grammar_focus": "computer actions and the present perfect",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena curriculum-aligned topic"
+    }
+  ]
+}
