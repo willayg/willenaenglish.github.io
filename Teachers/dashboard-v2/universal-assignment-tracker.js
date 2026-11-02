@@ -436,7 +436,7 @@ async function loadOverview(scopeName='my'){
       const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
       const ownedByMe=id(row.created_by)===teacher;
       return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(dday(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
-        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden><p>'+esc(detail)+'</p>'+(grammarResult?.student_rows?'<div class="ua-student-results">'+grammarResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.passed?'✓ Passed':'Not passed')+'</div>').join('')+'</div>':'')+(wordResult?.student_rows?'<div class="ua-student-results">'+wordResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+p.solved+' correctly answered / '+p.attempted+' attempted</div>').join('')+'</div>':'')+(writingResult?.student_rows?'<div class="ua-student-results">'+writingResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.completed?'✓ Submitted':'Not submitted')+'</div>').join('')+'</div>':'')+(puzzleResult?.student_rows?'<div class="ua-student-results">'+puzzleResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.completed?'✓ Completed · '+p.stars+'★':'Not completed')+'</div>').join('')+'</div>':'')+'<div class="ua-attempt-results" data-ua-attempts="'+i+'"></div></div>'+
+        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden><p>'+esc(detail)+'</p>'+(grammarResult?.student_rows?'<div class="ua-student-results">'+grammarResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.passed?'✓ Passed':'Not passed')+'</div>').join('')+'</div>':'')+(wordResult?.student_rows?'<div class="ua-student-results">'+wordResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+p.solved+' correctly answered / '+p.attempted+' attempted</div>').join('')+'</div>':'')+(writingResult?.student_rows?'<div class="ua-student-results">'+writingResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.completed?'✓ Submitted':'Not submitted')+'</div>').join('')+'</div>':'')+(puzzleResult?.student_rows?'<div class="ua-student-results">'+puzzleResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.completed?'✓ Completed · '+p.stars+'★':'Not completed')+'</div>').join('')+'</div>':'')+'</div>'+
         (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
         (ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label>'+(overviewStage==='active'?'<button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button>':'')+'</div>':'')+'</article>';
      }).join('')+(visible.length?'</div></div>':'')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
@@ -444,23 +444,14 @@ async function loadOverview(scopeName='my'){
    attachHomeworkGroupToggles(host);
    host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName);
    host.querySelectorAll('[data-ua-stage]').forEach(button=>button.onclick=()=>{overviewStage=button.dataset.uaStage;overviewSelections.clear();renderOverview()});
-   host.querySelectorAll('[data-ua-detail]').forEach(button=>button.onclick=async()=>{
-    const index=Number(button.dataset.uaDetail),row=visible[index];
+   host.querySelectorAll('[data-ua-detail]').forEach(button=>button.onclick=()=>{
+    const index=Number(button.dataset.uaDetail);
     const panel=host.querySelector('#uaExpanded'+index);
-    panel.hidden=!panel.hidden;button.setAttribute('aria-expanded',String(!panel.hidden));
-    // Keep Word Genius overview concise: student totals only, not per-word answer logs.
-    if(panel.hidden||row.app!=='내신')return;
-    const area=panel.querySelector('[data-ua-attempts]');
-    if(area.dataset.loaded)return;
-    area.textContent='Loading saved answers…';
-    try{
-     const attempts=await get('rpc/teacher_homework_detail_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_app:row.app,p_assignment_id:row.id})});
-     if(!Array.isArray(attempts))throw Error('Invalid response');
-     area.dataset.loaded='true';
-     area.innerHTML='<h4>Answer history (latest 200)</h4>'+(attempts.length?attempts.map(a=>'<div class="ua-attempt-item"><b>'+esc(a.student||a.question||'Question')+'</b> · '+(a.correct?'✓ Correct':'✕ Incorrect')+(a.retry?' · Retry':'')+'<small>'+esc(fmt(a.at))+'</small><div>Student: '+esc(a.answer??'—')+'</div><div>Target: '+esc(a.correct_answer??'—')+'</div></div>').join(''):'<p>No matching saved attempts for this assignment.</p>');
-    }catch(e){area.textContent='Could not load answers: '+e.message}
+    if(!panel)return;
+    panel.hidden=!panel.hidden;
+    button.setAttribute('aria-expanded',String(!panel.hidden));
    });
-   function updateSelectionUI(){
+      function updateSelectionUI(){
     const selectedCount=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
     const bulk=host.querySelector('#uaCompleteSelected');
     if(bulk){bulk.disabled=selectedCount===0;bulk.textContent='✓ Complete selected ('+selectedCount+')';}
