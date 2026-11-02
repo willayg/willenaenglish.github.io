@@ -259,7 +259,21 @@ function render(){
  if(active==='calendar'){body.innerHTML='<div id="uaCalendar">Loading calendar…</div>';window.UniversalAssignmentTracker?.loadCalendar?.();return}
  if(active==='my'||active==='all'){
    body.innerHTML='<div id="uaOverview" aria-live="polite">Loading cross-app homework…</div>';
-   window.UniversalAssignmentTracker?.loadOverview?.(active);
+   // The tracker script can finish loading after the initial dashboard render.
+    // Retry that first mount instead of requiring a second tap on My or All.
+    const requestedTab=active;
+    const loadWhenReady=(attempt=0)=>{
+      if(active!==requestedTab||!document.querySelector('#uaOverview'))return;
+      if(window.UniversalAssignmentTracker?.loadOverview){
+        void window.UniversalAssignmentTracker.loadOverview(requestedTab);
+      }else if(attempt<40){
+        setTimeout(()=>loadWhenReady(attempt+1),150);
+      }else{
+        const target=document.querySelector('#uaOverview');
+        if(target)target.textContent='Assignment tracker unavailable. Please refresh the dashboard.';
+      }
+    };
+    loadWhenReady();
    return;
  }
  if(active==='naesin'&&sub==='manage'){body.innerHTML='<div id="uaProgress" aria-live="polite">Loading homework results…</div>';window.UniversalAssignmentTracker?.load?.();return}
