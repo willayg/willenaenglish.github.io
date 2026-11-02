@@ -29,7 +29,7 @@ async function loadQuestions(){
 }
 function renderModeCards(){
  const mount=$('grammarModeCards');if(!mount)return;
- mount.innerHTML=modes.map(mode=>'<button class="grammar-mode-card" type="button" data-grammar-mode="'+mode.id+'"><span class="grammar-mode-icon" aria-hidden="true">'+mode.icon+'</span><span class="grammar-mode-copy"><strong>'+mode.label+'</strong><small>'+mode.ko+' · 8문제</small></span><span class="vocab-front-arrow" aria-hidden="true">›</span></button>').join('');
+ mount.innerHTML=modes.map((mode,i)=>'<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:0"><span>0%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">STEP '+(i+1)+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">'+mode.ko+' · 8문제</span></span></button>').join('');
 }
 function showBook(book,push=true){
  if(!book)return;activeBook=book;activeMode=null;
@@ -37,6 +37,9 @@ function showBook(book,push=true){
  $('grammarModePanel').hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;
  const playable=book.title.trim()==='Grammar Ten 완성 2';
  $('grammarUnitTitle').textContent=playable?'CHAPTER 1 · UNIT 01 · be동사의 현재형':'이 교재의 문법 활동은 준비 중이에요.';
+ const strip=$('grammarUnitStrip');
+ strip.innerHTML=playable?'<button type="button" class="study-v2-unit-pill is-active" aria-current="true">1</button>':'';
+ strip.hidden=!playable;
  $('grammarModeCards').hidden=!playable;
  $('grammarNotReady').hidden=playable;
  if(playable)renderModeCards();
