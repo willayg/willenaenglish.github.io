@@ -1,4 +1,6 @@
-# Oxford Buzz 2 — picture dictionary review
+# Oxford Buzz 1 — picture dictionary review
+
+Corrected textbook identification on 2026-11-02: this material was initially imported under Buzz 2, then renamed to Buzz 1 in place, preserving all original book/unit IDs and content links.
 
 Imported on 2026-11-02 from user-provided photographs of contents and picture dictionary, pp. 92–96.
 
@@ -40,8 +42,8 @@ The dictionary consists of **pictures and blank answer lines**, not printed voca
 
 ## Sentence Genius
 
-10 sentences per unit are not necessary at this introductory level: 8 short, original English–Korean sentence pairs per unit were entered in `sentences` and linked in `source_content_occurrences` with keys `buzz2:sentence:<unit>:<sequence>` and `buzz2:sentence-occurrence:<unit>:<sequence>`. Check real gameplay before claiming deployment.
+10 sentences per unit are not necessary at this introductory level: 8 short, original English–Korean sentence pairs per unit were entered in `sentences` and linked in `source_content_occurrences` with keys `buzz1:sentence:<unit>:<sequence>` and `buzz1:sentence-occurrence:<unit>:<sequence>`. Check real gameplay before claiming deployment.
 
 ## Writing Genius
 
-Previously specified level-4 eligibility preference means Buzz 2 should **not** be added to Writing Genius's standard diary/topic-writing selector without reconsidering that gate. Grammar Genius is deferred.
+Previously specified level-4 eligibility preference means Buzz 1 should **not** be added to Writing Genius's standard diary/topic-writing selector without reconsidering that gate. Grammar Genius is deferred.
