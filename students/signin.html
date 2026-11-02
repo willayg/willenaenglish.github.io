@@ -627,7 +627,8 @@
           body: JSON.stringify({
             korean_name: studentData.korean_name,
             name: studentData.name,
-            auth_code: studentData.auth_code
+            auth_code: studentData.auth_code,
+            login: true
           })
         });
         const data = await res.json();
@@ -636,6 +637,22 @@
           studentData.id = data.student.id;
           studentData.username = data.student.username;
           studentData.email = data.student.email || null;
+          if (data.session?.access_token && data.session?.refresh_token) {
+            // No password change: keep sessions on other phones/browsers alive.
+            const adopted=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=adopt_student_session',{
+              method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify(data.session)
+            });
+            const installed=await adopted.json().catch(()=>({}));
+            if(!adopted.ok || !installed.success)throw Error('Failed to install verified session');
+            WillenaAPI.setLocalTokens(data.session.access_token,data.session.refresh_token);
+            try { localStorage.setItem('user_logged_in',String(Date.now()));window.dispatchEvent(new Event('auth:changed')); } catch {}
+            modalTitle.textContent=mt('success');
+            modalBody.innerHTML='<p>✅</p>';
+            setTimeout(()=>{location.href=getNextDest()},250);
+            return;
+          }
+          // Backward compatibility only until both authentication Workers deploy.
           await completeEasyLogin();
         } else {
           let message = (data && data.error) ? data.error : mt('notFound');
