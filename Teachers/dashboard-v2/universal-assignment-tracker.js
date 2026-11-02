@@ -8,6 +8,7 @@ const assignedDateLabel=key=>key==='unknown'?'Date unavailable':new Intl.DateTim
 const assignmentDateStyle=document.createElement('style');
 assignmentDateStyle.textContent='.ua-date-groups{display:grid;gap:12px;margin:12px 0}.ua-date-card{background:#fff;border:1px solid #dce8eb;border-radius:12px;overflow:hidden}.ua-date-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;padding:15px 18px;border:0;background:#f8fcfd;color:#234456;cursor:pointer}.ua-date-toggle:hover{background:#edf8fa}.ua-date-toggle>span:first-child{display:flex;flex-direction:column;gap:3px}.ua-date-toggle small{font-size:12px;color:#647d88;font-weight:400}.ua-date-chevron{font-size:19px;color:#367f8a}.ua-date-body[hidden]{display:none}.ua-date-body .ua-progress-table-wrap{margin:0;border-radius:0}';
 assignmentDateStyle.textContent += '.ua-simple-date-divider{display:flex;align-items:center;gap:14px;font-size:14px;font-weight:700;color:#56717b;margin:24px 0 12px}.ua-simple-date-divider:after{content:"";height:1px;background:#cfdee3;flex:1}.ua-simple-date-divider:first-child{margin-top:8px}';
+assignmentDateStyle.textContent += '.ua-group-top{display:flex;align-items:center;gap:8px}.ua-group-top>.ua-group-heading{flex:1;min-width:0}.ua-group-select{display:flex;align-items:center;padding:12px 0 12px 14px;cursor:pointer}.ua-group-select input{width:19px;height:19px;accent-color:#2a9eaa;cursor:pointer}';
 document.head.appendChild(assignmentDateStyle);
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -345,7 +346,10 @@ async function loadOverview(scopeName='my'){
     }).filter(x=>x!==null);
     const average=fractions.length?Math.round(100*fractions.reduce((a,b)=>a+b,0)/fractions.length):null;
     const label=average===null?'Progress not available':average+'% · '+fractions.length+'/'+g.items.length+' tracked';
-    return '<div class="ua-group" data-ua-group="'+esc(g.key)+'"><button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(g.key)+'" aria-expanded="false"><span><b>'+esc(g.title)+'</b><small>'+esc(g.sub)+' · '+g.items.length+' assignment'+(g.items.length===1?'':'s')+'</small></span><strong>'+esc(label)+' ▾</strong></button>'+
+     const eligible=g.items.filter(row=>id(row.created_by)===teacher);
+     const selected=eligible.filter(row=>overviewSelections.has(homeworkKey(row))).length;
+     const groupSelect=eligible.length?'<label class="ua-group-select"><input type="checkbox" data-ua-select-group="'+esc(g.key)+'" aria-label="Select all homework for '+esc(g.title)+'" '+(selected===eligible.length?'checked':'')+'></label>':'';
+    return '<div class="ua-group" data-ua-group="'+esc(g.key)+'"><div class="ua-group-top">'+groupSelect+'<button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(g.key)+'" aria-expanded="false"><span><b>'+esc(g.title)+'</b><small>'+esc(g.sub)+' · '+g.items.length+' assignment'+(g.items.length===1?'':'s')+'</small></span><strong>'+esc(label)+' ▾</strong></button></div>'+
       (average===null?'':'<div class="ua-group-meter" role="progressbar" aria-label="Tracked question completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+average+'"><i style="width:'+average+'%"></i></div>')+
       '<div class="ua-group-body" hidden>';
    };
@@ -418,10 +422,25 @@ async function loadOverview(scopeName='my'){
     const bulk=host.querySelector('#uaCompleteSelected');
     if(bulk){bulk.disabled=selectedCount===0;bulk.textContent='✓ Complete selected ('+selectedCount+')';}
     const deleteBulk=host.querySelector('#uaDeleteSelected');if(deleteBulk){deleteBulk.disabled=selectedCount===0;deleteBulk.textContent='× Delete selected ('+selectedCount+')';}
+    host.querySelectorAll('[data-ua-select-group]').forEach(box=>{
+     const eligible=(groupByKey.get(box.dataset.uaSelectGroup)?.items||[]).filter(row=>id(row.created_by)===teacher);
+     const count=eligible.filter(row=>overviewSelections.has(homeworkKey(row))).length;
+     box.checked=eligible.length>0&&count===eligible.length;
+     box.indeterminate=count>0&&count<eligible.length;
+    });
     const allBox=host.querySelector('#uaSelectAll');
     if(allBox){allBox.checked=selectable.length>0&&selectedCount===selectable.length;allBox.indeterminate=selectedCount>0&&selectedCount<selectable.length;}
    }
-   host.querySelectorAll('[data-ua-select]').forEach(box=>box.onchange=()=>{
+   host.querySelectorAll('[data-ua-select-group]').forEach(box=>box.onchange=()=>{
+     (groupByKey.get(box.dataset.uaSelectGroup)?.items||[]).filter(row=>id(row.created_by)===teacher).forEach(row=>{
+      if(box.checked)overviewSelections.add(homeworkKey(row));else overviewSelections.delete(homeworkKey(row));
+     });
+     host.querySelectorAll('[data-ua-select]').forEach(child=>{
+      child.checked=overviewSelections.has(homeworkKey(visible[Number(child.dataset.uaSelect)]));
+     });
+     updateSelectionUI();
+    });
+    host.querySelectorAll('[data-ua-select]').forEach(box=>box.onchange=()=>{
     const row=visible[Number(box.dataset.uaSelect)];
     if(box.checked)overviewSelections.add(homeworkKey(row));else overviewSelections.delete(homeworkKey(row));
     updateSelectionUI();
