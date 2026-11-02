@@ -13,11 +13,12 @@ async function loadGrammarBooks(){
   const response=await fetch(DB+'/rest/v1/content_books?select=id,title,book_number,series_id,metadata&status=eq.published&metadata->>subject=eq.grammar&order=title.asc&limit=100',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
   if(!response.ok)throw Error('Book catalog '+response.status);
   books=await response.json();
+  if(!books.some(b=>b.title==='Grammar Ten 완성 2'))books.unshift({id:'grammar-ten-2-practice',title:'Grammar Ten 완성 2'});
   list.innerHTML=books.length?books.map(bookCard).join(''):'<div class="vocab-front-empty">등록된 문법 교재가 없습니다.</div>';
   const id=new URLSearchParams(location.search).get('book');
   const found=books.find(book=>String(book.id)===id);
   if(found)showBook(found,false);
- }catch(error){console.warn('[Grammar books] catalog unavailable',error);list.innerHTML='<div class="vocab-front-empty">교재를 불러오지 못했어요. <button type="button" id="grammarBooksRetry">다시 시도</button></div>';$('grammarBooksRetry')?.addEventListener('click',loadGrammarBooks)}
+ }catch(error){console.warn('[Grammar books] catalog unavailable',error);books=[{id:'grammar-ten-2-practice',title:'Grammar Ten 완성 2'}];list.innerHTML=books.map(bookCard).join('');}
 }
 async function loadQuestions(){
  if(catalog)return catalog;
@@ -46,7 +47,7 @@ function showBook(book,push=true){
  if(push)updateUrl(book.id);
  window.scrollTo(0,0);
 }
-function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;if(push)updateUrl();window.scrollTo(0,0)}
+function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;$('grammarQuestionBottom').hidden=true;if(push)updateUrl();window.scrollTo(0,0)}
 function toSharedQuestion(q){
  return {id:q.id,form:'choice',prompt:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:activeMode==='hunt'?{underlined_spans:q.options}: {},metadata:{sourceKey:q.id,practiceType:'grammar_books'}};
 }
@@ -57,9 +58,11 @@ function renderQuestion(){
  $('grammarRoundTitle').textContent=mode.label+' · '+mode.ko;
  $('grammarRoundCounter').textContent=(position+1)+' / '+questions.length;
  $('grammarRoundProgress').style.width=(position/questions.length*100)+'%';
- const host=$('grammarSharedQuestionHost');
+ const old=$('grammarSharedQuestionHost');
+ const host=old.cloneNode(false);old.replaceWith(host);
  renderer=new grammarEngine.QuestionRenderer(host).render(toSharedQuestion(q),{onChange:(_,has)=>{if(!checked)$('grammarCheck').disabled=!has}});
  $('grammarNext').hidden=true;$('grammarNext').classList.remove('is-next');$('grammarCheck').hidden=false;$('grammarCheck').disabled=true;$('grammarSkip').hidden=false;
+ $('grammarQuestionBottom').hidden=false;
  checked=false;
 }
 function startMode(mode){
