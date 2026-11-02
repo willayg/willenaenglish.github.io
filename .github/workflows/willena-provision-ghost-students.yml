@@ -1,0 +1,35 @@
+name: Willena Ghost Student Provisioning
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Pilot AA only, or provision remaining AA–BX after reviewing pilot"
+        required: true
+        default: pilot
+        type: choice
+        options:
+          - pilot
+          - remaining
+      confirmation:
+        description: 'Type CREATE GHOSTS to confirm production auth account creation'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: willena-ghost-provisioning
+  cancel-in-progress: false
+jobs:
+  provision:
+    if: ${{ github.ref == 'refs/heads/main' && inputs.confirmation == 'CREATE GHOSTS' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create and verify ghost students sequentially
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PROVISION_MODE: ${{ inputs.mode }}
+        run: node scripts/willena-provision-ghosts.mjs
