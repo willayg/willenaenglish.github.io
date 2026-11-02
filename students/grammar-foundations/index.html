@@ -11,10 +11,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../test-prep-v2/styles.css?v=2.21.2">
-<link rel="stylesheet" href="../test-prep-v2/header-v2.css?v=20261031-menu-layer2">
+
 <link rel="stylesheet" href="../test-prep-v2/card-style-v2.css?v=1.0.0">
 <link rel="stylesheet" href="../test-prep-v2/question-renderer-accessibility.css?v=2.25.93">
-<link rel="stylesheet" href="../test-prep-v2/theme-pips.css?v=2.25.95">
+<link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
 <link rel="stylesheet" href="../test-prep-v2/dark-mode.css?v=2.25.112">
 <link rel="stylesheet" href="../test-prep-v2/cyberpunk-mode.css?v=2.25.112">
 <link rel="stylesheet" href="../test-prep-v2/theme-overrides-2.25.91.css?v=2.25.91">
@@ -39,8 +39,26 @@
   }
 }
 </script>
-<style>.gf-book-browser{max-width:850px;margin:20px auto}.gf-book-header{display:flex;justify-content:space-between;gap:12px;align-items:center;background:#fff;border:2px solid #f4a3cd;border-radius:14px;padding:18px;color:#ae3b83}.gf-book-header span{font-size:12px;color:#657b84}.gf-book-chapter{background:white;margin:10px 0;border:2px solid #b6eaf1;border-radius:12px;overflow:hidden}.gf-book-chapter summary{cursor:pointer;font-weight:800;padding:14px 18px;color:#bd3a88}.gf-book-unit{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #e4f0f2;padding:12px 18px}.gf-book-unit small{white-space:nowrap;color:#78828c}.gf-book-note{max-width:850px;margin:20px auto;font-size:13px;color:#64748b}</style></head>
+<style>
+/* Retain legacy header IDs for the existing Grammar Genius engine; shared header is visible. */
+.student-header.tp-v1-header{display:none!important}
+.gf-genius-shell{min-height:100vh;display:flex;flex-direction:column}
+.gf-genius-shell .gf-app{flex:1;width:100%}
+.gf-genius-shell .vocab-theme-footer{margin-top:auto}
+.gf-genius-shell .vocab-theme-dock{margin:12px auto}
+.gf-book-browser{display:grid;gap:12px;max-width:850px;margin:20px auto}
+.gf-book-header{display:flex;justify-content:space-between;gap:12px;align-items:center;background:#fff;border:2px solid var(--vocab-border,#b6eaf1);border-radius:18px;padding:18px;color:var(--vocab-heading,#315e64)}
+.gf-book-header span{font-size:12px;color:var(--muted,#64748b)}
+.gf-book-chapter{background:var(--vocab-card,#fff);border:2px solid var(--vocab-border,#b6eaf1);border-radius:18px;overflow:hidden}
+.gf-book-chapter summary{cursor:pointer;font-weight:800;padding:16px;color:var(--pink,#cf4c96)}
+.gf-book-unit{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--vocab-border,#e4f0f2);padding:12px 16px}
+.gf-book-unit small{white-space:nowrap;color:var(--muted,#78828c)}
+.gf-book-note{max-width:850px;margin:20px auto;font-size:13px;color:var(--muted,#64748b)}
+</style></head>
 <body>
+<div class="study-app gf-genius-shell">
+<student-header title="문법 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+<div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마"><button type="button" class="vocab-theme-pip" data-theme="cyan" aria-label="cyan 테마" title="cyan" aria-pressed="false"></button><button type="button" class="vocab-theme-pip" data-theme="sunbeam" aria-label="sunbeam 테마" title="sunbeam" aria-pressed="false"></button><button type="button" class="vocab-theme-pip" data-theme="pink" aria-label="pink 테마" title="pink" aria-pressed="false"></button><button type="button" class="vocab-theme-pip" data-theme="paper" aria-label="paper 테마" title="paper" aria-pressed="false"></button><button type="button" class="vocab-theme-pip" data-theme="dark" aria-label="dark 테마" title="dark" aria-pressed="false"></button><button type="button" class="vocab-theme-pip" data-theme="cyberpunk" aria-label="cyberpunk 테마" title="cyberpunk" aria-pressed="false"></button></div>
 <header class="student-header tp-v1-header">
   <div class="header-orb"></div>
   <div class="header-inner">
@@ -73,16 +91,17 @@
 <button type="button" class="gf-home-button" id="gfHomeButton" aria-label="Grammar Genius Home menu"><span class="gf-home-button-icon" aria-hidden="true">⌂</span><span class="gf-home-button-label">홈 Home</span></button>
 <main class="gf-app" id="screen" data-willena-keyboard-safe><div class="loading">Loading…</div></main>
 <nav class="gf-bottom bottom" id="bottom" hidden></nav>
-<div class="app-version">Grammar Genius · v1.06</div>
+<div class="app-version">Grammar Genius · v1.07</div>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
 <script src="./auth-refresh.js?v=1.00"></script>
 <script src="./pass-threshold-fix.js?v=1.00"></script>
 <script src="./ui-shared-bridge.js?v=1.00"></script>
-<script type="module" src="../test-prep-v2/theme-pips.js?v=2.25.93"></script>
-<script type="module" src="../test-prep-v2/header-v2.js?v=20261031-shared-nav1"></script>
+<script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
+<script type="module" src="/students/components/student-header.js?v=20261101-menu-prominent1"></script>
 <script src="./rewards-sync.js?v=1.00"></script>
 <script type="module" src="./app.js?v=20261025-shared-unified-v1"></script>
 <script type="module" src="./journey-explainer.js?v=20261019-home-nav1"></script>
+</div>
 </body>
 </html>
