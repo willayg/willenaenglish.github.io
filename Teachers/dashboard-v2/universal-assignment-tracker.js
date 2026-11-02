@@ -347,39 +347,37 @@ async function loadOverview(scopeName='my',force=false){
    const profiles=await overviewGet('profiles?select=id,name,username&id=in.('+creators.join(',')+')');
    authors=new Map(profiles.map(p=>[id(p.id),p.name||p.username||'Unknown']));
   }catch(e){errors.push('Teacher names: '+e.message)}
-  let classProgress=new Map();
-  try{
-   const stats=await overviewGet('rpc/teacher_homework_class_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-   if(Array.isArray(stats))classProgress=new Map(stats.map(x=>[id(x.id),x]));
-  }catch(e){errors.push('Class progress: '+e.message)}
-  let wordClassProgress=new Map();
-  try{
-   const stats=await overviewGet('rpc/teacher_word_homework_class_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-   if(Array.isArray(stats))wordClassProgress=new Map(stats.map(x=>[id(x.id),x]));
-  }catch(e){errors.push('Word class activity: '+e.message)}
-  let writingProgress=new Map();
-  try{
-   const stats=await overviewGet('rpc/teacher_creative_writing_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-   if(Array.isArray(stats))writingProgress=new Map(stats.map(x=>[id(x.id),x]));
-  }catch(e){errors.push('Writing progress: '+e.message)}
-  let writingSentenceProgress=new Map();
-  try{
-   const stats=await overviewGet('rpc/teacher_writing_sentence_homework_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-   if(Array.isArray(stats))writingSentenceProgress=new Map(stats.map(x=>[id(x.id),x]));
-  }catch(e){errors.push('Sentence writing progress: '+e.message)}
-  let puzzleProgress=new Map();
-  try{
-   const stats=await overviewGet('rpc/teacher_puzzle_homework_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-   if(Array.isArray(stats))puzzleProgress=new Map(stats.map(x=>[id(x.id),x]));
-  }catch(e){errors.push('Puzzle progress: '+e.message)}
-  const naesin=rows.filter(r=>r.app==='내신');
-  let progress=new Map();
-  if(naesin.length)try{
-   const results=await overviewGet('rpc/test_prep_assignment_results_v1',{
-    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_group_id:null})
-   });
-   if(Array.isArray(results))progress=new Map(results.map(x=>[id(x.task_id),x]));
-  }catch(e){errors.push('내신 progress: '+e.message)}
+  // Fetch only progress families represented in the result set. Run in
+  // controlled parallel batches so one slow RPC doesn't hold up every other RPC.
+  const hasApp=app=>rows.some(row=>row.app===app);
+  const hasWritingSentence=rows.some(row=>row.app==='Writing Genius'&&row.list_key==='writing_genius:sentence');
+  const jobs=[
+   {name:'Class progress',enabled:hasApp('Grammar Genius'),path:'rpc/teacher_homework_class_progress_v1',body:'{}'},
+   {name:'Word class activity',enabled:hasApp('Word Genius'),path:'rpc/teacher_word_homework_class_progress_v1',body:'{}'},
+   {name:'Writing progress',enabled:rows.some(row=>row.app==='Writing Genius'&&row.list_key!=='writing_genius:sentence'),path:'rpc/teacher_creative_writing_progress_v1',body:'{}'},
+   {name:'Sentence writing progress',enabled:hasWritingSentence,path:'rpc/teacher_writing_sentence_homework_progress_v1',body:'{}'},
+   {name:'Puzzle progress',enabled:hasApp('Puzzles'),path:'rpc/teacher_puzzle_homework_progress_v1',body:'{}'},
+   {name:'내신 progress',enabled:hasApp('내신'),path:'rpc/test_prep_assignment_results_v1',body:JSON.stringify({p_group_id:null})}
+  ];
+  const outputs=new Map();
+  const enabled=jobs.filter(job=>job.enabled);
+  let nextJob=0;
+  await Promise.all(Array.from({length:Math.min(3,enabled.length)},async()=>{
+   while(nextJob<enabled.length){
+    const job=enabled[nextJob++];
+    try{
+     const result=await overviewGet(job.path,{method:'POST',headers:{'Content-Type':'application/json'},body:job.body});
+     outputs.set(job.name,Array.isArray(result)?result:[]);
+    }catch(error){errors.push(job.name+': '+error.message)}
+   }
+  }));
+  const asMap=(name,key='id')=>new Map((outputs.get(name)||[]).map(item=>[id(item[key]),item]));
+  const classProgress=asMap('Class progress');
+  const wordClassProgress=asMap('Word class activity');
+  const writingProgress=asMap('Writing progress');
+  const writingSentenceProgress=asMap('Sentence writing progress');
+  const puzzleProgress=asMap('Puzzle progress');
+  const progress=asMap('내신 progress','task_id');
   if(generation!==overviewGeneration||!host.isConnected)return;
   function renderOverview(){
    const now=Date.now();
