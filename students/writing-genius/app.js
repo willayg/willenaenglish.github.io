@@ -39,6 +39,153 @@ const prompts={
     {key:'own',title:'My Own Topic',help:'Choose any topic. Think of a beginning, details, and an ending.',starters:['I think…','First,…','Also,…','In the end,…']}
   ]
 };
+/* Original textbook-aligned topic prompts. Keep user-defined topics unrestricted. */
+prompts.topic.push(...[
+  {
+    "key": "buzz6-u1-w1",
+    "title": "A Day in the City",
+    "help": "Describe a trip through a city. Say where you went, what you saw, and whether you have visited before.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u1-w2",
+    "title": "My Favorite City",
+    "help": "Write about \"My Favorite City\" using vocabulary from Unit 1. Include examples of present perfect: for, since, ever, never.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u1-w3",
+    "title": "A Train Journey",
+    "help": "Write about \"A Train Journey\" using vocabulary from Unit 1. Include examples of present perfect: for, since, ever, never.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u2-w1",
+    "title": "A Weather Forecast",
+    "help": "Describe the weather today and predict what will happen tomorrow.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u2-w2",
+    "title": "My Favorite Season",
+    "help": "Write about \"My Favorite Season\" using vocabulary from Unit 2. Include examples of going to and will.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u2-w3",
+    "title": "A Snowy Weekend",
+    "help": "Write about \"A Snowy Weekend\" using vocabulary from Unit 2. Include examples of going to and will.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u3-w1",
+    "title": "Our Green School",
+    "help": "Explain things your class has already done to help the environment and what you have not done yet.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u3-w2",
+    "title": "An Environment Challenge",
+    "help": "Write about \"An Environment Challenge\" using vocabulary from Unit 3. Include examples of present perfect: already, just, yet.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u3-w3",
+    "title": "A Recycling Idea",
+    "help": "Write about \"A Recycling Idea\" using vocabulary from Unit 3. Include examples of present perfect: already, just, yet.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u4-w1",
+    "title": "The Surprise Performance",
+    "help": "Tell a short story about something unexpected happening during a play.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u4-w2",
+    "title": "Behind the Curtain",
+    "help": "Write about \"Behind the Curtain\" using vocabulary from Unit 4. Include examples of past progressive + simple past.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u4-w3",
+    "title": "The Day the Lights Went Out",
+    "help": "Write about \"The Day the Lights Went Out\" using vocabulary from Unit 4. Include examples of past progressive + simple past.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u5-w1",
+    "title": "A Food From Another Country",
+    "help": "Explain how a favorite food is prepared or served.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u5-w2",
+    "title": "A Special Restaurant",
+    "help": "Write about \"A Special Restaurant\" using vocabulary from Unit 5. Include examples of simple present passive.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u5-w3",
+    "title": "How We Make Lunch",
+    "help": "Write about \"How We Make Lunch\" using vocabulary from Unit 5. Include examples of simple present passive.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u6-w1",
+    "title": "My Technology Tips",
+    "help": "Explain what happens when people use everyday apps and devices.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u6-w2",
+    "title": "A Helpful App",
+    "help": "Write about \"A Helpful App\" using vocabulary from Unit 6. Include examples of zero conditional.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u6-w3",
+    "title": "A Day Without the Internet",
+    "help": "Write about \"A Day Without the Internet\" using vocabulary from Unit 6. Include examples of zero conditional.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u7-w1",
+    "title": "The Camping Trip",
+    "help": "Write a plan for a camping trip and explain what you will do if something unexpected happens.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u7-w2",
+    "title": "An Adventure on a Hill",
+    "help": "Write about \"An Adventure on a Hill\" using vocabulary from Unit 7. Include examples of first conditional.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u7-w3",
+    "title": "A Map to a Secret Place",
+    "help": "Write about \"A Map to a Secret Place\" using vocabulary from Unit 7. Include examples of first conditional.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u8-w1",
+    "title": "A Space Discovery",
+    "help": "Imagine that you discover a strange object in space and decide what it might be.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u8-w2",
+    "title": "Life on a Space Station",
+    "help": "Write about \"Life on a Space Station\" using vocabulary from Unit 8. Include examples of modals of possibility/certainty.",
+    "starters": []
+  },
+  {
+    "key": "buzz6-u8-w3",
+    "title": "My New Planet",
+    "help": "Write about \"My New Planet\" using vocabulary from Unit 8. Include examples of modals of possibility/certainty.",
+    "starters": []
+  }
+]);
 const exampleDiaries=[
  {title:'A Fun Saturday',text:'Today was a wonderful Saturday. I woke up early in the morning. I ate pancakes with my family. After breakfast, we went to the park. I rode my bicycle with my sister. We came home feeling tired but happy.'},
  {title:'My Day at School',text:'I went to school with my friend today. Our first class was English. We learned some new words together. At lunchtime, I ate rice and soup. After school, I played football outside. I had a busy but exciting day.'},
