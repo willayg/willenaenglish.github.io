@@ -22,3 +22,15 @@
 .ua-genius-manage .sgt-assignment-card{background:#f4fbfb;border:1px solid #d4e6e7;border-radius:20px;padding:20px}
 .ua-genius-manage .sgt-assignment-card>div:first-child{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
 @media(max-width:580px){.ua-genius-manage-toolbar{align-items:stretch}.ua-genius-manage-toolbar>.control:first-child{max-width:none;width:100%}.ua-genius-manage-card{padding:14px}}
+
+/* Shared assignment-card outline across app tabs. Keep nested details and controls unchanged. */
+#view-assignments .genius-homework-card,
+#view-assignments .ua-card,
+#view-assignments .ua-genius-manage-card,
+#view-assignments .ua-genius-manage .sgt-assignment-card,
+#view-assignments .gf-hw-group,
+#view-assignments .gf-hw-student-card,
+#view-assignments .ua-group:not(.ua-overview-genius-card) {
+  border: 2.5px solid #e7a2c5;
+  box-sizing: border-box;
+}
