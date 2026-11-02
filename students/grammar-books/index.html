@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
-<link rel="stylesheet" href="./shell.css?v=1">
+<link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261031-app-uniform12"><link rel="stylesheet" href="./shell.css?v=2">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261101-menu-prominent1"></script></head>
@@ -21,14 +21,23 @@
 <button type="button" class="vocab-theme-pip" data-theme="cyberpunk" aria-label="cyberpunk 테마" title="cyberpunk" aria-pressed="false"></button>
 </div>
 <main class="vocab-page">
-<section class="vocab-front-menu" aria-label="Grammar Genius books">
-<section class="vocab-front-books"><div class="vocab-front-section-head"><div><span class="eyebrow">GRAMMAR GENIUS</span><strong>교재 문법 학습</strong></div></div>
-<div class="grammar-empty-card" role="status"><div class="grammar-empty-icon"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M31 10c-8-6-20-2-20 8-7 5-7 14-2 19-4 9 2 17 11 17 4 5 11 3 11-3Zm2 0c8-6 20-2 20 8 7 5 7 14 2 19 4 9-2 17-11 17-4 5-11 3-11-3Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M20 23c8 0 10 4 10 10M15 38c7-3 12-1 15 5M44 23c-8 0-10 4-10 10M49 38c-7-3-12-1-15 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div><strong>교재 준비 중</strong><p>교재별 문법 활동이 여기에 표시됩니다.</p></div>
-</section></section>
+<section id="grammarBooksHome" class="vocab-front-menu" aria-label="Grammar Genius books">
+  <section id="appMissionBasket" class="app-mission-basket-slot"></section>
+  <div class="vocab-front-divider" aria-hidden="true"></div>
+  <section class="vocab-front-books" aria-label="Your grammar books">
+    <div class="vocab-front-section-head"><div><span class="eyebrow">내 교재</span><strong>교재를 선택하세요</strong></div></div>
+    <div id="grammarBookList" class="vocab-front-book-list" aria-live="polite"><div class="vocab-front-empty">교재를 불러오는 중…</div></div>
+  </section>
+</section>
+<section id="grammarBookDetail" class="vocab-home-card vocab-subscreen" hidden>
+  <div class="vocab-subscreen-head"><button id="grammarBookBack" class="vocab-screen-back" type="button">← 홈</button><span>교재 공부</span></div>
+  <h2 id="grammarBookTitle" class="grammar-book-title"></h2>
+  <div class="grammar-empty-card" role="status"><strong>학습 활동 준비 중</strong><p>이 교재의 문법 연습 문제는 아직 준비되지 않았어요.</p></div>
+</section>
 <section id="grammarQuestionEngineMount" hidden aria-hidden="true"></section>
 </main>
-<footer class="grammar-shell-version">Grammar Genius · Books · v1.0</footer>
+<footer class="grammar-shell-version">Grammar Genius · Books · v1.1</footer>
 </div>
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
-<script type="module" src="./engine.js?v=1"></script>
+<script src="/students/components/mission-basket.js?v=20261102-medals-fix4"></script><script type="module" src="./engine.js?v=1"></script><script type="module" src="./books.js?v=1"></script>
 </body></html>
