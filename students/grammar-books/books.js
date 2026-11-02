@@ -50,7 +50,9 @@ function showBook(book,push=true){
 }
 function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;if(push)updateUrl();window.scrollTo(0,0)}
 function toSharedQuestion(q){
- return {id:q.id,form:'choice',prompt:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:activeMode==='hunt'?{underlined_spans:q.options}: {},metadata:{sourceKey:q.id,practiceType:'grammar_books'}};
+ const hunt=activeMode==='hunt';
+ const sentence=hunt?q.options.join(' ').replace(/\s+([,.!?])/g,'$1'):'';
+ return {id:q.id,form:'choice',prompt:hunt?'밑줄 친 부분 중 어법상 틀린 것을 고르세요.\n'+sentence:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:q.options}: {},metadata:{sourceKey:q.id,practiceType:'grammar_books'}};
 }
 function renderQuestion(){
  const questions=questionBank()[activeMode]||[],q=questions[position];
