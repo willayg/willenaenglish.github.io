@@ -1,3 +1,4 @@
+import {renderStudentSessionFinish} from '../components/student-session-finish.js?v=1';
 import {capturePointOrigin,showPointAward} from '../components/student-point-feedback.js?v=20260927-startup2';
 import {repeatUntilCorrect} from '../vocab-study/vocab-pass-flow.js?v=20260927-startup2';
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
@@ -65,8 +66,21 @@ function showGrammarReward(reward){
  celebration.setAttribute('stars',String(reward.stars));
  celebration.setAttribute('star-max','5');
  celebration.setAttribute('points',String(reward.points));
- celebration.setAttribute('label','GRAMMAR REWARD');
+ celebration.setAttribute('label','SESSION REWARD');
  mount.append(celebration);
+}
+function drawFinishScreen(){
+ const mastered=masteredIds.size,missed=missedQuestions.length,percent=Math.round(mastered/8*100);
+ $('grammarFinishMain').innerHTML=renderStudentSessionFinish({
+   title:'잘했어요!',
+   description:missed?'틀린 문제만 다시 풀어보세요.':'이번 문법 학습이 끝났어요.',
+   stats:[{value:'8',label:'STUDIED'},{value:mastered,label:'SOLID'},{value:missed,label:'REVIEW'}],
+   rewardHtml:'<div id="grammarRewardMount" aria-live="polite"></div>',
+   actionsHtml:(missed?'<button id="grammarRetry" class="vocab-review-btn" type="button">Review '+missed+'</button>':'')+
+    '<button id="grammarResultBack" class="vocab-done-btn" type="button">Finish</button>'+
+    '<button id="grammarResultHome" class="vocab-done-btn" type="button">홈</button>'
+ });
+ $('grammarFinishMain').scrollTop=0;
 }
 
 const bestScore=(chapter,mode)=>Number(chapterProgress.find(p=>Number(p.chapter_number)===Number(chapter)&&p.mode===mode)?.best_correct)||0;
@@ -269,30 +283,23 @@ async function checkAnswer(){
 }
 async function finishRound(){
  playStudentSfx('complete');
- $('grammarRound').hidden=true;$('grammarResult').hidden=false;
- const total=8,mastered=masteredIds.size;
- $('grammarResultScore').textContent=mastered+' / '+total;
- $('grammarResultPercent').textContent=Math.round(mastered/total*100)+'%';
- $('grammarResultWrong').textContent=String(missedQuestions.length);
- $('grammarResultText').textContent=missedQuestions.length?'틀린 문제 '+missedQuestions.length+'개만 다시 풀어보세요.':'모든 문제를 맞혔어요!';
- showGrammarReward(null);
- if(!missedQuestions.length&&rewardSession&&!rewardSession.reviewOnly){$('grammarRewardMount').textContent='보상 저장 중…';}
- $('grammarRetry').hidden=missedQuestions.length===0;
- $('grammarRetry').textContent='오답 다시 풀기 ('+missedQuestions.length+')';
+ $('grammarRound').hidden=true;
+ drawFinishScreen();
+ $('grammarResult').hidden=false;
+ const rewardMount=$('grammarRewardMount');
+ if(!missedQuestions.length&&rewardSession&&!rewardSession.reviewOnly)rewardMount.textContent='보상 저장 중…';
  if(!retryingWrong||!missedQuestions.length){
   try{
    if(typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
-   await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,mastered);
+   await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,masteredIds.size);
    await refreshGrammarProgress();
    if(!missedQuestions.length){
     try{showGrammarReward(await completeRewardSession())}
-    catch(rewardError){$('grammarRewardMount').textContent='보상을 저장하지 못했습니다. 페이지를 새로고침하기 전에 확인해 주세요.';}
-   }
-   if(!missedQuestions.length){
+    catch(error){console.error('[Grammar Books] award failed',error);rewardMount.textContent='보상 저장에 실패했어요.'}
     void window.WillenaMissionBasket?.recordCompletedActivity?.('grammar-ten-2-chapter-'+activeUnit+'-'+activeMode,'Grammar Genius Books');
     void window.WillenaAchievements?.refresh?.();
    }
-  }catch(error){console.error('[Grammar Books] result not saved',error);$('grammarResultText').textContent+=' 점수를 저장하지 못했습니다. 다시 시도해 주세요.';}
+  }catch(error){console.error('[Grammar Books] result not saved',error);rewardMount.textContent='학습 기록 저장에 실패했어요.'}
  }
  window.scrollTo(0,0);
 }
@@ -323,12 +330,16 @@ $('grammarModeCards')?.addEventListener('click',e=>{const el=e.target.closest('[
 $('grammarCheck')?.addEventListener('click',checkAnswer);
 $('grammarSkip')?.addEventListener('click',()=>{if(checked||!activeMode)return;missedQuestions.push(activeQuestions[position]);position++;renderQuestion()});
 $('grammarNext')?.addEventListener('click',()=>{position++;renderQuestion()});
-$('grammarRetry')?.addEventListener('click',()=>{
- if(!activeMode||!missedQuestions.length)return;
- activeQuestions=[...missedQuestions];missedQuestions=[];retryingWrong=true;position=0;correct=0;checked=false;
- $('grammarResult').hidden=true;$('grammarRound').hidden=false;renderQuestion();
+$('grammarResult')?.addEventListener('click',event=>{
+ const button=event.target.closest('button');
+ if(!button)return;
+ if(button.id==='grammarRetry'){
+  if(!activeMode||!missedQuestions.length)return;
+  activeQuestions=[...missedQuestions];missedQuestions=[];retryingWrong=true;position=0;correct=0;checked=false;
+  $('grammarResult').hidden=true;$('grammarRound').hidden=false;renderQuestion();
+ }else if(button.id==='grammarResultBack')goToModes();
+ else if(button.id==='grammarResultHome')showHome();
 });
-$('grammarResultBack')?.addEventListener('click',goToModes);
 $('grammarRoundBack')?.addEventListener('click',goToModes);
 $('grammarSessionHome')?.addEventListener('click',()=>{goToModes();showHome()});
 $('grammarResultHome')?.addEventListener('click',()=>showHome());
