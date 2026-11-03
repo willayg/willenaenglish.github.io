@@ -181,6 +181,9 @@
     list.innerHTML=rows.map(assignmentCard).join('');
     document.querySelectorAll('#assignmentList .ghc-open').forEach(button=>button.addEventListener('click',()=>openAssignment(button.dataset.assignmentId)));
     void window.WillenaGeniusHomeworkCard?.hydrateTeachers(list);
+    // Share the same checked-card and cancellation toolbar as the other Genius apps.
+    if(state.filter==='current')window.WillenaHomeworkSelection?.mount?.(list,'homework_assignments');
+    else {list.previousElementSibling?.classList.contains('hw-select-toolbar')&&list.previousElementSibling.remove();delete list.dataset.hwManageControls;}
     void loadVisibleCardProgress(rows,generation);
   }
 
