@@ -165,7 +165,7 @@ async function loadGrammarBooks(){
 }
 async function loadChapterPack(){
  if(chapterPack)return chapterPack;
- const response=await fetch('./grammar-ten-2-chapters.json?v=1',{cache:'no-store'});
+ const response=await fetch('./grammar-ten-2-chapters.json?v=2',{cache:'no-store'});
  if(!response.ok)throw Error('Grammar Ten chapter content unavailable');
  const data=await response.json();
  if(!Array.isArray(data.chapters)||data.chapters.length!==11)throw Error('Invalid Grammar Ten chapters');
