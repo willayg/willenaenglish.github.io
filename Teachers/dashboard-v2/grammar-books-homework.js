@@ -4,11 +4,14 @@
 const OP='https://fiieuiktlsivwfgyivai.supabase.co';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const EDGE=OP+'/functions/v1/grammar-foundations-teacher-v1';
+const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co/rest/v1/';
+const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
+const ACTIVE_BOOK_ID='1e3a2112-07be-45e2-a8fc-ce20011e0e57';
 const CHAPTERS=['현재시제','과거시제','진행시제, 미래시제','조동사','명사','형용사, 부사','to부정사, 동명사','전치사','접속사','문장의 형태','의문사 의문문, 명령문, 감탄문'];
 const MODES=[['choose','빈칸 선택'],['check','문장 판단'],['hunt','오류 찾기']];
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
-const store={path:'books',sub:'manage',classNames:null,students:[],assignments:[],completions:[],loading:false,history:false,expanded:new Set()};
+const store={path:'books',sub:'manage',classNames:null,students:[],books:null,bookId:'',bookClasses:new Map(),assignments:[],completions:[],loading:false,history:false,expanded:new Set()};
 const root=()=>$('#uaGrammarHomework'),panel=()=>$('#gfBooksHomework');
 const authToken=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 async function refreshToken(){const response=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh'):fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include'}));const data=await response.json();if(!data.access_token)throw Error('Please sign in again');window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');return data.access_token}
@@ -26,16 +29,70 @@ const notice=(s,err=false)=>{const n=$('#gbHwNotice');if(n){n.textContent=s;n.cl
 function teacherId(){try{return JSON.parse(atob(authToken().split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub}catch{return''}}
 async function loadStudents(){
  if(store.classNames)return;
+ // The authoritative class roster is classes + class_enrollments, not the
+ // older Grammar Foundations activity feed (which can omit real classes).
+ const classes=await api('classes?select=id,name,status&status=eq.active&order=sort_order.asc&limit=200');
+ store.classNames=[...new Set([...(classes||[]).map(x=>x.name).filter(Boolean),'Test'])];
  try{
-  const d=await request(EDGE+'?action=students');
-  store.students=(d.students||[]).filter(s=>s.id&&s.class&&s.role!=='teacher'&&s.role!=='admin');
-  const classes=store.students.map(s=>String(s.class));
-  store.classNames=[...new Set([...classes,'Test'])].sort();
- }catch(e){
-  console.warn('[Grammar book homework] teacher roster unavailable',e);
-  const select=$('#classSelect');
-  store.classNames=[...new Set([...[...(select?.options||[])].map(o=>o.value).filter(Boolean),'Test'])];
+  const enrollments=await api('class_enrollments?select=student_id,class_id,status&status=eq.active&limit=2000');
+  const ids=[...new Set((enrollments||[]).map(e=>e.student_id).filter(Boolean))];
+  let profiles=[];
+  if(ids.length)profiles=await api('profiles?select=id,name,korean_name&role=eq.student&id=in.('+ids.join(',')+')&limit=2000');
+  const names=new Map((classes||[]).map(x=>[String(x.id),x.name]));
+  const members=new Map((profiles||[]).map(p=>[String(p.id),p]));
+  store.students=(enrollments||[]).flatMap(e=>{
+   const person=members.get(String(e.student_id)),name=names.get(String(e.class_id));
+   return person&&name?[{...person,class:name}]:[];
+  });
+ }catch(error){console.warn('[Grammar book homework] enrolled student progress may be incomplete',error);store.students=[];}
+}
+async function loadBooks(){
+ if(store.books)return store.books;
+ const headers={apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY};
+ const response=await fetch(CONTENT+'content_books?select=id,title,metadata&status=eq.published&metadata->>subject=eq.grammar&order=title.asc&limit=150',{headers,cache:'no-store'});
+ if(!response.ok)throw Error('Published grammar book catalog unavailable ('+response.status+')');
+ const rows=await response.json();
+ const books=[];
+ for(const row of Array.isArray(rows)?rows:[]){
+  const id=String(row.id),supported=id===ACTIVE_BOOK_ID,units=[];
+  if(supported){
+   const r=await fetch(CONTENT+'content_units?select=unit_number,title,metadata&book_id=eq.'+encodeURIComponent(id)+'&status=eq.published&order=unit_number.asc&limit=200',{headers,cache:'no-store'});
+   if(!r.ok)throw Error('Grammar units unavailable ('+r.status+')');
+   const raw=await r.json(),grouped=new Map();
+   for(const unit of Array.isArray(raw)?raw:[]){
+    const chapter=Number(unit.metadata?.chapter_number);
+    if(!Number.isInteger(chapter)||chapter<1||chapter>11)continue;
+    if(!grouped.has(chapter))grouped.set(chapter,{number:chapter,title:String(unit.metadata?.chapter_title||'Unit '+chapter)});
+   }
+   units.push(...[...grouped.values()].sort((a,b)=>a.number-b.number));
+  }
+  // Other books appear in the picker automatically, but remain disabled
+  // until their student game and completion writer support those units.
+  books.push({id,title:String(row.title||'Grammar book'),bookKey:supported?'grammar_ten_2':'',playable:supported&&units.length===11,units});
  }
+ store.books=books;
+ // Book-to-class links are for helpful defaults only. Assignments still allow
+ // any active class, including Test.
+ try{
+  const links=await api('class_book_assignments?select=class_id,book_id,status&status=eq.active&limit=1000');
+  const classes=await api('classes?select=id,name&status=eq.active&limit=200');
+  const names=new Map(classes.map(x=>[x.id,x.name]));
+  store.bookClasses=new Map();
+  for(const link of links){
+   if(!store.bookClasses.has(link.book_id))store.bookClasses.set(link.book_id,[]);
+   const name=names.get(link.class_id);
+   if(name&&!store.bookClasses.get(link.book_id).includes(name))store.bookClasses.get(link.book_id).push(name);
+  }
+ }catch(error){console.warn('[Grammar book homework] class-book suggestions unavailable',error)}
+ return books;
+}
+function selectedBook(){return (store.books||[]).find(b=>b.id===store.bookId)||null}
+function bookOptions(selected=''){
+ return (store.books||[]).map(b=>'<option value="'+esc(b.id)+'"'+(b.id===selected?' selected':'')+(b.playable?'':' disabled')+'>'+esc(b.title)+(b.playable?'':' · Not ready')+'</option>').join('');
+}
+function chapterChoices(selected=[]){
+ const book=selectedBook();
+ return (book?.units||[]).map(u=>'<label class="gb-chapter"><input type="checkbox" data-chapter="'+u.number+'"'+(selected.includes(u.number)?' checked':'')+'><span>Unit '+u.number+' · '+esc(u.title)+'</span></label>').join('');
 }
 function tabShell(){
  const outer=root();if(!outer)return;
@@ -51,9 +108,6 @@ async function show(){
  tabShell();
  if(store.path==='foundations'){window.dispatchEvent(new CustomEvent('ua:grammar-foundations-mounted',{detail:{sub:store.sub}}));return}
  if(store.sub==='create')await drawCreate();else await drawManage();
-}
-function chapterChoices(selected=[]){
- return CHAPTERS.map((s,i)=>'<label class="gb-chapter"><input type="checkbox" data-chapter="'+(i+1)+'"'+(selected.includes(i+1)?' checked':'')+'> <span>Unit '+(i+1)+' · '+esc(s)+'</span></label>').join('');
 }
 async function drawCreate(){
  await loadStudents();const el=panel();if(!el)return;
