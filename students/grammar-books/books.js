@@ -174,7 +174,7 @@ async function loadGrammarBooks(){
   if(!books.some(b=>b.title==='Grammar Ten 완성 2'))books.unshift({id:'grammar-ten-2-practice',title:'Grammar Ten 완성 2'});
   list.innerHTML=books.length?books.map(bookCard).join(''):'<div class="vocab-front-empty">등록된 문법 교재가 없습니다.</div>';
   const id=new URLSearchParams(location.search).get('book');
-  const found=books.find(book=>String(book.id)===id);
+  const found=books.find(book=>String(book.id)===id)||((id==='1e3a2112-07be-45e2-a8fc-ce20011e0e57'||id==='grammar-ten-2-practice')?books.find(book=>book.title==='Grammar Ten 완성 2'):null);
   if(found)showBook(found,false);
  }catch(error){console.warn('[Grammar books] catalog unavailable',error);books=[{id:'grammar-ten-2-practice',title:'Grammar Ten 완성 2'}];list.innerHTML=books.map(bookCard).join('');}
 }
