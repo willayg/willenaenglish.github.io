@@ -3,6 +3,12 @@ main = "src/index.js"
 compatibility_date = "2026-10-01"
 workers_dev = true
 
+# More-specific route takes precedence over the existing api.willenaenglish.com/* gateway.
+# This keeps the rest of the production API untouched.
+[[routes]]
+pattern = "api.willenaenglish.com/api/live-presence*"
+zone_name = "willenaenglish.com"
+
 # Isolated Worker. No API gateway route changes and no new Supabase secrets.
 [[services]]
 binding = "SUPABASE_AUTH"
