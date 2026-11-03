@@ -59,6 +59,8 @@ export default {
   async fetch(req,env) {
     const origin=req.headers.get("Origin")||"";
     const url=new URL(req.url);
+    // Same-zone narrow production route, preserving the existing /v1 service paths.
+    const path=url.pathname==="/api/live-presence"?"/v1/presence":url.pathname==="/api/live-presence/heartbeat"?"/v1/heartbeat":url.pathname==="/api/live-presence/disconnect"?"/v1/disconnect":url.pathname;
     if(req.method==="OPTIONS") {
       if(!ORIGINS.has(origin)) return reply({error:"Origin not allowed"},403,origin);
       return new Response(null,{status:204,headers:{
@@ -69,14 +71,14 @@ export default {
         "Access-Control-Max-Age":"600","Vary":"Origin"
       }});
     }
-    if(url.pathname==="/health" && req.method==="GET") return reply({ok:true,service:"live-presence",version:1},200,origin);
+    if(path==="/health" && req.method==="GET") return reply({ok:true,service:"live-presence",version:1},200,origin);
     if(!ORIGINS.has(origin)) return reply({error:"Origin not allowed"},403,origin);
-    if(!["/v1/heartbeat","/v1/disconnect","/v1/presence"].includes(url.pathname)) return reply({error:"Not found"},404,origin);
+    if(!["/v1/heartbeat","/v1/disconnect","/v1/presence"].includes(path)) return reply({error:"Not found"},404,origin);
     try {
       const user=await identity(req,env);
       if(!user) return reply({error:"Not authenticated"},401,origin);
       const stub=env.PRESENCE.get(env.PRESENCE.idFromName("willena-live-classroom-v1"));
-      if(url.pathname==="/v1/presence") {
+      if(path==="/v1/presence") {
         if(req.method!=="GET") return reply({error:"Method not allowed"},405,origin);
         if(!["teacher","admin"].includes(user.role)) return reply({error:"Teacher access required"},403,origin);
         const result=await stub.fetch("https://presence.internal/snapshot");
@@ -86,7 +88,7 @@ export default {
       if(!["POST","DELETE"].includes(req.method)) return reply({error:"Method not allowed"},405,origin);
       const data=await body(req);
       if(!UUID.test(data.session_id||"")) return reply({error:"Invalid session_id"},400,origin);
-      if(url.pathname==="/v1/disconnect" || req.method==="DELETE") {
+      if(path==="/v1/disconnect" || req.method==="DELETE") {
         await stub.fetch("https://presence.internal/disconnect",{method:"POST",body:JSON.stringify({student_id:user.id,session_id:data.session_id})});
         return reply({ok:true},200,origin);
       }
