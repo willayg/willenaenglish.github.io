@@ -1,0 +1,18 @@
+name = "willena-live-presence"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Isolated Worker: does not alter api.willenaenglish.com routes.
+# Configure SUPABASE_SERVICE_KEY with 'wrangler secret put', never in git.
+# SUPABASE_ANON_KEY is public; store as a Worker variable or secret.
+[vars]
+SUPABASE_URL = "https://fiieuiktlsivwfgyivai.supabase.co"
+
+[[durable_objects.bindings]]
+name = "PRESENCE"
+class_name = "PresenceRoom"
+
+[[migrations]]
+tag = "v1-presence-sqlite"
+new_sqlite_classes = ["PresenceRoom"]
