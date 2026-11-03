@@ -314,6 +314,7 @@ async function startMode(mode,{push=true}={}){
   activeQuestions=alreadyMastered?all:all.filter(q=>!masteredIds.has(q.id));
   // Completed modes remain playable, even if stored IDs came from an older edition.
   if(!activeQuestions.length)activeQuestions=all;
+  homeworkAttemptIds=new Set();
   activeMode=mode;retryQueue.begin(activeQuestions);retryingWrong=false;position=0;correct=0;checked=false;
   beginRewardSession(mode);
   rewardSession.total=all.length;
@@ -341,6 +342,7 @@ async function checkAnswer(){
  checked=true;
  if(result.correct){
   correct++;masteredIds.add(q.id);
+  homeworkAttemptIds.add(q.id);
   if(rewardSession&&!rewardSession.awardedIds.has(q.id)){
    rewardSession.awardedIds.add(q.id);
    if(!rewardSession.reviewOnly){
