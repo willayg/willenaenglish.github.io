@@ -1,0 +1,67 @@
+name: Deploy Live Classroom Presence (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: "Branch or commit containing presence Worker"
+        required: true
+        default: "feature/live-classroom-presence-p1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-live-classroom-presence
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout selected ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_ref }}
+
+      - name: Check required secrets
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SB_ANON: ${{ secrets.SUPABASE_ANON_KEY }}
+          SB_SERVICE: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          test -n "$CF_TOKEN" || { echo "::error::Missing CLOUDFLARE_API_TOKEN repository secret"; exit 1; }
+          test -n "$CF_ACCOUNT" || { echo "::error::Missing CLOUDFLARE_ACCOUNT_ID repository secret"; exit 1; }
+          test -n "$SB_ANON" || { echo "::error::Missing SUPABASE_ANON_KEY repository secret"; exit 1; }
+          test -n "$SB_SERVICE" || { echo "::error::Missing SUPABASE_SERVICE_KEY repository secret"; exit 1; }
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Upload Supabase secrets to isolated Worker
+        working-directory: cloudflare-workers/live-presence
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SB_ANON: ${{ secrets.SUPABASE_ANON_KEY }}
+          SB_SERVICE: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          printf %s "$SB_ANON" | npx --yes wrangler@4 secret put SUPABASE_ANON_KEY
+          printf %s "$SB_SERVICE" | npx --yes wrangler@4 secret put SUPABASE_SERVICE_KEY
+
+      - name: Deploy isolated presence Worker
+        id: deploy
+        working-directory: cloudflare-workers/live-presence
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4 deploy
+
+      - name: Summary
+        run: |
+          echo '### Live Classroom P1 Worker deployed' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Only willena-live-presence was deployed; the API gateway and student apps were not modified.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Check the previous step for the workers.dev URL, then visit /health.' >> "$GITHUB_STEP_SUMMARY"
