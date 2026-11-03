@@ -11,7 +11,7 @@ const KEY="willena:idle-identity:last-interaction:v1";
 const SIGNIN="/students/signin.html";
 const blockedSelectors=[
  "#vocabStudySession","#grammarRound","#session","#wgDiaryFlow","#wgEditor","#spRound",
- "#grammarQuestionEngineMount","#grammarResult","#gameArea","#wgPaperScreen"
+ "#gameArea","#wgPaperScreen"
 ];
 let last=Date.now(),busy=false,prompting=false,pendingCheck=false,lastWrite=0,dialog=null;
 try{const stored=Number(sessionStorage.getItem(KEY));if(Number.isFinite(stored)&&stored>0&&stored<=Date.now())last=stored;}catch{}
