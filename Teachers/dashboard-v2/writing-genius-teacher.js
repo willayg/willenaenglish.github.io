@@ -19,7 +19,7 @@ function mount(){
  view.innerHTML='<div class="page-head"><div><h1>Writing Genius</h1><div class="panel-sub">Student writing submissions</div></div></div>'+
   '<div class="wg-t-tabs" role="tablist" aria-label="Writing Genius teacher views"><button type="button" class="wg-t-tab is-active" data-wg-tab="submissions">Writing Submissions</button><button type="button" class="wg-t-tab" data-wg-tab="practice">Sentence Practice</button></div>'+
   '<div class="wg-t-filter"><select class="control" id="wgTeacherClass" aria-label="Class"><option value="">All classes</option></select>'+
-  '<select class="control" id="wgTeacherKind" aria-label="Writing type"><option value="">All writing</option><option value="sentence">Sentences</option><option value="diary">Diaries</option><option value="topic">Topics</option></select>'+
+  '<select class="control" id="wgTeacherKind" aria-label="Writing type"><option value="">All writing</option><option value="diary">Diaries</option><option value="topic">Topics</option></select>'+
   '<input class="control search" id="wgTeacherSearch" type="search" placeholder="Search student or title…" aria-label="Search submissions">'+
   '<button type="button" class="control" id="wgTeacherRefresh">Refresh</button></div>'+
   '<div class="wg-t-grid"><section class="panel wg-t-list-panel" aria-label="Writing submissions">'+
@@ -189,9 +189,11 @@ function renderPractice(){
   const responses=Array.isArray(e.responses)?e.responses:[];
   const total=Array.isArray(e.questions)?e.questions.length:0;
   const completed=responses.filter(x=>(x?.firstFeedback||x?.feedback)?.grade==='correct').length;
+   const attempted=responses.filter(x=>x?.firstFeedback||x?.feedback).length;
+   const attempts=responses.reduce((sum,x)=>sum+Math.max(0,Number(x?.attempts)||0),0);
   const b=make('button','wg-t-item wg-t-submission-card'+(e.id===state.activeSessionId?' is-selected':''));b.type='button';
   b.append(make('strong','wg-t-item-name',e.korean_name||e.name||'Student'),make('strong','wg-t-card-title',(e.book_title||e.book_id||'Book')+' · '+(e.unit_id||'Unit')));
-  b.append(make('span','wg-t-item-meta',[e.class_name,e.status,completed+' / '+total+' correct'].filter(Boolean).join(' · ')));
+  b.append(make('span','wg-t-item-meta',[e.class_name,e.assignment_id?'Homework':'Practice',e.status,attempted+' / '+total+' checked',completed+' correct',attempts+' attempts'].filter(Boolean).join(' · ')));
   b.onclick=()=>{state.activeSessionId=e.id;detailPractice(e);$('#wgTeacherModal').hidden=false;document.body.classList.add('wg-modal-open');$('#wgTeacherModalClose').focus()};
   container.append(b);
  }
@@ -202,7 +204,7 @@ function detailPractice(entry){
  const host=$('#wgTeacherDetail');if(!host)return;host.replaceChildren();
  if(!entry){host.append(make('div','wg-t-empty','Choose a sentence practice session.'));return}
  const head=make('div','wg-t-detail-head');
- head.append(make('span','wg-t-tag',entry.status||'Practice'),make('h2','',(entry.book_title||entry.book_id||'Book')+' · '+(entry.unit_id||'Unit')));
+ head.append(make('span','wg-t-tag',entry.assignment_id?'Homework · '+(entry.status||'In progress'):(entry.status||'Practice')),make('h2','',(entry.book_title||entry.book_id||'Book')+' · '+(entry.unit_id||'Unit')));
  head.append(make('p','',(entry.korean_name||entry.name||'Student')+' · '+(entry.class_name||'')+' · '+formatDate(entry.activity_at)));
  host.append(head);
  const questions=Array.isArray(entry.questions)?entry.questions:[],responses=Array.isArray(entry.responses)?entry.responses:[];
