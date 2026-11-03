@@ -5,8 +5,10 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 고르시오.',icon:'◉'},{id:'check',label:'문장 판단',ko:'어법에 맞는 문장이나 틀린 문장을 고르시오.',icon:'✓'},{id:'hunt',label:'오류 찾기',ko:'밑줄 친 부분 중 어법상 틀린 것을 고르시오.',icon:'⌕'}];
-let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1;
+let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[];
 const questionBank=()=>catalog?.modes||{};
+function shuffle(items){const out=[...items];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out}
+function prepareRound(questions){return shuffle(questions).map(q=>{const opts=shuffle(q.options.map((value,i)=>({value,i})));return {...q,options:opts.map(o=>o.value),answerIndex:opts.findIndex(o=>o.i===q.answerIndex)}})};
 function updateUrl(bookId=''){const p=new URLSearchParams(location.search);bookId?p.set('book',bookId):p.delete('book');const u=location.pathname+(p.size?'?'+p.toString():'');history.pushState({},'',u)}
 function bookCard(book){return '<button class="vocab-front-book-card" type="button" data-grammar-book="'+esc(book.id)+'"><span class="vocab-front-card-main"><span class="vocab-front-card-copy"><strong>'+esc(book.title)+'</strong></span></span><span class="vocab-front-arrow" aria-hidden="true">›</span></button>'}
 async function loadGrammarBooks(){
@@ -105,7 +107,7 @@ function toSharedQuestion(q){
  return {id:q.id,form:'choice',prompt:instruction+(hunt?'\n'+sentence:activeMode==='choose'?'\n'+q.prompt:''),choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:q.underlined||q.options}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
 }
 function renderQuestion(){
- const questions=questionBank()[activeMode]||[],q=questions[position];
+ const questions=activeQuestions,q=questions[position];
  if(!q)return finishRound();
  const mode=modes.find(m=>m.id===activeMode);
  $('grammarRoundTitle').textContent=mode.label+' · '+mode.ko;
@@ -123,14 +125,14 @@ function startMode(mode){
  if(!modes.some(x=>x.id===mode)||!activeBook)return;
  const panel=$('grammarModeCards');panel.setAttribute('aria-busy','true');
  loadQuestions().then(()=>{
-  activeMode=mode;position=0;correct=0;checked=false;
+  activeMode=mode;activeQuestions=prepareRound(questionBank()[mode]||[]);position=0;correct=0;checked=false;
   $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;
   renderQuestion();window.scrollTo(0,0);
  }).catch(err=>{console.error(err);$('grammarNotReady').textContent='문제를 불러오지 못했어요. 다시 시도해 주세요.';$('grammarNotReady').hidden=false}).finally(()=>panel.removeAttribute('aria-busy'));
 }
 async function checkAnswer(){
  if(checked||!renderer)return;
- const q=questionBank()[activeMode][position],shared=toSharedQuestion(q),response=renderer.getResponse();
+ const q=activeQuestions[position],shared=toSharedQuestion(q),response=renderer.getResponse();
  if(!Array.isArray(response)||!response.length)return;
  const btn=$('grammarCheck');btn.disabled=true;renderer.setDisabled(true);
  let result;
@@ -139,12 +141,12 @@ async function checkAnswer(){
  playStudentSfx(result.correct?'correct':'wrong');
  renderer.showFeedback(result);
  btn.hidden=true;$('grammarSkip').hidden=true;$('grammarNext').hidden=false;$('grammarNext').classList.add('is-next');
- $('grammarNext').textContent=position===questionBank()[activeMode].length-1?'Finish':'Next Question →';
+ $('grammarNext').textContent=position===activeQuestions.length-1?'Finish':'Next Question →';
 }
 function finishRound(){
  playStudentSfx('complete');
  $('grammarRound').hidden=true;$('grammarResult').hidden=false;
- const total=questionBank()[activeMode].length;
+ const total=activeQuestions.length;
  $('grammarResultScore').textContent=correct+' / '+total;
  $('grammarResultPercent').textContent=Math.round(correct/total*100)+'%';
  $('grammarResultText').textContent='이번 연습 결과예요. 다른 모드에도 도전해 보세요.';
@@ -154,7 +156,22 @@ function goToModes(){
  $('grammarRound').hidden=true;$('grammarResult').hidden=true;$('grammarModePanel').hidden=false;activeMode=null;window.scrollTo(0,0);
 }
 $('grammarUnitStrip')?.addEventListener('click',event=>{const el=event.target.closest('[data-unit]');if(el)selectUnit(Number(el.dataset.unit))});
-$('grammarGuideOpen')?.addEventListener('click',()=>{const unit=units.find(u=>Number(u.unit_number)===activeUnit);$('grammarGuideHeading').textContent=unit?.title||'문법 설명';$('grammarGuideContent').textContent=activeBook?.title==='Grammar Ten 완성 2'&&activeUnit===1?'be동사는 주어에 따라 am, is, are를 사용합니다. I am / He·She·It is / You·We·They are. 부정문은 be동사 뒤에 not을 붙이고, 의문문은 be동사를 주어 앞으로 옮깁니다.':'이 단원의 문법 설명을 준비 중입니다.';$('grammarGuideDialog').showModal()});
+$('grammarGuideOpen')?.addEventListener('click',async()=>{
+ const unit=units.find(u=>Number(u.unit_number)===activeUnit);
+ const heading=$('grammarGuideHeading'),body=$('grammarGuideContent');
+ heading.textContent=unit?.title||'문법 설명';
+ body.textContent='문법 설명을 불러오는 중…';
+ $('grammarGuideDialog').showModal();
+ try{
+  if(activeBook?.title.trim()==='Grammar Ten 완성 2'){
+   const pack=await loadChapterPack();
+   const chapter=pack.chapters.find(c=>Number(c.chapter)===activeUnit);
+   if(!chapter){body.textContent='해당 단원의 설명이 없습니다.';return}
+   heading.textContent='Unit '+activeUnit+' · '+chapter.title;
+   body.textContent=chapter.explanation;
+  }else body.textContent='이 교재의 문법 설명을 준비 중입니다.';
+ }catch(error){console.warn('[grammar books] explanation failed',error);body.textContent='문법 설명을 불러오지 못했어요.'}
+});
 $('grammarGuideClose')?.addEventListener('click',()=>$('grammarGuideDialog').close());
 list?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-book]');if(el)showBook(books.find(b=>String(b.id)===el.dataset.grammarBook))});
 $('grammarModeCards')?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-mode]');if(el)startMode(el.dataset.grammarMode)});
