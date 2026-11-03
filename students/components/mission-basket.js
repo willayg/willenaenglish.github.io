@@ -364,7 +364,17 @@ async function getCompletedActivityDays(){
  if(!successful)throw Error('No completed session sources readable');
  return [...dates];
 }
-window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits,getCompletedActivityDays,recordCompletedActivity,getStreakSnapshot,refreshStreakSnapshot,getGoldSnapshot,saveGoldSnapshot};
+async function getGrammarBookProgress(){
+ const rows=await authed(SUPA+'/rest/v1/student_grammar_book_chapter_progress?select=chapter_number,mode,best_correct,last_correct,attempts,completed_at&book_key=eq.grammar_ten_2&order=chapter_number.asc');
+ return Array.isArray(rows)?rows:[];
+}
+async function recordGrammarBookRound(chapter,mode,correct){
+ return authed(SUPA+'/rest/v1/rpc/record_grammar_book_chapter_round',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({p_chapter:chapter,p_mode:mode,p_correct:correct})
+ });
+}
+window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits,getCompletedActivityDays,recordCompletedActivity,getStreakSnapshot,refreshStreakSnapshot,getGoldSnapshot,saveGoldSnapshot,getGrammarBookProgress,recordGrammarBookRound};
 // Any student app may mount this shared widget on a chosen container.
 
 })();
