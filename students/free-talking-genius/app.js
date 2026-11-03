@@ -6,6 +6,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {renderStudentSessionFinish} from '/students/components/student-session-finish.js?v=1';
 import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
+import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -37,6 +38,40 @@ async function api(table,{method='GET',body=null,params=''}={}){
  const data=await response.json().catch(()=>null);
  if(!response.ok)throw Error(data?.message||data?.error||'Database request failed ('+response.status+')');
  return data;
+}
+async function stableRewardUuid(value){
+ if(!globalThis.crypto?.subtle)throw Error('Secure reward ID unavailable in this browser');
+ const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value)));
+ const b=bytes.slice(0,16);b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;
+ const h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');
+ return [h.slice(0,8),h.slice(8,12),h.slice(12,16),h.slice(16,20),h.slice(20,32)].join('-');
+}
+async function syncQuestionReward(question,bestPoints){
+ const pts=Math.max(0,Math.min(4,Number(bestPoints)||0));
+ if(!pts)return;
+ const rewardId=await stableRewardUuid('free-talking-question-v1|'+state.student.id+'|'+state.mode+'|'+question.id);
+ const payload={reward_only:true,session_id:rewardId,client_attempt_id:rewardId,
+  book_id:BOOK,unit_id:question.unit_id,
+  reward_mode:'free_talking_'+state.mode+'_question',
+  reward_list_name:'Free Talking Genius · Unit '+state.unit+' · '+state.mode+' · Q'+question.question_number,
+  reward_list_size:1,reward_started_at:state.session?.created_at||new Date().toISOString(),
+  reward_summary:{completed:true,stars:0,percent:pts*25,accuracy:pts/4,score:pts,total:4,
+   points_earned:pts,book_id:BOOK,unit_id:question.unit_id,
+   free_talking_question_id:question.id,free_talking_mode:state.mode,
+   reward_scheme:'free-talking-question-v1',session_source:'student'}};
+ const fn=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
+ const response=await fn('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+  method:'POST',credentials:'include',cache:'no-store',
+  headers:{'Content-Type':'application/json'},body:JSON.stringify({payload})});
+ const result=await response.json().catch(()=>null);
+ if(!response.ok||result?.success!==true)throw Error(result?.error||'Question points could not be confirmed');
+ state.awards.add(state.mode+':'+question.id);
+}
+async function syncPendingQuestionRewards(){
+ for(const question of groups()){
+  const best=bestUnitPoints(state.unit,state.mode,question.id);
+  if(best>0&&!state.awards.has(state.mode+':'+question.id))await syncQuestionReward(question,best);
+ }
 }
 const pct=x=>Math.max(0,Math.min(100,Math.round(Number(x)||0)));
 function attemptsFor(sessionId,questionId){
@@ -205,8 +240,18 @@ async function submit(){
   if(!response.ok||payload?.success!==true)throw Error(payload?.error||'AI feedback request failed');
   const attempt=payload.attempt;
   if(!attempt?.id)throw Error('Feedback was not confirmed as saved');
+  const prior=bestUnitPoints(state.unit,state.mode,question.id);
   if(!state.attempts.some(row=>row.id===attempt.id))state.attempts.push(attempt);
   state.feedback=attempt;markFeedback(attempt);
+  const best=bestUnitPoints(state.unit,state.mode,question.id);
+  try{
+   if(best>0)await syncQuestionReward(question,best);
+   const gained=Math.max(0,best-prior);
+   if(gained>0)void showPointAward({amount:gained,origin:capturePointOrigin($('ftSubmit'))}).catch(()=>{});
+  }catch(pointError){
+   state.awards.delete(state.mode+':'+question.id);
+   $('ftAttemptStatus').textContent='답변과 점수는 저장됐지만 포인트 동기화가 필요해요: '+pointError.message;
+  }
   playStudentSfx(Number(attempt.grammar_points)+Number(attempt.quality_points)===4?'correct':'wrong');
   $('ftSessionProgress').textContent=groups().filter(q=>questionBest(state.session.id,q.id)===4).length+'/8 mastered';
   $('ftProgressFill').style.width=pct(groups().filter(q=>questionBest(state.session.id,q.id)===4).length/8*100)+'%';
@@ -234,6 +279,7 @@ async function conclude(){
  finally{state.finishing=false}
 }
 async function rewardSync(data){
+ await syncPendingQuestionRewards();
  if(data?.reward_synced)return true;
  if(Number(data.points)===0&&Number(data.stars)===0){
   const ok=await api('rpc/free_talking_reward_synced_v1',{method:'POST',body:{p_session_id:state.session.id}});
@@ -248,7 +294,7 @@ async function rewardSync(data){
    reward_list_size:8,reward_started_at:state.session.created_at,
    reward_summary:{completed:true,stars:Number(data.stars)||0,percent:Number(data.percent)||0,
     accuracy:(Number(data.percent)||0)/100,score:Number(data.percent)||0,total:100,
-    points_earned:Number(data.points)||0,book_id:BOOK,unit_id:groups()[0].unit_id,
+    points_earned:0,book_id:BOOK,unit_id:groups()[0].unit_id,
     reward_scheme:'free-talking-v1',star_cap:5,session_source:'student',free_talking_mode:mode}};
  const fn=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
  const response=await fn('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
