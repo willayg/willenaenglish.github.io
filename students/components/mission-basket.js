@@ -108,6 +108,33 @@ async function standardHomework(){
  }));
  return entries.filter(Boolean);
 }
+// Independent, RLS-scoped Textbooks feed. A delayed or failed shared
+// homework worker must not suppress this student's grammar assignments.
+async function grammarBookHomework(){
+ const now=new Date().toISOString();
+ const assignments=await authed(SUPA+'/rest/v1/homework_assignments?select=id,title,list_meta,created_at,created_by,due_at,source_type&source_type=eq.grammar_books&active=eq.true&status=eq.active&start_at=lte.'+encodeURIComponent(now)+'&order=created_at.desc&limit=200');
+ if(!Array.isArray(assignments)||!assignments.length)return [];
+ const ids=assignments.map(a=>a.id).filter(Boolean);
+ let evidence=[];
+ try{
+  evidence=await authed(SUPA+'/rest/v1/grammar_book_homework_completions?select=assignment_id,mode&assignment_id=in.('+ids.map(encodeURIComponent).join(',')+')&limit=1500');
+ }catch(error){console.warn('[mission basket] Textbook homework evidence unavailable',error)}
+ let userId='';
+ try{const auth=await token();const claims=JSON.parse(atob(auth.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));userId=String(claims.sub||'');}catch{}
+ return assignments.filter(a=>{
+  const targets=a.list_meta?.target_student_ids;
+  return !Array.isArray(targets)||!targets.length||targets.map(String).includes(userId);
+ }).map(a=>{
+  const meta=a.list_meta||{},required=Array.isArray(meta.required_modes)?meta.required_modes:[];
+  const done=new Set((evidence||[]).filter(p=>p.assignment_id===a.id).map(p=>p.mode));
+  const finished=required.filter(mode=>done.has(mode)).length;
+  const chapter=Number(meta.chapter)||1;
+  const link='/students/grammar-books/?book='+encodeURIComponent(meta.source_book_id||'1e3a2112-07be-45e2-a8fc-ce20011e0e57')+'&unit='+chapter;
+  const mission=item('standard:'+a.id,'Grammar Genius Books',a.title||'Grammar homework',link,a.created_at||a.due_at,required.length>0&&finished===required.length,finished+'/'+required.length+' activities');
+  mission.teacherId=a.created_by||null;mission.progress=required.length?Math.round(100*finished/required.length):0;
+  return mission;
+ });
+}
 async function sentences(){
  const d=await authed(SUPA+'/rest/v1/rpc/sg_homework_student_v2',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
  return (d.assignments||[]).map(a=>{
@@ -252,7 +279,7 @@ async function mount(host,options={}){
  state.collapsed=true;
  restoreLocalMedals();
  host.innerHTML='<div class="dm-loading">미션을 확인하고 있어요…</div>';
- const results=await Promise.allSettled([standardHomework().then(rows=>state.appFilter?rows.filter(row=>row.app===state.appFilter):rows),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()]);
+ const results=await Promise.allSettled([standardHomework().then(rows=>state.appFilter?rows.filter(row=>row.app===state.appFilter):rows),state.appFilter&&state.appFilter!=='Grammar Genius Books'?Promise.resolve([]):grammarBookHomework(),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()]);
  for(const result of results){if(result.status==='fulfilled')state.items.push(...result.value);else state.errors.push(String(result.reason))}
  const unique=new Map(state.items.map(x=>[x.id,x]));
  state.items=[...unique.values()].sort((a,b)=>(Date.parse(b.created)||0)-(Date.parse(a.created)||0));
@@ -265,14 +292,30 @@ async function refresh(){
  if(refreshing||!state.host)return;
  refreshing=true;
  try{
-  const results=await Promise.allSettled([standardHomework().then(rows=>state.appFilter?rows.filter(row=>row.app===state.appFilter):rows),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()]);
-  const prefixes=['standard:','sentence:','grammar:','naesin:'];
+  const tasks=[
+   standardHomework().then(rows=>state.appFilter?rows.filter(row=>row.app===state.appFilter):rows),
+   state.appFilter&&state.appFilter!=='Grammar Genius Books'?Promise.resolve([]):grammarBookHomework(),
+   state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),
+   state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),
+   state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()
+  ];
+  const results=await Promise.allSettled(tasks);
+  const kept=new Map(state.items.map(x=>[x.id,x]));
+  const prefixes=['standard:','standard:','sentence:','grammar:','naesin:'];
   results.forEach((result,index)=>{
    if(result.status!=='fulfilled')return;
-   state.items=state.items.filter(x=>!x.id.startsWith(prefixes[index]));
-   state.items.push(...result.value);
+   if(index===0){
+    // Shared feed owns all normal assignments but not independently verified
+    // Textbooks until its textbook data is confirmed.
+    for(const [id,row] of kept)if(id.startsWith('standard:')&&row.app!=='Grammar Genius Books')kept.delete(id);
+   }else if(index===1){
+    for(const [id,row] of kept)if(id.startsWith('standard:')&&row.app==='Grammar Genius Books')kept.delete(id);
+   }else{
+    for(const id of kept.keys())if(id.startsWith(prefixes[index]))kept.delete(id);
+   }
+   for(const row of result.value)kept.set(row.id,row);
   });
-  state.items.sort((a,b)=>(Date.parse(b.created)||0)-(Date.parse(a.created)||0));
+  state.items=[...kept.values()].sort((a,b)=>(Date.parse(b.created)||0)-(Date.parse(a.created)||0));
   restoreLocalMedals();
   await resolveTeacherNames();render();
  }finally{refreshing=false}
