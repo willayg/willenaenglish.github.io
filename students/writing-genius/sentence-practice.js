@@ -321,7 +321,9 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
     b.append(badge);
    }
    const progress=unitProgress(field('spBook'),unit.id);
-   if(progress>0&&!achievement?.golden){
+   // The selected unit has its own large progress ring immediately below.
+   // Don't append "20%" to "Unit 1": it reads as a nonexistent "Unit 120%".
+   if(progress>0&&!achievement?.golden&&!selected){
     const pill=document.createElement('span');pill.className='sp-unit-progress';
     pill.textContent=progress+'%';pill.title='Saved practice progress';b.append(pill);
    }
