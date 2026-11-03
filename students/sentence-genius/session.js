@@ -2,6 +2,7 @@
 // in their existing Word Genius / student-platform canonical modules.
 import {QuestionRenderer} from '/shared/questions/question-renderer.js';
 import {recordSentenceAttempt} from './tracking.js?v=sg-decisions-v4a';
+import {recordSentenceHomeworkAnswer} from './homework.js?v=20261104-isolated2';
 import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=20261103-speech2';
 import {rewardSession} from './rewards.js?v=sg-coach-gold-v3';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
@@ -40,7 +41,7 @@ function questionFor(mode,item){
 }
 export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
   let ctx=null,queue=[],index=0,renderer=null,speech=null,answered=false,
-    since=0,epoch=0,mode='coach',reward=null,saving=new Set(),listenUsed=false,grading=false;
+    since=0,epoch=0,mode='coach',reward=null,saving=new Set(),listenUsed=false,grading=false,sessionRunId=null;
   function dispose(){
     ++epoch;
     speech?.dispose();speech=null;
@@ -48,16 +49,19 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     renderer=null;stopAudio();
   }
   function current(){return queue[index]||null}
-  function changeMode(next,{book,unit,items,store,preview=false}){
+  function changeMode(next,{book,unit,items,store,preview=false,homework=null,sessionContext=null}){
     if(!['coach','unscramble','speaking'].includes(next)||!items.length)return false;
     dispose();
-    ctx={book,unit,items,store,preview};
+    ctx={book,unit,items,store,preview,homework,sessionContext};
+    if(homework&&!homework.required_modes?.includes(next))return false;
+    sessionRunId=window.crypto?.randomUUID?.()||null;
+    if(homework&&!sessionRunId)throw Error('Secure homework session ID unavailable');
     mode=next;index=0;answered=false;resetAiSessionBudget();
     const pending=store.pending(mode,items);
     const isReview=!pending.length;
     queue=shuffle((isReview?items:pending).map(row=>({...row,retry:0})));
-    reward=preview||isReview||store.gold(items)?null:rewardSession(book,unit,mode);
-    $('sessionTitle').textContent=titles[mode];
+    reward=preview||homework||isReview||store.gold(items)?null:rewardSession(book,unit,mode);
+    $('sessionTitle').textContent=(homework?'숙제 · ':'')+titles[mode];
     $('sessionFooter').hidden=false;
     $('sessionContent').hidden=false;
     render();return true;
@@ -200,18 +204,21 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     $('answerNote').hidden=false;
     $('action').textContent='Next →';$('action').disabled=false;$('action').classList.add('is-next');
     playStudentSfx(correct||almostRight?'correct':'wrong');
-    if(verdict.points>0&&!ctx.preview){
+    if(verdict.points>0&&!ctx.preview&&!ctx.homework){
       try{Promise.resolve(showPointAward({amount:verdict.points,origin:capturePointOrigin($('action'))})).catch(()=>{})}catch{}
     }
     onProgress(ctx);
     if(!ctx.preview){
-    const recorded=Promise.resolve().then(()=>recordSentenceAttempt({
+    const recorded=Promise.resolve().then(()=>ctx.homework?
+     recordSentenceHomeworkAnswer({assignmentId:ctx.homework.id,sentenceId:item.id,mode,
+      sessionId:sessionRunId,correct:verdict.mastered}):
+     recordSentenceAttempt({
       book:ctx.book,unit:ctx.unit,item,mode,response,correct:verdict.mastered,
       assisted,almostRight,retryCount:item.retry,points:verdict.points,
       matchedBy:result.matchedBy||'unmatched',
       source:['ai','ai_cached'].includes(result.matchedBy)?'ai':'browser',
       elapsedMs:Date.now()-since
-    })).catch(e=>{console.warn('[Sentence Genius] progress queued or unavailable',e);onMessage('Progress could not be confirmed online.')});
+     })).catch(e=>{console.warn('[Sentence Genius] progress queued or unavailable',e);onMessage('Progress could not be confirmed online.')});
     saving.add(recorded);recorded.finally(()=>saving.delete(recorded));
     }
   }
@@ -231,9 +238,13 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     // Use the same canonical finish markup as Word Genius and Grammar Genius.
     // Keep Sentence Genius's stats, rewards and navigation behavior unchanged.
     $('questionRoot').innerHTML=renderStudentSessionFinish({
-      title:'Session complete!',
+      title:ctx.homework?'Homework complete!':'Session complete!',
       description:ctx.preview?'Teacher preview · No scores or rewards were saved.':'다음 단계도 도전해 보세요.',
-      stats:[
+      stats:ctx.homework?[
+        {label:'Homework progress',value:ctx.store.percent(mode,ctx.items)+'%'},
+        {label:'Questions',value:ctx.items.filter(item=>ctx.store.passed(mode,item.id)).length+'/'+ctx.items.length},
+        {label:'Mode',value:titles[mode]}
+      ]:[
         {label:'Unit mastery',value:ctx.store.percent(mode,ctx.items)+'%'},
         {label:'Stars',value:ctx.store.stars(mode,ctx.items)+'/5'},
         {label:'Golden Unit',value:ctx.store.gold(ctx.items)?'Gold':'—'}
