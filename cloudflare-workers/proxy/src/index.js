@@ -398,6 +398,22 @@ async function handleRequest(request, env) {
 
   try {
 
+    // Live Classroom: authenticated API forwarded through a private service binding.
+    if (url.pathname === '/api/live-presence' || url.pathname === '/api/live-presence/') {
+      const presence = env?.LIVE_PRESENCE;
+      if (!presence || typeof presence.fetch !== 'function') {
+        return rewriteResponse(new Response(JSON.stringify({ success:false, error:'Presence service unavailable' }), {
+          status:503, headers:{'content-type':'application/json; charset=utf-8'}
+        }), origin);
+      }
+      const target = new URL(request.url);
+      target.pathname = '/v1/presence';
+      const result = await presence.fetch(new Request(target.toString(), {
+        method: 'GET', headers: request.headers
+      }));
+      return rewriteResponse(result, origin);
+    }
+
     if (url.pathname === '/api/daily-study' || url.pathname === '/api/daily-study/') {
       const response = await routeDailyStudy(request, env);
       return rewriteResponse(response, origin);
