@@ -220,6 +220,7 @@ function updateUrl(bookId='',unitNumber=null,mode='',{replace=false}={}){
  bookId?p.set('book',bookId):p.delete('book');
  if(bookId&&unitNumber)p.set('unit',String(unitNumber));else p.delete('unit');
  if(bookId&&mode)p.set('mode',mode);else p.delete('mode');
+ if(activeHomework&&bookId)p.set('homework',activeHomework.id);else p.delete('homework');
  const url=location.pathname+(p.size?'?'+p.toString():'');
  if(url===location.pathname+location.search)return;
  history[replace?'replaceState':'pushState']({grammarBook:true,book:bookId||'',unit:unitNumber||null,mode:mode||''},'',url);
@@ -234,7 +235,10 @@ async function loadGrammarBooks(){
   list.innerHTML=books.length?books.map(bookCard).join(''):'<div class="vocab-front-empty">등록된 문법 교재가 없습니다.</div>';
   const id=new URLSearchParams(location.search).get('book');
   const found=books.find(book=>String(book.id)===id)||((id==='1e3a2112-07be-45e2-a8fc-ce20011e0e57'||id==='grammar-ten-2-practice')?books.find(book=>book.title==='Grammar Ten 완성 2'):null);
-  if(found)showBook(found,false);
+  if(geniusHomeworkFromUrl()){
+   try{await loadGrammarHomework()}catch(error){console.warn('[Grammar Textbooks] invalid assignment',error);activeHomework=null;$('grammarNotReady').textContent=error.message;$('grammarNotReady').hidden=false}
+  }
+  if(found)void showBook(found,false,activeHomework?.chapter||null);
  }catch(error){console.warn('[Grammar books] catalog unavailable',error);books=[{id:'grammar-ten-2-practice',title:'Grammar Ten 완성 2'}];list.innerHTML=books.map(bookCard).join('');}
 }
 async function loadChapterPack(){
@@ -284,6 +288,7 @@ async function loadBookUnits(book){
  }
 }
 function selectUnit(number,{push=true}={}){
+ if(activeHomework&&number!==activeHomework.chapter){activeHomework=null;homeworkModeEvidence.clear()}
  activeUnit=number;catalog=null;
  const unit=units.find(u=>Number(u.unit_number)===number);
  $('grammarUnitStrip').querySelectorAll('[data-unit]').forEach(el=>{const active=Number(el.dataset.unit)===number;el.classList.toggle('is-current',active);active?el.setAttribute('aria-current','true'):el.removeAttribute('aria-current')});
@@ -292,12 +297,16 @@ function selectUnit(number,{push=true}={}){
  $('grammarModeCards').hidden=!playable;$('grammarNotReady').hidden=playable;
  $('grammarGuideOpen').disabled=!unit;
  if(playable)renderModeCards();
+ updateHomeworkIdentity();
  renderUnitsProgress();
  if(push&&activeBook)updateUrl(activeBook.id,number);
 }
 function renderModeCards(){
  const mount=$('grammarModeCards');if(!mount)return;
- mount.innerHTML=modes.map((mode,i)=>{const best=bestScore(activeUnit,mode.id),pct=Math.round(best/8*100),stars=starsForPercent(pct);return '<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:'+pct+'"><span>'+pct+'%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">STEP '+(i+1)+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">★ '+stars+'/5</span></span></button>'}).join('');
+ mount.innerHTML=modes.filter(mode=>!activeHomework||activeHomework.required_modes.includes(mode.id)).map((mode,i)=>{
+ const count=activeHomework?Math.min(8,Number(homeworkModeEvidence.get(mode.id)?.correct_count)||0):bestScore(activeUnit,mode.id);
+ const pct=Math.round(count/8*100),stars=starsForPercent(pct);
+ return '<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:'+pct+'"><span>'+pct+'%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">'+(activeHomework?'HOMEWORK':'STEP '+(i+1))+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">'+(activeHomework?count+'/8 completed':'★ '+stars+'/5')+'</span></span></button>'}).join('');
 }
 async function showBook(book,push=true,requestedUnit=null){
  if(!book)return;
@@ -324,7 +333,7 @@ async function showBook(book,push=true,requestedUnit=null){
  }
  window.scrollTo(0,0);
 }
-function showHome(push=true){saveInterruptedRound();++navEpoch;activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;if(push)updateUrl();window.scrollTo(0,0)}
+function showHome(push=true){saveInterruptedRound();activeHomework=null;homeworkModeEvidence.clear();++navEpoch;activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;if(push)updateUrl();window.scrollTo(0,0)}
 function toSharedQuestion(q){
  if(q.displayStyle==='sentence-options'){
   return {id:q.id,form:'choice',prompt:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
