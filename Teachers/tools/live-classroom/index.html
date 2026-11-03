@@ -38,8 +38,11 @@ footer{text-align:center;color:#82959e;font-size:.75rem;margin-top:26px}
 body.embedded header{display:none}body.embedded main{max-width:none;margin:0;padding:10px 12px 20px}
 body.embedded .toolbar{border-radius:12px;padding:11px}
 body.embedded footer{display:none}
+
+body.mini main{margin:0;padding:12px}body.mini .toolbar{padding:7px 10px;border:0;box-shadow:none;background:#f7fcfd}body.mini .toolbar label[for="app-filter"],body.mini #app-filter,body.mini #refresh,body.mini #last-refresh,body.mini .stats,body.mini footer{display:none!important}body.mini .toolbar .grow{display:none}body.mini .class-head{margin:12px 0 6px}body.mini .notice{margin:8px 0}body.mini .student{grid-template-columns:minmax(90px,1fr) minmax(100px,1fr) minmax(130px,2fr);gap:8px}body.mini .student>:nth-child(4),body.mini .student>:nth-child(5){display:none}body.mini .table-heading{grid-template-columns:minmax(90px,1fr) minmax(100px,1fr) minmax(130px,2fr)}@media(max-width:620px){body.mini .student{grid-template-columns:minmax(70px,1fr) minmax(66px,.7fr) minmax(90px,1.2fr);font-size:.75rem}}
 </style>
-<script>if(new URLSearchParams(location.search).has('embedded'))document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('embedded'));</script>
+<script>if(new URLSearchParams(location.search).has('mini'))document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('mini'));
+if(new URLSearchParams(location.search).has('embedded'))document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('embedded'));</script>
 </head>
 <body>
 <header><img src="/Assets/Images/Logo.png" alt="Willena"><h1>Live Classroom</h1><a href="/Teachers/">← Dashboard</a></header>
@@ -50,5 +53,5 @@ body.embedded footer{display:none}
 <div id="classes"></div>
 <footer>Willena Live Classroom · Online status expires after 90 seconds · Updates while this page is open</footer>
 </main>
-<script type="module" src="./live-classroom.js?v=8"></script>
+<script type="module" src="./live-classroom.js?v=9-mini"></script>
 </body></html>
