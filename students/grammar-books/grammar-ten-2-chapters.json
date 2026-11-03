@@ -361,7 +361,7 @@
       "modes": {
         "choose": [
           {
-            "id": "gt2-c2-choose-1",
+            "id": "gt2-c2-choose-1-r2",
             "subunit": 1,
             "prompt": "A: ____ your parents at home yesterday?\nB: No, they ____.",
             "options": [
@@ -374,7 +374,7 @@
             "explanation": "복수 주어 your parents의 과거 상태는 Were로 묻고 No, they weren't.라고 답해요."
           },
           {
-            "id": "gt2-c2-choose-2",
+            "id": "gt2-c2-choose-2-r2",
             "subunit": 1,
             "prompt": "I ____ sick last Monday, but my brothers ____ healthy.",
             "options": [
@@ -387,7 +387,7 @@
             "explanation": "I에는 was, 복수인 my brothers에는 were를 써요."
           },
           {
-            "id": "gt2-c2-choose-3",
+            "id": "gt2-c2-choose-3-r2",
             "subunit": 2,
             "prompt": "A: ____ Mina visit her aunt last weekend?\nB: Yes, she ____.",
             "options": [
@@ -400,7 +400,7 @@
             "explanation": "과거의 일반동사 의문문은 Did + 주어 + 동사원형이며 Yes, she did.로 대답해요."
           },
           {
-            "id": "gt2-c2-choose-4",
+            "id": "gt2-c2-choose-4-r2",
             "subunit": 2,
             "prompt": "다음 중 동사원형과 과거형이 잘못 짝지어진 것은?",
             "options": [
@@ -413,7 +413,7 @@
             "explanation": "bring의 과거형은 brought예요. bringed는 잘못된 형태예요."
           },
           {
-            "id": "gt2-c2-choose-5",
+            "id": "gt2-c2-choose-5-r2",
             "subunit": 1,
             "prompt": "We ____ at school last Friday.",
             "options": [
@@ -426,7 +426,7 @@
             "explanation": "올바른 문장: We were at school last Friday."
           },
           {
-            "id": "gt2-c2-choose-6",
+            "id": "gt2-c2-choose-6-r2",
             "subunit": 1,
             "prompt": "____ they busy yesterday?",
             "options": [
@@ -439,7 +439,7 @@
             "explanation": "올바른 문장: Were they busy yesterday?"
           },
           {
-            "id": "gt2-c2-choose-7",
+            "id": "gt2-c2-choose-7-r2",
             "subunit": 2,
             "prompt": "They ____ to the museum.",
             "options": [
@@ -452,7 +452,7 @@
             "explanation": "올바른 문장: They went to the museum."
           },
           {
-            "id": "gt2-c2-choose-8",
+            "id": "gt2-c2-choose-8-r2",
             "subunit": 2,
             "prompt": "We didn't ____ TV last night.",
             "options": [
@@ -467,7 +467,7 @@
         ],
         "check": [
           {
-            "id": "gt2-c2-check-1",
+            "id": "gt2-c2-check-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
@@ -480,7 +480,7 @@
             "explanation": "복수 주어 cousins에는 were를 써요."
           },
           {
-            "id": "gt2-c2-check-2",
+            "id": "gt2-c2-check-2-r2",
             "subunit": 2,
             "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그는 어제 저녁 숙제를 하지 않았다.’",
             "options": [
@@ -493,7 +493,7 @@
             "explanation": "과거 부정문에서는 didn't + 동사원형을 사용해요."
           },
           {
-            "id": "gt2-c2-check-3",
+            "id": "gt2-c2-check-3-r2",
             "subunit": 2,
             "prompt": "다음 중 동사원형과 과거형이 바르게 짝지어진 것은?",
             "options": [
@@ -506,7 +506,7 @@
             "explanation": "teach의 과거형은 taught예요."
           },
           {
-            "id": "gt2-c2-check-4",
+            "id": "gt2-c2-check-4-r2",
             "subunit": 2,
             "prompt": "다음 중 대화가 자연스러운 것은?",
             "options": [
@@ -519,7 +519,7 @@
             "explanation": "Did로 시작한 과거 질문에는 Yes, I did.로 대답해요."
           },
           {
-            "id": "gt2-c2-check-5",
+            "id": "gt2-c2-check-5-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -532,7 +532,7 @@
             "explanation": "올바른 표현: We were at school last Friday."
           },
           {
-            "id": "gt2-c2-check-6",
+            "id": "gt2-c2-check-6-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -545,7 +545,7 @@
             "explanation": "올바른 표현: Were they busy yesterday?"
           },
           {
-            "id": "gt2-c2-check-7",
+            "id": "gt2-c2-check-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -558,7 +558,7 @@
             "explanation": "올바른 표현: They went to the museum."
           },
           {
-            "id": "gt2-c2-check-8",
+            "id": "gt2-c2-check-8-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -573,7 +573,7 @@
         ],
         "hunt": [
           {
-            "id": "gt2-c2-hunt-1",
+            "id": "gt2-c2-hunt-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -587,7 +587,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c2-hunt-2",
+            "id": "gt2-c2-hunt-2-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -601,7 +601,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c2-hunt-3",
+            "id": "gt2-c2-hunt-3-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -615,7 +615,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c2-hunt-4",
+            "id": "gt2-c2-hunt-4-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -629,7 +629,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c2-hunt-5",
+            "id": "gt2-c2-hunt-5-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -643,7 +643,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c2-hunt-6",
+            "id": "gt2-c2-hunt-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -657,7 +657,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c2-hunt-7",
+            "id": "gt2-c2-hunt-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -671,7 +671,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c2-hunt-8",
+            "id": "gt2-c2-hunt-8-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -700,7 +700,7 @@
       "modes": {
         "choose": [
           {
-            "id": "gt2-c3-choose-1",
+            "id": "gt2-c3-choose-1-r2",
             "subunit": 1,
             "prompt": "A: What ____ you doing at 7 p.m.?\nB: I ____ dinner.",
             "options": [
@@ -713,7 +713,7 @@
             "explanation": "과거 특정 시각에 진행 중이던 일은 were/was + -ing로 말해요."
           },
           {
-            "id": "gt2-c3-choose-2",
+            "id": "gt2-c3-choose-2-r2",
             "subunit": 1,
             "prompt": "다음 중 동사원형과 -ing형이 잘못 짝지어진 것은?",
             "options": [
@@ -726,7 +726,7 @@
             "explanation": "write는 끝의 e를 빼고 writing으로 써요."
           },
           {
-            "id": "gt2-c3-choose-3",
+            "id": "gt2-c3-choose-3-r2",
             "subunit": 2,
             "prompt": "A: ____ your brother studying now?\nB: No, he ____.",
             "options": [
@@ -739,7 +739,7 @@
             "explanation": "현재진행형 의문문은 Is he studying?이며 No, he isn't.로 답해요."
           },
           {
-            "id": "gt2-c3-choose-4",
+            "id": "gt2-c3-choose-4-r2",
             "subunit": 3,
             "prompt": "They ____ going to watch TV tonight, but they ____ go out tomorrow.",
             "options": [
@@ -752,7 +752,7 @@
             "explanation": "be going to의 부정은 aren't going to이고 will 뒤에는 동사원형이 와요."
           },
           {
-            "id": "gt2-c3-choose-5",
+            "id": "gt2-c3-choose-5-r2",
             "subunit": 1,
             "prompt": "They were ____ outside at six.",
             "options": [
@@ -765,7 +765,7 @@
             "explanation": "올바른 문장: They were playing outside at six."
           },
           {
-            "id": "gt2-c3-choose-6",
+            "id": "gt2-c3-choose-6-r2",
             "subunit": 2,
             "prompt": "She ____ sleeping now.",
             "options": [
@@ -778,7 +778,7 @@
             "explanation": "올바른 문장: She isn't sleeping now."
           },
           {
-            "id": "gt2-c3-choose-7",
+            "id": "gt2-c3-choose-7-r2",
             "subunit": 2,
             "prompt": "What ____ you doing at eight?",
             "options": [
@@ -791,7 +791,7 @@
             "explanation": "올바른 문장: What were you doing at eight?"
           },
           {
-            "id": "gt2-c3-choose-8",
+            "id": "gt2-c3-choose-8-r2",
             "subunit": 3,
             "prompt": "They ____ going to visit us.",
             "options": [
@@ -806,7 +806,7 @@
         ],
         "check": [
           {
-            "id": "gt2-c3-check-1",
+            "id": "gt2-c3-check-1-r2",
             "subunit": 1,
             "prompt": "다음 중 동사원형과 진행형이 바르게 짝지어진 것은?",
             "options": [
@@ -819,7 +819,7 @@
             "explanation": "swim은 마지막 자음을 한 번 더 쓰고 swimming으로 만들어요."
           },
           {
-            "id": "gt2-c3-check-2",
+            "id": "gt2-c3-check-2-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 올바른 의문문을 고르시오.",
             "options": [
@@ -832,7 +832,7 @@
             "explanation": "과거진행형 의문문은 Were + 복수 주어 + 동사-ing예요."
           },
           {
-            "id": "gt2-c3-check-3",
+            "id": "gt2-c3-check-3-r2",
             "subunit": 3,
             "prompt": "다음 중 우리말과 일치하는 문장은?\n‘우리는 내일 할머니를 방문할 예정이다.’",
             "options": [
@@ -845,7 +845,7 @@
             "explanation": "be going to + 동사원형 또는 will + 동사원형으로 미래를 나타내요."
           },
           {
-            "id": "gt2-c3-check-4",
+            "id": "gt2-c3-check-4-r2",
             "subunit": 3,
             "prompt": "다음 중 대화가 자연스러운 것은?",
             "options": [
@@ -858,7 +858,7 @@
             "explanation": "Will로 물으면 will로 답하고, 진행형 질문에는 알맞은 be동사로 답해요."
           },
           {
-            "id": "gt2-c3-check-5",
+            "id": "gt2-c3-check-5-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -871,7 +871,7 @@
             "explanation": "올바른 표현: They were playing outside at six."
           },
           {
-            "id": "gt2-c3-check-6",
+            "id": "gt2-c3-check-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -884,7 +884,7 @@
             "explanation": "올바른 표현: She isn't sleeping now."
           },
           {
-            "id": "gt2-c3-check-7",
+            "id": "gt2-c3-check-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -897,7 +897,7 @@
             "explanation": "올바른 표현: What were you doing at eight?"
           },
           {
-            "id": "gt2-c3-check-8",
+            "id": "gt2-c3-check-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -912,7 +912,7 @@
         ],
         "hunt": [
           {
-            "id": "gt2-c3-hunt-1",
+            "id": "gt2-c3-hunt-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -926,7 +926,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c3-hunt-2",
+            "id": "gt2-c3-hunt-2-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -940,7 +940,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c3-hunt-3",
+            "id": "gt2-c3-hunt-3-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -954,7 +954,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c3-hunt-4",
+            "id": "gt2-c3-hunt-4-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -968,7 +968,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c3-hunt-5",
+            "id": "gt2-c3-hunt-5-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -982,7 +982,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c3-hunt-6",
+            "id": "gt2-c3-hunt-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -996,7 +996,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c3-hunt-7",
+            "id": "gt2-c3-hunt-7-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1010,7 +1010,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c3-hunt-8",
+            "id": "gt2-c3-hunt-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1038,7 +1038,7 @@
       "modes": {
         "choose": [
           {
-            "id": "gt2-c4-choose-1",
+            "id": "gt2-c4-choose-1-r2",
             "subunit": 1,
             "prompt": "A: ____ I borrow your pen?\nB: Yes, you ____.",
             "options": [
@@ -1051,7 +1051,7 @@
             "explanation": "허락을 구할 때 May I ...?라고 말하고 Yes, you may.로 답할 수 있어요."
           },
           {
-            "id": "gt2-c4-choose-2",
+            "id": "gt2-c4-choose-2-r2",
             "subunit": 1,
             "prompt": "She ____ speak three languages when she was ten.",
             "options": [
@@ -1064,9 +1064,9 @@
             "explanation": "과거 능력은 could로 나타내요."
           },
           {
-            "id": "gt2-c4-choose-3",
+            "id": "gt2-c4-choose-3-r2",
             "subunit": 2,
-            "prompt": "A: ____ I wear a uniform tomorrow?\nB: Yes, all students ____.",
+            "prompt": "A: ____ wear a uniform tomorrow?\nB: Yes, all students ____.",
             "options": [
               "Do I have to — must",
               "Must I to — must",
@@ -1077,7 +1077,7 @@
             "explanation": "의무를 묻는 Do I have to ...?에는 must로 의무를 설명할 수 있어요."
           },
           {
-            "id": "gt2-c4-choose-4",
+            "id": "gt2-c4-choose-4-r2",
             "subunit": 2,
             "prompt": "You ____ run in the hallway, but you ____ walk quietly.",
             "options": [
@@ -1090,7 +1090,7 @@
             "explanation": "금지는 must not, 권장 행동은 should로 나타내요."
           },
           {
-            "id": "gt2-c4-choose-5",
+            "id": "gt2-c4-choose-5-r2",
             "subunit": 1,
             "prompt": "May I ____ the window?",
             "options": [
@@ -1103,7 +1103,7 @@
             "explanation": "올바른 문장: May I open the window?"
           },
           {
-            "id": "gt2-c4-choose-6",
+            "id": "gt2-c4-choose-6-r2",
             "subunit": 1,
             "prompt": "Can they ____ with us?",
             "options": [
@@ -1116,7 +1116,7 @@
             "explanation": "올바른 문장: Can they come with us?"
           },
           {
-            "id": "gt2-c4-choose-7",
+            "id": "gt2-c4-choose-7-r2",
             "subunit": 2,
             "prompt": "She ____ to finish her homework.",
             "options": [
@@ -1129,7 +1129,7 @@
             "explanation": "올바른 문장: She has to finish her homework."
           },
           {
-            "id": "gt2-c4-choose-8",
+            "id": "gt2-c4-choose-8-r2",
             "subunit": 2,
             "prompt": "He doesn't ____ to go now.",
             "options": [
@@ -1144,7 +1144,7 @@
         ],
         "check": [
           {
-            "id": "gt2-c4-check-1",
+            "id": "gt2-c4-check-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
@@ -1157,7 +1157,7 @@
             "explanation": "조동사 뒤에는 동사원형을 써요."
           },
           {
-            "id": "gt2-c4-check-2",
+            "id": "gt2-c4-check-2-r2",
             "subunit": 1,
             "prompt": "다음 중 우리말과 일치하는 문장은?\n‘내가 창문을 열어도 될까요?’",
             "options": [
@@ -1170,7 +1170,7 @@
             "explanation": "허락을 구하는 May I + 동사원형이 맞아요."
           },
           {
-            "id": "gt2-c4-check-3",
+            "id": "gt2-c4-check-3-r2",
             "subunit": 2,
             "prompt": "다음 중 의미가 다른 문장을 고르시오.\n‘할 필요가 없다’는 뜻이 아닌 것은?",
             "options": [
@@ -1183,7 +1183,7 @@
             "explanation": "must not은 금지이며 don't have to는 의무가 없다는 뜻이에요."
           },
           {
-            "id": "gt2-c4-check-4",
+            "id": "gt2-c4-check-4-r2",
             "subunit": 2,
             "prompt": "다음 중 대화가 자연스러운 것은?",
             "options": [
@@ -1196,7 +1196,7 @@
             "explanation": "조동사에 대한 짧은 대답은 같은 조동사를 쓰고 동사원형은 생략할 수 있어요."
           },
           {
-            "id": "gt2-c4-check-5",
+            "id": "gt2-c4-check-5-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1209,7 +1209,7 @@
             "explanation": "올바른 표현: May I open the window?"
           },
           {
-            "id": "gt2-c4-check-6",
+            "id": "gt2-c4-check-6-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1222,7 +1222,7 @@
             "explanation": "올바른 표현: Can they come with us?"
           },
           {
-            "id": "gt2-c4-check-7",
+            "id": "gt2-c4-check-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1235,7 +1235,7 @@
             "explanation": "올바른 표현: She has to finish her homework."
           },
           {
-            "id": "gt2-c4-check-8",
+            "id": "gt2-c4-check-8-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1250,7 +1250,7 @@
         ],
         "hunt": [
           {
-            "id": "gt2-c4-hunt-1",
+            "id": "gt2-c4-hunt-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1264,7 +1264,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c4-hunt-2",
+            "id": "gt2-c4-hunt-2-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1278,7 +1278,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c4-hunt-3",
+            "id": "gt2-c4-hunt-3-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1292,7 +1292,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c4-hunt-4",
+            "id": "gt2-c4-hunt-4-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1306,7 +1306,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c4-hunt-5",
+            "id": "gt2-c4-hunt-5-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1320,7 +1320,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c4-hunt-6",
+            "id": "gt2-c4-hunt-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1334,7 +1334,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c4-hunt-7",
+            "id": "gt2-c4-hunt-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1348,7 +1348,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c4-hunt-8",
+            "id": "gt2-c4-hunt-8-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1377,7 +1377,7 @@
       "modes": {
         "choose": [
           {
-            "id": "gt2-c5-choose-1",
+            "id": "gt2-c5-choose-1-r2",
             "subunit": 1,
             "prompt": "다음 중 명사의 단수형과 복수형이 잘못 짝지어진 것은?",
             "options": [
@@ -1390,7 +1390,7 @@
             "explanation": "mouse의 복수형은 mice예요."
           },
           {
-            "id": "gt2-c5-choose-2",
+            "id": "gt2-c5-choose-2-r2",
             "subunit": 1,
             "prompt": "There ____ three ____ in the park.",
             "options": [
@@ -1403,7 +1403,7 @@
             "explanation": "three 뒤에는 복수명사 children, 존재를 나타내는 동사는 are를 써요."
           },
           {
-            "id": "gt2-c5-choose-3",
+            "id": "gt2-c5-choose-3-r2",
             "subunit": 2,
             "prompt": "My uncle bought ____ useful camera and ____ umbrella.",
             "options": [
@@ -1416,7 +1416,7 @@
             "explanation": "useful은 자음 소리 /j/로 시작하므로 a, umbrella는 모음 소리로 시작하므로 an을 써요."
           },
           {
-            "id": "gt2-c5-choose-4",
+            "id": "gt2-c5-choose-4-r2",
             "subunit": 3,
             "prompt": "A: Is this your jacket?\nB: No, it isn't ____. It's ____.",
             "options": [
@@ -1429,7 +1429,7 @@
             "explanation": "단독으로 쓰는 소유대명사는 mine, hers예요."
           },
           {
-            "id": "gt2-c5-choose-5",
+            "id": "gt2-c5-choose-5-r2",
             "subunit": 1,
             "prompt": "There are three ____ here.",
             "options": [
@@ -1442,7 +1442,7 @@
             "explanation": "올바른 문장: There are three boxes here."
           },
           {
-            "id": "gt2-c5-choose-6",
+            "id": "gt2-c5-choose-6-r2",
             "subunit": 2,
             "prompt": "She bought ____ umbrella.",
             "options": [
@@ -1455,7 +1455,7 @@
             "explanation": "올바른 문장: She bought an umbrella."
           },
           {
-            "id": "gt2-c5-choose-7",
+            "id": "gt2-c5-choose-7-r2",
             "subunit": 2,
             "prompt": "____ sun rises in the east.",
             "options": [
@@ -1468,7 +1468,7 @@
             "explanation": "올바른 문장: The sun rises in the east."
           },
           {
-            "id": "gt2-c5-choose-8",
+            "id": "gt2-c5-choose-8-r2",
             "subunit": 3,
             "prompt": "Please give the book to ____.",
             "options": [
@@ -1483,7 +1483,7 @@
         ],
         "check": [
           {
-            "id": "gt2-c5-check-1",
+            "id": "gt2-c5-check-1-r2",
             "subunit": 1,
             "prompt": "다음 중 명사의 복수형이 바르게 짝지어진 것은?",
             "options": [
@@ -1496,7 +1496,7 @@
             "explanation": "woman의 복수형은 women이고 sheep은 단복수형이 같아요."
           },
           {
-            "id": "gt2-c5-check-2",
+            "id": "gt2-c5-check-2-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
@@ -1509,7 +1509,7 @@
             "explanation": "advice와 furniture 등은 셀 수 없는 명사로 쓰여요."
           },
           {
-            "id": "gt2-c5-check-3",
+            "id": "gt2-c5-check-3-r2",
             "subunit": 2,
             "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그녀는 정직한 학생이다.’",
             "options": [
@@ -1522,7 +1522,7 @@
             "explanation": "honest는 h를 발음하지 않아 모음 소리로 시작하므로 an을 써요."
           },
           {
-            "id": "gt2-c5-check-4",
+            "id": "gt2-c5-check-4-r2",
             "subunit": 3,
             "prompt": "다음 중 대화가 자연스러운 것은?",
             "options": [
@@ -1535,7 +1535,7 @@
             "explanation": "소유대명사 mine은 명사를 반복하지 않고 소유를 나타내요."
           },
           {
-            "id": "gt2-c5-check-5",
+            "id": "gt2-c5-check-5-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1548,7 +1548,7 @@
             "explanation": "올바른 표현: There are three boxes here."
           },
           {
-            "id": "gt2-c5-check-6",
+            "id": "gt2-c5-check-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1561,7 +1561,7 @@
             "explanation": "올바른 표현: She bought an umbrella."
           },
           {
-            "id": "gt2-c5-check-7",
+            "id": "gt2-c5-check-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1574,7 +1574,7 @@
             "explanation": "올바른 표현: The sun rises in the east."
           },
           {
-            "id": "gt2-c5-check-8",
+            "id": "gt2-c5-check-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1589,7 +1589,7 @@
         ],
         "hunt": [
           {
-            "id": "gt2-c5-hunt-1",
+            "id": "gt2-c5-hunt-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1603,7 +1603,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c5-hunt-2",
+            "id": "gt2-c5-hunt-2-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1617,7 +1617,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c5-hunt-3",
+            "id": "gt2-c5-hunt-3-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1631,7 +1631,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c5-hunt-4",
+            "id": "gt2-c5-hunt-4-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1645,7 +1645,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c5-hunt-5",
+            "id": "gt2-c5-hunt-5-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1659,7 +1659,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c5-hunt-6",
+            "id": "gt2-c5-hunt-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1673,7 +1673,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c5-hunt-7",
+            "id": "gt2-c5-hunt-7-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1687,7 +1687,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c5-hunt-8",
+            "id": "gt2-c5-hunt-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1716,7 +1716,7 @@
       "modes": {
         "choose": [
           {
-            "id": "gt2-c6-choose-1",
+            "id": "gt2-c6-choose-1-r2",
             "subunit": 1,
             "prompt": "The flowers smell ____, and the music sounds ____.",
             "options": [
@@ -1729,7 +1729,7 @@
             "explanation": "감각동사 smell, sound 뒤에서 상태를 나타낼 때는 형용사를 써요."
           },
           {
-            "id": "gt2-c6-choose-2",
+            "id": "gt2-c6-choose-2-r2",
             "subunit": 2,
             "prompt": "Mina speaks English ____, but her brother speaks ____.",
             "options": [
@@ -1742,7 +1742,7 @@
             "explanation": "speaks를 꾸미는 말에는 부사 well, slowly를 써요."
           },
           {
-            "id": "gt2-c6-choose-3",
+            "id": "gt2-c6-choose-3-r2",
             "subunit": 3,
             "prompt": "My bicycle is ____ than yours, but Leo's is the ____ of all.",
             "options": [
@@ -1755,7 +1755,7 @@
             "explanation": "두 대상을 비교하면 비교급 faster, 셋 이상에서 가장 높으면 최상급 fastest를 써요."
           },
           {
-            "id": "gt2-c6-choose-4",
+            "id": "gt2-c6-choose-4-r2",
             "subunit": 3,
             "prompt": "다음 중 비교급과 최상급이 잘못 짝지어진 것은?",
             "options": [
@@ -1768,7 +1768,7 @@
             "explanation": "good의 비교급은 better, 최상급은 best예요."
           },
           {
-            "id": "gt2-c6-choose-5",
+            "id": "gt2-c6-choose-5-r2",
             "subunit": 1,
             "prompt": "She looks ____ today.",
             "options": [
@@ -1781,7 +1781,7 @@
             "explanation": "올바른 문장: She looks happy today."
           },
           {
-            "id": "gt2-c6-choose-6",
+            "id": "gt2-c6-choose-6-r2",
             "subunit": 2,
             "prompt": "He runs ____ every morning.",
             "options": [
@@ -1794,7 +1794,7 @@
             "explanation": "올바른 문장: He runs quickly every morning."
           },
           {
-            "id": "gt2-c6-choose-7",
+            "id": "gt2-c6-choose-7-r2",
             "subunit": 2,
             "prompt": "They arrived ____ yesterday.",
             "options": [
@@ -1807,7 +1807,7 @@
             "explanation": "올바른 문장: They arrived late yesterday."
           },
           {
-            "id": "gt2-c6-choose-8",
+            "id": "gt2-c6-choose-8-r2",
             "subunit": 3,
             "prompt": "She is the ____ in her class.",
             "options": [
@@ -1822,7 +1822,7 @@
         ],
         "check": [
           {
-            "id": "gt2-c6-check-1",
+            "id": "gt2-c6-check-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
@@ -1835,7 +1835,7 @@
             "explanation": "감각동사 뒤에는 상태를 나타내는 형용사를 써요."
           },
           {
-            "id": "gt2-c6-check-2",
+            "id": "gt2-c6-check-2-r2",
             "subunit": 2,
             "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그녀는 매우 조심스럽게 운전한다.’",
             "options": [
@@ -1848,7 +1848,7 @@
             "explanation": "동사 drives를 꾸미는 말에는 부사 carefully를 써요."
           },
           {
-            "id": "gt2-c6-check-3",
+            "id": "gt2-c6-check-3-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 올바른 비교문을 고르시오.",
             "options": [
@@ -1861,7 +1861,7 @@
             "explanation": "easier than은 두 대상을 비교하는 올바른 표현이에요."
           },
           {
-            "id": "gt2-c6-check-4",
+            "id": "gt2-c6-check-4-r2",
             "subunit": 3,
             "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그는 우리 반에서 가장 키가 크다.’",
             "options": [
@@ -1874,7 +1874,7 @@
             "explanation": "최상급 표현은 the tallest in our class예요."
           },
           {
-            "id": "gt2-c6-check-5",
+            "id": "gt2-c6-check-5-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1887,7 +1887,7 @@
             "explanation": "올바른 표현: She looks happy today."
           },
           {
-            "id": "gt2-c6-check-6",
+            "id": "gt2-c6-check-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1900,7 +1900,7 @@
             "explanation": "올바른 표현: He runs quickly every morning."
           },
           {
-            "id": "gt2-c6-check-7",
+            "id": "gt2-c6-check-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1913,7 +1913,7 @@
             "explanation": "올바른 표현: They arrived late yesterday."
           },
           {
-            "id": "gt2-c6-check-8",
+            "id": "gt2-c6-check-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1928,7 +1928,7 @@
         ],
         "hunt": [
           {
-            "id": "gt2-c6-hunt-1",
+            "id": "gt2-c6-hunt-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1942,7 +1942,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c6-hunt-2",
+            "id": "gt2-c6-hunt-2-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1956,7 +1956,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c6-hunt-3",
+            "id": "gt2-c6-hunt-3-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1970,7 +1970,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c6-hunt-4",
+            "id": "gt2-c6-hunt-4-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1984,7 +1984,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c6-hunt-5",
+            "id": "gt2-c6-hunt-5-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1998,7 +1998,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c6-hunt-6",
+            "id": "gt2-c6-hunt-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2012,7 +2012,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c6-hunt-7",
+            "id": "gt2-c6-hunt-7-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2026,7 +2026,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c6-hunt-8",
+            "id": "gt2-c6-hunt-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2055,7 +2055,7 @@
       "modes": {
         "choose": [
           {
-            "id": "gt2-c7-choose-1",
+            "id": "gt2-c7-choose-1-r2",
             "subunit": 1,
             "prompt": "A: What do you want ____ this weekend?\nB: I hope ____ my grandparents.",
             "options": [
@@ -2068,7 +2068,7 @@
             "explanation": "want와 hope 뒤에는 to부정사를 쓸 수 있어요."
           },
           {
-            "id": "gt2-c7-choose-2",
+            "id": "gt2-c7-choose-2-r2",
             "subunit": 1,
             "prompt": "다음 중 to부정사가 명사 역할을 하는 문장은?",
             "options": [
@@ -2081,7 +2081,7 @@
             "explanation": "To travel abroad가 문장의 주어로 쓰여 명사 역할을 해요."
           },
           {
-            "id": "gt2-c7-choose-3",
+            "id": "gt2-c7-choose-3-r2",
             "subunit": 2,
             "prompt": "We need something ____ and a place ____.",
             "options": [
@@ -2094,7 +2094,7 @@
             "explanation": "something to eat과 a place to rest에서 to부정사는 앞의 명사를 꾸며요."
           },
           {
-            "id": "gt2-c7-choose-4",
+            "id": "gt2-c7-choose-4-r2",
             "subunit": 3,
             "prompt": "She enjoys ____ photos, and he finished ____ his room.",
             "options": [
@@ -2107,7 +2107,7 @@
             "explanation": "enjoy와 finish 뒤에는 동명사 -ing를 사용해요."
           },
           {
-            "id": "gt2-c7-choose-5",
+            "id": "gt2-c7-choose-5-r2",
             "subunit": 1,
             "prompt": "____ every day is healthy.",
             "options": [
@@ -2120,7 +2120,7 @@
             "explanation": "올바른 문장: To exercise every day is healthy."
           },
           {
-            "id": "gt2-c7-choose-6",
+            "id": "gt2-c7-choose-6-r2",
             "subunit": 2,
             "prompt": "I need something ____.",
             "options": [
@@ -2133,7 +2133,7 @@
             "explanation": "올바른 문장: I need something to drink."
           },
           {
-            "id": "gt2-c7-choose-7",
+            "id": "gt2-c7-choose-7-r2",
             "subunit": 2,
             "prompt": "This chair is comfortable ____.",
             "options": [
@@ -2146,7 +2146,7 @@
             "explanation": "올바른 문장: This chair is comfortable to sit on."
           },
           {
-            "id": "gt2-c7-choose-8",
+            "id": "gt2-c7-choose-8-r2",
             "subunit": 3,
             "prompt": "They finished ____ the room.",
             "options": [
@@ -2161,7 +2161,7 @@
         ],
         "check": [
           {
-            "id": "gt2-c7-check-1",
+            "id": "gt2-c7-check-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
@@ -2174,7 +2174,7 @@
             "explanation": "decide, want, hope 뒤에는 to부정사가 와요."
           },
           {
-            "id": "gt2-c7-check-2",
+            "id": "gt2-c7-check-2-r2",
             "subunit": 2,
             "prompt": "다음 중 우리말과 일치하는 문장은?\n‘나는 마실 물이 필요하다.’",
             "options": [
@@ -2187,7 +2187,7 @@
             "explanation": "to drink가 앞의 water를 꾸며 '마실 물'이라는 뜻을 나타내요."
           },
           {
-            "id": "gt2-c7-check-3",
+            "id": "gt2-c7-check-3-r2",
             "subunit": 3,
             "prompt": "다음 중 동명사를 바르게 사용한 문장은?",
             "options": [
@@ -2200,7 +2200,7 @@
             "explanation": "전치사 at 뒤에는 drawing처럼 동명사가 와요."
           },
           {
-            "id": "gt2-c7-check-4",
+            "id": "gt2-c7-check-4-r2",
             "subunit": 3,
             "prompt": "다음 중 대화가 자연스러운 것은?",
             "options": [
@@ -2213,7 +2213,7 @@
             "explanation": "enjoy의 목적어로는 동명사 reading을 써요."
           },
           {
-            "id": "gt2-c7-check-5",
+            "id": "gt2-c7-check-5-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2226,7 +2226,7 @@
             "explanation": "올바른 표현: To exercise every day is healthy."
           },
           {
-            "id": "gt2-c7-check-6",
+            "id": "gt2-c7-check-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2239,7 +2239,7 @@
             "explanation": "올바른 표현: I need something to drink."
           },
           {
-            "id": "gt2-c7-check-7",
+            "id": "gt2-c7-check-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2252,7 +2252,7 @@
             "explanation": "올바른 표현: This chair is comfortable to sit on."
           },
           {
-            "id": "gt2-c7-check-8",
+            "id": "gt2-c7-check-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2267,7 +2267,7 @@
         ],
         "hunt": [
           {
-            "id": "gt2-c7-hunt-1",
+            "id": "gt2-c7-hunt-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2281,7 +2281,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c7-hunt-2",
+            "id": "gt2-c7-hunt-2-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2295,7 +2295,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c7-hunt-3",
+            "id": "gt2-c7-hunt-3-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2309,7 +2309,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c7-hunt-4",
+            "id": "gt2-c7-hunt-4-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2323,7 +2323,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c7-hunt-5",
+            "id": "gt2-c7-hunt-5-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2337,7 +2337,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c7-hunt-6",
+            "id": "gt2-c7-hunt-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2351,7 +2351,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c7-hunt-7",
+            "id": "gt2-c7-hunt-7-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2365,7 +2365,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c7-hunt-8",
+            "id": "gt2-c7-hunt-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2393,7 +2393,7 @@
       "modes": {
         "choose": [
           {
-            "id": "gt2-c8-choose-1",
+            "id": "gt2-c8-choose-1-r2",
             "subunit": 1,
             "prompt": "The meeting starts ____ 3 p.m. ____ Friday.",
             "options": [
@@ -2406,7 +2406,7 @@
             "explanation": "구체적인 시각에는 at, 요일에는 on을 써요."
           },
           {
-            "id": "gt2-c8-choose-2",
+            "id": "gt2-c8-choose-2-r2",
             "subunit": 1,
             "prompt": "We stayed in Busan ____ three days, from Monday ____ Wednesday.",
             "options": [
@@ -2419,7 +2419,7 @@
             "explanation": "기간에는 for three days, 범위에는 from Monday to Wednesday를 써요."
           },
           {
-            "id": "gt2-c8-choose-3",
+            "id": "gt2-c8-choose-3-r2",
             "subunit": 2,
             "prompt": "A: Where is the bookstore?\nB: It's ____ the bakery and the bank.",
             "options": [
@@ -2432,7 +2432,7 @@
             "explanation": "두 장소 사이를 말할 때는 between A and B를 써요."
           },
           {
-            "id": "gt2-c8-choose-4",
+            "id": "gt2-c8-choose-4-r2",
             "subunit": 2,
             "prompt": "She usually goes to school ____ subway, but today she went ____ foot.",
             "options": [
@@ -2445,7 +2445,7 @@
             "explanation": "교통수단은 by subway, 걸어서 갈 때는 on foot이에요."
           },
           {
-            "id": "gt2-c8-choose-5",
+            "id": "gt2-c8-choose-5-r2",
             "subunit": 1,
             "prompt": "The class starts ____ nine.",
             "options": [
@@ -2458,7 +2458,7 @@
             "explanation": "올바른 문장: The class starts at nine."
           },
           {
-            "id": "gt2-c8-choose-6",
+            "id": "gt2-c8-choose-6-r2",
             "subunit": 1,
             "prompt": "He has lived here ____ 2020.",
             "options": [
@@ -2471,7 +2471,7 @@
             "explanation": "올바른 문장: He has lived here since 2020."
           },
           {
-            "id": "gt2-c8-choose-7",
+            "id": "gt2-c8-choose-7-r2",
             "subunit": 2,
             "prompt": "The cat is ____ the table.",
             "options": [
@@ -2484,7 +2484,7 @@
             "explanation": "올바른 문장: The cat is under the table."
           },
           {
-            "id": "gt2-c8-choose-8",
+            "id": "gt2-c8-choose-8-r2",
             "subunit": 2,
             "prompt": "The bank is ____ the library and the post office.",
             "options": [
@@ -2499,7 +2499,7 @@
         ],
         "check": [
           {
-            "id": "gt2-c8-check-1",
+            "id": "gt2-c8-check-1-r2",
             "subunit": 1,
             "prompt": "다음 중 시간 전치사를 올바르게 사용한 문장을 고르시오.",
             "options": [
@@ -2512,7 +2512,7 @@
             "explanation": "시각에는 at, 달에는 in, 요일에는 on을 써요."
           },
           {
-            "id": "gt2-c8-check-2",
+            "id": "gt2-c8-check-2-r2",
             "subunit": 1,
             "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그녀는 2021년부터 이곳에 살고 있다.’",
             "options": [
@@ -2525,7 +2525,7 @@
             "explanation": "since 뒤에는 시작 시점이 와요."
           },
           {
-            "id": "gt2-c8-check-3",
+            "id": "gt2-c8-check-3-r2",
             "subunit": 2,
             "prompt": "다음 중 장소 전치사를 올바르게 사용한 문장을 고르시오.",
             "options": [
@@ -2538,7 +2538,7 @@
             "explanation": "의자 아래 위치는 under the chair로 나타내요."
           },
           {
-            "id": "gt2-c8-check-4",
+            "id": "gt2-c8-check-4-r2",
             "subunit": 2,
             "prompt": "다음 중 대화가 자연스러운 것은?",
             "options": [
@@ -2551,7 +2551,7 @@
             "explanation": "이동수단은 by bus예요. between에는 두 대상을 연결하는 표현이 필요해요."
           },
           {
-            "id": "gt2-c8-check-5",
+            "id": "gt2-c8-check-5-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2564,7 +2564,7 @@
             "explanation": "올바른 표현: The class starts at nine."
           },
           {
-            "id": "gt2-c8-check-6",
+            "id": "gt2-c8-check-6-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2577,7 +2577,7 @@
             "explanation": "올바른 표현: He has lived here since 2020."
           },
           {
-            "id": "gt2-c8-check-7",
+            "id": "gt2-c8-check-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2590,7 +2590,7 @@
             "explanation": "올바른 표현: The cat is under the table."
           },
           {
-            "id": "gt2-c8-check-8",
+            "id": "gt2-c8-check-8-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2605,7 +2605,7 @@
         ],
         "hunt": [
           {
-            "id": "gt2-c8-hunt-1",
+            "id": "gt2-c8-hunt-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2619,7 +2619,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c8-hunt-2",
+            "id": "gt2-c8-hunt-2-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2633,7 +2633,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c8-hunt-3",
+            "id": "gt2-c8-hunt-3-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2647,7 +2647,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c8-hunt-4",
+            "id": "gt2-c8-hunt-4-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2661,7 +2661,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c8-hunt-5",
+            "id": "gt2-c8-hunt-5-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2675,7 +2675,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c8-hunt-6",
+            "id": "gt2-c8-hunt-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2689,7 +2689,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c8-hunt-7",
+            "id": "gt2-c8-hunt-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2703,7 +2703,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c8-hunt-8",
+            "id": "gt2-c8-hunt-8-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2732,7 +2732,7 @@
       "modes": {
         "choose": [
           {
-            "id": "gt2-c9-choose-1",
+            "id": "gt2-c9-choose-1-r2",
             "subunit": 1,
             "prompt": "I wanted to go outside, ____ it was raining, ____ I stayed home.",
             "options": [
@@ -2745,7 +2745,7 @@
             "explanation": "예상과 다른 상황은 but, 그 결과는 so로 연결해요."
           },
           {
-            "id": "gt2-c9-choose-2",
+            "id": "gt2-c9-choose-2-r2",
             "subunit": 1,
             "prompt": "Hurry up, ____ you'll miss the train.",
             "options": [
@@ -2758,7 +2758,7 @@
             "explanation": "명령문 + or는 '그렇지 않으면'이라는 뜻으로 쓰일 수 있어요."
           },
           {
-            "id": "gt2-c9-choose-3",
+            "id": "gt2-c9-choose-3-r2",
             "subunit": 2,
             "prompt": "Please call me ____ you arrive, and wash your hands ____ dinner.",
             "options": [
@@ -2771,7 +2771,7 @@
             "explanation": "도착할 때는 when, 식사 전에는 before가 자연스러워요."
           },
           {
-            "id": "gt2-c9-choose-4",
+            "id": "gt2-c9-choose-4-r2",
             "subunit": 3,
             "prompt": "I believe ____ she is honest, and I'll help her ____ she asks.",
             "options": [
@@ -2784,7 +2784,7 @@
             "explanation": "말의 내용을 나타내는 that절과 조건을 나타내는 if절을 구분해요."
           },
           {
-            "id": "gt2-c9-choose-5",
+            "id": "gt2-c9-choose-5-r2",
             "subunit": 1,
             "prompt": "He was tired, so he ____ to bed.",
             "options": [
@@ -2797,7 +2797,7 @@
             "explanation": "올바른 문장: He was tired, so he went to bed."
           },
           {
-            "id": "gt2-c9-choose-6",
+            "id": "gt2-c9-choose-6-r2",
             "subunit": 1,
             "prompt": "She was sick, ____ she went to school.",
             "options": [
@@ -2810,7 +2810,7 @@
             "explanation": "올바른 문장: She was sick, but she went to school."
           },
           {
-            "id": "gt2-c9-choose-7",
+            "id": "gt2-c9-choose-7-r2",
             "subunit": 2,
             "prompt": "Before you ____, close the door.",
             "options": [
@@ -2823,7 +2823,7 @@
             "explanation": "올바른 문장: Before you leave, close the door."
           },
           {
-            "id": "gt2-c9-choose-8",
+            "id": "gt2-c9-choose-8-r2",
             "subunit": 3,
             "prompt": "If she ____, I will tell her.",
             "options": [
@@ -2838,7 +2838,7 @@
         ],
         "check": [
           {
-            "id": "gt2-c9-check-1",
+            "id": "gt2-c9-check-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
@@ -2851,7 +2851,7 @@
             "explanation": "접속사 뒤에도 주어와 동사의 형태를 올바르게 써야 해요."
           },
           {
-            "id": "gt2-c9-check-2",
+            "id": "gt2-c9-check-2-r2",
             "subunit": 2,
             "prompt": "다음 중 우리말과 일치하는 문장은?\n‘네가 집에 오면 전화해 줘.’",
             "options": [
@@ -2864,7 +2864,7 @@
             "explanation": "미래의 일을 나타내는 시간 부사절에서는 현재형 get을 써요."
           },
           {
-            "id": "gt2-c9-check-3",
+            "id": "gt2-c9-check-3-r2",
             "subunit": 3,
             "prompt": "다음 중 조건을 바르게 나타낸 문장을 고르시오.",
             "options": [
@@ -2877,7 +2877,7 @@
             "explanation": "미래 조건을 나타내는 if절에는 현재형 rains를 써요."
           },
           {
-            "id": "gt2-c9-check-4",
+            "id": "gt2-c9-check-4-r2",
             "subunit": 3,
             "prompt": "다음 중 대화가 자연스러운 것은?",
             "options": [
@@ -2890,7 +2890,7 @@
             "explanation": "이유를 답할 때 because + 주어 + 동사의 절을 써요."
           },
           {
-            "id": "gt2-c9-check-5",
+            "id": "gt2-c9-check-5-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2903,7 +2903,7 @@
             "explanation": "올바른 표현: He was tired, so he went to bed."
           },
           {
-            "id": "gt2-c9-check-6",
+            "id": "gt2-c9-check-6-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2916,7 +2916,7 @@
             "explanation": "올바른 표현: She was sick, but she went to school."
           },
           {
-            "id": "gt2-c9-check-7",
+            "id": "gt2-c9-check-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2929,7 +2929,7 @@
             "explanation": "올바른 표현: Before you leave, close the door."
           },
           {
-            "id": "gt2-c9-check-8",
+            "id": "gt2-c9-check-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2944,7 +2944,7 @@
         ],
         "hunt": [
           {
-            "id": "gt2-c9-hunt-1",
+            "id": "gt2-c9-hunt-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2958,7 +2958,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c9-hunt-2",
+            "id": "gt2-c9-hunt-2-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2972,7 +2972,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c9-hunt-3",
+            "id": "gt2-c9-hunt-3-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2986,7 +2986,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c9-hunt-4",
+            "id": "gt2-c9-hunt-4-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3000,7 +3000,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c9-hunt-5",
+            "id": "gt2-c9-hunt-5-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3014,7 +3014,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c9-hunt-6",
+            "id": "gt2-c9-hunt-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3028,7 +3028,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c9-hunt-7",
+            "id": "gt2-c9-hunt-7-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3042,7 +3042,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c9-hunt-8",
+            "id": "gt2-c9-hunt-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3071,7 +3071,7 @@
       "modes": {
         "choose": [
           {
-            "id": "gt2-c10-choose-1",
+            "id": "gt2-c10-choose-1-r2",
             "subunit": 1,
             "prompt": "There ____ a new teacher at school, and there ____ thirty students.",
             "options": [
@@ -3084,7 +3084,7 @@
             "explanation": "There is는 단수, There are는 복수 명사에 맞춰 사용해요."
           },
           {
-            "id": "gt2-c10-choose-2",
+            "id": "gt2-c10-choose-2-r2",
             "subunit": 1,
             "prompt": "This juice tastes ____, but the cake smells ____.",
             "options": [
@@ -3097,7 +3097,7 @@
             "explanation": "taste와 smell 같은 감각동사 뒤에는 상태를 나타내는 형용사를 써요."
           },
           {
-            "id": "gt2-c10-choose-3",
+            "id": "gt2-c10-choose-3-r2",
             "subunit": 2,
             "prompt": "Mina gave ____ a gift, and I sent ____ a thank-you card.",
             "options": [
@@ -3110,7 +3110,7 @@
             "explanation": "give와 send의 사람 목적어는 me, her처럼 목적격을 써요."
           },
           {
-            "id": "gt2-c10-choose-4",
+            "id": "gt2-c10-choose-4-r2",
             "subunit": 3,
             "prompt": "The joke made everyone ____, and the song made the baby ____.",
             "options": [
@@ -3123,7 +3123,7 @@
             "explanation": "make + 목적어 + 동사원형에서 목적격보어는 동사원형을 써요."
           },
           {
-            "id": "gt2-c10-choose-5",
+            "id": "gt2-c10-choose-5-r2",
             "subunit": 1,
             "prompt": "There ____ many books here.",
             "options": [
@@ -3136,7 +3136,7 @@
             "explanation": "올바른 문장: There are many books here."
           },
           {
-            "id": "gt2-c10-choose-6",
+            "id": "gt2-c10-choose-6-r2",
             "subunit": 1,
             "prompt": "The music sounds ____.",
             "options": [
@@ -3149,7 +3149,7 @@
             "explanation": "올바른 문장: The music sounds beautiful."
           },
           {
-            "id": "gt2-c10-choose-7",
+            "id": "gt2-c10-choose-7-r2",
             "subunit": 2,
             "prompt": "He sent ____ friend a message.",
             "options": [
@@ -3162,7 +3162,7 @@
             "explanation": "올바른 문장: He sent his friend a message."
           },
           {
-            "id": "gt2-c10-choose-8",
+            "id": "gt2-c10-choose-8-r2",
             "subunit": 3,
             "prompt": "The news made him ____.",
             "options": [
@@ -3177,7 +3177,7 @@
         ],
         "check": [
           {
-            "id": "gt2-c10-check-1",
+            "id": "gt2-c10-check-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
@@ -3190,7 +3190,7 @@
             "explanation": "two cats는 복수이므로 There are를 써요."
           },
           {
-            "id": "gt2-c10-check-2",
+            "id": "gt2-c10-check-2-r2",
             "subunit": 2,
             "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그녀는 내게 편지를 보냈다.’",
             "options": [
@@ -3203,7 +3203,7 @@
             "explanation": "send + 사람 + 물건 형태에서는 목적격 me를 사용해요."
           },
           {
-            "id": "gt2-c10-check-3",
+            "id": "gt2-c10-check-3-r2",
             "subunit": 3,
             "prompt": "다음 중 목적격보어를 올바르게 쓴 문장은?",
             "options": [
@@ -3216,7 +3216,7 @@
             "explanation": "make + 목적어 + 형용사는 목적어의 상태를 설명해요."
           },
           {
-            "id": "gt2-c10-check-4",
+            "id": "gt2-c10-check-4-r2",
             "subunit": 3,
             "prompt": "다음 중 대화가 자연스러운 것은?",
             "options": [
@@ -3229,7 +3229,7 @@
             "explanation": "made me happy에서는 목적격 me와 형용사 happy를 써요."
           },
           {
-            "id": "gt2-c10-check-5",
+            "id": "gt2-c10-check-5-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3242,7 +3242,7 @@
             "explanation": "올바른 표현: There are many books here."
           },
           {
-            "id": "gt2-c10-check-6",
+            "id": "gt2-c10-check-6-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3255,7 +3255,7 @@
             "explanation": "올바른 표현: The music sounds beautiful."
           },
           {
-            "id": "gt2-c10-check-7",
+            "id": "gt2-c10-check-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3268,7 +3268,7 @@
             "explanation": "올바른 표현: He sent his friend a message."
           },
           {
-            "id": "gt2-c10-check-8",
+            "id": "gt2-c10-check-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3283,7 +3283,7 @@
         ],
         "hunt": [
           {
-            "id": "gt2-c10-hunt-1",
+            "id": "gt2-c10-hunt-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3297,7 +3297,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c10-hunt-2",
+            "id": "gt2-c10-hunt-2-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3311,7 +3311,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c10-hunt-3",
+            "id": "gt2-c10-hunt-3-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3325,7 +3325,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c10-hunt-4",
+            "id": "gt2-c10-hunt-4-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3339,7 +3339,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c10-hunt-5",
+            "id": "gt2-c10-hunt-5-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3353,7 +3353,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c10-hunt-6",
+            "id": "gt2-c10-hunt-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3367,7 +3367,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c10-hunt-7",
+            "id": "gt2-c10-hunt-7-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3381,7 +3381,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c10-hunt-8",
+            "id": "gt2-c10-hunt-8-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3411,7 +3411,7 @@
       "modes": {
         "choose": [
           {
-            "id": "gt2-c11-choose-1",
+            "id": "gt2-c11-choose-1-r2",
             "subunit": 1,
             "prompt": "A: ____ does your brother work?\nB: He works ____ a hospital.",
             "options": [
@@ -3424,7 +3424,7 @@
             "explanation": "장소를 묻는 의문사는 Where이고, 직장을 나타낼 때 at a hospital을 쓸 수 있어요."
           },
           {
-            "id": "gt2-c11-choose-2",
+            "id": "gt2-c11-choose-2-r2",
             "subunit": 2,
             "prompt": "A: ____ do you visit your grandparents?\nB: ____ a month.",
             "options": [
@@ -3437,7 +3437,7 @@
             "explanation": "빈도를 묻는 How often에는 Twice a month처럼 대답해요."
           },
           {
-            "id": "gt2-c11-choose-3",
+            "id": "gt2-c11-choose-3-r2",
             "subunit": 3,
             "prompt": "You're from Seoul, ____ you?\nNo, I'm ____.",
             "options": [
@@ -3450,7 +3450,7 @@
             "explanation": "You are의 긍정문에는 aren't you?를 붙이고 No, I'm not.으로 답해요."
           },
           {
-            "id": "gt2-c11-choose-4",
+            "id": "gt2-c11-choose-4-r2",
             "subunit": 4,
             "prompt": "____ a wonderful painting this is! ____ beautiful it is!",
             "options": [
@@ -3463,7 +3463,7 @@
             "explanation": "What a + 형용사 + 명사, How + 형용사를 사용해요."
           },
           {
-            "id": "gt2-c11-choose-5",
+            "id": "gt2-c11-choose-5-r2",
             "subunit": 1,
             "prompt": "What did you ____ yesterday?",
             "options": [
@@ -3476,7 +3476,7 @@
             "explanation": "올바른 문장: What did you eat yesterday?"
           },
           {
-            "id": "gt2-c11-choose-6",
+            "id": "gt2-c11-choose-6-r2",
             "subunit": 2,
             "prompt": "Why ____ he absent yesterday?",
             "options": [
@@ -3489,7 +3489,7 @@
             "explanation": "올바른 문장: Why was he absent yesterday?"
           },
           {
-            "id": "gt2-c11-choose-7",
+            "id": "gt2-c11-choose-7-r2",
             "subunit": 3,
             "prompt": "She ____n't like fish, does she?",
             "options": [
@@ -3502,7 +3502,7 @@
             "explanation": "올바른 문장: She doesn't like fish, does she?"
           },
           {
-            "id": "gt2-c11-choose-8",
+            "id": "gt2-c11-choose-8-r2",
             "subunit": 4,
             "prompt": "____ a beautiful day it is!",
             "options": [
@@ -3517,7 +3517,7 @@
         ],
         "check": [
           {
-            "id": "gt2-c11-check-1",
+            "id": "gt2-c11-check-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 의문문을 고르시오.",
             "options": [
@@ -3530,7 +3530,7 @@
             "explanation": "does 뒤에는 동사원형 live를 써요."
           },
           {
-            "id": "gt2-c11-check-2",
+            "id": "gt2-c11-check-2-r2",
             "subunit": 2,
             "prompt": "다음 중 우리말과 일치하는 문장은?\n‘너는 얼마나 자주 수영하니?’",
             "options": [
@@ -3543,7 +3543,7 @@
             "explanation": "빈도를 묻는 How often do you ...?를 사용해요."
           },
           {
-            "id": "gt2-c11-check-3",
+            "id": "gt2-c11-check-3-r2",
             "subunit": 3,
             "prompt": "다음 중 부가의문문이 올바른 것은?",
             "options": [
@@ -3556,7 +3556,7 @@
             "explanation": "부정문 뒤에는 긍정 형태의 부가의문문을 붙여요."
           },
           {
-            "id": "gt2-c11-check-4",
+            "id": "gt2-c11-check-4-r2",
             "subunit": 4,
             "prompt": "다음 중 감탄문을 바르게 쓴 것은?",
             "options": [
@@ -3569,7 +3569,7 @@
             "explanation": "How + 형용사 + 주어 + 동사의 어순이에요."
           },
           {
-            "id": "gt2-c11-check-5",
+            "id": "gt2-c11-check-5-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3582,7 +3582,7 @@
             "explanation": "올바른 표현: What did you eat yesterday?"
           },
           {
-            "id": "gt2-c11-check-6",
+            "id": "gt2-c11-check-6-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3595,7 +3595,7 @@
             "explanation": "올바른 표현: Why was he absent yesterday?"
           },
           {
-            "id": "gt2-c11-check-7",
+            "id": "gt2-c11-check-7-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3608,7 +3608,7 @@
             "explanation": "올바른 표현: She doesn't like fish, does she?"
           },
           {
-            "id": "gt2-c11-check-8",
+            "id": "gt2-c11-check-8-r2",
             "subunit": 4,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3623,7 +3623,7 @@
         ],
         "hunt": [
           {
-            "id": "gt2-c11-hunt-1",
+            "id": "gt2-c11-hunt-1-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3637,7 +3637,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c11-hunt-2",
+            "id": "gt2-c11-hunt-2-r2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3651,7 +3651,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c11-hunt-3",
+            "id": "gt2-c11-hunt-3-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3665,7 +3665,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c11-hunt-4",
+            "id": "gt2-c11-hunt-4-r2",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3679,7 +3679,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c11-hunt-5",
+            "id": "gt2-c11-hunt-5-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3693,7 +3693,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c11-hunt-6",
+            "id": "gt2-c11-hunt-6-r2",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3707,7 +3707,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c11-hunt-7",
+            "id": "gt2-c11-hunt-7-r2",
             "subunit": 4,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3721,7 +3721,7 @@
             "displayStyle": "sentence-options"
           },
           {
-            "id": "gt2-c11-hunt-8",
+            "id": "gt2-c11-hunt-8-r2",
             "subunit": 4,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
