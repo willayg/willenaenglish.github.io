@@ -40,6 +40,8 @@ function render(){
  }).join('')+'</div>':'<div class="gf-hw-loading">No book homework for this class.</div>';
  for(const a of rows){const x=progressMap.get(String(a.id));cards.updateRing(a.id,x?.students?100*x.passed/x.students:null,host)}
  void cards.hydrateTeachers(host);
+ const list=host.querySelector('.ua-genius-manage-list');
+ if(list)window.WillenaHomeworkSelection?.mount?.(list,'homework_assignments');
 }
 async function load(){
  const host=$('#gfTeacherBookList');if(!host)return;
