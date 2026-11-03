@@ -38,7 +38,7 @@ function render(){
   const detail=x?.student_rows?.length?x.student_rows.map(st=>'<div class="gf-hw-student"><span>'+esc(st.name||'Student')+'</span><span>'+esc(st.done??0)+'/'+esc(st.total??0)+' activities</span><strong class="'+(st.passed?'gf-hw-done':'')+'">'+(st.passed?'Complete':'In progress')+'</strong></div>').join(''):'<div class="gf-hw-loading">No recorded completion yet</div>';
   return cards.card({id:a.id,className:a.class,task:a.title,dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Chapter homework',body:'<div class="gf-hw-progress-summary">'+esc(x?.passed??0)+'/'+esc(x?.students??0)+' complete</div><div class="gf-hw-students">'+detail+'</div>'});
  }).join('')+'</div>':'<div class="gf-hw-loading">No book homework for this class.</div>';
- for(const a of rows){const x=progressMap.get(String(a.id));cards.updateRing(a.id,x?.students?100*x.passed/x.students:null,host)}
+ for(const a of rows){const x=progressMap.get(String(a.id));cards.updateRing(a.id,x?.students?Number(x.percent)||0:null,host)}
  void cards.hydrateTeachers(host);
  const list=host.querySelector('.ua-genius-manage-list');
  if(list)window.WillenaHomeworkSelection?.mount?.(list,'homework_assignments');
