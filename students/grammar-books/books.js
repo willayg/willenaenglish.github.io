@@ -5,7 +5,7 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 고르시오.',icon:'◉'},{id:'check',label:'문장 판단',ko:'어법에 맞는 문장이나 틀린 문장을 고르시오.',icon:'✓'},{id:'hunt',label:'오류 찾기',ko:'밑줄 친 부분 중 어법상 틀린 것을 고르시오.',icon:'⌕'}];
-let books=[],catalog=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1;
+let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1;
 const questionBank=()=>catalog?.modes||{};
 function updateUrl(bookId=''){const p=new URLSearchParams(location.search);bookId?p.set('book',bookId):p.delete('book');const u=location.pathname+(p.size?'?'+p.toString():'');history.pushState({},'',u)}
 function bookCard(book){return '<button class="vocab-front-book-card" type="button" data-grammar-book="'+esc(book.id)+'"><span class="vocab-front-card-main"><span class="vocab-front-card-copy"><strong>'+esc(book.title)+'</strong></span></span><span class="vocab-front-arrow" aria-hidden="true">›</span></button>'}
@@ -21,13 +21,27 @@ async function loadGrammarBooks(){
   if(found)showBook(found,false);
  }catch(error){console.warn('[Grammar books] catalog unavailable',error);books=[{id:'grammar-ten-2-practice',title:'Grammar Ten 완성 2'}];list.innerHTML=books.map(bookCard).join('');}
 }
+async function loadChapterPack(){
+ if(chapterPack)return chapterPack;
+ const response=await fetch('./grammar-ten-2-chapters.json?v=1',{cache:'no-store'});
+ if(!response.ok)throw Error('Grammar Ten chapter content unavailable');
+ const data=await response.json();
+ if(!Array.isArray(data.chapters)||data.chapters.length!==11)throw Error('Invalid Grammar Ten chapters');
+ for(const chapter of data.chapters){
+  for(const mode of modes){
+   const questions=chapter.modes?.[mode.id];
+   if(!Array.isArray(questions)||questions.length!==8||questions.some(q=>q.options?.length!==4||!Number.isInteger(q.answerIndex)||q.answerIndex<0||q.answerIndex>=4))throw Error('Invalid chapter '+chapter.chapter+' '+mode.id);
+  }
+ }
+ chapterPack=data;return data;
+}
 async function loadQuestions(){
  if(catalog)return catalog;
- const response=await fetch('./grammar-ten-2-unit-1.json?v=1',{cache:'no-store'});
- if(!response.ok)throw Error('Practice content unavailable');
- const data=await response.json();
- for(const mode of modes){const qs=data.modes?.[mode.id];if(!Array.isArray(qs)||qs.length!==8||qs.some(q=>q.options?.length!==4||!Number.isInteger(q.answerIndex)||q.answerIndex<0||q.answerIndex>=4))throw Error('Invalid '+mode.id+' questions')}
- catalog=data;return data;
+ if(activeBook?.title.trim()!=='Grammar Ten 완성 2')throw Error('No questions for this book');
+ const data=await loadChapterPack();
+ const chapter=data.chapters.find(c=>Number(c.chapter)===Number(activeUnit));
+ if(!chapter)throw Error('Chapter not found');
+ catalog=chapter;return chapter;
 }
 async function loadBookUnits(book){
  const match=book.title.trim()==='Grammar Ten 완성 2';
@@ -35,14 +49,30 @@ async function loadBookUnits(book){
  try{
   const response=await fetch(DB+'/rest/v1/content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(bookId)+'&status=eq.published&order=unit_number.asc&limit=100',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
   if(!response.ok)throw Error('Unit catalog '+response.status);
-  const rows=await response.json();return rows.length?rows:[];
- }catch(error){console.warn('[grammar books] unit catalog',error);return match?[{unit_number:1,title:'be동사의 현재형',metadata:{}}]:[]}
+  const rows=await response.json();
+  if(!match)return rows;
+  const map=new Map();
+  for(const row of rows){
+   const chapter=Number(row.metadata?.chapter_number);
+   if(!Number.isInteger(chapter)||chapter<1||chapter>11)continue;
+   if(!map.has(chapter))map.set(chapter,{unit_number:chapter,title:row.metadata?.chapter_title||'문법 학습',subunits:[]});
+   map.get(chapter).subunits.push(row);
+  }
+  if(map.size===11)return [...map.values()].sort((a,b)=>a.unit_number-b.unit_number);
+  throw Error('Incomplete chapter grouping');
+ }catch(error){
+  console.warn('[grammar books] unit catalog fallback',error);
+  if(!match)return [];
+  const data=await loadChapterPack();
+  return data.chapters.map(c=>({unit_number:c.chapter,title:c.title,subunits:c.topics.map((title,i)=>({unit_number:i+1,title}))}));
+ }
 }
 function selectUnit(number){
- activeUnit=number;const unit=units.find(u=>Number(u.unit_number)===number);
+ activeUnit=number;catalog=null;
+ const unit=units.find(u=>Number(u.unit_number)===number);
  $('grammarUnitStrip').querySelectorAll('[data-unit]').forEach(el=>{const active=Number(el.dataset.unit)===number;el.classList.toggle('is-current',active);active?el.setAttribute('aria-current','true'):el.removeAttribute('aria-current')});
  $('grammarUnitTitle').textContent=unit?'Unit '+number+' · '+unit.title:'Unit '+number;
- const playable=activeBook?.title.trim()==='Grammar Ten 완성 2'&&number===1;
+ const playable=activeBook?.title.trim()==='Grammar Ten 완성 2'&&!!unit;
  $('grammarModeCards').hidden=!playable;$('grammarNotReady').hidden=playable;
  $('grammarGuideOpen').disabled=!unit;
  if(playable)renderModeCards();
@@ -70,9 +100,9 @@ async function showBook(book,push=true){
 function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;if(push)updateUrl();window.scrollTo(0,0)}
 function toSharedQuestion(q){
  const hunt=activeMode==='hunt';
- const sentence=hunt?q.options.join(' ').replace(/\s+([,.!?])/g,'$1'):'';
+ const sentence=hunt?(q.sentence||q.options.join(' ').replace(/\s+([,.!?])/g,'$1')):'';
  const instruction=hunt?'다음 문장에서 어법상 틀린 부분을 고르시오.':activeMode==='choose'?'빈칸에 들어갈 알맞은 말을 고르시오.':/incorrect|wrong/i.test(q.prompt)?'다음 중 어법상 틀린 문장을 고르시오.':'다음 중 어법상 올바른 문장을 고르시오.';
- return {id:q.id,form:'choice',prompt:instruction+(hunt?'\\n'+sentence:activeMode==='choose'?'\\n'+q.prompt:''),choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:q.options}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books'}};
+ return {id:q.id,form:'choice',prompt:instruction+(hunt?'\n'+sentence:activeMode==='choose'?'\n'+q.prompt:''),choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:q.underlined||q.options}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
 }
 function renderQuestion(){
  const questions=questionBank()[activeMode]||[],q=questions[position];
