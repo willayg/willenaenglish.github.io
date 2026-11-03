@@ -103,7 +103,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   try{
    const rows=await state.queue;
    if(!Array.isArray(rows)||!rows.length)throw Error('연습 저장 응답이 없어요.');
-   if(state.session?.id===id)saveLabel('저장됨');
+   if(state.session?.id===id){saveLabel('저장됨');syncSessionRecord(state.session)}
    return true;
   }catch(err){
    saveLabel('저장 안 됨');
@@ -275,6 +275,23 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    txt('spSourceNote','단원 문장 전체를 맞히면 골드! 문장 수는 시작할 때 확인해요.');
   }
  }
+ function sessionProgress(session){
+  const total=Array.isArray(session?.questions)?session.questions.length:0;
+  const responses=Array.isArray(session?.responses)?session.responses:[];
+  const checked=responses.slice(0,total).filter(r=>r&&(r.feedback||r.firstFeedback)).length;
+  return {checked,total,percent:total?Math.round(100*checked/total):0};
+ }
+ function unitProgress(bookId,unitId){
+  const rows=state.recent.filter(row=>String(row.book_id)===String(bookId)&&String(row.unit_id)===String(unitId)&&
+    (state.sessionContext?.isHomework?String(row.assignment_id||'')===String(state.sessionContext.assignmentId):!row.assignment_id));
+  return rows.length?Math.max(...rows.map(row=>sessionProgress(row).percent)):0;
+ }
+ function syncSessionRecord(session){
+  if(!session?.id)return;
+  const index=state.recent.findIndex(row=>row.id===session.id);
+  if(index>=0)state.recent[index]=structuredClone(session);
+  renderSessionHistory();renderUnitButtons();
+ }
  function renderUnitButtons(){
   const strip=$('spUnitStrip');strip.replaceChildren();
   const selectedUnit=state.units.find(u=>u.id===field('spUnit'));
@@ -282,8 +299,9 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   const achievement=state.rewards.get(field('spBook')+'|'+field('spUnit'));
   const stars=Math.max(0,Math.min(5,Number(achievement?.best_stars)||0));
   txt('spSkillStars','★ '+stars+'/5');
-  const ring=$('spSkillRing');ring.style.setProperty('--progress',String(stars*20));
-  ring.querySelector('span').textContent=stars*20+'%';
+  const pct=unitProgress(field('spBook'),field('spUnit'));
+  const ring=$('spSkillRing');ring.style.setProperty('--progress',String(pct));
+  ring.querySelector('span').textContent=pct+'%';
   for(const unit of state.units){
    const selected=unit.id===field('spUnit');
    const b=node('button','Unit '+unit.number);
@@ -301,6 +319,11 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
     badge.className='sp-unit-stars';
     badge.textContent=' ★'+achievement.best_stars;
     b.append(badge);
+   }
+   const progress=unitProgress(field('spBook'),unit.id);
+   if(progress>0&&!achievement?.golden){
+    const pill=document.createElement('span');pill.className='sp-unit-progress';
+    pill.textContent=progress+'%';pill.title='Saved practice progress';b.append(pill);
    }
    b.setAttribute('aria-pressed',String(selected));
    b.title=unit.title;
@@ -476,7 +499,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
     else {state.catalogError=true;notify('숙제 단원을 찾지 못했어요. 선생님에게 알려주세요.',true);}
    }else {state.catalogError=true;notify('숙제 교재를 불러오지 못했어요. 선생님에게 알려주세요.',true);}
   }
-  renderSessionHistory();refreshStartButton();
+  renderSessionHistory();renderUnitButtons();refreshStartButton();
   if(state.sessionContext.isHomework&&state.session?.status==='in_progress'){
    showRound();return;
   }
@@ -506,7 +529,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
     responses:[],current_index:0,status:'in_progress'});
    if(!Array.isArray(made)||!made[0])throw Error('연습 시작 기록을 저장하지 못했어요.');
    state.session=made[0];state.today=made[0];state.recent.unshift(made[0]);
-   renderSessionHistory();showRound();
+   renderSessionHistory();renderUnitButtons();showRound();
   }catch(error){notify('연습을 시작하지 못했어요. '+error.message,true)}
   finally{state.loading=false;refreshStartButton()}
  }
