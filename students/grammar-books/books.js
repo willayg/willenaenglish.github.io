@@ -350,7 +350,7 @@ function renderQuestion(){
  const questions=activeQuestions,q=questions[position];
  if(!q)return finishRound();
  const mode=modes.find(m=>m.id===activeMode);
- $('grammarRoundTitle').textContent=mode.label+' · '+mode.ko;
+ $('grammarRoundTitle').textContent=(activeHomework?'숙제 · ':'')+mode.label+' · '+mode.ko;
  $('grammarRoundCounter').textContent=(position+1)+' / '+questions.length;
  $('grammarRoundProgress').style.width=(position/questions.length*100)+'%';
  const old=$('grammarSharedQuestionHost');
@@ -373,21 +373,20 @@ async function startMode(mode,{push=true}={}){
   const all=prepareRound(questionBank()[mode]||[],mode);
   const saved=chapterProgress.find(p=>Number(p.chapter_number)===chapter&&p.mode===mode);
   const eligibleIds=new Set(all.map(q=>q.id));
-  const savedIds=Array.isArray(saved?.mastered_question_ids)?saved.mastered_question_ids:[];
-  // Golden mastery is permanent. A repeat visit (including homework) is a
-  // fresh practice round, not a replacement of the student's best-ever score.
-  const alreadyMastered=bestScore(chapter,mode)===8;
+  const inHomework=!!activeHomework&&activeHomework.chapter===chapter&&activeHomework.required_modes.includes(mode);
+  if(activeHomework&&!inHomework)throw Error('This mode is not included in the assignment');
+  const savedIds=inHomework?(homeworkModeEvidence.get(mode)?.mastered_question_ids||[]):(Array.isArray(saved?.mastered_question_ids)?saved.mastered_question_ids:[]);
+  const alreadyMastered=!inHomework&&bestScore(chapter,mode)===8;
   masteredIds=alreadyMastered?new Set():new Set(savedIds.filter(id=>eligibleIds.has(id)));
   activeQuestions=alreadyMastered?all:all.filter(q=>!masteredIds.has(q.id));
-  // Completed modes remain playable, even if stored IDs came from an older edition.
   if(!activeQuestions.length)activeQuestions=all;
-  homeworkAttemptIds=new Set();
+  homeworkAttemptIds=new Set(masteredIds);
   activeMode=mode;retryQueue.begin(activeQuestions);retryingWrong=false;position=0;correct=0;checked=false;
   beginRewardSession(mode);
   rewardSession.total=all.length;
   // A repeat session cannot award points for questions mastered in an earlier session.
   if(rewardSession){
-   rewardSession.reviewOnly=bestScore(chapter,mode)===8;
+   rewardSession.reviewOnly=inHomework||bestScore(chapter,mode)===8;
    rewardSession.awardedIds=new Set(masteredIds);
   }
   $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;
@@ -409,7 +408,7 @@ async function checkAnswer(){
  checked=true;
  if(result.correct){
   correct++;masteredIds.add(q.id);
-  homeworkAttemptIds.add(q.id);
+  if(activeHomework){homeworkAttemptIds.add(q.id);scheduleHomeworkSave()}
   if(rewardSession&&!rewardSession.awardedIds.has(q.id)){
    rewardSession.awardedIds.add(q.id);
    if(!rewardSession.reviewOnly){
@@ -445,15 +444,15 @@ async function finishRound(){
   try{
    if(typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
    const alreadyGold=goldChapter(activeUnit);
-   await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,masteredIds.size,[...masteredIds]);
-   // Only completed new rounds can credit book-based homework.
-   // Existing mastery alone never auto-completes an assignment.
-   if(completed&&masteredIds.size===8&&rewardSession?.id){
-     try{await recordAssignedGrammarHomework(activeUnit,activeMode,rewardSession.id)}
-     catch(error){console.warn('[Grammar Books] homework recognition unavailable',error)}
+   if(currentGrammarContext().isHomework){
+     await saveHomeworkQuestions();
+     homeworkModeEvidence.set(activeMode,{correct_count:masteredIds.size,mastered_question_ids:[...masteredIds]});
+     renderModeCards();
+   }else{
+     await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,masteredIds.size,[...masteredIds]);
+     await refreshGrammarProgress();
    }
-   await refreshGrammarProgress();
-   if(!alreadyGold&&goldChapter(activeUnit)){
+   if(!activeHomework&&!alreadyGold&&goldChapter(activeUnit)){
     const actions=$('grammarFinishMain').querySelector('.vocab-finish-actions');
     actions?.insertAdjacentHTML('beforebegin',
       '<div class="vocab-golden-award"><img class="vocab-golden-award-icon" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt=""><div><strong>Golden Unit earned!</strong><span>Unit '+activeUnit+' is mastered.</span></div></div>');
@@ -490,6 +489,7 @@ function showFinishSaveWarning(message){
 function saveInterruptedRound(){
  if(!activeMode||$('grammarRound').hidden||!masteredIds.size)return;
  const mode=activeMode,chapter=activeUnit,ids=[...masteredIds];
+ if(activeHomework){void saveHomeworkQuestions().catch(e=>console.warn('[Grammar Textbooks] unfinished homework save failed',e));return}
  void window.WillenaMissionBasket?.recordGrammarBookRound?.(chapter,mode,ids.length,ids)
   .then(()=>{if(activeBook)void refreshGrammarProgress()})
   .catch(e=>console.warn('[Grammar Books] could not save exited round',e));
