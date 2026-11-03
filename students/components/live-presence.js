@@ -62,7 +62,7 @@ function context(){
  const assignmentId=d.assignment_id||query.get("assignment_id")||query.get("assignmentId")||query.get("teacherAssignmentId")||hash.get("assignment_id")||hash.get("teacherAssignmentId")||saved.assignment_id||saved.teacherAssignmentId||null;
  const match=UUID.test(assignmentId||"")?assignmentId:null;
  return {session_id:sessionId,app,book:label(d.book),unit:label(d.unit),activity:label(d.activity),
-  assignment_id:match,assignment_match:d.assignment_match===true,entered_via_homework:d.entered_via_homework===true||!!match,
+  assignment_id:match,assignment_match:false,entered_via_homework:d.entered_via_homework===true||!!match,
   last_interaction_age_ms:Math.min(Date.now()-lastActivity,3600000)};
 }
 async function send(force=false){
