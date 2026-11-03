@@ -385,7 +385,7 @@ async function levelTestDetail(env, body) {
     const rows = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/profiles?id=eq.${encodeURIComponent(attempt.student_id)}&select=id,name,korean_name,username,grade,school,class,phone,email&limit=1`);
     person = rows?.[0] || {};
   } else {
-    const rows = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/prospective_level_test_candidates?id=eq.${encodeURIComponent(attempt.candidate_id)}&select=id,student_name,school_name,school_grade,metadata&limit=1`);
+    const rows = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/prospective_level_test_candidates?id=eq.${encodeURIComponent(attempt.candidate_id)}&select=id,student_name,school_name,school_grade,phone,email,metadata&limit=1`);
     person = rows?.[0] || {};
   }
   if (!attempt.admin_opened_at) {
@@ -408,7 +408,7 @@ async function levelTestDetail(env, body) {
     korean_name: null, username: null,
     school_name: person.school_name || null,
     school_grade: person.school_grade || null,
-    class_name: null, phone: null, email: null,
+    class_name: null, phone: person.phone || null, email: person.email || null,
     metadata: person.metadata || {},
   };
   return {
