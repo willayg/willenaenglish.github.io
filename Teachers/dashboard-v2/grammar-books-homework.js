@@ -138,7 +138,14 @@ async function drawCreate(){
   bindChapters();
   const preferred=store.bookClasses.get(store.bookId)||[];
   const klass=el.querySelector('[name=klass]');
-  if(preferred.length===1&&klass?.options.namedItem?.(preferred[0]))klass.value=preferred[0];
+  if(klass){
+   const previous=klass.value;
+   const all=store.classNames||[];
+   const ordered=[...preferred.filter(x=>all.includes(x)),...all.filter(x=>!preferred.includes(x))];
+   klass.innerHTML='<option value="">Choose class</option>'+ordered.map(name=>
+    '<option value="'+esc(name)+'">'+esc(name)+(preferred.includes(name)?' · studying this book':'')+'</option>').join('');
+   klass.value=all.includes(previous)?previous:'';
+  }
   count();
  };
  $('#gbHwBook',el).addEventListener('change',changeBook);
