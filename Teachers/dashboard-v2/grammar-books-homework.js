@@ -127,7 +127,7 @@ async function drawCreate(){
  const fmt=koreanDate;
  el.querySelector('[name=start]').value=fmt(today);el.querySelector('[name=due]').value=fmt(due);
  const count=()=>{const n=$$('[data-chapter]:checked',el).length;$('#gbHwSelected',el).textContent=n+' selected';$('#gbHwSubmit',el).disabled=!n||!selectedBook()?.playable;$('#gbHwSubmit',el).textContent=n?'Assign '+n+' chapter'+(n===1?'':'s'):'Select chapters'};
- const bindChapters=()=>$('[data-chapter]',el).forEach(b=>b.addEventListener('change',count));
+ const bindChapters=()=>$$('[data-chapter]',el).forEach(b=>b.addEventListener('change',count));
  const changeBook=()=>{
   store.bookId=$('#gbHwBook',el).value;
   const book=selectedBook();
