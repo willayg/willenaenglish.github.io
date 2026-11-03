@@ -25,21 +25,27 @@ function tokenFrom(req) {
 async function identity(req,env) {
   const token=tokenFrom(req);
   if(!token || token.length>8192) return null;
-  // Server-side verification: never trust supplied student_id or role.
-  const auth=await fetch(env.SUPABASE_URL+"/auth/v1/user",{
-    headers:{"Authorization":"Bearer "+token,"apikey":env.SUPABASE_ANON_KEY},
-    cf:{cacheTtl:0}
-  });
-  if(!auth.ok) return null;
-  const user=await auth.json();
-  if(!UUID.test(user.id||"")) return null;
-  const url=env.SUPABASE_URL+"/rest/v1/profiles?id=eq."+encodeURIComponent(user.id)+"&select=id,name,class,role,approved&limit=1";
-  const response=await fetch(url,{headers:{"apikey":env.SUPABASE_SERVICE_KEY,"Authorization":"Bearer "+env.SUPABASE_SERVICE_KEY}});
-  if(!response.ok) throw new Error("Profile lookup failed");
-  const profiles=await response.json();
-  const profile=profiles[0];
-  if(!profile || profile.approved!==true) return null;
-  return {id:user.id,name:String(profile.name||"").slice(0,100),class:String(profile.class||"").slice(0,100),role:String(profile.role||"").toLowerCase()};
+  const auth=env.SUPABASE_AUTH;
+  if(!auth || typeof auth.fetch!=="function") throw new Error("Auth binding unavailable");
+  const headers=new Headers({"Authorization":"Bearer "+token});
+  const who=await auth.fetch(new Request("https://supabase-auth.internal/?action=whoami",{headers}));
+  if(!who.ok) return null;
+  const verified=await who.json();
+  if(!verified.success || !UUID.test(verified.user_id||"")) return null;
+  // Resolve role/name/class only AFTER verifying token ownership.
+  const profileResponse=await auth.fetch(new Request(
+    "https://supabase-auth.internal/?action=get_profile&user_id="+encodeURIComponent(verified.user_id),
+    {headers}
+  ));
+  if(!profileResponse.ok) throw new Error("Profile lookup failed");
+  const profile=await profileResponse.json();
+  if(!profile.success || profile.approved!==true) return null;
+  return {
+    id:verified.user_id,
+    name:String(profile.name||"").slice(0,100),
+    class:String(profile.class||"").slice(0,100),
+    role:String(profile.role||"").toLowerCase()
+  };
 }
 function textField(x,n=100) { return typeof x==="string"?x.trim().slice(0,n):""; }
 async function body(req) {
