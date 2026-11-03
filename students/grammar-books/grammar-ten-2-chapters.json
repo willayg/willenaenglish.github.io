@@ -237,7 +237,7 @@
           {
             "id": "gt2-c1-hunt-1",
             "subunit": 1,
-            "prompt": "다음 중 밑줄 친 동사 형태가 어법상 틀린 문장을 고르시오.",
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
               "My grandparents is very active.",
               "The weather is warm today.",
