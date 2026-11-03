@@ -243,7 +243,7 @@ async function showBook(book,push=true,requestedUnit=null){
  }
  window.scrollTo(0,0);
 }
-function showHome(push=true){++navEpoch;activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;if(push)updateUrl();window.scrollTo(0,0)}
+function showHome(push=true){saveInterruptedRound();++navEpoch;activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;if(push)updateUrl();window.scrollTo(0,0)}
 function toSharedQuestion(q){
  if(q.displayStyle==='sentence-options'){
   return {id:q.id,form:'choice',prompt:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
@@ -270,7 +270,7 @@ function renderQuestion(){
  
  checked=false;
 }
-async function startMode(mode){
+async function startMode(mode,{push=true}={}){
  preloadStudentSfx();
  if(!modes.some(x=>x.id===mode)||!activeBook)return;
  const panel=$('grammarModeCards');
@@ -296,7 +296,7 @@ async function startMode(mode){
    rewardSession.awardedIds=new Set(masteredIds);
   }
   $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;
-  updateUrl(book.id,chapter,mode);renderQuestion();window.scrollTo(0,0);
+  if(push)updateUrl(book.id,chapter,mode);renderQuestion();window.scrollTo(0,0);
  }catch(err){
   console.error('[Grammar Books] could not resume mode',err);
   if(token!==navEpoch)return;
@@ -384,17 +384,20 @@ function showFinishSaveWarning(message){
  }
  warning.textContent=[warning.textContent,message].filter(Boolean).join(' ');
 }
+function saveInterruptedRound(){
+ if(!activeMode||$('grammarRound').hidden||!masteredIds.size)return;
+ const mode=activeMode,chapter=activeUnit,ids=[...masteredIds];
+ void window.WillenaMissionBasket?.recordGrammarBookRound?.(chapter,mode,ids.length,ids)
+  .then(()=>{if(activeBook)void refreshGrammarProgress()})
+  .catch(e=>console.warn('[Grammar Books] could not save exited round',e));
+}
 function goToModes(push=true){
+ saveInterruptedRound();
  ++navEpoch;
- const previousMode=activeMode;
  $('grammarRound').hidden=true;$('grammarResult').hidden=true;
  $('grammarModePanel').hidden=false;activeMode=null;
  if(activeBook){detail.hidden=false;home.hidden=true;}
  if(push&&activeBook)updateUrl(activeBook.id,activeUnit);
- if(previousMode&&masteredIds.size&&masteredIds.size<8){
-  const count=masteredIds.size,ids=[...masteredIds],chapter=activeUnit;
-  void window.WillenaMissionBasket?.recordGrammarBookRound?.(chapter,previousMode,count,ids).then(()=>refreshGrammarProgress()).catch(e=>console.warn('[Grammar Books] could not save exited round',e));
- }
  renderModeCards();window.scrollTo(0,0);
 }
 $('grammarUnitStrip')?.addEventListener('click',event=>{const el=event.target.closest('[data-unit]');if(el)selectUnit(Number(el.dataset.unit))});
@@ -435,17 +438,18 @@ $('grammarSessionHome')?.addEventListener('click',()=>showHome());
 $('grammarResultHome')?.addEventListener('click',()=>showHome());
 back?.addEventListener('click',()=>{if(!$('grammarRound').hidden||!$('grammarResult').hidden){goToModes();return}showHome()});
 window.addEventListener('popstate',()=>{
+ saveInterruptedRound();
  const params=new URLSearchParams(location.search),id=params.get('book'),book=books.find(b=>String(b.id)===id);
  const unit=Number(params.get('unit'))||null,mode=params.get('mode');
  if(!book){showHome(false);return}
  if(activeBook&&String(activeBook.id)===String(book.id)&&units.length){
   ++navEpoch;
   if(unit&&units.some(u=>Number(u.unit_number)===unit))selectUnit(unit,{push:false});
-  if(mode&&modes.some(m=>m.id===mode)){void startMode(mode);return}
+  if(mode&&modes.some(m=>m.id===mode)){void startMode(mode,{push:false});return}
   $('grammarRound').hidden=true;$('grammarResult').hidden=true;activeMode=null;
   $('grammarModePanel').hidden=false;detail.hidden=false;home.hidden=true;
   renderModeCards();return;
  }
- void showBook(book,false,unit).then(()=>{if(mode&&activeBook===book)void startMode(mode)});
+ void showBook(book,false,unit).then(()=>{if(mode&&activeBook===book)void startMode(mode,{push:false})});
 });
 document.addEventListener('DOMContentLoaded',()=>{window.WillenaMissionBasket?.mount($('appMissionBasket'),{app:'Grammar Genius Books'});loadGrammarBooks()});
