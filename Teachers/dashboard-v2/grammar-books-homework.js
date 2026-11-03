@@ -219,7 +219,7 @@ function progressFor(a){
   total:Number(st.total)||0
  })):[];
  const total=Number(data?.students)||0,done=Number(data?.passed)||0;
- const pct=total?Math.round(100*done/total):null;
+ const pct=total?Math.round(Number(data?.percent)||0):null;
  return {rows,pct,done,total,modes:a.list_meta?.required_modes||[]};
 }
 function renderAssignment(a){
@@ -227,7 +227,7 @@ function renderAssignment(a){
  const modeNames=data.modes.map(m=>MODES.find(x=>x[0]===m)?.[1]||m).join(' · ');
  const rowHtml=data.rows.length?data.rows.map(({student,modesCompleted,total})=>
   '<div class="gf-hw-student"><span>'+esc(student.korean_name||student.name||'Student')+'</span>'+
-  '<span>'+modesCompleted.length+'/'+total+' activities</span><strong class="'+(modesCompleted.length===total?'gf-hw-done':'')+'">'+(total?Math.round(modesCompleted.length/total*100):0)+'%</strong></div>').join(''):'<div class="gf-hw-loading">No students in the selected class or roster unavailable.</div>';
+  '<span>'+modesCompleted.length+'/'+total+' questions</span><strong class="'+(modesCompleted.length===total?'gf-hw-done':'')+'">'+(total?Math.round(modesCompleted.length/total*100):0)+'%</strong></div>').join(''):'<div class="gf-hw-loading">No students in the selected class or roster unavailable.</div>';
  const buttons='<div class="gb-manage-actions">'+(store.history?'':'<button type="button" data-gb-edit="'+esc(a.id)+'">Edit</button>')+'</div>';
  const body='<div class="gf-hw-progress-summary">'+data.done+'/'+data.total+' completed · '+esc(modeNames)+'</div><div class="gf-hw-students">'+rowHtml+'</div>'+buttons;
  return shared.card({id:a.id,className:a.class,task:a.title,dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Student progress',body});
