@@ -228,7 +228,7 @@ function renderAssignment(a){
  const rowHtml=data.rows.length?data.rows.map(({student,modesCompleted,total})=>
   '<div class="gf-hw-student"><span>'+esc(student.korean_name||student.name||'Student')+'</span>'+
   '<span>'+modesCompleted.length+'/'+total+' activities</span><strong class="'+(modesCompleted.length===total?'gf-hw-done':'')+'">'+(total?Math.round(modesCompleted.length/total*100):0)+'%</strong></div>').join(''):'<div class="gf-hw-loading">No students in the selected class or roster unavailable.</div>';
- const buttons='<div class="gb-manage-actions">'+(store.history?'':'<button type="button" data-gb-edit="'+esc(a.id)+'">Edit</button><button type="button" data-gb-delete="'+esc(a.id)+'" aria-label="End assignment">×</button>')+'</div>';
+ const buttons='<div class="gb-manage-actions">'+(store.history?'':'<button type="button" data-gb-edit="'+esc(a.id)+'">Edit</button>')+'</div>';
  const body='<div class="gf-hw-progress-summary">'+data.done+'/'+data.total+' completed · '+esc(modeNames)+'</div><div class="gf-hw-students">'+rowHtml+'</div>'+buttons;
  return shared.card({id:a.id,className:a.class,task:a.title,dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Student progress',body});
 }
@@ -244,7 +244,7 @@ async function drawManage(){
  const shared=window.WillenaGeniusHomeworkCard;
  if(shared){for(const a of rows)shared.updateRing(a.id,progressFor(a).pct,el);void shared.hydrateTeachers(el)}
  $$('[data-gb-edit]',el).forEach(b=>b.onclick=()=>editAssignment(b.dataset.gbEdit));
- $$('[data-gb-delete]',el).forEach(b=>b.onclick=()=>endAssignment(b.dataset.gbDelete));
+
  }catch(error){el.innerHTML='<div class="gf-hw-error">Book homework unavailable: '+esc(error.message)+'</div>'}
 }
 async function endAssignment(id){
