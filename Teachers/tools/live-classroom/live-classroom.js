@@ -1,5 +1,6 @@
 // Live Classroom P2: read-only monitoring. Never changes homework or student accounts.
 const API="/api/live-presence";
+const MINI=new URLSearchParams(location.search).has("mini");
 const $=id=>document.getElementById(id);
 const CLASS_ORDER=["Brown","Stanford","Manchester","NY","Hawaii","Boston","Sydney","Berkeley","Chicago","Cambridge","Yale","Prince","Oxford","MIT","Pre"];
 const state={students:[],sessions:[],filter:"",appFilter:"",rosterOk:false,presenceOk:false,refreshing:false};
@@ -50,6 +51,7 @@ function render(){
   const online=sessions.get(s.id);
   // App filtering applies only to currently reported sessions; offline students
   // have no verifiable current app and are omitted in 내신-only mode.
+  if(MINI && (!online || !["active","idle"].includes(online.status)))continue;
   if(state.appFilter && online?.app!==state.appFilter)continue;
   const status=!state.presenceOk?"unavailable":online?.status==="active"?"active":online?"idle":"offline";
   if(status!=="unavailable")counts[status]++;
@@ -83,7 +85,7 @@ function render(){
   }
   root.append(grid);
  }
- if(!groups.size)root.append(node("p","muted",state.appFilter?"No students currently online in 내신 명중.":"No students in this selection."));
+ if(!groups.size)root.append(node("p","muted",MINI?"No students online in this class right now.":state.appFilter?"No students currently online in 내신 명중.":"No students in this selection."));
 }
 // Load roster and presence independently. A slow auth check must never leave the page blank.
 let accessGranted=false;
@@ -93,7 +95,7 @@ async function refresh(){
  try{
   await loadPresence();
   $("last-refresh").textContent="Updated "+time();
-  showNotice(state.sessions.length?"":"No current sessions yet.");
+  showNotice(state.sessions.length?"":(MINI?"No students online right now.":"No current sessions yet."));
  }catch(error){
   state.presenceOk=false;
   showNotice("Presence service: "+error.message,true);
