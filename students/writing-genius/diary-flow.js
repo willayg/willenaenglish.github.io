@@ -1,5 +1,6 @@
 import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
+import {judgeSentenceSpeech} from '/students/shared/sentence-speech-tolerance.js?v=20261103-speech1';
 const $=id=>document.getElementById(id);
 const norm=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim();
 const split=s=>(String(s||'').match(/[^.!?\n]+[.!?]+(?=\s|$)/g)||[]).map(x=>x.trim()).filter(x=>/[a-z]/i.test(x));
@@ -602,7 +603,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   let accepted=false;
   const judge=answer=>{
    if(accepted||step!=='speech')return;
-   const score=spokenAccuracy(target,answer);
+   const tolerant=judgeSentenceSpeech(target,answer);
+   const score=tolerant.correct?1:spokenAccuracy(target,answer);
    if(score<.75){
     status('다시 한번 말해 보세요.',true);
     return;
@@ -617,7 +619,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   if(window.SpeechRecognition||window.webkitSpeechRecognition){
    renderer.onSpeechResult=alternatives=>{
     const candidates=Array.isArray(alternatives)?alternatives:[alternatives];
-    const best=candidates.map(answer=>({answer,score:spokenAccuracy(target,answer)})).sort((a,b)=>b.score-a.score)[0];
+    const best=candidates.map(answer=>({answer,score:judgeSentenceSpeech(target,answer).correct?1:spokenAccuracy(target,answer)})).sort((a,b)=>b.score-a.score)[0];
     if(best)judge(best.answer);
    };
   }else{
