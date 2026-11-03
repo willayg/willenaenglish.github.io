@@ -2,7 +2,7 @@
 const API="/api/live-presence";
 const $=id=>document.getElementById(id);
 const CLASS_ORDER=["Brown","Stanford","Manchester","NY","Hawaii","Boston","Sydney","Berkeley","Chicago","Cambridge","Yale","Prince","Oxford","MIT","Pre"];
-const state={students:[],sessions:[],filter:"",rosterOk:false,presenceOk:false,refreshing:false};
+const state={students:[],sessions:[],filter:"",appFilter:"",rosterOk:false,presenceOk:false,refreshing:false};
 const clean=s=>String(s??"").trim();
 const time=()=>new Date().toLocaleTimeString("en-KR",{hour:"2-digit",minute:"2-digit"});
 function node(tag,className,text){const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=text;return n;}
@@ -48,6 +48,9 @@ function render(){
  const groups=new Map();
  for(const s of students){
   const online=sessions.get(s.id);
+  // App filtering applies only to currently reported sessions; offline students
+  // have no verifiable current app and are omitted in 내신-only mode.
+  if(state.appFilter && online?.app!==state.appFilter)continue;
   const status=!state.presenceOk?"unavailable":online?.status==="active"?"active":online?"idle":"offline";
   if(status!=="unavailable")counts[status]++;
   if(!groups.has(s.class))groups.set(s.class,[]);
@@ -80,7 +83,7 @@ function render(){
   }
   root.append(grid);
  }
- if(!students.length)root.append(node("p","muted","No students in this selection."));
+ if(!groups.size)root.append(node("p","muted",state.appFilter?"No students currently online in 내신 명중.":"No students in this selection."));
 }
 // Load roster and presence independently. A slow auth check must never leave the page blank.
 let accessGranted=false;
@@ -101,6 +104,7 @@ async function refresh(){
 }
 function registerUI(){
  $("class-filter").addEventListener("change",()=>{state.filter=$("class-filter").value;render();});
+ $("app-filter").addEventListener("change",()=>{state.appFilter=$("app-filter").value;render();});
  $("refresh").addEventListener("click",async()=>{
   try{await loadRoster();}catch(error){showNotice("Roster: "+error.message,true);}
   await refresh();
