@@ -43,7 +43,7 @@
           {
             "id": "gt2-c1-choose-3",
             "subunit": 1,
-            "prompt": "I ____ ready.",
+            "prompt": "I ____ ready for the test.",
             "options": [
               "am",
               "is",
@@ -51,7 +51,7 @@
               "be"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: I am ready."
+            "explanation": "올바른 문장: I am ready for the test."
           },
           {
             "id": "gt2-c1-choose-4",
@@ -127,7 +127,7 @@
             "options": [
               "She is a student.",
               "They is at home.",
-              "I is ready.",
+              "I is ready for the test.",
               "My sister like music."
             ],
             "answerIndex": 0,
@@ -138,7 +138,7 @@
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "I am ready.",
+              "I am ready for the test.",
               "They is at home.",
               "My sister likes music.",
               "We play soccer on Sundays."
@@ -153,11 +153,11 @@
             "options": [
               "My sister like music.",
               "We plays soccer on Sundays.",
-              "I am ready.",
+              "I am ready for the test.",
               "He don't eat fish."
             ],
             "answerIndex": 2,
-            "explanation": "올바른 표현: I am ready."
+            "explanation": "올바른 표현: I am ready for the test."
           },
           {
             "id": "gt2-c1-check-4",
@@ -218,7 +218,7 @@
             "options": [
               "She is a student.",
               "They are at home.",
-              "I am ready.",
+              "I am ready for the test.",
               "Where does they study?"
             ],
             "answerIndex": 3,
@@ -234,14 +234,14 @@
             "underlined": [
               "are",
               "She",
-              "a student.",
-              "a"
+              "a",
+              "student."
             ],
             "options": [
               "are",
               "She",
-              "a student.",
-              "a"
+              "a",
+              "student."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: She is a student."
@@ -254,14 +254,14 @@
             "underlined": [
               "They",
               "is",
-              "at home.",
-              "at"
+              "at",
+              "home."
             ],
             "options": [
               "They",
               "is",
-              "at home.",
-              "at"
+              "at",
+              "home."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: They are at home."
@@ -270,21 +270,21 @@
             "id": "gt2-c1-hunt-3",
             "subunit": 1,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I is ready.",
+            "sentence": "I is ready for the test.",
             "underlined": [
               "I",
-              "ready.",
+              "ready",
               "is",
-              "보기"
+              "for the test."
             ],
             "options": [
               "I",
-              "ready.",
+              "ready",
               "is",
-              "보기"
+              "for the test."
             ],
             "answerIndex": 2,
-            "explanation": "올바른 문장: I am ready."
+            "explanation": "올바른 문장: I am ready for the test."
           },
           {
             "id": "gt2-c1-hunt-4",
@@ -292,15 +292,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "My sister like music.",
             "underlined": [
-              "My sister",
-              "music.",
               "My",
+              "sister",
+              "music.",
               "like"
             ],
             "options": [
-              "My sister",
-              "music.",
               "My",
+              "sister",
+              "music.",
               "like"
             ],
             "answerIndex": 3,
@@ -314,14 +314,14 @@
             "underlined": [
               "plays",
               "We",
-              "soccer on Sundays.",
-              "soccer"
+              "soccer",
+              "on Sundays."
             ],
             "options": [
               "plays",
               "We",
-              "soccer on Sundays.",
-              "soccer"
+              "soccer",
+              "on Sundays."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: We play soccer on Sundays."
@@ -334,14 +334,14 @@
             "underlined": [
               "He",
               "don't",
-              "eat fish.",
-              "eat"
+              "eat",
+              "fish."
             ],
             "options": [
               "He",
               "don't",
-              "eat fish.",
-              "eat"
+              "eat",
+              "fish."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: He doesn't eat fish."
@@ -352,16 +352,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "Do your brother live here?",
             "underlined": [
-              "your brother live here?",
               "your",
+              "brother live",
               "Do",
-              "brother"
+              "here?"
             ],
             "options": [
-              "your brother live here?",
               "your",
+              "brother live",
               "Do",
-              "brother"
+              "here?"
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: Does your brother live here?"
@@ -373,14 +373,14 @@
             "sentence": "Where does they study?",
             "underlined": [
               "Where",
-              "they study?",
               "they",
+              "study?",
               "does"
             ],
             "options": [
               "Where",
-              "they study?",
               "they",
+              "study?",
               "does"
             ],
             "answerIndex": 3,
@@ -619,14 +619,14 @@
             "underlined": [
               "She",
               "were",
-              "tired yesterday.",
-              "tired"
+              "tired",
+              "yesterday."
             ],
             "options": [
               "She",
               "were",
-              "tired yesterday.",
-              "tired"
+              "tired",
+              "yesterday."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: She was tired yesterday."
@@ -638,15 +638,15 @@
             "sentence": "We was at school last Friday.",
             "underlined": [
               "We",
-              "at school last Friday.",
+              "at",
               "was",
-              "at"
+              "school last Friday."
             ],
             "options": [
               "We",
-              "at school last Friday.",
+              "at",
               "was",
-              "at"
+              "school last Friday."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: We were at school last Friday."
@@ -658,14 +658,14 @@
             "sentence": "I weren't at home last night.",
             "underlined": [
               "I",
-              "at home last night.",
               "at",
+              "home last night.",
               "weren't"
             ],
             "options": [
               "I",
-              "at home last night.",
               "at",
+              "home last night.",
               "weren't"
             ],
             "answerIndex": 3,
@@ -678,15 +678,15 @@
             "sentence": "Was they busy yesterday?",
             "underlined": [
               "Was",
-              "they busy yesterday?",
               "they",
-              "busy"
+              "busy",
+              "yesterday?"
             ],
             "options": [
               "Was",
-              "they busy yesterday?",
               "they",
-              "busy"
+              "busy",
+              "yesterday?"
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: Were they busy yesterday?"
@@ -699,14 +699,14 @@
             "underlined": [
               "He",
               "visit",
-              "his uncle last week.",
-              "his"
+              "his",
+              "uncle last week."
             ],
             "options": [
               "He",
               "visit",
-              "his uncle last week.",
-              "his"
+              "his",
+              "uncle last week."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: He visited his uncle last week."
@@ -718,15 +718,15 @@
             "sentence": "They goed to the museum.",
             "underlined": [
               "They",
-              "to the museum.",
+              "to",
               "goed",
-              "to"
+              "the museum."
             ],
             "options": [
               "They",
-              "to the museum.",
+              "to",
               "goed",
-              "to"
+              "the museum."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: They went to the museum."
@@ -737,15 +737,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "Did she called you yesterday?",
             "underlined": [
-              "Did she",
-              "you yesterday?",
               "Did",
+              "she",
+              "you yesterday?",
               "called"
             ],
             "options": [
-              "Did she",
-              "you yesterday?",
               "Did",
+              "she",
+              "you yesterday?",
               "called"
             ],
             "answerIndex": 3,
@@ -758,15 +758,15 @@
             "sentence": "We didn't watched TV last night.",
             "underlined": [
               "watched",
-              "We didn't",
-              "TV last night.",
-              "We"
+              "We",
+              "didn't",
+              "TV last night."
             ],
             "options": [
               "watched",
-              "We didn't",
-              "TV last night.",
-              "We"
+              "We",
+              "didn't",
+              "TV last night."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: We didn't watch TV last night."
@@ -1003,16 +1003,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "He is read now.",
             "underlined": [
-              "He is",
-              "now.",
+              "He",
+              "is",
               "read",
-              "He"
+              "now."
             ],
             "options": [
-              "He is",
-              "now.",
+              "He",
+              "is",
               "read",
-              "He"
+              "now."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: He is reading now."
@@ -1023,15 +1023,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "They were play outside at six.",
             "underlined": [
-              "They were",
-              "outside at six.",
               "They",
+              "were",
+              "outside at six.",
               "play"
             ],
             "options": [
-              "They were",
-              "outside at six.",
               "They",
+              "were",
+              "outside at six.",
               "play"
             ],
             "answerIndex": 3,
@@ -1045,14 +1045,14 @@
             "underlined": [
               "were",
               "I",
-              "cooking when she arrived.",
-              "cooking"
+              "cooking",
+              "when she arrived."
             ],
             "options": [
               "were",
               "I",
-              "cooking when she arrived.",
-              "cooking"
+              "cooking",
+              "when she arrived."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: I was cooking when she arrived."
@@ -1065,14 +1065,14 @@
             "underlined": [
               "She",
               "doesn't",
-              "sleeping now.",
-              "sleeping"
+              "sleeping",
+              "now."
             ],
             "options": [
               "She",
               "doesn't",
-              "sleeping now.",
-              "sleeping"
+              "sleeping",
+              "now."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: She isn't sleeping now."
@@ -1083,16 +1083,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "Is the children studying?",
             "underlined": [
-              "the children studying?",
               "the",
+              "children",
               "Is",
-              "children"
+              "studying?"
             ],
             "options": [
-              "the children studying?",
               "the",
+              "children",
               "Is",
-              "children"
+              "studying?"
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: Are the children studying?"
@@ -1104,14 +1104,14 @@
             "sentence": "What was you doing at eight?",
             "underlined": [
               "What",
-              "you doing at eight?",
               "you",
+              "doing at eight?",
               "was"
             ],
             "options": [
               "What",
-              "you doing at eight?",
               "you",
+              "doing at eight?",
               "was"
             ],
             "answerIndex": 3,
@@ -1124,15 +1124,15 @@
             "sentence": "I will helping you tomorrow.",
             "underlined": [
               "helping",
-              "I will",
-              "you tomorrow.",
-              "I"
+              "I",
+              "will",
+              "you tomorrow."
             ],
             "options": [
               "helping",
-              "I will",
-              "you tomorrow.",
-              "I"
+              "I",
+              "will",
+              "you tomorrow."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: I will help you tomorrow."
@@ -1145,14 +1145,14 @@
             "underlined": [
               "They",
               "is",
-              "going to visit us.",
-              "going"
+              "going",
+              "to visit us."
             ],
             "options": [
               "They",
               "is",
-              "going to visit us.",
-              "going"
+              "going",
+              "to visit us."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: They are going to visit us."
@@ -1388,15 +1388,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "She can swims very well.",
             "underlined": [
-              "She can",
-              "very well.",
               "She",
+              "can",
+              "very well.",
               "swims"
             ],
             "options": [
-              "She can",
-              "very well.",
               "She",
+              "can",
+              "very well.",
               "swims"
             ],
             "answerIndex": 3,
@@ -1409,15 +1409,15 @@
             "sentence": "May I opens the window?",
             "underlined": [
               "opens",
-              "May I",
-              "the window?",
-              "May"
+              "May",
+              "I",
+              "the window?"
             ],
             "options": [
               "opens",
-              "May I",
-              "the window?",
-              "May"
+              "May",
+              "I",
+              "the window?"
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: May I open the window?"
@@ -1428,16 +1428,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "He cannot drives a car.",
             "underlined": [
-              "He cannot",
+              "He",
               "drives",
-              "a car.",
-              "He"
+              "cannot",
+              "a car."
             ],
             "options": [
-              "He cannot",
+              "He",
               "drives",
-              "a car.",
-              "He"
+              "cannot",
+              "a car."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: He cannot drive a car."
@@ -1448,16 +1448,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "Can they comes with us?",
             "underlined": [
-              "Can they",
-              "with us?",
+              "Can",
+              "they",
               "comes",
-              "Can"
+              "with us?"
             ],
             "options": [
-              "Can they",
-              "with us?",
+              "Can",
+              "they",
               "comes",
-              "Can"
+              "with us?"
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: Can they come with us?"
@@ -1468,15 +1468,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "You must wearing a helmet.",
             "underlined": [
-              "You must",
-              "a helmet.",
               "You",
+              "must",
+              "a helmet.",
               "wearing"
             ],
             "options": [
-              "You must",
-              "a helmet.",
               "You",
+              "must",
+              "a helmet.",
               "wearing"
             ],
             "answerIndex": 3,
@@ -1490,14 +1490,14 @@
             "underlined": [
               "have",
               "She",
-              "to finish her homework.",
-              "to"
+              "to",
+              "finish her homework."
             ],
             "options": [
               "have",
               "She",
-              "to finish her homework.",
-              "to"
+              "to",
+              "finish her homework."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: She has to finish her homework."
@@ -1508,16 +1508,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "We should eating more vegetables.",
             "underlined": [
-              "We should",
+              "We",
               "eating",
-              "more vegetables.",
-              "We"
+              "should",
+              "more vegetables."
             ],
             "options": [
-              "We should",
+              "We",
               "eating",
-              "more vegetables.",
-              "We"
+              "should",
+              "more vegetables."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: We should eat more vegetables."
@@ -1528,16 +1528,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "He doesn't has to go now.",
             "underlined": [
-              "He doesn't",
-              "to go now.",
+              "He",
+              "doesn't",
               "has",
-              "He"
+              "to go now."
             ],
             "options": [
-              "He doesn't",
-              "to go now.",
+              "He",
+              "doesn't",
               "has",
-              "He"
+              "to go now."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: He doesn't have to go now."
@@ -1776,14 +1776,14 @@
             "underlined": [
               "childs",
               "Two",
-              "are playing.",
-              "are"
+              "are",
+              "playing."
             ],
             "options": [
               "childs",
               "Two",
-              "are playing.",
-              "are"
+              "are",
+              "playing."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: Two children are playing."
@@ -1794,16 +1794,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "There are three boxs here.",
             "underlined": [
-              "There are three",
+              "There are",
               "boxs",
-              "here.",
-              "There"
+              "three",
+              "here."
             ],
             "options": [
-              "There are three",
+              "There are",
               "boxs",
-              "here.",
-              "There"
+              "three",
+              "here."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: There are three boxes here."
@@ -1814,16 +1814,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "I have an information.",
             "underlined": [
-              "I have",
-              "information.",
+              "I",
+              "have",
               "an",
-              "I"
+              "information."
             ],
             "options": [
-              "I have",
-              "information.",
+              "I",
+              "have",
               "an",
-              "I"
+              "information."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: I have some information."
@@ -1834,15 +1834,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "She bought a umbrella.",
             "underlined": [
-              "She bought",
-              "umbrella.",
               "She",
+              "bought",
+              "umbrella.",
               "a"
             ],
             "options": [
-              "She bought",
-              "umbrella.",
               "She",
+              "bought",
+              "umbrella.",
               "a"
             ],
             "answerIndex": 3,
@@ -1855,15 +1855,15 @@
             "sentence": "He is an university student.",
             "underlined": [
               "an",
-              "He is",
-              "university student.",
-              "He"
+              "He",
+              "is",
+              "university student."
             ],
             "options": [
               "an",
-              "He is",
-              "university student.",
-              "He"
+              "He",
+              "is",
+              "university student."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: He is a university student."
@@ -1874,16 +1874,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "A sun rises in the east.",
             "underlined": [
-              "sun rises in the east.",
-              "A",
               "sun",
-              "rises"
+              "A",
+              "rises in the",
+              "east."
             ],
             "options": [
-              "sun rises in the east.",
-              "A",
               "sun",
-              "rises"
+              "A",
+              "rises in the",
+              "east."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: The sun rises in the east."
@@ -1894,16 +1894,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "This is she bag.",
             "underlined": [
-              "This is",
-              "bag.",
+              "This",
+              "is",
               "she",
-              "This"
+              "bag."
             ],
             "options": [
-              "This is",
-              "bag.",
+              "This",
+              "is",
               "she",
-              "This"
+              "bag."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: This is her bag."
@@ -1914,15 +1914,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "Please give the book to I.",
             "underlined": [
-              "Please give the book to",
+              "Please give the book",
+              "to",
               ".",
-              "Please",
               "I"
             ],
             "options": [
-              "Please give the book to",
+              "Please give the book",
+              "to",
               ".",
-              "Please",
               "I"
             ],
             "answerIndex": 3,
@@ -1984,7 +1984,7 @@
           {
             "id": "gt2-c6-choose-4",
             "subunit": 2,
-            "prompt": "He runs ____.",
+            "prompt": "He runs ____ every morning.",
             "options": [
               "quickly",
               "quick",
@@ -1992,7 +1992,7 @@
               "quickest"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: He runs quickly."
+            "explanation": "올바른 문장: He runs quickly every morning."
           },
           {
             "id": "gt2-c6-choose-5",
@@ -2056,7 +2056,7 @@
               "She looks happily today.",
               "The soup tastes delicious.",
               "It is an interested movie.",
-              "He runs quick."
+              "He runs quick every morning."
             ],
             "answerIndex": 1,
             "explanation": "올바른 표현: The soup tastes delicious."
@@ -2067,7 +2067,7 @@
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
               "It is an interesting movie.",
-              "He runs quickly.",
+              "He runs quickly every morning.",
               "She looks happily today.",
               "She speaks English well."
             ],
@@ -2079,7 +2079,7 @@
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "He runs quick.",
+              "He runs quick every morning.",
               "She speaks English good.",
               "They arrived lately yesterday.",
               "It is an interesting movie."
@@ -2092,13 +2092,13 @@
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "He runs quick.",
+              "He runs quick every morning.",
               "She speaks English well.",
               "They arrived late yesterday.",
               "This bag is heavier than mine."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 표현: He runs quickly."
+            "explanation": "올바른 표현: He runs quickly every morning."
           },
           {
             "id": "gt2-c6-check-5",
@@ -2160,16 +2160,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "The soup tastes deliciously.",
             "underlined": [
-              "The soup tastes",
+              "The soup",
               "deliciously",
-              ".",
-              "The"
+              "tastes",
+              "."
             ],
             "options": [
-              "The soup tastes",
+              "The soup",
               "deliciously",
-              ".",
-              "The"
+              "tastes",
+              "."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: The soup tastes delicious."
@@ -2180,16 +2180,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "She looks happily today.",
             "underlined": [
-              "She looks",
-              "today.",
+              "She",
+              "looks",
               "happily",
-              "She"
+              "today."
             ],
             "options": [
-              "She looks",
-              "today.",
+              "She",
+              "looks",
               "happily",
-              "She"
+              "today."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: She looks happy today."
@@ -2200,15 +2200,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "It is an interested movie.",
             "underlined": [
-              "It is an",
+              "It is",
+              "an",
               "movie.",
-              "It",
               "interested"
             ],
             "options": [
-              "It is an",
+              "It is",
+              "an",
               "movie.",
-              "It",
               "interested"
             ],
             "answerIndex": 3,
@@ -2218,21 +2218,21 @@
             "id": "gt2-c6-hunt-4",
             "subunit": 2,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He runs quick.",
+            "sentence": "He runs quick every morning.",
             "underlined": [
               "quick",
-              "He runs",
-              ".",
-              "He"
+              "He",
+              "runs",
+              "every morning."
             ],
             "options": [
               "quick",
-              "He runs",
-              ".",
-              "He"
+              "He",
+              "runs",
+              "every morning."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: He runs quickly."
+            "explanation": "올바른 문장: He runs quickly every morning."
           },
           {
             "id": "gt2-c6-hunt-5",
@@ -2240,16 +2240,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "She speaks English good.",
             "underlined": [
-              "She speaks English",
+              "She speaks",
               "good",
-              ".",
-              "She"
+              "English",
+              "."
             ],
             "options": [
-              "She speaks English",
+              "She speaks",
               "good",
-              ".",
-              "She"
+              "English",
+              "."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: She speaks English well."
@@ -2280,15 +2280,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "This bag is heavyer than mine.",
             "underlined": [
-              "This bag is",
+              "This bag",
+              "is",
               "than mine.",
-              "This",
               "heavyer"
             ],
             "options": [
-              "This bag is",
+              "This bag",
+              "is",
               "than mine.",
-              "This",
               "heavyer"
             ],
             "answerIndex": 3,
@@ -2301,15 +2301,15 @@
             "sentence": "She is the taller in her class.",
             "underlined": [
               "taller",
-              "She is the",
-              "in her class.",
-              "She"
+              "She is",
+              "the",
+              "in her class."
             ],
             "options": [
               "taller",
-              "She is the",
-              "in her class.",
-              "She"
+              "She is",
+              "the",
+              "in her class."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: She is the tallest in her class."
@@ -2546,16 +2546,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "I want learn French.",
             "underlined": [
-              "I want",
-              "French.",
+              "I",
+              "want",
               "learn",
-              "I"
+              "French."
             ],
             "options": [
-              "I want",
-              "French.",
+              "I",
+              "want",
               "learn",
-              "I"
+              "French."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: I want to learn French."
@@ -2566,15 +2566,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "Exercise every day is healthy.",
             "underlined": [
-              "every day is healthy.",
               "every",
-              "day",
+              "day is",
+              "healthy.",
               "Exercise"
             ],
             "options": [
-              "every day is healthy.",
               "every",
-              "day",
+              "day is",
+              "healthy.",
               "Exercise"
             ],
             "answerIndex": 3,
@@ -2587,15 +2587,15 @@
             "sentence": "She hopes become a doctor.",
             "underlined": [
               "become",
-              "She hopes",
-              "a doctor.",
-              "She"
+              "She",
+              "hopes",
+              "a doctor."
             ],
             "options": [
               "become",
-              "She hopes",
-              "a doctor.",
-              "She"
+              "She",
+              "hopes",
+              "a doctor."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: She hopes to become a doctor."
@@ -2606,16 +2606,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "I need something drink.",
             "underlined": [
-              "I need something",
+              "I need",
               "drink",
-              ".",
-              "I"
+              "something",
+              "."
             ],
             "options": [
-              "I need something",
+              "I need",
               "drink",
-              ".",
-              "I"
+              "something",
+              "."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: I need something to drink."
@@ -2626,16 +2626,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "He went out buy milk.",
             "underlined": [
-              "He went out",
-              "milk.",
+              "He went",
+              "out",
               "buy",
-              "He"
+              "milk."
             ],
             "options": [
-              "He went out",
-              "milk.",
+              "He went",
+              "out",
               "buy",
-              "He"
+              "milk."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: He went out to buy milk."
@@ -2646,15 +2646,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "This chair is comfortable sit on.",
             "underlined": [
-              "This chair is comfortable",
+              "This chair is",
+              "comfortable",
               ".",
-              "This",
               "sit on"
             ],
             "options": [
-              "This chair is comfortable",
+              "This chair is",
+              "comfortable",
               ".",
-              "This",
               "sit on"
             ],
             "answerIndex": 3,
@@ -2667,15 +2667,15 @@
             "sentence": "She enjoys to read novels.",
             "underlined": [
               "to read",
-              "She enjoys",
-              "novels.",
-              "She"
+              "She",
+              "enjoys",
+              "novels."
             ],
             "options": [
               "to read",
-              "She enjoys",
-              "novels.",
-              "She"
+              "She",
+              "enjoys",
+              "novels."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: She enjoys reading novels."
@@ -2686,16 +2686,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "They finished to clean the room.",
             "underlined": [
-              "They finished",
+              "They",
               "to clean",
-              "the room.",
-              "They"
+              "finished",
+              "the room."
             ],
             "options": [
-              "They finished",
+              "They",
               "to clean",
-              "the room.",
-              "They"
+              "finished",
+              "the room."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: They finished cleaning the room."
@@ -2768,15 +2768,15 @@
           {
             "id": "gt2-c8-choose-5",
             "subunit": 2,
-            "prompt": "The picture is ____ the wall.",
+            "prompt": "The picture hangs ____ the wall.",
             "options": [
               "on",
-              "at",
+              "ons",
               "in",
               "under"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: The picture is on the wall."
+            "explanation": "올바른 문장: The picture hangs on the wall."
           },
           {
             "id": "gt2-c8-choose-6",
@@ -2840,7 +2840,7 @@
               "The class starts on nine.",
               "We met on Monday.",
               "He has lived here since 2020.",
-              "The picture is on the wall."
+              "The picture hangs on the wall."
             ],
             "answerIndex": 0,
             "explanation": "올바른 표현: The class starts at nine."
@@ -2852,7 +2852,7 @@
             "options": [
               "He has lived here for 2020.",
               "We met on Monday.",
-              "The picture is at the wall.",
+              "The picture hangs ons the wall.",
               "The cat is between the table."
             ],
             "answerIndex": 1,
@@ -2863,7 +2863,7 @@
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "The picture is on the wall.",
+              "The picture hangs on the wall.",
               "The cat is under the table.",
               "He has lived here for 2020.",
               "She went to school by bus."
@@ -2879,10 +2879,10 @@
               "The cat is between the table.",
               "She went to school with bus.",
               "The bank is among the library and the post office.",
-              "The picture is on the wall."
+              "The picture hangs on the wall."
             ],
             "answerIndex": 3,
-            "explanation": "올바른 표현: The picture is on the wall."
+            "explanation": "올바른 표현: The picture hangs on the wall."
           },
           {
             "id": "gt2-c8-check-6",
@@ -2931,15 +2931,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "My birthday is on July.",
             "underlined": [
-              "My birthday is",
+              "My birthday",
+              "is",
               "July.",
-              "My",
               "on"
             ],
             "options": [
-              "My birthday is",
+              "My birthday",
+              "is",
               "July.",
-              "My",
               "on"
             ],
             "answerIndex": 3,
@@ -2952,15 +2952,15 @@
             "sentence": "The class starts on nine.",
             "underlined": [
               "on",
-              "The class starts",
-              "nine.",
-              "The"
+              "The class",
+              "starts",
+              "nine."
             ],
             "options": [
               "on",
-              "The class starts",
-              "nine.",
-              "The"
+              "The class",
+              "starts",
+              "nine."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: The class starts at nine."
@@ -2971,16 +2971,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "We met in Monday.",
             "underlined": [
-              "We met",
+              "We",
               "in",
-              "Monday.",
-              "We"
+              "met",
+              "Monday."
             ],
             "options": [
-              "We met",
+              "We",
               "in",
-              "Monday.",
-              "We"
+              "met",
+              "Monday."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: We met on Monday."
@@ -2991,16 +2991,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "He has lived here for 2020.",
             "underlined": [
-              "He has lived here",
-              "2020.",
+              "He has lived",
+              "here",
               "for",
-              "He"
+              "2020."
             ],
             "options": [
-              "He has lived here",
-              "2020.",
+              "He has lived",
+              "here",
               "for",
-              "He"
+              "2020."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: He has lived here since 2020."
@@ -3009,21 +3009,21 @@
             "id": "gt2-c8-hunt-5",
             "subunit": 2,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "The picture is at the wall.",
+            "sentence": "The picture hangs ons the wall.",
             "underlined": [
-              "The picture is",
+              "The picture",
+              "hangs",
               "the wall.",
-              "The",
-              "at"
+              "ons"
             ],
             "options": [
-              "The picture is",
+              "The picture",
+              "hangs",
               "the wall.",
-              "The",
-              "at"
+              "ons"
             ],
             "answerIndex": 3,
-            "explanation": "올바른 문장: The picture is on the wall."
+            "explanation": "올바른 문장: The picture hangs on the wall."
           },
           {
             "id": "gt2-c8-hunt-6",
@@ -3032,15 +3032,15 @@
             "sentence": "The cat is between the table.",
             "underlined": [
               "between",
-              "The cat is",
-              "the table.",
-              "The"
+              "The cat",
+              "is",
+              "the table."
             ],
             "options": [
               "between",
-              "The cat is",
-              "the table.",
-              "The"
+              "The cat",
+              "is",
+              "the table."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: The cat is under the table."
@@ -3051,16 +3051,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "She went to school with bus.",
             "underlined": [
-              "She went to school",
+              "She went to",
               "with",
-              "bus.",
-              "She"
+              "school",
+              "bus."
             ],
             "options": [
-              "She went to school",
+              "She went to",
               "with",
-              "bus.",
-              "She"
+              "school",
+              "bus."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: She went to school by bus."
@@ -3071,16 +3071,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "The bank is among the library and the post office.",
             "underlined": [
-              "The bank is",
-              "the library and the post office.",
+              "The bank",
+              "is",
               "among",
-              "The"
+              "the library and the post office."
             ],
             "options": [
-              "The bank is",
-              "the library and the post office.",
+              "The bank",
+              "is",
               "among",
-              "The"
+              "the library and the post office."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: The bank is between the library and the post office."
@@ -3705,14 +3705,14 @@
             "underlined": [
               "There",
               "are",
-              "a cat on the roof.",
-              "a"
+              "a",
+              "cat on the roof."
             ],
             "options": [
               "There",
               "are",
-              "a cat on the roof.",
-              "a"
+              "a",
+              "cat on the roof."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: There is a cat on the roof."
@@ -3724,15 +3724,15 @@
             "sentence": "There is many books here.",
             "underlined": [
               "There",
-              "many books here.",
+              "many",
               "is",
-              "many"
+              "books here."
             ],
             "options": [
               "There",
-              "many books here.",
+              "many",
               "is",
-              "many"
+              "books here."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: There are many books here."
@@ -3743,15 +3743,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "This cake smells wonderfully.",
             "underlined": [
-              "This cake smells",
+              "This cake",
+              "smells",
               ".",
-              "This",
               "wonderfully"
             ],
             "options": [
-              "This cake smells",
+              "This cake",
+              "smells",
               ".",
-              "This",
               "wonderfully"
             ],
             "answerIndex": 3,
@@ -3764,15 +3764,15 @@
             "sentence": "The music sounds beautifully.",
             "underlined": [
               "beautifully",
-              "The music sounds",
-              ".",
-              "The"
+              "The music",
+              "sounds",
+              "."
             ],
             "options": [
               "beautifully",
-              "The music sounds",
-              ".",
-              "The"
+              "The music",
+              "sounds",
+              "."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: The music sounds beautiful."
@@ -3783,16 +3783,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "She gave I a present.",
             "underlined": [
-              "She gave",
+              "She",
               "I",
-              "a present.",
-              "She"
+              "gave",
+              "a present."
             ],
             "options": [
-              "She gave",
+              "She",
               "I",
-              "a present.",
-              "She"
+              "gave",
+              "a present."
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: She gave me a present."
@@ -3823,15 +3823,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "Please show we the picture.",
             "underlined": [
-              "Please show",
-              "the picture.",
               "Please",
+              "show",
+              "the picture.",
               "we"
             ],
             "options": [
-              "Please show",
-              "the picture.",
               "Please",
+              "show",
+              "the picture.",
               "we"
             ],
             "answerIndex": 3,
@@ -3844,15 +3844,15 @@
             "sentence": "The news made him happily.",
             "underlined": [
               "happily",
-              "The news made him",
-              ".",
-              "The"
+              "The news made",
+              "him",
+              "."
             ],
             "options": [
               "happily",
-              "The news made him",
-              ".",
-              "The"
+              "The news made",
+              "him",
+              "."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: The news made him happy."
@@ -4091,15 +4091,15 @@
             "sentence": "Where do she live?",
             "underlined": [
               "Where",
-              "she live?",
+              "she",
               "do",
-              "she"
+              "live?"
             ],
             "options": [
               "Where",
-              "she live?",
+              "she",
               "do",
-              "she"
+              "live?"
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: Where does she live?"
@@ -4110,15 +4110,15 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "What did you ate yesterday?",
             "underlined": [
-              "What did you",
+              "What did",
+              "you",
               "yesterday?",
-              "What",
               "ate"
             ],
             "options": [
-              "What did you",
+              "What did",
+              "you",
               "yesterday?",
-              "What",
               "ate"
             ],
             "answerIndex": 3,
@@ -4131,15 +4131,15 @@
             "sentence": "How often does they exercise?",
             "underlined": [
               "does",
-              "How often",
-              "they exercise?",
-              "How"
+              "How",
+              "often",
+              "they exercise?"
             ],
             "options": [
               "does",
-              "How often",
-              "they exercise?",
-              "How"
+              "How",
+              "often",
+              "they exercise?"
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: How often do they exercise?"
@@ -4152,14 +4152,14 @@
             "underlined": [
               "Why",
               "were",
-              "he absent yesterday?",
-              "he"
+              "he",
+              "absent yesterday?"
             ],
             "options": [
               "Why",
               "were",
-              "he absent yesterday?",
-              "he"
+              "he",
+              "absent yesterday?"
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: Why was he absent yesterday?"
@@ -4170,16 +4170,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "You're hungry, isn't you?",
             "underlined": [
-              "You're hungry,",
-              "you?",
+              "You're",
+              "hungry,",
               "isn't",
-              "You're"
+              "you?"
             ],
             "options": [
-              "You're hungry,",
-              "you?",
+              "You're",
+              "hungry,",
               "isn't",
-              "You're"
+              "you?"
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: You're hungry, aren't you?"
@@ -4191,14 +4191,14 @@
             "sentence": "She doesn't like fish, doesn't she?",
             "underlined": [
               "She",
-              "like fish, doesn't she?",
               "like",
+              "fish, doesn't she?",
               "doesn't"
             ],
             "options": [
               "She",
-              "like fish, doesn't she?",
               "like",
+              "fish, doesn't she?",
               "doesn't"
             ],
             "answerIndex": 3,
@@ -4211,15 +4211,15 @@
             "sentence": "Doesn't touch the painting.",
             "underlined": [
               "Doesn't",
-              "touch the painting.",
               "touch",
-              "the"
+              "the",
+              "painting."
             ],
             "options": [
               "Doesn't",
-              "touch the painting.",
               "touch",
-              "the"
+              "the",
+              "painting."
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: Don't touch the painting."
@@ -4230,16 +4230,16 @@
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
             "sentence": "How a beautiful day it is!",
             "underlined": [
-              "a beautiful day it is!",
-              "How",
               "a",
-              "beautiful"
+              "How",
+              "beautiful day it",
+              "is!"
             ],
             "options": [
-              "a beautiful day it is!",
-              "How",
               "a",
-              "beautiful"
+              "How",
+              "beautiful day it",
+              "is!"
             ],
             "answerIndex": 1,
             "explanation": "올바른 문장: What a beautiful day it is!"
