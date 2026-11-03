@@ -43,3 +43,10 @@
 .grammar-guide-inner h2{font-size:22px;margin:10px 0 15px}
 #grammarGuideContent{white-space:pre-line;font-size:16px}
 #grammarGuideClose{float:right}
+
+/* Reuse Word Genius's fixed completion session and vocab-finish / reward animation. */
+.grammar-book-shell #grammarResult.grammar-complete-session{display:flex;flex-direction:column;z-index:10001}
+.grammar-book-shell #grammarResult .vocab-session-main{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow-y:auto}
+.grammar-book-shell #grammarResult .vocab-finish{width:min(620px,100%)}
+.grammar-book-shell #grammarResult .vocab-finish-stats strong{font-size:clamp(1.05rem,4vw,1.45rem)}
+.grammar-book-shell #grammarResult .vocab-finish-actions{display:flex;flex-wrap:wrap}
