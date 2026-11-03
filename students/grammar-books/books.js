@@ -8,7 +8,7 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 고르시오.',icon:'◉'},{id:'check',label:'문장 판단',ko:'어법에 맞는 문장이나 틀린 문장을 고르시오.',icon:'✓'},{id:'hunt',label:'오류 찾기',ko:'밑줄 친 부분 중 어법상 틀린 것을 고르시오.',icon:'⌕'}];
-let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[],masteredIds=new Set(),missedQuestions=[],retryingWrong=false,chapterProgress=[],rewardSession=null;
+let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[],masteredIds=new Set(),missedQuestions=[],retryingWrong=false,chapterProgress=[],rewardSession=null,navEpoch=0;
 const questionBank=()=>catalog?.modes||{};
 function beginRewardSession(mode){
  const reviewOnly=goldChapter(activeUnit);
@@ -134,7 +134,15 @@ function markedSentence(q){
  }
  return out+q.sentence.slice(cursor);
 }
-function updateUrl(bookId=''){const p=new URLSearchParams(location.search);bookId?p.set('book',bookId):p.delete('book');const u=location.pathname+(p.size?'?'+p.toString():'');history.pushState({},'',u)}
+function updateUrl(bookId='',unitNumber=null,mode='',{replace=false}={}){
+ const p=new URLSearchParams(location.search);
+ bookId?p.set('book',bookId):p.delete('book');
+ if(bookId&&unitNumber)p.set('unit',String(unitNumber));else p.delete('unit');
+ if(bookId&&mode)p.set('mode',mode);else p.delete('mode');
+ const url=location.pathname+(p.size?'?'+p.toString():'');
+ if(url===location.pathname+location.search)return;
+ history[replace?'replaceState':'pushState']({grammarBook:true,book:bookId||'',unit:unitNumber||null,mode:mode||''},'',url);
+}
 function bookCard(book){return '<button class="vocab-front-book-card" type="button" data-grammar-book="'+esc(book.id)+'"><span class="vocab-front-card-main"><span class="vocab-front-card-copy"><strong>'+esc(book.title)+'</strong></span></span><span class="vocab-front-arrow" aria-hidden="true">›</span></button>'}
 async function loadGrammarBooks(){
  try{
@@ -194,7 +202,7 @@ async function loadBookUnits(book){
   return data.chapters.map(c=>({unit_number:c.chapter,title:c.title,subunits:c.topics.map((title,i)=>({unit_number:i+1,title}))}));
  }
 }
-function selectUnit(number){
+function selectUnit(number,{push=true}={}){
  activeUnit=number;catalog=null;
  const unit=units.find(u=>Number(u.unit_number)===number);
  $('grammarUnitStrip').querySelectorAll('[data-unit]').forEach(el=>{const active=Number(el.dataset.unit)===number;el.classList.toggle('is-current',active);active?el.setAttribute('aria-current','true'):el.removeAttribute('aria-current')});
@@ -204,28 +212,38 @@ function selectUnit(number){
  $('grammarGuideOpen').disabled=!unit;
  if(playable)renderModeCards();
  renderUnitsProgress();
+ if(push&&activeBook)updateUrl(activeBook.id,number);
 }
 function renderModeCards(){
  const mount=$('grammarModeCards');if(!mount)return;
  mount.innerHTML=modes.map((mode,i)=>{const best=bestScore(activeUnit,mode.id),pct=Math.round(best/8*100),stars=starsForPercent(pct);return '<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:'+pct+'"><span>'+pct+'%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">STEP '+(i+1)+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">★ '+stars+'/5</span></span></button>'}).join('');
 }
-async function showBook(book,push=true){
- if(!book)return;activeBook=book;activeMode=null;
+async function showBook(book,push=true,requestedUnit=null){
+ if(!book)return;
+ const token=++navEpoch;activeBook=book;activeMode=null;catalog=null;
  title.textContent=book.title;home.hidden=true;detail.hidden=false;
  $('grammarModePanel').hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;
  $('grammarModeCards').hidden=true;
  $('grammarUnitTitle').textContent='단원을 불러오는 중…';
- units=await loadBookUnits(book);
- if(activeBook!==book)return;
+ const loaded=await loadBookUnits(book);
+ if(token!==navEpoch||activeBook!==book)return;
+ units=loaded;
  const strip=$('grammarUnitStrip');
  strip.innerHTML=units.map(u=>'<button type="button" class="study-v2-unit" data-unit="'+Number(u.unit_number)+'">Unit '+Number(u.unit_number)+'</button>').join('');
  strip.hidden=!units.length;
- if(units.length){selectUnit(Number(units[0].unit_number));if(book.title.trim()==='Grammar Ten 완성 2')void refreshGrammarProgress();}
- else {$('grammarUnitTitle').textContent='등록된 단원이 없습니다.';$('grammarNotReady').hidden=false;}
- if(push)updateUrl(book.id);
+ if(units.length){
+  const wanted=Number(requestedUnit||new URLSearchParams(location.search).get('unit')||units[0].unit_number);
+  const chosen=units.some(u=>Number(u.unit_number)===wanted)?wanted:Number(units[0].unit_number);
+  selectUnit(chosen,{push:false});
+  if(book.title.trim()==='Grammar Ten 완성 2')void refreshGrammarProgress();
+  if(push)updateUrl(book.id,chosen);
+ }else{
+  $('grammarUnitTitle').textContent='등록된 단원이 없습니다.';$('grammarNotReady').hidden=false;
+  if(push)updateUrl(book.id);
+ }
  window.scrollTo(0,0);
 }
-function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;if(push)updateUrl();window.scrollTo(0,0)}
+function showHome(push=true){++navEpoch;activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;if(push)updateUrl();window.scrollTo(0,0)}
 function toSharedQuestion(q){
  if(q.displayStyle==='sentence-options'){
   return {id:q.id,form:'choice',prompt:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
@@ -258,10 +276,10 @@ async function startMode(mode){
  const panel=$('grammarModeCards');
  if(panel.getAttribute('aria-busy')==='true')return;
  panel.setAttribute('aria-busy','true');
- const book=activeBook,chapter=activeUnit;
+ const book=activeBook,chapter=activeUnit,token=++navEpoch;
  try{
   await Promise.all([loadQuestions(),refreshGrammarProgress()]);
-  if(activeBook!==book||activeUnit!==chapter)return;
+  if(token!==navEpoch||activeBook!==book||activeUnit!==chapter)return;
   const all=prepareRound(questionBank()[mode]||[],mode);
   const saved=chapterProgress.find(p=>Number(p.chapter_number)===chapter&&p.mode===mode);
   const eligibleIds=new Set(all.map(q=>q.id));
@@ -278,9 +296,10 @@ async function startMode(mode){
    rewardSession.awardedIds=new Set(masteredIds);
   }
   $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;
-  renderQuestion();window.scrollTo(0,0);
+  updateUrl(book.id,chapter,mode);renderQuestion();window.scrollTo(0,0);
  }catch(err){
   console.error('[Grammar Books] could not resume mode',err);
+  if(token!==navEpoch)return;
   $('grammarNotReady').textContent='학습 기록이나 문제를 불러오지 못했어요. 다시 시도해 주세요.';
   $('grammarNotReady').hidden=false;
  }finally{panel.removeAttribute('aria-busy')}
@@ -365,8 +384,17 @@ function showFinishSaveWarning(message){
  }
  warning.textContent=[warning.textContent,message].filter(Boolean).join(' ');
 }
-function goToModes(){
- $('grammarRound').hidden=true;$('grammarResult').hidden=true;$('grammarModePanel').hidden=false;activeMode=null;
+function goToModes(push=true){
+ ++navEpoch;
+ const previousMode=activeMode;
+ $('grammarRound').hidden=true;$('grammarResult').hidden=true;
+ $('grammarModePanel').hidden=false;activeMode=null;
+ if(activeBook){detail.hidden=false;home.hidden=true;}
+ if(push&&activeBook)updateUrl(activeBook.id,activeUnit);
+ if(previousMode&&masteredIds.size&&masteredIds.size<8){
+  const count=masteredIds.size,ids=[...masteredIds],chapter=activeUnit;
+  void window.WillenaMissionBasket?.recordGrammarBookRound?.(chapter,previousMode,count,ids).then(()=>refreshGrammarProgress()).catch(e=>console.warn('[Grammar Books] could not save exited round',e));
+ }
  renderModeCards();window.scrollTo(0,0);
 }
 $('grammarUnitStrip')?.addEventListener('click',event=>{const el=event.target.closest('[data-unit]');if(el)selectUnit(Number(el.dataset.unit))});
@@ -403,8 +431,21 @@ $('grammarResult')?.addEventListener('click',event=>{
  else if(button.id==='grammarResultHome')showHome();
 });
 $('grammarRoundBack')?.addEventListener('click',goToModes);
-$('grammarSessionHome')?.addEventListener('click',()=>{goToModes();showHome()});
+$('grammarSessionHome')?.addEventListener('click',()=>showHome());
 $('grammarResultHome')?.addEventListener('click',()=>showHome());
 back?.addEventListener('click',()=>{if(!$('grammarRound').hidden||!$('grammarResult').hidden){goToModes();return}showHome()});
-window.addEventListener('popstate',()=>{const id=new URLSearchParams(location.search).get('book');const book=books.find(b=>String(b.id)===id);book?showBook(book,false):showHome(false)});
+window.addEventListener('popstate',()=>{
+ const params=new URLSearchParams(location.search),id=params.get('book'),book=books.find(b=>String(b.id)===id);
+ const unit=Number(params.get('unit'))||null,mode=params.get('mode');
+ if(!book){showHome(false);return}
+ if(activeBook&&String(activeBook.id)===String(book.id)&&units.length){
+  ++navEpoch;
+  if(unit&&units.some(u=>Number(u.unit_number)===unit))selectUnit(unit,{push:false});
+  if(mode&&modes.some(m=>m.id===mode)){void startMode(mode);return}
+  $('grammarRound').hidden=true;$('grammarResult').hidden=true;activeMode=null;
+  $('grammarModePanel').hidden=false;detail.hidden=false;home.hidden=true;
+  renderModeCards();return;
+ }
+ void showBook(book,false,unit).then(()=>{if(mode&&activeBook===book)void startMode(mode)});
+});
 document.addEventListener('DOMContentLoaded',()=>{window.WillenaMissionBasket?.mount($('appMissionBasket'),{app:'Grammar Genius Books'});loadGrammarBooks()});
