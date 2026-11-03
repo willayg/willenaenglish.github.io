@@ -260,7 +260,7 @@ function toSharedQuestion(q){
  }
  const hunt=activeMode==='hunt';
  const sentence=hunt?markedSentence(q):'';
- const instruction=hunt?'다음 문장에서 어법상 틀린 부분을 고르시오.':activeMode==='choose'&&q.prompt.startsWith('다음 중')?'':activeMode==='choose'?'빈칸에 들어갈 알맞은 말을 고르시오.':q.prompt;
+ const instruction=hunt?'다음 문장에서 어법상 틀린 부분을 고르시오.':activeMode==='choose'&&q.prompt.startsWith('다음 중')?'':activeMode==='choose'&&((q.prompt.match(/____/g)||[]).length>1)?'빈칸에 들어갈 말이 바르게 짝지어진 것을 고르시오.':activeMode==='choose'?'빈칸에 들어갈 알맞은 말을 고르시오.':q.prompt;
  return {id:q.id,form:'choice',prompt:instruction+(hunt?'\n'+sentence:activeMode==='choose'?(instruction?'\n':'')+q.prompt:''),choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:['①','②','③','④']}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
 }
 function renderQuestion(){
