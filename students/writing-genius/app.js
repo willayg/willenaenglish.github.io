@@ -219,7 +219,17 @@ const validKind=kind=>Object.hasOwn(modeNames,kind)?kind:'sentence';
 function notice(message='',error=false){const node=$('wgNotice');node.textContent=message;node.classList.toggle('is-error',error)}
 function saveState(message='',error=false){const node=$('wgSaveState');node.textContent=message;node.classList.toggle('is-error',error)}
 function navState(screen,id){return {[NAV]:true,screen,id:id||null,depth:screen==='editor'?1:0}}
-function show(name){$('wgHome').hidden=name!=='home';$('wgEditor').hidden=name!=='editor';$('wgPractice').hidden=name!=='practice';notice('')}
+function show(name){
+ $('wgHome').hidden=name!=='home';$('wgEditor').hidden=name!=='editor';$('wgPractice').hidden=name!=='practice';
+ // Reuse the SAME mounted Mission HAM on the Sentence Writing picker.
+ // Moving its node preserves mission state and avoids another API subscription.
+ const basket=$('appMissionBasket'),picker=$('spPicker'),home=$('wgHome');
+ if(basket&&picker&&home){
+  if(name==='practice'&&picker.firstElementChild!==basket)picker.prepend(basket);
+  else if(name!=='practice'&&basket.parentElement!==home)home.prepend(basket);
+ }
+ notice('');
+}
 function togglePortfolio(open){
   $('wgPortfolio').hidden=!open;
   $('wgOpenLibrary').hidden=open;
