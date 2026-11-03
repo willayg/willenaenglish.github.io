@@ -60,21 +60,24 @@ function render(){
   const people=groups.get(cls).sort((a,b)=>({active:0,idle:1,offline:2,unavailable:3}[a.status]-{active:0,idle:1,offline:2,unavailable:3}[b.status])||a.name.localeCompare(b.name));
   const h=node("div","class-head");h.append(node("h2","",cls),node("span","count",people.length+" students"));root.append(h);
   const grid=node("div","grid");
+  const head=node("div","student table-heading");
+  for(const h of ["Student","Status","Current app","Activity","Assigned"])head.append(node("span","",h));
+  grid.append(head);
   for(const person of people){
-   const card=node("article","student"),top=node("div","student-head"),label=node("span","status "+person.status,person.status==="active"?"● Active":person.status==="idle"?"● Idle":person.status==="unavailable"?"— Unavailable":"○ Offline");
-   top.append(node("strong","",person.name),label);card.append(top);
-   const d=node("div","detail");
-   if(person.online){
-    d.append(node("div","app",clean(person.online.app)||"Online"));
-    const activity=[person.online.book,person.online.unit,person.online.activity].map(clean).filter(Boolean).join(" · ");
-    d.append(node("div","",activity||"No activity details yet"));
-    if(person.online.assignment_match===true)d.append(node("span","homework","Matches homework"));
-    else if(person.online.entered_via_homework===true)d.append(node("span","homework","Opened from homework"));
-    else d.append(node("div","muted","Practice / assignment not confirmed"));
-    d.append(node("div","muted","Seen "+new Date(person.online.seen_at).toLocaleTimeString("en-KR",{hour:"2-digit",minute:"2-digit"})));
-   }else d.textContent=state.presenceOk?"No current session":"Presence unavailable";
-   card.append(d);grid.append(card);
-  }root.append(grid);
+    const row=node("div","student");
+    row.append(node("strong","name-cell",person.name));
+    const statusText=person.status==="active"?"● Active":person.status==="idle"?"● Idle":person.status==="unavailable"?"— Unavailable":"○ Offline";
+    const cell=node("span","status-cell");
+    cell.append(node("span","status "+person.status,statusText));row.append(cell);
+    const online=person.online;
+    const names={word:"Word Genius",grammar:"Grammar Genius",sentence:"Sentence Genius",writing:"Writing Genius",puzzles:"Puzzles",test_prep:"내신 명중",dashboard:"Dashboard"};
+    row.append(node("span","app-cell",online?(names[online.app]||clean(online.app)||"—"):"—"));
+    const activity=online?clean(online.activity):"";
+    row.append(node("span","activity-cell",activity||"—"));
+    const assigned=online?(online.assignment_match===true||online.entered_via_homework===true?"Yes":online.assignment_id?"Yes":"—"):"—";
+    row.append(node("span","assigned-cell",assigned));
+    grid.append(row);
+  root.append(grid);
  }
  if(!students.length)root.append(node("p","muted","No students in this selection."));
 }
