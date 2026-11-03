@@ -15,7 +15,7 @@ function prepareRound(questions,mode){
    const options=[...q.options];let ordered=null;
    const walk=(parts,left)=>{
     if(ordered)return;
-    if(!left.length){if(parts.join(' ').replace(/\\s+([,.!?])/g,'$1')===q.sentence)ordered=parts;return}
+    if(!left.length){if(parts.join(' ').replace(/\s+([,.!?])/g,'$1')===q.sentence)ordered=parts;return}
     left.forEach((part,i)=>walk([...parts,part],left.filter((_,j)=>j!==i)));
    };
    walk([],options);
