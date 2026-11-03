@@ -88,7 +88,7 @@ function renderUnitsProgress(){
 function shuffle(items){const out=[...items];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out}
 function prepareRound(questions,mode){
  return shuffle(questions).map(q=>{
-  if(mode==='hunt'){
+  if(mode==='hunt'&&q.displayStyle!=='sentence-options'){
    const wrong=q.options[q.answerIndex];
    const options=[...q.options];let ordered=null;
    const walk=(parts,left)=>{
@@ -208,10 +208,16 @@ async function showBook(book,push=true){
 }
 function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;if(push)updateUrl();window.scrollTo(0,0)}
 function toSharedQuestion(q){
+ if(q.displayStyle==='sentence-options'){
+  return {id:q.id,form:'choice',prompt:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
+ }
+ if(q.instruction){
+  return {id:q.id,form:'choice',prompt:q.instruction+'\n'+q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
+ }
  const hunt=activeMode==='hunt';
  const sentence=hunt?markedSentence(q):'';
- const instruction=hunt?'다음 문장에서 어법상 틀린 부분을 고르시오.':activeMode==='choose'?'빈칸에 들어갈 알맞은 말을 고르시오.':q.prompt;
- return {id:q.id,form:'choice',prompt:instruction+(hunt?'\n'+sentence:activeMode==='choose'?'\n'+q.prompt:''),choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:['①','②','③','④']}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
+ const instruction=hunt?'다음 문장에서 어법상 틀린 부분을 고르시오.':activeMode==='choose'&&q.prompt.startsWith('다음 중')?'':activeMode==='choose'?'빈칸에 들어갈 알맞은 말을 고르시오.':q.prompt;
+ return {id:q.id,form:'choice',prompt:instruction+(hunt?'\n'+sentence:activeMode==='choose'?(instruction?'\n':'')+q.prompt:''),choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:['①','②','③','④']}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
 }
 function renderQuestion(){
  const questions=activeQuestions,q=questions[position];
