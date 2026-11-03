@@ -1,3 +1,4 @@
+import {geniusSessionContext,geniusHomeworkFromUrl,geniusSessionHeader} from '../components/genius-session-context.js?v=20261104-a';
 import {renderStudentSessionFinish} from '../components/student-session-finish.js?v=1';
 import {capturePointOrigin,showPointAward} from '../components/student-point-feedback.js?v=20260927-startup2';
 import {createMissedOnlyRetry} from '../vocab-study/vocab-pass-flow.js?v=20261103-missed-only1';
@@ -8,7 +9,7 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 고르시오.',icon:'◉'},{id:'check',label:'문장 판단',ko:'어법에 맞는 문장이나 틀린 문장을 고르시오.',icon:'✓'},{id:'hunt',label:'오류 찾기',ko:'밑줄 친 부분 중 어법상 틀린 것을 고르시오.',icon:'⌕'}];
-let homeworkAttemptIds=new Set(),homeworkSaveTimer=null;
+let homeworkAttemptIds=new Set(),homeworkSaveTimer=null,activeHomework=null,homeworkModeEvidence=new Map(),homeworkWrite=Promise.resolve();
 let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[],masteredIds=new Set(),retryingWrong=false,chapterProgress=[],rewardSession=null,navEpoch=0;
 const retryQueue=createMissedOnlyRetry({idOf:q=>q.id});
 const roundTotal=()=>rewardSession?.total||8;
@@ -76,6 +77,63 @@ async function recordAssignedGrammarHomework(chapter,mode,sessionId,ids){
  if(!response.ok)throw Error('Assignment recognition HTTP '+response.status);
  const result=await response.json();
  if(result?.eligible_assignments>0)void window.WillenaMissionBasket?.refresh?.();
+}
+const HOMEWORK_DB='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
+const HOMEWORK_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+async function homeworkFetch(path,options={}){
+ const token=window.WillenaAPI?.getLocalAccessToken?.();
+ if(!token)throw Error('Student sign-in required for homework');
+ const response=await fetch(HOMEWORK_DB+path,{...options,cache:'no-store',headers:{apikey:HOMEWORK_KEY,Authorization:'Bearer '+token,...options.headers}});
+ const data=await response.json().catch(()=>null);
+ if(!response.ok)throw Error(data?.message||'Homework request failed ('+response.status+')');
+ return data;
+}
+async function loadGrammarHomework(){
+ const id=geniusHomeworkFromUrl();
+ if(!id)return null;
+ const rows=await homeworkFetch('homework_assignments?select=id,title,list_meta,active,status,created_at,due_at&source_type=eq.grammar_books&id=eq.'+encodeURIComponent(id)+'&active=eq.true&limit=1');
+ const a=rows?.[0];
+ if(!a||a.status!=='active'||a.list_meta?.book_key!=='grammar_ten_2')throw Error('This textbook homework is no longer available.');
+ const chapter=Number(a.list_meta.chapter);
+ if(!Number.isInteger(chapter)||chapter<1||chapter>11)throw Error('Invalid textbook homework chapter');
+ const modesRequired=(a.list_meta.required_modes||[]).filter(mode=>modes.some(m=>m.id===mode));
+ if(!modesRequired.length)throw Error('No assigned Grammar activities');
+ const evidence=await homeworkFetch('grammar_book_homework_completions?select=mode,correct_count,mastered_question_ids&assignment_id=eq.'+encodeURIComponent(id));
+ activeHomework={...a,chapter,required_modes:modesRequired};
+ homeworkModeEvidence=new Map((evidence||[]).map(row=>[row.mode,row]));
+ return activeHomework;
+}
+function currentGrammarContext(mode=activeMode){
+ return geniusSessionContext({assignmentId:activeHomework?.id,bookId:activeBook?.id,unitId:activeUnit,mode});
+}
+function saveHomeworkQuestions(){
+ if(homeworkSaveTimer){clearTimeout(homeworkSaveTimer);homeworkSaveTimer=null}
+ if(!activeHomework||!homeworkAttemptIds.size||!rewardSession?.id||!activeMode)return homeworkWrite;
+ const assignment=activeHomework.id,chapter=activeUnit,mode=activeMode,session=rewardSession.id,ids=[...homeworkAttemptIds];
+ homeworkWrite=homeworkWrite.catch(()=>{}).then(async()=>{
+  const result=await homeworkFetch('rpc/record_grammar_book_homework_questions_v2',{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({p_assignment_id:assignment,p_chapter:chapter,p_mode:mode,p_session_id:session,p_mastered_ids:ids})
+  });
+  if(result?.success!==true)throw Error('Homework is not active or eligible');
+  await window.WillenaMissionBasket?.refresh?.();
+ });
+ return homeworkWrite;
+}
+function scheduleHomeworkSave(){
+ if(!activeHomework)return;
+ if(homeworkSaveTimer)clearTimeout(homeworkSaveTimer);
+ homeworkSaveTimer=setTimeout(()=>{void saveHomeworkQuestions().catch(error=>console.warn('[Grammar Textbooks] homework progress save failed',error))},650);
+}
+function updateHomeworkIdentity(){
+ const existing=document.getElementById('grammarHomeworkIdentity');
+ existing?.remove();
+ if(!activeHomework||!activeBook||Number(activeUnit)!==activeHomework.chapter)return;
+ const parent=$('grammarModePanel');
+ const box=document.createElement('div');box.id='grammarHomeworkIdentity';
+ box.style.cssText='padding:14px 17px;margin:12px 0;border:2px solid #eeb1d0;border-radius:15px;background:#fff';
+ box.innerHTML='<strong style="color:#b83c77">숙제 / Homework</strong><div style="font-size:14px;margin-top:4px">'+esc(activeHomework.title)+'</div><small>Homework progress is separate from Golden Unit mastery.</small>';
+ parent.prepend(box);
 }
 function showGrammarReward(reward){
  const mount=$('grammarRewardMount');
