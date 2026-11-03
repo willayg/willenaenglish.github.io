@@ -83,7 +83,7 @@ function chapterChoices(selected=[]){
 function tabShell(){
  const outer=root();if(!outer)return;
  outer.innerHTML='<div class="gf-hw-view-tabs gb-book-tabs" role="tablist" aria-label="Grammar Genius homework paths">'+
- '<button type="button" class="gf-hw-view-tab'+(store.path==='books'?' active':'')+'" data-grammar-path="books">Book Grammar</button>'+
+ '<button type="button" class="gf-hw-view-tab'+(store.path==='books'?' active':'')+'" data-grammar-path="books">Textbooks</button>'+
  '<button type="button" class="gf-hw-view-tab'+(store.path==='foundations'?' active':'')+'" data-grammar-path="foundations">Foundations</button></div>'+
  '<div id="gfBooksHomework"'+(store.path==='books'?'':' hidden')+'></div>'+
  '<div id="gfLegacyHomework"'+(store.path==='foundations'?'':' hidden')+'></div>';
@@ -93,7 +93,13 @@ async function show(){
  if(!root())return;
  tabShell();
  if(store.path==='foundations'){window.dispatchEvent(new CustomEvent('ua:grammar-foundations-mounted',{detail:{sub:store.sub}}));return}
- if(store.sub==='create')await drawCreate();else await drawManage();
+ try{
+  if(store.sub==='create')await drawCreate();else await drawManage();
+ }catch(error){
+  console.error('[Grammar Textbooks] panel unavailable',error);
+  const el=panel();
+  if(el)el.innerHTML='<div class="gf-hw-error">Textbook homework unavailable: '+esc(error.message)+'</div>';
+ }
 }
 async function drawCreate(){
  await Promise.all([loadStudents(),loadBooks()]);const el=panel();if(!el)return;
