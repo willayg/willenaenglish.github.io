@@ -44,8 +44,9 @@ async function completeRewardSession(){
   }
  };
  try{
-  const response=await (window.WillenaAPI?.fetch||fetch)('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
-    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload})
+  const apiFetch=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function' ? window.WillenaAPI.fetch.bind(window.WillenaAPI) : window.fetch.bind(window);
+  const response=await apiFetch('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+    method:'POST',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload})
   });
   if(!response.ok)throw Error('Reward save HTTP '+response.status);
   const data=await response.json().catch(()=>null);
