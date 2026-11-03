@@ -1,6 +1,6 @@
 import {renderStudentSessionFinish} from '../components/student-session-finish.js?v=1';
 import {capturePointOrigin,showPointAward} from '../components/student-point-feedback.js?v=20260927-startup2';
-import {repeatUntilCorrect} from '../vocab-study/vocab-pass-flow.js?v=20260927-startup2';
+import {createMissedOnlyRetry} from '../vocab-study/vocab-pass-flow.js?v=20261103-missed-only1';
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 import {grammarEngine} from './engine.js?v=1';
 const DB='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -8,7 +8,9 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 고르시오.',icon:'◉'},{id:'check',label:'문장 판단',ko:'어법에 맞는 문장이나 틀린 문장을 고르시오.',icon:'✓'},{id:'hunt',label:'오류 찾기',ko:'밑줄 친 부분 중 어법상 틀린 것을 고르시오.',icon:'⌕'}];
-let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[],masteredIds=new Set(),missedQuestions=[],retryingWrong=false,chapterProgress=[],rewardSession=null,navEpoch=0;
+let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[],masteredIds=new Set(),retryingWrong=false,chapterProgress=[],rewardSession=null,navEpoch=0;
+const retryQueue=createMissedOnlyRetry({idOf:q=>q.id});
+const roundTotal=()=>rewardSession?.total||8;
 const questionBank=()=>catalog?.modes||{};
 function beginRewardSession(mode){
  const reviewOnly=goldChapter(activeUnit);
@@ -20,7 +22,7 @@ async function completeRewardSession(){
  const reward=rewardSession;
  if(!reward||reward.completed)return null;
  reward.completed=true;
- const percent=Math.round(reward.firstCorrect/8*100);
+ const percent=Math.round(reward.firstCorrect/roundTotal()*100);
  const stars=reward.reviewOnly?0:starsForPercent(percent);
  const points=reward.reviewOnly?0:reward.points;
  if(reward.reviewOnly)return {percent,stars,points};
@@ -34,10 +36,10 @@ async function completeRewardSession(){
   client_attempt_id:window.crypto?.randomUUID?.()||('grammar-reward-'+Date.now()),
   book_id:bookId,unit_id:unitId,skill:'grammar',response_type:'reward',
   activity_id:'grammar-books-reward',reward_mode:'grammar_books_'+reward.mode,
-  reward_list_name:listName,reward_list_size:8,reward_started_at:reward.startedAt,
+  reward_list_name:listName,reward_list_size:roundTotal(),reward_started_at:reward.startedAt,
   reward_summary:{
-   completed:true,stars,accuracy:reward.firstCorrect/8,percent,
-   score:reward.firstCorrect,total:8,points_earned:points,
+   completed:true,stars,accuracy:reward.firstCorrect/roundTotal(),percent,
+   score:reward.firstCorrect,total:roundTotal(),points_earned:points,
    book_id:bookId,unit_id:unitId,assignment_id:null,session_source:'student',
    grammar_mode:reward.mode,grammar_chapter:reward.chapter,
    reward_scheme:'grammar-books-v1',star_cap:5
@@ -51,7 +53,7 @@ async function completeRewardSession(){
   if(!response.ok)throw Error('Reward save HTTP '+response.status);
   const data=await response.json().catch(()=>null);
   if(data?.error||data?.success===false)throw Error(data?.error||'Reward save rejected');
-  window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.id,mode:'grammar_books_'+reward.mode,list_name:listName,list_size:8}}));
+  window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.id,mode:'grammar_books_'+reward.mode,list_name:listName,list_size:roundTotal()}}));
   window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:stars}}));
   try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
   return {percent,stars,points};
@@ -75,11 +77,11 @@ function showGrammarReward(reward){
  mount.append(celebration);
 }
 function drawFinishScreen(){
- const mastered=masteredIds.size,missed=missedQuestions.length,percent=Math.round(mastered/8*100);
+ const mastered=masteredIds.size,missed=retryQueue.pendingCount;
  $('grammarFinishMain').innerHTML=renderStudentSessionFinish({
    title:'잘했어요!',
    description:missed?'틀린 문제만 다시 풀어보세요.':'이번 문법 학습이 끝났어요.',
-   stats:[{value:'8',label:'STUDIED'},{value:mastered,label:'SOLID'},{value:missed,label:'REVIEW'}],
+   stats:[{value:roundTotal(),label:'STUDIED'},{value:mastered,label:'SOLID'},{value:missed,label:'REVIEW'}],
    rewardHtml:'<div id="grammarRewardMount" aria-live="polite"></div>',
    actionsHtml:(missed?'<button id="grammarRetry" class="vocab-review-btn" type="button">Review '+missed+'</button>':'')+
     '<button id="grammarResultBack" class="vocab-done-btn" type="button">Finish</button>'+
@@ -295,8 +297,9 @@ async function startMode(mode,{push=true}={}){
   activeQuestions=all.filter(q=>!masteredIds.has(q.id));
   // Fully mastered activities stay replayable as optional practice.
   if(!activeQuestions.length)activeQuestions=all;
-  activeMode=mode;missedQuestions=[];retryingWrong=false;position=0;correct=0;checked=false;
+  activeMode=mode;retryQueue.begin(activeQuestions);retryingWrong=false;position=0;correct=0;checked=false;
   beginRewardSession(mode);
+  rewardSession.total=all.length;
   // A repeat session cannot award points for questions mastered in an earlier session.
   if(rewardSession){
    rewardSession.reviewOnly=bestScore(chapter,mode)===8;
@@ -329,7 +332,8 @@ async function checkAnswer(){
    }
    if(!retryingWrong)rewardSession.firstCorrect++;
   }
- }else if(repeatUntilCorrect(result.correct))missedQuestions.push(q);
+ }
+  retryQueue.record(q,result.correct);
  playStudentSfx(result.correct?'correct':'wrong');
  renderer.showFeedback(result);
  btn.hidden=true;$('grammarSkip').hidden=true;$('grammarNext').hidden=false;$('grammarNext').classList.add('is-next');
@@ -341,11 +345,11 @@ async function finishRound(){
  drawFinishScreen();
  $('grammarResult').hidden=false;
  const rewardMount=$('grammarRewardMount');
- const completed=missedQuestions.length===0;
+ const completed=retryQueue.pendingCount===0;
  // The same Word Genius celebration must mount immediately on session finish.
  // Persistence runs afterward; a failed request must not hide the star animation.
  if(completed&&rewardSession){
-  const percent=Math.round(rewardSession.firstCorrect/8*100);
+  const percent=Math.round(rewardSession.firstCorrect/roundTotal()*100);
   showGrammarReward({
    percent,stars:rewardSession.reviewOnly?0:starsForPercent(percent),
    points:rewardSession.reviewOnly?0:rewardSession.points
@@ -428,14 +432,14 @@ $('grammarGuideClose')?.addEventListener('click',()=>$('grammarGuideDialog').clo
 list?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-book]');if(el)showBook(books.find(b=>String(b.id)===el.dataset.grammarBook))});
 $('grammarModeCards')?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-mode]');if(el)startMode(el.dataset.grammarMode)});
 $('grammarCheck')?.addEventListener('click',checkAnswer);
-$('grammarSkip')?.addEventListener('click',()=>{if(checked||!activeMode)return;missedQuestions.push(activeQuestions[position]);position++;renderQuestion()});
+$('grammarSkip')?.addEventListener('click',()=>{if(checked||!activeMode)return;retryQueue.record(activeQuestions[position],false);position++;renderQuestion()});
 $('grammarNext')?.addEventListener('click',()=>{position++;renderQuestion()});
 $('grammarResult')?.addEventListener('click',event=>{
  const button=event.target.closest('button');
  if(!button)return;
  if(button.id==='grammarRetry'){
-  if(!activeMode||!missedQuestions.length)return;
-  activeQuestions=[...missedQuestions];missedQuestions=[];retryingWrong=true;position=0;correct=0;checked=false;
+  if(!activeMode||!retryQueue.pendingCount)return;
+  activeQuestions=retryQueue.retry();retryingWrong=true;position=0;correct=0;checked=false;
   $('grammarResult').hidden=true;$('grammarRound').hidden=false;renderQuestion();
  }else if(button.id==='grammarResultBack')goToModes();
  else if(button.id==='grammarResultHome')showHome();
