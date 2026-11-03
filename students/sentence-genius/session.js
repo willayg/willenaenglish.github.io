@@ -5,6 +5,7 @@ import {recordSentenceAttempt} from './tracking.js?v=sg-decisions-v4a';
 import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=sg-no-approval-v4.1';
 import {rewardSession} from './rewards.js?v=sg-coach-gold-v3';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
+import {renderStudentSessionFinish} from '/students/components/student-session-finish.js?v=1';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {checkOrder} from './scoring.js?v=sg-coach-gold-v3';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
@@ -227,24 +228,23 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     $('instruction').textContent='잘했어요!';
     $('englishCoach').hidden=true;$('listenTools').hidden=true;
     $('questionRoot').replaceChildren();
-    const panel=document.createElement('div');panel.className='vocab-finish';
-    const h=document.createElement('h2');h.textContent='Session complete!';
-    const p=document.createElement('p');p.textContent=ctx.preview?
-      'Teacher preview · No scores or rewards were saved.':'다음 단계도 도전해 보세요.';
-    const detail=document.createElement('div');detail.className='vocab-finish-stats';
-    for(const [label,value] of [['Unit mastery',ctx.store.percent(mode,ctx.items)+'%'],
-      ['Stars',ctx.store.stars(mode,ctx.items)+'/5'],['Golden Unit',ctx.store.gold(ctx.items)?'Gold':'—']]){
-      const stat=document.createElement('div'),b=document.createElement('strong'),span=document.createElement('span');
-      b.textContent=value;span.textContent=label;stat.append(b,span);detail.append(stat);
-    }
-    const celebration=document.createElement('div'),buttons=document.createElement('div');
-    buttons.className='vocab-finish-actions';
-    const back=document.createElement('button');back.className='vocab-done-btn';back.textContent='Back to unit';
-    back.onclick=onBack;
-    const again=document.createElement('button');again.className='vocab-review-btn';again.textContent='Practice again';
-    again.onclick=()=>{changeMode(mode,ctx);$('sessionFooter').hidden=false};
-    buttons.append(back,again);panel.append(h,p,detail,celebration,buttons);
-    $('questionRoot').append(panel);
+    // Use the same canonical finish markup as Word Genius and Grammar Genius.
+    // Keep Sentence Genius's stats, rewards and navigation behavior unchanged.
+    $('questionRoot').innerHTML=renderStudentSessionFinish({
+      title:'Session complete!',
+      description:ctx.preview?'Teacher preview · No scores or rewards were saved.':'다음 단계도 도전해 보세요.',
+      stats:[
+        {label:'Unit mastery',value:ctx.store.percent(mode,ctx.items)+'%'},
+        {label:'Stars',value:ctx.store.stars(mode,ctx.items)+'/5'},
+        {label:'Golden Unit',value:ctx.store.gold(ctx.items)?'Gold':'—'}
+      ],
+      rewardHtml:'<div id="sentenceFinishCelebration" aria-live="polite"></div>',
+      actionsHtml:'<button id="sentenceFinishBack" class="vocab-done-btn" type="button">Back to unit</button>'+
+        '<button id="sentenceFinishAgain" class="vocab-review-btn" type="button">Practice again</button>'
+    });
+    const celebration=$('sentenceFinishCelebration');
+    $('sentenceFinishBack').addEventListener('click',onBack);
+    $('sentenceFinishAgain').addEventListener('click',()=>{changeMode(mode,ctx);$('sessionFooter').hidden=false});
     playStudentSfx('complete');
     // Assignment progress uses the server's recorded attempts. Always wait
     // for this session's writes before refreshing homework completion, even
