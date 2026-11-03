@@ -138,7 +138,7 @@ async function grammarBookHomework(){
  });
 }
 async function sentences(){
- const d=await authed(SUPA+'/rest/v1/rpc/sg_homework_student_v2',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+ const d=await authed(SUPA+'/rest/v1/rpc/sg_homework_student_v3',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
  return (d.assignments||[]).map(a=>{
   const query=new URLSearchParams();if(a.book_id)query.set('book',a.book_id);if(a.unit_id)query.set('unit',a.unit_id);if(a.id)query.set('homework',a.id);
   const entry=item('sentence:'+a.id,'Sentence Genius',a.title||a.unit_title||'문장 숙제','/students/sentence-genius/'+(query.size?'?'+query:''),a.created_at||a.assigned_at||a.due_at,Number(a.total)>0&&Number(a.done)>=Number(a.total));
