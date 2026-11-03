@@ -68,7 +68,7 @@ async function drawCreate(){
  '<div class="gb-chapter-list">'+chapterChoices()+'</div>'+
  '<div class="gf-hw-footer"><button type="submit" class="control ua-primary" id="gbHwSubmit">Assign selected chapters</button><span id="gbHwNotice" role="status"></span></div></form>';
  const today=new Date(), due=new Date(today.valueOf()+7*86400000);
- const fmt=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d).replace(/\//g,'-');
+ const fmt=koreanDate;
  el.querySelector('[name=start]').value=fmt(today);el.querySelector('[name=due]').value=fmt(due);
  const count=()=>{const n=$$('[data-chapter]:checked',el).length;$('#gbHwSelected',el).textContent=n+' selected';$('#gbHwSubmit',el).disabled=!n;$('#gbHwSubmit',el).textContent=n?'Assign '+n+' chapter'+(n===1?'':'s'):'Select chapters'};
  $$('[data-chapter]',el).forEach(b=>b.addEventListener('change',count));
@@ -159,7 +159,7 @@ async function endAssignment(id){
 }
 function editAssignment(id){
  const a=store.assignments.find(x=>x.id===id),host=panel();if(!a||!host)return;
- const dates=v=>v?new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(v)).replace(/\//g,'-'):'';
+ const dates=v=>v?koreanDate(v):'';
  const modal=document.createElement('dialog');modal.className='gb-edit-modal';
  modal.innerHTML='<form method="dialog" class="gf-hw-form"><h3>Edit book homework</h3><label>Class<select class="control" name="klass">'+(store.classNames||[]).map(v=>'<option value="'+esc(v)+'"'+(v===a.class?' selected':'')+'>'+esc(v)+'</option>').join('')+'</select></label>'+
  '<label>Chapter<select class="control" name="chapter">'+CHAPTERS.map((v,i)=>'<option value="'+(i+1)+'"'+(i+1===Number(a.list_meta?.chapter)?' selected':'')+'>Unit '+(i+1)+' · '+esc(v)+'</option>').join('')+'</select></label>'+
