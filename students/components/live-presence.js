@@ -40,7 +40,7 @@ function detect(){
   if(location.pathname.includes("grammar-books")){
    book=pickValue(["grammarBookTitle"]);unit=pickValue(["grammarUnitTitle"]);
    activity=visible("grammarRound")?pickValue(["grammarRoundTitle"])||"Grammar quiz":visible("grammarResult")?"Results":"Selecting grammar";
-  }else activity=pickValue(["screen"])?.slice(0,55)||"Grammar Genius";
+  }else activity="Grammar Genius practice";
  }else if(app==="sentence"){
   book=pickValue(["bookName"]);unit=pickValue(["unitTitle"]);
   activity=visible("session")?pickValue(["sessionTitle","instruction"])||"Sentence practice":visible("bookScreen")?"Selecting unit":"Sentence Genius home";
@@ -50,7 +50,7 @@ function detect(){
  }else if(app==="puzzles"){
   activity=pickValue(["modeLabel","listTitle"])||"Puzzles";
  }else if(app==="test_prep"){
-  activity=pickValue(["screen"])?.slice(0,60)||"Test prep";
+  activity="내신 practice";unit=new URLSearchParams(location.search).get("lesson")||"";
  }else if(app==="dashboard")activity="Student dashboard";
  return {book:label(book),unit:label(unit),activity:label(activity)};
 }
