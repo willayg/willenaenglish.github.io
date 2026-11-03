@@ -36,14 +36,18 @@ function tableFor(list){
  if(['word','writing','puzzles'].includes(active))return 'homework_assignments';
  return null;
 }
-function mount(list){
+function mount(list, explicitTable){
  // No cancel controls for history/closed assignments.
  const grammarHistory=list.closest('#gfBooksHomework')?.querySelector('[data-gb-stage="history"].active');
  const foundationHistory=list.closest('#gfLegacyHomework')?.querySelector('[data-gf-filter="history"].active');
  const creativeHistory=list.closest('.ua-genius-manage')?.querySelector('[data-period="history"].active');
  if(grammarHistory||foundationHistory||creativeHistory)return;
- const table=tableFor(list);
- if(!table||list.dataset.hwManageControls===table)return;
+ const table=explicitTable||tableFor(list);
+ if(!table)return;
+ // A list may be redrawn without replacing its container; rebuild controls with its cards.
+ if(list.dataset.hwManageControls===table && list.querySelector('.hw-card-select'))return;
+ if(list.previousElementSibling?.classList.contains('hw-select-toolbar'))list.previousElementSibling.remove();
+ delete list.dataset.hwManageControls;
  const cards=[...list.querySelectorAll('.genius-homework-card[data-genius-card]')];
  if(!cards.length)return;
  const identity=currentTeacher();
@@ -100,8 +104,9 @@ function mount(list){
  refresh();
 }
 function scan(){
- document.querySelectorAll('#universalAssignments .ua-genius-manage-list').forEach(mount);
+ document.querySelectorAll('#universalAssignments .ua-genius-manage-list').forEach(list=>mount(list));
 }
+
 const style=document.createElement('style');style.textContent=`
 .hw-select-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;background:#fff;border:1px solid #dce8eb;border-radius:12px;margin:0 0 10px}
 .hw-select-all,.hw-card-select label{display:inline-flex;align-items:center;gap:6px;color:#34515c;font-size:13px;font-weight:700;cursor:pointer}
@@ -120,5 +125,5 @@ function boot(){
  scan();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-window.WillenaHomeworkSelection={icons,cancelAssignment};
+window.WillenaHomeworkSelection={icons,cancelAssignment,mount};
 })();
