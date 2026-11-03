@@ -77,6 +77,7 @@ function render(){
     const assigned=online?(online.assignment_match===true||online.entered_via_homework===true?"Yes":online.assignment_id?"Yes":"—"):"—";
     row.append(node("span","assigned-cell",assigned));
     grid.append(row);
+  }
   root.append(grid);
  }
  if(!students.length)root.append(node("p","muted","No students in this selection."));
