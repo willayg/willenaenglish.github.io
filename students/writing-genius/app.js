@@ -208,7 +208,7 @@ const exampleDiaries=[
 ];
 let diaryRecognition=null,diaryTranscript='',diaryInterim='',diaryBusy=false,diaryReviewBody='';
 const fullDiarySentences=text=>String(text||'').trim().match(/[^.!?\n]+[.!?]+(?=\s|$)/g)?.map(x=>x.trim()).filter(x=>/[a-z]/i.test(x))||[];
-const state={student:null,entries:[],active:null,filter:'all',timer:0,loading:false};
+const state={student:null,entries:[],active:null,filter:'all',timer:0,loading:false,creativeAllowed:false};
 const fmtDate=s=>{if(!s)return'';const d=new Date(s);return Number.isNaN(d.getTime())?String(s).slice(0,10):d.toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'})};
 const seoulDate=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return parts.year+'-'+parts.month+'-'+parts.day};
 const wordCount=s=>String(s||'').trim().match(/\b[\p{L}\p{N}][\p{L}\p{N}'’-]*\b/gu)?.length||0;
@@ -220,6 +220,13 @@ function notice(message='',error=false){const node=$('wgNotice');node.textConten
 function saveState(message='',error=false){const node=$('wgSaveState');node.textContent=message;node.classList.toggle('is-error',error)}
 function navState(screen,id){return {[NAV]:true,screen,id:id||null,depth:screen==='editor'?1:0}}
 function show(name){$('wgHome').hidden=name!=='home';$('wgEditor').hidden=name!=='editor';$('wgPractice').hidden=name!=='practice';notice('')}
+function togglePortfolio(open){
+  $('wgPortfolio').hidden=!open;
+  $('wgOpenLibrary').hidden=open;
+  document.querySelector('.wg-mode-grid').hidden=open;
+  $('wgOpenLibrary').setAttribute('aria-expanded',String(open));
+  if(open){renderLibrary();window.scrollTo({top:0,behavior:'auto'});}
+}
 function renderLibrary(){
   const root=$('wgLibrary');root.replaceChildren();
   const published=state.entries.filter(e=>e.status==='submitted').length;
@@ -349,8 +356,11 @@ function openEditor(entry,fromPop=false){
   }
 }
 function start(kind){
-  if(document.querySelector('[data-start]')?.disabled){notice('Writing Genius는 레벨 4 이상 학생만 이용할 수 있어요.',true);return}
   kind=validKind(kind);
+  if(kind!=='sentence'&&state.creativeAllowed===false){
+    notice('일기와 주제 글쓰기는 레벨 4 이상 학생만 이용할 수 있어요. 문장 연습은 할 수 있어요.',true);
+    return;
+  }
   if(kind==='sentence'){
     state.active=null;show('practice');
     if(!(history.state?.[NAV]&&history.state.screen==='practice'))history.pushState(navState('practice'),'');
@@ -480,15 +490,20 @@ async function bootstrap(){
     if(!['student','teacher','admin'].includes(profile.role))throw Error('학생 계정으로 로그인해 주세요.');
     if(!state.student.className)state.student.className=profile.className;
     await requestDeadline(authToken());
-    const eligibility=await requestDeadline(databaseApi('rpc/writing_genius_access_v1','POST','',{}));
-    if(eligibility?.allowed!==true){
-      show('home');
-      document.querySelectorAll('[data-start]').forEach(button=>button.disabled=true);
-      const msg='Writing Genius는 레벨 4 이상 교재를 공부하는 학생만 이용할 수 있어요. 선생님에게 문의해 주세요.';
-      notice(msg,true);
-      const library=$('wgLibrary');
-      if(library){library.replaceChildren();library.append(el('p','wg-empty',msg));}
-      return;
+    // Eligibility limits creative writing only; Sentence Writing remains accessible.
+    try{
+      const eligibility=await requestDeadline(databaseApi('rpc/writing_genius_access_v1','POST','',{}));
+      state.creativeAllowed=eligibility?.allowed===true;
+    }catch(error){
+      state.creativeAllowed=false;
+      console.warn('[Writing Genius] Creative-writing eligibility unavailable:',error);
+    }
+    for(const kind of ['diary','topic']){
+      const button=document.querySelector('[data-start="'+kind+'"]');
+      if(button){
+        button.disabled=!state.creativeAllowed;
+        button.title=state.creativeAllowed?'':'레벨 4 이상 학생만 이용할 수 있어요';
+      }
     }
     await requestDeadline(reloadEntries());
     // Open the exact writing task selected in Mission HAM.
@@ -502,6 +517,7 @@ async function bootstrap(){
         const hw=(data.assignments||[]).find(a=>a.id===homeworkId);
         if(!hw||String(hw.list_meta?.creative_type||hw.list_meta?.source_type)!=='writing_genius')throw Error('이 글쓰기 숙제를 찾을 수 없어요.');
         const kind=hw.list_meta?.kind;
+        if((kind==='topic'||kind==='diary')&&!state.creativeAllowed)throw Error('일기와 주제 글쓰기는 레벨 4 이상 학생만 이용할 수 있어요.');
         if(kind==='topic'){
           const key='homework-'+hw.id;
           const custom={key,title:hw.title||'Topic writing',help:hw.list_meta?.prompt_text||hw.description||hw.title||'Write about this topic.',starters:[]};
@@ -760,6 +776,8 @@ const practice=createSentencePractice({
   onExit:()=>backHome()
 });
 document.querySelectorAll('[data-start]').forEach(button=>button.addEventListener('click',()=>{if(state.student)start(button.dataset.start)}));
+$('wgOpenLibrary').addEventListener('click',()=>togglePortfolio(true));
+$('wgCloseLibrary').addEventListener('click',()=>togglePortfolio(false));
 $('wgHistoryFilter').addEventListener('change',e=>{state.filter=e.target.value;renderLibrary()});
 $('wgBack').addEventListener('click',()=>void backHome());
 $('wgSave').addEventListener('click',()=>void saveEntry({force:true}));
