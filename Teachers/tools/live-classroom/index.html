@@ -35,7 +35,11 @@ button:hover{background:#eafbfd}.grow{flex:1}.muted{color:var(--muted);font-size
 .homework{display:inline-block;margin-top:7px;font-size:.73rem;color:#b3377d;border-radius:6px;padding:2px 7px;border:1px solid #f0b6d2}
 footer{text-align:center;color:#82959e;font-size:.75rem;margin-top:26px}
 @media(max-width:600px){header img{width:55px}header h1{font-size:1.15rem}header a{font-size:.8rem;padding:7px}.grid{display:block}.student{padding:9px 7px;min-height:44px;grid-template-columns:minmax(38px,.5fr) minmax(67px,.88fr) minmax(90px,1.25fr) minmax(72px,1.1fr) 54px;gap:5px;font-size:.72rem}.student strong{font-size:.78rem}.status{font-size:.65rem;padding:3px 5px}.class-head{margin:17px 0 8px}}
+body.embedded header{display:none}body.embedded main{max-width:none;margin:0;padding:10px 12px 20px}
+body.embedded .toolbar{border-radius:12px;padding:11px}
+body.embedded footer{display:none}
 </style>
+<script>if(new URLSearchParams(location.search).has('embedded'))document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('embedded'));</script>
 </head>
 <body>
 <header><img src="/Assets/Images/Logo.png" alt="Willena"><h1>Live Classroom</h1><a href="/Teachers/">← Dashboard</a></header>
