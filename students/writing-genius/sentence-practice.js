@@ -239,11 +239,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   }
  }
  function refreshStartButton(){
-  const btn=$('spStart'),last=state.today;
-  if(last?.status==='in_progress'){
-   btn.disabled=false;btn.title='이어서 연습';
-   txt('spSourceNote','완료하지 않은 연습을 이어서 할 수 있어요.');return;
-  }
+  const btn=$('spStart');
   btn.disabled=state.loading||state.catalogError||!field('spBook')||!field('spUnit');
   btn.title='문장 만들기';
   const selected=field('spBook')+'|'+field('spUnit');
@@ -314,7 +310,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    const units=await bounded(getPracticeUnits(bookId));
    if(serial!==state.bookReq)return;
    state.units=units;
-   if(units.length)$('spUnit').value=units[0].id;
+   $('spUnit').value=''; // Explicit unit choice
    renderUnitButtons();renderGoldenCount();
    state.catalogError=false;
   }catch(err){
@@ -390,6 +386,21 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    }
   }catch(error){console.warn('[Writing Genius] Could not refresh AI checks',error)}
  }
+ function renderSessionHistory(){
+ const host=$('spSessionList'),box=$('spSaved');if(!host||!box)return;
+ const rows=state.recent.filter(row=>state.sessionContext?.isHomework?String(row.assignment_id||'')===String(state.sessionContext.assignmentId):!row.assignment_id).slice(0,25);
+ box.hidden=false;host.replaceChildren();host.append(node('strong','저장된 문장 연습'));
+ if(!rows.length){host.append(node('p','아직 저장된 연습이 없어요.'));return}
+ for(const item of rows){
+  const line=node('div');line.className='sp-history-entry';
+  const total=(item.questions||[]).length;
+  line.append(node('span',(item.book_title||'교재')+' · '+(item.status==='completed'?'완료':'진행 중')+' · '+Math.min(Number(item.current_index)||0,total)+'/'+total));
+  if(item.status==='in_progress'){
+   const button=node('button','이어서 하기');button.type='button';button.className='vocab-screen-back';
+   button.onclick=async()=>{if(state.loading)return;state.session=structuredClone(item);await loadChecks(state.session);showRound();};line.append(button);
+  }host.append(line);
+ }
+ }
  async function loadSessions(){
   const list=await api('GET','?select=id,student_id,exercise_type,book_id,book_title,unit_id,assignment_id,questions,responses,current_index,status,practice_day,created_at,updated_at&order=created_at.desc&limit=25');
   if(!Array.isArray(list))throw Error('연습 기록을 불러오지 못했어요.');
@@ -416,13 +427,14 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   if(!window.WillenaAchievements){txt('spStreakCurrent',current);txt('spStreakBest',best);}
   else void window.WillenaAchievements.refresh();
   if(state.today&&state.today.status!=='completed')await loadChecks(state.today);
-  refreshStartButton();
+  renderSessionHistory();refreshStartButton();
  }
  async function open(student,homework=null){
   state.homework=homework;
   state.sessionContext=geniusSessionContext({assignmentId:homework?.assignmentId,bookId:homework?.bookId,unitId:homework?.unitId,mode:'sentence_writing'});
   state.student=student;state.active=true;state.loading=true;state.session=null;
   state.catalogError=false;setScreen('picker');saveLabel('');
+  const banner=$('spHomeworkBanner');if(banner){banner.hidden=!state.sessionContext.isHomework;banner.textContent=state.sessionContext.isHomework?'숙제 · 지정된 교재와 단원':'';}
   $('spStart').disabled=true;notify('오늘의 연습을 불러오는 중…');
   const outcomes=await Promise.allSettled([
    bounded(loadBooks(),15000),bounded(loadSessions(),15000),
@@ -445,19 +457,15 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
     else {state.catalogError=true;notify('숙제 단원을 찾지 못했어요. 선생님에게 알려주세요.',true);}
    }else {state.catalogError=true;notify('숙제 교재를 불러오지 못했어요. 선생님에게 알려주세요.',true);}
   }
-  refreshStartButton();
+  renderSessionHistory();refreshStartButton();
   // A successful request previously left the initial "loading" message
   // onscreen indefinitely, even though the textbook buttons were ready.
   if(!state.catalogError)notify('');
-  if(!state.sessionContext?.isHomework&&state.today?.status==='in_progress'){
-   state.session=structuredClone(state.today);showRound();
-  }
+
  }
  async function startSession(){
   if(state.loading)return;
-  if(!state.sessionContext?.isHomework&&state.today?.status==='in_progress'){
-   state.session=structuredClone(state.today);showRound();return;
-  }
+
   const book=state.books.find(b=>b.id===field('spBook')),unit=field('spUnit');
   if(state.sessionContext?.isHomework&&(String(book?.id)!==String(state.homework.bookId)||String(unit)!==String(state.homework.unitId))){notify('숙제에 지정된 교재와 단원을 선택하세요.',true);return}
   if(!book||!unit||state.catalogError)return;
@@ -476,7 +484,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
     responses:[],current_index:0,status:'in_progress'});
    if(!Array.isArray(made)||!made[0])throw Error('연습 시작 기록을 저장하지 못했어요.');
    state.session=made[0];state.today=made[0];state.recent.unshift(made[0]);
-   showRound();
+   renderSessionHistory();showRound();
   }catch(error){notify('연습을 시작하지 못했어요. '+error.message,true)}
   finally{state.loading=false;refreshStartButton()}
  }
@@ -553,7 +561,8 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   if(saved){
    if(state.today?.id===session.id)Object.assign(state.today,structuredClone(session));
    if(session.status==='completed')state.today=null;
-   showRound();
+   const idx=state.recent.findIndex(row=>row.id===session.id);if(idx>=0)state.recent[idx]=structuredClone(session);
+   renderSessionHistory();showRound();
   }else{session.current_index=prev;session.status='in_progress'}
   state.loading=false;$('spNextBtn').disabled=false;
  }
