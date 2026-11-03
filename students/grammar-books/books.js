@@ -64,14 +64,14 @@ async function completeRewardSession(){
   throw error;
  }
 }
-async function recordAssignedGrammarHomework(chapter,mode,sessionId){
+async function recordAssignedGrammarHomework(chapter,mode,sessionId,ids){
  const apiFetch=window.WillenaAPI?.fetch?.bind(window.WillenaAPI);
  const token=window.WillenaAPI?.getLocalAccessToken?.();
- if(!token||!sessionId)return;
- const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/record_grammar_book_homework_completion_v1',{
+ if(!token||!sessionId||!ids?.length)return;
+ const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/record_grammar_book_homework_questions_v1',{
   method:'POST',cache:'no-store',
   headers:{'Content-Type':'application/json','apikey':'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e','Authorization':'Bearer '+token},
-  body:JSON.stringify({p_chapter:chapter,p_mode:mode,p_session_id:sessionId})
+  body:JSON.stringify({p_chapter:chapter,p_mode:mode,p_session_id:sessionId,p_mastered_ids:ids})
  });
  if(!response.ok)throw Error('Assignment recognition HTTP '+response.status);
  const result=await response.json();
