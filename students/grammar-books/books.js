@@ -267,8 +267,10 @@ async function finishRound(){
  const total=8,mastered=masteredIds.size;
  $('grammarResultScore').textContent=mastered+' / '+total;
  $('grammarResultPercent').textContent=Math.round(mastered/total*100)+'%';
+ $('grammarResultWrong').textContent=String(missedQuestions.length);
  $('grammarResultText').textContent=missedQuestions.length?'틀린 문제 '+missedQuestions.length+'개만 다시 풀어보세요.':'모든 문제를 맞혔어요!';
  showGrammarReward(null);
+ if(!missedQuestions.length&&rewardSession&&!rewardSession.reviewOnly){$('grammarRewardMount').textContent='보상 저장 중…';}
  $('grammarRetry').hidden=missedQuestions.length===0;
  $('grammarRetry').textContent='오답 다시 풀기 ('+missedQuestions.length+')';
  if(!retryingWrong||!missedQuestions.length){
@@ -278,7 +280,7 @@ async function finishRound(){
    await refreshGrammarProgress();
    if(!missedQuestions.length){
     try{showGrammarReward(await completeRewardSession())}
-    catch(rewardError){$('grammarResultText').textContent+=' 보상 저장에 실패했습니다.'}
+    catch(rewardError){$('grammarRewardMount').textContent='보상을 저장하지 못했습니다. 페이지를 새로고침하기 전에 확인해 주세요.';}
    }
    if(!missedQuestions.length){
     void window.WillenaMissionBasket?.recordCompletedActivity?.('grammar-ten-2-chapter-'+activeUnit+'-'+activeMode,'Grammar Genius Books');
