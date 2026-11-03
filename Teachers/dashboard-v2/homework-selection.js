@@ -37,6 +37,11 @@ function tableFor(list){
  return null;
 }
 function mount(list){
+ // No cancel controls for history/closed assignments.
+ const grammarHistory=list.closest('#gfBooksHomework')?.querySelector('[data-gb-stage="history"].active');
+ const foundationHistory=list.closest('#gfLegacyHomework')?.querySelector('[data-gf-filter="history"].active');
+ const creativeHistory=list.closest('.ua-genius-manage')?.querySelector('[data-period="history"].active');
+ if(grammarHistory||foundationHistory||creativeHistory)return;
  const table=tableFor(list);
  if(!table||list.dataset.hwManageControls===table)return;
  const cards=[...list.querySelectorAll('.genius-homework-card[data-genius-card]')];
