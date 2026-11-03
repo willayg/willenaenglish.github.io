@@ -44,11 +44,11 @@ body.embedded footer{display:none}
 <body>
 <header><img src="/Assets/Images/Logo.png" alt="Willena"><h1>Live Classroom</h1><a href="/Teachers/">← Dashboard</a></header>
 <main>
-<div class="toolbar"><label for="class-filter">Class</label><select id="class-filter"><option value="">All Classes</option></select><span class="grow"></span><span class="muted" id="last-refresh">Not loaded</span><button id="refresh" type="button">Refresh</button></div>
+<div class="toolbar"><label for="class-filter">Class</label><select id="class-filter"><option value="">All Classes</option></select><label for="app-filter">App</label><select id="app-filter" aria-label="Filter by current app"><option value="">All Apps</option><option value="test_prep">내신 명중 Only</option></select><span class="grow"></span><span class="muted" id="last-refresh">Not loaded</span><button id="refresh" type="button">Refresh</button></div>
 <div class="stats" aria-live="polite"><span class="stat"><strong id="active-count">0</strong> Active</span><span class="stat"><strong id="idle-count">0</strong> Idle</span><span class="stat"><strong id="offline-count">0</strong> Offline</span></div>
 <div class="notice" id="notice">Loading student roster and checking the presence service…</div>
 <div id="classes"></div>
 <footer>Willena Live Classroom · Online status expires after 90 seconds · Updates while this page is open</footer>
 </main>
-<script type="module" src="./live-classroom.js?v=7"></script>
+<script type="module" src="./live-classroom.js?v=8"></script>
 </body></html>
