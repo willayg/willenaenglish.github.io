@@ -203,7 +203,7 @@ async function finishRound(){
    await window.WillenaMissionBasket?.recordGrammarBookRound?.(activeUnit,activeMode,mastered);
    await refreshGrammarProgress();
    if(!missedQuestions.length){
-    void window.WillenaMissionBasket?.recordCompletedActivity?.('Grammar Genius Books','grammar-ten-2-chapter-'+activeUnit+'-'+activeMode);
+    void window.WillenaMissionBasket?.recordCompletedActivity?.('grammar-ten-2-chapter-'+activeUnit+'-'+activeMode,'Grammar Genius Books');
     void window.WillenaAchievements?.refresh?.();
    }
   }catch(error){console.error('[Grammar Books] result not saved',error);$('grammarResultText').textContent+=' 점수를 저장하지 못했습니다. 다시 시도해 주세요.';}
@@ -211,7 +211,8 @@ async function finishRound(){
  window.scrollTo(0,0);
 }
 function goToModes(){
- $('grammarRound').hidden=true;$('grammarResult').hidden=true;$('grammarModePanel').hidden=false;activeMode=null;window.scrollTo(0,0);
+ $('grammarRound').hidden=true;$('grammarResult').hidden=true;$('grammarModePanel').hidden=false;activeMode=null;
+ renderModeCards();window.scrollTo(0,0);
 }
 $('grammarUnitStrip')?.addEventListener('click',event=>{const el=event.target.closest('[data-unit]');if(el)selectUnit(Number(el.dataset.unit))});
 $('grammarGuideOpen')?.addEventListener('click',async()=>{
@@ -243,6 +244,8 @@ $('grammarRetry')?.addEventListener('click',()=>{
 });
 $('grammarResultBack')?.addEventListener('click',goToModes);
 $('grammarRoundBack')?.addEventListener('click',goToModes);
+$('grammarSessionHome')?.addEventListener('click',()=>{goToModes();showHome()});
+$('grammarResultHome')?.addEventListener('click',()=>showHome());
 back?.addEventListener('click',()=>{if(!$('grammarRound').hidden||!$('grammarResult').hidden){goToModes();return}showHome()});
 window.addEventListener('popstate',()=>{const id=new URLSearchParams(location.search).get('book');const book=books.find(b=>String(b.id)===id);book?showBook(book,false):showHome(false)});
 document.addEventListener('DOMContentLoaded',()=>{window.WillenaMissionBasket?.mount($('appMissionBasket'),{app:'Grammar Genius Books'});loadGrammarBooks()});
