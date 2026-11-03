@@ -459,7 +459,7 @@ async function loadOverview(scopeName='my',force=false){
       const x=row.source_type==='grammar_books'?grammarBookProgress.get(id(row.id)):classProgress.get(id(row.id));return x&&Number(x.students)>0?(row.source_type==='grammar_books'?Number(x.percent)/100:Number(x.passed)/Number(x.students)):null;
      }
      if(row.app==='Writing Genius'){
-      const x=row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
+      const x=row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id));return x&&Number(x.students)>0?(row.list_key==='writing_genius:sentence'?Number(x.progress_percent||0)/100:Number(x.completed)/Number(x.students)):null;
      }
      if(row.app==='Puzzles'){
       const x=puzzleProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
@@ -505,7 +505,7 @@ async function loadOverview(scopeName='my',force=false){
       const detail=result?'Correct '+done+'/'+target+' · Attempted '+(result.attempted??'—')+' · First-try accuracy '+(result.accuracy_percent??'—')+'% · 오답 remaining '+(result.unresolved??'—')
         :grammarResult?grammarResult.passed+'/'+grammarResult.students+' students passed'
         :wordResult?wordResult.started+'/'+wordResult.students+' students attempted (not a pass rate)'
-        :writingResult?writingResult.completed+'/'+writingResult.students+' exact homework submissions'
+        :writingResult?(row.list_key==='writing_genius:sentence'?Number(writingResult.checked||0)+'/'+Number(writingResult.total_questions||0)+' questions checked · '+Number(writingResult.progress_percent||0)+'%':writingResult.completed+'/'+writingResult.students+' submitted')
         :puzzleResult?puzzleResult.completed+'/'+puzzleResult.students+' completed puzzles'
         :'Completion data not available for this app';
       const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
