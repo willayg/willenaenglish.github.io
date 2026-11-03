@@ -24,17 +24,21 @@ async function completeRewardSession(){
  const stars=reward.reviewOnly?0:starsForPercent(percent);
  const points=reward.reviewOnly?0:reward.points;
  if(reward.reviewOnly)return {percent,stars,points};
+ const bookId='1e3a2112-07be-45e2-a8fc-ce20011e0e57';
+ const chapterUnit=units.find(u=>Number(u.unit_number)===Number(reward.chapter));
+ const unitId=chapterUnit?.subunits?.[0]?.id;
+ if(!unitId){reward.completed=false;throw Error('Original textbook unit ID unavailable for reward');}
  const listName='Grammar Ten 완성 2 · Unit '+reward.chapter+' · '+(modes.find(m=>m.id===reward.mode)?.label||reward.mode);
  const payload={
   reward_only:true,session_id:reward.id,
   client_attempt_id:window.crypto?.randomUUID?.()||('grammar-reward-'+Date.now()),
-  book_id:null,unit_id:null,skill:'grammar',response_type:'reward',
+  book_id:bookId,unit_id:unitId,skill:'grammar',response_type:'reward',
   activity_id:'grammar-books-reward',reward_mode:'grammar_books_'+reward.mode,
   reward_list_name:listName,reward_list_size:8,reward_started_at:reward.startedAt,
   reward_summary:{
    completed:true,stars,accuracy:reward.firstCorrect/8,percent,
    score:reward.firstCorrect,total:8,points_earned:points,
-   book_id:null,unit_id:null,assignment_id:null,session_source:'student',
+   book_id:bookId,unit_id:unitId,assignment_id:null,session_source:'student',
    grammar_mode:reward.mode,grammar_chapter:reward.chapter,
    reward_scheme:'grammar-books-v1',star_cap:5
   }
