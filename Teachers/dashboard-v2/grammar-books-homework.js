@@ -110,24 +110,41 @@ async function show(){
  if(store.sub==='create')await drawCreate();else await drawManage();
 }
 async function drawCreate(){
- await loadStudents();const el=panel();if(!el)return;
+ await Promise.all([loadStudents(),loadBooks()]);const el=panel();if(!el)return;
+ if(!selectedBook()?.playable)store.bookId=store.books.find(b=>b.playable)?.id||'';
  const options=(store.classNames||[]).map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
  el.innerHTML='<form class="gf-hw-form gb-form" id="gbHwForm">'+
  '<div class="gf-hw-form-grid"><label>Class<select class="control" name="klass" required><option value="">Choose class</option>'+options+'</select></label>'+
  '<label>Available from<input class="control" type="date" name="start" required></label>'+
  '<label>Due date<input class="control" type="date" name="due" required></label></div>'+
- '<div class="gf-hw-picker-top"><div><strong>Grammar Ten 완성 2</strong><small>Choose chapters and the activities students must finish.</small></div><span id="gbHwSelected">0 chapters</span></div>'+
+ '<label>Book<select class="control" id="gbHwBook" name="book" required><option value="">Choose book</option>'+bookOptions(store.bookId)+'</select></label>'+
+ '<div class="gf-hw-picker-top"><div><strong id="gbHwBookTitle">Units</strong><small id="gbHwBookHint">Choose the units and activities students must complete.</small></div><span id="gbHwSelected">0 chapters</span></div>'+
  '<div class="gb-mode-row">'+MODES.map(([id,title])=>'<label><input type="checkbox" data-grammar-mode="'+id+'" checked> '+esc(title)+'</label>').join('')+'</div>'+
  '<div class="gb-select-head"><strong>Chapters</strong><label><input type="checkbox" id="gbSelectAll"> All</label></div>'+
- '<div class="gb-chapter-list">'+chapterChoices()+'</div>'+
+ '<div class="gb-chapter-list" id="gbHwUnitList">'+chapterChoices()+'</div>'+
  '<div class="gf-hw-footer"><button type="submit" class="control ua-primary" id="gbHwSubmit">Assign selected chapters</button><span id="gbHwNotice" role="status"></span></div></form>';
  const today=new Date(), due=new Date(today.valueOf()+7*86400000);
  const fmt=koreanDate;
  el.querySelector('[name=start]').value=fmt(today);el.querySelector('[name=due]').value=fmt(due);
- const count=()=>{const n=$$('[data-chapter]:checked',el).length;$('#gbHwSelected',el).textContent=n+' selected';$('#gbHwSubmit',el).disabled=!n;$('#gbHwSubmit',el).textContent=n?'Assign '+n+' chapter'+(n===1?'':'s'):'Select chapters'};
- $$('[data-chapter]',el).forEach(b=>b.addEventListener('change',count));
+ const count=()=>{const n=$$('[data-chapter]:checked',el).length;$('#gbHwSelected',el).textContent=n+' selected';$('#gbHwSubmit',el).disabled=!n||!selectedBook()?.playable;$('#gbHwSubmit',el).textContent=n?'Assign '+n+' chapter'+(n===1?'':'s'):'Select chapters'};
+ const bindChapters=()=>$('[data-chapter]',el).forEach(b=>b.addEventListener('change',count));
+ const changeBook=()=>{
+  store.bookId=$('#gbHwBook',el).value;
+  const book=selectedBook();
+  $('#gbHwBookTitle',el).textContent=book?.title||'Units';
+  $('#gbHwBookHint',el).textContent=book?.playable?'Choose units and the required activities.':'This book has no supported student exercises yet.';
+  $('#gbHwUnitList',el).innerHTML=chapterChoices();
+  $('#gbSelectAll',el).checked=false;
+  bindChapters();
+  const preferred=store.bookClasses.get(store.bookId)||[];
+  const klass=el.querySelector('[name=klass]');
+  if(preferred.length===1&&klass?.options.namedItem?.(preferred[0]))klass.value=preferred[0];
+  count();
+ };
+ $('#gbHwBook',el).addEventListener('change',changeBook);
+ bindChapters();
  $('#gbSelectAll',el).addEventListener('change',e=>{$$('[data-chapter]',el).forEach(b=>b.checked=e.target.checked);count()});
- $('#gbHwForm',el).addEventListener('submit',submit);count();
+ $('#gbHwForm',el).addEventListener('submit',submit);changeBook();
 }
 function koreanDate(value){
  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value)).map(x=>[x.type,x.value]));
@@ -137,19 +154,21 @@ function isoDate(date,end=false){return new Date(date+(end?'T23:59:59+09:00':'T0
 async function submit(e){
  e.preventDefault();if(store.loading)return;
  const f=e.currentTarget,klass=f.elements.klass.value,start=f.elements.start.value,due=f.elements.due.value;
+ const book=(store.books||[]).find(b=>b.id===f.elements.book.value);
  const chapters=$$('[data-chapter]:checked',f).map(e=>Number(e.dataset.chapter));
  const modes=$$('[data-grammar-mode]:checked',f).map(e=>e.dataset.grammarMode);
- if(!klass||!start||!due||!chapters.length||!modes.length){notice('Choose a class, dates, chapters and activities.',true);return}
+ if(!book?.playable||!klass||!start||!due||!chapters.length||!modes.length){notice('Choose a playable book, class, dates, units and activities.',true);return}
+ if(chapters.some(chapter=>!book.units.some(unit=>unit.number===chapter)))return notice('Invalid unit selection.',true);
  if(isoDate(due,true)<isoDate(start))return notice('Due date must be on or after the start date.',true);
  const creator=teacherId();if(!creator)return notice('Teacher login unavailable.',true);
  store.loading=true;$('#gbHwSubmit',f).disabled=true;notice('Assigning…');
  try{
   const rows=chapters.map(chapter=>({
    created_by:creator,class:klass,source_type:'grammar_books',
-   title:'Grammar Ten 완성 2 · Unit '+chapter+' · '+CHAPTERS[chapter-1],
-   list_key:'grammar_books:grammar_ten_2:chapter:'+chapter,
-   list_title:'Grammar Ten 완성 2 · Unit '+chapter,
-   list_meta:{app:'grammar_books',book_key:'grammar_ten_2',chapter,required_modes:modes,source_book_id:'1e3a2112-07be-45e2-a8fc-ce20011e0e57'},
+   title:book.title+' · Unit '+chapter+' · '+(book.units.find(u=>u.number===chapter)?.title||''),
+   list_key:'grammar_books:'+book.bookKey+':chapter:'+chapter,
+   list_title:book.title+' · Unit '+chapter,
+   list_meta:{app:'grammar_books',book_key:book.bookKey,chapter,required_modes:modes,source_book_id:book.id,book_title:book.title},
    goal_type:'completed_modes',goal_value:modes.length,
    start_at:isoDate(start),due_at:isoDate(due,true),active:true,status:'active',
    allow_manual_complete:false
