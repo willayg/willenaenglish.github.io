@@ -174,8 +174,12 @@ const homeworkKey=row=>row._table+':'+row.id;
 async function changeHomework(row){
  const table=row._table;
  if(!['homework_assignments','grammar_foundation_homework','sentence_genius_homework','test_prep_tasks'].includes(table))throw Error('This app does not support changes here yet');
+ if(table==='homework_assignments'){
+  const changed=await window.WillenaHomeworkSelection.cancelAssignment(table,row.id);
+  row.isActive=false;row.active=false;Object.assign(row,changed);
+  overviewSelections.delete(homeworkKey(row));return;
+ }
  const update={active:false};
- if(table==='homework_assignments'){update.status='ended';update.ended_at=new Date().toISOString();}
  if(table==='grammar_foundation_homework')update.closed_at=new Date().toISOString();
  if(table==='test_prep_tasks')update.completed_at=new Date().toISOString();
  const changed=await get(table+'?id=eq.'+encodeURIComponent(row.id),{
