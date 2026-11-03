@@ -3,6 +3,7 @@
 import {createSpeakingAudioCache} from '/students/vocab-study/vocab-listening-cache.js';
 import {matchSpeakingTarget} from '/students/vocab-study/speaking-match.js';
 import {matchFlexibleSentence,detectAlmostRight} from './flexibility.js?v=sg-flex-v2c';
+import {judgeSentenceSpeechAlternatives} from '/students/shared/sentence-speech-tolerance.js?v=20261103-speech1';
 const endpoint='/api/vocab-ai-speech';
 async function api(body){
   const headers={'Content-Type':'application/json'};
@@ -57,6 +58,8 @@ export async function playModel(text){
 // No approximate phonetic/loose plural matching for whole sentences: that
 // could mark a grammatically wrong verb form correct.
 export function matchSentence(target,alternatives,gradingContext={}){
+  const tolerant=judgeSentenceSpeechAlternatives(target,alternatives,gradingContext);
+  if(tolerant)return tolerant;
   const match=matchSpeakingTarget(target,alternatives);
   if(match.correct&&['exact','spacing','homophone'].includes(match.matchedBy))return match;
   const equivalent=matchFlexibleSentence(target,alternatives,gradingContext);
