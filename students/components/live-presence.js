@@ -32,10 +32,16 @@ function pickValue(names){for(const name of names){const t=value(name);if(t)retu
 function detect(){
  let book="",unit="",activity="";
  if(app==="word"){
-  book=pickValue(["vocabBookPicker","vocabAdminBookSelect","vocabStudyTitle"]);
-  unit=pickValue(["vocabUnitTitle"]);
-  activity=visible("vocabStudySession")?pickValue(["vocabStudyTitle","vocabInstruction"])||"Word practice":
-    visible("vocabWordTestScreen")?"Word test":visible("vocabBookScreen")?"Selecting unit":"Word Genius home";
+  // Prefer canonical Word Genius state over placeholder selector text.
+  const state=window.WillenaVocabStudy?.getState?.();
+  const session=visible("vocabStudySession");
+  book=String(state?.book?.book_title||state?.book?.title||"");
+  unit=state?.unit?.unit_number!=null?"Unit "+state.unit.unit_number:"";
+  if(session){
+    activity=state?.speakingSession?"Speaking":state?.spellingTest?"Spelling":state?.spellingPractice?"Spelling Coach":"Quiz";
+  }else if(visible("vocabWordTestScreen"))activity="Word Test";
+  else if(visible("vocabBookScreen"))activity="Select Unit";
+  else activity="Home";
  }else if(app==="grammar"){
   if(location.pathname.includes("grammar-books")){
    book=pickValue(["grammarBookTitle"]);unit=pickValue(["grammarUnitTitle"]);
@@ -56,6 +62,13 @@ function detect(){
 }
 function context(){
  const d={...detect(),...(manual||{})};
+ // Explicit assigned Word Genius runs are available through its canonical state.
+ const wordState=app==="word"?window.WillenaVocabStudy?.getState?.():null;
+ if(wordState?.activeTeacherAssignment && visible("vocabStudySession")){
+   const assignment=wordState.activeTeacherAssignment.assignment||{};
+   if(assignment.id)d.assignment_id=assignment.id;
+   d.entered_via_homework=true;
+ }
  const query=new URLSearchParams(location.search);
  const hash=new URLSearchParams(location.hash.slice(1).replace(/^\?/,""));
  const saved=history.state&&typeof history.state==="object"?history.state:{};
