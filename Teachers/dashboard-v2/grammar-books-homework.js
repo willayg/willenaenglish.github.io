@@ -75,6 +75,10 @@ async function drawCreate(){
  $('#gbSelectAll',el).addEventListener('change',e=>{$$('[data-chapter]',el).forEach(b=>b.checked=e.target.checked);count()});
  $('#gbHwForm',el).addEventListener('submit',submit);count();
 }
+function koreanDate(value){
+ const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value)).map(x=>[x.type,x.value]));
+ return parts.year+'-'+parts.month+'-'+parts.day;
+}
 function isoDate(date,end=false){return new Date(date+(end?'T23:59:59+09:00':'T00:00:00+09:00')).toISOString()}
 async function submit(e){
  e.preventDefault();if(store.loading)return;
