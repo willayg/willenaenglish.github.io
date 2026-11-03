@@ -1,5 +1,5 @@
 // Live Classroom P2: read-only monitoring. Never changes homework or student accounts.
-const API="https://api.willenaenglish.com/api/live-presence";
+const API="/api/live-presence";
 const $=id=>document.getElementById(id);
 const CLASS_ORDER=["Brown","Stanford","Manchester","NY","Hawaii","Boston","Sydney","Berkeley","Chicago","Cambridge","Yale","Prince","Oxford","MIT","Pre"];
 const state={students:[],sessions:[],filter:"",rosterOk:false,presenceOk:false,refreshing:false};
