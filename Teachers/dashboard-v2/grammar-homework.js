@@ -25,7 +25,7 @@ async function classes(){
  const rows=await api('classes?select=name&status=eq.active&order=sort_order.asc');
  state.classes=[...new Set([...rows.map(c=>c.name).filter(Boolean),'Test'])];return state.classes;
 }
-function root(){return $('#uaGrammarHomework')}
+function root(){return $('#gfLegacyHomework')}
 async function mount(sub){
  state.mode=sub;state.details.clear();const el=root();if(!el)return;
  el.innerHTML='<div class="gf-hw-loading">Loading Grammar Genius homework…</div>';
@@ -158,5 +158,5 @@ async function paintBatchView(){
  }
  void Promise.all(Array.from({length:Math.min(4,entries.length)},work));
 }
-window.addEventListener('ua:grammar-mounted',e=>{void mount(e.detail?.sub||'manage')});
+window.addEventListener('ua:grammar-foundations-mounted',e=>{void mount(e.detail?.sub||'manage')});
 })();
