@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Free Talking Genius | Willena</title><link rel="icon" href="/Assets/Images/Logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
+<link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
+<link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
+<link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
+<link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
+<link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
+<link rel="stylesheet" href="./styles.css?v=ft-proto-1">
+<script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
+<script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
+<script type="module" src="/students/components/student-header.js?v=20261101-menu-prominent1"></script>
+<script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
+</head><body>
+<div class="study-app free-talking-genius">
+<student-header title="프리토킹 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+<main class="ft-page">
+<div id="ftError" class="ft-error" role="alert" hidden></div>
+<section id="ftHome" class="ft-shell">
+ <div class="vocab-front-intro"><small class="ft-eyebrow">WILLENA · FREE TALKING GENIUS</small>
+ <h1>Free Talking Genius</h1><p>교재에 나온 주제로 내 생각을 자유롭게 말하고 써 봐요.</p></div>
+ <button class="vocab-front-book-card ft-book-choice" id="ftOpenBook" type="button" disabled>
+  <span class="ft-book-icon"><img src="/shared/svgs/golden-unit.svg" alt=""></span>
+  <span class="vocab-front-card-copy"><strong>Oxford Buzz 6</strong><small>8 units · Speaking &amp; Writing · 8 questions each</small></span>
+  <span class="ft-chevron">›</span>
+ </button>
+ <p id="ftLoading" class="ft-status">교재와 학습 기록을 확인하는 중…</p>
+</section>
+<section id="ftBook" class="ft-shell" hidden>
+ <div class="ft-topline"><button id="ftBackHome" class="vocab-back" type="button">← 홈</button><span class="ft-eyebrow">교재 공부</span></div>
+ <h2>Oxford Buzz 6</h2>
+ <div id="ftUnitStrip" class="ft-units" aria-label="Units"></div>
+ <h3 id="ftUnitTitle"></h3><p id="ftUnitFocus" class="ft-muted"></p>
+ <div class="ft-mode-grid">
+  <button type="button" id="ftSpeakingCard" class="vocab-skill-card vocab-skill-pronunciation" data-mode="speaking">
+   <span class="vocab-skill-ring" style="--progress:0"><span>0%</span></span>
+   <span class="vocab-skill-copy"><small class="vocab-skill-step">STEP 1</small><strong>말하기 · Speaking</strong><span class="vocab-card-stars">8 questions</span></span>
+  </button>
+  <button type="button" id="ftWritingCard" class="vocab-skill-card vocab-skill-spelling" data-mode="writing">
+   <span class="vocab-skill-ring" style="--progress:0"><span>0%</span></span>
+   <span class="vocab-skill-copy"><small class="vocab-skill-step">STEP 2</small><strong>쓰기 · Writing</strong><span class="vocab-card-stars">8 questions</span></span>
+  </button>
+ </div>
+ <p class="ft-muted">문법 2점 + 답변 내용 2점. 틀린 부분은 다시 고쳐서 만점을 받을 수 있어요.</p>
+</section>
+<section id="ftSession" class="vocab-session" hidden>
+ <header class="vocab-session-top">
+ <div class="vocab-session-topline"><button id="ftSessionExit" class="vocab-back" type="button" aria-label="돌아가기">←</button>
+ <div class="vocab-progress-copy"><strong id="ftSessionTitle">Free Talking</strong><small id="ftSessionProgress">1 / 8</small></div>
+ <button id="ftSessionHome" class="vocab-session-home" type="button">⌂ 홈</button></div>
+ <div class="vocab-progress-track"><div id="ftProgressFill" class="vocab-progress-fill" style="width:0%"></div></div></header>
+ <div id="ftQuestionStage" class="vocab-session-main" data-willena-keyboard-safe>
+ <div class="ft-question-intro"><span id="ftPromptLabel" class="ft-eyebrow">QUESTION 1</span><span class="ft-pts-label">GRAMMAR 2 + ANSWER 2</span></div>
+ <div id="ftQuestionHost" class="vocab-question-wrap"></div>
+ <div id="ftTranscriptRow" class="ft-transcript-row" hidden><label for="ftTranscriptEdit">음성 인식 결과 수정 (필요할 때만)</label>
+ <textarea id="ftTranscriptEdit" rows="2" placeholder="인식된 영어를 확인하고 필요한 부분만 고쳐 주세요."></textarea></div>
+ <div id="ftFeedback" class="ft-feedback" hidden>
+  <h3 id="ftFeedbackTitle"></h3>
+  <div class="ft-feedback-grid"><div><strong>Grammar</strong><b id="ftGrammarScore">0/2</b><p id="ftGrammarFeedback"></p></div>
+  <div><strong>Answer quality</strong><b id="ftQualityScore">0/2</b><p id="ftQualityFeedback"></p></div></div>
+  <div class="ft-correction"><strong>Better English</strong><p id="ftCorrection"></p></div>
+ </div><p id="ftAttemptStatus" class="ft-status" role="status"></p></div>
+ <footer class="vocab-session-bottom"><div class="vocab-action-row">
+ <button id="ftSkip" type="button" class="vocab-skip-action">Next question</button>
+ <button id="ftRetry" type="button" class="vocab-skip-action" hidden>Try again</button>
+ <button id="ftSubmit" type="button" class="vocab-action" disabled>Check Answer</button>
+ <button id="ftNext" type="button" class="vocab-action" hidden>Next →</button>
+ </div></footer>
+</section>
+<section id="ftFinish" class="ft-shell" hidden><div id="ftFinishContent"></div><div id="ftFinishStatus" class="ft-status" role="status"></div>
+ <div class="ft-finish-actions"><button id="ftRetrySync" class="vocab-action" hidden type="button">Retry points sync</button><button id="ftFinishHome" class="vocab-action" type="button">Back to Units</button></div>
+</section>
+<div class="ft-footer-version">Free Talking Genius · prototype v1</div>
+</main></div>
+<script type="module" src="./app.js?v=ft-proto-1"></script>
+<script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
+<script defer src="/students/components/idle-identity-check.js?v=20261103-idle1"></script>
+</body></html>
