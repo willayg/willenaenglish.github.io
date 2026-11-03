@@ -111,3 +111,22 @@
  .gf-hw-task-score{min-width:80px}
  .gf-hw-student-detail{padding:8px}
 }
+
+/* Book-based Grammar Genius assignment UI reuses the Foundations and Genius card tokens. */
+.gb-book-tabs{margin:0 0 16px;display:flex;gap:8px}
+.gb-mode-row{display:flex;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid #dce9ec;border-radius:11px;background:#fff}
+.gb-mode-row label{display:flex;align-items:center;gap:6px;font-size:13px;color:#36535e;font-weight:650}
+.gb-chapter-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:9px}
+.gb-chapter{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #dce9ec;border-radius:11px;padding:12px;font-size:13px;color:#2d4651;cursor:pointer}
+.gb-chapter:has(input:checked){background:#f3fdfe;border-color:#6ccbd5}
+.gb-select-head{display:flex;justify-content:space-between;align-items:center}
+.gb-select-head label{display:flex;align-items:center;gap:6px;font-size:13px}
+.gb-manage-actions{display:flex;justify-content:flex-end;align-items:center;gap:9px;margin-top:12px}
+.gb-manage-actions button{font:inherit;font-size:13px;padding:8px 12px;border:1px solid #9bdde3;border-radius:8px;background:#fff;color:#bb3f7b;cursor:pointer}
+.gb-manage-actions button[data-gb-delete]{font-size:19px;padding:4px 11px}
+.gb-edit-modal{border:2px solid #89dce4;border-radius:17px;padding:20px;width:min(540px,calc(100vw - 30px));max-height:90vh;overflow:auto;background:#fff;color:#2e4550}
+.gb-edit-modal::backdrop{background:#112c3b77}
+.gb-edit-modal h3{margin:0;font-size:20px}
+.gb-edit-modal form>label{display:grid;gap:5px;font-size:13px;font-weight:700}
+.gb-edit-modal .gf-hw-form{gap:13px}
+@media(max-width:640px){.gb-chapter-list{grid-template-columns:1fr}.gb-mode-row{gap:8px}.gb-form .gf-hw-form-grid{grid-template-columns:1fr}.gb-book-tabs{flex-wrap:wrap}}
