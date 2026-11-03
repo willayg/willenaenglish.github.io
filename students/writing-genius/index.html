@@ -23,7 +23,7 @@
 
 <link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261031-app-uniform12">
 <style>.app-mission-basket-slot .dashboard-mission-basket{width:100%;max-width:none;margin:12px 0 20px}.app-mission-basket-slot:empty{display:none}</style>
-</head><body>
+<style>.sp-homework-banner{margin:10px;padding:10px 14px;border:2px solid #f1a6cd;background:#fff4fa;border-radius:12px;color:#b13e81;font-weight:800}.sp-history-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #dce9eb;padding:9px 2px;font-size:12px}.sp-history-entry button{flex-shrink:0}.sp-saved{margin-top:16px;padding:14px;border:1px solid #b5e2e7;border-radius:14px;background:#fff}.sp-saved strong{display:block;margin-bottom:8px}</style></head><body>
 <div class="study-app writing-genius">
   <student-header title="쓰기 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
   <div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
@@ -164,7 +164,7 @@
         <button id="spBack" class="vocab-screen-back" type="button">← 글쓰기 메뉴</button>
         <span id="spSaveState" class="wg-save-state" role="status" aria-live="polite"></span>
       </div>
-      <div id="spPicker" class="sp-picker vocab-home-card vocab-subscreen">
+      <div id="spPicker" class="sp-picker vocab-home-card vocab-subscreen"><p id="spHomeworkBanner" class="sp-homework-banner" hidden></p>
         <div class="vocab-subscreen-head"><button id="spBookBack" class="vocab-screen-back" type="button">← 홈</button><span>교재 공부</span></div>
         <section class="vocab-book-picker"><div id="spBookTabs" class="vocab-book-choices" role="group" aria-label="교재 선택"></div><select id="spBook" hidden aria-label="교재"></select></section>
         <div class="sp-units study-v2-units vocab-unit-selector"><div id="spUnitStrip" class="study-v2-unit-strip" aria-label="단원"></div><input id="spUnit" type="hidden" value=""></div>
@@ -243,7 +243,7 @@
 </div>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
 <script src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
-<script type="module" src="./app.js?v=20261103-speech2"></script>
+<script type="module" src="./app.js?v=20261104-history-picker2"></script>
 
 <script src="/students/components/mission-basket.js?v=20261103-grammar-direct2"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
