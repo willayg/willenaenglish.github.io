@@ -98,6 +98,18 @@ async function load(force=false){
   ]);
   if(results[0].status==='rejected')console.warn('[achievements] Gold calculation failed',results[0].reason);
   goldTotal=results[0].status==='fulfilled'?results[0].value:(current?.gold??0);
+  // Grammar Books is a separate persisted mastery source. Do not add it to
+  // the existing four-field gold snapshot or overwrite legacy award counts.
+  try{
+   const grammarRows=await missions?.getGrammarBookProgress?.()||[];
+   const grouped=new Map();
+   for(const row of grammarRows){
+    if(!grouped.has(row.chapter_number))grouped.set(row.chapter_number,new Set());
+    if(Number(row.best_correct)===8)grouped.get(row.chapter_number).add(row.mode);
+   }
+   goldTotal+=[...grouped.values()].filter(modes=>['choose','check','hunt'].every(mode=>modes.has(mode))).length;
+  }catch(error){console.warn('[achievements] Grammar chapter gold unavailable',error)}
+
   let verified=results[1]?.status==='fulfilled'?results[1].value:null;
   if(!verified){try{verified=streakFromDays(await missions?.getCompletedActivityDays?.()||[])}catch(e){console.warn('[achievements] historical streak fallback failed',e)}}
   current={current:verified?Math.max(verified.current,Math.max(0,+d.current_streak||0)):Math.max(0,+d.current_streak||0),best:verified?Math.max(verified.best,Math.max(0,+d.best_streak||0)):Math.max(0,+d.best_streak||0),gold:goldTotal};
