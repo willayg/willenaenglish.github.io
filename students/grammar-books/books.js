@@ -12,7 +12,14 @@ function prepareRound(questions,mode){
  return shuffle(questions).map(q=>{
   if(mode==='hunt'){
    const wrong=q.options[q.answerIndex];
-   const ordered=[...q.options].sort((a,b)=>q.sentence.indexOf(a)-q.sentence.indexOf(b));
+   const options=[...q.options];let ordered=null;
+   const walk=(parts,left)=>{
+    if(ordered)return;
+    if(!left.length){if(parts.join(' ').replace(/\\s+([,.!?])/g,'$1')===q.sentence)ordered=parts;return}
+    left.forEach((part,i)=>walk([...parts,part],left.filter((_,j)=>j!==i)));
+   };
+   walk([],options);
+   if(!ordered)throw Error('Error Hunt spans do not reconstruct sentence: '+q.id);
    return {...q,options:ordered,answerIndex:ordered.indexOf(wrong),underlined:ordered};
   }
   const opts=shuffle(q.options.map((value,i)=>({value,i})));
