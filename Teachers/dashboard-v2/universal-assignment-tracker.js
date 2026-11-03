@@ -456,7 +456,7 @@ async function loadOverview(scopeName='my',force=false){
      const outcome=progress.get(id(row.id)),target=Number(row.target_count)||0;
      if(row.app==='내신'&&outcome&&target>0)return Math.min(1,(Number(outcome.done)||0)/target);
      if(row.app==='Grammar Genius'){
-      const x=row.source_type==='grammar_books'?grammarBookProgress.get(id(row.id)):classProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.passed)/Number(x.students):null;
+      const x=row.source_type==='grammar_books'?grammarBookProgress.get(id(row.id)):classProgress.get(id(row.id));return x&&Number(x.students)>0?(row.source_type==='grammar_books'?Number(x.percent)/100:Number(x.passed)/Number(x.students)):null;
      }
      if(row.app==='Writing Genius'){
       const x=row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
@@ -498,7 +498,7 @@ async function loadOverview(scopeName='my',force=false){
       const target=Number(row.target_count)||0;
       const pct=target?(done>=target&&(Number(result?.unresolved)||0)>0?99:Math.min(100,Math.round(done/target*100))):null;
       const grammarResult=row.source_type==='grammar_books'?grammarBookProgress.get(id(row.id)):classProgress.get(id(row.id));
-      const visiblePct=row.app==='Grammar Genius'&&Number(grammarResult?.students)>0?Math.round(100*Number(grammarResult.passed)/Number(grammarResult.students)):pct;
+      const visiblePct=row.app==='Grammar Genius'&&Number(grammarResult?.students)>0?(row.source_type==='grammar_books'?Number(grammarResult.percent):Math.round(100*Number(grammarResult.passed)/Number(grammarResult.students))):pct;
       const wordResult=row.app==='Word Genius'?wordClassProgress.get(id(row.id)):null;
       const writingResult=row.app==='Writing Genius'?(row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id))):null;
       const puzzleResult=row.app==='Puzzles'?puzzleProgress.get(id(row.id)):null;
