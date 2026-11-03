@@ -515,6 +515,83 @@ async function createManualLevelTest(env, body, actor) {
   return levelTestDetail(env, { source:'visitor', attempt_id:attempt.id });
 }
 
+
+/**
+ * Enrol a visitor level-test candidate as an ordinary student.
+ * The original prospective attempt and its answers remain untouched.
+ * Only admins can reach this action (enforced by the main router).
+ */
+async function enrollVisitorStudent(env, body) {
+  const attemptId = String(body?.attempt_id || '').trim();
+  const username = String(body?.username || '').trim().toLowerCase();
+  const password = String(body?.password || '');
+  const englishName = String(body?.name || '').trim();
+  const koreanName = String(body?.korean_name || '').trim();
+  const className = String(body?.class_name || '').trim();
+  if (!/^[a-z0-9._-]{3,40}$/.test(username)) throw Object.assign(new Error('Username must be 3–40 letters, digits, dots, underscores or hyphens'), {status:400});
+  if (password.length < 8) throw Object.assign(new Error('Password must be at least 8 characters'), {status:400});
+  if (!attemptId || !englishName || !className) throw Object.assign(new Error('Test, English name and class are required'), {status:400});
+  const base = env.SCORES_SUPABASE_URL, key = env.SCORES_SUPABASE_SERVICE_ROLE_KEY;
+  const attempts = await supabaseFetch(base, key,
+    `/rest/v1/prospective_level_test_attempts?id=eq.${encodeURIComponent(attemptId)}&select=id,candidate_id,setup,metadata&limit=1`);
+  const attempt = attempts?.[0];
+  if (!attempt) throw Object.assign(new Error('Visitor test not found'), {status:404});
+  const setup = attempt.setup && typeof attempt.setup === 'object' ? attempt.setup : {};
+  if (setup.source !== 'willena-visitor' && setup.source !== 'willena-manual')
+    throw Object.assign(new Error('Only visitor tests can be enrolled here'), {status:400});
+  const candidates = await supabaseFetch(base, key,
+    `/rest/v1/prospective_level_test_candidates?id=eq.${encodeURIComponent(attempt.candidate_id)}&select=id,student_name,school_name,school_grade,phone,metadata&limit=1`);
+  const candidate = candidates?.[0];
+  if (!candidate) throw Object.assign(new Error('Visitor record not found'), {status:404});
+  const priorId = candidate.metadata?.enrolled_student_id || attempt.metadata?.enrolled_student_id;
+  if (priorId) return {already_enrolled:true,user_id:priorId};
+  const existing = await supabaseFetch(base,key,
+    `/rest/v1/profiles?username=eq.${encodeURIComponent(username)}&select=id&limit=1`);
+  if (existing?.length) throw Object.assign(new Error('Username is already in use'), {status:409});
+  const email = `${username}@stu.willena`;
+  const authResponse = await fetch(`${base}/auth/v1/admin/users`, {
+    method:'POST',
+    headers:{apikey:key,Authorization:`Bearer ${key}`,'Content-Type':'application/json'},
+    body:JSON.stringify({email,password,email_confirm:true,user_metadata:{role:'student',username}})
+  });
+  const authBody = await authResponse.json().catch(()=>({}));
+  const newId = authBody.id || authBody.user?.id;
+  if (!authResponse.ok || !newId) throw Object.assign(new Error(authBody.msg || authBody.message || 'Could not create student login'), {status:400});
+  let profileSaved = false;
+  try {
+    const profile = {
+      id:newId,email,username,name:englishName,korean_name:koreanName || candidate.student_name || null,
+      role:'student',approved:true,class:className,
+      grade:String(body.grade || candidate.school_grade || '').trim() || null,
+      school:String(body.school || candidate.school_name || '').trim() || null,
+      phone:String(body.phone || candidate.phone || '').trim() || null
+    };
+    await supabaseFetch(base,key,'/rest/v1/profiles',{
+      method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(profile)
+    });
+    profileSaved = true;
+    const enrolledAt = new Date().toISOString();
+    await supabaseFetch(base,key,`/rest/v1/prospective_level_test_candidates?id=eq.${encodeURIComponent(candidate.id)}`,{
+      method:'PATCH',headers:{Prefer:'return=minimal'},
+      body:JSON.stringify({metadata:{...(candidate.metadata || {}),enrolled_student_id:newId,enrolled_at:enrolledAt}})
+    });
+    await supabaseFetch(base,key,`/rest/v1/prospective_level_test_attempts?id=eq.${encodeURIComponent(attemptId)}`,{
+      method:'PATCH',headers:{Prefer:'return=minimal'},
+      body:JSON.stringify({metadata:{...(attempt.metadata || {}),enrolled_student_id:newId,enrolled_at:enrolledAt}})
+    });
+    return {user_id:newId,username,visitor_attempt_id:attemptId};
+  } catch(error) {
+    // If enrolment linkage failed after profile creation, do not delete an actual
+    // student account; surface the error so the admin can reconcile it.
+    if (!profileSaved) {
+      await fetch(`${base}/auth/v1/admin/users/${encodeURIComponent(newId)}`,{
+        method:'DELETE',headers:{apikey:key,Authorization:`Bearer ${key}`}
+      }).catch(()=>{});
+    }
+    throw error;
+  }
+}
+
 async function createClass(env, body) {
   const name = String(body.name || '').trim().replace(/\s+/g, ' ');
   if (name.length < 2 || name.length > 80) throw Object.assign(new Error('Class name must be 2–80 characters'), { status: 400 });
@@ -928,6 +1005,7 @@ export default {
       if (req.method !== 'POST') return json(origin, 405, { success: false, error: 'Method not allowed' });
       const body = await req.json().catch(() => null);
       if (!body) return json(origin, 400, { success: false, error: 'Invalid JSON' });
+      if (body.action === 'enroll_visitor_student') return json(origin, 201, { success: true, ...await enrollVisitorStudent(env, body) });
       if (body.action === 'level_test_detail') return json(origin, 200, { success: true, ...await levelTestDetail(env, body) });
       if (body.action === 'save_manual_level_test') return json(origin, 200, { success: true, ...await saveManualLevelTest(env, body, adminActor) });
       if (body.action === 'create_manual_level_test') return json(origin, 201, { success: true, ...await createManualLevelTest(env, body, adminActor) });
