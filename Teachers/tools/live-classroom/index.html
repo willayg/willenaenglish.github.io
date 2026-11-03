@@ -22,6 +22,13 @@ button:hover{background:#eafbfd}.grow{flex:1}.muted{color:var(--muted);font-size
 .class-head h2{font-size:1.13rem;margin:0}.class-head .count{color:var(--muted);font-size:.87rem}
 .grid{display:flex;flex-direction:column;background:#fff;border:1px solid #dce9ec;border-radius:12px;overflow:hidden}
 .student{display:grid;grid-template-columns:minmax(135px,1fr) minmax(0,2fr);align-items:center;gap:10px;background:white;border:0;border-bottom:1px solid #dce9ec;border-radius:0;padding:10px 14px;min-height:48px;box-shadow:none}.student:last-child{border-bottom:0}
+.grid{display:block;background:#fff;border:1px solid #dce9ec;border-radius:12px;overflow:hidden}
+.student{display:grid;grid-template-columns:minmax(80px,1.05fr) minmax(85px,.95fr) minmax(120px,1.5fr) minmax(100px,1.5fr) minmax(70px,.7fr);align-items:center;gap:12px;padding:9px 15px;min-height:45px;border:0;border-bottom:1px solid #e4edef;border-radius:0;box-shadow:none;background:#fff;font-size:.89rem}
+.student:last-child{border-bottom:0}.student strong{font-weight:700}
+.table-heading{background:#eff8fa;color:#536d78;font-size:.76rem;text-transform:uppercase;letter-spacing:.03em;font-weight:700;min-height:40px}
+.app-cell,.activity-cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.assigned-cell{font-weight:600;color:#b43f7b}
+.status-cell{display:flex;align-items:center}.status{font-size:.74rem}
+@media(max-width:620px){.student{grid-template-columns:minmax(38px,.5fr) minmax(67px,.88fr) minmax(90px,1.25fr) minmax(72px,1.1fr) 54px;gap:5px;padding:9px 7px;font-size:.72rem}.table-heading{font-size:.6rem}.status{font-size:.65rem;padding:3px 5px}.app-cell,.activity-cell{white-space:normal;overflow-wrap:anywhere;line-height:1.3}.assigned-cell{text-align:center}}
 .student-head{display:flex;justify-content:space-between;gap:7px;align-items:start}.student strong{font-size:1rem}.status{font-size:.74rem;border-radius:20px;padding:3px 8px;white-space:nowrap;font-weight:700}
 .status.active{background:#e5f7ed;color:#257650}.status.idle{background:#fff4d7;color:#976c18}.status.offline{background:#eff2f5;color:#63747f}.status.unavailable{background:#fff2e2;color:#946a23}
 .detail{display:flex;align-items:center;gap:12px;flex-wrap:wrap;line-height:1.4;font-size:.8rem;color:#455d69;overflow-wrap:anywhere;margin:0}.detail>div{display:inline}.detail .app{font-weight:700;color:#177c8d}
@@ -39,5 +46,5 @@ footer{text-align:center;color:#82959e;font-size:.75rem;margin-top:26px}
 <div id="classes"></div>
 <footer>Willena Live Classroom · Online status expires after 90 seconds · Updates while this page is open</footer>
 </main>
-<script type="module" src="./live-classroom.js?v=5"></script>
+<script type="module" src="./live-classroom.js?v=6"></script>
 </body></html>
