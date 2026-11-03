@@ -63,6 +63,19 @@ async function completeRewardSession(){
   throw error;
  }
 }
+async function recordAssignedGrammarHomework(chapter,mode,sessionId){
+ const apiFetch=window.WillenaAPI?.fetch?.bind(window.WillenaAPI);
+ const token=window.WillenaAPI?.getLocalAccessToken?.();
+ if(!token||!sessionId)return;
+ const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/record_grammar_book_homework_completion_v1',{
+  method:'POST',cache:'no-store',
+  headers:{'Content-Type':'application/json','apikey':'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e','Authorization':'Bearer '+token},
+  body:JSON.stringify({p_chapter:chapter,p_mode:mode,p_session_id:sessionId})
+ });
+ if(!response.ok)throw Error('Assignment recognition HTTP '+response.status);
+ const result=await response.json();
+ if(result?.eligible_assignments>0)void window.WillenaMissionBasket?.refresh?.();
+}
 function showGrammarReward(reward){
  const mount=$('grammarRewardMount');
  if(!mount)return;
@@ -360,6 +373,12 @@ async function finishRound(){
    if(typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
    const alreadyGold=goldChapter(activeUnit);
    await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,masteredIds.size,[...masteredIds]);
+   // Only completed new rounds can credit book-based homework.
+   // Existing mastery alone never auto-completes an assignment.
+   if(completed&&masteredIds.size===8&&rewardSession?.id){
+     try{await recordAssignedGrammarHomework(activeUnit,activeMode,rewardSession.id)}
+     catch(error){console.warn('[Grammar Books] homework recognition unavailable',error)}
+   }
    await refreshGrammarProgress();
    if(!alreadyGold&&goldChapter(activeUnit)){
     const actions=$('grammarFinishMain').querySelector('.vocab-finish-actions');
