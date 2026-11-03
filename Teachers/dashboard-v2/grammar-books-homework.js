@@ -180,7 +180,7 @@ async function submit(e){
  }catch(error){notice('Could not assign: '+error.message,true)}finally{store.loading=false;if($('#gbHwSubmit',f))$('#gbHwSubmit',f).disabled=false}
 }
 async function fetchRecords(){
- await loadStudents();
+ await Promise.all([loadStudents(),loadBooks()]);
  const [assignments,completions]=await Promise.all([
   table('?source_type=eq.grammar_books&select=*&order=created_at.desc&limit=400'),
   api('grammar_book_homework_completions?select=assignment_id,student_id,mode,completed_at&limit=5000')
@@ -231,32 +231,56 @@ async function endAssignment(id){
  catch(error){notice('Could not end assignment: '+error.message,true)}
 }
 function editAssignment(id){
- const a=store.assignments.find(x=>x.id===id),host=panel();if(!a||!host)return;
+ const a=store.assignments.find(x=>x.id===id),host=panel();
+ if(!a||!host)return;
  const dates=v=>v?koreanDate(v):'';
+ const activeBookId=String(a.list_meta?.source_book_id||ACTIVE_BOOK_ID);
+ const book=(store.books||[]).find(b=>b.id===activeBookId);
  const modal=document.createElement('dialog');modal.className='gb-edit-modal';
- modal.innerHTML='<form method="dialog" class="gf-hw-form"><h3>Edit book homework</h3><label>Class<select class="control" name="klass">'+(store.classNames||[]).map(v=>'<option value="'+esc(v)+'"'+(v===a.class?' selected':'')+'>'+esc(v)+'</option>').join('')+'</select></label>'+
- '<label>Chapter<select class="control" name="chapter">'+CHAPTERS.map((v,i)=>'<option value="'+(i+1)+'"'+(i+1===Number(a.list_meta?.chapter)?' selected':'')+'>Unit '+(i+1)+' · '+esc(v)+'</option>').join('')+'</select></label>'+
+ modal.innerHTML='<form class="gf-hw-form"><h3>Edit book homework</h3>'+
+ '<label>Class<select class="control" name="klass">'+(store.classNames||[]).map(v=>'<option value="'+esc(v)+'"'+(v===a.class?' selected':'')+'>'+esc(v)+'</option>').join('')+'</select></label>'+
+ '<label>Book<select class="control" name="book"><option value="">Choose book</option>'+bookOptions(activeBookId)+'</select></label>'+
+ '<label>Unit<select class="control" name="chapter"></select></label>'+
  '<label>Available from<input class="control" type="date" name="start" value="'+esc(dates(a.start_at))+'"></label>'+
  '<label>Due date<input class="control" type="date" name="due" value="'+esc(dates(a.due_at))+'"></label>'+
  '<div class="gb-mode-row">'+MODES.map(([m,t])=>'<label><input type="checkbox" data-gb-mode="'+m+'"'+((a.list_meta?.required_modes||[]).includes(m)?' checked':'')+'> '+esc(t)+'</label>').join('')+'</div>'+
- '<div class="gb-manage-actions"><button value="cancel" type="button" data-cancel>Cancel</button><button value="save" type="submit" class="ua-primary">Save</button></div><p role="status"></p></form>';
+ '<div class="gb-manage-actions"><button type="button" data-cancel>Cancel</button><button type="submit" class="ua-primary">Save</button></div><p role="status"></p></form>';
  host.append(modal);const form=modal.querySelector('form');
+ const refreshUnits=()=>{
+  const selected=(store.books||[]).find(b=>b.id===form.elements.book.value);
+  const previous=Number(form.elements.chapter.value)||Number(a.list_meta?.chapter);
+  form.elements.chapter.innerHTML=(selected?.units||[]).map(u=>'<option value="'+u.number+'"'+(u.number===previous?' selected':'')+'>Unit '+u.number+' · '+esc(u.title)+'</option>').join('');
+  form.querySelector('button[type=submit]').disabled=!selected?.playable;
+ };
+ form.elements.book.onchange=refreshUnits;
+ refreshUnits();
  form.querySelector('[data-cancel]').onclick=()=>modal.close();
  modal.addEventListener('close',()=>modal.remove(),{once:true});
- form.onsubmit=async e=>{
-  e.preventDefault();const modes=$$('[data-gb-mode]:checked',modal).map(x=>x.dataset.gbMode),chapter=Number(form.elements.chapter.value);
-  if(!modes.length){form.querySelector('p').textContent='Select at least one activity.';return}
-  if(isoDate(form.elements.due.value,true)<isoDate(form.elements.start.value)){form.querySelector('p').textContent='Due date is before the start date.';return}
-  const meta={...a.list_meta,chapter,required_modes:modes};
+ form.onsubmit=async event=>{
+  event.preventDefault();
+  const book=(store.books||[]).find(b=>b.id===form.elements.book.value);
+  const modes=$$('[data-gb-mode]:checked',modal).map(x=>x.dataset.gbMode);
+  const chapter=Number(form.elements.chapter.value);
+  if(!book?.playable||!book.units.some(u=>u.number===chapter)||!modes.length){
+   form.querySelector('p').textContent='Choose a playable book, unit and at least one activity.';return;
+  }
+  if(isoDate(form.elements.due.value,true)<isoDate(form.elements.start.value)){
+   form.querySelector('p').textContent='Due date is before the start date.';return;
+  }
+  const meta={...a.list_meta,source_book_id:book.id,book_title:book.title,book_key:book.bookKey,chapter,required_modes:modes};
+  const save=form.querySelector('button[type=submit]');save.disabled=true;
   try{
-   await table('?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-    class:form.elements.klass.value,title:'Grammar Ten 완성 2 · Unit '+chapter+' · '+CHAPTERS[chapter-1],
-    list_key:'grammar_books:grammar_ten_2:chapter:'+chapter,list_title:'Grammar Ten 완성 2 · Unit '+chapter,
-    start_at:isoDate(form.elements.start.value),due_at:isoDate(form.elements.due.value,true),
-    goal_value:modes.length,list_meta:meta
-   })});
+   const title=book.title+' · Unit '+chapter+' · '+(book.units.find(u=>u.number===chapter)?.title||'');
+   const patch={
+    class:form.elements.klass.value,title,list_key:'grammar_books:'+book.bookKey+':chapter:'+chapter,
+    list_title:book.title+' · Unit '+chapter,start_at:isoDate(form.elements.start.value),
+    due_at:isoDate(form.elements.due.value,true),goal_value:modes.length,list_meta:meta
+   };
+   const result=await table('?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(patch)});
+   if(!Array.isArray(result)||result.length!==1)throw Error('Update not confirmed by server');
    modal.close();await drawManage();
   }catch(error){form.querySelector('p').textContent=error.message}
+  finally{save.disabled=false}
  };
  modal.showModal();
 }
