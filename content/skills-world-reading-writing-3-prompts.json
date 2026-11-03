@@ -1,0 +1,245 @@
+{
+  "book": "Oxford Skills World Reading with Writing 3",
+  "prompts": [
+    {
+      "id": "skillsworld3-u1-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 1,
+      "title": "Describe My Art Project",
+      "prompt": "Write about \"Describe My Art Project\" using Level 3 language. Writing focus: description.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u1-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 1,
+      "title": "More About Describe My Art Project",
+      "prompt": "Write about \"Describe My Art Project\" using Level 3 language. Writing focus: description.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u2-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 2,
+      "title": "How to Make a Picture",
+      "prompt": "Write about \"How to Make a Picture\" using Level 3 language. Writing focus: details.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u2-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 2,
+      "title": "More About How to Make a Picture",
+      "prompt": "Write about \"How to Make a Picture\" using Level 3 language. Writing focus: details.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u3-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 3,
+      "title": "Why I Like My Clothes",
+      "prompt": "Write about \"Why I Like My Clothes\" using Level 3 language. Writing focus: persuasive text.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u3-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 3,
+      "title": "More About Why I Like My Clothes",
+      "prompt": "Write about \"Why I Like My Clothes\" using Level 3 language. Writing focus: persuasive text.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u4-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 4,
+      "title": "The Best Clothes for Winter",
+      "prompt": "Write about \"The Best Clothes for Winter\" using Level 3 language. Writing focus: opinions and reasons.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u4-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 4,
+      "title": "More About The Best Clothes for Winter",
+      "prompt": "Write about \"The Best Clothes for Winter\" using Level 3 language. Writing focus: opinions and reasons.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u5-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 5,
+      "title": "How to Find My School",
+      "prompt": "Write about \"How to Find My School\" using Level 3 language. Writing focus: process paragraph.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u5-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 5,
+      "title": "More About How to Find My School",
+      "prompt": "Write about \"How to Find My School\" using Level 3 language. Writing focus: process paragraph.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u6-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 6,
+      "title": "A Walk Through the City",
+      "prompt": "Write about \"A Walk Through the City\" using Level 3 language. Writing focus: sequence words.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u6-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 6,
+      "title": "More About A Walk Through the City",
+      "prompt": "Write about \"A Walk Through the City\" using Level 3 language. Writing focus: sequence words.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u7-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 7,
+      "title": "A Job I Admire",
+      "prompt": "Write about \"A Job I Admire\" using Level 3 language. Writing focus: outline.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u7-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 7,
+      "title": "More About A Job I Admire",
+      "prompt": "Write about \"A Job I Admire\" using Level 3 language. Writing focus: outline.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u8-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 8,
+      "title": "My Future Job",
+      "prompt": "Write about \"My Future Job\" using Level 3 language. Writing focus: main ideas and details.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u8-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 8,
+      "title": "More About My Future Job",
+      "prompt": "Write about \"My Future Job\" using Level 3 language. Writing focus: main ideas and details.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u9-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 9,
+      "title": "Describe My Home",
+      "prompt": "Write about \"Describe My Home\" using Level 3 language. Writing focus: journal entry.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u9-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 9,
+      "title": "More About Describe My Home",
+      "prompt": "Write about \"Describe My Home\" using Level 3 language. Writing focus: journal entry.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u10-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 10,
+      "title": "A Day in My House",
+      "prompt": "Write about \"A Day in My House\" using Level 3 language. Writing focus: dates.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u10-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 10,
+      "title": "More About A Day in My House",
+      "prompt": "Write about \"A Day in My House\" using Level 3 language. Writing focus: dates.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u11-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 11,
+      "title": "My Favorite Free-Time Activity",
+      "prompt": "Write about \"My Favorite Free-Time Activity\" using Level 3 language. Writing focus: story.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u11-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 11,
+      "title": "More About My Favorite Free-Time Activity",
+      "prompt": "Write about \"My Favorite Free-Time Activity\" using Level 3 language. Writing focus: story.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u12-w1",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 12,
+      "title": "A Camping Adventure",
+      "prompt": "Write about \"A Camping Adventure\" using Level 3 language. Writing focus: setting.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld3-u12-w2",
+      "book_key": "book:skills_world:reading_writing:3",
+      "unit": 12,
+      "title": "More About A Camping Adventure",
+      "prompt": "Write about \"A Camping Adventure\" using Level 3 language. Writing focus: setting.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    }
+  ]
+}
