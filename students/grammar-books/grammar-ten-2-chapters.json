@@ -363,18 +363,57 @@
           {
             "id": "gt2-c2-choose-1",
             "subunit": 1,
-            "prompt": "She ____ tired yesterday.",
+            "prompt": "A: ____ your parents at home yesterday?\nB: No, they ____.",
             "options": [
-              "was",
-              "were",
-              "is",
-              "are"
+              "Were — weren't",
+              "Was — wasn't",
+              "Did — didn't",
+              "Are — aren't"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: She was tired yesterday."
+            "explanation": "복수 주어 your parents의 과거 상태는 Were로 묻고 No, they weren't.라고 답해요."
           },
           {
             "id": "gt2-c2-choose-2",
+            "subunit": 1,
+            "prompt": "I ____ sick last Monday, but my brothers ____ healthy.",
+            "options": [
+              "was — were",
+              "were — was",
+              "am — are",
+              "was — was"
+            ],
+            "answerIndex": 0,
+            "explanation": "I에는 was, 복수인 my brothers에는 were를 써요."
+          },
+          {
+            "id": "gt2-c2-choose-3",
+            "subunit": 2,
+            "prompt": "A: ____ Mina visit her aunt last weekend?\nB: Yes, she ____.",
+            "options": [
+              "Did — did",
+              "Did — visited",
+              "Does — does",
+              "Was — was"
+            ],
+            "answerIndex": 0,
+            "explanation": "과거의 일반동사 의문문은 Did + 주어 + 동사원형이며 Yes, she did.로 대답해요."
+          },
+          {
+            "id": "gt2-c2-choose-4",
+            "subunit": 2,
+            "prompt": "다음 중 동사원형과 과거형이 잘못 짝지어진 것은?",
+            "options": [
+              "bring — bringed",
+              "buy — bought",
+              "feel — felt",
+              "write — wrote"
+            ],
+            "answerIndex": 0,
+            "explanation": "bring의 과거형은 brought예요. bringed는 잘못된 형태예요."
+          },
+          {
+            "id": "gt2-c2-choose-5",
             "subunit": 1,
             "prompt": "We ____ at school last Friday.",
             "options": [
@@ -387,20 +426,7 @@
             "explanation": "올바른 문장: We were at school last Friday."
           },
           {
-            "id": "gt2-c2-choose-3",
-            "subunit": 1,
-            "prompt": "I ____ at home last night.",
-            "options": [
-              "wasn't",
-              "weren't",
-              "isn't",
-              "aren't"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: I wasn't at home last night."
-          },
-          {
-            "id": "gt2-c2-choose-4",
+            "id": "gt2-c2-choose-6",
             "subunit": 1,
             "prompt": "____ they busy yesterday?",
             "options": [
@@ -413,20 +439,7 @@
             "explanation": "올바른 문장: Were they busy yesterday?"
           },
           {
-            "id": "gt2-c2-choose-5",
-            "subunit": 2,
-            "prompt": "He ____ his uncle last week.",
-            "options": [
-              "visited",
-              "visit",
-              "visits",
-              "visiting"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: He visited his uncle last week."
-          },
-          {
-            "id": "gt2-c2-choose-6",
+            "id": "gt2-c2-choose-7",
             "subunit": 2,
             "prompt": "They ____ to the museum.",
             "options": [
@@ -437,19 +450,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: They went to the museum."
-          },
-          {
-            "id": "gt2-c2-choose-7",
-            "subunit": 2,
-            "prompt": "Did she ____ you yesterday?",
-            "options": [
-              "call",
-              "called",
-              "calls",
-              "calling"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: Did she call you yesterday?"
           },
           {
             "id": "gt2-c2-choose-8",
@@ -471,16 +471,55 @@
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "We was at school last Friday.",
-              "She was tired yesterday.",
-              "I weren't at home last night.",
-              "Was they busy yesterday?"
+              "My cousins were at the cinema yesterday.",
+              "My cousins was at the cinema yesterday.",
+              "Were Jenny at school yesterday?",
+              "I weren't busy yesterday."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: She was tired yesterday."
+            "answerIndex": 0,
+            "explanation": "복수 주어 cousins에는 were를 써요."
           },
           {
             "id": "gt2-c2-check-2",
+            "subunit": 2,
+            "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그는 어제 저녁 숙제를 하지 않았다.’",
+            "options": [
+              "He didn't do his homework last night.",
+              "He didn't did his homework last night.",
+              "He wasn't do his homework last night.",
+              "He doesn't did his homework last night."
+            ],
+            "answerIndex": 0,
+            "explanation": "과거 부정문에서는 didn't + 동사원형을 사용해요."
+          },
+          {
+            "id": "gt2-c2-check-3",
+            "subunit": 2,
+            "prompt": "다음 중 동사원형과 과거형이 바르게 짝지어진 것은?",
+            "options": [
+              "teach — taught",
+              "meet — meeted",
+              "eat — eated",
+              "see — seed"
+            ],
+            "answerIndex": 0,
+            "explanation": "teach의 과거형은 taught예요."
+          },
+          {
+            "id": "gt2-c2-check-4",
+            "subunit": 2,
+            "prompt": "다음 중 대화가 자연스러운 것은?",
+            "options": [
+              "A: Did you see the film?\nB: Yes, I did.",
+              "A: Did you see the film?\nB: Yes, I was.",
+              "A: Were you at home?\nB: Yes, I did.",
+              "A: Did Amy call?\nB: Yes, she does."
+            ],
+            "answerIndex": 0,
+            "explanation": "Did로 시작한 과거 질문에는 Yes, I did.로 대답해요."
+          },
+          {
+            "id": "gt2-c2-check-5",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -493,20 +532,7 @@
             "explanation": "올바른 표현: We were at school last Friday."
           },
           {
-            "id": "gt2-c2-check-3",
-            "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "Was they busy yesterday?",
-              "He visit his uncle last week.",
-              "They goed to the museum.",
-              "I wasn't at home last night."
-            ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: I wasn't at home last night."
-          },
-          {
-            "id": "gt2-c2-check-4",
+            "id": "gt2-c2-check-6",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -519,20 +545,7 @@
             "explanation": "올바른 표현: Were they busy yesterday?"
           },
           {
-            "id": "gt2-c2-check-5",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "They goed to the museum.",
-              "He visited his uncle last week.",
-              "Did she called you yesterday?",
-              "We didn't watched TV last night."
-            ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: He visited his uncle last week."
-          },
-          {
-            "id": "gt2-c2-check-6",
+            "id": "gt2-c2-check-7",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -543,19 +556,6 @@
             ],
             "answerIndex": 2,
             "explanation": "올바른 표현: They went to the museum."
-          },
-          {
-            "id": "gt2-c2-check-7",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "We didn't watched TV last night.",
-              "She were tired yesterday.",
-              "We was at school last Friday.",
-              "Did she call you yesterday?"
-            ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: Did she call you yesterday?"
           },
           {
             "id": "gt2-c2-check-8",
@@ -575,165 +575,118 @@
           {
             "id": "gt2-c2-hunt-1",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She were tired yesterday.",
-            "underlined": [
-              "She",
-              "were",
-              "tired",
-              "yesterday."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "She",
-              "were",
-              "tired",
-              "yesterday."
+              "She were tired yesterday.",
+              "We were at school last Friday.",
+              "I wasn't at home last night.",
+              "Were they busy yesterday?"
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: She was tired yesterday."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: She was tired yesterday.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c2-hunt-2",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "We was at school last Friday.",
-            "underlined": [
-              "We",
-              "at",
-              "was",
-              "school last Friday."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "We",
-              "at",
-              "was",
-              "school last Friday."
+              "We was at school last Friday.",
+              "I wasn't at home last night.",
+              "Were they busy yesterday?",
+              "He visited his uncle last week."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: We were at school last Friday."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: We were at school last Friday.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c2-hunt-3",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I weren't at home last night.",
-            "underlined": [
-              "I",
-              "at",
-              "home last night.",
-              "weren't"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "I",
-              "at",
-              "home last night.",
-              "weren't"
+              "I weren't at home last night.",
+              "Were they busy yesterday?",
+              "He visited his uncle last week.",
+              "They went to the museum."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: I wasn't at home last night."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: I wasn't at home last night.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c2-hunt-4",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Was they busy yesterday?",
-            "underlined": [
-              "Was",
-              "they",
-              "busy",
-              "yesterday?"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "Was",
-              "they",
-              "busy",
-              "yesterday?"
+              "Was they busy yesterday?",
+              "He visited his uncle last week.",
+              "They went to the museum.",
+              "Did she call you yesterday?"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: Were they busy yesterday?"
+            "explanation": "올바른 문장: Were they busy yesterday?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c2-hunt-5",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He visit his uncle last week.",
-            "underlined": [
-              "He",
-              "visit",
-              "his",
-              "uncle last week."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "He",
-              "visit",
-              "his",
-              "uncle last week."
+              "He visit his uncle last week.",
+              "They went to the museum.",
+              "Did she call you yesterday?",
+              "We didn't watch TV last night."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: He visited his uncle last week."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: He visited his uncle last week.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c2-hunt-6",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "They goed to the museum.",
-            "underlined": [
-              "They",
-              "to",
-              "goed",
-              "the museum."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "They",
-              "to",
-              "goed",
-              "the museum."
+              "They goed to the museum.",
+              "Did she call you yesterday?",
+              "We didn't watch TV last night.",
+              "She was tired yesterday."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: They went to the museum."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: They went to the museum.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c2-hunt-7",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Did she called you yesterday?",
-            "underlined": [
-              "Did",
-              "she",
-              "you yesterday?",
-              "called"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "Did",
-              "she",
-              "you yesterday?",
-              "called"
+              "Did she called you yesterday?",
+              "We didn't watch TV last night.",
+              "She was tired yesterday.",
+              "We were at school last Friday."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: Did she call you yesterday?"
+            "answerIndex": 0,
+            "explanation": "올바른 문장: Did she call you yesterday?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c2-hunt-8",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "We didn't watched TV last night.",
-            "underlined": [
-              "watched",
-              "We",
-              "didn't",
-              "TV last night."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "watched",
-              "We",
-              "didn't",
-              "TV last night."
+              "We didn't watched TV last night.",
+              "She was tired yesterday.",
+              "We were at school last Friday.",
+              "I wasn't at home last night."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: We didn't watch TV last night."
+            "explanation": "올바른 문장: We didn't watch TV last night.",
+            "displayStyle": "sentence-options"
           }
         ]
-      }
+      },
+      "contentVersion": "review-aligned-2026-11-03"
     },
     {
       "chapter": 3,
@@ -749,18 +702,57 @@
           {
             "id": "gt2-c3-choose-1",
             "subunit": 1,
-            "prompt": "He is ____ now.",
+            "prompt": "A: What ____ you doing at 7 p.m.?\nB: I ____ dinner.",
             "options": [
-              "reading",
-              "read",
-              "reads",
-              "to read"
+              "were — was cooking",
+              "was — was cooking",
+              "were — cook",
+              "are — cooked"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: He is reading now."
+            "explanation": "과거 특정 시각에 진행 중이던 일은 were/was + -ing로 말해요."
           },
           {
             "id": "gt2-c3-choose-2",
+            "subunit": 1,
+            "prompt": "다음 중 동사원형과 -ing형이 잘못 짝지어진 것은?",
+            "options": [
+              "write — writeing",
+              "run — running",
+              "lie — lying",
+              "take — taking"
+            ],
+            "answerIndex": 0,
+            "explanation": "write는 끝의 e를 빼고 writing으로 써요."
+          },
+          {
+            "id": "gt2-c3-choose-3",
+            "subunit": 2,
+            "prompt": "A: ____ your brother studying now?\nB: No, he ____.",
+            "options": [
+              "Is — isn't",
+              "Are — aren't",
+              "Does — doesn't",
+              "Was — wasn't"
+            ],
+            "answerIndex": 0,
+            "explanation": "현재진행형 의문문은 Is he studying?이며 No, he isn't.로 답해요."
+          },
+          {
+            "id": "gt2-c3-choose-4",
+            "subunit": 3,
+            "prompt": "They ____ going to watch TV tonight, but they ____ go out tomorrow.",
+            "options": [
+              "aren't — will",
+              "isn't — are",
+              "don't — will",
+              "aren't — going"
+            ],
+            "answerIndex": 0,
+            "explanation": "be going to의 부정은 aren't going to이고 will 뒤에는 동사원형이 와요."
+          },
+          {
+            "id": "gt2-c3-choose-5",
             "subunit": 1,
             "prompt": "They were ____ outside at six.",
             "options": [
@@ -773,20 +765,7 @@
             "explanation": "올바른 문장: They were playing outside at six."
           },
           {
-            "id": "gt2-c3-choose-3",
-            "subunit": 1,
-            "prompt": "I ____ cooking when she arrived.",
-            "options": [
-              "was",
-              "were",
-              "am",
-              "is"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: I was cooking when she arrived."
-          },
-          {
-            "id": "gt2-c3-choose-4",
+            "id": "gt2-c3-choose-6",
             "subunit": 2,
             "prompt": "She ____ sleeping now.",
             "options": [
@@ -799,20 +778,7 @@
             "explanation": "올바른 문장: She isn't sleeping now."
           },
           {
-            "id": "gt2-c3-choose-5",
-            "subunit": 2,
-            "prompt": "____ the children studying?",
-            "options": [
-              "Are",
-              "Is",
-              "Do",
-              "Does"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: Are the children studying?"
-          },
-          {
-            "id": "gt2-c3-choose-6",
+            "id": "gt2-c3-choose-7",
             "subunit": 2,
             "prompt": "What ____ you doing at eight?",
             "options": [
@@ -823,19 +789,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: What were you doing at eight?"
-          },
-          {
-            "id": "gt2-c3-choose-7",
-            "subunit": 3,
-            "prompt": "I will ____ you tomorrow.",
-            "options": [
-              "help",
-              "helping",
-              "helps",
-              "helped"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: I will help you tomorrow."
           },
           {
             "id": "gt2-c3-choose-8",
@@ -855,18 +808,57 @@
           {
             "id": "gt2-c3-check-1",
             "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
+            "prompt": "다음 중 동사원형과 진행형이 바르게 짝지어진 것은?",
             "options": [
-              "They were play outside at six.",
-              "I were cooking when she arrived.",
-              "He is reading now.",
-              "She doesn't sleeping now."
+              "swim — swimming",
+              "make — makeing",
+              "sit — siting",
+              "die — dieing"
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: He is reading now."
+            "answerIndex": 0,
+            "explanation": "swim은 마지막 자음을 한 번 더 쓰고 swimming으로 만들어요."
           },
           {
             "id": "gt2-c3-check-2",
+            "subunit": 2,
+            "prompt": "다음 중 어법상 올바른 의문문을 고르시오.",
+            "options": [
+              "Were your friends playing soccer?",
+              "Was your friends playing soccer?",
+              "Did your friends playing soccer?",
+              "Were your friends play soccer?"
+            ],
+            "answerIndex": 0,
+            "explanation": "과거진행형 의문문은 Were + 복수 주어 + 동사-ing예요."
+          },
+          {
+            "id": "gt2-c3-check-3",
+            "subunit": 3,
+            "prompt": "다음 중 우리말과 일치하는 문장은?\n‘우리는 내일 할머니를 방문할 예정이다.’",
+            "options": [
+              "We are going to visit Grandma tomorrow.",
+              "We is going to visit Grandma tomorrow.",
+              "We are going to visiting Grandma tomorrow.",
+              "We will to visit Grandma tomorrow."
+            ],
+            "answerIndex": 0,
+            "explanation": "be going to + 동사원형 또는 will + 동사원형으로 미래를 나타내요."
+          },
+          {
+            "id": "gt2-c3-check-4",
+            "subunit": 3,
+            "prompt": "다음 중 대화가 자연스러운 것은?",
+            "options": [
+              "A: Will you come tomorrow?\nB: Yes, I will.",
+              "A: Are you going to cook?\nB: Yes, I going to.",
+              "A: Is Mia sleeping?\nB: Yes, she does.",
+              "A: Were you watching TV?\nB: Yes, I am."
+            ],
+            "answerIndex": 0,
+            "explanation": "Will로 물으면 will로 답하고, 진행형 질문에는 알맞은 be동사로 답해요."
+          },
+          {
+            "id": "gt2-c3-check-5",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -879,20 +871,7 @@
             "explanation": "올바른 표현: They were playing outside at six."
           },
           {
-            "id": "gt2-c3-check-3",
-            "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "I was cooking when she arrived.",
-              "She doesn't sleeping now.",
-              "Is the children studying?",
-              "What was you doing at eight?"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 표현: I was cooking when she arrived."
-          },
-          {
-            "id": "gt2-c3-check-4",
+            "id": "gt2-c3-check-6",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -905,20 +884,7 @@
             "explanation": "올바른 표현: She isn't sleeping now."
           },
           {
-            "id": "gt2-c3-check-5",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "What was you doing at eight?",
-              "I will helping you tomorrow.",
-              "Are the children studying?",
-              "They is going to visit us."
-            ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: Are the children studying?"
-          },
-          {
-            "id": "gt2-c3-check-6",
+            "id": "gt2-c3-check-7",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -929,19 +895,6 @@
             ],
             "answerIndex": 3,
             "explanation": "올바른 표현: What were you doing at eight?"
-          },
-          {
-            "id": "gt2-c3-check-7",
-            "subunit": 3,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "I will help you tomorrow.",
-              "They is going to visit us.",
-              "He is read now.",
-              "They were play outside at six."
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 표현: I will help you tomorrow."
           },
           {
             "id": "gt2-c3-check-8",
@@ -961,165 +914,118 @@
           {
             "id": "gt2-c3-hunt-1",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He is read now.",
-            "underlined": [
-              "He",
-              "is",
-              "read",
-              "now."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "He",
-              "is",
-              "read",
-              "now."
+              "He is read now.",
+              "They were playing outside at six.",
+              "I was cooking when she arrived.",
+              "She isn't sleeping now."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: He is reading now."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: He is reading now.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c3-hunt-2",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "They were play outside at six.",
-            "underlined": [
-              "They",
-              "were",
-              "outside at six.",
-              "play"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "They",
-              "were",
-              "outside at six.",
-              "play"
+              "They were play outside at six.",
+              "I was cooking when she arrived.",
+              "She isn't sleeping now.",
+              "Are the children studying?"
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: They were playing outside at six."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: They were playing outside at six.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c3-hunt-3",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I were cooking when she arrived.",
-            "underlined": [
-              "were",
-              "I",
-              "cooking",
-              "when she arrived."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "were",
-              "I",
-              "cooking",
-              "when she arrived."
+              "I were cooking when she arrived.",
+              "She isn't sleeping now.",
+              "Are the children studying?",
+              "What were you doing at eight?"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: I was cooking when she arrived."
+            "explanation": "올바른 문장: I was cooking when she arrived.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c3-hunt-4",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She doesn't sleeping now.",
-            "underlined": [
-              "She",
-              "doesn't",
-              "sleeping",
-              "now."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "She",
-              "doesn't",
-              "sleeping",
-              "now."
+              "She doesn't sleeping now.",
+              "Are the children studying?",
+              "What were you doing at eight?",
+              "I will help you tomorrow."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: She isn't sleeping now."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: She isn't sleeping now.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c3-hunt-5",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Is the children studying?",
-            "underlined": [
-              "the",
-              "children",
-              "Is",
-              "studying?"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "the",
-              "children",
-              "Is",
-              "studying?"
+              "Is the children studying?",
+              "What were you doing at eight?",
+              "I will help you tomorrow.",
+              "They are going to visit us."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: Are the children studying?"
+            "answerIndex": 0,
+            "explanation": "올바른 문장: Are the children studying?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c3-hunt-6",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "What was you doing at eight?",
-            "underlined": [
-              "What",
-              "you",
-              "doing at eight?",
-              "was"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "What",
-              "you",
-              "doing at eight?",
-              "was"
+              "What was you doing at eight?",
+              "I will help you tomorrow.",
+              "They are going to visit us.",
+              "He is reading now."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: What were you doing at eight?"
+            "answerIndex": 0,
+            "explanation": "올바른 문장: What were you doing at eight?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c3-hunt-7",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I will helping you tomorrow.",
-            "underlined": [
-              "helping",
-              "I",
-              "will",
-              "you tomorrow."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "helping",
-              "I",
-              "will",
-              "you tomorrow."
+              "I will helping you tomorrow.",
+              "They are going to visit us.",
+              "He is reading now.",
+              "They were playing outside at six."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: I will help you tomorrow."
+            "explanation": "올바른 문장: I will help you tomorrow.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c3-hunt-8",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "They is going to visit us.",
-            "underlined": [
-              "They",
-              "is",
-              "going",
-              "to visit us."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "They",
-              "is",
-              "going",
-              "to visit us."
+              "They is going to visit us.",
+              "He is reading now.",
+              "They were playing outside at six.",
+              "I was cooking when she arrived."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: They are going to visit us."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: They are going to visit us.",
+            "displayStyle": "sentence-options"
           }
         ]
-      }
+      },
+      "contentVersion": "review-aligned-2026-11-03"
     },
     {
       "chapter": 4,
@@ -1134,18 +1040,57 @@
           {
             "id": "gt2-c4-choose-1",
             "subunit": 1,
-            "prompt": "She can ____ very well.",
+            "prompt": "A: ____ I borrow your pen?\nB: Yes, you ____.",
             "options": [
-              "swim",
-              "swims",
-              "swimming",
-              "swam"
+              "May — may",
+              "Must — must not",
+              "Should — should not",
+              "Do — do"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: She can swim very well."
+            "explanation": "허락을 구할 때 May I ...?라고 말하고 Yes, you may.로 답할 수 있어요."
           },
           {
             "id": "gt2-c4-choose-2",
+            "subunit": 1,
+            "prompt": "She ____ speak three languages when she was ten.",
+            "options": [
+              "could",
+              "can",
+              "may",
+              "must"
+            ],
+            "answerIndex": 0,
+            "explanation": "과거 능력은 could로 나타내요."
+          },
+          {
+            "id": "gt2-c4-choose-3",
+            "subunit": 2,
+            "prompt": "A: ____ I wear a uniform tomorrow?\nB: Yes, all students ____.",
+            "options": [
+              "Do I have to — must",
+              "Must I to — must",
+              "Should I to — have",
+              "Can I to — must"
+            ],
+            "answerIndex": 0,
+            "explanation": "의무를 묻는 Do I have to ...?에는 must로 의무를 설명할 수 있어요."
+          },
+          {
+            "id": "gt2-c4-choose-4",
+            "subunit": 2,
+            "prompt": "You ____ run in the hallway, but you ____ walk quietly.",
+            "options": [
+              "must not — should",
+              "don't have to — must not",
+              "may — must not",
+              "should — must not"
+            ],
+            "answerIndex": 0,
+            "explanation": "금지는 must not, 권장 행동은 should로 나타내요."
+          },
+          {
+            "id": "gt2-c4-choose-5",
             "subunit": 1,
             "prompt": "May I ____ the window?",
             "options": [
@@ -1158,20 +1103,7 @@
             "explanation": "올바른 문장: May I open the window?"
           },
           {
-            "id": "gt2-c4-choose-3",
-            "subunit": 1,
-            "prompt": "He cannot ____ a car.",
-            "options": [
-              "drive",
-              "drives",
-              "driving",
-              "drove"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: He cannot drive a car."
-          },
-          {
-            "id": "gt2-c4-choose-4",
+            "id": "gt2-c4-choose-6",
             "subunit": 1,
             "prompt": "Can they ____ with us?",
             "options": [
@@ -1184,20 +1116,7 @@
             "explanation": "올바른 문장: Can they come with us?"
           },
           {
-            "id": "gt2-c4-choose-5",
-            "subunit": 2,
-            "prompt": "You must ____ a helmet.",
-            "options": [
-              "wear",
-              "wearing",
-              "wears",
-              "wore"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: You must wear a helmet."
-          },
-          {
-            "id": "gt2-c4-choose-6",
+            "id": "gt2-c4-choose-7",
             "subunit": 2,
             "prompt": "She ____ to finish her homework.",
             "options": [
@@ -1208,19 +1127,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: She has to finish her homework."
-          },
-          {
-            "id": "gt2-c4-choose-7",
-            "subunit": 2,
-            "prompt": "We should ____ more vegetables.",
-            "options": [
-              "eat",
-              "eating",
-              "eats",
-              "ate"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: We should eat more vegetables."
           },
           {
             "id": "gt2-c4-choose-8",
@@ -1242,16 +1148,55 @@
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "May I opens the window?",
-              "He cannot drives a car.",
-              "Can they comes with us?",
-              "She can swim very well."
+              "My sister can ride a bicycle.",
+              "My sister can rides a bicycle.",
+              "May he to leave early?",
+              "You must to be careful."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: She can swim very well."
+            "answerIndex": 0,
+            "explanation": "조동사 뒤에는 동사원형을 써요."
           },
           {
             "id": "gt2-c4-check-2",
+            "subunit": 1,
+            "prompt": "다음 중 우리말과 일치하는 문장은?\n‘내가 창문을 열어도 될까요?’",
+            "options": [
+              "May I open the window?",
+              "Must I opening the window?",
+              "Can I to open the window?",
+              "Am I open the window?"
+            ],
+            "answerIndex": 0,
+            "explanation": "허락을 구하는 May I + 동사원형이 맞아요."
+          },
+          {
+            "id": "gt2-c4-check-3",
+            "subunit": 2,
+            "prompt": "다음 중 의미가 다른 문장을 고르시오.\n‘할 필요가 없다’는 뜻이 아닌 것은?",
+            "options": [
+              "You must not stay here.",
+              "You don't have to stay here.",
+              "You need not stay here.",
+              "You don't need to stay here."
+            ],
+            "answerIndex": 0,
+            "explanation": "must not은 금지이며 don't have to는 의무가 없다는 뜻이에요."
+          },
+          {
+            "id": "gt2-c4-check-4",
+            "subunit": 2,
+            "prompt": "다음 중 대화가 자연스러운 것은?",
+            "options": [
+              "A: Should I call her?\nB: Yes, you should.",
+              "A: Can Mia play chess?\nB: Yes, she cans.",
+              "A: Must we leave now?\nB: No, you mustn't to.",
+              "A: May I enter?\nB: Yes, you may to."
+            ],
+            "answerIndex": 0,
+            "explanation": "조동사에 대한 짧은 대답은 같은 조동사를 쓰고 동사원형은 생략할 수 있어요."
+          },
+          {
+            "id": "gt2-c4-check-5",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1264,20 +1209,7 @@
             "explanation": "올바른 표현: May I open the window?"
           },
           {
-            "id": "gt2-c4-check-3",
-            "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "Can they comes with us?",
-              "He cannot drive a car.",
-              "You must wearing a helmet.",
-              "She have to finish her homework."
-            ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: He cannot drive a car."
-          },
-          {
-            "id": "gt2-c4-check-4",
+            "id": "gt2-c4-check-6",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1290,20 +1222,7 @@
             "explanation": "올바른 표현: Can they come with us?"
           },
           {
-            "id": "gt2-c4-check-5",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "She have to finish her homework.",
-              "We should eating more vegetables.",
-              "He doesn't has to go now.",
-              "You must wear a helmet."
-            ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: You must wear a helmet."
-          },
-          {
-            "id": "gt2-c4-check-6",
+            "id": "gt2-c4-check-7",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1314,19 +1233,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 표현: She has to finish her homework."
-          },
-          {
-            "id": "gt2-c4-check-7",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "He doesn't has to go now.",
-              "We should eat more vegetables.",
-              "She can swims very well.",
-              "May I opens the window?"
-            ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: We should eat more vegetables."
           },
           {
             "id": "gt2-c4-check-8",
@@ -1346,165 +1252,118 @@
           {
             "id": "gt2-c4-hunt-1",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She can swims very well.",
-            "underlined": [
-              "She",
-              "can",
-              "very well.",
-              "swims"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "She",
-              "can",
-              "very well.",
-              "swims"
+              "She can swims very well.",
+              "May I open the window?",
+              "He cannot drive a car.",
+              "Can they come with us?"
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: She can swim very well."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: She can swim very well.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c4-hunt-2",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "May I opens the window?",
-            "underlined": [
-              "opens",
-              "May",
-              "I",
-              "the window?"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "opens",
-              "May",
-              "I",
-              "the window?"
+              "May I opens the window?",
+              "He cannot drive a car.",
+              "Can they come with us?",
+              "You must wear a helmet."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: May I open the window?"
+            "explanation": "올바른 문장: May I open the window?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c4-hunt-3",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He cannot drives a car.",
-            "underlined": [
-              "He",
-              "drives",
-              "cannot",
-              "a car."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "He",
-              "drives",
-              "cannot",
-              "a car."
+              "He cannot drives a car.",
+              "Can they come with us?",
+              "You must wear a helmet.",
+              "She has to finish her homework."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: He cannot drive a car."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: He cannot drive a car.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c4-hunt-4",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Can they comes with us?",
-            "underlined": [
-              "Can",
-              "they",
-              "comes",
-              "with us?"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "Can",
-              "they",
-              "comes",
-              "with us?"
+              "Can they comes with us?",
+              "You must wear a helmet.",
+              "She has to finish her homework.",
+              "We should eat more vegetables."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: Can they come with us?"
+            "answerIndex": 0,
+            "explanation": "올바른 문장: Can they come with us?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c4-hunt-5",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "You must wearing a helmet.",
-            "underlined": [
-              "You",
-              "must",
-              "a helmet.",
-              "wearing"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "You",
-              "must",
-              "a helmet.",
-              "wearing"
+              "You must wearing a helmet.",
+              "She has to finish her homework.",
+              "We should eat more vegetables.",
+              "He doesn't have to go now."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: You must wear a helmet."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: You must wear a helmet.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c4-hunt-6",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She have to finish her homework.",
-            "underlined": [
-              "have",
-              "She",
-              "to",
-              "finish her homework."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "have",
-              "She",
-              "to",
-              "finish her homework."
+              "She have to finish her homework.",
+              "We should eat more vegetables.",
+              "He doesn't have to go now.",
+              "She can swim very well."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: She has to finish her homework."
+            "explanation": "올바른 문장: She has to finish her homework.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c4-hunt-7",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "We should eating more vegetables.",
-            "underlined": [
-              "We",
-              "eating",
-              "should",
-              "more vegetables."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "We",
-              "eating",
-              "should",
-              "more vegetables."
+              "We should eating more vegetables.",
+              "He doesn't have to go now.",
+              "She can swim very well.",
+              "May I open the window?"
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: We should eat more vegetables."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: We should eat more vegetables.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c4-hunt-8",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He doesn't has to go now.",
-            "underlined": [
-              "He",
-              "doesn't",
-              "has",
-              "to go now."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "He",
-              "doesn't",
-              "has",
-              "to go now."
+              "He doesn't has to go now.",
+              "She can swim very well.",
+              "May I open the window?",
+              "He cannot drive a car."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: He doesn't have to go now."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: He doesn't have to go now.",
+            "displayStyle": "sentence-options"
           }
         ]
-      }
+      },
+      "contentVersion": "review-aligned-2026-11-03"
     },
     {
       "chapter": 5,
@@ -1520,18 +1379,57 @@
           {
             "id": "gt2-c5-choose-1",
             "subunit": 1,
-            "prompt": "Two ____ are playing.",
+            "prompt": "다음 중 명사의 단수형과 복수형이 잘못 짝지어진 것은?",
             "options": [
-              "children",
-              "childs",
-              "childes",
-              "child"
+              "mouse — mouses",
+              "child — children",
+              "leaf — leaves",
+              "knife — knives"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: Two children are playing."
+            "explanation": "mouse의 복수형은 mice예요."
           },
           {
             "id": "gt2-c5-choose-2",
+            "subunit": 1,
+            "prompt": "There ____ three ____ in the park.",
+            "options": [
+              "are — children",
+              "is — children",
+              "are — childs",
+              "is — child"
+            ],
+            "answerIndex": 0,
+            "explanation": "three 뒤에는 복수명사 children, 존재를 나타내는 동사는 are를 써요."
+          },
+          {
+            "id": "gt2-c5-choose-3",
+            "subunit": 2,
+            "prompt": "My uncle bought ____ useful camera and ____ umbrella.",
+            "options": [
+              "a — an",
+              "an — a",
+              "an — an",
+              "a — a"
+            ],
+            "answerIndex": 0,
+            "explanation": "useful은 자음 소리 /j/로 시작하므로 a, umbrella는 모음 소리로 시작하므로 an을 써요."
+          },
+          {
+            "id": "gt2-c5-choose-4",
+            "subunit": 3,
+            "prompt": "A: Is this your jacket?\nB: No, it isn't ____. It's ____.",
+            "options": [
+              "mine — hers",
+              "my — her",
+              "me — she",
+              "I — her"
+            ],
+            "answerIndex": 0,
+            "explanation": "단독으로 쓰는 소유대명사는 mine, hers예요."
+          },
+          {
+            "id": "gt2-c5-choose-5",
             "subunit": 1,
             "prompt": "There are three ____ here.",
             "options": [
@@ -1544,20 +1442,7 @@
             "explanation": "올바른 문장: There are three boxes here."
           },
           {
-            "id": "gt2-c5-choose-3",
-            "subunit": 1,
-            "prompt": "I have ____ information.",
-            "options": [
-              "some",
-              "an",
-              "a",
-              "many"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: I have some information."
-          },
-          {
-            "id": "gt2-c5-choose-4",
+            "id": "gt2-c5-choose-6",
             "subunit": 2,
             "prompt": "She bought ____ umbrella.",
             "options": [
@@ -1570,20 +1455,7 @@
             "explanation": "올바른 문장: She bought an umbrella."
           },
           {
-            "id": "gt2-c5-choose-5",
-            "subunit": 2,
-            "prompt": "He is ____ university student.",
-            "options": [
-              "a",
-              "an",
-              "some",
-              "many"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: He is a university student."
-          },
-          {
-            "id": "gt2-c5-choose-6",
+            "id": "gt2-c5-choose-7",
             "subunit": 2,
             "prompt": "____ sun rises in the east.",
             "options": [
@@ -1594,19 +1466,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: The sun rises in the east."
-          },
-          {
-            "id": "gt2-c5-choose-7",
-            "subunit": 3,
-            "prompt": "This is ____ bag.",
-            "options": [
-              "her",
-              "she",
-              "hers",
-              "him"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: This is her bag."
           },
           {
             "id": "gt2-c5-choose-8",
@@ -1626,18 +1485,57 @@
           {
             "id": "gt2-c5-check-1",
             "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
+            "prompt": "다음 중 명사의 복수형이 바르게 짝지어진 것은?",
             "options": [
-              "Two children are playing.",
-              "There are three boxs here.",
-              "I have an information.",
-              "She bought a umbrella."
+              "woman — women",
+              "person — personses",
+              "foot — foots",
+              "sheep — sheeps"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 표현: Two children are playing."
+            "explanation": "woman의 복수형은 women이고 sheep은 단복수형이 같아요."
           },
           {
             "id": "gt2-c5-check-2",
+            "subunit": 2,
+            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
+            "options": [
+              "We need some advice.",
+              "We need an advice.",
+              "She has three furnitures.",
+              "I bought two breads."
+            ],
+            "answerIndex": 0,
+            "explanation": "advice와 furniture 등은 셀 수 없는 명사로 쓰여요."
+          },
+          {
+            "id": "gt2-c5-check-3",
+            "subunit": 2,
+            "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그녀는 정직한 학생이다.’",
+            "options": [
+              "She is an honest student.",
+              "She is a honest student.",
+              "She is an honesty student.",
+              "She is honest student."
+            ],
+            "answerIndex": 0,
+            "explanation": "honest는 h를 발음하지 않아 모음 소리로 시작하므로 an을 써요."
+          },
+          {
+            "id": "gt2-c5-check-4",
+            "subunit": 3,
+            "prompt": "다음 중 대화가 자연스러운 것은?",
+            "options": [
+              "A: Whose bag is this?\nB: It's mine.",
+              "A: Whose bag is this?\nB: It's my.",
+              "A: Who are they?\nB: Them are my cousins.",
+              "A: Is this your coat?\nB: Yes, it is me."
+            ],
+            "answerIndex": 0,
+            "explanation": "소유대명사 mine은 명사를 반복하지 않고 소유를 나타내요."
+          },
+          {
+            "id": "gt2-c5-check-5",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1650,20 +1548,7 @@
             "explanation": "올바른 표현: There are three boxes here."
           },
           {
-            "id": "gt2-c5-check-3",
-            "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "She bought a umbrella.",
-              "He is an university student.",
-              "I have some information.",
-              "A sun rises in the east."
-            ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: I have some information."
-          },
-          {
-            "id": "gt2-c5-check-4",
+            "id": "gt2-c5-check-6",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1676,20 +1561,7 @@
             "explanation": "올바른 표현: She bought an umbrella."
           },
           {
-            "id": "gt2-c5-check-5",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "He is a university student.",
-              "A sun rises in the east.",
-              "This is she bag.",
-              "Please give the book to I."
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 표현: He is a university student."
-          },
-          {
-            "id": "gt2-c5-check-6",
+            "id": "gt2-c5-check-7",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -1700,19 +1572,6 @@
             ],
             "answerIndex": 1,
             "explanation": "올바른 표현: The sun rises in the east."
-          },
-          {
-            "id": "gt2-c5-check-7",
-            "subunit": 3,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "Please give the book to I.",
-              "Two childs are playing.",
-              "This is her bag.",
-              "There are three boxs here."
-            ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: This is her bag."
           },
           {
             "id": "gt2-c5-check-8",
@@ -1732,165 +1591,118 @@
           {
             "id": "gt2-c5-hunt-1",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Two childs are playing.",
-            "underlined": [
-              "childs",
-              "Two",
-              "are",
-              "playing."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "childs",
-              "Two",
-              "are",
-              "playing."
+              "Two childs are playing.",
+              "There are three boxes here.",
+              "I have some information.",
+              "She bought an umbrella."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: Two children are playing."
+            "explanation": "올바른 문장: Two children are playing.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c5-hunt-2",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "There are three boxs here.",
-            "underlined": [
-              "There are",
-              "boxs",
-              "three",
-              "here."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "There are",
-              "boxs",
-              "three",
-              "here."
+              "There are three boxs here.",
+              "I have some information.",
+              "She bought an umbrella.",
+              "He is a university student."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: There are three boxes here."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: There are three boxes here.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c5-hunt-3",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I have an information.",
-            "underlined": [
-              "I",
-              "have",
-              "an",
-              "information."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "I",
-              "have",
-              "an",
-              "information."
+              "I have an information.",
+              "She bought an umbrella.",
+              "He is a university student.",
+              "The sun rises in the east."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: I have some information."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: I have some information.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c5-hunt-4",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She bought a umbrella.",
-            "underlined": [
-              "She",
-              "bought",
-              "umbrella.",
-              "a"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "She",
-              "bought",
-              "umbrella.",
-              "a"
+              "She bought a umbrella.",
+              "He is a university student.",
+              "The sun rises in the east.",
+              "This is her bag."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: She bought an umbrella."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: She bought an umbrella.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c5-hunt-5",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He is an university student.",
-            "underlined": [
-              "an",
-              "He",
-              "is",
-              "university student."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "an",
-              "He",
-              "is",
-              "university student."
+              "He is an university student.",
+              "The sun rises in the east.",
+              "This is her bag.",
+              "Please give the book to me."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: He is a university student."
+            "explanation": "올바른 문장: He is a university student.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c5-hunt-6",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "A sun rises in the east.",
-            "underlined": [
-              "sun",
-              "A",
-              "rises in the",
-              "east."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "sun",
-              "A",
-              "rises in the",
-              "east."
+              "A sun rises in the east.",
+              "This is her bag.",
+              "Please give the book to me.",
+              "Two children are playing."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: The sun rises in the east."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: The sun rises in the east.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c5-hunt-7",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "This is she bag.",
-            "underlined": [
-              "This",
-              "is",
-              "she",
-              "bag."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "This",
-              "is",
-              "she",
-              "bag."
+              "This is she bag.",
+              "Please give the book to me.",
+              "Two children are playing.",
+              "There are three boxes here."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: This is her bag."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: This is her bag.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c5-hunt-8",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Please give the book to I.",
-            "underlined": [
-              "Please give the book",
-              "to",
-              ".",
-              "I"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "Please give the book",
-              "to",
-              ".",
-              "I"
+              "Please give the book to I.",
+              "Two children are playing.",
+              "There are three boxes here.",
+              "I have some information."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: Please give the book to me."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: Please give the book to me.",
+            "displayStyle": "sentence-options"
           }
         ]
-      }
+      },
+      "contentVersion": "review-aligned-2026-11-03"
     },
     {
       "chapter": 6,
@@ -1906,18 +1718,57 @@
           {
             "id": "gt2-c6-choose-1",
             "subunit": 1,
-            "prompt": "The soup tastes ____.",
+            "prompt": "The flowers smell ____, and the music sounds ____.",
             "options": [
-              "delicious",
-              "deliciously",
-              "deliciousness",
-              "delight"
+              "sweet — beautiful",
+              "sweetly — beautifully",
+              "sweet — beautifully",
+              "sweetly — beautiful"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: The soup tastes delicious."
+            "explanation": "감각동사 smell, sound 뒤에서 상태를 나타낼 때는 형용사를 써요."
           },
           {
             "id": "gt2-c6-choose-2",
+            "subunit": 2,
+            "prompt": "Mina speaks English ____, but her brother speaks ____.",
+            "options": [
+              "well — slowly",
+              "good — slow",
+              "well — slow",
+              "good — slowly"
+            ],
+            "answerIndex": 0,
+            "explanation": "speaks를 꾸미는 말에는 부사 well, slowly를 써요."
+          },
+          {
+            "id": "gt2-c6-choose-3",
+            "subunit": 3,
+            "prompt": "My bicycle is ____ than yours, but Leo's is the ____ of all.",
+            "options": [
+              "faster — fastest",
+              "fast — faster",
+              "fastest — faster",
+              "more fast — fastest"
+            ],
+            "answerIndex": 0,
+            "explanation": "두 대상을 비교하면 비교급 faster, 셋 이상에서 가장 높으면 최상급 fastest를 써요."
+          },
+          {
+            "id": "gt2-c6-choose-4",
+            "subunit": 3,
+            "prompt": "다음 중 비교급과 최상급이 잘못 짝지어진 것은?",
+            "options": [
+              "good — gooder — goodest",
+              "bad — worse — worst",
+              "easy — easier — easiest",
+              "big — bigger — biggest"
+            ],
+            "answerIndex": 0,
+            "explanation": "good의 비교급은 better, 최상급은 best예요."
+          },
+          {
+            "id": "gt2-c6-choose-5",
             "subunit": 1,
             "prompt": "She looks ____ today.",
             "options": [
@@ -1930,20 +1781,7 @@
             "explanation": "올바른 문장: She looks happy today."
           },
           {
-            "id": "gt2-c6-choose-3",
-            "subunit": 1,
-            "prompt": "It is an ____ movie.",
-            "options": [
-              "interesting",
-              "interested",
-              "interest",
-              "interestingly"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: It is an interesting movie."
-          },
-          {
-            "id": "gt2-c6-choose-4",
+            "id": "gt2-c6-choose-6",
             "subunit": 2,
             "prompt": "He runs ____ every morning.",
             "options": [
@@ -1956,20 +1794,7 @@
             "explanation": "올바른 문장: He runs quickly every morning."
           },
           {
-            "id": "gt2-c6-choose-5",
-            "subunit": 2,
-            "prompt": "She speaks English ____.",
-            "options": [
-              "well",
-              "good",
-              "best",
-              "better"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: She speaks English well."
-          },
-          {
-            "id": "gt2-c6-choose-6",
+            "id": "gt2-c6-choose-7",
             "subunit": 2,
             "prompt": "They arrived ____ yesterday.",
             "options": [
@@ -1980,19 +1805,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: They arrived late yesterday."
-          },
-          {
-            "id": "gt2-c6-choose-7",
-            "subunit": 3,
-            "prompt": "This bag is ____ than mine.",
-            "options": [
-              "heavier",
-              "heavyer",
-              "heaviest",
-              "heavy"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: This bag is heavier than mine."
           },
           {
             "id": "gt2-c6-choose-8",
@@ -2014,16 +1826,55 @@
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "She looks happily today.",
-              "The soup tastes delicious.",
-              "It is an interested movie.",
-              "He runs quick every morning."
+              "The soup tastes salty.",
+              "The soup tastes saltily.",
+              "Your idea sounds wonderfully.",
+              "Mina looks happily today."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: The soup tastes delicious."
+            "answerIndex": 0,
+            "explanation": "감각동사 뒤에는 상태를 나타내는 형용사를 써요."
           },
           {
             "id": "gt2-c6-check-2",
+            "subunit": 2,
+            "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그녀는 매우 조심스럽게 운전한다.’",
+            "options": [
+              "She drives very carefully.",
+              "She drives very careful.",
+              "She is drives carefully.",
+              "She drives much careful."
+            ],
+            "answerIndex": 0,
+            "explanation": "동사 drives를 꾸미는 말에는 부사 carefully를 써요."
+          },
+          {
+            "id": "gt2-c6-check-3",
+            "subunit": 3,
+            "prompt": "다음 중 어법상 올바른 비교문을 고르시오.",
+            "options": [
+              "This puzzle is easier than that one.",
+              "This puzzle is more easier than that one.",
+              "This puzzle is easiest than that one.",
+              "This puzzle is as easier as that one."
+            ],
+            "answerIndex": 0,
+            "explanation": "easier than은 두 대상을 비교하는 올바른 표현이에요."
+          },
+          {
+            "id": "gt2-c6-check-4",
+            "subunit": 3,
+            "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그는 우리 반에서 가장 키가 크다.’",
+            "options": [
+              "He is the tallest in our class.",
+              "He is taller in our class.",
+              "He is the most tall in our class.",
+              "He is tallest than us."
+            ],
+            "answerIndex": 0,
+            "explanation": "최상급 표현은 the tallest in our class예요."
+          },
+          {
+            "id": "gt2-c6-check-5",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2036,20 +1887,7 @@
             "explanation": "올바른 표현: She looks happy today."
           },
           {
-            "id": "gt2-c6-check-3",
-            "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "He runs quick every morning.",
-              "She speaks English good.",
-              "They arrived lately yesterday.",
-              "It is an interesting movie."
-            ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: It is an interesting movie."
-          },
-          {
-            "id": "gt2-c6-check-4",
+            "id": "gt2-c6-check-6",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2062,20 +1900,7 @@
             "explanation": "올바른 표현: He runs quickly every morning."
           },
           {
-            "id": "gt2-c6-check-5",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "They arrived lately yesterday.",
-              "She speaks English well.",
-              "This bag is heavyer than mine.",
-              "She is the taller in her class."
-            ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: She speaks English well."
-          },
-          {
-            "id": "gt2-c6-check-6",
+            "id": "gt2-c6-check-7",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2086,19 +1911,6 @@
             ],
             "answerIndex": 2,
             "explanation": "올바른 표현: They arrived late yesterday."
-          },
-          {
-            "id": "gt2-c6-check-7",
-            "subunit": 3,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "She is the taller in her class.",
-              "The soup tastes deliciously.",
-              "She looks happily today.",
-              "This bag is heavier than mine."
-            ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: This bag is heavier than mine."
           },
           {
             "id": "gt2-c6-check-8",
@@ -2118,165 +1930,118 @@
           {
             "id": "gt2-c6-hunt-1",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "The soup tastes deliciously.",
-            "underlined": [
-              "The soup",
-              "deliciously",
-              "tastes",
-              "."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "The soup",
-              "deliciously",
-              "tastes",
-              "."
+              "The soup tastes deliciously.",
+              "She looks happy today.",
+              "It is an interesting movie.",
+              "He runs quickly every morning."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: The soup tastes delicious."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: The soup tastes delicious.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c6-hunt-2",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She looks happily today.",
-            "underlined": [
-              "She",
-              "looks",
-              "happily",
-              "today."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "She",
-              "looks",
-              "happily",
-              "today."
+              "She looks happily today.",
+              "It is an interesting movie.",
+              "He runs quickly every morning.",
+              "She speaks English well."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: She looks happy today."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: She looks happy today.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c6-hunt-3",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "It is an interested movie.",
-            "underlined": [
-              "It is",
-              "an",
-              "movie.",
-              "interested"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "It is",
-              "an",
-              "movie.",
-              "interested"
+              "It is an interested movie.",
+              "He runs quickly every morning.",
+              "She speaks English well.",
+              "They arrived late yesterday."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: It is an interesting movie."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: It is an interesting movie.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c6-hunt-4",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He runs quick every morning.",
-            "underlined": [
-              "quick",
-              "He",
-              "runs",
-              "every morning."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "quick",
-              "He",
-              "runs",
-              "every morning."
+              "He runs quick every morning.",
+              "She speaks English well.",
+              "They arrived late yesterday.",
+              "This bag is heavier than mine."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: He runs quickly every morning."
+            "explanation": "올바른 문장: He runs quickly every morning.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c6-hunt-5",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She speaks English good.",
-            "underlined": [
-              "She speaks",
-              "good",
-              "English",
-              "."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "She speaks",
-              "good",
-              "English",
-              "."
+              "She speaks English good.",
+              "They arrived late yesterday.",
+              "This bag is heavier than mine.",
+              "She is the tallest in her class."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: She speaks English well."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: She speaks English well.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c6-hunt-6",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "They arrived lately yesterday.",
-            "underlined": [
-              "They",
-              "arrived",
-              "lately",
-              "yesterday."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "They",
-              "arrived",
-              "lately",
-              "yesterday."
+              "They arrived lately yesterday.",
+              "This bag is heavier than mine.",
+              "She is the tallest in her class.",
+              "The soup tastes delicious."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: They arrived late yesterday."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: They arrived late yesterday.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c6-hunt-7",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "This bag is heavyer than mine.",
-            "underlined": [
-              "This bag",
-              "is",
-              "than mine.",
-              "heavyer"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "This bag",
-              "is",
-              "than mine.",
-              "heavyer"
+              "This bag is heavyer than mine.",
+              "She is the tallest in her class.",
+              "The soup tastes delicious.",
+              "She looks happy today."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: This bag is heavier than mine."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: This bag is heavier than mine.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c6-hunt-8",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She is the taller in her class.",
-            "underlined": [
-              "taller",
-              "She is",
-              "the",
-              "in her class."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "taller",
-              "She is",
-              "the",
-              "in her class."
+              "She is the taller in her class.",
+              "The soup tastes delicious.",
+              "She looks happy today.",
+              "It is an interesting movie."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: She is the tallest in her class."
+            "explanation": "올바른 문장: She is the tallest in her class.",
+            "displayStyle": "sentence-options"
           }
         ]
-      }
+      },
+      "contentVersion": "review-aligned-2026-11-03"
     },
     {
       "chapter": 7,
@@ -2292,18 +2057,57 @@
           {
             "id": "gt2-c7-choose-1",
             "subunit": 1,
-            "prompt": "I want ____ French.",
+            "prompt": "A: What do you want ____ this weekend?\nB: I hope ____ my grandparents.",
             "options": [
-              "to learn",
-              "learn",
-              "learning",
-              "learned"
+              "to do — to visit",
+              "doing — visiting",
+              "do — visit",
+              "to doing — to visiting"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: I want to learn French."
+            "explanation": "want와 hope 뒤에는 to부정사를 쓸 수 있어요."
           },
           {
             "id": "gt2-c7-choose-2",
+            "subunit": 1,
+            "prompt": "다음 중 to부정사가 명사 역할을 하는 문장은?",
+            "options": [
+              "To travel abroad is my dream.",
+              "I have a book to read.",
+              "He went out to meet a friend.",
+              "She needs a chair to sit on."
+            ],
+            "answerIndex": 0,
+            "explanation": "To travel abroad가 문장의 주어로 쓰여 명사 역할을 해요."
+          },
+          {
+            "id": "gt2-c7-choose-3",
+            "subunit": 2,
+            "prompt": "We need something ____ and a place ____.",
+            "options": [
+              "to eat — to rest",
+              "eating — resting",
+              "eat — rest",
+              "to eating — to resting"
+            ],
+            "answerIndex": 0,
+            "explanation": "something to eat과 a place to rest에서 to부정사는 앞의 명사를 꾸며요."
+          },
+          {
+            "id": "gt2-c7-choose-4",
+            "subunit": 3,
+            "prompt": "She enjoys ____ photos, and he finished ____ his room.",
+            "options": [
+              "taking — cleaning",
+              "to take — to clean",
+              "take — clean",
+              "taking — to clean"
+            ],
+            "answerIndex": 0,
+            "explanation": "enjoy와 finish 뒤에는 동명사 -ing를 사용해요."
+          },
+          {
+            "id": "gt2-c7-choose-5",
             "subunit": 1,
             "prompt": "____ every day is healthy.",
             "options": [
@@ -2316,20 +2120,7 @@
             "explanation": "올바른 문장: To exercise every day is healthy."
           },
           {
-            "id": "gt2-c7-choose-3",
-            "subunit": 1,
-            "prompt": "She hopes ____ a doctor.",
-            "options": [
-              "to become",
-              "become",
-              "becoming",
-              "became"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: She hopes to become a doctor."
-          },
-          {
-            "id": "gt2-c7-choose-4",
+            "id": "gt2-c7-choose-6",
             "subunit": 2,
             "prompt": "I need something ____.",
             "options": [
@@ -2342,20 +2133,7 @@
             "explanation": "올바른 문장: I need something to drink."
           },
           {
-            "id": "gt2-c7-choose-5",
-            "subunit": 2,
-            "prompt": "He went out ____ milk.",
-            "options": [
-              "to buy",
-              "buy",
-              "buying",
-              "bought"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: He went out to buy milk."
-          },
-          {
-            "id": "gt2-c7-choose-6",
+            "id": "gt2-c7-choose-7",
             "subunit": 2,
             "prompt": "This chair is comfortable ____.",
             "options": [
@@ -2366,19 +2144,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: This chair is comfortable to sit on."
-          },
-          {
-            "id": "gt2-c7-choose-7",
-            "subunit": 3,
-            "prompt": "She enjoys ____ novels.",
-            "options": [
-              "reading",
-              "to read",
-              "read",
-              "reads"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: She enjoys reading novels."
           },
           {
             "id": "gt2-c7-choose-8",
@@ -2400,16 +2165,55 @@
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "Exercise every day is healthy.",
-              "She hopes become a doctor.",
-              "I want to learn French.",
-              "I need something drink."
+              "I decided to study abroad.",
+              "I decided studying abroad.",
+              "He wants buy a new bike.",
+              "We hope seeing you soon."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: I want to learn French."
+            "answerIndex": 0,
+            "explanation": "decide, want, hope 뒤에는 to부정사가 와요."
           },
           {
             "id": "gt2-c7-check-2",
+            "subunit": 2,
+            "prompt": "다음 중 우리말과 일치하는 문장은?\n‘나는 마실 물이 필요하다.’",
+            "options": [
+              "I need some water to drink.",
+              "I need some water drink.",
+              "I need to drinking some water.",
+              "I need some water drinking."
+            ],
+            "answerIndex": 0,
+            "explanation": "to drink가 앞의 water를 꾸며 '마실 물'이라는 뜻을 나타내요."
+          },
+          {
+            "id": "gt2-c7-check-3",
+            "subunit": 3,
+            "prompt": "다음 중 동명사를 바르게 사용한 문장은?",
+            "options": [
+              "He is good at drawing.",
+              "He is good at draw.",
+              "They enjoy to swim.",
+              "She finished to write the letter."
+            ],
+            "answerIndex": 0,
+            "explanation": "전치사 at 뒤에는 drawing처럼 동명사가 와요."
+          },
+          {
+            "id": "gt2-c7-check-4",
+            "subunit": 3,
+            "prompt": "다음 중 대화가 자연스러운 것은?",
+            "options": [
+              "A: What do you enjoy doing?\nB: I enjoy reading.",
+              "A: What do you enjoy doing?\nB: I enjoy to read.",
+              "A: Do you mind waiting?\nB: No, I don't mind to wait.",
+              "A: Did you finish cooking?\nB: Yes, I finished to cook."
+            ],
+            "answerIndex": 0,
+            "explanation": "enjoy의 목적어로는 동명사 reading을 써요."
+          },
+          {
+            "id": "gt2-c7-check-5",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2422,20 +2226,7 @@
             "explanation": "올바른 표현: To exercise every day is healthy."
           },
           {
-            "id": "gt2-c7-check-3",
-            "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "She hopes to become a doctor.",
-              "I need something drink.",
-              "He went out buy milk.",
-              "This chair is comfortable sit on."
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 표현: She hopes to become a doctor."
-          },
-          {
-            "id": "gt2-c7-check-4",
+            "id": "gt2-c7-check-6",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2448,20 +2239,7 @@
             "explanation": "올바른 표현: I need something to drink."
           },
           {
-            "id": "gt2-c7-check-5",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "This chair is comfortable sit on.",
-              "She enjoys to read novels.",
-              "He went out to buy milk.",
-              "They finished to clean the room."
-            ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: He went out to buy milk."
-          },
-          {
-            "id": "gt2-c7-check-6",
+            "id": "gt2-c7-check-7",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2472,19 +2250,6 @@
             ],
             "answerIndex": 3,
             "explanation": "올바른 표현: This chair is comfortable to sit on."
-          },
-          {
-            "id": "gt2-c7-check-7",
-            "subunit": 3,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "She enjoys reading novels.",
-              "They finished to clean the room.",
-              "I want learn French.",
-              "Exercise every day is healthy."
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 표현: She enjoys reading novels."
           },
           {
             "id": "gt2-c7-check-8",
@@ -2504,165 +2269,118 @@
           {
             "id": "gt2-c7-hunt-1",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I want learn French.",
-            "underlined": [
-              "I",
-              "want",
-              "learn",
-              "French."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "I",
-              "want",
-              "learn",
-              "French."
+              "I want learn French.",
+              "To exercise every day is healthy.",
+              "She hopes to become a doctor.",
+              "I need something to drink."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: I want to learn French."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: I want to learn French.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c7-hunt-2",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Exercise every day is healthy.",
-            "underlined": [
-              "every",
-              "day is",
-              "healthy.",
-              "Exercise"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "every",
-              "day is",
-              "healthy.",
-              "Exercise"
+              "Exercise every day is healthy.",
+              "She hopes to become a doctor.",
+              "I need something to drink.",
+              "He went out to buy milk."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: To exercise every day is healthy."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: To exercise every day is healthy.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c7-hunt-3",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She hopes become a doctor.",
-            "underlined": [
-              "become",
-              "She",
-              "hopes",
-              "a doctor."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "become",
-              "She",
-              "hopes",
-              "a doctor."
+              "She hopes become a doctor.",
+              "I need something to drink.",
+              "He went out to buy milk.",
+              "This chair is comfortable to sit on."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: She hopes to become a doctor."
+            "explanation": "올바른 문장: She hopes to become a doctor.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c7-hunt-4",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I need something drink.",
-            "underlined": [
-              "I need",
-              "drink",
-              "something",
-              "."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "I need",
-              "drink",
-              "something",
-              "."
+              "I need something drink.",
+              "He went out to buy milk.",
+              "This chair is comfortable to sit on.",
+              "She enjoys reading novels."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: I need something to drink."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: I need something to drink.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c7-hunt-5",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He went out buy milk.",
-            "underlined": [
-              "He went",
-              "out",
-              "buy",
-              "milk."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "He went",
-              "out",
-              "buy",
-              "milk."
+              "He went out buy milk.",
+              "This chair is comfortable to sit on.",
+              "She enjoys reading novels.",
+              "They finished cleaning the room."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: He went out to buy milk."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: He went out to buy milk.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c7-hunt-6",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "This chair is comfortable sit on.",
-            "underlined": [
-              "This chair is",
-              "comfortable",
-              ".",
-              "sit on"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "This chair is",
-              "comfortable",
-              ".",
-              "sit on"
+              "This chair is comfortable sit on.",
+              "She enjoys reading novels.",
+              "They finished cleaning the room.",
+              "I want to learn French."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: This chair is comfortable to sit on."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: This chair is comfortable to sit on.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c7-hunt-7",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She enjoys to read novels.",
-            "underlined": [
-              "to read",
-              "She",
-              "enjoys",
-              "novels."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "to read",
-              "She",
-              "enjoys",
-              "novels."
+              "She enjoys to read novels.",
+              "They finished cleaning the room.",
+              "I want to learn French.",
+              "To exercise every day is healthy."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: She enjoys reading novels."
+            "explanation": "올바른 문장: She enjoys reading novels.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c7-hunt-8",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "They finished to clean the room.",
-            "underlined": [
-              "They",
-              "to clean",
-              "finished",
-              "the room."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "They",
-              "to clean",
-              "finished",
-              "the room."
+              "They finished to clean the room.",
+              "I want to learn French.",
+              "To exercise every day is healthy.",
+              "She hopes to become a doctor."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: They finished cleaning the room."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: They finished cleaning the room.",
+            "displayStyle": "sentence-options"
           }
         ]
-      }
+      },
+      "contentVersion": "review-aligned-2026-11-03"
     },
     {
       "chapter": 8,
@@ -2677,18 +2395,57 @@
           {
             "id": "gt2-c8-choose-1",
             "subunit": 1,
-            "prompt": "My birthday is ____ July.",
+            "prompt": "The meeting starts ____ 3 p.m. ____ Friday.",
             "options": [
-              "in",
-              "on",
-              "at",
-              "by"
+              "at — on",
+              "on — at",
+              "in — in",
+              "at — in"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: My birthday is in July."
+            "explanation": "구체적인 시각에는 at, 요일에는 on을 써요."
           },
           {
             "id": "gt2-c8-choose-2",
+            "subunit": 1,
+            "prompt": "We stayed in Busan ____ three days, from Monday ____ Wednesday.",
+            "options": [
+              "for — to",
+              "since — at",
+              "during — since",
+              "for — on"
+            ],
+            "answerIndex": 0,
+            "explanation": "기간에는 for three days, 범위에는 from Monday to Wednesday를 써요."
+          },
+          {
+            "id": "gt2-c8-choose-3",
+            "subunit": 2,
+            "prompt": "A: Where is the bookstore?\nB: It's ____ the bakery and the bank.",
+            "options": [
+              "between",
+              "among",
+              "during",
+              "through"
+            ],
+            "answerIndex": 0,
+            "explanation": "두 장소 사이를 말할 때는 between A and B를 써요."
+          },
+          {
+            "id": "gt2-c8-choose-4",
+            "subunit": 2,
+            "prompt": "She usually goes to school ____ subway, but today she went ____ foot.",
+            "options": [
+              "by — on",
+              "with — by",
+              "in — by",
+              "by — by"
+            ],
+            "answerIndex": 0,
+            "explanation": "교통수단은 by subway, 걸어서 갈 때는 on foot이에요."
+          },
+          {
+            "id": "gt2-c8-choose-5",
             "subunit": 1,
             "prompt": "The class starts ____ nine.",
             "options": [
@@ -2701,20 +2458,7 @@
             "explanation": "올바른 문장: The class starts at nine."
           },
           {
-            "id": "gt2-c8-choose-3",
-            "subunit": 1,
-            "prompt": "We met ____ Monday.",
-            "options": [
-              "on",
-              "in",
-              "at",
-              "by"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: We met on Monday."
-          },
-          {
-            "id": "gt2-c8-choose-4",
+            "id": "gt2-c8-choose-6",
             "subunit": 1,
             "prompt": "He has lived here ____ 2020.",
             "options": [
@@ -2727,20 +2471,7 @@
             "explanation": "올바른 문장: He has lived here since 2020."
           },
           {
-            "id": "gt2-c8-choose-5",
-            "subunit": 2,
-            "prompt": "The picture hangs ____ the wall.",
-            "options": [
-              "on",
-              "ons",
-              "in",
-              "under"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: The picture hangs on the wall."
-          },
-          {
-            "id": "gt2-c8-choose-6",
+            "id": "gt2-c8-choose-7",
             "subunit": 2,
             "prompt": "The cat is ____ the table.",
             "options": [
@@ -2751,19 +2482,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: The cat is under the table."
-          },
-          {
-            "id": "gt2-c8-choose-7",
-            "subunit": 2,
-            "prompt": "She went to school ____ bus.",
-            "options": [
-              "by",
-              "with",
-              "at",
-              "in"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: She went to school by bus."
           },
           {
             "id": "gt2-c8-choose-8",
@@ -2783,18 +2501,57 @@
           {
             "id": "gt2-c8-check-1",
             "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
+            "prompt": "다음 중 시간 전치사를 올바르게 사용한 문장을 고르시오.",
             "options": [
-              "The class starts on nine.",
-              "We met in Monday.",
-              "He has lived here for 2020.",
-              "My birthday is in July."
+              "The concert begins at seven.",
+              "The concert begins on seven.",
+              "My birthday is at August.",
+              "We exercise in Mondays."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: My birthday is in July."
+            "answerIndex": 0,
+            "explanation": "시각에는 at, 달에는 in, 요일에는 on을 써요."
           },
           {
             "id": "gt2-c8-check-2",
+            "subunit": 1,
+            "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그녀는 2021년부터 이곳에 살고 있다.’",
+            "options": [
+              "She has lived here since 2021.",
+              "She has lived here for 2021.",
+              "She has lived here during 2021.",
+              "She has lived here at 2021."
+            ],
+            "answerIndex": 0,
+            "explanation": "since 뒤에는 시작 시점이 와요."
+          },
+          {
+            "id": "gt2-c8-check-3",
+            "subunit": 2,
+            "prompt": "다음 중 장소 전치사를 올바르게 사용한 문장을 고르시오.",
+            "options": [
+              "The cat is under the chair.",
+              "The cat is between the chair.",
+              "The cat is during the chair.",
+              "The cat is since the chair."
+            ],
+            "answerIndex": 0,
+            "explanation": "의자 아래 위치는 under the chair로 나타내요."
+          },
+          {
+            "id": "gt2-c8-check-4",
+            "subunit": 2,
+            "prompt": "다음 중 대화가 자연스러운 것은?",
+            "options": [
+              "A: How do you get to school?\nB: By bus.",
+              "A: How do you get to school?\nB: With bus.",
+              "A: When is the party?\nB: At Saturday.",
+              "A: Where is the shop?\nB: Between the station."
+            ],
+            "answerIndex": 0,
+            "explanation": "이동수단은 by bus예요. between에는 두 대상을 연결하는 표현이 필요해요."
+          },
+          {
+            "id": "gt2-c8-check-5",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2807,20 +2564,7 @@
             "explanation": "올바른 표현: The class starts at nine."
           },
           {
-            "id": "gt2-c8-check-3",
-            "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "He has lived here for 2020.",
-              "We met on Monday.",
-              "The picture hangs ons the wall.",
-              "The cat is between the table."
-            ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: We met on Monday."
-          },
-          {
-            "id": "gt2-c8-check-4",
+            "id": "gt2-c8-check-6",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2833,20 +2577,7 @@
             "explanation": "올바른 표현: He has lived here since 2020."
           },
           {
-            "id": "gt2-c8-check-5",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "The cat is between the table.",
-              "She went to school with bus.",
-              "The bank is among the library and the post office.",
-              "The picture hangs on the wall."
-            ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: The picture hangs on the wall."
-          },
-          {
-            "id": "gt2-c8-check-6",
+            "id": "gt2-c8-check-7",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -2857,19 +2588,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 표현: The cat is under the table."
-          },
-          {
-            "id": "gt2-c8-check-7",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "The bank is among the library and the post office.",
-              "She went to school by bus.",
-              "My birthday is on July.",
-              "The class starts on nine."
-            ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: She went to school by bus."
           },
           {
             "id": "gt2-c8-check-8",
@@ -2889,165 +2607,118 @@
           {
             "id": "gt2-c8-hunt-1",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "My birthday is on July.",
-            "underlined": [
-              "My birthday",
-              "is",
-              "July.",
-              "on"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "My birthday",
-              "is",
-              "July.",
-              "on"
+              "My birthday is on July.",
+              "The class starts at nine.",
+              "We met on Monday.",
+              "He has lived here since 2020."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: My birthday is in July."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: My birthday is in July.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c8-hunt-2",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "The class starts on nine.",
-            "underlined": [
-              "on",
-              "The class",
-              "starts",
-              "nine."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "on",
-              "The class",
-              "starts",
-              "nine."
+              "The class starts on nine.",
+              "We met on Monday.",
+              "He has lived here since 2020.",
+              "The picture hangs on the wall."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: The class starts at nine."
+            "explanation": "올바른 문장: The class starts at nine.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c8-hunt-3",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "We met in Monday.",
-            "underlined": [
-              "We",
-              "in",
-              "met",
-              "Monday."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "We",
-              "in",
-              "met",
-              "Monday."
+              "We met in Monday.",
+              "He has lived here since 2020.",
+              "The picture hangs on the wall.",
+              "The cat is under the table."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: We met on Monday."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: We met on Monday.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c8-hunt-4",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He has lived here for 2020.",
-            "underlined": [
-              "He has lived",
-              "here",
-              "for",
-              "2020."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "He has lived",
-              "here",
-              "for",
-              "2020."
+              "He has lived here for 2020.",
+              "The picture hangs on the wall.",
+              "The cat is under the table.",
+              "She went to school by bus."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: He has lived here since 2020."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: He has lived here since 2020.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c8-hunt-5",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "The picture hangs ons the wall.",
-            "underlined": [
-              "The picture",
-              "hangs",
-              "the wall.",
-              "ons"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "The picture",
-              "hangs",
-              "the wall.",
-              "ons"
+              "The picture hangs ons the wall.",
+              "The cat is under the table.",
+              "She went to school by bus.",
+              "The bank is between the library and the post office."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: The picture hangs on the wall."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: The picture hangs on the wall.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c8-hunt-6",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "The cat is between the table.",
-            "underlined": [
-              "between",
-              "The cat",
-              "is",
-              "the table."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "between",
-              "The cat",
-              "is",
-              "the table."
+              "The cat is between the table.",
+              "She went to school by bus.",
+              "The bank is between the library and the post office.",
+              "My birthday is in July."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: The cat is under the table."
+            "explanation": "올바른 문장: The cat is under the table.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c8-hunt-7",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She went to school with bus.",
-            "underlined": [
-              "She went to",
-              "with",
-              "school",
-              "bus."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "She went to",
-              "with",
-              "school",
-              "bus."
+              "She went to school with bus.",
+              "The bank is between the library and the post office.",
+              "My birthday is in July.",
+              "The class starts at nine."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: She went to school by bus."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: She went to school by bus.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c8-hunt-8",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "The bank is among the library and the post office.",
-            "underlined": [
-              "The bank",
-              "is",
-              "among",
-              "the library and the post office."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "The bank",
-              "is",
-              "among",
-              "the library and the post office."
+              "The bank is among the library and the post office.",
+              "My birthday is in July.",
+              "The class starts at nine.",
+              "We met on Monday."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: The bank is between the library and the post office."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: The bank is between the library and the post office.",
+            "displayStyle": "sentence-options"
           }
         ]
-      }
+      },
+      "contentVersion": "review-aligned-2026-11-03"
     },
     {
       "chapter": 9,
@@ -3063,18 +2734,57 @@
           {
             "id": "gt2-c9-choose-1",
             "subunit": 1,
-            "prompt": "She likes tea ____ coffee.",
+            "prompt": "I wanted to go outside, ____ it was raining, ____ I stayed home.",
             "options": [
-              "and",
-              "ands",
-              "because",
-              "so"
+              "but — so",
+              "so — but",
+              "or — and",
+              "and — or"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: She likes tea and coffee."
+            "explanation": "예상과 다른 상황은 but, 그 결과는 so로 연결해요."
           },
           {
             "id": "gt2-c9-choose-2",
+            "subunit": 1,
+            "prompt": "Hurry up, ____ you'll miss the train.",
+            "options": [
+              "or",
+              "and",
+              "because",
+              "but"
+            ],
+            "answerIndex": 0,
+            "explanation": "명령문 + or는 '그렇지 않으면'이라는 뜻으로 쓰일 수 있어요."
+          },
+          {
+            "id": "gt2-c9-choose-3",
+            "subunit": 2,
+            "prompt": "Please call me ____ you arrive, and wash your hands ____ dinner.",
+            "options": [
+              "when — before",
+              "because — after",
+              "if — because",
+              "that — when"
+            ],
+            "answerIndex": 0,
+            "explanation": "도착할 때는 when, 식사 전에는 before가 자연스러워요."
+          },
+          {
+            "id": "gt2-c9-choose-4",
+            "subunit": 3,
+            "prompt": "I believe ____ she is honest, and I'll help her ____ she asks.",
+            "options": [
+              "that — if",
+              "because — that",
+              "if — because",
+              "when — that"
+            ],
+            "answerIndex": 0,
+            "explanation": "말의 내용을 나타내는 that절과 조건을 나타내는 if절을 구분해요."
+          },
+          {
+            "id": "gt2-c9-choose-5",
             "subunit": 1,
             "prompt": "He was tired, so he ____ to bed.",
             "options": [
@@ -3087,20 +2797,7 @@
             "explanation": "올바른 문장: He was tired, so he went to bed."
           },
           {
-            "id": "gt2-c9-choose-3",
-            "subunit": 1,
-            "prompt": "You can stay ____ leave.",
-            "options": [
-              "or",
-              "ors",
-              "because",
-              "so"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: You can stay or leave."
-          },
-          {
-            "id": "gt2-c9-choose-4",
+            "id": "gt2-c9-choose-6",
             "subunit": 1,
             "prompt": "She was sick, ____ she went to school.",
             "options": [
@@ -3113,20 +2810,7 @@
             "explanation": "올바른 문장: She was sick, but she went to school."
           },
           {
-            "id": "gt2-c9-choose-5",
-            "subunit": 2,
-            "prompt": "When it ____, we stay inside.",
-            "options": [
-              "rains",
-              "rain",
-              "raining",
-              "rained"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: When it rains, we stay inside."
-          },
-          {
-            "id": "gt2-c9-choose-6",
+            "id": "gt2-c9-choose-7",
             "subunit": 2,
             "prompt": "Before you ____, close the door.",
             "options": [
@@ -3137,19 +2821,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: Before you leave, close the door."
-          },
-          {
-            "id": "gt2-c9-choose-7",
-            "subunit": 3,
-            "prompt": "I stayed home because I ____ ill.",
-            "options": [
-              "was",
-              "were",
-              "is",
-              "be"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: I stayed home because I was ill."
           },
           {
             "id": "gt2-c9-choose-8",
@@ -3171,16 +2842,55 @@
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "She likes tea and coffee.",
-              "He was tired, so he go to bed.",
-              "You can stay ors leave.",
-              "She was sick, buts she went to school."
+              "She was tired, so she went to bed.",
+              "She was tired, so she go to bed.",
+              "He likes music ands movies.",
+              "You may stay ors leave."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 표현: She likes tea and coffee."
+            "explanation": "접속사 뒤에도 주어와 동사의 형태를 올바르게 써야 해요."
           },
           {
             "id": "gt2-c9-check-2",
+            "subunit": 2,
+            "prompt": "다음 중 우리말과 일치하는 문장은?\n‘네가 집에 오면 전화해 줘.’",
+            "options": [
+              "Call me when you get home.",
+              "Call me when you will get home.",
+              "Call me when you gets home.",
+              "Call me when you getting home."
+            ],
+            "answerIndex": 0,
+            "explanation": "미래의 일을 나타내는 시간 부사절에서는 현재형 get을 써요."
+          },
+          {
+            "id": "gt2-c9-check-3",
+            "subunit": 3,
+            "prompt": "다음 중 조건을 바르게 나타낸 문장을 고르시오.",
+            "options": [
+              "If it rains tomorrow, we'll stay home.",
+              "If it will rain tomorrow, we'll stay home.",
+              "If it rain tomorrow, we'll stay home.",
+              "If it raining tomorrow, we'll stay home."
+            ],
+            "answerIndex": 0,
+            "explanation": "미래 조건을 나타내는 if절에는 현재형 rains를 써요."
+          },
+          {
+            "id": "gt2-c9-check-4",
+            "subunit": 3,
+            "prompt": "다음 중 대화가 자연스러운 것은?",
+            "options": [
+              "A: Why did you stay home?\nB: Because I was sick.",
+              "A: Why did you stay home?\nB: Because I were sick.",
+              "A: When will you call?\nB: If I will arrive.",
+              "A: Do you know her?\nB: I know because she is a nurse."
+            ],
+            "answerIndex": 0,
+            "explanation": "이유를 답할 때 because + 주어 + 동사의 절을 써요."
+          },
+          {
+            "id": "gt2-c9-check-5",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3193,20 +2903,7 @@
             "explanation": "올바른 표현: He was tired, so he went to bed."
           },
           {
-            "id": "gt2-c9-check-3",
-            "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "She was sick, buts she went to school.",
-              "When it rain, we stay inside.",
-              "You can stay or leave.",
-              "Before you leaving, close the door."
-            ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: You can stay or leave."
-          },
-          {
-            "id": "gt2-c9-check-4",
+            "id": "gt2-c9-check-6",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3219,20 +2916,7 @@
             "explanation": "올바른 표현: She was sick, but she went to school."
           },
           {
-            "id": "gt2-c9-check-5",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "When it rains, we stay inside.",
-              "Before you leaving, close the door.",
-              "I stayed home because I were ill.",
-              "If she come, I will tell her."
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 표현: When it rains, we stay inside."
-          },
-          {
-            "id": "gt2-c9-check-6",
+            "id": "gt2-c9-check-7",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3243,19 +2927,6 @@
             ],
             "answerIndex": 1,
             "explanation": "올바른 표현: Before you leave, close the door."
-          },
-          {
-            "id": "gt2-c9-check-7",
-            "subunit": 3,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "If she come, I will tell her.",
-              "She likes tea ands coffee.",
-              "I stayed home because I was ill.",
-              "He was tired, so he go to bed."
-            ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: I stayed home because I was ill."
           },
           {
             "id": "gt2-c9-check-8",
@@ -3275,165 +2946,118 @@
           {
             "id": "gt2-c9-hunt-1",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She likes tea ands coffee.",
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "ands",
-              "She likes",
-              "tea",
-              "coffee."
+              "She likes tea ands coffee.",
+              "He was tired, so he went to bed.",
+              "You can stay or leave.",
+              "She was sick, but she went to school."
             ],
             "answerIndex": 0,
-            "underlined": [
-              "ands",
-              "She likes",
-              "tea",
-              "coffee."
-            ],
-            "explanation": "올바른 문장: She likes tea and coffee."
+            "explanation": "올바른 문장: She likes tea and coffee.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c9-hunt-2",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He was tired, so he go to bed.",
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "He was tired, so",
-              "go",
-              "he",
-              "to bed."
+              "He was tired, so he go to bed.",
+              "You can stay or leave.",
+              "She was sick, but she went to school.",
+              "When it rains, we stay inside."
             ],
-            "answerIndex": 1,
-            "underlined": [
-              "He was tired, so",
-              "go",
-              "he",
-              "to bed."
-            ],
-            "explanation": "올바른 문장: He was tired, so he went to bed."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: He was tired, so he went to bed.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c9-hunt-3",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "You can stay ors leave.",
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "You can",
-              "stay",
-              "ors",
-              "leave."
+              "You can stay ors leave.",
+              "She was sick, but she went to school.",
+              "When it rains, we stay inside.",
+              "Before you leave, close the door."
             ],
-            "answerIndex": 2,
-            "underlined": [
-              "You can",
-              "stay",
-              "ors",
-              "leave."
-            ],
-            "explanation": "올바른 문장: You can stay or leave."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: You can stay or leave.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c9-hunt-4",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She was sick, buts she went to school.",
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "She was",
-              "sick,",
-              "she went to school.",
-              "buts"
+              "She was sick, buts she went to school.",
+              "When it rains, we stay inside.",
+              "Before you leave, close the door.",
+              "I stayed home because I was ill."
             ],
-            "answerIndex": 3,
-            "underlined": [
-              "She was",
-              "sick,",
-              "she went to school.",
-              "buts"
-            ],
-            "explanation": "올바른 문장: She was sick, but she went to school."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: She was sick, but she went to school.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c9-hunt-5",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "When it rain, we stay inside.",
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "rain",
-              "When",
-              "it",
-              ", we stay inside."
+              "When it rain, we stay inside.",
+              "Before you leave, close the door.",
+              "I stayed home because I was ill.",
+              "If she comes, I will tell her."
             ],
             "answerIndex": 0,
-            "underlined": [
-              "rain",
-              "When",
-              "it",
-              ", we stay inside."
-            ],
-            "explanation": "올바른 문장: When it rains, we stay inside."
+            "explanation": "올바른 문장: When it rains, we stay inside.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c9-hunt-6",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Before you leaving, close the door.",
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "Before",
-              "leaving",
-              "you",
-              ", close the door."
+              "Before you leaving, close the door.",
+              "I stayed home because I was ill.",
+              "If she comes, I will tell her.",
+              "She likes tea and coffee."
             ],
-            "answerIndex": 1,
-            "underlined": [
-              "Before",
-              "leaving",
-              "you",
-              ", close the door."
-            ],
-            "explanation": "올바른 문장: Before you leave, close the door."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: Before you leave, close the door.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c9-hunt-7",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I stayed home because I were ill.",
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "I stayed home because",
-              "I",
-              "were",
-              "ill."
+              "I stayed home because I were ill.",
+              "If she comes, I will tell her.",
+              "She likes tea and coffee.",
+              "He was tired, so he went to bed."
             ],
-            "answerIndex": 2,
-            "underlined": [
-              "I stayed home because",
-              "I",
-              "were",
-              "ill."
-            ],
-            "explanation": "올바른 문장: I stayed home because I was ill."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: I stayed home because I was ill.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c9-hunt-8",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "If she come, I will tell her.",
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "If",
-              "she",
-              ", I will tell her.",
-              "come"
+              "If she come, I will tell her.",
+              "She likes tea and coffee.",
+              "He was tired, so he went to bed.",
+              "You can stay or leave."
             ],
-            "answerIndex": 3,
-            "underlined": [
-              "If",
-              "she",
-              ", I will tell her.",
-              "come"
-            ],
-            "explanation": "올바른 문장: If she comes, I will tell her."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: If she comes, I will tell her.",
+            "displayStyle": "sentence-options"
           }
         ]
-      }
+      },
+      "contentVersion": "review-aligned-2026-11-03"
     },
     {
       "chapter": 10,
@@ -3449,18 +3073,57 @@
           {
             "id": "gt2-c10-choose-1",
             "subunit": 1,
-            "prompt": "There ____ a cat on the roof.",
+            "prompt": "There ____ a new teacher at school, and there ____ thirty students.",
             "options": [
-              "is",
-              "are",
-              "am",
-              "be"
+              "is — are",
+              "are — is",
+              "is — is",
+              "are — are"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: There is a cat on the roof."
+            "explanation": "There is는 단수, There are는 복수 명사에 맞춰 사용해요."
           },
           {
             "id": "gt2-c10-choose-2",
+            "subunit": 1,
+            "prompt": "This juice tastes ____, but the cake smells ____.",
+            "options": [
+              "sour — sweet",
+              "sourly — sweetly",
+              "sourly — sweet",
+              "sour — sweetly"
+            ],
+            "answerIndex": 0,
+            "explanation": "taste와 smell 같은 감각동사 뒤에는 상태를 나타내는 형용사를 써요."
+          },
+          {
+            "id": "gt2-c10-choose-3",
+            "subunit": 2,
+            "prompt": "Mina gave ____ a gift, and I sent ____ a thank-you card.",
+            "options": [
+              "me — her",
+              "I — she",
+              "my — hers",
+              "mine — she"
+            ],
+            "answerIndex": 0,
+            "explanation": "give와 send의 사람 목적어는 me, her처럼 목적격을 써요."
+          },
+          {
+            "id": "gt2-c10-choose-4",
+            "subunit": 3,
+            "prompt": "The joke made everyone ____, and the song made the baby ____.",
+            "options": [
+              "laugh — sleep",
+              "to laugh — to sleep",
+              "laughing — sleeping",
+              "laughed — slept"
+            ],
+            "answerIndex": 0,
+            "explanation": "make + 목적어 + 동사원형에서 목적격보어는 동사원형을 써요."
+          },
+          {
+            "id": "gt2-c10-choose-5",
             "subunit": 1,
             "prompt": "There ____ many books here.",
             "options": [
@@ -3473,20 +3136,7 @@
             "explanation": "올바른 문장: There are many books here."
           },
           {
-            "id": "gt2-c10-choose-3",
-            "subunit": 1,
-            "prompt": "This cake smells ____.",
-            "options": [
-              "wonderful",
-              "wonderfully",
-              "wonder",
-              "wondered"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: This cake smells wonderful."
-          },
-          {
-            "id": "gt2-c10-choose-4",
+            "id": "gt2-c10-choose-6",
             "subunit": 1,
             "prompt": "The music sounds ____.",
             "options": [
@@ -3499,20 +3149,7 @@
             "explanation": "올바른 문장: The music sounds beautiful."
           },
           {
-            "id": "gt2-c10-choose-5",
-            "subunit": 2,
-            "prompt": "She gave ____ a present.",
-            "options": [
-              "me",
-              "I",
-              "my",
-              "mine"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: She gave me a present."
-          },
-          {
-            "id": "gt2-c10-choose-6",
+            "id": "gt2-c10-choose-7",
             "subunit": 2,
             "prompt": "He sent ____ friend a message.",
             "options": [
@@ -3523,19 +3160,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: He sent his friend a message."
-          },
-          {
-            "id": "gt2-c10-choose-7",
-            "subunit": 2,
-            "prompt": "Please show ____ the picture.",
-            "options": [
-              "us",
-              "we",
-              "our",
-              "ours"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: Please show us the picture."
           },
           {
             "id": "gt2-c10-choose-8",
@@ -3557,16 +3181,55 @@
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "There is many books here.",
-              "There is a cat on the roof.",
-              "This cake smells wonderfully.",
-              "The music sounds beautifully."
+              "There are two cats in the garden.",
+              "There is two cats in the garden.",
+              "This cake smells deliciously.",
+              "The soup tastes wonderfully."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: There is a cat on the roof."
+            "answerIndex": 0,
+            "explanation": "two cats는 복수이므로 There are를 써요."
           },
           {
             "id": "gt2-c10-check-2",
+            "subunit": 2,
+            "prompt": "다음 중 우리말과 일치하는 문장은?\n‘그녀는 내게 편지를 보냈다.’",
+            "options": [
+              "She sent me a letter.",
+              "She sent I a letter.",
+              "She sent to me a letter.",
+              "She sent mine a letter."
+            ],
+            "answerIndex": 0,
+            "explanation": "send + 사람 + 물건 형태에서는 목적격 me를 사용해요."
+          },
+          {
+            "id": "gt2-c10-check-3",
+            "subunit": 3,
+            "prompt": "다음 중 목적격보어를 올바르게 쓴 문장은?",
+            "options": [
+              "The music made us happy.",
+              "The music made us happily.",
+              "His mom made he tired.",
+              "The story made them sadly."
+            ],
+            "answerIndex": 0,
+            "explanation": "make + 목적어 + 형용사는 목적어의 상태를 설명해요."
+          },
+          {
+            "id": "gt2-c10-check-4",
+            "subunit": 3,
+            "prompt": "다음 중 대화가 자연스러운 것은?",
+            "options": [
+              "A: How did the news make you feel?\nB: It made me happy.",
+              "A: How did the news make you feel?\nB: It made I happy.",
+              "A: Does the soup smell good?\nB: Yes, it smells well.",
+              "A: Is there any students here?\nB: Yes, there are."
+            ],
+            "answerIndex": 0,
+            "explanation": "made me happy에서는 목적격 me와 형용사 happy를 써요."
+          },
+          {
+            "id": "gt2-c10-check-5",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3579,20 +3242,7 @@
             "explanation": "올바른 표현: There are many books here."
           },
           {
-            "id": "gt2-c10-check-3",
-            "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "The music sounds beautifully.",
-              "She gave I a present.",
-              "He sent him friend a message.",
-              "This cake smells wonderful."
-            ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: This cake smells wonderful."
-          },
-          {
-            "id": "gt2-c10-check-4",
+            "id": "gt2-c10-check-6",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3605,20 +3255,7 @@
             "explanation": "올바른 표현: The music sounds beautiful."
           },
           {
-            "id": "gt2-c10-check-5",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "He sent him friend a message.",
-              "She gave me a present.",
-              "Please show we the picture.",
-              "The news made him happily."
-            ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: She gave me a present."
-          },
-          {
-            "id": "gt2-c10-check-6",
+            "id": "gt2-c10-check-7",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3629,19 +3266,6 @@
             ],
             "answerIndex": 2,
             "explanation": "올바른 표현: He sent his friend a message."
-          },
-          {
-            "id": "gt2-c10-check-7",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "The news made him happily.",
-              "There are a cat on the roof.",
-              "There is many books here.",
-              "Please show us the picture."
-            ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: Please show us the picture."
           },
           {
             "id": "gt2-c10-check-8",
@@ -3661,165 +3285,118 @@
           {
             "id": "gt2-c10-hunt-1",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "There are a cat on the roof.",
-            "underlined": [
-              "There",
-              "are",
-              "a",
-              "cat on the roof."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "There",
-              "are",
-              "a",
-              "cat on the roof."
+              "There are a cat on the roof.",
+              "There are many books here.",
+              "This cake smells wonderful.",
+              "The music sounds beautiful."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: There is a cat on the roof."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: There is a cat on the roof.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c10-hunt-2",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "There is many books here.",
-            "underlined": [
-              "There",
-              "many",
-              "is",
-              "books here."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "There",
-              "many",
-              "is",
-              "books here."
+              "There is many books here.",
+              "This cake smells wonderful.",
+              "The music sounds beautiful.",
+              "She gave me a present."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: There are many books here."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: There are many books here.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c10-hunt-3",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "This cake smells wonderfully.",
-            "underlined": [
-              "This cake",
-              "smells",
-              ".",
-              "wonderfully"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "This cake",
-              "smells",
-              ".",
-              "wonderfully"
+              "This cake smells wonderfully.",
+              "The music sounds beautiful.",
+              "She gave me a present.",
+              "He sent his friend a message."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: This cake smells wonderful."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: This cake smells wonderful.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c10-hunt-4",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "The music sounds beautifully.",
-            "underlined": [
-              "beautifully",
-              "The music",
-              "sounds",
-              "."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "beautifully",
-              "The music",
-              "sounds",
-              "."
+              "The music sounds beautifully.",
+              "She gave me a present.",
+              "He sent his friend a message.",
+              "Please show us the picture."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: The music sounds beautiful."
+            "explanation": "올바른 문장: The music sounds beautiful.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c10-hunt-5",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She gave I a present.",
-            "underlined": [
-              "She",
-              "I",
-              "gave",
-              "a present."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "She",
-              "I",
-              "gave",
-              "a present."
+              "She gave I a present.",
+              "He sent his friend a message.",
+              "Please show us the picture.",
+              "The news made him happy."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: She gave me a present."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: She gave me a present.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c10-hunt-6",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He sent him friend a message.",
-            "underlined": [
-              "He",
-              "sent",
-              "him",
-              "friend a message."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "He",
-              "sent",
-              "him",
-              "friend a message."
+              "He sent him friend a message.",
+              "Please show us the picture.",
+              "The news made him happy.",
+              "There is a cat on the roof."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: He sent his friend a message."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: He sent his friend a message.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c10-hunt-7",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Please show we the picture.",
-            "underlined": [
-              "Please",
-              "show",
-              "the picture.",
-              "we"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "Please",
-              "show",
-              "the picture.",
-              "we"
+              "Please show we the picture.",
+              "The news made him happy.",
+              "There is a cat on the roof.",
+              "There are many books here."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: Please show us the picture."
+            "answerIndex": 0,
+            "explanation": "올바른 문장: Please show us the picture.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c10-hunt-8",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "The news made him happily.",
-            "underlined": [
-              "happily",
-              "The news made",
-              "him",
-              "."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "happily",
-              "The news made",
-              "him",
-              "."
+              "The news made him happily.",
+              "There is a cat on the roof.",
+              "There are many books here.",
+              "This cake smells wonderful."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: The news made him happy."
+            "explanation": "올바른 문장: The news made him happy.",
+            "displayStyle": "sentence-options"
           }
         ]
-      }
+      },
+      "contentVersion": "review-aligned-2026-11-03"
     },
     {
       "chapter": 11,
@@ -3836,18 +3413,57 @@
           {
             "id": "gt2-c11-choose-1",
             "subunit": 1,
-            "prompt": "Where ____ she live?",
+            "prompt": "A: ____ does your brother work?\nB: He works ____ a hospital.",
             "options": [
-              "does",
-              "do",
-              "is",
-              "are"
+              "Where — at",
+              "When — on",
+              "What — to",
+              "Why — in"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: Where does she live?"
+            "explanation": "장소를 묻는 의문사는 Where이고, 직장을 나타낼 때 at a hospital을 쓸 수 있어요."
           },
           {
             "id": "gt2-c11-choose-2",
+            "subunit": 2,
+            "prompt": "A: ____ do you visit your grandparents?\nB: ____ a month.",
+            "options": [
+              "How often — Twice",
+              "How long — Two",
+              "How many — Twice",
+              "How far — Twice"
+            ],
+            "answerIndex": 0,
+            "explanation": "빈도를 묻는 How often에는 Twice a month처럼 대답해요."
+          },
+          {
+            "id": "gt2-c11-choose-3",
+            "subunit": 3,
+            "prompt": "You're from Seoul, ____ you?\nNo, I'm ____.",
+            "options": [
+              "aren't — not",
+              "isn't — not",
+              "don't — no",
+              "weren't — not"
+            ],
+            "answerIndex": 0,
+            "explanation": "You are의 긍정문에는 aren't you?를 붙이고 No, I'm not.으로 답해요."
+          },
+          {
+            "id": "gt2-c11-choose-4",
+            "subunit": 4,
+            "prompt": "____ a wonderful painting this is! ____ beautiful it is!",
+            "options": [
+              "What — How",
+              "How — What",
+              "What — What",
+              "How — How"
+            ],
+            "answerIndex": 0,
+            "explanation": "What a + 형용사 + 명사, How + 형용사를 사용해요."
+          },
+          {
+            "id": "gt2-c11-choose-5",
             "subunit": 1,
             "prompt": "What did you ____ yesterday?",
             "options": [
@@ -3860,20 +3476,7 @@
             "explanation": "올바른 문장: What did you eat yesterday?"
           },
           {
-            "id": "gt2-c11-choose-3",
-            "subunit": 2,
-            "prompt": "How often ____ they exercise?",
-            "options": [
-              "do",
-              "does",
-              "is",
-              "are"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: How often do they exercise?"
-          },
-          {
-            "id": "gt2-c11-choose-4",
+            "id": "gt2-c11-choose-6",
             "subunit": 2,
             "prompt": "Why ____ he absent yesterday?",
             "options": [
@@ -3886,20 +3489,7 @@
             "explanation": "올바른 문장: Why was he absent yesterday?"
           },
           {
-            "id": "gt2-c11-choose-5",
-            "subunit": 3,
-            "prompt": "You're hungry, ____ you?",
-            "options": [
-              "aren't",
-              "isn't",
-              "don't",
-              "weren't"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: You're hungry, aren't you?"
-          },
-          {
-            "id": "gt2-c11-choose-6",
+            "id": "gt2-c11-choose-7",
             "subunit": 3,
             "prompt": "She ____n't like fish, does she?",
             "options": [
@@ -3910,19 +3500,6 @@
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: She doesn't like fish, does she?"
-          },
-          {
-            "id": "gt2-c11-choose-7",
-            "subunit": 4,
-            "prompt": "____ touch the painting.",
-            "options": [
-              "Don't",
-              "Doesn't",
-              "Not",
-              "No"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: Don't touch the painting."
           },
           {
             "id": "gt2-c11-choose-8",
@@ -3942,18 +3519,57 @@
           {
             "id": "gt2-c11-check-1",
             "subunit": 1,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
+            "prompt": "다음 중 어법상 올바른 의문문을 고르시오.",
             "options": [
-              "What did you ate yesterday?",
-              "How often does they exercise?",
-              "Where does she live?",
-              "Why were he absent yesterday?"
+              "Where does your aunt live?",
+              "Where do your aunt live?",
+              "Where does your aunt lives?",
+              "Where is your aunt live?"
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: Where does she live?"
+            "answerIndex": 0,
+            "explanation": "does 뒤에는 동사원형 live를 써요."
           },
           {
             "id": "gt2-c11-check-2",
+            "subunit": 2,
+            "prompt": "다음 중 우리말과 일치하는 문장은?\n‘너는 얼마나 자주 수영하니?’",
+            "options": [
+              "How often do you swim?",
+              "How many do you swim?",
+              "How long are you swim?",
+              "How far does you swim?"
+            ],
+            "answerIndex": 0,
+            "explanation": "빈도를 묻는 How often do you ...?를 사용해요."
+          },
+          {
+            "id": "gt2-c11-check-3",
+            "subunit": 3,
+            "prompt": "다음 중 부가의문문이 올바른 것은?",
+            "options": [
+              "She isn't tired, is she?",
+              "She isn't tired, isn't she?",
+              "He likes soccer, isn't he?",
+              "You're a student, don't you?"
+            ],
+            "answerIndex": 0,
+            "explanation": "부정문 뒤에는 긍정 형태의 부가의문문을 붙여요."
+          },
+          {
+            "id": "gt2-c11-check-4",
+            "subunit": 4,
+            "prompt": "다음 중 감탄문을 바르게 쓴 것은?",
+            "options": [
+              "How exciting this movie is!",
+              "What exciting this movie is!",
+              "How an exciting movie!",
+              "What an exciting is this movie!"
+            ],
+            "answerIndex": 0,
+            "explanation": "How + 형용사 + 주어 + 동사의 어순이에요."
+          },
+          {
+            "id": "gt2-c11-check-5",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3966,20 +3582,7 @@
             "explanation": "올바른 표현: What did you eat yesterday?"
           },
           {
-            "id": "gt2-c11-check-3",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "How often do they exercise?",
-              "Why were he absent yesterday?",
-              "You're hungry, isn't you?",
-              "She doesn't like fish, doesn't she?"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 표현: How often do they exercise?"
-          },
-          {
-            "id": "gt2-c11-check-4",
+            "id": "gt2-c11-check-6",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -3992,20 +3595,7 @@
             "explanation": "올바른 표현: Why was he absent yesterday?"
           },
           {
-            "id": "gt2-c11-check-5",
-            "subunit": 3,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "She doesn't like fish, doesn't she?",
-              "Doesn't touch the painting.",
-              "You're hungry, aren't you?",
-              "How a beautiful day it is!"
-            ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: You're hungry, aren't you?"
-          },
-          {
-            "id": "gt2-c11-check-6",
+            "id": "gt2-c11-check-7",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
@@ -4016,19 +3606,6 @@
             ],
             "answerIndex": 3,
             "explanation": "올바른 표현: She doesn't like fish, does she?"
-          },
-          {
-            "id": "gt2-c11-check-7",
-            "subunit": 4,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
-            "options": [
-              "Don't touch the painting.",
-              "How a beautiful day it is!",
-              "Where do she live?",
-              "What did you ate yesterday?"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 표현: Don't touch the painting."
           },
           {
             "id": "gt2-c11-check-8",
@@ -4048,165 +3625,118 @@
           {
             "id": "gt2-c11-hunt-1",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Where do she live?",
-            "underlined": [
-              "Where",
-              "she",
-              "do",
-              "live?"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "Where",
-              "she",
-              "do",
-              "live?"
+              "Where do she live?",
+              "What did you eat yesterday?",
+              "How often do they exercise?",
+              "Why was he absent yesterday?"
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: Where does she live?"
+            "answerIndex": 0,
+            "explanation": "올바른 문장: Where does she live?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c11-hunt-2",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "What did you ate yesterday?",
-            "underlined": [
-              "What did",
-              "you",
-              "yesterday?",
-              "ate"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "What did",
-              "you",
-              "yesterday?",
-              "ate"
+              "What did you ate yesterday?",
+              "How often do they exercise?",
+              "Why was he absent yesterday?",
+              "You're hungry, aren't you?"
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: What did you eat yesterday?"
+            "answerIndex": 0,
+            "explanation": "올바른 문장: What did you eat yesterday?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c11-hunt-3",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "How often does they exercise?",
-            "underlined": [
-              "does",
-              "How",
-              "often",
-              "they exercise?"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "does",
-              "How",
-              "often",
-              "they exercise?"
+              "How often does they exercise?",
+              "Why was he absent yesterday?",
+              "You're hungry, aren't you?",
+              "She doesn't like fish, does she?"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: How often do they exercise?"
+            "explanation": "올바른 문장: How often do they exercise?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c11-hunt-4",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Why were he absent yesterday?",
-            "underlined": [
-              "Why",
-              "were",
-              "he",
-              "absent yesterday?"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "Why",
-              "were",
-              "he",
-              "absent yesterday?"
+              "Why were he absent yesterday?",
+              "You're hungry, aren't you?",
+              "She doesn't like fish, does she?",
+              "Don't touch the painting."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: Why was he absent yesterday?"
+            "answerIndex": 0,
+            "explanation": "올바른 문장: Why was he absent yesterday?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c11-hunt-5",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "You're hungry, isn't you?",
-            "underlined": [
-              "You're",
-              "hungry,",
-              "isn't",
-              "you?"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "You're",
-              "hungry,",
-              "isn't",
-              "you?"
+              "You're hungry, isn't you?",
+              "She doesn't like fish, does she?",
+              "Don't touch the painting.",
+              "What a beautiful day it is!"
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: You're hungry, aren't you?"
+            "answerIndex": 0,
+            "explanation": "올바른 문장: You're hungry, aren't you?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c11-hunt-6",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She doesn't like fish, doesn't she?",
-            "underlined": [
-              "She",
-              "like",
-              "fish, doesn't she?",
-              "doesn't"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "She",
-              "like",
-              "fish, doesn't she?",
-              "doesn't"
+              "She doesn't like fish, doesn't she?",
+              "Don't touch the painting.",
+              "What a beautiful day it is!",
+              "Where does she live?"
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: She doesn't like fish, does she?"
+            "answerIndex": 0,
+            "explanation": "올바른 문장: She doesn't like fish, does she?",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c11-hunt-7",
             "subunit": 4,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Doesn't touch the painting.",
-            "underlined": [
-              "Doesn't",
-              "touch",
-              "the",
-              "painting."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "Doesn't",
-              "touch",
-              "the",
-              "painting."
+              "Doesn't touch the painting.",
+              "What a beautiful day it is!",
+              "Where does she live?",
+              "What did you eat yesterday?"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: Don't touch the painting."
+            "explanation": "올바른 문장: Don't touch the painting.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c11-hunt-8",
             "subunit": 4,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "How a beautiful day it is!",
-            "underlined": [
-              "a",
-              "How",
-              "beautiful day it",
-              "is!"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "a",
-              "How",
-              "beautiful day it",
-              "is!"
+              "How a beautiful day it is!",
+              "Where does she live?",
+              "What did you eat yesterday?",
+              "How often do they exercise?"
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: What a beautiful day it is!"
+            "answerIndex": 0,
+            "explanation": "올바른 문장: What a beautiful day it is!",
+            "displayStyle": "sentence-options"
           }
         ]
-      }
+      },
+      "contentVersion": "review-aligned-2026-11-03"
     }
   ]
 }
