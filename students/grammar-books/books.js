@@ -5,8 +5,24 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 고르시오.',icon:'◉'},{id:'check',label:'문장 판단',ko:'어법에 맞는 문장이나 틀린 문장을 고르시오.',icon:'✓'},{id:'hunt',label:'오류 찾기',ko:'밑줄 친 부분 중 어법상 틀린 것을 고르시오.',icon:'⌕'}];
-let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[];
+let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[],masteredIds=new Set(),missedQuestions=[],retryingWrong=false,chapterProgress=[];
 const questionBank=()=>catalog?.modes||{};
+const bestScore=(chapter,mode)=>Number(chapterProgress.find(p=>Number(p.chapter_number)===Number(chapter)&&p.mode===mode)?.best_correct)||0;
+const goldChapter=chapter=>modes.every(mode=>bestScore(chapter,mode.id)===8);
+const starsForPercent=p=>p>=100?5:p>=90?4:p>=80?3:p>=70?2:p>=60?1:0;
+async function refreshGrammarProgress(){
+ try{chapterProgress=await window.WillenaMissionBasket?.getGrammarBookProgress?.()||[];renderUnitsProgress();renderModeCards();}
+ catch(e){console.warn('[Grammar Books] saved mastery unavailable',e)}
+}
+function renderUnitsProgress(){
+ $('grammarUnitStrip')?.querySelectorAll('[data-unit]').forEach(el=>{
+  const number=Number(el.dataset.unit),gold=goldChapter(number);
+  el.classList.toggle('is-golden',gold);
+  el.querySelector('.vocab-unit-gold')?.remove();
+  if(gold)el.insertAdjacentHTML('beforeend','<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="골드 메달">');
+ });
+ const count=$('grammarGoldCount');if(count)count.textContent=String(units.filter(u=>goldChapter(u.unit_number)).length);
+}
 function shuffle(items){const out=[...items];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out}
 function prepareRound(questions,mode){
  return shuffle(questions).map(q=>{
@@ -106,10 +122,11 @@ function selectUnit(number){
  $('grammarModeCards').hidden=!playable;$('grammarNotReady').hidden=playable;
  $('grammarGuideOpen').disabled=!unit;
  if(playable)renderModeCards();
+ renderUnitsProgress();
 }
 function renderModeCards(){
  const mount=$('grammarModeCards');if(!mount)return;
- mount.innerHTML=modes.map((mode,i)=>'<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:0"><span>0%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">STEP '+(i+1)+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">★ 0/5</span></span></button>').join('');
+ mount.innerHTML=modes.map((mode,i)=>{const best=bestScore(activeUnit,mode.id),pct=Math.round(best/8*100),stars=starsForPercent(pct);return '<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:'+pct+'"><span>'+pct+'%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">STEP '+(i+1)+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">★ '+stars+'/5</span></span></button>'}).join('');
 }
 async function showBook(book,push=true){
  if(!book)return;activeBook=book;activeMode=null;
@@ -123,6 +140,7 @@ async function showBook(book,push=true){
  strip.innerHTML=units.map(u=>'<button type="button" class="study-v2-unit" data-unit="'+Number(u.unit_number)+'">Unit '+Number(u.unit_number)+'</button>').join('');
  strip.hidden=!units.length;
  if(units.length)selectUnit(Number(units[0].unit_number));
+ if(book.title.trim()==='Grammar Ten 완성 2')void refreshGrammarProgress();
  else {$('grammarUnitTitle').textContent='등록된 단원이 없습니다.';$('grammarNotReady').hidden=false;}
  if(push)updateUrl(book.id);
  window.scrollTo(0,0);
@@ -153,7 +171,7 @@ function startMode(mode){
  if(!modes.some(x=>x.id===mode)||!activeBook)return;
  const panel=$('grammarModeCards');panel.setAttribute('aria-busy','true');
  loadQuestions().then(()=>{
-  activeMode=mode;activeQuestions=prepareRound(questionBank()[mode]||[],mode);position=0;correct=0;checked=false;
+  activeMode=mode;activeQuestions=prepareRound(questionBank()[mode]||[],mode);masteredIds=new Set();missedQuestions=[];retryingWrong=false;position=0;correct=0;checked=false;
   $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;
   renderQuestion();window.scrollTo(0,0);
  }).catch(err=>{console.error(err);$('grammarNotReady').textContent='문제를 불러오지 못했어요. 다시 시도해 주세요.';$('grammarNotReady').hidden=false}).finally(()=>panel.removeAttribute('aria-busy'));
@@ -165,19 +183,31 @@ async function checkAnswer(){
  const btn=$('grammarCheck');btn.disabled=true;renderer.setDisabled(true);
  let result;
  try{result=await grammarEngine.gradeQuestion(shared,response)}catch(e){console.error('[grammar books] grading failed',e);renderer.setDisabled(false);btn.disabled=false;return}
- checked=true;if(result.correct)correct++;
+ checked=true;if(result.correct){correct++;masteredIds.add(q.id)}else missedQuestions.push(q);
  playStudentSfx(result.correct?'correct':'wrong');
  renderer.showFeedback(result);
  btn.hidden=true;$('grammarSkip').hidden=true;$('grammarNext').hidden=false;$('grammarNext').classList.add('is-next');
  $('grammarNext').textContent=position===activeQuestions.length-1?'Finish':'Next Question →';
 }
-function finishRound(){
+async function finishRound(){
  playStudentSfx('complete');
  $('grammarRound').hidden=true;$('grammarResult').hidden=false;
- const total=activeQuestions.length;
- $('grammarResultScore').textContent=correct+' / '+total;
- $('grammarResultPercent').textContent=Math.round(correct/total*100)+'%';
- $('grammarResultText').textContent='이번 연습 결과예요. 다른 모드에도 도전해 보세요.';
+ const total=8,mastered=masteredIds.size;
+ $('grammarResultScore').textContent=mastered+' / '+total;
+ $('grammarResultPercent').textContent=Math.round(mastered/total*100)+'%';
+ $('grammarResultText').textContent=missedQuestions.length?'틀린 문제 '+missedQuestions.length+'개만 다시 풀어보세요.':'모든 문제를 맞혔어요!';
+ $('grammarRetry').hidden=missedQuestions.length===0;
+ $('grammarRetry').textContent='오답 다시 풀기 ('+missedQuestions.length+')';
+ if(!retryingWrong||!missedQuestions.length){
+  try{
+   await window.WillenaMissionBasket?.recordGrammarBookRound?.(activeUnit,activeMode,mastered);
+   await refreshGrammarProgress();
+   if(!missedQuestions.length){
+    void window.WillenaMissionBasket?.recordCompletedActivity?.('Grammar Genius Books','grammar-ten-2-chapter-'+activeUnit+'-'+activeMode);
+    void window.WillenaAchievements?.refresh?.();
+   }
+  }catch(error){console.error('[Grammar Books] result not saved',error);$('grammarResultText').textContent+=' 점수를 저장하지 못했습니다. 다시 시도해 주세요.';}
+ }
  window.scrollTo(0,0);
 }
 function goToModes(){
@@ -204,9 +234,13 @@ $('grammarGuideClose')?.addEventListener('click',()=>$('grammarGuideDialog').clo
 list?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-book]');if(el)showBook(books.find(b=>String(b.id)===el.dataset.grammarBook))});
 $('grammarModeCards')?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-mode]');if(el)startMode(el.dataset.grammarMode)});
 $('grammarCheck')?.addEventListener('click',checkAnswer);
-$('grammarSkip')?.addEventListener('click',()=>{if(checked||!activeMode)return;position++;renderQuestion()});
+$('grammarSkip')?.addEventListener('click',()=>{if(checked||!activeMode)return;missedQuestions.push(activeQuestions[position]);position++;renderQuestion()});
 $('grammarNext')?.addEventListener('click',()=>{position++;renderQuestion()});
-$('grammarRetry')?.addEventListener('click',()=>{if(activeMode)startMode(activeMode)});
+$('grammarRetry')?.addEventListener('click',()=>{
+ if(!activeMode||!missedQuestions.length)return;
+ activeQuestions=[...missedQuestions];missedQuestions=[];retryingWrong=true;position=0;correct=0;checked=false;
+ $('grammarResult').hidden=true;$('grammarRound').hidden=false;renderQuestion();
+});
 $('grammarResultBack')?.addEventListener('click',goToModes);
 $('grammarRoundBack')?.addEventListener('click',goToModes);
 back?.addEventListener('click',()=>{if(!$('grammarRound').hidden||!$('grammarResult').hidden){goToModes();return}showHome()});
