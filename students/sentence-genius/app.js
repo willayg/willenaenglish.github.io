@@ -3,6 +3,7 @@
 import {studentIdentity,signedInProfile,assignedBooks,loadUnits,loadSentences,
   loadTeacherClasses,loadTeacherBookCatalog,loadTeacherClassHomework} from './content.js?v=sg-no-approval-v4.1';
 import {openUnit} from './scoring.js?v=sg-coach-gold-v3';
+import {geniusSessionContext,geniusHomeworkFromUrl} from '/students/components/genius-session-context.js?v=20261104-a';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
 import {createScreens} from './screens.js?v=sg-homework-progress-v5b';
@@ -11,7 +12,7 @@ import {loadSentenceHomework} from './homework.js?v=sg-homework-unified-v6';
 
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
   loadToken:0,loading:null,teacher:false,homework:[],simMode:'class',simClasses:[],simCatalog:[],
-  simClass:null,simToken:0};
+  simClass:null,simToken:0,homeworkSession:null,homeworkStore:null};
 let navigation;
 let homeworkRefresh=0;
 let goldBookRefresh=0;
@@ -33,9 +34,9 @@ async function refreshStudentHomework(){
   }catch(error){console.warn('[Sentence Genius] homework refresh unavailable',error)}
 }
 const screens=createScreens({
-  book:id=>void openBook(id),
-  homework:(bookId,unitId)=>void openBook(bookId,{unitId}),
-  unit:id=>void selectUnit(id),
+  book:id=>{clearHomeworkSession();void openBook(id)},
+  homework:assignment=>void openHomeworkSession(assignment),
+  unit:id=>{if(state.homeworkSession&&String(id)!==String(state.homeworkSession.unit_id))clearHomeworkSession();void selectUnit(id)},
   start:mode=>openSession(mode),
   home:()=>navigation.home(),
   simMode:mode=>void changeSimulationMode(mode),
@@ -45,14 +46,40 @@ const screens=createScreens({
 });
 const session=createSession({
   onBack:()=>navigation.back(),
-  onHome:()=>navigation.home(),
+  onHome:()=>{clearHomeworkSession();navigation.home()},
   onProgress:()=>screens.progress(),
   onFinish:()=>{window.WillenaMissionBasket?.recordCompletedActivity?.('sentence-session:'+Date.now());screens.progress();void refreshStudentHomework();void refreshHomeAchievements()},
   onMessage:message=>screens.notice(message)
 });
+function clearHomeworkSession(){
+ state.homeworkSession=null;state.homeworkStore=null;
+ screens.setHomeworkSession(null);
+ const u=new URL(location.href);
+ if(u.searchParams.has('homework')){u.searchParams.delete('homework');history.replaceState(history.state,'',u.pathname+u.search)}
+}
+async function openHomeworkSession(assignment){
+ if(state.teacher||!assignment?.id)return;
+ const record=state.homework.find(a=>String(a.id)===String(assignment.id));
+ if(!record)return screens.notice('This homework is no longer assigned to you.');
+ state.homeworkSession=record;state.homeworkStore=null;
+ const u=new URL(location.href);u.searchParams.set('homework',record.id);
+ history.replaceState(history.state,'',u.pathname+u.search);
+ await openBook(record.book_id,{unitId:record.unit_id});
+ if(state.homeworkSession?.id===record.id)screens.setHomeworkSession(record,state.homeworkStore);
+}
 function currentContext(){
-  return{book:state.book,unit:state.unit,items:state.items,store:state.store,
-    preview:state.teacher};
+ const hw=state.homeworkSession;
+ if(!hw)return{book:state.book,unit:state.unit,items:state.items,store:state.store,
+   preview:state.teacher,sessionContext:geniusSessionContext({bookId:state.book?.id,unitId:state.unit?.id})};
+ const targets=new Set((hw.target_sentence_ids||[]).map(String));
+ const items=state.items.filter(item=>targets.has(String(item.id)));
+ if(!state.homeworkStore){
+  state.homeworkStore=openUnit(state.student.id,state.unit.id,{preview:true});
+  state.homeworkStore.hydrateServer((hw.passed_items||[]).map(p=>({id:p.sentence_id,mode:p.mode,passed:true,attempts:1})));
+ }
+ return {book:state.book,unit:state.unit,items,store:state.homeworkStore,
+  preview:state.teacher,homework:hw,
+  sessionContext:geniusSessionContext({assignmentId:hw.id,bookId:state.book.id,unitId:state.unit.id})};
 }
 async function selectUnit(id,{routeUpdate=true}={}){
   const unit=state.units.find(x=>String(x.id)===String(id));
@@ -67,6 +94,7 @@ async function selectUnit(id,{routeUpdate=true}={}){
     state.items=items;
     state.store=openUnit(state.student.id,unit.id,{preview:state.teacher});
     screens.showBook({newBook:state.book,newUnits:state.units,newUnit:unit,newItems:items,newStore:state.store});
+    if(state.homeworkSession)screens.setHomeworkSession(state.homeworkSession,state.homeworkStore);
     screens.notice(items.length?'':'이 단원에 사용할 수 있는 영어·한국어 문장이 없습니다.');
     if(!state.teacher)try{
       const rows=await getSentenceMastery(state.book.id,unit.id);
@@ -143,7 +171,9 @@ async function openBook(id,{unitId=null,routeUpdate=true}={}){
 }
 function openSession(mode,{routeUpdate=true}={}){
   if(!state.book||!state.unit||!state.store||!state.items.length)return;
-  const started=session.start(mode,currentContext());
+  if(state.homeworkSession&&!state.homeworkSession.required_modes?.includes(mode))return;
+  const context=currentContext();if(!context.items.length)return screens.notice('Assigned sentence content unavailable.');
+  const started=session.start(mode,context);
   if(!started)return;
   screens.visible('activity');
   if(routeUpdate)navigation.push({
@@ -285,9 +315,14 @@ async function boot(){
     // A homework mission may deep-link to an assigned book and unit. Verify
     // the book belongs to this student's real assignment before opening.
     const params=new URLSearchParams(location.search);
-    const homeworkBook=params.get('book'),homeworkUnit=params.get('unit');
-    if(homeworkBook&&homeworkUnit&&state.books.some(b=>String(b.id)===homeworkBook)){
-      await openBook(homeworkBook,{unitId:homeworkUnit});
+    const assigned=geniusHomeworkFromUrl();
+    const hw=assigned&&state.homework.find(row=>String(row.id)===assigned);
+    if(hw)await openHomeworkSession(hw);
+    else{
+     const homeworkBook=params.get('book'),homeworkUnit=params.get('unit');
+     if(homeworkBook&&homeworkUnit&&state.books.some(b=>String(b.id)===homeworkBook)){
+       await openBook(homeworkBook,{unitId:homeworkUnit});
+     }
     }
   }catch(error){
     console.warn('[Sentence Genius] startup failed',error);
