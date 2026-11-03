@@ -368,6 +368,7 @@ async function loadOverview(scopeName='my',force=false){
      if(kind.includes('writing')||key.startsWith('writing_genius:'))app='Writing Genius';
      else if(kind.includes('puzzle')||key.startsWith('puzzles:'))app='Puzzles';
      else if(kind.includes('sentence')||sourceKind==='sentence_genius')app='Sentence Genius';
+     else if(sourceKind==='grammar_books')app='Grammar Genius';
     }
     return {...row,_table:source.table,app,label:source.label(row),isActive:source.isActive(row)};
    });
@@ -393,6 +394,7 @@ async function loadOverview(scopeName='my',force=false){
   const hasWritingSentence=rows.some(row=>row.app==='Writing Genius'&&row.list_key==='writing_genius:sentence');
   const jobs=[
    {name:'Class progress',enabled:hasApp('Grammar Genius'),path:'rpc/teacher_homework_class_progress_v1',body:'{}'},
+   {name:'Grammar book progress',enabled:rows.some(row=>row.source_type==='grammar_books'),path:'rpc/teacher_grammar_book_homework_progress_v1',body:'{}'},
    {name:'Word class activity',enabled:hasApp('Word Genius'),path:'rpc/teacher_word_homework_class_progress_v1',body:'{}'},
    {name:'Writing progress',enabled:rows.some(row=>row.app==='Writing Genius'&&row.list_key!=='writing_genius:sentence'),path:'rpc/teacher_creative_writing_progress_v1',body:'{}'},
    {name:'Sentence writing progress',enabled:hasWritingSentence,path:'rpc/teacher_writing_sentence_homework_progress_v1',body:'{}'},
@@ -413,6 +415,7 @@ async function loadOverview(scopeName='my',force=false){
   }));
   const asMap=(name,key='id')=>new Map((outputs.get(name)||[]).map(item=>[id(item[key]),item]));
   const classProgress=asMap('Class progress');
+  const grammarBookProgress=asMap('Grammar book progress');
   const wordClassProgress=asMap('Word class activity');
   const writingProgress=asMap('Writing progress');
   const writingSentenceProgress=asMap('Sentence writing progress');
@@ -449,7 +452,7 @@ async function loadOverview(scopeName='my',force=false){
      const outcome=progress.get(id(row.id)),target=Number(row.target_count)||0;
      if(row.app==='내신'&&outcome&&target>0)return Math.min(1,(Number(outcome.done)||0)/target);
      if(row.app==='Grammar Genius'){
-      const x=classProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.passed)/Number(x.students):null;
+      const x=row.source_type==='grammar_books'?grammarBookProgress.get(id(row.id)):classProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.passed)/Number(x.students):null;
      }
      if(row.app==='Writing Genius'){
       const x=row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
@@ -490,7 +493,8 @@ async function loadOverview(scopeName='my',force=false){
       const done=result?Number(result.done)||0:0;
       const target=Number(row.target_count)||0;
       const pct=target?(done>=target&&(Number(result?.unresolved)||0)>0?99:Math.min(100,Math.round(done/target*100))):null;
-      const grammarResult=classProgress.get(id(row.id));
+      const grammarResult=row.source_type==='grammar_books'?grammarBookProgress.get(id(row.id)):classProgress.get(id(row.id));
+      const visiblePct=row.app==='Grammar Genius'&&Number(grammarResult?.students)>0?Math.round(100*Number(grammarResult.passed)/Number(grammarResult.students)):pct;
       const wordResult=row.app==='Word Genius'?wordClassProgress.get(id(row.id)):null;
       const writingResult=row.app==='Writing Genius'?(row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id))):null;
       const puzzleResult=row.app==='Puzzles'?puzzleProgress.get(id(row.id)):null;
@@ -502,7 +506,7 @@ async function loadOverview(scopeName='my',force=false){
         :'Completion data not available for this app';
       const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
       const ownedByMe=id(row.created_by)===teacher;
-      return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(dday(row.due_at))+'</small><strong>'+esc(status)+(pct===null?'':' · '+pct+'%')+' ▾</strong></button>'+
+      return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(dday(row.due_at))+'</small><strong>'+esc(status)+(visiblePct===null?'':' · '+visiblePct+'%')+' ▾</strong></button>'+
         '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden><p>'+esc(detail)+'</p>'+(grammarResult?.student_rows?'<div class="ua-student-results">'+grammarResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.passed?'✓ Passed':'Not passed')+'</div>').join('')+'</div>':'')+(wordResult?.student_rows?'<div class="ua-student-results">'+wordResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+p.solved+' correctly answered / '+p.attempted+' attempted</div>').join('')+'</div>':'')+(writingResult?.student_rows?'<div class="ua-student-results">'+writingResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.completed?'✓ Submitted':'Not submitted')+'</div>').join('')+'</div>':'')+(puzzleResult?.student_rows?'<div class="ua-student-results">'+puzzleResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.completed?'✓ Completed · '+p.stars+'★':'Not completed')+'</div>').join('')+'</div>':'')+'</div>'+
         (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
         (ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label>'+(overviewStage==='active'?'<button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button>':'')+'</div>':'')+'</article>';
