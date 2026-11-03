@@ -1,3 +1,4 @@
+import {capturePointOrigin,showPointAward} from '../components/student-point-feedback.js?v=20260927-startup2';
 import {repeatUntilCorrect} from '../vocab-study/vocab-pass-flow.js?v=20260927-startup2';
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 import {grammarEngine} from './engine.js?v=1';
@@ -6,8 +7,68 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 고르시오.',icon:'◉'},{id:'check',label:'문장 판단',ko:'어법에 맞는 문장이나 틀린 문장을 고르시오.',icon:'✓'},{id:'hunt',label:'오류 찾기',ko:'밑줄 친 부분 중 어법상 틀린 것을 고르시오.',icon:'⌕'}];
-let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[],masteredIds=new Set(),missedQuestions=[],retryingWrong=false,chapterProgress=[];
+let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[],masteredIds=new Set(),missedQuestions=[],retryingWrong=false,chapterProgress=[],rewardSession=null;
 const questionBank=()=>catalog?.modes||{};
+function beginRewardSession(mode){
+ const reviewOnly=goldChapter(activeUnit);
+ rewardSession={id:window.crypto?.randomUUID?.()||('grammar-'+Date.now()+'-'+Math.random().toString(16).slice(2)),
+  chapter:activeUnit,mode,startedAt:new Date().toISOString(),firstCorrect:0,
+  points:0,awardedIds:new Set(),reviewOnly,completed:false};
+}
+async function completeRewardSession(){
+ const reward=rewardSession;
+ if(!reward||reward.completed)return null;
+ reward.completed=true;
+ const percent=Math.round(reward.firstCorrect/8*100);
+ const stars=reward.reviewOnly?0:starsForPercent(percent);
+ const points=reward.reviewOnly?0:reward.points;
+ if(reward.reviewOnly)return {percent,stars,points};
+ const listName='Grammar Ten 완성 2 · Unit '+reward.chapter+' · '+(modes.find(m=>m.id===reward.mode)?.label||reward.mode);
+ const payload={
+  reward_only:true,session_id:reward.id,
+  client_attempt_id:window.crypto?.randomUUID?.()||('grammar-reward-'+Date.now()),
+  book_id:null,unit_id:null,skill:'grammar',response_type:'reward',
+  activity_id:'grammar-books-reward',reward_mode:'grammar_books_'+reward.mode,
+  reward_list_name:listName,reward_list_size:8,reward_started_at:reward.startedAt,
+  reward_summary:{
+   completed:true,stars,accuracy:reward.firstCorrect/8,percent,
+   score:reward.firstCorrect,total:8,points_earned:points,
+   book_id:null,unit_id:null,assignment_id:null,session_source:'student',
+   grammar_mode:reward.mode,grammar_chapter:reward.chapter,
+   reward_scheme:'grammar-books-v1',star_cap:5
+  }
+ };
+ try{
+  const response=await (window.WillenaAPI?.fetch||fetch)('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload})
+  });
+  if(!response.ok)throw Error('Reward save HTTP '+response.status);
+  const data=await response.json().catch(()=>null);
+  if(data?.error||data?.success===false)throw Error(data?.error||'Reward save rejected');
+  window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.id,mode:'grammar_books_'+reward.mode,list_name:listName,list_size:8}}));
+  window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:stars}}));
+  try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
+  return {percent,stars,points};
+ }catch(error){
+  reward.completed=false;
+  console.warn('[Grammar Books] reward save failed',error);
+  throw error;
+ }
+}
+function showGrammarReward(reward){
+ const mount=$('grammarRewardMount');
+ if(!mount)return;
+ mount.replaceChildren();
+ if(!reward||!(reward.points||reward.stars))return;
+ const celebration=document.createElement('student-reward-celebration');
+ celebration.setAttribute('percent',String(reward.percent));
+ celebration.setAttribute('stars',String(reward.stars));
+ celebration.setAttribute('star-max','5');
+ celebration.setAttribute('points',String(reward.points));
+ celebration.setAttribute('label','GRAMMAR REWARD');
+ mount.append(celebration);
+}
+
 const bestScore=(chapter,mode)=>Number(chapterProgress.find(p=>Number(p.chapter_number)===Number(chapter)&&p.mode===mode)?.best_correct)||0;
 const goldChapter=chapter=>modes.every(mode=>bestScore(chapter,mode.id)===8);
 const starsForPercent=p=>p>=100?5:p>=90?4:p>=80?3:p>=70?2:p>=60?1:0;
@@ -171,7 +232,7 @@ function startMode(mode){
  if(!modes.some(x=>x.id===mode)||!activeBook)return;
  const panel=$('grammarModeCards');panel.setAttribute('aria-busy','true');
  loadQuestions().then(()=>{
-  activeMode=mode;activeQuestions=prepareRound(questionBank()[mode]||[],mode);masteredIds=new Set();missedQuestions=[];retryingWrong=false;position=0;correct=0;checked=false;
+  activeMode=mode;activeQuestions=prepareRound(questionBank()[mode]||[],mode);masteredIds=new Set();missedQuestions=[];retryingWrong=false;position=0;correct=0;checked=false;beginRewardSession(mode);
   $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;
   renderQuestion();window.scrollTo(0,0);
  }).catch(err=>{console.error(err);$('grammarNotReady').textContent='문제를 불러오지 못했어요. 다시 시도해 주세요.';$('grammarNotReady').hidden=false}).finally(()=>panel.removeAttribute('aria-busy'));
@@ -183,7 +244,18 @@ async function checkAnswer(){
  const btn=$('grammarCheck');btn.disabled=true;renderer.setDisabled(true);
  let result;
  try{result=await grammarEngine.gradeQuestion(shared,response)}catch(e){console.error('[grammar books] grading failed',e);renderer.setDisabled(false);btn.disabled=false;return}
- checked=true;if(result.correct){correct++;masteredIds.add(q.id)}else if(repeatUntilCorrect(result.correct))missedQuestions.push(q);
+ checked=true;
+ if(result.correct){
+  correct++;masteredIds.add(q.id);
+  if(rewardSession&&!rewardSession.awardedIds.has(q.id)){
+   rewardSession.awardedIds.add(q.id);
+   if(!rewardSession.reviewOnly){
+    rewardSession.points+=2;
+    showPointAward({amount:2,origin:capturePointOrigin($('grammarSharedQuestionHost'))}).catch(()=>{});
+   }
+   if(!retryingWrong)rewardSession.firstCorrect++;
+  }
+ }else if(repeatUntilCorrect(result.correct))missedQuestions.push(q);
  playStudentSfx(result.correct?'correct':'wrong');
  renderer.showFeedback(result);
  btn.hidden=true;$('grammarSkip').hidden=true;$('grammarNext').hidden=false;$('grammarNext').classList.add('is-next');
@@ -196,6 +268,7 @@ async function finishRound(){
  $('grammarResultScore').textContent=mastered+' / '+total;
  $('grammarResultPercent').textContent=Math.round(mastered/total*100)+'%';
  $('grammarResultText').textContent=missedQuestions.length?'틀린 문제 '+missedQuestions.length+'개만 다시 풀어보세요.':'모든 문제를 맞혔어요!';
+ showGrammarReward(null);
  $('grammarRetry').hidden=missedQuestions.length===0;
  $('grammarRetry').textContent='오답 다시 풀기 ('+missedQuestions.length+')';
  if(!retryingWrong||!missedQuestions.length){
@@ -203,6 +276,10 @@ async function finishRound(){
    if(typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
    await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,mastered);
    await refreshGrammarProgress();
+   if(!missedQuestions.length){
+    try{showGrammarReward(await completeRewardSession())}
+    catch(rewardError){$('grammarResultText').textContent+=' 보상 저장에 실패했습니다.'}
+   }
    if(!missedQuestions.length){
     void window.WillenaMissionBasket?.recordCompletedActivity?.('grammar-ten-2-chapter-'+activeUnit+'-'+activeMode,'Grammar Genius Books');
     void window.WillenaAchievements?.refresh?.();
