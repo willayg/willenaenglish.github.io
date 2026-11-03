@@ -32,7 +32,7 @@ async function refreshStudentHomework(){
     state.homework=assignments;
     if(state.homeworkSession){
       const next=assignments.find(a=>String(a.id)===String(state.homeworkSession.id));
-      if(next){state.homeworkSession=next;state.homeworkStore=null;screens.setHomeworkSession(next,null)}
+      if(next){state.homeworkSession=next;state.homeworkStore=null;if(state.unit?.id)currentContext();screens.setHomeworkSession(next,state.homeworkStore)}
       else clearHomeworkSession();
     }
     screens.homework(assignments);
@@ -70,7 +70,7 @@ async function openHomeworkSession(assignment){
  const u=new URL(location.href);u.searchParams.set('homework',record.id);
  history.replaceState(history.state,'',u.pathname+u.search);
  await openBook(record.book_id,{unitId:record.unit_id});
- if(state.homeworkSession?.id===record.id)screens.setHomeworkSession(record,state.homeworkStore);
+ if(state.homeworkSession?.id===record.id){if(state.unit?.id)currentContext();screens.setHomeworkSession(record,state.homeworkStore)}
 }
 function currentContext(){
  const hw=state.homeworkSession;
