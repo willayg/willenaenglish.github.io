@@ -3,7 +3,7 @@
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
 import {createDiaryFlow} from './diary-flow.js?v=20261104-determiner2';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
-import {createSentencePractice} from './sentence-practice.js?v=20261104-history-picker2';
+import {createSentencePractice} from './sentence-practice.js?v=20261104-partial-progress3';
 const API_BASE='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const NAV='willenaWritingGeniusNav';
