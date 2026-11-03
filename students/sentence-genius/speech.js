@@ -3,7 +3,7 @@
 import {createSpeakingAudioCache} from '/students/vocab-study/vocab-listening-cache.js';
 import {matchSpeakingTarget} from '/students/vocab-study/speaking-match.js';
 import {matchFlexibleSentence,detectAlmostRight} from './flexibility.js?v=sg-flex-v2c';
-import {judgeSentenceSpeechAlternatives} from '/students/shared/sentence-speech-tolerance.js?v=20261103-speech1';
+import {judgeSentenceSpeechAlternatives} from '/students/shared/sentence-speech-tolerance.js?v=20261104-determiner2';
 const endpoint='/api/vocab-ai-speech';
 async function api(body){
   const headers={'Content-Type':'application/json'};
