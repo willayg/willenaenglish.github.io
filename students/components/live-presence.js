@@ -26,7 +26,7 @@ try{
 let lastActivity=Date.now(),lastSent=0,lastPayload="",pending=false,stopped=false,manual=null,timeout=null;
 const cleanup=()=>{if(timeout){clearTimeout(timeout);timeout=null;}};
 function visible(id){const el=document.getElementById(id);if(!el||el.hidden)return false;const style=getComputedStyle(el);return style.display!=="none"&&style.visibility!=="hidden"&&!!el.getClientRects().length;}
-function value(id){return String(document.getElementById(id)?.textContent||"").replace(/\s+/g," ").trim().slice(0,85);}
+function value(id){const el=document.getElementById(id);if(!el)return "";const txt=el.tagName==="SELECT"?(el.selectedOptions?.[0]?.textContent||""):el.textContent;return String(txt||"").replace(/\s+/g," ").trim().slice(0,85);}
 function label(s){return String(s||"").replace(/[\x00-\x1f]/g," ").trim().slice(0,100);}
 function pickValue(names){for(const name of names){const t=value(name);if(t)return t;}return "";}
 function detect(){
@@ -57,7 +57,7 @@ function detect(){
 function context(){
  const d={...detect(),...(manual||{})};
  const query=new URLSearchParams(location.search);
- const hash=new URLSearchParams(location.hash.replace(/^#\\??/,""));
+ const hash=new URLSearchParams(location.hash.slice(1).replace(/^\?/,""));
  const saved=history.state&&typeof history.state==="object"?history.state:{};
  const assignmentId=d.assignment_id||query.get("assignment_id")||query.get("assignmentId")||query.get("teacherAssignmentId")||hash.get("assignment_id")||hash.get("teacherAssignmentId")||saved.assignment_id||saved.teacherAssignmentId||null;
  const match=UUID.test(assignmentId||"")?assignmentId:null;
@@ -88,7 +88,8 @@ function disconnect(){
  // Avoid false online while the tab is closed. Navigations may start a new heartbeat shortly.
  try{fetch(DISCONNECT,{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_id:sessionId}),keepalive:true}).catch(()=>{});}catch{}
 }
-// No automatic disconnect on pagehide: navigation to a different app in the same tab\n// can race the next heartbeat. The server expires closed sessions after 90 seconds.
+// No automatic disconnect on pagehide: navigation to a different app in the same tab
+// can race the next heartbeat. The server expires closed sessions after 90 seconds.
 window.WillenaPresence={
  setActivity(fields){manual={...(manual||{}),...fields};schedule();},
  clearActivity(){manual=null;schedule();},
