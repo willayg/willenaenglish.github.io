@@ -88,7 +88,14 @@ function drawFinishScreen(){
  $('grammarFinishMain').scrollTop=0;
 }
 
-const bestScore=(chapter,mode)=>Number(chapterProgress.find(p=>Number(p.chapter_number)===Number(chapter)&&p.mode===mode)?.best_correct)||0;
+const bestScore=(chapter,mode)=>{
+ const row=chapterProgress.find(p=>Number(p.chapter_number)===Number(chapter)&&p.mode===mode);
+ if(Number(chapter)>=2){
+  const ids=Array.isArray(row?.mastered_question_ids)?row.mastered_question_ids:[];
+  return ids.filter(id=>id.startsWith('gt2-c'+chapter+'-'+mode+'-') && id.endsWith('-r2')).length;
+ }
+ return Number(row?.best_correct)||0;
+};
 const goldChapter=chapter=>modes.every(mode=>bestScore(chapter,mode.id)===8);
 const starsForPercent=p=>p>=100?5:p>=90?4:p>=80?3:p>=70?2:p>=60?1:0;
 async function refreshGrammarProgress(){
