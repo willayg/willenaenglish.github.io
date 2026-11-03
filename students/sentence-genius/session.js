@@ -2,7 +2,7 @@
 // in their existing Word Genius / student-platform canonical modules.
 import {QuestionRenderer} from '/shared/questions/question-renderer.js';
 import {recordSentenceAttempt} from './tracking.js?v=sg-decisions-v4a';
-import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=sg-no-approval-v4.1';
+import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=20261103-speech2';
 import {rewardSession} from './rewards.js?v=sg-coach-gold-v3';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
 import {renderStudentSessionFinish} from '/students/components/student-session-finish.js?v=1';
