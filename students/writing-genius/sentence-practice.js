@@ -1,3 +1,4 @@
+import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
 // Writing Genius v1.11.0: use available unit sentences (up to ten), repeat wrong answers.
 // First attempt fixes stars; DB model and approved variations are checked before AI.
 import {getAssignedPracticeBooks,getPracticeUnits,
@@ -158,7 +159,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   if(s.status==='completed'||s.current_index>=s.questions.length){showDone();return}
   setScreen('round');
   const i=s.current_index,card=s.questions[i],resp=current();
-  txt('spModeLabel','문장 만들기');
+  txt('spModeLabel',state.sessionContext?.isHomework?'숙제 · 문장 만들기':'문장 만들기');
   txt('spQuestionCount',(i+1)+' / '+s.questions.length);
   $('spProgressBar').style.width=(i/s.questions.length*100)+'%';
   txt('spUnitName',s.book_title+' · '+(card.unitName||'Unit'));
@@ -419,6 +420,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  }
  async function open(student,homework=null){
   state.homework=homework;
+  state.sessionContext=geniusSessionContext({assignmentId:homework?.assignmentId,bookId:homework?.bookId,unitId:homework?.unitId,mode:'sentence_writing'});
   state.student=student;state.active=true;state.loading=true;state.session=null;
   state.catalogError=false;setScreen('picker');saveLabel('');
   $('spStart').disabled=true;notify('오늘의 연습을 불러오는 중…');
@@ -447,17 +449,17 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   // A successful request previously left the initial "loading" message
   // onscreen indefinitely, even though the textbook buttons were ready.
   if(!state.catalogError)notify('');
-  if(!state.homework?.assignmentId&&state.today?.status==='in_progress'){
+  if(!state.sessionContext?.isHomework&&state.today?.status==='in_progress'){
    state.session=structuredClone(state.today);showRound();
   }
  }
  async function startSession(){
   if(state.loading)return;
-  if(!state.homework?.assignmentId&&state.today?.status==='in_progress'){
+  if(!state.sessionContext?.isHomework&&state.today?.status==='in_progress'){
    state.session=structuredClone(state.today);showRound();return;
   }
   const book=state.books.find(b=>b.id===field('spBook')),unit=field('spUnit');
-  if(state.homework?.assignmentId&&(String(book?.id)!==String(state.homework.bookId)||String(unit)!==String(state.homework.unitId))){notify('숙제에 지정된 교재와 단원을 선택하세요.',true);return}
+  if(state.sessionContext?.isHomework&&(String(book?.id)!==String(state.homework.bookId)||String(unit)!==String(state.homework.unitId))){notify('숙제에 지정된 교재와 단원을 선택하세요.',true);return}
   if(!book||!unit||state.catalogError)return;
   state.loading=true;$('spStart').disabled=true;
   notify('선택한 단원의 문장을 가져오는 중…');
@@ -469,7 +471,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
     notify('이 단원에는 연습할 수 있는 문장이 없어요. 다른 단원을 선택해 주세요.',true);return;
    }
    const made=await api('POST','',{
-    student_id:state.student.id,exercise_type:'make',assignment_id:state.homework?.assignmentId||null,book_id:book.id,
+    student_id:state.student.id,exercise_type:'make',assignment_id:state.sessionContext?.assignmentId||null,book_id:book.id,
     book_title:book.title,unit_id:unit,questions:cards,
     responses:[],current_index:0,status:'in_progress'});
    if(!Array.isArray(made)||!made[0])throw Error('연습 시작 기록을 저장하지 못했어요.');
