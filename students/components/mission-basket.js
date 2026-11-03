@@ -140,7 +140,7 @@ async function grammarBookHomework(){
 async function sentences(){
  const d=await authed(SUPA+'/rest/v1/rpc/sg_homework_student_v2',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
  return (d.assignments||[]).map(a=>{
-  const query=new URLSearchParams();if(a.book_id)query.set('book',a.book_id);if(a.unit_id)query.set('unit',a.unit_id);
+  const query=new URLSearchParams();if(a.book_id)query.set('book',a.book_id);if(a.unit_id)query.set('unit',a.unit_id);if(a.id)query.set('homework',a.id);
   const entry=item('sentence:'+a.id,'Sentence Genius',a.title||a.unit_title||'문장 숙제','/students/sentence-genius/'+(query.size?'?'+query:''),a.created_at||a.assigned_at||a.due_at,Number(a.total)>0&&Number(a.done)>=Number(a.total));
   entry.teacherId=a.created_by||null;entry.teacherName=a.teacher_name||'';
   entry.progress=Number(a.total)>0?Math.min(100,Math.round(100*(Number(a.done)||0)/Number(a.total))):0;
