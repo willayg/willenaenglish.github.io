@@ -36,7 +36,7 @@ async function standardHomework(){
  if(grammarRows.length){
   try{
    const ids=grammarRows.map(a=>a.id).filter(Boolean);
-   grammarProof=await authed(SUPA+'/rest/v1/grammar_book_homework_completions?select=assignment_id,mode&assignment_id=in.('+ids.map(encodeURIComponent).join(',')+')&limit=1000');
+   grammarProof=await authed(SUPA+'/rest/v1/grammar_book_homework_completions?select=assignment_id,mode,correct_count&assignment_id=in.('+ids.map(encodeURIComponent).join(',')+')&limit=1000');
   }catch(error){console.warn('[mission basket] Grammar Books homework progress unavailable',error)}
  }
  const entries=await Promise.all((d.assignments||[]).map(async a=>{
@@ -49,7 +49,7 @@ async function standardHomework(){
   else if(source==='grammar_books'){
     app='Grammar Genius Books';
     const chapter=Number(a.list_meta?.chapter)||1;
-    url='/students/grammar-books/?book=1e3a2112-07be-45e2-a8fc-ce20011e0e57&unit='+chapter;
+    url='/students/grammar-books/?book='+encodeURIComponent(a.list_meta?.source_book_id||'1e3a2112-07be-45e2-a8fc-ce20011e0e57')+'&unit='+chapter+'&homework='+encodeURIComponent(a.id);
   }
   else if(source==='vocab_study'){app='Word Genius';url='/students/vocab-study/?open=wordtest'}
   else if(['wordlist','english_arcade','arcade','saved_game','grammar','phonics'].includes(source)){
@@ -63,11 +63,12 @@ async function standardHomework(){
   entry.teacherName=a.teacher_name||'';
   if(app==='Grammar Genius Books'){
    const required=Array.isArray(a.list_meta?.required_modes)?a.list_meta.required_modes:[];
-   const doneModes=new Set(grammarProof.filter(p=>String(p.assignment_id)===String(a.id)).map(p=>p.mode));
-   const count=required.filter(mode=>doneModes.has(mode)).length;
-   entry.progress=required.length?Math.round(count/required.length*100):0;
-   entry.done=required.length>0&&count===required.length;
-   entry.detail=count+'/'+required.length+' activities';
+   const evidence=grammarProof.filter(p=>String(p.assignment_id)===String(a.id));
+   const count=required.reduce((sum,mode)=>sum+Math.min(8,Math.max(0,Number(evidence.find(p=>p.mode===mode)?.correct_count)||0)),0);
+   const total=required.length*8;
+   entry.progress=total?Math.round(100*count/total):0;
+   entry.done=total>0&&count===total;
+   entry.detail=count+'/'+total+' questions';
   }
   if(app==='Writing Genius'||app==='Puzzles'){
     entry.progress=Number(a.creative_progress?.percent)||0;
@@ -117,7 +118,7 @@ async function grammarBookHomework(){
  const ids=assignments.map(a=>a.id).filter(Boolean);
  let evidence=[];
  try{
-  evidence=await authed(SUPA+'/rest/v1/grammar_book_homework_completions?select=assignment_id,mode&assignment_id=in.('+ids.map(encodeURIComponent).join(',')+')&limit=1500');
+  evidence=await authed(SUPA+'/rest/v1/grammar_book_homework_completions?select=assignment_id,mode,correct_count&assignment_id=in.('+ids.map(encodeURIComponent).join(',')+')&limit=1500');
  }catch(error){console.warn('[mission basket] Textbook homework evidence unavailable',error)}
  let userId='';
  try{const auth=await token();const claims=JSON.parse(atob(auth.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));userId=String(claims.sub||'');}catch{}
@@ -126,12 +127,13 @@ async function grammarBookHomework(){
   return !Array.isArray(targets)||!targets.length||targets.map(String).includes(userId);
  }).map(a=>{
   const meta=a.list_meta||{},required=Array.isArray(meta.required_modes)?meta.required_modes:[];
-  const done=new Set((evidence||[]).filter(p=>p.assignment_id===a.id).map(p=>p.mode));
-  const finished=required.filter(mode=>done.has(mode)).length;
+  const answers=(evidence||[]).filter(p=>p.assignment_id===a.id);
+  const finished=required.reduce((sum,mode)=>sum+Math.min(8,Math.max(0,Number(answers.find(p=>p.mode===mode)?.correct_count)||0)),0);
+  const total=required.length*8;
   const chapter=Number(meta.chapter)||1;
-  const link='/students/grammar-books/?book='+encodeURIComponent(meta.source_book_id||'1e3a2112-07be-45e2-a8fc-ce20011e0e57')+'&unit='+chapter;
-  const mission=item('standard:'+a.id,'Grammar Genius Books',a.title||'Grammar homework',link,a.created_at||a.due_at,required.length>0&&finished===required.length,finished+'/'+required.length+' activities');
-  mission.teacherId=a.created_by||null;mission.progress=required.length?Math.round(100*finished/required.length):0;
+  const link='/students/grammar-books/?book='+encodeURIComponent(meta.source_book_id||'1e3a2112-07be-45e2-a8fc-ce20011e0e57')+'&unit='+chapter+'&homework='+encodeURIComponent(a.id);
+  const mission=item('standard:'+a.id,'Grammar Genius Books',a.title||'Grammar homework',link,a.created_at||a.due_at,total>0&&finished===total,finished+'/'+total+' questions');
+  mission.teacherId=a.created_by||null;mission.progress=total?Math.round(100*finished/total):0;
   return mission;
  });
 }
