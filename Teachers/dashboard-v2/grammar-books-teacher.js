@@ -70,7 +70,7 @@ function boot(){
  const base=document.createElement('div');base.id='gfTeacherFoundationsPanel';
  old.forEach(n=>base.appendChild(n));
  const tabs=document.createElement('div');tabs.id='gfTeacherBookTabs';tabs.className='class-leaders-tabs';
- tabs.innerHTML='<button type="button" class="class-leaders-tab active" data-gf-teacher-path="books">Book Grammar</button><button type="button" class="class-leaders-tab" data-gf-teacher-path="foundations">Foundations</button>';
+ tabs.innerHTML='<button type="button" class="class-leaders-tab active" data-gf-teacher-path="books">Textbooks</button><button type="button" class="class-leaders-tab" data-gf-teacher-path="foundations">Foundations</button>';
  const panel=document.createElement('div');panel.id='gfTeacherBooksPanel';
  panel.innerHTML='<div class="page-head"><div><h1>Grammar Genius Books</h1><div class="panel-sub">Assigned textbook chapters and class completion</div></div><div class="filters"><select class="control" id="gfTeacherBookClass"><option value="">All Classes</option></select><button class="control" id="gfTeacherBooksRefresh" type="button">Refresh</button><button class="control ua-primary" id="gfTeacherBooksAssign" type="button">Assign Homework</button></div></div><div id="gfTeacherBookList" class="panel" style="padding:14px"></div>';
  view.append(tabs,panel,base);
