@@ -48,20 +48,20 @@ function render(){
  const groups=new Map();
  for(const s of students){
   const online=sessions.get(s.id);
-  const status=online?.status==="active"?"active":online?"idle":"offline";
-  counts[status]++;
+  const status=!state.presenceOk?"unavailable":online?.status==="active"?"active":online?"idle":"offline";
+  if(status!=="unavailable")counts[status]++;
   if(!groups.has(s.class))groups.set(s.class,[]);
   groups.get(s.class).push({...s,online,status});
  }
- for(const status of Object.keys(counts))$(status+"-count").textContent=counts[status];
+ for(const status of Object.keys(counts))$(status+"-count").textContent=state.presenceOk?counts[status]:"—";
  const root=$("classes");root.replaceChildren();
  if(!state.rosterOk){root.append(node("p","muted","Student roster unavailable."));return;}
  for(const cls of [...groups.keys()].sort(classOrder)){
-  const people=groups.get(cls).sort((a,b)=>({active:0,idle:1,offline:2}[a.status]-{active:0,idle:1,offline:2}[b.status])||a.name.localeCompare(b.name));
+  const people=groups.get(cls).sort((a,b)=>({active:0,idle:1,offline:2,unavailable:3}[a.status]-{active:0,idle:1,offline:2,unavailable:3}[b.status])||a.name.localeCompare(b.name));
   const h=node("div","class-head");h.append(node("h2","",cls),node("span","count",people.length+" students"));root.append(h);
   const grid=node("div","grid");
   for(const person of people){
-   const card=node("article","student"),top=node("div","student-head"),label=node("span","status "+person.status,person.status==="active"?"● Active":person.status==="idle"?"● Idle":"○ Offline");
+   const card=node("article","student"),top=node("div","student-head"),label=node("span","status "+person.status,person.status==="active"?"● Active":person.status==="idle"?"● Idle":person.status==="unavailable"?"— Unavailable":"○ Offline");
    top.append(node("strong","",person.name),label);card.append(top);
    const d=node("div","detail");
    if(person.online){
@@ -72,7 +72,7 @@ function render(){
     else if(person.online.entered_via_homework===true)d.append(node("span","homework","Opened from homework"));
     else d.append(node("div","muted","Practice / assignment not confirmed"));
     d.append(node("div","muted","Seen "+new Date(person.online.seen_at).toLocaleTimeString("en-KR",{hour:"2-digit",minute:"2-digit"})));
-   }else d.textContent="No current session";
+   }else d.textContent=state.presenceOk?"No current session":"Presence unavailable";
    card.append(d);grid.append(card);
   }root.append(grid);
  }
