@@ -116,6 +116,12 @@ function saveHomeworkQuestions(){
    body:JSON.stringify({p_assignment_id:assignment,p_chapter:chapter,p_mode:mode,p_session_id:session,p_mastered_ids:ids})
   });
   if(result?.success!==true)throw Error('Homework is not active or eligible');
+  if(activeHomework?.id===assignment){
+   const previous=homeworkModeEvidence.get(mode)?.mastered_question_ids||[];
+   const merged=[...new Set([...previous,...ids])];
+   homeworkModeEvidence.set(mode,{mastered_question_ids:merged,correct_count:Math.min(8,merged.length)});
+   if(activeMode===mode&&activeUnit===chapter)renderModeCards();
+  }
   await window.WillenaMissionBasket?.refresh?.();
  });
  return homeworkWrite;
