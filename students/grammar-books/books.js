@@ -296,8 +296,14 @@ async function finishRound(){
  if(!retryingWrong||!missedQuestions.length){
   try{
    if(typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
+   const alreadyGold=goldChapter(activeUnit);
    await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,masteredIds.size);
    await refreshGrammarProgress();
+   if(!alreadyGold&&goldChapter(activeUnit)){
+    const actions=$('grammarFinishMain').querySelector('.vocab-finish-actions');
+    actions?.insertAdjacentHTML('beforebegin',
+      '<div class="vocab-golden-award"><img class="vocab-golden-award-icon" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt=""><div><strong>Golden Unit earned!</strong><span>Unit '+activeUnit+' is mastered.</span></div></div>');
+   }
    if(!missedQuestions.length){
     try{showGrammarReward(await completeRewardSession())}
     catch(error){console.error('[Grammar Books] award failed',error);rewardMount.textContent='보상 저장에 실패했어요.'}
