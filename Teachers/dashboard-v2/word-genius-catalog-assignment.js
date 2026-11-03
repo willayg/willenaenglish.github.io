@@ -43,13 +43,29 @@ async function loadBooks(){
 }
 async function loadClasses(){
  const sel=panel()?.querySelector('#uaClass');if(!sel)return;
+ // The admin list endpoint can return a partial class list. Merge it with
+ // the canonical active-class roster so active classes are never omitted.
+ // Keep API-provided names as well, so newly added classes still appear.
+ const activeRoster=['Berkeley','Boston','Brown','Cambridge','Chicago','Hawaii','Manchester','MIT','New York','Oxford','Pre-Harvard','Princeton','Stanford','Sydney','Test','Yale'];
+ const names=new Map(activeRoster.map(name=>[name.toLowerCase(),name]));
+ const add=(name)=>{
+  const value=String(name||'').trim();
+  if(value)names.set(value.toLowerCase(),value);
+ };
  try{
- const url=window.WillenaAPI?.getApiUrl?.('/.netlify/functions/admin_classes?action=list')||'/.netlify/functions/admin_classes?action=list';
- const res=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/admin_classes?action=list'):fetch(url,{credentials:'include'}));const data=await res.json();
- let classes=Array.isArray(data.classes)?data.classes:[];
- if(!classes.length){const old=document.querySelector('#assignmentClassFilter');classes=[...(old?.options||[])].map(o=>({name:o.value})).filter(o=>o.name)}
- sel.innerHTML='<option value="">Choose class…</option>'+classes.map(c=>'<option value="'+esc(c.name||c.display_name)+'">'+esc(c.display_name||c.name)+'</option>').join('');
- }catch(e){const old=document.querySelector('#assignmentClassFilter');const classes=[...(old?.options||[])].map(o=>({name:o.value})).filter(o=>o.name);sel.innerHTML='<option value="">Choose class…</option>'+classes.map(c=>'<option value="'+esc(c.name)+'">'+esc(c.name)+'</option>').join('');if(!classes.length)message('Class list unavailable: '+e.message)}
+  const url=window.WillenaAPI?.getApiUrl?.('/.netlify/functions/admin_classes?action=list')||'/.netlify/functions/admin_classes?action=list';
+  const res=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/admin_classes?action=list'):fetch(url,{credentials:'include'}));
+  if(!res.ok)throw Error('Class list request failed ('+res.status+')');
+  const data=await res.json();
+  (Array.isArray(data.classes)?data.classes:[]).filter(c=>!c.status||c.status==='active').forEach(c=>add(c.name||c.display_name));
+ }catch(e){console.warn('[Word Genius] Class list endpoint unavailable; using active roster:',e)}
+ // Also retain classes visible in the shared assignment filter.
+ const old=document.querySelector('#assignmentClassFilter');
+ [...(old?.options||[])].forEach(o=>add(o.value));
+ const selected=sel.value;
+ const classes=[...names.values()].sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
+ sel.replaceChildren(new Option('Choose class…',''),...classes.map(name=>new Option(name,name)));
+ if(classes.includes(selected))sel.value=selected;
 }
 async function loadUnits({preserveSelection=false}={}){
  const bookId=panel()?.querySelector('#uaBook')?.value;
