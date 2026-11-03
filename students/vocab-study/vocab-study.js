@@ -1,3 +1,4 @@
+import {renderStudentSessionFinish} from '../components/student-session-finish.js?v=1';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {attachAISpeakingFallback} from './vocab-ai-speech-ui.js?v=20261024-round-mic2';
 import {createSpeakingAudioCache} from './vocab-listening-cache.js?v=20261024-audio-prefetch2';
@@ -2771,24 +2772,16 @@ async function finishSession(){
   questionStage.hidden=false;
   instructionEl.hidden=true;
   instructionEl.textContent='';
-  root.innerHTML=
-    '<section class="vocab-finish">'+
-      '<span class="eyebrow">SESSION COMPLETE</span>'+
-      '<h2>잘했어요!</h2>'+
-      '<p>이번 단어 학습이 끝났어요.</p>'+
-      '<div class="vocab-finish-stats">'+
-        '<div><strong>'+studied.length+'</strong><span>STUDIED</span></div>'+
-        '<div><strong>'+solid+'</strong><span>SOLID</span></div>'+
-        '<div><strong>'+review.length+'</strong><span>REVIEW</span></div>'+
-      '</div>'+
-      rewardSummaryHtml(reward)+
-      goldenAwardHtml()+
-      (reviewWords.length?'<div class="vocab-review-words"><strong>한 번 더 볼 단어</strong><br>'+reviewWords.map(escapeHtml).join(' · ')+'</div>':'')+
-      '<div class="vocab-finish-actions">'+
-        (reviewWords.length?'<button id="vocabReviewAgain" class="vocab-review-btn" type="button">Review '+reviewWords.length+'</button>':'')+
-        '<button id="vocabDone" class="vocab-done-btn" type="button">Finish</button>'+
-      '</div>'+
-    '</section>';
+  root.innerHTML=renderStudentSessionFinish({
+    title:'잘했어요!',
+    description:'이번 단어 학습이 끝났어요.',
+    stats:[{value:studied.length,label:'STUDIED'},{value:solid,label:'SOLID'},{value:review.length,label:'REVIEW'}],
+    rewardHtml:rewardSummaryHtml(reward),
+    goldHtml:goldenAwardHtml(),
+    reviewHtml:reviewWords.length?'<div class="vocab-review-words"><strong>한 번 더 볼 단어</strong><br>'+reviewWords.map(escapeHtml).join(' · ')+'</div>':'',
+    actionsHtml:(reviewWords.length?'<button id="vocabReviewAgain" class="vocab-review-btn" type="button">Review '+reviewWords.length+'</button>':'')+
+      '<button id="vocabDone" class="vocab-done-btn" type="button">Finish</button>'
+  });
   answerNote.hidden=true;
   el('vocabReviewAgain')?.addEventListener('click',reviewSession);
   el('vocabDone')?.addEventListener('click',closeSession);
