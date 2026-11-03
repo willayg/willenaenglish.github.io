@@ -46,5 +46,9 @@ service = "daily-study-v2"
 binding = "WORKSHEET_ASSETS"
 service = "word-builder-assets"
 
+[[services]]
+binding = "LIVE_PRESENCE"
+service = "willena-live-presence"
+
 [vars]
 NETLIFY_BASE = "https://willenaenglish.netlify.app"
