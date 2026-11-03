@@ -30,6 +30,11 @@ async function refreshStudentHomework(){
     const assignments=await loadSentenceHomework();
     if(current!==homeworkRefresh)return;
     state.homework=assignments;
+    if(state.homeworkSession){
+      const next=assignments.find(a=>String(a.id)===String(state.homeworkSession.id));
+      if(next){state.homeworkSession=next;state.homeworkStore=null;screens.setHomeworkSession(next,null)}
+      else clearHomeworkSession();
+    }
     screens.homework(assignments);
   }catch(error){console.warn('[Sentence Genius] homework refresh unavailable',error)}
 }
@@ -173,6 +178,7 @@ function openSession(mode,{routeUpdate=true}={}){
   if(!state.book||!state.unit||!state.store||!state.items.length)return;
   if(state.homeworkSession&&!state.homeworkSession.required_modes?.includes(mode))return;
   const context=currentContext();if(!context.items.length)return screens.notice('Assigned sentence content unavailable.');
+  if(state.homeworkSession)screens.setHomeworkSession(state.homeworkSession,state.homeworkStore);
   const started=session.start(mode,context);
   if(!started)return;
   screens.visible('activity');
@@ -182,6 +188,7 @@ function openSession(mode,{routeUpdate=true}={}){
 }
 async function applyRoute(route){
   if(route.screen==='home'){
+    if(state.homeworkSession)clearHomeworkSession();
     session.dispose();
     screens.home(state.books);screens.homework(state.homework);screens.visible('home');return;
   }
