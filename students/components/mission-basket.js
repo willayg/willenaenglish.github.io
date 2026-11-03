@@ -30,6 +30,15 @@ async function standardHomework(){
  const r=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&_='+Date.now());
  if(!r.ok)throw Error('Shared homework unavailable');
  const d=await r.json();if(!d.success)throw Error('Shared homework unavailable');
+ // One RLS-scoped read for all active Grammar Books assignments.
+ const grammarRows=(d.assignments||[]).filter(a=>a.source_type==='grammar_books');
+ let grammarProof=[];
+ if(grammarRows.length){
+  try{
+   const ids=grammarRows.map(a=>a.id).filter(Boolean);
+   grammarProof=await authed(SUPA+'/rest/v1/grammar_book_homework_completions?select=assignment_id,mode&assignment_id=in.('+ids.map(encodeURIComponent).join(',')+')&limit=1000');
+  }catch(error){console.warn('[mission basket] Grammar Books homework progress unavailable',error)}
+ }
  const entries=await Promise.all((d.assignments||[]).map(async a=>{
   const source=String(a.list_meta?.creative_type||a.list_meta?.source_type||a.source_type||a.list_meta?.app||'').toLowerCase().trim();
   // Sentence Genius has its own live feed below. Never misroute its rows to Arcade.
@@ -37,6 +46,11 @@ async function standardHomework(){
   let app,url;
   if(source==='writing_genius'){app='Writing Genius';url='/students/writing-genius/?homework='+encodeURIComponent(a.id)}
   else if(source==='puzzles'){app='Puzzles';url='/students/wordsearch/?homework='+encodeURIComponent(a.id)+'&mode='+encodeURIComponent(a.list_meta?.kind||'')}
+  else if(source==='grammar_books'){
+    app='Grammar Genius Books';
+    const chapter=Number(a.list_meta?.chapter)||1;
+    url='/students/grammar-books/?book=1e3a2112-07be-45e2-a8fc-ce20011e0e57&unit='+chapter;
+  }
   else if(source==='vocab_study'){app='Word Genius';url='/students/vocab-study/?open=wordtest'}
   else if(['wordlist','english_arcade','arcade','saved_game','grammar','phonics'].includes(source)){
     app='English Arcade';url='/Games/english_arcade/index.html?openHomework=1';
@@ -47,6 +61,14 @@ async function standardHomework(){
   const entry=item('standard:'+a.id,app,a.title||a.list_title||'숙제',url,a.created_at||a.assigned_at||a.due_at,false,a.due_at?'기한 '+new Date(a.due_at).toLocaleDateString('ko-KR'):'');
   entry.teacherId=a.created_by||null;
   entry.teacherName=a.teacher_name||'';
+  if(app==='Grammar Genius Books'){
+   const required=Array.isArray(a.list_meta?.required_modes)?a.list_meta.required_modes:[];
+   const doneModes=new Set(grammarProof.filter(p=>String(p.assignment_id)===String(a.id)).map(p=>p.mode));
+   const count=required.filter(mode=>doneModes.has(mode)).length;
+   entry.progress=required.length?Math.round(count/required.length*100):0;
+   entry.done=required.length>0&&count===required.length;
+   entry.detail=count+'/'+required.length+' activities';
+  }
   if(app==='Writing Genius'||app==='Puzzles'){
     entry.progress=Number(a.creative_progress?.percent)||0;
     entry.done=a.creative_progress?.completed===true;
