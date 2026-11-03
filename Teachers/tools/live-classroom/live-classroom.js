@@ -82,26 +82,47 @@ function render(){
  }
  if(!students.length)root.append(node("p","muted","No students in this selection."));
 }
+// Load roster and presence independently. A slow auth check must never leave the page blank.
 let accessGranted=false;
 async function refresh(){
  if(state.refreshing||!accessGranted||document.hidden)return;
  state.refreshing=true;
- try {
+ try{
   await loadPresence();
   $("last-refresh").textContent="Updated "+time();
-  showNotice(state.sessions.length?"":"No student apps are sending heartbeats yet. P3 will activate live activity reporting.");
- } catch(e){state.presenceOk=false;showNotice("Presence service: "+e.message,true);}
- finally{state.refreshing=false;render();}
+  showNotice(state.sessions.length?"":"No current sessions yet.");
+ }catch(error){
+  state.presenceOk=false;
+  showNotice("Presence service: "+error.message,true);
+ }finally{
+  state.refreshing=false;
+  try{render();}catch(error){console.error("[Live Classroom] render",error);showNotice("Could not draw student list. Please refresh.",true);}
+ }
 }
-(async()=>{
- try{
-  await checkTeacher();
-  accessGranted=true;
-  try{await loadRoster();}catch(e){showNotice("Roster: "+e.message,true);}
+function registerUI(){
+ $("class-filter").addEventListener("change",()=>{state.filter=$("class-filter").value;render();});
+ $("refresh").addEventListener("click",async()=>{
+  try{await loadRoster();}catch(error){showNotice("Roster: "+error.message,true);}
   await refresh();
-  $("class-filter").addEventListener("change",()=>{state.filter=$("class-filter").value;render();});
-  $("refresh").addEventListener("click",()=>{refresh();});
-  setInterval(refresh,15000);
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh();});
- }catch(e){showNotice(e.message,true);}
-})();
+ });
+ setInterval(refresh,15000);
+ document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh();});
+}
+async function boot(){
+ registerUI();
+ const watchdog=setTimeout(()=>{if(!state.rosterOk)showNotice("Still loading student roster. Check your connection or tap Refresh.",true);},12000);
+ try{
+  // Roster endpoint checks teacher access itself; never gate UI on extra sequential
+  // whoami and profile requests that could fail during cookie refresh.
+  await loadRoster();
+  accessGranted=true;
+  render();
+  await refresh();
+ }catch(error){
+  console.error("[Live Classroom] startup",error);
+  showNotice("Student roster: "+error.message,true);
+  try{render();}catch(ignore){}
+ }finally{clearTimeout(watchdog);}
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});
+else boot();
