@@ -5,7 +5,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const el=(tag,cls,text)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(text!==undefined)x.textContent=text;return x};
 export function createScreens(actions){
   let books=[],units=[],book=null,unit=null,items=[],store=null;
-  let goldenUnits=new Set();
+  let goldenUnits=new Set(),activeHomework=null,homeworkStore=null;
   function setGoldenUnits(ids=[]){
     goldenUnits=new Set(ids.map(String));
     for(const button of $('unitStrip').querySelectorAll('[data-unit-id]')){
@@ -41,7 +41,7 @@ export function createScreens(actions){
       const fill=el('i','');fill.style.width=percent+'%';bar.append(fill);copy.append(bar);
       button.classList.toggle('is-complete',complete);
       button.append(copy,el('span','sg-assigned-arrow','›'));
-      button.addEventListener('click',()=>actions.homework(a.book_id,a.unit_id));
+      button.addEventListener('click',()=>actions.homework(a));
       root.append(button);
     }
   }
@@ -60,7 +60,7 @@ export function createScreens(actions){
   }
   function showBook({newBook,newUnits,newUnit,newItems,newStore}){
     book=newBook;units=newUnits;unit=newUnit;items=newItems;store=newStore;
-    $('bookName').textContent=book?.title||'Sentence Genius';
+    $('bookName').textContent=(activeHomework?'숙제 / Homework · ':'')+(book?.title||'Sentence Genius');
     $('unitTitle').textContent=unit?'Unit '+unit.unit_number+(unit.title?' · '+unit.title:''):'Unit';
     $('itemCount').textContent=items.length+' 문장 보기';
     $('itemCountOpen').disabled=!items.length;
@@ -73,6 +73,22 @@ export function createScreens(actions){
     }
     progress();
   }
+  function setHomeworkSession(assignment=null,progressStore=null){
+    activeHomework=assignment;homeworkStore=progressStore;
+    const bookScreen=$('bookScreen'),old=$('sgHomeworkSessionBanner');
+    if(old)old.remove();
+    if(activeHomework&&bookScreen){
+      const banner=el('div','sg-homework-session-banner');
+      banner.id='sgHomeworkSessionBanner';
+      banner.style.cssText='margin:12px 0;padding:13px 16px;background:#fff;border:2px solid #eab1d0;border-radius:16px;color:#334f58';
+      banner.append(el('strong','','숙제 / Homework'));
+      banner.append(el('div','',activeHomework.title||'Textbook sentence assignment'));
+      banner.append(el('small','','Assigned answers are tracked separately from Golden Unit mastery.'));
+      $('unitTitle').before(banner);
+    }
+    $('bookName').textContent=(activeHomework?'숙제 / Homework · ':'')+(book?.title||'Sentence Genius');
+    progress();
+  }
   function goldIcon(button){
     const img=document.createElement('img');img.className='vocab-unit-gold';
     img.src='/shared/svgs/golden-unit.svg?v=20260927-icons1';
@@ -80,16 +96,22 @@ export function createScreens(actions){
   }
   function progress(){
     for(const [id,mode] of [['coachCard','coach'],['unscrambleCard','unscramble'],['speakingCard','speaking']]){
-      const btn=$(id);btn.disabled=!items.length;
-      const percent=store&&items.length?store.percent(mode,items):0;
+      const btn=$(id),required=!activeHomework||activeHomework.required_modes?.includes(mode);
+      const targets=activeHomework?new Set((activeHomework.target_sentence_ids||[]).map(String)):null;
+      const eligible=targets?items.filter(item=>targets.has(String(item.id))):items;
+      btn.hidden=!required;
+      btn.disabled=!required||!eligible.length;
+      const progressStore=activeHomework?homeworkStore:store;
+      const percent=progressStore&&eligible.length?progressStore.percent(mode,eligible):0;
       btn.querySelector('.vocab-skill-ring')?.style.setProperty('--progress',percent);
       const ring=btn.querySelector('.vocab-skill-ring span');if(ring)ring.textContent=percent+'%';
-      $(mode+'Stars').textContent='★ '+(store?.stars(mode,items)||0)+'/5';
+      const done=progressStore?eligible.filter(item=>progressStore.passed(mode,item.id)).length:0;
+      $(mode+'Stars').textContent=activeHomework?done+'/'+eligible.length+' completed':'★ '+(store?.stars(mode,items)||0)+'/5';
     }
     const gold=!!store?.gold(items);
     if(gold&&unit?.id)goldenUnits.add(String(unit.id));
     $('goldStatus').classList.toggle('is-gold',gold);
-    $('goldLabel').textContent=gold?'Golden Unit · 완성!':'코치 + 문장 배열 + 말하기: 모두 완료하면 Gold';
+    $('goldLabel').textContent=activeHomework?(gold?'Golden Unit retained · Permanent mastery':'Homework does not affect permanent mastery'):(gold?'Golden Unit · 완성!':'코치 + 문장 배열 + 말하기: 모두 완료하면 Gold');
     const tab=$('unitStrip').querySelector('.is-current');
     if(tab){
       if(gold&&!tab.querySelector('img'))goldIcon(tab);
@@ -195,6 +217,6 @@ export function createScreens(actions){
   $('unscrambleCard').addEventListener('click',()=>actions.start('unscramble'));
   $('speakingCard').addEventListener('click',()=>actions.start('speaking'));
   $('bookBack').addEventListener('click',actions.home);
-  return {visible,notice,home,homework,showBook,progress,setGoldenUnits,sentenceList,
+  return {visible,notice,home,homework,showBook,progress,setHomeworkSession,setGoldenUnits,sentenceList,
     teacherSetup,teacherMode,teacherStatus,teacherOverview};
 }
