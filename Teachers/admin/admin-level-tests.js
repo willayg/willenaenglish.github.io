@@ -235,6 +235,79 @@ function renderFullResults(){
 }
 
 function setArchiveButton(archived){var button=byId('levelTestArchive');button.textContent=archived?tr('restore'):tr('archive');button.classList.toggle('is-restore',archived);button.disabled=false}
+
+function updateVisitorEnrollButton(){
+ var button=byId('levelTestEnroll');
+ if(!button)return;
+ var visitor=activeRow&&activeRow.source==='visitor';
+ button.hidden=!visitor;
+ button.disabled=!visitor||!activeDetail;
+ var linked=activeDetail?.candidate?.metadata?.enrolled_student_id||activeDetail?.attempt?.metadata?.enrolled_student_id;
+ button.textContent=linked?'Enrolled ✓':'Enroll student';
+ button.disabled=button.disabled||Boolean(linked);
+}
+function closeVisitorEnrollModal(){
+ var el=byId('visitorEnrollModal');if(el)el.remove();
+}
+async function openVisitorEnrollModal(){
+ if(!activeRow||activeRow.source!=='visitor'||!activeDetail)return;
+ var row=activeRow, candidate=activeDetail.candidate||{};
+ var linked=candidate.metadata?.enrolled_student_id||activeDetail.attempt?.metadata?.enrolled_student_id;
+ if(linked)return;
+ var cls=[];
+ try {
+  var response=await api(endpoint);
+  cls=(response.classes||[]).map(function(c){return typeof c==='string'?c:(c.name||c.class_name||'')}).filter(Boolean);
+ } catch(error){console.warn('Could not load classes for enrolment',error)}
+ cls=Array.from(new Set(cls)).sort(function(a,b){return a.localeCompare(b,undefined,{numeric:true})});
+ closeVisitorEnrollModal();
+ var wrapper=document.createElement('div');
+ wrapper.id='visitorEnrollModal';wrapper.className='visitor-enroll-backdrop';
+ wrapper.innerHTML='<div class="visitor-enroll-panel" role="dialog" aria-modal="true" aria-labelledby="visitorEnrollHeading">'+
+  '<div class="visitor-enroll-head"><h2 id="visitorEnrollHeading">Enroll student</h2><button type="button" class="visitor-enroll-close" aria-label="Close">×</button></div>'+
+  '<form id="visitorEnrollForm" class="visitor-enroll-form">'+
+  '<p class="visitor-enroll-intro">Create a regular Willena student account. The visitor level-test results will be kept.</p>'+
+  '<label>English name<input name="name" autocomplete="off" required value="'+esc(candidate.english_name||'')+'"></label>'+
+  '<label>Korean name<input name="korean_name" value="'+esc(candidate.korean_name||candidate.student_name||row.student_name||'')+'"></label>'+
+  '<label>Class<select name="class_name" required><option value="">Select class</option>'+cls.map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>'}).join('')+'</select></label>'+
+  '<label>School<input name="school" value="'+esc(candidate.school_name||row.school||'')+'"></label>'+
+  '<label>Grade<input name="grade" value="'+esc(candidate.school_grade||row.grade||'')+'"></label>'+
+  '<label>Phone<input name="phone" value="'+esc(candidate.phone||'')+'"></label>'+
+  '<label>Username<input name="username" required minlength="3" maxlength="40" autocomplete="off" placeholder="student login"></label>'+
+  '<label>Temporary password<input name="password" type="text" minlength="8" required autocomplete="new-password" placeholder="8 characters minimum"></label>'+
+  '<p id="visitorEnrollError" class="visitor-enroll-error" role="alert"></p>'+
+  '<div class="visitor-enroll-actions"><button type="button" data-cancel>Cancel</button><button type="submit" class="primary">Create student</button></div>'+
+  '</form></div>';
+ document.body.appendChild(wrapper);
+ wrapper.querySelectorAll('[data-cancel],.visitor-enroll-close').forEach(function(btn){btn.addEventListener('click',closeVisitorEnrollModal)});
+ wrapper.addEventListener('click',function(e){if(e.target===wrapper)closeVisitorEnrollModal()});
+ wrapper.querySelector('form').addEventListener('submit',async function(e){
+  e.preventDefault();
+  var form=e.currentTarget, data=new FormData(form), get=function(key){return String(data.get(key)||'').trim()};
+  var payload={action:'enroll_visitor_student',attempt_id:row.id,
+   name:get('name'),korean_name:get('korean_name'),class_name:get('class_name'),
+   grade:get('grade'),school:get('school'),phone:get('phone'),
+   username:get('username').toLowerCase(),password:get('password')};
+  var error=byId('visitorEnrollError'),submit=form.querySelector('[type="submit"]');
+  if(!/^[a-z0-9._-]{3,40}$/.test(payload.username)){error.textContent='Enter a valid username (3–40 lowercase letters, numbers, . _ -).';return}
+  if(payload.password.length<8){error.textContent='Password must be at least 8 characters.';return}
+  if(!payload.class_name){error.textContent='Choose a class.';return}
+  submit.disabled=true;submit.textContent='Creating…';error.textContent='';
+  try {
+   var result=await api(endpoint,{method:'POST',body:JSON.stringify(payload)});
+   if(!result.success)throw new Error(result.error||'Enrolment failed');
+   closeVisitorEnrollModal();
+   if(activeRow&&activeRow.id===row.id) {
+    activeDetail.candidate=Object.assign({},candidate,{metadata:Object.assign({},candidate.metadata||{},{enrolled_student_id:result.user_id})});
+    updateVisitorEnrollButton();
+   }
+   toast(result.already_enrolled?'Already enrolled':'Student enrolled successfully');
+   window.dispatchEvent(new CustomEvent('willena-student-enrolled',{detail:{user_id:result.user_id,username:result.username}}));
+  }catch(ex){error.textContent=ex.message||'Could not enroll student'}
+  finally{submit.disabled=false;submit.textContent='Create student'}
+ });
+ wrapper.querySelector('[name="name"]').focus();
+}
 function open(id){
  var row=findRow(id);if(!row)return;
  activeDetail=null;activeRow=row;
@@ -243,17 +316,17 @@ function open(id){
  byId('levelTestDetailName').textContent=name(row);
  byId('levelTestDetailMeta').textContent=[row.class_name||row.school,when(row)].filter(Boolean).join(' · ');
  byId('levelTestDetailBody').innerHTML='<p class="level-test-empty">Loading mini report…</p>';
- byId('levelTestArchive').disabled=true;byId('levelTestManualOverride').disabled=true;byId('levelTestFullReport').disabled=true;byId('levelTestFullResults').disabled=true;
+ updateVisitorEnrollButton();byId('levelTestArchive').disabled=true;byId('levelTestManualOverride').disabled=true;byId('levelTestFullReport').disabled=true;byId('levelTestFullResults').disabled=true;
  setArchiveButton(activeFilter==='archived');
  byId('levelTestResults').classList.remove('show');
  var drawer=byId('levelTestDrawer');drawer.classList.add('show');drawer.setAttribute('aria-hidden','false');
  Promise.all([api(endpoint,{method:'POST',body:JSON.stringify({action:'level_test_detail',source:row.source,attempt_id:row.id})}),ensureScoring()]).then(function(results){
-  var data=repairPayload(results[0]);activeDetail=data;row.is_new=false;render();renderMini(data);setArchiveButton(activeFilter==='archived');
+  var data=repairPayload(results[0]);activeDetail=data;row.is_new=false;render();renderMini(data);setArchiveButton(activeFilter==='archived');updateVisitorEnrollButton();
   byId('levelTestManualOverride').disabled=false;byId('levelTestFullReport').disabled=false;byId('levelTestFullResults').disabled=false;
  }).catch(function(error){byId('levelTestDetailBody').innerHTML='<p class="level-test-empty">'+esc(error.message)+'</p>'});
 }
 function closeResults(){byId('levelTestResults').classList.remove('show');byId('levelTestResults').setAttribute('aria-hidden','true')}
-function close(){closeResults();var drawer=byId('levelTestDrawer');drawer.classList.remove('show');drawer.setAttribute('aria-hidden','true');activeDetail=null;activeRow=null}
+function close(){closeResults();var drawer=byId('levelTestDrawer');drawer.classList.remove('show');drawer.setAttribute('aria-hidden','true');activeDetail=null;activeRow=null;closeVisitorEnrollModal();updateVisitorEnrollButton()}
 function toast(text,action,onAction,duration){if(typeof window.showToast==='function')window.showToast(text,{action:action||'',onAction:onAction||null,duration:duration||5000});else window.alert(text)}
 
 async function setArchived(row,archived,options){
@@ -322,6 +395,7 @@ async function load(force){
 }
 
 document.querySelectorAll('[data-page="levelTests"]').forEach(function(button){button.addEventListener('click',function(){load(false)})});
+byId('levelTestEnroll')?.addEventListener('click',openVisitorEnrollModal);
 byId('levelTestSearch').addEventListener('input',render);
 byId('levelTestRefresh').addEventListener('click',function(){if(activeFilter==='archived')loadArchived(true);else load(true)});
 byId('levelTestFilters').querySelectorAll('[data-test-filter]').forEach(function(button){button.onclick=function(){activeFilter=button.dataset.testFilter;selected.clear();byId('levelTestFilters').querySelectorAll('button').forEach(function(x){x.classList.toggle('active',x===button)});if(activeFilter==='archived')loadArchived(false);else render()}});
