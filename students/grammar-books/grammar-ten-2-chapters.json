@@ -25,7 +25,8 @@
               "Does — does"
             ],
             "answerIndex": 0,
-            "explanation": "'at the museum'처럼 상태·위치를 묻는 질문은 Are your cousins ...?이고, 긍정 대답은 Yes, they are.예요."
+            "explanation": "'at the museum'처럼 상태·위치를 묻는 질문은 Are your cousins ...?이고, 긍정 대답은 Yes, they are.예요.",
+            "instruction": "빈칸에 들어갈 말이 바르게 짝지어진 것을 고르시오."
           },
           {
             "id": "gt2-c1-choose-2",
@@ -38,7 +39,8 @@
               "does — do"
             ],
             "answerIndex": 0,
-            "explanation": "dad는 한 명이므로 is, uncles는 여러 명이므로 are를 써요."
+            "explanation": "dad는 한 명이므로 is, uncles는 여러 명이므로 are를 써요.",
+            "instruction": "빈칸에 들어갈 말이 바르게 짝지어진 것을 고르시오."
           },
           {
             "id": "gt2-c1-choose-3",
@@ -51,7 +53,8 @@
               "I'm not"
             ],
             "answerIndex": 0,
-            "explanation": "Is your backpack ...?의 주어는 it으로 받고, be동사 is의 부정형 isn't를 써요."
+            "explanation": "Is your backpack ...?의 주어는 it으로 받고, be동사 is의 부정형 isn't를 써요.",
+            "instruction": "빈칸에 들어갈 말이 바르게 짝지어진 것을 고르시오."
           },
           {
             "id": "gt2-c1-choose-4",
@@ -64,7 +67,8 @@
               "work — prepares"
             ],
             "answerIndex": 0,
-            "explanation": "my aunt와 she는 3인칭 단수 주어이므로 works, prepares를 써요."
+            "explanation": "my aunt와 she는 3인칭 단수 주어이므로 works, prepares를 써요.",
+            "instruction": "빈칸에 들어갈 말이 바르게 짝지어진 것을 고르시오."
           },
           {
             "id": "gt2-c1-choose-5",
@@ -77,7 +81,8 @@
               "doesn't — enjoys"
             ],
             "answerIndex": 0,
-            "explanation": "doesn't 뒤에는 동사원형 like, his parents에는 동사원형 enjoy를 써요."
+            "explanation": "doesn't 뒤에는 동사원형 like, his parents에는 동사원형 enjoy를 써요.",
+            "instruction": "빈칸에 들어갈 말이 바르게 짝지어진 것을 고르시오."
           },
           {
             "id": "gt2-c1-choose-6",
@@ -90,7 +95,8 @@
               "mix — mixes"
             ],
             "answerIndex": 0,
-            "explanation": "자음+y로 끝나는 carry는 y를 i로 바꾸고 -es를 붙여 carries가 돼요."
+            "explanation": "자음+y로 끝나는 carry는 y를 i로 바꾸고 -es를 붙여 carries가 돼요.",
+            "instruction": ""
           },
           {
             "id": "gt2-c1-choose-7",
@@ -103,7 +109,8 @@
               "Does — is"
             ],
             "answerIndex": 0,
-            "explanation": "Ella는 3인칭 단수이므로 Does로 묻고 Yes, she does.로 대답해요."
+            "explanation": "Ella는 3인칭 단수이므로 Does로 묻고 Yes, she does.로 대답해요.",
+            "instruction": "빈칸에 들어갈 말이 바르게 짝지어진 것을 고르시오."
           },
           {
             "id": "gt2-c1-choose-8",
@@ -116,7 +123,8 @@
               "Does — doesn't"
             ],
             "answerIndex": 0,
-            "explanation": "학교에 있는 상태를 묻는 be동사 의문문이므로 Are ..., No, they aren't.가 맞아요."
+            "explanation": "학교에 있는 상태를 묻는 be동사 의문문이므로 Are ..., No, they aren't.가 맞아요.",
+            "instruction": "빈칸에 들어갈 말이 바르게 짝지어진 것을 고르시오."
           }
         ],
         "check": [
