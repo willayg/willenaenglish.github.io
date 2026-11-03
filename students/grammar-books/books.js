@@ -306,9 +306,12 @@ async function startMode(mode,{push=true}={}){
   const saved=chapterProgress.find(p=>Number(p.chapter_number)===chapter&&p.mode===mode);
   const eligibleIds=new Set(all.map(q=>q.id));
   const savedIds=Array.isArray(saved?.mastered_question_ids)?saved.mastered_question_ids:[];
-  masteredIds=new Set(savedIds.filter(id=>eligibleIds.has(id)));
-  activeQuestions=all.filter(q=>!masteredIds.has(q.id));
-  // Fully mastered activities stay replayable as optional practice.
+  // Golden mastery is permanent. A repeat visit (including homework) is a
+  // fresh practice round, not a replacement of the student's best-ever score.
+  const alreadyMastered=bestScore(chapter,mode)===8;
+  masteredIds=alreadyMastered?new Set():new Set(savedIds.filter(id=>eligibleIds.has(id)));
+  activeQuestions=alreadyMastered?all:all.filter(q=>!masteredIds.has(q.id));
+  // Completed modes remain playable, even if stored IDs came from an older edition.
   if(!activeQuestions.length)activeQuestions=all;
   activeMode=mode;retryQueue.begin(activeQuestions);retryingWrong=false;position=0;correct=0;checked=false;
   beginRewardSession(mode);
