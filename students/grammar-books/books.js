@@ -8,7 +8,28 @@ const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 �
 let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[];
 const questionBank=()=>catalog?.modes||{};
 function shuffle(items){const out=[...items];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out}
-function prepareRound(questions){return shuffle(questions).map(q=>{const opts=shuffle(q.options.map((value,i)=>({value,i})));return {...q,options:opts.map(o=>o.value),answerIndex:opts.findIndex(o=>o.i===q.answerIndex)}})};
+function prepareRound(questions,mode){
+ return shuffle(questions).map(q=>{
+  if(mode==='hunt'){
+   const wrong=q.options[q.answerIndex];
+   const ordered=[...q.options].sort((a,b)=>q.sentence.indexOf(a)-q.sentence.indexOf(b));
+   return {...q,options:ordered,answerIndex:ordered.indexOf(wrong),underlined:ordered};
+  }
+  const opts=shuffle(q.options.map((value,i)=>({value,i})));
+  return {...q,options:opts.map(o=>o.value),answerIndex:opts.findIndex(o=>o.i===q.answerIndex)};
+ });
+}
+function markedSentence(q){
+ const markers=['①','②','③','④'];
+ const tokens=q.options.map((part,i)=>({part,marker:markers[i],at:q.sentence.indexOf(part)})).sort((a,b)=>a.at-b.at);
+ let out='',cursor=0;
+ for(const token of tokens){
+  if(token.at<cursor)return q.sentence;
+  out+=q.sentence.slice(cursor,token.at)+token.marker+' '+token.part;
+  cursor=token.at+token.part.length;
+ }
+ return out+q.sentence.slice(cursor);
+}
 function updateUrl(bookId=''){const p=new URLSearchParams(location.search);bookId?p.set('book',bookId):p.delete('book');const u=location.pathname+(p.size?'?'+p.toString():'');history.pushState({},'',u)}
 function bookCard(book){return '<button class="vocab-front-book-card" type="button" data-grammar-book="'+esc(book.id)+'"><span class="vocab-front-card-main"><span class="vocab-front-card-copy"><strong>'+esc(book.title)+'</strong></span></span><span class="vocab-front-arrow" aria-hidden="true">›</span></button>'}
 async function loadGrammarBooks(){
@@ -102,9 +123,9 @@ async function showBook(book,push=true){
 function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;if(push)updateUrl();window.scrollTo(0,0)}
 function toSharedQuestion(q){
  const hunt=activeMode==='hunt';
- const sentence=hunt?(q.sentence||q.options.join(' ').replace(/\s+([,.!?])/g,'$1')):'';
+ const sentence=hunt?markedSentence(q):'';
  const instruction=hunt?'다음 문장에서 어법상 틀린 부분을 고르시오.':activeMode==='choose'?'빈칸에 들어갈 알맞은 말을 고르시오.':q.prompt;
- return {id:q.id,form:'choice',prompt:instruction+(hunt?'\n'+sentence:activeMode==='choose'?'\n'+q.prompt:''),choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:q.underlined||q.options}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
+ return {id:q.id,form:'choice',prompt:instruction+(hunt?'\n'+sentence:activeMode==='choose'?'\n'+q.prompt:''),choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:['①','②','③','④']}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
 }
 function renderQuestion(){
  const questions=activeQuestions,q=questions[position];
@@ -125,7 +146,7 @@ function startMode(mode){
  if(!modes.some(x=>x.id===mode)||!activeBook)return;
  const panel=$('grammarModeCards');panel.setAttribute('aria-busy','true');
  loadQuestions().then(()=>{
-  activeMode=mode;activeQuestions=prepareRound(questionBank()[mode]||[]);position=0;correct=0;checked=false;
+  activeMode=mode;activeQuestions=prepareRound(questionBank()[mode]||[],mode);position=0;correct=0;checked=false;
   $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;
   renderQuestion();window.scrollTo(0,0);
  }).catch(err=>{console.error(err);$('grammarNotReady').textContent='문제를 불러오지 못했어요. 다시 시도해 주세요.';$('grammarNotReady').hidden=false}).finally(()=>panel.removeAttribute('aria-busy'));
