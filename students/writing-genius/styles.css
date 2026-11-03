@@ -882,3 +882,16 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-random-topic{border:2px solid #24b5c5;background:#fff;color:#df4d95;box-shadow:0 2px 0 rgba(36,181,197,.12)}
 .writing-genius .df-random-topic:focus-visible{outline:3px solid #81dfe7;outline-offset:3px}
 .writing-genius #wgDiaryFlow .df-random-topic.is-spinning{background:#f1fcfd;color:#df4d95;border-color:#24b5c5}
+
+/* Student writing portfolio: same white/cyan/pink palette as the mode cards. */
+.wg-portfolio-button{display:flex;align-items:center;gap:13px;width:100%;padding:14px 18px;margin:-10px 0 24px;border:2px solid var(--pink,#ff0a8a);border-radius:18px;background:var(--vocab-card,#fff);color:var(--pink,#e93186);text-align:left;cursor:pointer;box-shadow:0 5px 18px rgba(34,106,116,.06)}
+.wg-portfolio-button svg{width:34px;height:34px;flex:none;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.wg-portfolio-button span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:2px}
+.wg-portfolio-button strong{font:900 1rem Poppins,system-ui,sans-serif}
+.wg-portfolio-button small{font:600 .77rem Poppins,system-ui,sans-serif;color:var(--vocab-muted,#6f8190)}
+.wg-portfolio-button .wg-portfolio-arrow{font-size:1.6rem;color:var(--cyan-strong,#25b8c4)}
+.wg-portfolio-button:hover,.wg-portfolio-button:focus-visible{outline:2px solid var(--cyan-strong,#25b8c4);outline-offset:2px}
+.wg-portfolio{margin:4px 0 22px}.wg-portfolio>.vocab-screen-back{margin-bottom:18px}
+.wg-portfolio .wg-library-head{align-items:center;flex-wrap:wrap}
+.wg-portfolio .wg-library{max-height:none}
+@media(max-width:680px){.wg-portfolio-button{margin:0 0 18px}}
