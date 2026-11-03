@@ -7,7 +7,6 @@ const EDGE=OP+'/functions/v1/grammar-foundations-teacher-v1';
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co/rest/v1/';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const ACTIVE_BOOK_ID='1e3a2112-07be-45e2-a8fc-ce20011e0e57';
-const CHAPTERS=['현재시제','과거시제','진행시제, 미래시제','조동사','명사','형용사, 부사','to부정사, 동명사','전치사','접속사','문장의 형태','의문사 의문문, 명령문, 감탄문'];
 const MODES=[['choose','빈칸 선택'],['check','문장 판단'],['hunt','오류 찾기']];
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
