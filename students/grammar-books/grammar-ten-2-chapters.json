@@ -3151,15 +3151,15 @@
           {
             "id": "gt2-c10-choose-7-r2",
             "subunit": 2,
-            "prompt": "He sent ____ friend a message.",
+            "prompt": "Yesterday, the teacher ____ the students a worksheet, and they ____ her.",
             "options": [
-              "his",
-              "him",
-              "to his friend",
-              "his friend's"
+              "gave — thanked",
+              "give — thanked",
+              "gave — thanks",
+              "given — thanking"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: He sent his friend a message."
+            "explanation": "과거 시점을 나타내는 yesterday에 맞춰 gave와 thanked를 써요."
           },
           {
             "id": "gt2-c10-choose-8-r2",
@@ -3491,15 +3491,15 @@
           {
             "id": "gt2-c11-choose-7-r2",
             "subunit": 3,
-            "prompt": "She ____n't like fish, does she?",
+            "prompt": "She ____ like fish, does she?",
             "options": [
-              "does",
               "doesn't",
-              "is",
-              "isn't"
+              "don't",
+              "isn't",
+              "didn't"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: She doesn't like fish, does she?"
+            "explanation": "부정문 She doesn't like fish 뒤에 긍정 부가의문문 does she?를 붙여요."
           },
           {
             "id": "gt2-c11-choose-8-r2",
