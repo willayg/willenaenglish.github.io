@@ -67,6 +67,18 @@ export function judgeSentenceSpeech(target,transcript,{contractionPolicy='flexib
  if(!a.length||!b.length)return {correct:false,matchedBy:null,transcript:raw};
  if(same(a,b))return {correct:true,matchedBy:"speech_normalized",transcript:raw};
  if(repeatedTarget(a,b))return {correct:true,matchedBy:"speech_repeated",transcript:raw};
+ // Speech recognition frequently confuses this / that / the.
+ // When every other word in a sufficiently long sentence matches, treat a
+ // single determiner confusion as uncertain recognition, not failed English.
+ // This is intentionally limited to the speech judge (not typed work).
+ if(a.length>=5&&a.length===b.length){
+  const mismatch=[];
+  for(let i=0;i<a.length;i++)if(a[i]!==b[i])mismatch.push(i);
+  const determiners=new Set(['this','that','the']);
+  if(mismatch.length===1&&determiners.has(a[mismatch[0]])&&determiners.has(b[mismatch[0]]))
+   return {correct:true,matchedBy:"speech_determiner_stt",transcript:raw};
+ }
+
  // For longer targets, allow minor STT omissions but not critical-word changes.
  // Both recall and precision must be >= 90%, preserving meaningful ordering.
  if(a.length>=10&&b.length>=10 && Math.abs(a.length-b.length)<=Math.floor(a.length*.1)){
