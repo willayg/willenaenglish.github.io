@@ -135,5 +135,6 @@ function bindLevelTestModes(){
 function bindStudents(){
   $('#studentSearch').addEventListener('input',applyFilters);$('#classFilter').addEventListener('change',applyFilters);$('#gradeFilter').addEventListener('change',applyFilters);$('#studentRefresh').addEventListener('click',()=>loadStudents(true));$('#addStudent').addEventListener('click',openAdd);$('#closeStudentDrawer').addEventListener('click',closeStudent);$('#studentDrawerBg').addEventListener('click',e=>{if(e.target===$('#studentDrawerBg'))closeStudent()});$('#closeAddStudentDrawer').addEventListener('click',closeAdd);$('#cancelAddStudent').addEventListener('click',closeAdd);$('#addStudentDrawerBg').addEventListener('click',e=>{if(e.target===$('#addStudentDrawerBg'))closeAdd()});$('#addStudentForm').addEventListener('submit',createStudentFromDrawer);document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeStudent();closeAdd()}})
 }
+window.addEventListener('willena-student-enrolled',()=>loadStudents(true));
 function boot(){bindNavigation();bindStudents();bindLevelTestModes();$('#adminV2Boot')?.classList.add('hidden');loadStudents(false)}
 boot();
