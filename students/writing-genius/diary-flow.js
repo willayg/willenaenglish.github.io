@@ -1,6 +1,6 @@
 import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
-import {judgeSentenceSpeech} from '/students/shared/sentence-speech-tolerance.js?v=20261103-speech1';
+import {judgeSentenceSpeech} from '/students/shared/sentence-speech-tolerance.js?v=20261104-determiner2';
 const $=id=>document.getElementById(id);
 const norm=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim();
 const split=s=>(String(s||'').match(/[^.!?\n]+[.!?]+(?=\s|$)/g)||[]).map(x=>x.trim()).filter(x=>/[a-z]/i.test(x));
