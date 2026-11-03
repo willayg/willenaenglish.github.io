@@ -3106,8 +3106,8 @@
             "options": [
               "and",
               "ands",
-              "or",
-              "but"
+              "because",
+              "so"
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: She likes tea and coffee."
@@ -3132,7 +3132,7 @@
             "options": [
               "or",
               "ors",
-              "and",
+              "because",
               "so"
             ],
             "answerIndex": 0,
@@ -3145,8 +3145,8 @@
             "options": [
               "but",
               "buts",
-              "so",
-              "and"
+              "because of",
+              "however"
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: She was sick, but she went to school."
@@ -3184,7 +3184,7 @@
             "options": [
               "was",
               "were",
-              "am",
+              "is",
               "be"
             ],
             "answerIndex": 0,
