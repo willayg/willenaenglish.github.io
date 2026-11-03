@@ -103,7 +103,7 @@ function showHome(push=true){activeBook=null;activeMode=null;detail.hidden=true;
 function toSharedQuestion(q){
  const hunt=activeMode==='hunt';
  const sentence=hunt?(q.sentence||q.options.join(' ').replace(/\s+([,.!?])/g,'$1')):'';
- const instruction=hunt?'다음 문장에서 어법상 틀린 부분을 고르시오.':activeMode==='choose'?'빈칸에 들어갈 알맞은 말을 고르시오.':/incorrect|wrong/i.test(q.prompt)?'다음 중 어법상 틀린 문장을 고르시오.':'다음 중 어법상 올바른 문장을 고르시오.';
+ const instruction=hunt?'다음 문장에서 어법상 틀린 부분을 고르시오.':activeMode==='choose'?'빈칸에 들어갈 알맞은 말을 고르시오.':q.prompt;
  return {id:q.id,form:'choice',prompt:instruction+(hunt?'\n'+sentence:activeMode==='choose'?'\n'+q.prompt:''),choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:q.underlined||q.options}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
 }
 function renderQuestion(){
