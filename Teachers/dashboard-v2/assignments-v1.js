@@ -175,6 +175,8 @@
     state.progress=null;
     state.studentDetail=null;
     if(!rows.length){
+      if(list.previousElementSibling?.classList.contains('hw-select-toolbar'))list.previousElementSibling.remove();
+      delete list.dataset.hwManageControls;
       list.innerHTML='<div class="empty">No '+(state.filter==='current'?'current':'past')+' Vocabulary Study assignments'+(state.className?' for '+esc(state.className):'')+'.</div>';
       return;
     }
