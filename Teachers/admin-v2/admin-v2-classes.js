@@ -13,6 +13,7 @@ let drawerMode='edit';
 let selectedBooks=new Map();
 let searchCache=new Map();
 let catalogPromise=null;
+let activeBookSearch='';
 let timers=new Map();
 let controllers=new Map();
 let orderEditing=false;
@@ -117,7 +118,7 @@ function levelOptions(current=''){
 }
 function currentBook(row,i){const b=row?.books?.[i];return b?{book_id:b.book_id,title:b.book_title,series:b.catalog_series||'',level:b.catalog_level||'',source_type:b.source_type||'manual'}:null}
 function drawerEls(){return {bg:$('#classDrawerBgV2'),drawer:$('#classDrawerV2'),body:$('#classDrawerBodyV2'),title:$('#classDrawerTitleV2'),meta:$('#classDrawerMetaV2')}}
-function closeDrawer(){const {bg,drawer}=drawerEls();bg?.classList.remove('open');drawer?.classList.remove('open');document.body.style.overflow='';controllers.forEach(c=>c.abort());timers.forEach(t=>clearTimeout(t));timers.clear();activeClass=null;selectedBooks.clear()}
+function closeDrawer(){activeBookSearch='';hideMenus();const {bg,drawer}=drawerEls();bg?.classList.remove('open');drawer?.classList.remove('open');document.body.style.overflow='';controllers.forEach(c=>c.abort());timers.forEach(t=>clearTimeout(t));timers.clear();activeClass=null;selectedBooks.clear()}
 
 function renderDrawer(row,mode='edit'){
   drawerMode=mode;activeClass=row||null;selectedBooks.clear();
@@ -128,7 +129,7 @@ function renderDrawer(row,mode='edit'){
   for(let i=0;i<3;i++){const b=currentBook(row,i);if(b?.title)selectedBooks.set(`classBook${i+1}`,b.book_id?b:{...b,manual:true})}
   const rs=isAdd?[]:roster().filter(s=>s.class===row.name);
   body.innerHTML=`<section class="admin-class-section"><h3>${isAdd?'Class setup':'Book assignments'}</h3><div class="admin-form-grid">${isAdd?`<label class="admin-form-field full"><span>Class name</span><input id="classNameV2" maxlength="80"></label>`:''}<div class="full admin-book-grid">${[0,1,2].map(i=>{const b=currentBook(row,i);return `<label class="admin-form-field"><span>Book ${i+1}</span><div class="admin-book-picker"><input id="classBook${i+1}" autocomplete="off" value="${esc(b?displayBook(b):'')}" placeholder="Type at least 2 characters"><div id="classBook${i+1}Menu" class="admin-book-suggestions"></div></div><div id="classBook${i+1}Status" class="admin-book-status">${b?(b.book_id?'Curriculum DB book':'Manual entry'):''}</div></label>`}).join('')}</div><label class="admin-form-field full"><span>Fallback level</span><select id="classLevelV2">${levelOptions(row?.level||'')}</select></label></div><div class="admin-modal-error" id="classDrawerErrorV2"></div><button class="admin-class-save" id="classSaveV2">${isAdd?'Create class':'Save changes'}</button></section>${isAdd?'':`<section class="admin-class-section"><h3>Roster</h3><div class="admin-class-roster">${rs.length?rs.map(s=>`<div><b>${esc(s.name||s.korean_name||s.username)}</b><span>${esc(s.korean_name||s.username||'')}</span></div>`).join(''):'<div class="empty">No students assigned.</div>'}</div></section>`}`;
-  [1,2,3].forEach(n=>bindBook(`classBook${n}`));syncLevel();$('#classSaveV2').onclick=saveDrawer;bg.classList.add('open');drawer.classList.add('open');document.body.style.overflow='hidden';setTimeout(()=>$(isAdd?'#classNameV2':'#classBook1')?.focus(),0);
+  [1,2,3].forEach(n=>bindBook(`classBook${n}`));syncLevel();$('#classSaveV2').onclick=saveDrawer;bg.classList.add('open');drawer.classList.add('open');document.body.style.overflow='hidden';if(isAdd)setTimeout(()=>$('#classNameV2')?.focus(),0);
 }
 
 function openEdit(name){const row=rows.find(r=>r.name===name);if(row)renderDrawer(row,'edit')}
@@ -136,7 +137,8 @@ function openAdd(){renderDrawer({name:'',books:[],level:null},'add')}
 function syncLevel(){const has=[1,2,3].some(n=>$('#classBook'+n)?.value.trim());const level=$('#classLevelV2');if(level){level.disabled=has;if(has)level.value=''}}
 function bookStatus(id){const input=$('#'+id),el=$('#'+id+'Status'),b=selectedBooks.get(id);if(!input||!el)return;el.textContent=input.value.trim()?(b?(b.book_id?'Linked to curriculum DB':'Manual entry (not linked)'):'Select a matching book to link it'):''}
 function hideMenus(except=''){
-  $$('.admin-book-suggestions.show').forEach(menu=>{if(menu.id!==except)menu.classList.remove('show')});
+  $('.admin-book-suggestions.show').forEach(menu=>{if(menu.id!==except)menu.classList.remove('show')});
+  if(!except)activeBookSearch='';
 }
 async function catalogBooks(){
   if(!catalogPromise)catalogPromise=edge(CONTENT_API,{method:'POST',body:JSON.stringify({action:'list_books'})})
@@ -148,7 +150,7 @@ async function catalogBooks(){
   return catalogPromise;
 }
 function showMenu(id,books,message=''){
-  const input=$('#'+id),menu=$('#'+id+'Menu');if(!input||!menu)return;
+  const input=$('#'+id),menu=$('#'+id+'Menu');if(!input||!menu||activeBookSearch!==id||document.activeElement!==input)return;
   menu.innerHTML=(message?`<div class="admin-book-menu-message">${esc(message)}</div>`:'')+
     books.map((b,i)=>`<button type="button" data-i="${i}"><b>${esc(b.title)}</b><span>${esc([b.series,b.level?`Level ${b.level}`:''].filter(Boolean).join(' · '))}</span></button>`).join('')+
     (!books.length&&input.value.trim().length>=2&&message!=='Searching…'&&message!=='Search unavailable — try again'?`<button type="button" data-manual="1"><b>Use as manual entry</b><span>Not linked to curriculum DB</span></button>`:'');
@@ -156,16 +158,16 @@ function showMenu(id,books,message=''){
   $$('[data-i]',menu).forEach(btn=>btn.addEventListener('mousedown',e=>e.preventDefault()));
   $$('[data-i]',menu).forEach(btn=>btn.onclick=()=>{
     const b=books[Number(btn.dataset.i)];selectedBooks.set(id,b);
-    input.value=displayBook(b);menu.classList.remove('show');bookStatus(id);syncLevel();
+    input.value=displayBook(b);hideMenus();bookStatus(id);syncLevel();
   });
   const manual=$('[data-manual]',menu);
   if(manual){manual.onmousedown=e=>e.preventDefault();manual.onclick=()=>{
     selectedBooks.set(id,{manual:true,title:input.value.trim()});
-    menu.classList.remove('show');bookStatus(id);syncLevel();
+    hideMenus();bookStatus(id);syncLevel();
   }}
 }
 async function searchBooks(id){
-  const input=$('#'+id);if(!input)return;
+  const input=$('#'+id);if(!input||activeBookSearch!==id||document.activeElement!==input)return;
   const q=input.value.trim();const key=q.toLocaleLowerCase();
   if(q.length<2){hideMenus();return}
   const cached=searchCache.get(key);
@@ -173,23 +175,23 @@ async function searchBooks(id){
   showMenu(id,[],'Searching…');
   try{
     const all=await catalogBooks();
-    if(!input.isConnected||input.value.trim()!==q||selectedBooks.has(id))return;
+    if(!input.isConnected||document.activeElement!==input||activeBookSearch!==id||input.value.trim()!==q||selectedBooks.has(id))return;
     const terms=key.split(/\s+/).filter(Boolean);
     const books=all.filter(b=>terms.every(t=>`${b.title} ${b.series}`.toLocaleLowerCase().includes(t)))
       .sort((a,b)=>Number(b.title.toLocaleLowerCase().startsWith(key))-Number(a.title.toLocaleLowerCase().startsWith(key))||a.title.localeCompare(b.title))
       .slice(0,40);
     searchCache.set(key,books);showMenu(id,books,books.length?'':'No matching database books');
-  }catch(e){if(input.isConnected&&input.value.trim()===q)showMenu(id,[],'Search unavailable — try again')}
+  }catch(e){if(input.isConnected&&document.activeElement===input&&activeBookSearch===id&&input.value.trim()===q)showMenu(id,[],'Search unavailable — try again')}
 }
 function bindBook(id){
   const input=$('#'+id);
   input.addEventListener('input',()=>{
-    selectedBooks.delete(id);clearTimeout(timers.get(id));timers.set(id,setTimeout(()=>searchBooks(id),180));
+    activeBookSearch=id;hideMenus(id+'Menu');selectedBooks.delete(id);clearTimeout(timers.get(id));timers.set(id,setTimeout(()=>searchBooks(id),180));
     bookStatus(id);syncLevel();if(!input.value.trim())hideMenus();
   });
-  input.addEventListener('focus',()=>{if(!selectedBooks.has(id)&&input.value.trim().length>=2)searchBooks(id)});
+  // Focusing or opening a class is not a search; only actual text editing opens suggestions.
   input.addEventListener('keydown',e=>{if(e.key==='Escape')hideMenus()});
-  input.addEventListener('blur',()=>setTimeout(()=>hideMenus(),130));
+  input.addEventListener('blur',()=>hideMenus());
 }
 function bookPayload(id){
   const value=$('#'+id).value.trim();if(!value)return null;
@@ -206,7 +208,7 @@ async function saveDrawer(){
 
 export async function mountClasses(){
   if($('#classAddV2')?.dataset.bound!=='1'){
-    $('#classAddV2').dataset.bound='1';$('#classAddV2').onclick=openAdd;$('#classRefreshV2').onclick=()=>loadClasses(true);$('#classDrawerCloseV2').onclick=closeDrawer;$('#classDrawerBgV2').onclick=e=>{if(e.target===$('#classDrawerBgV2'))closeDrawer()};$('#classOrderEditV2').onclick=beginOrder;$('#classOrderCancelV2').onclick=cancelOrder;$('#classOrderDoneV2').onclick=saveOrder;
+    $('#classAddV2').dataset.bound='1';$('#classAddV2').onclick=openAdd;$('#classRefreshV2').onclick=()=>loadClasses(true);$('#classDrawerCloseV2').onclick=closeDrawer;$('#classDrawerBgV2').onclick=e=>{if(e.target===$('#classDrawerBgV2'))closeDrawer()};document.addEventListener('pointerdown',e=>{if(!e.target.closest?.('.admin-book-picker'))hideMenus()});$('#classOrderEditV2').onclick=beginOrder;$('#classOrderCancelV2').onclick=cancelOrder;$('#classOrderDoneV2').onclick=saveOrder;
   }
   return loadClasses(false);
 }
