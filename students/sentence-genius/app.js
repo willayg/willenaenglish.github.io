@@ -6,9 +6,9 @@ import {openUnit} from './scoring.js?v=sg-coach-gold-v3';
 import {geniusSessionContext,geniusHomeworkFromUrl} from '/students/components/genius-session-context.js?v=20261104-a';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
-import {createScreens} from './screens.js?v=sg-homework-progress-v5b';
-import {createSession} from './session.js?v=20261103-speech2';
-import {loadSentenceHomework} from './homework.js?v=sg-homework-unified-v6';
+import {createScreens} from './screens.js?v=20261104-separated-homework1';
+import {createSession} from './session.js?v=20261104-separated-homework1';
+import {loadSentenceHomework} from './homework.js?v=20261104-separated-homework1';
 
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
   loadToken:0,loading:null,teacher:false,homework:[],simMode:'class',simClasses:[],simCatalog:[],
