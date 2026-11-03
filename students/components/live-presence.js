@@ -56,7 +56,18 @@ function detect(){
  }else if(app==="puzzles"){
   activity=pickValue(["modeLabel","listTitle"])||"Puzzles";
  }else if(app==="test_prep"){
-  activity="내신 practice";unit=new URLSearchParams(location.search).get("lesson")||"";
+  // Navigation V2 stores the current logical route in history.state.
+  // Use its structured identifiers, never question text or student input.
+  const h=history.state;
+  const route=h?.app==="willena-test-prep-v2"?h.route||{}:{};
+  const qs=new URLSearchParams(location.search);
+  const view=String(route.view||qs.get("view")||"home");
+  const practice=String(route.practice||qs.get("practice")||"");
+  const titles={vocabulary:"Vocabulary",reading:"Reading",grammar:"Grammar",communication:"Communication",writing:"Writing",listening:"Listening"};
+  const views={home:"Home",plan:"Book",lesson:"Lesson",practice:"Practice",result:"Results",review:"Review",mock:"Mock Test",performance:"Performance"};
+  unit=String(route.lesson||qs.get("lesson")||"");
+  activity=view==="practice"?(titles[practice]||practice||"Practice"):views[view]||"내신";
+  if(view==="practice" && practice && !titles[practice])activity=practice.replace(/[_-]/g," ").slice(0,40);
  }else if(app==="dashboard")activity="Student dashboard";
  return {book:label(book),unit:label(unit),activity:label(activity)};
 }
