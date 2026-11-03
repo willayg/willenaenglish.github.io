@@ -1,0 +1,71 @@
+/* Free Talking Genius: deliberately inherits Word Genius typography, borders, rings, colors and screen layout. */
+.free-talking-genius{--ft-pink:#ea188b;--ft-cyan:#bdecef;--ft-ink:#234f55;min-height:100vh;background:#e9fbfc;color:var(--ink,#234f55);font-family:Poppins,Arial,sans-serif}
+.free-talking-genius [hidden]{display:none!important}
+.ft-page{max-width:1030px;margin:0 auto;padding:18px clamp(12px,3vw,32px) 50px}
+.ft-shell{border:2px solid #bcebee;background:#fff;border-radius:32px;padding:clamp(20px,4vw,40px);box-shadow:0 14px 32px #2c7c8420;margin:14px auto;max-width:900px}
+.ft-shell h1{font-size:clamp(27px,4vw,42px);margin:10px 0;color:#284e55;font-weight:900}
+.ft-shell h2{font-size:clamp(24px,3.8vw,35px);margin:15px 0 18px;font-weight:900}
+.ft-shell h3{font-size:clamp(19px,2.8vw,25px);font-weight:850;margin:20px 0}
+.ft-shell p{line-height:1.6}
+.ft-eyebrow{color:#2ca5b3;font-size:12px;letter-spacing:.11em;font-weight:900}
+.ft-muted{color:#687c86;font-size:13px;line-height:1.7}
+.ft-book-choice{width:100%;display:flex;align-items:center;gap:16px;cursor:pointer;padding:20px;border:2px solid var(--ft-cyan);border-radius:22px;background:#fff;color:var(--ft-ink);text-align:left;margin:22px 0}
+.ft-book-choice:disabled{opacity:.55;cursor:wait}
+.ft-book-choice .vocab-front-card-copy{display:grid;gap:5px;flex:1}
+.ft-book-choice strong{font-size:clamp(18px,3vw,24px)}
+.ft-book-choice small{font-size:12px;color:#6e8490}
+.ft-book-icon{border:2px solid var(--ft-cyan);border-radius:15px;width:58px;height:58px;display:grid;place-items:center;flex-shrink:0}
+.ft-book-icon img{width:32px;height:32px}
+.ft-chevron{font-size:33px;color:#db5b98}
+.ft-topline{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.ft-topline .vocab-back{border:2px solid var(--ft-cyan);padding:8px 16px;border-radius:12px;background:#fff;font-weight:850;color:var(--ft-ink)}
+.ft-units{display:flex;gap:10px;overflow-x:auto;padding:8px 2px 16px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.ft-units button{scroll-snap-align:start;flex:0 0 auto;padding:12px 16px;min-width:92px;border:2px solid var(--ft-cyan);border-radius:15px;background:#fff;font:800 15px Poppins,Arial,sans-serif;color:var(--ft-ink);cursor:pointer}
+.ft-units button.is-current{border-color:var(--ft-pink);background:#fce8f5;color:#ce0d7a}
+.ft-units button.is-golden{background:#fff6df}
+.ft-units img{width:15px;margin-left:4px;vertical-align:middle}
+.ft-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px;margin:20px 0}
+.ft-mode-grid .vocab-skill-card{width:100%;display:flex;align-items:center;min-height:138px;gap:15px;background:#fff;border:3px solid var(--ft-cyan);border-radius:22px;padding:17px;text-align:left;cursor:pointer}
+.ft-mode-grid .vocab-skill-copy{display:grid;gap:5px}
+.ft-mode-grid .vocab-skill-copy strong{font-size:clamp(15px,2vw,20px)}
+.ft-mode-grid .vocab-skill-ring{flex:0 0 75px;width:75px;height:75px}
+.ft-mode-grid .vocab-card-stars{font-size:12px}
+.ft-error{color:#a94346;background:#fff0f0;border:1px solid #e9bcbc;padding:13px 16px;border-radius:12px;margin:10px 0;font-weight:700}
+.ft-session-topline{display:flex;align-items:center;gap:15px}
+#ftSession{background:#fff;border-radius:28px;margin:14px auto;max-width:920px;overflow:hidden;box-shadow:0 8px 28px #246b731d;border:2px solid var(--ft-cyan)}
+#ftSession .vocab-session-top,#ftSession .vocab-session-bottom{position:relative;z-index:2}
+#ftSession .vocab-session-main{padding:clamp(18px,4vw,34px)}
+.ft-question-intro{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 3px 15px}
+.ft-pts-label{font-size:11px;color:#ac8294;font-weight:800}
+#ftQuestionHost{border:2px solid #e4eff0;border-radius:23px;padding:clamp(12px,3vw,25px);background:#fff}
+#ftQuestionHost .question-card{width:100%}
+#ftQuestionHost .prompt{font-size:clamp(21px,3vw,31px);font-weight:850;text-align:center;color:var(--ft-ink);line-height:1.45;margin-bottom:20px}
+#ftQuestionHost .context{color:#758c97;font-size:14px;text-align:center;line-height:1.6}
+#ftQuestionHost textarea.answer{min-height:125px;width:100%;box-sizing:border-box;resize:vertical;border:2px solid var(--ft-cyan);border-radius:15px;font:600 17px Poppins,Arial,sans-serif;color:var(--ft-ink);padding:15px;line-height:1.6}
+#ftQuestionHost textarea.answer:focus,#ftTranscriptEdit:focus{outline:none;border-color:#e961a4}
+#ftQuestionHost .speaking-control{padding:22px 0 8px}
+.ft-transcript-row{display:grid;gap:7px;margin-top:14px;padding:13px 15px;border-radius:14px;background:#f3fafb}
+.ft-transcript-row label{font-size:12px;font-weight:750;color:#607782}
+#ftTranscriptEdit{width:100%;box-sizing:border-box;border:2px solid var(--ft-cyan);padding:10px 12px;border-radius:12px;color:var(--ft-ink);font:600 15px Poppins,Arial,sans-serif}
+.ft-feedback{margin-top:18px;border:2px solid #ebc1d6;background:#fffafa;border-radius:18px;padding:clamp(14px,3vw,21px)}
+.ft-feedback h3{margin:0 0 10px;font-size:20px;color:#b64f80}
+.ft-feedback-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ft-feedback-grid>div{background:#fff;border:1px solid #f1dae5;border-radius:12px;padding:12px}
+.ft-feedback-grid strong{font-size:13px;color:#6d7684}.ft-feedback-grid b{float:right;color:#bd3c80;font-size:18px}
+.ft-feedback-grid p{clear:both;margin:9px 0 0;font-size:13px;line-height:1.55;color:#465e6a}
+.ft-correction{margin-top:12px;padding:12px;border-radius:11px;background:#effbfc;border:1px solid var(--ft-cyan)}
+.ft-correction strong{font-size:13px;color:#2d9aa5}.ft-correction p{font-size:15px;font-weight:700;line-height:1.6;margin:8px 0 0}
+.ft-status{font-size:13px;color:#69838d;line-height:1.6;min-height:18px;margin:12px 0}
+.ft-finish-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.ft-finish-actions .vocab-action{padding:12px 25px;min-width:150px;border:2px solid var(--ft-cyan);background:#fff;color:var(--ft-ink);border-radius:14px;font-weight:850}
+.ft-footer-version{text-align:center;font-size:11px;color:#92a9ac;padding:16px 0}
+@media(max-width:620px){
+.ft-shell{border-radius:23px;padding:16px}
+.ft-mode-grid{grid-template-columns:1fr}
+.ft-mode-grid .vocab-skill-card{min-height:110px}
+.ft-feedback-grid{grid-template-columns:1fr}
+.ft-pts-label{font-size:10px}
+.ft-book-choice{padding:14px}
+#ftQuestionHost{padding:14px 10px}
+#ftSession .vocab-session-main{padding:13px}
+}
