@@ -448,7 +448,7 @@ async function finishRound(){
  }
  if(!retryingWrong||completed){
   try{
-   if(typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
+   if(!currentGrammarContext().isHomework&&typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
    const alreadyGold=goldChapter(activeUnit);
    if(currentGrammarContext().isHomework){
      await saveHomeworkQuestions();
