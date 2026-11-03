@@ -178,10 +178,13 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   if(!session)return;
   const summary=sessionSummary(session);
   const award=state.rewards.get(session.book_id+'|'+session.unit_id);
-  txt('spStarsEarned','★'.repeat(summary.stars)+'☆'.repeat(5-summary.stars));
-  txt('spScoreSummary',summary.percent+'% · '+summary.stars+'/5 stars · 숙달 '+summary.mastered+'/'+summary.total+
+  const homework=!!session.assignment_id;
+  txt('spStarsEarned',homework?'숙제 / Homework':'★'.repeat(summary.stars)+'☆'.repeat(5-summary.stars));
+  txt('spScoreSummary',homework
+   ?'숙제 · '+summary.mastered+'/'+summary.total+' sentences · '+summary.percent+'%'
+   :summary.percent+'% · '+summary.stars+'/5 stars · 숙달 '+summary.mastered+'/'+summary.total+
    (!summary.eligible?' · 단원 혼합 연습(골드 제외)':''));
-  $('spGoldAward').hidden=!award?.golden;
+  $('spGoldAward').hidden=!!session.assignment_id||!award?.golden;
   txt('spSyncStatus','');
   refreshStartButton();
   void synchronizeRewards(session,summary);
@@ -210,6 +213,12 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   }catch(error){console.warn('[Writing Genius] Gold units unavailable',error)}
  }
  async function synchronizeRewards(session,summary){
+  // Assigned textbook writing is a separate submission. It must never issue
+  // voluntary unit stars or alter permanent Golden Unit mastery.
+  if(session.assignment_id){
+   if(state.session?.id===session.id)txt('spSyncStatus','숙제 진행 상황이 저장되었어요.');
+   return;
+  }
   const id=session.id;
   if(state.rewardInflight.has(id))return;
   state.rewardInflight.add(id);
@@ -406,7 +415,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   const list=await api('GET','?select=id,student_id,exercise_type,book_id,book_title,unit_id,assignment_id,questions,responses,current_index,status,practice_day,created_at,updated_at&student_id=eq.'+encodeURIComponent(state.student.id)+'&exercise_type=eq.make&order=created_at.desc&limit=100');
   if(!Array.isArray(list))throw Error('연습 기록을 불러오지 못했어요.');
   state.recent=list.filter(x=>x.student_id===state.student.id&&x.exercise_type==='make');
-  state.today=state.recent.find(x=>x.status==='in_progress')||null;
+  state.today=state.recent.find(x=>!x.assignment_id&&x.status==='in_progress')||null;
   // Real session streaks: unique completed practice days in Korea.
   const days=new Set(state.recent.filter(x=>x.status==='completed').map(x=>{
    const date=x.practice_day||x.created_at;
@@ -449,6 +458,15 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   }else if(outcomes[1].status==='rejected'){
    state.catalogError=true;notify('연습 기록을 불러오지 못했어요. '+outcomes[1].reason?.message,true);
   }
+  // Resume this assignment's own unfinished session; never pull in
+  // a previous voluntary practice session for the same textbook unit.
+  if(state.sessionContext.isHomework&&!state.catalogError){
+   const pending=state.recent.find(s=>String(s.assignment_id)===String(state.sessionContext.assignmentId)&&s.status==='in_progress');
+   if(pending){
+    state.session=structuredClone(pending);
+    await loadChecks(state.session);
+   }
+  }
   if(homework?.bookId&&homework?.unitId&&!state.catalogError){
    const book=state.books.find(x=>String(x.id)===String(homework.bookId));
    if(book){
@@ -459,6 +477,9 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    }else {state.catalogError=true;notify('숙제 교재를 불러오지 못했어요. 선생님에게 알려주세요.',true);}
   }
   renderSessionHistory();refreshStartButton();
+  if(state.sessionContext.isHomework&&state.session?.status==='in_progress'){
+   showRound();return;
+  }
   // A successful request previously left the initial "loading" message
   // onscreen indefinitely, even though the textbook buttons were ready.
   if(!state.catalogError)notify('');
