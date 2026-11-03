@@ -102,48 +102,73 @@ async function show(){
  }
 }
 async function drawCreate(){
- await Promise.all([loadStudents(),loadBooks()]);const el=panel();if(!el)return;
- if(!selectedBook()?.playable)store.bookId=store.books.find(b=>b.playable)?.id||'';
- const options=(store.classNames||[]).map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');
- el.innerHTML='<form class="gf-hw-form gb-form" id="gbHwForm">'+
- '<div class="gf-hw-form-grid"><label>Class<select class="control" name="klass" required><option value="">Choose class</option>'+options+'</select></label>'+
- '<label>Available from<input class="control" type="date" name="start" required></label>'+
+ await Promise.all([loadStudents(),loadBooks()]);
+ const el=panel();if(!el)return;
+ const classes=store.classNames||[];
+ const options=classes.map(name=>'<option value="'+esc(name)+'">'+esc(name)+'</option>').join('');
+ // Match Writing Genius: class → assigned textbooks → "Other book" → content.
+ el.innerHTML='<form id="gbHwForm" class="ua-feature ua-genius-assign gb-form">'+
+ '<h3>Assign Grammar Genius homework</h3>'+
+ '<label>Class <select class="control" name="klass" required><option value="">Choose class</option>'+options+'</select></label>'+
+ '<label>Textbook <select class="control" name="book" required><option value="">Choose class first</option></select></label>'+
+ '<p class="ua-note" id="gbHwBookStatus" role="status">Choose a class to see its textbooks.</p>'+
+ '<div id="gbHwBookContent" hidden>'+
+ '<div class="gf-hw-picker-top"><strong id="gbHwBookTitle">Units</strong><span id="gbHwSelected">0 selected</span></div>'+
+ '<div class="gb-select-head"><strong>Units</strong><label><input type="checkbox" id="gbSelectAll"> All</label></div>'+
+ '<div class="gb-chapter-list" id="gbHwUnitList"></div>'+
+ '<strong>Activities</strong><div class="gb-mode-row">'+MODES.map(([id,title])=>'<label><input type="checkbox" data-grammar-mode="'+id+'" checked> '+esc(title)+'</label>').join('')+'</div></div>'+
+ '<div class="gf-hw-form-grid"><label>Available from<input class="control" type="date" name="start" required></label>'+
  '<label>Due date<input class="control" type="date" name="due" required></label></div>'+
- '<label>Book<select class="control" id="gbHwBook" name="book" required><option value="">Choose book</option>'+bookOptions(store.bookId)+'</select></label>'+
- '<div class="gf-hw-picker-top"><div><strong id="gbHwBookTitle">Units</strong><small id="gbHwBookHint">Choose the units and activities students must complete.</small></div><span id="gbHwSelected">0 chapters</span></div>'+
- '<div class="gb-mode-row">'+MODES.map(([id,title])=>'<label><input type="checkbox" data-grammar-mode="'+id+'" checked> '+esc(title)+'</label>').join('')+'</div>'+
- '<div class="gb-select-head"><strong>Chapters</strong><label><input type="checkbox" id="gbSelectAll"> All</label></div>'+
- '<div class="gb-chapter-list" id="gbHwUnitList">'+chapterChoices()+'</div>'+
- '<div class="gf-hw-footer"><button type="submit" class="control ua-primary" id="gbHwSubmit">Assign selected chapters</button><span id="gbHwNotice" role="status"></span></div></form>';
- const today=new Date(), due=new Date(today.valueOf()+7*86400000);
- const fmt=koreanDate;
- el.querySelector('[name=start]').value=fmt(today);el.querySelector('[name=due]').value=fmt(due);
- const count=()=>{const n=$$('[data-chapter]:checked',el).length;$('#gbHwSelected',el).textContent=n+' selected';$('#gbHwSubmit',el).disabled=!n||!selectedBook()?.playable;$('#gbHwSubmit',el).textContent=n?'Assign '+n+' chapter'+(n===1?'':'s'):'Select chapters'};
- const bindChapters=()=>$$('[data-chapter]',el).forEach(b=>b.addEventListener('change',count));
- const changeBook=()=>{
-  store.bookId=$('#gbHwBook',el).value;
-  const book=selectedBook();
-  $('#gbHwBookTitle',el).textContent=book?.title||'Units';
-  $('#gbHwBookHint',el).textContent=book?.playable?'Choose units and the required activities.':'This book has no supported student exercises yet.';
-  $('#gbHwUnitList',el).innerHTML=chapterChoices();
-  $('#gbSelectAll',el).checked=false;
-  bindChapters();
-  const preferred=store.bookClasses.get(store.bookId)||[];
-  const klass=el.querySelector('[name=klass]');
-  if(klass){
-   const previous=klass.value;
-   const all=store.classNames||[];
-   const ordered=[...preferred.filter(x=>all.includes(x)),...all.filter(x=>!preferred.includes(x))];
-   klass.innerHTML='<option value="">Choose class</option>'+ordered.map(name=>
-    '<option value="'+esc(name)+'">'+esc(name)+(preferred.includes(name)?' · studying this book':'')+'</option>').join('');
-   klass.value=all.includes(previous)?previous:'';
-  }
-  count();
+ '<div class="gf-hw-footer"><button type="submit" class="control ua-primary" id="gbHwSubmit" disabled>Assign homework →</button>'+
+ '<span id="gbHwNotice" role="status"></span></div></form>';
+ const form=$('#gbHwForm',el),bookSelect=form.elements.book,classSelect=form.elements.klass;
+ const today=new Date(),due=new Date(today.valueOf()+7*86400000);
+ form.elements.start.value=koreanDate(today);form.elements.due.value=koreanDate(due);
+ const message=$('#gbHwBookStatus',el),unitList=$('#gbHwUnitList',el),content=$('#gbHwBookContent',el);
+ let expanded=false;
+ const count=()=>{
+  const n=$$('[data-chapter]:checked',form).length;
+  $('#gbHwSelected',el).textContent=n+' selected';
+  $('#gbHwSubmit',el).disabled=!selectedBook()?.playable||!n||!classSelect.value;
  };
- $('#gbHwBook',el).addEventListener('change',changeBook);
- bindChapters();
- $('#gbSelectAll',el).addEventListener('change',e=>{$$('[data-chapter]',el).forEach(b=>b.checked=e.target.checked);count()});
- $('#gbHwForm',el).addEventListener('submit',submit);changeBook();
+ const bindChapters=()=>$$('[data-chapter]',form).forEach(input=>input.addEventListener('change',count));
+ function populateBooks(all=false){
+  const selectedClass=classSelect.value;
+  // store.bookClasses is keyed by book ID. Keep the exact assigned-books-first
+  // workflow from the Writing Genius selector.
+  const assigned=(store.books||[]).filter(b=>(store.bookClasses.get(b.id)||[]).includes(selectedClass));
+  const list=all?(store.books||[]):assigned;
+  bookSelect.replaceChildren(new Option(all?'Choose any textbook':'Choose textbook',''));
+  for(const book of list){
+   const opt=new Option(book.title+(book.playable?'':' · Not ready'),book.id);
+   opt.disabled=!book.playable;
+   bookSelect.add(opt);
+  }
+  if(!all)bookSelect.add(new Option('Other book — all textbooks','__other__'));
+  message.textContent=all?'Full grammar textbook catalogue':assigned.length?'Assigned textbooks shown first.':'Use Other book to browse grammar textbooks.';
+  store.bookId='';content.hidden=true;unitList.replaceChildren();count();
+ }
+ function selectBook(){
+  store.bookId=bookSelect.value;
+  const book=selectedBook();
+  content.hidden=!book?.playable;
+  unitList.innerHTML=book?.playable?chapterChoices():'';
+  $('#gbHwBookTitle',el).textContent=book?.title||'Units';
+  $('#gbSelectAll',el).checked=false;bindChapters();
+  if(book&&!book.playable)message.textContent='This textbook does not yet have supported student exercises.';
+  count();
+ }
+ classSelect.addEventListener('change',()=>{expanded=false;populateBooks()});
+ bookSelect.addEventListener('change',()=>{
+  if(bookSelect.value==='__other__'){expanded=true;populateBooks(true);return}
+  selectBook();
+ });
+ $('#gbSelectAll',el).addEventListener('change',event=>{
+  $$('[data-chapter]',form).forEach(input=>input.checked=event.target.checked);
+  count();
+ });
+ form.addEventListener('submit',submit);
+ populateBooks();
 }
 function koreanDate(value){
  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value)).map(x=>[x.type,x.value]));
