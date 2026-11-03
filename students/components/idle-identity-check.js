@@ -13,7 +13,7 @@ const blockedSelectors=[
  "#vocabStudySession","#grammarRound","#session","#wgDiaryFlow","#wgEditor","#spRound",
  "#grammarQuestionEngineMount","#grammarResult","#gameArea","#wgPaperScreen"
 ];
-let last=Date.now(),busy=false,prompting=false,confirmed=false,lastWrite=0,dialog=null;
+let last=Date.now(),busy=false,prompting=false,pendingCheck=false,lastWrite=0,dialog=null;
 try{const stored=Number(sessionStorage.getItem(KEY));if(Number.isFinite(stored)&&stored>0&&stored<=Date.now())last=stored;}catch{}
 const now=()=>Date.now();
 function record(t=now()){
@@ -45,7 +45,7 @@ function working(){
  if(path.includes("/students/wordsearch/")&&visible(document.querySelector("#gameArea")))return true;
  return blockedSelectors.some(selector=>visible(document.querySelector(selector)));
 }
-function eligible(){return !prompting&&!busy&&!document.hidden&&now()-last>=IDLE_MS&&!working();}
+function eligible(){return !prompting&&!busy&&!document.hidden&&(pendingCheck||now()-last>=IDLE_MS)&&!working();}
 async function profile(){
  const api=window.WillenaAPI;
  if(!api?.fetch)return null;
@@ -77,7 +77,7 @@ function mount(){
  const yes=document.createElement("button");yes.type="button";yes.className="wil-yes";yes.textContent="Yes, it's me · 네, 맞아요";
  const no=document.createElement("button");no.type="button";no.textContent="No, log out · 아니요, 로그아웃";
  actions.append(yes,no);panel.append(title,sub,actions);root.append(panel);document.body.appendChild(root);
- yes.addEventListener("click",()=>{root.hidden=true;prompting=false;confirmed=true;record();});
+ yes.addEventListener("click",()=>{root.hidden=true;prompting=false;pendingCheck=false;record();});
  no.addEventListener("click",async()=>{
   yes.disabled=true;no.disabled=true;no.textContent="Signing out…";
   try{
@@ -97,31 +97,41 @@ async function ask(){
  busy=true;
  try{
   const person=await profile();
-  if(!person){record();return;}
-  if(!eligible())return;
+  if(!person){pendingCheck=false;record();return;}
+  if(document.hidden||working()||prompting)return;
   const ui=mount();ui.title.textContent=person.name+", is that you?";
   ui.sub.textContent=person.className?person.className+" · 본인이 맞나요?":"본인이 맞나요?";
   ui.yes.disabled=false;ui.no.disabled=false;ui.no.textContent="No, log out · 아니요, 로그아웃";
   ui.root.hidden=false;prompting=true;ui.yes.focus();
- }catch(e){console.warn("[Idle Identity] check unavailable",e);record();}
+ }catch(e){console.warn("[Idle Identity] check unavailable",e);pendingCheck=false;record();}
  finally{busy=false;}
 }
 function onInteraction(e){
  if(prompting)return;
  if(e.isTrusted===false)return;
- if(now()-last>=IDLE_MS){
-  if(!working()){
-   // On a safe screen, stop only the action that would begin new work.
-   // Never intercept actions on an in-progress task.
-   if(e.cancelable)e.preventDefault();
-   e.stopImmediatePropagation?.();
-   ask();return;
-  }
+ if(now()-last>=IDLE_MS)pendingCheck=true;
+ if(busy){
+  if(e.cancelable)e.preventDefault();
+  e.stopImmediatePropagation?.();
+  return;
+ }
+ if(pendingCheck&&!working()){
+  // Defer confirmation until a non-working state; this interaction stays blocked.
+  if(e.cancelable)e.preventDefault();
+  e.stopImmediatePropagation?.();
+  ask();return;
  }
  record();
 }
-["pointerdown","keydown","touchstart"].forEach(type=>addEventListener(type,onInteraction,{capture:true,passive:false}));
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&eligible())ask();});
-window.addEventListener("pageshow",()=>{if(eligible())ask();});
-window.WillenaIdleIdentity={check:ask,isPending:()=>now()-last>=IDLE_MS,isShowing:()=>prompting};
+["pointerdown","keydown","touchstart","click","submit"].forEach(type=>addEventListener(type,onInteraction,{capture:true,passive:false}));
+const observer=new MutationObserver(()=>{
+ if(!document.hidden&&pendingCheck&&!working())ask();
+});
+function observe(){if(document.body)observer.observe(document.body,{attributes:true,subtree:true,attributeFilter:["hidden","class","aria-hidden"]});}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",observe,{once:true});else observe();
+document.addEventListener("visibilitychange",()=>{
+ if(!document.hidden){if(now()-last>=IDLE_MS)pendingCheck=true;if(eligible())ask();}
+});
+window.addEventListener("pageshow",()=>{if(now()-last>=IDLE_MS)pendingCheck=true;if(eligible())ask();});
+window.WillenaIdleIdentity={check:ask,isPending:()=>pendingCheck||now()-last>=IDLE_MS,isShowing:()=>prompting};
 })();
