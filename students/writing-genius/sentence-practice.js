@@ -394,7 +394,8 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  for(const item of rows){
   const line=node('div');line.className='sp-history-entry';
   const total=(item.questions||[]).length;
-  line.append(node('span',(item.book_title||'교재')+' · '+(item.status==='completed'?'완료':'진행 중')+' · '+Math.min(Number(item.current_index)||0,total)+'/'+total));
+  const attempts=(item.responses||[]).reduce((n,r)=>n+Math.max(0,Number(r?.attempts)||0),0);
+  line.append(node('span',(item.book_title||'교재')+' · '+(item.status==='completed'?'완료':'진행 중')+' · '+Math.min(Number(item.current_index)||0,total)+'/'+total+' · '+attempts+'회 확인'));
   if(item.status==='in_progress'){
    const button=node('button','이어서 하기');button.type='button';button.className='vocab-screen-back';
    button.onclick=async()=>{if(state.loading)return;state.session=structuredClone(item);await loadChecks(state.session);showRound();};line.append(button);
@@ -402,7 +403,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  }
  }
  async function loadSessions(){
-  const list=await api('GET','?select=id,student_id,exercise_type,book_id,book_title,unit_id,assignment_id,questions,responses,current_index,status,practice_day,created_at,updated_at&order=created_at.desc&limit=25');
+  const list=await api('GET','?select=id,student_id,exercise_type,book_id,book_title,unit_id,assignment_id,questions,responses,current_index,status,practice_day,created_at,updated_at&student_id=eq.'+encodeURIComponent(state.student.id)+'&exercise_type=eq.make&order=created_at.desc&limit=100');
   if(!Array.isArray(list))throw Error('연습 기록을 불러오지 못했어요.');
   state.recent=list.filter(x=>x.student_id===state.student.id&&x.exercise_type==='make');
   state.today=state.recent.find(x=>x.status==='in_progress')||null;
