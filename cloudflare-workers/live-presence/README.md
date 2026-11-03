@@ -11,7 +11,7 @@ Dedicated Cloudflare Worker with one SQLite-backed Durable Object; isolated from
 - `POST /v1/disconnect` (or DELETE) — authenticated student deletes only their own session.
 - `GET /v1/presence` — authenticated, approved **teacher/admin** only. Returns all live sessions; P2 will add class grouping and an interface.
 
-The service uses the access token from the `sb_access` cookie or `Authorization: Bearer`. It verifies the token using Supabase Auth and resolves the authoritative role, name and class server-side using the profiles table. IDs/class/role in the request body are never trusted. Both `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_KEY` are deployed as secrets; **do not commit them**.
+The service uses the access token from the `sb_access` cookie or `Authorization: Bearer`. It verifies the token through the existing `supabase-auth` Cloudflare Worker using a private service binding, then resolves the verified user's role, name, approval and class. IDs/class/role in the request body are never trusted. **No new Supabase GitHub secrets are required.**
 
 ### Heartbeat example
 
@@ -53,12 +53,10 @@ From the repository root:
 
 ```sh
 cd cloudflare-workers/live-presence
-npx wrangler secret put SUPABASE_ANON_KEY
-npx wrangler secret put SUPABASE_SERVICE_KEY
 npx wrangler deploy
 ```
 
-Requires a Cloudflare account with SQLite-backed Durable Objects enabled. The first deployment applies the `v1-presence-sqlite` migration. Worker runs on its own `workers.dev` URL; do **not** bind to `api.willenaenglish.com` yet.
+Alternatively use GitHub Actions → **Deploy Live Classroom Presence (manual)**, selecting ref `feature/live-classroom-presence-p1`. Only existing `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets are required. Requires a Cloudflare account with SQLite-backed Durable Objects enabled and access to the existing `supabase-auth` Worker. The first deployment applies the `v1-presence-sqlite` migration. Worker runs on its own `workers.dev` URL; do **not** bind to `api.willenaenglish.com` yet.
 
 **Critical:** The existing dashboard does not call this Worker yet. For P2, bind it through the existing API gateway or a same-site hostname after review so browser cookies are available. Production CORS origins are intentionally restricted.
 
