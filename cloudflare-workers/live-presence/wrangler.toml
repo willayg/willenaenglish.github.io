@@ -3,11 +3,10 @@ main = "src/index.js"
 compatibility_date = "2026-10-01"
 workers_dev = true
 
-# Isolated Worker: does not alter api.willenaenglish.com routes.
-# Configure SUPABASE_SERVICE_KEY with 'wrangler secret put', never in git.
-# SUPABASE_ANON_KEY is public; store as a Worker variable or secret.
-[vars]
-SUPABASE_URL = "https://fiieuiktlsivwfgyivai.supabase.co"
+# Isolated Worker. No API gateway route changes and no new Supabase secrets.
+[[services]]
+binding = "SUPABASE_AUTH"
+service = "supabase-auth"
 
 [[durable_objects.bindings]]
 name = "PRESENCE"
