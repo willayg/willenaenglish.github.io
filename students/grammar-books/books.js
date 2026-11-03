@@ -252,15 +252,38 @@ function renderQuestion(){
  
  checked=false;
 }
-function startMode(mode){
+async function startMode(mode){
  preloadStudentSfx();
  if(!modes.some(x=>x.id===mode)||!activeBook)return;
- const panel=$('grammarModeCards');panel.setAttribute('aria-busy','true');
- loadQuestions().then(()=>{
-  activeMode=mode;activeQuestions=prepareRound(questionBank()[mode]||[],mode);masteredIds=new Set();missedQuestions=[];retryingWrong=false;position=0;correct=0;checked=false;beginRewardSession(mode);
+ const panel=$('grammarModeCards');
+ if(panel.getAttribute('aria-busy')==='true')return;
+ panel.setAttribute('aria-busy','true');
+ const book=activeBook,chapter=activeUnit;
+ try{
+  await Promise.all([loadQuestions(),refreshGrammarProgress()]);
+  if(activeBook!==book||activeUnit!==chapter)return;
+  const all=prepareRound(questionBank()[mode]||[],mode);
+  const saved=chapterProgress.find(p=>Number(p.chapter_number)===chapter&&p.mode===mode);
+  const eligibleIds=new Set(all.map(q=>q.id));
+  const savedIds=Array.isArray(saved?.mastered_question_ids)?saved.mastered_question_ids:[];
+  masteredIds=new Set(savedIds.filter(id=>eligibleIds.has(id)));
+  activeQuestions=all.filter(q=>!masteredIds.has(q.id));
+  // Fully mastered activities stay replayable as optional practice.
+  if(!activeQuestions.length)activeQuestions=all;
+  activeMode=mode;missedQuestions=[];retryingWrong=false;position=0;correct=0;checked=false;
+  beginRewardSession(mode);
+  // A repeat session cannot award points for questions mastered in an earlier session.
+  if(rewardSession){
+   rewardSession.reviewOnly=bestScore(chapter,mode)===8;
+   rewardSession.awardedIds=new Set(masteredIds);
+  }
   $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;
   renderQuestion();window.scrollTo(0,0);
- }).catch(err=>{console.error(err);$('grammarNotReady').textContent='문제를 불러오지 못했어요. 다시 시도해 주세요.';$('grammarNotReady').hidden=false}).finally(()=>panel.removeAttribute('aria-busy'));
+ }catch(err){
+  console.error('[Grammar Books] could not resume mode',err);
+  $('grammarNotReady').textContent='학습 기록이나 문제를 불러오지 못했어요. 다시 시도해 주세요.';
+  $('grammarNotReady').hidden=false;
+ }finally{panel.removeAttribute('aria-busy')}
 }
 async function checkAnswer(){
  if(checked||!renderer)return;
@@ -306,7 +329,7 @@ async function finishRound(){
   try{
    if(typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
    const alreadyGold=goldChapter(activeUnit);
-   await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,masteredIds.size);
+   await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,masteredIds.size,[...masteredIds]);
    await refreshGrammarProgress();
    if(!alreadyGold&&goldChapter(activeUnit)){
     const actions=$('grammarFinishMain').querySelector('.vocab-finish-actions');
