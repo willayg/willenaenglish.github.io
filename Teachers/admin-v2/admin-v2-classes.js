@@ -24,7 +24,7 @@ let dragPlaceholder=null;
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]))}
 function roster(){return getStudentRoster()?.students||[]}
 function countFor(name){return roster().filter(s=>s.class===name).length}
-function displayBook(b){return b?.series?`${b.series} — ${b.title}`:(b?.title||'')}
+function displayBook(b){return b?.title||''}
 
 async function resolveUserId(){
   if(userId)return userId;
@@ -126,7 +126,7 @@ function renderDrawer(row,mode='edit'){
   const isAdd=mode==='add';
   title.textContent=isAdd?'Add class':row.name;
   meta.textContent=isAdd?'Create a class and assign books':`${countFor(row.name)} students`;
-  for(let i=0;i<3;i++){const b=currentBook(row,i);if(b?.title)selectedBooks.set(`classBook${i+1}`,b.book_id?b:{...b,manual:true})}
+  for(let i=0;i<3;i++){const b=currentBook(row,i);if(b?.book_id)selectedBooks.set(`classBook${i+1}`,b)}
   const rs=isAdd?[]:roster().filter(s=>s.class===row.name);
   body.innerHTML=`<section class="admin-class-section"><h3>${isAdd?'Class setup':'Book assignments'}</h3><div class="admin-form-grid">${isAdd?`<label class="admin-form-field full"><span>Class name</span><input id="classNameV2" maxlength="80"></label>`:''}<div class="full admin-book-grid">${[0,1,2].map(i=>{const b=currentBook(row,i);return `<label class="admin-form-field"><span>Book ${i+1}</span><div class="admin-book-picker"><input id="classBook${i+1}" autocomplete="off" value="${esc(b?displayBook(b):'')}" placeholder="Type at least 2 characters"><div id="classBook${i+1}Menu" class="admin-book-suggestions"></div></div><div id="classBook${i+1}Status" class="admin-book-status">${b?(b.book_id?'Curriculum DB book':'Manual entry'):''}</div></label>`}).join('')}</div><label class="admin-form-field full"><span>Fallback level</span><select id="classLevelV2">${levelOptions(row?.level||'')}</select></label></div><div class="admin-modal-error" id="classDrawerErrorV2"></div><button class="admin-class-save" id="classSaveV2">${isAdd?'Create class':'Save changes'}</button></section>${isAdd?'':`<section class="admin-class-section"><h3>Roster</h3><div class="admin-class-roster">${rs.length?rs.map(s=>`<div><b>${esc(s.name||s.korean_name||s.username)}</b><span>${esc(s.korean_name||s.username||'')}</span></div>`).join(''):'<div class="empty">No students assigned.</div>'}</div></section>`}`;
   [1,2,3].forEach(n=>bindBook(`classBook${n}`));syncLevel();$('#classSaveV2').onclick=saveDrawer;bg.classList.add('open');drawer.classList.add('open');document.body.style.overflow='hidden';if(isAdd)setTimeout(()=>$('#classNameV2')?.focus(),0);
@@ -135,7 +135,7 @@ function renderDrawer(row,mode='edit'){
 function openEdit(name){const row=rows.find(r=>r.name===name);if(row)renderDrawer(row,'edit')}
 function openAdd(){renderDrawer({name:'',books:[],level:null},'add')}
 function syncLevel(){const has=[1,2,3].some(n=>$('#classBook'+n)?.value.trim());const level=$('#classLevelV2');if(level){level.disabled=has;if(has)level.value=''}}
-function bookStatus(id){const input=$('#'+id),el=$('#'+id+'Status'),b=selectedBooks.get(id);if(!input||!el)return;el.textContent=input.value.trim()?(b?(b.book_id?'Linked to curriculum DB':'Manual entry (not linked)'):'Select a matching book to link it'):''}
+function bookStatus(id){const input=$('#'+id),el=$('#'+id+'Status'),b=selectedBooks.get(id);if(!input||!el)return;el.textContent=input.value.trim()?(b?.book_id?'Linked to curriculum DB':'Select a database book from the search results'):''}
 function hideMenus(except=''){
   $('.admin-book-suggestions.show').forEach(menu=>{if(menu.id!==except)menu.classList.remove('show')});
   if(!except)activeBookSearch='';
@@ -152,19 +152,13 @@ async function catalogBooks(){
 function showMenu(id,books,message=''){
   const input=$('#'+id),menu=$('#'+id+'Menu');if(!input||!menu||activeBookSearch!==id||document.activeElement!==input)return;
   menu.innerHTML=(message?`<div class="admin-book-menu-message">${esc(message)}</div>`:'')+
-    books.map((b,i)=>`<button type="button" data-i="${i}"><b>${esc(b.title)}</b><span>${esc([b.series,b.level?`Level ${b.level}`:''].filter(Boolean).join(' · '))}</span></button>`).join('')+
-    (!books.length&&input.value.trim().length>=2&&message!=='Searching…'&&message!=='Search unavailable — try again'?`<button type="button" data-manual="1"><b>Use as manual entry</b><span>Not linked to curriculum DB</span></button>`:'');
+    books.map((b,i)=>`<button type="button" data-i="${i}"><b>${esc(b.title)}</b><span>${esc([b.series,b.level?`Level ${b.level}`:''].filter(Boolean).join(' · '))}</span></button>`).join('');
   hideMenus(menu.id);menu.classList.toggle('show',!!menu.children.length);
   $$('[data-i]',menu).forEach(btn=>btn.addEventListener('mousedown',e=>e.preventDefault()));
   $$('[data-i]',menu).forEach(btn=>btn.onclick=()=>{
     const b=books[Number(btn.dataset.i)];selectedBooks.set(id,b);
     input.value=displayBook(b);hideMenus();bookStatus(id);syncLevel();
   });
-  const manual=$('[data-manual]',menu);
-  if(manual){manual.onmousedown=e=>e.preventDefault();manual.onclick=()=>{
-    selectedBooks.set(id,{manual:true,title:input.value.trim()});
-    hideMenus();bookStatus(id);syncLevel();
-  }}
 }
 async function searchBooks(id){
   const input=$('#'+id);if(!input||activeBookSearch!==id||document.activeElement!==input)return;
@@ -196,9 +190,8 @@ function bindBook(id){
 function bookPayload(id){
   const value=$('#'+id).value.trim();if(!value)return null;
   const b=selectedBooks.get(id);
-  if(!b)throw new Error('Select a book from the suggestions for Book '+id.slice(-1));
-  return b.book_id?{book_id:b.book_id,title:b.title,series:b.series,level:b.level,source_type:'catalog'}
-    :{book_id:null,title:b.title||value,source_type:'manual'};
+  if(!b?.book_id)throw new Error('Select a curriculum DB book for Book '+id.slice(-1));
+  return {book_id:b.book_id,title:b.title,series:b.series,level:b.level,source_type:'catalog'};
 }
 
 async function saveDrawer(){
