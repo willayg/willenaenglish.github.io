@@ -190,7 +190,7 @@ async function creativeManage(app,body){
     results.forEach(result=>{if(result.status==='fulfilled'&&Array.isArray(result.value))result.value.forEach(x=>progress.set(String(x.id),x))});
     for(const item of chosen){
      const stat=progress.get(String(item.id));
-     window.WillenaGeniusHomeworkCard?.updateRing(item.id,stat&&Number(stat.students)>0?100*Number(stat.completed||0)/Number(stat.students):null,body);
+     window.WillenaGeniusHomeworkCard?.updateRing(item.id,stat&&Number(stat.students)>0?(item.list_key==='writing_genius:sentence'?Number(stat.progress_percent||0):100*Number(stat.completed||0)/Number(stat.students)):null,body);
     }
    })();
 
@@ -206,7 +206,8 @@ async function creativeManage(app,body){
     if(!response.ok)throw Error('Progress unavailable');
     const matches=await response.json(),result=matches.find(x=>x.id===button.dataset.creativeProgress);
     if(!result){host.textContent='No linked student progress yet.';return}
-    host.innerHTML='<p><b>'+result.completed+' / '+result.students+'</b> completed</p>'+(result.student_rows||[]).map(st=>'<div class="ua-creative-student-row"><span>'+esc(st.name)+'</span><span>'+(st.completed?'✓ Completed':'Not completed')+'</span></div>').join('');
+    const isSentence=record?.list_key==='writing_genius:sentence';
+    host.innerHTML=isSentence?'<p><b>'+Number(result.progress_percent||0)+'%</b> progress · '+Number(result.checked||0)+'/'+Number(result.total_questions||0)+' questions checked</p>'+(result.student_rows||[]).map(st=>'<div class="ua-creative-student-row"><span>'+esc(st.name)+'</span><span>'+Number(st.checked||0)+'/'+Number(st.total||0)+' · '+Number(st.progress_percent||0)+'%</span></div>').join(''):'<p><b>'+result.completed+' / '+result.students+'</b> completed</p>'+(result.student_rows||[]).map(st=>'<div class="ua-creative-student-row"><span>'+esc(st.name)+'</span><span>'+(st.completed?'✓ Completed':'Not completed')+'</span></div>').join('');
    }catch(e){host.textContent=e.message}
   }))};
   paint();
