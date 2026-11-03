@@ -11,7 +11,7 @@
         "일반동사의 현재형",
         "현재시제의 의문문"
       ],
-      "explanation": "1. be동사의 현재형\n2. 일반동사의 현재형\n3. 현재시제의 의문문",
+      "explanation": "be동사의 현재형: I에는 am, he/she/it과 단수 명사에는 is, you/we/they와 복수 명사에는 are를 사용해요.\n일반동사의 현재형: 주어가 he/she/it이면 동사에 -(e)s를 붙이고, I/you/we/they에는 동사원형을 써요.\n의문문: be동사는 주어 앞으로 옮기고, 일반동사는 Do/Does + 주어 + 동사원형으로 물어요. Does 뒤에는 동사원형을 써요.",
       "modes": {
         "choose": [
           {
@@ -396,7 +396,7 @@
         "be동사의 과거형",
         "일반동사의 과거형"
       ],
-      "explanation": "1. be동사의 과거형\n2. 일반동사의 과거형",
+      "explanation": "be동사의 과거형: I/he/she/it은 was, you/we/they는 were를 써요. 부정은 wasn't/weren't예요.\n일반동사의 과거형: 규칙 동사는 -ed를 붙이고 go→went처럼 불규칙 변화도 있어요.\n과거 의문문과 부정문: Did/didn't 뒤에는 과거형이 아닌 동사원형을 써요.",
       "modes": {
         "choose": [
           {
@@ -782,7 +782,7 @@
         "진행시제의 부정문과 의문문",
         "미래를 나타내는 will, be going to"
       ],
-      "explanation": "1. 현재진행시제, 과거진행시제\n2. 진행시제의 부정문과 의문문\n3. 미래를 나타내는 will, be going to",
+      "explanation": "진행시제: be동사 + 동사-ing로 진행 중인 동작을 나타내요. 현재는 am/is/are + -ing, 과거는 was/were + -ing예요.\n부정·의문: be동사 뒤에 not을 넣거나 be동사를 주어 앞으로 옮겨요.\n미래시제: will + 동사원형, be going to + 동사원형을 사용해요. going to 앞의 be동사는 주어에 맞춰 바꿔요.",
       "modes": {
         "choose": [
           {
@@ -1167,7 +1167,7 @@
         "can, may",
         "must, have to, should"
       ],
-      "explanation": "1. can, may\n2. must, have to, should",
+      "explanation": "can과 may: 가능·능력 또는 허락을 말해요. 조동사 뒤에는 언제나 동사원형을 써요.\nmust: 강한 의무를 나타내고 must not은 금지를 나타내요.\nhave to: 의무를 나타내고 주어가 3인칭 단수면 has to로 바뀌어요. don't have to는 '할 필요가 없다'는 뜻이에요.\nshould: 조언할 때 쓰고 뒤에는 동사원형이 와요.",
       "modes": {
         "choose": [
           {
@@ -1553,7 +1553,7 @@
         "관사",
         "인칭대명사"
       ],
-      "explanation": "1. 명사\n2. 관사\n3. 인칭대명사",
+      "explanation": "명사: 복수형은 보통 -s/-es를 붙이지만 child→children처럼 불규칙 변화가 있어요. information은 보통 셀 수 없는 명사예요.\n관사: 자음 소리 앞에는 a, 모음 소리 앞에는 an을 써요. 발음이 기준이에요(예: a university, an umbrella).\n인칭대명사: 주격(I, she 등), 목적격(me, her 등), 소유격(my, her 등)을 문장 속 역할에 맞게 골라요.",
       "modes": {
         "choose": [
           {
@@ -1939,7 +1939,7 @@
         "부사",
         "비교 표현"
       ],
-      "explanation": "1. 형용사\n2. 부사\n3. 비교 표현",
+      "explanation": "형용사: 사람이나 사물의 성질을 꾸미며 be동사·감각동사 뒤에 올 수 있어요(look happy, taste good).\n부사: 동작의 방식을 나타내며 동사를 꾸며요. quick→quickly처럼 바뀌지만 good→well도 있어요.\n비교급: 둘을 비교할 때 -er/more ... than을 써요. 최상급은 the -est/the most ...를 써요. heavy→heavier처럼 철자가 바뀌기도 해요.",
       "modes": {
         "choose": [
           {
@@ -2010,7 +2010,7 @@
           {
             "id": "gt2-c6-choose-6",
             "subunit": 2,
-            "prompt": "They arrived ____.",
+            "prompt": "They arrived ____ yesterday.",
             "options": [
               "late",
               "lately",
@@ -2018,7 +2018,7 @@
               "later"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: They arrived late."
+            "explanation": "올바른 문장: They arrived late yesterday."
           },
           {
             "id": "gt2-c6-choose-7",
@@ -2081,7 +2081,7 @@
             "options": [
               "He runs quick.",
               "She speaks English good.",
-              "They arrived lately.",
+              "They arrived lately yesterday.",
               "It is an interesting movie."
             ],
             "answerIndex": 3,
@@ -2094,7 +2094,7 @@
             "options": [
               "He runs quick.",
               "She speaks English well.",
-              "They arrived late.",
+              "They arrived late yesterday.",
               "This bag is heavier than mine."
             ],
             "answerIndex": 0,
@@ -2105,7 +2105,7 @@
             "subunit": 2,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "They arrived lately.",
+              "They arrived lately yesterday.",
               "She speaks English well.",
               "This bag is heavyer than mine.",
               "She is the taller in her class."
@@ -2120,11 +2120,11 @@
             "options": [
               "This bag is heavier than mine.",
               "She is the tallest in her class.",
-              "They arrived lately.",
+              "They arrived lately yesterday.",
               "The soup tastes delicious."
             ],
             "answerIndex": 2,
-            "explanation": "올바른 표현: They arrived late."
+            "explanation": "올바른 표현: They arrived late yesterday."
           },
           {
             "id": "gt2-c6-check-7",
@@ -2258,21 +2258,21 @@
             "id": "gt2-c6-hunt-6",
             "subunit": 2,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "They arrived lately.",
+            "sentence": "They arrived lately yesterday.",
             "underlined": [
-              "They arrived",
-              ".",
+              "They",
+              "arrived",
               "lately",
-              "They"
+              "yesterday."
             ],
             "options": [
-              "They arrived",
-              ".",
+              "They",
+              "arrived",
               "lately",
-              "They"
+              "yesterday."
             ],
             "answerIndex": 2,
-            "explanation": "올바른 문장: They arrived late."
+            "explanation": "올바른 문장: They arrived late yesterday."
           },
           {
             "id": "gt2-c6-hunt-7",
@@ -2325,7 +2325,7 @@
         "to부정사의 형용사적 & 부사적 용법",
         "동명사"
       ],
-      "explanation": "1. to부정사의 명사적 용법\n2. to부정사의 형용사적 & 부사적 용법\n3. 동명사",
+      "explanation": "to부정사의 명사적 용법: to + 동사원형이 '…하는 것'이라는 뜻으로 주어나 목적어 자리에 올 수 있어요.\n형용사적 용법: 앞의 명사를 꾸며요(something to drink). 부사적 용법: 목적·이유 등을 나타내요(went out to buy).\n동명사: 동사-ing가 명사 역할을 해요. enjoy, finish 뒤에는 동명사가 주로 와요.",
       "modes": {
         "choose": [
           {
@@ -2710,7 +2710,7 @@
         "시간을 나타내는 전치사",
         "장소를 나타내는 전치사, 기타 전치사"
       ],
-      "explanation": "1. 시간을 나타내는 전치사\n2. 장소를 나타내는 전치사, 기타 전치사",
+      "explanation": "시간 전치사: at은 구체적인 시각, on은 요일·날짜, in은 월·계절·연도에 자주 써요. since는 시작 시점, for는 기간을 나타내요.\n장소 전치사: in(안), on(표면 위), under(아래), between(둘 사이) 등 위치 관계를 구분해요.\n수단: 교통수단을 말할 때 by bus, by train처럼 써요.",
       "modes": {
         "choose": [
           {
@@ -3096,112 +3096,112 @@
         "when, before, after",
         "because, if, that"
       ],
-      "explanation": "1. and, but, or, so\n2. when, before, after\n3. because, if, that",
+      "explanation": "and(그리고), but(그러나), or(또는), so(그래서)는 말의 관계를 연결해요.\nwhen(…할 때), before(…하기 전에), after(…한 뒤에)는 시간을 나타내는 절을 이끌어요.\nbecause는 이유를, if는 조건을, that은 내용을 나타내는 절을 이끌 수 있어요. 접속사 뒤에도 주어와 동사가 갖춰진 절을 써요.",
       "modes": {
         "choose": [
           {
             "id": "gt2-c9-choose-1",
             "subunit": 1,
-            "prompt": "I was tired, ____ I went to bed.",
-            "options": [
-              "so",
-              "but",
-              "or",
-              "and"
-            ],
-            "answerIndex": 0,
-            "explanation": "올바른 문장: I was tired, so I went to bed."
-          },
-          {
-            "id": "gt2-c9-choose-2",
-            "subunit": 1,
             "prompt": "She likes tea ____ coffee.",
             "options": [
               "and",
-              "but",
-              "so",
-              "because"
+              "ands",
+              "or",
+              "but"
             ],
             "answerIndex": 0,
             "explanation": "올바른 문장: She likes tea and coffee."
           },
           {
-            "id": "gt2-c9-choose-3",
+            "id": "gt2-c9-choose-2",
             "subunit": 1,
-            "prompt": "Hurry up, ____ you'll miss the bus.",
+            "prompt": "He was tired, so he ____ to bed.",
             "options": [
-              "or",
-              "and",
-              "so",
-              "but"
+              "went",
+              "go",
+              "goes",
+              "going"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: Hurry up, or you'll miss the bus."
+            "explanation": "올바른 문장: He was tired, so he went to bed."
+          },
+          {
+            "id": "gt2-c9-choose-3",
+            "subunit": 1,
+            "prompt": "You can stay ____ leave.",
+            "options": [
+              "or",
+              "ors",
+              "and",
+              "so"
+            ],
+            "answerIndex": 0,
+            "explanation": "올바른 문장: You can stay or leave."
           },
           {
             "id": "gt2-c9-choose-4",
             "subunit": 1,
-            "prompt": "I wanted to go, ____ it was raining.",
+            "prompt": "She was sick, ____ she went to school.",
             "options": [
               "but",
+              "buts",
               "so",
-              "and",
-              "or"
+              "and"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: I wanted to go, but it was raining."
+            "explanation": "올바른 문장: She was sick, but she went to school."
           },
           {
             "id": "gt2-c9-choose-5",
             "subunit": 2,
-            "prompt": "Call me ____ you arrive.",
+            "prompt": "When it ____, we stay inside.",
             "options": [
-              "when",
-              "because",
-              "although",
-              "unless"
+              "rains",
+              "rain",
+              "raining",
+              "rained"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: Call me when you arrive."
+            "explanation": "올바른 문장: When it rains, we stay inside."
           },
           {
             "id": "gt2-c9-choose-6",
             "subunit": 2,
-            "prompt": "Wash your hands ____ you eat.",
+            "prompt": "Before you ____, close the door.",
             "options": [
-              "before",
-              "because",
-              "if",
-              "so"
+              "leave",
+              "leaving",
+              "leaves",
+              "left"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: Wash your hands before you eat."
+            "explanation": "올바른 문장: Before you leave, close the door."
           },
           {
             "id": "gt2-c9-choose-7",
             "subunit": 3,
-            "prompt": "We stayed indoors ____ it was cold.",
+            "prompt": "I stayed home because I ____ ill.",
             "options": [
-              "because",
-              "although",
-              "unless",
-              "but"
+              "was",
+              "were",
+              "am",
+              "be"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: We stayed indoors because it was cold."
+            "explanation": "올바른 문장: I stayed home because I was ill."
           },
           {
             "id": "gt2-c9-choose-8",
             "subunit": 3,
-            "prompt": "I know ____ she is honest.",
+            "prompt": "If she ____, I will tell her.",
             "options": [
-              "that",
-              "because",
-              "if",
-              "so"
+              "comes",
+              "come",
+              "coming",
+              "came"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: I know that she is honest."
+            "explanation": "올바른 문장: If she comes, I will tell her."
           }
         ],
         "check": [
@@ -3210,104 +3210,104 @@
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "I was tired, so I went to bed.",
-              "She likes tea but coffee.",
-              "Hurry up, and you'll miss the bus.",
-              "I wanted to go, so it was raining."
+              "She likes tea and coffee.",
+              "He was tired, so he go to bed.",
+              "You can stay ors leave.",
+              "She was sick, buts she went to school."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 표현: I was tired, so I went to bed."
+            "explanation": "올바른 표현: She likes tea and coffee."
           },
           {
             "id": "gt2-c9-check-2",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "Hurry up, or you'll miss the bus.",
-              "She likes tea but coffee.",
-              "I wanted to go, but it was raining.",
-              "Call me when you arrive."
+              "You can stay or leave.",
+              "He was tired, so he go to bed.",
+              "She was sick, but she went to school.",
+              "When it rains, we stay inside."
             ],
             "answerIndex": 1,
-            "explanation": "올바른 표현: She likes tea and coffee."
+            "explanation": "올바른 표현: He was tired, so he went to bed."
           },
           {
             "id": "gt2-c9-check-3",
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "I wanted to go, so it was raining.",
-              "Call me because you arrive.",
-              "Hurry up, or you'll miss the bus.",
-              "Wash your hands because you eat."
+              "She was sick, buts she went to school.",
+              "When it rain, we stay inside.",
+              "You can stay or leave.",
+              "Before you leaving, close the door."
             ],
             "answerIndex": 2,
-            "explanation": "올바른 표현: Hurry up, or you'll miss the bus."
+            "explanation": "올바른 표현: You can stay or leave."
           },
           {
             "id": "gt2-c9-check-4",
             "subunit": 1,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "Call me when you arrive.",
-              "Wash your hands before you eat.",
-              "We stayed indoors because it was cold.",
-              "I wanted to go, so it was raining."
+              "When it rains, we stay inside.",
+              "Before you leave, close the door.",
+              "I stayed home because I was ill.",
+              "She was sick, buts she went to school."
             ],
             "answerIndex": 3,
-            "explanation": "올바른 표현: I wanted to go, but it was raining."
+            "explanation": "올바른 표현: She was sick, but she went to school."
           },
           {
             "id": "gt2-c9-check-5",
             "subunit": 2,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "Call me when you arrive.",
-              "Wash your hands because you eat.",
-              "We stayed indoors although it was cold.",
-              "I know because she is honest."
+              "When it rains, we stay inside.",
+              "Before you leaving, close the door.",
+              "I stayed home because I were ill.",
+              "If she come, I will tell her."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 표현: Call me when you arrive."
+            "explanation": "올바른 표현: When it rains, we stay inside."
           },
           {
             "id": "gt2-c9-check-6",
             "subunit": 2,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "We stayed indoors because it was cold.",
-              "Wash your hands because you eat.",
-              "I know that she is honest.",
-              "I was tired, so I went to bed."
+              "I stayed home because I was ill.",
+              "Before you leaving, close the door.",
+              "If she comes, I will tell her.",
+              "She likes tea and coffee."
             ],
             "answerIndex": 1,
-            "explanation": "올바른 표현: Wash your hands before you eat."
+            "explanation": "올바른 표현: Before you leave, close the door."
           },
           {
             "id": "gt2-c9-check-7",
             "subunit": 3,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "I know because she is honest.",
-              "I was tired, but I went to bed.",
-              "We stayed indoors because it was cold.",
-              "She likes tea but coffee."
+              "If she come, I will tell her.",
+              "She likes tea ands coffee.",
+              "I stayed home because I was ill.",
+              "He was tired, so he go to bed."
             ],
             "answerIndex": 2,
-            "explanation": "올바른 표현: We stayed indoors because it was cold."
+            "explanation": "올바른 표현: I stayed home because I was ill."
           },
           {
             "id": "gt2-c9-check-8",
             "subunit": 3,
             "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "I was tired, so I went to bed.",
               "She likes tea and coffee.",
-              "Hurry up, or you'll miss the bus.",
-              "I know because she is honest."
+              "He was tired, so he went to bed.",
+              "You can stay or leave.",
+              "If she come, I will tell her."
             ],
             "answerIndex": 3,
-            "explanation": "올바른 표현: I know that she is honest."
+            "explanation": "올바른 표현: If she comes, I will tell her."
           }
         ],
         "hunt": [
@@ -3315,161 +3315,161 @@
             "id": "gt2-c9-hunt-1",
             "subunit": 1,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I was tired, but I went to bed.",
-            "underlined": [
-              "but",
-              "I was tired,",
-              "I went to bed.",
-              "I"
-            ],
+            "sentence": "She likes tea ands coffee.",
             "options": [
-              "but",
-              "I was tired,",
-              "I went to bed.",
-              "I"
+              "ands",
+              "She likes",
+              "tea",
+              "coffee."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: I was tired, so I went to bed."
+            "underlined": [
+              "ands",
+              "She likes",
+              "tea",
+              "coffee."
+            ],
+            "explanation": "올바른 문장: She likes tea and coffee."
           },
           {
             "id": "gt2-c9-hunt-2",
             "subunit": 1,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She likes tea but coffee.",
-            "underlined": [
-              "She likes tea",
-              "but",
-              "coffee.",
-              "She"
-            ],
+            "sentence": "He was tired, so he go to bed.",
             "options": [
-              "She likes tea",
-              "but",
-              "coffee.",
-              "She"
+              "He was tired, so",
+              "go",
+              "he",
+              "to bed."
             ],
             "answerIndex": 1,
-            "explanation": "올바른 문장: She likes tea and coffee."
+            "underlined": [
+              "He was tired, so",
+              "go",
+              "he",
+              "to bed."
+            ],
+            "explanation": "올바른 문장: He was tired, so he went to bed."
           },
           {
             "id": "gt2-c9-hunt-3",
             "subunit": 1,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Hurry up, and you'll miss the bus.",
-            "underlined": [
-              "Hurry up,",
-              "you'll miss the bus.",
-              "and",
-              "Hurry"
-            ],
+            "sentence": "You can stay ors leave.",
             "options": [
-              "Hurry up,",
-              "you'll miss the bus.",
-              "and",
-              "Hurry"
+              "You can",
+              "stay",
+              "ors",
+              "leave."
             ],
             "answerIndex": 2,
-            "explanation": "올바른 문장: Hurry up, or you'll miss the bus."
+            "underlined": [
+              "You can",
+              "stay",
+              "ors",
+              "leave."
+            ],
+            "explanation": "올바른 문장: You can stay or leave."
           },
           {
             "id": "gt2-c9-hunt-4",
             "subunit": 1,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I wanted to go, so it was raining.",
-            "underlined": [
-              "I wanted to go,",
-              "it was raining.",
-              "I",
-              "so"
-            ],
+            "sentence": "She was sick, buts she went to school.",
             "options": [
-              "I wanted to go,",
-              "it was raining.",
-              "I",
-              "so"
+              "She was",
+              "sick,",
+              "she went to school.",
+              "buts"
             ],
             "answerIndex": 3,
-            "explanation": "올바른 문장: I wanted to go, but it was raining."
+            "underlined": [
+              "She was",
+              "sick,",
+              "she went to school.",
+              "buts"
+            ],
+            "explanation": "올바른 문장: She was sick, but she went to school."
           },
           {
             "id": "gt2-c9-hunt-5",
             "subunit": 2,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Call me because you arrive.",
-            "underlined": [
-              "because",
-              "Call me",
-              "you arrive.",
-              "Call"
-            ],
+            "sentence": "When it rain, we stay inside.",
             "options": [
-              "because",
-              "Call me",
-              "you arrive.",
-              "Call"
+              "rain",
+              "When",
+              "it",
+              ", we stay inside."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: Call me when you arrive."
+            "underlined": [
+              "rain",
+              "When",
+              "it",
+              ", we stay inside."
+            ],
+            "explanation": "올바른 문장: When it rains, we stay inside."
           },
           {
             "id": "gt2-c9-hunt-6",
             "subunit": 2,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Wash your hands because you eat.",
-            "underlined": [
-              "Wash your hands",
-              "because",
-              "you eat.",
-              "Wash"
-            ],
+            "sentence": "Before you leaving, close the door.",
             "options": [
-              "Wash your hands",
-              "because",
-              "you eat.",
-              "Wash"
+              "Before",
+              "leaving",
+              "you",
+              ", close the door."
             ],
             "answerIndex": 1,
-            "explanation": "올바른 문장: Wash your hands before you eat."
+            "underlined": [
+              "Before",
+              "leaving",
+              "you",
+              ", close the door."
+            ],
+            "explanation": "올바른 문장: Before you leave, close the door."
           },
           {
             "id": "gt2-c9-hunt-7",
             "subunit": 3,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "We stayed indoors although it was cold.",
-            "underlined": [
-              "We stayed indoors",
-              "it was cold.",
-              "although",
-              "We"
-            ],
+            "sentence": "I stayed home because I were ill.",
             "options": [
-              "We stayed indoors",
-              "it was cold.",
-              "although",
-              "We"
+              "I stayed home because",
+              "I",
+              "were",
+              "ill."
             ],
             "answerIndex": 2,
-            "explanation": "올바른 문장: We stayed indoors because it was cold."
+            "underlined": [
+              "I stayed home because",
+              "I",
+              "were",
+              "ill."
+            ],
+            "explanation": "올바른 문장: I stayed home because I was ill."
           },
           {
             "id": "gt2-c9-hunt-8",
             "subunit": 3,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I know because she is honest.",
-            "underlined": [
-              "I know",
-              "she is honest.",
-              "I",
-              "because"
-            ],
+            "sentence": "If she come, I will tell her.",
             "options": [
-              "I know",
-              "she is honest.",
-              "I",
-              "because"
+              "If",
+              "she",
+              ", I will tell her.",
+              "come"
             ],
             "answerIndex": 3,
-            "explanation": "올바른 문장: I know that she is honest."
+            "underlined": [
+              "If",
+              "she",
+              ", I will tell her.",
+              "come"
+            ],
+            "explanation": "올바른 문장: If she comes, I will tell her."
           }
         ]
       }
@@ -3482,7 +3482,7 @@
         "수여동사+간접목적어+직접목적어",
         "동사+목적어+목적격보어"
       ],
-      "explanation": "1. There is/are, 감각동사+형용사\n2. 수여동사+간접목적어+직접목적어\n3. 동사+목적어+목적격보어",
+      "explanation": "There is/are는 '~이 있다'는 뜻이에요. 뒤에 오는 명사가 단수면 is, 복수면 are를 써요.\n감각동사 look, smell, sound, taste, feel 뒤에는 상태를 설명하는 형용사가 와요.\n수여동사: give/send/show + 사람 + 물건 형태를 사용할 수 있어요(give me a book).\n목적격보어: make + 목적어 + 형용사처럼 목적어의 상태를 설명해요(make him happy).",
       "modes": {
         "choose": [
           {
@@ -3553,10 +3553,10 @@
           {
             "id": "gt2-c10-choose-6",
             "subunit": 2,
-            "prompt": "He sent ____ a message.",
+            "prompt": "He sent ____ friend a message.",
             "options": [
-              "his friend",
-              "his friend to",
+              "his",
+              "him",
               "to his friend",
               "his friend's"
             ],
@@ -3624,7 +3624,7 @@
             "options": [
               "The music sounds beautifully.",
               "She gave I a present.",
-              "He sent his friend to a message.",
+              "He sent him friend a message.",
               "This cake smells wonderful."
             ],
             "answerIndex": 3,
@@ -3648,7 +3648,7 @@
             "subunit": 2,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "He sent his friend to a message.",
+              "He sent him friend a message.",
               "She gave me a present.",
               "Please show we the picture.",
               "The news made him happily."
@@ -3663,7 +3663,7 @@
             "options": [
               "Please show us the picture.",
               "The news made him happy.",
-              "He sent his friend to a message.",
+              "He sent him friend a message.",
               "There is a cat on the roof."
             ],
             "answerIndex": 2,
@@ -3801,18 +3801,18 @@
             "id": "gt2-c10-hunt-6",
             "subunit": 2,
             "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He sent his friend to a message.",
+            "sentence": "He sent him friend a message.",
             "underlined": [
-              "He sent",
-              "a message.",
-              "his friend to",
-              "He"
+              "He",
+              "sent",
+              "him",
+              "friend a message."
             ],
             "options": [
-              "He sent",
-              "a message.",
-              "his friend to",
-              "He"
+              "He",
+              "sent",
+              "him",
+              "friend a message."
             ],
             "answerIndex": 2,
             "explanation": "올바른 문장: He sent his friend a message."
@@ -3869,7 +3869,7 @@
         "부가의문문, 선택의문문, 부정의문문",
         "명령문, 감탄문"
       ],
-      "explanation": "1. 의문사가 있는 의문문 1\n2. 의문사가 있는 의문문 2\n3. 부가의문문, 선택의문문, 부정의문문\n4. 명령문, 감탄문",
+      "explanation": "의문사가 있는 의문문: who, what, where, when, why, how 등의 의문사를 문장 앞에 놓아요. 일반동사 의문문에는 do/does/did가 필요하고 뒤의 동사는 원형으로 써요.\n부가의문문: 앞 문장이 긍정이면 뒤에 부정 부가의문문을 붙이는 경우가 많아요(You're hungry, aren't you?).\n명령문: 동사원형으로 시작하고, 금지할 때는 Don't + 동사원형을 써요.\n감탄문: What a/an + 형용사 + 명사!, How + 형용사/부사! 등의 형식을 사용해요.",
       "modes": {
         "choose": [
           {
