@@ -17,106 +17,106 @@
           {
             "id": "gt2-c1-choose-1",
             "subunit": 1,
-            "prompt": "She ____ a student.",
+            "prompt": "A: ____ your cousins at the museum now?\nB: Yes, they ____.",
             "options": [
-              "is",
-              "are",
-              "am",
-              "be"
+              "Are — are",
+              "Do — do",
+              "Is — is",
+              "Does — does"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: She is a student."
+            "explanation": "'at the museum'처럼 상태·위치를 묻는 질문은 Are your cousins ...?이고, 긍정 대답은 Yes, they are.예요."
           },
           {
             "id": "gt2-c1-choose-2",
             "subunit": 1,
-            "prompt": "They ____ at home.",
+            "prompt": "My dad ____ a firefighter, but my uncles ____ teachers.",
             "options": [
-              "are",
-              "is",
-              "am",
-              "was"
+              "is — are",
+              "are — is",
+              "am — are",
+              "does — do"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: They are at home."
+            "explanation": "dad는 한 명이므로 is, uncles는 여러 명이므로 are를 써요."
           },
           {
             "id": "gt2-c1-choose-3",
             "subunit": 1,
-            "prompt": "I ____ ready for the test.",
+            "prompt": "A: Is your backpack heavy?\nB: No, ____.",
             "options": [
-              "am",
-              "is",
-              "are",
-              "be"
+              "it isn't",
+              "it doesn't",
+              "they aren't",
+              "I'm not"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: I am ready for the test."
+            "explanation": "Is your backpack ...?의 주어는 it으로 받고, be동사 is의 부정형 isn't를 써요."
           },
           {
             "id": "gt2-c1-choose-4",
             "subunit": 2,
-            "prompt": "My sister ____ music.",
+            "prompt": "My aunt ____ in a hotel. She ____ breakfast for the guests.",
             "options": [
-              "likes",
-              "like",
-              "liking",
-              "liked"
+              "works — prepares",
+              "work — prepare",
+              "works — prepare",
+              "work — prepares"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: My sister likes music."
+            "explanation": "my aunt와 she는 3인칭 단수 주어이므로 works, prepares를 써요."
           },
           {
             "id": "gt2-c1-choose-5",
             "subunit": 2,
-            "prompt": "We ____ soccer on Sundays.",
+            "prompt": "He ____ like spicy food, but his parents ____ it.",
             "options": [
-              "play",
-              "plays",
-              "playing",
-              "played"
+              "doesn't — enjoy",
+              "don't — enjoys",
+              "isn't — enjoy",
+              "doesn't — enjoys"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: We play soccer on Sundays."
+            "explanation": "doesn't 뒤에는 동사원형 like, his parents에는 동사원형 enjoy를 써요."
           },
           {
             "id": "gt2-c1-choose-6",
             "subunit": 2,
-            "prompt": "He ____ eat fish.",
+            "prompt": "다음 중 동사원형과 3인칭 단수 현재형이 잘못 짝지어진 것은?",
             "options": [
-              "doesn't",
-              "don't",
-              "isn't",
-              "didn't"
+              "carry — carrys",
+              "watch — watches",
+              "study — studies",
+              "mix — mixes"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: He doesn't eat fish."
+            "explanation": "자음+y로 끝나는 carry는 y를 i로 바꾸고 -es를 붙여 carries가 돼요."
           },
           {
             "id": "gt2-c1-choose-7",
             "subunit": 3,
-            "prompt": "____ your brother live here?",
+            "prompt": "A: ____ Ella practice the violin every day?\nB: Yes, she ____.",
             "options": [
-              "Does",
-              "Do",
-              "Is",
-              "Are"
+              "Does — does",
+              "Do — do",
+              "Is — is",
+              "Does — is"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: Does your brother live here?"
+            "explanation": "Ella는 3인칭 단수이므로 Does로 묻고 Yes, she does.로 대답해요."
           },
           {
             "id": "gt2-c1-choose-8",
             "subunit": 3,
-            "prompt": "Where ____ they study?",
+            "prompt": "A: ____ your classmates at school now?\nB: No, they ____.",
             "options": [
-              "do",
-              "does",
-              "is",
-              "are"
+              "Are — aren't",
+              "Do — don't",
+              "Is — isn't",
+              "Does — doesn't"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: Where do they study?"
+            "explanation": "학교에 있는 상태를 묻는 be동사 의문문이므로 Are ..., No, they aren't.가 맞아요."
           }
         ],
         "check": [
@@ -125,269 +125,222 @@
             "subunit": 1,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "She is a student.",
-              "They is at home.",
-              "I is ready for the test.",
-              "My sister like music."
+              "The children are in the playground.",
+              "The children is in the playground.",
+              "My best friend am very kind.",
+              "I are ready for school."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 표현: She is a student."
+            "explanation": "children은 복수 주어이므로 are를 써요."
           },
           {
             "id": "gt2-c1-check-2",
             "subunit": 1,
-            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+            "prompt": "다음 중 우리말과 일치하는 영어 문장은?\n‘그녀의 부모님은 지금 집에 계시지 않다.’",
             "options": [
-              "I am ready for the test.",
-              "They is at home.",
-              "My sister likes music.",
-              "We play soccer on Sundays."
+              "Her parents aren't at home now.",
+              "Her parents isn't at home now.",
+              "Her parents don't at home now.",
+              "Her parents doesn't at home now."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: They are at home."
+            "answerIndex": 0,
+            "explanation": "parents는 복수 주어이고 위치·상태를 말하므로 aren't at home이 맞아요."
           },
           {
             "id": "gt2-c1-check-3",
-            "subunit": 1,
+            "subunit": 2,
             "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
             "options": [
-              "My sister like music.",
-              "We plays soccer on Sundays.",
-              "I am ready for the test.",
-              "He don't eat fish."
+              "My neighbor teaches science at school.",
+              "My neighbor teach science at school.",
+              "She don't drink coffee.",
+              "Kevin play tennis every Saturday."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: I am ready for the test."
+            "answerIndex": 0,
+            "explanation": "My neighbor는 3인칭 단수 주어이므로 teaches를 써요."
           },
           {
             "id": "gt2-c1-check-4",
             "subunit": 2,
-            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+            "prompt": "다음 중 우리말과 일치하도록 바르게 쓴 문장은?\n‘우리는 주말에 숙제를 하지 않는다.’",
             "options": [
-              "We play soccer on Sundays.",
-              "He doesn't eat fish.",
-              "Does your brother live here?",
-              "My sister like music."
+              "We don't do homework on weekends.",
+              "We doesn't do homework on weekends.",
+              "We aren't do homework on weekends.",
+              "We don't does homework on weekends."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: My sister likes music."
+            "answerIndex": 0,
+            "explanation": "we의 현재형 부정문은 don't + 동사원형이에요."
           },
           {
             "id": "gt2-c1-check-5",
             "subunit": 2,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
+            "prompt": "다음 중 동사원형과 3인칭 단수 현재형이 바르게 짝지어진 것은?",
             "options": [
-              "We play soccer on Sundays.",
-              "He don't eat fish.",
-              "Do your brother live here?",
-              "Where does they study?"
+              "fix — fixes",
+              "study — studys",
+              "have — haves",
+              "go — gos"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 표현: We play soccer on Sundays."
+            "explanation": "fix는 fixes, study는 studies, have는 has, go는 goes로 바뀌어요."
           },
           {
             "id": "gt2-c1-check-6",
-            "subunit": 2,
-            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+            "subunit": 3,
+            "prompt": "다음 중 어법상 올바른 의문문을 고르시오.",
             "options": [
-              "Does your brother live here?",
-              "He don't eat fish.",
-              "Where do they study?",
-              "She is a student."
+              "Does your brother get up early?",
+              "Does your brother gets up early?",
+              "Do your brother get up early?",
+              "Is your brother get up early?"
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 표현: He doesn't eat fish."
+            "answerIndex": 0,
+            "explanation": "Does 뒤에는 동사원형 get을 써요."
           },
           {
             "id": "gt2-c1-check-7",
             "subunit": 3,
-            "prompt": "다음 중 어법상 올바른 문장을 고르시오.",
+            "prompt": "다음 중 대화가 자연스러운 것은?",
             "options": [
-              "Where does they study?",
-              "She are a student.",
-              "Does your brother live here?",
-              "They is at home."
+              "A: Are these shoes new?\nB: Yes, they are.",
+              "A: Does your mom drive?\nB: Yes, she is.",
+              "A: Is the boys hungry?\nB: Yes, they are.",
+              "A: Do Mia like soccer?\nB: Yes, she does."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 표현: Does your brother live here?"
+            "answerIndex": 0,
+            "explanation": "be동사 의문문 Are these shoes ...?에는 Yes, they are.로 대답해요."
           },
           {
             "id": "gt2-c1-check-8",
             "subunit": 3,
-            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+            "prompt": "다음 중 우리말과 일치하는 의문문을 고르시오.\n‘너의 누나는 영어를 가르치니?’",
             "options": [
-              "She is a student.",
-              "They are at home.",
-              "I am ready for the test.",
-              "Where does they study?"
+              "Does your sister teach English?",
+              "Do your sister teaches English?",
+              "Is your sister teach English?",
+              "Does your sister teaches English?"
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 표현: Where do they study?"
+            "answerIndex": 0,
+            "explanation": "3인칭 단수 의문문은 Does + 주어 + 동사원형의 순서예요."
           }
         ],
         "hunt": [
           {
             "id": "gt2-c1-hunt-1",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "She are a student.",
-            "underlined": [
-              "are",
-              "She",
-              "a",
-              "student."
-            ],
+            "prompt": "다음 중 밑줄 친 동사 형태가 어법상 틀린 문장을 고르시오.",
             "options": [
-              "are",
-              "She",
-              "a",
-              "student."
+              "My grandparents is very active.",
+              "The weather is warm today.",
+              "I am not tired.",
+              "Are your cousins at school?"
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: She is a student."
+            "explanation": "grandparents는 복수 주어이므로 is가 아니라 are를 써요.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c1-hunt-2",
             "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "They is at home.",
-            "underlined": [
-              "They",
-              "is",
-              "at",
-              "home."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "They",
-              "is",
-              "at",
-              "home."
+              "Does your bag heavy?",
+              "Is the train late?",
+              "My brother isn't at home.",
+              "Those apples are fresh."
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: They are at home."
+            "answerIndex": 0,
+            "explanation": "heavy는 형용사이므로 Does your bag ...?가 아니라 Is your bag heavy?라고 물어요.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c1-hunt-3",
-            "subunit": 1,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "I is ready for the test.",
-            "underlined": [
-              "I",
-              "ready",
-              "is",
-              "for the test."
-            ],
+            "subunit": 2,
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "I",
-              "ready",
-              "is",
-              "for the test."
+              "My sister study English after dinner.",
+              "They walk to school every day.",
+              "Ben watches movies on Fridays.",
+              "I enjoy music class."
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: I am ready for the test."
+            "answerIndex": 0,
+            "explanation": "My sister는 3인칭 단수이므로 study가 아니라 studies예요.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c1-hunt-4",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "My sister like music.",
-            "underlined": [
-              "My",
-              "sister",
-              "music.",
-              "like"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "My",
-              "sister",
-              "music.",
-              "like"
+              "Our dog doesn't likes carrots.",
+              "Their cousins don't live here.",
+              "My aunt drives to work.",
+              "We often have breakfast together."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: My sister likes music."
+            "answerIndex": 0,
+            "explanation": "doesn't 다음에는 동사원형 like를 써야 해요.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c1-hunt-5",
             "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "We plays soccer on Sundays.",
-            "underlined": [
-              "plays",
-              "We",
-              "soccer",
-              "on Sundays."
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "plays",
-              "We",
-              "soccer",
-              "on Sundays."
+              "Emily go to the library on Tuesdays.",
+              "Their teacher reads a lot.",
+              "My friends eat lunch at noon.",
+              "He carries a small bag."
             ],
             "answerIndex": 0,
-            "explanation": "올바른 문장: We play soccer on Sundays."
+            "explanation": "Emily는 3인칭 단수이므로 goes를 써요.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c1-hunt-6",
-            "subunit": 2,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "He don't eat fish.",
-            "underlined": [
-              "He",
-              "don't",
-              "eat",
-              "fish."
-            ],
+            "subunit": 3,
+            "prompt": "다음 중 어법상 틀린 의문문을 고르시오.",
             "options": [
-              "He",
-              "don't",
-              "eat",
-              "fish."
+              "Do your dad work on Saturdays?",
+              "Do the students need more time?",
+              "Does Mina speak French?",
+              "Are your friends at the park?"
             ],
-            "answerIndex": 1,
-            "explanation": "올바른 문장: He doesn't eat fish."
+            "answerIndex": 0,
+            "explanation": "your dad는 3인칭 단수이므로 Does your dad work ...?가 맞아요.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c1-hunt-7",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Do your brother live here?",
-            "underlined": [
-              "your",
-              "brother live",
-              "Do",
-              "here?"
-            ],
+            "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
             "options": [
-              "your",
-              "brother live",
-              "Do",
-              "here?"
+              "Does Alice needs a new notebook?",
+              "Do you play basketball?",
+              "Is your uncle a pilot?",
+              "Does your teacher give homework?"
             ],
-            "answerIndex": 2,
-            "explanation": "올바른 문장: Does your brother live here?"
+            "answerIndex": 0,
+            "explanation": "Does 뒤에는 동사원형 need를 써요.",
+            "displayStyle": "sentence-options"
           },
           {
             "id": "gt2-c1-hunt-8",
             "subunit": 3,
-            "prompt": "다음 문장에서 어법상 틀린 부분을 고르시오.",
-            "sentence": "Where does they study?",
-            "underlined": [
-              "Where",
-              "they",
-              "study?",
-              "does"
-            ],
+            "prompt": "다음 중 대화의 어법이 틀린 것을 고르시오.",
             "options": [
-              "Where",
-              "they",
-              "study?",
-              "does"
+              "A: Does your sister cook?\nB: Yes, she is.",
+              "A: Are your parents busy?\nB: No, they aren't.",
+              "A: Do you like this song?\nB: Yes, I do.",
+              "A: Is that your bike?\nB: No, it isn't."
             ],
-            "answerIndex": 3,
-            "explanation": "올바른 문장: Where do they study?"
+            "answerIndex": 0,
+            "explanation": "Does로 묻는 일반동사 질문에는 Yes, she does.라고 대답해요.",
+            "displayStyle": "sentence-options"
           }
         ]
-      }
+      },
+      "contentVersion": "review-aligned-2026-11-03"
     },
     {
       "chapter": 2,
