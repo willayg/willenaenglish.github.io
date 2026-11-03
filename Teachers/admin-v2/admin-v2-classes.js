@@ -150,42 +150,61 @@ async function catalogBooks(){
   return catalogPromise;
 }
 function showMenu(id,books,message=''){
-  const input=$('#'+id),menu=$('#'+id+'Menu');if(!input||!menu||activeBookSearch!==id||document.activeElement!==input)return;
+  const input=$('#'+id),menu=$('#'+id+'Menu');
+  if(!input||!menu||activeBookSearch!==id||document.activeElement!==input)return;
   menu.innerHTML=(message?`<div class="admin-book-menu-message">${esc(message)}</div>`:'')+
     books.map((b,i)=>`<button type="button" data-i="${i}"><b>${esc(b.title)}</b><span>${esc([b.series,b.level?`Level ${b.level}`:''].filter(Boolean).join(' · '))}</span></button>`).join('');
   hideMenus(menu.id);menu.classList.toggle('show',!!menu.children.length);
-  $$('[data-i]',menu).forEach(btn=>btn.addEventListener('mousedown',e=>e.preventDefault()));
-  $$('[data-i]',menu).forEach(btn=>btn.onclick=()=>{
-    const b=books[Number(btn.dataset.i)];selectedBooks.set(id,b);
-    input.value=displayBook(b);hideMenus();bookStatus(id);syncLevel();
+  $$('[data-i]',menu).forEach(btn=>{
+    btn.onpointerdown=e=>e.preventDefault();
+    btn.onclick=()=>{
+      const b=books[Number(btn.dataset.i)];
+      selectedBooks.set(id,b);input.value=displayBook(b);
+      hideMenus();bookStatus(id);syncLevel();
+    };
   });
 }
 async function searchBooks(id){
-  const input=$('#'+id);if(!input||activeBookSearch!==id||document.activeElement!==input)return;
-  const q=input.value.trim();const key=q.toLocaleLowerCase();
-  if(q.length<2){hideMenus();return}
+  const input=$('#'+id);
+  if(!input||activeBookSearch!==id||document.activeElement!==input)return;
+  const q=input.value.trim(),key=q.toLocaleLowerCase();
   const cached=searchCache.get(key);
   if(cached){showMenu(id,cached);return}
-  showMenu(id,[],'Searching…');
+  showMenu(id,[],'Loading books…');
   try{
     const all=await catalogBooks();
-    if(!input.isConnected||document.activeElement!==input||activeBookSearch!==id||input.value.trim()!==q||selectedBooks.has(id))return;
+    if(!input.isConnected||document.activeElement!==input||activeBookSearch!==id||input.value.trim()!==q)return;
     const terms=key.split(/\s+/).filter(Boolean);
     const books=all.filter(b=>terms.every(t=>`${b.title} ${b.series}`.toLocaleLowerCase().includes(t)))
       .sort((a,b)=>Number(b.title.toLocaleLowerCase().startsWith(key))-Number(a.title.toLocaleLowerCase().startsWith(key))||a.title.localeCompare(b.title))
-      .slice(0,40);
-    searchCache.set(key,books);showMenu(id,books,books.length?'':'No matching database books');
-  }catch(e){if(input.isConnected&&document.activeElement===input&&activeBookSearch===id&&input.value.trim()===q)showMenu(id,[],'Search unavailable — try again')}
+      .slice(0,61);
+    searchCache.set(key,books);
+    showMenu(id,books,books.length?'':'No matching database books');
+  }catch(e){
+    if(input.isConnected&&document.activeElement===input&&activeBookSearch===id)showMenu(id,[],'Could not load books');
+  }
 }
 function bindBook(id){
   const input=$('#'+id);
-  input.addEventListener('input',()=>{
-    activeBookSearch=id;hideMenus(id+'Menu');selectedBooks.delete(id);clearTimeout(timers.get(id));timers.set(id,setTimeout(()=>searchBooks(id),180));
-    bookStatus(id);syncLevel();if(!input.value.trim())hideMenus();
+  input.addEventListener('focus',()=>{
+    activeBookSearch=id;hideMenus(id+'Menu');
+    if(selectedBooks.has(id)){input.value='';input.placeholder='Search or select a database book';}
+    searchBooks(id);
   });
-  // Focusing or opening a class is not a search; only actual text editing opens suggestions.
-  input.addEventListener('keydown',e=>{if(e.key==='Escape')hideMenus()});
-  input.addEventListener('blur',()=>hideMenus());
+  input.addEventListener('input',()=>{
+    activeBookSearch=id;hideMenus(id+'Menu');
+    selectedBooks.delete(id);clearTimeout(timers.get(id));
+    timers.set(id,setTimeout(()=>searchBooks(id),160));
+    bookStatus(id);syncLevel();
+  });
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){hideMenus();input.blur();}
+  });
+  input.addEventListener('blur',()=>{
+    clearTimeout(timers.get(id));hideMenus();
+    const b=selectedBooks.get(id);
+    if(b?.book_id){input.value=displayBook(b);input.placeholder='Type to filter database books';}
+  });
 }
 function bookPayload(id){
   const value=$('#'+id).value.trim();if(!value)return null;
@@ -201,7 +220,7 @@ async function saveDrawer(){
 
 export async function mountClasses(){
   if($('#classAddV2')?.dataset.bound!=='1'){
-    $('#classAddV2').dataset.bound='1';$('#classAddV2').onclick=openAdd;$('#classRefreshV2').onclick=()=>loadClasses(true);$('#classDrawerCloseV2').onclick=closeDrawer;$('#classDrawerBgV2').onclick=e=>{if(e.target===$('#classDrawerBgV2'))closeDrawer()};document.addEventListener('pointerdown',e=>{if(!e.target.closest?.('.admin-book-picker'))hideMenus()});$('#classOrderEditV2').onclick=beginOrder;$('#classOrderCancelV2').onclick=cancelOrder;$('#classOrderDoneV2').onclick=saveOrder;
+    $('#classAddV2').dataset.bound='1';$('#classAddV2').onclick=openAdd;$('#classRefreshV2').onclick=()=>loadClasses(true);$('#classDrawerCloseV2').onclick=e=>{e.preventDefault();e.stopPropagation();closeDrawer()};$('#classDrawerBgV2').onclick=e=>{if(e.target===$('#classDrawerBgV2'))closeDrawer()};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#classDrawerV2')?.classList.contains('open'))closeDrawer()});document.addEventListener('pointerdown',e=>{if(!e.target.closest?.('.admin-book-picker'))hideMenus()});$('#classOrderEditV2').onclick=beginOrder;$('#classOrderCancelV2').onclick=cancelOrder;$('#classOrderDoneV2').onclick=saveOrder;
   }
   return loadClasses(false);
 }
