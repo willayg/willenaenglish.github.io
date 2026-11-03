@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>Writing Genius v1.13.0 · 쓰기 지니어스</title>
+<title>Writing Genius v1.13.1 · 쓰기 지니어스</title>
 <link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
-<link rel="stylesheet" href="./styles.css?v=20261101-random140-cyanfix">
+<link rel="stylesheet" href="./styles.css?v=20261103-writing-portfolio1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -56,12 +56,18 @@
         <div><strong>GOLD</strong><span>5문장만 있는 단원도 모두 맞히면 골드!</span></div>
         <div><strong>AI 20</strong><span>AI Willi 하루 20회 · 저장된 정답은 차감 없음</span></div>
       </div>
-      <!-- Keep state bindings for editor/history logic; this library is no longer shown on the home screen. -->
-      <div class="wg-library-head" hidden aria-hidden="true">
+      <button id="wgOpenLibrary" class="wg-portfolio-button" type="button" aria-controls="wgPortfolio" aria-expanded="false">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="5" width="20" height="23" rx="3"/><path d="M11 11h10M11 16h10M11 21h6"/></svg>
+        <span><strong>내 글 모음</strong><small>지난 일기와 글 다시 보기</small></span><span class="wg-portfolio-arrow" aria-hidden="true">›</span>
+      </button>
+      <section id="wgPortfolio" class="wg-portfolio" hidden aria-label="내 글 모음">
+      <button id="wgCloseLibrary" class="vocab-screen-back" type="button">← 글쓰기 메뉴</button>
+      <div class="wg-library-head">
         <div><h2 class="wg-section-title">내가 쓴 글</h2><p id="wgSummary"></p></div>
         <select id="wgHistoryFilter" aria-label="글 종류 선택"><option value="all">전체</option><option value="draft">임시 저장</option><option value="submitted">제출 완료</option></select>
       </div>
-      <div id="wgLibrary" class="wg-library" hidden aria-hidden="true"></div>
+      <div id="wgLibrary" class="wg-library"></div>
+      </section>
     </section>
     <section id="wgEditor" class="wg-editor" aria-label="Writing editor" hidden>
       <section id="wgDiaryFlow" class="wg-diary-flow" hidden aria-label="Daily Diary">
@@ -232,12 +238,12 @@
       </div>
       <div id="spMessage" class="wg-notice" role="status" aria-live="polite"></div>
     </section>
-    <div class="wg-version-row" aria-label="Writing Genius version"><span>Writing Genius</span><strong>v1.13.0</strong></div>
+    <div class="wg-version-row" aria-label="Writing Genius version"><span>Writing Genius</span><strong>v1.13.1</strong></div>
   </main>
 </div>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
 <script src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
-<script type="module" src="./app.js?v=20261102-sentence-homework1"></script>
+<script type="module" src="./app.js?v=20261103-writing-portfolio1"></script>
 
 <script src="/students/components/mission-basket.js?v=20261102-medals-fix4"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
