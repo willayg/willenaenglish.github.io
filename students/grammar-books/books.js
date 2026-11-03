@@ -292,8 +292,17 @@ async function finishRound(){
  drawFinishScreen();
  $('grammarResult').hidden=false;
  const rewardMount=$('grammarRewardMount');
- if(!missedQuestions.length&&rewardSession&&!rewardSession.reviewOnly)rewardMount.textContent='보상 저장 중…';
- if(!retryingWrong||!missedQuestions.length){
+ const completed=missedQuestions.length===0;
+ // The same Word Genius celebration must mount immediately on session finish.
+ // Persistence runs afterward; a failed request must not hide the star animation.
+ if(completed&&rewardSession){
+  const percent=Math.round(rewardSession.firstCorrect/8*100);
+  showGrammarReward({
+   percent,stars:rewardSession.reviewOnly?0:starsForPercent(percent),
+   points:rewardSession.reviewOnly?0:rewardSession.points
+  });
+ }
+ if(!retryingWrong||completed){
   try{
    if(typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
    const alreadyGold=goldChapter(activeUnit);
@@ -304,15 +313,34 @@ async function finishRound(){
     actions?.insertAdjacentHTML('beforebegin',
       '<div class="vocab-golden-award"><img class="vocab-golden-award-icon" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt=""><div><strong>Golden Unit earned!</strong><span>Unit '+activeUnit+' is mastered.</span></div></div>');
    }
-   if(!missedQuestions.length){
-    try{showGrammarReward(await completeRewardSession())}
-    catch(error){console.error('[Grammar Books] award failed',error);rewardMount.textContent='보상 저장에 실패했어요.'}
-    void window.WillenaMissionBasket?.recordCompletedActivity?.('grammar-ten-2-chapter-'+activeUnit+'-'+activeMode,'Grammar Genius Books');
-    void window.WillenaAchievements?.refresh?.();
+  }catch(error){
+   console.error('[Grammar Books] progress save failed',error);
+   showFinishSaveWarning('학습 기록이 저장되지 않았어요.');
+  }
+  if(completed){
+   try{await completeRewardSession()}
+   catch(error){
+    console.error('[Grammar Books] award save failed',error);
+    showFinishSaveWarning('별과 포인트 저장을 확인하지 못했어요.');
    }
-  }catch(error){console.error('[Grammar Books] result not saved',error);rewardMount.textContent='학습 기록 저장에 실패했어요.'}
+   void window.WillenaMissionBasket?.recordCompletedActivity?.('grammar-ten-2-chapter-'+activeUnit+'-'+activeMode,'Grammar Genius Books');
+   void window.WillenaAchievements?.refresh?.();
+  }
  }
  window.scrollTo(0,0);
+}
+function showFinishSaveWarning(message){
+ const mount=$('grammarFinishMain');
+ if(!mount)return;
+ let warning=$('grammarFinishSaveWarning');
+ if(!warning){
+  warning=document.createElement('p');
+  warning.id='grammarFinishSaveWarning';
+  warning.setAttribute('role','status');
+  warning.style.cssText='margin:12px auto;font-size:14px;font-weight:700;color:#a33';
+  mount.querySelector('.vocab-finish-actions')?.before(warning);
+ }
+ warning.textContent=[warning.textContent,message].filter(Boolean).join(' ');
 }
 function goToModes(){
  $('grammarRound').hidden=true;$('grammarResult').hidden=true;$('grammarModePanel').hidden=false;activeMode=null;
