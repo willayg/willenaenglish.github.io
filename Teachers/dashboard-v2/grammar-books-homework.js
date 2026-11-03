@@ -10,7 +10,7 @@ const ACTIVE_BOOK_ID='1e3a2112-07be-45e2-a8fc-ce20011e0e57';
 const MODES=[['choose','빈칸 선택'],['check','문장 판단'],['hunt','오류 찾기']];
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
-const store={path:'books',sub:'manage',classNames:null,students:[],books:null,bookId:'',bookClasses:new Map(),assignments:[],completions:[],loading:false,history:false,expanded:new Set()};
+const store={path:'books',sub:'manage',classNames:null,students:[],books:null,bookId:'',bookClasses:new Map(),assignments:[],completions:[],progress:new Map(),loading:false,history:false,expanded:new Set()};
 const root=()=>$('#uaGrammarHomework'),panel=()=>$('#gfBooksHomework');
 const authToken=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 async function refreshToken(){const response=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh'):fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include'}));const data=await response.json();if(!data.access_token)throw Error('Please sign in again');window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');return data.access_token}
@@ -28,22 +28,22 @@ const notice=(s,err=false)=>{const n=$('#gbHwNotice');if(n){n.textContent=s;n.cl
 function teacherId(){try{return JSON.parse(atob(authToken().split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub}catch{return''}}
 async function loadStudents(){
  if(store.classNames)return;
- // The authoritative class roster is classes + class_enrollments, not the
- // older Grammar Foundations activity feed (which can omit real classes).
- const classes=await api('classes?select=id,name,status&status=eq.active&order=sort_order.asc&limit=200');
- store.classNames=[...new Set([...(classes||[]).map(x=>x.name).filter(Boolean),'Test'])];
- try{
-  const enrollments=await api('class_enrollments?select=student_id,class_id,status&status=eq.active&limit=2000');
-  const ids=[...new Set((enrollments||[]).map(e=>e.student_id).filter(Boolean))];
-  let profiles=[];
-  if(ids.length)profiles=await api('profiles?select=id,name,korean_name&role=eq.student&id=in.('+ids.join(',')+')&limit=2000');
-  const names=new Map((classes||[]).map(x=>[String(x.id),x.name]));
-  const members=new Map((profiles||[]).map(p=>[String(p.id),p]));
-  store.students=(enrollments||[]).flatMap(e=>{
-   const person=members.get(String(e.student_id)),name=names.get(String(e.class_id));
-   return person&&name?[{...person,class:name}]:[];
-  });
- }catch(error){console.warn('[Grammar book homework] enrolled student progress may be incomplete',error);store.students=[];}
+ // Reuse the existing teacher-authorized class/book RPC. Direct classes
+ // table access is intentionally not granted to this browser session.
+ const data=await api('rpc/get_sentence_genius_teacher_classes',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+ if(data?.success!==true||!Array.isArray(data.classes))throw Error('Teacher class catalog unavailable');
+ store.classNames=[...new Set(data.classes.map(row=>String(row.name||'').trim()).filter(Boolean))];
+ store.bookClasses=new Map();
+ for(const row of data.classes){
+  for(const book of row.books||[]){
+   if(book.status!=='active'||!book.book_id)continue;
+   const key=String(book.book_id);
+   if(!store.bookClasses.has(key))store.bookClasses.set(key,[]);
+   store.bookClasses.get(key).push(String(row.name));
+  }
+ }
+ // Student-level results are fetched through an existing authorized
+ // teacher progress RPC, not profile/enrollment table grants.
 }
 async function loadBooks(){
  if(store.books)return store.books;
@@ -70,19 +70,6 @@ async function loadBooks(){
   books.push({id,title:String(row.title||'Grammar book'),bookKey:supported?'grammar_ten_2':'',playable:supported&&units.length===11,units});
  }
  store.books=books;
- // Book-to-class links are for helpful defaults only. Assignments still allow
- // any active class, including Test.
- try{
-  const links=await api('class_book_assignments?select=class_id,book_id,status&status=eq.active&limit=1000');
-  const classes=await api('classes?select=id,name&status=eq.active&limit=200');
-  const names=new Map(classes.map(x=>[x.id,x.name]));
-  store.bookClasses=new Map();
-  for(const link of links){
-   if(!store.bookClasses.has(link.book_id))store.bookClasses.set(link.book_id,[]);
-   const name=names.get(link.class_id);
-   if(name&&!store.bookClasses.get(link.book_id).includes(name))store.bookClasses.get(link.book_id).push(name);
-  }
- }catch(error){console.warn('[Grammar book homework] class-book suggestions unavailable',error)}
  return books;
 }
 function selectedBook(){return (store.books||[]).find(b=>b.id===store.bookId)||null}
@@ -187,30 +174,29 @@ async function submit(e){
 }
 async function fetchRecords(){
  await Promise.all([loadStudents(),loadBooks()]);
- const [assignments,completions]=await Promise.all([
+ const [assignments,progress]=await Promise.all([
   table('?source_type=eq.grammar_books&select=*&order=created_at.desc&limit=400'),
-  api('grammar_book_homework_completions?select=assignment_id,student_id,mode,completed_at&limit=5000')
+  api('rpc/teacher_grammar_book_homework_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
  ]);
  store.assignments=Array.isArray(assignments)?assignments:[];
- store.completions=Array.isArray(completions)?completions:[];
-}
-function peopleFor(a){
- const ids=Array.isArray(a.list_meta?.target_student_ids)?a.list_meta.target_student_ids:[];
- return store.students.filter(st=>st.class===a.class&&(!ids.length||ids.includes(st.id)));
+ store.progress=new Map((Array.isArray(progress)?progress:[]).map(row=>[String(row.id),row]));
 }
 function progressFor(a){
- const modes=a.list_meta?.required_modes||[],people=peopleFor(a),hit=new Set(store.completions.filter(c=>c.assignment_id===a.id).map(c=>c.student_id+':'+c.mode));
- const rows=people.map(student=>({student,modesCompleted:modes.filter(m=>hit.has(student.id+':'+m)),total:modes.length}));
- const done=rows.filter(r=>r.total&&r.modesCompleted.length===r.total).length;
- const pct=rows.length&&modes.length?Math.round(rows.reduce((sum,r)=>sum+100*r.modesCompleted.length/r.total,0)/rows.length):null;
- return {rows,pct,done,total:rows.length,modes};
+ const data=store.progress.get(String(a.id));
+ const rows=Array.isArray(data?.student_rows)?data.student_rows.map(st=>({
+  student:{name:st.name||'Student'},modesCompleted:Array.from({length:Number(st.done)||0}),
+  total:Number(st.total)||0
+ })):[];
+ const total=Number(data?.students)||0,done=Number(data?.passed)||0;
+ const pct=total?Math.round(100*done/total):null;
+ return {rows,pct,done,total,modes:a.list_meta?.required_modes||[]};
 }
 function renderAssignment(a){
  const data=progressFor(a),shared=window.WillenaGeniusHomeworkCard;
  const modeNames=data.modes.map(m=>MODES.find(x=>x[0]===m)?.[1]||m).join(' · ');
  const rowHtml=data.rows.length?data.rows.map(({student,modesCompleted,total})=>
   '<div class="gf-hw-student"><span>'+esc(student.korean_name||student.name||'Student')+'</span>'+
-  '<span>'+modesCompleted.length+'/'+total+' activities</span><strong class="'+(modesCompleted.length===total?'gf-hw-done':'')+'">'+Math.round(modesCompleted.length/total*100)+'%</strong></div>').join(''):'<div class="gf-hw-loading">No students in the selected class or roster unavailable.</div>';
+  '<span>'+modesCompleted.length+'/'+total+' activities</span><strong class="'+(modesCompleted.length===total?'gf-hw-done':'')+'">'+(total?Math.round(modesCompleted.length/total*100):0)+'%</strong></div>').join(''):'<div class="gf-hw-loading">No students in the selected class or roster unavailable.</div>';
  const buttons='<div class="gb-manage-actions">'+(store.history?'':'<button type="button" data-gb-edit="'+esc(a.id)+'">Edit</button><button type="button" data-gb-delete="'+esc(a.id)+'" aria-label="End assignment">×</button>')+'</div>';
  const body='<div class="gf-hw-progress-summary">'+data.done+'/'+data.total+' completed · '+esc(modeNames)+'</div><div class="gf-hw-students">'+rowHtml+'</div>'+buttons;
  return shared.card({id:a.id,className:a.class,task:a.title,dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Student progress',body});
