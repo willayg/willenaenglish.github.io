@@ -143,7 +143,7 @@ function renderQuestion({retry=false}={}){
  $('ftSessionProgress').textContent=mastered+'/8 mastered';
  $('ftProgressFill').style.width=pct(mastered/8*100)+'%';
  $('ftSessionTitle').textContent=(state.mode==='speaking'?'Speaking':'Writing')+' · Unit '+state.unit;
- state.renderer?.speechRecognition?.stop?.();
+ try{state.renderer?.speechRecognition?.stop?.()}catch{}
  state.renderer=new QuestionRenderer($('ftQuestionHost'));
  const form=state.mode==='speaking'?'speaking':'write';
  state.renderer.render({form,prompt:state.current.question_en,context:{korean:state.current.question_ko},answer:[],
@@ -254,7 +254,7 @@ async function rewardSync(data){
  const response=await fn('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
   method:'POST',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload})});
  const result=await response.json().catch(()=>null);
- if(!response.ok||result?.error||result?.success===false)throw Error(result?.error||'Could not credit Willena rewards');
+ if(!response.ok||result?.error||result?.success!==true)throw Error(result?.error||'Could not confirm Willena rewards');
  const synced=await api('rpc/free_talking_reward_synced_v1',{method:'POST',body:{p_session_id:state.session.id}});
  if(synced!==true)throw Error('Reward record saved, confirmation pending');
  state.session.reward_synced=true;
@@ -279,7 +279,7 @@ async function renderFinish(data){
 }
 async function exit(){
  if(state.loading)return;
- state.renderer?.speechRecognition?.stop?.();state.current=null;state.session=null;
+ try{state.renderer?.speechRecognition?.stop?.()}catch{}state.current=null;state.session=null;
  try{await refreshData()}catch(error){console.warn('[Free Talking] refresh',error)}
  renderBook();view('ftBook');
 }
