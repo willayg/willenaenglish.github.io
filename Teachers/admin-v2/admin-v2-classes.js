@@ -151,7 +151,7 @@ function showMenu(id,books,message=''){
   const input=$('#'+id),menu=$('#'+id+'Menu');if(!input||!menu)return;
   menu.innerHTML=(message?`<div class="admin-book-menu-message">${esc(message)}</div>`:'')+
     books.map((b,i)=>`<button type="button" data-i="${i}"><b>${esc(b.title)}</b><span>${esc([b.series,b.level?`Level ${b.level}`:''].filter(Boolean).join(' · '))}</span></button>`).join('')+
-    (!books.length&&input.value.trim().length>=2&&!message?`<button type="button" data-manual="1"><b>Use as manual entry</b><span>Not linked to curriculum DB</span></button>`:'');
+    (!books.length&&input.value.trim().length>=2&&message!=='Searching…'&&message!=='Search unavailable — try again'?`<button type="button" data-manual="1"><b>Use as manual entry</b><span>Not linked to curriculum DB</span></button>`:'');
   hideMenus(menu.id);menu.classList.toggle('show',!!menu.children.length);
   $$('[data-i]',menu).forEach(btn=>btn.addEventListener('mousedown',e=>e.preventDefault()));
   $$('[data-i]',menu).forEach(btn=>btn.onclick=()=>{
@@ -174,7 +174,7 @@ async function searchBooks(id){
   try{
     const all=await catalogBooks();
     if(!input.isConnected||input.value.trim()!==q||selectedBooks.has(id))return;
-    const terms=key.split(/\\s+/).filter(Boolean);
+    const terms=key.split(/\s+/).filter(Boolean);
     const books=all.filter(b=>terms.every(t=>`${b.title} ${b.series}`.toLocaleLowerCase().includes(t)))
       .sort((a,b)=>Number(b.title.toLocaleLowerCase().startsWith(key))-Number(a.title.toLocaleLowerCase().startsWith(key))||a.title.localeCompare(b.title))
       .slice(0,40);
