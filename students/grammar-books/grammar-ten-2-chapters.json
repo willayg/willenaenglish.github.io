@@ -1079,7 +1079,7 @@
           {
             "id": "gt2-c4-choose-4-r2",
             "subunit": 2,
-            "prompt": "You ____ run in the hallway, but you ____ walk quietly.",
+            "prompt": "학교 규칙: 복도에서는 뛰면 안 되고 조용히 걸어야 합니다.\nYou ____ run in the hallway, but you ____ walk quietly.",
             "options": [
               "must not — should",
               "don't have to — must not",
@@ -3196,7 +3196,7 @@
             "options": [
               "She sent me a letter.",
               "She sent I a letter.",
-              "She sent to me a letter.",
+              "She sent a me letter.",
               "She sent mine a letter."
             ],
             "answerIndex": 0,
