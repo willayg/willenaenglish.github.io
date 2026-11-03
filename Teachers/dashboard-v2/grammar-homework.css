@@ -130,3 +130,14 @@
 .gb-edit-modal form>label{display:grid;gap:5px;font-size:13px;font-weight:700}
 .gb-edit-modal .gf-hw-form{gap:13px}
 @media(max-width:640px){.gb-chapter-list{grid-template-columns:1fr}.gb-mode-row{gap:8px}.gb-form .gf-hw-form-grid{grid-template-columns:1fr}.gb-book-tabs{flex-wrap:wrap}}
+
+/* Textbook homework: same compact stacked fields used by other Assign forms. */
+#gbHwForm.ua-genius-assign{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;gap:15px;padding:20px;background:#fff;border:1px solid #e1e9ed;border-radius:16px}
+#gbHwForm>h3{margin:0;font-size:18px;color:#313846}
+#gbHwForm>label{display:grid;gap:7px;font-size:13px;font-weight:750;color:#343343}
+#gbHwForm select.control,#gbHwForm input.control{width:100%;min-width:0;min-height:44px;box-sizing:border-box}
+#gbHwForm #gbHwBookContent{display:grid;gap:12px}
+#gbHwForm #gbHwBookContent[hidden]{display:none}
+#gbHwForm .ua-note{margin:0;color:#75838b;font-size:12px}
+#gbHwForm .gf-hw-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:640px){#gbHwForm .gf-hw-form-grid{grid-template-columns:1fr}}
