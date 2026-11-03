@@ -1,3 +1,4 @@
+import {repeatUntilCorrect} from '../vocab-study/vocab-pass-flow.js?v=20260927-startup2';
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 import {grammarEngine} from './engine.js?v=1';
 const DB='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -139,8 +140,7 @@ async function showBook(book,push=true){
  const strip=$('grammarUnitStrip');
  strip.innerHTML=units.map(u=>'<button type="button" class="study-v2-unit" data-unit="'+Number(u.unit_number)+'">Unit '+Number(u.unit_number)+'</button>').join('');
  strip.hidden=!units.length;
- if(units.length)selectUnit(Number(units[0].unit_number));
- if(book.title.trim()==='Grammar Ten 완성 2')void refreshGrammarProgress();
+ if(units.length){selectUnit(Number(units[0].unit_number));if(book.title.trim()==='Grammar Ten 완성 2')void refreshGrammarProgress();}
  else {$('grammarUnitTitle').textContent='등록된 단원이 없습니다.';$('grammarNotReady').hidden=false;}
  if(push)updateUrl(book.id);
  window.scrollTo(0,0);
@@ -183,7 +183,7 @@ async function checkAnswer(){
  const btn=$('grammarCheck');btn.disabled=true;renderer.setDisabled(true);
  let result;
  try{result=await grammarEngine.gradeQuestion(shared,response)}catch(e){console.error('[grammar books] grading failed',e);renderer.setDisabled(false);btn.disabled=false;return}
- checked=true;if(result.correct){correct++;masteredIds.add(q.id)}else missedQuestions.push(q);
+ checked=true;if(result.correct){correct++;masteredIds.add(q.id)}else if(repeatUntilCorrect(result.correct))missedQuestions.push(q);
  playStudentSfx(result.correct?'correct':'wrong');
  renderer.showFeedback(result);
  btn.hidden=true;$('grammarSkip').hidden=true;$('grammarNext').hidden=false;$('grammarNext').classList.add('is-next');
@@ -200,7 +200,8 @@ async function finishRound(){
  $('grammarRetry').textContent='오답 다시 풀기 ('+missedQuestions.length+')';
  if(!retryingWrong||!missedQuestions.length){
   try{
-   await window.WillenaMissionBasket?.recordGrammarBookRound?.(activeUnit,activeMode,mastered);
+   if(typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
+   await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,mastered);
    await refreshGrammarProgress();
    if(!missedQuestions.length){
     void window.WillenaMissionBasket?.recordCompletedActivity?.('grammar-ten-2-chapter-'+activeUnit+'-'+activeMode,'Grammar Genius Books');
