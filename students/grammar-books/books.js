@@ -8,7 +8,7 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 고르시오.',icon:'◉'},{id:'check',label:'문장 판단',ko:'어법에 맞는 문장이나 틀린 문장을 고르시오.',icon:'✓'},{id:'hunt',label:'오류 찾기',ko:'밑줄 친 부분 중 어법상 틀린 것을 고르시오.',icon:'⌕'}];
-let homeworkAttemptIds=new Set();
+let homeworkAttemptIds=new Set(),homeworkSaveTimer=null;
 let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[],masteredIds=new Set(),retryingWrong=false,chapterProgress=[],rewardSession=null,navEpoch=0;
 const retryQueue=createMissedOnlyRetry({idOf:q=>q.id});
 const roundTotal=()=>rewardSession?.total||8;
