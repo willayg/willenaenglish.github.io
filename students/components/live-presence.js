@@ -57,7 +57,9 @@ function detect(){
 function context(){
  const d={...detect(),...(manual||{})};
  const query=new URLSearchParams(location.search);
- const assignmentId=d.assignment_id||query.get("assignment_id")||query.get("assignmentId")||null;
+ const hash=new URLSearchParams(location.hash.replace(/^#\\??/,""));
+ const saved=history.state&&typeof history.state==="object"?history.state:{};
+ const assignmentId=d.assignment_id||query.get("assignment_id")||query.get("assignmentId")||query.get("teacherAssignmentId")||hash.get("assignment_id")||hash.get("teacherAssignmentId")||saved.assignment_id||saved.teacherAssignmentId||null;
  const match=UUID.test(assignmentId||"")?assignmentId:null;
  return {session_id:sessionId,app,book:label(d.book),unit:label(d.unit),activity:label(d.activity),
   assignment_id:match,assignment_match:d.assignment_match===true,entered_via_homework:d.entered_via_homework===true||!!match,
@@ -86,7 +88,7 @@ function disconnect(){
  // Avoid false online while the tab is closed. Navigations may start a new heartbeat shortly.
  try{fetch(DISCONNECT,{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_id:sessionId}),keepalive:true}).catch(()=>{});}catch{}
 }
-addEventListener("pagehide",disconnect);
+// No automatic disconnect on pagehide: navigation to a different app in the same tab\n// can race the next heartbeat. The server expires closed sessions after 90 seconds.
 window.WillenaPresence={
  setActivity(fields){manual={...(manual||{}),...fields};schedule();},
  clearActivity(){manual=null;schedule();},
