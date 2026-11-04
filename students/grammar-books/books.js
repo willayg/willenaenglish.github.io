@@ -207,7 +207,7 @@ function drawFinishScreen(){
 }
 
 const bestScore=(chapter,mode)=>{
- const row=chapterProgress.find(p=>Number(p.chapter_number)===Number(chapter)&&p.mode===mode&&(!courseKey(activeBook)||p.book_key===courseKey(activeBook)));
+ const row=chapterProgress.find(p=>Number(p.chapter_number)===Number(chapter)&&p.mode===mode&&(courseKey(activeBook)?p.book_key===courseKey(activeBook):(!p.book_key||p.book_key==='grammar_ten_2')));
  if(isTen(activeBook)&&Number(chapter)>=2){
   const ids=Array.isArray(row?.mastered_question_ids)?row.mastered_question_ids:[];
   return ids.filter(id=>id.startsWith('gt2-c'+chapter+'-'+mode+'-') && id.endsWith('-r2')).length;
@@ -367,6 +367,7 @@ function renderModeCards(){
 }
 async function showBook(book,push=true,requestedUnit=null){
  if(!book)return;
+ if(activeHomework&&courseKey(book)){activeHomework=null;homeworkModeEvidence.clear()}
  const token=++navEpoch;activeBook=book;activeMode=null;catalog=null;
  title.textContent=book.title;home.hidden=true;detail.hidden=false;
  $('grammarModePanel').hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;
@@ -428,7 +429,7 @@ async function startMode(mode,{push=true}={}){
   await Promise.all([loadQuestions(),refreshGrammarProgress()]);
   if(token!==navEpoch||activeBook!==book||activeUnit!==chapter)return;
   const all=prepareRound(questionBank()[mode]||[],mode);
-  const saved=chapterProgress.find(p=>Number(p.chapter_number)===chapter&&p.mode===mode&&(!courseKey(book)||p.book_key===courseKey(book)));
+  const saved=chapterProgress.find(p=>Number(p.chapter_number)===chapter&&p.mode===mode&&(courseKey(book)?p.book_key===courseKey(book):(!p.book_key||p.book_key==='grammar_ten_2')));
   const eligibleIds=new Set(all.map(q=>q.id));
   const inHomework=!!activeHomework&&activeHomework.chapter===chapter&&activeHomework.required_modes.includes(mode);
   if(activeHomework&&!inHomework)throw Error('This mode is not included in the assignment');
@@ -441,6 +442,7 @@ async function startMode(mode,{push=true}={}){
   activeMode=mode;retryQueue.begin(activeQuestions);retryingWrong=false;position=0;correct=0;checked=false;
   beginRewardSession(mode);
   rewardSession.total=all.length;
+  if(courseKey(book))rewardSession.firstCorrect=masteredIds.size;
   // A repeat session cannot award points for questions mastered in an earlier session.
   if(rewardSession){
    rewardSession.reviewOnly=inHomework||bestScore(chapter,mode)>=unitRoundSize();
@@ -478,6 +480,7 @@ async function checkAnswer(){
   retryQueue.record(q,result.correct);
  playStudentSfx(result.correct?'correct':'wrong');
  renderer.showFeedback(result);
+ if(q.explanation){const feedback=$('grammarSharedQuestionHost')?.querySelector('[data-feedback]');if(feedback){const note=document.createElement('p');note.className='grammar-book-explanation';note.textContent=q.explanation;feedback.append(note)}}
  btn.hidden=true;$('grammarSkip').hidden=true;$('grammarNext').hidden=false;$('grammarNext').classList.add('is-next');
  $('grammarNext').textContent=position===activeQuestions.length-1?'Finish':'Next Question →';
 }
