@@ -118,7 +118,19 @@ function levelOptions(current=''){
 }
 function currentBook(row,i){const b=row?.books?.[i];return b?{book_id:b.book_id,title:b.book_title,series:b.catalog_series||'',level:b.catalog_level||'',source_type:b.source_type||'manual'}:null}
 function drawerEls(){return {bg:$('#classDrawerBgV2'),drawer:$('#classDrawerV2'),body:$('#classDrawerBodyV2'),title:$('#classDrawerTitleV2'),meta:$('#classDrawerMetaV2')}}
-function closeDrawer(){activeBookSearch='';const {bg,drawer}=drawerEls();bg?.classList.remove('open');drawer?.classList.remove('open');document.body.style.overflow='';hideMenus();controllers.forEach(c=>c.abort());timers.forEach(t=>clearTimeout(t));timers.clear();activeClass=null;selectedBooks.clear()}
+function closeDrawer(){
+  // Close visually first: search cleanup must never trap the user in the drawer.
+  const {bg,drawer}=drawerEls();
+  bg?.classList.remove('open');
+  drawer?.classList.remove('open');
+  document.body.style.overflow='';
+  activeClass=null;
+  activeBookSearch='';
+  try{hideMenus()}catch(error){console.warn('[Admin classes] close menus',error)}
+  try{controllers.forEach(controller=>controller?.abort?.());controllers.clear()}catch(error){console.warn('[Admin classes] close searches',error)}
+  try{timers.forEach(timer=>clearTimeout(timer));timers.clear()}catch(error){console.warn('[Admin classes] clear timers',error)}
+  selectedBooks.clear();
+}
 
 function renderDrawer(row,mode='edit'){
   drawerMode=mode;activeClass=row||null;selectedBooks.clear();
