@@ -77,6 +77,12 @@ exports.handler = async (event) => {
     if (action === 'delete_assignment') {
       return await deleteAssignment(event);
     }
+    if (action === 'update_assignment') {
+      return await updateAssignmentDueDate(event);
+    }
+    if (action === 'reactivate_assignment') {
+      return await reactivateAssignment(event);
+    }
     if (action === 'update_assignment_meta') {
       return await updateAssignmentMeta(event);
     }
@@ -457,6 +463,61 @@ async function endAssignment(event) {
   const { data, error } = await supabase.from('homework_assignments').update({ active:false, ended_at:new Date().toISOString() }).eq('id', assignmentId).select().single();
   if (error) return _json(500,{ success:false, error:'Failed to end assignment: '+(error.message||error.code)});
   return _json(200,{ success:true, assignment:data });
+}
+
+// Restore support for the Teachers Word Genius history UI.
+// Only the assignment row is updated; attempts and student progress are never reset.
+async function authorizedAssignmentChange(event) {
+  const userId = await getUserIdFromCookie(event);
+  if (!userId) return { response: _json(401, { success: false, error: 'Not signed in' }) };
+  const { data: profile, error } = await supabase.from('profiles')
+    .select('id, role, approved').eq('id', userId).single();
+  if (error || !profile || !['teacher', 'admin'].includes(String(profile.role || '').toLowerCase()) || profile.approved === false) {
+    return { response: _json(403, { success: false, error: 'Only approved teachers can restore assignments' }) };
+  }
+  if (event.httpMethod !== 'POST') {
+    return { response: _json(405, { success: false, error: 'POST required' }) };
+  }
+  let body;
+  try { body = JSON.parse(event.body || '{}'); }
+  catch { return { response: _json(400, { success: false, error: 'Invalid JSON body' }) }; }
+  const assignmentId = body.assignment_id || body.id || event.queryStringParameters?.assignment_id || event.queryStringParameters?.id;
+  if (!assignmentId) return { response: _json(400, { success: false, error: 'Missing assignment id' }) };
+  const { data: assignment, error: readErr } = await supabase.from('homework_assignments')
+    .select('*').eq('id', assignmentId).maybeSingle();
+  if (readErr) return { response: _json(500, { success: false, error: 'Could not read assignment: ' + readErr.message }) };
+  if (!assignment) return { response: _json(404, { success: false, error: 'Assignment not found' }) };
+  return { assignmentId, assignment, body };
+}
+
+async function updateAssignmentDueDate(event) {
+  const auth = await authorizedAssignmentChange(event);
+  if (auth.response) return auth.response;
+  if (auth.body.due_at === undefined) {
+    return _json(400, { success: false, error: 'A due date is required for this update' });
+  }
+  const date = new Date(auth.body.due_at);
+  if (!Number.isFinite(date.getTime()) || date.getTime() <= Date.now()) {
+    return _json(400, { success: false, error: 'Choose a future due date' });
+  }
+  const { data, error } = await supabase.from('homework_assignments')
+    .update({ due_at: date.toISOString() }).eq('id', auth.assignmentId).select().single();
+  if (error) return _json(500, { success: false, error: 'Could not update due date: ' + error.message });
+  return _json(200, { success: true, assignment: data });
+}
+
+async function reactivateAssignment(event) {
+  const auth = await authorizedAssignmentChange(event);
+  if (auth.response) return auth.response;
+  const dueMs = Date.parse(String(auth.assignment.due_at || ''));
+  if (Number.isFinite(dueMs) && dueMs < Date.now()) {
+    return _json(400, { success: false, error: 'Move the due date into the future before restoring' });
+  }
+  const { data, error } = await supabase.from('homework_assignments')
+    .update({ active: true, status: 'active', ended_at: null })
+    .eq('id', auth.assignmentId).select().single();
+  if (error) return _json(500, { success: false, error: 'Could not restore assignment: ' + error.message });
+  return _json(200, { success: true, assignment: data });
 }
 
 function normalizeListIdentifier(value) {
