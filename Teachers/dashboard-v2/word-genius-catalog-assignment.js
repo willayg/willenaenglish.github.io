@@ -25,7 +25,7 @@ async function mount(){
  root().querySelector('.ua-catalog-host').appendChild(div);
  const due=div.querySelector('#uaDue');const d=new Date(Date.now()+7*86400000);due.value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
  div.querySelector('#uaReloadBooks').onclick=loadBooks;
- div.querySelector('#uaBook').onchange=()=>{void loadUnits()};
+ div.querySelector('#uaBook').onchange=()=>{syncCoachEligibility();void loadUnits()};
  div.querySelector('#uaClass').addEventListener('change',()=>{void renderMasteryPreview()});
  div.querySelectorAll('input[name="uaMode"],input[name="uaSpellingMode"]').forEach(i=>i.addEventListener('change',()=>{void renderMasteryPreview()}));
  div.querySelector('#uaPreviewToggle').addEventListener('click',()=>{
@@ -41,7 +41,7 @@ async function loadBooks(){
  const select=panel()?.querySelector('#uaBook');if(!select)return;
  const before=select.value;
  cacheEpoch++;targetCache.clear();targetLoads.clear();previewRevision++;previewReady=false;
- try{books=await content('content_books?select=id,title,status&status=in.(review,published)&order=title.asc&limit=1000');select.innerHTML='<option value="">Choose a book…</option>'+books.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.title)+'</option>').join('');if(books.some(b=>b.id===before)){select.value=before;await loadUnits({preserveSelection:true})}else{units=[];selected=[];renderUnits()}}catch(e){message(e.message)}
+ try{books=await content('content_books?select=id,title,status,public_level&status=in.(review,published)&order=title.asc&limit=1000');select.innerHTML='<option value="">Choose a book…</option>'+books.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.title)+'</option>').join('');if(books.some(b=>b.id===before)){select.value=before;syncCoachEligibility();await loadUnits({preserveSelection:true})}else{units=[];selected=[];syncCoachEligibility();renderUnits()}}catch(e){message(e.message)}
 }
 async function loadClasses(){
  const sel=panel()?.querySelector('#uaClass');if(!sel)return;
@@ -68,6 +68,16 @@ async function loadClasses(){
  const classes=[...names.values()].sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
  sel.replaceChildren(new Option('Choose class…',''),...classes.map(name=>new Option(name,name)));
  if(classes.includes(selected))sel.value=selected;
+}
+function syncCoachEligibility(){
+ const p=panel(),book=books.find(b=>b.id===p?.querySelector('#uaBook')?.value);
+ const coach=p?.querySelector('input[name="uaSpellingMode"][value="spelling_coach"]');
+ const standard=p?.querySelector('input[name="uaSpellingMode"][value="spelling_test"]');
+ if(!coach||!standard)return;
+ const permitted=book&&Number(book.public_level)<=1&&book.public_level!==null;
+ coach.disabled=!permitted;
+ if(!permitted&&coach.checked)standard.checked=true;
+ coach.closest('label')?.setAttribute('title',permitted?'Beginner Coach homework':'Spelling Coach homework is available through Level 1');
 }
 async function loadUnits({preserveSelection=false}={}){
  const bookId=panel()?.querySelector('#uaBook')?.value;
@@ -196,6 +206,7 @@ async function renderMasteryPreview(groups=null){
 async function submit(ev){
  ev.preventDefault();if(busy)return;
  const p=panel(),bookId=p.querySelector('#uaBook').value,className=p.querySelector('#uaClass').value,day=p.querySelector('#uaDue').value,modes=[...p.querySelectorAll('input[name="uaMode"]:checked')].map(x=>x.value).concat([p.querySelector('input[name="uaSpellingMode"]:checked')?.value||'spelling_test']);
+ if(modes.includes('spelling_coach')&&!(books.find(b=>b.id===bookId)?.public_level<=1)){message('Spelling Coach homework is available only for Level 1 or below.');return;}
  if(!bookId||!className||!day||!selected.length||!modes.length){message('Choose a book, units, class, due date and at least one mode.');return}
  if(!previewReady){message('Wait for the vocabulary preview to finish before assigning.');return}
  busy=true;p.querySelector('#uaCreate').disabled=true;message('Checking selected units…');
