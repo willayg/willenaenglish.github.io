@@ -33,3 +33,17 @@
 .ghc-ring span{position:relative;font-weight:800;font-size:14px;color:#2c6870}
 .ghc-ring:not(.has-data) span{color:#87979d}
 @media(max-width:600px){.genius-homework-card{padding-right:82px}.ghc-ring{width:54px;height:54px;right:12px;top:59px}.ghc-ring:before{inset:6px}.ghc-ring span{font-size:12px}}
+
+/* Shared Word Genius-style progress detail across Genius homework cards and My/All. */
+.ghc-progress-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:#6d8088;margin:8px 0 12px}
+.ghc-progress-summary b{font-weight:800;color:#227c84}
+.ghc-progress-track,.ghc-student-track{display:block;height:10px;overflow:hidden;background:#e7eff0;border-radius:999px}
+.ghc-progress-track{margin-bottom:13px}
+.ghc-progress-track>i,.ghc-student-track>i{display:block;width:0;height:100%;border-radius:inherit;background:#2b9da6}
+.ghc-student-list{display:grid;gap:12px;padding:4px 0 13px}
+.ghc-student-row{display:grid;grid-template-columns:minmax(95px,1fr) minmax(75px,2fr) minmax(38px,auto);gap:12px;align-items:center;font-size:13px;min-height:27px}
+.ghc-student-name{overflow-wrap:anywhere;color:#42545c}
+.ghc-student-pct{text-align:right;font-weight:800;color:#3a5059;font-variant-numeric:tabular-nums}
+.ghc-progress-modes{font-size:12px;color:#748891;margin:5px 0 12px;overflow-wrap:anywhere}
+.genius-homework-card>.ghc-details .ghc-content{margin-right:0}
+@media(max-width:600px){.ghc-student-row{grid-template-columns:minmax(70px,1fr) minmax(70px,2fr) 42px;gap:8px}.ghc-progress-summary{font-size:12px}}
