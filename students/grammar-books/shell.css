@@ -50,3 +50,6 @@
 .grammar-book-shell #grammarResult .vocab-finish{width:min(620px,100%)}
 .grammar-book-shell #grammarResult .vocab-finish-stats strong{font-size:clamp(1.05rem,4vw,1.45rem)}
 .grammar-book-shell #grammarResult .vocab-finish-actions{display:flex;flex-wrap:wrap}
+
+/* Shared-question feedback: show the Korean grammar explanation for every answer. */
+.grammar-book-explanation{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:rgba(38,156,165,.08);color:#245b64;font-size:13px;line-height:1.65;font-weight:650;white-space:pre-wrap}
