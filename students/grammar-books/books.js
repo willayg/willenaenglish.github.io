@@ -9,10 +9,48 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 고르시오.',icon:'◉'},{id:'check',label:'문장 판단',ko:'어법에 맞는 문장이나 틀린 문장을 고르시오.',icon:'✓'},{id:'hunt',label:'오류 찾기',ko:'밑줄 친 부분 중 어법상 틀린 것을 고르시오.',icon:'⌕'}];
+const COURSE_BOOKS={
+ '8e949813-fa91-4adc-a709-905efc980d8b':{key:'buzz6',title:'Oxford Buzz 6'},
+ 'c437909b-f399-468a-bc31-996147d82fd8':{key:'eu5',title:'Everybody Up 5 (3rd Edition)'},
+ '89872c50-a590-4879-aa0c-7273aabcaf8c':{key:'eu6',title:'Everybody Up 6 (3rd Edition)'}
+};
+const TEN_BOOK_ID='1e3a2112-07be-45e2-a8fc-ce20011e0e57';
+const courseKey=book=>COURSE_BOOKS[String(book?.id||'')]?.key||'';
+const isTen=book=>book?.title?.trim()==='Grammar Ten 완성 2';
+const unitRoundSize=()=>isTen(activeBook)?8:5;
+let coursePacks=null;
+async function loadCoursePacks(){
+ if(coursePacks)return coursePacks;
+ const response=await fetch('./coursebook-question-packs.json?v=20261105-a',{cache:'no-store'});
+ if(!response.ok)throw Error('Coursebook grammar questions unavailable ('+response.status+')');
+ const data=await response.json();
+ if(!Array.isArray(data.books)||data.books.length!==3)throw Error('Coursebook grammar inventory incomplete');
+ for(const book of data.books){
+  if(!Array.isArray(book.chapters)||book.chapters.length!==8)throw Error('Incomplete book '+book.key);
+  for(const chapter of book.chapters){
+   for(const mode of ['choose','check','hunt']){
+    const qs=chapter.modes?.[mode];
+    if(!Array.isArray(qs)||qs.length!==5||qs.some(q=>!Array.isArray(q.options)||q.options.length!==(mode==='hunt'?4:5)||!Number.isInteger(q.answerIndex)||q.answerIndex<0||q.answerIndex>=q.options.length))
+     throw Error('Invalid grammar unit '+book.key+' '+chapter.unit+' '+mode);
+   }
+  }
+ }
+ coursePacks=data;
+ return data;
+}
+async function saveCourseProgress(chapter,mode,ids){
+ if(!courseKey(activeBook))throw Error('Not a coursebook assignment');
+ const result=await homeworkFetch('rpc/record_grammar_coursebook_round_v1',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({p_book_key:courseKey(activeBook),p_chapter:chapter,p_mode:mode,p_mastered_ids:ids})
+ });
+ if(result?.success!==true)throw Error('Coursebook results not saved');
+ return result;
+}
 let homeworkAttemptIds=new Set(),homeworkSaveTimer=null,activeHomework=null,homeworkModeEvidence=new Map(),homeworkWrite=Promise.resolve();
 let books=[],catalog=null,chapterPack=null,activeBook=null,activeMode=null,position=0,checked=false,correct=0,renderer=null,units=[],activeUnit=1,activeQuestions=[],masteredIds=new Set(),retryingWrong=false,chapterProgress=[],rewardSession=null,navEpoch=0;
 const retryQueue=createMissedOnlyRetry({idOf:q=>q.id});
-const roundTotal=()=>rewardSession?.total||8;
+const roundTotal=()=>rewardSession?.total||unitRoundSize();
 const questionBank=()=>catalog?.modes||{};
 function beginRewardSession(mode){
  const reviewOnly=goldChapter(activeUnit);
@@ -28,11 +66,11 @@ async function completeRewardSession(){
  const stars=reward.reviewOnly?0:starsForPercent(percent);
  const points=reward.reviewOnly?0:reward.points;
  if(reward.reviewOnly)return {percent,stars,points};
- const bookId='1e3a2112-07be-45e2-a8fc-ce20011e0e57';
+ const bookId=isTen(activeBook)?TEN_BOOK_ID:activeBook?.id;
  const chapterUnit=units.find(u=>Number(u.unit_number)===Number(reward.chapter));
- const unitId=chapterUnit?.subunits?.[0]?.id;
+ const unitId=chapterUnit?.subunits?.[0]?.id||chapterUnit?.id;
  if(!unitId){reward.completed=false;throw Error('Original textbook unit ID unavailable for reward');}
- const listName='Grammar Ten 완성 2 · Unit '+reward.chapter+' · '+(modes.find(m=>m.id===reward.mode)?.label||reward.mode);
+ const listName=activeBook?.title+' · Unit '+reward.chapter+' · '+(modes.find(m=>m.id===reward.mode)?.label||reward.mode);
  const payload={
   reward_only:true,session_id:reward.id,
   client_attempt_id:window.crypto?.randomUUID?.()||('grammar-reward-'+Date.now()),
@@ -169,17 +207,17 @@ function drawFinishScreen(){
 }
 
 const bestScore=(chapter,mode)=>{
- const row=chapterProgress.find(p=>Number(p.chapter_number)===Number(chapter)&&p.mode===mode);
- if(Number(chapter)>=2){
+ const row=chapterProgress.find(p=>Number(p.chapter_number)===Number(chapter)&&p.mode===mode&&(!courseKey(activeBook)||p.book_key===courseKey(activeBook)));
+ if(isTen(activeBook)&&Number(chapter)>=2){
   const ids=Array.isArray(row?.mastered_question_ids)?row.mastered_question_ids:[];
   return ids.filter(id=>id.startsWith('gt2-c'+chapter+'-'+mode+'-') && id.endsWith('-r2')).length;
  }
  return Number(row?.best_correct)||0;
 };
-const goldChapter=chapter=>modes.every(mode=>bestScore(chapter,mode.id)===8);
+const goldChapter=chapter=>modes.every(mode=>bestScore(chapter,mode.id)>=unitRoundSize());
 const starsForPercent=p=>p>=100?5:p>=90?4:p>=80?3:p>=70?2:p>=60?1:0;
 async function refreshGrammarProgress(){
- try{chapterProgress=await window.WillenaMissionBasket?.getGrammarBookProgress?.()||[];renderUnitsProgress();renderModeCards();}
+ try{chapterProgress=courseKey(activeBook)?await homeworkFetch('rpc/get_grammar_coursebook_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}):await window.WillenaMissionBasket?.getGrammarBookProgress?.()||[];renderUnitsProgress();renderModeCards();}
  catch(e){console.warn('[Grammar Books] saved mastery unavailable',e)}
 }
 function renderUnitsProgress(){
@@ -237,6 +275,11 @@ async function loadGrammarBooks(){
   const response=await fetch(DB+'/rest/v1/content_books?select=id,title,book_number,series_id,metadata&status=eq.published&metadata->>subject=eq.grammar&order=title.asc&limit=100',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
   if(!response.ok)throw Error('Book catalog '+response.status);
   books=await response.json();
+  const extraIds=Object.keys(COURSE_BOOKS);
+  const extraResponse=await fetch(DB+'/rest/v1/content_books?select=id,title&status=eq.published&id=in.('+extraIds.join(',')+')',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
+  if(!extraResponse.ok)throw Error('Coursebook catalog '+extraResponse.status);
+  const extras=await extraResponse.json();
+  for(const book of extras)if(COURSE_BOOKS[book.id]&&!books.some(b=>b.id===book.id))books.push(book);
   if(!books.some(b=>b.title==='Grammar Ten 완성 2'))books.unshift({id:'grammar-ten-2-practice',title:'Grammar Ten 완성 2'});
   list.innerHTML=books.length?books.map(bookCard).join(''):'<div class="vocab-front-empty">등록된 문법 교재가 없습니다.</div>';
   const id=new URLSearchParams(location.search).get('book');
@@ -263,14 +306,21 @@ async function loadChapterPack(){
 }
 async function loadQuestions(){
  if(catalog)return catalog;
- if(activeBook?.title.trim()!=='Grammar Ten 완성 2')throw Error('No questions for this book');
+ if(courseKey(activeBook)){
+  const data=await loadCoursePacks();
+  const book=data.books.find(b=>b.key===courseKey(activeBook));
+  const chapter=book?.chapters.find(c=>Number(c.unit)===Number(activeUnit));
+  if(!chapter)throw Error('Coursebook grammar unit not found');
+  catalog=chapter;return chapter;
+ }
+ if(!isTen(activeBook))throw Error('No questions for this book');
  const data=await loadChapterPack();
  const chapter=data.chapters.find(c=>Number(c.chapter)===Number(activeUnit));
  if(!chapter)throw Error('Chapter not found');
  catalog=chapter;return chapter;
 }
 async function loadBookUnits(book){
- const match=book.title.trim()==='Grammar Ten 완성 2';
+ const match=isTen(book);
  const bookId=match?'1e3a2112-07be-45e2-a8fc-ce20011e0e57':book.id;
  try{
   const response=await fetch(DB+'/rest/v1/content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(bookId)+'&status=eq.published&order=unit_number.asc&limit=100',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
@@ -299,7 +349,7 @@ function selectUnit(number,{push=true}={}){
  const unit=units.find(u=>Number(u.unit_number)===number);
  $('grammarUnitStrip').querySelectorAll('[data-unit]').forEach(el=>{const active=Number(el.dataset.unit)===number;el.classList.toggle('is-current',active);active?el.setAttribute('aria-current','true'):el.removeAttribute('aria-current')});
  $('grammarUnitTitle').textContent=unit?'Unit '+number+' · '+unit.title:'Unit '+number;
- const playable=activeBook?.title.trim()==='Grammar Ten 완성 2'&&!!unit;
+ const playable=(isTen(activeBook)||!!courseKey(activeBook))&&!!unit;
  $('grammarModeCards').hidden=!playable;$('grammarNotReady').hidden=playable;
  $('grammarGuideOpen').disabled=!unit;
  if(playable)renderModeCards();
@@ -310,9 +360,10 @@ function selectUnit(number,{push=true}={}){
 function renderModeCards(){
  const mount=$('grammarModeCards');if(!mount)return;
  mount.innerHTML=modes.filter(mode=>!activeHomework||activeHomework.required_modes.includes(mode.id)).map((mode,i)=>{
- const count=activeHomework?Math.min(8,Number(homeworkModeEvidence.get(mode.id)?.correct_count)||0):bestScore(activeUnit,mode.id);
- const pct=Math.round(count/8*100),stars=starsForPercent(pct);
- return '<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:'+pct+'"><span>'+pct+'%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">'+(activeHomework?'HOMEWORK':'STEP '+(i+1))+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">'+(activeHomework?count+'/8 completed':'★ '+stars+'/5')+'</span></span></button>'}).join('');
+ const max=unitRoundSize();
+ const count=activeHomework?Math.min(max,Number(homeworkModeEvidence.get(mode.id)?.correct_count)||0):bestScore(activeUnit,mode.id);
+ const pct=Math.round(count/max*100),stars=starsForPercent(pct);
+ return '<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:'+pct+'"><span>'+pct+'%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">'+(activeHomework?'HOMEWORK':'STEP '+(i+1))+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">'+(activeHomework?count+'/'+max+' completed':'★ '+stars+'/5')+'</span></span></button>'}).join('');
 }
 async function showBook(book,push=true,requestedUnit=null){
  if(!book)return;
@@ -331,7 +382,7 @@ async function showBook(book,push=true,requestedUnit=null){
   const wanted=Number(requestedUnit||new URLSearchParams(location.search).get('unit')||units[0].unit_number);
   const chosen=units.some(u=>Number(u.unit_number)===wanted)?wanted:Number(units[0].unit_number);
   selectUnit(chosen,{push:false});
-  if(book.title.trim()==='Grammar Ten 완성 2')void refreshGrammarProgress();
+  void refreshGrammarProgress();
   if(push)updateUrl(book.id,chosen);
  }else{
   $('grammarUnitTitle').textContent='등록된 단원이 없습니다.';$('grammarNotReady').hidden=false;
@@ -377,12 +428,12 @@ async function startMode(mode,{push=true}={}){
   await Promise.all([loadQuestions(),refreshGrammarProgress()]);
   if(token!==navEpoch||activeBook!==book||activeUnit!==chapter)return;
   const all=prepareRound(questionBank()[mode]||[],mode);
-  const saved=chapterProgress.find(p=>Number(p.chapter_number)===chapter&&p.mode===mode);
+  const saved=chapterProgress.find(p=>Number(p.chapter_number)===chapter&&p.mode===mode&&(!courseKey(book)||p.book_key===courseKey(book)));
   const eligibleIds=new Set(all.map(q=>q.id));
   const inHomework=!!activeHomework&&activeHomework.chapter===chapter&&activeHomework.required_modes.includes(mode);
   if(activeHomework&&!inHomework)throw Error('This mode is not included in the assignment');
   const savedIds=inHomework?(homeworkModeEvidence.get(mode)?.mastered_question_ids||[]):(Array.isArray(saved?.mastered_question_ids)?saved.mastered_question_ids:[]);
-  const alreadyMastered=!inHomework&&bestScore(chapter,mode)===8;
+  const alreadyMastered=!inHomework&&bestScore(chapter,mode)>=unitRoundSize();
   masteredIds=alreadyMastered?new Set():new Set(savedIds.filter(id=>eligibleIds.has(id)));
   activeQuestions=alreadyMastered?all:all.filter(q=>!masteredIds.has(q.id));
   if(!activeQuestions.length)activeQuestions=all;
@@ -392,7 +443,7 @@ async function startMode(mode,{push=true}={}){
   rewardSession.total=all.length;
   // A repeat session cannot award points for questions mastered in an earlier session.
   if(rewardSession){
-   rewardSession.reviewOnly=inHomework||bestScore(chapter,mode)===8;
+   rewardSession.reviewOnly=inHomework||bestScore(chapter,mode)>=unitRoundSize();
    rewardSession.awardedIds=new Set(masteredIds);
   }
   $('grammarModePanel').hidden=true;$('grammarResult').hidden=true;$('grammarRound').hidden=false;
@@ -448,14 +499,15 @@ async function finishRound(){
  }
  if(!retryingWrong||completed){
   try{
-   if(!currentGrammarContext().isHomework&&typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
+   if(isTen(activeBook)&&!currentGrammarContext().isHomework&&typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
    const alreadyGold=goldChapter(activeUnit);
    if(currentGrammarContext().isHomework){
      await saveHomeworkQuestions();
      homeworkModeEvidence.set(activeMode,{correct_count:masteredIds.size,mastered_question_ids:[...masteredIds]});
      renderModeCards();
    }else{
-     await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,masteredIds.size,[...masteredIds]);
+     if(courseKey(activeBook))await saveCourseProgress(activeUnit,activeMode,[...masteredIds]);
+     else await window.WillenaMissionBasket.recordGrammarBookRound(activeUnit,activeMode,masteredIds.size,[...masteredIds]);
      await refreshGrammarProgress();
    }
    if(!activeHomework&&!alreadyGold&&goldChapter(activeUnit)){
@@ -473,7 +525,7 @@ async function finishRound(){
     console.error('[Grammar Books] award save failed',error);
     showFinishSaveWarning('별과 포인트 저장을 확인하지 못했어요.');
    }
-   void window.WillenaMissionBasket?.recordCompletedActivity?.('grammar-ten-2-chapter-'+activeUnit+'-'+activeMode,'Grammar Genius Books');
+   void window.WillenaMissionBasket?.recordCompletedActivity?.('grammar-'+(courseKey(activeBook)||'ten2')+'-unit-'+activeUnit+'-'+activeMode,'Grammar Genius Books');
    void window.WillenaAchievements?.refresh?.();
   }
  }
@@ -496,8 +548,8 @@ function saveInterruptedRound(){
  if(!activeMode||$('grammarRound').hidden||!masteredIds.size)return;
  const mode=activeMode,chapter=activeUnit,ids=[...masteredIds];
  if(activeHomework){void saveHomeworkQuestions().catch(e=>console.warn('[Grammar Textbooks] unfinished homework save failed',e));return}
- void window.WillenaMissionBasket?.recordGrammarBookRound?.(chapter,mode,ids.length,ids)
-  .then(()=>{if(activeBook)void refreshGrammarProgress()})
+ void (courseKey(activeBook)?saveCourseProgress(chapter,mode,ids):window.WillenaMissionBasket?.recordGrammarBookRound?.(chapter,mode,ids.length,ids))
+  ?.then(()=>{if(activeBook)void refreshGrammarProgress()})
   .catch(e=>console.warn('[Grammar Books] could not save exited round',e));
 }
 function goToModes(push=true){
@@ -523,6 +575,11 @@ $('grammarGuideOpen')?.addEventListener('click',async()=>{
    if(!chapter){body.textContent='해당 단원의 설명이 없습니다.';return}
    heading.textContent='Unit '+activeUnit+' · '+chapter.title;
    body.textContent=chapter.explanation;
+  }else if(courseKey(activeBook)){
+   const pack=await loadCoursePacks();
+   const chapter=pack.books.find(b=>b.key===courseKey(activeBook))?.chapters.find(c=>c.unit===activeUnit);
+   heading.textContent='Unit '+activeUnit+' · '+(chapter?.title||unit?.title||'Grammar');
+   body.textContent=chapter?.grammarFocus||'문법 학습';
   }else body.textContent='이 교재의 문법 설명을 준비 중입니다.';
  }catch(error){console.warn('[grammar books] explanation failed',error);body.textContent='문법 설명을 불러오지 못했어요.'}
 });
