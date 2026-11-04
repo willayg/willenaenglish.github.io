@@ -143,7 +143,26 @@ async function flush(){
 }
 async function record(detail){
  var owner;
- try{owner=await verifiedOwner();}catch(error){setStatus('Recording paused · verify login','#a0443c');return;}
+ try{owner=await verifiedOwner();}catch(error){
+  // If connectivity fails after the page was authenticated, retain the answer
+  // ONLY for that previously verified student. Never send it as another user.
+  owner=currentOwner;
+  if(!owner&&global.WillenaVocabStudyAuthReady){
+    try{var initial=await global.WillenaVocabStudyAuthReady;owner=initial&&initial.user_id?String(initial.user_id):null;}catch(_){}
+  }
+  if(owner){
+    var delayed=payloadFrom(detail,owner);
+    if(delayed){
+      queueAttempt(owner,{payload:delayed,owner_id:owner,queued_at:new Date().toISOString()});
+      setStatus('Answer queued · login verification unavailable','#a66a15');
+      global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'queued',error:'Identity check unavailable',payload:delayed}}));
+    }
+  }else{
+    setStatus('Recording paused · please sign in again','#a0443c');
+    global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'blocked',error:'No verified student identity'}}));
+  }
+  return;
+ }
  var payload=payloadFrom(detail,owner);
  if(!payload){setStatus('Recorder · missing activity data','#a0443c');return;}
  await attachConceptEvidence(payload);attachDiagnosis(payload);
