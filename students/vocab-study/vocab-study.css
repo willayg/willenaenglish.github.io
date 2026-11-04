@@ -875,6 +875,18 @@ body.willena-kb-open .vocab-session-main{
   text-align:center;margin-top:-9px;
 }
 
+/* Word Genius speaking preview: use scoring status before Check Answer.
+   These selectors are scoped to the Word Genius card only. */
+.speaking-card [data-speaking-transcript][data-accepted="true"]{
+  color:#168345!important;
+  border-color:#77c99a!important;
+  background:#ebfff2!important;
+}
+.speaking-card [data-speaking-transcript][data-accepted="false"]{
+  color:#cf304c!important;
+  border-color:#efa4ae!important;
+  background:#fff0f2!important;
+}
 /* Speaking assist: initially hidden until two actual microphone attempts. */
 .vocab-speaking-listen[hidden],.vocab-speaking-ai-voice-notice[hidden]{display:none!important}
 
