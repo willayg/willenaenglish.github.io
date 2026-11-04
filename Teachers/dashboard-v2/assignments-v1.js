@@ -205,6 +205,31 @@
     sync();
   }
 
+  // Use the same authenticated Supabase REST update used by Genius card cancellation.
+  // The deployed homework API gateway may not yet expose reactivate_assignment.
+  async function restoreAssignmentRow(a, dueAt){
+    const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+    if(!token)throw Error('Please sign in again');
+    const dueMs=Date.parse(String(dueAt||a.due_at||''));
+    if(Number.isFinite(dueMs)&&dueMs<Date.now())throw Error('Choose a future due date before restoring');
+    const fields={active:true,status:'active',ended_at:null};
+    if(dueAt)fields.due_at=dueAt;
+    const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/homework_assignments?id=eq.'+encodeURIComponent(a.id),{
+      method:'PATCH',headers:{
+        apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',
+        Authorization:'Bearer '+token,
+        'Content-Type':'application/json',
+        Prefer:'return=representation'
+      },body:JSON.stringify(fields),cache:'no-store'
+    });
+    const data=await response.json().catch(()=>null);
+    if(!response.ok)throw Error(data?.message||data?.error||'Restore failed ('+response.status+')');
+    if(!Array.isArray(data)||data.length!==1||data[0].active!==true||data[0].ended_at) {
+      throw Error('Restore was not confirmed by the database');
+    }
+    return data[0];
+  }
+
   async function restoreHistoryAssignments(ids){
     if(state.restoring||!ids.length)return;
     const assignments=ids.map(id=>state.assignments.find(a=>String(a.id)===String(id))).filter(a=>a&&!isCurrent(a));
@@ -228,10 +253,7 @@
     let success=0;const errors=[];
     for(const a of assignments){
       try{
-        if(dueAt&&expired.includes(a)){
-          await api(route('update_assignment'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({assignment_id:a.id,due_at:dueAt})});
-        }
-        await api(route('reactivate_assignment'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({assignment_id:a.id})});
+        await restoreAssignmentRow(a,dueAt&&expired.includes(a)?dueAt:null);
         state.historySelected.delete(String(a.id));
         success++;
       }catch(error){errors.push((a.class||a.title||a.id)+': '+error.message);}
