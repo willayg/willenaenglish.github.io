@@ -3,7 +3,7 @@
 const HOST='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let books=[],units=[],selected=[],busy=false,previewReady=false,previewRevision=0,cacheEpoch=0;
+let books=[],units=[],selected=[],busy=false,previewReady=false,previewRevision=0,cacheEpoch=0,masteryRevision=0;
 const targetCache=new Map(),targetLoads=new Map();
 async function content(path){
  const r=await fetch(HOST+'/rest/v1/'+path,{headers:{apikey:KEY,Authorization:'Bearer '+KEY},cache:'no-store'});
@@ -21,11 +21,13 @@ async function mount(){
  if(!root()||!document.querySelector('#uaAppBody .ua-catalog-host'))return;
  if(panel())return;
  const div=document.createElement('section');div.id='uaCatalog';div.className='ua-catalog';
- div.innerHTML='<div class="ua-section-heading"><div><div class="ua-eyebrow">CONTENT DATABASE</div><h3>Assign from a book</h3></div><button type="button" class="control" id="uaReloadBooks">↻ Refresh books</button></div><form id="uaCatalogForm"><div class="ua-catalog-fields"><label>Class<select id="uaClass" class="control" required><option value="">Choose class…</option></select></label><label>Book<select id="uaBook" class="control" required><option value="">Loading books…</option></select></label><label>Due date<input id="uaDue" class="control" type="date" required></label></div><div class="ua-catalog-units"><strong>Units</strong><div id="uaUnitList">Select a book first.</div></div><div class="ua-catalog-preview" id="uaWordsPreview"><div class="ua-preview-heading"><div><strong>Selected words preview</strong><small id="uaPreviewSummary" aria-live="polite">Choose units to see their words.</small></div><button type="button" class="control ua-preview-toggle" id="uaPreviewToggle" aria-controls="uaPreviewBody" aria-expanded="true">Hide preview</button></div><div class="ua-preview-body" id="uaPreviewBody"><p class="ua-preview-empty">Select one or more units above to see the exact vocabulary before assigning it.</p></div></div><div class="ua-catalog-modes"><strong>Practice modes</strong><label><input type="checkbox" name="uaMode" value="quiz" checked> Quiz</label><label><input type="checkbox" name="uaMode" value="spelling_test" checked> Spelling</label><label><input type="checkbox" name="uaMode" value="speaking" checked> Speaking</label></div><div class="ua-catalog-footer"><span id="uaCount">Choose units to preview vocabulary.</span><button type="submit" class="control ua-primary" id="uaCreate" disabled>Assign selected words →</button></div><p id="uaCatalogMessage" role="status" aria-live="polite"></p></form>';
+ div.innerHTML='<div class="ua-section-heading"><div><div class="ua-eyebrow">CONTENT DATABASE</div><h3>Assign from a book</h3></div><button type="button" class="control" id="uaReloadBooks">↻ Refresh books</button></div><form id="uaCatalogForm"><div class="ua-catalog-fields"><label>Class<select id="uaClass" class="control" required><option value="">Choose class…</option></select></label><label>Book<select id="uaBook" class="control" required><option value="">Loading books…</option></select></label><label>Due date<input id="uaDue" class="control" type="date" required></label></div><div class="ua-catalog-units"><strong>Units</strong><div id="uaUnitList">Select a book first.</div></div><div class="ua-catalog-preview" id="uaWordsPreview"><div class="ua-preview-heading"><div><strong>Selected words preview</strong><small id="uaPreviewSummary" aria-live="polite">Choose units to see their words.</small></div><button type="button" class="control ua-preview-toggle" id="uaPreviewToggle" aria-controls="uaPreviewBody" aria-expanded="true">Hide preview</button></div><div class="ua-preview-body" id="uaPreviewBody"><p class="ua-preview-empty">Select one or more units above to see the exact vocabulary before assigning it.</p></div></div><div class="ua-catalog-modes"><strong>Practice modes</strong><label><input type="checkbox" name="uaMode" value="quiz" checked> Quiz</label><label><input type="checkbox" name="uaMode" value="spelling_test" checked> Spelling</label><label><input type="checkbox" name="uaMode" value="speaking" checked> Speaking</label></div><label class="ua-fresh-session"><input type="checkbox" id="uaFreshSession"> <span><strong>Fresh Session</strong><small>Require new answers after assignment. Existing mastery stays unchanged.</small></span></label><section class="ua-mastery-preview" id="uaMasteryPreview"><strong>Class progress before assigning</strong><div id="uaMasteryRows">Choose a class, book and units.</div></section><div class="ua-catalog-footer"><span id="uaCount">Choose units to preview vocabulary.</span><button type="submit" class="control ua-primary" id="uaCreate" disabled>Assign selected words →</button></div><p id="uaCatalogMessage" role="status" aria-live="polite"></p></form>';
  root().querySelector('.ua-catalog-host').appendChild(div);
  const due=div.querySelector('#uaDue');const d=new Date(Date.now()+7*86400000);due.value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
  div.querySelector('#uaReloadBooks').onclick=loadBooks;
  div.querySelector('#uaBook').onchange=()=>{void loadUnits()};
+ div.querySelector('#uaClass').addEventListener('change',()=>{void renderMasteryPreview()});
+ div.querySelectorAll('input[name="uaMode"]').forEach(i=>i.addEventListener('change',()=>{void renderMasteryPreview()}));
  div.querySelector('#uaPreviewToggle').addEventListener('click',()=>{
   const body=div.querySelector('#uaPreviewBody'),toggle=div.querySelector('#uaPreviewToggle');
   body.hidden=!body.hidden;toggle.setAttribute('aria-expanded',String(!body.hidden));toggle.textContent=body.hidden?'Show preview':'Hide preview';
@@ -112,9 +114,11 @@ async function renderPreview(){
  const summary=p.querySelector('#uaPreviewSummary'),body=p.querySelector('#uaPreviewBody');
  const count=p.querySelector('#uaCount'),create=p.querySelector('#uaCreate');
  const revision=++previewRevision;
+ ++masteryRevision;
  const chosen=units.filter(u=>selected.includes(u.id));
  previewReady=false;create.disabled=true;
  if(!chosen.length){
+  const rows=p.querySelector('#uaMasteryRows');if(rows)rows.textContent='Choose a class, book and units.';
   summary.textContent='Choose units to see their words.';
   count.textContent='Choose units to preview vocabulary.';
   body.innerHTML='<p class="ua-preview-empty">Select one or more units above to see the exact vocabulary before assigning it.</p>';
@@ -140,6 +144,7 @@ async function renderPreview(){
    '</section>'
   ).join('');
   previewReady=true;create.disabled=busy;
+  void renderMasteryPreview(groups);
  }catch(e){
   if(revision!==previewRevision)return;
   summary.textContent='Word preview unavailable';
@@ -149,6 +154,43 @@ async function renderPreview(){
    cacheEpoch++;targetCache.clear();targetLoads.clear();void renderPreview();
   });
  }
+}
+
+const OP_HOST='https://fiieuiktlsivwfgyivai.supabase.co';
+const OP_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const masteryStyle=document.createElement('style');
+masteryStyle.textContent='.ua-fresh-session{display:flex;gap:9px;align-items:center;padding:12px;margin:12px 0;border:1px solid #f1bfd4;border-radius:10px;background:#fff}.ua-fresh-session input{accent-color:#e75d9e;width:19px;height:19px}.ua-fresh-session span{display:grid;gap:2px}.ua-fresh-session small{font-size:11px;color:#687380}.ua-mastery-preview{padding:12px;margin:12px 0;border:1px solid #bce5ee;border-radius:10px;background:white}.ua-mastery-preview>strong{display:block;margin-bottom:8px}.ua-mastery-rows{max-height:220px;overflow:auto;display:grid;gap:7px}.ua-mastery-row{display:grid;grid-template-columns:minmax(55px,1fr) 2fr 38px;gap:8px;align-items:center;font-size:12px}.ua-mastery-row span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ua-mastery-track{height:7px;background:#edf2f5;border-radius:20px;overflow:hidden}.ua-mastery-fill{height:100%;background:#ed70ad;border-radius:20px}.ua-mastery-row b{text-align:right;font-size:11px}';
+document.head.appendChild(masteryStyle);
+async function classMastery(className,bookId,unitIds,lexicalIds,modes){
+ const call=token=>fetch(OP_HOST+'/rest/v1/rpc/teacher_vocab_class_preview_v1',{method:'POST',cache:'no-store',headers:{apikey:OP_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({p_class:className,p_book_id:bookId,p_unit_ids:unitIds,p_lexical_entry_ids:lexicalIds,p_modes:modes})});
+ let response=await call(window.WillenaAPI?.getLocalAccessToken?.()||'');
+ if(response.status===401){
+  const refresh=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh'):fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include'}));
+  const data=await refresh.json().catch(()=>({}));
+  if(refresh.ok&&data.access_token){window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');response=await call(data.access_token)}
+ }
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok||data.success!==true)throw Error(data.message||data.error||'Class preview unavailable');
+ return data;
+}
+async function renderMasteryPreview(groups=null){
+ const p=panel(),body=p?.querySelector('#uaMasteryRows');if(!p||!body)return;
+ const rev=++masteryRevision,className=p.querySelector('#uaClass')?.value||'',bookId=p.querySelector('#uaBook')?.value||'';
+ const modes=[...p.querySelectorAll('input[name="uaMode"]:checked')].map(x=>x.value),unitIds=selected.slice();
+ if(!className||!bookId||!unitIds.length||!modes.length){body.textContent='Choose a class, book, units and modes.';return;}
+ body.textContent='Loading class progress…';
+ try{
+  const chosen=groups||await Promise.all(unitIds.map(async id=>({targets:await getTargets(id)})));
+  const ids=[...new Set(chosen.flatMap(g=>g.targets.map(t=>t.lexical_entry_id)))];
+  if(!ids.length){if(rev===masteryRevision)body.textContent='No vocabulary in selection.';return;}
+  const data=await classMastery(className,bookId,unitIds,ids,modes);
+  if(rev!==masteryRevision)return;
+  const students=Array.isArray(data.students)?data.students:[];
+  body.innerHTML=students.length?'<div class="ua-mastery-rows">'+students.map(st=>{
+   const pct=Math.max(0,Math.min(100,Number(st.percent)||0));
+   return '<div class="ua-mastery-row"><span>'+esc(st.name||st.korean_name||'Student')+'</span><div class="ua-mastery-track"><div class="ua-mastery-fill" style="width:'+pct+'%"></div></div><b>'+pct+'%</b></div>';
+  }).join('')+'</div>':'No students in class.';
+ }catch(error){if(rev===masteryRevision)body.textContent='Preview unavailable: '+error.message;}
 }
 async function submit(ev){
  ev.preventDefault();if(busy)return;
@@ -164,7 +206,7 @@ async function submit(ev){
   const due_at=new Date(day+'T23:59:59').toISOString(),created=[];
   for(const {unit,targets} of prepared){
    const title=book.title+' · Unit '+unit.unit_number+(unit.title?' — '+unit.title:'');
-   const payload={class:className,title,list_title:title,description:'Word Genius textbook vocabulary',source_type:'vocab_study',list_key:'vocab_catalog:'+bookId+':'+unit.id,list_meta:{source_app:'vocab_catalog',source_book_id:bookId,source_unit_ids:[unit.id],unit_id:unit.id,source_unit_id:unit.id,assignment_group_id:groupId,assignment_group_title:book.title+' · '+chosen.map(u=>'Unit '+u.unit_number).join(', '),required_modes:modes,workload_mode:'all'},due_at,goal_type:'clean_pass',goal_value:100,targets};
+   const payload={class:className,title,list_title:title,description:'Word Genius textbook vocabulary',source_type:'vocab_study',list_key:'vocab_catalog:'+bookId+':'+unit.id,list_meta:{source_app:'vocab_catalog',source_book_id:bookId,source_unit_ids:[unit.id],unit_id:unit.id,source_unit_id:unit.id,assignment_group_id:groupId,assignment_group_title:book.title+' · '+chosen.map(u=>'Unit '+u.unit_number).join(', '),required_modes:modes,fresh_session:!!p.querySelector('#uaFreshSession')?.checked,workload_mode:'all'},due_at,goal_type:'clean_pass',goal_value:100,targets};
    try{const result=await homework(payload);created.push(result.assignment?.id)}catch(e){throw Error('Saved '+created.length+' of '+prepared.length+' unit assignments. Remaining units were not saved: '+e.message)}
   }
   message('Assigned '+created.length+' separate units to '+className+'. Each unit has its own progress.');
