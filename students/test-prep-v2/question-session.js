@@ -147,6 +147,7 @@ export function createQuestionSession({
     if(checkedState.get()){
       if(!nextPointerArmed)return;
       nextPointerArmed=false;
+      if(indexState.get()===queueLength()-1)showFinishOverlay();
       indexState.set(indexState.get()+1);render();return;
     }
     if(grading)return;
@@ -184,7 +185,7 @@ export function createQuestionSession({
       if(practiceType==='vocab_test')mountVocabAiWilli({container:root,item:vocabItemFromQuestion(q),question:q,response,result,mode:q?.metadata?.mode||q?.tracking?.questionType||'vocab_test'});
       else mountAiWilliHelper({container:root,question:q,response,result,section:q.skill,practiceType});
     }
-    if(isLastQuestion)showFinishOverlay();
+    // Keep the final answer and correction visible until the student explicitly continues.
 
     // Once feedback is visible, this question is consumed. Persist locally before
     // remote tracking so leaving immediately cannot reopen the same question.
@@ -193,8 +194,7 @@ export function createQuestionSession({
     try{await recordAttempt({question:q,response,result,practiceType,...getAttemptExtras(entry,q,false)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} tracking failed`,e)}
     if(!isActive())return;
-    if(isLastQuestion){indexState.set(answeredIndex+1);render();return}
-    btn.disabled=false;btn.textContent='Next Question →';
+    btn.disabled=false;btn.textContent=isLastQuestion?'See Results →':'Next Question →';
     const skipButton=document.getElementById(buttonIds.skip);if(skipButton)skipButton.disabled=true;
   }
 
