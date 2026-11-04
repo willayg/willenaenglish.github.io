@@ -104,6 +104,7 @@ export function createScreens(actions){
     $('goldStatus').classList.toggle('is-gold',gold);
     // Homework progress is shown on skill cards; keep permanent gold display for practice only.
     $('goldStatus').hidden=!!activeHomework;
+    $('goldStatus').style.display=activeHomework?'none':'';
     $('goldLabel').textContent=gold?'Golden Unit · 완성!':'코치 + 문장 배열 + 말하기: 모두 완료하면 Gold';
     const tab=$('unitStrip').querySelector('.is-current');
     if(tab){
