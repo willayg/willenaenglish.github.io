@@ -120,7 +120,14 @@ async function load(){
   if(!Array.isArray(data))throw Error('Invalid assignment results response');
   const resultMap=new Map(data.map(r=>[id(r.task_id),r]));
   const names=new Map();
-  groups.forEach(item=>(item.members||[]).forEach(m=>{const p=m.student||{};names.set(id(p.id||m.student_id),p.korean_name||p.name||p.username||'Student')}));
+  groups.forEach(item=>(item.members||[]).forEach(m=>{const p=m.student||{};names.set(id(p.id||m.student_id),p.name||p.username||p.korean_name||'Student')}));
+  const taskStudentIds=[...new Set(tasks.map(t=>id(t.student_id)).filter(Boolean))];
+  for(let i=0;i<taskStudentIds.length;i+=150){
+    try{
+      const profiles=await get('profiles?select=id,name,username,korean_name&id=in.('+taskStudentIds.slice(i,i+150).join(',')+')');
+      profiles.forEach(p=>names.set(id(p.id),p.name||p.username||p.korean_name||'Student'));
+    }catch(error){console.warn('[내신 names] English name lookup unavailable',error);break}
+  }
   all=tasks.map(t=>{
    const result=resultMap.get(id(t.id));
    const done=result?Number(result.done)||0:0,target=Math.max(1,Number(t.target_count)||10);
@@ -419,6 +426,17 @@ async function loadOverview(scopeName='my',force=false){
     }catch(error){errors.push(job.name+': '+error.message)}
    }
   }));
+  const resultStudentIds=[...new Set([...outputs.values()].flatMap(records=>records.flatMap(record=>Array.isArray(record.student_rows)?record.student_rows.map(s=>id(s.student_id)):[])).filter(Boolean))];
+  const missingIds=resultStudentIds.filter(studentId=>!students.has(studentId));
+  if(missingIds.length){
+    for(let i=0;i<missingIds.length;i+=150){
+      try{
+        const found=await overviewGet('profiles?select=id,name,username,korean_name,class&id=in.('+missingIds.slice(i,i+150).join(',')+')');
+        found.forEach(profile=>students.set(id(profile.id),profile));
+      }catch(error){errors.push('Student display names: '+error.message);break}
+    }
+  }
+  const studentNames=students;
   const asMap=(name,key='id')=>new Map((outputs.get(name)||[]).map(item=>[id(item[key]),item]));
   const classProgress=asMap('Class progress');
   const grammarBookProgress=asMap('Grammar book progress');
@@ -431,7 +449,8 @@ async function loadOverview(scopeName='my',force=false){
   function overviewStudentProgress(records,{kind='completion'}={}){
     if(!Array.isArray(records)||!records.length)return '';
     const rows=records.map(st=>{
-      const name=esc(st.name||'Student');
+      const person=studentNames.get(id(st.student_id));
+      const name=esc(person?.name||person?.username||st.name||person?.korean_name||'Student');
       let percentage=null,note='';
       if(kind==='grammar'){
         const done=Number(st.done),total=Number(st.total);
