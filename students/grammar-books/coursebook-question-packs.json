@@ -41,15 +41,15 @@
               },
               {
                 "id": "buzz6-u1-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\n_______ you ever visited the history museum?",
                 "options": [
-                  "I has never ridden the subway alone.",
-                  "She has lived in this city since five years.",
-                  "Has you ever visited the history museum?",
-                  "We have known this bus driver for 2021.",
-                  "Have you ever visited the history museum?"
+                  "Has",
+                  "Did",
+                  "Have",
+                  "Does",
+                  "Is"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 2,
                 "explanation": "you에는 Have를 사용합니다.",
                 "displayStyle": "sentence-options"
               },
@@ -259,15 +259,15 @@
               },
               {
                 "id": "buzz6-u2-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nWe _______ going to visit the park on Saturday.",
                 "options": [
-                  "Look at those dark clouds! It going to rain.",
-                  "I think it will sunny tomorrow.",
-                  "We going to visit the park on Saturday.",
-                  "Do you will bring a jacket tomorrow?",
-                  "We are going to visit the park on Saturday."
+                  "do",
+                  "is",
+                  "are",
+                  "were",
+                  "has"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 2,
                 "explanation": "주어 we 뒤에는 are going to를 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -477,15 +477,15 @@
               },
               {
                 "id": "buzz6-u3-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nThey _______ just planted ten new trees.",
                 "options": [
-                  "We have already clean the riverbank.",
-                  "Has she finished recycling the bottles already yet?",
-                  "They has just planted ten new trees.",
-                  "I haven't turned off the lights already.",
-                  "They have just planted ten new trees."
+                  "has",
+                  "having",
+                  "is",
+                  "have",
+                  "are"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 3,
                 "explanation": "복수 주어 they에는 have를 사용합니다.",
                 "displayStyle": "sentence-options"
               },
@@ -695,15 +695,15 @@
               },
               {
                 "id": "buzz6-u4-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nShe dropped her ticket while she _______ running.",
                 "options": [
-                  "I were watching the play when the lights went out.",
-                  "While we was waiting, the actor arrived.",
-                  "She dropped her ticket while she is running.",
-                  "The audience was clap when the curtain opened.",
-                  "She dropped her ticket while she was running."
+                  "were",
+                  "am",
+                  "was",
+                  "be",
+                  "is"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 2,
                 "explanation": "과거의 진행 동작에는 was running을 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -913,15 +913,15 @@
               },
               {
                 "id": "buzz6-u5-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nCoffee is _______ hot at this café.",
                 "options": [
-                  "Rice is grow in many Asian countries.",
-                  "These noodles is made from wheat.",
-                  "Coffee is serve hot at this café.",
-                  "The cakes are bake every morning.",
-                  "Coffee is served hot at this café."
+                  "serve",
+                  "serves",
+                  "serving",
+                  "served",
+                  "to serve"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 3,
                 "explanation": "과거분사 served를 사용합니다.",
                 "displayStyle": "sentence-options"
               },
@@ -1131,15 +1131,15 @@
               },
               {
                 "id": "buzz6-u6-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nWhen I press this button, the screen _______ on.",
                 "options": [
-                  "If you heat ice, it will melts.",
-                  "If the signal is weak, the video stop.",
-                  "When I press this button, the screen turn on.",
-                  "If you doesn't charge the phone, it runs out of power.",
-                  "When I press this button, the screen turns on."
+                  "turn",
+                  "turning",
+                  "turns",
+                  "to turn",
+                  "turned"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 2,
                 "explanation": "3인칭 단수 screen에는 turns가 맞습니다.",
                 "displayStyle": "sentence-options"
               },
@@ -1349,15 +1349,15 @@
               },
               {
                 "id": "buzz6-u7-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nIf she _______ a deer, she will take a photo.",
                 "options": [
-                  "If it will rain, we will stay indoors.",
-                  "We will go hiking if the weather will be nice.",
-                  "If she see a deer, she will take a photo.",
-                  "If you leave early, you don't will miss the bus.",
-                  "If she sees a deer, she will take a photo."
+                  "see",
+                  "saw",
+                  "seeing",
+                  "sees",
+                  "will see"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 3,
                 "explanation": "she에는 sees가 옵니다.",
                 "displayStyle": "sentence-options"
               },
@@ -1567,15 +1567,15 @@
               },
               {
                 "id": "buzz6-u8-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nThat light might _______ a distant star.",
                 "options": [
-                  "The planet who we saw was very bright.",
-                  "The astronaut which spoke to us was friendly.",
-                  "That light might is a distant star.",
-                  "The spaceship must to be very expensive.",
-                  "That light might be a distant star."
+                  "is",
+                  "been",
+                  "be",
+                  "being",
+                  "to be"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 2,
                 "explanation": "조동사 might 뒤에는 동사원형 be를 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -1792,15 +1792,15 @@
               },
               {
                 "id": "eu5-u1-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nShe _______ a competition last summer.",
                 "options": [
-                  "He act in a play during vacation.",
-                  "How did you felt when you rode the roller coaster?",
-                  "She win a competition last summer.",
-                  "I feel relaxed, but my brother felt nervous yesterday.",
-                  "She won a competition last summer."
+                  "win",
+                  "wins",
+                  "winning",
+                  "won",
+                  "to win"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 3,
                 "explanation": "last summer의 과거 사건에는 won을 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -2010,15 +2010,15 @@
               },
               {
                 "id": "eu5-u2-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nI was setting up the tent when he _______.",
                 "options": [
-                  "She were studying insects in the morning.",
-                  "Were he looking for animal tracks?",
-                  "I was setting up the tent when he arrive.",
-                  "When the rain started, we was collecting leaves.",
-                  "I was setting up the tent when he arrived."
+                  "arrive",
+                  "arrives",
+                  "arriving",
+                  "arrived",
+                  "to arrive"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 3,
                 "explanation": "과거의 사건은 arrived로 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -2228,13 +2228,13 @@
               },
               {
                 "id": "eu5-u3-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nWe will _______ pizzas for the party.",
                 "options": [
-                  "We will ordered pizzas for the party.",
-                  "What will he does at the party?",
-                  "Does she will pour the juice at the party?",
-                  "She will buys some balloons tomorrow.",
-                  "Will she pour the juice at the party?"
+                  "orders",
+                  "ordered",
+                  "ordering",
+                  "to order",
+                  "order"
                 ],
                 "answerIndex": 4,
                 "explanation": "will 의문문에는 does를 함께 쓰지 않습니다.",
@@ -2446,15 +2446,15 @@
               },
               {
                 "id": "eu5-u4-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nThe Amazon is one of the _______ rainforests.",
                 "options": [
-                  "A jaguar is fastest than a sloth.",
-                  "This frog is colorfuller than that one.",
-                  "The Amazon is one of the larger rainforests.",
-                  "Monkeys can climbs trees very quickly.",
-                  "The Amazon is one of the largest rainforests."
+                  "larger",
+                  "large",
+                  "largest",
+                  "more large",
+                  "most large"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 2,
                 "explanation": "one of the 뒤에는 최상급을 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -2664,15 +2664,15 @@
               },
               {
                 "id": "eu5-u5-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nThey usually _______ at school early these days.",
                 "options": [
-                  "She practices the piano careful.",
-                  "He drinks always water after exercise.",
-                  "They usually arrives at school early.",
-                  "My brother runs more faster than I do.",
-                  "They usually arrive at school early."
+                  "arrives",
+                  "arrive",
+                  "arrived",
+                  "arriving",
+                  "to arrive"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 1,
                 "explanation": "복수 they에는 arrive를 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -2882,15 +2882,15 @@
               },
               {
                 "id": "eu5-u6-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nHow _______ glue do we need?",
                 "options": [
-                  "We need a few water for the clay.",
-                  "There is many pieces of wood here.",
-                  "How many glue do we need?",
-                  "First, cutting the paper into four pieces.",
-                  "How much glue do we need?"
+                  "many",
+                  "much",
+                  "few",
+                  "a few",
+                  "several"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 1,
                 "explanation": "glue는 불가산명사입니다.",
                 "displayStyle": "sentence-options"
               },
@@ -3100,15 +3100,15 @@
               },
               {
                 "id": "eu5-u7-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nShe _______ to Thailand last summer.",
                 "options": [
-                  "Has you ever visited Australia?",
-                  "I have never flew on a plane.",
-                  "She has gone to Thailand last summer.",
-                  "We has been to several countries.",
-                  "She went to Thailand last summer."
+                  "go",
+                  "goes",
+                  "went",
+                  "has gone",
+                  "have gone"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 2,
                 "explanation": "명확한 과거 시점에는 단순과거입니다.",
                 "displayStyle": "sentence-options"
               },
@@ -3318,15 +3318,15 @@
               },
               {
                 "id": "eu5-u8-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nThey _______ already downloaded the file.",
                 "options": [
-                  "I have just send you an email.",
-                  "Have she finished her online project yet?",
-                  "They has already downloaded the file.",
-                  "I haven't changed my password already.",
-                  "They have already downloaded the file."
+                  "has",
+                  "having",
+                  "is",
+                  "have",
+                  "are"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 3,
                 "explanation": "they에는 have가 옵니다.",
                 "displayStyle": "sentence-options"
               },
@@ -3543,15 +3543,15 @@
               },
               {
                 "id": "eu6-u1-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nHow did you _______ to the museum yesterday?",
                 "options": [
-                  "Walks up the street and turn right.",
-                  "They catch a taxi to the zoo yesterday.",
-                  "How did you got to the museum yesterday?",
-                  "I going to visit the shrine on Friday.",
-                  "How did you get to the museum yesterday?"
+                  "got",
+                  "gets",
+                  "getting",
+                  "get",
+                  "to get"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 3,
                 "explanation": "did 다음에는 동사원형 get을 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -3761,15 +3761,15 @@
               },
               {
                 "id": "eu6-u2-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nShe can _______ friends on weekends.",
                 "options": [
-                  "I has to read textbooks every night.",
-                  "My brother doesn't has to pay bills.",
-                  "She can calls friends on weekends.",
-                  "When he was young, he couldn't used a smartphone.",
-                  "She can call friends on weekends."
+                  "calls",
+                  "called",
+                  "calling",
+                  "call",
+                  "to call"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 3,
                 "explanation": "can 뒤에는 동사원형 call을 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -3979,15 +3979,15 @@
               },
               {
                 "id": "eu6-u3-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nWe have been _______ in Paris for three years.",
                 "options": [
-                  "He has owned a laptop for September.",
-                  "I have owned this phone since six months.",
-                  "We have been live in Paris for three years.",
-                  "How long has you been studying English?",
-                  "We have been living in Paris for three years."
+                  "live",
+                  "lived",
+                  "to live",
+                  "living",
+                  "lives"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 3,
                 "explanation": "현재완료진행형은 have been + -ing입니다.",
                 "displayStyle": "sentence-options"
               },
@@ -4197,15 +4197,15 @@
               },
               {
                 "id": "eu6-u4-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nYou should wait until you _______ ready.",
                 "options": [
-                  "I wanted buying some soap at the store.",
-                  "We need washing our hands before dinner.",
-                  "You should wait until you will be ready.",
-                  "She need a bottle of shampoo.",
-                  "You should wait until you are ready."
+                  "will be",
+                  "are",
+                  "is",
+                  "were",
+                  "be"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 1,
                 "explanation": "미래 시간 부사절 until에는 현재형을 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -4415,15 +4415,15 @@
               },
               {
                 "id": "eu6-u5-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nThe girl _______ works at the shop is my friend.",
                 "options": [
-                  "She is the one which is going to the mall.",
-                  "He said yesterday that he were going to the museum.",
-                  "The girl which works at the shop is my friend.",
-                  "Did she said that she was going to the mall?",
-                  "The girl who works at the shop is my friend."
+                  "which",
+                  "who",
+                  "whose",
+                  "where",
+                  "when"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 1,
                 "explanation": "사람 선행사 girl에는 who를 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -4633,15 +4633,15 @@
               },
               {
                 "id": "eu6-u6-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nIf everyone _______, the city would be cleaner.",
                 "options": [
-                  "If I have a new bicycle, I would ride it all the time.",
-                  "If you wants to help the environment, reuse paper.",
-                  "If everyone recycle, the city would be cleaner.",
-                  "We will save energy if we will turn off the lights.",
-                  "If everyone recycled, the city would be cleaner."
+                  "recycle",
+                  "recycling",
+                  "recycled",
+                  "will recycle",
+                  "recycles"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 2,
                 "explanation": "가정법 과거에서는 recycled를 씁니다.",
                 "displayStyle": "sentence-options"
               },
@@ -4851,15 +4851,15 @@
               },
               {
                 "id": "eu6-u7-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nThis bridge was _______ many years ago.",
                 "options": [
-                  "The paintings is displayed in the gallery.",
-                  "The canal was complete in 1825.",
-                  "This bridge was build many years ago.",
-                  "Was these sculptures made by the artist?",
-                  "This bridge was built many years ago."
+                  "build",
+                  "builds",
+                  "building",
+                  "built",
+                  "to build"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 3,
                 "explanation": "build의 과거분사는 built입니다.",
                 "displayStyle": "sentence-options"
               },
@@ -5069,15 +5069,15 @@
               },
               {
                 "id": "eu6-u8-choose-3",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 빈칸에 들어갈 말로 알맞은 것을 고르시오.\nShe has been studying for the exam _______ Monday.",
                 "options": [
-                  "The speech was bored, but the students were excited.",
-                  "I have opening presents all morning.",
-                  "She has been studying for the exam for Monday.",
-                  "The award ceremony was more excited than last year.",
-                  "She has been studying for the exam since Monday."
+                  "for",
+                  "since",
+                  "from",
+                  "during",
+                  "by"
                 ],
-                "answerIndex": 4,
+                "answerIndex": 1,
                 "explanation": "시작 시점 Monday 앞에는 since를 씁니다.",
                 "displayStyle": "sentence-options"
               },
