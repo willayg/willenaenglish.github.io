@@ -21,13 +21,13 @@ async function mount(){
  if(!root()||!document.querySelector('#uaAppBody .ua-catalog-host'))return;
  if(panel())return;
  const div=document.createElement('section');div.id='uaCatalog';div.className='ua-catalog';
- div.innerHTML='<div class="ua-section-heading"><div><div class="ua-eyebrow">CONTENT DATABASE</div><h3>Assign from a book</h3></div><button type="button" class="control" id="uaReloadBooks">↻ Refresh books</button></div><form id="uaCatalogForm"><div class="ua-catalog-fields"><label>Class<select id="uaClass" class="control" required><option value="">Choose class…</option></select></label><label>Book<select id="uaBook" class="control" required><option value="">Loading books…</option></select></label><label>Due date<input id="uaDue" class="control" type="date" required></label></div><div class="ua-catalog-units"><strong>Units</strong><div id="uaUnitList">Select a book first.</div></div><div class="ua-catalog-preview" id="uaWordsPreview"><div class="ua-preview-heading"><div><strong>Selected words preview</strong><small id="uaPreviewSummary" aria-live="polite">Choose units to see their words.</small></div><button type="button" class="control ua-preview-toggle" id="uaPreviewToggle" aria-controls="uaPreviewBody" aria-expanded="true">Hide preview</button></div><div class="ua-preview-body" id="uaPreviewBody"><p class="ua-preview-empty">Select one or more units above to see the exact vocabulary before assigning it.</p></div></div><div class="ua-catalog-modes"><strong>Practice modes</strong><label><input type="checkbox" name="uaMode" value="quiz" checked> Quiz</label><label><input type="checkbox" name="uaMode" value="spelling_test" checked> Spelling</label><label><input type="checkbox" name="uaMode" value="speaking" checked> Speaking</label></div><label class="ua-fresh-session"><input type="checkbox" id="uaFreshSession"> <span><strong>Fresh Session</strong><small>Require new answers after assignment. Existing mastery stays unchanged.</small></span></label><section class="ua-mastery-preview" id="uaMasteryPreview"><strong>Class progress before assigning</strong><div id="uaMasteryRows">Choose a class, book and units.</div></section><div class="ua-catalog-footer"><span id="uaCount">Choose units to preview vocabulary.</span><button type="submit" class="control ua-primary" id="uaCreate" disabled>Assign selected words →</button></div><p id="uaCatalogMessage" role="status" aria-live="polite"></p></form>';
+ div.innerHTML='<div class="ua-section-heading"><div><div class="ua-eyebrow">CONTENT DATABASE</div><h3>Assign from a book</h3></div><button type="button" class="control" id="uaReloadBooks">↻ Refresh books</button></div><form id="uaCatalogForm"><div class="ua-catalog-fields"><label>Class<select id="uaClass" class="control" required><option value="">Choose class…</option></select></label><label>Book<select id="uaBook" class="control" required><option value="">Loading books…</option></select></label><label>Due date<input id="uaDue" class="control" type="date" required></label></div><div class="ua-catalog-units"><strong>Units</strong><div id="uaUnitList">Select a book first.</div></div><div class="ua-catalog-preview" id="uaWordsPreview"><div class="ua-preview-heading"><div><strong>Selected words preview</strong><small id="uaPreviewSummary" aria-live="polite">Choose units to see their words.</small></div><button type="button" class="control ua-preview-toggle" id="uaPreviewToggle" aria-controls="uaPreviewBody" aria-expanded="true">Hide preview</button></div><div class="ua-preview-body" id="uaPreviewBody"><p class="ua-preview-empty">Select one or more units above to see the exact vocabulary before assigning it.</p></div></div><div class="ua-catalog-modes"><strong>Practice modes</strong><label><input type="checkbox" name="uaMode" value="quiz" checked> Quiz</label><span class="ua-spelling-choice"><strong>Spelling homework (choose one)</strong><label><input type="radio" name="uaSpellingMode" value="spelling_test" checked> Spelling Test</label><label><input type="radio" name="uaSpellingMode" value="spelling_coach"> Spelling Coach</label></span><label><input type="checkbox" name="uaMode" value="speaking" checked> Speaking</label></div><label class="ua-fresh-session"><input type="checkbox" id="uaFreshSession"> <span><strong>Fresh Session</strong><small>Require new answers after assignment. Existing mastery stays unchanged.</small></span></label><section class="ua-mastery-preview" id="uaMasteryPreview"><strong>Class progress before assigning</strong><div id="uaMasteryRows">Choose a class, book and units.</div></section><div class="ua-catalog-footer"><span id="uaCount">Choose units to preview vocabulary.</span><button type="submit" class="control ua-primary" id="uaCreate" disabled>Assign selected words →</button></div><p id="uaCatalogMessage" role="status" aria-live="polite"></p></form>';
  root().querySelector('.ua-catalog-host').appendChild(div);
  const due=div.querySelector('#uaDue');const d=new Date(Date.now()+7*86400000);due.value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
  div.querySelector('#uaReloadBooks').onclick=loadBooks;
  div.querySelector('#uaBook').onchange=()=>{void loadUnits()};
  div.querySelector('#uaClass').addEventListener('change',()=>{void renderMasteryPreview()});
- div.querySelectorAll('input[name="uaMode"]').forEach(i=>i.addEventListener('change',()=>{void renderMasteryPreview()}));
+ div.querySelectorAll('input[name="uaMode"],input[name="uaSpellingMode"]').forEach(i=>i.addEventListener('change',()=>{void renderMasteryPreview()}));
  div.querySelector('#uaPreviewToggle').addEventListener('click',()=>{
   const body=div.querySelector('#uaPreviewBody'),toggle=div.querySelector('#uaPreviewToggle');
   body.hidden=!body.hidden;toggle.setAttribute('aria-expanded',String(!body.hidden));toggle.textContent=body.hidden?'Show preview':'Hide preview';
@@ -156,6 +156,7 @@ async function renderPreview(){
  }
 }
 
+const spellingStyle=document.createElement('style');spellingStyle.textContent='.ua-spelling-choice{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 12px;border:1px solid #bfe7ed;border-radius:10px;background:#fff}.ua-spelling-choice strong{font-size:12px}.ua-spelling-choice input{accent-color:#ed70ad}';document.head.appendChild(spellingStyle);
 const OP_HOST='https://fiieuiktlsivwfgyivai.supabase.co';
 const OP_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const masteryStyle=document.createElement('style');
@@ -176,7 +177,7 @@ async function classMastery(className,bookId,unitIds,lexicalIds,modes){
 async function renderMasteryPreview(groups=null){
  const p=panel(),body=p?.querySelector('#uaMasteryRows');if(!p||!body)return;
  const rev=++masteryRevision,className=p.querySelector('#uaClass')?.value||'',bookId=p.querySelector('#uaBook')?.value||'';
- const modes=[...p.querySelectorAll('input[name="uaMode"]:checked')].map(x=>x.value),unitIds=selected.slice();
+ const modes=[...p.querySelectorAll('input[name="uaMode"]:checked')].map(x=>x.value).concat([p.querySelector('input[name="uaSpellingMode"]:checked')?.value||'spelling_test']),unitIds=selected.slice();
  if(!className||!bookId||!unitIds.length||!modes.length){body.textContent='Choose a class, book, units and modes.';return;}
  body.textContent='Loading class progress…';
  try{
@@ -194,7 +195,7 @@ async function renderMasteryPreview(groups=null){
 }
 async function submit(ev){
  ev.preventDefault();if(busy)return;
- const p=panel(),bookId=p.querySelector('#uaBook').value,className=p.querySelector('#uaClass').value,day=p.querySelector('#uaDue').value,modes=[...p.querySelectorAll('input[name="uaMode"]:checked')].map(x=>x.value);
+ const p=panel(),bookId=p.querySelector('#uaBook').value,className=p.querySelector('#uaClass').value,day=p.querySelector('#uaDue').value,modes=[...p.querySelectorAll('input[name="uaMode"]:checked')].map(x=>x.value).concat([p.querySelector('input[name="uaSpellingMode"]:checked')?.value||'spelling_test']);
  if(!bookId||!className||!day||!selected.length||!modes.length){message('Choose a book, units, class, due date and at least one mode.');return}
  if(!previewReady){message('Wait for the vocabulary preview to finish before assigning.');return}
  busy=true;p.querySelector('#uaCreate').disabled=true;message('Checking selected units…');
@@ -206,7 +207,7 @@ async function submit(ev){
   const due_at=new Date(day+'T23:59:59').toISOString(),created=[];
   for(const {unit,targets} of prepared){
    const title=book.title+' · Unit '+unit.unit_number+(unit.title?' — '+unit.title:'');
-   const payload={class:className,title,list_title:title,description:'Word Genius textbook vocabulary',source_type:'vocab_study',list_key:'vocab_catalog:'+bookId+':'+unit.id,list_meta:{source_app:'vocab_catalog',source_book_id:bookId,source_unit_ids:[unit.id],unit_id:unit.id,source_unit_id:unit.id,assignment_group_id:groupId,assignment_group_title:book.title+' · '+chosen.map(u=>'Unit '+u.unit_number).join(', '),required_modes:modes,fresh_session:!!p.querySelector('#uaFreshSession')?.checked,workload_mode:'all'},due_at,goal_type:'clean_pass',goal_value:100,targets};
+   const payload={class:className,title,list_title:title,description:'Word Genius textbook vocabulary',source_type:'vocab_study',list_key:'vocab_catalog:'+bookId+':'+unit.id,list_meta:{source_app:'vocab_catalog',source_book_id:bookId,source_unit_ids:[unit.id],unit_id:unit.id,source_unit_id:unit.id,assignment_group_id:groupId,assignment_group_title:book.title+' · '+chosen.map(u=>'Unit '+u.unit_number).join(', '),required_modes:modes,coach_golden_enabled:modes.includes('spelling_coach'),fresh_session:!!p.querySelector('#uaFreshSession')?.checked,workload_mode:'all'},due_at,goal_type:'clean_pass',goal_value:100,targets};
    try{const result=await homework(payload);created.push(result.assignment?.id)}catch(e){throw Error('Saved '+created.length+' of '+prepared.length+' unit assignments. Remaining units were not saved: '+e.message)}
   }
   message('Assigned '+created.length+' separate units to '+className+'. Each unit has its own progress.');
