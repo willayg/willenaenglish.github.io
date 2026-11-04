@@ -211,20 +211,12 @@ async function fetchRecords(){
  ]);
  store.assignments=Array.isArray(assignments)?assignments:[];
  store.progress=new Map((Array.isArray(progress)?progress:[]).map(row=>[String(row.id),row]));
- const ids=[...new Set([...store.progress.values()].flatMap(r=>(Array.isArray(r.student_rows)?r.student_rows:[]).map(s=>String(s.student_id||'')).filter(Boolean)))];
- const englishNames=new Map();
- for(let i=0;i<ids.length;i+=150){
-  try{
-   const profiles=await api('profiles?select=id,name,username,korean_name&id=in.('+ids.slice(i,i+150).join(',')+')');
-   for(const p of profiles||[])englishNames.set(String(p.id),p.name||p.username||p.korean_name||'Student');
-  }catch(error){console.warn('[Grammar books] English name lookup unavailable',error);break}
- }
- store.englishNames=englishNames;
+
 }
 function progressFor(a){
  const data=store.progress.get(String(a.id));
  const rows=Array.isArray(data?.student_rows)?data.student_rows.map(st=>({
-  student:{name:store.englishNames?.get(String(st.student_id))||st.name||'Student'},
+  student:{name:st.name||'Student'},
   done:Math.max(0,Number(st.done)||0),
   total:Math.max(0,Number(st.total)||0)
  })):[];
