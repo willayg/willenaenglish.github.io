@@ -673,7 +673,7 @@ function renderManage(root){
   box.textContent='Loading recorded completion…';
   try{const data=await rpc('sg_homework_progress_v1',{p_id:b.dataset.sgProgress});
    const rows=data.students||[];
-   box.innerHTML=rows.length?rows.map(s=>'<div class="sgt-student"><div><strong>'+escapeHtml(s.korean_name||s.name||'Student')+'</strong></div><div class="sgt-bar"><i style="width:'+Math.max(0,Math.min(100,Number(s.percent)||0))+'%"></i></div><b>'+Math.round(Number(s.percent)||0)+'%</b></div>').join(''):'No students enrolled in this class.';
+   box.innerHTML=rows.length?rows.map(s=>'<div class="sgt-student"><div><strong>'+escapeHtml(s.name||s.korean_name||'Student')+'</strong></div><div class="sgt-bar"><i style="width:'+Math.max(0,Math.min(100,Number(s.percent)||0))+'%"></i></div><b>'+Math.round(Number(s.percent)||0)+'%</b></div>').join(''):'No students enrolled in this class.';
   }catch(e){box.textContent=e.message}
  });
 }
