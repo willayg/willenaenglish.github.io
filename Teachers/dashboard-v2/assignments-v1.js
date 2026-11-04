@@ -10,7 +10,9 @@
     progress:null,
     studentDetail:null,
     cardProgress:new Map(),
-    listGeneration:0
+    listGeneration:0,
+    historySelected:new Set(),
+    restoring:false
   };
 
   const $=(s,r=document)=>r.querySelector(s);
@@ -160,6 +162,88 @@
       '<button type="button" class="control ghc-open" data-assignment-id="'+esc(a.id)+'">Open details</button>'});
   }
 
+
+  function historyCard(a){
+    return '<div class="assignment-history-item">'+
+      '<label class="assignment-history-select"><input type="checkbox" data-history-select="'+esc(a.id)+'" aria-label="Select '+esc(a.title||'homework')+'"> Select</label>'+
+      assignmentCard(a)+'</div>';
+  }
+
+  function historySelectionToolbar(){
+    return '<div class="assignment-restore-toolbar" role="group" aria-label="Restore past assignments">'+
+      '<label><input type="checkbox" id="assignmentHistorySelectAll"> Select all</label>'+
+      '<button type="button" id="assignmentRestoreSelected" class="control" disabled>Restore to Current (0)</button>'+
+      '<span id="assignmentRestoreStatus" role="status" aria-live="polite"></span></div>';
+  }
+  function wireHistorySelection(rows){
+    const list=$('#assignmentList');
+    if(!list)return;
+    const selected=state.historySelected;
+    const inputs=$('[data-history-select]',list);
+    const all=$('#assignmentHistorySelectAll',list);
+    const restore=$('#assignmentRestoreSelected',list);
+    const sync=()=>{
+      const valid=new Set(rows.map(a=>String(a.id)));
+      for(const id of selected)if(!valid.has(id))selected.delete(id);
+      inputs.forEach(input=>{input.checked=selected.has(input.dataset.historySelect)});
+      const count=selected.size;
+      all.checked=!!inputs.length&&count===inputs.length;
+      all.indeterminate=count>0&&count<inputs.length;
+      restore.disabled=!count||state.restoring;
+      restore.textContent='Restore to Current ('+count+')';
+    };
+    inputs.forEach(input=>input.addEventListener('change',()=>{
+      if(input.checked)selected.add(input.dataset.historySelect);
+      else selected.delete(input.dataset.historySelect);
+      sync();
+    }));
+    all.addEventListener('change',()=>{
+      inputs.forEach(input=>{if(all.checked)selected.add(input.dataset.historySelect);else selected.delete(input.dataset.historySelect)});
+      sync();
+    });
+    restore.addEventListener('click',()=>void restoreHistoryAssignments([...selected]));
+    sync();
+  }
+
+  async function restoreHistoryAssignments(ids){
+    if(state.restoring||!ids.length)return;
+    const assignments=ids.map(id=>state.assignments.find(a=>String(a.id)===String(id))).filter(a=>a&&!isCurrent(a));
+    if(!assignments.length)return;
+    const expired=assignments.filter(a=>a.due_at&&Date.parse(a.due_at)<Date.now());
+    let dueAt=null;
+    if(expired.length){
+      const tomorrow=new Date(Date.now()+86400000);
+      const defaultDay=dateInputValue(tomorrow);
+      const chosen=prompt(expired.length+' assignment(s) have passed their due date. Enter a new due date (YYYY-MM-DD) for those assignments:',defaultDay);
+      if(chosen===null)return;
+      if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(chosen.trim())){alert('Enter a date as YYYY-MM-DD.');return;}
+      dueAt=dueAtFromDate(chosen.trim());
+      if(!dueAt||Date.parse(dueAt)<=Date.now()){alert('Choose a future due date.');return;}
+    }
+    if(!confirm('Restore '+assignments.length+' assignment(s) to Current? Existing student progress will be kept.'))return;
+    state.restoring=true;
+    const button=$('#assignmentRestoreSelected'),status=$('#assignmentRestoreStatus');
+    if(button)button.disabled=true;
+    if(status)status.textContent='Restoring…';
+    let success=0;const errors=[];
+    for(const a of assignments){
+      try{
+        if(dueAt&&expired.includes(a)){
+          await api(route('update_assignment'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({assignment_id:a.id,due_at:dueAt})});
+        }
+        await api(route('reactivate_assignment'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({assignment_id:a.id})});
+        state.historySelected.delete(String(a.id));
+        success++;
+      }catch(error){errors.push((a.class||a.title||a.id)+': '+error.message);}
+    }
+    state.restoring=false;
+    state.loaded=false;
+    state.filter=success?'current':'history';
+    $('[data-assignment-status]').forEach(btn=>btn.classList.toggle('active',btn.dataset.assignmentStatus===state.filter));
+    await loadAssignments(true);
+    if(errors.length)alert(success+' restored, '+errors.length+' failed. '+errors.slice(0,3).join(' | '));
+  }
+
   function renderList(){
     const list=$('#assignmentList');
     const detail=$('#assignmentDetail');
@@ -175,12 +259,14 @@
     state.progress=null;
     state.studentDetail=null;
     if(!rows.length){
+      state.historySelected.clear();
       if(list.previousElementSibling?.classList.contains('hw-select-toolbar'))list.previousElementSibling.remove();
       delete list.dataset.hwManageControls;
       list.innerHTML='<div class="empty">No '+(state.filter==='current'?'current':'past')+' Vocabulary Study assignments'+(state.className?' for '+esc(state.className):'')+'.</div>';
       return;
     }
-    list.innerHTML=rows.map(assignmentCard).join('');
+    list.innerHTML=(state.filter==='history'?historySelectionToolbar():'')+rows.map(state.filter==='history'?historyCard:assignmentCard).join('');
+    if(state.filter==='history')wireHistorySelection(rows);
     document.querySelectorAll('#assignmentList .ghc-open').forEach(button=>button.addEventListener('click',()=>openAssignment(button.dataset.assignmentId)));
     void window.WillenaGeniusHomeworkCard?.hydrateTeachers(list);
     // Share the same checked-card and cancellation toolbar as the other Genius apps.
@@ -316,7 +402,7 @@
           (isCurrent(state.selectedAssignment||a)
             ?'<button class="control" type="button" id="assignmentEditBtn">Edit</button><button class="control assignment-cancel-btn" type="button" id="assignmentCancelBtn">Cancel assignment</button>'
             :((state.selectedAssignment||a)?.ended_at?'<button class="control assignment-reactivate-btn" type="button" id="assignmentReactivateBtn">Reactivate</button>':''))+
-          '<button class="control assignment-delete-btn" type="button" id="assignmentDeleteBtn">Delete</button>'+
+          '<button class="control assignment-delete-btn" type="button" id="assignmentDeleteBtn">Move to History</button>'+
           '<button class="control" type="button" id="assignmentDetailRefresh">Refresh</button>'+
         '</div>'+
       '</div>'+
@@ -583,35 +669,23 @@
   }
 
   async function reactivateAssignment(id){
-    const assignment=state.assignments.find(x=>String(x.id)===String(id))||state.selectedAssignment;
-    if(!assignment)return;
-    if(!confirm('Reactivate this assignment?\n\nStudents will see it as current work again.'))return;
-    try{
-      await api(route('reactivate_assignment'),{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({assignment_id:id})
-      });
-      state.loaded=false;
-      state.filter='current';
-      $$('[data-assignment-status]').forEach(btn=>btn.classList.toggle('active',btn.dataset.assignmentStatus==='current'));
-      await loadAssignments(true);
-    }catch(error){
-      alert('Could not reactivate assignment: '+error.message);
-    }
+    state.historySelected.add(String(id));
+    await restoreHistoryAssignments([String(id)]);
   }
 
+  // Ordinary removal is recoverable: preserve the assignment and all attempt records.
   async function deleteAssignment(id){
     const assignment=state.assignments.find(x=>String(x.id)===String(id))||state.selectedAssignment;
     if(!assignment)return;
-    if(!confirm('Delete this assignment permanently?\n\nThis removes the assignment record. This cannot be undone.'))return;
+    if(!confirm('Move this assignment to History? Students will no longer see it as current work, but you can restore it later.'))return;
     try{
-      await api(route('delete_assignment',{id}),{method:'DELETE'});
+      await api(route('end_assignment'),{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({assignment_id:id})
+      });
       state.loaded=false;
       await loadAssignments(true);
-    }catch(error){
-      alert('Could not delete assignment: '+error.message);
-    }
+    }catch(error){alert('Could not archive assignment: '+error.message);}
   }
 
   async function openAssignment(id,force=false){
