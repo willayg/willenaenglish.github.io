@@ -99,7 +99,27 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
 
 <script src="/free-level-test/js/report-calculation.js?v=1.27"></script>
 <script src="./admin-v2-visitor-qr.js?v=1.28"></script>
-<script type="module" src="./admin-v2.js?v=20261104-drawer-close2"></script>
+<script>
+/* Resilient class drawer dismissal, including when the classes module fails to initialize.
+   Runs after the primary handler; if it has already closed the drawer, this is a no-op. */
+(function(){
+  function dismissClassDrawer(){
+    const drawer=document.getElementById('classDrawerV2');
+    if(!drawer?.classList.contains('open'))return;
+    drawer.classList.remove('open');
+    document.getElementById('classDrawerBgV2')?.classList.remove('open');
+    document.body.style.overflow='';
+  }
+  document.addEventListener('click',function(event){
+    if(event.target.closest?.('#classDrawerCloseV2,#classCancelV2') ||
+       event.target.id==='classDrawerBgV2')dismissClassDrawer();
+  });
+  document.addEventListener('keydown',function(event){
+    if(event.key==='Escape')dismissClassDrawer();
+  });
+})();
+</script>
+<script type="module" src="./admin-v2.js?v=20261104-drawer-close3"></script>
 <script type="module" src="./biweekly-report.js?v=20261101-v1"></script>
 <script>
 (function(){
