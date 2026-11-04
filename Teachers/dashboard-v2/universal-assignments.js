@@ -242,6 +242,29 @@ async function creativeManage(app,body){
  }catch(e){if(body.isConnected)body.innerHTML='<div class="ua-empty">'+esc(e.message)+'</div>'}
 }
 
+const overviewMountedHosts=new WeakSet();
+function activate(){
+ // The workspace is built while its dashboard view is hidden on initial load.
+ // Start the My/All fetch on first visibility, without waiting for a second tab click.
+ if(!root.closest('.view')?.classList.contains('active'))return;
+ if(active!=='my'&&active!=='all')return;
+ const host=root.querySelector('#uaOverview');
+ if(!host||overviewMountedHosts.has(host))return;
+ overviewMountedHosts.add(host);
+ const requested=active;
+ const ready=(attempt=0)=>{
+  if(!host.isConnected||active!==requested)return;
+  if(window.UniversalAssignmentTracker?.loadOverview){
+   void window.UniversalAssignmentTracker.loadOverview(requested);
+  }else if(attempt<80){
+   setTimeout(()=>ready(attempt+1),150);
+  }else{
+   overviewMountedHosts.delete(host);
+   host.textContent='Assignment tracker unavailable. Please refresh the dashboard.';
+  }
+ };
+ ready();
+}
 function groupRows(){return window.NaesinV2Data?.getCachedGroups?.()||[]}
 function render(){
  restoreWordPanel();
@@ -260,21 +283,7 @@ function render(){
  if(active==='calendar'){body.innerHTML='<div id="uaCalendar">Loading calendar…</div>';window.UniversalAssignmentTracker?.loadCalendar?.();return}
  if(active==='my'||active==='all'){
    body.innerHTML='<div id="uaOverview" aria-live="polite">Loading cross-app homework…</div>';
-   // The tracker script can finish loading after the initial dashboard render.
-    // Retry that first mount instead of requiring a second tap on My or All.
-    const requestedTab=active;
-    const loadWhenReady=(attempt=0)=>{
-      if(active!==requestedTab||!document.querySelector('#uaOverview'))return;
-      if(window.UniversalAssignmentTracker?.loadOverview){
-        void window.UniversalAssignmentTracker.loadOverview(requestedTab);
-      }else if(attempt<40){
-        setTimeout(()=>loadWhenReady(attempt+1),150);
-      }else{
-        const target=document.querySelector('#uaOverview');
-        if(target)target.textContent='Assignment tracker unavailable. Please refresh the dashboard.';
-      }
-    };
-    loadWhenReady();
+   activate();
    return;
  }
  if(active==='naesin'&&sub==='manage'){body.innerHTML='<div id="uaProgress" aria-live="polite">Loading homework results…</div>';window.UniversalAssignmentTracker?.load?.();return}
@@ -311,7 +320,7 @@ function render(){
 async function refresh(){
  if(loading)return;loading=true;try{await window.NaesinV2Data?.loadGroups?.();groups=groupRows()}catch(e){console.warn('Assignments load unavailable',e)}finally{loading=false;if(active==='naesin')render()}
 }
-window.UniversalAssignments={refresh,openTab:id=>{if(apps.some(a=>a.id===id)){active=id;remember();render()}}};
+window.UniversalAssignments={refresh,activate,openTab:id=>{if(apps.some(a=>a.id===id)){active=id;remember();render()}}};
 document.querySelectorAll('[data-view="vocab"]').forEach(el=>el.addEventListener('click',restoreWordPanel));
 groups=groupRows();render();void refresh();
 })();
