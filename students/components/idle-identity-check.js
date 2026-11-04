@@ -8,21 +8,44 @@
 if(window.WillenaIdleIdentity)return;
 const IDLE_MS=5*60*1000;
 const KEY="willena:idle-identity:last-interaction:v1";
-const TAB_KEY="willena:identity:tab-open:v2";
-const WINDOW_MARK="__willena_verified_window_v2__";
+const TAB_KEY="willena:identity:tab-established:v4";
+const TAB_INSTANCE_KEY="willena:identity:tab-instance:v4";
 const VERIFIED_KEY="willena:identity:verified-user:v2";
 const ACCOUNT_EVENT="user_logged_in";
 let lastSeenAuthEvent="";
 try{lastSeenAuthEvent=localStorage.getItem(ACCOUNT_EVENT)||"";}catch{}
 let accountChanged=false, verifiedId="";
- // window.name persists across navigation within the same tab, unlike a fresh tab.
- // Prompt once on a newly opened tab; never on ordinary in-tab app navigation.
- const TAB_MARK="__willena_identity_tab_checked_v3__";
- let newTab=false;
- try {
-  newTab=window.name!==TAB_MARK;
-  window.name=TAB_MARK;
- } catch { newTab=true; }
+// Only the first entry into an actual browser tab asks. Navigation within that
+// same tab keeps sessionStorage; a regular new tab starts without this marker.
+let newTab=false, tabInstance="";
+try {
+ newTab=sessionStorage.getItem(TAB_KEY)!=="1";
+ if(newTab)sessionStorage.setItem(TAB_KEY,"1");
+ tabInstance=sessionStorage.getItem(TAB_INSTANCE_KEY)||"";
+ if(!tabInstance) {
+  tabInstance=crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+"-"+Math.random();
+  sessionStorage.setItem(TAB_INSTANCE_KEY,tabInstance);
+ }
+} catch { newTab=true; tabInstance=String(Date.now())+"-"+Math.random(); }
+// Duplicate-tab actions sometimes clone sessionStorage. Detect that copy by
+// asking existing tabs with the same instance ID to respond.
+try {
+ const channel=new BroadcastChannel("willena:identity:tabs:v4");
+ let responded=false;
+ channel.onmessage=(event)=>{
+  const msg=event.data||{};
+  if(msg.id!==tabInstance)return;
+  if(msg.type==="hello"){
+   channel.postMessage({type:"already-open",id:tabInstance});
+  } else if(msg.type==="already-open"&&!responded){
+   responded=true; newTab=true;pendingCheck=true;
+   if(!document.hidden)ask();
+   tabInstance=crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+"-"+Math.random();
+   try{sessionStorage.setItem(TAB_INSTANCE_KEY,tabInstance);}catch{}
+  }
+ };
+ channel.postMessage({type:"hello",id:tabInstance});
+} catch {}
 try{verifiedId=sessionStorage.getItem(VERIFIED_KEY)||"";}catch{}
 const SIGNIN="/students/signin.html";
 const blockedSelectors=[
@@ -126,7 +149,7 @@ async function ask(){
   const person=await profile();
   if(!person){
    // Unauthenticated pages have their normal login guard; leave an account-change check pending.
-   if(!accountChanged)pendingCheck=false;
+   if(!accountChanged&&!newTab)pendingCheck=false;
    return;
   }
   if(document.hidden||(working()&&!accountChanged&&!newTab)||prompting)return;
@@ -200,8 +223,15 @@ window.addEventListener("auth:changed",onAccountEvent);
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",checkForStudentChange,{once:true});
 else checkForStudentChange();
 if(newTab){
- if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(ask,0),{once:true});
- else setTimeout(ask,0);
+ // Initial auth may still be starting. Keep retrying briefly until the profile is available.
+ let attempts=0;
+ const tryNewTab=()=>{
+  if(!newTab||prompting)return;
+  ask();
+  if(++attempts<16 && newTab) setTimeout(tryNewTab,700);
+ };
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",tryNewTab,{once:true});
+ else tryNewTab();
 }
 window.addEventListener("focus",()=>{
  try{lastSeenAuthEvent=localStorage.getItem(ACCOUNT_EVENT)||"";}catch{}
