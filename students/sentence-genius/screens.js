@@ -97,7 +97,7 @@ export function createScreens(actions){
       btn.querySelector('.vocab-skill-ring')?.style.setProperty('--progress',percent);
       const ring=btn.querySelector('.vocab-skill-ring span');if(ring)ring.textContent=percent+'%';
       const done=progressStore?eligible.filter(item=>progressStore.passed(mode,item.id)).length:0;
-      $(mode+'Stars').textContent=activeHomework?done+'/'+eligible.length+' completed':'★ '+(store?.stars(mode,items)||0)+'/5';
+      $(mode+'Stars').textContent=activeHomework?done+'/'+eligible.length:'★ '+(store?.stars(mode,items)||0)+'/5';
     }
     const gold=!!store?.gold(items);
     if(gold&&unit?.id)goldenUnits.add(String(unit.id));
