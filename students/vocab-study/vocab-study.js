@@ -4,7 +4,7 @@ import {attachAISpeakingFallback} from './vocab-ai-speech-ui.js?v=20261024-round
 import {createSpeakingAudioCache} from './vocab-listening-cache.js?v=20261024-audio-prefetch2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
 import {getSpellingTarget,matchesSpellingTarget} from './spelling-targets.js?v=20261028-apostrophes1';
-import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261028-apostrophes1';
+import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261104-sentence-match1';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-startup2';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260927-startup2';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260927-startup2';
@@ -1960,7 +1960,27 @@ function renderSpeakingQuestion(){
         checkSpeaking();
       }
     });
-    renderer.onSpeechResult=alternatives=>state.aiSpeechUi?.observe(alternatives);
+    // Show acceptance before the student presses Check Answer.
+    // Use exactly the same matcher as scoring, including full-word matches
+    // inside sentences, so the preview never contradicts the result.
+    const transcriptEl=host.querySelector('[data-speaking-transcript]');
+    const updateSpeakingPreview=alternatives=>{
+      if(session.checked||state.renderer!==renderer)return;
+      const accepted=matchSpeakingTarget(expected,alternatives).correct;
+      if(transcriptEl){
+        transcriptEl.style.color=accepted?'#168345':'#cf304c';
+        transcriptEl.style.borderColor=accepted?'#77c99a':'#efa4ae';
+        transcriptEl.setAttribute('data-accepted',accepted?'true':'false');
+      }
+    };
+    renderer.onSpeechResult=alternatives=>{
+      updateSpeakingPreview(alternatives);
+      state.aiSpeechUi?.observe(alternatives);
+    };
+    host.querySelector('[data-speaking-mic]')?.addEventListener('click',()=>{
+      transcriptEl?.removeAttribute('data-accepted');
+      if(transcriptEl){transcriptEl.style.color='';transcriptEl.style.borderColor='';}
+    });
   }
   // Prepare a small window in the background while students try the normal mic.
   // Silent preload does not show the target or play anything.
@@ -1982,7 +2002,7 @@ function checkSpeaking(){
   const alternatives=renderer.getSpeechAlternatives?.()||[response];
   const match=matchSpeakingTarget(target,alternatives);
   const aiFallback=!!session.aiAcceptedTranscript&&session.aiAcceptedTranscript===response;
-  const correct=!!match.correct&&(!aiFallback||['exact','spacing','homophone'].includes(match.matchedBy));
+  const correct=!!match.correct&&(!aiFallback||['exact','spacing','homophone','in_sentence','in_sentence_homophone'].includes(match.matchedBy));
   const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0);
   session.results.push({
     lexicalEntryId:word.id||null,
