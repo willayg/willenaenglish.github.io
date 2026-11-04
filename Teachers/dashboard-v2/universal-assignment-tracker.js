@@ -428,6 +428,34 @@ async function loadOverview(scopeName='my',force=false){
   const puzzleProgress=asMap('Puzzle progress');
   const progress=asMap('내신 progress','task_id');
   if(generation!==overviewGeneration||!host.isConnected)return;
+  function overviewStudentProgress(records,{kind='completion'}={}){
+    if(!Array.isArray(records)||!records.length)return '';
+    const rows=records.map(st=>{
+      const name=esc(st.name||'Student');
+      let percentage=null,note='';
+      if(kind==='grammar'){
+        const done=Number(st.done),total=Number(st.total);
+        if(Number.isFinite(done)&&Number.isFinite(total)&&total>0){
+          percentage=Math.max(0,Math.min(100,Math.round(100*done/total)));
+        }else note=st.passed?'Passed':'Not passed';
+      }else if(kind==='word'){
+        note=(Number(st.solved)||0)+' correct / '+(Number(st.attempted)||0)+' attempted';
+      }else if(kind==='writing-sentence'){
+        const done=Number(st.checked),total=Number(st.total);
+        if(Number.isFinite(done)&&Number.isFinite(total)&&total>0){
+          percentage=Math.max(0,Math.min(100,Math.round(100*done/total)));
+        }else note='No verified questions';
+      }else{
+        percentage=st.completed?100:0;
+        note=st.completed?'Completed':'Not completed';
+      }
+      return '<div class="ghc-student-row"><span class="ghc-student-name">'+name+'</span>'+
+       (percentage===null?'<span class="ghc-student-note">'+esc(note)+'</span>':
+       '<span class="ghc-student-track" role="progressbar" aria-label="'+name+' progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+percentage+'"><i style="width:'+percentage+'%"></i></span>')+
+       '<strong class="ghc-student-pct">'+(percentage===null?'—':percentage+'%')+'</strong></div>';
+    }).join('');
+    return '<div class="ghc-student-list">'+rows+'</div>';
+  }
   function renderOverview(){
    const now=Date.now();
    const overdue=r=>r.due_at&&Date.parse(r.due_at)<now;
@@ -511,7 +539,12 @@ async function loadOverview(scopeName='my',force=false){
       const target=Number(row.target_count)||0;
       const pct=target?(done>=target&&(Number(result?.unresolved)||0)>0?99:Math.min(100,Math.round(done/target*100))):null;
       const grammarResult=row.source_type==='grammar_books'?grammarBookProgress.get(id(row.id)):classProgress.get(id(row.id));
-      const visiblePct=row.app==='Grammar Genius'&&Number(grammarResult?.students)>0?(row.source_type==='grammar_books'?Number(grammarResult.percent):Math.round(100*Number(grammarResult.passed)/Number(grammarResult.students))):pct;
+      const verifiedGrammarRows=Array.isArray(grammarResult?.student_rows)?grammarResult.student_rows:[];
+      const verifiedGrammarPct=verifiedGrammarRows.length&&row.source_type==='grammar_books'
+       ?Math.round(verifiedGrammarRows.reduce((sum,st)=>sum+(Number(st.total)>0?100*Math.min(Number(st.done)||0,Number(st.total))/Number(st.total):0),0)/verifiedGrammarRows.length)
+       :null;
+      const visiblePct=row.app==='Grammar Genius'&&Number(grammarResult?.students)>0
+       ?(row.source_type==='grammar_books'?verifiedGrammarPct:Math.round(100*Number(grammarResult.passed)/Number(grammarResult.students))):pct;
       const wordResult=row.app==='Word Genius'?wordClassProgress.get(id(row.id)):null;
       const writingResult=row.app==='Writing Genius'?(row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id))):null;
       const puzzleResult=row.app==='Puzzles'?puzzleProgress.get(id(row.id)):null;
@@ -524,7 +557,11 @@ async function loadOverview(scopeName='my',force=false){
       const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
       const ownedByMe=id(row.created_by)===teacher;
       return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(dday(row.due_at))+'</small><strong>'+esc(status)+(visiblePct===null?'':' · '+visiblePct+'%')+' ▾</strong></button>'+
-        '<div class="ua-homework-expanded" id="uaExpanded'+i+'" hidden><p>'+esc(detail)+'</p>'+(grammarResult?.student_rows?'<div class="ua-student-results">'+grammarResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.passed?'✓ Passed':'Not passed')+'</div>').join('')+'</div>':'')+(wordResult?.student_rows?'<div class="ua-student-results">'+wordResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+p.solved+' correctly answered / '+p.attempted+' attempted</div>').join('')+'</div>':'')+(writingResult?.student_rows?'<div class="ua-student-results">'+writingResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.completed?'✓ Submitted':'Not submitted')+'</div>').join('')+'</div>':'')+(puzzleResult?.student_rows?'<div class="ua-student-results">'+puzzleResult.student_rows.map(p=>'<div>'+esc(p.name)+' — '+(p.completed?'✓ Completed · '+p.stars+'★':'Not completed')+'</div>').join('')+'</div>':'')+'</div>'+
+        '<div class="ua-homework-expanded ghc-overview-expanded" id="uaExpanded'+i+'" hidden><p class="ghc-overview-detail">'+esc(detail)+'</p>'+
+        (grammarResult?.student_rows?overviewStudentProgress(grammarResult.student_rows,{kind:'grammar'}):'')+
+        (wordResult?.student_rows?overviewStudentProgress(wordResult.student_rows,{kind:'word'}):'')+
+        (writingResult?.student_rows?overviewStudentProgress(writingResult.student_rows,{kind:row.list_key==='writing_genius:sentence'?'writing-sentence':'completion'}):'')+
+        (puzzleResult?.student_rows?overviewStudentProgress(puzzleResult.student_rows,{kind:'completion'}):'')+'</div>'+
         (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
         (ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label>'+(overviewStage==='active'?'<button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button>':'')+'</div>':'')+'</article>';
      }).join('')+(visible.length?'</div></div>':'')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
