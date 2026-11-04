@@ -16,10 +16,59 @@ function sourceId(q){const base=canonicalId(q);if(!base)return'';const mode=Stri
 function duplicateKey(studentId,q){const id=sourceId(q);return studentId&&id?`${studentId}:${id}`:''}
 function recentlyFlagged(studentId,q){const key=duplicateKey(studentId,q);if(!key)return false;const row=readStore()[key];return !!row&&now()-Number(row.at||0)<DUPLICATE_MS}
 function markFlagged(studentId,q,meta={}){const key=duplicateKey(studentId,q);if(!key)return;const store=pruneStore();store[key]={at:now(),reason:meta.reason||null};writeStore(store)}
-function refreshToken(){
-  const fetcher=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
-  return fetcher(`/.netlify/functions/supabase_auth?action=refresh&_=${Date.now()}`,{credentials:'include',cache:'no-store'})
-    .then(r=>r.json().catch(()=>({}))).then(d=>{if(d?.success&&d.access_token){window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');return d.access_token}return''}).catch(()=> '');
+let refreshInFlight=null;
+async function refreshToken(){
+  if(refreshInFlight)return refreshInFlight;
+  refreshInFlight=(async()=>{
+    const fetcher=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
+    try{
+      const r=await fetcher(`/.netlify/functions/supabase_auth?action=refresh&_=${Date.now()}`,{credentials:'include',cache:'no-store'});
+      const d=await r.json().catch(()=>({}));
+      if(r.ok&&d?.success&&d.access_token){
+        window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');
+        return d.access_token;
+      }
+    }catch(e){console.warn('[question-flags] cookie refresh unavailable',e)}
+    // Match the working student tracking flow when a browser cannot send the session cookie.
+    const localRefresh=localStorage.getItem('sb_refresh_token')||'';
+    if(!localRefresh)return '';
+    try{
+      const r=await fetch(`${DB}/auth/v1/token?grant_type=refresh_token`,{
+        method:'POST',headers:{apikey:API_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({refresh_token:localRefresh}),credentials:'omit',cache:'no-store'
+      });
+      const d=await r.json().catch(()=>({}));
+      if(r.ok&&d.access_token){
+        window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');
+        return d.access_token;
+      }
+    }catch(e){console.warn('[question-flags] local refresh unavailable',e)}
+    return '';
+  })();
+  try{return await refreshInFlight}finally{refreshInFlight=null}
+}
+async function authenticatedStudent(){
+  let access=token()||await refreshToken();
+  if(!access)throw new Error('AUTH_REQUIRED');
+  for(let attempt=0;attempt<2;attempt++){
+    const response=await fetch(`${DB}/auth/v1/user`,{
+      headers:{apikey:API_KEY,Authorization:`Bearer ${access}`},credentials:'omit',cache:'no-store'
+    });
+    if(response.ok){
+      const user=await response.json();
+      if(!user?.id)throw new Error('AUTH_REQUIRED');
+      return{access,studentId:user.id};
+    }
+    if(response.status!==401||attempt)return Promise.reject(new Error('AUTH_REQUIRED'));
+    access=await refreshToken();
+    if(!access)throw new Error('AUTH_REQUIRED');
+  }
+  throw new Error('AUTH_REQUIRED');
+}
+async function refreshAndAuthenticate(){
+  const access=await refreshToken();
+  if(!access)throw new Error('AUTH_REQUIRED');
+  return authenticatedStudent();
 }
 function toast(message){
   let el=document.getElementById('willenaQuestionFlagToast');
@@ -64,12 +113,22 @@ function snapshotOf(q,renderer,c){
 async function postFlag(payload,access){return fetch(`${DB}/rest/v1/${TABLE}`,{method:'POST',headers:{apikey:API_KEY,Authorization:`Bearer ${access}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)})}
 async function send(){
   if(!active||sending)return;if(!reason){toast('이유를 하나 골라 주세요.');return}
-  const current=active,c=current.context||{},studentId=String(c.studentId||'');if(!studentId){toast('로그인이 필요합니다.');return}
-  const q=current.question||{},sid=sourceId(q)||null,payload={student_id:studentId,plan_id:c.planId||null,unit_key:c.lesson||null,practice_type:String(c.practiceType||q?.tracking?.practiceType||q?.skill||'unknown'),source_type:sourceType(q,c),source_id:sid,reason,note:document.getElementById('wqfNote')?.value.trim()||null,snapshot:snapshotOf(q,current.renderer,c),status:'open'};
+  const current=active,c=current.context||{},q=current.question||{},sid=sourceId(q)||null;
   setBusy(true);try{
-    let access=token();if(!access)access=await refreshToken();if(!access)throw new Error('로그인이 필요합니다.');let r=await postFlag(payload,access);if(r.status===401){access=await refreshToken();if(access)r=await postFlag(payload,access)}if(!r.ok)throw new Error(await r.text());
+    // The renderer's student state can be temporarily empty even while the student is signed in.
+    // Use the verified auth user ID for RLS instead of treating missing UI state as logout.
+    let {access,studentId}=await authenticatedStudent();
+    const payload={student_id:studentId,plan_id:c.planId||null,unit_key:c.lesson||null,practice_type:String(c.practiceType||q?.tracking?.practiceType||q?.skill||'unknown'),source_type:sourceType(q,c),source_id:sid,reason,note:document.getElementById('wqfNote')?.value.trim()||null,snapshot:snapshotOf(q,current.renderer,c),status:'open'};
+    if(recentlyFlagged(studentId,q)){sending=false;setBusy(false);toast('이 문제는 이미 신고했어요.');return}
+    let r=await postFlag(payload,access);
+    if(r.status===401){
+      ({access,studentId}=await refreshAndAuthenticate());
+      payload.student_id=studentId;
+      r=await postFlag(payload,access);
+    }
+    if(!r.ok)throw new Error(await r.text());
     markFlagged(studentId,q,{reason});const btn=current.host?.querySelector?.('[data-question-flag]');if(btn){btn.classList.add('flagged');btn.setAttribute('aria-label','신고 완료');btn.title='신고 완료'}sending=false;document.getElementById('willenaQuestionFlagOverlay')?.classList.remove('open');active=null;reason='';toast('신고했습니다. 고마워요!');
-  }catch(e){console.error('[question-flags] save failed',e);sending=false;setBusy(false);toast('신고 저장에 실패했습니다.')}
+  }catch(e){console.error('[question-flags] save failed',e);sending=false;setBusy(false);toast(e?.message==='AUTH_REQUIRED'?'로그인이 필요합니다. 다시 로그인해 주세요.':'신고 저장에 실패했습니다.')}
 }
 function mount(detail){
   const host=detail?.host,q=detail?.question;if(!host||!q||!host.isConnected)return;ensureUi();host.classList.add('wqf-host');host.querySelector('[data-question-flag]')?.remove();const c=getContext?.()||{},studentId=String(c.studentId||'');const b=document.createElement('button');b.type='button';b.className='wqf-button';b.dataset.questionFlag='1';b.dataset.questionUtility='1';b.textContent='⚑';b.title='문제 신고';b.setAttribute('aria-label','문제 신고');if(recentlyFlagged(studentId,q)){b.classList.add('flagged');b.title='신고 완료';b.setAttribute('aria-label','신고 완료')}b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();open(detail)};host.appendChild(b);
