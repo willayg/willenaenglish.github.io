@@ -251,6 +251,9 @@ function prepareRound(questions,mode){
 }
 function markedSentence(q){
  const markers=['①','②','③','④'];
+ // The four underlined spans already follow the original sentence order.
+ // Avoid indexOf collisions when a short expression repeats elsewhere.
+ if(q.sentence===q.options.join(' '))return q.options.map((part,i)=>markers[i]+' '+part).join(' ');
  const tokens=q.options.map((part,i)=>({part,marker:markers[i],at:q.sentence.indexOf(part)})).sort((a,b)=>a.at-b.at);
  let out='',cursor=0;
  for(const token of tokens){
