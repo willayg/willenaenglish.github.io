@@ -21,7 +21,7 @@ let accountChanged=false, verifiedId="";
  let newTab=false;
  try {
   newTab=window.name!==TAB_MARK;
-  if(!window.name || window.name===TAB_MARK) window.name=TAB_MARK;
+  window.name=TAB_MARK;
  } catch { newTab=true; }
 try{verifiedId=sessionStorage.getItem(VERIFIED_KEY)||"";}catch{}
 const SIGNIN="/students/signin.html";
