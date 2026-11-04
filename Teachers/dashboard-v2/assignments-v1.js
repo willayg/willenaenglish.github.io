@@ -179,7 +179,7 @@
     const list=$('#assignmentList');
     if(!list)return;
     const selected=state.historySelected;
-    const inputs=$('[data-history-select]',list);
+    const inputs=$$('[data-history-select]',list);
     const all=$('#assignmentHistorySelectAll',list);
     const restore=$('#assignmentRestoreSelected',list);
     const sync=()=>{
@@ -239,7 +239,7 @@
     state.restoring=false;
     state.loaded=false;
     state.filter=success?'current':'history';
-    $('[data-assignment-status]').forEach(btn=>btn.classList.toggle('active',btn.dataset.assignmentStatus===state.filter));
+    $$('[data-assignment-status]').forEach(btn=>btn.classList.toggle('active',btn.dataset.assignmentStatus===state.filter));
     await loadAssignments(true);
     if(errors.length)alert(success+' restored, '+errors.length+' failed. '+errors.slice(0,3).join(' | '));
   }
