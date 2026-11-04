@@ -55,30 +55,30 @@
               },
               {
                 "id": "buzz6-u1-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have never ridden the subway alone.\n② I has never ridden the subway alone.\n③ Have you ever visited the history museum?\n④ I has never ridden the subway alone.",
                 "options": [
-                  "I has never ridden the subway alone.",
-                  "We have known this bus driver since 2021.",
-                  "Has you ever visited the history museum?",
-                  "We have known this bus driver for 2021.",
-                  "He has never went to the city aquarium."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "시작 시점에는 since를 씁니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "buzz6-u1-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She has lived in this city since five years.\n② She has lived in this city for five years.\n③ I has never ridden the subway alone.\n④ We have known this bus driver since 2021.",
                 "options": [
-                  "I has never ridden the subway alone.",
-                  "She has lived in this city since five years.",
-                  "Has you ever visited the history museum?",
-                  "He has never been to the city aquarium.",
-                  "He has never went to the city aquarium."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "have/has 뒤에는 과거분사 been을 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -273,30 +273,30 @@
               },
               {
                 "id": "buzz6-u2-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Look at those dark clouds! It is going to rain.\n② Look at those dark clouds! It going to rain.\n③ We are going to visit the park on Saturday.\n④ Look at those dark clouds! It going to rain.",
                 "options": [
-                  "Look at those dark clouds! It going to rain.",
-                  "Will you bring a jacket tomorrow?",
-                  "We going to visit the park on Saturday.",
-                  "Do you will bring a jacket tomorrow?",
-                  "She does not going to go skiing this winter."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "will 의문문 앞에 do를 쓰지 않습니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "buzz6-u2-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I think it will sunny tomorrow.\n② I think it will be sunny tomorrow.\n③ Look at those dark clouds! It going to rain.\n④ Will you bring a jacket tomorrow?",
                 "options": [
-                  "Look at those dark clouds! It going to rain.",
-                  "I think it will sunny tomorrow.",
-                  "We going to visit the park on Saturday.",
-                  "She is not going to go skiing this winter.",
-                  "She does not going to go skiing this winter."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "be going to의 부정은 be not going to입니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -491,30 +491,30 @@
               },
               {
                 "id": "buzz6-u3-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We have already cleaned the riverbank.\n② We have already clean the riverbank.\n③ They have just planted ten new trees.\n④ We have already clean the riverbank.",
                 "options": [
-                  "We have already clean the riverbank.",
-                  "I haven't turned off the lights yet.",
-                  "They has just planted ten new trees.",
-                  "I haven't turned off the lights already.",
-                  "The volunteers have just arrive at the park."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "부정문의 아직은 yet가 자연스럽습니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "buzz6-u3-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Has she finished recycling the bottles already yet?\n② Has she finished recycling the bottles yet?\n③ We have already clean the riverbank.\n④ I haven't turned off the lights yet.",
                 "options": [
-                  "We have already clean the riverbank.",
-                  "Has she finished recycling the bottles already yet?",
-                  "They has just planted ten new trees.",
-                  "The volunteers have just arrived at the park.",
-                  "The volunteers have just arrive at the park."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "have just 뒤에는 과거분사 arrived를 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -709,30 +709,30 @@
               },
               {
                 "id": "buzz6-u4-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I was watching the play when the lights went out.\n② I were watching the play when the lights went out.\n③ She dropped her ticket while she was running.\n④ I were watching the play when the lights went out.",
                 "options": [
-                  "I were watching the play when the lights went out.",
-                  "The audience was clapping when the curtain opened.",
-                  "She dropped her ticket while she is running.",
-                  "The audience was clap when the curtain opened.",
-                  "What did you doing when the show started?"
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "was 뒤에는 동사-ing를 사용합니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "buzz6-u4-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① While we was waiting, the actor arrived.\n② While we were waiting, the actor arrived.\n③ I were watching the play when the lights went out.\n④ The audience was clapping when the curtain opened.",
                 "options": [
-                  "I were watching the play when the lights went out.",
-                  "While we was waiting, the actor arrived.",
-                  "She dropped her ticket while she is running.",
-                  "What were you doing when the show started?",
-                  "What did you doing when the show started?"
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "과거진행 의문문은 were you doing입니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -927,30 +927,30 @@
               },
               {
                 "id": "buzz6-u5-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Rice is grown in many Asian countries.\n② Rice is grow in many Asian countries.\n③ Coffee is served hot at this café.\n④ Rice is grow in many Asian countries.",
                 "options": [
-                  "Rice is grow in many Asian countries.",
-                  "The cakes are baked every morning.",
-                  "Coffee is serve hot at this café.",
-                  "The cakes are bake every morning.",
-                  "Does chocolate produced in this factory?"
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "수동태는 are baked입니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "buzz6-u5-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① These noodles is made from wheat.\n② These noodles are made from wheat.\n③ Rice is grow in many Asian countries.\n④ The cakes are baked every morning.",
                 "options": [
-                  "Rice is grow in many Asian countries.",
-                  "These noodles is made from wheat.",
-                  "Coffee is serve hot at this café.",
-                  "Is chocolate produced in this factory?",
-                  "Does chocolate produced in this factory?"
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "수동태 의문문은 Is chocolate produced...?입니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -1145,30 +1145,30 @@
               },
               {
                 "id": "buzz6-u6-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If you heat ice, it melts.\n② If you heat ice, it will melts.\n③ When I press this button, the screen turns on.\n④ If you heat ice, it will melts.",
                 "options": [
-                  "If you heat ice, it will melts.",
-                  "If you don't charge the phone, it runs out of power.",
-                  "When I press this button, the screen turn on.",
-                  "If you doesn't charge the phone, it runs out of power.",
-                  "If water reaches zero degrees, it freeze."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "you의 부정문은 don't입니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "buzz6-u6-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If the signal is weak, the video stop.\n② If the signal is weak, the video stops.\n③ If you heat ice, it will melts.\n④ If you don't charge the phone, it runs out of power.",
                 "options": [
-                  "If you heat ice, it will melts.",
-                  "If the signal is weak, the video stop.",
-                  "When I press this button, the screen turn on.",
-                  "If water reaches zero degrees, it freezes.",
-                  "If water reaches zero degrees, it freeze."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "3인칭 단수 주어에는 freezes를 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -1363,30 +1363,30 @@
               },
               {
                 "id": "buzz6-u7-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If it rains, we will stay indoors.\n② If it will rain, we will stay indoors.\n③ If she sees a deer, she will take a photo.\n④ If it will rain, we will stay indoors.",
                 "options": [
-                  "If it will rain, we will stay indoors.",
-                  "If you leave early, you won't miss the bus.",
-                  "If she see a deer, she will take a photo.",
-                  "If you leave early, you don't will miss the bus.",
-                  "Will you call me if you will find the map?"
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "미래의 부정은 won't + 동사원형입니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "buzz6-u7-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We will go hiking if the weather will be nice.\n② We will go hiking if the weather is nice.\n③ If it will rain, we will stay indoors.\n④ If you leave early, you won't miss the bus.",
                 "options": [
-                  "If it will rain, we will stay indoors.",
-                  "We will go hiking if the weather will be nice.",
-                  "If she see a deer, she will take a photo.",
-                  "Will you call me if you find the map?",
-                  "Will you call me if you will find the map?"
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "if절에는 find를 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -1581,30 +1581,30 @@
               },
               {
                 "id": "buzz6-u8-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The planet that we saw was very bright.\n② The planet who we saw was very bright.\n③ That light might be a distant star.\n④ The planet who we saw was very bright.",
                 "options": [
-                  "The planet who we saw was very bright.",
-                  "The spaceship must be very expensive.",
-                  "That light might is a distant star.",
-                  "The spaceship must to be very expensive.",
-                  "This is the telescope who my uncle bought."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "must 뒤에 to를 넣지 않습니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "buzz6-u8-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The astronaut which spoke to us was friendly.\n② The astronaut who spoke to us was friendly.\n③ The planet who we saw was very bright.\n④ The spaceship must be very expensive.",
                 "options": [
-                  "The planet who we saw was very bright.",
-                  "The astronaut which spoke to us was friendly.",
-                  "That light might is a distant star.",
-                  "This is the telescope that my uncle bought.",
-                  "This is the telescope who my uncle bought."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "사물 선행사 telescope에는 that/which입니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -1806,30 +1806,30 @@
               },
               {
                 "id": "eu5-u1-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I could swim when I was six.\n② I could swam when I was six.\n③ Could you see the ocean from your room?\n④ I could swam when I was six.",
                 "options": [
-                  "I could swam when I was six.",
-                  "We were excited about our vacation.",
-                  "Did you could see the ocean from your room?",
-                  "We was excited about our vacation.",
-                  "They have visited the beach last weekend."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "we에는 were를 사용합니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u1-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She couldn't rode a bike last summer.\n② She couldn't ride a bike last summer.\n③ I could swam when I was six.\n④ We were excited about our vacation.",
                 "options": [
-                  "I could swam when I was six.",
-                  "She couldn't rode a bike last summer.",
-                  "Did you could see the ocean from your room?",
-                  "They visited the beach last weekend.",
-                  "They have visited the beach last weekend."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "last weekend는 단순과거를 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -2024,30 +2024,30 @@
               },
               {
                 "id": "eu5-u2-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We were cooking when it started to rain.\n② We was cooking when it started to rain.\n③ This tent is bigger than that one.\n④ We was cooking when it started to rain.",
                 "options": [
-                  "We was cooking when it started to rain.",
-                  "The river was colder than the lake.",
-                  "This tent is more bigger than that one.",
-                  "The river was coldest than the lake.",
-                  "What did you doing at eight last night?"
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "than 앞에는 비교급 colder를 씁니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u2-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She were sleeping while we were talking.\n② She was sleeping while we were talking.\n③ We was cooking when it started to rain.\n④ The river was colder than the lake.",
                 "options": [
-                  "We was cooking when it started to rain.",
-                  "She were sleeping while we were talking.",
-                  "This tent is more bigger than that one.",
-                  "What were you doing at eight last night?",
-                  "What did you doing at eight last night?"
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "과거진행 의문문은 were you doing입니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -2242,30 +2242,30 @@
               },
               {
                 "id": "eu5-u3-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We are going to decorate the classroom.\n② We is going to decorate the classroom.\n③ She is going to invite her classmates.\n④ We is going to decorate the classroom.",
                 "options": [
-                  "We is going to decorate the classroom.",
-                  "Let's make some sandwiches together.",
-                  "She going to invite her classmates.",
-                  "Let's making some sandwiches together.",
-                  "Would you like join our party?"
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "Let's 뒤에는 동사원형을 씁니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u3-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Could you bringing some juice to the party?\n② Could you bring some juice to the party?\n③ We is going to decorate the classroom.\n④ Let's make some sandwiches together.",
                 "options": [
-                  "We is going to decorate the classroom.",
-                  "Could you bringing some juice to the party?",
-                  "She going to invite her classmates.",
-                  "Would you like to join our party?",
-                  "Would you like join our party?"
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "would like 뒤에는 to부정사를 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -2460,30 +2460,30 @@
               },
               {
                 "id": "eu5-u4-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① A jaguar is faster than a sloth.\n② A jaguar is fastest than a sloth.\n③ The Amazon is one of the largest rainforests.\n④ A jaguar is fastest than a sloth.",
                 "options": [
-                  "A jaguar is fastest than a sloth.",
-                  "Monkeys can climb trees very quickly.",
-                  "The Amazon is one of the larger rainforests.",
-                  "Monkeys can climbs trees very quickly.",
-                  "This bird is as brighter as that one."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "can 뒤에는 동사원형 climb을 씁니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u4-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① This frog is colorfuller than that one.\n② This frog is more colorful than that one.\n③ A jaguar is fastest than a sloth.\n④ Monkeys can climb trees very quickly.",
                 "options": [
-                  "A jaguar is fastest than a sloth.",
-                  "This frog is colorfuller than that one.",
-                  "The Amazon is one of the larger rainforests.",
-                  "This bird is as bright as that one.",
-                  "This bird is as brighter as that one."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "as ... as 사이에는 원급 bright를 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -2678,30 +2678,30 @@
               },
               {
                 "id": "eu5-u5-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She practices the piano carefully.\n② She practices the piano careful.\n③ They usually arrive at school early.\n④ She practices the piano careful.",
                 "options": [
-                  "She practices the piano careful.",
-                  "My brother runs faster than I do.",
-                  "They usually arrives at school early.",
-                  "My brother runs more faster than I do.",
-                  "You should sleeps well before the exam."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "faster 앞에 more를 쓰지 않습니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u5-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① He drinks always water after exercise.\n② He always drinks water after exercise.\n③ She practices the piano careful.\n④ My brother runs faster than I do.",
                 "options": [
-                  "She practices the piano careful.",
-                  "He drinks always water after exercise.",
-                  "They usually arrives at school early.",
-                  "You should sleep well before the exam.",
-                  "You should sleeps well before the exam."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "should 뒤에는 동사원형 sleep을 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -2896,30 +2896,30 @@
               },
               {
                 "id": "eu5-u6-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We need a little water for the clay.\n② We need a few water for the clay.\n③ How much glue do we need?\n④ We need a few water for the clay.",
                 "options": [
-                  "We need a few water for the clay.",
-                  "First, cut the paper into four pieces.",
-                  "How many glue do we need?",
-                  "First, cutting the paper into four pieces.",
-                  "Please putting some paint on the brush."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "명령문은 동사원형으로 시작합니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u6-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① There is many pieces of wood here.\n② There are many pieces of wood here.\n③ We need a few water for the clay.\n④ First, cut the paper into four pieces.",
                 "options": [
-                  "We need a few water for the clay.",
-                  "There is many pieces of wood here.",
-                  "How many glue do we need?",
-                  "Please put some paint on the brush.",
-                  "Please putting some paint on the brush."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "please 뒤 명령문에는 동사원형을 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -3114,30 +3114,30 @@
               },
               {
                 "id": "eu5-u7-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Have you ever visited Australia?\n② Has you ever visited Australia?\n③ She went to Thailand last summer.\n④ Has you ever visited Australia?",
                 "options": [
-                  "Has you ever visited Australia?",
-                  "We have been to several countries.",
-                  "She has gone to Thailand last summer.",
-                  "We has been to several countries.",
-                  "He has already pack his suitcase."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "we에는 have를 씁니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u7-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have never flew on a plane.\n② I have never flown on a plane.\n③ Has you ever visited Australia?\n④ We have been to several countries.",
                 "options": [
-                  "Has you ever visited Australia?",
-                  "I have never flew on a plane.",
-                  "She has gone to Thailand last summer.",
-                  "He has already packed his suitcase.",
-                  "He has already pack his suitcase."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "has 뒤에는 packed가 옵니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -3332,30 +3332,30 @@
               },
               {
                 "id": "eu5-u8-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have just sent you an email.\n② I have just send you an email.\n③ They have already downloaded the file.\n④ I have just send you an email.",
                 "options": [
-                  "I have just send you an email.",
-                  "I haven't changed my password yet.",
-                  "They has already downloaded the file.",
-                  "I haven't changed my password already.",
-                  "He has never share his password online."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "부정문에서 아직은 yet입니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u8-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Have she finished her online project yet?\n② Has she finished her online project yet?\n③ I have just send you an email.\n④ I haven't changed my password yet.",
                 "options": [
-                  "I have just send you an email.",
-                  "Have she finished her online project yet?",
-                  "They has already downloaded the file.",
-                  "He has never shared his password online.",
-                  "He has never share his password online."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "has 뒤에는 shared를 사용합니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -3557,30 +3557,30 @@
               },
               {
                 "id": "eu6-u1-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If we leave now, we will catch the bus.\n② If we will leave now, we will catch the bus.\n③ How long have you lived in this city?\n④ If we will leave now, we will catch the bus.",
                 "options": [
-                  "If we will leave now, we will catch the bus.",
-                  "The bus was late because of the traffic.",
-                  "How long has you lived in this city?",
-                  "The bus were late because of the traffic.",
-                  "She has never rode a cable car."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "단수 bus에는 was를 씁니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u1-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① You should to take the subway to the station.\n② You should take the subway to the station.\n③ If we will leave now, we will catch the bus.\n④ The bus was late because of the traffic.",
                 "options": [
-                  "If we will leave now, we will catch the bus.",
-                  "You should to take the subway to the station.",
-                  "How long has you lived in this city?",
-                  "She has never ridden a cable car.",
-                  "She has never rode a cable car."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "과거분사 ridden을 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -3775,30 +3775,30 @@
               },
               {
                 "id": "eu6-u2-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① You should help people who need assistance.\n② You should helps people who need assistance.\n③ The volunteer who helped us was kind.\n④ You should helps people who need assistance.",
                 "options": [
-                  "You should helps people who need assistance.",
-                  "If you see an accident, call an adult.",
-                  "The volunteer which helped us was kind.",
-                  "If you will see an accident, call an adult.",
-                  "She has already donate her old books."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "조건절에는 현재형을 씁니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u2-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We mustn't throwing litter in the park.\n② We mustn't throw litter in the park.\n③ You should helps people who need assistance.\n④ If you see an accident, call an adult.",
                 "options": [
-                  "You should helps people who need assistance.",
-                  "We mustn't throwing litter in the park.",
-                  "The volunteer which helped us was kind.",
-                  "She has already donated her old books.",
-                  "She has already donate her old books."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "has 뒤에는 과거분사를 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -3993,30 +3993,30 @@
               },
               {
                 "id": "eu6-u3-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The robot is controlled by a computer.\n② The robot is control by a computer.\n③ You can turn off the device here.\n④ The robot is control by a computer.",
                 "options": [
-                  "The robot is control by a computer.",
-                  "If the battery dies, the screen turns off.",
-                  "You can to turn off the device here.",
-                  "If the battery die, the screen turns off.",
-                  "This machine has already being tested."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "battery는 단수로 dies를 씁니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u3-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① These apps is used by many students.\n② These apps are used by many students.\n③ The robot is control by a computer.\n④ If the battery dies, the screen turns off.",
                 "options": [
-                  "The robot is control by a computer.",
-                  "These apps is used by many students.",
-                  "You can to turn off the device here.",
-                  "This machine has already been tested.",
-                  "This machine has already being tested."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "현재완료 수동태는 has been + p.p.입니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4211,30 +4211,30 @@
               },
               {
                 "id": "eu6-u4-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① This is the house where I grew up.\n② This is the house who I grew up.\n③ I have lived here since 2022.\n④ This is the house who I grew up.",
                 "options": [
-                  "This is the house who I grew up.",
-                  "My brother is used to getting up early.",
-                  "I have lived here for 2022.",
-                  "My brother is used to get up early.",
-                  "If I will finish my chores, I will watch TV."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "be used to 뒤에는 동명사입니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u4-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She usually go to bed before ten.\n② She usually goes to bed before ten.\n③ This is the house who I grew up.\n④ My brother is used to getting up early.",
                 "options": [
-                  "This is the house who I grew up.",
-                  "She usually go to bed before ten.",
-                  "I have lived here for 2022.",
-                  "If I finish my chores, I will watch TV.",
-                  "If I will finish my chores, I will watch TV."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "if절은 현재형을 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4429,30 +4429,30 @@
               },
               {
                 "id": "eu6-u5-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The library is across from the bank.\n② The library are across from the bank.\n③ Walk straight until you reach the corner.\n④ The library are across from the bank.",
                 "options": [
-                  "The library are across from the bank.",
-                  "The café that opened yesterday is popular.",
-                  "Walking straight until you reach the corner.",
-                  "The café who opened yesterday is popular.",
-                  "If you will turn left, you will see the museum."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "사물에는 that/which입니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u5-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Could you tell me where is the station?\n② Could you tell me where the station is?\n③ The library are across from the bank.\n④ The café that opened yesterday is popular.",
                 "options": [
-                  "The library are across from the bank.",
-                  "Could you tell me where is the station?",
-                  "Walking straight until you reach the corner.",
-                  "If you turn left, you will see the museum.",
-                  "If you will turn left, you will see the museum."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "if절에는 현재형을 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4647,30 +4647,30 @@
               },
               {
                 "id": "eu6-u6-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Plastic bottles are recycled in this city.\n② Plastic bottles is recycled in this city.\n③ If the ice melts, sea levels rise.\n④ Plastic bottles is recycled in this city.",
                 "options": [
-                  "Plastic bottles is recycled in this city.",
-                  "The forest has been protected for years.",
-                  "If the ice melt, sea levels rise.",
-                  "The forest has protected for years.",
-                  "We haven't cleaned the beach already."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "보호되어 왔다: has been protected입니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u6-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We should to use less plastic every day.\n② We should use less plastic every day.\n③ Plastic bottles is recycled in this city.\n④ The forest has been protected for years.",
                 "options": [
-                  "Plastic bottles is recycled in this city.",
-                  "We should to use less plastic every day.",
-                  "If the ice melt, sea levels rise.",
-                  "We haven't cleaned the beach yet.",
-                  "We haven't cleaned the beach already."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "부정문의 yet를 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4865,30 +4865,30 @@
               },
               {
                 "id": "eu6-u7-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① This phone is cheaper than that one.\n② This phone is cheapest than that one.\n③ This is the best deal in the store.\n④ This phone is cheapest than that one.",
                 "options": [
-                  "This phone is cheapest than that one.",
-                  "You should read the details carefully.",
-                  "This is the better deal in the store.",
-                  "You should read the details careful.",
-                  "These shoes is made from recycled materials."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "read를 꾸미는 부사 carefully입니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u7-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Our product works more efficient.\n② Our product works more efficiently.\n③ This phone is cheapest than that one.\n④ You should read the details carefully.",
                 "options": [
-                  "This phone is cheapest than that one.",
-                  "Our product works more efficient.",
-                  "This is the better deal in the store.",
-                  "These shoes are made from recycled materials.",
-                  "These shoes is made from recycled materials."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "복수 shoes에는 are를 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -5083,30 +5083,30 @@
               },
               {
                 "id": "eu6-u8-choose-4",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She said that she was busy.\n② She said that she is busy yesterday.\n③ He asked me to send him a message.\n④ She said that she is busy yesterday.",
                 "options": [
-                  "She said that she is busy yesterday.",
-                  "If you call me, I will answer.",
-                  "He asked me send him a message.",
-                  "If you will call me, I will answer.",
-                  "They has already replied to the email."
+                  "①, ②",
+                  "①, ③",
+                  "②, ④",
+                  "③, ④",
+                  "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "조건절에는 현재형을 씁니다.",
+                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u8-choose-5",
-                "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Could you tell me what time is it?\n② Could you tell me what time it is?\n③ She said that she is busy yesterday.\n④ If you call me, I will answer.",
                 "options": [
-                  "She said that she is busy yesterday.",
-                  "Could you tell me what time is it?",
-                  "He asked me send him a message.",
-                  "They have already replied to the email.",
-                  "They has already replied to the email."
+                  "②, ④",
+                  "③, ④",
+                  "①, ③",
+                  "①, ④",
+                  "①, ②"
                 ],
-                "answerIndex": 3,
-                "explanation": "they에는 have를 씁니다.",
+                "answerIndex": 0,
+                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
                 "displayStyle": "sentence-options"
               }
             ],
