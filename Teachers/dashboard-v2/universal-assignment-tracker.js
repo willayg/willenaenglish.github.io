@@ -15,6 +15,7 @@ assignmentCardStyle.href='/Teachers/dashboard-v2/genius-homework-card.css';
 document.head.appendChild(assignmentCardStyle);
 assignmentDateStyle.textContent += '.ua-overview-genius-card{width:100%;margin:0;min-height:210px;overflow:hidden;position:relative;border:2.5px solid #e7a2c5;border-radius:17px;padding:17px 95px 17px 20px;background:#fff;box-sizing:border-box}.ua-overview-heading{display:flex;align-items:center;gap:10px;min-height:30px}.ua-overview-heading>.ghc-class{flex:1;min-width:0}.ua-overview-genius-card .ghc-task{margin-top:10px}.ua-overview-genius-card .ghc-teacher{margin-bottom:23px}.ua-overview-genius-card .ghc-ring{top:65px}.ua-overview-genius-card>.ghc-details{margin-right:-75px}.ua-overview-progress-toggle{font:inherit;font-size:14px;font-weight:750;color:#277e85;border:0;background:transparent;cursor:pointer;display:flex;justify-content:space-between;width:100%;padding:12px 0 0;text-align:left}.ua-overview-genius-card .ua-group-body{padding:14px 0 0;margin-right:-75px}.ua-overview-genius-card .ua-group-select{padding:0;flex:none}.ua-overview-genius-card .ghc-day{margin-left:auto}.ua-overview-genius-card .ua-homework-card{width:100%}@media(max-width:600px){.ua-overview-genius-card{padding:14px 82px 14px 15px;min-height:200px}.ua-overview-genius-card .ghc-ring{top:65px}.ua-overview-genius-card>.ghc-details,.ua-overview-genius-card .ua-group-body{margin-right:-67px}}';
 assignmentDateStyle.textContent += '.ua-toolbar .ua-bulk-icon{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;width:56px;height:46px;min-width:56px;min-height:46px;padding:7px;border-radius:12px;background:#fff;line-height:1;border:1.5px solid #a9d7dc;color:#26868f;cursor:pointer}.ua-toolbar .ua-bulk-delete{border-color:#e2b4c7;color:#b25b74}.ua-toolbar .ua-bulk-icon svg{flex:none}.ua-toolbar .ua-bulk-count{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}.ua-toolbar .ua-bulk-icon:disabled{opacity:.4;cursor:not-allowed}.ua-toolbar .ua-bulk-icon:focus-visible{outline:3px solid #2899a5;outline-offset:2px}';
+assignmentDateStyle.textContent += '.ua-overview-filters{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0 12px}.ua-overview-filters label{display:flex;flex:1 1 200px;min-width:0;flex-direction:column;gap:5px;font-size:12px;font-weight:750;color:#54737d}.ua-overview-filters select{width:100%;max-width:100%;background:#fff;box-sizing:border-box;min-height:42px}\n';
 document.head.appendChild(assignmentDateStyle);
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -170,6 +171,7 @@ function render(){
 }
 let overviewStage='active';
 const overviewSelections=new Set();
+const overviewFilters={my:{className:'',assignment:''},all:{className:'',assignment:''}};
 const homeworkKey=row=>row._table+':'+row.id;
 async function changeHomework(row){
  const table=row._table;
@@ -433,7 +435,16 @@ async function loadOverview(scopeName='my',force=false){
    const owned=rows.filter(r=>scopeName==='all'||id(r.created_by)===teacher);
    const active=owned.filter(r=>!finished(r));
    const complete=owned.filter(finished);
-   const visible=(overviewStage==='complete'?complete:active)
+   const stageRows=overviewStage==='complete'?complete:active;
+   const filter=overviewFilters[scopeName]||overviewFilters.my;
+   const rowClass=row=>String(row._overviewClass||row.class||row.class_name||students.get(id(row.student_id))?.class||'').trim();
+   const classOptions=[...new Set(stageRows.map(rowClass).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+   if(filter.className&&!classOptions.includes(filter.className))filter.className='';
+   const byClass=stageRows.filter(row=>!filter.className||rowClass(row)===filter.className);
+   const nameOf=row=>String(row.app||'Homework')+' · '+String(row.label||'Assignment');
+   const assignmentOptions=[...new Set(byClass.map(nameOf))].sort((a,b)=>a.localeCompare(b));
+   if(filter.assignment&&!assignmentOptions.includes(filter.assignment))filter.assignment='';
+   const visible=byClass.filter(row=>!filter.assignment||nameOf(row)===filter.assignment)
     .sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
    // Group per-student homework by student and class-wide homework by class.
    // Only include verified question progress in aggregate percentages.
@@ -479,6 +490,8 @@ async function loadOverview(scopeName='my',force=false){
    const selectable=visible.filter(r=>id(r.created_by)===teacher);
    const checked=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
    host.innerHTML='<div class="ua-scope-tabs" role="tablist" aria-label="Homework status"><button type="button" class="'+(overviewStage==='active'?'active':'')+'" data-ua-stage="active">Active ('+active.length+')</button><button type="button" class="'+(overviewStage==='complete'?'active':'')+'" data-ua-stage="complete">Complete ('+complete.length+')</button></div>'+
+     '<div class="ua-overview-filters"><label>Class<select class="control" id="uaOverviewClassFilter" aria-label="Filter homework by class"><option value="">All classes</option>'+classOptions.map(name=>'<option value="'+esc(name)+'"'+(filter.className===name?' selected':'')+'>'+esc(name)+'</option>').join('')+'</select></label>'+
+     '<label>Assignment<select class="control" id="uaOverviewAssignmentFilter" aria-label="Filter homework by assignment"><option value="">All assignments</option>'+assignmentOptions.map(name=>'<option value="'+esc(name)+'"'+(filter.assignment===name?' selected':'')+'>'+esc(name)+'</option>').join('')+'</select></label></div>'+
      '<div class="ua-toolbar"><strong>'+(scopeName==='my'?'My homework':'All teachers’ homework')+'</strong>'+
      '<label class="ua-bulk-select"><input type="checkbox" id="uaSelectAll" '+(selectable.length&&checked===selectable.length?'checked':'')+' '+(!selectable.length?'disabled':'')+'> Select all</label>'+
       (overviewStage==='active'?'<button type="button" class="control ua-bulk-icon ua-bulk-complete" id="uaCompleteSelected" title="Complete selected" aria-label="Complete '+checked+' selected assignments" '+(!checked?'disabled':'')+'>'+window.WillenaHomeworkSelection.icons.complete+'<span class="ua-bulk-count">'+checked+'</span></button>':'')+
@@ -517,6 +530,8 @@ async function loadOverview(scopeName='my',force=false){
      }).join('')+(visible.length?'</div></div>':'')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
      '<p class="ua-note">Past-due homework appears in Complete automatically. ✓ closes one assignment; check boxes and Complete selected close several. Student attempts and results remain preserved.</p>';
    attachHomeworkGroupToggles(host);
+   host.querySelector('#uaOverviewClassFilter').onchange=event=>{filter.className=event.target.value;filter.assignment='';overviewSelections.clear();renderOverview()};
+   host.querySelector('#uaOverviewAssignmentFilter').onchange=event=>{filter.assignment=event.target.value;overviewSelections.clear();renderOverview()};
    host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName,true);
    host.querySelectorAll('[data-ua-stage]').forEach(button=>button.onclick=()=>{overviewStage=button.dataset.uaStage;overviewSelections.clear();renderOverview()});
    host.querySelectorAll('[data-ua-detail]').forEach(button=>button.onclick=()=>{
