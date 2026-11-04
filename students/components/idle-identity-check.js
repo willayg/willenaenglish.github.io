@@ -125,7 +125,7 @@ async function ask(){
  try{
   const person=await profile();
   if(!person){
-   // No authenticated student: login pages handle sign-in. Do not clear a pending check on transient failures.
+   // Unauthenticated pages have their normal login guard; leave an account-change check pending.
    if(!accountChanged)pendingCheck=false;
    return;
   }
@@ -137,7 +137,7 @@ async function ask(){
   ui.sub.textContent=person.className?person.className+" · 본인이 맞나요?":"본인이 맞나요?";
   ui.yes.disabled=false;ui.no.disabled=false;ui.no.textContent="No, log out · 아니요, 로그아웃";
   ui.root.hidden=false;prompting=true;ui.yes.focus();
- }catch(e){console.warn("[Idle Identity] check unavailable",e);pendingCheck=false;record();}
+ }catch(e){console.warn("[Idle Identity] check unavailable",e);pendingCheck=true;}
  finally{busy=false;}
 }
 function onInteraction(e){
@@ -178,6 +178,19 @@ function onAccountEvent(e){
 }
 window.addEventListener("storage",onAccountEvent);
 window.addEventListener("auth:changed",onAccountEvent);
+// Check the server identity after every document navigation, even if a suspended tab missed a storage event.
+async function verifyNavigationIdentity(){
+ if(openedNewTab||accountChanged||!verifiedId)return;
+ try{
+  const person=await profile();
+  if(person?.id&&person.id!==verifiedId){
+   accountChanged=true;pendingCheck=true;
+   if(!document.hidden)ask();
+  }
+ }catch(error){console.debug("[Idle Identity] navigation check pending",error);}
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",verifyNavigationIdentity,{once:true});
+else verifyNavigationIdentity();
 window.addEventListener("focus",()=>{
   try{
    const current=localStorage.getItem(ACCOUNT_EVENT)||"";
