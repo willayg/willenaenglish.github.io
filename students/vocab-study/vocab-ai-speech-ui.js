@@ -170,7 +170,7 @@ export function attachAISpeakingFallback({host,target,isCurrent,onAccepted,match
       // Only usable AI transcriptions consume a check.
       remaining-=1;
       const assessment=match(target,[transcript]);
-      if(assessment.correct&&['exact','spacing','homophone'].includes(assessment.matchedBy)){
+      if(assessment.correct&&['exact','spacing','homophone','in_sentence','in_sentence_homophone'].includes(assessment.matchedBy)){
         if(status)status.textContent='잘했어요! ✅';
         dispose();
         onAccepted(transcript);
