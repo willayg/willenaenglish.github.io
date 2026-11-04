@@ -215,21 +215,30 @@ async function fetchRecords(){
 function progressFor(a){
  const data=store.progress.get(String(a.id));
  const rows=Array.isArray(data?.student_rows)?data.student_rows.map(st=>({
-  student:{name:st.name||'Student'},modesCompleted:Array.from({length:Number(st.done)||0}),
-  total:Number(st.total)||0
+  student:{name:st.name||'Student'},
+  done:Math.max(0,Number(st.done)||0),
+  total:Math.max(0,Number(st.total)||0)
  })):[];
  const total=Number(data?.students)||0,done=Number(data?.passed)||0;
- const pct=total?Math.round(Number(data?.percent)||0):null;
+ // Calculate the ring from real per-student completion counters. Do not trust
+ // a stale aggregate percentage; never infer progress from three assigned modes.
+ const pct=rows.length?Math.round(rows.reduce((sum,r)=>sum+(r.total?Math.min(100,100*r.done/r.total):0),0)/rows.length):null;
  return {rows,pct,done,total,modes:a.list_meta?.required_modes||[]};
 }
 function renderAssignment(a){
  const data=progressFor(a),shared=window.WillenaGeniusHomeworkCard;
  const modeNames=data.modes.map(m=>MODES.find(x=>x[0]===m)?.[1]||m).join(' · ');
- const rowHtml=data.rows.length?data.rows.map(({student,modesCompleted,total})=>
-  '<div class="gf-hw-student"><span>'+esc(student.korean_name||student.name||'Student')+'</span>'+
-  '<span>'+modesCompleted.length+'/'+total+' questions</span><strong class="'+(modesCompleted.length===total?'gf-hw-done':'')+'">'+(total?Math.round(modesCompleted.length/total*100):0)+'%</strong></div>').join(''):'<div class="gf-hw-loading">No students in the selected class or roster unavailable.</div>';
+ const rowHtml=data.rows.length?data.rows.map(({student,done,total})=>{
+  const pct=total?Math.max(0,Math.min(100,Math.round(100*done/total))):0;
+  return '<div class="ghc-student-row"><span class="ghc-student-name">'+esc(student.korean_name||student.name||'Student')+'</span>'+
+   '<span class="ghc-student-track" role="progressbar" aria-label="'+esc(student.name||'Student')+' progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><i style="width:'+pct+'%"></i></span>'+
+   '<strong class="ghc-student-pct">'+pct+'%</strong></div>';
+ }).join(''):'<div class="gf-hw-loading">No students in the selected class or roster unavailable.</div>';
  const buttons='<div class="gb-manage-actions">'+(store.history?'':'<button type="button" data-gb-edit="'+esc(a.id)+'">Edit</button>')+'</div>';
- const body='<div class="gf-hw-progress-summary">'+data.done+'/'+data.total+' completed · '+esc(modeNames)+'</div><div class="gf-hw-students">'+rowHtml+'</div>'+buttons;
+ const classPct=data.pct===null?'—':data.pct+'%';
+ const body='<div class="ghc-progress-summary"><span>Class progress <b>'+classPct+'</b></span><span>'+data.done+'/'+data.total+' complete · '+(data.total-data.done)+' not complete</span></div>'+
+  '<div class="ghc-progress-track"><i style="width:'+(data.pct||0)+'%"></i></div><div class="ghc-student-list">'+rowHtml+'</div>'+
+  '<div class="ghc-progress-modes">'+esc(modeNames)+'</div>'+buttons;
  return shared.card({id:a.id,className:a.class,task:a.title,dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Student progress',body});
 }
 async function drawManage(){
