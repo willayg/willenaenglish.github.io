@@ -8,12 +8,18 @@
 if(window.WillenaIdleIdentity)return;
 const IDLE_MS=5*60*1000;
 const KEY="willena:idle-identity:last-interaction:v1";
+const TAB_KEY="willena:identity:tab-open:v2";
+const VERIFIED_KEY="willena:identity:verified-user:v2";
+const ACCOUNT_EVENT="user_logged_in";
+let openedNewTab=false, accountChanged=false, verifiedId="";
+try{openedNewTab=!sessionStorage.getItem(TAB_KEY);sessionStorage.setItem(TAB_KEY,"1");}catch{openedNewTab=true;}
+try{verifiedId=sessionStorage.getItem(VERIFIED_KEY)||"";}catch{}
 const SIGNIN="/students/signin.html";
 const blockedSelectors=[
  "#vocabStudySession","#grammarRound","#session","#wgDiaryFlow","#wgEditor","#spRound",
  "#gameArea","#wgPaperScreen"
 ];
-let last=Date.now(),busy=false,prompting=false,pendingCheck=false,lastWrite=0,dialog=null;
+let last=Date.now(),busy=false,prompting=false,pendingCheck=openedNewTab,lastWrite=0,dialog=null;
 try{const stored=Number(sessionStorage.getItem(KEY));if(Number.isFinite(stored)&&stored>0&&stored<=Date.now())last=stored;}catch{}
 const now=()=>Date.now();
 function record(t=now()){
@@ -45,7 +51,7 @@ function working(){
  if(path.includes("/students/wordsearch/")&&visible(document.querySelector("#gameArea")))return true;
  return blockedSelectors.some(selector=>visible(document.querySelector(selector)));
 }
-function eligible(){return !prompting&&!busy&&!document.hidden&&(pendingCheck||now()-last>=IDLE_MS)&&!working();}
+function eligible(){return !prompting&&!busy&&!document.hidden&&(pendingCheck||now()-last>=IDLE_MS)&&(!working()||accountChanged);}
 async function profile(){
  const api=window.WillenaAPI;
  if(!api?.fetch)return null;
@@ -53,7 +59,12 @@ async function profile(){
  if(!result.ok)return null;
  const data=await result.json().catch(()=>null);
  if(!data?.success||!data?.name)return null;
- return {name:String(data.name).trim().slice(0,65),className:String(data.class||"").trim().slice(0,60)};
+ const auth=await api.fetch('/.netlify/functions/supabase_auth?action=whoami_student',{credentials:'include',cache:'no-store'});
+ const who=await auth.json().catch(()=>({}));
+ if(!auth.ok||!who?.success)return null;
+ const uid=String(who.user_id||who.user?.id||who.id||"");
+ if(!uid)return null;
+ return {name:String(data.name).trim().slice(0,65),className:String(data.class||"").trim().slice(0,60),id:uid};
 }
 function mount(){
  if(dialog)return dialog;
@@ -77,7 +88,11 @@ function mount(){
  const yes=document.createElement("button");yes.type="button";yes.className="wil-yes";yes.textContent="Yes, it's me · 네, 맞아요";
  const no=document.createElement("button");no.type="button";no.textContent="No, log out · 아니요, 로그아웃";
  actions.append(yes,no);panel.append(title,sub,actions);root.append(panel);document.body.appendChild(root);
- yes.addEventListener("click",()=>{root.hidden=true;prompting=false;pendingCheck=false;record();});
+ yes.addEventListener("click",()=>{
+  root.hidden=true;prompting=false;pendingCheck=false;accountChanged=false;
+  try{sessionStorage.setItem(VERIFIED_KEY,verifiedId);}catch{}
+  record();
+ });
  no.addEventListener("click",async()=>{
   yes.disabled=true;no.disabled=true;no.textContent="Signing out…";
   try{
@@ -98,7 +113,10 @@ async function ask(){
  try{
   const person=await profile();
   if(!person){pendingCheck=false;record();return;}
-  if(document.hidden||working()||prompting)return;
+  if(document.hidden||(working()&&!accountChanged)||prompting)return;
+  if(verifiedId&&person.id!==verifiedId)accountChanged=true;
+  if(accountChanged){pendingCheck=true;}
+  verifiedId=person.id;
   const ui=mount();ui.title.textContent=person.name+", is that you?";
   ui.sub.textContent=person.className?person.className+" · 본인이 맞나요?":"본인이 맞나요?";
   ui.yes.disabled=false;ui.no.disabled=false;ui.no.textContent="No, log out · 아니요, 로그아웃";
@@ -115,7 +133,7 @@ function onInteraction(e){
   e.stopImmediatePropagation?.();
   return;
  }
- if(pendingCheck&&!working()){
+ if(pendingCheck&&(!working()||accountChanged)){
   // Defer confirmation until a non-working state; this interaction stays blocked.
   if(e.cancelable)e.preventDefault();
   e.stopImmediatePropagation?.();
@@ -125,7 +143,7 @@ function onInteraction(e){
 }
 ["pointerdown","keydown","touchstart","click","submit"].forEach(type=>addEventListener(type,onInteraction,{capture:true,passive:false}));
 const observer=new MutationObserver(()=>{
- if(!document.hidden&&pendingCheck&&!working())ask();
+ if(!document.hidden&&pendingCheck&&(!working()||accountChanged))ask();
 });
 function observe(){if(document.body)observer.observe(document.body,{attributes:true,subtree:true,attributeFilter:["hidden","class","aria-hidden"]});}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",observe,{once:true});else observe();
@@ -133,5 +151,20 @@ document.addEventListener("visibilitychange",()=>{
  if(!document.hidden){if(now()-last>=IDLE_MS)pendingCheck=true;if(eligible())ask();}
 });
 window.addEventListener("pageshow",()=>{if(now()-last>=IDLE_MS)pendingCheck=true;if(eligible())ask();});
+// A different student may sign in from another tab. Lock before allowing further input.
+function onAccountEvent(e){
+ if(e?.type==="storage" && e.key!==ACCOUNT_EVENT && e.key!==VERIFIED_KEY)return;
+ accountChanged=true;pendingCheck=true;
+ // Do not trust a stale identity from the former tab.
+ if(!document.hidden)ask();
+}
+window.addEventListener("storage",onAccountEvent);
+window.addEventListener("auth:changed",onAccountEvent);
+window.addEventListener("focus",()=>{if(!document.hidden&&pendingCheck)ask();});
+// On initial load a QR link, direct URL or new tab has no tab marker and must confirm.
+if(openedNewTab){
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(ask,0),{once:true});
+ else setTimeout(ask,0);
+}
 window.WillenaIdleIdentity={check:ask,isPending:()=>pendingCheck||now()-last>=IDLE_MS,isShowing:()=>prompting};
 })();
