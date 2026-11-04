@@ -760,7 +760,7 @@ function renderOldWordTests(){
     const a=row.assignment||{},student=arr(row.students)[0]||{},modes=arr(a.required_modes);
     const starTotal=modes.reduce((sum,mode)=>sum+Math.max(0,Number(student?.modes?.[mode]?.stars)||0),0);
     const starMax=modes.length*10;
-    const labels={quiz:'퀴즈',spelling_test:'철자',speaking:'말하기'};
+    const labels={quiz:'퀴즈',spelling_test:'철자',spelling_coach:'철자 코치',speaking:'말하기'};
     const reviewButtons=modes.map(mode=>
       '<button type="button" class="vocab-old-review-mode" data-old-test="'+index+'" data-old-mode="'+escapeHtml(mode)+'">'+escapeHtml(labels[mode]||mode)+'</button>'
     ).join('');
@@ -826,8 +826,8 @@ function teacherModeWordCount(row,mode){
 function teacherCoachWords(row){
   // Use the spelling allocation in split assignments; otherwise all assigned words.
   const required=arr(row?.assignment?.required_modes);
-  const assignedSpelling=!required.length||required.includes('spelling_test');
-  return teacherAssignmentWords(row,assignedSpelling?'spelling_test':'').map(word=>{
+  const assignedSpelling=!required.length||required.includes('spelling_test')||required.includes('spelling_coach');
+  return teacherAssignmentWords(row,required.includes('spelling_coach')?'spelling_coach':(assignedSpelling?'spelling_test':'')).map(word=>{
     const spellingTarget=getSpellingTarget(word.word);
     return spellingTarget?Object.assign({},word,{spellingTarget}):null;
   }).filter(Boolean);
@@ -926,9 +926,9 @@ function renderTeacherAssignments(){
   if(teacherPracticeCountEl)teacherPracticeCountEl.textContent=state.teacherAssignments.length+' assignment'+(state.teacherAssignments.length===1?'':'s');
   teacherPracticeListEl.innerHTML=state.teacherAssignments.map((row,index)=>{
     const a=row.assignment||{},student=arr(row.students)[0]||{},modes=arr(a.required_modes);
-    const labels={quiz:'퀴즈',spelling_test:'철자',speaking:'말하기'};
-    const modeClasses={quiz:'vocab-skill-quiz',spelling_test:'vocab-skill-spelling',speaking:'vocab-skill-pronunciation'};
-    const stepNumbers={quiz:1,spelling_test:2,speaking:3};
+    const labels={quiz:'퀴즈',spelling_test:'철자',spelling_coach:'철자 코치',speaking:'말하기'};
+    const modeClasses={quiz:'vocab-skill-quiz',spelling_test:'vocab-skill-spelling',spelling_coach:'vocab-skill-spelling',speaking:'vocab-skill-pronunciation'};
+    const stepNumbers={quiz:1,spelling_test:2,spelling_coach:2,speaking:3};
     const modeHtml=modes.map(mode=>{
       const m=teacherModeProgress(row,student,mode);
       const complete=m.complete;
@@ -942,7 +942,7 @@ function renderTeacherAssignments(){
     }).join('');
     const wordCount=teacherAssignmentWords(row).length;
     const coachCount=teacherCoachWords(row).length;
-    const coachHtml=coachCount
+    const coachHtml=coachCount&&!modes.includes('spelling_coach')
       ?'<button type="button" class="vocab-teacher-optional-coach" data-teacher-coach="'+index+'">'+
         '<span><strong>철자 코치 <small>선택 연습</small></strong><span>'+coachCount+' words · 힌트와 재도전 · 숙제 완료율에 미반영</span></span>'+
         '<span class="vocab-teacher-optional-arrow">연습하기 →</span>'+
@@ -1028,7 +1028,7 @@ async function loadTeacherAssignments({showLoader=false}={}){
 }
 function teacherTitle(mode){
   const title=txt(state.activeTeacherAssignment?.assignment?.title||'Word Test Study');
-  const suffix={quiz:'Quiz',spelling_test:'Spelling Test',spelling_coach:'Spelling Coach (Optional)',speaking:'Speaking'}[mode]||'Practice';
+  const suffix={quiz:'Quiz',spelling_test:'Spelling Test',spelling_coach:'Spelling Coach',speaking:'Speaking'}[mode]||'Practice';
   return title+' · '+suffix;
 }
 function startTeacherAssignment(row,mode,{historyMode='push'}={}){
@@ -1045,7 +1045,7 @@ function startTeacherAssignment(row,mode,{historyMode='push'}={}){
   state.rewardSession=null;
   state.activeTeacherItems=[];
   state.assignedSpellingRecovery=null;
-  state.optionalTeacherCoach=mode==='spelling_coach';
+  state.optionalTeacherCoach=mode==='spelling_coach'&&!arr(row?.assignment?.required_modes).includes('spelling_coach');
   state.activeTeacherAssignment=row;
   state.progressSnapshot=null;
 
@@ -1057,10 +1057,10 @@ function startTeacherAssignment(row,mode,{historyMode='push'}={}){
     return;
   }
 
-  const words=mode==='spelling_coach'?teacherCoachWords(row):teacherRemainingWords(row,mode);
+  const words=mode==='spelling_coach'?(state.optionalTeacherCoach?teacherCoachWords(row):teacherRemainingWords(row,'spelling_coach').map(word=>{const spellingTarget=getSpellingTarget(word.word);return spellingTarget?Object.assign({},word,{spellingTarget}):null}).filter(Boolean)):teacherRemainingWords(row,mode);
   if(!words.length)return;
   if(mode==='spelling_test')openSpellingTest({teacherWords:words,historyMode});
-  else if(mode==='spelling_coach')openSpellingPreview({teacherWords:teacherCoachWords(row),historyMode});
+  else if(mode==='spelling_coach')openSpellingPreview({teacherWords:words,historyMode});
   else if(mode==='speaking')openSpeakingSession({teacherWords:words,historyMode});
 }
 
@@ -2727,6 +2727,14 @@ async function finishSpellingPractice(){
   playStudentSfx('complete');
   disableSpellingKeyboard();
   const practice=state.spellingPractice;
+  const assignedCoach=!!state.activeTeacherAssignment&&!state.optionalTeacherCoach&&arr(state.activeTeacherAssignment?.assignment?.required_modes).includes('spelling_coach');
+  if(assignedCoach){
+    try{
+      await Promise.allSettled([...state.pendingTeacherRecords]);
+      await loadTeacherAssignments({showLoader:false});
+      await checkTeacherGoldenUnit(state.activeTeacherAssignment);
+    }catch(error){console.warn('[Vocab Study] assigned Coach completion refresh failed',error);}
+  }
   const passedIds=new Set(arr(practice?.results).filter(r=>Number(r.supportLevel||0)===0).map(r=>txt(r.lexicalEntryId||r.word)).filter(Boolean));
   const supported=arr(practice?.results).filter(r=>Number(r.supportLevel||0)>0).length;
   const wrongs=arr(practice?.attempts).filter(r=>!r.correct).length;
@@ -2750,7 +2758,7 @@ async function finishSpellingPractice(){
         '<div><strong>'+supported+'</strong><span>HELPED</span></div>'+
         '<div><strong>'+wrongs+'</strong><span>RETRIES</span></div>'+
       '</div>'+
-      rewardSummaryHtml(reward,{pointsOnly:true})+
+      rewardSummaryHtml(reward,{pointsOnly:true})+goldenAwardHtml()+
       '<div class="vocab-finish-actions">'+
         (state.assignedSpellingRecovery?'<button id="vocabAssignedSpellRetry" class="vocab-review-btn" type="button">틀린 단어 다시 시험</button>':'')+
         '<button id="vocabSpellingDone" class="vocab-done-btn" type="button">Finish</button>'+
