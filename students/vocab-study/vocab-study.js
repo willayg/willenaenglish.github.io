@@ -2603,8 +2603,7 @@ async function openSpellingPreview({teacherWords=null,historyMode='replace'}={})
   root.innerHTML=
     '<section class="practice-panel vocab-coach-preview">'+
       '<div class="practice-toolbar vocab-coach-toolbar">'+
-        '<div class="vocab-coach-heading"><span class="eyebrow">SPELLING COACH</span><h2>단어를 보고 들어보세요</h2><small class="section-note">힌트를 쓴 단어는 마지막에 한 번 더 해요.</small></div>'+
-        '<button id="vocabStartSpelling" class="vocab-coach-start" type="button">Start Coach</button>'+
+        '<button id="vocabStartSpelling" class="vocab-coach-start" type="button">시작</button>'+
       '</div>'+
       '<div class="lesson-word-grid vocab-coach-word-grid">'+
         words.map((w,i)=>
