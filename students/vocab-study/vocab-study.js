@@ -1882,7 +1882,20 @@ function renderSpeakingQuestion(){
   root.innerHTML='<div class="question-card speaking-card" id="vocabQuestionHost"></div>';
   const host=el('vocabQuestionHost');
   state.renderer=new QuestionRenderer(host).render(speakingQuestion(word,session.index),{
-    onChange:(_,has)=>{if(!session.checked)actionBtn.disabled=!has}
+    onChange:(response,has)=>{
+      if(session.checked)return;
+      actionBtn.disabled=!has;
+      // Renderer.emit() runs whenever a browser speech result is displayed.
+      // Colour from the actual response, rather than relying on a secondary
+      // recognition callback that some browsers do not deliver.
+      const preview=host.querySelector('[data-speaking-transcript]');
+      if(preview){
+        if(!has){delete preview.dataset.accepted;return;}
+        const candidates=state.renderer?.getSpeechAlternatives?.()||[];
+        const heard=candidates.length?candidates:[response];
+        preview.dataset.accepted=matchSpeakingTarget(word.speakingTarget||word.word,heard).correct?'true':'false';
+      }
+    }
   });
   // Let students hear the target as often as they need without changing
   // scores, speech transcripts, or their unlimited microphone retries.
@@ -1900,7 +1913,7 @@ function renderSpeakingQuestion(){
     speakingControl.insertBefore(listenButton,speakingControl.firstChild);
     const voiceNotice=document.createElement('small');
     voiceNotice.className='vocab-speaking-ai-voice-notice';
-    voiceNotice.textContent='AI-generated pronunciation · AI 생성 음성';
+    voiceNotice.textContent='Voice by AI Willi · AI Willi - 생성 음성';
     voiceNotice.hidden=true;
     speakingControl.insertBefore(voiceNotice,listenButton.nextSibling);
     listenButton.addEventListener('click',async()=>{
