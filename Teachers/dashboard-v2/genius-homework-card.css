@@ -47,3 +47,11 @@
 .ghc-progress-modes{font-size:12px;color:#748891;margin:5px 0 12px;overflow-wrap:anywhere}
 .genius-homework-card>.ghc-details .ghc-content{margin-right:0}
 @media(max-width:600px){.ghc-student-row{grid-template-columns:minmax(70px,1fr) minmax(70px,2fr) 42px;gap:8px}.ghc-progress-summary{font-size:12px}}
+
+/* My/All overview uses the same shared homework detail spacing as the Word cards. */
+.ua-overview-genius-card .ua-group-body .ua-homework-card{border:1px solid #dce8e9;border-radius:14px;background:#fff;box-shadow:none}
+.ua-overview-genius-card .ua-homework-expanded.ghc-overview-expanded{background:#fff;border:0;border-top:1px solid #e6eeee;margin:0 12px;padding:12px 6px 14px;max-width:none}
+.ua-overview-genius-card .ghc-overview-expanded .ghc-overview-detail{font-size:12px;color:#6a818a;margin:0 0 12px;line-height:1.5}
+.ua-overview-genius-card .ghc-overview-expanded .ghc-student-list{padding:2px 0 6px}
+.ghc-student-note{color:#6e818a;font-size:12px;overflow-wrap:anywhere}
+.ua-overview-genius-card .ua-homework-detail{background:#fff}
