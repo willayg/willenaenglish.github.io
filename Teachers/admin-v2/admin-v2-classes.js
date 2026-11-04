@@ -118,7 +118,7 @@ function levelOptions(current=''){
 }
 function currentBook(row,i){const b=row?.books?.[i];return b?{book_id:b.book_id,title:b.book_title,series:b.catalog_series||'',level:b.catalog_level||'',source_type:b.source_type||'manual'}:null}
 function drawerEls(){return {bg:$('#classDrawerBgV2'),drawer:$('#classDrawerV2'),body:$('#classDrawerBodyV2'),title:$('#classDrawerTitleV2'),meta:$('#classDrawerMetaV2')}}
-function closeDrawer(){activeBookSearch='';hideMenus();const {bg,drawer}=drawerEls();bg?.classList.remove('open');drawer?.classList.remove('open');document.body.style.overflow='';controllers.forEach(c=>c.abort());timers.forEach(t=>clearTimeout(t));timers.clear();activeClass=null;selectedBooks.clear()}
+function closeDrawer(){activeBookSearch='';const {bg,drawer}=drawerEls();bg?.classList.remove('open');drawer?.classList.remove('open');document.body.style.overflow='';hideMenus();controllers.forEach(c=>c.abort());timers.forEach(t=>clearTimeout(t));timers.clear();activeClass=null;selectedBooks.clear()}
 
 function renderDrawer(row,mode='edit'){
   drawerMode=mode;activeClass=row||null;selectedBooks.clear();
@@ -137,7 +137,7 @@ function openAdd(){renderDrawer({name:'',books:[],level:null},'add')}
 function syncLevel(){const has=[1,2,3].some(n=>$('#classBook'+n)?.value.trim());const level=$('#classLevelV2');if(level){level.disabled=has;if(has)level.value=''}}
 function bookStatus(id){const input=$('#'+id),el=$('#'+id+'Status'),b=selectedBooks.get(id);if(!input||!el)return;el.textContent=input.value.trim()?(b?.book_id?'Linked to curriculum DB':'Select a database book from the search results'):''}
 function hideMenus(except=''){
-  $('.admin-book-suggestions.show').forEach(menu=>{if(menu.id!==except)menu.classList.remove('show')});
+  $$('.admin-book-suggestions.show').forEach(menu=>{if(menu.id!==except)menu.classList.remove('show')});
   if(!except)activeBookSearch='';
 }
 async function catalogBooks(){
