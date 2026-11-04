@@ -41,7 +41,13 @@ function mount(list, explicitTable){
  const grammarHistory=list.closest('#gfBooksHomework')?.querySelector('[data-gb-stage="history"].active');
  const foundationHistory=list.closest('#gfLegacyHomework')?.querySelector('[data-gf-filter="history"].active');
  const creativeHistory=list.closest('.ua-genius-manage')?.querySelector('[data-period="history"].active');
- if(grammarHistory||foundationHistory||creativeHistory)return;
+ const wordHistory=list.id==='assignmentList'&&!!list.querySelector('#assignmentRestoreSelected');
+ if(grammarHistory||foundationHistory||creativeHistory||wordHistory){
+  // History uses its own restore checkboxes, not the active-assignment cancel controls.
+  if(list.previousElementSibling?.classList.contains('hw-select-toolbar'))list.previousElementSibling.remove();
+  delete list.dataset.hwManageControls;
+  return;
+ }
  const table=explicitTable||tableFor(list);
  if(!table)return;
  // A list may be redrawn without replacing its container; rebuild controls with its cards.
