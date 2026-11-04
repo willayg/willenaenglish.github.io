@@ -216,7 +216,7 @@
       const defaultDay=dateInputValue(tomorrow);
       const chosen=prompt(expired.length+' assignment(s) have passed their due date. Enter a new due date (YYYY-MM-DD) for those assignments:',defaultDay);
       if(chosen===null)return;
-      if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(chosen.trim())){alert('Enter a date as YYYY-MM-DD.');return;}
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(chosen.trim())){alert('Enter a date as YYYY-MM-DD.');return;}
       dueAt=dueAtFromDate(chosen.trim());
       if(!dueAt||Date.parse(dueAt)<=Date.now()){alert('Choose a future due date.');return;}
     }
