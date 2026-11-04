@@ -4,6 +4,7 @@ import {capturePointOrigin,showPointAward} from '../components/student-point-fee
 import {createMissedOnlyRetry} from '../vocab-study/vocab-pass-flow.js?v=20261103-missed-only1';
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 import {grammarEngine} from './engine.js?v=1';
+import {studentIdentity,signedInProfile,assignedBooks} from '../sentence-genius/content.js?v=20261024-wg-auth1';
 const DB='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const $=id=>document.getElementById(id),list=$('grammarBookList'),home=$('grammarBooksHome'),detail=$('grammarBookDetail'),back=$('grammarBookBack'),title=$('grammarBookTitle');
@@ -279,7 +280,16 @@ async function loadGrammarBooks(){
   const extraResponse=await fetch(DB+'/rest/v1/content_books?select=id,title&status=eq.published&id=in.('+extraIds.join(',')+')',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
   if(!extraResponse.ok)throw Error('Coursebook catalog '+extraResponse.status);
   const extras=await extraResponse.json();
-  for(const book of extras)if(COURSE_BOOKS[book.id]&&!books.some(b=>b.id===book.id))books.push(book);
+  let assigned=new Set();
+  try{
+   const identity=await studentIdentity();
+   const profile=await signedInProfile(identity.id);
+   if(profile.role==='student'&&profile.approved){
+    const selected=await assignedBooks(profile.className||identity.className);
+    assigned=new Set(selected.map(row=>String(row.id)));
+   }
+  }catch(error){console.warn('[Grammar Books] Student book restrictions unavailable; hiding course books',error)}
+  for(const book of extras)if(COURSE_BOOKS[book.id]&&assigned.has(String(book.id))&&!books.some(b=>b.id===book.id))books.push(book);
   if(!books.some(b=>b.title==='Grammar Ten 완성 2'))books.unshift({id:'grammar-ten-2-practice',title:'Grammar Ten 완성 2'});
   list.innerHTML=books.length?books.map(bookCard).join(''):'<div class="vocab-front-empty">등록된 문법 교재가 없습니다.</div>';
   const id=new URLSearchParams(location.search).get('book');
@@ -326,7 +336,12 @@ async function loadBookUnits(book){
   const response=await fetch(DB+'/rest/v1/content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(bookId)+'&status=eq.published&order=unit_number.asc&limit=100',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
   if(!response.ok)throw Error('Unit catalog '+response.status);
   const rows=await response.json();
-  if(!match)return rows;
+  if(!match){
+   if(!courseKey(book))return rows;
+   const packs=await loadCoursePacks();
+   const chapters=packs.books.find(item=>item.key===courseKey(book))?.chapters||[];
+   return rows.map(row=>({...row,title:chapters.find(ch=>ch.unit===Number(row.unit_number))?.title||row.title}));
+  }
   const map=new Map();
   for(const row of rows){
    const chapter=Number(row.metadata?.chapter_number);
