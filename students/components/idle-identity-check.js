@@ -51,7 +51,7 @@ function working(){
  if(path.includes("/students/wordsearch/")&&visible(document.querySelector("#gameArea")))return true;
  return blockedSelectors.some(selector=>visible(document.querySelector(selector)));
 }
-function eligible(){return !prompting&&!busy&&!document.hidden&&(pendingCheck||now()-last>=IDLE_MS)&&(!working()||accountChanged);}
+function eligible(){return !prompting&&!busy&&!document.hidden&&(pendingCheck||now()-last>=IDLE_MS)&&(!working()||accountChanged||openedNewTab);}
 async function profile(){
  const api=window.WillenaAPI;
  if(!api?.fetch)return null;
@@ -59,7 +59,7 @@ async function profile(){
  if(!result.ok)return null;
  const data=await result.json().catch(()=>null);
  if(!data?.success||!data?.name)return null;
- const auth=await api.fetch('/.netlify/functions/supabase_auth?action=whoami_student',{credentials:'include',cache:'no-store'});
+ const auth=await api.fetch('/.netlify/functions/supabase_auth?action=whoami',{credentials:'include',cache:'no-store'});
  const who=await auth.json().catch(()=>({}));
  if(!auth.ok||!who?.success)return null;
  const uid=String(who.user_id||who.user?.id||who.id||"");
@@ -89,9 +89,11 @@ function mount(){
  const no=document.createElement("button");no.type="button";no.textContent="No, log out · 아니요, 로그아웃";
  actions.append(yes,no);panel.append(title,sub,actions);root.append(panel);document.body.appendChild(root);
  yes.addEventListener("click",()=>{
-  root.hidden=true;prompting=false;pendingCheck=false;accountChanged=false;
+  const mustReload=accountChanged;
+  root.hidden=true;prompting=false;pendingCheck=false;accountChanged=false;openedNewTab=false;
   try{sessionStorage.setItem(VERIFIED_KEY,verifiedId);}catch{}
   record();
+  if(mustReload)location.reload();
  });
  no.addEventListener("click",async()=>{
   yes.disabled=true;no.disabled=true;no.textContent="Signing out…";
@@ -113,7 +115,7 @@ async function ask(){
  try{
   const person=await profile();
   if(!person){pendingCheck=false;record();return;}
-  if(document.hidden||(working()&&!accountChanged)||prompting)return;
+  if(document.hidden||(working()&&!accountChanged&&!openedNewTab)||prompting)return;
   if(verifiedId&&person.id!==verifiedId)accountChanged=true;
   if(accountChanged){pendingCheck=true;}
   verifiedId=person.id;
@@ -133,7 +135,7 @@ function onInteraction(e){
   e.stopImmediatePropagation?.();
   return;
  }
- if(pendingCheck&&(!working()||accountChanged)){
+ if(pendingCheck&&(!working()||accountChanged||openedNewTab)){
   // Defer confirmation until a non-working state; this interaction stays blocked.
   if(e.cancelable)e.preventDefault();
   e.stopImmediatePropagation?.();
@@ -143,7 +145,7 @@ function onInteraction(e){
 }
 ["pointerdown","keydown","touchstart","click","submit"].forEach(type=>addEventListener(type,onInteraction,{capture:true,passive:false}));
 const observer=new MutationObserver(()=>{
- if(!document.hidden&&pendingCheck&&(!working()||accountChanged))ask();
+ if(!document.hidden&&pendingCheck&&(!working()||accountChanged||openedNewTab))ask();
 });
 function observe(){if(document.body)observer.observe(document.body,{attributes:true,subtree:true,attributeFilter:["hidden","class","aria-hidden"]});}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",observe,{once:true});else observe();
