@@ -9,10 +9,20 @@ if(window.WillenaIdleIdentity)return;
 const IDLE_MS=5*60*1000;
 const KEY="willena:idle-identity:last-interaction:v1";
 const TAB_KEY="willena:identity:tab-open:v2";
+const WINDOW_MARK="__willena_verified_window_v2__";
 const VERIFIED_KEY="willena:identity:verified-user:v2";
 const ACCOUNT_EVENT="user_logged_in";
+let lastSeenAuthEvent="";
+try{lastSeenAuthEvent=localStorage.getItem(ACCOUNT_EVENT)||"";}catch{}
 let openedNewTab=false, accountChanged=false, verifiedId="";
-try{openedNewTab=!sessionStorage.getItem(TAB_KEY);sessionStorage.setItem(TAB_KEY,"1");}catch{openedNewTab=true;}
+// sessionStorage is copied by browsers for some window.open/new-tab flows.
+ // window.name is per browsing context and prevents a copied storage marker from bypassing the check.
+ try{
+  openedNewTab=window.name!==WINDOW_MARK;
+  if(!window.name||window.name===WINDOW_MARK)window.name=WINDOW_MARK;
+  else openedNewTab=true; // Never overwrite an app-owned window name.
+  sessionStorage.setItem(TAB_KEY,"1");
+ }catch{openedNewTab=true;}
 try{verifiedId=sessionStorage.getItem(VERIFIED_KEY)||"";}catch{}
 const SIGNIN="/students/signin.html";
 const blockedSelectors=[
@@ -114,7 +124,11 @@ async function ask(){
  busy=true;
  try{
   const person=await profile();
-  if(!person){pendingCheck=false;record();return;}
+  if(!person){
+   // No authenticated student: login pages handle sign-in. Do not clear a pending check on transient failures.
+   if(!accountChanged)pendingCheck=false;
+   return;
+  }
   if(document.hidden||(working()&&!accountChanged&&!openedNewTab)||prompting)return;
   if(verifiedId&&person.id!==verifiedId)accountChanged=true;
   if(accountChanged){pendingCheck=true;}
@@ -155,14 +169,22 @@ document.addEventListener("visibilitychange",()=>{
 window.addEventListener("pageshow",()=>{if(now()-last>=IDLE_MS)pendingCheck=true;if(eligible())ask();});
 // A different student may sign in from another tab. Lock before allowing further input.
 function onAccountEvent(e){
- if(e?.type==="storage" && e.key!==ACCOUNT_EVENT && e.key!==VERIFIED_KEY)return;
+ if(e?.type==="storage" && e.key!==ACCOUNT_EVENT)return;
+ if(e?.type==="storage" && e.newValue===lastSeenAuthEvent)return;
+ try{lastSeenAuthEvent=localStorage.getItem(ACCOUNT_EVENT)||"";}catch{}
  accountChanged=true;pendingCheck=true;
  // Do not trust a stale identity from the former tab.
  if(!document.hidden)ask();
 }
 window.addEventListener("storage",onAccountEvent);
 window.addEventListener("auth:changed",onAccountEvent);
-window.addEventListener("focus",()=>{if(!document.hidden&&pendingCheck)ask();});
+window.addEventListener("focus",()=>{
+  try{
+   const current=localStorage.getItem(ACCOUNT_EVENT)||"";
+   if(current!==lastSeenAuthEvent){lastSeenAuthEvent=current;accountChanged=true;pendingCheck=true;}
+  }catch{}
+  if(!document.hidden&&pendingCheck)ask();
+ });
 // On initial load a QR link, direct URL or new tab has no tab marker and must confirm.
 if(openedNewTab){
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(ask,0),{once:true});
