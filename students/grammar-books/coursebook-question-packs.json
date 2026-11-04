@@ -1754,59 +1754,59 @@
     {
       "key": "eu5",
       "title": "Everybody Up 5 (3rd Edition)",
-      "source": "Photographed syllabus",
+      "source": "Oxford University Press official Everybody Up 3rd Edition Level 5 syllabus (original practice questions)",
       "chapters": [
         {
           "unit": 1,
           "title": "Vacation",
-          "grammarFocus": "past abilities with could / couldn't",
+          "grammarFocus": "Simple past for vacation activities and feelings",
           "modes": {
             "choose": [
               {
                 "id": "eu5-u1-choose-1",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "I could swim when I was six.",
-                  "She couldn't rode a bike last summer.",
-                  "Did you could see the ocean from your room?",
-                  "We was excited about our vacation.",
-                  "They have visited the beach last weekend."
+                  "He acted in a play during vacation.",
+                  "How did you felt when you rode the roller coaster?",
+                  "She win a competition last summer.",
+                  "I feel relaxed, but my brother felt nervous yesterday.",
+                  "We learn how to dive on our vacation last year."
                 ],
                 "answerIndex": 0,
-                "explanation": "could 뒤에는 동사원형 swim을 씁니다.",
+                "explanation": "과거에 한 일은 과거형 acted로 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u1-choose-2",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "I could swam when I was six.",
-                  "She couldn't rode a bike last summer.",
-                  "She couldn't ride a bike last summer.",
-                  "We was excited about our vacation.",
-                  "They have visited the beach last weekend."
+                  "He act in a play during vacation.",
+                  "How did you felt when you rode the roller coaster?",
+                  "How did you feel when you rode the roller coaster?",
+                  "I feel relaxed, but my brother felt nervous yesterday.",
+                  "We learn how to dive on our vacation last year."
                 ],
                 "answerIndex": 2,
-                "explanation": "couldn't 뒤에는 동사원형이 옵니다.",
+                "explanation": "did 뒤에는 동사원형 feel을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u1-choose-3",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "I could swam when I was six.",
-                  "She couldn't rode a bike last summer.",
-                  "Did you could see the ocean from your room?",
-                  "We was excited about our vacation.",
-                  "Could you see the ocean from your room?"
+                  "He act in a play during vacation.",
+                  "How did you felt when you rode the roller coaster?",
+                  "She win a competition last summer.",
+                  "I feel relaxed, but my brother felt nervous yesterday.",
+                  "She won a competition last summer."
                 ],
                 "answerIndex": 4,
-                "explanation": "could 의문문에 did를 추가하지 않습니다.",
+                "explanation": "last summer의 과거 사건에는 won을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u1-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I could swim when I was six.\n② I could swam when I was six.\n③ Could you see the ocean from your room?\n④ I could swam when I was six.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① He acted in a play during vacation.\n② He act in a play during vacation.\n③ She won a competition last summer.\n④ He act in a play during vacation.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -1815,12 +1815,12 @@
                   "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ①, ③입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u1-choose-5",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She couldn't rode a bike last summer.\n② She couldn't ride a bike last summer.\n③ I could swam when I was six.\n④ We were excited about our vacation.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① How did you felt when you rode the roller coaster?\n② How did you feel when you rode the roller coaster?\n③ He act in a play during vacation.\n④ I felt relaxed, but my brother felt nervous yesterday.",
                 "options": [
                   "②, ④",
                   "③, ④",
@@ -1829,7 +1829,7 @@
                   "①, ②"
                 ],
                 "answerIndex": 0,
-                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ②, ④입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -1838,70 +1838,70 @@
                 "id": "eu5-u1-check-1",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "I could swam when I was six.",
-                  "She couldn't ride a bike last summer.",
-                  "Could you see the ocean from your room?",
-                  "We were excited about our vacation.",
-                  "They visited the beach last weekend."
+                  "He act in a play during vacation.",
+                  "How did you feel when you rode the roller coaster?",
+                  "She won a competition last summer.",
+                  "I felt relaxed, but my brother felt nervous yesterday.",
+                  "We learned how to dive on our vacation last year."
                 ],
                 "answerIndex": 0,
-                "explanation": "could 뒤에는 동사원형 swim을 씁니다.",
+                "explanation": "과거에 한 일은 과거형 acted로 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u1-check-2",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "I could swim when I was six.",
-                  "She couldn't ride a bike last summer.",
-                  "She couldn't rode a bike last summer.",
-                  "We were excited about our vacation.",
-                  "They visited the beach last weekend."
+                  "He acted in a play during vacation.",
+                  "How did you feel when you rode the roller coaster?",
+                  "How did you felt when you rode the roller coaster?",
+                  "I felt relaxed, but my brother felt nervous yesterday.",
+                  "We learned how to dive on our vacation last year."
                 ],
                 "answerIndex": 2,
-                "explanation": "couldn't 뒤에는 동사원형이 옵니다.",
+                "explanation": "did 뒤에는 동사원형 feel을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u1-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "I could swim when I was six.",
-                  "She couldn't ride a bike last summer.",
-                  "Could you see the ocean from your room?",
-                  "We were excited about our vacation.",
-                  "Did you could see the ocean from your room?"
+                  "He acted in a play during vacation.",
+                  "How did you feel when you rode the roller coaster?",
+                  "She won a competition last summer.",
+                  "I felt relaxed, but my brother felt nervous yesterday.",
+                  "She win a competition last summer."
                 ],
                 "answerIndex": 4,
-                "explanation": "could 의문문에 did를 추가하지 않습니다.",
+                "explanation": "last summer의 과거 사건에는 won을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u1-check-4",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "I could swim when I was six.",
-                  "We was excited about our vacation.",
-                  "Could you see the ocean from your room?",
-                  "We were excited about our vacation.",
-                  "They visited the beach last weekend."
+                  "He acted in a play during vacation.",
+                  "I feel relaxed, but my brother felt nervous yesterday.",
+                  "She won a competition last summer.",
+                  "I felt relaxed, but my brother felt nervous yesterday.",
+                  "We learned how to dive on our vacation last year."
                 ],
                 "answerIndex": 1,
-                "explanation": "we에는 were를 사용합니다.",
+                "explanation": "yesterday의 과거 느낌은 felt입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u1-check-5",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "I could swim when I was six.",
-                  "She couldn't ride a bike last summer.",
-                  "Could you see the ocean from your room?",
-                  "They have visited the beach last weekend.",
-                  "They visited the beach last weekend."
+                  "He acted in a play during vacation.",
+                  "How did you feel when you rode the roller coaster?",
+                  "She won a competition last summer.",
+                  "We learn how to dive on our vacation last year.",
+                  "We learned how to dive on our vacation last year."
                 ],
                 "answerIndex": 3,
-                "explanation": "last weekend는 단순과거를 씁니다.",
+                "explanation": "last year에는 learned를 씁니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -1909,67 +1909,67 @@
               {
                 "id": "eu5-u1-hunt-1",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "I could swam when I was six.",
+                "sentence": "He act in a play during vacation.",
                 "options": [
-                  "I",
-                  "could",
-                  "swam",
-                  "when I was six."
+                  "He",
+                  "act",
+                  "in a",
+                  "play during vacation."
                 ],
-                "answerIndex": 2,
-                "explanation": "could 뒤에는 동사원형 swim을 씁니다."
+                "answerIndex": 1,
+                "explanation": "과거에 한 일은 과거형 acted로 씁니다."
               },
               {
                 "id": "eu5-u1-hunt-2",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "She couldn't rode a bike last summer.",
+                "sentence": "How did you felt when you rode the roller coaster?",
                 "options": [
-                  "She",
-                  "couldn't",
-                  "rode",
-                  "a bike last summer."
+                  "How",
+                  "did you",
+                  "felt",
+                  "when you rode the roller coaster?"
                 ],
                 "answerIndex": 2,
-                "explanation": "couldn't 뒤에는 동사원형이 옵니다."
+                "explanation": "did 뒤에는 동사원형 feel을 씁니다."
               },
               {
                 "id": "eu5-u1-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "Did you could see the ocean from your room?",
+                "sentence": "She win a competition last summer.",
                 "options": [
-                  "Did",
-                  "you could",
-                  "see the",
-                  "ocean from your room?"
+                  "She",
+                  "win",
+                  "a competition",
+                  "last summer."
                 ],
-                "answerIndex": 0,
-                "explanation": "could 의문문에 did를 추가하지 않습니다."
+                "answerIndex": 1,
+                "explanation": "last summer의 과거 사건에는 won을 씁니다."
               },
               {
                 "id": "eu5-u1-hunt-4",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "We was excited about our vacation.",
+                "sentence": "I feel relaxed, but my brother felt nervous yesterday.",
                 "options": [
-                  "We",
-                  "was",
-                  "excited about",
-                  "our vacation."
+                  "I",
+                  "feel",
+                  "relaxed, but my",
+                  "brother felt nervous yesterday."
                 ],
                 "answerIndex": 1,
-                "explanation": "we에는 were를 사용합니다."
+                "explanation": "yesterday의 과거 느낌은 felt입니다."
               },
               {
                 "id": "eu5-u1-hunt-5",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "They have visited the beach last weekend.",
+                "sentence": "We learn how to dive on our vacation last year.",
                 "options": [
-                  "They",
-                  "have",
-                  "visited the",
-                  "beach last weekend."
+                  "We",
+                  "learn",
+                  "how to dive on",
+                  "our vacation last year."
                 ],
                 "answerIndex": 1,
-                "explanation": "last weekend는 단순과거를 씁니다."
+                "explanation": "last year에는 learned를 씁니다."
               }
             ]
           }
@@ -1977,54 +1977,54 @@
         {
           "unit": 2,
           "title": "Camping",
-          "grammarFocus": "past progressive and comparisons",
+          "grammarFocus": "Past progressive, was/were + -ing, while/when",
           "modes": {
             "choose": [
               {
                 "id": "eu5-u2-choose-1",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "We were cooking when it started to rain.",
-                  "She were sleeping while we were talking.",
-                  "This tent is more bigger than that one.",
-                  "The river was coldest than the lake.",
-                  "What did you doing at eight last night?"
+                  "She was studying insects in the morning.",
+                  "Were he looking for animal tracks?",
+                  "I was setting up the tent when he arrive.",
+                  "When the rain started, we was collecting leaves.",
+                  "What did you doing when you saw the deer?"
                 ],
                 "answerIndex": 0,
-                "explanation": "we에는 were cooking을 씁니다.",
+                "explanation": "she와 함께 was studying을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u2-choose-2",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "We was cooking when it started to rain.",
-                  "She were sleeping while we were talking.",
-                  "She was sleeping while we were talking.",
-                  "The river was coldest than the lake.",
-                  "What did you doing at eight last night?"
+                  "She were studying insects in the morning.",
+                  "Were he looking for animal tracks?",
+                  "Was he looking for animal tracks?",
+                  "When the rain started, we was collecting leaves.",
+                  "What did you doing when you saw the deer?"
                 ],
                 "answerIndex": 2,
-                "explanation": "she에는 was를 사용합니다.",
+                "explanation": "he에는 Was를 사용합니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u2-choose-3",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "We was cooking when it started to rain.",
-                  "She were sleeping while we were talking.",
-                  "This tent is more bigger than that one.",
-                  "The river was coldest than the lake.",
-                  "This tent is bigger than that one."
+                  "She were studying insects in the morning.",
+                  "Were he looking for animal tracks?",
+                  "I was setting up the tent when he arrive.",
+                  "When the rain started, we was collecting leaves.",
+                  "I was setting up the tent when he arrived."
                 ],
                 "answerIndex": 4,
-                "explanation": "bigger 앞에 more를 중복해서 쓰지 않습니다.",
+                "explanation": "과거의 사건은 arrived로 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u2-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We were cooking when it started to rain.\n② We was cooking when it started to rain.\n③ This tent is bigger than that one.\n④ We was cooking when it started to rain.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She was studying insects in the morning.\n② She were studying insects in the morning.\n③ I was setting up the tent when he arrived.\n④ She were studying insects in the morning.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -2033,12 +2033,12 @@
                   "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ①, ③입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u2-choose-5",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She were sleeping while we were talking.\n② She was sleeping while we were talking.\n③ We was cooking when it started to rain.\n④ The river was colder than the lake.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Were he looking for animal tracks?\n② Was he looking for animal tracks?\n③ She were studying insects in the morning.\n④ When the rain started, we were collecting leaves.",
                 "options": [
                   "②, ④",
                   "③, ④",
@@ -2047,7 +2047,7 @@
                   "①, ②"
                 ],
                 "answerIndex": 0,
-                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ②, ④입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -2056,67 +2056,67 @@
                 "id": "eu5-u2-check-1",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "We was cooking when it started to rain.",
-                  "She was sleeping while we were talking.",
-                  "This tent is bigger than that one.",
-                  "The river was colder than the lake.",
-                  "What were you doing at eight last night?"
+                  "She were studying insects in the morning.",
+                  "Was he looking for animal tracks?",
+                  "I was setting up the tent when he arrived.",
+                  "When the rain started, we were collecting leaves.",
+                  "What were you doing when you saw the deer?"
                 ],
                 "answerIndex": 0,
-                "explanation": "we에는 were cooking을 씁니다.",
+                "explanation": "she와 함께 was studying을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u2-check-2",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "We were cooking when it started to rain.",
-                  "She was sleeping while we were talking.",
-                  "She were sleeping while we were talking.",
-                  "The river was colder than the lake.",
-                  "What were you doing at eight last night?"
+                  "She was studying insects in the morning.",
+                  "Was he looking for animal tracks?",
+                  "Were he looking for animal tracks?",
+                  "When the rain started, we were collecting leaves.",
+                  "What were you doing when you saw the deer?"
                 ],
                 "answerIndex": 2,
-                "explanation": "she에는 was를 사용합니다.",
+                "explanation": "he에는 Was를 사용합니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u2-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "We were cooking when it started to rain.",
-                  "She was sleeping while we were talking.",
-                  "This tent is bigger than that one.",
-                  "The river was colder than the lake.",
-                  "This tent is more bigger than that one."
+                  "She was studying insects in the morning.",
+                  "Was he looking for animal tracks?",
+                  "I was setting up the tent when he arrived.",
+                  "When the rain started, we were collecting leaves.",
+                  "I was setting up the tent when he arrive."
                 ],
                 "answerIndex": 4,
-                "explanation": "bigger 앞에 more를 중복해서 쓰지 않습니다.",
+                "explanation": "과거의 사건은 arrived로 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u2-check-4",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "We were cooking when it started to rain.",
-                  "The river was coldest than the lake.",
-                  "This tent is bigger than that one.",
-                  "The river was colder than the lake.",
-                  "What were you doing at eight last night?"
+                  "She was studying insects in the morning.",
+                  "When the rain started, we was collecting leaves.",
+                  "I was setting up the tent when he arrived.",
+                  "When the rain started, we were collecting leaves.",
+                  "What were you doing when you saw the deer?"
                 ],
                 "answerIndex": 1,
-                "explanation": "than 앞에는 비교급 colder를 씁니다.",
+                "explanation": "we에는 were collecting을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u2-check-5",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "We were cooking when it started to rain.",
-                  "She was sleeping while we were talking.",
-                  "This tent is bigger than that one.",
-                  "What did you doing at eight last night?",
-                  "What were you doing at eight last night?"
+                  "She was studying insects in the morning.",
+                  "Was he looking for animal tracks?",
+                  "I was setting up the tent when he arrived.",
+                  "What did you doing when you saw the deer?",
+                  "What were you doing when you saw the deer?"
                 ],
                 "answerIndex": 3,
                 "explanation": "과거진행 의문문은 were you doing입니다.",
@@ -2127,64 +2127,64 @@
               {
                 "id": "eu5-u2-hunt-1",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "We was cooking when it started to rain.",
+                "sentence": "She were studying insects in the morning.",
                 "options": [
-                  "We",
-                  "was",
-                  "cooking when it",
-                  "started to rain."
+                  "She",
+                  "were",
+                  "studying insects",
+                  "in the morning."
                 ],
                 "answerIndex": 1,
-                "explanation": "we에는 were cooking을 씁니다."
+                "explanation": "she와 함께 was studying을 씁니다."
               },
               {
                 "id": "eu5-u2-hunt-2",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "She were sleeping while we were talking.",
+                "sentence": "Were he looking for animal tracks?",
                 "options": [
-                  "She",
-                  "were",
-                  "sleeping while",
-                  "we were talking."
+                  "Were",
+                  "he",
+                  "looking",
+                  "for animal tracks?"
                 ],
-                "answerIndex": 1,
-                "explanation": "she에는 was를 사용합니다."
+                "answerIndex": 0,
+                "explanation": "he에는 Was를 사용합니다."
               },
               {
                 "id": "eu5-u2-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "This tent is more bigger than that one.",
+                "sentence": "I was setting up the tent when he arrive .",
                 "options": [
-                  "This",
-                  "tent is",
-                  "more",
-                  "bigger than that one."
+                  "I was setting up",
+                  "the tent when he",
+                  "arrive",
+                  "."
                 ],
                 "answerIndex": 2,
-                "explanation": "bigger 앞에 more를 중복해서 쓰지 않습니다."
+                "explanation": "과거의 사건은 arrived로 씁니다."
               },
               {
                 "id": "eu5-u2-hunt-4",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "The river was coldest than the lake.",
+                "sentence": "When the rain started, we was collecting leaves.",
                 "options": [
-                  "The",
-                  "river was",
-                  "coldest",
-                  "than the lake."
+                  "When the",
+                  "rain started, we",
+                  "was",
+                  "collecting leaves."
                 ],
                 "answerIndex": 2,
-                "explanation": "than 앞에는 비교급 colder를 씁니다."
+                "explanation": "we에는 were collecting을 씁니다."
               },
               {
                 "id": "eu5-u2-hunt-5",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "What did you doing at eight last night?",
+                "sentence": "What did you doing when you saw the deer?",
                 "options": [
                   "What",
                   "did",
-                  "you doing at",
-                  "eight last night?"
+                  "you doing when",
+                  "you saw the deer?"
                 ],
                 "answerIndex": 1,
                 "explanation": "과거진행 의문문은 were you doing입니다."
@@ -2195,54 +2195,54 @@
         {
           "unit": 3,
           "title": "Class Party",
-          "grammarFocus": "plans and requests",
+          "grammarFocus": "Will + base verb for party plans and predictions",
           "modes": {
             "choose": [
               {
                 "id": "eu5-u3-choose-1",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "We are going to decorate the classroom.",
-                  "Could you bringing some juice to the party?",
-                  "She going to invite her classmates.",
-                  "Let's making some sandwiches together.",
-                  "Would you like join our party?"
+                  "We will order pizzas for the party.",
+                  "What will he does at the party?",
+                  "Does she will pour the juice at the party?",
+                  "She will buys some balloons tomorrow.",
+                  "Who does will put up the decorations?"
                 ],
                 "answerIndex": 0,
-                "explanation": "we에는 are going to를 사용합니다.",
+                "explanation": "will 뒤에는 동사원형 order를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u3-choose-2",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "We is going to decorate the classroom.",
-                  "Could you bringing some juice to the party?",
-                  "Could you bring some juice to the party?",
-                  "Let's making some sandwiches together.",
-                  "Would you like join our party?"
+                  "We will ordered pizzas for the party.",
+                  "What will he does at the party?",
+                  "What will he do at the party?",
+                  "She will buys some balloons tomorrow.",
+                  "Who does will put up the decorations?"
                 ],
                 "answerIndex": 2,
-                "explanation": "could 뒤에는 동사원형 bring입니다.",
+                "explanation": "will 뒤에는 do를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u3-choose-3",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "We is going to decorate the classroom.",
-                  "Could you bringing some juice to the party?",
-                  "She going to invite her classmates.",
-                  "Let's making some sandwiches together.",
-                  "She is going to invite her classmates."
+                  "We will ordered pizzas for the party.",
+                  "What will he does at the party?",
+                  "Does she will pour the juice at the party?",
+                  "She will buys some balloons tomorrow.",
+                  "Will she pour the juice at the party?"
                 ],
                 "answerIndex": 4,
-                "explanation": "be going to 앞에 is가 필요합니다.",
+                "explanation": "will 의문문에는 does를 함께 쓰지 않습니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u3-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We are going to decorate the classroom.\n② We is going to decorate the classroom.\n③ She is going to invite her classmates.\n④ We is going to decorate the classroom.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We will order pizzas for the party.\n② We will ordered pizzas for the party.\n③ Will she pour the juice at the party?\n④ We will ordered pizzas for the party.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -2251,12 +2251,12 @@
                   "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ①, ③입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u3-choose-5",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Could you bringing some juice to the party?\n② Could you bring some juice to the party?\n③ We is going to decorate the classroom.\n④ Let's make some sandwiches together.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① What will he does at the party?\n② What will he do at the party?\n③ We will ordered pizzas for the party.\n④ She will buy some balloons tomorrow.",
                 "options": [
                   "②, ④",
                   "③, ④",
@@ -2265,7 +2265,7 @@
                   "①, ②"
                 ],
                 "answerIndex": 0,
-                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ②, ④입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -2274,70 +2274,70 @@
                 "id": "eu5-u3-check-1",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "We is going to decorate the classroom.",
-                  "Could you bring some juice to the party?",
-                  "She is going to invite her classmates.",
-                  "Let's make some sandwiches together.",
-                  "Would you like to join our party?"
+                  "We will ordered pizzas for the party.",
+                  "What will he do at the party?",
+                  "Will she pour the juice at the party?",
+                  "She will buy some balloons tomorrow.",
+                  "Who will put up the decorations?"
                 ],
                 "answerIndex": 0,
-                "explanation": "we에는 are going to를 사용합니다.",
+                "explanation": "will 뒤에는 동사원형 order를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u3-check-2",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "We are going to decorate the classroom.",
-                  "Could you bring some juice to the party?",
-                  "Could you bringing some juice to the party?",
-                  "Let's make some sandwiches together.",
-                  "Would you like to join our party?"
+                  "We will order pizzas for the party.",
+                  "What will he do at the party?",
+                  "What will he does at the party?",
+                  "She will buy some balloons tomorrow.",
+                  "Who will put up the decorations?"
                 ],
                 "answerIndex": 2,
-                "explanation": "could 뒤에는 동사원형 bring입니다.",
+                "explanation": "will 뒤에는 do를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u3-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "We are going to decorate the classroom.",
-                  "Could you bring some juice to the party?",
-                  "She is going to invite her classmates.",
-                  "Let's make some sandwiches together.",
-                  "She going to invite her classmates."
+                  "We will order pizzas for the party.",
+                  "What will he do at the party?",
+                  "Will she pour the juice at the party?",
+                  "She will buy some balloons tomorrow.",
+                  "Does she will pour the juice at the party?"
                 ],
                 "answerIndex": 4,
-                "explanation": "be going to 앞에 is가 필요합니다.",
+                "explanation": "will 의문문에는 does를 함께 쓰지 않습니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u3-check-4",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "We are going to decorate the classroom.",
-                  "Let's making some sandwiches together.",
-                  "She is going to invite her classmates.",
-                  "Let's make some sandwiches together.",
-                  "Would you like to join our party?"
+                  "We will order pizzas for the party.",
+                  "She will buys some balloons tomorrow.",
+                  "Will she pour the juice at the party?",
+                  "She will buy some balloons tomorrow.",
+                  "Who will put up the decorations?"
                 ],
                 "answerIndex": 1,
-                "explanation": "Let's 뒤에는 동사원형을 씁니다.",
+                "explanation": "will 뒤에는 동사원형 buy를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu5-u3-check-5",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "We are going to decorate the classroom.",
-                  "Could you bring some juice to the party?",
-                  "She is going to invite her classmates.",
-                  "Would you like join our party?",
-                  "Would you like to join our party?"
+                  "We will order pizzas for the party.",
+                  "What will he do at the party?",
+                  "Will she pour the juice at the party?",
+                  "Who does will put up the decorations?",
+                  "Who will put up the decorations?"
                 ],
                 "answerIndex": 3,
-                "explanation": "would like 뒤에는 to부정사를 씁니다.",
+                "explanation": "의문사 + will + 동사원형을 씁니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -2345,67 +2345,67 @@
               {
                 "id": "eu5-u3-hunt-1",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "We is going to decorate the classroom.",
+                "sentence": "We will ordered pizzas for the party.",
                 "options": [
                   "We",
-                  "is",
-                  "going to",
-                  "decorate the classroom."
+                  "will",
+                  "ordered",
+                  "pizzas for the party."
                 ],
-                "answerIndex": 1,
-                "explanation": "we에는 are going to를 사용합니다."
+                "answerIndex": 2,
+                "explanation": "will 뒤에는 동사원형 order를 씁니다."
               },
               {
                 "id": "eu5-u3-hunt-2",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "Could you bringing some juice to the party?",
+                "sentence": "What will he does at the party?",
                 "options": [
-                  "Could",
-                  "you",
-                  "bringing",
-                  "some juice to the party?"
+                  "What",
+                  "will he",
+                  "does",
+                  "at the party?"
                 ],
                 "answerIndex": 2,
-                "explanation": "could 뒤에는 동사원형 bring입니다."
+                "explanation": "will 뒤에는 do를 씁니다."
               },
               {
                 "id": "eu5-u3-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "She going to invite her classmates.",
+                "sentence": "Does she will pour the juice at the party?",
                 "options": [
-                  "She",
-                  "going",
-                  "to invite",
-                  "her classmates."
+                  "Does",
+                  "she will",
+                  "pour the",
+                  "juice at the party?"
                 ],
-                "answerIndex": 1,
-                "explanation": "be going to 앞에 is가 필요합니다."
+                "answerIndex": 0,
+                "explanation": "will 의문문에는 does를 함께 쓰지 않습니다."
               },
               {
                 "id": "eu5-u3-hunt-4",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "Let's making some sandwiches together.",
+                "sentence": "She will buys some balloons tomorrow.",
                 "options": [
-                  "Let's",
-                  "making",
-                  "some",
-                  "sandwiches together."
+                  "She",
+                  "will",
+                  "buys",
+                  "some balloons tomorrow."
                 ],
-                "answerIndex": 1,
-                "explanation": "Let's 뒤에는 동사원형을 씁니다."
+                "answerIndex": 2,
+                "explanation": "will 뒤에는 동사원형 buy를 씁니다."
               },
               {
                 "id": "eu5-u3-hunt-5",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "Would you like join our party?",
+                "sentence": "Who does will put up the decorations?",
                 "options": [
-                  "Would",
-                  "you like",
-                  "join",
-                  "our party?"
+                  "Who",
+                  "does",
+                  "will put",
+                  "up the decorations?"
                 ],
-                "answerIndex": 2,
-                "explanation": "would like 뒤에는 to부정사를 씁니다."
+                "answerIndex": 1,
+                "explanation": "의문사 + will + 동사원형을 씁니다."
               }
             ]
           }
