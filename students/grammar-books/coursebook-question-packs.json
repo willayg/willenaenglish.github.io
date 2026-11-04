@@ -3505,59 +3505,59 @@
     {
       "key": "eu6",
       "title": "Everybody Up 6 (3rd Edition)",
-      "source": "Provisional grammar alignment - verify against book pages",
+      "source": "Oxford University Press official Everybody Up 3rd Edition Level 6 syllabus (coursebook grammar examples authored by Willena)",
       "chapters": [
         {
           "unit": 1,
           "title": "Getting Around",
-          "grammarFocus": "transport and travel grammar",
+          "grammarFocus": "Directions, simple past transport, future plans",
           "modes": {
             "choose": [
               {
                 "id": "eu6-u1-choose-1",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "If we leave now, we will catch the bus.",
-                  "You should to take the subway to the station.",
-                  "How long has you lived in this city?",
-                  "The bus were late because of the traffic.",
-                  "She has never rode a cable car."
+                  "Walk up the street and turn right.",
+                  "They catch a taxi to the zoo yesterday.",
+                  "How did you got to the museum yesterday?",
+                  "I going to visit the shrine on Friday.",
+                  "I'll taking the train to the station."
                 ],
                 "answerIndex": 0,
-                "explanation": "if절에는 현재형을 씁니다.",
+                "explanation": "길 안내 명령문은 동사원형 Walk로 시작합니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u1-choose-2",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "If we will leave now, we will catch the bus.",
-                  "You should to take the subway to the station.",
-                  "You should take the subway to the station.",
-                  "The bus were late because of the traffic.",
-                  "She has never rode a cable car."
+                  "Walks up the street and turn right.",
+                  "They catch a taxi to the zoo yesterday.",
+                  "They caught a taxi to the zoo yesterday.",
+                  "I going to visit the shrine on Friday.",
+                  "I'll taking the train to the station."
                 ],
                 "answerIndex": 2,
-                "explanation": "should 뒤에는 동사원형입니다.",
+                "explanation": "어제 한 일에는 과거형 caught를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u1-choose-3",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "If we will leave now, we will catch the bus.",
-                  "You should to take the subway to the station.",
-                  "How long has you lived in this city?",
-                  "The bus were late because of the traffic.",
-                  "How long have you lived in this city?"
+                  "Walks up the street and turn right.",
+                  "They catch a taxi to the zoo yesterday.",
+                  "How did you got to the museum yesterday?",
+                  "I going to visit the shrine on Friday.",
+                  "How did you get to the museum yesterday?"
                 ],
                 "answerIndex": 4,
-                "explanation": "you에는 have를 씁니다.",
+                "explanation": "did 다음에는 동사원형 get을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u1-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If we leave now, we will catch the bus.\n② If we will leave now, we will catch the bus.\n③ How long have you lived in this city?\n④ If we will leave now, we will catch the bus.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Walk up the street and turn right.\n② Walks up the street and turn right.\n③ How did you get to the museum yesterday?\n④ Walks up the street and turn right.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -3566,12 +3566,12 @@
                   "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ①, ③입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u1-choose-5",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① You should to take the subway to the station.\n② You should take the subway to the station.\n③ If we will leave now, we will catch the bus.\n④ The bus was late because of the traffic.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① They catch a taxi to the zoo yesterday.\n② They caught a taxi to the zoo yesterday.\n③ Walks up the street and turn right.\n④ I am going to visit the shrine on Friday.",
                 "options": [
                   "②, ④",
                   "③, ④",
@@ -3580,7 +3580,7 @@
                   "①, ②"
                 ],
                 "answerIndex": 0,
-                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ②, ④입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -3589,70 +3589,70 @@
                 "id": "eu6-u1-check-1",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "If we will leave now, we will catch the bus.",
-                  "You should take the subway to the station.",
-                  "How long have you lived in this city?",
-                  "The bus was late because of the traffic.",
-                  "She has never ridden a cable car."
+                  "Walks up the street and turn right.",
+                  "They caught a taxi to the zoo yesterday.",
+                  "How did you get to the museum yesterday?",
+                  "I am going to visit the shrine on Friday.",
+                  "I'll take the train to the station."
                 ],
                 "answerIndex": 0,
-                "explanation": "if절에는 현재형을 씁니다.",
+                "explanation": "길 안내 명령문은 동사원형 Walk로 시작합니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u1-check-2",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "If we leave now, we will catch the bus.",
-                  "You should take the subway to the station.",
-                  "You should to take the subway to the station.",
-                  "The bus was late because of the traffic.",
-                  "She has never ridden a cable car."
+                  "Walk up the street and turn right.",
+                  "They caught a taxi to the zoo yesterday.",
+                  "They catch a taxi to the zoo yesterday.",
+                  "I am going to visit the shrine on Friday.",
+                  "I'll take the train to the station."
                 ],
                 "answerIndex": 2,
-                "explanation": "should 뒤에는 동사원형입니다.",
+                "explanation": "어제 한 일에는 과거형 caught를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u1-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "If we leave now, we will catch the bus.",
-                  "You should take the subway to the station.",
-                  "How long have you lived in this city?",
-                  "The bus was late because of the traffic.",
-                  "How long has you lived in this city?"
+                  "Walk up the street and turn right.",
+                  "They caught a taxi to the zoo yesterday.",
+                  "How did you get to the museum yesterday?",
+                  "I am going to visit the shrine on Friday.",
+                  "How did you got to the museum yesterday?"
                 ],
                 "answerIndex": 4,
-                "explanation": "you에는 have를 씁니다.",
+                "explanation": "did 다음에는 동사원형 get을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u1-check-4",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "If we leave now, we will catch the bus.",
-                  "The bus were late because of the traffic.",
-                  "How long have you lived in this city?",
-                  "The bus was late because of the traffic.",
-                  "She has never ridden a cable car."
+                  "Walk up the street and turn right.",
+                  "I going to visit the shrine on Friday.",
+                  "How did you get to the museum yesterday?",
+                  "I am going to visit the shrine on Friday.",
+                  "I'll take the train to the station."
                 ],
                 "answerIndex": 1,
-                "explanation": "단수 bus에는 was를 씁니다.",
+                "explanation": "be going to 앞에 am이 필요합니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u1-check-5",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "If we leave now, we will catch the bus.",
-                  "You should take the subway to the station.",
-                  "How long have you lived in this city?",
-                  "She has never rode a cable car.",
-                  "She has never ridden a cable car."
+                  "Walk up the street and turn right.",
+                  "They caught a taxi to the zoo yesterday.",
+                  "How did you get to the museum yesterday?",
+                  "I'll taking the train to the station.",
+                  "I'll take the train to the station."
                 ],
                 "answerIndex": 3,
-                "explanation": "과거분사 ridden을 씁니다.",
+                "explanation": "will 뒤에는 동사원형 take를 씁니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -3660,122 +3660,122 @@
               {
                 "id": "eu6-u1-hunt-1",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "If we will leave now, we will catch the bus.",
+                "sentence": "Walks up the street and turn right.",
                 "options": [
-                  "If",
-                  "we",
-                  "will",
-                  "leave now, we will catch the bus."
+                  "Walks",
+                  "up the",
+                  "street and",
+                  "turn right."
                 ],
-                "answerIndex": 2,
-                "explanation": "if절에는 현재형을 씁니다."
+                "answerIndex": 0,
+                "explanation": "길 안내 명령문은 동사원형 Walk로 시작합니다."
               },
               {
                 "id": "eu6-u1-hunt-2",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "You should to take the subway to the station.",
+                "sentence": "They catch a taxi to the zoo yesterday.",
                 "options": [
-                  "You",
-                  "should",
-                  "to",
-                  "take the subway to the station."
+                  "They",
+                  "catch",
+                  "a taxi to",
+                  "the zoo yesterday."
                 ],
-                "answerIndex": 2,
-                "explanation": "should 뒤에는 동사원형입니다."
+                "answerIndex": 1,
+                "explanation": "어제 한 일에는 과거형 caught를 씁니다."
               },
               {
                 "id": "eu6-u1-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "How long has you lived in this city?",
+                "sentence": "How did you got to the museum yesterday?",
                 "options": [
                   "How",
-                  "long",
-                  "has",
-                  "you lived in this city?"
+                  "did you",
+                  "got",
+                  "to the museum yesterday?"
                 ],
                 "answerIndex": 2,
-                "explanation": "you에는 have를 씁니다."
+                "explanation": "did 다음에는 동사원형 get을 씁니다."
               },
               {
                 "id": "eu6-u1-hunt-4",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "The bus were late because of the traffic.",
+                "sentence": "I going to visit the shrine on Friday.",
                 "options": [
-                  "The",
-                  "bus",
-                  "were",
-                  "late because of the traffic."
+                  "I",
+                  "going",
+                  "to visit the",
+                  "shrine on Friday."
                 ],
-                "answerIndex": 2,
-                "explanation": "단수 bus에는 was를 씁니다."
+                "answerIndex": 1,
+                "explanation": "be going to 앞에 am이 필요합니다."
               },
               {
                 "id": "eu6-u1-hunt-5",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "She has never rode a cable car.",
+                "sentence": "I'll taking the train to the station.",
                 "options": [
-                  "She",
-                  "has never",
-                  "rode",
-                  "a cable car."
+                  "I'll",
+                  "taking",
+                  "the train",
+                  "to the station."
                 ],
-                "answerIndex": 2,
-                "explanation": "과거분사 ridden을 씁니다."
+                "answerIndex": 1,
+                "explanation": "will 뒤에는 동사원형 take를 씁니다."
               }
             ]
           }
         },
         {
           "unit": 2,
-          "title": "Helping Life",
-          "grammarFocus": "advice and obligations",
+          "title": "Family Life",
+          "grammarFocus": "Have to/don't have to, can/could privileges",
           "modes": {
             "choose": [
               {
                 "id": "eu6-u2-choose-1",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "You should help people who need assistance.",
-                  "We mustn't throwing litter in the park.",
-                  "The volunteer which helped us was kind.",
-                  "If you will see an accident, call an adult.",
-                  "She has already donate her old books."
+                  "I have to read textbooks every night.",
+                  "My brother doesn't has to pay bills.",
+                  "She can calls friends on weekends.",
+                  "When he was young, he couldn't used a smartphone.",
+                  "My parents has to go to work early."
                 ],
                 "answerIndex": 0,
-                "explanation": "should 뒤에는 동사원형입니다.",
+                "explanation": "I에는 have to를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u2-choose-2",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "You should helps people who need assistance.",
-                  "We mustn't throwing litter in the park.",
-                  "We mustn't throw litter in the park.",
-                  "If you will see an accident, call an adult.",
-                  "She has already donate her old books."
+                  "I has to read textbooks every night.",
+                  "My brother doesn't has to pay bills.",
+                  "My brother doesn't have to pay bills.",
+                  "When he was young, he couldn't used a smartphone.",
+                  "My parents has to go to work early."
                 ],
                 "answerIndex": 2,
-                "explanation": "mustn't 뒤에는 동사원형입니다.",
+                "explanation": "doesn't 뒤에는 동사원형 have를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u2-choose-3",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "You should helps people who need assistance.",
-                  "We mustn't throwing litter in the park.",
-                  "The volunteer which helped us was kind.",
-                  "If you will see an accident, call an adult.",
-                  "The volunteer who helped us was kind."
+                  "I has to read textbooks every night.",
+                  "My brother doesn't has to pay bills.",
+                  "She can calls friends on weekends.",
+                  "When he was young, he couldn't used a smartphone.",
+                  "She can call friends on weekends."
                 ],
                 "answerIndex": 4,
-                "explanation": "사람에는 who/that을 씁니다.",
+                "explanation": "can 뒤에는 동사원형 call을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u2-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① You should help people who need assistance.\n② You should helps people who need assistance.\n③ The volunteer who helped us was kind.\n④ You should helps people who need assistance.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have to read textbooks every night.\n② I has to read textbooks every night.\n③ She can call friends on weekends.\n④ I has to read textbooks every night.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -3784,12 +3784,12 @@
                   "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ①, ③입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u2-choose-5",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We mustn't throwing litter in the park.\n② We mustn't throw litter in the park.\n③ You should helps people who need assistance.\n④ If you see an accident, call an adult.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① My brother doesn't has to pay bills.\n② My brother doesn't have to pay bills.\n③ I has to read textbooks every night.\n④ When he was young, he couldn't use a smartphone.",
                 "options": [
                   "②, ④",
                   "③, ④",
@@ -3798,7 +3798,7 @@
                   "①, ②"
                 ],
                 "answerIndex": 0,
-                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ②, ④입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -3807,70 +3807,70 @@
                 "id": "eu6-u2-check-1",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "You should helps people who need assistance.",
-                  "We mustn't throw litter in the park.",
-                  "The volunteer who helped us was kind.",
-                  "If you see an accident, call an adult.",
-                  "She has already donated her old books."
+                  "I has to read textbooks every night.",
+                  "My brother doesn't have to pay bills.",
+                  "She can call friends on weekends.",
+                  "When he was young, he couldn't use a smartphone.",
+                  "My parents have to go to work early."
                 ],
                 "answerIndex": 0,
-                "explanation": "should 뒤에는 동사원형입니다.",
+                "explanation": "I에는 have to를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u2-check-2",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "You should help people who need assistance.",
-                  "We mustn't throw litter in the park.",
-                  "We mustn't throwing litter in the park.",
-                  "If you see an accident, call an adult.",
-                  "She has already donated her old books."
+                  "I have to read textbooks every night.",
+                  "My brother doesn't have to pay bills.",
+                  "My brother doesn't has to pay bills.",
+                  "When he was young, he couldn't use a smartphone.",
+                  "My parents have to go to work early."
                 ],
                 "answerIndex": 2,
-                "explanation": "mustn't 뒤에는 동사원형입니다.",
+                "explanation": "doesn't 뒤에는 동사원형 have를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u2-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "You should help people who need assistance.",
-                  "We mustn't throw litter in the park.",
-                  "The volunteer who helped us was kind.",
-                  "If you see an accident, call an adult.",
-                  "The volunteer which helped us was kind."
+                  "I have to read textbooks every night.",
+                  "My brother doesn't have to pay bills.",
+                  "She can call friends on weekends.",
+                  "When he was young, he couldn't use a smartphone.",
+                  "She can calls friends on weekends."
                 ],
                 "answerIndex": 4,
-                "explanation": "사람에는 who/that을 씁니다.",
+                "explanation": "can 뒤에는 동사원형 call을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u2-check-4",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "You should help people who need assistance.",
-                  "If you will see an accident, call an adult.",
-                  "The volunteer who helped us was kind.",
-                  "If you see an accident, call an adult.",
-                  "She has already donated her old books."
+                  "I have to read textbooks every night.",
+                  "When he was young, he couldn't used a smartphone.",
+                  "She can call friends on weekends.",
+                  "When he was young, he couldn't use a smartphone.",
+                  "My parents have to go to work early."
                 ],
                 "answerIndex": 1,
-                "explanation": "조건절에는 현재형을 씁니다.",
+                "explanation": "couldn't 뒤에는 동사원형 use를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u2-check-5",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "You should help people who need assistance.",
-                  "We mustn't throw litter in the park.",
-                  "The volunteer who helped us was kind.",
-                  "She has already donate her old books.",
-                  "She has already donated her old books."
+                  "I have to read textbooks every night.",
+                  "My brother doesn't have to pay bills.",
+                  "She can call friends on weekends.",
+                  "My parents has to go to work early.",
+                  "My parents have to go to work early."
                 ],
                 "answerIndex": 3,
-                "explanation": "has 뒤에는 과거분사를 씁니다.",
+                "explanation": "복수 주어 parents에는 have to입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -3878,122 +3878,122 @@
               {
                 "id": "eu6-u2-hunt-1",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "You should helps people who need assistance.",
+                "sentence": "I has to read textbooks every night.",
                 "options": [
-                  "You",
-                  "should",
-                  "helps",
-                  "people who need assistance."
+                  "I",
+                  "has",
+                  "to read",
+                  "textbooks every night."
                 ],
-                "answerIndex": 2,
-                "explanation": "should 뒤에는 동사원형입니다."
+                "answerIndex": 1,
+                "explanation": "I에는 have to를 씁니다."
               },
               {
                 "id": "eu6-u2-hunt-2",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "We mustn't throwing litter in the park.",
+                "sentence": "My brother doesn't has to pay bills.",
                 "options": [
-                  "We",
-                  "mustn't",
-                  "throwing",
-                  "litter in the park."
+                  "My",
+                  "brother doesn't",
+                  "has",
+                  "to pay bills."
                 ],
                 "answerIndex": 2,
-                "explanation": "mustn't 뒤에는 동사원형입니다."
+                "explanation": "doesn't 뒤에는 동사원형 have를 씁니다."
               },
               {
                 "id": "eu6-u2-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "The volunteer which helped us was kind.",
+                "sentence": "She can calls friends on weekends.",
                 "options": [
-                  "The",
-                  "volunteer",
-                  "which",
-                  "helped us was kind."
+                  "She",
+                  "can",
+                  "calls",
+                  "friends on weekends."
                 ],
                 "answerIndex": 2,
-                "explanation": "사람에는 who/that을 씁니다."
+                "explanation": "can 뒤에는 동사원형 call을 씁니다."
               },
               {
                 "id": "eu6-u2-hunt-4",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "If you will see an accident, call an adult.",
+                "sentence": "When he was young, he couldn't used a smartphone.",
                 "options": [
-                  "If",
-                  "you",
-                  "will",
-                  "see an accident, call an adult."
+                  "When he was",
+                  "young, he couldn't",
+                  "used",
+                  "a smartphone."
                 ],
                 "answerIndex": 2,
-                "explanation": "조건절에는 현재형을 씁니다."
+                "explanation": "couldn't 뒤에는 동사원형 use를 씁니다."
               },
               {
                 "id": "eu6-u2-hunt-5",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "She has already donate her old books.",
+                "sentence": "My parents has to go to work early.",
                 "options": [
-                  "She",
-                  "has already",
-                  "donate",
-                  "her old books."
+                  "My",
+                  "parents",
+                  "has",
+                  "to go to work early."
                 ],
                 "answerIndex": 2,
-                "explanation": "has 뒤에는 과거분사를 씁니다."
+                "explanation": "복수 주어 parents에는 have to입니다."
               }
             ]
           }
         },
         {
           "unit": 3,
-          "title": "Smart Life",
-          "grammarFocus": "technology and passive voice",
+          "title": "Student Life",
+          "grammarFocus": "Present perfect and present perfect continuous; since/for",
           "modes": {
             "choose": [
               {
                 "id": "eu6-u3-choose-1",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "The robot is controlled by a computer.",
-                  "These apps is used by many students.",
-                  "You can to turn off the device here.",
-                  "If the battery die, the screen turns off.",
-                  "This machine has already being tested."
+                  "He has owned a laptop since September.",
+                  "I have owned this phone since six months.",
+                  "We have been live in Paris for three years.",
+                  "How long has you been studying English?",
+                  "She have been walking all morning."
                 ],
                 "answerIndex": 0,
-                "explanation": "수동태는 is controlled입니다.",
+                "explanation": "특정 시작 시점 September 앞에는 since를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u3-choose-2",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "The robot is control by a computer.",
-                  "These apps is used by many students.",
-                  "These apps are used by many students.",
-                  "If the battery die, the screen turns off.",
-                  "This machine has already being tested."
+                  "He has owned a laptop for September.",
+                  "I have owned this phone since six months.",
+                  "I have owned this phone for six months.",
+                  "How long has you been studying English?",
+                  "She have been walking all morning."
                 ],
                 "answerIndex": 2,
-                "explanation": "apps에는 are를 씁니다.",
+                "explanation": "six months 같은 기간에는 for를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u3-choose-3",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "The robot is control by a computer.",
-                  "These apps is used by many students.",
-                  "You can to turn off the device here.",
-                  "If the battery die, the screen turns off.",
-                  "You can turn off the device here."
+                  "He has owned a laptop for September.",
+                  "I have owned this phone since six months.",
+                  "We have been live in Paris for three years.",
+                  "How long has you been studying English?",
+                  "We have been living in Paris for three years."
                 ],
                 "answerIndex": 4,
-                "explanation": "can 뒤에는 동사원형입니다.",
+                "explanation": "현재완료진행형은 have been + -ing입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u3-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The robot is controlled by a computer.\n② The robot is control by a computer.\n③ You can turn off the device here.\n④ The robot is control by a computer.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① He has owned a laptop since September.\n② He has owned a laptop for September.\n③ We have been living in Paris for three years.\n④ He has owned a laptop for September.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -4002,12 +4002,12 @@
                   "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ①, ③입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u3-choose-5",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① These apps is used by many students.\n② These apps are used by many students.\n③ The robot is control by a computer.\n④ If the battery dies, the screen turns off.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have owned this phone since six months.\n② I have owned this phone for six months.\n③ He has owned a laptop for September.\n④ How long have you been studying English?",
                 "options": [
                   "②, ④",
                   "③, ④",
@@ -4016,7 +4016,7 @@
                   "①, ②"
                 ],
                 "answerIndex": 0,
-                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ②, ④입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4025,70 +4025,70 @@
                 "id": "eu6-u3-check-1",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "The robot is control by a computer.",
-                  "These apps are used by many students.",
-                  "You can turn off the device here.",
-                  "If the battery dies, the screen turns off.",
-                  "This machine has already been tested."
+                  "He has owned a laptop for September.",
+                  "I have owned this phone for six months.",
+                  "We have been living in Paris for three years.",
+                  "How long have you been studying English?",
+                  "She has been walking all morning."
                 ],
                 "answerIndex": 0,
-                "explanation": "수동태는 is controlled입니다.",
+                "explanation": "특정 시작 시점 September 앞에는 since를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u3-check-2",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "The robot is controlled by a computer.",
-                  "These apps are used by many students.",
-                  "These apps is used by many students.",
-                  "If the battery dies, the screen turns off.",
-                  "This machine has already been tested."
+                  "He has owned a laptop since September.",
+                  "I have owned this phone for six months.",
+                  "I have owned this phone since six months.",
+                  "How long have you been studying English?",
+                  "She has been walking all morning."
                 ],
                 "answerIndex": 2,
-                "explanation": "apps에는 are를 씁니다.",
+                "explanation": "six months 같은 기간에는 for를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u3-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "The robot is controlled by a computer.",
-                  "These apps are used by many students.",
-                  "You can turn off the device here.",
-                  "If the battery dies, the screen turns off.",
-                  "You can to turn off the device here."
+                  "He has owned a laptop since September.",
+                  "I have owned this phone for six months.",
+                  "We have been living in Paris for three years.",
+                  "How long have you been studying English?",
+                  "We have been live in Paris for three years."
                 ],
                 "answerIndex": 4,
-                "explanation": "can 뒤에는 동사원형입니다.",
+                "explanation": "현재완료진행형은 have been + -ing입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u3-check-4",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "The robot is controlled by a computer.",
-                  "If the battery die, the screen turns off.",
-                  "You can turn off the device here.",
-                  "If the battery dies, the screen turns off.",
-                  "This machine has already been tested."
+                  "He has owned a laptop since September.",
+                  "How long has you been studying English?",
+                  "We have been living in Paris for three years.",
+                  "How long have you been studying English?",
+                  "She has been walking all morning."
                 ],
                 "answerIndex": 1,
-                "explanation": "battery는 단수로 dies를 씁니다.",
+                "explanation": "you에는 have를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u3-check-5",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "The robot is controlled by a computer.",
-                  "These apps are used by many students.",
-                  "You can turn off the device here.",
-                  "This machine has already being tested.",
-                  "This machine has already been tested."
+                  "He has owned a laptop since September.",
+                  "I have owned this phone for six months.",
+                  "We have been living in Paris for three years.",
+                  "She have been walking all morning.",
+                  "She has been walking all morning."
                 ],
                 "answerIndex": 3,
-                "explanation": "현재완료 수동태는 has been + p.p.입니다.",
+                "explanation": "3인칭 단수 she에는 has를 씁니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4096,122 +4096,122 @@
               {
                 "id": "eu6-u3-hunt-1",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "The robot is control by a computer.",
+                "sentence": "He has owned a laptop for September.",
                 "options": [
-                  "The",
-                  "robot is",
-                  "control",
-                  "by a computer."
+                  "He has",
+                  "owned a laptop",
+                  "for",
+                  "September."
                 ],
                 "answerIndex": 2,
-                "explanation": "수동태는 is controlled입니다."
+                "explanation": "특정 시작 시점 September 앞에는 since를 씁니다."
               },
               {
                 "id": "eu6-u3-hunt-2",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "These apps is used by many students.",
+                "sentence": "I have owned this phone since six months.",
                 "options": [
-                  "These",
-                  "apps",
-                  "is",
-                  "used by many students."
+                  "I have",
+                  "owned this phone",
+                  "since",
+                  "six months."
                 ],
                 "answerIndex": 2,
-                "explanation": "apps에는 are를 씁니다."
+                "explanation": "six months 같은 기간에는 for를 씁니다."
               },
               {
                 "id": "eu6-u3-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "You can to turn off the device here.",
+                "sentence": "We have been live in Paris for three years.",
                 "options": [
-                  "You",
-                  "can",
-                  "to",
-                  "turn off the device here."
+                  "We",
+                  "have been",
+                  "live",
+                  "in Paris for three years."
                 ],
                 "answerIndex": 2,
-                "explanation": "can 뒤에는 동사원형입니다."
+                "explanation": "현재완료진행형은 have been + -ing입니다."
               },
               {
                 "id": "eu6-u3-hunt-4",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "If the battery die , the screen turns off.",
+                "sentence": "How long has you been studying English?",
                 "options": [
-                  "If",
-                  "the battery",
-                  "die",
-                  ", the screen turns off."
+                  "How",
+                  "long",
+                  "has",
+                  "you been studying English?"
                 ],
                 "answerIndex": 2,
-                "explanation": "battery는 단수로 dies를 씁니다."
+                "explanation": "you에는 have를 씁니다."
               },
               {
                 "id": "eu6-u3-hunt-5",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "This machine has already being tested.",
+                "sentence": "She have been walking all morning.",
                 "options": [
-                  "This machine",
-                  "has already",
-                  "being",
-                  "tested."
+                  "She",
+                  "have",
+                  "been walking",
+                  "all morning."
                 ],
-                "answerIndex": 2,
-                "explanation": "현재완료 수동태는 has been + p.p.입니다."
+                "answerIndex": 1,
+                "explanation": "3인칭 단수 she에는 has를 씁니다."
               }
             ]
           }
         },
         {
           "unit": 4,
-          "title": "Homes and Habits",
-          "grammarFocus": "routines and relative clauses",
+          "title": "Wants and Needs",
+          "grammarFocus": "Want/need + infinitive; until and healthy habits",
           "modes": {
             "choose": [
               {
                 "id": "eu6-u4-choose-1",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "This is the house where I grew up.",
-                  "She usually go to bed before ten.",
-                  "I have lived here for 2022.",
-                  "My brother is used to get up early.",
-                  "If I will finish my chores, I will watch TV."
+                  "I wanted to buy some soap at the store.",
+                  "We need washing our hands before dinner.",
+                  "You should wait until you will be ready.",
+                  "She need a bottle of shampoo.",
+                  "He has want to get a new toothbrush for weeks."
                 ],
                 "answerIndex": 0,
-                "explanation": "장소를 나타내는 관계부사 where를 씁니다.",
+                "explanation": "want 뒤에는 to부정사를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u4-choose-2",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "This is the house who I grew up.",
-                  "She usually go to bed before ten.",
-                  "She usually goes to bed before ten.",
-                  "My brother is used to get up early.",
-                  "If I will finish my chores, I will watch TV."
+                  "I wanted buying some soap at the store.",
+                  "We need washing our hands before dinner.",
+                  "We need to wash our hands before dinner.",
+                  "She need a bottle of shampoo.",
+                  "He has want to get a new toothbrush for weeks."
                 ],
                 "answerIndex": 2,
-                "explanation": "she에는 goes를 씁니다.",
+                "explanation": "need 뒤에는 to부정사를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u4-choose-3",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "This is the house who I grew up.",
-                  "She usually go to bed before ten.",
-                  "I have lived here for 2022.",
-                  "My brother is used to get up early.",
-                  "I have lived here since 2022."
+                  "I wanted buying some soap at the store.",
+                  "We need washing our hands before dinner.",
+                  "You should wait until you will be ready.",
+                  "She need a bottle of shampoo.",
+                  "You should wait until you are ready."
                 ],
                 "answerIndex": 4,
-                "explanation": "시작 시점에는 since입니다.",
+                "explanation": "미래 시간 부사절 until에는 현재형을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u4-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① This is the house where I grew up.\n② This is the house who I grew up.\n③ I have lived here since 2022.\n④ This is the house who I grew up.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I wanted to buy some soap at the store.\n② I wanted buying some soap at the store.\n③ You should wait until you are ready.\n④ I wanted buying some soap at the store.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -4220,12 +4220,12 @@
                   "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ①, ③입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u4-choose-5",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She usually go to bed before ten.\n② She usually goes to bed before ten.\n③ This is the house who I grew up.\n④ My brother is used to getting up early.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We need washing our hands before dinner.\n② We need to wash our hands before dinner.\n③ I wanted buying some soap at the store.\n④ She needs a bottle of shampoo.",
                 "options": [
                   "②, ④",
                   "③, ④",
@@ -4234,7 +4234,7 @@
                   "①, ②"
                 ],
                 "answerIndex": 0,
-                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ②, ④입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4243,70 +4243,70 @@
                 "id": "eu6-u4-check-1",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "This is the house who I grew up.",
-                  "She usually goes to bed before ten.",
-                  "I have lived here since 2022.",
-                  "My brother is used to getting up early.",
-                  "If I finish my chores, I will watch TV."
+                  "I wanted buying some soap at the store.",
+                  "We need to wash our hands before dinner.",
+                  "You should wait until you are ready.",
+                  "She needs a bottle of shampoo.",
+                  "He has wanted to get a new toothbrush for weeks."
                 ],
                 "answerIndex": 0,
-                "explanation": "장소를 나타내는 관계부사 where를 씁니다.",
+                "explanation": "want 뒤에는 to부정사를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u4-check-2",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "This is the house where I grew up.",
-                  "She usually goes to bed before ten.",
-                  "She usually go to bed before ten.",
-                  "My brother is used to getting up early.",
-                  "If I finish my chores, I will watch TV."
+                  "I wanted to buy some soap at the store.",
+                  "We need to wash our hands before dinner.",
+                  "We need washing our hands before dinner.",
+                  "She needs a bottle of shampoo.",
+                  "He has wanted to get a new toothbrush for weeks."
                 ],
                 "answerIndex": 2,
-                "explanation": "she에는 goes를 씁니다.",
+                "explanation": "need 뒤에는 to부정사를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u4-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "This is the house where I grew up.",
-                  "She usually goes to bed before ten.",
-                  "I have lived here since 2022.",
-                  "My brother is used to getting up early.",
-                  "I have lived here for 2022."
+                  "I wanted to buy some soap at the store.",
+                  "We need to wash our hands before dinner.",
+                  "You should wait until you are ready.",
+                  "She needs a bottle of shampoo.",
+                  "You should wait until you will be ready."
                 ],
                 "answerIndex": 4,
-                "explanation": "시작 시점에는 since입니다.",
+                "explanation": "미래 시간 부사절 until에는 현재형을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u4-check-4",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "This is the house where I grew up.",
-                  "My brother is used to get up early.",
-                  "I have lived here since 2022.",
-                  "My brother is used to getting up early.",
-                  "If I finish my chores, I will watch TV."
+                  "I wanted to buy some soap at the store.",
+                  "She need a bottle of shampoo.",
+                  "You should wait until you are ready.",
+                  "She needs a bottle of shampoo.",
+                  "He has wanted to get a new toothbrush for weeks."
                 ],
                 "answerIndex": 1,
-                "explanation": "be used to 뒤에는 동명사입니다.",
+                "explanation": "3인칭 단수 she에는 needs를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u4-check-5",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "This is the house where I grew up.",
-                  "She usually goes to bed before ten.",
-                  "I have lived here since 2022.",
-                  "If I will finish my chores, I will watch TV.",
-                  "If I finish my chores, I will watch TV."
+                  "I wanted to buy some soap at the store.",
+                  "We need to wash our hands before dinner.",
+                  "You should wait until you are ready.",
+                  "He has want to get a new toothbrush for weeks.",
+                  "He has wanted to get a new toothbrush for weeks."
                 ],
                 "answerIndex": 3,
-                "explanation": "if절은 현재형을 씁니다.",
+                "explanation": "has 뒤에는 과거분사 wanted가 옵니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4314,67 +4314,67 @@
               {
                 "id": "eu6-u4-hunt-1",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "This is the house who I grew up.",
+                "sentence": "I wanted buying some soap at the store.",
                 "options": [
-                  "This is",
-                  "the house",
-                  "who",
-                  "I grew up."
+                  "I",
+                  "wanted",
+                  "buying",
+                  "some soap at the store."
                 ],
                 "answerIndex": 2,
-                "explanation": "장소를 나타내는 관계부사 where를 씁니다."
+                "explanation": "want 뒤에는 to부정사를 씁니다."
               },
               {
                 "id": "eu6-u4-hunt-2",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "She usually go to bed before ten.",
+                "sentence": "We need washing our hands before dinner.",
                 "options": [
-                  "She",
-                  "usually",
-                  "go",
-                  "to bed before ten."
+                  "We",
+                  "need",
+                  "washing",
+                  "our hands before dinner."
                 ],
                 "answerIndex": 2,
-                "explanation": "she에는 goes를 씁니다."
+                "explanation": "need 뒤에는 to부정사를 씁니다."
               },
               {
                 "id": "eu6-u4-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "I have lived here for 2022.",
+                "sentence": "You should wait until you will be ready.",
                 "options": [
-                  "I have",
-                  "lived here",
-                  "for",
-                  "2022."
+                  "You should",
+                  "wait until you",
+                  "will",
+                  "be ready."
                 ],
                 "answerIndex": 2,
-                "explanation": "시작 시점에는 since입니다."
+                "explanation": "미래 시간 부사절 until에는 현재형을 씁니다."
               },
               {
                 "id": "eu6-u4-hunt-4",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "My brother is used to get up early.",
+                "sentence": "She need a bottle of shampoo.",
                 "options": [
-                  "My brother",
-                  "is used to",
-                  "get",
-                  "up early."
+                  "She",
+                  "need",
+                  "a bottle",
+                  "of shampoo."
                 ],
-                "answerIndex": 2,
-                "explanation": "be used to 뒤에는 동명사입니다."
+                "answerIndex": 1,
+                "explanation": "3인칭 단수 she에는 needs를 씁니다."
               },
               {
                 "id": "eu6-u4-hunt-5",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "If I will finish my chores, I will watch TV.",
+                "sentence": "He has want to get a new toothbrush for weeks.",
                 "options": [
-                  "If",
-                  "I",
-                  "will",
-                  "finish my chores, I will watch TV."
+                  "He",
+                  "has",
+                  "want",
+                  "to get a new toothbrush for weeks."
                 ],
                 "answerIndex": 2,
-                "explanation": "if절은 현재형을 씁니다."
+                "explanation": "has 뒤에는 과거분사 wanted가 옵니다."
               }
             ]
           }
@@ -4382,54 +4382,54 @@
         {
           "unit": 5,
           "title": "Around Town",
-          "grammarFocus": "directions and locations",
+          "grammarFocus": "Relative clauses with who; reported speech; comparisons",
           "modes": {
             "choose": [
               {
                 "id": "eu6-u5-choose-1",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "The library is across from the bank.",
-                  "Could you tell me where is the station?",
-                  "Walking straight until you reach the corner.",
-                  "The café who opened yesterday is popular.",
-                  "If you will turn left, you will see the museum."
+                  "She is the one who is going to the mall.",
+                  "He said yesterday that he were going to the museum.",
+                  "The girl which works at the shop is my friend.",
+                  "Did she said that she was going to the mall?",
+                  "My brother is more older than I am."
                 ],
                 "answerIndex": 0,
-                "explanation": "단수 library에는 is입니다.",
+                "explanation": "사람을 가리킬 때 관계대명사 who를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u5-choose-2",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "The library are across from the bank.",
-                  "Could you tell me where is the station?",
-                  "Could you tell me where the station is?",
-                  "The café who opened yesterday is popular.",
-                  "If you will turn left, you will see the museum."
+                  "She is the one which is going to the mall.",
+                  "He said yesterday that he were going to the museum.",
+                  "He said yesterday that he was going to the museum.",
+                  "Did she said that she was going to the mall?",
+                  "My brother is more older than I am."
                 ],
                 "answerIndex": 2,
-                "explanation": "간접의문문은 주어+동사 어순입니다.",
+                "explanation": "he에는 was going to를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u5-choose-3",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "The library are across from the bank.",
-                  "Could you tell me where is the station?",
-                  "Walking straight until you reach the corner.",
-                  "The café who opened yesterday is popular.",
-                  "Walk straight until you reach the corner."
+                  "She is the one which is going to the mall.",
+                  "He said yesterday that he were going to the museum.",
+                  "The girl which works at the shop is my friend.",
+                  "Did she said that she was going to the mall?",
+                  "The girl who works at the shop is my friend."
                 ],
                 "answerIndex": 4,
-                "explanation": "명령문은 동사원형입니다.",
+                "explanation": "사람 선행사 girl에는 who를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u5-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The library is across from the bank.\n② The library are across from the bank.\n③ Walk straight until you reach the corner.\n④ The library are across from the bank.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She is the one who is going to the mall.\n② She is the one which is going to the mall.\n③ The girl who works at the shop is my friend.\n④ She is the one which is going to the mall.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -4438,12 +4438,12 @@
                   "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ①, ③입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u5-choose-5",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Could you tell me where is the station?\n② Could you tell me where the station is?\n③ The library are across from the bank.\n④ The café that opened yesterday is popular.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① He said yesterday that he were going to the museum.\n② He said yesterday that he was going to the museum.\n③ She is the one which is going to the mall.\n④ Did she say that she was going to the mall?",
                 "options": [
                   "②, ④",
                   "③, ④",
@@ -4452,7 +4452,7 @@
                   "①, ②"
                 ],
                 "answerIndex": 0,
-                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ②, ④입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4461,70 +4461,70 @@
                 "id": "eu6-u5-check-1",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "The library are across from the bank.",
-                  "Could you tell me where the station is?",
-                  "Walk straight until you reach the corner.",
-                  "The café that opened yesterday is popular.",
-                  "If you turn left, you will see the museum."
+                  "She is the one which is going to the mall.",
+                  "He said yesterday that he was going to the museum.",
+                  "The girl who works at the shop is my friend.",
+                  "Did she say that she was going to the mall?",
+                  "My brother is older than I am."
                 ],
                 "answerIndex": 0,
-                "explanation": "단수 library에는 is입니다.",
+                "explanation": "사람을 가리킬 때 관계대명사 who를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u5-check-2",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "The library is across from the bank.",
-                  "Could you tell me where the station is?",
-                  "Could you tell me where is the station?",
-                  "The café that opened yesterday is popular.",
-                  "If you turn left, you will see the museum."
+                  "She is the one who is going to the mall.",
+                  "He said yesterday that he was going to the museum.",
+                  "He said yesterday that he were going to the museum.",
+                  "Did she say that she was going to the mall?",
+                  "My brother is older than I am."
                 ],
                 "answerIndex": 2,
-                "explanation": "간접의문문은 주어+동사 어순입니다.",
+                "explanation": "he에는 was going to를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u5-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "The library is across from the bank.",
-                  "Could you tell me where the station is?",
-                  "Walk straight until you reach the corner.",
-                  "The café that opened yesterday is popular.",
-                  "Walking straight until you reach the corner."
+                  "She is the one who is going to the mall.",
+                  "He said yesterday that he was going to the museum.",
+                  "The girl who works at the shop is my friend.",
+                  "Did she say that she was going to the mall?",
+                  "The girl which works at the shop is my friend."
                 ],
                 "answerIndex": 4,
-                "explanation": "명령문은 동사원형입니다.",
+                "explanation": "사람 선행사 girl에는 who를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u5-check-4",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "The library is across from the bank.",
-                  "The café who opened yesterday is popular.",
-                  "Walk straight until you reach the corner.",
-                  "The café that opened yesterday is popular.",
-                  "If you turn left, you will see the museum."
+                  "She is the one who is going to the mall.",
+                  "Did she said that she was going to the mall?",
+                  "The girl who works at the shop is my friend.",
+                  "Did she say that she was going to the mall?",
+                  "My brother is older than I am."
                 ],
                 "answerIndex": 1,
-                "explanation": "사물에는 that/which입니다.",
+                "explanation": "did 뒤에는 동사원형 say를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u5-check-5",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "The library is across from the bank.",
-                  "Could you tell me where the station is?",
-                  "Walk straight until you reach the corner.",
-                  "If you will turn left, you will see the museum.",
-                  "If you turn left, you will see the museum."
+                  "She is the one who is going to the mall.",
+                  "He said yesterday that he was going to the museum.",
+                  "The girl who works at the shop is my friend.",
+                  "My brother is more older than I am.",
+                  "My brother is older than I am."
                 ],
                 "answerIndex": 3,
-                "explanation": "if절에는 현재형을 씁니다.",
+                "explanation": "비교급 older 앞에 more를 중복해서 쓰지 않습니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4532,67 +4532,67 @@
               {
                 "id": "eu6-u5-hunt-1",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "The library are across from the bank.",
+                "sentence": "She is the one which is going to the mall.",
                 "options": [
-                  "The",
-                  "library",
-                  "are",
-                  "across from the bank."
+                  "She is",
+                  "the one",
+                  "which",
+                  "is going to the mall."
                 ],
                 "answerIndex": 2,
-                "explanation": "단수 library에는 is입니다."
+                "explanation": "사람을 가리킬 때 관계대명사 who를 씁니다."
               },
               {
                 "id": "eu6-u5-hunt-2",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "Could you tell me where is the station?",
+                "sentence": "He said yesterday that he were going to the museum.",
                 "options": [
-                  "Could you",
-                  "tell me where",
-                  "is",
-                  "the station?"
+                  "He said",
+                  "yesterday that he",
+                  "were",
+                  "going to the museum."
                 ],
                 "answerIndex": 2,
-                "explanation": "간접의문문은 주어+동사 어순입니다."
+                "explanation": "he에는 was going to를 씁니다."
               },
               {
                 "id": "eu6-u5-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "Walking straight until you reach the corner.",
+                "sentence": "The girl which works at the shop is my friend.",
                 "options": [
-                  "Walking",
-                  "straight until",
-                  "you reach",
-                  "the corner."
+                  "The",
+                  "girl",
+                  "which",
+                  "works at the shop is my friend."
                 ],
-                "answerIndex": 0,
-                "explanation": "명령문은 동사원형입니다."
+                "answerIndex": 2,
+                "explanation": "사람 선행사 girl에는 who를 씁니다."
               },
               {
                 "id": "eu6-u5-hunt-4",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "The café who opened yesterday is popular.",
+                "sentence": "Did she said that she was going to the mall?",
                 "options": [
-                  "The",
-                  "café",
-                  "who",
-                  "opened yesterday is popular."
+                  "Did",
+                  "she",
+                  "said",
+                  "that she was going to the mall?"
                 ],
                 "answerIndex": 2,
-                "explanation": "사물에는 that/which입니다."
+                "explanation": "did 뒤에는 동사원형 say를 씁니다."
               },
               {
                 "id": "eu6-u5-hunt-5",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "If you will turn left, you will see the museum.",
+                "sentence": "My brother is more older than I am.",
                 "options": [
-                  "If",
-                  "you",
-                  "will",
-                  "turn left, you will see the museum."
+                  "My",
+                  "brother is",
+                  "more",
+                  "older than I am."
                 ],
                 "answerIndex": 2,
-                "explanation": "if절에는 현재형을 씁니다."
+                "explanation": "비교급 older 앞에 more를 중복해서 쓰지 않습니다."
               }
             ]
           }
@@ -4600,54 +4600,54 @@
         {
           "unit": 6,
           "title": "Our Planet",
-          "grammarFocus": "environmental grammar",
+          "grammarFocus": "First and second conditionals for conservation",
           "modes": {
             "choose": [
               {
                 "id": "eu6-u6-choose-1",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "Plastic bottles are recycled in this city.",
-                  "We should to use less plastic every day.",
-                  "If the ice melt, sea levels rise.",
-                  "The forest has protected for years.",
-                  "We haven't cleaned the beach already."
+                  "If I had a new bicycle, I would ride it all the time.",
+                  "If you wants to help the environment, reuse paper.",
+                  "If everyone recycle, the city would be cleaner.",
+                  "We will save energy if we will turn off the lights.",
+                  "If I were a scientist, I would studied pollution."
                 ],
                 "answerIndex": 0,
-                "explanation": "복수 bottles에는 are를 씁니다.",
+                "explanation": "가정법 과거 if절에는 had를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u6-choose-2",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "Plastic bottles is recycled in this city.",
-                  "We should to use less plastic every day.",
-                  "We should use less plastic every day.",
-                  "The forest has protected for years.",
-                  "We haven't cleaned the beach already."
+                  "If I have a new bicycle, I would ride it all the time.",
+                  "If you wants to help the environment, reuse paper.",
+                  "If you want to help the environment, reuse paper.",
+                  "We will save energy if we will turn off the lights.",
+                  "If I were a scientist, I would studied pollution."
                 ],
                 "answerIndex": 2,
-                "explanation": "should 뒤에는 동사원형입니다.",
+                "explanation": "주어 you에는 want를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u6-choose-3",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "Plastic bottles is recycled in this city.",
-                  "We should to use less plastic every day.",
-                  "If the ice melt, sea levels rise.",
-                  "The forest has protected for years.",
-                  "If the ice melts, sea levels rise."
+                  "If I have a new bicycle, I would ride it all the time.",
+                  "If you wants to help the environment, reuse paper.",
+                  "If everyone recycle, the city would be cleaner.",
+                  "We will save energy if we will turn off the lights.",
+                  "If everyone recycled, the city would be cleaner."
                 ],
                 "answerIndex": 4,
-                "explanation": "ice는 단수로 melts를 씁니다.",
+                "explanation": "가정법 과거에서는 recycled를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u6-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Plastic bottles are recycled in this city.\n② Plastic bottles is recycled in this city.\n③ If the ice melts, sea levels rise.\n④ Plastic bottles is recycled in this city.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If I had a new bicycle, I would ride it all the time.\n② If I have a new bicycle, I would ride it all the time.\n③ If everyone recycled, the city would be cleaner.\n④ If I have a new bicycle, I would ride it all the time.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -4656,12 +4656,12 @@
                   "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ①, ③입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u6-choose-5",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We should to use less plastic every day.\n② We should use less plastic every day.\n③ Plastic bottles is recycled in this city.\n④ The forest has been protected for years.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If you wants to help the environment, reuse paper.\n② If you want to help the environment, reuse paper.\n③ If I have a new bicycle, I would ride it all the time.\n④ We will save energy if we turn off the lights.",
                 "options": [
                   "②, ④",
                   "③, ④",
@@ -4670,7 +4670,7 @@
                   "①, ②"
                 ],
                 "answerIndex": 0,
-                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ②, ④입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4679,70 +4679,70 @@
                 "id": "eu6-u6-check-1",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "Plastic bottles is recycled in this city.",
-                  "We should use less plastic every day.",
-                  "If the ice melts, sea levels rise.",
-                  "The forest has been protected for years.",
-                  "We haven't cleaned the beach yet."
+                  "If I have a new bicycle, I would ride it all the time.",
+                  "If you want to help the environment, reuse paper.",
+                  "If everyone recycled, the city would be cleaner.",
+                  "We will save energy if we turn off the lights.",
+                  "If I were a scientist, I would study pollution."
                 ],
                 "answerIndex": 0,
-                "explanation": "복수 bottles에는 are를 씁니다.",
+                "explanation": "가정법 과거 if절에는 had를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u6-check-2",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "Plastic bottles are recycled in this city.",
-                  "We should use less plastic every day.",
-                  "We should to use less plastic every day.",
-                  "The forest has been protected for years.",
-                  "We haven't cleaned the beach yet."
+                  "If I had a new bicycle, I would ride it all the time.",
+                  "If you want to help the environment, reuse paper.",
+                  "If you wants to help the environment, reuse paper.",
+                  "We will save energy if we turn off the lights.",
+                  "If I were a scientist, I would study pollution."
                 ],
                 "answerIndex": 2,
-                "explanation": "should 뒤에는 동사원형입니다.",
+                "explanation": "주어 you에는 want를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u6-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "Plastic bottles are recycled in this city.",
-                  "We should use less plastic every day.",
-                  "If the ice melts, sea levels rise.",
-                  "The forest has been protected for years.",
-                  "If the ice melt, sea levels rise."
+                  "If I had a new bicycle, I would ride it all the time.",
+                  "If you want to help the environment, reuse paper.",
+                  "If everyone recycled, the city would be cleaner.",
+                  "We will save energy if we turn off the lights.",
+                  "If everyone recycle, the city would be cleaner."
                 ],
                 "answerIndex": 4,
-                "explanation": "ice는 단수로 melts를 씁니다.",
+                "explanation": "가정법 과거에서는 recycled를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u6-check-4",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "Plastic bottles are recycled in this city.",
-                  "The forest has protected for years.",
-                  "If the ice melts, sea levels rise.",
-                  "The forest has been protected for years.",
-                  "We haven't cleaned the beach yet."
+                  "If I had a new bicycle, I would ride it all the time.",
+                  "We will save energy if we will turn off the lights.",
+                  "If everyone recycled, the city would be cleaner.",
+                  "We will save energy if we turn off the lights.",
+                  "If I were a scientist, I would study pollution."
                 ],
                 "answerIndex": 1,
-                "explanation": "보호되어 왔다: has been protected입니다.",
+                "explanation": "미래 조건절 if에는 현재형을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u6-check-5",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "Plastic bottles are recycled in this city.",
-                  "We should use less plastic every day.",
-                  "If the ice melts, sea levels rise.",
-                  "We haven't cleaned the beach already.",
-                  "We haven't cleaned the beach yet."
+                  "If I had a new bicycle, I would ride it all the time.",
+                  "If you want to help the environment, reuse paper.",
+                  "If everyone recycled, the city would be cleaner.",
+                  "If I were a scientist, I would studied pollution.",
+                  "If I were a scientist, I would study pollution."
                 ],
                 "answerIndex": 3,
-                "explanation": "부정문의 yet를 씁니다.",
+                "explanation": "would 뒤에는 동사원형 study를 씁니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4750,122 +4750,122 @@
               {
                 "id": "eu6-u6-hunt-1",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "Plastic bottles is recycled in this city.",
+                "sentence": "If I have a new bicycle, I would ride it all the time.",
                 "options": [
-                  "Plastic",
-                  "bottles",
-                  "is",
-                  "recycled in this city."
+                  "If",
+                  "I",
+                  "have",
+                  "a new bicycle, I would ride it all the time."
                 ],
                 "answerIndex": 2,
-                "explanation": "복수 bottles에는 are를 씁니다."
+                "explanation": "가정법 과거 if절에는 had를 씁니다."
               },
               {
                 "id": "eu6-u6-hunt-2",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "We should to use less plastic every day.",
+                "sentence": "If you wants to help the environment, reuse paper.",
                 "options": [
-                  "We",
-                  "should",
-                  "to",
-                  "use less plastic every day."
+                  "If",
+                  "you",
+                  "wants",
+                  "to help the environment, reuse paper."
                 ],
                 "answerIndex": 2,
-                "explanation": "should 뒤에는 동사원형입니다."
+                "explanation": "주어 you에는 want를 씁니다."
               },
               {
                 "id": "eu6-u6-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "If the ice melt , sea levels rise.",
+                "sentence": "If everyone recycle , the city would be cleaner.",
                 "options": [
                   "If",
-                  "the ice",
-                  "melt",
-                  ", sea levels rise."
+                  "everyone",
+                  "recycle",
+                  ", the city would be cleaner."
                 ],
                 "answerIndex": 2,
-                "explanation": "ice는 단수로 melts를 씁니다."
+                "explanation": "가정법 과거에서는 recycled를 씁니다."
               },
               {
                 "id": "eu6-u6-hunt-4",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "The forest has protected for years.",
+                "sentence": "We will save energy if we will turn off the lights.",
                 "options": [
-                  "The",
-                  "forest has",
-                  "protected",
-                  "for years."
+                  "We",
+                  "will",
+                  "save energy if we",
+                  "will turn off the lights."
                 ],
-                "answerIndex": 2,
-                "explanation": "보호되어 왔다: has been protected입니다."
+                "answerIndex": 1,
+                "explanation": "미래 조건절 if에는 현재형을 씁니다."
               },
               {
                 "id": "eu6-u6-hunt-5",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "We haven't cleaned the beach already .",
+                "sentence": "If I were a scientist, I would studied pollution.",
                 "options": [
-                  "We haven't",
-                  "cleaned the beach",
-                  "already",
-                  "."
+                  "If I were",
+                  "a scientist, I would",
+                  "studied",
+                  "pollution."
                 ],
                 "answerIndex": 2,
-                "explanation": "부정문의 yet를 씁니다."
+                "explanation": "would 뒤에는 동사원형 study를 씁니다."
               }
             ]
           }
         },
         {
           "unit": 7,
-          "title": "Advertisements",
-          "grammarFocus": "comparisons and persuasive language",
+          "title": "Achievements",
+          "grammarFocus": "Present and past passive voice",
           "modes": {
             "choose": [
               {
                 "id": "eu6-u7-choose-1",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "This phone is cheaper than that one.",
-                  "Our product works more efficient.",
-                  "This is the better deal in the store.",
-                  "You should read the details careful.",
-                  "These shoes is made from recycled materials."
+                  "The paintings are displayed in the gallery.",
+                  "The canal was complete in 1825.",
+                  "This bridge was build many years ago.",
+                  "Was these sculptures made by the artist?",
+                  "The opera were performed here last year."
                 ],
                 "answerIndex": 0,
-                "explanation": "than과 비교급 cheaper를 씁니다.",
+                "explanation": "복수 paintings에는 are displayed를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u7-choose-2",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "This phone is cheapest than that one.",
-                  "Our product works more efficient.",
-                  "Our product works more efficiently.",
-                  "You should read the details careful.",
-                  "These shoes is made from recycled materials."
+                  "The paintings is displayed in the gallery.",
+                  "The canal was complete in 1825.",
+                  "The canal was completed in 1825.",
+                  "Was these sculptures made by the artist?",
+                  "The opera were performed here last year."
                 ],
                 "answerIndex": 2,
-                "explanation": "동사 수식은 부사 efficiently입니다.",
+                "explanation": "수동태는 was + 과거분사 completed입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u7-choose-3",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "This phone is cheapest than that one.",
-                  "Our product works more efficient.",
-                  "This is the better deal in the store.",
-                  "You should read the details careful.",
-                  "This is the best deal in the store."
+                  "The paintings is displayed in the gallery.",
+                  "The canal was complete in 1825.",
+                  "This bridge was build many years ago.",
+                  "Was these sculptures made by the artist?",
+                  "This bridge was built many years ago."
                 ],
                 "answerIndex": 4,
-                "explanation": "범위 내 최상급 best입니다.",
+                "explanation": "build의 과거분사는 built입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u7-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① This phone is cheaper than that one.\n② This phone is cheapest than that one.\n③ This is the best deal in the store.\n④ This phone is cheapest than that one.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The paintings are displayed in the gallery.\n② The paintings is displayed in the gallery.\n③ This bridge was built many years ago.\n④ The paintings is displayed in the gallery.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -4874,12 +4874,12 @@
                   "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ①, ③입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u7-choose-5",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Our product works more efficient.\n② Our product works more efficiently.\n③ This phone is cheapest than that one.\n④ You should read the details carefully.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The canal was complete in 1825.\n② The canal was completed in 1825.\n③ The paintings is displayed in the gallery.\n④ Were these sculptures made by the artist?",
                 "options": [
                   "②, ④",
                   "③, ④",
@@ -4888,7 +4888,7 @@
                   "①, ②"
                 ],
                 "answerIndex": 0,
-                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ②, ④입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4897,70 +4897,70 @@
                 "id": "eu6-u7-check-1",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "This phone is cheapest than that one.",
-                  "Our product works more efficiently.",
-                  "This is the best deal in the store.",
-                  "You should read the details carefully.",
-                  "These shoes are made from recycled materials."
+                  "The paintings is displayed in the gallery.",
+                  "The canal was completed in 1825.",
+                  "This bridge was built many years ago.",
+                  "Were these sculptures made by the artist?",
+                  "The opera was performed here last year."
                 ],
                 "answerIndex": 0,
-                "explanation": "than과 비교급 cheaper를 씁니다.",
+                "explanation": "복수 paintings에는 are displayed를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u7-check-2",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "This phone is cheaper than that one.",
-                  "Our product works more efficiently.",
-                  "Our product works more efficient.",
-                  "You should read the details carefully.",
-                  "These shoes are made from recycled materials."
+                  "The paintings are displayed in the gallery.",
+                  "The canal was completed in 1825.",
+                  "The canal was complete in 1825.",
+                  "Were these sculptures made by the artist?",
+                  "The opera was performed here last year."
                 ],
                 "answerIndex": 2,
-                "explanation": "동사 수식은 부사 efficiently입니다.",
+                "explanation": "수동태는 was + 과거분사 completed입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u7-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "This phone is cheaper than that one.",
-                  "Our product works more efficiently.",
-                  "This is the best deal in the store.",
-                  "You should read the details carefully.",
-                  "This is the better deal in the store."
+                  "The paintings are displayed in the gallery.",
+                  "The canal was completed in 1825.",
+                  "This bridge was built many years ago.",
+                  "Were these sculptures made by the artist?",
+                  "This bridge was build many years ago."
                 ],
                 "answerIndex": 4,
-                "explanation": "범위 내 최상급 best입니다.",
+                "explanation": "build의 과거분사는 built입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u7-check-4",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "This phone is cheaper than that one.",
-                  "You should read the details careful.",
-                  "This is the best deal in the store.",
-                  "You should read the details carefully.",
-                  "These shoes are made from recycled materials."
+                  "The paintings are displayed in the gallery.",
+                  "Was these sculptures made by the artist?",
+                  "This bridge was built many years ago.",
+                  "Were these sculptures made by the artist?",
+                  "The opera was performed here last year."
                 ],
                 "answerIndex": 1,
-                "explanation": "read를 꾸미는 부사 carefully입니다.",
+                "explanation": "복수 these sculptures에는 Were를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u7-check-5",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "This phone is cheaper than that one.",
-                  "Our product works more efficiently.",
-                  "This is the best deal in the store.",
-                  "These shoes is made from recycled materials.",
-                  "These shoes are made from recycled materials."
+                  "The paintings are displayed in the gallery.",
+                  "The canal was completed in 1825.",
+                  "This bridge was built many years ago.",
+                  "The opera were performed here last year.",
+                  "The opera was performed here last year."
                 ],
                 "answerIndex": 3,
-                "explanation": "복수 shoes에는 are를 씁니다.",
+                "explanation": "단수 opera에는 was performed를 씁니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -4968,122 +4968,122 @@
               {
                 "id": "eu6-u7-hunt-1",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "This phone is cheapest than that one.",
+                "sentence": "The paintings is displayed in the gallery.",
                 "options": [
-                  "This",
-                  "phone is",
-                  "cheapest",
-                  "than that one."
+                  "The",
+                  "paintings",
+                  "is",
+                  "displayed in the gallery."
                 ],
                 "answerIndex": 2,
-                "explanation": "than과 비교급 cheaper를 씁니다."
+                "explanation": "복수 paintings에는 are displayed를 씁니다."
               },
               {
                 "id": "eu6-u7-hunt-2",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "Our product works more efficient .",
+                "sentence": "The canal was complete in 1825.",
                 "options": [
-                  "Our product",
-                  "works more",
-                  "efficient",
-                  "."
+                  "The",
+                  "canal was",
+                  "complete",
+                  "in 1825."
                 ],
                 "answerIndex": 2,
-                "explanation": "동사 수식은 부사 efficiently입니다."
+                "explanation": "수동태는 was + 과거분사 completed입니다."
               },
               {
                 "id": "eu6-u7-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "This is the better deal in the store.",
+                "sentence": "This bridge was build many years ago.",
                 "options": [
                   "This",
-                  "is the",
-                  "better",
-                  "deal in the store."
+                  "bridge was",
+                  "build",
+                  "many years ago."
                 ],
                 "answerIndex": 2,
-                "explanation": "범위 내 최상급 best입니다."
+                "explanation": "build의 과거분사는 built입니다."
               },
               {
                 "id": "eu6-u7-hunt-4",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "You should read the details careful .",
+                "sentence": "Was these sculptures made by the artist?",
                 "options": [
-                  "You should",
-                  "read the details",
-                  "careful",
-                  "."
+                  "Was",
+                  "these sculptures",
+                  "made by",
+                  "the artist?"
                 ],
-                "answerIndex": 2,
-                "explanation": "read를 꾸미는 부사 carefully입니다."
+                "answerIndex": 0,
+                "explanation": "복수 these sculptures에는 Were를 씁니다."
               },
               {
                 "id": "eu6-u7-hunt-5",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "These shoes is made from recycled materials.",
+                "sentence": "The opera were performed here last year.",
                 "options": [
-                  "These",
-                  "shoes",
-                  "is",
-                  "made from recycled materials."
+                  "The",
+                  "opera",
+                  "were",
+                  "performed here last year."
                 ],
                 "answerIndex": 2,
-                "explanation": "복수 shoes에는 are를 씁니다."
+                "explanation": "단수 opera에는 was performed를 씁니다."
               }
             ]
           }
         },
         {
           "unit": 8,
-          "title": "Communication",
-          "grammarFocus": "reported speech and requests",
+          "title": "Graduation Day",
+          "grammarFocus": "-ed/-ing adjectives; present perfect continuous",
           "modes": {
             "choose": [
               {
                 "id": "eu6-u8-choose-1",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "She said that she was busy.",
-                  "Could you tell me what time is it?",
-                  "He asked me send him a message.",
-                  "If you will call me, I will answer.",
-                  "They has already replied to the email."
+                  "The speech was boring, but the students were excited.",
+                  "I have opening presents all morning.",
+                  "She has been studying for the exam for Monday.",
+                  "The award ceremony was more excited than last year.",
+                  "Has you been writing thank-you cards all afternoon?"
                 ],
                 "answerIndex": 0,
-                "explanation": "과거의 전달 발화에는 시제 일치를 적용합니다.",
+                "explanation": "감정을 일으키는 speech는 boring입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u8-choose-2",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "She said that she is busy yesterday.",
-                  "Could you tell me what time is it?",
-                  "Could you tell me what time it is?",
-                  "If you will call me, I will answer.",
-                  "They has already replied to the email."
+                  "The speech was bored, but the students were excited.",
+                  "I have opening presents all morning.",
+                  "I have been opening presents all morning.",
+                  "The award ceremony was more excited than last year.",
+                  "Has you been writing thank-you cards all afternoon?"
                 ],
                 "answerIndex": 2,
-                "explanation": "간접의문문은 주어+동사 어순입니다.",
+                "explanation": "현재완료진행형에는 have been + -ing가 필요합니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u8-choose-3",
                 "prompt": "다음 중 어법상 옳은 문장을 고르시오.",
                 "options": [
-                  "She said that she is busy yesterday.",
-                  "Could you tell me what time is it?",
-                  "He asked me send him a message.",
-                  "If you will call me, I will answer.",
-                  "He asked me to send him a message."
+                  "The speech was bored, but the students were excited.",
+                  "I have opening presents all morning.",
+                  "She has been studying for the exam for Monday.",
+                  "The award ceremony was more excited than last year.",
+                  "She has been studying for the exam since Monday."
                 ],
                 "answerIndex": 4,
-                "explanation": "ask + 목적어 + to부정사입니다.",
+                "explanation": "시작 시점 Monday 앞에는 since를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u8-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She said that she was busy.\n② She said that she is busy yesterday.\n③ He asked me to send him a message.\n④ She said that she is busy yesterday.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The speech was boring, but the students were excited.\n② The speech was bored, but the students were excited.\n③ She has been studying for the exam since Monday.\n④ The speech was bored, but the students were excited.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -5092,12 +5092,12 @@
                   "①, ④"
                 ],
                 "answerIndex": 1,
-                "explanation": "올바른 문장은 ①, ③입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ①, ③입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u8-choose-5",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Could you tell me what time is it?\n② Could you tell me what time it is?\n③ She said that she is busy yesterday.\n④ If you call me, I will answer.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have opening presents all morning.\n② I have been opening presents all morning.\n③ The speech was bored, but the students were excited.\n④ The award ceremony was more exciting than last year.",
                 "options": [
                   "②, ④",
                   "③, ④",
@@ -5106,7 +5106,7 @@
                   "①, ②"
                 ],
                 "answerIndex": 0,
-                "explanation": "올바른 문장은 ②, ④입니다. 주어와 동사 형태 및 해당 단원의 문법을 확인하세요.",
+                "explanation": "올바른 문장은 ②, ④입니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -5115,70 +5115,70 @@
                 "id": "eu6-u8-check-1",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "She said that she is busy yesterday.",
-                  "Could you tell me what time it is?",
-                  "He asked me to send him a message.",
-                  "If you call me, I will answer.",
-                  "They have already replied to the email."
+                  "The speech was bored, but the students were excited.",
+                  "I have been opening presents all morning.",
+                  "She has been studying for the exam since Monday.",
+                  "The award ceremony was more exciting than last year.",
+                  "Have you been writing thank-you cards all afternoon?"
                 ],
                 "answerIndex": 0,
-                "explanation": "과거의 전달 발화에는 시제 일치를 적용합니다.",
+                "explanation": "감정을 일으키는 speech는 boring입니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u8-check-2",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "She said that she was busy.",
-                  "Could you tell me what time it is?",
-                  "Could you tell me what time is it?",
-                  "If you call me, I will answer.",
-                  "They have already replied to the email."
+                  "The speech was boring, but the students were excited.",
+                  "I have been opening presents all morning.",
+                  "I have opening presents all morning.",
+                  "The award ceremony was more exciting than last year.",
+                  "Have you been writing thank-you cards all afternoon?"
                 ],
                 "answerIndex": 2,
-                "explanation": "간접의문문은 주어+동사 어순입니다.",
+                "explanation": "현재완료진행형에는 have been + -ing가 필요합니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u8-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "She said that she was busy.",
-                  "Could you tell me what time it is?",
-                  "He asked me to send him a message.",
-                  "If you call me, I will answer.",
-                  "He asked me send him a message."
+                  "The speech was boring, but the students were excited.",
+                  "I have been opening presents all morning.",
+                  "She has been studying for the exam since Monday.",
+                  "The award ceremony was more exciting than last year.",
+                  "She has been studying for the exam for Monday."
                 ],
                 "answerIndex": 4,
-                "explanation": "ask + 목적어 + to부정사입니다.",
+                "explanation": "시작 시점 Monday 앞에는 since를 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u8-check-4",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "She said that she was busy.",
-                  "If you will call me, I will answer.",
-                  "He asked me to send him a message.",
-                  "If you call me, I will answer.",
-                  "They have already replied to the email."
+                  "The speech was boring, but the students were excited.",
+                  "The award ceremony was more excited than last year.",
+                  "She has been studying for the exam since Monday.",
+                  "The award ceremony was more exciting than last year.",
+                  "Have you been writing thank-you cards all afternoon?"
                 ],
                 "answerIndex": 1,
-                "explanation": "조건절에는 현재형을 씁니다.",
+                "explanation": "행사 자체를 꾸밀 때는 exciting을 씁니다.",
                 "displayStyle": "sentence-options"
               },
               {
                 "id": "eu6-u8-check-5",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "She said that she was busy.",
-                  "Could you tell me what time it is?",
-                  "He asked me to send him a message.",
-                  "They has already replied to the email.",
-                  "They have already replied to the email."
+                  "The speech was boring, but the students were excited.",
+                  "I have been opening presents all morning.",
+                  "She has been studying for the exam since Monday.",
+                  "Has you been writing thank-you cards all afternoon?",
+                  "Have you been writing thank-you cards all afternoon?"
                 ],
                 "answerIndex": 3,
-                "explanation": "they에는 have를 씁니다.",
+                "explanation": "you에는 Have를 씁니다.",
                 "displayStyle": "sentence-options"
               }
             ],
@@ -5186,67 +5186,67 @@
               {
                 "id": "eu6-u8-hunt-1",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "She said that she is busy yesterday.",
+                "sentence": "The speech was bored , but the students were excited.",
                 "options": [
-                  "She said",
-                  "that she",
-                  "is",
-                  "busy yesterday."
+                  "The",
+                  "speech was",
+                  "bored",
+                  ", but the students were excited."
                 ],
                 "answerIndex": 2,
-                "explanation": "과거의 전달 발화에는 시제 일치를 적용합니다."
+                "explanation": "감정을 일으키는 speech는 boring입니다."
               },
               {
                 "id": "eu6-u8-hunt-2",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "Could you tell me what time is it?",
+                "sentence": "I have opening presents all morning.",
                 "options": [
-                  "Could you tell",
-                  "me what time",
-                  "is",
-                  "it?"
+                  "I",
+                  "have",
+                  "opening",
+                  "presents all morning."
                 ],
                 "answerIndex": 2,
-                "explanation": "간접의문문은 주어+동사 어순입니다."
+                "explanation": "현재완료진행형에는 have been + -ing가 필요합니다."
               },
               {
                 "id": "eu6-u8-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "He asked me send him a message.",
+                "sentence": "She has been studying for the exam for Monday.",
                 "options": [
-                  "He",
-                  "asked me",
-                  "send",
-                  "him a message."
+                  "She has",
+                  "been studying",
+                  "for",
+                  "the exam for Monday."
                 ],
                 "answerIndex": 2,
-                "explanation": "ask + 목적어 + to부정사입니다."
+                "explanation": "시작 시점 Monday 앞에는 since를 씁니다."
               },
               {
                 "id": "eu6-u8-hunt-4",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "If you will call me, I will answer.",
+                "sentence": "The award ceremony was more excited than last year.",
                 "options": [
-                  "If",
-                  "you",
-                  "will",
-                  "call me, I will answer."
+                  "The award",
+                  "ceremony was more",
+                  "excited",
+                  "than last year."
                 ],
                 "answerIndex": 2,
-                "explanation": "조건절에는 현재형을 씁니다."
+                "explanation": "행사 자체를 꾸밀 때는 exciting을 씁니다."
               },
               {
                 "id": "eu6-u8-hunt-5",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "They has already replied to the email.",
+                "sentence": "Has you been writing thank-you cards all afternoon?",
                 "options": [
-                  "They",
-                  "has",
-                  "already replied",
-                  "to the email."
+                  "Has",
+                  "you been",
+                  "writing thank-you",
+                  "cards all afternoon?"
                 ],
-                "answerIndex": 1,
-                "explanation": "they에는 have를 씁니다."
+                "answerIndex": 0,
+                "explanation": "you에는 Have를 씁니다."
               }
             ]
           }
