@@ -14,22 +14,14 @@ const VERIFIED_KEY="willena:identity:verified-user:v2";
 const ACCOUNT_EVENT="user_logged_in";
 let lastSeenAuthEvent="";
 try{lastSeenAuthEvent=localStorage.getItem(ACCOUNT_EVENT)||"";}catch{}
-let openedNewTab=false, accountChanged=false, verifiedId="";
-// sessionStorage is copied by browsers for some window.open/new-tab flows.
- // window.name is per browsing context and prevents a copied storage marker from bypassing the check.
- try{
-  openedNewTab=window.name!==WINDOW_MARK;
-  if(!window.name||window.name===WINDOW_MARK)window.name=WINDOW_MARK;
-  else openedNewTab=true; // Never overwrite an app-owned window name.
-  sessionStorage.setItem(TAB_KEY,"1");
- }catch{openedNewTab=true;}
+let accountChanged=false, verifiedId="";
 try{verifiedId=sessionStorage.getItem(VERIFIED_KEY)||"";}catch{}
 const SIGNIN="/students/signin.html";
 const blockedSelectors=[
  "#vocabStudySession","#grammarRound","#session","#wgDiaryFlow","#wgEditor","#spRound",
  "#gameArea","#wgPaperScreen"
 ];
-let last=Date.now(),busy=false,prompting=false,pendingCheck=openedNewTab,lastWrite=0,dialog=null;
+let last=Date.now(),busy=false,prompting=false,pendingCheck=false,lastWrite=0,dialog=null;
 try{const stored=Number(sessionStorage.getItem(KEY));if(Number.isFinite(stored)&&stored>0&&stored<=Date.now())last=stored;}catch{}
 const now=()=>Date.now();
 function record(t=now()){
@@ -61,7 +53,7 @@ function working(){
  if(path.includes("/students/wordsearch/")&&visible(document.querySelector("#gameArea")))return true;
  return blockedSelectors.some(selector=>visible(document.querySelector(selector)));
 }
-function eligible(){return !prompting&&!busy&&!document.hidden&&(pendingCheck||now()-last>=IDLE_MS)&&(!working()||accountChanged||openedNewTab);}
+function eligible(){return !prompting&&!busy&&!document.hidden&&(pendingCheck||now()-last>=IDLE_MS)&&(!working()||accountChanged);}
 async function profile(){
  const api=window.WillenaAPI;
  if(!api?.fetch)return null;
@@ -95,18 +87,18 @@ function mount(){
  const title=document.createElement("h2");title.id="wil-idle-title";
  const sub=document.createElement("p");
  const actions=document.createElement("div");actions.className="wil-idle-actions";
- const yes=document.createElement("button");yes.type="button";yes.className="wil-yes";yes.textContent="Yes, it's me · 네, 맞아요";
- const no=document.createElement("button");no.type="button";no.textContent="No, log out · 아니요, 로그아웃";
+ const yes=document.createElement("button");yes.type="button";yes.className="wil-yes";yes.textContent="네, 맞아요";
+ const no=document.createElement("button");no.type="button";no.textContent="아니요, 다른 학생이에요";
  actions.append(yes,no);panel.append(title,sub,actions);root.append(panel);document.body.appendChild(root);
  yes.addEventListener("click",()=>{
   const mustReload=accountChanged;
-  root.hidden=true;prompting=false;pendingCheck=false;accountChanged=false;openedNewTab=false;
+  root.hidden=true;prompting=false;pendingCheck=false;accountChanged=false;
   try{sessionStorage.setItem(VERIFIED_KEY,verifiedId);}catch{}
   record();
   if(mustReload)location.reload();
  });
  no.addEventListener("click",async()=>{
-  yes.disabled=true;no.disabled=true;no.textContent="Signing out…";
+  yes.disabled=true;no.disabled=true;no.textContent="로그아웃 중…";
   try{
    const {logoutStudent}=await import('/students/shared/student-header-actions.js?v=1.0.1');
    await logoutStudent({redirect:SIGNIN});
@@ -129,13 +121,13 @@ async function ask(){
    if(!accountChanged)pendingCheck=false;
    return;
   }
-  if(document.hidden||(working()&&!accountChanged&&!openedNewTab)||prompting)return;
+  if(document.hidden||(working()&&!accountChanged)||prompting)return;
   if(verifiedId&&person.id!==verifiedId)accountChanged=true;
   if(accountChanged){pendingCheck=true;}
   verifiedId=person.id;
-  const ui=mount();ui.title.textContent=person.name+", is that you?";
-  ui.sub.textContent=person.className?person.className+" · 본인이 맞나요?":"본인이 맞나요?";
-  ui.yes.disabled=false;ui.no.disabled=false;ui.no.textContent="No, log out · 아니요, 로그아웃";
+  const ui=mount();ui.title.textContent=person.name+" 학생 맞나요?";
+  ui.sub.textContent=person.className||"";
+  ui.yes.disabled=false;ui.no.disabled=false;ui.no.textContent="아니요, 다른 학생이에요";
   ui.root.hidden=false;prompting=true;ui.yes.focus();
  }catch(e){console.warn("[Idle Identity] check unavailable",e);pendingCheck=true;}
  finally{busy=false;}
@@ -149,7 +141,7 @@ function onInteraction(e){
   e.stopImmediatePropagation?.();
   return;
  }
- if(pendingCheck&&(!working()||accountChanged||openedNewTab)){
+ if(pendingCheck&&(!working()||accountChanged)){
   // Defer confirmation until a non-working state; this interaction stays blocked.
   if(e.cancelable)e.preventDefault();
   e.stopImmediatePropagation?.();
@@ -159,7 +151,7 @@ function onInteraction(e){
 }
 ["pointerdown","keydown","touchstart","click","submit"].forEach(type=>addEventListener(type,onInteraction,{capture:true,passive:false}));
 const observer=new MutationObserver(()=>{
- if(!document.hidden&&pendingCheck&&(!working()||accountChanged||openedNewTab))ask();
+ if(!document.hidden&&pendingCheck&&(!working()||accountChanged))ask();
 });
 function observe(){if(document.body)observer.observe(document.body,{attributes:true,subtree:true,attributeFilter:["hidden","class","aria-hidden"]});}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",observe,{once:true});else observe();
@@ -168,40 +160,40 @@ document.addEventListener("visibilitychange",()=>{
 });
 window.addEventListener("pageshow",()=>{if(now()-last>=IDLE_MS)pendingCheck=true;if(eligible())ask();});
 // A different student may sign in from another tab. Lock before allowing further input.
+async function checkForStudentChange(){
+ if(busy||prompting)return;
+ try{
+  const person=await profile();
+  if(!person?.id)return;
+  if(!verifiedId){
+   verifiedId=person.id;
+   try{sessionStorage.setItem(VERIFIED_KEY,verifiedId);}catch{}
+   return;
+  }
+  if(person.id!==verifiedId){
+   accountChanged=true;pendingCheck=true;
+   if(!document.hidden)ask();
+  }else{
+   accountChanged=false;
+   if(now()-last<IDLE_MS)pendingCheck=false;
+  }
+ }catch(error){console.debug("[Idle Identity] account check unavailable",error);}
+}
 function onAccountEvent(e){
- if(e?.type==="storage" && e.key!==ACCOUNT_EVENT)return;
- if(e?.type==="storage" && e.newValue===lastSeenAuthEvent)return;
+ if(e?.type==="storage"&&e.key!==ACCOUNT_EVENT)return;
+ if(e?.type==="storage"&&e.newValue===lastSeenAuthEvent)return;
  try{lastSeenAuthEvent=localStorage.getItem(ACCOUNT_EVENT)||"";}catch{}
- accountChanged=true;pendingCheck=true;
- // Do not trust a stale identity from the former tab.
- if(!document.hidden)ask();
+ checkForStudentChange();
 }
 window.addEventListener("storage",onAccountEvent);
 window.addEventListener("auth:changed",onAccountEvent);
-// Check the server identity after every document navigation, even if a suspended tab missed a storage event.
-async function verifyNavigationIdentity(){
- if(openedNewTab||accountChanged||!verifiedId)return;
- try{
-  const person=await profile();
-  if(person?.id&&person.id!==verifiedId){
-   accountChanged=true;pendingCheck=true;
-   if(!document.hidden)ask();
-  }
- }catch(error){console.debug("[Idle Identity] navigation check pending",error);}
-}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",verifyNavigationIdentity,{once:true});
-else verifyNavigationIdentity();
+// New app sessions and QR links never trigger prompts for an unchanged account.
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",checkForStudentChange,{once:true});
+else checkForStudentChange();
 window.addEventListener("focus",()=>{
-  try{
-   const current=localStorage.getItem(ACCOUNT_EVENT)||"";
-   if(current!==lastSeenAuthEvent){lastSeenAuthEvent=current;accountChanged=true;pendingCheck=true;}
-  }catch{}
-  if(!document.hidden&&pendingCheck)ask();
- });
-// On initial load a QR link, direct URL or new tab has no tab marker and must confirm.
-if(openedNewTab){
- if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(ask,0),{once:true});
- else setTimeout(ask,0);
-}
+ try{lastSeenAuthEvent=localStorage.getItem(ACCOUNT_EVENT)||"";}catch{}
+ checkForStudentChange();
+ if(!document.hidden&&pendingCheck&&now()-last>=IDLE_MS)ask();
+});
 window.WillenaIdleIdentity={check:ask,isPending:()=>pendingCheck||now()-last>=IDLE_MS,isShowing:()=>prompting};
 })();
