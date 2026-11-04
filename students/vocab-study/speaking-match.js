@@ -169,6 +169,26 @@ export function matchSpeakingTarget(target,transcripts){
   const homophone=heard.find(item=>homophoneVariant(item.normalized,wanted));
   if(homophone)return{correct:true,matchedBy:'homophone',transcript:homophone.raw};
 
+  // Word Genius accepts a clearly spoken target anywhere within a longer
+  // sentence. Match full words (or consecutive words for a phrase), never
+  // arbitrary substrings such as "bee" inside "beeline".
+  const wantedWords=wanted.split(' ');
+  const contained=heard.find(item=>{
+    const words=item.normalized.split(' ');
+    return words.length>=wantedWords.length&&words.some((_,i)=>
+      i+wantedWords.length<=words.length&&
+      wantedWords.every((word,j)=>words[i+j]===word));
+  });
+  if(contained)return{correct:true,matchedBy:'in_sentence',transcript:contained.raw};
+
+  const containedHomophone=heard.find(item=>{
+    const words=item.normalized.split(' ');
+    return words.length>=wantedWords.length&&words.some((_,i)=>
+      i+wantedWords.length<=words.length&&
+      homophoneVariant(words.slice(i,i+wantedWords.length).join(' '),wanted));
+  });
+  if(containedHomophone)return{correct:true,matchedBy:'in_sentence_homophone',transcript:containedHomophone.raw};
+
   const plural=heard.find(item=>pluralVariant(item.normalized,wanted));
   if(plural)return{correct:true,matchedBy:'singular_plural',transcript:plural.raw};
 
