@@ -75,17 +75,8 @@ export function createScreens(actions){
   }
   function setHomeworkSession(assignment=null,progressStore=null){
     activeHomework=assignment;homeworkStore=progressStore;
-    const bookScreen=$('bookScreen'),old=$('sgHomeworkSessionBanner');
-    if(old)old.remove();
-    if(activeHomework&&bookScreen){
-      const banner=el('div','sg-homework-session-banner');
-      banner.id='sgHomeworkSessionBanner';
-      banner.style.cssText='margin:12px 0;padding:13px 16px;background:#fff;border:2px solid #eab1d0;border-radius:16px;color:#334f58';
-      banner.append(el('strong','','숙제 / Homework'));
-      banner.append(el('div','',activeHomework.title||'Textbook sentence assignment'));
-      banner.append(el('small','','Assigned answers are tracked separately from Golden Unit mastery.'));
-      $('unitTitle').before(banner);
-    }
+    // The book header already indicates homework; no redundant explanation card.
+    $('sgHomeworkSessionBanner')?.remove();
     $('bookName').textContent=(activeHomework?'숙제 / Homework · ':'')+(book?.title||'Sentence Genius');
     progress();
   }
@@ -111,7 +102,9 @@ export function createScreens(actions){
     const gold=!!store?.gold(items);
     if(gold&&unit?.id)goldenUnits.add(String(unit.id));
     $('goldStatus').classList.toggle('is-gold',gold);
-    $('goldLabel').textContent=activeHomework?(gold?'Golden Unit retained · Permanent mastery':'Homework does not affect permanent mastery'):(gold?'Golden Unit · 완성!':'코치 + 문장 배열 + 말하기: 모두 완료하면 Gold');
+    // Homework progress is shown on skill cards; keep permanent gold display for practice only.
+    $('goldStatus').hidden=!!activeHomework;
+    $('goldLabel').textContent=gold?'Golden Unit · 완성!':'코치 + 문장 배열 + 말하기: 모두 완료하면 Gold';
     const tab=$('unitStrip').querySelector('.is-current');
     if(tab){
       if(gold&&!tab.querySelector('img'))goldIcon(tab);
