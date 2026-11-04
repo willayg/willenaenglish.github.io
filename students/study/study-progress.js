@@ -1,7 +1,10 @@
 (function(global){
 'use strict';
 var PROGRESS_ENDPOINT='/.netlify/functions/progress_summary';
-var QUEUE_KEY='willena-study-attempt-queue-v1';
+var QUEUE_KEY='willena-study-attempt-queue-v2:';
+var OWNER_KEY='willena-study-verified-owner-v2';
+var currentOwner=null,ownerPromise=null,ownerCheckedAt=0;
+var OWNER_TTL_MS=5000;
 var PREVIEW_KEY='willena-study-preview-book';
 var SCORING_VERSION=(global.WillenaActivityScoring&&WillenaActivityScoring.version)||'activity-v1';
 var PROGRESS_VERSION='study-v1';
@@ -14,12 +17,48 @@ function uuid(){if(global.crypto&&crypto.randomUUID)return crypto.randomUUID();r
 function previewActive(){try{return !!sessionStorage.getItem(PREVIEW_KEY)||document.documentElement.classList.contains('study-preview-active');}catch(_){return document.documentElement.classList.contains('study-preview-active');}}
 function ensureStatus(){if(!/^staging\./i.test(location.hostname))return null;var n=document.getElementById('studyRecordingStatus');if(n)return n;n=document.createElement('div');n.id='studyRecordingStatus';n.style.cssText='position:fixed;right:10px;bottom:10px;z-index:9998;padding:8px 11px;border-radius:999px;background:#173f46;color:#fff;font:700 12px Poppins,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:.9;max-width:calc(100vw - 20px);white-space:normal';n.textContent=previewActive()?'Preview · recording':'Recorder ready';document.body.appendChild(n);return n;}
 function setStatus(text,bg){var n=ensureStatus();if(!n)return;n.textContent=text;if(bg)n.style.background=bg;}
-function readQueue(){try{var q=JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]');return Array.isArray(q)?q:[];}catch(_){return[];}}
-function writeQueue(q){try{localStorage.setItem(QUEUE_KEY,JSON.stringify(q.slice(-100)));}catch(_){}}
-function queueAttempt(item){var q=readQueue();if(!q.some(function(x){return x&&x.payload&&x.payload.client_attempt_id===item.payload.client_attempt_id;}))q.push(item);writeQueue(q);}
-function sessionId(bookId,unitId,assignmentId){var key=assignmentId?'willena-study-assignment-session-v1:'+assignmentId:('willena-study-session-v1:'+bookId+':'+unitId);try{var id=sessionStorage.getItem(key);if(!id){id=uuid();sessionStorage.setItem(key,id);}return id;}catch(_){return uuid();}}
-function payloadFrom(detail){var activity=detail&&detail.activity||{},result=detail&&detail.result||{},meta=activity.metadata||{},bookId=meta.book_id||null,unitId=meta.unit_id||null,assignmentId=meta.assignment_id||null;if((!bookId||!unitId)&&!assignmentId)return null;var contentType=String(activity.sourceType||'activity'),contentId=activity.sourceId||null;var masteryType=meta.mastery_content_type||contentType,masteryId=meta.mastery_content_id||contentId;if(activity.skill==='grammar'&&meta.pattern_id){masteryType='pattern';masteryId=meta.pattern_id;}var isPreview=previewActive();var hintsUsed=Math.max(0,Math.floor(Number(detail&&detail.hintsUsed!=null?detail.hintsUsed:(meta.hints_used||0))||0));var retryCount=Math.max(0,Math.floor(Number(detail&&detail.retryCount!=null?detail.retryCount:(meta.retry_count||0))||0));var sessionAttemptNumber=Math.max(1,Math.floor(Number(detail&&detail.attemptNumber!=null?detail.attemptNumber:(meta.session_attempt_number||1))||1));var sessionSource=String(detail&&detail.sessionSource||meta.session_source||'student').trim()||'student';return{
- session_id:sessionId(bookId,unitId,assignmentId),client_attempt_id:uuid(),book_id:bookId,unit_id:unitId,assignment_id:assignmentId,
+// The old browser-wide queue is intentionally not flushed: its entries have no
+// verified student identity. Keep it untouched for manual recovery if needed.
+function ownerQueueKey(owner){return QUEUE_KEY+owner;}
+function readQueue(owner){if(!owner)return[];try{var q=JSON.parse(localStorage.getItem(ownerQueueKey(owner))||'[]');return Array.isArray(q)?q:[];}catch(_){return[];}}
+function writeQueue(owner,q){if(!owner)return;try{localStorage.setItem(ownerQueueKey(owner),JSON.stringify(q.slice(-100)));}catch(_){}}
+function queueAttempt(owner,item){if(!owner||item.owner_id!==owner)return;var q=readQueue(owner);if(!q.some(function(x){return x&&x.payload&&x.payload.client_attempt_id===item.payload.client_attempt_id;}))q.push(item);writeQueue(owner,q);}
+function quarantineRejected(owner,item,error){try{
+ var key='willena-study-rejected-queue-v1:'+owner;
+ var q=JSON.parse(localStorage.getItem(key)||'[]');if(!Array.isArray(q))q=[];
+ q.push(Object.assign({},item,{rejected_at:new Date().toISOString(),last_error:String(error||'').slice(0,180)}));
+ localStorage.setItem(key,JSON.stringify(q.slice(-100)));
+}catch(_){}}
+async function verifiedOwner(force){
+ if(!force&&currentOwner&&Date.now()-ownerCheckedAt<OWNER_TTL_MS)return currentOwner;
+ if(ownerPromise)return ownerPromise;
+ ownerPromise=(async function(){
+  var fetcher=global.WillenaAPI&&typeof global.WillenaAPI.fetch==='function'?global.WillenaAPI.fetch.bind(global.WillenaAPI):global.fetch.bind(global);
+  var resp=await fetcher('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now(),{credentials:'include',cache:'no-store'});
+  var data=await resp.json().catch(function(){return{};});
+  if(!resp.ok||!data.success||!data.user_id)throw Error('Student identity could not be verified');
+  var next=String(data.user_id),previous=currentOwner;
+  try{previous=previous||sessionStorage.getItem(OWNER_KEY)||null;sessionStorage.setItem(OWNER_KEY,next);}catch(_){}
+  currentOwner=next;ownerCheckedAt=Date.now();
+  if(previous&&previous!==next){
+    // Student switched on a shared device. The page may still show the last
+    // student's questions, so force it to reload before accepting an answer.
+    global.dispatchEvent(new CustomEvent('willena:study-identity-changed',{detail:{previous:previous,current:next}}));
+    global.location.reload();
+    throw Error('Student changed. Reloading the activity.');
+  }
+  return next;
+ })();
+ try{return await ownerPromise;}finally{ownerPromise=null;}
+}
+function sessionId(bookId,unitId,assignmentId,owner){
+ if(!owner)throw Error('No verified student for study session');
+ var scope=assignmentId?'assignment:'+assignmentId:('unit:'+bookId+':'+unitId);
+ var key='willena-study-session-v2:'+owner+':'+scope;
+ try{var id=sessionStorage.getItem(key);if(!id){id=uuid();sessionStorage.setItem(key,id);}return id;}catch(_){return uuid();}
+}
+function payloadFrom(detail,owner){var activity=detail&&detail.activity||{},result=detail&&detail.result||{},meta=activity.metadata||{},bookId=meta.book_id||null,unitId=meta.unit_id||null,assignmentId=meta.assignment_id||null;if((!bookId||!unitId)&&!assignmentId)return null;var contentType=String(activity.sourceType||'activity'),contentId=activity.sourceId||null;var masteryType=meta.mastery_content_type||contentType,masteryId=meta.mastery_content_id||contentId;if(activity.skill==='grammar'&&meta.pattern_id){masteryType='pattern';masteryId=meta.pattern_id;}var isPreview=previewActive();var hintsUsed=Math.max(0,Math.floor(Number(detail&&detail.hintsUsed!=null?detail.hintsUsed:(meta.hints_used||0))||0));var retryCount=Math.max(0,Math.floor(Number(detail&&detail.retryCount!=null?detail.retryCount:(meta.retry_count||0))||0));var sessionAttemptNumber=Math.max(1,Math.floor(Number(detail&&detail.attemptNumber!=null?detail.attemptNumber:(meta.session_attempt_number||1))||1));var sessionSource=String(detail&&detail.sessionSource||meta.session_source||'student').trim()||'student';return{
+ session_id:sessionId(bookId,unitId,assignmentId,owner),client_attempt_id:uuid(),book_id:bookId,unit_id:unitId,assignment_id:assignmentId,
  skill:String(activity.skill||'practice'),response_type:String(activity.response&&activity.response.type||'unknown'),
  content_type:contentType,content_id:contentId,mastery_content_type:String(masteryType||contentType),mastery_content_id:masteryId||null,occurrence_id:meta.occurrence_id||null,
  activity_id:String(activity.id||''),stimulus_snapshot:activity.stimulus||{},student_answer:result.selected===undefined?null:result.selected,
@@ -78,12 +117,64 @@ async function getProgress(bookId,unitId){var q='?section=study_progress&_='+Dat
 async function getAdaptiveState(){return api('?section=adaptive_state&_='+Date.now());}
 async function getContentMastery(bookId,unitId){var q='?section=study_content_mastery&_='+Date.now();if(bookId)q+='&book_id='+encodeURIComponent(bookId);if(unitId)q+='&unit_id='+encodeURIComponent(unitId);return api(q);}
 async function getVocabSnapshot(bookId,unitId){var q='?section=study_vocab_snapshot&_='+Date.now();if(bookId)q+='&book_id='+encodeURIComponent(bookId);if(unitId)q+='&unit_id='+encodeURIComponent(unitId);return api(q);}
-async function flush(){if(flushing)return;flushing=true;try{var q=readQueue().map(normalizeQueuedPreview),remaining=[];for(var i=0;i<q.length;i++){try{await attachConceptEvidence(q[i].payload);attachDiagnosis(q[i].payload);await send(q[i]);}catch(error){remaining.push(q[i]);}}writeQueue(remaining);if(q.length&&!remaining.length)setStatus('Saved queued answers','#23704a');else if(remaining.length)setStatus('Queued '+remaining.length,'#a66a15');else setStatus(previewActive()?'Preview · recording':'Recorder ready','#173f46');}finally{flushing=false;}}
-async function record(detail){var payload=payloadFrom(detail);if(!payload){setStatus('Recorder · missing activity data','#a0443c');return;}await attachConceptEvidence(payload);attachDiagnosis(payload);var item={payload:payload,queued_at:new Date().toISOString()};setStatus(previewActive()?'Preview · saving…':'Saving…','#315e64');try{var result=await send(item);setStatus((previewActive()?'Preview · ':'')+'Saved ✓ · '+(result.study_context==='independent'?'independent':'current'),'#23704a');global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'recorded',result:result,payload:payload}}));if(payload.metadata&&payload.metadata.vocab_study===true){try{var snapshot=await getVocabSnapshot(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:vocab-snapshot-updated',{detail:{book_id:payload.book_id,unit_id:payload.unit_id,data:snapshot}}));}catch(_){}}else{try{var progress=await getProgress(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:study-progress-updated',{detail:progress}));}catch(_){}try{var mastery=await getContentMastery(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:content-mastery-updated',{detail:{book_id:payload.book_id,unit_id:payload.unit_id,data:mastery}}));}catch(_){}}}catch(error){console.warn('[WillenaStudyProgress] queued attempt after recording failure',error);queueAttempt(item);setStatus('Queued · '+error.message,'#a66a15');global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'queued',error:error.message,payload:payload}}));}}
+function isPermanentIdentityError(error){
+ var msg=String(error&&error.message||error||'').toLowerCase();
+ return /session belongs to another student|cannot transfer a study session|study session is missing/.test(msg);
+}
+async function flush(){
+ if(flushing)return;
+ flushing=true;
+ try{
+  var owner=await verifiedOwner(true).catch(function(){return null;});
+  if(!owner)return;
+  var q=readQueue(owner).map(normalizeQueuedPreview),remaining=[];
+  for(var i=0;i<q.length;i++){
+   var item=q[i];
+   if(item.owner_id!==owner){quarantineRejected(owner,item,'Queued attempt has no matching verified owner');continue;}
+   if(currentOwner!==owner){remaining.push.apply(remaining,q.slice(i));break;}
+   try{await attachConceptEvidence(item.payload);attachDiagnosis(item.payload);await send(item);}
+   catch(error){if(isPermanentIdentityError(error))quarantineRejected(owner,item,error);else remaining.push(item);}
+  }
+  writeQueue(owner,remaining);
+  if(q.length&&!remaining.length)setStatus('Saved queued answers','#23704a');
+  else if(remaining.length)setStatus('Queued '+remaining.length,'#a66a15');
+  else setStatus(previewActive()?'Preview · recording':'Recorder ready','#173f46');
+ }finally{flushing=false;}
+}
+async function record(detail){
+ var owner;
+ try{owner=await verifiedOwner();}catch(error){setStatus('Recording paused · verify login','#a0443c');return;}
+ var payload=payloadFrom(detail,owner);
+ if(!payload){setStatus('Recorder · missing activity data','#a0443c');return;}
+ await attachConceptEvidence(payload);attachDiagnosis(payload);
+ var item={payload:payload,owner_id:owner,queued_at:new Date().toISOString()};
+ setStatus(previewActive()?'Preview · saving…':'Saving…','#315e64');
+ try{
+  if(currentOwner!==owner)throw Error('Student changed before saving answer');
+  var result=await send(item);
+  setStatus((previewActive()?'Preview · ':'')+'Saved ✓ · '+(result.study_context==='independent'?'independent':'current'),'#23704a');
+  global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'recorded',result:result,payload:payload}}));
+  if(payload.metadata&&payload.metadata.vocab_study===true){
+   try{var snapshot=await getVocabSnapshot(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:vocab-snapshot-updated',{detail:{book_id:payload.book_id,unit_id:payload.unit_id,data:snapshot}}));}catch(_){}
+  }else{
+   try{var progress=await getProgress(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:study-progress-updated',{detail:progress}));}catch(_){}
+   try{var mastery=await getContentMastery(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:content-mastery-updated',{detail:{book_id:payload.book_id,unit_id:payload.unit_id,data:mastery}}));}catch(_){}
+  }
+ }catch(error){
+  console.warn('[WillenaStudyProgress] recording failed',error);
+  if(isPermanentIdentityError(error))quarantineRejected(owner,item,error);
+  else queueAttempt(owner,item);
+  setStatus('Queued / blocked · '+error.message,'#a66a15');
+  global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'queued',error:error.message,payload:payload}}));
+ }
+}
+function onAuthChange(){ownerCheckedAt=0;verifiedOwner(true).then(flush).catch(function(){});}
 
 global.addEventListener('willena:activity-answer',function(event){var activity=event&&event.detail&&event.detail.activity,meta=activity&&activity.metadata||{};if(meta.daily_test_mode===true||meta.morphology_sidecar===true||meta.ai_coach_cross_book===true)return;record(event.detail);});
 global.addEventListener('online',flush);
-global.addEventListener('auth:changed',flush);
+global.addEventListener('auth:changed',onAuthChange);
+global.addEventListener('focus',function(){verifiedOwner(true).catch(function(){});});
+global.addEventListener('storage',function(event){if(event.key&&/auth|token|sb_access|supabase/i.test(event.key)){ownerCheckedAt=0;verifiedOwner(true).catch(function(){});}});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){ensureStatus();flush();},{once:true});else{ensureStatus();setTimeout(flush,0);}
 global.WillenaStudyProgress={record:record,flush:flush,getProgress:getProgress,getAdaptiveState:getAdaptiveState,getContentMastery:getContentMastery,getVocabSnapshot:getVocabSnapshot,isPreview:previewActive,scoringVersion:SCORING_VERSION,progressVersion:PROGRESS_VERSION,schedulerVersion:SCHEDULER_VERSION,conceptEvidenceVersion:CONCEPT_EVIDENCE_VERSION};
 })(window);
