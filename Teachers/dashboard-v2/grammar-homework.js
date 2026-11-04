@@ -130,7 +130,7 @@ async function paintBatchView(){
     shared.updateRing(a.id,total>0?100*done/total:null,el);
     const detail=card.querySelector('#gfHwDetail-'+CSS.escape(String(a.id)));
     if(detail)detail.innerHTML='<div class="gf-hw-progress-summary">'+done+'/'+total+' students completed</div>'+
-     '<div class="gf-hw-students">'+(data.students||[]).map(st=>'<div class="gf-hw-student"><span>'+esc(st.korean_name||st.name||'Student')+'</span><span>'+esc(st.attempts?'Best '+st.best_score+'/'+st.total:'Not started')+'</span><strong class="'+(st.complete?'gf-hw-done':'')+'">'+(st.complete?'Complete':esc(st.percent)+'%')+'</strong></div>').join('')+'</div>';
+     '<div class="gf-hw-students">'+(data.students||[]).map(st=>'<div class="gf-hw-student"><span>'+esc(st.name||st.korean_name||'Student')+'</span><span>'+esc(st.attempts?'Best '+st.best_score+'/'+st.total:'Not started')+'</span><strong class="'+(st.complete?'gf-hw-done':'')+'">'+(st.complete?'Complete':esc(st.percent)+'%')+'</strong></div>').join('')+'</div>';
    }
    return;
   }catch(error){console.warn('Grammar batch unavailable, falling back',error);}
@@ -149,7 +149,7 @@ async function paintBatchView(){
     const detail=card.querySelector('#gfHwDetail-'+CSS.escape(String(a.id)));
     if(detail){
      detail.innerHTML='<div class="gf-hw-progress-summary">'+done+'/'+total+' students completed</div>'+
-      '<div class="gf-hw-students">'+(data.students||[]).map(st=>'<div class="gf-hw-student"><span>'+esc(st.korean_name||st.name||'Student')+'</span><span>'+esc(st.attempts?'Best '+st.best_score+'/'+st.total:'Not started')+'</span><strong class="'+(st.complete?'gf-hw-done':'')+'">'+(st.complete?'Complete':esc(st.percent)+'%')+'</strong></div>').join('')+'</div>';
+      '<div class="gf-hw-students">'+(data.students||[]).map(st=>'<div class="gf-hw-student"><span>'+esc(st.name||st.korean_name||'Student')+'</span><span>'+esc(st.attempts?'Best '+st.best_score+'/'+st.total:'Not started')+'</span><strong class="'+(st.complete?'gf-hw-done':'')+'">'+(st.complete?'Complete':esc(st.percent)+'%')+'</strong></div>').join('')+'</div>';
     }
    }catch(e){
     const detail=card.querySelector('.ghc-content');if(detail)detail.textContent='Unable to load progress: '+e.message;
