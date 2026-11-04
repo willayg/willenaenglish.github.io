@@ -21,7 +21,7 @@ const HOMOPHONE_GROUPS=[
   ['pear','pair'],
   ['plane','plain'],
   ['there','their',"they're"],
-  ['be','bee'],
+  ['be','bee','b'],
   ['break','brake'],
   ['new','knew'],
   ['one','won'],
