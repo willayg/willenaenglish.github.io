@@ -11,7 +11,7 @@ assignmentDateStyle.textContent += '.ua-simple-date-divider{display:flex;align-i
 assignmentDateStyle.textContent += '.ua-group-top{display:flex;align-items:center;gap:8px}.ua-group-top>.ua-group-heading{flex:1;min-width:0}.ua-group-select{display:flex;align-items:center;padding:12px 0 12px 14px;cursor:pointer}.ua-group-select input{width:19px;height:19px;accent-color:#2a9eaa;cursor:pointer}';
 const assignmentCardStyle=document.createElement('link');
 assignmentCardStyle.rel='stylesheet';
-assignmentCardStyle.href='/Teachers/dashboard-v2/genius-homework-card.css';
+assignmentCardStyle.href='/Teachers/dashboard-v2/genius-homework-card.css?v=20261104-shared-progress3';
 document.head.appendChild(assignmentCardStyle);
 assignmentDateStyle.textContent += '.ua-overview-genius-card{width:100%;margin:0;min-height:210px;overflow:hidden;position:relative;border:2.5px solid #e7a2c5;border-radius:17px;padding:17px 95px 17px 20px;background:#fff;box-sizing:border-box}.ua-overview-heading{display:flex;align-items:center;gap:10px;min-height:30px}.ua-overview-heading>.ghc-class{flex:1;min-width:0}.ua-overview-genius-card .ghc-task{margin-top:10px}.ua-overview-genius-card .ghc-teacher{margin-bottom:23px}.ua-overview-genius-card .ghc-ring{top:65px}.ua-overview-genius-card>.ghc-details{margin-right:-75px}.ua-overview-progress-toggle{font:inherit;font-size:14px;font-weight:750;color:#277e85;border:0;background:transparent;cursor:pointer;display:flex;justify-content:space-between;width:100%;padding:12px 0 0;text-align:left}.ua-overview-genius-card .ua-group-body{padding:14px 0 0;margin-right:-75px}.ua-overview-genius-card .ua-group-select{padding:0;flex:none}.ua-overview-genius-card .ghc-day{margin-left:auto}.ua-overview-genius-card .ua-homework-card{width:100%}@media(max-width:600px){.ua-overview-genius-card{padding:14px 82px 14px 15px;min-height:200px}.ua-overview-genius-card .ghc-ring{top:65px}.ua-overview-genius-card>.ghc-details,.ua-overview-genius-card .ua-group-body{margin-right:-67px}}';
 assignmentDateStyle.textContent += '.ua-toolbar .ua-bulk-icon{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;width:56px;height:46px;min-width:56px;min-height:46px;padding:7px;border-radius:12px;background:#fff;line-height:1;border:1.5px solid #a9d7dc;color:#26868f;cursor:pointer}.ua-toolbar .ua-bulk-delete{border-color:#e2b4c7;color:#b25b74}.ua-toolbar .ua-bulk-icon svg{flex:none}.ua-toolbar .ua-bulk-count{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}.ua-toolbar .ua-bulk-icon:disabled{opacity:.4;cursor:not-allowed}.ua-toolbar .ua-bulk-icon:focus-visible{outline:3px solid #2899a5;outline-offset:2px}';
@@ -495,7 +495,11 @@ async function loadOverview(scopeName='my',force=false){
      const outcome=progress.get(id(row.id)),target=Number(row.target_count)||0;
      if(row.app==='내신'&&outcome&&target>0)return Math.min(1,(Number(outcome.done)||0)/target);
      if(row.app==='Grammar Genius'){
-      const x=row.source_type==='grammar_books'?grammarBookProgress.get(id(row.id)):classProgress.get(id(row.id));return x&&Number(x.students)>0?(row.source_type==='grammar_books'?Number(x.percent)/100:Number(x.passed)/Number(x.students)):null;
+      const x=row.source_type==='grammar_books'?grammarBookProgress.get(id(row.id)):classProgress.get(id(row.id));
+      if(!x||!(Number(x.students)>0))return null;
+      if(row.source_type!=='grammar_books')return Number(x.passed)/Number(x.students);
+      const studentRows=Array.isArray(x.student_rows)?x.student_rows:[];
+      return studentRows.length?studentRows.reduce((sum,st)=>sum+(Number(st.total)>0?Math.min(Number(st.done)||0,Number(st.total))/Number(st.total):0),0)/studentRows.length:null;
      }
      if(row.app==='Writing Genius'){
       const x=row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id));return x&&Number(x.students)>0?(row.list_key==='writing_genius:sentence'?Number(x.progress_percent||0)/100:Number(x.completed)/Number(x.students)):null;
