@@ -6,7 +6,7 @@ import {openUnit} from './scoring.js?v=sg-coach-gold-v3';
 import {geniusSessionContext,geniusHomeworkFromUrl} from '/students/components/genius-session-context.js?v=20261104-a';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
-import {createScreens} from './screens.js?v=20261104-separated-homework1';
+import {createScreens} from './screens.js?v=20261104-compact-homework1';
 import {createSession} from './session.js?v=20261104-determiner2';
 import {loadSentenceHomework} from './homework.js?v=20261104-separated-homework1';
 
