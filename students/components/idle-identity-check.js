@@ -15,13 +15,21 @@ const ACCOUNT_EVENT="user_logged_in";
 let lastSeenAuthEvent="";
 try{lastSeenAuthEvent=localStorage.getItem(ACCOUNT_EVENT)||"";}catch{}
 let accountChanged=false, verifiedId="";
+ // window.name persists across navigation within the same tab, unlike a fresh tab.
+ // Prompt once on a newly opened tab; never on ordinary in-tab app navigation.
+ const TAB_MARK="__willena_identity_tab_checked_v3__";
+ let newTab=false;
+ try {
+  newTab=window.name!==TAB_MARK;
+  if(!window.name || window.name===TAB_MARK) window.name=TAB_MARK;
+ } catch { newTab=true; }
 try{verifiedId=sessionStorage.getItem(VERIFIED_KEY)||"";}catch{}
 const SIGNIN="/students/signin.html";
 const blockedSelectors=[
  "#vocabStudySession","#grammarRound","#session","#wgDiaryFlow","#wgEditor","#spRound",
  "#gameArea","#wgPaperScreen"
 ];
-let last=Date.now(),busy=false,prompting=false,pendingCheck=false,lastWrite=0,dialog=null;
+let last=Date.now(),busy=false,prompting=false,pendingCheck=newTab,lastWrite=0,dialog=null;
 try{const stored=Number(sessionStorage.getItem(KEY));if(Number.isFinite(stored)&&stored>0&&stored<=Date.now())last=stored;}catch{}
 const now=()=>Date.now();
 function record(t=now()){
@@ -53,7 +61,7 @@ function working(){
  if(path.includes("/students/wordsearch/")&&visible(document.querySelector("#gameArea")))return true;
  return blockedSelectors.some(selector=>visible(document.querySelector(selector)));
 }
-function eligible(){return !prompting&&!busy&&!document.hidden&&(pendingCheck||now()-last>=IDLE_MS)&&(!working()||accountChanged);}
+function eligible(){return !prompting&&!busy&&!document.hidden&&(pendingCheck||now()-last>=IDLE_MS)&&(!working()||accountChanged||newTab);}
 async function profile(){
  const api=window.WillenaAPI;
  if(!api?.fetch)return null;
@@ -92,7 +100,7 @@ function mount(){
  actions.append(yes,no);panel.append(title,sub,actions);root.append(panel);document.body.appendChild(root);
  yes.addEventListener("click",()=>{
   const mustReload=accountChanged;
-  root.hidden=true;prompting=false;pendingCheck=false;accountChanged=false;
+  root.hidden=true;prompting=false;pendingCheck=false;accountChanged=false;newTab=false;
   try{sessionStorage.setItem(VERIFIED_KEY,verifiedId);}catch{}
   record();
   if(mustReload)location.reload();
@@ -121,7 +129,7 @@ async function ask(){
    if(!accountChanged)pendingCheck=false;
    return;
   }
-  if(document.hidden||(working()&&!accountChanged)||prompting)return;
+  if(document.hidden||(working()&&!accountChanged&&!newTab)||prompting)return;
   if(verifiedId&&person.id!==verifiedId)accountChanged=true;
   if(accountChanged){pendingCheck=true;}
   verifiedId=person.id;
@@ -141,7 +149,7 @@ function onInteraction(e){
   e.stopImmediatePropagation?.();
   return;
  }
- if(pendingCheck&&(!working()||accountChanged)){
+ if(pendingCheck&&(!working()||accountChanged||newTab)){
   // Defer confirmation until a non-working state; this interaction stays blocked.
   if(e.cancelable)e.preventDefault();
   e.stopImmediatePropagation?.();
@@ -151,7 +159,7 @@ function onInteraction(e){
 }
 ["pointerdown","keydown","touchstart","click","submit"].forEach(type=>addEventListener(type,onInteraction,{capture:true,passive:false}));
 const observer=new MutationObserver(()=>{
- if(!document.hidden&&pendingCheck&&(!working()||accountChanged))ask();
+ if(!document.hidden&&pendingCheck&&(!working()||accountChanged||newTab))ask();
 });
 function observe(){if(document.body)observer.observe(document.body,{attributes:true,subtree:true,attributeFilter:["hidden","class","aria-hidden"]});}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",observe,{once:true});else observe();
@@ -168,6 +176,7 @@ async function checkForStudentChange(){
   if(!verifiedId){
    verifiedId=person.id;
    try{sessionStorage.setItem(VERIFIED_KEY,verifiedId);}catch{}
+   if(newTab&&!document.hidden)ask();
    return;
   }
   if(person.id!==verifiedId){
@@ -175,7 +184,7 @@ async function checkForStudentChange(){
    if(!document.hidden)ask();
   }else{
    accountChanged=false;
-   if(now()-last<IDLE_MS)pendingCheck=false;
+   if(now()-last<IDLE_MS&&!newTab)pendingCheck=false;
   }
  }catch(error){console.debug("[Idle Identity] account check unavailable",error);}
 }
@@ -187,13 +196,17 @@ function onAccountEvent(e){
 }
 window.addEventListener("storage",onAccountEvent);
 window.addEventListener("auth:changed",onAccountEvent);
-// New app sessions and QR links never trigger prompts for an unchanged account.
+// New tabs (including QR links opened as new tabs) require one confirmation; same-tab navigation does not.
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",checkForStudentChange,{once:true});
 else checkForStudentChange();
+if(newTab){
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(ask,0),{once:true});
+ else setTimeout(ask,0);
+}
 window.addEventListener("focus",()=>{
  try{lastSeenAuthEvent=localStorage.getItem(ACCOUNT_EVENT)||"";}catch{}
  checkForStudentChange();
  if(!document.hidden&&pendingCheck&&now()-last>=IDLE_MS)ask();
 });
-window.WillenaIdleIdentity={check:ask,isPending:()=>pendingCheck||now()-last>=IDLE_MS,isShowing:()=>prompting};
+window.WillenaIdleIdentity={check:ask,isPending:()=>pendingCheck||newTab||now()-last>=IDLE_MS,isShowing:()=>prompting};
 })();
