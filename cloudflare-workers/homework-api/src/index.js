@@ -1006,9 +1006,9 @@ export default {
 
         let updated;
         try {
-          updated = await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignmentId}`, { active:true, ended_at:null });
+          updated = await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignmentId}`, { active:true, status:'active', ended_at:null });
         } catch (err) {
-          updated = await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignmentId}`, { active:true });
+          updated = await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignmentId}`, { active:true, status:'active' });
         }
         return jsonResponse({ success:true, assignment:updated?.[0] || null }, 200, origin);
       }
