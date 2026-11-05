@@ -75,6 +75,10 @@ export function createScreens(actions){
   }
   function setHomeworkSession(assignment=null,progressStore=null){
     activeHomework=assignment;homeworkStore=progressStore;
+    // Hide unit navigation in assignment mode. The selected homework already
+    // identifies the exact unit; normal study retains all unit tabs.
+    const bookScreen=$('bookScreen');
+    bookScreen?.classList.toggle('sg-focused-homework',!!activeHomework);
     // The book header already indicates homework; no redundant explanation card.
     $('sgHomeworkSessionBanner')?.remove();
     $('bookName').textContent=(activeHomework?'숙제 / Homework · ':'')+(book?.title||'Sentence Genius');
