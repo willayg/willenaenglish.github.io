@@ -64,7 +64,12 @@ export function createFreeTalkingVoice({host,getToken}){
   }catch(e){
    if(v!==version)return;
    console.warn('[Free Talking] question voice',e?.message||'error');
-   status('음성을 사용할 수 없어요. 질문을 읽고 답해 주세요.');
+   const reason=String(e?.message||'');
+   status(/로그인|401|인증|sign.in/i.test(reason)
+    ?'음성 로그인 확인에 실패했어요. 새로고침 후 다시 들어 보세요.'
+    :/configured|설정/i.test(reason)
+     ?'AI 음성 설정을 확인해야 해요. 선생님에게 알려 주세요.'
+     :'음성을 불러오지 못했어요. 다시 듣기를 눌러 재시도하세요.');
    if(button)button.disabled=false;
   }
  }
