@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./styles.css?v=20261105-model-status1">
+<link rel="stylesheet" href="./styles.css?v=20261105-voice-picker1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261101-menu-prominent1"></script>
@@ -73,7 +73,23 @@
    <span class="ft-willi-wave"><i></i><i></i><i></i><i></i><i></i></span>
   </div>
   <div class="ft-willi-voice-copy"><strong>AI Willi <small>Voice by AI Willi · AI 생성 음성</small></strong>
-   <button type="button" class="ft-willi-listen" data-ft-listen disabled aria-pressed="false"><span aria-hidden="true">▶</span> Listen again</button>
+   <div class="ft-willi-voice-controls">
+    <button type="button" class="ft-willi-listen" data-ft-listen disabled aria-pressed="false"><span aria-hidden="true">▶</span> Listen again</button>
+    <label class="ft-voice-select-label" for="ftVoicePicker">Voice
+     <select id="ftVoicePicker" class="ft-voice-select" data-ft-voice-picker aria-label="Choose AI Willi voice">
+      <option value="marin" selected>Marin</option>
+      <option value="cedar">Cedar</option>
+      <option value="coral">Coral</option>
+      <option value="alloy">Alloy</option>
+      <option value="ash">Ash</option>
+      <option value="ballad">Ballad</option>
+      <option value="echo">Echo</option>
+      <option value="sage">Sage</option>
+      <option value="shimmer">Shimmer</option>
+      <option value="verse">Verse</option>
+     </select>
+    </label>
+   </div>
    <span class="ft-willi-status" data-ft-voice-status role="status">질문 음성을 준비하는 중…</span>
    <span class="ft-willi-model" data-ft-voice-model data-state="loading">Voice model: checking…</span>
   </div>
@@ -97,9 +113,9 @@
 <section id="ftFinish" class="ft-shell" hidden><div id="ftFinishContent"></div><div id="ftFinishStatus" class="ft-status" role="status"></div>
  <div class="ft-finish-actions"><button id="ftRetrySync" class="vocab-action" hidden type="button">Retry points sync</button><button id="ftFinishHome" class="vocab-action" type="button">Back to Units</button></div>
 </section>
-<div class="ft-footer-version">Free Talking Genius · Realtime R2 · v1.6</div>
+<div class="ft-footer-version">Free Talking Genius · Voice preview · v1.7</div>
 </main></div>
-<script type="module" src="./app.js?v=20261105-r2fix3"></script>
+<script type="module" src="./app.js?v=20261105-voice-picker1"></script>
 <script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261103-idle1"></script>
 </body></html>
