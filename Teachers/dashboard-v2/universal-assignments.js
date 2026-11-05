@@ -161,14 +161,14 @@ async function creativeManage(app,body){
     '<div class="ua-genius-manage-toolbar"><select class="control" id="uaCreativeClass"><option value="all">All classes</option>'+classes.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('')+'</select>'+
     '<div class="ua-genius-current-history"><button type="button" data-period="current" class="'+(view==='current'?'active':'')+'">Current</button><button type="button" data-period="history" class="'+(view==='history'?'active':'')+'">History</button></div>'+
     '<button type="button" class="control" id="uaCreativeRefresh">Refresh</button></div>'+
-    (chosen.length?'<div class="ua-genius-manage-list">'+chosen.map(a=>
+    (chosen.length?'<div class="ua-genius-manage-list">'+window.WillenaGeniusHomeworkCard.groupByDate(chosen,a=>
      window.WillenaGeniusHomeworkCard.card({id:a.id,className:a.class,qrUrl:'https://students.willenaenglish.com'+(app==='writing'?'/students/writing-genius/?homework='+encodeURIComponent(a.id):'/students/wordsearch/?homework='+encodeURIComponent(a.id)+'&mode='+encodeURIComponent(a.list_meta?.kind||'boggle')),
      task:(a.list_meta?.kind==='sentence'?(a.list_meta?.unit_label||a.title):(a.title||'Homework')),
      dueAt:a.due_at,teacher:a.teacher_name||a.created_by_name||'',createdBy:a.created_by,
      progressLabel:'Student progress',
      body:'<button type="button" class="control ua-assign ghc-load-action" data-creative-progress="'+esc(a.id)+'" hidden>Load student results</button>'+
       '<div data-creative-results="'+esc(a.id)+'" aria-live="polite"></div>'})
-    ).join('')+'</div>':'<div class="ua-empty">No '+label+' homework in this view.</div>')+'</div>';
+    )+'</div>':'<div class="ua-empty">No '+label+' homework in this view.</div>')+'</div>';
    body.querySelector('#uaCreativeClass').value=classChoice;
    body.querySelector('#uaCreativeClass').onchange=e=>{classChoice=e.target.value;paint()};
    body.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{view=b.dataset.period;paint()});
