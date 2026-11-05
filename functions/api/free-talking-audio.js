@@ -163,11 +163,84 @@ async function saveR2(key,audio,format='wav',env={}){
   return {stored:false,path:null};
  }
 }
+// Inventory-first preload: check all published questions in one R2 manifest pass.
+// Never invoke a TTS provider while assembling an inventory.
+async function audioInventory(bookId,env){
+ const res=await fetch(CONTENT+'/rest/v1/free_talking_questions?select=id,question_en&book_id=eq.'+
+  encodeURIComponent(bookId)+'&is_published=eq.true&order=unit_number.asc,question_number.asc&limit=200',{
+  headers:{apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY},
+  cache:'no-store',signal:AbortSignal.timeout(12000)});
+ if(!res.ok)throw Error('INVENTORY_CONTENT_UNAVAILABLE');
+ const rows=await res.json();
+ if(!Array.isArray(rows)||rows.length>200)throw Error('INVENTORY_INVALID');
+ const records=[];
+ for(const q of rows){
+  if(!UUID.test(q.id)||!q.question_en)continue;
+  const text=String(q.question_en).trim();
+  records.push({
+   id:q.id,
+   marin:await cacheKey(text,model(env),'marin'),
+   lili:await cacheKey(text,ELEVEN_MODEL,ELEVEN_VOICES['bunny-v3'],'elevenlabs'),
+   fallback:await cacheKey(text,'gpt-4o-mini-tts','marin','fallback')
+  });
+ }
+ const bucket=env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET;
+ const keysByFormat={
+  wav:records.map(r=>r.marin),
+  mp3:records.flatMap(r=>[r.lili,r.fallback])
+ };
+ const statuses=new Map();
+ for(const [format,keys] of Object.entries(keysByFormat)){
+  if(!keys.length)continue;
+  // Shared R2 reader performs parallel HEAD operations and returns presigned URLs.
+  const response=await fetch(R2+'get_audio_urls',{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({words:keys,format,strict:true}),
+   cache:'no-store',signal:AbortSignal.timeout(25000)});
+  if(!response.ok)throw Error('INVENTORY_R2_HTTP_'+response.status);
+  const payload=await response.json();
+  for(const key of keys){
+   const item=payload?.results?.[key];
+   if(typeof item?.exists!=='boolean')throw Error('INVENTORY_R2_UNVERIFIED');
+   statuses.set(key,{exists:item.exists,url:item.exists&&typeof item.url==='string'&&item.url.startsWith('https://')?item.url:null});
+  }
+ }
+ // A direct R2 binding may store clips that aren't in the shared bucket.
+ // Head-only checks recover them without sending audio bytes.
+ if(bucket){
+  for(const r of records){
+   for(const [key,format] of [[r.marin,'wav'],[r.lili,'mp3'],[r.fallback,'mp3']]){
+    if(statuses.get(key)?.exists)continue;
+    try{
+     const item=await bucket.head(key+'.'+format);
+     if(item)statuses.set(key,{exists:true,url:null});
+    }catch(e){throw Error('INVENTORY_DIRECT_R2_UNAVAILABLE')}
+   }
+  }
+ }
+ return {
+  success:true,book_id:bookId,questions:records.map(r=>{
+   const willi=statuses.get(r.marin),backup=statuses.get(r.fallback),lili=statuses.get(r.lili);
+   const williResolved=willi?.exists?willi:backup?.exists?backup:{exists:false,url:null};
+   return {id:r.id,marin:{cached:!!williResolved.exists,url:williResolved.url},
+    'bunny-v3':{cached:!!lili?.exists,url:lili?.url||null}};
+  })
+ };
+}
 export async function onRequestPost({request,env,context}){
  try{
   const userId=await verifyStudent(request);
   if(!userId)return json(401,{success:false,error:'학생 로그인을 확인해 주세요.'});
   const body=await request.json().catch(()=>null);
+  if(body?.inventory_book_id){
+   const bookId=String(body.inventory_book_id);
+   if(!UUID.test(bookId))return json(400,{success:false,error:'Invalid book'});
+   try{return json(200,await audioInventory(bookId,env))}
+   catch(e){
+    console.warn('[Free Talking] R2 inventory',String(e?.message||e).slice(0,150));
+    return json(503,{success:false,error:'R2 inventory unavailable; no new audio generated',code:'INVENTORY_UNAVAILABLE'});
+   }
+  }
   const id=String(body?.question_id||'');
   // Preloader receives cache status only; it never downloads the audio bytes.
   const warmOnly=body?.warm_only===true;
