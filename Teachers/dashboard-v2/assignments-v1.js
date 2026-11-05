@@ -107,11 +107,14 @@
     const avg=Math.round(rows.reduce((n,x)=>n+x.overall,0)/rows.length);
     const done=rows.filter(x=>x.status==='complete').length;
     const notStarted=rows.filter(x=>x.status==='not_started').length;
-    return '<div class="assignment-card-summary" data-card-progress="'+esc(a.id)+'">'+
-      '<div class="assignment-card-summary-top"><span>Class progress <strong>'+avg+'%</strong></span><span>'+done+'/'+rows.length+' complete · '+notStarted+' not started</span></div>'+
-      '<div class="assignment-card-track"><span style="width:'+avg+'%"></span></div>'+
-      '<div class="assignment-students-list-wrap">'+
-      '<div class="assignment-students-list">'+rows.map(x=>'<div class="assignment-students-line"><span>'+esc(x.student.name||x.student.korean_name||'Student')+'</span><div class="assignment-card-track"><span style="width:'+x.overall+'%"></span></div><strong>'+x.overall+'%</strong></div>').join('')+'</div></div></div>';
+    const panel=window.WillenaGeniusHomeworkCard?.progressPanel({
+      students:rows.map(x=>({
+        name:x.student.name||x.student.korean_name||'Student',
+        percent:x.overall
+      })),
+      average:avg,completed:done,notStarted
+    });
+    return '<div class="assignment-card-summary" data-card-progress="'+esc(a.id)+'">'+(panel||'Progress unavailable')+'</div>';
   }
 
   async function loadVisibleCardProgress(rows,generation){
