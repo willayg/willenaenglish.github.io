@@ -137,6 +137,16 @@ async function action(req:Request){
   if(!saved)throw error||new Error("Room could not be created");
   return response({ok:true,pin:saved.pin,total:qs.length});
  }
+ if(mode==="preview"){
+  if(!["teacher","admin"].includes(who.role))return fail("Teacher access required.",403);
+  const r=await room(clean(p.pin));
+  if(r.teacher_id!==who.id)return fail("Only the hosting teacher can preview this game.",403);
+  if(r.status!=="lobby")return fail("Word preview is available before the game starts.",409);
+  return response({ok:true,pin:r.pin,words:r.questions.map((q:any,i:number)=>({
+    number:i+1,word:clean(q.options?.[q.correct]),meaning:clean(q.explanation).split(" = ").slice(1).join(" = "),
+    book:clean(q.book),unit:q.unit
+  }))});
+ }
  if(mode==="join"){
   const r=await room(clean(p.pin));
   if(r.status!=="lobby")return fail("This game has already started.");
