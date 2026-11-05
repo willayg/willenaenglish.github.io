@@ -43,6 +43,18 @@ function groupByDate(rows,render,options={}){
 const dateStyle=document.createElement('style');
 dateStyle.textContent='.ghc-date-group{margin:0 0 16px;border:1.5px solid #d6e9eb;background:#fff;border-radius:18px;overflow:hidden}.ghc-date-group>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:15px 18px;background:#f6fcfc;color:#266f78;font-weight:850}.ghc-date-group>summary::-webkit-details-marker{display:none}.ghc-date-group>summary small{font-size:.72rem;color:#799197;font-weight:700}.ghc-date-chevron{margin-left:auto;transition:transform .2s}.ghc-date-group[open] .ghc-date-chevron{transform:rotate(180deg)}.ghc-date-items{display:grid;gap:16px;padding:16px}.ghc-date-items>.genius-homework-card{margin:0!important}.ghc-date-group:focus-within{border-color:#9cdde1}@media(max-width:600px){.ghc-date-items{padding:10px;gap:12px}.ghc-date-group>summary{padding:12px}}';
 document.head.appendChild(dateStyle);
+
+function classReadiness(host,rows=[],subtitle='Prior assignment results for the selected content'){
+ if(!host)return;
+ const safe=(rows||[]).filter(x=>x&&String(x.name||'').trim()).map(x=>({
+   name:String(x.name),pct:Number.isFinite(Number(x.percent))?Math.max(0,Math.min(100,Math.round(Number(x.percent)))):null
+ })).sort((a,b)=>a.name.localeCompare(b.name,'en'));
+ host.innerHTML='<section class="ghc-readiness"><h4>Class progress before assigning</h4>'+
+ '<p>'+esc(subtitle)+'</p>'+
+ (safe.length?safe.map(x=>'<div class="ghc-readiness-row"><span>'+esc(x.name)+'</span><div class="ghc-readiness-track"><i style="width:'+(x.pct===null?0:x.pct)+'%"></i></div><strong>'+(x.pct===null?'—':x.pct+'%')+'</strong></div>').join(''):'<div class="ghc-readiness-empty">No previous results for this selection. This does not mean 0% mastery.</div>')+
+ '</section>';
+}
+dateStyle.textContent+='.ghc-readiness{border:1.5px solid #b9e2e7;border-radius:17px;padding:18px;margin:22px 0;background:#fff}.ghc-readiness h4{font-size:1.05rem;margin:0 0 6px;color:#303442}.ghc-readiness p{font-size:.77rem;color:#6a7c84;margin:0 0 13px}.ghc-readiness-row{display:grid;grid-template-columns:minmax(80px,125px) minmax(100px,1fr) 46px;align-items:center;gap:12px;margin:9px 0;font-size:.83rem}.ghc-readiness-row strong{text-align:right;font-variant-numeric:tabular-nums}.ghc-readiness-track{height:10px;background:#e9eff1;border-radius:999px;overflow:hidden}.ghc-readiness-track i{display:block;height:100%;border-radius:999px;background:#ea69a8}.ghc-readiness-empty{padding:10px 0;color:#758890;font-size:.78rem;font-weight:650}@media(max-width:600px){.ghc-readiness-row{grid-template-columns:minmax(65px,95px) 1fr 40px;gap:8px}}';
 document.addEventListener('toggle',event=>{
  const details=event.target;
  if(!(details instanceof HTMLDetailsElement)||!details.matches('.ghc-details')||!details.open)return;
@@ -111,6 +123,6 @@ document.addEventListener('click',event=>{
  overlay.querySelector('.ghc-qr-close').focus();
 });
 
-window.WillenaGeniusHomeworkCard={card,dday,escape:esc,hydrateTeachers,updateRing,groupByDate};
+window.WillenaGeniusHomeworkCard={card,dday,escape:esc,hydrateTeachers,updateRing,groupByDate,classReadiness};
 
 })();
