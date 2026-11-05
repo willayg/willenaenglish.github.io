@@ -568,7 +568,7 @@ function createShell(){
  '<fieldset class="sgt-modes"><legend>Required steps</legend>'+
  Object.entries(types).map(([key,label])=>'<label><input type="checkbox" name="sgtMode" value="'+key+'" checked> '+label+'</label>').join('')+'</fieldset>'+
  '<div id="sgtPreAssignmentReport" aria-live="polite"></div>'+
- '<div class="sgt-actions"><button type="submit" id="sgtCreate" class="control ua-primary">Assign selected units</button></div><div data-sg-status role="status"></div></form>';
+ '<div class="sgt-actions"><button type="submit" id="sgtCreate" class="control ua-primary">Assign selected missions</button></div><div data-sg-status role="status"></div></form>';
 }
 async function mountCreate(root){
  const classEl=$('#sgtClass',root),bookEl=$('#sgtBook',root),unitHost=$('#sgtUnits',root);
