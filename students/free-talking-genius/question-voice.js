@@ -71,31 +71,12 @@ export function createFreeTalkingVoice({host,getToken}){
   inflight.set(cacheId,work);
   return work;
  }
+ // Temporarily disabled: no batch MP3 fetch/generation, regardless of voice choice.
+ // The current question still loads on demand through select().
  function preload(unit=preferredUnit){
   preferredUnit=Number(unit)||1;
-  const epoch=++preloadEpoch,chosen=activeVoice();
-  // Never batch-generate MP3s before the student explicitly chooses a voice.
-  if(!voiceConfirmed||!isElevenVoice(chosen)||!questionBank.length){preloadingText('');return}
-  // Preload only the selected unit; avoid generating every textbook unit at once.
-  const ordered=questionBank.filter(q=>Number(q.unit_number)===preferredUnit)
-   .sort((a,b)=>Number(a.question_number)-Number(b.question_number));
-  const total=ordered.length;let done=0,failed=0,cursor=0;
-  preloadingText(chosen+' · loading 0/'+total+' questions…');
-  async function worker(){
-   while(epoch===preloadEpoch&&!destroyed&&activeVoice()===chosen){
-    const index=cursor++;if(index>=ordered.length)return;
-    const id=String(ordered[index].id||'');
-    if(!id)continue;
-    try{await obtain(id,chosen)}catch(e){failed++;console.warn('[Free Talking] voice preload',chosen,String(e?.message||e).slice(0,120))}
-    done++;
-    if(epoch===preloadEpoch){
-     preloadingText(chosen+' · '+done+'/'+total+' ready'+(failed?' · '+failed+' failed':''));
-    }
-   }
-  }
-  void Promise.all([worker(),worker()]).then(()=>{
-   if(epoch===preloadEpoch&&!destroyed)preloadingText(chosen+' · '+(total-failed)+'/'+total+' prepared'+(failed?' · retry failed voices by tapping Listen':''));
-  });
+  ++preloadEpoch;
+  preloadingText('');
  }
  function setQuestionBank(questions,unit=1){questionBank=Array.isArray(questions)?questions:[];preload(unit)}
  async function play(){
