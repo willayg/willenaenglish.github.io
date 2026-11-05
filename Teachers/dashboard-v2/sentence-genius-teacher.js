@@ -567,6 +567,7 @@ function createShell(){
  '<div class="sgt-target"><strong>Units</strong><div id="sgtUnits">Choose a textbook.</div></div>'+
  '<fieldset class="sgt-modes"><legend>Required steps</legend>'+
  Object.entries(types).map(([key,label])=>'<label><input type="checkbox" name="sgtMode" value="'+key+'" checked> '+label+'</label>').join('')+'</fieldset>'+
+ '<div class="sgt-actions"><button type="button" id="sgtPreviewProgress" class="control">Check class progress</button></div><div id="sgtPreAssignmentReport" aria-live="polite"></div>'+
  '<div class="sgt-actions"><button type="submit" id="sgtCreate" class="control ua-primary">Assign selected units</button></div><div data-sg-status role="status"></div></form>';
 }
 async function mountCreate(root){
@@ -581,6 +582,30 @@ async function mountCreate(root){
     const all=await units(bookEl.value);state.units=all;
     unitHost.innerHTML=all.length?all.map(u=>'<label class="sgt-unit"><input type="checkbox" data-sg-unit="'+escapeHtml(u.id)+'"><span>Unit '+escapeHtml(u.unit_number)+' · '+escapeHtml(u.title||'')+'</span></label>').join(''):'No published units for this textbook.';
    }catch(e){status(root,e.message)}
+  };
+  $('#sgtPreviewProgress',root).onclick=async()=>{
+   const host=$('#sgtPreAssignmentReport',root);
+   const className=classEl.value,bookId=bookEl.value,
+    chosen=[...root.querySelectorAll('[data-sg-unit]:checked')].map(x=>String(x.dataset.sgUnit));
+   if(!className||!bookId||!chosen.length){host.textContent='Choose a class, textbook and at least one unit first.';return}
+   host.textContent='Checking previous student results…';
+   const button=$('#sgtPreviewProgress',root);button.disabled=true;
+   try{
+    const records=await Promise.allSettled([rpc('sg_homework_list_v1',{p_history:false}),rpc('sg_homework_list_v1',{p_history:true})]);
+    const assignments=[...new Map(records.flatMap(r=>r.status==='fulfilled'?(r.value.assignments||[]):[]).filter(a=>
+      a.class_name===className&&String(a.book_id)===String(bookId)&&chosen.includes(String(a.unit_id))
+    ).map(a=>[String(a.id),a])).values()].slice(0,8);
+    const results=await Promise.allSettled(assignments.map(a=>rpc('sg_homework_progress_v1',{p_id:a.id})));
+    const people=new Map();
+    results.forEach(r=>{if(r.status!=='fulfilled')return;(r.value.students||[]).forEach(st=>{
+      const name=String(st.name||st.korean_name||'').trim(),total=Number(st.total)||0,done=Number(st.done)||0;
+      if(!name||!total)return;
+      const prev=people.get(name)||{name,done:0,total:0};prev.done+=Math.min(total,Math.max(0,done));prev.total+=total;people.set(name,prev)
+    })});
+    window.WillenaGeniusHomeworkCard?.classReadiness(host,[...people.values()].map(p=>({name:p.name,percent:100*p.done/p.total})),
+      'Prior Sentence Genius homework results for the selected textbook and units (not a new test).');
+   }catch(error){host.textContent='Previous progress unavailable: '+error.message}
+   finally{button.disabled=false}
   };
   $('#sgtAssignForm',root).onsubmit=async ev=>{
    ev.preventDefault();const btn=$('#sgtCreate',root);
