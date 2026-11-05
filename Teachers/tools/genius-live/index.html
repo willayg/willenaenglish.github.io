@@ -19,18 +19,20 @@ button.primary{background:var(--pink);border-color:var(--pink);color:white}butto
 import {ensureTeacherSession,ensureAuthRefresh} from "/Teachers/auth-refresh.js?v=20261021-sessionfix1";
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const api=async(action,body={})=>{const r=await fetch("/api/genius-live",{method:"POST",credentials:"include",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,...body})});const j=await r.json().catch(()=>({}));if(!r.ok||!j.ok)throw Error(j.error||"Request failed ("+r.status+")");return j};
-let catalog=[],classes=[],selectedClassId="",selected=new Map(),pin=sessionStorage.getItem("genius.live.host.pin")||"",state=null,busy=false,initialized=false,autoReveal=false;
+let catalog=[],classes=[],classBookIds={},selectedClassId="",selected=new Map(),pin=sessionStorage.getItem("genius.live.host.pin")||"",state=null,busy=false,initialized=false,autoReveal=false;
 let settings={count:15,seconds:20,mode:"team",teamCount:2},lastView="";
 function notify(message,error=false){const n=$("#message");n.textContent=message;n.className="notice"+(error?" error":"");n.hidden=!message}
 function bookName(id){return catalog.find(b=>b.id===id)?.title||"Unknown book"}
+function classBooks(){const allowed=new Set(classBookIds[selectedClassId]||[]);return catalog.filter(b=>allowed.has(b.id))}
+function resetToClassBooks(){const allowed=new Set(classBookIds[selectedClassId]||[]);for(const id of [...selected.keys()])if(!allowed.has(id))selected.delete(id)}
 function selectedUnits(){return [...selected].map(([bookId,units])=>({bookId,units:[...units]})).filter(x=>x.units.length)}
 function roundStatus(){if(!state)return "";return state.status+"|"+state.questionNumber+"|"+state.answeredCount+"|"+state.players.length+"|"+state.className}
 function teamName(n){return ["Pink Dragons","Blue Sharks","Green Tigers","Yellow Stars","Purple Panthers","Orange Foxes","Silver Wolves","Red Falcons"][n]||"Team"}
 function leaderboard(){if(!state)return "";let list=state.mode==="team"?Array.from({length:state.teamCount},(_,i)=>({name:teamName(i),score:state.players.filter(p=>p.team===i).reduce((s,p)=>s+p.score,0)})):state.players.map(p=>({name:p.name,score:p.score}));list.sort((a,b)=>b.score-a.score);return list.map((p,i)=>'<div class="score"><span>'+(i+1)+'. '+esc(p.name)+'</span><b>'+p.score.toLocaleString()+' pts</b></div>').join("")}
 function setup(){
- $("#app").innerHTML='<div class="grid"><section class="panel em"><div class="row between"><h2>Create a classroom game</h2><span class="tag">Word Genius · Quiz</span></div><p class="muted small">Choose your class and any published books. Questions come directly from Word Genius content.</p>'+
+ $("#app").innerHTML='<div class="grid"><section class="panel em"><div class="row between"><h2>Create a classroom game</h2><span class="tag">Word Genius · Quiz</span></div><p class="muted small">Only books actively assigned to the selected class are available.</p>'+
  '<div class="field"><label for="classSelect">Class</label><select id="classSelect"><option value="">Choose a class…</option>'+classes.map(c=>'<option value="'+esc(c.id)+'" '+(selectedClassId===c.id?"selected":"")+'>'+esc(c.name)+'</option>').join("")+'</select></div>'+
- '<div class="field"><label>Find a book</label><select id="bookSelect"><option value="">Select a book…</option>'+catalog.map(b=>'<option value="'+b.id+'">'+esc(b.title)+'</option>').join("")+'</select></div><div id="bookCards">'+bookCards()+'</div>'+
+ '<div class="field"><label for="bookSelect">Assigned books</label><select id="bookSelect" '+(!selectedClassId||!classBooks().length?"disabled":"")+'><option value="">'+(!selectedClassId?"Choose a class first…":!classBooks().length?"No active assigned books":"Select a class book…")+'</option>'+classBooks().map(b=>'<option value="'+b.id+'">'+esc(b.title)+'</option>').join("")+'</select></div><div id="bookCards">'+bookCards()+'</div>'+
  '<div class="two"><div class="field"><label>Number of questions</label><select id="count">'+[5,10,15,20,30,40].map(n=>'<option '+(settings.count===n?"selected":"")+'>'+n+'</option>').join("")+'</select></div>'+
  '<div class="field"><label>Seconds per question</label><select id="seconds">'+[10,15,20,30,45,60].map(n=>'<option '+(settings.seconds===n?"selected":"")+'>'+n+'</option>').join("")+'</select></div>'+
  '<div class="field"><label>Game type</label><select id="mode"><option value="team" '+(settings.mode==="team"?"selected":"")+'>Team battle</option><option value="individual" '+(settings.mode==="individual"?"selected":"")+'>Individual</option></select></div>'+
@@ -39,7 +41,7 @@ function setup(){
  '<aside class="panel"><h2>Teacher instructions</h2><p>1. Select one or more books and units.</p><p>2. Create a game and show the six-digit PIN.</p><p>3. Students sign into the separate Genius Live student page and join.</p><p>4. Start the quiz, reveal each answer and follow the scoreboard.</p>'+
  '<div class="notice"><b>Student game:</b><p class="small">https://students.willenaenglish.com/students/genius-live/</p><button id="copyLink">Copy student link</button></div>'+
  '<p class="muted small">No dashboard link has been added, and Genius homework scores are unaffected.</p></aside></div>';
- $("#classSelect").onchange=e=>{selectedClassId=e.target.value;const create=$("#create");if(create)create.disabled=!selectedClassId||!selectedUnits().length};
+ $("#classSelect").onchange=e=>{selectedClassId=e.target.value;resetToClassBooks();setup()};
  $("#bookSelect").onchange=e=>{const id=e.target.value;if(!id)return;const b=catalog.find(x=>x.id===id);if(!selected.has(id))selected.set(id,new Set(b.units.map(u=>u.id)));setup()};
  document.querySelectorAll("[data-unit]").forEach(b=>b.onclick=()=>{const id=b.dataset.book,unit=b.dataset.unit,chosen=selected.get(id);chosen.has(unit)?chosen.delete(unit):chosen.add(unit);setup()});
  document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{selected.delete(b.dataset.remove);setup()});
@@ -82,7 +84,7 @@ async function login(){
   if(!res.ok||!["teacher","admin"].includes(String(r.role||"").toLowerCase()))throw Error("Teacher access required.");
   ensureAuthRefresh();initialized=true;
   if(pin){await refresh();if(state){notify("");return}pin="";sessionStorage.removeItem("genius.live.host.pin")}
-  notify("Loading books…");const data=await api("catalog");catalog=data.books||[];classes=data.classes||[];notify("");setup();
+  notify("Loading books…");const data=await api("catalog");catalog=data.books||[];classes=data.classes||[];classBookIds=data.classBookIds||{};resetToClassBooks();notify("");setup();
  }catch(e){notify(e.message,true);$("#app").innerHTML='<div class="panel"><h2>Could not open Genius Live</h2><button id="retryLogin">Retry login</button> <a href="/Teachers/">Teachers Dashboard</a></div>';$("#retryLogin").onclick=login}}
 setInterval(()=>{if(initialized&&pin&&document.visibilityState==="visible")refresh()},1800);
 setInterval(tick,200);
