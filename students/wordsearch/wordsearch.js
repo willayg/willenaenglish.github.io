@@ -1578,6 +1578,8 @@ async function boot(){
     setPuzzleControlsEnabled(false);
     console.error('[Word Search boot]',error);
     showError(error);
+  }finally{
+    window.WillenaHomeworkDeepLinkSplash?.hide();
   }
 }
 
