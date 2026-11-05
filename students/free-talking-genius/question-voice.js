@@ -198,7 +198,26 @@ export function createFreeTalkingVoice({host,getToken}){
     }
    }
    render(' · '+missing.length+' missing');
-   if(!missing.length)return;
+   // A successful HEAD inventory does not preload audio. Fetch the actual saved
+   // clips into browser memory, current unit first, without triggering paid TTS.
+   const cachedJobs=[];
+   for(const voice of [selectedVoice,otherVoice])for(const q of orderedQuestions){
+    if(byId.get(String(q.id))?.[voice]?.cached&&!stored.has(String(q.id)+'|'+voice+'|'+(modelForVoice(voice)||'standard')))
+     cachedJobs.push({id:String(q.id),voice});
+   }
+   let loadIndex=0,loaded=0,loadFailures=0;
+   const preloadCached=async()=>{
+    while(loadIndex<cachedJobs.length&&epoch===preloadEpoch&&!destroyed){
+     const job=cachedJobs[loadIndex++];
+     try{await obtain(job.id,job.voice);loaded++}
+     catch(e){loadFailures++;console.warn('[Free Talking] cached clip preload',job.voice,String(e?.message||e).slice(0,100))}
+     if(loaded%3===0||loadFailures)render(' · '+loaded+'/'+cachedJobs.length+' loaded'+(loadFailures?' · '+loadFailures+' load errors':''));
+    }
+   };
+   // Keep a bounded concurrency: enough for immediate playback, not dozens of
+   // simultaneous WAV downloads on classroom Wi-Fi or mobile connections.
+   const cacheLoading=Promise.all(Array.from({length:Math.min(3,cachedJobs.length)},()=>preloadCached()));
+   if(!missing.length){await cacheLoading;render(' · '+loaded+' loaded'+(loadFailures?' · '+loadFailures+' load errors':''));return}
    // Prove R2 accepts writes BEFORE asking OpenAI or ElevenLabs for new clips.
    try{await confirmStorageWritable()}
    catch(e){
@@ -214,14 +233,21 @@ export function createFreeTalkingVoice({host,getToken}){
     return (Number(qa?.unit_number)===preferredUnit?0:1)-
      (Number(qb?.unit_number)===preferredUnit?0:1);
    });
-   let failed=0;
+   let failed=0,liliNotConfigured=false;
    for(const job of missing){
+    // Do not retry a known missing provider secret for every question.
+    if(job.voice==='bunny-v3'&&liliNotConfigured)continue;
     if(epoch!==preloadEpoch||destroyed)return;
     try{await warm(job.id,job.voice);complete[job.voice]++}
     catch(e){
      failed++;
      const message=String(e?.message||e);
      console.warn('[Free Talking] R2 missing clip generation',job.voice,message.slice(0,150));
+     if(job.voice==='bunny-v3'&&/ELEVENLABS_KEY_NOT_CONFIGURED|ELEVENLABS_KEY_NOT_AVAILABLE/i.test(message)){
+      liliNotConfigured=true;
+      render(' · AI Lili key unavailable in this deployment; continuing AI Willi');
+      continue;
+     }
      if(/R2|INVENTORY|401|403|sign.in|AUTH/i.test(message)){
       render(' · paused: '+message.slice(0,85));
       return;
@@ -230,7 +256,9 @@ export function createFreeTalkingVoice({host,getToken}){
     render((failed?' · '+failed+' failed':''));
     await sleep(1000);
    }
-   render(failed?' · '+failed+' failed (retry later)':'');
+   await cacheLoading;
+   render((failed?' · '+failed+' failed':'')+(liliNotConfigured?' · AI Lili needs Preview secret':'')+
+    (loaded?' · '+loaded+' cached audio loaded':''));
   }
   void run().catch(e=>{
    if(epoch===preloadEpoch)preloadingText('Preload stopped: '+String(e?.message||e).slice(0,110));
