@@ -132,13 +132,13 @@ async function drawCreate(){
   $('#gbHwSelected',el).textContent=n+' selected';
   $('#gbHwSubmit',el).disabled=!selectedBook()?.playable||!n||!classSelect.value;
  };
- const bindChapters=()=>$('[data-chapter]',form).forEach(input=>input.addEventListener('change',()=>{count();scheduleClassPreview()}));
+ const bindChapters=()=>$$('[data-chapter]',form).forEach(input=>input.addEventListener('change',()=>{count();scheduleClassPreview()}));
  let previewStamp=0,previewTimer=null;
  function scheduleClassPreview(){
   const stamp=++previewStamp;
   clearTimeout(previewTimer);
   const host=$('#gbHwPreviewReport',el);
-  if(!classSelect.value||!selectedBook()?.playable||!$('[data-chapter]:checked',form).length){host.replaceChildren();return}
+  if(!classSelect.value||!selectedBook()?.playable||!$$('[data-chapter]:checked',form).length){host.replaceChildren();return}
   host.textContent='Loading class progress…';
   previewTimer=setTimeout(()=>void updateClassPreview(stamp),220);
  }
@@ -176,7 +176,7 @@ async function drawCreate(){
  async function updateClassPreview(stamp){
   const host=$('#gbHwPreviewReport',el);
   const klass=classSelect.value,bookId=bookSelect.value;
-  const selected=$('[data-chapter]:checked',form).map(x=>Number(x.dataset.chapter));
+  const selected=$$('[data-chapter]:checked',form).map(x=>Number(x.dataset.chapter));
   if(!klass||!bookId||!selected.length){host.replaceChildren();return}
   host.textContent='Checking previous homework progress…';
   try{
