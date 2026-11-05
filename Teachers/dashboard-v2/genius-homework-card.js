@@ -18,6 +18,19 @@ function card({className,task,dueAt,teacher,progressLabel='Progress',progressPer
  (valid?'<div class="ghc-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.max(0,Math.min(100,pct))+'"><span style="width:'+Math.max(0,Math.min(100,pct))+'%"></span></div>':'')+
  '<details class="ghc-details"><summary><span>'+esc(progressLabel)+'</span><span class="ghc-chevron">▾</span></summary><div class="ghc-content">'+body+action+'</div></details></article>';
 }
+// Shared grouped homework card shell for the My/All overview. Keep the same
+// Word Genius card elements, ring, heading, divider and expandable detail styles.
+function groupCardStart({key,title,task,teacher,dueAt,dueLabel,checkbox='',progressPercent=null}){
+ const pct=Number(progressPercent),valid=progressPercent!==null&&progressPercent!==undefined&&Number.isFinite(pct);
+ const bounded=valid?Math.max(0,Math.min(100,Math.round(pct))):0;
+ return '<div class="ua-group genius-homework-card ua-overview-genius-card" data-ua-group="'+esc(key)+'">'+
+  '<div class="ghc-top">'+checkbox+'<strong class="ghc-class">'+esc(title)+'</strong><span class="ghc-day">'+esc(dueLabel||dday(dueAt))+'</span></div>'+
+  '<div class="ghc-task">'+esc(task)+'</div>'+
+  '<div class="ghc-teacher">'+esc(teacher)+'</div>'+
+  '<div class="ghc-ring'+(valid?' has-data':'')+'" style="'+(valid?'--ghc-pct:'+bounded+'%;':'')+'" role="img" aria-label="'+esc(valid?'Class progress '+bounded+'%':'Class progress not available')+'"><span>'+(valid?bounded+'%':'—')+'</span></div>'+
+  '<div class="ghc-details"><button type="button" class="ua-overview-progress-toggle" data-ua-group-toggle="'+esc(key)+'" aria-expanded="false"><span>Student progress</span><span class="ghc-chevron">▾</span></button></div>'+
+  '<div class="ua-group-body" hidden>';
+}
 // Date-grouped assignment cards. Uses the teacher's Korean calendar date, not due dates.
 function dateKey(value){
  if(!value)return 'undated';
@@ -123,6 +136,6 @@ document.addEventListener('click',event=>{
  overlay.querySelector('.ghc-qr-close').focus();
 });
 
-window.WillenaGeniusHomeworkCard={card,dday,escape:esc,hydrateTeachers,updateRing,groupByDate,classReadiness};
+window.WillenaGeniusHomeworkCard={card,groupCardStart,dday,escape:esc,hydrateTeachers,updateRing,groupByDate,classReadiness};
 
 })();
