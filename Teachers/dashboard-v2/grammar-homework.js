@@ -33,12 +33,36 @@ async function mount(sub){
 }
 async function renderCreate(){
  const [mods,names]=await Promise.all([catalog(),classes()]);const el=root();if(!el||state.mode!=='create')return;
- el.innerHTML='<form id="gfHwForm" class="gf-hw-form"><div class="gf-hw-form-grid"><label>Class<select required id="gfHwClass" class="control"><option value="">Choose class</option>'+names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('')+'</select></label><label>Completion requirement<select id="gfHwGoal" class="control"><option value="80">Pass · 80%</option><option value="100">Gold · 100%</option></select></label><label>Due date<input required type="date" id="gfHwDue" class="control"></label></div><div class="gf-hw-picker-top"><div><strong>Select grammar points and levels</strong><small>Each selected level becomes a separate student homework item.</small></div><span id="gfHwSelected">0 selected</span></div><div class="gf-hw-footer"><button type="submit" id="gfHwSubmit" class="control ua-primary">Assign selected levels →</button><button type="button" class="control gf-hw-view" id="gfHwView" hidden>View assignments →</button><span id="gfHwMessage" role="status" aria-live="polite"></span></div><div class="gf-hw-modules">'+mods.map(m=>'<fieldset class="gf-hw-module"><legend>'+esc(title(m))+' <small>'+esc(m.englishTitle||'')+'</small></legend><label class="gf-hw-all"><input type="checkbox" data-all="'+esc(m.id)+'"> All levels</label><div class="gf-hw-levels">'+(m.stages||[]).map(s=>'<label><input type="checkbox" data-stage="'+esc(s.id)+'" data-module="'+esc(m.id)+'"><span>Level '+esc(s.number)+' · '+esc(stitle(s))+'</span></label>').join('')+'</div></fieldset>').join('')+'</div></form>';
+ el.innerHTML='<form id="gfHwForm" class="gf-hw-form"><div class="gf-hw-form-grid"><label>Class<select required id="gfHwClass" class="control"><option value="">Choose class</option>'+names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('')+'</select></label><label>Completion requirement<select id="gfHwGoal" class="control"><option value="80">Pass · 80%</option><option value="100">Gold · 100%</option></select></label><label>Due date<input required type="date" id="gfHwDue" class="control"></label></div><div class="gf-hw-picker-top"><div><strong>Select grammar points and levels</strong><small>Each selected level becomes a separate student homework item.</small></div><span id="gfHwSelected">0 selected</span></div><div class="gf-hw-pre-assignment"><button type="button" class="control" id="gfHwPreview">Check class progress</button><div id="gfHwPreviewReport" aria-live="polite"></div></div><div class="gf-hw-footer"><button type="submit" id="gfHwSubmit" class="control ua-primary">Assign selected levels →</button><button type="button" class="control gf-hw-view" id="gfHwView" hidden>View assignments →</button><span id="gfHwMessage" role="status" aria-live="polite"></span></div><div class="gf-hw-modules">'+mods.map(m=>'<fieldset class="gf-hw-module"><legend>'+esc(title(m))+' <small>'+esc(m.englishTitle||'')+'</small></legend><label class="gf-hw-all"><input type="checkbox" data-all="'+esc(m.id)+'"> All levels</label><div class="gf-hw-levels">'+(m.stages||[]).map(s=>'<label><input type="checkbox" data-stage="'+esc(s.id)+'" data-module="'+esc(m.id)+'"><span>Level '+esc(s.number)+' · '+esc(stitle(s))+'</span></label>').join('')+'</div></fieldset>').join('')+'</div></form>';
  const d=new Date(Date.now()+7*864e5);$('#gfHwDue',el).value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  const count=()=>{const n=el.querySelectorAll('[data-stage]:checked').length;$('#gfHwSelected',el).textContent=n+' selected';const button=$('#gfHwSubmit',el);button.textContent=n?'Assign '+n+' selected level'+(n===1?'':'s')+' →':'Select levels to assign';button.disabled=!n||state.loading;if(n)$('#gfHwView',el).hidden=true};count();
  $('#gfHwView',el).onclick=()=>document.querySelector('#universalAssignments [data-ua-sub="manage"]')?.click();
  el.querySelectorAll('[data-all]').forEach(x=>x.onchange=()=>{el.querySelectorAll('[data-module="'+CSS.escape(x.dataset.all)+'"]').forEach(y=>y.checked=x.checked);count()});
  el.querySelectorAll('[data-stage]').forEach(x=>x.onchange=()=>{const all=el.querySelector('[data-all="'+CSS.escape(x.dataset.module)+'"]');const children=[...el.querySelectorAll('[data-module="'+CSS.escape(x.dataset.module)+'"]')];if(all)all.checked=children.every(c=>c.checked);count()});
+ $('#gfHwPreview',el).onclick=async()=>{
+  const host=$('#gfHwPreviewReport',el),button=$('#gfHwPreview',el);
+  const klass=$('#gfHwClass',el).value,stages=[...el.querySelectorAll('[data-stage]:checked')].map(x=>String(x.dataset.stage));
+  if(!klass||!stages.length){host.textContent='Select a class and at least one grammar level.';return}
+  button.disabled=true;host.textContent='Checking previous student results…';
+  try{
+   const all=await table('?select=id,class_name,stage_id,created_at&class_name=eq.'+encodeURIComponent(klass)+'&order=created_at.desc&limit=1000');
+   const chosen=new Map();
+   (all||[]).filter(a=>stages.includes(String(a.stage_id))).forEach(a=>{if(!chosen.has(String(a.stage_id)))chosen.set(String(a.stage_id),a.id)});
+   const ids=[...chosen.values()];
+   const data=ids.length?await request(OP+'/rest/v1/rpc/gf_hw_progress_batch_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_ids:ids})}):[];
+   const people=new Map();
+   (Array.isArray(data)?data:[]).forEach(a=>(a.students||[]).forEach(st=>{
+    const name=String(st.name||st.korean_name||'').trim();
+    if(!name)return;
+    const pct=Number(st.percent);
+    if(!Number.isFinite(pct))return;
+    const prev=people.get(name)||{name,total:0,count:0};prev.total+=Math.min(100,Math.max(0,pct));prev.count++;people.set(name,prev)
+   }));
+   window.WillenaGeniusHomeworkCard?.classReadiness(host,[...people.values()].map(p=>({name:p.name,percent:p.total/p.count})),
+    'Previous Grammar Foundations results for selected levels; not a new assessment.');
+  }catch(error){host.textContent='Previous progress unavailable: '+error.message}
+  finally{button.disabled=false}
+ };
  $('#gfHwForm',el).onsubmit=submit;
 }
 async function submit(e){
