@@ -142,7 +142,13 @@ async function saveR2(key,audio,format='wav',env={}){
    method:'POST',headers:{'Content-Type':'application/json'},
    body:JSON.stringify({word:key,fileDataBase64:audio,format,verify:true}),signal:AbortSignal.timeout(20000),cache:'no-store'});
   const data=await res.json().catch(()=>null);
-  if(!res.ok||data?.success!==true||data?.path!==filename)throw Error('R2 upload not confirmed ('+res.status+')');
+  if(!res.ok||data?.success!==true||data?.path!==filename){
+   const upstream=String(data?.error||'');
+   const reason=/Missing R2 environment variables/.test(upstream)?'R2_CONFIG_MISSING':
+    /upload_audio failed/.test(upstream)?'R2_WRITE_FAILED':
+    !res.ok?'R2_UPLOAD_HTTP_'+res.status:'R2_UPLOAD_RESPONSE_INVALID';
+   throw Error(reason);
+  }
   // The upload service now verifies a HEAD in its own R2 bucket.
   if(data.verified===true&&Number(data.size)>0)return {stored:true,path:'r2_shared'};
   // The upload function verified this exact object by HEAD in its own bucket.
@@ -161,7 +167,7 @@ async function saveR2(key,audio,format='wav',env={}){
   return {stored:true,path:'r2_shared'};
  }catch(e){
   console.warn('[Free Talking audio] cache write failed',String(e?.message||e).slice(0,130));
-  return {stored:false,path:null};
+  return {stored:false,path:null,reason:String(e?.message||'R2_WRITE_FAILED').slice(0,80)};
  }
 }
 // Inventory-first preload: check all published questions in one R2 manifest pass.
@@ -244,7 +250,7 @@ async function probeAudioStorage(env){
  chars(36,'data');view.setUint32(40,4,true);
  const saved=await saveR2('ft_storage_probe_v1',base64(bytes.buffer),'wav',env);
  return {success:saved.stored===true,storage_ready:saved.stored===true,
-  storage_path:saved.path||null,code:saved.stored?'R2_READY':'R2_WRITE_FAILED'};
+  storage_path:saved.path||null,code:saved.stored?'R2_READY':saved.reason||'R2_WRITE_FAILED'};
 }
 export async function onRequestPost({request,env,context}){
  try{
