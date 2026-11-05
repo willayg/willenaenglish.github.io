@@ -161,3 +161,10 @@ html[data-dashboard-theme] .dashboard-mission-basket .dm-item.dm-done{
  background:conic-gradient(#d9ab34 calc(var(--dm-pct)*1%),#f7e8b8 0);color:#946b0a;
 }
 @media(max-width:560px){.dashboard-mission-basket .dm-item{padding-right:68px}.dashboard-mission-basket .dm-progress-ring{width:49px;height:49px;right:10px}.dashboard-mission-basket .dm-progress-ring::before{inset:5px}.dashboard-mission-basket .dm-progress-ring>span{font-size:11px}}
+
+/* Three clear tabs for active missions, overdue missions and earned medals. */
+.dashboard-mission-basket .dm-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.dashboard-mission-basket .dm-tabs button{min-width:0;padding:8px 5px;font-size:clamp(11px,2.8vw,14px);line-height:1.3;white-space:normal}
+.dashboard-mission-basket .dm-tabs [data-tab="overdue"][aria-pressed="true"]{background:#fff1f6;border-color:#eaa9c7;color:#a54f76}
+.dashboard-mission-basket .dm-tabs [data-tab="overdue"] span{white-space:nowrap}
+@media(max-width:380px){.dashboard-mission-basket .dm-tabs{gap:4px}.dashboard-mission-basket .dm-tabs button{font-size:11px;padding:7px 2px}}
