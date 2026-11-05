@@ -301,33 +301,39 @@ function updateUrl(bookId='',unitNumber=null,mode='',{replace=false}={}){
 function bookCard(book){return '<button class="vocab-front-book-card" type="button" data-grammar-book="'+esc(book.id)+'"><span class="vocab-front-card-main"><span class="vocab-front-card-copy"><strong>'+esc(book.title)+'</strong></span></span><span class="vocab-front-arrow" aria-hidden="true">›</span></button>'}
 async function loadGrammarBooks(){
  try{
+  // Only textbooks assigned to the student's verified class may appear here,
+  // including grammar-specific books such as Grammar Ten.
+  const identity=await studentIdentity();
+  const profile=await signedInProfile(identity.id);
+  if(profile.role!=='student'||!profile.approved)throw Error('Approved student account required');
+  const assignedRows=await assignedBooks(profile.className||identity.className);
+  const assigned=new Set(assignedRows.map(row=>String(row.id)));
+
   const response=await fetch(DB+'/rest/v1/content_books?select=id,title,book_number,series_id,metadata&status=eq.published&metadata->>subject=eq.grammar&order=title.asc&limit=100',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
   if(!response.ok)throw Error('Book catalog '+response.status);
-  books=await response.json();
+  const grammarBooks=await response.json();
   const extraIds=Object.keys(COURSE_BOOKS);
   const extraResponse=await fetch(DB+'/rest/v1/content_books?select=id,title&status=eq.published&id=in.('+extraIds.join(',')+')',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}});
   if(!extraResponse.ok)throw Error('Coursebook catalog '+extraResponse.status);
   const extras=await extraResponse.json();
-  let assigned=new Set();
-  try{
-   const identity=await studentIdentity();
-   const profile=await signedInProfile(identity.id);
-   if(profile.role==='student'&&profile.approved){
-    const selected=await assignedBooks(profile.className||identity.className);
-    assigned=new Set(selected.map(row=>String(row.id)));
-   }
-  }catch(error){console.warn('[Grammar Books] Student book restrictions unavailable; hiding course books',error)}
-  for(const book of extras)if(COURSE_BOOKS[book.id]&&assigned.has(String(book.id))&&!books.some(b=>b.id===book.id))books.push(book);
-  if(!books.some(b=>b.title==='Grammar Ten 완성 2'))books.unshift({id:'grammar-ten-2-practice',title:'Grammar Ten 완성 2'});
+  const available=new Map();
+  for(const book of [...grammarBooks,...extras]){
+   if(assigned.has(String(book.id)))available.set(String(book.id),book);
+  }
+  books=[...available.values()];
   list.innerHTML=books.length?books.map(bookCard).join(''):'<div class="vocab-front-empty">등록된 문법 교재가 없습니다.</div>';
   const id=new URLSearchParams(location.search).get('book');
-  const found=books.find(book=>String(book.id)===id)||((id==='1e3a2112-07be-45e2-a8fc-ce20011e0e57'||id==='grammar-ten-2-practice')?books.find(book=>book.title==='Grammar Ten 완성 2'):null);
+  const found=books.find(book=>String(book.id)===id);
   if(geniusHomeworkFromUrl()){
    try{await loadGrammarHomework()}catch(error){console.warn('[Grammar Textbooks] invalid assignment',error);activeHomework=null;$('grammarNotReady').textContent=error.message;$('grammarNotReady').hidden=false}
   }
   if(found)await showBook(found,false,activeHomework?.chapter||null);
-  else if(geniusHomeworkFromUrl())$('grammarNotReady').textContent='This homework is not available in your assigned books.';
- }catch(error){console.warn('[Grammar books] catalog unavailable',error);books=[{id:'grammar-ten-2-practice',title:'Grammar Ten 완성 2'}];list.innerHTML=books.map(bookCard).join('');}
+  else if(id||geniusHomeworkFromUrl())$('grammarNotReady').textContent='This textbook is not assigned to your class.';
+ }catch(error){
+  // Fail closed: a catalog or assignment lookup failure never exposes Grammar Ten.
+  console.warn('[Grammar books] catalog or class assignment unavailable',error);
+  books=[];list.innerHTML='<div class="vocab-front-empty">교재 목록을 불러오지 못했어요. 다시 시도해 주세요.</div>';
+ }
  finally{window.WillenaHomeworkDeepLinkSplash?.hide()}
 }
 async function loadChapterPack(){
