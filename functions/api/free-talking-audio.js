@@ -64,46 +64,50 @@ async function cacheKey(text,ttsModel,ttsVoice,variant='realtime'){
  const hex=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
  return (variant==='realtime'?'ft_realtime_v1_':variant==='elevenlabs'?'ft_eleven_v1_':'ft_fallback_v1_')+hex.slice(0,32);
 }
-// Only the Cloudflare Pages R2 binding is used for all audio operations.
-function audioBucket(env){
- const bucket=env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET;
- if(!bucket||typeof bucket.get!=='function'||typeof bucket.head!=='function'||typeof bucket.put!=='function')
-  throw Error('CLOUDFLARE_R2_BINDING_MISSING');
- return bucket;
+// Reuse Willena's existing get-audio-urls Cloudflare Worker and its bound R2
+// bucket, instead of depending on R2 bindings on Pages Preview deployments.
+const AUDIO_WORKER='https://get-audio-urls.willena.workers.dev/free-talking-store';
+function studentBearer(request){
+ const value=request.headers.get('Authorization')||'';
+ if(!/^Bearer\s+\S{40,}/i.test(value))throw Error('STUDENT_AUTH_REQUIRED');
+ return value;
+}
+async function audioStore(request,body){
+ let response;
+ try{
+  response=await fetch(AUDIO_WORKER,{method:'POST',
+   headers:{Authorization:studentBearer(request),'Content-Type':'application/json'},
+   body:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(20000)});
+ }catch(e){
+  console.warn('[Free Talking] shared audio worker unavailable',String(e?.message||e).slice(0,100));
+  throw Error('SHARED_AUDIO_WORKER_UNAVAILABLE');
+ }
+ const result=await response.json().catch(()=>null);
+ if(!response.ok||!result?.success){
+  const code=String(result?.code||'SHARED_AUDIO_WORKER_ERROR');
+  console.warn('[Free Talking] shared storage HTTP',response.status,code);
+  throw Error(code);
+ }
+ return result;
 }
 function base64(bytes){
  const a=new Uint8Array(bytes);let s='';
  for(let i=0;i<a.length;i+=8192)s+=String.fromCharCode(...a.subarray(i,i+8192));
  return btoa(s);
 }
-async function cachedAudio(key,format='wav',env={}){
- let object;
- try{object=await audioBucket(env).get(key+'.'+format)}
- catch(e){
-  if(String(e?.message||'')==='CLOUDFLARE_R2_BINDING_MISSING')throw e;
-  console.warn('[Free Talking] R2 read',String(e?.message||e).slice(0,120));
-  throw Error('R2_READ_FAILED');
- }
- return object?{audio:base64(await object.arrayBuffer()),source:'r2_direct',stored:true}:null;
+async function cachedAudio(key,format='wav',request){
+ const r=await audioStore(request,{action:'get',key,format});
+ return r.found?{audio:r.audio,source:'r2_shared',stored:true}:null;
 }
-async function saveR2(key,audio,format='wav',env={}){
- const bucket=audioBucket(env),filename=key+'.'+format;
- const binary=atob(audio),bytes=new Uint8Array(binary.length);
- for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
- try{
-  await bucket.put(filename,bytes,{httpMetadata:{contentType:format==='wav'?'audio/wav':'audio/mpeg',
-   cacheControl:'public, max-age=31536000, immutable'}});
-  const head=await bucket.head(filename);
-  if(!head||head.size!==bytes.byteLength)throw Error('R2_SIZE_MISMATCH');
-  return {stored:true,path:'r2_direct'};
- }catch(e){
-  console.warn('[Free Talking] R2 write',String(e?.message||e).slice(0,120));
-  throw Error('R2_WRITE_FAILED');
- }
+async function saveR2(key,audio,format='wav',request,questionId,modelId,voiceId,variant){
+ const r=await audioStore(request,{action:'put',key,audio,format,
+  question_id:questionId,model:modelId,voice:voiceId,variant});
+ if(!r.stored)throw Error('R2_WRITE_FAILED');
+ return {stored:true,path:'shared_worker'};
 }
 // Inventory-first preload: check all published questions in one R2 manifest pass.
 // Never invoke a TTS provider while assembling an inventory.
-async function audioInventory(bookId,env){
+async function audioInventory(bookId,env,request){
  const res=await fetch(CONTENT+'/rest/v1/free_talking_questions?select=id,question_en&book_id=eq.'+
   encodeURIComponent(bookId)+'&is_published=eq.true&order=unit_number.asc,question_number.asc&limit=200',{
   headers:{apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY},
@@ -122,17 +126,10 @@ async function audioInventory(bookId,env){
    fallback:await cacheKey(text,'gpt-4o-mini-tts','marin','fallback')
   });
  }
- const bucket=audioBucket(env),statuses=new Map();
- const keys=records.flatMap(r=>[[r.marin,'wav'],[r.lili,'mp3'],[r.fallback,'mp3']]);
- let ix=0;
- async function worker(){
-  while(ix<keys.length){
-   const [key,format]=keys[ix++];
-   try{statuses.set(key,{exists:!!(await bucket.head(key+'.'+format)),url:null})}
-   catch(e){throw Error('R2_INVENTORY_FAILED')}
-  }
- }
- await Promise.all(Array.from({length:Math.min(8,keys.length)},()=>worker()));
+ const files=records.flatMap(r=>[r.marin+'.wav',r.lili+'.mp3',r.fallback+'.mp3']);
+ const result=await audioStore(request,{action:'inventory',files});
+ const statuses=new Map();
+ for(const file of files){const key=file.slice(0,file.lastIndexOf('.'));statuses.set(key,{exists:!!result.exists?.[file],url:null});}
  return {
   success:true,book_id:bookId,questions:records.map(r=>{
    const willi=statuses.get(r.marin),backup=statuses.get(r.fallback),lili=statuses.get(r.lili);
@@ -146,29 +143,20 @@ async function audioInventory(bookId,env){
   })
  };
 }
-// Test R2 writes before queuing paid TTS generation. A tiny valid silent WAV
-// goes to a fixed diagnostic key, never to a student question cache key.
-async function probeAudioStorage(env){
- const bytes=new Uint8Array(48),view=new DataView(bytes.buffer);
- const chars=(offset,value)=>{for(let i=0;i<value.length;i++)bytes[offset+i]=value.charCodeAt(i)};
- chars(0,'RIFF');view.setUint32(4,40,true);chars(8,'WAVE');chars(12,'fmt ');
- view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);
- view.setUint32(24,24000,true);view.setUint32(28,48000,true);
- view.setUint16(32,2,true);view.setUint16(34,16,true);
- chars(36,'data');view.setUint32(40,4,true);
- const saved=await saveR2('ft_storage_probe_v1',base64(bytes.buffer),'wav',env);
- return {success:saved.stored===true,storage_ready:saved.stored===true,
-  storage_path:saved.path||null,code:saved.stored?'R2_READY':(saved.reason||'R2_WRITE_FAILED').split(' ')[0],detail:saved.stored?null:saved.reason||'R2_WRITE_FAILED'};
+// Check storage readiness before paid TTS. The shared Worker probes its own bucket.
+async function probeAudioStorage(request){
+ const result=await audioStore(request,{action:'probe'});
+ return {success:result.stored===true,storage_ready:result.stored===true,
+  storage_path:'shared_worker',code:result.code||'R2_READY'};
 }
 export async function onRequestPost({request,env,context}){
  try{
-  audioBucket(env);
   const userId=await verifyStudent(request);
   if(!userId)return json(401,{success:false,error:'학생 로그인을 확인해 주세요.'});
   const body=await request.json().catch(()=>null);
   if(body?.storage_probe===true){
    try{
-    const probe=await probeAudioStorage(env);
+    const probe=await probeAudioStorage(request);
     return json(probe.success?200:503,probe);
    }catch(e){
     console.warn('[Free Talking] R2 storage preflight',String(e?.message||e).slice(0,150));
@@ -179,7 +167,7 @@ export async function onRequestPost({request,env,context}){
   if(body?.inventory_book_id){
    const bookId=String(body.inventory_book_id);
    if(!UUID.test(bookId))return json(400,{success:false,error:'Invalid book'});
-   try{return json(200,await audioInventory(bookId,env))}
+   try{return json(200,await audioInventory(bookId,env,request))}
    catch(e){
     console.warn('[Free Talking] R2 inventory',String(e?.message||e).slice(0,150));
     return json(503,{success:false,error:'R2 inventory unavailable; no new audio generated',code:'INVENTORY_UNAVAILABLE'});
@@ -202,13 +190,13 @@ export async function onRequestPost({request,env,context}){
   const elevenId=ELEVEN_VOICES[chosenVoice]||null;
   if(elevenId){
    const cache=await cacheKey(t,elevenModel,elevenId,'elevenlabs');
-   const hit=await cachedAudio(cache,'mp3',env);
+   const hit=await cachedAudio(cache,'mp3',request);
    if(hit)return json(200,{success:true,...(warmOnly?{}:hit),cache_status:'hit',source:hit.source,model:elevenModel,
     voice:chosenVoice,provider:'elevenlabs',content_type:'audio/mpeg',ai_generated:true,stored:true});
    try{
     const bytes=await elevenAudio({env,text:t,voiceId:elevenId,modelId:elevenModel});
     const audio=base64(bytes);
-    const saved=await saveR2(cache,audio,'mp3',env);
+    const saved=await saveR2(cache,audio,'mp3',request,id,elevenModel,elevenId,'elevenlabs');
     return json(200,{success:true,...(warmOnly?{}:{audio}),cache_status:saved.stored?'generated_saved':'generated_unsaved',source:'elevenlabs',model:elevenModel,
      voice:chosenVoice,provider:'elevenlabs',content_type:'audio/mpeg',
      stored:saved.stored,r2_status:saved.path||'not_saved',ai_generated:true});
@@ -225,13 +213,13 @@ export async function onRequestPost({request,env,context}){
    }
   }
   const ttsModel=model(env),ttsVoice=chosenVoice||voice(env),key=await cacheKey(t,ttsModel,ttsVoice);
-  const url=await cachedAudio(key,'wav',env);
+  const url=await cachedAudio(key,'wav',request);
   if(url)return json(200,{success:true,...(warmOnly?{}:url),stored:true,cache_status:'hit',source:url.source,model:ttsModel,content_type:'audio/wav',voice:ttsVoice,ai_generated:true});
   // Once Marin's compatible MP3 fallback exists, reuse it immediately.
   // Do not repeatedly attempt a failed Realtime generation on every reload.
   const fallbackVoice='marin',fallbackModel='gpt-4o-mini-tts';
   const fallbackKey=await cacheKey(t,fallbackModel,fallbackVoice,'fallback');
-  const existingFallback=await cachedAudio(fallbackKey,'mp3',env);
+  const existingFallback=await cachedAudio(fallbackKey,'mp3',request);
   if(existingFallback)return json(200,{success:true,...(warmOnly?{}:existingFallback),
    cache_status:'hit',source:'r2_fallback',model:fallbackModel,voice:fallbackVoice,
    content_type:'audio/mpeg',stored:true,ai_generated:true});
@@ -242,7 +230,7 @@ export async function onRequestPost({request,env,context}){
    const wav=await generateQuestionWav({apiKey,text:t,model:ttsModel,voice:ttsVoice});
    if(!wav.byteLength||wav.byteLength>1250000)throw Error('Invalid Realtime WAV');
    const audio=base64(wav);
-   const saved=await saveR2(key,audio,'wav',env);
+   const saved=await saveR2(key,audio,'wav',request,id,ttsModel,ttsVoice,'realtime');
    return json(200,{success:true,...(warmOnly?{}:{audio}),cache_status:saved.stored?'generated_saved':'generated_unsaved',content_type:'audio/wav',source:'openai_realtime',model:ttsModel,
      stored:saved.stored,r2_status:saved.path||'not_saved',voice:ttsVoice,ai_generated:true});
   }catch(realtimeError){
@@ -265,14 +253,14 @@ export async function onRequestPost({request,env,context}){
   const mp3=await response.arrayBuffer();
   if(mp3.byteLength<500||mp3.byteLength>1200000)throw Error('Invalid backup MP3');
   const fallbackAudio=base64(mp3);
-  const fallbackSaved=await saveR2(fallbackKey,fallbackAudio,'mp3',env);
+  const fallbackSaved=await saveR2(fallbackKey,fallbackAudio,'mp3',request,id,fallbackModel,fallbackVoice,'fallback');
   return json(200,{success:true,...(warmOnly?{}:{audio:fallbackAudio}),cache_status:fallbackSaved.stored?'generated_saved':'generated_unsaved',content_type:'audio/mpeg',source:'openai_tts_fallback',model:fallbackModel,
     stored:fallbackSaved.stored,r2_status:fallbackSaved.path||'not_saved',voice:fallbackVoice,ai_generated:true});
  }catch(e){const reason=String(e?.message||e);console.warn('[Free Talking audio] failure',reason);
-  if(/^(CLOUDFLARE_R2_BINDING_MISSING|R2_READ_FAILED|R2_WRITE_FAILED|R2_INVENTORY_FAILED)$/.test(reason))
+  if(/^(SHARED_AUDIO_|SHARED_R2_|R2_|STUDENT_AUTH_|INVALID_|AUDIO_KEY_)/.test(reason))
    return json(503,{success:false,error:reason,code:reason,cache_status:'storage_error'});
   return json(503,{success:false,error:'Question audio unavailable'});}
 }
 export async function onRequestGet({env}){
- return json(200,{success:true,service:'free-talking-question-audio',configured:!!(env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY),r2:(env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET)?'cloudflare-direct':'binding-missing',direct_r2_bound:!!(env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET),elevenlabs_configured:!!(env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY),format:'wav',model:model(env),voice:voice(env)});
+ return json(200,{success:true,service:'free-talking-question-audio',configured:!!(env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY),r2:'shared-worker',direct_r2_bound:false,storage_worker:AUDIO_WORKER,elevenlabs_configured:!!(env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY),format:'wav',model:model(env),voice:voice(env)});
 }
