@@ -34,15 +34,10 @@ const dday=x=>{
 const id=x=>String(x||'');
 function sharedHomeworkGroupStart({key,title,sub,label,average=null,checkbox='',overviewStyle=false,due='',teacher=''}) {
  if(overviewStyle){
-  const valid=Number.isFinite(average);
-  const pct=valid?Math.max(0,Math.min(100,average)):0;
-  return '<div class="ua-group genius-homework-card ua-overview-genius-card" data-ua-group="'+esc(key)+'">'+
-   '<div class="ua-overview-heading">'+checkbox+'<strong class="ghc-class">'+esc(title)+'</strong><span class="ghc-day">'+esc(due)+'</span></div>'+
-   '<div class="ghc-task">'+esc(sub)+'</div>'+
-   '<div class="ghc-teacher">'+esc(teacher)+'</div>'+
-   '<div class="ghc-ring'+(valid?' has-data':'')+'" style="'+(valid?'--ghc-pct:'+pct+'%;':'')+'" role="img" aria-label="'+esc(valid?'Tracked homework progress '+pct+'%':'Progress not available')+'"><span>'+(valid?pct+'%':'—')+'</span></div>'+
-   '<div class="ghc-details"><button type="button" class="ua-overview-progress-toggle" data-ua-group-toggle="'+esc(key)+'" aria-expanded="false"><span>Student progress</span><span class="ghc-chevron">▾</span></button></div>'+
-   '<div class="ua-group-body" hidden>';
+  return window.WillenaGeniusHomeworkCard.groupCardStart({
+    key,title,task:sub,teacher,dueLabel:due,checkbox,progressPercent:average
+  });
+
  }
  return '<div class="ua-group" data-ua-group="'+esc(key)+'"><div class="ua-group-top">'+checkbox+'<button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(key)+'" aria-expanded="false"><span><b>'+esc(title)+'</b><small>'+esc(sub)+'</small></span><strong>'+esc(label)+' ▾</strong></button></div>'+
  (average===null?'':'<div class="ua-group-meter" role="progressbar" aria-label="Tracked question completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+average+'"><i style="width:'+average+'%"></i></div>')+
@@ -573,7 +568,22 @@ async function loadOverview(scopeName='my',force=false){
     const dueDates=g.items.map(row=>row.due_at).filter(Boolean).sort();
     const dueLabel=dueDates.length?(new Set(dueDates.map(x=>assignedDateKey(x))).size===1?dday(dueDates[0]):'Next '+dday(dueDates[0])):'';
     const teacherLabels=[...new Set(g.items.map(row=>authors.get(id(row.created_by))||'Unknown'))];
-    return sharedHomeworkGroupStart({key:g.key,title:g.title,sub:g.items.length+' assignment'+(g.items.length===1?'':'s')+' · '+g.sub,label,average,checkbox:groupSelect,overviewStyle:true,due:dueLabel,teacher:teacherLabels.length===1?teacherLabels[0]+' Teacher':teacherLabels.length+' teachers'});
+    const shell=sharedHomeworkGroupStart({key:g.key,title:g.title,sub:g.items.length+' assignment'+(g.items.length===1?'':'s')+' · '+g.sub,label,average,checkbox:groupSelect,overviewStyle:true,due:dueLabel,teacher:teacherLabels.length===1?teacherLabels[0]+' Teacher':teacherLabels.length+' teachers'});
+    // Show the same verified progress panel as Word Genius without requiring
+    // a second assignment-detail click. Keep existing detail/actions below it.
+    if(g.items.length===1&&g.items[0].app==='Word Genius'){
+      const row=g.items[0],data=wordCompletionCache.get(id(row.id));
+      if(data?.students?.length){
+        const items=data.students.map(st=>{
+          const pct=wordStudentPercent(st,{...data.assignment,list_meta:row.list_meta||{}});
+          return {name:students.get(id(st.student_id))?.name||st.name||st.korean_name||'Student',percent:pct,status:st.status};
+        });
+        const completed=items.filter(x=>x.status==='complete').length;
+        const notStarted=items.filter(x=>x.status==='not_started').length;
+        return shell+window.WillenaGeniusHomeworkCard.progressPanel({students:items,average,completed,notStarted});
+      }
+    }
+    return shell;
    };
    const selectable=visible.filter(r=>id(r.created_by)===teacher);
    const checked=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
