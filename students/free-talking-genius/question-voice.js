@@ -5,6 +5,7 @@ export function createFreeTalkingVoice({host,getToken}){
  let selected='',version=0,currentUrl='',playing=false,loadedVoice='';
  const stored=new Map();
  const inflight=new Map();
+ const warming=new Map();
  let questionBank=[],preferredUnit=1,preloadEpoch=0,destroyed=false,voiceConfirmed=false;
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
@@ -71,10 +72,38 @@ export function createFreeTalkingVoice({host,getToken}){
   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
   return {url:URL.createObjectURL(new Blob([bytes],{type:data.content_type==='audio/wav'?'audio/wav':'audio/mpeg'})),owned:true,...details};
  }
+ // Authenticated, status-only R2 cache warmer. Does not download MP3 or WAV data.
+ async function warm(questionId,voice){
+  const key=questionId+'|'+voice;
+  if(warming.has(key))return warming.get(key);
+  const expectedModel=modelForVoice(voice);
+  const requestedVoice=voice==='bunny-v3'?'bunny':voice;
+  const requestBody={question_id:questionId,voice:requestedVoice,warm_only:true,
+   ...(voice==='bunny-v3'?{compare_model:'eleven_v3'}:{})};
+  const work=(async()=>{
+   const call=async access=>fetch('/api/free-talking-audio',{
+    method:'POST',credentials:'include',cache:'no-store',
+    headers:{'Content-Type':'application/json',Authorization:'Bearer '+access},
+    body:JSON.stringify(requestBody),signal:AbortSignal.timeout(70000)});
+   let response=await call(await getToken());
+   if(response.status===401)response=await call(await getToken(true));
+   const data=await response.json().catch(()=>null);
+   if(!response.ok||data?.success!==true)throw Error(data?.error||'R2 prewarm failed');
+   if(data.voice!==requestedVoice)throw Error('Warm voice mismatch');
+   if(expectedModel&&data.model!==expectedModel)throw Error('Warm model mismatch');
+   if(!data.stored||!['hit','generated_saved'].includes(data.cache_status))
+    throw Error('Audio generated but R2 persistence was not verified for '+voice);
+   return data.cache_status;
+  })().finally(()=>warming.delete(key));
+  warming.set(key,work);
+  return work;
+ }
  async function obtain(questionId,voice){
   const cacheId=questionId+'|'+voice+'|'+(modelForVoice(voice)||'standard');
   if(stored.has(cacheId))return stored.get(cacheId);
   if(inflight.has(cacheId))return inflight.get(cacheId);
+  // A foreground playback waits for any ongoing write of the same clip.
+  if(warming.has(questionId+'|'+voice))await warming.get(questionId+'|'+voice);
   const work=fetchVoice(questionId,voice).then(file=>{
    if(destroyed){if(file.owned)URL.revokeObjectURL(file.url);return file}
    stored.set(cacheId,file);
@@ -83,34 +112,46 @@ export function createFreeTalkingVoice({host,getToken}){
   inflight.set(cacheId,work);
   return work;
  }
- // Preload all published questions for the selected textbook and selected voice.
- // The current unit goes first. Limit concurrent generation to two requests.
- // Cached R2 audio is reused by the API; changing voices cancels the old queue.
+ // Both selectable voices are saved independently in R2, regardless of the
+ // current picker choice. The selected voice/current unit is prioritized.
+ // Preload requests transfer only cache status, not audio blobs.
  function preload(unit=preferredUnit){
   preferredUnit=Number(unit)||1;
   const epoch=++preloadEpoch;
-  const chosen=activeVoice();
   if(!questionBank.length||destroyed){preloadingText('');return}
-  const ordered=[...questionBank].sort((a,b)=>
+  const selectedVoice=activeVoice(),otherVoice=selectedVoice==='marin'?'bunny-v3':'marin';
+  const orderedQuestions=[...questionBank].sort((a,b)=>
    (Number(a.unit_number)===preferredUnit?0:1)-(Number(b.unit_number)===preferredUnit?0:1)
    ||Number(a.unit_number)-Number(b.unit_number)||Number(a.question_number)-Number(b.question_number));
-  const total=ordered.length;
-  let cursor=0,done=0,failed=0;
-  preloadingText((chosen==='bunny-v3'?'AI Lili':'AI Willi')+' · 0/'+total+' ready');
+  // Finish the current unit for both voices before the remaining units.
+  const current=orderedQuestions.filter(q=>Number(q.unit_number)===preferredUnit);
+  const later=orderedQuestions.filter(q=>Number(q.unit_number)!==preferredUnit);
+  const jobs=[
+   ...current.map(q=>({id:String(q.id),voice:selectedVoice})),
+   ...current.map(q=>({id:String(q.id),voice:otherVoice})),
+   ...later.flatMap(q=>[{id:String(q.id),voice:selectedVoice},{id:String(q.id),voice:otherVoice}])
+  ].filter(job=>job.id);
+  const totals={'marin':0,'bunny-v3':0},failures={'marin':0,'bunny-v3':0};
+  let cursor=0,cacheUnavailable=false;
+  const label=()=> 'AI Willi '+totals.marin+'/'+orderedQuestions.length+
+   ' · AI Lili '+totals['bunny-v3']+'/'+orderedQuestions.length+' cached'+
+   (failures.marin+failures['bunny-v3']?' · '+(failures.marin+failures['bunny-v3'])+' failed':'');
+  preloadingText(label());
   async function worker(){
-   while(epoch===preloadEpoch&&!destroyed&&activeVoice()===chosen){
-    const q=ordered[cursor++];
-    if(!q)return;
-    try{await obtain(String(q.id),chosen)}
-    catch(error){failed++;console.warn('[Free Talking] preload failed',chosen,String(error?.message||error).slice(0,120))}
-    done++;
-    if(epoch===preloadEpoch&&!destroyed)
-     preloadingText((chosen==='bunny-v3'?'AI Lili':'AI Willi')+' · '+done+'/'+total+' prepared'+(failed?' · '+failed+' failed':''));
+   while(epoch===preloadEpoch&&!destroyed&&!cacheUnavailable){
+    const job=jobs[cursor++];if(!job)return;
+    try{await warm(job.id,job.voice);totals[job.voice]++}
+    catch(e){
+     failures[job.voice]++;
+     const msg=String(e?.message||e);
+     console.warn('[Free Talking] R2 prewarm',job.voice,msg.slice(0,140));
+     if(/R2 cache temporarily unavailable|R2_LOOKUP_UNAVAILABLE/i.test(msg))cacheUnavailable=true;
+    }
+    if(epoch===preloadEpoch&&!destroyed)preloadingText(label()+(cacheUnavailable?' · R2 unavailable':''));
    }
   }
   void Promise.all([worker(),worker()]).then(()=>{
-   if(epoch===preloadEpoch&&!destroyed)
-    preloadingText((chosen==='bunny-v3'?'AI Lili':'AI Willi')+' · '+(total-failed)+'/'+total+' ready'+(failed?' · '+failed+' failed':''));
+   if(epoch===preloadEpoch&&!destroyed)preloadingText(label()+(cacheUnavailable?' · R2 unavailable':''));
   });
  }
  function setQuestionBank(questions,unit=1){questionBank=Array.isArray(questions)?questions:[];preload(unit)}
