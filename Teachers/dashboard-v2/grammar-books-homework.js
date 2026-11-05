@@ -120,7 +120,7 @@ async function drawCreate(){
  '<div class="gf-hw-form-grid"><label>Available from<input class="control" type="date" name="start" required></label>'+
  '<label>Due date<input class="control" type="date" name="due" required></label></div>'+
  '<div class="gf-hw-pre-assignment"><div id="gbHwPreviewReport" aria-live="polite"></div></div>'+
- '<div class="gf-hw-footer"><button type="submit" class="control ua-primary" id="gbHwSubmit" disabled>Assign mission →</button>'+
+ '<div class="gf-hw-footer"><button type="submit" class="control ua-primary" id="gbHwSubmit" disabled>Assign Mission →</button>'+
  '<span id="gbHwNotice" role="status"></span></div></form>';
  const form=$('#gbHwForm',el),bookSelect=form.elements.book,classSelect=form.elements.klass;
  const today=new Date(),due=new Date(today.valueOf()+7*86400000);
