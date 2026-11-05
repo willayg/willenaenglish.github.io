@@ -173,11 +173,28 @@ function scheduleHomeworkSave(){
 function updateHomeworkIdentity(){
  const existing=document.getElementById('grammarHomeworkIdentity');
  existing?.remove();
- if(!activeHomework||!activeBook||Number(activeUnit)!==activeHomework.chapter)return;
+ const focused=!!activeHomework&&!!activeBook&&Number(activeUnit)===activeHomework.chapter;
  const parent=$('grammarModePanel');
- const box=document.createElement('div');box.id='grammarHomeworkIdentity';
- box.style.cssText='padding:14px 17px;margin:12px 0;border:2px solid #eeb1d0;border-radius:15px;background:#fff';
- box.innerHTML='<strong style="color:#b83c77">숙제 / Homework</strong><div style="font-size:14px;margin-top:4px">'+esc(activeHomework.title)+'</div><small>Homework progress is separate from Golden Unit mastery.</small>';
+ parent?.classList.toggle('grammar-focused-homework',focused);
+ if(!focused)return;
+ const box=document.createElement('div');
+ box.id='grammarHomeworkIdentity';
+ box.className='grammar-focused-toolbar';
+ const label=document.createElement('span');
+ label.className='grammar-focused-label';
+ label.textContent='선택한 숙제 · Your Homework';
+ const all=document.createElement('button');
+ all.type='button';
+ all.className='grammar-view-all';
+ all.textContent='모든 단원 보기 · View all';
+ all.addEventListener('click',()=>{
+   activeHomework=null;
+   homeworkModeEvidence.clear();
+   updateUrl(activeBook?.id,activeUnit);
+   renderModeCards();
+   updateHomeworkIdentity();
+ });
+ box.append(label,all);
  parent.prepend(box);
 }
 function showGrammarReward(reward){
