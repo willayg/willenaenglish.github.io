@@ -70,6 +70,22 @@ function validateSource(raw) {
 }
 
 async function fetchImage(source) {
+  // Word Builder can generate pasted/uploaded images as data URLs. Decode them
+  // locally rather than attempting an HTTP fetch of the data: scheme.
+  if (typeof source === 'string' && source.startsWith('data:')) {
+    const match = /^data:(image\/(?:jpeg|png|webp|gif|avif));base64,([A-Za-z0-9+/=]+)$/i.exec(source);
+    if (!match) throw new Error('Unsupported embedded image format');
+    const contentType = match[1].toLowerCase();
+    if (!ALLOWED_TYPES.has(contentType)) throw new Error('Unsupported image type: ' + contentType);
+    const encoded = match[2];
+    if (encoded.length > Math.ceil(MAX_SOURCE_BYTES / 3) * 4 + 4) throw new Error('Image is too large');
+    let binary;
+    try { binary = atob(encoded); }
+    catch { throw new Error('Invalid embedded image encoding'); }
+    if (!binary.length || binary.length > MAX_SOURCE_BYTES) throw new Error('Image is empty or too large');
+    const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+    return { buffer: bytes.buffer, contentType };
+  }
   const url = validateSource(source);
   const res = await fetch(url.toString(), {
     redirect: 'follow',
