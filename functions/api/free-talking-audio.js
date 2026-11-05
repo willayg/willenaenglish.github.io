@@ -215,6 +215,7 @@ export async function onRequestPost({request,env,context}){
    }catch(e){
     const reason=String(e?.message||e);
     if(reason==='R2_WRITE_FAILED')return json(503,{success:false,error:reason,code:reason,cache_status:'storage_error'});
+    if(reason==='ELEVENLABS_KEY_NOT_CONFIGURED_ON_CLOUDFLARE')return json(503,{success:false,error:reason,code:reason});
     console.warn('[Free Talking audio] ElevenLabs generation failed',reason.slice(0,160));
     // Report category, not provider response bodies or credentials.
     const category=/429|rate.limit/i.test(reason)?'rate_limit':
@@ -273,5 +274,5 @@ export async function onRequestPost({request,env,context}){
   return json(503,{success:false,error:'Question audio unavailable'});}
 }
 export async function onRequestGet({env}){
- return json(200,{success:true,service:'free-talking-question-audio',configured:!!(env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY),r2:(env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET)?'cloudflare-direct':'binding-missing',direct_r2_bound:!!(env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET),format:'wav',model:model(env),voice:voice(env)});
+ return json(200,{success:true,service:'free-talking-question-audio',configured:!!(env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY),r2:(env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET)?'cloudflare-direct':'binding-missing',direct_r2_bound:!!(env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET),elevenlabs_configured:!!(env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY),format:'wav',model:model(env),voice:voice(env)});
 }
