@@ -95,7 +95,7 @@ async function cachedAudio(key,format='wav',env={}){
  try{
   const res=await fetch(R2+'get_audio_urls',{
    method:'POST',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({words:[key],format}),signal:AbortSignal.timeout(12000),cache:'no-store'});
+   body:JSON.stringify({words:[key],format,strict:true}),signal:AbortSignal.timeout(12000),cache:'no-store'});
   if(!res.ok)throw Error('Shared R2 lookup HTTP '+res.status);
   const data=await res.json();
   const found=data?.results?.[key];
