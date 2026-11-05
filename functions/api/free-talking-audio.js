@@ -232,11 +232,34 @@ async function audioInventory(bookId,env){
   })
  };
 }
+// Test R2 writes before queuing paid TTS generation. A tiny valid silent WAV
+// goes to a fixed diagnostic key, never to a student question cache key.
+async function probeAudioStorage(env){
+ const bytes=new Uint8Array(48),view=new DataView(bytes.buffer);
+ const chars=(offset,value)=>{for(let i=0;i<value.length;i++)bytes[offset+i]=value.charCodeAt(i)};
+ chars(0,'RIFF');view.setUint32(4,40,true);chars(8,'WAVE');chars(12,'fmt ');
+ view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);
+ view.setUint32(24,24000,true);view.setUint32(28,48000,true);
+ view.setUint16(32,2,true);view.setUint16(34,16,true);
+ chars(36,'data');view.setUint32(40,4,true);
+ const saved=await saveR2('ft_storage_probe_v1',base64(bytes.buffer),'wav',env);
+ return {success:saved.stored===true,storage_ready:saved.stored===true,
+  storage_path:saved.path||null,code:saved.stored?'R2_READY':'R2_WRITE_FAILED'};
+}
 export async function onRequestPost({request,env,context}){
  try{
   const userId=await verifyStudent(request);
   if(!userId)return json(401,{success:false,error:'학생 로그인을 확인해 주세요.'});
   const body=await request.json().catch(()=>null);
+  if(body?.storage_probe===true){
+   try{
+    const probe=await probeAudioStorage(env);
+    return json(probe.success?200:503,probe);
+   }catch(e){
+    console.warn('[Free Talking] R2 storage preflight',String(e?.message||e).slice(0,150));
+    return json(503,{success:false,storage_ready:false,code:'R2_PROBE_FAILED'});
+   }
+  }
   if(body?.inventory_book_id){
    const bookId=String(body.inventory_book_id);
    if(!UUID.test(bookId))return json(400,{success:false,error:'Invalid book'});
