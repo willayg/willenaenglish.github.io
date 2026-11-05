@@ -110,3 +110,10 @@
 .ft-willi-model[data-state="fallback"]{background:#fff8ef;border-color:#efd1a5;color:#78562d}
 .ft-willi-model[data-state="error"]{background:#fff3f5;border-color:#efb6c2;color:#9a3949}
 .ft-willi-model[data-state="loading"]{opacity:.7}
+
+/* Free Talking Realtime voice comparison; narrow/mobile layouts included. */
+.ft-willi-voice-controls{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:8px}
+.ft-voice-select-label{display:inline-flex;align-items:center;gap:7px;border:1px solid #bae5e9;border-radius:30px;padding:5px 11px;color:#2c6670;background:#faffff;font-size:12px;font-weight:700}
+.ft-voice-select{min-width:100px;max-width:140px;min-height:32px;border:0;background:transparent;color:#255761;font:inherit;font-size:14px;cursor:pointer;outline-offset:2px}
+.ft-voice-select:focus-visible{outline:2px solid #55c5d3}
+@media(max-width:480px){.ft-willi-voice-controls{gap:7px}.ft-voice-select-label{padding:4px 8px}.ft-voice-select{min-width:80px;max-width:110px}}
