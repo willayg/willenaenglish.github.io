@@ -43,15 +43,22 @@ export function createFreeTalkingVoice({host,getToken}){
  audio.addEventListener('pause',()=>{setPlaying(false);if(!audio.ended)status('다시 듣기를 눌러 주세요.')});
  audio.addEventListener('ended',()=>{setPlaying(false);status('다시 듣기를 누르면 질문을 또 들을 수 있어요.')});
  audio.addEventListener('error',()=>{setPlaying(false);status('음성을 불러오지 못했어요. 질문을 읽고 답해 주세요.')});
+ const modelForVoice=voice=>voice==='bunny-v3'?'eleven_v3':voice==='bunny-multilingual-v2'?'eleven_multilingual_v2':null;
  async function fetchVoice(questionId,voice){
+  const expectedModel=modelForVoice(voice);
+  const requestedVoice=expectedModel?'bunny':voice;
+  const requestBody={question_id:questionId,voice:requestedVoice,...(expectedModel?{compare_model:expectedModel}:{})};
   const call=async access=>fetch('/api/free-talking-audio',{
    method:'POST',credentials:'include',cache:'no-store',
    headers:{'Content-Type':'application/json',Authorization:'Bearer '+access},
-   body:JSON.stringify({question_id:questionId,voice}),signal:AbortSignal.timeout(70000)});
+   body:JSON.stringify(requestBody),signal:AbortSignal.timeout(70000)});
   let response=await call(await getToken());
   if(response.status===401)response=await call(await getToken(true));
   const data=await response.json().catch(()=>null);
   if(!response.ok||data?.success!==true)throw Error(data?.error||'Audio unavailable');
+  // Never accept a cached Flash response as a comparison model.
+  if(expectedModel&&data.model!==expectedModel)throw Error('Expected '+expectedModel+' but audio service returned '+(data.model||'unknown')+'. Backend deployment may be outdated.');
+  if(data.voice!==requestedVoice)throw Error('Expected voice '+requestedVoice+' but service returned '+(data.voice||'unknown'));
   const details={model:data.model||'',voice:data.voice||'',source:data.source||'',stored:data.stored===true};
   if(data.audio_url?.startsWith('https://'))return {url:data.audio_url,owned:false,...details};
   if(typeof data.audio!=='string'||!data.audio.length)throw Error('Missing generated audio');
@@ -60,7 +67,7 @@ export function createFreeTalkingVoice({host,getToken}){
   return {url:URL.createObjectURL(new Blob([bytes],{type:data.content_type==='audio/wav'?'audio/wav':'audio/mpeg'})),owned:true,...details};
  }
  async function obtain(questionId,voice){
-  const cacheId=questionId+'|'+voice;
+  const cacheId=questionId+'|'+voice+'|'+(modelForVoice(voice)||'standard');
   if(stored.has(cacheId))return stored.get(cacheId);
   if(inflight.has(cacheId))return inflight.get(cacheId);
   const work=fetchVoice(questionId,voice).then(file=>{
@@ -106,7 +113,9 @@ export function createFreeTalkingVoice({host,getToken}){
    if(v!==version)return
    if(v!==version)return;
    // Never advertise or play a different voice than the one requested.
-   if(String(file.voice||'').toLowerCase()!==requestedVoice)throw Error('Voice mismatch: selected '+requestedVoice+', received '+String(file.voice||'unknown'));
+   const actualVoice=modelForVoice(requestedVoice)?'bunny':requestedVoice;
+   if(String(file.voice||'').toLowerCase()!==actualVoice)throw Error('Voice mismatch: selected '+actualVoice+', received '+String(file.voice||'unknown'));
+   if(modelForVoice(requestedVoice)&&file.model!==modelForVoice(requestedVoice))throw Error('Model mismatch: expected '+modelForVoice(requestedVoice));
    currentUrl=file.url;
    loadedVoice=requestedVoice;
    showModel(file);
