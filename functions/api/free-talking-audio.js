@@ -77,7 +77,7 @@ export async function onRequestPost({request,env,context}){
   if(!t||t.length>600)return json(422,{success:false,error:'Question audio text unavailable'});
   const ttsModel=model(env),ttsVoice=voice(env),key=await cacheKey(t,ttsModel,ttsVoice);
   const url=await cachedAudio(key);
-  if(url)return json(200,{success:true,audio_url:url,source:'r2',content_type:'audio/wav',voice:ttsVoice,ai_generated:true});
+  if(url)return json(200,{success:true,audio_url:url,source:'r2',model:ttsModel,content_type:'audio/wav',voice:ttsVoice,ai_generated:true});
   const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
   if(!apiKey)return json(503,{success:false,error:'AI voice is not configured'});
   // Realtime is preferred, but never let a WebSocket failure silence the lesson.
@@ -87,7 +87,7 @@ export async function onRequestPost({request,env,context}){
    const audio=base64(wav);
    if(context?.waitUntil)context.waitUntil(saveR2(key,audio,'wav'));
    else await saveR2(key,audio,'wav');
-   return json(200,{success:true,audio,content_type:'audio/wav',source:'openai_realtime',
+   return json(200,{success:true,audio,content_type:'audio/wav',source:'openai_realtime',model:ttsModel,
      saving:true,voice:ttsVoice,ai_generated:true});
   }catch(realtimeError){
    console.warn('[Free Talking audio] realtime generation failed; trying speech fallback',String(realtimeError?.message||realtimeError).slice(0,160));
@@ -98,7 +98,7 @@ export async function onRequestPost({request,env,context}){
   const fallbackKey=await cacheKey(t,fallbackModel,fallbackVoice,'fallback');
   const fallbackUrl=await cachedAudio(fallbackKey,'mp3');
   if(fallbackUrl)return json(200,{success:true,audio_url:fallbackUrl,content_type:'audio/mpeg',
-    source:'r2_fallback',voice:fallbackVoice,ai_generated:true});
+    source:'r2_fallback',model:fallbackModel,voice:fallbackVoice,ai_generated:true});
   const response=await fetch('https://api.openai.com/v1/audio/speech',{
    method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
    body:JSON.stringify({model:fallbackModel,voice:fallbackVoice,input:t,response_format:'mp3',
@@ -114,7 +114,7 @@ export async function onRequestPost({request,env,context}){
   const fallbackAudio=base64(mp3);
   if(context?.waitUntil)context.waitUntil(saveR2(fallbackKey,fallbackAudio,'mp3'));
   else await saveR2(fallbackKey,fallbackAudio,'mp3');
-  return json(200,{success:true,audio:fallbackAudio,content_type:'audio/mpeg',source:'openai_tts_fallback',
+  return json(200,{success:true,audio:fallbackAudio,content_type:'audio/mpeg',source:'openai_tts_fallback',model:fallbackModel,
     saving:true,voice:fallbackVoice,ai_generated:true});
  }catch(e){console.warn('[Free Talking audio] failure',e?.message||'error');return json(503,{success:false,error:'Question audio unavailable'})}
 }
