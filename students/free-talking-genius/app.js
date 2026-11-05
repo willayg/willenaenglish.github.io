@@ -23,7 +23,64 @@ const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.un
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
 function showError(message){$('ftError').textContent=message||'Unknown error';$('ftError').hidden=false;console.error('[Free Talking]',message)}
 function clearError(){$('ftError').hidden=true;$('ftError').textContent=''}
-function view(which){if(which!=='ftSession')questionVoice.stop();for(const id of ['ftHome','ftBook','ftSession','ftFinish'])$(id).hidden=id!==which;clearError();window.scrollTo({top:0,behavior:'instant'})}
+// Navigation history belongs to this app, not to the student's saved attempts.
+// Store the screen and unit in browser history; never use history to modify scores.
+const FT_NAV_KEY='willenaFreeTalkingNavV1';
+const FT_SCREENS=new Set(['ftHome','ftBook','ftSession','ftFinish']);
+let visibleScreen='ftHome',navigatingHistory=false;
+function navState(screen){
+ return {screen,bookId:state.bookId||null,unit:state.unit,mode:state.mode||null,
+  sessionId:state.session?.id||null};
+}
+function sameNav(a,b){
+ return !!a&&a.screen===b.screen&&a.bookId===b.bookId&&
+  Number(a.unit)===Number(b.unit)&&a.mode===b.mode&&a.sessionId===b.sessionId;
+}
+function view(which,{record=true}={}){
+ if(!FT_SCREENS.has(which))return;
+ if(which!=='ftSession')questionVoice.stop();
+ for(const id of FT_SCREENS)$(id).hidden=id!==which;
+ visibleScreen=which;clearError();
+ if(record&&!navigatingHistory){
+  const next=navState(which),previous=history.state?.[FT_NAV_KEY];
+  if(!sameNav(previous,next)){
+   history.pushState({...history.state,[FT_NAV_KEY]:next},'');
+  }
+ }
+ window.scrollTo({top:0,behavior:'instant'});
+}
+function restoreNavigation(nav){
+ if(!nav||!FT_SCREENS.has(nav.screen))return;
+ navigatingHistory=true;
+ try{
+  if(nav.screen==='ftHome'){view('ftHome',{record:false});return}
+  if(!state.books.length){view('ftHome',{record:false});return}
+  const book=state.books.find(b=>b.id===nav.bookId&&b.ready);
+  if(!book){view('ftHome',{record:false});return}
+  state.bookId=book.id;
+  const availableUnits=new Set(state.questions.filter(q=>q.book_id===book.id).map(q=>Number(q.unit_number)));
+  if(availableUnits.has(Number(nav.unit)))state.unit=Number(nav.unit);
+  else state.unit=Math.min(...availableUnits);
+  renderBook();
+  if(nav.screen==='ftSession'){
+   if(state.session?.id===nav.sessionId&&state.session.status==='in_progress'&&state.mode===nav.mode){
+    renderQuestion();return;
+   }
+   // Never create a new session from browser history. Resume only an active
+   // in-memory session; a refresh must start via the normal authenticated flow.
+   view('ftBook',{record:false});return;
+  }
+  if(nav.screen==='ftFinish'&&state.session?.id===nav.sessionId&&state.session.status==='completed'){
+   view('ftFinish',{record:false});return;
+  }
+  view('ftBook',{record:false});
+ }finally{navigatingHistory=false}
+}
+history.replaceState({...history.state,[FT_NAV_KEY]:navState('ftHome')},'');
+window.addEventListener('popstate',event=>{
+ const snapshot=event.state?.[FT_NAV_KEY];
+ if(snapshot)restoreNavigation(snapshot);
+});
 async function token(refresh=false){
  const existing=window.WillenaAPI?.getLocalAccessToken?.();
  if(existing&&!refresh)return existing;
@@ -391,7 +448,11 @@ async function exit(){
  questionVoice.stop();
  try{state.renderer?.speechRecognition?.stop?.()}catch{}state.current=null;state.session=null;
  try{await refreshData()}catch(error){console.warn('[Free Talking] refresh',error)}
- renderBook();view('ftBook');
+ renderBook();
+ // The session was entered from its unit screen; go back to that history
+ // entry instead of adding a duplicate Book screen over the session.
+ if(history.state?.[FT_NAV_KEY]?.screen==='ftSession')history.back();
+ else view('ftBook');
 }
 async function startup(){
  try{
@@ -419,7 +480,12 @@ $('ftSkip').addEventListener('click',()=>{state.cursor=(state.cursor+1)%8;render
 $('ftNext').addEventListener('click',()=>{state.cursor=(state.cursor+1)%8;renderQuestion()});
 $('ftSessionExit').addEventListener('click',()=>void exit());
 $('ftSessionHome').addEventListener('click',()=>void exit());
-$('ftFinishHome').addEventListener('click',()=>void exit());
+$('ftFinishHome').addEventListener('click',()=>{
+ // Finish follows Session, which follows Book. Skip completed screens.
+ const current=history.state?.[FT_NAV_KEY];
+ if(current?.screen==='ftFinish')history.go(-2);
+ else void exit();
+});
 $('ftRetrySync').addEventListener('click',()=>void renderFinish({percent:state.session.first_try_percent,stars:state.session.reward_stars,
  points:state.session.reward_points,reward_synced:state.session.reward_synced}));
 void startup();
