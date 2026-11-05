@@ -120,8 +120,10 @@ async function detectBooks(){
  const published=new Set(state.questions.map(q=>q.book_id));
  const titles=new Map((state.catalog||[]).map(b=>[b.id,b.title]));
  const unique=new Map();
- for(const b of assigned)if(published.has(b.id)){
-  unique.set(b.id,{id:b.id,title:titles.get(b.id)||b.title||'Textbook'});
+ // Assignment detection and Free Talking content readiness are distinct.
+ // Always display genuinely assigned books, even if no question bank exists yet.
+ for(const b of assigned)if(b.id){
+  unique.set(b.id,{id:b.id,title:titles.get(b.id)||b.title||'Textbook',ready:published.has(b.id)});
  }
  state.books=[...unique.values()].sort((a,b)=>a.title.localeCompare(b.title));
  if(!state.books.length){state.bookId=null;return;}
@@ -134,14 +136,17 @@ function renderBookChoices(){
   const button=document.createElement('button');
   button.type='button';button.className='vocab-front-book-card ft-book-choice';
   const count=state.questions.filter(q=>q.book_id===b.id).length;
+  button.disabled=!b.ready;
+  if(!b.ready)button.title='This textbook is assigned, but Free Talking questions are not available yet.';
   button.innerHTML='<span class="ft-book-icon"><img src="/shared/svgs/golden-unit.svg" alt=""></span>'+
    '<span class="vocab-front-card-copy"><strong>'+escape(b.title)+'</strong><small>'+
-   count+' questions · Speaking & Writing</small></span><span class="ft-chevron">›</span>';
-  button.addEventListener('click',()=>void chooseBook(b.id));host.append(button);
+   (b.ready?count+' questions · Speaking & Writing':'Assigned textbook · Free Talking questions not available yet')+
+   '</small></span><span class="ft-chevron">'+(b.ready?'›':'')+'</span>';
+  if(b.ready)button.addEventListener('click',()=>void chooseBook(b.id));host.append(button);
  }
 }
 async function chooseBook(id){
- if(!state.books.some(b=>b.id===id))return;
+ if(!state.books.some(b=>b.id===id&&b.ready))return;
  state.bookId=id;state.unit=Math.min(...state.questions.filter(q=>q.book_id===id).map(q=>Number(q.unit_number)));state.session=null;state.current=null;state.awards.clear();
  try{
   await refreshData();
@@ -395,7 +400,10 @@ async function startup(){
   await loadQuestions();
   await detectBooks();
   renderBookChoices();
-  $('ftLoading').textContent=state.books.length?state.books.length+' assigned textbook(s) ready · Speaking & Writing':'No Free Talking questions are published for your assigned textbooks yet.';
+  const ready=state.books.filter(b=>b.ready).length;
+  $('ftLoading').textContent=state.books.length?
+   state.books.length+' assigned textbook(s) detected · '+ready+' with Free Talking questions':
+   'No active textbook assignments were found for your class.';
  }catch(error){showError('Free Talking을 열 수 없어요. '+error.message);
   $('ftLoading').textContent='로그인이나 Content Database 연결을 확인해 주세요.'}
 }
