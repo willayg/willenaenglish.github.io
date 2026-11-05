@@ -646,7 +646,7 @@ function renderManage(root){
   const count=(a.target_sentence_ids||[]).length,modes=(a.required_modes||[]).map(m=>types[m]||m).join(' · ');
   const shared=window.WillenaGeniusHomeworkCard;
   const task=String(a.title||'Sentence homework').replace(/^.+?\s*[·|—–-]\s*(?=Unit\s*\d)/i,'');
-  return shared.card({id:a.id,className:a.class_name,task,dueAt:a.due_at,
+  return shared.card({id:a.id,className:a.class_name,task,dueAt:a.due_at,qrUrl:'https://students.willenaenglish.com/students/sentence-genius/?homework='+encodeURIComponent(a.id),
     teacher:a.teacher_name||a.created_by_name||'',createdBy:a.created_by,progressLabel:'Student progress',
     body:'<div class="sgt-actions"><button class="control ghc-load-action" type="button" data-sg-progress="'+escapeHtml(a.id)+'" hidden>Load student results</button></div>'+
     '<div class="sgt-progress" id="sgtProgress-'+escapeHtml(a.id)+'" hidden></div>'});
