@@ -222,12 +222,26 @@ function savedSessionHomeCard(){
   const position=Math.min(Math.max(0,Number(saved.index)||0)+1,stage.questions.length);
   return '<button type="button" class="gf-resume-card" id="gfResumeSession"><span class="gf-resume-icon" aria-hidden="true">↪</span><span><strong>이어서 학습하기 · Continue</strong><small>'+esc(koTitle(mod))+' · Level '+esc(stage.number)+' · '+position+'/'+stage.questions.length+'</small></span><span class="gf-resume-arrow" aria-hidden="true">→</span></button>';
 }
+function focusedGrammarHomeworkHtml(){
+ const wanted=new URLSearchParams(location.search).get('homework');
+ if(!wanted)return homeworkCards(grammarHomework,progressMap);
+ const chosen=grammarHomework.filter(row=>String(row.id)===wanted);
+ const viewAll='<button type="button" id="gfViewAllHomework" class="gf-view-all-homework">모든 숙제 보기 · View all homework</button>';
+ return '<div class="gf-focused-homework"><div class="gf-focused-title">✓ 선택한 숙제 · Your Homework</div>'+(
+   chosen.length?homeworkCards(chosen,progressMap):'<p>선택한 숙제를 찾을 수 없어요. 현재 배정된 숙제를 확인하세요.</p>'
+ )+viewAll+'</div>';
+}
 function renderHome(){
   document.querySelector('.header-title').textContent='Grammar Genius 내신';
   state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};setBottom('');
-  root.innerHTML=`<h1 class="gf-title">Grammar Genius 내신</h1><div class="gf-kicker gf-title-en">중학교 문법 기초 학습</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p>${savedSessionHomeCard()}${homeworkCards(grammarHomework,progressMap)}<div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
+  root.innerHTML=`<h1 class="gf-title">Grammar Genius 내신</h1><div class="gf-kicker gf-title-en">중학교 문법 기초 학습</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p>${savedSessionHomeCard()}${focusedGrammarHomeworkHtml()}<div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
   root.querySelectorAll('[data-open-group]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'group',group:Number(btn.dataset.openGroup)}));
   root.querySelectorAll('[data-homework-stage]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'practice',moduleId:btn.dataset.homeworkModule,stageId:btn.dataset.homeworkStage}));
+  document.getElementById('gfViewAllHomework')?.addEventListener('click',()=>{
+    const url=new URL(location.href);url.searchParams.delete('homework');
+    history.replaceState(history.state,'',url.pathname+url.search+url.hash);
+    renderHome();
+  });
   document.getElementById('gfResumeSession')?.addEventListener('click',()=>{
     const route=resumeRoute();
     if(route)void nav.navigate(route);
