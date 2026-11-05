@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./styles.css?v=ft-proto-1">
+<link rel="stylesheet" href="./styles.css?v=20261105-p1b1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261101-menu-prominent1"></script>
@@ -56,6 +56,27 @@
  <div class="vocab-progress-track"><div id="ftProgressFill" class="vocab-progress-fill" style="width:0%"></div></div></header>
  <div id="ftQuestionStage" class="vocab-session-main" data-willena-keyboard-safe>
  <div class="ft-question-intro"><span id="ftPromptLabel" class="ft-eyebrow">QUESTION 1</span><span class="ft-pts-label">GRAMMAR 2 + ANSWER 2</span></div>
+ <section id="ftWilliVoice" class="ft-willi-voice" aria-label="AI Willi question audio">
+  <div class="ft-willi-avatar" data-ft-avatar aria-hidden="true">
+   <svg viewBox="0 0 90 90" width="90" height="90" role="img" aria-label="AI Willi">
+    <circle class="ft-willi-halo" cx="45" cy="45" r="39"/>
+    <circle class="ft-willi-face" cx="45" cy="45" r="31"/>
+    <ellipse class="ft-willi-eye" cx="33" cy="39" rx="3.5" ry="4.5"/>
+    <ellipse class="ft-willi-eye" cx="57" cy="39" rx="3.5" ry="4.5"/>
+    <ellipse class="ft-willi-cheek" cx="25" cy="50" rx="6" ry="3"/>
+    <ellipse class="ft-willi-cheek" cx="65" cy="50" rx="6" ry="3"/>
+    <path class="ft-willi-mouth" d="M34 55 Q45 64 56 55"/>
+    <path class="ft-willi-headphones" d="M14 45 C13 0 77 0 76 45"/>
+    <rect class="ft-willi-earpad" x="9" y="38" width="9" height="18" rx="5"/>
+    <rect class="ft-willi-earpad" x="72" y="38" width="9" height="18" rx="5"/>
+   </svg>
+   <span class="ft-willi-wave"><i></i><i></i><i></i><i></i><i></i></span>
+  </div>
+  <div class="ft-willi-voice-copy"><strong>AI Willi <small>Voice by AI Willi · AI 생성 음성</small></strong>
+   <button type="button" class="ft-willi-listen" data-ft-listen disabled aria-pressed="false"><span aria-hidden="true">▶</span> Listen again</button>
+   <span class="ft-willi-status" data-ft-voice-status role="status">질문 음성을 준비하는 중…</span>
+  </div>
+ </section>
  <div id="ftQuestionHost" class="vocab-question-wrap"></div>
  <div id="ftTranscriptRow" class="ft-transcript-row" hidden><label for="ftTranscriptEdit">말한 문장 확인 · 직접 입력도 가능해요</label>
  <textarea id="ftTranscriptEdit" rows="3" lang="en" placeholder="인식된 영어를 확인하거나 직접 영어 답변을 입력하세요."></textarea></div>
@@ -75,9 +96,9 @@
 <section id="ftFinish" class="ft-shell" hidden><div id="ftFinishContent"></div><div id="ftFinishStatus" class="ft-status" role="status"></div>
  <div class="ft-finish-actions"><button id="ftRetrySync" class="vocab-action" hidden type="button">Retry points sync</button><button id="ftFinishHome" class="vocab-action" type="button">Back to Units</button></div>
 </section>
-<div class="ft-footer-version">Free Talking Genius · Pass 1 · v1.2</div>
+<div class="ft-footer-version">Free Talking Genius · Pass 1B · v1.3</div>
 </main></div>
-<script type="module" src="./app.js?v=20261105-p1-retry-grading2"></script>
+<script type="module" src="./app.js?v=20261105-p1b-question-audio1"></script>
 <script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261103-idle1"></script>
 </body></html>
