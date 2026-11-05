@@ -14,6 +14,8 @@ const voice=env=>env.FREE_TALKING_REALTIME_VOICE||'marin';
 const REALTIME_VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar']);
 const ELEVEN_VOICES=Object.freeze({
  bunny:'M7zl2TS7ORAIGUejDfoy',
+ 'bunny-v3':'M7zl2TS7ORAIGUejDfoy',
+ 'bunny-multilingual-v2':'M7zl2TS7ORAIGUejDfoy',
  jock:'xmKwyBr5yTqqIbt4LW3I',
  'sgt-steve':'8j74BTqU7XqD2faIlSD4',
  lily:'HSbsudjyUAPurHByCRRP'
@@ -147,7 +149,8 @@ export async function onRequestPost({request,env,context}){
   // Isolated comparison option: only Bunny, only these explicitly allowed models.
   if(compareModel&&!(chosenVoice==='bunny'&&['eleven_v3','eleven_multilingual_v2'].includes(compareModel)))
    return json(400,{success:false,error:'Unsupported comparison model or voice'});
-  const elevenModel=compareModel||ELEVEN_MODEL;
+  const modelByVoice={'bunny-v3':'eleven_v3','bunny-multilingual-v2':'eleven_multilingual_v2'};
+  const elevenModel=compareModel||modelByVoice[chosenVoice]||ELEVEN_MODEL;
   const elevenId=ELEVEN_VOICES[chosenVoice]||null;
   if(chosenVoice&&!elevenId&&!REALTIME_VOICES.has(chosenVoice))return json(400,{success:false,error:'Unsupported voice'});
   if(elevenId){
