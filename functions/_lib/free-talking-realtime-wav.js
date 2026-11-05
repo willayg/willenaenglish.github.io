@@ -4,8 +4,11 @@
 export async function generateQuestionWav({apiKey,text,model='gpt-realtime-2.1-mini',voice='marin'}){
  if(!apiKey)throw new Error('Realtime API key missing');
  const url='https://api.openai.com/v1/realtime?model='+encodeURIComponent(model);
- const handshake=await fetch(url,{headers:{Upgrade:'websocket',Authorization:'Bearer '+apiKey,'OpenAI-Beta':'realtime=v1'},signal:AbortSignal.timeout(10000)});
- if(!handshake.webSocket)throw new Error('Realtime WebSocket rejected (HTTP '+handshake.status+')');
+ const handshake=await fetch(url,{headers:{Upgrade:'websocket',Authorization:'Bearer '+apiKey},signal:AbortSignal.timeout(10000)});
+ if(!handshake.webSocket){
+  let reason='';try{const data=await handshake.json();reason=String(data?.error?.message||data?.error?.code||'').slice(0,150)}catch{}
+  throw new Error('Realtime WebSocket rejected (HTTP '+handshake.status+(reason?': '+reason:'')+')');
+ }
  const socket=handshake.webSocket;
  socket.accept();
  const instructions=[
@@ -18,7 +21,7 @@ export async function generateQuestionWav({apiKey,text,model='gpt-realtime-2.1-m
  const chunks=[];
  let bytes=0,settled=false;
  const result=await new Promise((resolve,reject)=>{
-  const timeout=setTimeout(()=>finish(new Error('Realtime audio timed out')),11000);
+  const timeout=setTimeout(()=>finish(new Error('Realtime audio timed out')),23000);
   const finish=(error,value)=>{
    if(settled)return;settled=true;clearTimeout(timeout);
    try{socket.close(1000,'done')}catch{}
@@ -38,7 +41,7 @@ export async function generateQuestionWav({apiKey,text,model='gpt-realtime-2.1-m
     }else if(data.type==='session.updated'){
      socket.send(JSON.stringify({type:'response.create',response:{
       conversation:'none',output_modalities:['audio'],instructions,
-      audio:{output:{format:{type:'audio/pcm'},voice}},
+      audio:{output:{format:{type:'audio/pcm',rate:24000},voice}},
       input:[{type:'message',role:'user',content:[{type:'input_text',text:'Read this exact question aloud, without any other words: '+JSON.stringify(text)}]}]
      }}));
     }else if(data.type==='response.output_audio.delta'){
