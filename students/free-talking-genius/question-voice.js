@@ -33,7 +33,7 @@ export function createFreeTalkingVoice({host,getToken}){
   const call=async access=>fetch('/api/free-talking-audio',{
    method:'POST',credentials:'include',cache:'no-store',
    headers:{'Content-Type':'application/json',Authorization:'Bearer '+access},
-   body:JSON.stringify({question_id:questionId}),signal:AbortSignal.timeout(45000)});
+   body:JSON.stringify({question_id:questionId}),signal:AbortSignal.timeout(70000)});
   let response=await call(await getToken());
   if(response.status===401)response=await call(await getToken(true));
   const data=await response.json().catch(()=>null);
