@@ -300,8 +300,10 @@ async function loadGrammarBooks(){
   if(geniusHomeworkFromUrl()){
    try{await loadGrammarHomework()}catch(error){console.warn('[Grammar Textbooks] invalid assignment',error);activeHomework=null;$('grammarNotReady').textContent=error.message;$('grammarNotReady').hidden=false}
   }
-  if(found)void showBook(found,false,activeHomework?.chapter||null);
+  if(found)await showBook(found,false,activeHomework?.chapter||null);
+  else if(geniusHomeworkFromUrl())$('grammarNotReady').textContent='This homework is not available in your assigned books.';
  }catch(error){console.warn('[Grammar books] catalog unavailable',error);books=[{id:'grammar-ten-2-practice',title:'Grammar Ten 완성 2'}];list.innerHTML=books.map(bookCard).join('');}
+ finally{window.WillenaHomeworkDeepLinkSplash?.hide()}
 }
 async function loadChapterPack(){
  if(chapterPack)return chapterPack;
