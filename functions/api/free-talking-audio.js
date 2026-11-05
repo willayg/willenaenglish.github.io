@@ -12,6 +12,42 @@ const json=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Co
 const model=env=>env.FREE_TALKING_REALTIME_MODEL||'gpt-realtime-2.1-mini';
 const voice=env=>env.FREE_TALKING_REALTIME_VOICE||'marin';
 const REALTIME_VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar']);
+const ELEVEN_VOICES=Object.freeze({
+ bunny:'M7zl2TS7ORAIGUejDfoy',
+ jock:'xmKwyBr5yTqqIbt4LW3I',
+ 'sgt-steve':'8j74BTqU7XqD2faIlSD4'
+});
+const ELEVEN_MODEL='eleven_flash_v2_5'; // Modern, economical low-latency model for comparison.
+const ELEVEN_PROXY='https://staging.willenaenglish.com/.netlify/functions/eleven_labs_proxy';
+async function elevenAudio({env,text,voiceId}){
+ const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
+ if(key){
+  const response=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId)+'?output_format=mp3_44100_128',{
+   method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
+   body:JSON.stringify({text,model_id:ELEVEN_MODEL,voice_settings:{stability:0.55,similarity_boost:0.8,style:0,use_speaker_boost:false}}),
+   signal:AbortSignal.timeout(25000)
+  });
+  if(!response.ok)throw Error('ElevenLabs TTS HTTP '+response.status);
+  const audio=await response.arrayBuffer();
+  if(audio.byteLength<500||audio.byteLength>1200000)throw Error('Invalid ElevenLabs MP3');
+  return audio;
+ }
+ // English Arcade's existing Netlify ElevenLabs backend has the credentials.
+ // Only this authenticated Pages Function sends textbook-controlled text here.
+ const response=await fetch(ELEVEN_PROXY,{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({text,voice_id:voiceId,model_id:ELEVEN_MODEL,
+   voice_settings:{stability:0.55,similarity_boost:0.8,style:0,use_speaker_boost:false}}),
+  signal:AbortSignal.timeout(30000)
+ });
+ if(!response.ok)throw Error('Existing ElevenLabs proxy HTTP '+response.status);
+ const data=await response.json().catch(()=>null);
+ const encoded=String(data?.audio||'');
+ if(encoded.length<700||encoded.length>1650000||!/^[a-zA-Z0-9+/=]+$/.test(encoded))throw Error('Existing ElevenLabs proxy returned invalid audio');
+ const binary=atob(encoded),bytes=new Uint8Array(binary.length);
+ for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+ return bytes.buffer;
+}
 async function verifyStudent(request){
  const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
  if(token.length<40)return null;
@@ -35,10 +71,10 @@ async function questionById(id){
  return row?.book_id===BUZZ6&&row.is_published===true?row:null;
 }
 async function cacheKey(text,ttsModel,ttsVoice,variant='realtime'){
- const source=[variant==='realtime'?'free_talking_realtime_question_wav_v1':'free_talking_legacy_fallback_mp3_v1',ttsModel,ttsVoice,'natural_voice_1',text.trim()].join('|');
+ const source=[variant==='realtime'?'free_talking_realtime_question_wav_v1':variant==='elevenlabs'?'free_talking_elevenlabs_question_mp3_v1':'free_talking_legacy_fallback_mp3_v1',ttsModel,ttsVoice,'natural_voice_1',text.trim()].join('|');
  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(source));
  const hex=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
- return (variant==='realtime'?'ft_realtime_v1_':'ft_fallback_v1_')+hex.slice(0,32);
+ return (variant==='realtime'?'ft_realtime_v1_':variant==='elevenlabs'?'ft_eleven_v1_':'ft_fallback_v1_')+hex.slice(0,32);
 }
 async function cachedAudio(key,format='wav',env={}){
  const bucket=env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET;
@@ -105,7 +141,25 @@ export async function onRequestPost({request,env,context}){
   const t=String(q.question_en||'').trim();
   if(!t||t.length>600)return json(422,{success:false,error:'Question audio text unavailable'});
   const chosenVoice=body?.voice==null?'':String(body.voice).toLowerCase().trim();
-  if(chosenVoice&&!REALTIME_VOICES.has(chosenVoice))return json(400,{success:false,error:'Unsupported realtime voice'});
+  const elevenId=ELEVEN_VOICES[chosenVoice]||null;
+  if(chosenVoice&&!elevenId&&!REALTIME_VOICES.has(chosenVoice))return json(400,{success:false,error:'Unsupported voice'});
+  if(elevenId){
+   const cache=await cacheKey(t,ELEVEN_MODEL,elevenId,'elevenlabs');
+   const hit=await cachedAudio(cache,'mp3',env);
+   if(hit)return json(200,{success:true,...hit,source:hit.source,model:ELEVEN_MODEL,
+    voice:chosenVoice,provider:'elevenlabs',content_type:'audio/mpeg',ai_generated:true,stored:true});
+   try{
+    const bytes=await elevenAudio({env,text:t,voiceId:elevenId});
+    const audio=base64(bytes);
+    const saved=await saveR2(cache,audio,'mp3',env);
+    return json(200,{success:true,audio,source:'elevenlabs',model:ELEVEN_MODEL,
+     voice:chosenVoice,provider:'elevenlabs',content_type:'audio/mpeg',
+     stored:saved.stored,r2_status:saved.path||'not_saved',ai_generated:true});
+   }catch(e){
+    console.warn('[Free Talking audio] ElevenLabs generation failed',String(e?.message||e).slice(0,160));
+    return json(502,{success:false,error:'ElevenLabs voice unavailable. Please select another voice.'});
+   }
+  }
   const ttsModel=model(env),ttsVoice=chosenVoice||voice(env),key=await cacheKey(t,ttsModel,ttsVoice);
   const url=await cachedAudio(key,'wav',env);
   if(url)return json(200,{success:true,...url,source:url.source,model:ttsModel,content_type:'audio/wav',voice:ttsVoice,ai_generated:true});
