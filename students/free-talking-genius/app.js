@@ -11,6 +11,7 @@ import {geniusSessionContext} from '/students/components/genius-session-context.
 import {createFreeTalkingVoice} from './question-voice.js?v=20261105-lily-preload1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+// Book selection is resolved from the current student's class assignments.
 const BOOK=()=>state.bookId;
 const bookTitle=()=>state.books.find(b=>b.id===state.bookId)?.title||'Textbook';
 const $=id=>document.getElementById(id);
@@ -123,7 +124,7 @@ async function detectBooks(){
   unique.set(b.id,{id:b.id,title:titles.get(b.id)||b.title||'Textbook'});
  }
  state.books=[...unique.values()].sort((a,b)=>a.title.localeCompare(b.title));
- if(!state.books.length)throw Error('Your class has no textbooks with published Free Talking questions yet.');
+ if(!state.books.length){state.bookId=null;return;}
  const previous=state.bookId;
  state.bookId=state.books.some(b=>b.id===previous)?previous:state.books[0].id;
 }
@@ -141,7 +142,7 @@ function renderBookChoices(){
 }
 async function chooseBook(id){
  if(!state.books.some(b=>b.id===id))return;
- state.bookId=id;state.unit=1;state.session=null;state.current=null;state.awards.clear();
+ state.bookId=id;state.unit=Math.min(...state.questions.filter(q=>q.book_id===id).map(q=>Number(q.unit_number)));state.session=null;state.current=null;state.awards.clear();
  try{
   await refreshData();
   questionVoice.setQuestionBank(state.questions.filter(q=>q.book_id===id),state.unit);
@@ -387,7 +388,6 @@ async function exit(){
  renderBook();view('ftBook');
 }
 async function startup(){
- $('ftOpenBook').disabled=true;
  try{
   state.student=await studentIdentity();
   state.profile=await signedInProfile(state.student.id);
@@ -395,7 +395,7 @@ async function startup(){
   await loadQuestions();
   await detectBooks();
   renderBookChoices();
-  $('ftLoading').textContent=state.books.length+' assigned textbook(s) ready · Speaking & Writing';
+  $('ftLoading').textContent=state.books.length?state.books.length+' assigned textbook(s) ready · Speaking & Writing':'No Free Talking questions are published for your assigned textbooks yet.';
  }catch(error){showError('Free Talking을 열 수 없어요. '+error.message);
   $('ftLoading').textContent='로그인이나 Content Database 연결을 확인해 주세요.'}
 }
