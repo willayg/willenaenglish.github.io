@@ -287,7 +287,7 @@
       list.innerHTML='<div class="empty">No '+(state.filter==='current'?'current':'past')+' Vocabulary Study assignments'+(state.className?' for '+esc(state.className):'')+'.</div>';
       return;
     }
-    list.innerHTML=(state.filter==='history'?historySelectionToolbar():'')+rows.map(state.filter==='history'?historyCard:assignmentCard).join('');
+    list.innerHTML=(state.filter==='history'?historySelectionToolbar():'')+window.WillenaGeniusHomeworkCard.groupByDate(rows,state.filter==='history'?historyCard:assignmentCard);
     if(state.filter==='history')wireHistorySelection(rows);
     document.querySelectorAll('#assignmentList .ghc-open').forEach(button=>button.addEventListener('click',()=>openAssignment(button.dataset.assignmentId)));
     void window.WillenaGeniusHomeworkCard?.hydrateTeachers(list);
