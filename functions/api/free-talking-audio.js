@@ -15,6 +15,7 @@ const voice=env=>env.FREE_TALKING_REALTIME_VOICE||'marin';
 // but are not reachable through this endpoint until an authenticated unlock system exists.
 const SELECTABLE_VOICES=new Set(['marin','bunny-v3']);
 const ELEVEN_VOICES=Object.freeze({
+ bunny:'M7zl2TS7ORAIGUejDfoy',
  'bunny-v3':'M7zl2TS7ORAIGUejDfoy'
 });
 const ELEVEN_MODEL='eleven_v3';
@@ -142,7 +143,9 @@ export async function onRequestPost({request,env,context}){
   const t=String(q.question_en||'').trim();
   if(!t||t.length>600)return json(422,{success:false,error:'Question audio text unavailable'});
   const chosenVoice=body?.voice==null?'':String(body.voice).toLowerCase().trim();
-  if(!SELECTABLE_VOICES.has(chosenVoice)||body?.compare_model)
+  // Accept the previously working Bunny comparison protocol for AI Lili.
+  const comparison=chosenVoice==='bunny'&&body?.compare_model==='eleven_v3';
+  if(!comparison&&(!SELECTABLE_VOICES.has(chosenVoice)||body?.compare_model))
    return json(400,{success:false,error:'This voice is not available yet.'});
   const elevenModel=ELEVEN_MODEL;
   const elevenId=ELEVEN_VOICES[chosenVoice]||null;
