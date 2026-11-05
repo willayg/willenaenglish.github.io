@@ -41,6 +41,7 @@ async function refreshStudentHomework(){
 const screens=createScreens({
   book:id=>{clearHomeworkSession();void openBook(id)},
   homework:assignment=>void openHomeworkSession(assignment),
+  viewAllHomework:()=>{clearHomeworkSession();screens.progress()},
   unit:id=>{if(state.homeworkSession&&String(id)!==String(state.homeworkSession.unit_id))clearHomeworkSession();void selectUnit(id)},
   start:mode=>openSession(mode),
   home:()=>navigation.home(),
