@@ -240,7 +240,7 @@ function renderAssignment(a){
  const body='<div class="ghc-progress-summary"><span>Class progress <b>'+classPct+'</b></span><span>'+data.done+'/'+data.total+' complete · '+(data.total-data.done)+' not complete</span></div>'+
   '<div class="ghc-progress-track"><i style="width:'+(data.pct||0)+'%"></i></div><div class="ghc-student-list">'+rowHtml+'</div>'+
   '<div class="ghc-progress-modes">'+esc(modeNames)+'</div>'+buttons;
- return shared.card({id:a.id,className:a.class,task:a.title,dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Student progress',body});
+ return shared.card({id:a.id,className:a.class,task:a.title,dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Student progress',body,qrUrl:a.list_meta?.book_key==='grammar_ten_2'?'https://students.willenaenglish.com/students/grammar-books/?book='+encodeURIComponent(a.list_meta?.source_book_id||'grammar-ten-2-practice')+'&unit='+encodeURIComponent(a.list_meta?.chapter||1)+'&homework='+encodeURIComponent(a.id):''});
 }
 async function drawManage(){
  const el=panel();if(!el)return;el.innerHTML='<div class="gf-hw-loading">Loading book assignments…</div>';
