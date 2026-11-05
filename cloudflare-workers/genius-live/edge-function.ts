@@ -22,7 +22,7 @@ async function user(req:Request){
  return {id:data.user.id,role:clean(profile.role).toLowerCase(),name:clean(profile.name||profile.username||"Player"),class:clean(profile.class)};
 }
 async function content(path:string){
- const res=await fetch(CONTENT_URL+"/rest/v1/"+path,{headers:{"apikey":CONTENT_KEY,"Authorization":"Bearer "+CONTENT_KEY,"Accept":"application/json"}});
+ const res=await fetch(CONTENT_URL+"/rest/v1/"+path,{headers:{"apikey":CONTENT_KEY,"Accept":"application/json"}});
  const body=await res.json().catch(()=>[]);
  if(!res.ok)throw new Error("Content database: "+(body?.message||res.status));
  return body;
