@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>Willena Vocabulary Study</title>
+<script>try{const q=new URLSearchParams(location.search);if(q.get('assignment_id')||q.get('homework'))document.documentElement.classList.add('vocab-focused-boot')}catch(_){}</script>
 <link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +15,7 @@
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./vocab-study.css?v=20261105-focus-homework2">
+<link rel="stylesheet" href="./vocab-study.css?v=20261105-focused-splash1">
 <link rel="stylesheet" href="./theme-pips.css?v=20261101-footer1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script>
@@ -196,9 +197,10 @@
     <div class="vocab-loading-card">
       <div class="vocab-loading-logo" aria-hidden="true"></div>
       <div class="vocab-loading-sweep" aria-hidden="true"></div>
-      <strong id="vocabLoadingText">불러오는 중...</strong>
+      <strong id="vocabLoadingText">숙제를 불러오는 중...</strong><small class="vocab-loading-subtext">선택한 숙제로 이동하고 있어요 · Opening your homework</small>
     </div>
   </section>
+  <script>if(document.documentElement.classList.contains('vocab-focused-boot')){const overlay=document.getElementById('vocabLoading');overlay.hidden=false;overlay.setAttribute('aria-hidden','false')}</script>
 
   <section id="vocabWordModal" class="vocab-word-modal" hidden aria-hidden="true">
     <div class="vocab-word-modal-card" role="dialog" aria-modal="true" aria-labelledby="vocabWordModalTitle">
@@ -246,7 +248,7 @@
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
 <script type="module" src="./theme-pips.js?v=20261101-footer1"></script>
 <script type="module">
-import('./vocab-study.js?v=20261105-focus-homework2').catch(error=>{
+import('./vocab-study.js?v=20261105-focused-splash1').catch(error=>{
   console.error('[Vocab Study] module load',error);
   const panel=document.getElementById('vocabStartupError');
   if(panel){panel.hidden=false;panel.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}
