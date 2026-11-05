@@ -51,7 +51,7 @@ async function standardHomework(){
     const chapter=Number(a.list_meta?.chapter)||1;
     url='/students/grammar-books/?book='+encodeURIComponent(a.list_meta?.source_book_id||'1e3a2112-07be-45e2-a8fc-ce20011e0e57')+'&unit='+chapter+'&homework='+encodeURIComponent(a.id);
   }
-  else if(source==='vocab_study'){app='Word Genius';url='/students/vocab-study/?open=wordtest'}
+  else if(source==='vocab_study'){app='Word Genius';url='/students/vocab-study/?open=wordtest&assignment_id='+encodeURIComponent(a.id)}
   else if(['wordlist','english_arcade','arcade','saved_game','grammar','phonics'].includes(source)){
     app='English Arcade';url='/Games/english_arcade/index.html?openHomework=1';
   }else{
