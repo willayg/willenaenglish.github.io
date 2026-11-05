@@ -15,7 +15,8 @@ const REALTIME_VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shi
 const ELEVEN_VOICES=Object.freeze({
  bunny:'M7zl2TS7ORAIGUejDfoy',
  jock:'xmKwyBr5yTqqIbt4LW3I',
- 'sgt-steve':'8j74BTqU7XqD2faIlSD4'
+ 'sgt-steve':'8j74BTqU7XqD2faIlSD4',
+ lily:'HSbsudjyUAPurHByCRRP'
 });
 const ELEVEN_MODEL='eleven_flash_v2_5'; // Modern, economical low-latency model for comparison.
 const ELEVEN_PROXY='https://api.willenaenglish.com/.netlify/functions/eleven_labs_proxy';
