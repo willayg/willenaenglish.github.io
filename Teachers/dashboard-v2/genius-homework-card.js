@@ -23,7 +23,8 @@ function dateKey(value){
  if(!value)return 'undated';
  const d=new Date(value);
  if(Number.isNaN(d.getTime()))return 'undated';
- return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+ const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).map(x=>[x.type,x.value]));
+ return p.year+'-'+p.month+'-'+p.day;
 }
 function groupByDate(rows,render,options={}){
  const groups=new Map();
