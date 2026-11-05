@@ -43,11 +43,14 @@ export function createFreeTalkingVoice({host,getToken}){
  audio.addEventListener('pause',()=>{setPlaying(false);if(!audio.ended)status('다시 듣기를 눌러 주세요.')});
  audio.addEventListener('ended',()=>{setPlaying(false);status('다시 듣기를 누르면 질문을 또 들을 수 있어요.')});
  audio.addEventListener('error',()=>{setPlaying(false);status('음성을 불러오지 못했어요. 질문을 읽고 답해 주세요.')});
- const modelForVoice=voice=>voice==='bunny-v3'?'eleven_v3':voice==='bunny-multilingual-v2'?'eleven_multilingual_v2':null;
+ const modelForVoice=voice=>voice==='bunny-v3'?'eleven_v3':
+  voice==='bunny-multilingual-v2'?'eleven_multilingual_v2':
+  ['jock','sgt-steve','lily'].includes(voice)?'eleven_v3':null;
  async function fetchVoice(questionId,voice){
   const expectedModel=modelForVoice(voice);
-  const requestedVoice=expectedModel?'bunny':voice;
-  const requestBody={question_id:questionId,voice:requestedVoice,...(expectedModel?{compare_model:expectedModel}:{})};
+  const bunnyVariant=voice==='bunny-v3'||voice==='bunny-multilingual-v2';
+  const requestedVoice=bunnyVariant?'bunny':voice;
+  const requestBody={question_id:questionId,voice:requestedVoice,...(bunnyVariant?{compare_model:expectedModel}:{})};
   const call=async access=>fetch('/api/free-talking-audio',{
    method:'POST',credentials:'include',cache:'no-store',
    headers:{'Content-Type':'application/json',Authorization:'Bearer '+access},
@@ -113,7 +116,7 @@ export function createFreeTalkingVoice({host,getToken}){
    if(v!==version)return
    if(v!==version)return;
    // Never advertise or play a different voice than the one requested.
-   const actualVoice=modelForVoice(requestedVoice)?'bunny':requestedVoice;
+   const actualVoice=['bunny-v3','bunny-multilingual-v2'].includes(requestedVoice)?'bunny':requestedVoice;
    if(String(file.voice||'').toLowerCase()!==actualVoice)throw Error('Voice mismatch: selected '+actualVoice+', received '+String(file.voice||'unknown'));
    if(modelForVoice(requestedVoice)&&file.model!==modelForVoice(requestedVoice))throw Error('Model mismatch: expected '+modelForVoice(requestedVoice));
    currentUrl=file.url;
