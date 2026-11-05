@@ -5,7 +5,7 @@ const SCORES='https://fiieuiktlsivwfgyivai.supabase.co';
 const SCORES_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
-const BUZZ6='8e949813-fa91-4adc-a709-905efc980d8b';
+// Audio is authorized by published question ID, not a single hardcoded textbook.
 const R2='https://api.willenaenglish.com/.netlify/functions/';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const json=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
@@ -69,7 +69,7 @@ async function questionById(id){
  if(!res.ok)throw Error('Content Database unavailable');
  const data=await res.json().catch(()=>[]);
  const row=data?.[0];
- return row?.book_id===BUZZ6&&row.is_published===true?row:null;
+ return UUID.test(String(row?.book_id||''))&&row.is_published===true?row:null;
 }
 async function cacheKey(text,ttsModel,ttsVoice,variant='realtime'){
  const source=[variant==='realtime'?'free_talking_realtime_question_wav_v1':variant==='elevenlabs'?'free_talking_elevenlabs_question_mp3_v1':'free_talking_legacy_fallback_mp3_v1',ttsModel,ttsVoice,'natural_voice_1',text.trim()].join('|');
