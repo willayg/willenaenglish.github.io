@@ -5,7 +5,7 @@ export function createFreeTalkingVoice({host,getToken}){
  let selected='',version=0,currentUrl='',playing=false,loadedVoice='';
  const stored=new Map();
  const inflight=new Map();
- let questionBank=[],preferredUnit=1,preloadEpoch=0,destroyed=false;
+ let questionBank=[],preferredUnit=1,preloadEpoch=0,destroyed=false,voiceConfirmed=false;
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
  const VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar','bunny','jock','sgt-steve','lily']);
@@ -74,10 +74,11 @@ export function createFreeTalkingVoice({host,getToken}){
  function preload(unit=preferredUnit){
   preferredUnit=Number(unit)||1;
   const epoch=++preloadEpoch,chosen=activeVoice();
-  if(!isElevenVoice(chosen)||!questionBank.length){preloadingText('');return}
-  const ordered=[...questionBank].sort((a,b)=>
-   (Number(a.unit_number)===preferredUnit?0:1)-(Number(b.unit_number)===preferredUnit?0:1)
-   || Number(a.unit_number)-Number(b.unit_number)||Number(a.question_number)-Number(b.question_number));
+  // Never batch-generate MP3s before the student explicitly chooses a voice.
+  if(!voiceConfirmed||!isElevenVoice(chosen)||!questionBank.length){preloadingText('');return}
+  // Preload only the selected unit; avoid generating every textbook unit at once.
+  const ordered=questionBank.filter(q=>Number(q.unit_number)===preferredUnit)
+   .sort((a,b)=>Number(a.question_number)-Number(b.question_number));
   const total=ordered.length;let done=0,failed=0,cursor=0;
   preloadingText(chosen+' · loading 0/'+total+' questions…');
   async function worker(){
@@ -88,7 +89,6 @@ export function createFreeTalkingVoice({host,getToken}){
     try{await obtain(id,chosen)}catch(e){failed++;console.warn('[Free Talking] voice preload',chosen,String(e?.message||e).slice(0,120))}
     done++;
     if(epoch===preloadEpoch){
-     const unitDone=ordered.slice(0,done).filter(q=>Number(q.unit_number)===preferredUnit).length;
      preloadingText(chosen+' · '+done+'/'+total+' ready'+(failed?' · '+failed+' failed':''));
     }
    }
@@ -153,8 +153,9 @@ export function createFreeTalkingVoice({host,getToken}){
  }
  function changeVoice(){
   const chosen=activeVoice();
-  if(chosen===pickerVoice)return;
+  if(chosen===pickerVoice&&voiceConfirmed)return;
   pickerVoice=chosen;
+  voiceConfirmed=true;
   try{localStorage.setItem(PREFERENCE_KEY,chosen)}catch(_){}
   preload(preferredUnit);
   if(selected)void select(selected,{autoplay:true});
