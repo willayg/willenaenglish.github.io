@@ -109,7 +109,7 @@ async function paintBatchView(){
  const shared=window.WillenaGeniusHomeworkCard;
  if(!shared){el.innerHTML='<div class="gf-hw-error">Shared homework cards unavailable.</div>';return}
  el.innerHTML='<div class="ua-genius-manage-list">'+entries.map(a=>shared.card({
-  id:a.id,className:a.class_name,
+  id:a.id,className:a.class_name,qrUrl:'https://students.willenaenglish.com/students/grammar-foundations/?homework='+encodeURIComponent(a.id),
   task:[a.module_title,a.stage_title].filter(Boolean).join(' · '),
   dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Student progress',
   body:'<div id="gfHwDetail-'+esc(a.id)+'" class="gf-hw-students"></div>'
