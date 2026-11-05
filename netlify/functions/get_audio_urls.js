@@ -58,10 +58,11 @@ exports.handler = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
     const words = Array.isArray(body.words) ? body.words : [];
+    const format = body.format === 'wav' ? 'wav' : 'mp3'; // preserves default MP3
     if (!words.length) {
       return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Missing words' }) };
     }
-    const toKey = (word) => String(word).trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_\-]/g, '') + '.mp3';
+    const toKey = (word) => String(word).trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_\-]/g, '') + '.' + format;
     const results = {};
 
     let idx = 0; const conc = Math.min(12, words.length);
