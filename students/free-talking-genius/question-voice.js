@@ -115,8 +115,20 @@ export function createFreeTalkingVoice({host,getToken}){
   inflight.set(cacheId,work);
   return work;
  }
- // Serial cache warming avoids flooding ElevenLabs/R2 with new files.
- // Previously prepared clips are skipped by the server R2 lookup, even after reload.
+ // Inventory-first preload: R2 HEAD checks for every question/voice precede
+ // any paid generation. Existing R2 URLs are reused directly on the phone.
+ async function fetchInventory(bookId){
+  const call=async access=>fetch('/api/free-talking-audio',{
+   method:'POST',credentials:'include',cache:'no-store',
+   headers:{'Content-Type':'application/json',Authorization:'Bearer '+access},
+   body:JSON.stringify({inventory_book_id:bookId}),signal:AbortSignal.timeout(50000)});
+  let r=await call(await getToken());
+  if(r.status===401)r=await call(await getToken(true));
+  const data=await r.json().catch(()=>null);
+  if(!r.ok||data?.success!==true||!Array.isArray(data.questions))
+   throw Error(data?.error||'Cannot confirm R2 inventory');
+  return data.questions;
+ }
  function preload(unit=preferredUnit){
   preferredUnit=Number(unit)||1;
   const epoch=++preloadEpoch;
@@ -125,59 +137,80 @@ export function createFreeTalkingVoice({host,getToken}){
   const orderedQuestions=[...questionBank].sort((a,b)=>
    (Number(a.unit_number)===preferredUnit?0:1)-(Number(b.unit_number)===preferredUnit?0:1)
    ||Number(a.unit_number)-Number(b.unit_number)||Number(a.question_number)-Number(b.question_number));
-  const current=orderedQuestions.filter(q=>Number(q.unit_number)===preferredUnit);
-  const later=orderedQuestions.filter(q=>Number(q.unit_number)!==preferredUnit);
-  const jobs=[
-   ...current.flatMap(q=>[{id:String(q.id),voice:selectedVoice},{id:String(q.id),voice:otherVoice}]),
-   ...later.flatMap(q=>[{id:String(q.id),voice:selectedVoice},{id:String(q.id),voice:otherVoice}])
-  ].filter(job=>job.id);
   const total=orderedQuestions.length;
   const complete={'marin':0,'bunny-v3':0};
-  const failures=[];
-  let canceled=false;
-  const render=()=>{
-   if(epoch!==preloadEpoch||destroyed)return;
-   const text='AI Willi '+complete.marin+'/'+total+
-    ' · AI Lili '+complete['bunny-v3']+'/'+total+' R2 ready'+
-    (failures.length?' · '+failures.length+' pending retry':'');
-   preloadingText(text);
-  };
   const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  const render=(suffix='')=>{
+   if(epoch!==preloadEpoch||destroyed)return;
+   preloadingText('AI Willi '+complete.marin+'/'+total+' · AI Lili '+
+    complete['bunny-v3']+'/'+total+' R2 ready'+suffix);
+  };
   async function run(){
-   render();
-   // One request at a time, and gentle backoff for temporary TTS/R2 failures.
-   for(let pass=0;pass<3;pass++){
-    const batch=pass===0?jobs:failures.splice(0);
-    if(!batch.length)break;
-    for(const job of batch){
-     if(epoch!==preloadEpoch||destroyed)return;
-     try{
-      await warm(job.id,job.voice);
-      complete[job.voice]++;
-     }catch(e){
-      const message=String(e?.message||e).slice(0,160);
-      failures.push(job);
-      console.warn('[Free Talking] cache preload',job.voice,'pass '+(pass+1),message);
-      if(/R2 cache temporarily unavailable|R2_LOOKUP_UNAVAILABLE|R2_WRITE_UNVERIFIED|Student sign-in required|401|403/i.test(message)){
-       preloadingText('R2/audio saving issue · preloading paused to prevent duplicate charges');
-       return;
-      }
+   preloadingText('Checking R2 for both voices…');
+   const bookId=orderedQuestions[0]?.book_id;
+   if(!bookId){preloadingText('Cannot check R2: missing textbook ID');return}
+   let inventory;
+   try{inventory=await fetchInventory(bookId)}
+   catch(e){
+    if(epoch===preloadEpoch)preloadingText('R2 inventory failed — generation paused: '+String(e?.message||e).slice(0,100));
+    return;
+   }
+   if(epoch!==preloadEpoch||destroyed)return;
+   const byId=new Map(inventory.map(item=>[item.id,item]));
+   // Never treat a partial response as a complete cache manifest.
+   if(orderedQuestions.some(q=>!byId.has(String(q.id)))){
+    preloadingText('R2 inventory incomplete — no new audio generated');
+    return;
+   }
+   const missing=[];
+   for(const voice of [selectedVoice,otherVoice]){
+    for(const q of orderedQuestions){
+     const clip=byId.get(String(q.id))?.[voice];
+     if(!clip||typeof clip.cached!=='boolean'){
+      preloadingText('R2 inventory invalid — no new audio generated');
+      return;
      }
-     render();
-     // Allow the first unit to load comfortably; pause more on retries.
-     // Extra breathing room helps avoid provider throttling during large batches.
-     await sleep(pass===0?800:2000*pass);
+     if(clip.cached){
+      complete[voice]++;
+      // Store the signed R2 URL locally for instant playback without hitting TTS.
+      if(clip.url?.startsWith('https://')){
+       const cacheId=String(q.id)+'|'+voice+'|'+(modelForVoice(voice)||'standard');
+       stored.set(cacheId,{url:clip.url,owned:false,model:clip.model,
+        voice:clip.voice,source:clip.source||'r2_shared',stored:true});
+      }
+     }else missing.push({id:String(q.id),voice});
     }
-    if(failures.length&&pass<2)await sleep(3000*(pass+1));
    }
-   if(epoch===preloadEpoch&&!destroyed){
-    render();
-    if(failures.length)preloadingText('AI Willi '+complete.marin+'/'+total+
-     ' · AI Lili '+complete['bunny-v3']+'/'+total+
-     ' R2 ready · '+failures.length+' not yet cached (retry on next opening)');
+   render(' · '+missing.length+' missing');
+   if(!missing.length)return;
+   // Current unit first, then the rest. One provider request at a time.
+   missing.sort((a,b)=>{
+    const qa=orderedQuestions.find(q=>String(q.id)===a.id);
+    const qb=orderedQuestions.find(q=>String(q.id)===b.id);
+    return (Number(qa?.unit_number)===preferredUnit?0:1)-
+     (Number(qb?.unit_number)===preferredUnit?0:1);
+   });
+   let failed=0;
+   for(const job of missing){
+    if(epoch!==preloadEpoch||destroyed)return;
+    try{await warm(job.id,job.voice);complete[job.voice]++}
+    catch(e){
+     failed++;
+     const message=String(e?.message||e);
+     console.warn('[Free Talking] R2 missing clip generation',job.voice,message.slice(0,150));
+     if(/R2|INVENTORY|401|403|sign.in|AUTH/i.test(message)){
+      render(' · paused: '+message.slice(0,85));
+      return;
+     }
+    }
+    render((failed?' · '+failed+' failed':''));
+    await sleep(1000);
    }
+   render(failed?' · '+failed+' failed (retry later)':'');
   }
-  void run().catch(e=>console.warn('[Free Talking] preloader stopped',e?.message||e));
+  void run().catch(e=>{
+   if(epoch===preloadEpoch)preloadingText('Preload stopped: '+String(e?.message||e).slice(0,110));
+  });
  }
  function setQuestionBank(questions,unit=1){questionBank=Array.isArray(questions)?questions:[];preload(unit)}
  async function play(){
