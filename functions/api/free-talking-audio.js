@@ -1,6 +1,6 @@
 // Free Talking Genius: authenticated question audio, cached in Willena's existing R2 audio store.
 // Question text comes from the published Content Database, never from browser-supplied text.
-import {generateQuestionWav} from './free-talking-realtime-wav.js';
+import {generateQuestionWav} from '../_lib/free-talking-realtime-wav.js';
 const SCORES='https://fiieuiktlsivwfgyivai.supabase.co';
 const SCORES_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
