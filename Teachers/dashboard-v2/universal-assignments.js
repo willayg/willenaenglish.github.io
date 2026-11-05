@@ -162,7 +162,7 @@ async function creativeManage(app,body){
     '<div class="ua-genius-current-history"><button type="button" data-period="current" class="'+(view==='current'?'active':'')+'">Current</button><button type="button" data-period="history" class="'+(view==='history'?'active':'')+'">History</button></div>'+
     '<button type="button" class="control" id="uaCreativeRefresh">Refresh</button></div>'+
     (chosen.length?'<div class="ua-genius-manage-list">'+chosen.map(a=>
-     window.WillenaGeniusHomeworkCard.card({id:a.id,className:a.class,
+     window.WillenaGeniusHomeworkCard.card({id:a.id,className:a.class,qrUrl:'https://students.willenaenglish.com'+(app==='writing'?'/students/writing-genius/?homework='+encodeURIComponent(a.id):'/students/wordsearch/?homework='+encodeURIComponent(a.id)+'&mode='+encodeURIComponent(a.list_meta?.kind||'boggle')),
      task:(a.list_meta?.kind==='sentence'?(a.list_meta?.unit_label||a.title):(a.title||'Homework')),
      dueAt:a.due_at,teacher:a.teacher_name||a.created_by_name||'',createdBy:a.created_by,
      progressLabel:'Student progress',
