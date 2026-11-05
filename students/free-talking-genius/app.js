@@ -155,28 +155,30 @@ function markFeedback(attempt){
  $('ftSubmit').hidden=true;
  $('ftSkip').hidden=true;
  $('ftAttemptStatus').textContent=sum===4?'이 질문은 숙달했어요. 다음 질문으로 넘어가요.':
- '답변을 다시 말하거나 쓰면 부족한 점수를 채울 수 있어요. 최대 5번 확인할 수 있어요.';
+ '다시 답하면 점수를 올릴 수 있어요. 바로 다음 질문으로 가도 괜찮아요.';
 }
 function questionIndexAfter(start=0){
  const questions=groups();
+ // Every saved first answer counts as finished. Improving to 4/4 is optional.
  for(let i=0;i<questions.length;i++){
   const index=(start+i)%questions.length,q=questions[index];
-  if(questionBest(state.session.id,q.id)<4&&attemptsFor(state.session.id,q.id).length<5)return index;
+  if(attemptsFor(state.session.id,q.id).length===0)return index;
  }
  return -1;
 }
 function renderQuestion({retry=false}={}){
  const questions=groups();
  if(!state.session||!questions.length)return;
- const idx=questionIndexAfter(state.cursor);
+ const sameQuestion=retry&&state.current&&attemptsFor(state.session.id,state.current.id).length<5&&questionBest(state.session.id,state.current.id)<4;
+ const idx=sameQuestion?questions.findIndex(q=>q.id===state.current.id):questionIndexAfter(state.cursor);
  if(idx<0){void conclude();return}
  state.cursor=idx;state.current=questions[idx];state.feedback=null;
  $('ftFeedback').hidden=true;$('ftSubmit').hidden=false;$('ftNext').hidden=true;$('ftRetry').hidden=true;$('ftSkip').hidden=false;
  $('ftAttemptStatus').textContent=retry?'답을 더 자연스럽게 고쳐서 다시 시도해 보세요.':'자신의 생각으로 자유롭게 답해 보세요.';
  $('ftPromptLabel').textContent='QUESTION '+(idx+1);
- const mastered=questions.filter(q=>questionBest(state.session.id,q.id)===4).length;
- $('ftSessionProgress').textContent=mastered+'/8 mastered';
- $('ftProgressFill').style.width=pct(mastered/8*100)+'%';
+ const answered=questions.filter(q=>attemptsFor(state.session.id,q.id).length>0).length;
+ $('ftSessionProgress').textContent=answered+'/8 answered';
+ $('ftProgressFill').style.width=pct(answered/8*100)+'%';
  $('ftSessionTitle').textContent=(state.mode==='speaking'?'Speaking':'Writing')+' · Unit '+state.unit;
  try{state.renderer?.speechRecognition?.stop?.()}catch{}
  state.renderer=new QuestionRenderer($('ftQuestionHost'));
@@ -208,11 +210,10 @@ async function openMode(mode){
   await refreshData();
   let session=state.sessions.find(s=>s.book_id===BOOK&&s.unit_number===state.unit&&s.mode===mode&&s.status==='in_progress');
   if(session){
-   const remaining=groups().some(q=>questionBest(session.id,q.id)<4&&attemptsFor(session.id,q.id).length<5);
-   if(!remaining){
-    // Keep the exhausted session and its history; start a new practice run.
-    session=null;
-   }
+   // Keep unfinished sessions, even if eight answers are already present:
+   // renderQuestion will safely finalize the session rather than orphaning it.
+   const hasUnanswered=groups().some(q=>attemptsFor(session.id,q.id).length===0);
+   if(!hasUnanswered)state.cursor=0;
   }
   if(!session){
    const created=await api('free_talking_sessions',{method:'POST',body:{
@@ -253,8 +254,9 @@ async function submit(){
    $('ftAttemptStatus').textContent='답변과 점수는 저장됐지만 포인트 동기화가 필요해요: '+pointError.message;
   }
   playStudentSfx(Number(attempt.grammar_points)+Number(attempt.quality_points)===4?'correct':'wrong');
-  $('ftSessionProgress').textContent=groups().filter(q=>questionBest(state.session.id,q.id)===4).length+'/8 mastered';
-  $('ftProgressFill').style.width=pct(groups().filter(q=>questionBest(state.session.id,q.id)===4).length/8*100)+'%';
+  const answered=groups().filter(q=>attemptsFor(state.session.id,q.id).length>0).length;
+  $('ftSessionProgress').textContent=answered+'/8 answered';
+  $('ftProgressFill').style.width=pct(answered/8*100)+'%';
  }catch(error){$('ftAttemptStatus').textContent='저장하지 못했어요. '+error.message;console.warn('[Free Talking] grade',error)}
  finally{setBusy(false)}
 }
@@ -269,10 +271,10 @@ async function conclude(){
    await renderFinish(data);
   }else{
    view('ftFinish');
-   $('ftFinishContent').innerHTML=renderStudentSessionFinish({title:'아직 연습할 질문이 있어요.',
-     description:'이번 연습 기록은 저장했어요. 나머지 질문도 좋은 답으로 마무리해 보세요.',
-     stats:[{label:'Mastered',value:(data?.mastered||0)+'/8'},{label:'Best possible',value:'4/4 per question'}]});
-   $('ftFinishStatus').textContent='질문당 최대 5번 확인할 수 있어요. 나중에 다시 시작해도 이전 기록은 남아요.';
+   $('ftFinishContent').innerHTML=renderStudentSessionFinish({title:'아직 답하지 않은 질문이 있어요.',
+     description:'완료하려면 여덟 질문에 한 번씩 답해 주세요. 4/4 만점은 선택 사항이에요.',
+     stats:[{label:'Answered',value:groups().filter(q=>attemptsFor(state.session.id,q.id).length>0).length+'/8'},{label:'Mastered',value:(data?.mastered||0)+'/8'}]});
+   $('ftFinishStatus').textContent='지금까지의 답변은 모두 저장되어 있어요.';
    $('ftRetrySync').hidden=true;
   }
  }catch(error){showError('완료 상태를 저장하지 못했어요. '+error.message)}
@@ -313,7 +315,7 @@ async function renderFinish(data){
  const reward='<student-reward-celebration percent="'+pct(scores.percent)+'" stars="'+scores.stars+
   '" star-max="5" points="'+scores.points+'" label="FREE TALKING REWARD"></student-reward-celebration>';
  $('ftFinishContent').innerHTML=renderStudentSessionFinish({title:'잘했어요! · Unit '+state.unit+' complete',
-  description:'8개 질문을 모두 자신의 영어로 답했어요. 수정한 답변도 모두 저장했어요.',
+  description:'8개 질문의 답변과 AI 피드백을 저장했어요. 만점이 아니어도 활동을 마칠 수 있어요.',
   stats:[{label:'First-try accuracy',value:pct(scores.percent)+'%'},
    {label:'Stars',value:scores.stars+'/5'},{label:'Points',value:scores.points}],
   rewardHtml:reward});
