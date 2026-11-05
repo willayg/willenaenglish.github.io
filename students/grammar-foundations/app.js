@@ -472,6 +472,8 @@ async function boot(){
     console.error('[grammar-foundations] boot failed',e);setBottom('');
     root.innerHTML=`<div class="gf-result"><div class="gf-pass">Could not load lessons</div><p>${esc(e.message||e)}</p><div class="gf-result-actions"><button class="gf-btn primary" id="retryBoot">Try again</button></div></div>`;
     document.getElementById('retryBoot').onclick=boot;
+  }finally{
+    window.WillenaHomeworkDeepLinkSplash?.hide();
   }
 }
 boot();
