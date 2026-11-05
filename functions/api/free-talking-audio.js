@@ -39,7 +39,14 @@ async function cacheKey(text,ttsModel,ttsVoice,variant='realtime'){
  const hex=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
  return (variant==='realtime'?'ft_realtime_v1_':'ft_fallback_v1_')+hex.slice(0,32);
 }
-async function cachedAudio(key,format='wav'){
+async function cachedAudio(key,format='wav',env={}){
+ const bucket=env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET;
+ if(bucket){
+  try{
+   const object=await bucket.get(key+'.'+format);
+   if(object)return {audio:base64(await object.arrayBuffer()),source:'r2_direct',stored:true};
+  }catch(e){console.warn('[Free Talking audio] bound R2 read failed',e?.message||'error')}
+ }
  try{
   const res=await fetch(R2+'get_audio_urls',{
    method:'POST',headers:{'Content-Type':'application/json'},
@@ -47,7 +54,7 @@ async function cachedAudio(key,format='wav'){
   if(!res.ok)return null;
   const data=await res.json().catch(()=>null);
   const found=data?.results?.[key];
-  return found?.exists&&String(found.url||'').startsWith('https://')?found.url:null;
+  return found?.exists&&String(found.url||'').startsWith('https://')?{audio_url:found.url,source:'r2_shared',stored:true}:null;
  }catch(e){console.warn('[Free Talking audio] R2 lookup failed',e?.name||'error');return null}
 }
 function base64(bytes){
@@ -55,14 +62,35 @@ function base64(bytes){
  for(let i=0;i<a.length;i+=8192)s+=String.fromCharCode(...a.subarray(i,i+8192));
  return btoa(s);
 }
-async function saveR2(key,audio,format='wav'){
+async function saveR2(key,audio,format='wav',env={}){
+ const filename=key+'.'+format;
+ const bucket=env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET;
+ if(bucket){
+  try{
+   const binary=atob(audio),bytes=new Uint8Array(binary.length);
+   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+   await bucket.put(filename,bytes,{httpMetadata:{
+    contentType:format==='wav'?'audio/wav':'audio/mpeg',
+    cacheControl:'public, max-age=31536000, immutable'
+   }});
+   const saved=await bucket.head(filename);
+   if(saved?.size===bytes.byteLength)return {stored:true,path:'r2_direct'};
+   throw Error('R2 saved object did not verify');
+  }catch(e){console.warn('[Free Talking audio] bound R2 write failed',String(e?.message||e).slice(0,130))}
+ }
+ // Compatibility with the same shared MP3 pipeline used by Word Genius.
+ // WAV requires the shared endpoint to support format=wav; it must verify the suffix.
  try{
   const res=await fetch(R2+'upload_audio',{
    method:'POST',headers:{'Content-Type':'application/json'},
    body:JSON.stringify({word:key,fileDataBase64:audio,format}),signal:AbortSignal.timeout(15000),cache:'no-store'});
   const data=await res.json().catch(()=>null);
-  if(!res.ok||data?.success!==true||data?.path!==key+'.'+format)throw Error('R2 upload failed');
- }catch(e){console.warn('[Free Talking audio] cache write failed',e?.name||'error')}
+  if(!res.ok||data?.success!==true||data?.path!==filename)throw Error('R2 upload not confirmed ('+res.status+')');
+  return {stored:true,path:'r2_shared'};
+ }catch(e){
+  console.warn('[Free Talking audio] cache write failed',String(e?.message||e).slice(0,130));
+  return {stored:false,path:null};
+ }
 }
 export async function onRequestPost({request,env,context}){
  try{
@@ -76,8 +104,8 @@ export async function onRequestPost({request,env,context}){
   const t=String(q.question_en||'').trim();
   if(!t||t.length>600)return json(422,{success:false,error:'Question audio text unavailable'});
   const ttsModel=model(env),ttsVoice=voice(env),key=await cacheKey(t,ttsModel,ttsVoice);
-  const url=await cachedAudio(key);
-  if(url)return json(200,{success:true,audio_url:url,source:'r2',model:ttsModel,content_type:'audio/wav',voice:ttsVoice,ai_generated:true});
+  const url=await cachedAudio(key,'wav',env);
+  if(url)return json(200,{success:true,...url,source:url.source,model:ttsModel,content_type:'audio/wav',voice:ttsVoice,ai_generated:true});
   const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
   if(!apiKey)return json(503,{success:false,error:'AI voice is not configured'});
   // Realtime is preferred, but never let a WebSocket failure silence the lesson.
@@ -85,10 +113,9 @@ export async function onRequestPost({request,env,context}){
    const wav=await generateQuestionWav({apiKey,text:t,model:ttsModel,voice:ttsVoice});
    if(!wav.byteLength||wav.byteLength>1250000)throw Error('Invalid Realtime WAV');
    const audio=base64(wav);
-   if(context?.waitUntil)context.waitUntil(saveR2(key,audio,'wav'));
-   else await saveR2(key,audio,'wav');
+   const saved=await saveR2(key,audio,'wav',env);
    return json(200,{success:true,audio,content_type:'audio/wav',source:'openai_realtime',model:ttsModel,
-     saving:true,voice:ttsVoice,ai_generated:true});
+     stored:saved.stored,r2_status:saved.path||'not_saved',voice:ttsVoice,ai_generated:true});
   }catch(realtimeError){
    console.warn('[Free Talking audio] realtime generation failed; trying speech fallback',String(realtimeError?.message||realtimeError).slice(0,160));
   }
@@ -96,9 +123,9 @@ export async function onRequestPost({request,env,context}){
   // until Realtime generation is fully verified; never touches other apps.
   const fallbackVoice='shimmer',fallbackModel='gpt-4o-mini-tts';
   const fallbackKey=await cacheKey(t,fallbackModel,fallbackVoice,'fallback');
-  const fallbackUrl=await cachedAudio(fallbackKey,'mp3');
-  if(fallbackUrl)return json(200,{success:true,audio_url:fallbackUrl,content_type:'audio/mpeg',
-    source:'r2_fallback',model:fallbackModel,voice:fallbackVoice,ai_generated:true});
+  const fallbackUrl=await cachedAudio(fallbackKey,'mp3',env);
+  if(fallbackUrl)return json(200,{success:true,...fallbackUrl,content_type:'audio/mpeg',
+    source:'r2_fallback',model:fallbackModel,voice:fallbackVoice,stored:true,ai_generated:true});
   const response=await fetch('https://api.openai.com/v1/audio/speech',{
    method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
    body:JSON.stringify({model:fallbackModel,voice:fallbackVoice,input:t,response_format:'mp3',
@@ -112,12 +139,11 @@ export async function onRequestPost({request,env,context}){
   const mp3=await response.arrayBuffer();
   if(mp3.byteLength<500||mp3.byteLength>1200000)throw Error('Invalid backup MP3');
   const fallbackAudio=base64(mp3);
-  if(context?.waitUntil)context.waitUntil(saveR2(fallbackKey,fallbackAudio,'mp3'));
-  else await saveR2(fallbackKey,fallbackAudio,'mp3');
+  const fallbackSaved=await saveR2(fallbackKey,fallbackAudio,'mp3',env);
   return json(200,{success:true,audio:fallbackAudio,content_type:'audio/mpeg',source:'openai_tts_fallback',model:fallbackModel,
-    saving:true,voice:fallbackVoice,ai_generated:true});
+    stored:fallbackSaved.stored,r2_status:fallbackSaved.path||'not_saved',voice:fallbackVoice,ai_generated:true});
  }catch(e){console.warn('[Free Talking audio] failure',e?.message||'error');return json(503,{success:false,error:'Question audio unavailable'})}
 }
 export async function onRequestGet({env}){
- return json(200,{success:true,service:'free-talking-question-audio',configured:!!(env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY),r2:'shared-audio-endpoints',format:'wav',model:model(env),voice:voice(env)});
+ return json(200,{success:true,service:'free-talking-question-audio',configured:!!(env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY),r2:(env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET)?'direct-binding':'shared-audio-endpoints',direct_r2_bound:!!(env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET),format:'wav',model:model(env),voice:voice(env)});
 }
