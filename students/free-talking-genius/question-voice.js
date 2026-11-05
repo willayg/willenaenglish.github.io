@@ -7,6 +7,10 @@ export function createFreeTalkingVoice({host,getToken}){
  const inflight=new Map();
  const warming=new Map();
  let questionBank=[],preferredUnit=1,preloadEpoch=0,destroyed=false,voiceConfirmed=false;
+ // Exactly one background preload at a time, even after switching units or voices.
+ let preloadTail=Promise.resolve();
+ const PRELOAD_CACHE_GAP_MS=700;
+ const PRELOAD_GENERATION_GAP_MS=1800;
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
  const VOICES=new Set(['marin','bunny-v3']);
@@ -155,30 +159,41 @@ export function createFreeTalkingVoice({host,getToken}){
    ||Number(a.unit_number)-Number(b.unit_number)||Number(a.question_number)-Number(b.question_number));
   const total=orderedQuestions.length;
   const complete={'marin':0,'bunny-v3':0};
-  const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-  const render=(suffix='')=>{
-   if(epoch!==preloadEpoch||destroyed)return;
+  const current=()=>epoch===preloadEpoch&&!destroyed;
+  // Short sleeps make cancellations responsive: a unit switch never spawns
+  // another concurrent batch of R2 downloads or paid TTS requests.
+  async function gap(ms){
+   let remaining=ms;
+   while(remaining>0&&current()){
+    const part=Math.min(150,remaining);
+    await new Promise(resolve=>setTimeout(resolve,part));
+    remaining-=part;
+   }
+   return current();
+  }
+  function render(message=''){
+   if(!current())return;
    preloadingText('AI Willi '+complete.marin+'/'+total+' · AI Lili '+
-    complete['bunny-v3']+'/'+total+' R2 ready'+suffix);
-  };
+    complete['bunny-v3']+'/'+total+' R2 ready'+message);
+  }
   async function run(){
-   preloadingText('Checking R2 for both voices…');
+   if(!current())return;
+   preloadingText('Checking R2 inventory for both voices…');
    const bookId=orderedQuestions[0]?.book_id;
    if(!bookId){preloadingText('Cannot check R2: missing textbook ID');return}
    let inventory;
    try{inventory=await fetchInventory(bookId)}
    catch(e){
-    if(epoch===preloadEpoch)preloadingText('R2 inventory failed — generation paused: '+String(e?.message||e).slice(0,100));
+    if(current())preloadingText('R2 inventory failed — generation paused: '+String(e?.message||e).slice(0,100));
     return;
    }
-   if(epoch!==preloadEpoch||destroyed)return;
-   const byId=new Map(inventory.map(item=>[item.id,item]));
-   // Never treat a partial response as a complete cache manifest.
+   if(!current())return;
+   const byId=new Map(inventory.map(item=>[String(item.id),item]));
    if(orderedQuestions.some(q=>!byId.has(String(q.id)))){
     preloadingText('R2 inventory incomplete — no new audio generated');
     return;
    }
-   const missing=[];
+   const cachedJobs=[],missingJobs=[];
    for(const voice of [selectedVoice,otherVoice]){
     for(const q of orderedQuestions){
      const clip=byId.get(String(q.id))?.[voice];
@@ -186,66 +201,59 @@ export function createFreeTalkingVoice({host,getToken}){
       preloadingText('R2 inventory invalid — no new audio generated');
       return;
      }
+     const id=String(q.id);
+     const cacheId=id+'|'+voice+'|'+(modelForVoice(voice)||'standard');
      if(clip.cached){
       complete[voice]++;
-      // Store the signed R2 URL locally for instant playback without hitting TTS.
-      if(clip.url?.startsWith('https://')){
-       const cacheId=String(q.id)+'|'+voice+'|'+(modelForVoice(voice)||'standard');
+      // Only use a URL when the inventory actually supplied a valid one.
+      if(clip.url?.startsWith('https://')&&!stored.has(cacheId))
        stored.set(cacheId,{url:clip.url,owned:false,model:clip.model,
         voice:clip.voice,source:clip.source||'r2_shared',stored:true});
-      }
-     }else missing.push({id:String(q.id),voice});
+      if(!stored.has(cacheId))cachedJobs.push({id,voice});
+     }else missingJobs.push({id,voice});
     }
    }
-   render(' · '+missing.length+' missing');
-   // A successful HEAD inventory does not preload audio. Fetch the actual saved
-   // clips into browser memory, current unit first, without triggering paid TTS.
-   const cachedJobs=[];
-   for(const voice of [selectedVoice,otherVoice])for(const q of orderedQuestions){
-    if(byId.get(String(q.id))?.[voice]?.cached&&!stored.has(String(q.id)+'|'+voice+'|'+(modelForVoice(voice)||'standard')))
-     cachedJobs.push({id:String(q.id),voice});
-   }
-   let loadIndex=0,loaded=0,loadFailures=0;
-   const preloadCached=async()=>{
-    while(loadIndex<cachedJobs.length&&epoch===preloadEpoch&&!destroyed){
-     const job=cachedJobs[loadIndex++];
-     try{await obtain(job.id,job.voice);loaded++}
-     catch(e){loadFailures++;console.warn('[Free Talking] cached clip preload',job.voice,String(e?.message||e).slice(0,100))}
-     if(loaded%3===0||loadFailures)render(' · '+loaded+'/'+cachedJobs.length+' loaded'+(loadFailures?' · '+loadFailures+' load errors':''));
+   render(' · '+cachedJobs.length+' to load · '+missingJobs.length+' missing');
+   // Stage 1: R2 cached clips only, sequential, paced. No paid generation
+   // starts while the saved recordings are being loaded into the browser.
+   let loaded=0,loadFailures=0;
+   for(const job of cachedJobs){
+    if(!current())return;
+    try{await obtain(job.id,job.voice);loaded++}
+    catch(e){
+     loadFailures++;
+     console.warn('[Free Talking] cached clip preload',job.voice,String(e?.message||e).slice(0,120));
     }
-   };
-   // Keep a bounded concurrency: enough for immediate playback, not dozens of
-   // simultaneous WAV downloads on classroom Wi-Fi or mobile connections.
-   const cacheLoading=Promise.all(Array.from({length:Math.min(3,cachedJobs.length)},()=>preloadCached()));
-   if(!missing.length){await cacheLoading;render(' · '+loaded+' loaded'+(loadFailures?' · '+loadFailures+' load errors':''));return}
-   // Prove R2 accepts writes BEFORE asking OpenAI or ElevenLabs for new clips.
-   try{await confirmStorageWritable()}
-   catch(e){
-    if(epoch===preloadEpoch&&!destroyed)
-     render(' · generation paused: R2 storage not writable ('+String(e?.message||e).slice(0,55)+')');
+    render(' · loading saved audio '+loaded+'/'+cachedJobs.length+
+     (loadFailures?' · '+loadFailures+' errors':''));
+    if(!await gap(PRELOAD_CACHE_GAP_MS))return;
+   }
+   if(!missingJobs.length){
+    render(' · '+loaded+' saved clips loaded'+(loadFailures?' · '+loadFailures+' load errors':''));
     return;
    }
-   if(epoch!==preloadEpoch||destroyed)return;
-   // Current unit first, then the rest. One provider request at a time.
-   missing.sort((a,b)=>{
-    const qa=orderedQuestions.find(q=>String(q.id)===a.id);
-    const qb=orderedQuestions.find(q=>String(q.id)===b.id);
-    return (Number(qa?.unit_number)===preferredUnit?0:1)-
-     (Number(qb?.unit_number)===preferredUnit?0:1);
-   });
-   let failed=0,liliNotConfigured=false;
-   for(const job of missing){
-    // Do not retry a known missing provider secret for every question.
-    if(job.voice==='bunny-v3'&&liliNotConfigured)continue;
-    if(epoch!==preloadEpoch||destroyed)return;
-    try{await warm(job.id,job.voice);complete[job.voice]++}
-    catch(e){
+   // Stage 2: verify storage, then generate one missing voice clip at a time.
+   // Never re-run a missing clip while a previous TTS request is outstanding.
+   try{await confirmStorageWritable()}
+   catch(e){
+    if(current())render(' · generation paused: storage unavailable ('+String(e?.message||e).slice(0,55)+')');
+    return;
+   }
+   if(!current())return;
+   let generated=0,failed=0,liliUnavailable=false;
+   for(const job of missingJobs){
+    if(!current())return;
+    if(job.voice==='bunny-v3'&&liliUnavailable)continue;
+    try{
+     const outcome=await warm(job.id,job.voice);
+     if(outcome==='hit'||outcome==='generated_saved'){complete[job.voice]++;generated++}
+    }catch(e){
      failed++;
      const message=String(e?.message||e);
-     console.warn('[Free Talking] R2 missing clip generation',job.voice,message.slice(0,150));
-     if(job.voice==='bunny-v3'&&/ELEVENLABS_KEY_NOT_CONFIGURED|ELEVENLABS_KEY_NOT_AVAILABLE/i.test(message)){
-      liliNotConfigured=true;
-      render(' · AI Lili key unavailable in this deployment; continuing AI Willi');
+     console.warn('[Free Talking] paced missing-clip generation',job.voice,message.slice(0,150));
+     if(job.voice==='bunny-v3'&&/ELEVENLABS_KEY_NOT_CONFIGURED|ELEVENLABS_KEY_NOT_AVAILABLE|ELEVENLABS_PROXY_UNAVAILABLE/i.test(message)){
+      liliUnavailable=true;
+      render(' · AI Lili unavailable; continuing AI Willi');
       continue;
      }
      if(/R2|INVENTORY|401|403|sign.in|AUTH/i.test(message)){
@@ -253,15 +261,18 @@ export function createFreeTalkingVoice({host,getToken}){
       return;
      }
     }
-    render((failed?' · '+failed+' failed':''));
-    await sleep(1000);
+    render(' · generating missing audio '+generated+'/'+missingJobs.length+
+     (failed?' · '+failed+' failed':''));
+    if(!await gap(PRELOAD_GENERATION_GAP_MS))return;
    }
-   await cacheLoading;
-   render((failed?' · '+failed+' failed':'')+(liliNotConfigured?' · AI Lili needs Preview secret':'')+
-    (loaded?' · '+loaded+' cached audio loaded':''));
+   render((failed?' · '+failed+' failed':'')+
+    (liliUnavailable?' · AI Lili unavailable':'')+
+    (loaded?' · '+loaded+' saved clips loaded':''));
   }
-  void run().catch(e=>{
-   if(epoch===preloadEpoch)preloadingText('Preload stopped: '+String(e?.message||e).slice(0,110));
+  // A new request supersedes the old one, but starts only after its active
+  // network operation finishes. Prevents races between textbook/unit changes.
+  preloadTail=preloadTail.catch(()=>{}).then(run).catch(e=>{
+   if(current())preloadingText('Preload stopped: '+String(e?.message||e).slice(0,110));
   });
  }
  function setQuestionBank(questions,unit=1){questionBank=Array.isArray(questions)?questions:[];preload(unit)}
