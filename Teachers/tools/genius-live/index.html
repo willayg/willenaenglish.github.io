@@ -25,7 +25,7 @@ function notify(message,error=false){const n=$("#message");n.textContent=message
 function bookName(id){return catalog.find(b=>b.id===id)?.title||"Unknown book"}
 function selectedUnits(){return [...selected].map(([bookId,units])=>({bookId,units:[...units]})).filter(x=>x.units.length)}
 function roundStatus(){if(!state)return "";return state.status+"|"+state.questionNumber+"|"+state.answeredCount+"|"+state.players.length+"|"+state.className}
-function teamName(n){return ["Pink Dragons","Blue Sharks","Green Tigers","Yellow Stars"][n]||"Team"}
+function teamName(n){return ["Pink Dragons","Blue Sharks","Green Tigers","Yellow Stars","Purple Panthers","Orange Foxes","Silver Wolves","Red Falcons"][n]||"Team"}
 function leaderboard(){if(!state)return "";let list=state.mode==="team"?Array.from({length:state.teamCount},(_,i)=>({name:teamName(i),score:state.players.filter(p=>p.team===i).reduce((s,p)=>s+p.score,0)})):state.players.map(p=>({name:p.name,score:p.score}));list.sort((a,b)=>b.score-a.score);return list.map((p,i)=>'<div class="score"><span>'+(i+1)+'. '+esc(p.name)+'</span><b>'+p.score.toLocaleString()+' pts</b></div>').join("")}
 function setup(){
  $("#app").innerHTML='<div class="grid"><section class="panel em"><div class="row between"><h2>Create a classroom game</h2><span class="tag">Word Genius · Quiz</span></div><p class="muted small">Choose your class and any published books. Questions come directly from Word Genius content.</p>'+
@@ -34,7 +34,7 @@ function setup(){
  '<div class="two"><div class="field"><label>Number of questions</label><select id="count">'+[5,10,15,20,30,40].map(n=>'<option '+(settings.count===n?"selected":"")+'>'+n+'</option>').join("")+'</select></div>'+
  '<div class="field"><label>Seconds per question</label><select id="seconds">'+[10,15,20,30,45,60].map(n=>'<option '+(settings.seconds===n?"selected":"")+'>'+n+'</option>').join("")+'</select></div>'+
  '<div class="field"><label>Game type</label><select id="mode"><option value="team" '+(settings.mode==="team"?"selected":"")+'>Team battle</option><option value="individual" '+(settings.mode==="individual"?"selected":"")+'>Individual</option></select></div>'+
- '<div class="field"><label>Number of teams</label><select id="teamCount" '+(settings.mode==="individual"?"disabled":"")+'>'+[2,3,4].map(n=>'<option '+(settings.teamCount===n?"selected":"")+'>'+n+'</option>').join("")+'</select></div></div>'+
+ '<div class="field"><label>Number of teams</label><select id="teamCount" '+(settings.mode==="individual"?"disabled":"")+'>'+[2,3,4,5,6,7,8].map(n=>'<option '+(settings.teamCount===n?"selected":"")+'>'+n+'</option>').join("")+'</select></div></div>'+
  '<button class="primary" id="create" '+(!selectedUnits().length||!selectedClassId?"disabled":"")+'>Create Live Game</button></section>'+
  '<aside class="panel"><h2>Teacher instructions</h2><p>1. Select one or more books and units.</p><p>2. Create a game and show the six-digit PIN.</p><p>3. Students sign into the separate Genius Live student page and join.</p><p>4. Start the quiz, reveal each answer and follow the scoreboard.</p>'+
  '<div class="notice"><b>Student game:</b><p class="small">https://students.willenaenglish.com/students/genius-live/</p><button id="copyLink">Copy student link</button></div>'+
