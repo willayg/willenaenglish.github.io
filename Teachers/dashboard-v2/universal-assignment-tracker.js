@@ -180,6 +180,8 @@ function render(){
 }
 let overviewStage='active';
 const overviewSelections=new Set();
+const wordCompletionCache=new Map();
+const wordCompletionPending=new Map();
 const overviewFilters={my:{className:'',assignment:'',teacherId:''},all:{className:'',assignment:'',teacherId:''}};
 const homeworkKey=row=>row._table+':'+row.id;
 async function changeHomework(row){
@@ -321,6 +323,7 @@ let overviewGeneration=0;
 const ASSIGNMENT_INVALIDATION_KEY='willena:assignments:changed:v1';
 function invalidateOverviewCache(broadcast=false){
  overviewReadCache.clear();
+ wordCompletionCache.clear();
  overviewGeneration++;
  if(broadcast){
   try{localStorage.setItem(ASSIGNMENT_INVALIDATION_KEY,String(Date.now()));}catch(_){}
@@ -448,6 +451,22 @@ async function loadOverview(scopeName='my',force=false){
   const puzzleProgress=asMap('Puzzle progress');
   const progress=asMap('내신 progress','task_id');
   if(generation!==overviewGeneration||!host.isConnected)return;
+  // Match Word Genius's existing teacher-card calculation, including split workloads.
+  // Do not confuse correct/attempted (accuracy) with required homework completion.
+  function wordStudentPercent(st,assignment){
+    const modes=Array.isArray(assignment?.list_meta?.required_modes)&&assignment.list_meta.required_modes.length
+      ?assignment.list_meta.required_modes:(assignment?.required_modes||[]);
+    if(!modes.length)return null;
+    const split=assignment?.list_meta?.workload_mode==='split';
+    const percents=modes.map(mode=>{
+      const raw=st?.modes?.[mode]||{};
+      const target=assignment?.list_meta?.mode_target_ids?.[mode];
+      const total=split&&Array.isArray(target)?target.length:Number(raw.total)||0;
+      const clean=Math.max(0,Math.min(total,Number(raw.clean)||0));
+      return total>0?100*clean/total:0;
+    });
+    return Math.max(0,Math.min(100,Math.round(percents.reduce((a,b)=>a+b,0)/percents.length)));
+  }
   function overviewStudentProgress(records,{kind='completion'}={}){
     if(!Array.isArray(records)||!records.length)return '';
     const rows=records.map(st=>{
@@ -461,6 +480,9 @@ async function loadOverview(scopeName='my',force=false){
         }else note=st.passed?'Passed':'Not passed';
       }else if(kind==='word'){
         note=(Number(st.solved)||0)+' correct / '+(Number(st.attempted)||0)+' attempted';
+      }else if(kind==='word-completion'){
+        percentage=wordStudentPercent(st,wordCompletionCache.get(id(st.assignment_id))?.assignment);
+        note=percentage===null?'Progress unavailable':'Required homework modes';
       }else if(kind==='writing-sentence'){
         const done=Number(st.checked),total=Number(st.total);
         if(Number.isFinite(done)&&Number.isFinite(total)&&total>0){
@@ -534,6 +556,13 @@ async function loadOverview(scopeName='my',force=false){
      if(row.app==='Puzzles'){
       const x=puzzleProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
      }
+     if(row.app==='Word Genius'){
+      const data=wordCompletionCache.get(id(row.id));
+      const students=data?.students||[];
+      if(!students.length)return null;
+      const values=students.map(st=>wordStudentPercent(st,{...data.assignment,list_meta:row.list_meta||{}})).filter(Number.isFinite);
+      return values.length?values.reduce((a,b)=>a+b,0)/values.length/100:null;
+     }
      return null;
     }).filter(x=>x!==null);
     const average=fractions.length?Math.round(100*fractions.reduce((a,b)=>a+b,0)/fractions.length):null;
@@ -591,7 +620,11 @@ async function loadOverview(scopeName='my',force=false){
       return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(dday(row.due_at))+'</small><strong>'+esc(status)+(visiblePct===null?'':' · '+visiblePct+'%')+' ▾</strong></button>'+
         '<div class="ua-homework-expanded ghc-overview-expanded" id="uaExpanded'+i+'" hidden><p class="ghc-overview-detail">'+esc(detail)+'</p>'+
         (grammarResult?.student_rows?overviewStudentProgress(grammarResult.student_rows,{kind:'grammar'}):'')+
-        (wordResult?.student_rows?overviewStudentProgress(wordResult.student_rows,{kind:'word'}):'')+
+        (wordResult?.student_rows
+          ?(wordCompletionCache.has(id(row.id))
+             ?overviewStudentProgress((wordCompletionCache.get(id(row.id))?.students||[]).map(st=>({...st,assignment_id:id(row.id)})),{kind:'word-completion'})
+             :'<div class="ghc-student-list" data-word-pending="'+esc(row.id)+'"><small>Loading verified homework completion…</small></div>')
+          :'')+
         (writingResult?.student_rows?overviewStudentProgress(writingResult.student_rows,{kind:row.list_key==='writing_genius:sentence'?'writing-sentence':'completion'}):'')+
         (puzzleResult?.student_rows?overviewStudentProgress(puzzleResult.student_rows,{kind:'completion'}):'')+'</div>'+
         (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
@@ -599,6 +632,58 @@ async function loadOverview(scopeName='my',force=false){
      }).join('')+(visible.length?'</div></div>':'')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
      '<p class="ua-note">Past-due homework appears in Complete automatically. ✓ closes one assignment; check boxes and Complete selected close several. Student attempts and results remain preserved.</p>';
    attachHomeworkGroupToggles(host);
+   // Load exact Word Genius homework mastery only for visible class cards.
+   // This avoids multiplying expensive cell-pass checks across all assignments.
+   let wordObserver=null;
+   let refreshRequested=false;
+   const rerenderWhenReady=()=>{
+     if(refreshRequested)return;
+     refreshRequested=true;
+     requestAnimationFrame(()=>{
+       refreshRequested=false;
+       if(generation!==overviewGeneration||!host.isConnected)return;
+       wordObserver?.disconnect();
+       renderOverview();
+     });
+   };
+   const fetchWord=(row)=>{
+     const key=id(row.id);
+     if(wordCompletionCache.has(key))return;
+     if(wordCompletionPending.has(key))return;
+     const task=get('rpc/get_vocab_assignment_progress_v1',{
+       method:'POST',headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({p_assignment_id:key})
+     }).then(data=>{
+       if(data?.success&&Array.isArray(data.students)){
+         wordCompletionCache.set(key,{assignment:data.assignment||{},students:data.students});
+       }else{
+         wordCompletionCache.set(key,{assignment:{},students:[]});
+       }
+     }).catch(error=>{
+       console.warn('[Homework overview] Word Genius completion unavailable',key,error);
+       wordCompletionCache.set(key,{assignment:{},students:[]});
+     }).finally(()=>{wordCompletionPending.delete(key);rerenderWhenReady()});
+     wordCompletionPending.set(key,task);
+   };
+   const requestGroupWords=group=>{
+     const key=group?.dataset.uaGroup;
+     const items=groupByKey.get(key)?.items||[];
+     items.filter(row=>row.app==='Word Genius').forEach(fetchWord);
+   };
+   if(typeof IntersectionObserver==='function'){
+     wordObserver=new IntersectionObserver(entries=>{
+       for(const entry of entries)if(entry.isIntersecting){
+         requestGroupWords(entry.target);
+         wordObserver.unobserve(entry.target);
+       }
+     },{rootMargin:'120px 0px'});
+     host.querySelectorAll('.ua-group[data-ua-group]').forEach(group=>{
+       if((groupByKey.get(group.dataset.uaGroup)?.items||[]).some(row=>row.app==='Word Genius'))wordObserver.observe(group);
+     });
+   }else{
+     host.querySelectorAll('.ua-group[data-ua-group]').forEach(group=>requestGroupWords(group));
+   }
+
    host.querySelector('#uaOverviewClassFilter').onchange=event=>{filter.className=event.target.value;filter.assignment='';overviewSelections.clear();renderOverview()};
    host.querySelector('#uaOverviewAssignmentFilter').onchange=event=>{filter.assignment=event.target.value;overviewSelections.clear();renderOverview()};
    const teacherFilter=host.querySelector('#uaOverviewTeacherFilter');
