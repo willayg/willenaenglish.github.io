@@ -49,8 +49,10 @@ export function createFreeTalkingVoice({host,getToken}){
  const modelForVoice=voice=>voice==='bunny-v3'?'eleven_v3':null;
  async function fetchVoice(questionId,voice){
   const expectedModel=modelForVoice(voice);
-  const requestedVoice=voice;
-  const requestBody={question_id:questionId,voice:requestedVoice};
+  // Use the exact Bunny v3 protocol that worked in the comparison test.
+  const requestedVoice=voice==='bunny-v3'?'bunny':voice;
+  const requestBody={question_id:questionId,voice:requestedVoice,
+   ...(voice==='bunny-v3'?{compare_model:'eleven_v3'}:{})};
   const call=async access=>fetch('/api/free-talking-audio',{
    method:'POST',credentials:'include',cache:'no-store',
    headers:{'Content-Type':'application/json',Authorization:'Bearer '+access},
@@ -116,7 +118,7 @@ export function createFreeTalkingVoice({host,getToken}){
    if(v!==version)return
    if(v!==version)return;
    // Never advertise or play a different voice than the one requested.
-   const actualVoice=requestedVoice;
+   const actualVoice=requestedVoice==='bunny-v3'?'bunny':requestedVoice;
    if(String(file.voice||'').toLowerCase()!==actualVoice)throw Error('Voice mismatch: selected '+actualVoice+', received '+String(file.voice||'unknown'));
    if(modelForVoice(requestedVoice)&&file.model!==modelForVoice(requestedVoice))throw Error('Model mismatch: expected '+modelForVoice(requestedVoice));
    currentUrl=file.url;
@@ -129,6 +131,8 @@ export function createFreeTalkingVoice({host,getToken}){
    if(v!==version)return;
    console.warn('[Free Talking] question voice',e?.message||'error');
    if(modelLabel){modelLabel.textContent='Voice: '+activeVoice()+' · unavailable';modelLabel.dataset.state='error'}
+   // Keep enough diagnostic information to distinguish a stale deployment from TTS failure.
+   if(preloadLabel)preloadLabel.textContent=String(e?.message||'Audio request failed').slice(0,180);
    const reason=String(e?.message||'');
    status(/로그인|401|인증|sign.in/i.test(reason)
     ?'음성 로그인 확인에 실패했어요. 새로고침 후 다시 들어 보세요.'
