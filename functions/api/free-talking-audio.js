@@ -172,7 +172,8 @@ export async function onRequestPost({request,env,context}){
     return json(probe.success?200:503,probe);
    }catch(e){
     console.warn('[Free Talking] R2 storage preflight',String(e?.message||e).slice(0,150));
-    return json(503,{success:false,storage_ready:false,code:'R2_PROBE_FAILED'});
+    const reason=String(e?.message||e);
+    return json(503,{success:false,storage_ready:false,code:reason==='R2_WRITE_FAILED'?reason:'R2_PROBE_FAILED'});
    }
   }
   if(body?.inventory_book_id){
@@ -213,6 +214,7 @@ export async function onRequestPost({request,env,context}){
      stored:saved.stored,r2_status:saved.path||'not_saved',ai_generated:true});
    }catch(e){
     const reason=String(e?.message||e);
+    if(reason==='R2_WRITE_FAILED')return json(503,{success:false,error:reason,code:reason,cache_status:'storage_error'});
     console.warn('[Free Talking audio] ElevenLabs generation failed',reason.slice(0,160));
     // Report category, not provider response bodies or credentials.
     const category=/429|rate.limit/i.test(reason)?'rate_limit':
@@ -243,6 +245,7 @@ export async function onRequestPost({request,env,context}){
    return json(200,{success:true,...(warmOnly?{}:{audio}),cache_status:saved.stored?'generated_saved':'generated_unsaved',content_type:'audio/wav',source:'openai_realtime',model:ttsModel,
      stored:saved.stored,r2_status:saved.path||'not_saved',voice:ttsVoice,ai_generated:true});
   }catch(realtimeError){
+   if(String(realtimeError?.message||realtimeError)==='R2_WRITE_FAILED')throw realtimeError;
    console.warn('[Free Talking audio] realtime generation failed; trying speech fallback',String(realtimeError?.message||realtimeError).slice(0,160));
   }
   // Temporary Marin-voice compatibility fallback. Uses the existing OpenAI TTS endpoint
