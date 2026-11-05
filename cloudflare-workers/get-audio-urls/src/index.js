@@ -1,3 +1,4 @@
+import { PUBLISHED_LEXICAL_WORDS } from './published-lexical-words.js';
 /**
  * Cloudflare Worker: get-audio-urls
  * 
@@ -25,10 +26,9 @@ const ALLOWED_ORIGINS = [
   'https://willenaenglish-github-io.pages.dev',
   // Cloudflare Pages deployment
   'https://cf.willenaenglish.com',
-  'https://staging.willenaenglish.com',
-  // Student and Teacher subdomains
-  'https://students.willenaenglish.com',
   'https://teachers.willenaenglish.com',
+  'https://staging.willenaenglish.com',
+  'https://students.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
 ];
@@ -41,7 +41,7 @@ function getCorsHeaders(origin) {
   const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Credentials': 'true',
   };
@@ -63,6 +63,484 @@ function getCacheKey(words) {
   return `audio-urls:${sorted}`;
 }
 
+
+const SHIMMER_BATCH_ID = 'shimmer-monosyllables-20260927-cf-v4';
+const SHIMMER_MARKER_KEY = '_batches/' + SHIMMER_BATCH_ID + '.json';
+const CONTENT_SUPABASE_URL = 'https://gxwfsqxyuufqtitspfqg.supabase.co';
+const CONTENT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_G-FYhHfDL4OGdL892gY1Zg_epdbEeqO';
+
+async function readBatchMarker(env) {
+  const obj = await env.AUDIO_BUCKET.get(SHIMMER_MARKER_KEY);
+  if (!obj) return null;
+  return JSON.parse(await obj.text());
+}
+
+async function saveBatchMarker(env, marker) {
+  marker.updated_at = new Date().toISOString();
+  await env.AUDIO_BUCKET.put(SHIMMER_MARKER_KEY, JSON.stringify(marker, null, 2), {
+    httpMetadata: { contentType: 'application/json', cacheControl: 'no-store' }
+  });
+}
+
+async function fetchPublishedLexicalWords() {
+  return PUBLISHED_LEXICAL_WORDS.slice();
+}
+
+async function classifyMonosyllableChunkCF(env, chunk) {
+  const resp = await fetch('https://students.willenaenglish.com/api/openai-tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'classify', words: chunk })
+  });
+  if (!resp.ok) throw new Error('Student Pages classifier failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
+  const data = await resp.json();
+  return Array.isArray(data.words) ? data.words : [];
+}
+
+async function generateShimmerWordCF(env, word) {
+  const resp = await fetch('https://students.willenaenglish.com/api/openai-tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mode: 'tts',
+      input: word,
+      instructions: 'Pronounce this English vocabulary word once, clearly and naturally. Warm, friendly and encouraging tone for a child learning English. Neutral American English. Slightly slower than normal conversation, but do not exaggerate. Do not add any other words or sounds.'
+    })
+  });
+  if (!resp.ok) throw new Error('Student Pages TTS failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
+  return await resp.arrayBuffer();
+}
+
+function publicBatchStatus(marker) {
+  if (!marker) return { batch_id: SHIMMER_BATCH_ID, state: 'not_started' };
+  return {
+    batch_id: marker.batch_id,
+    state: marker.state,
+    source_count: marker.source_words?.length || 0,
+    classified_count: marker.classify_index || 0,
+    target_count: marker.targets?.length || 0,
+    completed_count: marker.completed?.length || 0,
+    completed: marker.completed || [],
+    failure_count: marker.failures?.length || 0,
+    failures: marker.failures || [],
+    last_chunk: marker.last_chunk || [],
+    started_at: marker.started_at,
+    updated_at: marker.updated_at,
+    finished_at: marker.finished_at
+  };
+}
+
+async function handleShimmerBatch(request, env) {
+  const origin = request.headers.get('Origin') || '';
+  const cors = getCorsHeaders(origin);
+  const jsonHeaders = { 'Content-Type':'application/json', 'Cache-Control':'no-store', ...cors };
+
+  try {
+    if (origin && origin !== 'https://teachers.willenaenglish.com' && origin !== 'https://staging.willenaenglish.com' && origin !== 'https://get-audio-urls.willena.workers.dev') {
+      return new Response(JSON.stringify({ error: 'Forbidden origin' }), { status: 403, headers: jsonHeaders });
+    }
+    if (!env.AUDIO_BUCKET) {
+      return new Response(JSON.stringify({ error:'R2 binding unavailable' }), { status:500, headers:jsonHeaders });
+    }
+
+    if (request.method === 'GET') {
+      const status = publicBatchStatus(await readBatchMarker(env));
+      return new Response(JSON.stringify(status), { status:200, headers:jsonHeaders });
+    }
+    if (request.method !== 'POST') {
+      return new Response(JSON.stringify({ error:'Method not allowed' }), { status:405, headers:jsonHeaders });
+    }
+
+    let marker = await readBatchMarker(env);
+
+    // Fast initialization only: no OpenAI work in the first request.
+    if (!marker) {
+      const words = await fetchPublishedLexicalWords();
+      marker = {
+        batch_id: SHIMMER_BATCH_ID,
+        state:'classifying',
+        started_at:new Date().toISOString(),
+        source_words: words,
+        classify_index: 0,
+        targets: [],
+        completed: [],
+        failures: [],
+        last_chunk: []
+      };
+      await saveBatchMarker(env, marker);
+      return new Response(JSON.stringify(publicBatchStatus(marker)), { status:200, headers:jsonHeaders });
+    }
+
+    // Classify one slice per request and persist immediately.
+    if (marker.state === 'classifying') {
+      const size = 140;
+      const from = marker.classify_index || 0;
+      const chunk = (marker.source_words || []).slice(from, from + size);
+
+      if (chunk.length) {
+        const selected = await classifyMonosyllableChunkCF(env, chunk);
+        marker.targets.push(...selected);
+        marker.targets = [...new Set(marker.targets)];
+        marker.classify_index = from + chunk.length;
+        marker.last_chunk = [{ status:'classified', from, to:marker.classify_index, selected:selected.length }];
+        if (marker.classify_index >= marker.source_words.length) {
+          marker.state = 'ready';
+          marker.source_words = [];
+        }
+        await saveBatchMarker(env, marker);
+        return new Response(JSON.stringify(publicBatchStatus(marker)), { status:200, headers:jsonHeaders });
+      }
+
+      marker.state = 'ready';
+      marker.source_words = [];
+      await saveBatchMarker(env, marker);
+      return new Response(JSON.stringify(publicBatchStatus(marker)), { status:200, headers:jsonHeaders });
+    }
+
+    if (marker.state === 'complete' || marker.state === 'complete_with_failures') {
+      return new Response(JSON.stringify(publicBatchStatus(marker)), { status:200, headers:jsonHeaders });
+    }
+
+    const completed = new Set(marker.completed || []);
+    const next = (marker.targets || []).filter(w => !completed.has(w)).slice(0, 4);
+    marker.state = 'running';
+    marker.last_chunk = [];
+
+    for (const word of next) {
+      try {
+        const audio = await generateShimmerWordCF(env, word);
+        await env.AUDIO_BUCKET.put(toKey(word), audio, {
+          httpMetadata: { contentType:'audio/mpeg', cacheControl:'public, max-age=300, must-revalidate' },
+          customMetadata: { tts_provider:'openai', tts_model:'gpt-4o-mini-tts', tts_voice:'shimmer', batch_id:SHIMMER_BATCH_ID }
+        });
+        marker.completed.push(word);
+        marker.failures = (marker.failures || []).filter(f => f.word !== word);
+        marker.last_chunk.push({ word, status:'ok' });
+      } catch (e) {
+        marker.failures = (marker.failures || []).filter(f => f.word !== word);
+        marker.failures.push({ word, error:String(e?.message || e).slice(0,300) });
+        marker.last_chunk.push({ word, status:'failed', error:String(e?.message || e).slice(0,160) });
+      }
+    }
+
+    const doneNow = new Set(marker.completed || []);
+    const remaining = (marker.targets || []).filter(w => !doneNow.has(w));
+    if (!remaining.length) {
+      marker.state = marker.failures?.length ? 'complete_with_failures' : 'complete';
+      marker.finished_at = new Date().toISOString();
+    }
+
+    await saveBatchMarker(env, marker);
+    return new Response(JSON.stringify(publicBatchStatus(marker)), { status:200, headers:jsonHeaders });
+  } catch (e) {
+    return new Response(JSON.stringify({
+      batch_id: SHIMMER_BATCH_ID,
+      state:'error',
+      error:String(e?.message || e)
+    }), { status:500, headers:jsonHeaders });
+  }
+}
+
+
+
+
+
+async function serveWordAudio(request, env, word) {
+  const cors = getCorsHeaders(request.headers.get('Origin') || '');
+  const key = toKey(word);
+  if (!key || key === '.mp3') {
+    return new Response('Missing word', {
+      status:400,
+      headers:{'Content-Type':'text/plain','Cache-Control':'no-store',...cors}
+    });
+  }
+  const object = await env.AUDIO_BUCKET.get(key);
+  if (!object) {
+    return new Response('Audio not found', {
+      status:404,
+      headers:{'Content-Type':'text/plain','Cache-Control':'no-store',...cors}
+    });
+  }
+  return new Response(object.body, {
+    status:200,
+    headers:{
+      'Content-Type':'audio/mpeg',
+      'Cache-Control':'public, max-age=3600, must-revalidate',
+      ...cors
+    }
+  });
+}
+
+async function serveBatchAudio(env, word) {
+  const key = toKey(word);
+  const object = await env.AUDIO_BUCKET.get(key);
+  if (!object) {
+    return new Response('Audio not found: ' + key, {
+      status: 404,
+      headers: { 'Content-Type':'text/plain', 'Cache-Control':'no-store' }
+    });
+  }
+  return new Response(object.body, {
+    status: 200,
+    headers: {
+      'Content-Type':'audio/mpeg',
+      'Cache-Control':'no-store',
+      'Content-Disposition':'inline; filename="' + key + '"'
+    }
+  });
+}
+
+async function inspectAudioObject(env, word) {
+  const key = toKey(word);
+  const object = await env.AUDIO_BUCKET.get(key);
+  if (!object) return { exists:false, key };
+  const bytes = new Uint8Array(await object.arrayBuffer());
+  const head = Array.from(bytes.slice(0, 16)).map(b=>b.toString(16).padStart(2,'0')).join(' ');
+  const looksMp3 = (bytes[0]===0x49 && bytes[1]===0x44 && bytes[2]===0x33) || (bytes[0]===0xff && (bytes[1]&0xe0)===0xe0);
+  return {
+    exists:true,
+    key,
+    size:bytes.length,
+    content_type:object.httpMetadata?.contentType || null,
+    head_hex:head,
+    looks_mp3:looksMp3
+  };
+}
+
+function shimmerBatchUi() {
+  return `<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shimmer Batch</title>
+<style>
+body{font:16px/1.45 system-ui;margin:0;background:#f7fbfc;color:#17252d}
+main{max-width:760px;margin:32px auto;padding:0 16px}
+.card{background:#fff;border:3px solid #c9f3f5;border-radius:20px;padding:20px}
+button{font:inherit;font-weight:800;padding:12px 16px;border:3px solid #ffd0df;border-radius:14px;background:#fff;cursor:pointer;margin:0 8px 8px 0}
+button:disabled{opacity:.5} progress{width:100%;height:22px;margin:14px 0 6px}
+pre{white-space:pre-wrap;background:#f4f7f8;padding:14px;border-radius:12px;min-height:120px}
+.small{color:#65757d;font-size:13px}
+.players{margin-top:20px}
+.player-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #e5edef}
+.player-word{font-weight:800;min-width:0;flex:1;overflow-wrap:anywhere}
+.play-btn{margin:0;padding:9px 14px;min-width:84px}
+.now-playing{margin-top:8px;font-size:13px;color:#65757d}
+</style></head><body><main><div class="card">
+<h1>Shimmer monosyllable replacement</h1>
+<p>Direct worker: published monosyllables → OpenAI <b>gpt-4o-mini-tts / Shimmer</b> → R2.</p>
+<p class="small">No Netlify. No Pages function. No proxy worker.</p>
+<button id="go">Run / resume batch</button>
+<button id="stop">Stop after current chunk</button>
+<button id="status">Refresh status</button>
+<progress id="bar" value="0" max="1"></progress>
+<div id="summary" class="small">Loading…</div>
+<div class="players">
+  <h2>New Shimmer files</h2>
+  <div id="nowPlaying" class="now-playing">Nothing playing.</div>
+  <div id="players"><div class="small">Generated files will appear here.</div></div>
+  <audio id="audio" preload="none"></audio>
+</div>
+<pre id="out">Ready.</pre>
+</div></main>
+<script>
+const API='/admin/shimmer-batch';
+const out=document.getElementById('out'),go=document.getElementById('go'),bar=document.getElementById('bar'),summary=document.getElementById('summary');
+const players=document.getElementById('players'),audio=document.getElementById('audio'),nowPlaying=document.getElementById('nowPlaying');
+let running=false,stopRequested=false;
+
+function audioUrl(word){
+  return '/admin/batch-audio?word=' + encodeURIComponent(word) + '&batch=' + Date.now();
+}
+function renderPlayers(words){
+  const list=Array.isArray(words)?words.slice().reverse():[];
+  if(!list.length){
+    players.innerHTML='<div class="small">Generated files will appear here.</div>';
+    return;
+  }
+  players.innerHTML='';
+  for(const word of list){
+    const row=document.createElement('div');
+    row.className='player-row';
+    const label=document.createElement('div');
+    label.className='player-word';
+    label.textContent=word;
+    const btn=document.createElement('button');
+    btn.className='play-btn';
+    btn.type='button';
+    btn.textContent='▶ Play';
+    btn.addEventListener('click',async()=>{
+      nowPlaying.textContent='Loading: '+word;
+      try{
+        const r=await fetch(audioUrl(word),{cache:'no-store'});
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const buf=await r.arrayBuffer();
+        if(buf.byteLength<100) throw new Error('Audio file is too small ('+buf.byteLength+' bytes)');
+        const blob=new Blob([buf],{type:'audio/mpeg'});
+        const objectUrl=URL.createObjectURL(blob);
+        if(audio.dataset.objectUrl) URL.revokeObjectURL(audio.dataset.objectUrl);
+        audio.dataset.objectUrl=objectUrl;
+        audio.src=objectUrl;
+        nowPlaying.textContent='Playing: '+word+' · '+buf.byteLength+' bytes';
+        await audio.play();
+      }catch(e){
+        let extra='';
+        try{
+          const d=await fetch('/admin/audio-debug?word='+encodeURIComponent(word),{cache:'no-store'}).then(r=>r.json());
+          extra=' · '+JSON.stringify(d);
+        }catch(_){}
+        nowPlaying.textContent='Could not play '+word+': '+e.message+extra;
+      }
+    });
+    row.append(label,btn);
+    players.appendChild(row);
+  }
+}
+audio.addEventListener('ended',()=>{nowPlaying.textContent='Finished.';});
+
+function show(j){
+ const state=j.state||'unknown';
+ if(state==='classifying'){
+   const total=Number(j.source_count||0),done=Number(j.classified_count||0);
+   bar.max=Math.max(total,1);bar.value=Math.min(done,bar.max);
+   summary.textContent='Classifying '+done+' / '+total+' · '+(j.target_count||0)+' monosyllables found';
+ } else {
+   const total=Number(j.target_count||0),done=Number(j.completed_count||0);
+   bar.max=Math.max(total,1);bar.value=Math.min(done,bar.max);
+   summary.textContent=(j.openai_configured===false?'Student OpenAI endpoint unavailable · ':'')+(total?done+' / '+total+' complete · ':'')+state;
+ }
+ renderPlayers(j.completed||[]);
+ out.textContent=JSON.stringify(j,null,2);
+}
+async function req(method){
+ const r=await fetch(API,{method,cache:'no-store',headers:method==='POST'?{'Content-Type':'application/json'}:undefined,body:method==='POST'?'{}':undefined});
+ const t=await r.text(); let j={}; try{j=t?JSON.parse(t):{};}catch(_){throw new Error('Non-JSON '+r.status+': '+t.slice(0,200));}
+ if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); return j;
+}
+async function status(){try{const j=await req('GET');show(j);return j}catch(e){out.textContent='Status error: '+e.message}}
+async function run(){if(running)return;running=true;stopRequested=false;go.disabled=true;try{while(!stopRequested){const j=await req('POST');show(j);if(['complete','complete_with_failures','error'].includes(j.state))break;await new Promise(r=>setTimeout(r,250));}}catch(e){out.textContent='Batch error: '+e.message+'\\n\\n'+out.textContent}finally{running=false;go.disabled=false}}
+go.onclick=run;document.getElementById('stop').onclick=()=>stopRequested=true;document.getElementById('status').onclick=status;status();
+</script></body></html>`;
+}
+
+
+
+// Free Talking storage bridge. Reuses the existing R2 bucket without requiring
+// a Pages R2 binding. Only authenticated, approved students can use this route.
+const FT_SCORES='https://fiieuiktlsivwfgyivai.supabase.co';
+const FT_SCORES_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const FT_CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
+const FT_CONTENT_KEY='sb_publishable_G-FYhHfDL4OGdL892gY1Zg_epdbEeqO';
+const FT_UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const FT_FILE=/^(ft_realtime_v1_|ft_eleven_v1_|ft_fallback_v1_)[0-9a-f]{32}\.(wav|mp3)$/;
+const ftJson=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
+async function ftAuth(request){
+  const token=String(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
+  if(token.length<40)return false;
+  const headers={apikey:FT_SCORES_KEY,Authorization:'Bearer '+token};
+  const user=await fetch(FT_SCORES+'/auth/v1/user',{headers,signal:AbortSignal.timeout(10000)});
+  if(!user.ok)return false;
+  const info=await user.json().catch(()=>null);
+  if(!FT_UUID.test(info?.id||''))return false;
+  const profile=await fetch(FT_SCORES+'/rest/v1/profiles?select=role,approved&id=eq.'+info.id+'&limit=1',{
+    headers,signal:AbortSignal.timeout(9000)});
+  if(!profile.ok)return false;
+  const rows=await profile.json().catch(()=>[]);
+  return rows?.[0]?.role==='student'&&rows?.[0]?.approved===true;
+}
+function ftToBase64(buf){
+  const bytes=new Uint8Array(buf);let s='';
+  for(let i=0;i<bytes.length;i+=8192)s+=String.fromCharCode(...bytes.subarray(i,i+8192));
+  return btoa(s);
+}
+async function ftHash(text,ttsModel,ttsVoice,variant){
+  const tag=variant==='realtime'?'free_talking_realtime_question_wav_v1':variant==='elevenlabs'?'free_talking_elevenlabs_question_mp3_v1':'free_talking_legacy_fallback_mp3_v1';
+  const source=[tag,ttsModel,ttsVoice,'natural_voice_1',text.trim()].join('|');
+  const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(source));
+  return (variant==='realtime'?'ft_realtime_v1_':variant==='elevenlabs'?'ft_eleven_v1_':'ft_fallback_v1_')+
+    Array.from(new Uint8Array(hash),v=>v.toString(16).padStart(2,'0')).join('').slice(0,32);
+}
+async function ftAuthorizedWrite(body){
+  const id=String(body.question_id||'');
+  if(!FT_UUID.test(id))return false;
+  const variant=String(body.variant||''),key=String(body.key||''),format=String(body.format||'');
+  if(!['realtime','elevenlabs','fallback'].includes(variant))return false;
+  const allowed=variant==='realtime'?format==='wav'&&body.voice==='marin'&&
+    /^gpt-realtime-[a-zA-Z0-9.-]{1,40}$/.test(String(body.model||'')):
+    variant==='elevenlabs'?format==='mp3'&&body.model==='eleven_v3'&&body.voice==='M7zl2TS7ORAIGUejDfoy':
+    format==='mp3'&&body.model==='gpt-4o-mini-tts'&&body.voice==='marin';
+  if(!allowed)return false;
+  const response=await fetch(FT_CONTENT+'/rest/v1/free_talking_questions?select=question_en,book_id,is_published&id=eq.'+
+    encodeURIComponent(id)+'&is_published=eq.true&limit=1',{headers:{apikey:FT_CONTENT_KEY,Authorization:'Bearer '+FT_CONTENT_KEY},
+      signal:AbortSignal.timeout(10000)});
+  if(!response.ok)return false;
+  const row=(await response.json().catch(()=>[]))?.[0];
+  if(!row?.question_en||!FT_UUID.test(String(row.book_id||'')))return false;
+  return key===await ftHash(String(row.question_en),body.model,body.voice,variant);
+}
+async function ftStorage(request,env){
+  if(request.method!=='POST')return ftJson(405,{success:false,code:'METHOD_NOT_ALLOWED'});
+  if(!env.AUDIO_BUCKET)return ftJson(503,{success:false,code:'SHARED_R2_BINDING_MISSING'});
+  try{
+    if(!(await ftAuth(request)))return ftJson(401,{success:false,code:'STUDENT_AUTH_REQUIRED'});
+    if(Number(request.headers.get('content-length')||0)>1800000)return ftJson(413,{success:false,code:'PAYLOAD_TOO_LARGE'});
+    const body=await request.json().catch(()=>null);
+    if(!body||typeof body!=='object')return ftJson(400,{success:false,code:'INVALID_BODY'});
+    if(body.action==='probe'){
+      const key='ft_storage_probe_v1.wav';
+      const bytes=new Uint8Array(48),dv=new DataView(bytes.buffer);
+      for(const [at,s] of [[0,'RIFF'],[8,'WAVE'],[12,'fmt '],[36,'data']])
+        for(let i=0;i<s.length;i++)bytes[at+i]=s.charCodeAt(i);
+      dv.setUint32(4,40,true);dv.setUint32(16,16,true);dv.setUint16(20,1,true);
+      dv.setUint16(22,1,true);dv.setUint32(24,24000,true);dv.setUint32(28,48000,true);
+      dv.setUint16(32,2,true);dv.setUint16(34,16,true);dv.setUint32(40,4,true);
+      await env.AUDIO_BUCKET.put(key,bytes,{httpMetadata:{contentType:'audio/wav'}});
+      const head=await env.AUDIO_BUCKET.head(key);
+      return head?.size===bytes.length?ftJson(200,{success:true,stored:true,storage_path:'shared_worker',code:'R2_READY'}):
+        ftJson(503,{success:false,code:'R2_PROBE_FAILED'});
+    }
+    if(body.action==='inventory'){
+      const files=body.files;
+      if(!Array.isArray(files)||files.length>300||files.some(k=>typeof k!=='string'||!FT_FILE.test(k)))
+        return ftJson(400,{success:false,code:'INVALID_INVENTORY'});
+      const exists={};let i=0;
+      async function work(){while(i<files.length){const key=files[i++];exists[key]=!!(await env.AUDIO_BUCKET.head(key));}}
+      await Promise.all(Array.from({length:Math.min(10,files.length)},()=>work()));
+      return ftJson(200,{success:true,exists});
+    }
+    const key=String(body.key||''),format=String(body.format||'');
+    const file=key+'.'+format;
+    if(!FT_FILE.test(file)||!file.startsWith(format==='wav'?'ft_realtime_v1_':'ft_'))
+      return ftJson(400,{success:false,code:'INVALID_AUDIO_KEY'});
+    if(body.action==='get'){
+      const obj=await env.AUDIO_BUCKET.get(file);
+      return ftJson(200,{success:true,found:!!obj,...(obj?{audio:ftToBase64(await obj.arrayBuffer())}:{})});
+    }
+    if(body.action==='put'){
+      if(!(await ftAuthorizedWrite(body)))return ftJson(403,{success:false,code:'AUDIO_KEY_NOT_AUTHORIZED'});
+      if(typeof body.audio!=='string'||body.audio.length<650||body.audio.length>1680000)
+        return ftJson(413,{success:false,code:'INVALID_AUDIO_LENGTH'});
+      const encoded=body.audio;
+      if(!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded))return ftJson(400,{success:false,code:'INVALID_AUDIO_ENCODING'});
+      const binary=atob(encoded);const bytes=new Uint8Array(binary.length);
+      for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+      if(bytes.length<500||bytes.length>1250000)return ftJson(413,{success:false,code:'INVALID_AUDIO_BYTES'});
+      const wav=bytes[0]===82&&bytes[1]===73&&bytes[2]===70&&bytes[3]===70;
+      const mp3=(bytes[0]===73&&bytes[1]===68&&bytes[2]===51)||(bytes[0]===255&&(bytes[1]&224)===224);
+      if(format==='wav'&&!wav||format==='mp3'&&!mp3)return ftJson(400,{success:false,code:'INVALID_AUDIO_FORMAT'});
+      const previous=await env.AUDIO_BUCKET.head(file);
+      if(previous)return ftJson(200,{success:true,stored:true,path:'shared_worker',existing:true});
+      await env.AUDIO_BUCKET.put(file,bytes,{httpMetadata:{contentType:format==='wav'?'audio/wav':'audio/mpeg',
+        cacheControl:'public, max-age=31536000, immutable'}});
+      const head=await env.AUDIO_BUCKET.head(file);
+      return head?.size===bytes.length?ftJson(200,{success:true,stored:true,path:'shared_worker'}):
+        ftJson(503,{success:false,code:'R2_SIZE_MISMATCH'});
+    }
+    return ftJson(400,{success:false,code:'INVALID_ACTION'});
+  }catch(error){
+    console.error('[Free Talking shared audio]',String(error?.message||error).slice(0,160));
+    return ftJson(503,{success:false,code:'SHARED_AUDIO_STORAGE_FAILED'});
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const startTime = Date.now();
@@ -71,9 +549,36 @@ export default {
     const requestId = crypto.randomUUID().slice(0, 8);
     const url = new URL(request.url);
 
+    if (url.pathname === '/free-talking-store') return ftStorage(request,env);
+
     // Handle CORS preflight for all routes
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 200, headers: corsHeaders });
+    }
+
+    if (url.pathname === '/admin/audio-debug') {
+      const word = url.searchParams.get('word') || '';
+      const info = await inspectAudioObject(env, word);
+      return new Response(JSON.stringify(info), { status: 200, headers: { 'Content-Type':'application/json', 'Cache-Control':'no-store' } });
+    }
+
+    if (url.pathname === '/word-audio') {
+      const word = url.searchParams.get('word') || '';
+      return serveWordAudio(request, env, word);
+    }
+
+    if (url.pathname === '/admin/batch-audio') {
+      const word = url.searchParams.get('word') || '';
+      return serveBatchAudio(env, word);
+    }
+
+    if (url.pathname === '/admin/shimmer-batch-ui') {
+      return new Response(shimmerBatchUi(), { status: 200, headers: { 'Content-Type':'text/html; charset=utf-8', 'Cache-Control':'no-store' } });
+    }
+
+    // Route: admin Shimmer monosyllable replacement batch (Cloudflare-only)
+    if (url.pathname === '/admin/shimmer-batch') {
+      return handleShimmerBatch(request, env);
     }
 
     // Route: GET /audio/:filename - proxy audio files from R2
@@ -271,3 +776,5 @@ export default {
     }
   }
 };
+
+// deploy-bump: 2026-09-27 shimmer batch
