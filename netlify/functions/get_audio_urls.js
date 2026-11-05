@@ -59,6 +59,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || '{}');
     const words = Array.isArray(body.words) ? body.words : [];
     const format = body.format === 'wav' ? 'wav' : 'mp3'; // optional; old clients use MP3
+    const strict = body.strict === true; // Opt-in: Free Talking treats storage outages as errors, not misses.
     if (!words.length) {
       return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Missing words' }) };
     }
@@ -77,7 +78,13 @@ exports.handler = async (event) => {
           const url = await getSignedUrl(s3, new GetObjectCommand({ Bucket: R2_BUCKET_NAME, Key }), { expiresIn: 60 * 60 * 8 });
           results[w] = { exists: true, url };
         } catch (e) {
-          results[w] = { exists: false };
+          // Only an actual 404/NoSuchKey is a verified cache miss.
+          // Preserve legacy behavior for other apps unless strict was requested.
+          const code = e?.$metadata?.httpStatusCode;
+          const notFound = code === 404 || ['NotFound','NoSuchKey','NoSuchObject'].includes(e?.name);
+          results[w] = strict && !notFound
+            ? { exists: null, error: 'R2_HEAD_FAILED', status: code || null }
+            : { exists: false };
         }
       }
     }
