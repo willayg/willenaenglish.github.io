@@ -18,6 +18,30 @@ function card({className,task,dueAt,teacher,progressLabel='Progress',progressPer
  (valid?'<div class="ghc-meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.max(0,Math.min(100,pct))+'"><span style="width:'+Math.max(0,Math.min(100,pct))+'%"></span></div>':'')+
  '<details class="ghc-details"><summary><span>'+esc(progressLabel)+'</span><span class="ghc-chevron">▾</span></summary><div class="ghc-content">'+body+action+'</div></details></article>';
 }
+// Date-grouped assignment cards. Uses the teacher's Korean calendar date, not due dates.
+function dateKey(value){
+ if(!value)return 'undated';
+ const d=new Date(value);
+ if(Number.isNaN(d.getTime()))return 'undated';
+ return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+}
+function groupByDate(rows,render,options={}){
+ const groups=new Map();
+ (rows||[]).forEach(row=>{
+  const key=dateKey(row.created_at||row.assigned_at);
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(row);
+ });
+ const dates=[...groups.keys()].sort((a,b)=>b.localeCompare(a));
+ return dates.map((date,i)=>{
+  const items=groups.get(date);
+  const label=date==='undated'?'Date unavailable':new Intl.DateTimeFormat('en-US',{timeZone:'UTC',year:'numeric',month:'short',day:'numeric',weekday:'short'}).format(new Date(date+'T12:00:00Z'));
+  return '<details class="ghc-date-group" '+(i===0?'open':'')+'><summary><span class="ghc-date-label">'+esc(label)+'</span><small>'+items.length+' assignment'+(items.length===1?'':'s')+'</small><span class="ghc-date-chevron">▾</span></summary><div class="ghc-date-items">'+items.map(render).join('')+'</div></details>';
+ }).join('');
+}
+const dateStyle=document.createElement('style');
+dateStyle.textContent='.ghc-date-group{margin:0 0 16px;border:1.5px solid #d6e9eb;background:#fff;border-radius:18px;overflow:hidden}.ghc-date-group>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:15px 18px;background:#f6fcfc;color:#266f78;font-weight:850}.ghc-date-group>summary::-webkit-details-marker{display:none}.ghc-date-group>summary small{font-size:.72rem;color:#799197;font-weight:700}.ghc-date-chevron{margin-left:auto;transition:transform .2s}.ghc-date-group[open] .ghc-date-chevron{transform:rotate(180deg)}.ghc-date-items{display:grid;gap:16px;padding:16px}.ghc-date-items>.genius-homework-card{margin:0!important}.ghc-date-group:focus-within{border-color:#9cdde1}@media(max-width:600px){.ghc-date-items{padding:10px;gap:12px}.ghc-date-group>summary{padding:12px}}';
+document.head.appendChild(dateStyle);
 document.addEventListener('toggle',event=>{
  const details=event.target;
  if(!(details instanceof HTMLDetailsElement)||!details.matches('.ghc-details')||!details.open)return;
@@ -86,6 +110,6 @@ document.addEventListener('click',event=>{
  overlay.querySelector('.ghc-qr-close').focus();
 });
 
-window.WillenaGeniusHomeworkCard={card,dday,escape:esc,hydrateTeachers,updateRing};
+window.WillenaGeniusHomeworkCard={card,dday,escape:esc,hydrateTeachers,updateRing,groupByDate};
 
 })();
