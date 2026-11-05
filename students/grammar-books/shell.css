@@ -77,3 +77,7 @@
 }
 .grammar-book-shell .grammar-view-all:focus-visible{outline:3px solid #267e87;outline-offset:2px}
 @media(max-width:600px){.grammar-book-shell .grammar-focused-toolbar{padding:13px 12px;border-radius:18px}}
+
+/* Homework mode must override inherited layout rules even when hidden is toggled. */
+.grammar-book-shell .grammar-focused-homework .vocab-unit-selector,
+.grammar-book-shell .vocab-unit-selector[hidden]{display:none!important}
