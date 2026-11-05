@@ -34,7 +34,27 @@ async function elevenAudio({env,text,voiceId,modelId=ELEVEN_MODEL}){
   if(audio.byteLength<500||audio.byteLength>1200000)throw Error('Invalid ElevenLabs MP3');
   return audio;
  }
- throw Error('ELEVENLABS_KEY_NOT_AVAILABLE_IN_THIS_DEPLOYMENT');
+ // The existing Willena ElevenLabs proxy was the previous working voice path.
+ // Pages Preview can omit secrets that are present on the Production project.
+ // Keep direct ElevenLabs as first choice, but use the established service
+ // rather than treating a Preview secret mismatch as a missing provider account.
+ const upstream='https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy';
+ let proxyResponse;
+ try{
+  proxyResponse=await fetch(upstream,{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({text,voice_id:voiceId,model_id:modelId,voice_settings:settings}),
+   signal:AbortSignal.timeout(30000)
+  });
+ }catch(e){throw Error('ELEVENLABS_PROXY_UNAVAILABLE');}
+ if(!proxyResponse.ok)throw Error('ELEVENLABS_PROXY_HTTP_'+proxyResponse.status);
+ const payload=await proxyResponse.json().catch(()=>null);
+ if(typeof payload?.audio!=='string')throw Error('ELEVENLABS_PROXY_INVALID_RESPONSE');
+ const binary=atob(payload.audio);
+ if(binary.length<500||binary.length>1200000)throw Error('ELEVENLABS_PROXY_INVALID_AUDIO');
+ const bytes=new Uint8Array(binary.length);
+ for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+ return bytes.buffer;
 }
 async function verifyStudent(request){
  const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
