@@ -78,24 +78,42 @@ async function cacheKey(text,ttsModel,ttsVoice,variant='realtime'){
  const hex=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
  return (variant==='realtime'?'ft_realtime_v1_':variant==='elevenlabs'?'ft_eleven_v1_':'ft_fallback_v1_')+hex.slice(0,32);
 }
+// Cache lookup must fail closed: an R2 outage is NOT a cache miss.
+// Otherwise every refresh can regenerate all questions and consume paid TTS credits.
 async function cachedAudio(key,format='wav',env={}){
  const bucket=env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET;
+ let directError=null;
  if(bucket){
   try{
    const object=await bucket.get(key+'.'+format);
    if(object)return {audio:base64(await object.arrayBuffer()),source:'r2_direct',stored:true};
-  }catch(e){console.warn('[Free Talking audio] bound R2 read failed',e?.message||'error')}
+  }catch(e){
+   directError=e;
+   console.warn('[Free Talking audio] direct R2 lookup failed',String(e?.message||e).slice(0,130));
+  }
  }
  try{
   const res=await fetch(R2+'get_audio_urls',{
    method:'POST',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({words:[key],format}),signal:AbortSignal.timeout(5000),cache:'no-store'});
-  if(!res.ok)return null;
-  const data=await res.json().catch(()=>null);
+   body:JSON.stringify({words:[key],format}),signal:AbortSignal.timeout(12000),cache:'no-store'});
+  if(!res.ok)throw Error('Shared R2 lookup HTTP '+res.status);
+  const data=await res.json();
   const found=data?.results?.[key];
-  return found?.exists&&String(found.url||'').startsWith('https://')?{audio_url:found.url,source:'r2_shared',stored:true}:null;
- }catch(e){console.warn('[Free Talking audio] R2 lookup failed',e?.name||'error');return null}
+  if(!found||typeof found.exists!=='boolean')throw Error('Shared R2 lookup returned invalid status');
+  if(found.exists){
+   if(typeof found.url!=='string'||!found.url.startsWith('https://'))throw Error('Shared R2 has object but URL is missing');
+   return {audio_url:found.url,source:'r2_shared',stored:true};
+  }
+  // If an R2 binding failed, a missing shared object cannot prove it is absent.
+  if(directError)throw Error('Direct R2 unavailable and shared cache has no matching file');
+  return null;
+ }catch(e){
+  console.warn('[Free Talking audio] R2 lookup unavailable',String(e?.message||e).slice(0,130));
+  // Distinguish an unreachable cache from a confirmed miss.
+  throw Error('R2_LOOKUP_UNAVAILABLE');
+ }
 }
+
 function base64(bytes){
  const a=new Uint8Array(bytes);let s='';
  for(let i=0;i<a.length;i+=8192)s+=String.fromCharCode(...a.subarray(i,i+8192));
@@ -125,6 +143,9 @@ async function saveR2(key,audio,format='wav',env={}){
    body:JSON.stringify({word:key,fileDataBase64:audio,format}),signal:AbortSignal.timeout(15000),cache:'no-store'});
   const data=await res.json().catch(()=>null);
   if(!res.ok||data?.success!==true||data?.path!==filename)throw Error('R2 upload not confirmed ('+res.status+')');
+  // A 200 from upload alone is insufficient: verify through the reader used on reload.
+  const verified=await cachedAudio(key,format,{});
+  if(!verified||verified.source!=='r2_shared')throw Error('R2 upload not readable after writing');
   return {stored:true,path:'r2_shared'};
  }catch(e){
   console.warn('[Free Talking audio] cache write failed',String(e?.message||e).slice(0,130));
@@ -152,13 +173,13 @@ export async function onRequestPost({request,env,context}){
   if(elevenId){
    const cache=await cacheKey(t,elevenModel,elevenId,'elevenlabs');
    const hit=await cachedAudio(cache,'mp3',env);
-   if(hit)return json(200,{success:true,...hit,source:hit.source,model:elevenModel,
+   if(hit)return json(200,{success:true,...hit,cache_status:'hit',source:hit.source,model:elevenModel,
     voice:chosenVoice,provider:'elevenlabs',content_type:'audio/mpeg',ai_generated:true,stored:true});
    try{
     const bytes=await elevenAudio({env,text:t,voiceId:elevenId,modelId:elevenModel});
     const audio=base64(bytes);
     const saved=await saveR2(cache,audio,'mp3',env);
-    return json(200,{success:true,audio,source:'elevenlabs',model:elevenModel,
+    return json(200,{success:true,audio,cache_status:saved.stored?'generated_saved':'generated_unsaved',source:'elevenlabs',model:elevenModel,
      voice:chosenVoice,provider:'elevenlabs',content_type:'audio/mpeg',
      stored:saved.stored,r2_status:saved.path||'not_saved',ai_generated:true});
    }catch(e){
@@ -168,7 +189,7 @@ export async function onRequestPost({request,env,context}){
   }
   const ttsModel=model(env),ttsVoice=chosenVoice||voice(env),key=await cacheKey(t,ttsModel,ttsVoice);
   const url=await cachedAudio(key,'wav',env);
-  if(url)return json(200,{success:true,...url,source:url.source,model:ttsModel,content_type:'audio/wav',voice:ttsVoice,ai_generated:true});
+  if(url)return json(200,{success:true,...url,cache_status:'hit',source:url.source,model:ttsModel,content_type:'audio/wav',voice:ttsVoice,ai_generated:true});
   const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
   if(!apiKey)return json(503,{success:false,error:'AI voice is not configured'});
   // Realtime is preferred, but never let a WebSocket failure silence the lesson.
@@ -177,7 +198,7 @@ export async function onRequestPost({request,env,context}){
    if(!wav.byteLength||wav.byteLength>1250000)throw Error('Invalid Realtime WAV');
    const audio=base64(wav);
    const saved=await saveR2(key,audio,'wav',env);
-   return json(200,{success:true,audio,content_type:'audio/wav',source:'openai_realtime',model:ttsModel,
+   return json(200,{success:true,audio,cache_status:saved.stored?'generated_saved':'generated_unsaved',content_type:'audio/wav',source:'openai_realtime',model:ttsModel,
      stored:saved.stored,r2_status:saved.path||'not_saved',voice:ttsVoice,ai_generated:true});
   }catch(realtimeError){
    console.warn('[Free Talking audio] realtime generation failed; trying speech fallback',String(realtimeError?.message||realtimeError).slice(0,160));
@@ -188,7 +209,7 @@ export async function onRequestPost({request,env,context}){
   const fallbackKey=await cacheKey(t,fallbackModel,fallbackVoice,'fallback');
   const fallbackUrl=await cachedAudio(fallbackKey,'mp3',env);
   if(fallbackUrl)return json(200,{success:true,...fallbackUrl,content_type:'audio/mpeg',
-    source:'r2_fallback',model:fallbackModel,voice:fallbackVoice,stored:true,ai_generated:true});
+    source:'r2_fallback',cache_status:'hit',model:fallbackModel,voice:fallbackVoice,stored:true,ai_generated:true});
   const response=await fetch('https://api.openai.com/v1/audio/speech',{
    method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
    body:JSON.stringify({model:fallbackModel,voice:fallbackVoice,input:t,response_format:'mp3',
@@ -203,9 +224,11 @@ export async function onRequestPost({request,env,context}){
   if(mp3.byteLength<500||mp3.byteLength>1200000)throw Error('Invalid backup MP3');
   const fallbackAudio=base64(mp3);
   const fallbackSaved=await saveR2(fallbackKey,fallbackAudio,'mp3',env);
-  return json(200,{success:true,audio:fallbackAudio,content_type:'audio/mpeg',source:'openai_tts_fallback',model:fallbackModel,
+  return json(200,{success:true,audio:fallbackAudio,cache_status:fallbackSaved.stored?'generated_saved':'generated_unsaved',content_type:'audio/mpeg',source:'openai_tts_fallback',model:fallbackModel,
     stored:fallbackSaved.stored,r2_status:fallbackSaved.path||'not_saved',voice:fallbackVoice,ai_generated:true});
- }catch(e){console.warn('[Free Talking audio] failure',e?.message||'error');return json(503,{success:false,error:'Question audio unavailable'})}
+ }catch(e){const reason=String(e?.message||e);console.warn('[Free Talking audio] failure',reason);
+  if(reason==='R2_LOOKUP_UNAVAILABLE')return json(503,{success:false,error:'R2 cache temporarily unavailable; audio generation skipped to avoid duplicate charges.',cache_status:'lookup_error'});
+  return json(503,{success:false,error:'Question audio unavailable'});}
 }
 export async function onRequestGet({env}){
  return json(200,{success:true,service:'free-talking-question-audio',configured:!!(env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY),r2:(env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET)?'direct-binding':'shared-audio-endpoints',direct_r2_bound:!!(env.FREE_TALKING_AUDIO_BUCKET||env.AUDIO_BUCKET),format:'wav',model:model(env),voice:voice(env)});
