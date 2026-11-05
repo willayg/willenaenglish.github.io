@@ -2991,7 +2991,7 @@ window.WillenaVocabStudy={version:'0.102',getState:()=>state,start:startSession,
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
     if(unitTitleEl)unitTitleEl.textContent='Please try again.';startBtn.disabled=true;if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
   }finally{
-    if(!bootLoaderReleased)endVocabLoading();
+    if(!bootLoaderReleased){document.documentElement.classList.remove('vocab-focused-boot');endVocabLoading();}
   }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
