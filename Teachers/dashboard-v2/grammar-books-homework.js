@@ -247,7 +247,7 @@ async function drawManage(){
  try{await fetchRecords();if(panel()!==el)return;
  const rows=store.assignments.filter(a=>store.history?a.active===false||a.status!=='active':a.active!==false&&a.status==='active');
  el.innerHTML='<div class="gf-hw-toolbar"><div class="assignment-status-tabs"><button type="button" data-gb-stage="current" class="assignment-status-tab'+(!store.history?' active':'')+'">Current</button><button type="button" data-gb-stage="history" class="assignment-status-tab'+(store.history?' active':'')+'">History</button></div><button class="control" id="gbHwRefresh">Refresh</button></div>'+
- (rows.length?'<div class="ua-genius-manage-list">'+rows.map(renderAssignment).join('')+'</div>':'<div class="gf-hw-loading">No '+(store.history?'previous':'current')+' book assignments.</div>')+
+ (rows.length?'<div class="ua-genius-manage-list">'+window.WillenaGeniusHomeworkCard.groupByDate(rows,renderAssignment)+'</div>':'<div class="gf-hw-loading">No '+(store.history?'previous':'current')+' book assignments.</div>')+
  '<div id="gbHwNotice" role="status"></div>';
  $$('[data-gb-stage]',el).forEach(b=>b.onclick=()=>{store.history=b.dataset.gbStage==='history';void drawManage()});
  $('#gbHwRefresh',el).onclick=()=>drawManage();
