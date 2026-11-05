@@ -2,7 +2,7 @@
 // No browser-generated voice fallback: the text stays readable when audio is unavailable.
 export function createFreeTalkingVoice({host,getToken}){
  const audio=new Audio();audio.preload='auto';
- let selected='',version=0,currentUrl='',playing=false;
+ let selected='',version=0,currentUrl='',playing=false,loadedVoice='';
  const stored=new Map();
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
@@ -68,7 +68,7 @@ export function createFreeTalkingVoice({host,getToken}){
  async function select(questionId,{autoplay=true}={}){
   version++;const v=version;
   audio.pause();audio.removeAttribute('src');audio.load();
-  selected=String(questionId||'');currentUrl='';
+  selected=String(questionId||'');currentUrl='';loadedVoice='';
   setPlaying(false);
   if(button)button.disabled=true;
   status('AI Willi 음성을 불러오는 중…');
@@ -80,7 +80,10 @@ export function createFreeTalkingVoice({host,getToken}){
    let file=stored.get(cacheId);
    if(!file){file=await fetchVoice(selected,requestedVoice);if(v!==version){if(file.owned)URL.revokeObjectURL(file.url);return}stored.set(cacheId,file)}
    if(v!==version)return;
+   // Never advertise or play a different voice than the one requested.
+   if(String(file.voice||'').toLowerCase()!==requestedVoice)throw Error('Voice mismatch: selected '+requestedVoice+', received '+String(file.voice||'unknown'));
    currentUrl=file.url;
+   loadedVoice=requestedVoice;
    showModel(file);
    if(button)button.disabled=false;
    status('AI 생성 음성 · 질문 듣기');
@@ -88,7 +91,7 @@ export function createFreeTalkingVoice({host,getToken}){
   }catch(e){
    if(v!==version)return;
    console.warn('[Free Talking] question voice',e?.message||'error');
-   if(modelLabel){modelLabel.textContent='Voice model: unavailable';modelLabel.dataset.state='error'}
+   if(modelLabel){modelLabel.textContent='Voice: '+activeVoice()+' · unavailable';modelLabel.dataset.state='error'}
    const reason=String(e?.message||'');
    status(/로그인|401|인증|sign.in/i.test(reason)
     ?'음성 로그인 확인에 실패했어요. 새로고침 후 다시 들어 보세요.'
@@ -99,18 +102,22 @@ export function createFreeTalkingVoice({host,getToken}){
   }
  }
  function stop(){
-  version++;selected='';currentUrl='';
+  version++;selected='';currentUrl='';loadedVoice='';
   audio.pause();audio.removeAttribute('src');audio.load();setPlaying(false);
   showModel(null);
   if(button)button.disabled=true;
  }
- voicePicker?.addEventListener('change',()=>{
+ function changeVoice(){
   const chosen=activeVoice();
+  if(chosen===loadedVoice)return;
   try{localStorage.setItem(PREFERENCE_KEY,chosen)}catch(_){}
   if(selected)void select(selected,{autoplay:true});
- });
+ }
+ voicePicker?.addEventListener('input',changeVoice);
+ voicePicker?.addEventListener('change',changeVoice);
  button?.addEventListener('click',async()=>{
   if(playing){audio.pause();return}
+  if(selected&&loadedVoice!==activeVoice()){await select(selected,{autoplay:true});return}
   if(currentUrl){await play();return}
   if(selected){const id=selected;await select(id,{autoplay:true})}
  });
