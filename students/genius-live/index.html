@@ -17,7 +17,7 @@ button{padding:12px 17px;font-weight:700;border-radius:12px;border:2px solid var
 <script type="module">
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const api=async(action,body={})=>{const r=await fetch("/api/genius-live",{method:"POST",credentials:"include",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,...body})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok){const e=new Error(d.error||"Game server error");e.status=r.status;throw e}return d};
-const teamName=n=>["Pink Dragons","Blue Sharks","Green Tigers","Yellow Stars"][n]||"Team";
+const teamName=n=>["Pink Dragons","Blue Sharks","Green Tigers","Yellow Stars","Purple Panthers","Orange Foxes","Silver Wolves","Red Falcons"][n]||"Team";
 let pin=sessionStorage.getItem("genius.live.student.pin")||new URLSearchParams(location.search).get("pin")||"",state=null,working=false,last="";
 function notice(t,err=false){const m=$("#message");m.hidden=!t;m.className="notice"+(err?" error":"");m.textContent=t}
 function scores(){let list=state.mode==="team"?Array.from({length:state.teamCount},(_,i)=>({name:teamName(i),score:state.players.filter(p=>p.team===i).reduce((n,p)=>n+p.score,0)})):state.players.map(p=>({name:p.name,score:p.score}));list.sort((a,b)=>b.score-a.score);return list.map((p,i)=>'<div class="score"><span>'+(i+1)+'. '+esc(p.name)+'</span><b>'+p.score.toLocaleString()+' pts</b></div>').join("")}
