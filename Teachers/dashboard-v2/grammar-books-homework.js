@@ -108,7 +108,7 @@ async function drawCreate(){
  const options=classes.map(name=>'<option value="'+esc(name)+'">'+esc(name)+'</option>').join('');
  // Match Writing Genius: class → assigned textbooks → "Other book" → content.
  el.innerHTML='<form id="gbHwForm" class="ua-feature ua-genius-assign gb-form">'+
- '<h3>Assign Grammar Genius homework</h3>'+
+ '<h3>Assign Grammar Genius mission</h3>'+
  '<label>Class <select class="control" name="klass" required><option value="">Choose class</option>'+options+'</select></label>'+
  '<label>Textbook <select class="control" name="book" required><option value="">Choose class first</option></select></label>'+
  '<p class="ua-note" id="gbHwBookStatus" role="status">Choose a class to see its textbooks.</p>'+
@@ -120,7 +120,7 @@ async function drawCreate(){
  '<div class="gf-hw-form-grid"><label>Available from<input class="control" type="date" name="start" required></label>'+
  '<label>Due date<input class="control" type="date" name="due" required></label></div>'+
  '<div class="gf-hw-pre-assignment"><div id="gbHwPreviewReport" aria-live="polite"></div></div>'+
- '<div class="gf-hw-footer"><button type="submit" class="control ua-primary" id="gbHwSubmit" disabled>Assign homework →</button>'+
+ '<div class="gf-hw-footer"><button type="submit" class="control ua-primary" id="gbHwSubmit" disabled>Assign mission →</button>'+
  '<span id="gbHwNotice" role="status"></span></div></form>';
  const form=$('#gbHwForm',el),bookSelect=form.elements.book,classSelect=form.elements.klass;
  const today=new Date(),due=new Date(today.valueOf()+7*86400000);
