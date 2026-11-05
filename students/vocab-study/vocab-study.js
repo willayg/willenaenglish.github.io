@@ -2919,17 +2919,35 @@ async function boot(){
 
       // The app is usable now. Do not block the whole UI on secondary
       // books or teacher Word Test hydration.
-      endVocabLoading();
+      // Keep the cover over focused homework until the correct assignment is
+      // hydrated and visible. Normal Word Genius startup stays unchanged.
+      if(!deepLinkAssignmentId)endVocabLoading();
       bootLoaderReleased=true;
 
       hydrateSecondaryBooks(resolved.deferredAssignments,state.book.book_id);
       background(async()=>{
-        await loadTeacherAssignments({showLoader:false});
-        renderFrontMenu();
-        if((openWordTestRequested||deepLinkAssignmentId)&&state.activeScreen==='home'){
-          openWordTestScreen({historyMode:'replace'});
+        try{
+          await loadTeacherAssignments({showLoader:false});
+          renderFrontMenu();
+          if((openWordTestRequested||deepLinkAssignmentId)&&state.activeScreen==='home'){
+            openWordTestScreen({historyMode:'replace'});
+          }
+        }catch(error){
+          console.warn('[Vocab Study] homework startup',error);
+          if(deepLinkAssignmentId){
+            openWordTestScreen({historyMode:'replace'});
+            const notice=document.createElement('p');
+            notice.setAttribute('role','alert');
+            notice.textContent='숙제를 불러오지 못했어요. 모든 숙제를 확인하거나 다시 시도해 주세요.';
+            notice.className='vocab-focused-load-error';
+            wordTestScreenEl?.prepend(notice);
+          }
+        }finally{
+          if(deepLinkAssignmentId){
+            document.documentElement.classList.remove('vocab-focused-boot');
+            endVocabLoading();
+          }
         }
-
       },'teacher word tests');
     }
     startBtn.addEventListener('click',()=>{if(confirmGoldenPractice())startSession()});
@@ -2965,6 +2983,7 @@ async function boot(){
 window.WillenaVocabStudy={version:'0.102',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
+    document.documentElement.classList.remove('vocab-focused-boot');
     const startupError=el('vocabStartupError');
     if(startupError){startupError.hidden=false;startupError.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
