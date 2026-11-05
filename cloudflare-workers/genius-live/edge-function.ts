@@ -167,7 +167,33 @@ async function action(req:Request){
  }
  const r=await room(clean(p.pin));
  if(r.teacher_id!==who.id||!["teacher","admin"].includes(who.role))return fail("Only the hosting teacher can control this room.",403);
- if(mode==="start"){
+ if(["set_team","balance_teams","randomize_teams"].includes(mode)){
+  if(r.status!=="lobby")return fail("Teams can only be changed before the game starts.",409);
+  if(r.settings.mode!=="team")return fail("This game uses individual scoring.");
+  const teamCount=Number(r.settings.teamCount);
+  if(!Number.isInteger(teamCount)||teamCount<2||teamCount>8)return fail("Invalid team setup.");
+  const {data:players,error:pe}=await sb.from("genius_live_players_v1").select("id,team,joined_at").eq("room_id",r.id).order("joined_at",{ascending:true});
+  if(pe)throw pe;
+  if(mode==="set_team"){
+   const playerId=clean(p.playerId),target=Number(p.team);
+   if(!/^[0-9a-f-]{36}$/i.test(playerId)||!Number.isInteger(target)||target<0||target>=teamCount)return fail("Invalid player or team.");
+   if(!(players||[]).some((x:any)=>x.id===playerId))return fail("Player is not in this game.",404);
+   const {data:changed,error}=await sb.from("genius_live_players_v1").update({team:target}).eq("room_id",r.id).eq("id",playerId).select("id");
+   if(error)throw error;if(!changed?.length)return fail("Team update did not save.",409);
+  }else{
+   const rows=[...(players||[])];
+   if(mode==="randomize_teams"){
+    // Fisher-Yates, using crypto instead of Math.random for unbiased independent shuffles.
+    const numbers=new Uint32Array(1);
+    for(let i=rows.length-1;i>0;i--){crypto.getRandomValues(numbers);const j=numbers[0]%(i+1);[rows[i],rows[j]]=[rows[j],rows[i]]}
+   }
+   // Round-robin always keeps team sizes within one student.
+   const updates=rows.filter((x:any,i:number)=>x.team!==i%teamCount).map((x:any)=>({id:x.id,team:rows.indexOf(x)%teamCount}));
+   const results=await Promise.all(updates.map((x:any)=>sb.from("genius_live_players_v1").update({team:x.team}).eq("room_id",r.id).eq("id",x.id).select("id")));
+   for(const result of results){if(result.error)throw result.error;if(!result.data?.length)throw new Error("A team assignment could not be saved.");}
+  }
+ }
+ else if(mode==="start"){
   if(r.status!=="lobby")return fail("Game has already started.");
   const {count}=await sb.from("genius_live_players_v1").select("id",{count:"exact",head:true}).eq("room_id",r.id);
   if(!count)return fail("At least one player must join.");
