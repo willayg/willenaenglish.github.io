@@ -15,8 +15,8 @@ function showWordPanel(body){const panel=document.querySelector('[data-vocab-sub
 
 
 const newHomeworkApps={
- writing:{heading:'Assign writing mission',types:[['diary','Daily diary'],['topic','Topic writing'],['sentence','Sentence writing (textbook)']]},
- puzzles:{heading:'Assign puzzle mission',types:[['boggle','Boggle'],['wordsearch','Word Search'],['crossword','Crossword'],['mixmatch','Mix & Match']]}
+ writing:{heading:'Assign Writing Mission',types:[['diary','Daily diary'],['topic','Topic writing'],['sentence','Sentence writing (textbook)']]},
+ puzzles:{heading:'Assign Puzzle Mission',types:[['boggle','Boggle'],['wordsearch','Word Search'],['crossword','Crossword'],['mixmatch','Mix & Match']]}
 };
 function homeworkForm(app,body){
  const spec=newHomeworkApps[app];
@@ -31,7 +31,7 @@ function homeworkForm(app,body){
  '<label>Due date <input class="control" name="due" type="date" required></label>'+ 
  '<label>Repeat <select class="control" name="repeat"><option value="none">One time</option><option value="daily">Every day</option><option value="weekly">Every week</option></select></label>'+
  '<div><div id="uaClassProgressReport" aria-live="polite"></div></div>'+
- '<button class="control ua-primary" type="submit">Assign mission →</button><div id="uaNewHomeworkStatus" role="status"></div></form>';
+ '<button class="control ua-primary" type="submit">Assign Mission →</button><div id="uaNewHomeworkStatus" role="status"></div></form>';
  const form=body.querySelector('form'),date=form.elements.due;
  if(app==='writing'){
   const fields=body.querySelector('#uaSentenceBookFields'),message=body.querySelector('#uaSentenceBookStatus');
