@@ -36,6 +36,33 @@
 #grammarRound .willena-question-renderer .context{font-size:15px!important}
 #grammarRound .willena-question-renderer .prompt .u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
 
+/* Grammar exam questions need textbook-style left alignment rather than Word Genius's centered single-word prompt. */
+#grammarRound .vocab-question-wrap .willena-question-renderer .prompt{
+  width:100%;
+  box-sizing:border-box;
+  margin:0 0 18px;
+  text-align:left!important;
+  white-space:pre-line;
+  overflow-wrap:anywhere;
+  line-height:1.65!important;
+  letter-spacing:normal;
+}
+#grammarRound .vocab-question-wrap .willena-question-renderer .choices{
+  width:100%;
+  justify-items:stretch;
+  gap:10px;
+}
+#grammarRound .vocab-question-wrap .willena-question-renderer .choice{
+  text-align:left!important;
+  padding:13px 16px;
+}
+@media(max-width:600px){
+  #grammarRound .vocab-question-wrap .willena-question-renderer .prompt{
+    margin-bottom:16px;
+    line-height:1.55!important;
+  }
+}
+
 /* Only the explainer dialog is app-specific. Unit strip and activity cards inherit Word Genius unchanged. */
 .grammar-guide-dialog{border:2px solid var(--cyan,#66d6df);border-radius:24px;width:min(560px,calc(100vw - 32px));max-height:80dvh;padding:0;color:var(--ink,#173f46);background:var(--vocab-card,#fff)}
 .grammar-guide-dialog::backdrop{background:rgba(14,40,47,.55)}
