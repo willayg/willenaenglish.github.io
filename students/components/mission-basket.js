@@ -170,7 +170,7 @@ async function naesin(){
 
  return plans.flatMap(p=>(p.tasks||[]).filter(t=>t.active!==false).map(t=>{
   const progress=t.progress||{},done=progress.gold===true||progress.complete===true||testCompleted.has(String(t.id));
-  const x=item('naesin:'+t.id,'내신 명중',t.title||t.lesson||'내신 과제','/students/test-prep-v2/',t.created_at||t.due_at,done,p.book_label||'');
+  const x=item('naesin:'+t.id,'내신 명중',t.title||t.lesson||'내신 과제','/students/test-prep-v2/?homework='+encodeURIComponent(t.id),t.created_at||t.due_at,done,p.book_label||'');
   x.archived=archivedIds.has(String(t.id));x.teacherId=t.created_by||null;x.teacherName=t.teacher_name||'';return x;
  }));
 }
