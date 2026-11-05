@@ -180,7 +180,7 @@ function render(){
 }
 let overviewStage='active';
 const overviewSelections=new Set();
-const overviewFilters={my:{className:'',assignment:''},all:{className:'',assignment:''}};
+const overviewFilters={my:{className:'',assignment:'',teacherId:''},all:{className:'',assignment:'',teacherId:''}};
 const homeworkKey=row=>row._table+':'+row.id;
 async function changeHomework(row){
  const table=row._table;
@@ -482,10 +482,16 @@ async function loadOverview(scopeName='my',force=false){
    const overdue=r=>r.due_at&&Date.parse(r.due_at)<now;
    const finished=r=>!r.isActive||overdue(r);
    const owned=rows.filter(r=>scopeName==='all'||id(r.created_by)===teacher);
-   const active=owned.filter(r=>!finished(r));
-   const complete=owned.filter(finished);
-   const stageRows=overviewStage==='complete'?complete:active;
    const filter=overviewFilters[scopeName]||overviewFilters.my;
+   const teacherOptions=[...new Map(owned.filter(r=>id(r.created_by)).map(r=>{
+     const key=id(r.created_by);
+     return [key,{id:key,name:authors.get(key)||'Unknown teacher'}];
+   })).values()].sort((a,b)=>a.name.localeCompare(b.name,'en')||a.id.localeCompare(b.id));
+   if(filter.teacherId&&!teacherOptions.some(row=>row.id===filter.teacherId))filter.teacherId='';
+   const teacherRows=filter.teacherId?owned.filter(r=>id(r.created_by)===filter.teacherId):owned;
+   const active=teacherRows.filter(r=>!finished(r));
+   const complete=teacherRows.filter(finished);
+   const stageRows=overviewStage==='complete'?complete:active;
    const rowClass=row=>String(row._overviewClass||row.class||row.class_name||students.get(id(row.student_id))?.class||'').trim();
    const classOptions=[...new Set(stageRows.map(rowClass).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
    if(filter.className&&!classOptions.includes(filter.className))filter.className='';
@@ -544,7 +550,8 @@ async function loadOverview(scopeName='my',force=false){
    const checked=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
    host.innerHTML='<div class="ua-scope-tabs" role="tablist" aria-label="Homework status"><button type="button" class="'+(overviewStage==='active'?'active':'')+'" data-ua-stage="active">Active ('+active.length+')</button><button type="button" class="'+(overviewStage==='complete'?'active':'')+'" data-ua-stage="complete">Complete ('+complete.length+')</button></div>'+
      '<div class="ua-overview-filters"><label>Class<select class="control" id="uaOverviewClassFilter" aria-label="Filter homework by class"><option value="">All classes</option>'+classOptions.map(name=>'<option value="'+esc(name)+'"'+(filter.className===name?' selected':'')+'>'+esc(name)+'</option>').join('')+'</select></label>'+
-     '<label>Assignment<select class="control" id="uaOverviewAssignmentFilter" aria-label="Filter homework by assignment"><option value="">All assignments</option>'+assignmentOptions.map(name=>'<option value="'+esc(name)+'"'+(filter.assignment===name?' selected':'')+'>'+esc(name)+'</option>').join('')+'</select></label></div>'+
+     '<label>Assignment<select class="control" id="uaOverviewAssignmentFilter" aria-label="Filter homework by assignment"><option value="">All assignments</option>'+assignmentOptions.map(name=>'<option value="'+esc(name)+'"'+(filter.assignment===name?' selected':'')+'>'+esc(name)+'</option>').join('')+'</select></label>'+
+     (scopeName==='all'?'<label>Teacher<select class="control" id="uaOverviewTeacherFilter" aria-label="Filter homework by teacher"><option value="">All teachers</option>'+teacherOptions.map(row=>'<option value="'+esc(row.id)+'"'+(filter.teacherId===row.id?' selected':'')+'>'+esc(row.name)+'</option>').join('')+'</select></label>':'')+'</div>'+
      '<div class="ua-toolbar"><strong>'+(scopeName==='my'?'My homework':'All teachers’ homework')+'</strong>'+
      '<label class="ua-bulk-select"><input type="checkbox" id="uaSelectAll" '+(selectable.length&&checked===selectable.length?'checked':'')+' '+(!selectable.length?'disabled':'')+'> Select all</label>'+
       (overviewStage==='active'?'<button type="button" class="control ua-bulk-icon ua-bulk-complete" id="uaCompleteSelected" title="Complete selected" aria-label="Complete '+checked+' selected assignments" '+(!checked?'disabled':'')+'>'+window.WillenaHomeworkSelection.icons.complete+'<span class="ua-bulk-count">'+checked+'</span></button>':'')+
@@ -594,6 +601,12 @@ async function loadOverview(scopeName='my',force=false){
    attachHomeworkGroupToggles(host);
    host.querySelector('#uaOverviewClassFilter').onchange=event=>{filter.className=event.target.value;filter.assignment='';overviewSelections.clear();renderOverview()};
    host.querySelector('#uaOverviewAssignmentFilter').onchange=event=>{filter.assignment=event.target.value;overviewSelections.clear();renderOverview()};
+   const teacherFilter=host.querySelector('#uaOverviewTeacherFilter');
+   if(teacherFilter)teacherFilter.onchange=event=>{
+     filter.teacherId=event.target.value;
+     filter.className='';filter.assignment='';
+     overviewSelections.clear();renderOverview();
+   };
    host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName,true);
    host.querySelectorAll('[data-ua-stage]').forEach(button=>button.onclick=()=>{overviewStage=button.dataset.uaStage;overviewSelections.clear();renderOverview()});
    host.querySelectorAll('[data-ua-detail]').forEach(button=>button.onclick=()=>{
