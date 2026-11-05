@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./styles.css?v=20261105-lily-preload1">
+<link rel="stylesheet" href="./styles.css?v=20261105-books-dynamic1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261101-menu-prominent1"></script>
@@ -24,16 +24,12 @@
 <section id="ftHome" class="ft-shell">
  <div class="vocab-front-intro"><small class="ft-eyebrow">WILLENA · FREE TALKING GENIUS</small>
  <h1>Free Talking Genius</h1><p>교재에 나온 주제로 내 생각을 자유롭게 말하고 써 봐요.</p></div>
- <button class="vocab-front-book-card ft-book-choice" id="ftOpenBook" type="button" disabled>
-  <span class="ft-book-icon"><img src="/shared/svgs/golden-unit.svg" alt=""></span>
-  <span class="vocab-front-card-copy"><strong>Oxford Buzz 6</strong><small>8 units · Speaking &amp; Writing · 8 questions each</small></span>
-  <span class="ft-chevron">›</span>
- </button>
+ <div id="ftBookChoices" class="ft-book-list" aria-label="My Free Talking textbooks"></div>
  <p id="ftLoading" class="ft-status">교재와 학습 기록을 확인하는 중…</p>
 </section>
 <section id="ftBook" class="ft-shell" hidden>
  <div class="ft-topline"><button id="ftBackHome" class="vocab-back" type="button">← 홈</button><span class="ft-eyebrow">교재 공부</span></div>
- <h2>Oxford Buzz 6</h2>
+ <h2 id="ftBookTitle">Textbook</h2>
  <div id="ftUnitStrip" class="ft-units" aria-label="Units"></div>
  <h3 id="ftUnitTitle"></h3><p id="ftUnitFocus" class="ft-muted"></p>
  <div class="ft-mode-grid">
@@ -122,9 +118,9 @@
 <section id="ftFinish" class="ft-shell" hidden><div id="ftFinishContent"></div><div id="ftFinishStatus" class="ft-status" role="status"></div>
  <div class="ft-finish-actions"><button id="ftRetrySync" class="vocab-action" hidden type="button">Retry points sync</button><button id="ftFinishHome" class="vocab-action" type="button">Back to Units</button></div>
 </section>
-<div class="ft-footer-version">Free Talking Genius · Character voice test · v2.0</div>
+<div class="ft-footer-version">Free Talking Genius · Character voices · dynamic books · v2.1</div>
 </main></div>
-<script type="module" src="./app.js?v=20261105-lily-preload1"></script>
+<script type="module" src="./app.js?v=20261105-books-dynamic1"></script>
 <script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261103-idle1"></script>
 </body></html>
