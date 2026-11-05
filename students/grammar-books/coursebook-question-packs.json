@@ -7991,7 +7991,7 @@
                 "id": "buzz4-u5-check-3",
                 "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
                 "options": [
-                  "Students must run in the hallway; it is against school rules.",
+                  "Students musts run in the hallway; it is against school rules.",
                   "Please give her the library book.",
                   "Our teacher asked us to be quiet.",
                   "You must wear a helmet; the school requires it.",
@@ -8060,10 +8060,10 @@
               {
                 "id": "buzz4-u5-hunt-3",
                 "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
-                "sentence": "Students must run in the hallway; it is against school rules.",
+                "sentence": "Students musts run in the hallway; it is against school rules.",
                 "options": [
                   "Students",
-                  "must",
+                  "musts",
                   "run",
                   "in the hallway; it is against school rules."
                 ],
