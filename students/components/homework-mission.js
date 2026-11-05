@@ -52,7 +52,7 @@ function destinationFor(a){
   if(book)q.set('book',book);if(unit)q.set('unit',unit);
   return {app:'Sentence Genius',href:'/students/sentence-genius/'+(q.size?'?'+q:''),buttonLabel:'Sentence Genius에서 숙제 시작하기'};
  }
- if(source==='vocab_study')return {app:'Word Genius',href:'/students/vocab-study/?open=wordtest',buttonLabel:'Word Genius에서 숙제 시작하기'};
+ if(source==='vocab_study')return {app:'Word Genius',href:'/students/vocab-study/?open=wordtest&assignment_id='+encodeURIComponent(a.id),buttonLabel:'Word Genius에서 숙제 시작하기'};
  if(['english_arcade','arcade','saved_game','grammar','phonics'].includes(source))return {app:'English Arcade',href:'/Games/english_arcade/index.html?openHomework=1',buttonLabel:'English Arcade에서 숙제 시작하기'};
  // A generic wordlist is not proof of an Arcade assignment.
  return null;
