@@ -20,12 +20,13 @@ const ELEVEN_VOICES=Object.freeze({
 });
 const ELEVEN_MODEL='eleven_flash_v2_5'; // Modern, economical low-latency model for comparison.
 const ELEVEN_PROXY='https://api.willenaenglish.com/.netlify/functions/eleven_labs_proxy';
-async function elevenAudio({env,text,voiceId}){
+async function elevenAudio({env,text,voiceId,modelId=ELEVEN_MODEL}){
+ const settings=modelId==='eleven_v3'?{stability:0.5}:{stability:0.55,similarity_boost:0.8,style:0,use_speaker_boost:false};
  const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
  if(key){
   const response=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId)+'?output_format=mp3_44100_128',{
    method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
-   body:JSON.stringify({text,model_id:ELEVEN_MODEL,voice_settings:{stability:0.55,similarity_boost:0.8,style:0,use_speaker_boost:false}}),
+   body:JSON.stringify({text,model_id:modelId,voice_settings:settings}),
    signal:AbortSignal.timeout(25000)
   });
   if(!response.ok)throw Error('ElevenLabs TTS HTTP '+response.status);
@@ -37,8 +38,8 @@ async function elevenAudio({env,text,voiceId}){
  // Only this authenticated Pages Function sends textbook-controlled text here.
  const response=await fetch(ELEVEN_PROXY,{
   method:'POST',headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({text,voice_id:voiceId,model_id:ELEVEN_MODEL,
-   voice_settings:{stability:0.55,similarity_boost:0.8,style:0,use_speaker_boost:false}}),
+  body:JSON.stringify({text,voice_id:voiceId,model_id:modelId,
+   voice_settings:settings}),
   signal:AbortSignal.timeout(30000)
  });
  if(!response.ok)throw Error('Existing ElevenLabs proxy HTTP '+response.status);
@@ -142,18 +143,23 @@ export async function onRequestPost({request,env,context}){
   const t=String(q.question_en||'').trim();
   if(!t||t.length>600)return json(422,{success:false,error:'Question audio text unavailable'});
   const chosenVoice=body?.voice==null?'':String(body.voice).toLowerCase().trim();
+  const compareModel=String(body?.compare_model||'');
+  // Isolated comparison option: only Bunny, only these explicitly allowed models.
+  if(compareModel&&!(chosenVoice==='bunny'&&['eleven_v3','eleven_multilingual_v2'].includes(compareModel)))
+   return json(400,{success:false,error:'Unsupported comparison model or voice'});
+  const elevenModel=compareModel||ELEVEN_MODEL;
   const elevenId=ELEVEN_VOICES[chosenVoice]||null;
   if(chosenVoice&&!elevenId&&!REALTIME_VOICES.has(chosenVoice))return json(400,{success:false,error:'Unsupported voice'});
   if(elevenId){
-   const cache=await cacheKey(t,ELEVEN_MODEL,elevenId,'elevenlabs');
+   const cache=await cacheKey(t,elevenModel,elevenId,'elevenlabs');
    const hit=await cachedAudio(cache,'mp3',env);
-   if(hit)return json(200,{success:true,...hit,source:hit.source,model:ELEVEN_MODEL,
+   if(hit)return json(200,{success:true,...hit,source:hit.source,model:elevenModel,
     voice:chosenVoice,provider:'elevenlabs',content_type:'audio/mpeg',ai_generated:true,stored:true});
    try{
-    const bytes=await elevenAudio({env,text:t,voiceId:elevenId});
+    const bytes=await elevenAudio({env,text:t,voiceId:elevenId,modelId:elevenModel});
     const audio=base64(bytes);
     const saved=await saveR2(cache,audio,'mp3',env);
-    return json(200,{success:true,audio,source:'elevenlabs',model:ELEVEN_MODEL,
+    return json(200,{success:true,audio,source:'elevenlabs',model:elevenModel,
      voice:chosenVoice,provider:'elevenlabs',content_type:'audio/mpeg',
      stored:saved.stored,r2_status:saved.path||'not_saved',ai_generated:true});
    }catch(e){
