@@ -1,7 +1,8 @@
 // Free Talking Genius: real textbook questions, student-owned attempts and AI Willi.
 // Reuses Word Genius's question renderer, reward display, header, finish and session UI.
 // No dashboard registration and no changes to Writing Genius.
-import {studentIdentity,signedInProfile,assignedBooks} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
+import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
+import {fetchClassBookAssignments,extractClassBookAssignments} from '/students/shared/class-book-assignments.js?v=20261105-shared1';
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {renderStudentSessionFinish} from '/students/components/student-session-finish.js?v=1';
@@ -116,14 +117,14 @@ async function loadQuestions(){
 async function detectBooks(){
  const className=state.student?.className||state.profile?.className;
  if(!className)throw Error('No class assigned to your student account.');
- const assigned=await assignedBooks(className);
+ const assigned=extractClassBookAssignments(await fetchClassBookAssignments(className));
  const published=new Set(state.questions.map(q=>q.book_id));
  const titles=new Map((state.catalog||[]).map(b=>[b.id,b.title]));
  const unique=new Map();
  // Assignment detection and Free Talking content readiness are distinct.
  // Always display genuinely assigned books, even if no question bank exists yet.
- for(const b of assigned)if(b.id){
-  unique.set(b.id,{id:b.id,title:titles.get(b.id)||b.title||'Textbook',ready:published.has(b.id)});
+ for(const b of assigned)if(b.book_id){
+  unique.set(b.book_id,{id:b.book_id,title:titles.get(b.book_id)||b.book_title||b.title||'Textbook',ready:published.has(b.book_id)});
  }
  state.books=[...unique.values()].sort((a,b)=>a.title.localeCompare(b.title));
  if(!state.books.length){state.bookId=null;return;}
