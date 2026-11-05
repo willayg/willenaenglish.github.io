@@ -440,8 +440,8 @@ function showHome(push=true){saveInterruptedRound();activeHomework=null;homework
 function toSharedQuestion(q){
   if(q.displayStyle==='beginner-underlined'){
     const markers=['①','②','③','④'];
-    const sentence=q.options.map((part,index)=>markers[index]+' '+part).join(' ').replace(/\\s+([,.!?;:])/g,'$1');
-    return {id:q.id,form:'choice',prompt:q.prompt+'\\n'+sentence,choices:q.options.map((part,index)=>markers[index]+' '+part),answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit}};
+    const sentence=q.options.map((part,index)=>markers[index]+' '+part).join(' ').replace(/\s+([,.!?;:])/g,'$1');
+    return {id:q.id,form:'choice',prompt:q.prompt+'\n'+sentence,choices:q.options.map((part,index)=>markers[index]+' '+part),answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit}};
   }
  if(q.displayStyle==='sentence-options'){
   return {id:q.id,form:'choice',prompt:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
