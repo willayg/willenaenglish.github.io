@@ -208,6 +208,14 @@ export async function onRequestPost({request,env,context}){
   const ttsModel=model(env),ttsVoice=chosenVoice||voice(env),key=await cacheKey(t,ttsModel,ttsVoice);
   const url=await cachedAudio(key,'wav',env);
   if(url)return json(200,{success:true,...(warmOnly?{}:url),stored:true,cache_status:'hit',source:url.source,model:ttsModel,content_type:'audio/wav',voice:ttsVoice,ai_generated:true});
+  // Once Marin's compatible MP3 fallback exists, reuse it immediately.
+  // Do not repeatedly attempt a failed Realtime generation on every reload.
+  const fallbackVoice='marin',fallbackModel='gpt-4o-mini-tts';
+  const fallbackKey=await cacheKey(t,fallbackModel,fallbackVoice,'fallback');
+  const existingFallback=await cachedAudio(fallbackKey,'mp3',env);
+  if(existingFallback)return json(200,{success:true,...(warmOnly?{}:existingFallback),
+   cache_status:'hit',source:'r2_fallback',model:fallbackModel,voice:fallbackVoice,
+   content_type:'audio/mpeg',stored:true,ai_generated:true});
   const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
   if(!apiKey)return json(503,{success:false,error:'AI voice is not configured'});
   // Realtime is preferred, but never let a WebSocket failure silence the lesson.
@@ -223,11 +231,7 @@ export async function onRequestPost({request,env,context}){
   }
   // Temporary Marin-voice compatibility fallback. Uses the existing OpenAI TTS endpoint
   // until Realtime generation is fully verified; never touches other apps.
-  const fallbackVoice='marin',fallbackModel='gpt-4o-mini-tts';
-  const fallbackKey=await cacheKey(t,fallbackModel,fallbackVoice,'fallback');
-  const fallbackUrl=await cachedAudio(fallbackKey,'mp3',env);
-  if(fallbackUrl)return json(200,{success:true,...(warmOnly?{}:fallbackUrl),content_type:'audio/mpeg',
-    source:'r2_fallback',cache_status:'hit',model:fallbackModel,voice:fallbackVoice,stored:true,ai_generated:true});
+  // No existing fallback; generate a new one only after Realtime fails.
   const response=await fetch('https://api.openai.com/v1/audio/speech',{
    method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
    body:JSON.stringify({model:fallbackModel,voice:fallbackVoice,input:t,response_format:'mp3',
