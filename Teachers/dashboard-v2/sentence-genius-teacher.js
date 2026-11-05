@@ -642,7 +642,7 @@ function renderManage(root){
  const holder=$('#sgtAssignments',root);if(!holder)return;
  const chosen=$('#sgtClassFilter',root)?.value||'all';
  const visible=state.assignments.filter(a=>chosen==='all'||a.class_name===chosen);
- holder.innerHTML=visible.length?visible.map(a=>{
+ holder.innerHTML=visible.length?window.WillenaGeniusHomeworkCard.groupByDate(visible,a=>{
   const count=(a.target_sentence_ids||[]).length,modes=(a.required_modes||[]).map(m=>types[m]||m).join(' · ');
   const shared=window.WillenaGeniusHomeworkCard;
   const task=String(a.title||'Sentence homework').replace(/^.+?\s*[·|—–-]\s*(?=Unit\s*\d)/i,'');
@@ -650,7 +650,7 @@ function renderManage(root){
     teacher:a.teacher_name||a.created_by_name||'',createdBy:a.created_by,progressLabel:'Student progress',
     body:'<div class="sgt-actions"><button class="control ghc-load-action" type="button" data-sg-progress="'+escapeHtml(a.id)+'" hidden>Load student results</button></div>'+
     '<div class="sgt-progress" id="sgtProgress-'+escapeHtml(a.id)+'" hidden></div>'});
- }).join(''):'<div class="sgt-result">No Sentence Genius assignments found.</div>';
+ }):'<div class="sgt-result">No Sentence Genius assignments found.</div>';
  void window.WillenaGeniusHomeworkCard?.hydrateTeachers(holder);
  // Load class completion for each visible assignment without opening student details.
  void Promise.allSettled(visible.map(async a=>{
