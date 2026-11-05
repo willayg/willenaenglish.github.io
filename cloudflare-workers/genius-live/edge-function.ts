@@ -110,7 +110,7 @@ async function action(req:Request){
  if(mode==="create"){
   if(!["teacher","admin"].includes(who.role))return fail("Teacher access required",403);
   const count=Math.max(1,Math.min(40,Number(p.count)||10)),seconds=Math.max(8,Math.min(60,Number(p.seconds)||20));
-  const gameMode=p.mode==="individual"?"individual":"team",teamCount=Math.max(2,Math.min(4,Number(p.teamCount)||2));
+  const gameMode=p.mode==="individual"?"individual":"team",teamCount=Math.max(2,Math.min(8,Number(p.teamCount)||2));
   const classId=clean(p.classId);
   if(!/^[0-9a-f-]{36}$/i.test(classId))return fail("Choose a class first.");
   const {data:selectedClass,error:classError}=await sb.from("classes").select("id,name").eq("id",classId).maybeSingle();
