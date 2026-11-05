@@ -1,7 +1,7 @@
 // Free Talking Genius: real textbook questions, student-owned attempts and AI Willi.
 // Reuses Word Genius's question renderer, reward display, header, finish and session UI.
 // No dashboard registration and no changes to Writing Genius.
-import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
+import {studentIdentity,signedInProfile,assignedBooks} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {renderStudentSessionFinish} from '/students/components/student-session-finish.js?v=1';
@@ -11,12 +11,13 @@ import {geniusSessionContext} from '/students/components/genius-session-context.
 import {createFreeTalkingVoice} from './question-voice.js?v=20261105-lily-preload1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const BOOK='8e949813-fa91-4adc-a709-905efc980d8b';
+const BOOK=()=>state.bookId;
+const bookTitle=()=>state.books.find(b=>b.id===state.bookId)?.title||'Textbook';
 const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
-const state={student:null,profile:null,questions:[],unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
+const state={student:null,profile:null,books:[],bookId:null,questions:[],unitTitles:new Map(),unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
  current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set()};
-const groups=()=>state.questions.filter(x=>Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
+const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
 function showError(message){$('ftError').textContent=message||'Unknown error';$('ftError').hidden=false;console.error('[Free Talking]',message)}
 function clearError(){$('ftError').hidden=true;$('ftError').textContent=''}
@@ -53,12 +54,12 @@ async function syncQuestionReward(question,bestPoints){
  if(!pts)return;
  const rewardId=await stableRewardUuid('free-talking-question-v1|'+state.student.id+'|'+state.mode+'|'+question.id);
  const payload={reward_only:true,session_id:rewardId,client_attempt_id:rewardId,
-  book_id:BOOK,unit_id:question.unit_id,
+  book_id:BOOK(),unit_id:question.unit_id,
   reward_mode:'free_talking_'+state.mode+'_question',
-  reward_list_name:'Free Talking Genius · Unit '+state.unit+' · '+state.mode+' · Q'+question.question_number,
+  reward_list_name:'Free Talking Genius · '+bookTitle()+' · Unit '+state.unit+' · '+state.mode+' · Q'+question.question_number,
   reward_list_size:1,reward_started_at:state.session?.created_at||new Date().toISOString(),
   reward_summary:{completed:true,stars:0,percent:pts*25,accuracy:pts/4,score:pts,total:4,
-   points_earned:pts,book_id:BOOK,unit_id:question.unit_id,
+   points_earned:pts,book_id:BOOK(),unit_id:question.unit_id,
    free_talking_question_id:question.id,free_talking_mode:state.mode,
    reward_scheme:'free-talking-question-v1',session_source:'student'}};
  const fn=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
@@ -82,31 +83,74 @@ function attemptsFor(sessionId,questionId){
 }
 function questionBest(sessionId,id){return Math.max(0,...attemptsFor(sessionId,id).map(a=>Number(a.grammar_points)+Number(a.quality_points)))}
 function bestUnitPoints(unit,mode,questionId){
- const ids=new Set(state.sessions.filter(s=>s.book_id===BOOK&&s.unit_number===unit&&s.mode===mode).map(s=>s.id));
+ const ids=new Set(state.sessions.filter(s=>s.book_id===BOOK()&&s.unit_number===unit&&s.mode===mode).map(s=>s.id));
  return Math.max(0,...state.attempts.filter(a=>ids.has(a.session_id)&&a.question_id===questionId)
   .map(a=>Number(a.grammar_points)+Number(a.quality_points)));
 }
 function masteryCount(unit,mode){
- const prompts=state.questions.filter(x=>Number(x.unit_number)===unit);
+ const prompts=state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===unit);
  return prompts.filter(q=>bestUnitPoints(unit,mode,q.id)===4).length;
 }
 function unitGold(unit){return masteryCount(unit,'speaking')===8&&masteryCount(unit,'writing')===8}
 async function refreshData(){
- const list=await api('free_talking_sessions',{params:'?select=*&student_id=eq.'+state.student.id+'&book_id=eq.'+BOOK+'&order=created_at.desc&limit=200'});
+ const list=await api('free_talking_sessions',{params:'?select=*&student_id=eq.'+state.student.id+'&book_id=eq.'+BOOK()+'&order=created_at.desc&limit=200'});
  state.sessions=Array.isArray(list)?list:[];
  const ids=state.sessions.map(s=>s.id);
  state.attempts=ids.length?await api('free_talking_attempts',{params:'?select=*&session_id=in.('+ids.join(',')+')&order=created_at.asc&limit=2000'}):[];
 }
 async function loadQuestions(){
- const path='/rest/v1/free_talking_questions?select=id,unit_id,unit_number,question_number,question_en,question_ko,grammar_focus&book_id=eq.'+BOOK+'&is_published=eq.true&order=unit_number.asc,question_number.asc&limit=100';
+ const path='/rest/v1/free_talking_questions?select=id,book_id,unit_id,unit_number,question_number,question_en,question_ko,grammar_focus&is_published=eq.true&order=book_id.asc,unit_number.asc,question_number.asc&limit=800';
  const list=await contentDbGet(path);
- if(!Array.isArray(list)||list.length!==64)throw Error('Oxford Buzz 6 question bank is incomplete: expected 64 published prompts.');
- for(let n=1;n<=8;n++)if(list.filter(row=>Number(row.unit_number)===n).length!==8)throw Error('Unit '+n+' is missing questions.');
- state.questions=list;
+ if(!Array.isArray(list))throw Error('Free Talking question bank unavailable.');
+ state.questions=list.filter(q=>q.id&&q.book_id&&q.unit_id);
+ const ids=[...new Set(state.questions.map(q=>q.book_id))];
+ if(!ids.length)throw Error('No published Free Talking questions.');
+ const [catalog,units]=await Promise.all([
+  contentDbGet('/rest/v1/content_books?select=id,title&status=in.(review,published)&id=in.('+ids.join(',')+')&limit=100'),
+  contentDbGet('/rest/v1/content_units?select=id,book_id,unit_number,title&book_id=in.('+ids.join(',')+')&status=in.(review,published)&limit=200')
+ ]);
+ state.catalog=Array.isArray(catalog)?catalog:[];
+ state.unitTitles=new Map((Array.isArray(units)?units:[]).map(u=>[u.book_id+':'+u.unit_number,u.title||'']));
+}
+async function detectBooks(){
+ const className=state.student?.className||state.profile?.className;
+ if(!className)throw Error('No class assigned to your student account.');
+ const assigned=await assignedBooks(className);
+ const published=new Set(state.questions.map(q=>q.book_id));
+ const titles=new Map((state.catalog||[]).map(b=>[b.id,b.title]));
+ const unique=new Map();
+ for(const b of assigned)if(published.has(b.id)){
+  unique.set(b.id,{id:b.id,title:titles.get(b.id)||b.title||'Textbook'});
+ }
+ state.books=[...unique.values()].sort((a,b)=>a.title.localeCompare(b.title));
+ if(!state.books.length)throw Error('Your class has no textbooks with published Free Talking questions yet.');
+ const previous=state.bookId;
+ state.bookId=state.books.some(b=>b.id===previous)?previous:state.books[0].id;
+}
+function renderBookChoices(){
+ const host=$('ftBookChoices');host.replaceChildren();
+ for(const b of state.books){
+  const button=document.createElement('button');
+  button.type='button';button.className='vocab-front-book-card ft-book-choice';
+  const count=state.questions.filter(q=>q.book_id===b.id).length;
+  button.innerHTML='<span class="ft-book-icon"><img src="/shared/svgs/golden-unit.svg" alt=""></span>'+
+   '<span class="vocab-front-card-copy"><strong>'+escape(b.title)+'</strong><small>'+
+   count+' questions · Speaking & Writing</small></span><span class="ft-chevron">›</span>';
+  button.addEventListener('click',()=>void chooseBook(b.id));host.append(button);
+ }
+}
+async function chooseBook(id){
+ if(!state.books.some(b=>b.id===id))return;
+ state.bookId=id;state.unit=1;state.session=null;state.current=null;state.awards.clear();
+ try{
+  await refreshData();
+  questionVoice.setQuestionBank(state.questions.filter(q=>q.book_id===id),state.unit);
+  renderBook();view('ftBook');
+ }catch(error){showError('Could not open this textbook: '+error.message)}
 }
 function renderUnitStrip(){
  const host=$('ftUnitStrip');host.replaceChildren();
- for(let n=1;n<=8;n++){
+ for(const n of [...new Set(state.questions.filter(q=>q.book_id===state.bookId).map(q=>Number(q.unit_number)))].sort((a,b)=>a-b)){
   const button=document.createElement('button');
   button.type='button';button.className=(n===state.unit?'is-current ':'')+(unitGold(n)?'is-golden':'');
   button.textContent='Unit '+n;
@@ -116,9 +160,8 @@ function renderUnitStrip(){
 }
 function renderBook(){
  renderUnitStrip();
- const prompts=groups();$('ftUnitTitle').textContent='Unit '+state.unit+' · '+({
-  1:'Travel in the City',2:'The Seasons',3:'The Environment',4:'A Trip to the Theater',
-  5:'World Food',6:"Let's Connect",7:'In the Country',8:'A Journey to Space'})[state.unit];
+ const prompts=groups();$('ftBookTitle').textContent=bookTitle();
+ $('ftUnitTitle').textContent='Unit '+state.unit+' · '+(state.unitTitles.get(state.bookId+':'+state.unit)||'');
  $('ftUnitFocus').textContent=prompts[0]?.grammar_focus?'Grammar opportunity · '+prompts[0].grammar_focus:'';
  for(const mode of ['speaking','writing']){
   const count=masteryCount(state.unit,mode),card=$('ft'+(mode==='speaking'?'Speaking':'Writing')+'Card');
@@ -215,11 +258,11 @@ function renderQuestion({retry=false}={}){
 async function openMode(mode){
  if(state.loading)return;
  if(!['speaking','writing'].includes(mode))return;
- state.mode=mode;state.identity=geniusSessionContext({bookId:BOOK,unitId:groups()[0]?.unit_id,mode});
+ state.mode=mode;state.identity=geniusSessionContext({bookId:BOOK(),unitId:groups()[0]?.unit_id,mode});
  setBusy(true);
  try{
   await refreshData();
-  let session=state.sessions.find(s=>s.book_id===BOOK&&s.unit_number===state.unit&&s.mode===mode&&s.status==='in_progress');
+  let session=state.sessions.find(s=>s.book_id===BOOK()&&s.unit_number===state.unit&&s.mode===mode&&s.status==='in_progress');
   if(session){
    // Keep unfinished sessions, even if eight answers are already present:
    // renderQuestion will safely finalize the session rather than orphaning it.
@@ -228,7 +271,7 @@ async function openMode(mode){
   }
   if(!session){
    const created=await api('free_talking_sessions',{method:'POST',body:{
-    student_id:state.student.id,book_id:BOOK,unit_id:groups()[0].unit_id,unit_number:state.unit,mode,status:'in_progress'}});
+    student_id:state.student.id,book_id:BOOK(),unit_id:groups()[0].unit_id,unit_number:state.unit,mode,status:'in_progress'}});
    session=created?.[0];
    if(!session?.id)throw Error('Cannot create a new study session.');
    state.sessions.unshift(session);
@@ -298,16 +341,16 @@ async function rewardSync(data){
   const ok=await api('rpc/free_talking_reward_synced_v1',{method:'POST',body:{p_session_id:state.session.id}});
   return ok===true;
  }
- const unit='Buzz 6 · Unit '+state.unit,mode=state.mode;
+ const unit=bookTitle()+' · Unit '+state.unit,mode=state.mode;
  const payload={reward_only:true,session_id:state.session.id,client_attempt_id:state.session.id,
-   book_id:BOOK,unit_id:groups()[0].unit_id,
+   book_id:BOOK(),unit_id:groups()[0].unit_id,
    skill:mode==='speaking'?'speaking':'writing_sentence',response_type:'reward',
    activity_id:'free-talking-genius-reward',reward_mode:'free_talking_'+mode,
    reward_list_name:'Free Talking Genius · '+unit+' · '+mode,
    reward_list_size:8,reward_started_at:state.session.created_at,
    reward_summary:{completed:true,stars:Number(data.stars)||0,percent:Number(data.percent)||0,
     accuracy:(Number(data.percent)||0)/100,score:Number(data.percent)||0,total:100,
-    points_earned:0,book_id:BOOK,unit_id:groups()[0].unit_id,
+    points_earned:0,book_id:BOOK(),unit_id:groups()[0].unit_id,
     reward_scheme:'free-talking-v1',star_cap:5,session_source:'student',free_talking_mode:mode}};
  const fn=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
  const response=await fn('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
@@ -349,14 +392,14 @@ async function startup(){
   state.student=await studentIdentity();
   state.profile=await signedInProfile(state.student.id);
   if(state.profile?.role!=='student'||state.profile?.approved===false)throw Error('Student sign-in required');
-  await Promise.all([loadQuestions(),refreshData()]);
-   questionVoice.setQuestionBank(state.questions,state.unit);
-  $('ftOpenBook').disabled=false;
-  $('ftLoading').textContent='Oxford Buzz 6 is ready · 64 questions · 2 answer modes';
+  await loadQuestions();
+  await detectBooks();
+  renderBookChoices();
+  $('ftLoading').textContent=state.books.length+' assigned textbook(s) ready · Speaking & Writing';
  }catch(error){showError('Free Talking을 열 수 없어요. '+error.message);
   $('ftLoading').textContent='로그인이나 Content Database 연결을 확인해 주세요.'}
 }
-$('ftOpenBook').addEventListener('click',()=>selectUnit(1));
+// Book cards are created dynamically from the student's active class assignments.
 $('ftBackHome').addEventListener('click',()=>view('ftHome'));
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
 $('ftWritingCard').addEventListener('click',()=>void openMode('writing'));
