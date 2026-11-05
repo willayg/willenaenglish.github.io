@@ -83,12 +83,35 @@ export function createFreeTalkingVoice({host,getToken}){
   inflight.set(cacheId,work);
   return work;
  }
- // Temporarily disabled: no batch MP3 fetch/generation, regardless of voice choice.
- // The current question still loads on demand through select().
+ // Preload all published questions for the selected textbook and selected voice.
+ // The current unit goes first. Limit concurrent generation to two requests.
+ // Cached R2 audio is reused by the API; changing voices cancels the old queue.
  function preload(unit=preferredUnit){
   preferredUnit=Number(unit)||1;
-  ++preloadEpoch;
-  preloadingText('');
+  const epoch=++preloadEpoch;
+  const chosen=activeVoice();
+  if(!questionBank.length||destroyed){preloadingText('');return}
+  const ordered=[...questionBank].sort((a,b)=>
+   (Number(a.unit_number)===preferredUnit?0:1)-(Number(b.unit_number)===preferredUnit?0:1)
+   ||Number(a.unit_number)-Number(b.unit_number)||Number(a.question_number)-Number(b.question_number));
+  const total=ordered.length;
+  let cursor=0,done=0,failed=0;
+  preloadingText((chosen==='bunny-v3'?'AI Lili':'AI Willi')+' · 0/'+total+' ready');
+  async function worker(){
+   while(epoch===preloadEpoch&&!destroyed&&activeVoice()===chosen){
+    const q=ordered[cursor++];
+    if(!q)return;
+    try{await obtain(String(q.id),chosen)}
+    catch(error){failed++;console.warn('[Free Talking] preload failed',chosen,String(error?.message||error).slice(0,120))}
+    done++;
+    if(epoch===preloadEpoch&&!destroyed)
+     preloadingText((chosen==='bunny-v3'?'AI Lili':'AI Willi')+' · '+done+'/'+total+' prepared'+(failed?' · '+failed+' failed':''));
+   }
+  }
+  void Promise.all([worker(),worker()]).then(()=>{
+   if(epoch===preloadEpoch&&!destroyed)
+    preloadingText((chosen==='bunny-v3'?'AI Lili':'AI Willi')+' · '+(total-failed)+'/'+total+' ready'+(failed?' · '+failed+' failed':''));
+  });
  }
  function setQuestionBank(questions,unit=1){questionBank=Array.isArray(questions)?questions:[];preload(unit)}
  async function play(){
