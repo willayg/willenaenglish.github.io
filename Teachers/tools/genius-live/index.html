@@ -79,7 +79,6 @@ async function login(){
   if(pin){await refresh();if(state){notify("");return}pin="";sessionStorage.removeItem("genius.live.host.pin")}
   notify("Loading books…");const data=await api("catalog");catalog=data.books||[];notify("");setup();
  }catch(e){notify(e.message,true);$("#app").innerHTML='<div class="panel"><h2>Could not open Genius Live</h2><button id="retryLogin">Retry login</button> <a href="/Teachers/">Teachers Dashboard</a></div>';$("#retryLogin").onclick=login}}
-}
 setInterval(()=>{if(initialized&&pin&&document.visibilityState==="visible")refresh()},1800);
 setInterval(tick,200);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&pin)refresh()});
