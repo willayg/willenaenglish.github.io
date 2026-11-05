@@ -333,7 +333,7 @@ class StudentHeader extends HTMLElement {
   // --- Shared homework mission popup ---
   async _maybeShowMissionModal() {
     try {
-      const mission = await import('/students/components/homework-mission.js?v=20261105-focus-homework2');
+      const mission = await import('/students/components/homework-mission.js?v=20261105-pass2-qr2');
       await mission.showHomeworkMission();
     } catch (error) {
       console.debug('[student-header] homework mission unavailable', error);
