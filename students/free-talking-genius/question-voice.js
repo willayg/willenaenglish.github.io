@@ -6,7 +6,7 @@ export function createFreeTalkingVoice({host,getToken}){
  const stored=new Map();
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
- const VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar']);
+ const VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar','bunny','jock','sgt-steve']);
  const PREFERENCE_KEY='willena-free-talking-voice-v1';
  try{
   const saved=localStorage.getItem(PREFERENCE_KEY);
