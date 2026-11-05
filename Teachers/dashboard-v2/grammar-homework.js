@@ -37,7 +37,7 @@ async function renderCreate(){
  const d=new Date(Date.now()+7*864e5);$('#gfHwDue',el).value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  let previewSeq=0,previewTimer=null;
  const schedulePreview=()=>{const stamp=++previewSeq;clearTimeout(previewTimer);const host=$('#gfHwPreviewReport',el);if(!$('#gfHwClass',el).value||!el.querySelector('[data-stage]:checked')){host.replaceChildren();return}host.textContent='Loading class progress…';previewTimer=setTimeout(()=>void loadPreview(stamp),220)};
- const count=()=>{const n=el.querySelectorAll('[data-stage]:checked').length;$('#gfHwSelected',el).textContent=n+' selected';const button=$('#gfHwSubmit',el);button.textContent=n?'Assign '+n+' selected level'+(n===1?'':'s')+' →':'Select levels for mission';button.disabled=!n||state.loading;if(n)$('#gfHwView',el).hidden=true};count();
+ const count=()=>{const n=el.querySelectorAll('[data-stage]:checked').length;$('#gfHwSelected',el).textContent=n+' selected';const button=$('#gfHwSubmit',el);button.textContent=n?'Assign Mission · '+n+' level'+(n===1?'':'s')+' →':'Select levels for mission';button.disabled=!n||state.loading;if(n)$('#gfHwView',el).hidden=true};count();
  $('#gfHwView',el).onclick=()=>document.querySelector('#universalAssignments [data-ua-sub="manage"]')?.click();
  el.querySelectorAll('[data-all]').forEach(x=>x.onchange=()=>{el.querySelectorAll('[data-module="'+CSS.escape(x.dataset.all)+'"]').forEach(y=>y.checked=x.checked);count();schedulePreview()});
  el.querySelectorAll('[data-stage]').forEach(x=>x.onchange=()=>{const all=el.querySelector('[data-all="'+CSS.escape(x.dataset.module)+'"]');const children=[...el.querySelectorAll('[data-module="'+CSS.escape(x.dataset.module)+'"]')];if(all)all.checked=children.every(c=>c.checked);count();schedulePreview()});
@@ -86,7 +86,7 @@ async function submit(e){
   el.querySelectorAll('[data-stage],[data-all]').forEach(x=>x.checked=false);
   $('#gfHwSelected',el).textContent='0 selected';
   $('#gfHwView',el).hidden=false;
- }catch(error){message('Could not assign: '+error.message,true)}finally{state.loading=false;const selected=el.querySelectorAll('[data-stage]:checked').length;$('#gfHwSubmit',el).disabled=!selected;$('#gfHwSubmit',el).textContent=selected?'Assign '+selected+' selected level'+(selected===1?'':'s')+' →':'Select levels for mission'}
+ }catch(error){message('Could not assign: '+error.message,true)}finally{state.loading=false;const selected=el.querySelectorAll('[data-stage]:checked').length;$('#gfHwSubmit',el).disabled=!selected;$('#gfHwSubmit',el).textContent=selected?'Assign Mission · '+selected+' level'+(selected===1?'':'s')+' →':'Select levels for mission'}
 }
 function jwtUserId(t){try{const part=t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(atob(part)).sub||''}catch{return''}}
 
