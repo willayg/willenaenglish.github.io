@@ -20,11 +20,12 @@ function card({className,task,dueAt,teacher,progressLabel='Progress',progressPer
 }
 // Shared grouped homework card shell for the My/All overview. Keep the same
 // Word Genius card elements, ring, heading, divider and expandable detail styles.
-function groupCardStart({key,title,task,teacher,dueAt,dueLabel,checkbox='',progressPercent=null}){
+function groupCardStart({key,title,task,teacher,dueAt,dueLabel,checkbox='',progressPercent=null,apps=[]}){
  const pct=Number(progressPercent),valid=progressPercent!==null&&progressPercent!==undefined&&Number.isFinite(pct);
  const bounded=valid?Math.max(0,Math.min(100,Math.round(pct))):0;
  return '<div class="ua-group genius-homework-card ua-overview-genius-card" data-ua-group="'+esc(key)+'">'+
   '<div class="ghc-top">'+checkbox+'<strong class="ghc-class">'+esc(title)+'</strong><span class="ghc-day">'+esc(dueLabel||dday(dueAt))+'</span></div>'+
+  (apps.length?'<div class="ghc-app-label">'+apps.map(esc).join(' · ')+'</div>':'')+
   '<div class="ghc-task">'+esc(task)+'</div>'+
   '<div class="ghc-teacher">'+esc(teacher)+'</div>'+
   '<div class="ghc-ring'+(valid?' has-data':'')+'" style="'+(valid?'--ghc-pct:'+bounded+'%;':'')+'" role="img" aria-label="'+esc(valid?'Class progress '+bounded+'%':'Class progress not available')+'"><span>'+(valid?bounded+'%':'—')+'</span></div>'+
