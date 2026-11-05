@@ -124,6 +124,7 @@ const state={
   optionalTeacherCoach:false,
   pendingTeacherRecords:new Set()
 };
+let focusedHomeworkId=(()=>{try{return new URLSearchParams(location.search).get('assignment_id')||new URLSearchParams(location.search).get('homework')||''}catch(_){return ''}})();
 let navController=null;
 let spellingKeyboard=null;
 
@@ -890,7 +891,19 @@ function teacherRemainingWords(row,mode){
   return teacherAssignmentWords(row,mode).filter(word=>!done.has(txt(word?.id)));
 }
 
+function clearFocusedHomework(){
+ focusedHomeworkId='';
+ try{const url=new URL(location.href);url.searchParams.delete('assignment_id');url.searchParams.delete('homework');url.searchParams.set('open','wordtest');history.replaceState(history.state,'',url.pathname+url.search+url.hash)}catch(_){}
+ renderTeacherAssignments();
+}
 function renderTeacherAssignments(){
+ if(wordTestScreenEl)wordTestScreenEl.classList.toggle('vocab-focused-homework',!!focusedHomeworkId);
+ const focusToolbar=el('vocabFocusedHomeworkToolbar');
+ if(focusToolbar){
+   focusToolbar.hidden=!focusedHomeworkId;
+   focusToolbar.innerHTML=focusedHomeworkId?'<span class="vocab-focused-label">선택한 숙제 · Your Homework</span><button type="button" class="vocab-view-all-homework">모든 숙제 보기 · View all</button>':'';
+   focusToolbar.querySelector('button')?.addEventListener('click',clearFocusedHomework);
+ }
   if(!teacherPracticeEl||!teacherPracticeListEl)return;
   if(state.adminMode){
     teacherPracticeEl.hidden=true;
@@ -923,8 +936,21 @@ function renderTeacherAssignments(){
     wordTestEmptyEl.hidden=true;
     wordTestEmptyEl.classList.remove('is-loading');
   }
-  if(teacherPracticeCountEl)teacherPracticeCountEl.textContent=state.teacherAssignments.length+' assignment'+(state.teacherAssignments.length===1?'':'s');
-  teacherPracticeListEl.innerHTML=state.teacherAssignments.map((row,index)=>{
+  const visibleAssignments=focusedHomeworkId
+    ? state.teacherAssignments.map((row,index)=>({row,index})).filter(({row})=>String(row?.assignment?.id)===String(focusedHomeworkId))
+    : state.teacherAssignments.map((row,index)=>({row,index}));
+  if(teacherPracticeCountEl)teacherPracticeCountEl.textContent=visibleAssignments.length+' assignment'+(visibleAssignments.length===1?'':'s');
+  if(focusedHomeworkId&&!visibleAssignments.length){
+    teacherPracticeEl.hidden=true;
+    if(wordTestEmptyEl){
+      wordTestEmptyEl.hidden=false;
+      wordTestEmptyEl.classList.remove('is-loading');
+      wordTestEmptyEl.innerHTML='<strong>선택한 숙제를 찾을 수 없어요</strong><span>완료되었거나 현재 계정에 배정되지 않은 숙제일 수 있어요. 모든 숙제를 확인해 주세요.</span>';
+    }
+    teacherPracticeListEl.innerHTML='';
+    return;
+  }
+  teacherPracticeListEl.innerHTML=visibleAssignments.map(({row,index})=>{
     const a=row.assignment||{},student=arr(row.students)[0]||{},modes=arr(a.required_modes);
     const labels={quiz:'퀴즈',spelling_test:'철자',spelling_coach:'철자 코치',speaking:'말하기'};
     const modeClasses={quiz:'vocab-skill-quiz',spelling_test:'vocab-skill-spelling',spelling_coach:'vocab-skill-spelling',speaking:'vocab-skill-pronunciation'};
@@ -948,7 +974,7 @@ function renderTeacherAssignments(){
         '<span class="vocab-teacher-optional-arrow">연습하기 →</span>'+
       '</button>'
       :'';
-    return '<article class="vocab-teacher-card">'+
+    return '<article class="vocab-teacher-card'+(focusedHomeworkId?' is-focused':'')+'">'+
       '<div class="vocab-teacher-card-title">'+
         '<div><strong>숙제 / Homework</strong><small>'+wordCount+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+(a.teacher_name?' · 선생님: '+escapeHtml(a.teacher_name):'')+'</small></div>'+
         '<button class="vocab-teacher-words" type="button" data-teacher-words="'+index+'">'+wordCount+' 단어 보기</button>'+
@@ -2852,7 +2878,7 @@ async function closeSession({historyMode='back'}={}){
 }
 async function boot(){
   let bootLoaderReleased=false;
-  const deepLinkAssignmentId=(()=>{try{return new URLSearchParams(location.search).get('assignment_id')||''}catch(_){return ''}})();
+  const deepLinkAssignmentId=focusedHomeworkId;
   const openWordTestRequested=(()=>{
     try{return new URLSearchParams(location.search).get('open')==='wordtest'}catch(_){return false}
   })();
@@ -2903,27 +2929,7 @@ async function boot(){
         if((openWordTestRequested||deepLinkAssignmentId)&&state.activeScreen==='home'){
           openWordTestScreen({historyMode:'replace'});
         }
-        if(deepLinkAssignmentId){
-          const index=state.teacherAssignments.findIndex(row=>String(row?.assignment?.id)===String(deepLinkAssignmentId));
-          if(index>=0){
-            const card=teacherPracticeListEl?.querySelectorAll('.vocab-teacher-card')?.[index];
-            if(card){
-              card.style.outline='3px solid #df91bf';
-              card.style.outlineOffset='4px';
-              card.scrollIntoView({block:'center',behavior:'auto'});
-              const hint=document.createElement('p');
-              hint.textContent='QR 숙제 · 아래에서 활동을 선택하세요.';
-              hint.style.cssText='font-weight:700;color:#19777e;margin:8px 0;';
-              card.prepend(hint);
-            }
-          }else{
-            const notice=document.createElement('p');
-            notice.setAttribute('role','status');
-            notice.textContent='이 숙제를 찾을 수 없어요. 내 숙제 목록이나 선생님에게 확인해 주세요.';
-            notice.style.cssText='padding:12px;border:1px solid #dda6be;border-radius:10px;color:#8e3d65;';
-            teacherPracticeEl?.prepend(notice);
-          }
-        }
+
       },'teacher word tests');
     }
     startBtn.addEventListener('click',()=>{if(confirmGoldenPractice())startSession()});
