@@ -1018,3 +1018,12 @@ body.willena-kb-open .vocab-session-main{
 .vocab-focused-homework .vocab-teacher-card.is-focused{border:2.5px solid #b8e9ed;border-radius:24px;background:#fff;padding:20px 16px;box-shadow:0 9px 27px rgba(30,121,132,.07)}
 .vocab-focused-homework .vocab-old-tests{display:none!important}
 @media(max-width:600px){.vocab-focused-homework .vocab-teacher-card.is-focused{padding:14px 10px;border-radius:19px}.vocab-focused-toolbar{align-items:flex-start}}
+
+/* Focused homework splash: visible on initial HTML paint, before module startup. */
+html.vocab-focused-boot #vocabLoading{display:grid!important}
+html.vocab-focused-boot #vocabLoading[hidden]{display:grid!important}
+.vocab-focused-boot .vocab-loading{background:rgba(247,253,253,.97);backdrop-filter:blur(10px)}
+.vocab-focused-boot .vocab-loading-card{width:min(410px,88vw);min-width:0;min-height:245px;padding:32px 25px;border:2px solid #b8e9ed;border-radius:25px;background:#fff;box-shadow:0 16px 42px rgba(34,112,122,.12);gap:4px}
+.vocab-focused-boot .vocab-loading-card #vocabLoadingText{color:#276f79;font-size:1.1rem;line-height:1.45}
+.vocab-loading-subtext{color:#7c969b;font-size:.76rem;font-weight:700;line-height:1.5}
+.vocab-focused-load-error{margin:12px 0;padding:13px;border:1.5px solid #dfadc5;border-radius:12px;color:#965170;background:#fff}
