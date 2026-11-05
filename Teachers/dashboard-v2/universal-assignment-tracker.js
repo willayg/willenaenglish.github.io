@@ -655,7 +655,7 @@ async function loadOverview(scopeName='my',force=false){
        body:JSON.stringify({p_assignment_id:key})
      }).then(data=>{
        if(data?.success&&Array.isArray(data.students)){
-         wordCompletionCache.set(key,{assignment:data.assignment||{},students:data.students});
+         wordCompletionCache.set(key,{assignment:{...(data.assignment||{}),list_meta:row.list_meta||{}},students:data.students});
        }else{
          wordCompletionCache.set(key,{assignment:{},students:[]});
        }
