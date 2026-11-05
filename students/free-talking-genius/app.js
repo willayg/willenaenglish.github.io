@@ -8,6 +8,7 @@ import {renderStudentSessionFinish} from '/students/components/student-session-f
 import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
+import {createFreeTalkingVoice} from './question-voice.js?v=20261105-p1b1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const BOOK='8e949813-fa91-4adc-a709-905efc980d8b';
@@ -16,9 +17,10 @@ const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>'
 const state={student:null,profile:null,questions:[],unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
  current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set()};
 const groups=()=>state.questions.filter(x=>Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
+const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
 function showError(message){$('ftError').textContent=message||'Unknown error';$('ftError').hidden=false;console.error('[Free Talking]',message)}
 function clearError(){$('ftError').hidden=true;$('ftError').textContent=''}
-function view(which){for(const id of ['ftHome','ftBook','ftSession','ftFinish'])$(id).hidden=id!==which;clearError();window.scrollTo({top:0,behavior:'instant'})}
+function view(which){if(which!=='ftSession')questionVoice.stop();for(const id of ['ftHome','ftBook','ftSession','ftFinish'])$(id).hidden=id!==which;clearError();window.scrollTo({top:0,behavior:'instant'})}
 async function token(refresh=false){
  const existing=window.WillenaAPI?.getLocalAccessToken?.();
  if(existing&&!refresh)return existing;
@@ -208,6 +210,7 @@ function renderQuestion({retry=false}={}){
  const previous=attemptsFor(state.session.id,state.current.id);
  if(previous.length)$('ftAttemptStatus').textContent='이전에 '+previous.length+'번 답했어요. 더 좋은 답으로 다시 도전해 보세요.';
  view('ftSession');
+ void questionVoice.select(state.current.id,{autoplay:!retry});
 }
 async function openMode(mode){
  if(state.loading)return;
@@ -335,6 +338,7 @@ async function renderFinish(data){
 }
 async function exit(){
  if(state.loading)return;
+ questionVoice.stop();
  try{state.renderer?.speechRecognition?.stop?.()}catch{}state.current=null;state.session=null;
  try{await refreshData()}catch(error){console.warn('[Free Talking] refresh',error)}
  renderBook();view('ftBook');
