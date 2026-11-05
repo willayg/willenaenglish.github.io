@@ -18,7 +18,7 @@ const ELEVEN_VOICES=Object.freeze({
  'sgt-steve':'8j74BTqU7XqD2faIlSD4'
 });
 const ELEVEN_MODEL='eleven_flash_v2_5'; // Modern, economical low-latency model for comparison.
-const ELEVEN_PROXY='https://staging.willenaenglish.com/.netlify/functions/eleven_labs_proxy';
+const ELEVEN_PROXY='https://api.willenaenglish.com/.netlify/functions/eleven_labs_proxy';
 async function elevenAudio({env,text,voiceId}){
  const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
  if(key){
