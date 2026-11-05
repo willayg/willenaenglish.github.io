@@ -73,7 +73,7 @@ async function naesin(){
 function missionPastDue(x){
  if(x.done||x.archived||state.archives.has(x.id)||!x.dueAt)return false;
  const date=new Date(x.dueAt);if(!Number.isFinite(date.getTime()))return false;
- const day=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+ const day=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day};
  return day(date)<day(new Date());
 }
 function render(){
