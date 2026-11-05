@@ -11,6 +11,7 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 const json=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 const model=env=>env.FREE_TALKING_REALTIME_MODEL||'gpt-realtime-2.1-mini';
 const voice=env=>env.FREE_TALKING_REALTIME_VOICE||'marin';
+const REALTIME_VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar']);
 async function verifyStudent(request){
  const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
  if(token.length<40)return null;
@@ -103,7 +104,9 @@ export async function onRequestPost({request,env,context}){
   if(!q)return json(404,{success:false,error:'Question unavailable'});
   const t=String(q.question_en||'').trim();
   if(!t||t.length>600)return json(422,{success:false,error:'Question audio text unavailable'});
-  const ttsModel=model(env),ttsVoice=voice(env),key=await cacheKey(t,ttsModel,ttsVoice);
+  const chosenVoice=body?.voice==null?'':String(body.voice).toLowerCase().trim();
+  if(chosenVoice&&!REALTIME_VOICES.has(chosenVoice))return json(400,{success:false,error:'Unsupported realtime voice'});
+  const ttsModel=model(env),ttsVoice=chosenVoice||voice(env),key=await cacheKey(t,ttsModel,ttsVoice);
   const url=await cachedAudio(key,'wav',env);
   if(url)return json(200,{success:true,...url,source:url.source,model:ttsModel,content_type:'audio/wav',voice:ttsVoice,ai_generated:true});
   const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
