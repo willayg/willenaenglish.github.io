@@ -334,7 +334,7 @@ async function boot(){
   }catch(error){
     console.warn('[Sentence Genius] startup failed',error);
     if(/session|expired|401|auth|unauthor/i.test(String(error.message))){
-      location.replace('/students/signin.html?next='+encodeURIComponent('/students/sentence-genius/'));
+      location.replace('/students/signin.html?next='+encodeURIComponent(location.pathname+location.search));
       return;
     }
     screens.notice('교재를 불러올 수 없습니다: '+error.message);
