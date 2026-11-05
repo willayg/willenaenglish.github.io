@@ -106,7 +106,12 @@ export function createFreeTalkingVoice({host,getToken}){
   if(stored.has(cacheId))return stored.get(cacheId);
   if(inflight.has(cacheId))return inflight.get(cacheId);
   // A foreground playback waits for any ongoing write of the same clip.
-  if(warming.has(questionId+'|'+voice))await warming.get(questionId+'|'+voice);
+  if(warming.has(questionId+'|'+voice)){
+   // A preloader failure should not conceal an existing R2 recording from playback.
+   try{await warming.get(questionId+'|'+voice)}catch(e){
+    console.warn('[Free Talking] background warm failed, checking playback cache',String(e?.message||e).slice(0,90));
+   }
+  }
   const work=fetchVoice(questionId,voice).then(file=>{
    if(destroyed){if(file.owned)URL.revokeObjectURL(file.url);return file}
    stored.set(cacheId,file);
@@ -128,6 +133,17 @@ export function createFreeTalkingVoice({host,getToken}){
   if(!r.ok||data?.success!==true||!Array.isArray(data.questions))
    throw Error(data?.error||'Cannot confirm R2 inventory');
   return data.questions;
+ }
+ async function confirmStorageWritable(){
+  const call=async access=>fetch('/api/free-talking-audio',{
+   method:'POST',credentials:'include',cache:'no-store',
+   headers:{'Content-Type':'application/json',Authorization:'Bearer '+access},
+   body:JSON.stringify({storage_probe:true}),signal:AbortSignal.timeout(30000)});
+  let response=await call(await getToken());
+  if(response.status===401)response=await call(await getToken(true));
+  const data=await response.json().catch(()=>null);
+  if(!response.ok||data?.storage_ready!==true)throw Error(data?.code||'R2_WRITE_FAILED');
+  return true;
  }
  function preload(unit=preferredUnit){
   preferredUnit=Number(unit)||1;
@@ -183,6 +199,14 @@ export function createFreeTalkingVoice({host,getToken}){
    }
    render(' · '+missing.length+' missing');
    if(!missing.length)return;
+   // Prove R2 accepts writes BEFORE asking OpenAI or ElevenLabs for new clips.
+   try{await confirmStorageWritable()}
+   catch(e){
+    if(epoch===preloadEpoch&&!destroyed)
+     render(' · generation paused: R2 storage not writable ('+String(e?.message||e).slice(0,55)+')');
+    return;
+   }
+   if(epoch!==preloadEpoch||destroyed)return;
    // Current unit first, then the rest. One provider request at a time.
    missing.sort((a,b)=>{
     const qa=orderedQuestions.find(q=>String(q.id)===a.id);
