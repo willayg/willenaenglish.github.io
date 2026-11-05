@@ -24,7 +24,7 @@ async function authed(url,options={}){
  const body=await r.text();return body?JSON.parse(body):null;
 }
 function item(id,app,title,link,created,done=false,detail=''){
- return {id:String(id),app,title:String(title||'과제'),link,created:String(created||''),done:!!done,detail,teacherId:null,teacherName:''};
+ return {id:String(id),app,title:String(title||'과제'),link,created:String(created||''),done:!!done,detail,dueAt:null,teacherId:null,teacherName:''};
 }
 async function standardHomework(){
  const r=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&_='+Date.now());
@@ -60,7 +60,7 @@ async function standardHomework(){
   }
   const entry=item('standard:'+a.id,app,a.title||a.list_title||'숙제',url,a.created_at||a.assigned_at||a.due_at,false,a.due_at?'기한 '+new Date(a.due_at).toLocaleDateString('ko-KR'):'');
   entry.teacherId=a.created_by||null;
-  entry.teacherName=a.teacher_name||'';
+  entry.teacherName=a.teacher_name||'';entry.dueAt=a.due_at||null;
   if(app==='Grammar Genius Books'){
    const required=Array.isArray(a.list_meta?.required_modes)?a.list_meta.required_modes:[];
    const evidence=grammarProof.filter(p=>String(p.assignment_id)===String(a.id));
@@ -133,7 +133,7 @@ async function grammarBookHomework(){
   const chapter=Number(meta.chapter)||1;
   const link='/students/grammar-books/?book='+encodeURIComponent(meta.source_book_id||'1e3a2112-07be-45e2-a8fc-ce20011e0e57')+'&unit='+chapter+'&homework='+encodeURIComponent(a.id);
   const mission=item('standard:'+a.id,'Grammar Genius Books',a.title||'Grammar homework',link,a.created_at||a.due_at,total>0&&finished===total,finished+'/'+total+' questions');
-  mission.teacherId=a.created_by||null;mission.progress=total?Math.round(100*finished/total):0;
+  mission.teacherId=a.created_by||null;mission.dueAt=a.due_at||null;mission.progress=total?Math.round(100*finished/total):0;
   return mission;
  });
 }
@@ -143,7 +143,7 @@ async function sentences(){
   const query=new URLSearchParams();if(a.book_id)query.set('book',a.book_id);if(a.unit_id)query.set('unit',a.unit_id);if(a.id)query.set('homework',a.id);
   const entry=item('sentence:'+a.id,'Sentence Genius',a.title||a.unit_title||'문장 숙제','/students/sentence-genius/'+(query.size?'?'+query:''),a.created_at||a.assigned_at||a.due_at,Number(a.total)>0&&Number(a.done)>=Number(a.total));
   entry.teacherId=a.created_by||null;entry.teacherName=a.teacher_name||'';
-  entry.progress=Number(a.total)>0?Math.min(100,Math.round(100*(Number(a.done)||0)/Number(a.total))):0;
+  entry.dueAt=a.due_at||null;entry.progress=Number(a.total)>0?Math.min(100,Math.round(100*(Number(a.done)||0)/Number(a.total))):0;
   return entry;
  });
 }
@@ -151,7 +151,7 @@ async function grammar(){
  const rows=await authed(SUPA+'/rest/v1/grammar_foundation_homework?select=id,module_title,stage_title,module_id,stage_id,completion_percent,due_at,created_by&active=eq.true&order=due_at.desc&limit=300');
  return (Array.isArray(rows)?rows:[]).map(a=>{
   const entry=item('grammar:'+a.id,'Grammar Genius',(a.module_title||'Grammar')+' · '+(a.stage_title||'Stage'),'/students/grammar-foundations/?homework='+encodeURIComponent(a.id),a.created_at||a.due_at,false,'목표 '+(a.completion_percent||80)+'%');
-  entry.teacherId=a.created_by||null;return entry;
+  entry.teacherId=a.created_by||null;entry.dueAt=a.due_at||null;return entry;
  });
 }
 async function naesin(){
@@ -171,7 +171,7 @@ async function naesin(){
  return plans.flatMap(p=>(p.tasks||[]).filter(t=>t.active!==false).map(t=>{
   const progress=t.progress||{},done=progress.gold===true||progress.complete===true||testCompleted.has(String(t.id));
   const x=item('naesin:'+t.id,'내신 명중',t.title||t.lesson||'내신 과제','/students/test-prep-v2/?homework='+encodeURIComponent(t.id),t.created_at||t.due_at,done,p.book_label||'');
-  x.archived=archivedIds.has(String(t.id));x.teacherId=t.created_by||null;x.teacherName=t.teacher_name||'';return x;
+  x.archived=archivedIds.has(String(t.id));x.teacherId=t.created_by||null;x.teacherName=t.teacher_name||'';x.dueAt=t.due_at||null;return x;
  }));
 }
 const medalSvg='<svg viewBox="0 0 96 108" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mbGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff7b9"/><stop offset=".48" stop-color="#f8cb4b"/><stop offset="1" stop-color="#b97811"/></linearGradient></defs><path d="M26 4h18l18 36-16 11L26 4Z" fill="#f67eaf" stroke="#db4c89" stroke-width="2"/><path d="M70 4H52L35 40l16 11L70 4Z" fill="#7bdae3" stroke="#32b4c3" stroke-width="2"/><circle cx="48" cy="66" r="34" fill="#d9981a" stroke="#a86b12" stroke-width="3"/><circle cx="48" cy="66" r="28" fill="url(#mbGold)" stroke="#fff5ae" stroke-width="2"/><path d="m48 46 6.5 13.4 14.8 2.1-10.7 10.3 2.5 14.6L48 79.5l-13.1 6.9 2.5-14.6-10.7-10.3 14.8-2.1L48 46Z" fill="#fff7d6" stroke="#bb8419" stroke-width="1.5" stroke-linejoin="round"/></svg>';
@@ -225,19 +225,28 @@ function progressMeter(entry){
  if(percent===null)return '';
  return '<span class="dm-progress-ring" style="--dm-pct:'+percent+'" role="progressbar" aria-label="숙제 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+percent+'"><span>'+percent+'%</span></span>';
 }
+function missionPastDue(x){
+ if(x.done||x.archived||state.archives.has(x.id)||!x.dueAt)return false;
+ const due=new Date(x.dueAt);
+ if(!Number.isFinite(due.getTime()))return false;
+ const day=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+ return day(due)<day(new Date());
+}
 function render(){
  const host=state.host;if(!host)return;
  const savedKey=archiveStorageKey();
  if(savedKey){try{const details=JSON.parse(localStorage.getItem(savedKey+':details')||'{}');for(const [id,item] of Object.entries(details)){if(state.archives.has(id)&&!state.items.some(x=>x.id===id))state.items.push({...item,archived:true,done:true})}}catch(e){console.warn('[mission basket] medal restoration',e)}}
  const visible=state.appFilter?state.items.filter(x=>x.app===state.appFilter):state.items;
- const open=visible.filter(x=>!state.archives.has(x.id)&&!x.archived);
+ const unarchived=visible.filter(x=>!state.archives.has(x.id)&&!x.archived);
+ const overdue=unarchived.filter(missionPastDue);
+ const open=unarchived.filter(x=>!missionPastDue(x));
  const archive=visible.filter(x=>state.archives.has(x.id)||x.archived);
- const displayed=state.tab==='archive'?archive:open;
+ const displayed=state.tab==='archive'?archive:state.tab==='overdue'?overdue:open;
  const pending=open.filter(x=>!x.done).length;
  host.innerHTML='<div class="dm-head"><button class="dm-toggle" aria-expanded="'+(!state.collapsed)+'" type="button"><svg viewBox="0 0 48 48" width="35" height="35" aria-hidden="true"><path d="M8 19h32v20a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V19Z" fill="#DBF6F3" stroke="#16848C" stroke-width="2.5"/><path d="M6 14h36v7H6v-7Z" fill="#8BDFD7" stroke="#16848C" stroke-width="2.5"/><path d="m24 25 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7L24 25Z" fill="#EAB84B" stroke="#BA8D2D" stroke-width="1.2"/></svg><strong>미션 바구니</strong><span class="dm-count">'+pending+'개 남음</span><span class="dm-arrow">'+(state.collapsed?'▸':'▾')+'</span></button></div>'+
- (state.collapsed?'':'<div class="dm-body"><div class="dm-tabs"><button type="button" data-tab="active" aria-pressed="'+(state.tab==='active')+'">진행 중 <span>'+open.length+'</span></button><button type="button" data-tab="archive" aria-pressed="'+(state.tab==='archive')+'">미션 메달 <span>'+archive.length+'</span></button></div><div class="dm-items">'+(displayed.length?displayed.map(x=>state.tab==='archive'?
+ (state.collapsed?'':'<div class="dm-body"><div class="dm-tabs"><button type="button" data-tab="active" aria-pressed="'+(state.tab==='active')+'">진행 중 <span>'+open.length+'</span></button><button type="button" data-tab="overdue" aria-pressed="'+(state.tab==='overdue')+'">기한 지남 <span>'+overdue.length+'</span></button><button type="button" data-tab="archive" aria-pressed="'+(state.tab==='archive')+'">미션 메달 <span>'+archive.length+'</span></button></div><div class="dm-items">'+(displayed.length?displayed.map(x=>state.tab==='archive'?
  '<a class="dm-medal" data-medal-id="'+esc(x.id)+'" href="'+esc(x.link)+'" aria-label="'+esc(x.app+' '+x.title)+'"><span class="dm-medal-svg">'+medalSvg+'</span><strong>'+esc(x.title)+'</strong><small>'+esc(x.app)+'</small></a>':
- '<a class="dm-item '+(x.done?'dm-done':'')+'" data-mission-id="'+esc(x.id)+'" href="'+esc(x.link)+'"><span class="dm-app">'+esc(x.app)+(x.done?' · ★ GOLD':'')+'</span><strong>'+esc(x.title)+'</strong>'+(x.detail?'<small>'+esc(x.detail)+'</small>':'')+(!x.done&&x.teacherName?'<small class="dm-teacher">'+esc(firstTeacherName(x.teacherName))+' Teacher</small>':'')+progressMeter(x)+'<span class="dm-action">'+(x.done?'✓':'→')+'</span></a>').join(''):'<p class="dm-empty">'+(state.tab==='archive'?'아직 모은 메달이 없어요.':'현재 미션이 없어요.')+'</p>')+'</div></div>');
+ '<a class="dm-item '+(x.done?'dm-done':'')+'" data-mission-id="'+esc(x.id)+'" href="'+esc(x.link)+'"><span class="dm-app">'+esc(x.app)+(x.done?' · ★ GOLD':'')+'</span><strong>'+esc(x.title)+'</strong>'+(x.detail?'<small>'+esc(x.detail)+'</small>':'')+(!x.done&&x.teacherName?'<small class="dm-teacher">'+esc(firstTeacherName(x.teacherName))+' Teacher</small>':'')+progressMeter(x)+'<span class="dm-action">'+(x.done?'✓':'→')+'</span></a>').join(''):'<p class="dm-empty">'+(state.tab==='archive'?'아직 모은 메달이 없어요.':state.tab==='overdue'?'기한이 지난 미완료 미션이 없어요.':'현재 미션이 없어요.')+'</p>')+'</div></div>');
  host.querySelector('.dm-toggle')?.addEventListener('click',()=>{state.collapsed=!state.collapsed;try{sessionStorage.setItem('dashboard-mission-collapsed',state.collapsed?'1':'0')}catch{}render()});
  host.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;render()}));
  host.querySelectorAll('[data-mission-id]').forEach(card=>card.addEventListener('click',async event=>{
