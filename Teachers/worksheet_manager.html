@@ -273,8 +273,11 @@
         credentials: 'omit',
         body: JSON.stringify({ assets })
       });
-      if (!res.ok) throw new Error('Image persistence failed (' + res.status + ')');
       const result = await res.json().catch(() => null);
+      if (!res.ok) {
+        const key = result?.input_key != null ? ` (image ${result.input_key})` : '';
+        throw new Error(`Image persistence failed${key}: ${result?.error || 'HTTP ' + res.status}`);
+      }
       if (!result || result.success !== true || !Array.isArray(result.assets)) throw new Error(result?.error || 'Image persistence returned invalid data');
 
       const byKey = new Map(result.assets.map(x => [String(x.input_key), x]));
