@@ -55,7 +55,7 @@
               },
               {
                 "id": "buzz6-u1-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have never ridden the subway alone.\n② I has never ridden the subway alone.\n③ Have you ever visited the history museum?\n④ I has never ridden the subway alone.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have never ridden the subway alone.\n② I has never ridden the subway alone.\n③ Have you ever visited the history museum?\n④ She has lived in this city since five years.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -273,7 +273,7 @@
               },
               {
                 "id": "buzz6-u2-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Look at those dark clouds! It is going to rain.\n② Look at those dark clouds! It going to rain.\n③ We are going to visit the park on Saturday.\n④ Look at those dark clouds! It going to rain.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Look at those dark clouds! It is going to rain.\n② Look at those dark clouds! It going to rain.\n③ We are going to visit the park on Saturday.\n④ I think it will sunny tomorrow.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -491,7 +491,7 @@
               },
               {
                 "id": "buzz6-u3-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We have already cleaned the riverbank.\n② We have already clean the riverbank.\n③ They have just planted ten new trees.\n④ We have already clean the riverbank.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We have already cleaned the riverbank.\n② We have already clean the riverbank.\n③ They have just planted ten new trees.\n④ Has she finished recycling the bottles already yet?",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -709,7 +709,7 @@
               },
               {
                 "id": "buzz6-u4-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I was watching the play when the lights went out.\n② I were watching the play when the lights went out.\n③ She dropped her ticket while she was running.\n④ I were watching the play when the lights went out.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I was watching the play when the lights went out.\n② I were watching the play when the lights went out.\n③ She dropped her ticket while she was running.\n④ While we was waiting, the actor arrived.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -927,7 +927,7 @@
               },
               {
                 "id": "buzz6-u5-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Rice is grown in many Asian countries.\n② Rice is grow in many Asian countries.\n③ Coffee is served hot at this café.\n④ Rice is grow in many Asian countries.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Rice is grown in many Asian countries.\n② Rice is grow in many Asian countries.\n③ Coffee is served hot at this café.\n④ These noodles is made from wheat.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -1145,7 +1145,7 @@
               },
               {
                 "id": "buzz6-u6-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If you heat ice, it melts.\n② If you heat ice, it will melts.\n③ When I press this button, the screen turns on.\n④ If you heat ice, it will melts.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If you heat ice, it melts.\n② If you heat ice, it will melts.\n③ When I press this button, the screen turns on.\n④ If the signal is weak, the video stop.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -1363,7 +1363,7 @@
               },
               {
                 "id": "buzz6-u7-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If it rains, we will stay indoors.\n② If it will rain, we will stay indoors.\n③ If she sees a deer, she will take a photo.\n④ If it will rain, we will stay indoors.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If it rains, we will stay indoors.\n② If it will rain, we will stay indoors.\n③ If she sees a deer, she will take a photo.\n④ We will go hiking if the weather will be nice.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -1581,7 +1581,7 @@
               },
               {
                 "id": "buzz6-u8-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The planet that we saw was very bright.\n② The planet who we saw was very bright.\n③ That light might be a distant star.\n④ The planet who we saw was very bright.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The planet that we saw was very bright.\n② The planet who we saw was very bright.\n③ That light might be a distant star.\n④ The astronaut which spoke to us was friendly.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -1806,7 +1806,7 @@
               },
               {
                 "id": "eu5-u1-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① He acted in a play during vacation.\n② He act in a play during vacation.\n③ She won a competition last summer.\n④ He act in a play during vacation.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① He acted in a play during vacation.\n② He act in a play during vacation.\n③ She won a competition last summer.\n④ How did you felt when you rode the roller coaster?",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -2024,7 +2024,7 @@
               },
               {
                 "id": "eu5-u2-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She was studying insects in the morning.\n② She were studying insects in the morning.\n③ I was setting up the tent when he arrived.\n④ She were studying insects in the morning.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She was studying insects in the morning.\n② She were studying insects in the morning.\n③ I was setting up the tent when he arrived.\n④ Were he looking for animal tracks?",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -2242,7 +2242,7 @@
               },
               {
                 "id": "eu5-u3-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We will order pizzas for the party.\n② We will ordered pizzas for the party.\n③ Will she pour the juice at the party?\n④ We will ordered pizzas for the party.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We will order pizzas for the party.\n② We will ordered pizzas for the party.\n③ Will she pour the juice at the party?\n④ What will he does at the party?",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -2460,7 +2460,7 @@
               },
               {
                 "id": "eu5-u4-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① A jaguar is faster than a sloth.\n② A jaguar is fastest than a sloth.\n③ The Amazon is one of the largest rainforests.\n④ A jaguar is fastest than a sloth.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① A jaguar is faster than a sloth.\n② A jaguar is fastest than a sloth.\n③ The Amazon is one of the largest rainforests.\n④ This frog is colorfuller than that one.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -2678,7 +2678,7 @@
               },
               {
                 "id": "eu5-u5-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She practices the piano carefully.\n② She practices the piano careful.\n③ They usually arrive at school early.\n④ She practices the piano careful.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She practices the piano carefully.\n② She practices the piano careful.\n③ They usually arrive at school early.\n④ He drinks always water after exercise.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -2896,7 +2896,7 @@
               },
               {
                 "id": "eu5-u6-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We need a little water for the clay.\n② We need a few water for the clay.\n③ How much glue do we need?\n④ We need a few water for the clay.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① We need a little water for the clay.\n② We need a few water for the clay.\n③ How much glue do we need?\n④ There is many pieces of wood here.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -3114,7 +3114,7 @@
               },
               {
                 "id": "eu5-u7-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Have you ever visited Australia?\n② Has you ever visited Australia?\n③ She went to Thailand last summer.\n④ Has you ever visited Australia?",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Have you ever visited Australia?\n② Has you ever visited Australia?\n③ She went to Thailand last summer.\n④ I have never flew on a plane.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -3332,7 +3332,7 @@
               },
               {
                 "id": "eu5-u8-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have just sent you an email.\n② I have just send you an email.\n③ They have already downloaded the file.\n④ I have just send you an email.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have just sent you an email.\n② I have just send you an email.\n③ They have already downloaded the file.\n④ Have she finished her online project yet?",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -3557,7 +3557,7 @@
               },
               {
                 "id": "eu6-u1-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Walk up the street and turn right.\n② Walks up the street and turn right.\n③ How did you get to the museum yesterday?\n④ Walks up the street and turn right.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① Walk up the street and turn right.\n② Walks up the street and turn right.\n③ How did you get to the museum yesterday?\n④ They catch a taxi to the zoo yesterday.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -3775,7 +3775,7 @@
               },
               {
                 "id": "eu6-u2-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have to read textbooks every night.\n② I has to read textbooks every night.\n③ She can call friends on weekends.\n④ I has to read textbooks every night.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I have to read textbooks every night.\n② I has to read textbooks every night.\n③ She can call friends on weekends.\n④ My brother doesn't has to pay bills.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -3993,7 +3993,7 @@
               },
               {
                 "id": "eu6-u3-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① He has owned a laptop since September.\n② He has owned a laptop for September.\n③ We have been living in Paris for three years.\n④ He has owned a laptop for September.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① He has owned a laptop since September.\n② He has owned a laptop for September.\n③ We have been living in Paris for three years.\n④ I have owned this phone since six months.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -4211,7 +4211,7 @@
               },
               {
                 "id": "eu6-u4-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I wanted to buy some soap at the store.\n② I wanted buying some soap at the store.\n③ You should wait until you are ready.\n④ I wanted buying some soap at the store.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① I wanted to buy some soap at the store.\n② I wanted buying some soap at the store.\n③ You should wait until you are ready.\n④ We need washing our hands before dinner.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -4429,7 +4429,7 @@
               },
               {
                 "id": "eu6-u5-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She is the one who is going to the mall.\n② She is the one which is going to the mall.\n③ The girl who works at the shop is my friend.\n④ She is the one which is going to the mall.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① She is the one who is going to the mall.\n② She is the one which is going to the mall.\n③ The girl who works at the shop is my friend.\n④ He said yesterday that he were going to the museum.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -4647,7 +4647,7 @@
               },
               {
                 "id": "eu6-u6-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If I had a new bicycle, I would ride it all the time.\n② If I have a new bicycle, I would ride it all the time.\n③ If everyone recycled, the city would be cleaner.\n④ If I have a new bicycle, I would ride it all the time.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① If I had a new bicycle, I would ride it all the time.\n② If I have a new bicycle, I would ride it all the time.\n③ If everyone recycled, the city would be cleaner.\n④ If you wants to help the environment, reuse paper.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -4865,7 +4865,7 @@
               },
               {
                 "id": "eu6-u7-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The paintings are displayed in the gallery.\n② The paintings is displayed in the gallery.\n③ This bridge was built many years ago.\n④ The paintings is displayed in the gallery.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The paintings are displayed in the gallery.\n② The paintings is displayed in the gallery.\n③ This bridge was built many years ago.\n④ The canal was complete in 1825.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -5083,7 +5083,7 @@
               },
               {
                 "id": "eu6-u8-choose-4",
-                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The speech was boring, but the students were excited.\n② The speech was bored, but the students were excited.\n③ She has been studying for the exam since Monday.\n④ The speech was bored, but the students were excited.",
+                "prompt": "다음 문장 중 어법상 옳은 것을 모두 고른 것은?\n① The speech was boring, but the students were excited.\n② The speech was bored, but the students were excited.\n③ She has been studying for the exam since Monday.\n④ I have opening presents all morning.",
                 "options": [
                   "①, ②",
                   "①, ③",
@@ -5298,7 +5298,7 @@
                 "options": [
                   "go",
                   "going",
-                  "went",
+                  "has go",
                   "gone",
                   "goes"
                 ],
@@ -5313,7 +5313,7 @@
                   "does",
                   "do",
                   "doing",
-                  "did",
+                  "has",
                   "done"
                 ],
                 "answerIndex": 1,
@@ -6143,7 +6143,7 @@
                   "has",
                   "have",
                   "having",
-                  "had",
+                  "haves",
                   "is"
                 ],
                 "answerIndex": 0,
@@ -6157,7 +6157,7 @@
                   "has",
                   "having",
                   "have",
-                  "had",
+                  "haves",
                   "are"
                 ],
                 "answerIndex": 2,
@@ -6854,7 +6854,7 @@
                   "cans",
                   "are",
                   "could",
-                  "did"
+                  "does"
                 ],
                 "answerIndex": 3,
                 "explanation": "last night에 가능했던 일을 말할 때 could를 씁니다.",
