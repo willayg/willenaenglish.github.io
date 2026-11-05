@@ -1,3 +1,4 @@
+import {fetchClassBookAssignments,extractClassBookAssignments} from '/students/shared/class-book-assignments.js?v=20261105-shared1';
 import {renderStudentSessionFinish} from '../components/student-session-finish.js?v=1';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {attachAISpeakingFallback} from './vocab-ai-speech-ui.js?v=20261104-sentence-match1';
@@ -1256,15 +1257,7 @@ async function api(url,opts){
   return d;
 }
 async function whoami(){return api('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now())}
-async function fetchAssignmentsNetwork(className){
-  const r=await fetch(OP_URL+'/rest/v1/rpc/get_study_assignment_for_class',{
-    method:'POST',headers:{apikey:OP_KEY,Authorization:'Bearer '+OP_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({p_class_name:className}),cache:'no-store'
-  });
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok||!d.success)throw new Error(d.error||'Could not load assigned books.');
-  return d;
-}
+const fetchAssignmentsNetwork=fetchClassBookAssignments;
 async function assignments(className){
   const cached=getAssignment(className);
   if(cached){
@@ -1400,7 +1393,7 @@ async function hydrateSecondaryBooks(list,activeBookId){
 async function resolveAssignedBooks(authData){
   const className=txt(authData?.class);if(!className)throw new Error('No active class is assigned.');
   const a=await assignments(className);
-  const list=(Array.isArray(a.assignments)&&a.assignments.length?a.assignments:(a.assignment?[a.assignment]:[])).filter(x=>x&&x.book_id);
+  const list=extractClassBookAssignments(a);
   if(!list.length)throw new Error('No active book is assigned.');
   let wanted='';try{wanted=localStorage.getItem(ACTIVE_BOOK_KEY)||''}catch(_){}
   const fallback=a.assignment&&a.assignment.book_id;
