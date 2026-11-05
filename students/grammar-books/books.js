@@ -176,6 +176,10 @@ function updateHomeworkIdentity(){
  const focused=!!activeHomework&&!!activeBook&&Number(activeUnit)===activeHomework.chapter;
  const parent=$('grammarModePanel');
  parent?.classList.toggle('grammar-focused-homework',focused);
+ // Hide the actual strip container as well as styling its parent. This avoids
+ // inherited Word Genius CSS overriding the homework-only layout.
+ const unitSelector=$('grammarUnitStrip')?.closest('.vocab-unit-selector');
+ if(unitSelector)unitSelector.hidden=focused;
  if(!focused)return;
  const box=document.createElement('div');
  box.id='grammarHomeworkIdentity';
