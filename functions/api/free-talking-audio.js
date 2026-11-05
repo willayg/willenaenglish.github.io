@@ -11,16 +11,13 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 const json=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 const model=env=>env.FREE_TALKING_REALTIME_MODEL||'gpt-realtime-2.1-mini';
 const voice=env=>env.FREE_TALKING_REALTIME_VOICE||'marin';
-const REALTIME_VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar']);
+// Only these two voices are selectable. Prize voices remain registered separately
+// but are not reachable through this endpoint until an authenticated unlock system exists.
+const SELECTABLE_VOICES=new Set(['marin','bunny-v3']);
 const ELEVEN_VOICES=Object.freeze({
- bunny:'M7zl2TS7ORAIGUejDfoy',
- 'bunny-v3':'M7zl2TS7ORAIGUejDfoy',
- 'bunny-multilingual-v2':'M7zl2TS7ORAIGUejDfoy',
- jock:'xmKwyBr5yTqqIbt4LW3I',
- 'sgt-steve':'8j74BTqU7XqD2faIlSD4',
- lily:'HSbsudjyUAPurHByCRRP'
+ 'bunny-v3':'M7zl2TS7ORAIGUejDfoy'
 });
-const ELEVEN_MODEL='eleven_flash_v2_5'; // Modern, economical low-latency model for comparison.
+const ELEVEN_MODEL='eleven_v3';
 const ELEVEN_PROXY='https://api.willenaenglish.com/.netlify/functions/eleven_labs_proxy';
 async function elevenAudio({env,text,voiceId,modelId=ELEVEN_MODEL}){
  const settings=modelId==='eleven_v3'?{stability:0.5}:{stability:0.55,similarity_boost:0.8,style:0,use_speaker_boost:false};
@@ -145,15 +142,10 @@ export async function onRequestPost({request,env,context}){
   const t=String(q.question_en||'').trim();
   if(!t||t.length>600)return json(422,{success:false,error:'Question audio text unavailable'});
   const chosenVoice=body?.voice==null?'':String(body.voice).toLowerCase().trim();
-  const compareModel=String(body?.compare_model||'');
-  // Isolated comparison option: only Bunny, only these explicitly allowed models.
-  if(compareModel&&!(chosenVoice==='bunny'&&['eleven_v3','eleven_multilingual_v2'].includes(compareModel)))
-   return json(400,{success:false,error:'Unsupported comparison model or voice'});
-  const modelByVoice={'bunny-v3':'eleven_v3','bunny-multilingual-v2':'eleven_multilingual_v2',
-   jock:'eleven_v3','sgt-steve':'eleven_v3',lily:'eleven_v3'};
-  const elevenModel=compareModel||modelByVoice[chosenVoice]||ELEVEN_MODEL;
+  if(!SELECTABLE_VOICES.has(chosenVoice)||body?.compare_model)
+   return json(400,{success:false,error:'This voice is not available yet.'});
+  const elevenModel=ELEVEN_MODEL;
   const elevenId=ELEVEN_VOICES[chosenVoice]||null;
-  if(chosenVoice&&!elevenId&&!REALTIME_VOICES.has(chosenVoice))return json(400,{success:false,error:'Unsupported voice'});
   if(elevenId){
    const cache=await cacheKey(t,elevenModel,elevenId,'elevenlabs');
    const hit=await cachedAudio(cache,'mp3',env);
