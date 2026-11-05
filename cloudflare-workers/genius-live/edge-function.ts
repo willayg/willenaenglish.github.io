@@ -48,7 +48,7 @@ async function snapshot(r:any,who:any){
  }
  const mine=me?answers.find(x=>x.player_id===me.id):null;
  const q=r.question_index>=0?r.questions[r.question_index]:null;
- return {ok:true,pin:r.pin,teacher,status:r.status,mode:r.settings.mode,teamCount:r.settings.teamCount,seconds:r.settings.seconds,
+ return {ok:true,pin:r.pin,teacher,status:r.status,classId:r.settings.classId||null,className:r.settings.className||"",mode:r.settings.mode,teamCount:r.settings.teamCount,seconds:r.settings.seconds,
  questionNumber:r.question_index+1,total:r.questions.length,deadline:r.deadline,players:(players||[]).map((p:any)=>({name:p.display_name,team:p.team,score:p.score,id:teacher?p.id:undefined})),
  answeredCount:answers.length,answeredPlayerIds:teacher?answers.map(x=>x.player_id):undefined,
  question:q?publicQ(q,r.status==="reveal"||r.status==="finished"):null,
@@ -102,18 +102,25 @@ async function action(req:Request){
  const who=await user(req);
  if(mode==="catalog"){
   if(!["teacher","admin"].includes(who.role))return fail("Teacher access required",403);
+  const {data:classes,error:classError}=await sb.from("classes").select("id,name").order("name",{ascending:true});
+  if(classError)throw classError;
   const data=await content("content_books?select=id,title,content_units(id,unit_number,title,status)&status=in.(review,published)&order=title.asc&limit=1000");
-  return response({ok:true,books:(data as any[]).map(b=>({id:b.id,title:b.title,units:(b.content_units||[]).filter((u:any)=>["review","published"].includes(u.status)).sort((a:any,b:any)=>a.unit_number-b.unit_number)})).filter(b=>b.units.length)});
+  return response({ok:true,classes:(classes||[]).filter((c:any)=>clean(c.name)),books:(data as any[]).map(b=>({id:b.id,title:b.title,units:(b.content_units||[]).filter((u:any)=>["review","published"].includes(u.status)).sort((a:any,b:any)=>a.unit_number-b.unit_number)})).filter(b=>b.units.length)});
  }
  if(mode==="create"){
   if(!["teacher","admin"].includes(who.role))return fail("Teacher access required",403);
   const count=Math.max(1,Math.min(40,Number(p.count)||10)),seconds=Math.max(8,Math.min(60,Number(p.seconds)||20));
   const gameMode=p.mode==="individual"?"individual":"team",teamCount=Math.max(2,Math.min(4,Number(p.teamCount)||2));
+  const classId=clean(p.classId);
+  if(!/^[0-9a-f-]{36}$/i.test(classId))return fail("Choose a class first.");
+  const {data:selectedClass,error:classError}=await sb.from("classes").select("id,name").eq("id",classId).maybeSingle();
+  if(classError)throw classError;
+  if(!selectedClass)return fail("Selected class was not found.");
   const qs=await buildQuestions(p.selections,count);
   let saved:any=null,error:any=null;
   for(let attempt=0;attempt<4;attempt++){
    const pin=String(100000+Math.floor(Math.random()*900000));
-   const result=await sb.from("genius_live_rooms_v1").insert({pin,teacher_id:who.id,settings:{seconds,mode:gameMode,teamCount},questions:qs}).select("pin").single();
+   const result=await sb.from("genius_live_rooms_v1").insert({pin,teacher_id:who.id,settings:{seconds,mode:gameMode,teamCount,classId:selectedClass.id,className:selectedClass.name},questions:qs}).select("pin").single();
    if(!result.error){saved=result.data;break}error=result.error;
    if(result.error.code!=="23505")break;
   }
