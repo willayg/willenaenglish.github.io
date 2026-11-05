@@ -222,8 +222,12 @@ async function audioInventory(bookId,env){
   success:true,book_id:bookId,questions:records.map(r=>{
    const willi=statuses.get(r.marin),backup=statuses.get(r.fallback),lili=statuses.get(r.lili);
    const williResolved=willi?.exists?willi:backup?.exists?backup:{exists:false,url:null};
-   return {id:r.id,marin:{cached:!!williResolved.exists,url:williResolved.url},
-    'bunny-v3':{cached:!!lili?.exists,url:lili?.url||null}};
+   return {id:r.id,marin:{cached:!!williResolved.exists,url:williResolved.url,
+     model:willi?.exists?model(env):'gpt-4o-mini-tts',voice:'marin',
+     source:williResolved.url?'r2_shared':'r2_direct',content_type:willi?.exists?'audio/wav':'audio/mpeg'},
+    'bunny-v3':{cached:!!lili?.exists,url:lili?.url||null,
+     model:ELEVEN_MODEL,voice:'bunny',source:lili?.url?'r2_shared':'r2_direct',
+     content_type:'audio/mpeg'}};
   })
  };
 }
