@@ -8,7 +8,7 @@ import {renderStudentSessionFinish} from '/students/components/student-session-f
 import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
-import {createFreeTalkingVoice} from './question-voice.js?v=20261105-character-test1';
+import {createFreeTalkingVoice} from './question-voice.js?v=20261105-eleven-voice-fix1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const BOOK='8e949813-fa91-4adc-a709-905efc980d8b';
