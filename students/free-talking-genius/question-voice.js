@@ -13,7 +13,8 @@ export function createFreeTalkingVoice({host,getToken}){
   if(!model){modelLabel.textContent='Voice model: checking…';modelLabel.dataset.state='loading';return}
   const cached=/^r2/.test(String(file.source||''));
   const fallback=/fallback/.test(String(file.source||''))||model==='gpt-4o-mini-tts';
-  modelLabel.textContent='Voice: '+model+(file.voice?' · '+file.voice:'')+(cached?' · R2 cached':'')+(fallback?' · backup':'');
+  const cacheState=cached?' · R2 cached':file.stored===true?' · Saved to R2':file.stored===false?' · R2 not saved':'';
+  modelLabel.textContent='Voice: '+model+(file.voice?' · '+file.voice:'')+cacheState+(fallback?' · backup':'');
   modelLabel.dataset.state=fallback?'fallback':'ready';
  }
  const avatar=host.querySelector('[data-ft-avatar]');
@@ -37,7 +38,7 @@ export function createFreeTalkingVoice({host,getToken}){
   if(response.status===401)response=await call(await getToken(true));
   const data=await response.json().catch(()=>null);
   if(!response.ok||data?.success!==true)throw Error(data?.error||'Audio unavailable');
-  const details={model:data.model||'',voice:data.voice||'',source:data.source||''};
+  const details={model:data.model||'',voice:data.voice||'',source:data.source||'',stored:data.stored===true};
   if(data.audio_url?.startsWith('https://'))return {url:data.audio_url,owned:false,...details};
   if(typeof data.audio!=='string'||!data.audio.length)throw Error('Missing generated audio');
   const binary=atob(data.audio),bytes=new Uint8Array(binary.length);
