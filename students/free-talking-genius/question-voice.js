@@ -142,7 +142,7 @@ export function createFreeTalkingVoice({host,getToken}){
   let response=await call(await getToken());
   if(response.status===401)response=await call(await getToken(true));
   const data=await response.json().catch(()=>null);
-  if(!response.ok||data?.storage_ready!==true)throw Error(data?.code||'R2_WRITE_FAILED');
+  if(!response.ok||data?.storage_ready!==true)throw Error(data?.detail||data?.code||'R2_WRITE_FAILED');
   return true;
  }
  function preload(unit=preferredUnit){
