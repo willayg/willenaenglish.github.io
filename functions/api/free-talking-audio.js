@@ -205,9 +205,9 @@ export async function onRequestPost({request,env,context}){
   }catch(realtimeError){
    console.warn('[Free Talking audio] realtime generation failed; trying speech fallback',String(realtimeError?.message||realtimeError).slice(0,160));
   }
-  // Temporary compatibility fallback. Uses the existing OpenAI TTS endpoint
+  // Temporary Marin-voice compatibility fallback. Uses the existing OpenAI TTS endpoint
   // until Realtime generation is fully verified; never touches other apps.
-  const fallbackVoice='shimmer',fallbackModel='gpt-4o-mini-tts';
+  const fallbackVoice='marin',fallbackModel='gpt-4o-mini-tts';
   const fallbackKey=await cacheKey(t,fallbackModel,fallbackVoice,'fallback');
   const fallbackUrl=await cachedAudio(fallbackKey,'mp3',env);
   if(fallbackUrl)return json(200,{success:true,...(warmOnly?{}:fallbackUrl),content_type:'audio/mpeg',
