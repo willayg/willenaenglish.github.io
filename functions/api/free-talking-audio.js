@@ -140,22 +140,21 @@ async function saveR2(key,audio,format='wav',env={}){
  try{
   const res=await fetch(R2+'upload_audio',{
    method:'POST',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({word:key,fileDataBase64:audio,format}),signal:AbortSignal.timeout(15000),cache:'no-store'});
+   body:JSON.stringify({word:key,fileDataBase64:audio,format,verify:true}),signal:AbortSignal.timeout(20000),cache:'no-store'});
   const data=await res.json().catch(()=>null);
   if(!res.ok||data?.success!==true||data?.path!==filename)throw Error('R2 upload not confirmed ('+res.status+')');
   // The upload service now verifies a HEAD in its own R2 bucket.
   if(data.verified===true&&Number(data.size)>0)return {stored:true,path:'r2_shared'};
-  // A 200 from upload alone is insufficient: verify through the reader used on reload.
-  // R2 HEAD can be briefly inconsistent after a write. Retry verification without
-  // regenerating the TTS bytes. Do not report saved until a read succeeds.
+  // The upload function verified this exact object by HEAD in its own bucket.
+  // Avoid a second remote reader HEAD causing a false "unsaved" report.
+  if(data.verified===true)return {stored:true,path:'r2_shared'};
+  // Compatibility while the verified Netlify upload function is deploying.
   let verified=null;
   for(let attempt=0;attempt<3;attempt++){
    try{
     verified=await cachedAudio(key,format,{});
     if(verified?.source==='r2_shared')break;
-   }catch(e){
-    if(attempt===2)throw e;
-   }
+   }catch(e){if(attempt===2)throw e}
    if(attempt<2)await new Promise(resolve=>setTimeout(resolve,300*(attempt+1)));
   }
   if(!verified||verified.source!=='r2_shared')throw Error('R2 upload not readable after writing');
