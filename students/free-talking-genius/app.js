@@ -195,6 +195,14 @@ function renderQuestion({retry=false}={}){
  });
  $('ftTranscriptRow').hidden=state.mode!=='speaking';
  $('ftTranscriptEdit').value='';
+ if(state.mode==='speaking'){
+  const supported=Boolean(window.SpeechRecognition||window.webkitSpeechRecognition);
+  const status=$('ftQuestionHost').querySelector('[data-speaking-status]');
+  if(!supported&&status)status.textContent='이 브라우저에서는 마이크 입력이 지원되지 않아요. 아래에 직접 영어로 입력할 수 있어요.';
+  $('ftTranscriptEdit').placeholder=supported
+   ?'마이크가 잘못 들었다면 영어 문장을 수정하거나 직접 입력하세요.'
+   :'여기에 영어 답변을 직접 입력하세요.';
+ }
  $('ftSubmit').disabled=true;
  // A restored unfinished question shows its previously saved guidance.
  const previous=attemptsFor(state.session.id,state.current.id);
