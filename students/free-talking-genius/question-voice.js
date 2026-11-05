@@ -6,6 +6,16 @@ export function createFreeTalkingVoice({host,getToken}){
  const stored=new Map();
  const button=host.querySelector('[data-ft-listen]');
  const label=host.querySelector('[data-ft-voice-status]');
+ const modelLabel=host.querySelector('[data-ft-voice-model]');
+ function showModel(file){
+  if(!modelLabel)return;
+  const model=String(file?.model||'');
+  if(!model){modelLabel.textContent='Voice model: checking…';modelLabel.dataset.state='loading';return}
+  const cached=/^r2/.test(String(file.source||''));
+  const fallback=/fallback/.test(String(file.source||''))||model==='gpt-4o-mini-tts';
+  modelLabel.textContent='Voice: '+model+(file.voice?' · '+file.voice:'')+(cached?' · R2 cached':'')+(fallback?' · backup':'');
+  modelLabel.dataset.state=fallback?'fallback':'ready';
+ }
  const avatar=host.querySelector('[data-ft-avatar]');
  function status(value){if(label)label.textContent=value}
  function setPlaying(value){
@@ -27,11 +37,12 @@ export function createFreeTalkingVoice({host,getToken}){
   if(response.status===401)response=await call(await getToken(true));
   const data=await response.json().catch(()=>null);
   if(!response.ok||data?.success!==true)throw Error(data?.error||'Audio unavailable');
-  if(data.audio_url?.startsWith('https://'))return {url:data.audio_url,owned:false};
+  const details={model:data.model||'',voice:data.voice||'',source:data.source||''};
+  if(data.audio_url?.startsWith('https://'))return {url:data.audio_url,owned:false,...details};
   if(typeof data.audio!=='string'||!data.audio.length)throw Error('Missing generated audio');
   const binary=atob(data.audio),bytes=new Uint8Array(binary.length);
   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-  return {url:URL.createObjectURL(new Blob([bytes],{type:data.content_type==='audio/wav'?'audio/wav':'audio/mpeg'})),owned:true};
+  return {url:URL.createObjectURL(new Blob([bytes],{type:data.content_type==='audio/wav'?'audio/wav':'audio/mpeg'})),owned:true,...details};
  }
  async function play(){
   if(!currentUrl||!selected)return;
@@ -52,18 +63,21 @@ export function createFreeTalkingVoice({host,getToken}){
   setPlaying(false);
   if(button)button.disabled=true;
   status('AI Willi 음성을 불러오는 중…');
+  showModel(null);
   if(!selected)return;
   try{
    let file=stored.get(selected);
    if(!file){file=await fetchVoice(selected);if(v!==version){if(file.owned)URL.revokeObjectURL(file.url);return}stored.set(selected,file)}
    if(v!==version)return;
    currentUrl=file.url;
+   showModel(file);
    if(button)button.disabled=false;
    status('AI 생성 음성 · 질문 듣기');
    if(autoplay)await play();
   }catch(e){
    if(v!==version)return;
    console.warn('[Free Talking] question voice',e?.message||'error');
+   if(modelLabel){modelLabel.textContent='Voice model: unavailable';modelLabel.dataset.state='error'}
    const reason=String(e?.message||'');
    status(/로그인|401|인증|sign.in/i.test(reason)
     ?'음성 로그인 확인에 실패했어요. 새로고침 후 다시 들어 보세요.'
@@ -76,6 +90,7 @@ export function createFreeTalkingVoice({host,getToken}){
  function stop(){
   version++;selected='';currentUrl='';
   audio.pause();audio.removeAttribute('src');audio.load();setPlaying(false);
+  showModel(null);
   if(button)button.disabled=true;
  }
  button?.addEventListener('click',async()=>{
