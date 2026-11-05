@@ -104,8 +104,13 @@ async function action(req:Request){
   if(!["teacher","admin"].includes(who.role))return fail("Teacher access required",403);
   const {data:classes,error:classError}=await sb.from("classes").select("id,name").order("name",{ascending:true});
   if(classError)throw classError;
+  const {data:assigned,error:assignmentError}=await sb.from("class_book_assignments").select("class_id,book_id").eq("status","active").not("book_id","is",null);
+  if(assignmentError)throw assignmentError;
+  const assignments:Record<string,string[]>={};
+  for(const row of assigned||[]){const id=clean(row.class_id),book=clean(row.book_id);if(!id||!book)continue;(assignments[id]??=[]).push(book)}
+  for(const id of Object.keys(assignments))assignments[id]=[...new Set(assignments[id])];
   const data=await content("content_books?select=id,title,content_units(id,unit_number,title,status)&status=in.(review,published)&order=title.asc&limit=1000");
-  return response({ok:true,classes:(classes||[]).filter((c:any)=>clean(c.name)),books:(data as any[]).map(b=>({id:b.id,title:b.title,units:(b.content_units||[]).filter((u:any)=>["review","published"].includes(u.status)).sort((a:any,b:any)=>a.unit_number-b.unit_number)})).filter(b=>b.units.length)});
+  return response({ok:true,classes:(classes||[]).filter((c:any)=>clean(c.name)),classBookIds:assignments,books:(data as any[]).map(b=>({id:b.id,title:b.title,units:(b.content_units||[]).filter((u:any)=>["review","published"].includes(u.status)).sort((a:any,b:any)=>a.unit_number-b.unit_number)})).filter(b=>b.units.length)});
  }
  if(mode==="create"){
   if(!["teacher","admin"].includes(who.role))return fail("Teacher access required",403);
@@ -116,6 +121,11 @@ async function action(req:Request){
   const {data:selectedClass,error:classError}=await sb.from("classes").select("id,name").eq("id",classId).maybeSingle();
   if(classError)throw classError;
   if(!selectedClass)return fail("Selected class was not found.");
+  const {data:assigned,error:assignmentError}=await sb.from("class_book_assignments").select("book_id").eq("class_id",selectedClass.id).eq("status","active").not("book_id","is",null);
+  if(assignmentError)throw assignmentError;
+  const allowedBooks=new Set((assigned||[]).map((row:any)=>clean(row.book_id)));
+  if(!allowedBooks.size)return fail("This class has no active assigned books.");
+  if(!Array.isArray(p.selections)||!p.selections.length||p.selections.some((item:any)=>!allowedBooks.has(clean(item.bookId))))return fail("Only books actively assigned to this class can be selected.");
   const qs=await buildQuestions(p.selections,count);
   let saved:any=null,error:any=null;
   for(let attempt=0;attempt<4;attempt++){
