@@ -7003,6 +7003,1757 @@
           }
         }
       ]
+    },
+    {
+      "key": "buzz4",
+      "title": "Oxford Buzz 4",
+      "source": "Original Willena questions aligned to Oxford Buzz 4 published student-book grammar syllabus",
+      "chapters": [
+        {
+          "unit": 1,
+          "title": "Healthy Living",
+          "grammarFocus": "How often; frequency expressions; adverbs of frequency",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz4-u1-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nHow often _______ your sister exercise?",
+                "options": [
+                  "does",
+                  "do",
+                  "is",
+                  "are",
+                  "did"
+                ],
+                "answerIndex": 0,
+                "explanation": "3인칭 단수 sister의 습관을 물을 때 does를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u1-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nI brush my teeth _______ a day: morning and night.",
+                "options": [
+                  "two",
+                  "second",
+                  "twice",
+                  "double",
+                  "two time"
+                ],
+                "answerIndex": 2,
+                "explanation": "하루 두 번은 twice a day라고 표현합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u1-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nHe _______ drinks water after soccer practice.",
+                "options": [
+                  "every",
+                  "once",
+                  "much",
+                  "many",
+                  "always"
+                ],
+                "answerIndex": 4,
+                "explanation": "일반동사 drinks 앞에 빈도부사 always를 놓습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u1-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nHow often _______ you eat vegetables?",
+                "options": [
+                  "does",
+                  "do",
+                  "are",
+                  "is",
+                  "did"
+                ],
+                "answerIndex": 1,
+                "explanation": "you의 현재 습관을 묻는 의문문에는 do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u1-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nMy mom _______ goes swimming on Sundays.",
+                "options": [
+                  "many",
+                  "every",
+                  "twice",
+                  "often",
+                  "how"
+                ],
+                "answerIndex": 3,
+                "explanation": "일반동사 goes 앞에는 빈도부사 often을 놓을 수 있습니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz4-u1-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I brush my teeth twice a day: morning and night.",
+                  "How often do your sister exercise?",
+                  "He always drinks water after soccer practice.",
+                  "How often do you eat vegetables?",
+                  "My mom often goes swimming on Sundays."
+                ],
+                "answerIndex": 1,
+                "explanation": "3인칭 단수 sister의 습관을 물을 때 does를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u1-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "How often does your sister exercise?",
+                  "He always drinks water after soccer practice.",
+                  "How often do you eat vegetables?",
+                  "I brush my teeth two a day: morning and night.",
+                  "My mom often goes swimming on Sundays."
+                ],
+                "answerIndex": 3,
+                "explanation": "하루 두 번은 twice a day라고 표현합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u1-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He every drinks water after soccer practice.",
+                  "How often does your sister exercise?",
+                  "I brush my teeth twice a day: morning and night.",
+                  "How often do you eat vegetables?",
+                  "My mom often goes swimming on Sundays."
+                ],
+                "answerIndex": 0,
+                "explanation": "일반동사 drinks 앞에 빈도부사 always를 놓습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u1-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "How often does your sister exercise?",
+                  "I brush my teeth twice a day: morning and night.",
+                  "How often does you eat vegetables?",
+                  "He always drinks water after soccer practice.",
+                  "My mom often goes swimming on Sundays."
+                ],
+                "answerIndex": 2,
+                "explanation": "you의 현재 습관을 묻는 의문문에는 do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u1-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "How often does your sister exercise?",
+                  "I brush my teeth twice a day: morning and night.",
+                  "He always drinks water after soccer practice.",
+                  "How often do you eat vegetables?",
+                  "My mom many goes swimming on Sundays."
+                ],
+                "answerIndex": 4,
+                "explanation": "일반동사 goes 앞에는 빈도부사 often을 놓을 수 있습니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz4-u1-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "How often do your sister exercise?",
+                "options": [
+                  "How",
+                  "often",
+                  "do",
+                  "your sister exercise?"
+                ],
+                "answerIndex": 2,
+                "explanation": "3인칭 단수 sister의 습관을 물을 때 does를 씁니다."
+              },
+              {
+                "id": "buzz4-u1-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I brush my teeth two a day: morning and night.",
+                "options": [
+                  "I brush my",
+                  "teeth",
+                  "two",
+                  "a day: morning and night."
+                ],
+                "answerIndex": 2,
+                "explanation": "하루 두 번은 twice a day라고 표현합니다."
+              },
+              {
+                "id": "buzz4-u1-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "He every drinks water after soccer practice.",
+                "options": [
+                  "He",
+                  "every",
+                  "drinks",
+                  "water after soccer practice."
+                ],
+                "answerIndex": 1,
+                "explanation": "일반동사 drinks 앞에 빈도부사 always를 놓습니다."
+              },
+              {
+                "id": "buzz4-u1-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "How often does you eat vegetables?",
+                "options": [
+                  "How",
+                  "often",
+                  "does",
+                  "you eat vegetables?"
+                ],
+                "answerIndex": 2,
+                "explanation": "you의 현재 습관을 묻는 의문문에는 do를 씁니다."
+              },
+              {
+                "id": "buzz4-u1-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "My mom many goes swimming on Sundays.",
+                "options": [
+                  "My",
+                  "mom",
+                  "many",
+                  "goes swimming on Sundays."
+                ],
+                "answerIndex": 2,
+                "explanation": "일반동사 goes 앞에는 빈도부사 often을 놓을 수 있습니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 2,
+          "title": "In the Kitchen",
+          "grammarFocus": "Count/noncount nouns; how much/many; adverbs of manner",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz4-u2-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nHow _______ flour do we need for the cake?",
+                "options": [
+                  "much",
+                  "many",
+                  "some",
+                  "any",
+                  "few"
+                ],
+                "answerIndex": 0,
+                "explanation": "flour는 셀 수 없는 명사이므로 How much를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u2-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nHow _______ eggs are in the bowl?",
+                "options": [
+                  "much",
+                  "any",
+                  "many",
+                  "a",
+                  "little"
+                ],
+                "answerIndex": 2,
+                "explanation": "eggs는 셀 수 있는 복수명사이므로 How many를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u2-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThere isn't _______ milk in the fridge.",
+                "options": [
+                  "many",
+                  "a",
+                  "an",
+                  "few",
+                  "any"
+                ],
+                "answerIndex": 4,
+                "explanation": "부정문에서 셀 수 없는 milk 앞에는 any를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u2-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nPlease cut the vegetables _______ when you make soup.",
+                "options": [
+                  "careful",
+                  "carefully",
+                  "care",
+                  "caring",
+                  "more careful"
+                ],
+                "answerIndex": 1,
+                "explanation": "동사 cut을 수식하는 것은 형용사가 아닌 부사 carefully입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u2-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWe need _______ sugar for the cookies.",
+                "options": [
+                  "a",
+                  "an",
+                  "many",
+                  "some",
+                  "few"
+                ],
+                "answerIndex": 3,
+                "explanation": "sugar는 셀 수 없는 명사이므로 some sugar라고 합니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz4-u2-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "How many eggs are in the bowl?",
+                  "How many flour do we need for the cake?",
+                  "There isn't any milk in the fridge.",
+                  "Please cut the vegetables carefully when you make soup.",
+                  "We need some sugar for the cookies."
+                ],
+                "answerIndex": 1,
+                "explanation": "flour는 셀 수 없는 명사이므로 How much를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u2-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "How much flour do we need for the cake?",
+                  "There isn't any milk in the fridge.",
+                  "Please cut the vegetables carefully when you make soup.",
+                  "How much eggs are in the bowl?",
+                  "We need some sugar for the cookies."
+                ],
+                "answerIndex": 3,
+                "explanation": "eggs는 셀 수 있는 복수명사이므로 How many를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u2-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There isn't many milk in the fridge.",
+                  "How much flour do we need for the cake?",
+                  "How many eggs are in the bowl?",
+                  "Please cut the vegetables carefully when you make soup.",
+                  "We need some sugar for the cookies."
+                ],
+                "answerIndex": 0,
+                "explanation": "부정문에서 셀 수 없는 milk 앞에는 any를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u2-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "How much flour do we need for the cake?",
+                  "How many eggs are in the bowl?",
+                  "Please cut the vegetables careful when you make soup.",
+                  "There isn't any milk in the fridge.",
+                  "We need some sugar for the cookies."
+                ],
+                "answerIndex": 2,
+                "explanation": "동사 cut을 수식하는 것은 형용사가 아닌 부사 carefully입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u2-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "How much flour do we need for the cake?",
+                  "How many eggs are in the bowl?",
+                  "There isn't any milk in the fridge.",
+                  "Please cut the vegetables carefully when you make soup.",
+                  "We need a sugar for the cookies."
+                ],
+                "answerIndex": 4,
+                "explanation": "sugar는 셀 수 없는 명사이므로 some sugar라고 합니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz4-u2-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "How many flour do we need for the cake?",
+                "options": [
+                  "How",
+                  "many",
+                  "flour",
+                  "do we need for the cake?"
+                ],
+                "answerIndex": 1,
+                "explanation": "flour는 셀 수 없는 명사이므로 How much를 씁니다."
+              },
+              {
+                "id": "buzz4-u2-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "How much eggs are in the bowl?",
+                "options": [
+                  "How",
+                  "much",
+                  "eggs",
+                  "are in the bowl?"
+                ],
+                "answerIndex": 1,
+                "explanation": "eggs는 셀 수 있는 복수명사이므로 How many를 씁니다."
+              },
+              {
+                "id": "buzz4-u2-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There isn't many milk in the fridge.",
+                "options": [
+                  "There",
+                  "isn't",
+                  "many",
+                  "milk in the fridge."
+                ],
+                "answerIndex": 2,
+                "explanation": "부정문에서 셀 수 없는 milk 앞에는 any를 씁니다."
+              },
+              {
+                "id": "buzz4-u2-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Please cut the vegetables careful when you make soup.",
+                "options": [
+                  "Please cut the",
+                  "vegetables",
+                  "careful",
+                  "when you make soup."
+                ],
+                "answerIndex": 2,
+                "explanation": "동사 cut을 수식하는 것은 형용사가 아닌 부사 carefully입니다."
+              },
+              {
+                "id": "buzz4-u2-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "We need a sugar for the cookies.",
+                "options": [
+                  "We",
+                  "need",
+                  "a",
+                  "sugar for the cookies."
+                ],
+                "answerIndex": 2,
+                "explanation": "sugar는 셀 수 없는 명사이므로 some sugar라고 합니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 3,
+          "title": "Family Life",
+          "grammarFocus": "Regular past affirmative/negative; had to",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz4-u3-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nI _______ my room yesterday afternoon.",
+                "options": [
+                  "cleaned",
+                  "clean",
+                  "cleans",
+                  "cleaning",
+                  "have clean"
+                ],
+                "answerIndex": 0,
+                "explanation": "yesterday의 과거 행동에는 cleaned를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u3-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nShe didn't _______ the dishes last night.",
+                "options": [
+                  "washed",
+                  "washes",
+                  "wash",
+                  "washing",
+                  "to wash"
+                ],
+                "answerIndex": 2,
+                "explanation": "didn't 뒤에는 동사원형 wash를 사용합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u3-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWe _______ to prepare food for the party yesterday.",
+                "options": [
+                  "have",
+                  "has",
+                  "having",
+                  "having to",
+                  "had"
+                ],
+                "answerIndex": 4,
+                "explanation": "과거의 의무는 had to + 동사원형으로 표현합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u3-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nDid your brother _______ the table yesterday?",
+                "options": [
+                  "sets",
+                  "set",
+                  "setting",
+                  "to set",
+                  "has set"
+                ],
+                "answerIndex": 1,
+                "explanation": "Did 뒤에는 동사원형 set이 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u3-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nMy father _______ dinner for us last Sunday.",
+                "options": [
+                  "cook",
+                  "cooks",
+                  "cooking",
+                  "cooked",
+                  "has cook"
+                ],
+                "answerIndex": 3,
+                "explanation": "last Sunday는 과거 시점이므로 cooked를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz4-u3-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She didn't wash the dishes last night.",
+                  "I clean my room yesterday afternoon.",
+                  "We had to prepare food for the party yesterday.",
+                  "Did your brother set the table yesterday?",
+                  "My father cooked dinner for us last Sunday."
+                ],
+                "answerIndex": 1,
+                "explanation": "yesterday의 과거 행동에는 cleaned를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u3-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I cleaned my room yesterday afternoon.",
+                  "We had to prepare food for the party yesterday.",
+                  "Did your brother set the table yesterday?",
+                  "She didn't washed the dishes last night.",
+                  "My father cooked dinner for us last Sunday."
+                ],
+                "answerIndex": 3,
+                "explanation": "didn't 뒤에는 동사원형 wash를 사용합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u3-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "We have to prepare food for the party yesterday.",
+                  "I cleaned my room yesterday afternoon.",
+                  "She didn't wash the dishes last night.",
+                  "Did your brother set the table yesterday?",
+                  "My father cooked dinner for us last Sunday."
+                ],
+                "answerIndex": 0,
+                "explanation": "과거의 의무는 had to + 동사원형으로 표현합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u3-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I cleaned my room yesterday afternoon.",
+                  "She didn't wash the dishes last night.",
+                  "Did your brother sets the table yesterday?",
+                  "We had to prepare food for the party yesterday.",
+                  "My father cooked dinner for us last Sunday."
+                ],
+                "answerIndex": 2,
+                "explanation": "Did 뒤에는 동사원형 set이 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u3-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I cleaned my room yesterday afternoon.",
+                  "She didn't wash the dishes last night.",
+                  "We had to prepare food for the party yesterday.",
+                  "Did your brother set the table yesterday?",
+                  "My father cook dinner for us last Sunday."
+                ],
+                "answerIndex": 4,
+                "explanation": "last Sunday는 과거 시점이므로 cooked를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz4-u3-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I clean my room yesterday afternoon.",
+                "options": [
+                  "I",
+                  "clean",
+                  "my",
+                  "room yesterday afternoon."
+                ],
+                "answerIndex": 1,
+                "explanation": "yesterday의 과거 행동에는 cleaned를 씁니다."
+              },
+              {
+                "id": "buzz4-u3-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She didn't washed the dishes last night.",
+                "options": [
+                  "She",
+                  "didn't",
+                  "washed",
+                  "the dishes last night."
+                ],
+                "answerIndex": 2,
+                "explanation": "didn't 뒤에는 동사원형 wash를 사용합니다."
+              },
+              {
+                "id": "buzz4-u3-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "We have to prepare food for the party yesterday.",
+                "options": [
+                  "We",
+                  "have",
+                  "to",
+                  "prepare food for the party yesterday."
+                ],
+                "answerIndex": 1,
+                "explanation": "과거의 의무는 had to + 동사원형으로 표현합니다."
+              },
+              {
+                "id": "buzz4-u3-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Did your brother sets the table yesterday?",
+                "options": [
+                  "Did your",
+                  "brother",
+                  "sets",
+                  "the table yesterday?"
+                ],
+                "answerIndex": 2,
+                "explanation": "Did 뒤에는 동사원형 set이 옵니다."
+              },
+              {
+                "id": "buzz4-u3-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "My father cook dinner for us last Sunday.",
+                "options": [
+                  "My",
+                  "father",
+                  "cook",
+                  "dinner for us last Sunday."
+                ],
+                "answerIndex": 2,
+                "explanation": "last Sunday는 과거 시점이므로 cooked를 씁니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 4,
+          "title": "Our History",
+          "grammarFocus": "Irregular past affirmative/negative and questions",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz4-u4-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWe _______ an old bridge on our trip yesterday.",
+                "options": [
+                  "saw",
+                  "see",
+                  "seen",
+                  "sees",
+                  "seeing"
+                ],
+                "answerIndex": 0,
+                "explanation": "see의 과거형은 saw입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u4-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nShe didn't _______ the old coin at the museum.",
+                "options": [
+                  "found",
+                  "finds",
+                  "find",
+                  "finding",
+                  "to find"
+                ],
+                "answerIndex": 2,
+                "explanation": "didn't 뒤에는 동사원형 find가 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u4-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\n_______ they go to the history museum last week?",
+                "options": [
+                  "Do",
+                  "Does",
+                  "Were",
+                  "Are",
+                  "Did"
+                ],
+                "answerIndex": 4,
+                "explanation": "과거 일반동사 의문문에는 Did를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u4-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nMy grandpa _______ a letter fifty years ago.",
+                "options": [
+                  "write",
+                  "wrote",
+                  "written",
+                  "writes",
+                  "writing"
+                ],
+                "answerIndex": 1,
+                "explanation": "write의 과거형은 wrote입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u4-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThe visitors _______ many photos at the castle yesterday.",
+                "options": [
+                  "take",
+                  "taken",
+                  "takes",
+                  "took",
+                  "taking"
+                ],
+                "answerIndex": 3,
+                "explanation": "take의 과거형은 took입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz4-u4-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She didn't find the old coin at the museum.",
+                  "We see an old bridge on our trip yesterday.",
+                  "Did they go to the history museum last week?",
+                  "My grandpa wrote a letter fifty years ago.",
+                  "The visitors took many photos at the castle yesterday."
+                ],
+                "answerIndex": 1,
+                "explanation": "see의 과거형은 saw입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u4-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "We saw an old bridge on our trip yesterday.",
+                  "Did they go to the history museum last week?",
+                  "My grandpa wrote a letter fifty years ago.",
+                  "She didn't found the old coin at the museum.",
+                  "The visitors took many photos at the castle yesterday."
+                ],
+                "answerIndex": 3,
+                "explanation": "didn't 뒤에는 동사원형 find가 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u4-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Do they go to the history museum last week?",
+                  "We saw an old bridge on our trip yesterday.",
+                  "She didn't find the old coin at the museum.",
+                  "My grandpa wrote a letter fifty years ago.",
+                  "The visitors took many photos at the castle yesterday."
+                ],
+                "answerIndex": 0,
+                "explanation": "과거 일반동사 의문문에는 Did를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u4-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "We saw an old bridge on our trip yesterday.",
+                  "She didn't find the old coin at the museum.",
+                  "My grandpa write a letter fifty years ago.",
+                  "Did they go to the history museum last week?",
+                  "The visitors took many photos at the castle yesterday."
+                ],
+                "answerIndex": 2,
+                "explanation": "write의 과거형은 wrote입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u4-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "We saw an old bridge on our trip yesterday.",
+                  "She didn't find the old coin at the museum.",
+                  "Did they go to the history museum last week?",
+                  "My grandpa wrote a letter fifty years ago.",
+                  "The visitors take many photos at the castle yesterday."
+                ],
+                "answerIndex": 4,
+                "explanation": "take의 과거형은 took입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz4-u4-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "We see an old bridge on our trip yesterday.",
+                "options": [
+                  "We",
+                  "see",
+                  "an",
+                  "old bridge on our trip yesterday."
+                ],
+                "answerIndex": 1,
+                "explanation": "see의 과거형은 saw입니다."
+              },
+              {
+                "id": "buzz4-u4-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She didn't found the old coin at the museum.",
+                "options": [
+                  "She",
+                  "didn't",
+                  "found",
+                  "the old coin at the museum."
+                ],
+                "answerIndex": 2,
+                "explanation": "didn't 뒤에는 동사원형 find가 옵니다."
+              },
+              {
+                "id": "buzz4-u4-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Do they go to the history museum last week?",
+                "options": [
+                  "Do",
+                  "they",
+                  "go",
+                  "to the history museum last week?"
+                ],
+                "answerIndex": 0,
+                "explanation": "과거 일반동사 의문문에는 Did를 씁니다."
+              },
+              {
+                "id": "buzz4-u4-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "My grandpa write a letter fifty years ago.",
+                "options": [
+                  "My",
+                  "grandpa",
+                  "write",
+                  "a letter fifty years ago."
+                ],
+                "answerIndex": 2,
+                "explanation": "write의 과거형은 wrote입니다."
+              },
+              {
+                "id": "buzz4-u4-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "The visitors take many photos at the castle yesterday.",
+                "options": [
+                  "The",
+                  "visitors",
+                  "take",
+                  "many photos at the castle yesterday."
+                ],
+                "answerIndex": 2,
+                "explanation": "take의 과거형은 took입니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 5,
+          "title": "School Life",
+          "grammarFocus": "Object pronouns; must and must not",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz4-u5-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nPlease give _______ the library book.",
+                "options": [
+                  "her",
+                  "she",
+                  "hers",
+                  "he",
+                  "they"
+                ],
+                "answerIndex": 0,
+                "explanation": "동사 give의 간접목적어 자리에는 목적격 her가 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u5-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nOur teacher asked _______ to be quiet.",
+                "options": [
+                  "we",
+                  "our",
+                  "us",
+                  "ours",
+                  "ourselves"
+                ],
+                "answerIndex": 2,
+                "explanation": "동사 asked의 목적어로는 us를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u5-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nStudents _______ run in the hallway; it is against school rules.",
+                "options": [
+                  "must",
+                  "musts",
+                  "doesn't",
+                  "isn't",
+                  "mustn't"
+                ],
+                "answerIndex": 4,
+                "explanation": "금지 규칙은 mustn't + 동사원형으로 나타냅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u5-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nYou _______ wear a helmet; the school requires it.",
+                "options": [
+                  "musts",
+                  "must",
+                  "are",
+                  "has",
+                  "does"
+                ],
+                "answerIndex": 1,
+                "explanation": "규칙에 따른 의무에는 must + 동사원형을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u5-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nI met Tom and gave _______ the map.",
+                "options": [
+                  "he",
+                  "his",
+                  "they",
+                  "him",
+                  "we"
+                ],
+                "answerIndex": 3,
+                "explanation": "Tom을 가리키는 목적격 대명사는 him입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz4-u5-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Our teacher asked us to be quiet.",
+                  "Please give she the library book.",
+                  "Students mustn't run in the hallway; it is against school rules.",
+                  "You must wear a helmet; the school requires it.",
+                  "I met Tom and gave him the map."
+                ],
+                "answerIndex": 1,
+                "explanation": "동사 give의 간접목적어 자리에는 목적격 her가 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u5-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Please give her the library book.",
+                  "Students mustn't run in the hallway; it is against school rules.",
+                  "You must wear a helmet; the school requires it.",
+                  "Our teacher asked we to be quiet.",
+                  "I met Tom and gave him the map."
+                ],
+                "answerIndex": 3,
+                "explanation": "동사 asked의 목적어로는 us를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u5-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Students must run in the hallway; it is against school rules.",
+                  "Please give her the library book.",
+                  "Our teacher asked us to be quiet.",
+                  "You must wear a helmet; the school requires it.",
+                  "I met Tom and gave him the map."
+                ],
+                "answerIndex": 0,
+                "explanation": "금지 규칙은 mustn't + 동사원형으로 나타냅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u5-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Please give her the library book.",
+                  "Our teacher asked us to be quiet.",
+                  "You musts wear a helmet; the school requires it.",
+                  "Students mustn't run in the hallway; it is against school rules.",
+                  "I met Tom and gave him the map."
+                ],
+                "answerIndex": 2,
+                "explanation": "규칙에 따른 의무에는 must + 동사원형을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u5-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Please give her the library book.",
+                  "Our teacher asked us to be quiet.",
+                  "Students mustn't run in the hallway; it is against school rules.",
+                  "You must wear a helmet; the school requires it.",
+                  "I met Tom and gave he the map."
+                ],
+                "answerIndex": 4,
+                "explanation": "Tom을 가리키는 목적격 대명사는 him입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz4-u5-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Please give she the library book.",
+                "options": [
+                  "Please",
+                  "give",
+                  "she",
+                  "the library book."
+                ],
+                "answerIndex": 2,
+                "explanation": "동사 give의 간접목적어 자리에는 목적격 her가 옵니다."
+              },
+              {
+                "id": "buzz4-u5-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Our teacher asked we to be quiet.",
+                "options": [
+                  "Our teacher",
+                  "asked",
+                  "we",
+                  "to be quiet."
+                ],
+                "answerIndex": 2,
+                "explanation": "동사 asked의 목적어로는 us를 씁니다."
+              },
+              {
+                "id": "buzz4-u5-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Students must run in the hallway; it is against school rules.",
+                "options": [
+                  "Students",
+                  "must",
+                  "run",
+                  "in the hallway; it is against school rules."
+                ],
+                "answerIndex": 1,
+                "explanation": "금지 규칙은 mustn't + 동사원형으로 나타냅니다."
+              },
+              {
+                "id": "buzz4-u5-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "You musts wear a helmet; the school requires it.",
+                "options": [
+                  "You",
+                  "musts",
+                  "wear",
+                  "a helmet; the school requires it."
+                ],
+                "answerIndex": 1,
+                "explanation": "규칙에 따른 의무에는 must + 동사원형을 씁니다."
+              },
+              {
+                "id": "buzz4-u5-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I met Tom and gave he the map.",
+                "options": [
+                  "I met Tom and",
+                  "gave",
+                  "he",
+                  "the map."
+                ],
+                "answerIndex": 2,
+                "explanation": "Tom을 가리키는 목적격 대명사는 him입니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 6,
+          "title": "Vacation Plans",
+          "grammarFocus": "Be going to future plans and questions",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz4-u6-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nI _______ going to visit my cousins this summer.",
+                "options": [
+                  "am",
+                  "is",
+                  "are",
+                  "be",
+                  "do"
+                ],
+                "answerIndex": 0,
+                "explanation": "I am going to + 동사원형으로 미래 계획을 말합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u6-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nShe is going to _______ a tent on vacation.",
+                "options": [
+                  "takes",
+                  "taking",
+                  "take",
+                  "took",
+                  "taken"
+                ],
+                "answerIndex": 2,
+                "explanation": "be going to 뒤에는 동사원형 take가 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u6-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\n_______ they going to stay at a hotel?",
+                "options": [
+                  "Is",
+                  "Am",
+                  "Do",
+                  "Does",
+                  "Are"
+                ],
+                "answerIndex": 4,
+                "explanation": "They의 be going to 의문문은 Are they going to ...? 입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u6-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWe _______ going to go camping next weekend.",
+                "options": [
+                  "is",
+                  "are",
+                  "am",
+                  "do",
+                  "does"
+                ],
+                "answerIndex": 1,
+                "explanation": "We와 함께 쓰는 be동사는 are입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u6-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nMy brother _______ going to swim in the sea.",
+                "options": [
+                  "are",
+                  "am",
+                  "be",
+                  "is",
+                  "do"
+                ],
+                "answerIndex": 3,
+                "explanation": "3인칭 단수 brother의 미래 계획에는 is going to를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz4-u6-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She is going to take a tent on vacation.",
+                  "I is going to visit my cousins this summer.",
+                  "Are they going to stay at a hotel?",
+                  "We are going to go camping next weekend.",
+                  "My brother is going to swim in the sea."
+                ],
+                "answerIndex": 1,
+                "explanation": "I am going to + 동사원형으로 미래 계획을 말합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u6-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I am going to visit my cousins this summer.",
+                  "Are they going to stay at a hotel?",
+                  "We are going to go camping next weekend.",
+                  "She is going to takes a tent on vacation.",
+                  "My brother is going to swim in the sea."
+                ],
+                "answerIndex": 3,
+                "explanation": "be going to 뒤에는 동사원형 take가 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u6-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Is they going to stay at a hotel?",
+                  "I am going to visit my cousins this summer.",
+                  "She is going to take a tent on vacation.",
+                  "We are going to go camping next weekend.",
+                  "My brother is going to swim in the sea."
+                ],
+                "answerIndex": 0,
+                "explanation": "They의 be going to 의문문은 Are they going to ...? 입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u6-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I am going to visit my cousins this summer.",
+                  "She is going to take a tent on vacation.",
+                  "We is going to go camping next weekend.",
+                  "Are they going to stay at a hotel?",
+                  "My brother is going to swim in the sea."
+                ],
+                "answerIndex": 2,
+                "explanation": "We와 함께 쓰는 be동사는 are입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u6-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I am going to visit my cousins this summer.",
+                  "She is going to take a tent on vacation.",
+                  "Are they going to stay at a hotel?",
+                  "We are going to go camping next weekend.",
+                  "My brother are going to swim in the sea."
+                ],
+                "answerIndex": 4,
+                "explanation": "3인칭 단수 brother의 미래 계획에는 is going to를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz4-u6-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I is going to visit my cousins this summer.",
+                "options": [
+                  "I",
+                  "is",
+                  "going",
+                  "to visit my cousins this summer."
+                ],
+                "answerIndex": 1,
+                "explanation": "I am going to + 동사원형으로 미래 계획을 말합니다."
+              },
+              {
+                "id": "buzz4-u6-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She is going to takes a tent on vacation.",
+                "options": [
+                  "She is going",
+                  "to",
+                  "takes",
+                  "a tent on vacation."
+                ],
+                "answerIndex": 2,
+                "explanation": "be going to 뒤에는 동사원형 take가 옵니다."
+              },
+              {
+                "id": "buzz4-u6-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Is they going to stay at a hotel?",
+                "options": [
+                  "Is",
+                  "they",
+                  "going",
+                  "to stay at a hotel?"
+                ],
+                "answerIndex": 0,
+                "explanation": "They의 be going to 의문문은 Are they going to ...? 입니다."
+              },
+              {
+                "id": "buzz4-u6-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "We is going to go camping next weekend.",
+                "options": [
+                  "We",
+                  "is",
+                  "going",
+                  "to go camping next weekend."
+                ],
+                "answerIndex": 1,
+                "explanation": "We와 함께 쓰는 be동사는 are입니다."
+              },
+              {
+                "id": "buzz4-u6-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "My brother are going to swim in the sea.",
+                "options": [
+                  "My",
+                  "brother",
+                  "are",
+                  "going to swim in the sea."
+                ],
+                "answerIndex": 2,
+                "explanation": "3인칭 단수 brother의 미래 계획에는 is going to를 씁니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 7,
+          "title": "The World of Animals",
+          "grammarFocus": "Comparative/superlative adjectives and adverbs",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz4-u7-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nAn elephant is _______ than a goat.",
+                "options": [
+                  "bigger",
+                  "biggest",
+                  "big",
+                  "most big",
+                  "bigly"
+                ],
+                "answerIndex": 0,
+                "explanation": "than과 함께 비교할 때 bigger를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u7-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThe cheetah is one of the _______ land animals.",
+                "options": [
+                  "faster",
+                  "fast",
+                  "fastest",
+                  "more fast",
+                  "fastly"
+                ],
+                "answerIndex": 2,
+                "explanation": "one of the + 최상급 + 복수명사에는 fastest를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u7-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nA turtle moves _______ than a rabbit.",
+                "options": [
+                  "most slowly",
+                  "slow",
+                  "slowest",
+                  "more slow",
+                  "more slowly"
+                ],
+                "answerIndex": 4,
+                "explanation": "동사 moves를 비교해서 수식하므로 부사 비교급 more slowly를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u7-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThis is the _______ snake in the zoo.",
+                "options": [
+                  "longer",
+                  "longest",
+                  "long",
+                  "more long",
+                  "longly"
+                ],
+                "answerIndex": 1,
+                "explanation": "the와 함께 최상급 longest를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u7-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nEagles can fly _______ than chickens.",
+                "options": [
+                  "highest",
+                  "highly",
+                  "most high",
+                  "higher",
+                  "height"
+                ],
+                "answerIndex": 3,
+                "explanation": "than 뒤의 비교에는 부사 비교급 higher가 알맞습니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz4-u7-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "The cheetah is one of the fastest land animals.",
+                  "An elephant is biggest than a goat.",
+                  "A turtle moves more slowly than a rabbit.",
+                  "This is the longest snake in the zoo.",
+                  "Eagles can fly higher than chickens."
+                ],
+                "answerIndex": 1,
+                "explanation": "than과 함께 비교할 때 bigger를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u7-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "An elephant is bigger than a goat.",
+                  "A turtle moves more slowly than a rabbit.",
+                  "This is the longest snake in the zoo.",
+                  "The cheetah is one of the faster land animals.",
+                  "Eagles can fly higher than chickens."
+                ],
+                "answerIndex": 3,
+                "explanation": "one of the + 최상급 + 복수명사에는 fastest를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u7-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "A turtle moves most slowly than a rabbit.",
+                  "An elephant is bigger than a goat.",
+                  "The cheetah is one of the fastest land animals.",
+                  "This is the longest snake in the zoo.",
+                  "Eagles can fly higher than chickens."
+                ],
+                "answerIndex": 0,
+                "explanation": "동사 moves를 비교해서 수식하므로 부사 비교급 more slowly를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u7-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "An elephant is bigger than a goat.",
+                  "The cheetah is one of the fastest land animals.",
+                  "This is the longer snake in the zoo.",
+                  "A turtle moves more slowly than a rabbit.",
+                  "Eagles can fly higher than chickens."
+                ],
+                "answerIndex": 2,
+                "explanation": "the와 함께 최상급 longest를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u7-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "An elephant is bigger than a goat.",
+                  "The cheetah is one of the fastest land animals.",
+                  "A turtle moves more slowly than a rabbit.",
+                  "This is the longest snake in the zoo.",
+                  "Eagles can fly highest than chickens."
+                ],
+                "answerIndex": 4,
+                "explanation": "than 뒤의 비교에는 부사 비교급 higher가 알맞습니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz4-u7-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "An elephant is biggest than a goat.",
+                "options": [
+                  "An elephant",
+                  "is",
+                  "biggest",
+                  "than a goat."
+                ],
+                "answerIndex": 2,
+                "explanation": "than과 함께 비교할 때 bigger를 씁니다."
+              },
+              {
+                "id": "buzz4-u7-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "The cheetah is one of the faster land animals.",
+                "options": [
+                  "The cheetah is one of",
+                  "the",
+                  "faster",
+                  "land animals."
+                ],
+                "answerIndex": 2,
+                "explanation": "one of the + 최상급 + 복수명사에는 fastest를 씁니다."
+              },
+              {
+                "id": "buzz4-u7-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "A turtle moves most slowly than a rabbit.",
+                "options": [
+                  "A turtle",
+                  "moves",
+                  "most slowly",
+                  "than a rabbit."
+                ],
+                "answerIndex": 2,
+                "explanation": "동사 moves를 비교해서 수식하므로 부사 비교급 more slowly를 씁니다."
+              },
+              {
+                "id": "buzz4-u7-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "This is the longer snake in the zoo.",
+                "options": [
+                  "This is",
+                  "the",
+                  "longer",
+                  "snake in the zoo."
+                ],
+                "answerIndex": 2,
+                "explanation": "the와 함께 최상급 longest를 씁니다."
+              },
+              {
+                "id": "buzz4-u7-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Eagles can fly highest than chickens.",
+                "options": [
+                  "Eagles can",
+                  "fly",
+                  "highest",
+                  "than chickens."
+                ],
+                "answerIndex": 2,
+                "explanation": "than 뒤의 비교에는 부사 비교급 higher가 알맞습니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 8,
+          "title": "Fun at Home",
+          "grammarFocus": "Relative pronouns; simple present versus present progressive",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz4-u8-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nA chef is someone _______ cooks food.",
+                "options": [
+                  "who",
+                  "which",
+                  "where",
+                  "when",
+                  "whose"
+                ],
+                "answerIndex": 0,
+                "explanation": "사람을 설명하는 주격 관계대명사는 who입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u8-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThis is the show _______ my sister likes.",
+                "options": [
+                  "who",
+                  "where",
+                  "that",
+                  "when",
+                  "whose"
+                ],
+                "answerIndex": 2,
+                "explanation": "사물 show를 꾸미는 목적격 관계대명사 that이 알맞습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u8-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nListen! My parents _______ watching a movie.",
+                "options": [
+                  "is",
+                  "am",
+                  "do",
+                  "does",
+                  "are"
+                ],
+                "answerIndex": 4,
+                "explanation": "지금 영화를 보고 있는 동작에는 are watching을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u8-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nI usually _______ cartoons after school.",
+                "options": [
+                  "watching",
+                  "watch",
+                  "watches",
+                  "watched",
+                  "am watch"
+                ],
+                "answerIndex": 1,
+                "explanation": "usually는 반복적인 습관이므로 현재형 watch를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u8-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWhat _______ your brother doing right now?",
+                "options": [
+                  "are",
+                  "am",
+                  "does",
+                  "is",
+                  "do"
+                ],
+                "answerIndex": 3,
+                "explanation": "right now의 현재진행형 의문문은 What is ... doing? 입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz4-u8-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "This is the show that my sister likes.",
+                  "A chef is someone which cooks food.",
+                  "Listen! My parents are watching a movie.",
+                  "I usually watch cartoons after school.",
+                  "What is your brother doing right now?"
+                ],
+                "answerIndex": 1,
+                "explanation": "사람을 설명하는 주격 관계대명사는 who입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u8-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "A chef is someone who cooks food.",
+                  "Listen! My parents are watching a movie.",
+                  "I usually watch cartoons after school.",
+                  "This is the show who my sister likes.",
+                  "What is your brother doing right now?"
+                ],
+                "answerIndex": 3,
+                "explanation": "사물 show를 꾸미는 목적격 관계대명사 that이 알맞습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u8-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Listen! My parents is watching a movie.",
+                  "A chef is someone who cooks food.",
+                  "This is the show that my sister likes.",
+                  "I usually watch cartoons after school.",
+                  "What is your brother doing right now?"
+                ],
+                "answerIndex": 0,
+                "explanation": "지금 영화를 보고 있는 동작에는 are watching을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u8-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "A chef is someone who cooks food.",
+                  "This is the show that my sister likes.",
+                  "I usually watching cartoons after school.",
+                  "Listen! My parents are watching a movie.",
+                  "What is your brother doing right now?"
+                ],
+                "answerIndex": 2,
+                "explanation": "usually는 반복적인 습관이므로 현재형 watch를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz4-u8-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "A chef is someone who cooks food.",
+                  "This is the show that my sister likes.",
+                  "Listen! My parents are watching a movie.",
+                  "I usually watch cartoons after school.",
+                  "What are your brother doing right now?"
+                ],
+                "answerIndex": 4,
+                "explanation": "right now의 현재진행형 의문문은 What is ... doing? 입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz4-u8-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "A chef is someone which cooks food.",
+                "options": [
+                  "A chef is",
+                  "someone",
+                  "which",
+                  "cooks food."
+                ],
+                "answerIndex": 2,
+                "explanation": "사람을 설명하는 주격 관계대명사는 who입니다."
+              },
+              {
+                "id": "buzz4-u8-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "This is the show who my sister likes.",
+                "options": [
+                  "This is the",
+                  "show",
+                  "who",
+                  "my sister likes."
+                ],
+                "answerIndex": 2,
+                "explanation": "사물 show를 꾸미는 목적격 관계대명사 that이 알맞습니다."
+              },
+              {
+                "id": "buzz4-u8-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Listen! My parents is watching a movie.",
+                "options": [
+                  "Listen! My",
+                  "parents",
+                  "is",
+                  "watching a movie."
+                ],
+                "answerIndex": 2,
+                "explanation": "지금 영화를 보고 있는 동작에는 are watching을 씁니다."
+              },
+              {
+                "id": "buzz4-u8-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I usually watching cartoons after school.",
+                "options": [
+                  "I",
+                  "usually",
+                  "watching",
+                  "cartoons after school."
+                ],
+                "answerIndex": 2,
+                "explanation": "usually는 반복적인 습관이므로 현재형 watch를 씁니다."
+              },
+              {
+                "id": "buzz4-u8-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "What are your brother doing right now?",
+                "options": [
+                  "What",
+                  "are",
+                  "your",
+                  "brother doing right now?"
+                ],
+                "answerIndex": 1,
+                "explanation": "right now의 현재진행형 의문문은 What is ... doing? 입니다."
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }
