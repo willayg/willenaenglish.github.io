@@ -567,7 +567,7 @@ function createShell(){
  '<div class="sgt-target"><strong>Units</strong><div id="sgtUnits">Choose a textbook.</div></div>'+
  '<fieldset class="sgt-modes"><legend>Required steps</legend>'+
  Object.entries(types).map(([key,label])=>'<label><input type="checkbox" name="sgtMode" value="'+key+'" checked> '+label+'</label>').join('')+'</fieldset>'+
- '<div class="sgt-actions"><button type="button" id="sgtPreviewProgress" class="control">Check class progress</button></div><div id="sgtPreAssignmentReport" aria-live="polite"></div>'+
+ '<div id="sgtPreAssignmentReport" aria-live="polite"></div>'+
  '<div class="sgt-actions"><button type="submit" id="sgtCreate" class="control ua-primary">Assign selected units</button></div><div data-sg-status role="status"></div></form>';
 }
 async function mountCreate(root){
@@ -575,21 +575,42 @@ async function mountCreate(root){
  try{
   const [cls,b]=await Promise.all([classes(),books()]);
   classEl.innerHTML='<option value="">Choose a class</option>'+cls.map(c=>'<option value="'+escapeHtml(c.name)+'">'+escapeHtml(c.display_name||c.name)+'</option>').join('');
-  bookEl.innerHTML=options(b,'Choose a textbook');window.WillenaGeniusBooks?.bind({classSelect:classEl,bookSelect:bookEl,books:()=>state.books||[],onChange:()=>{state.units=[];unitHost.textContent='Choose a textbook.'}});$('#sgtDue',root).value=dateDefault();
-  bookEl.onchange=async()=>{
-   unitHost.textContent='Loading units…';
-   try{
-    const all=await units(bookEl.value);state.units=all;
-    unitHost.innerHTML=all.length?all.map(u=>'<label class="sgt-unit"><input type="checkbox" data-sg-unit="'+escapeHtml(u.id)+'"><span>Unit '+escapeHtml(u.unit_number)+' · '+escapeHtml(u.title||'')+'</span></label>').join(''):'No published units for this textbook.';
-   }catch(e){status(root,e.message)}
+  bookEl.innerHTML=options(b,'Choose a textbook');
+  let previewRevision=0,previewTimer=null,unitRevision=0;
+  const schedulePreview=()=>{
+   const revision=++previewRevision;
+   clearTimeout(previewTimer);
+   const host=$('#sgtPreAssignmentReport',root);
+   if(!host)return;
+   const selected=root.querySelector('[data-sg-unit]:checked');
+   if(!classEl.value||!bookEl.value||!selected){host.replaceChildren();return}
+   host.textContent='Loading class progress…';
+   previewTimer=setTimeout(()=>void loadPreview(revision),240);
   };
-  $('#sgtPreviewProgress',root).onclick=async()=>{
+  window.WillenaGeniusBooks?.bind({classSelect:classEl,bookSelect:bookEl,books:()=>state.books||[],onChange:()=>{
+    ++unitRevision;state.units=[];unitHost.textContent='Choose a textbook.';schedulePreview();
+  }});
+  classEl.addEventListener('change',schedulePreview);
+  unitHost.addEventListener('change',event=>{if(event.target.matches('[data-sg-unit]'))schedulePreview()});
+  $('#sgtDue',root).value=dateDefault();
+  bookEl.onchange=async()=>{
+   const revision=++unitRevision,bookId=bookEl.value;
+   unitHost.textContent=bookId?'Loading units…':'Choose a textbook.';
+   schedulePreview();
+   if(!bookId)return;
+   try{
+    const all=await units(bookId);
+    if(revision!==unitRevision||bookEl.value!==bookId||!unitHost.isConnected)return;
+    state.units=all;
+    unitHost.innerHTML=all.length?all.map(u=>'<label class="sgt-unit"><input type="checkbox" data-sg-unit="'+escapeHtml(u.id)+'"><span>Unit '+escapeHtml(u.unit_number)+' · '+escapeHtml(u.title||'')+'</span></label>').join(''):'No published units for this textbook.';
+   }catch(e){if(revision===unitRevision)status(root,e.message)}
+  };
+  async function loadPreview(revision){
    const host=$('#sgtPreAssignmentReport',root);
    const className=classEl.value,bookId=bookEl.value,
     chosen=[...root.querySelectorAll('[data-sg-unit]:checked')].map(x=>String(x.dataset.sgUnit));
-   if(!className||!bookId||!chosen.length){host.textContent='Choose a class, textbook and at least one unit first.';return}
+   if(!className||!bookId||!chosen.length){host.replaceChildren();return}
    host.textContent='Checking previous student results…';
-   const button=$('#sgtPreviewProgress',root);button.disabled=true;
    try{
     const records=await Promise.allSettled([rpc('sg_homework_list_v1',{p_history:false}),rpc('sg_homework_list_v1',{p_history:true})]);
     const assignments=[...new Map(records.flatMap(r=>r.status==='fulfilled'?(r.value.assignments||[]):[]).filter(a=>
@@ -602,11 +623,11 @@ async function mountCreate(root){
       if(!name||!total)return;
       const prev=people.get(name)||{name,done:0,total:0};prev.done+=Math.min(total,Math.max(0,done));prev.total+=total;people.set(name,prev)
     })});
+    if(revision!==previewRevision||!host.isConnected)return;
     window.WillenaGeniusHomeworkCard?.classReadiness(host,[...people.values()].map(p=>({name:p.name,percent:100*p.done/p.total})),
       'Prior Sentence Genius homework results for the selected textbook and units (not a new test).');
-   }catch(error){host.textContent='Previous progress unavailable: '+error.message}
-   finally{button.disabled=false}
-  };
+   }catch(error){if(revision===previewRevision&&host.isConnected)host.textContent='Previous progress unavailable: '+error.message}
+  }
   $('#sgtAssignForm',root).onsubmit=async ev=>{
    ev.preventDefault();const btn=$('#sgtCreate',root);
    const className=classEl.value,book=state.books.find(x=>x.id===bookEl.value),
