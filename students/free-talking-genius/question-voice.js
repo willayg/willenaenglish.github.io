@@ -19,6 +19,9 @@ export function createFreeTalkingVoice({host,getToken}){
  const label=host.querySelector('[data-ft-voice-status]');
  const modelLabel=host.querySelector('[data-ft-voice-model]');
  const preloadLabel=host.querySelector('[data-ft-voice-preload]');
+ const characterName=host.querySelector('[data-ft-character-name]');
+ function updateCharacterName(){if(characterName)characterName.textContent=activeVoice()==='bunny-v3'?'AI Lili':'AI Willi'}
+ updateCharacterName();
  const isElevenVoice=v=>['bunny','jock','sgt-steve','lily'].includes(v);
  function preloadingText(text){if(preloadLabel)preloadLabel.textContent=text||''}
  function showModel(file){
@@ -146,6 +149,7 @@ export function createFreeTalkingVoice({host,getToken}){
   if(chosen===pickerVoice&&voiceConfirmed)return;
   pickerVoice=chosen;
   voiceConfirmed=true;
+  updateCharacterName();
   try{localStorage.setItem(PREFERENCE_KEY,chosen)}catch(_){}
   preload(preferredUnit);
   if(selected)void select(selected,{autoplay:true});
