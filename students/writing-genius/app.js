@@ -569,6 +569,8 @@ async function bootstrap(){
     if(match)openEditor(match,true);else show('home');
   }catch(error){
     show('home');notice(error.message+' 로그인 페이지에서 다시 시도해 주세요.',true);
+  }finally{
+    window.WillenaHomeworkDeepLinkSplash?.hide();
   }
 }
 let diaryStep=1,correctionIndex=0,corrections=[],diaryMode='write';
