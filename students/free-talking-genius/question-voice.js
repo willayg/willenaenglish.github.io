@@ -9,8 +9,9 @@ export function createFreeTalkingVoice({host,getToken}){
  let questionBank=[],preferredUnit=1,preloadEpoch=0,destroyed=false,voiceConfirmed=false;
  // Exactly one background preload at a time, even after switching units or voices.
  let preloadTail=Promise.resolve();
- const PRELOAD_CACHE_GAP_MS=700;
- const PRELOAD_GENERATION_GAP_MS=1800;
+ const PRELOAD_CACHE_GAP_MS=120;
+ const PRELOAD_CACHE_CONCURRENCY=3;
+ const PRELOAD_GENERATION_GAP_MS=300;
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
  const VOICES=new Set(['marin','bunny-v3']);
@@ -214,20 +215,26 @@ export function createFreeTalkingVoice({host,getToken}){
     }
    }
    render(' · '+cachedJobs.length+' to load · '+missingJobs.length+' missing');
-   // Stage 1: R2 cached clips only, sequential, paced. No paid generation
-   // starts while the saved recordings are being loaded into the browser.
-   let loaded=0,loadFailures=0;
-   for(const job of cachedJobs){
-    if(!current())return;
-    try{await obtain(job.id,job.voice);loaded++}
-    catch(e){
-     loadFailures++;
-     console.warn('[Free Talking] cached clip preload',job.voice,String(e?.message||e).slice(0,120));
+   // Stage 1: existing R2 recordings are safe to download in a small
+   // parallel pool. Keep the selected unit at the front; never use paid TTS here.
+   let loaded=0,loadFailures=0,cacheCursor=0;
+   async function loadCachedWorker(){
+    while(current()&&cacheCursor<cachedJobs.length){
+     const job=cachedJobs[cacheCursor++];
+     try{await obtain(job.id,job.voice);loaded++}
+     catch(e){
+      loadFailures++;
+      console.warn('[Free Talking] cached clip preload',job.voice,String(e?.message||e).slice(0,120));
+     }
+     render(' · loading saved audio '+loaded+'/'+cachedJobs.length+
+      (loadFailures?' · '+loadFailures+' errors':''));
+     if(!await gap(PRELOAD_CACHE_GAP_MS))return;
     }
-    render(' · loading saved audio '+loaded+'/'+cachedJobs.length+
-     (loadFailures?' · '+loadFailures+' errors':''));
-    if(!await gap(PRELOAD_CACHE_GAP_MS))return;
    }
+   await Promise.all(Array.from(
+    {length:Math.min(PRELOAD_CACHE_CONCURRENCY,cachedJobs.length)},
+    ()=>loadCachedWorker()));
+   if(!current())return;
    if(!missingJobs.length){
     render(' · '+loaded+' saved clips loaded'+(loadFailures?' · '+loadFailures+' load errors':''));
     return;
