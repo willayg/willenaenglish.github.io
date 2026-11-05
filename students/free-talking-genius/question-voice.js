@@ -88,11 +88,14 @@ export function createFreeTalkingVoice({host,getToken}){
    let response=await call(await getToken());
    if(response.status===401)response=await call(await getToken(true));
    const data=await response.json().catch(()=>null);
-   if(!response.ok||data?.success!==true)throw Error(data?.error||'R2 prewarm failed');
+   if(!response.ok||data?.success!==true){
+    const reason=data?.code||data?.cache_status||('HTTP_'+response.status);
+    throw Error(reason+': '+(data?.error||'R2 prewarm failed'));
+   }
    if(data.voice!==requestedVoice)throw Error('Warm voice mismatch');
    if(expectedModel&&data.model!==expectedModel)throw Error('Warm model mismatch');
    if(!data.stored||!['hit','generated_saved'].includes(data.cache_status))
-    throw Error('Audio generated but R2 persistence was not verified for '+voice);
+    throw Error('R2_WRITE_UNVERIFIED: generated clip was not saved; stopping automatic retries to prevent duplicate charges');
    return data.cache_status;
   })().finally(()=>warming.delete(key));
   warming.set(key,work);
@@ -155,14 +158,15 @@ export function createFreeTalkingVoice({host,getToken}){
       const message=String(e?.message||e).slice(0,160);
       failures.push(job);
       console.warn('[Free Talking] cache preload',job.voice,'pass '+(pass+1),message);
-      if(/R2 cache temporarily unavailable|R2_LOOKUP_UNAVAILABLE|Student sign-in required/i.test(message)){
-       preloadingText('R2/auth unavailable · preloading paused (audio already cached is safe)');
+      if(/R2 cache temporarily unavailable|R2_LOOKUP_UNAVAILABLE|R2_WRITE_UNVERIFIED|Student sign-in required|401|403/i.test(message)){
+       preloadingText('R2/audio saving issue · preloading paused to prevent duplicate charges');
        return;
       }
      }
      render();
      // Allow the first unit to load comfortably; pause more on retries.
-     await sleep(pass===0?350:1200*pass);
+     // Extra breathing room helps avoid provider throttling during large batches.
+     await sleep(pass===0?800:2000*pass);
     }
     if(failures.length&&pass<2)await sleep(3000*(pass+1));
    }
