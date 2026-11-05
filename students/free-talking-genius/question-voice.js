@@ -4,9 +4,11 @@ export function createFreeTalkingVoice({host,getToken}){
  const audio=new Audio();audio.preload='auto';
  let selected='',version=0,currentUrl='',playing=false,loadedVoice='';
  const stored=new Map();
+ const inflight=new Map();
+ let questionBank=[],preferredUnit=1,preloadEpoch=0,destroyed=false;
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
- const VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar','bunny','jock','sgt-steve']);
+ const VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar','bunny','jock','sgt-steve','lily']);
  const PREFERENCE_KEY='willena-free-talking-voice-v1';
  try{
   const saved=localStorage.getItem(PREFERENCE_KEY);
@@ -15,6 +17,9 @@ export function createFreeTalkingVoice({host,getToken}){
  const activeVoice=()=>voicePicker&&VOICES.has(voicePicker.value)?voicePicker.value:'marin';
  const label=host.querySelector('[data-ft-voice-status]');
  const modelLabel=host.querySelector('[data-ft-voice-model]');
+ const preloadLabel=host.querySelector('[data-ft-voice-preload]');
+ const isElevenVoice=v=>['bunny','jock','sgt-steve','lily'].includes(v);
+ function preloadingText(text){if(preloadLabel)preloadLabel.textContent=text||''}
  function showModel(file){
   if(!modelLabel)return;
   const model=String(file?.model||'');
@@ -53,6 +58,45 @@ export function createFreeTalkingVoice({host,getToken}){
   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
   return {url:URL.createObjectURL(new Blob([bytes],{type:data.content_type==='audio/wav'?'audio/wav':'audio/mpeg'})),owned:true,...details};
  }
+ async function obtain(questionId,voice){
+  const cacheId=questionId+'|'+voice;
+  if(stored.has(cacheId))return stored.get(cacheId);
+  if(inflight.has(cacheId))return inflight.get(cacheId);
+  const work=fetchVoice(questionId,voice).then(file=>{
+   if(destroyed){if(file.owned)URL.revokeObjectURL(file.url);return file}
+   stored.set(cacheId,file);
+   return file;
+  }).finally(()=>inflight.delete(cacheId));
+  inflight.set(cacheId,work);
+  return work;
+ }
+ function preload(unit=preferredUnit){
+  preferredUnit=Number(unit)||1;
+  const epoch=++preloadEpoch,chosen=activeVoice();
+  if(!isElevenVoice(chosen)||!questionBank.length){preloadingText('');return}
+  const ordered=[...questionBank].sort((a,b)=>
+   (Number(a.unit_number)===preferredUnit?0:1)-(Number(b.unit_number)===preferredUnit?0:1)
+   || Number(a.unit_number)-Number(b.unit_number)||Number(a.question_number)-Number(b.question_number));
+  const total=ordered.length;let done=0,failed=0,cursor=0;
+  preloadingText(chosen+' · loading 0/'+total+' questions…');
+  async function worker(){
+   while(epoch===preloadEpoch&&!destroyed&&activeVoice()===chosen){
+    const index=cursor++;if(index>=ordered.length)return;
+    const id=String(ordered[index].id||'');
+    if(!id)continue;
+    try{await obtain(id,chosen)}catch(e){failed++;console.warn('[Free Talking] voice preload',chosen,String(e?.message||e).slice(0,120))}
+    done++;
+    if(epoch===preloadEpoch){
+     const unitDone=ordered.slice(0,done).filter(q=>Number(q.unit_number)===preferredUnit).length;
+     preloadingText(chosen+' · '+done+'/'+total+' ready'+(failed?' · '+failed+' failed':''));
+    }
+   }
+  }
+  void Promise.all([worker(),worker()]).then(()=>{
+   if(epoch===preloadEpoch&&!destroyed)preloadingText(chosen+' · '+(total-failed)+'/'+total+' prepared'+(failed?' · retry failed voices by tapping Listen':''));
+  });
+ }
+ function setQuestionBank(questions,unit=1){questionBank=Array.isArray(questions)?questions:[];preload(unit)}
  async function play(){
   if(!currentUrl||!selected)return;
   try{
@@ -76,9 +120,8 @@ export function createFreeTalkingVoice({host,getToken}){
   if(!selected)return;
   try{
    const requestedVoice=activeVoice();
-   const cacheId=selected+'|'+requestedVoice;
-   let file=stored.get(cacheId);
-   if(!file){file=await fetchVoice(selected,requestedVoice);if(v!==version){if(file.owned)URL.revokeObjectURL(file.url);return}stored.set(cacheId,file)}
+   const file=await obtain(selected,requestedVoice);
+   if(v!==version)return
    if(v!==version)return;
    // Never advertise or play a different voice than the one requested.
    if(String(file.voice||'').toLowerCase()!==requestedVoice)throw Error('Voice mismatch: selected '+requestedVoice+', received '+String(file.voice||'unknown'));
@@ -111,6 +154,7 @@ export function createFreeTalkingVoice({host,getToken}){
   const chosen=activeVoice();
   if(chosen===loadedVoice)return;
   try{localStorage.setItem(PREFERENCE_KEY,chosen)}catch(_){}
+  preload(preferredUnit);
   if(selected)void select(selected,{autoplay:true});
  }
  voicePicker?.addEventListener('input',changeVoice);
@@ -122,9 +166,10 @@ export function createFreeTalkingVoice({host,getToken}){
   if(selected){const id=selected;await select(id,{autoplay:true})}
  });
  function destroy(){
+  destroyed=true;preloadEpoch++;
   stop();
   for(const file of stored.values())if(file.owned)URL.revokeObjectURL(file.url);
   stored.clear();
  }
- return {select,stop,destroy};
+ return {select,stop,destroy,preload,setQuestionBank};
 }
