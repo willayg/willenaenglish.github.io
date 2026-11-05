@@ -149,7 +149,8 @@ export async function onRequestPost({request,env,context}){
   // Isolated comparison option: only Bunny, only these explicitly allowed models.
   if(compareModel&&!(chosenVoice==='bunny'&&['eleven_v3','eleven_multilingual_v2'].includes(compareModel)))
    return json(400,{success:false,error:'Unsupported comparison model or voice'});
-  const modelByVoice={'bunny-v3':'eleven_v3','bunny-multilingual-v2':'eleven_multilingual_v2'};
+  const modelByVoice={'bunny-v3':'eleven_v3','bunny-multilingual-v2':'eleven_multilingual_v2',
+   jock:'eleven_v3','sgt-steve':'eleven_v3',lily:'eleven_v3'};
   const elevenModel=compareModel||modelByVoice[chosenVoice]||ELEVEN_MODEL;
   const elevenId=ELEVEN_VOICES[chosenVoice]||null;
   if(chosenVoice&&!elevenId&&!REALTIME_VOICES.has(chosenVoice))return json(400,{success:false,error:'Unsupported voice'});
