@@ -30,6 +30,7 @@ function homeworkForm(app,body){
  (app==='writing'?'<label>Writing instructions / topic <textarea class="control" name="prompt" rows="4" maxlength="1500" placeholder="What should students write about?"></textarea></label>':'')+
  '<label>Due date <input class="control" name="due" type="date" required></label>'+ 
  '<label>Repeat <select class="control" name="repeat"><option value="none">One time</option><option value="daily">Every day</option><option value="weekly">Every week</option></select></label>'+
+ '<div><button type="button" class="control" id="uaPreviewClassProgress">Check class progress</button><div id="uaClassProgressReport" aria-live="polite"></div></div>'+
  '<button class="control ua-primary" type="submit">Assign homework →</button><div id="uaNewHomeworkStatus" role="status"></div></form>';
  const form=body.querySelector('form'),date=form.elements.due;
  if(app==='writing'){
@@ -93,6 +94,39 @@ function homeworkForm(app,body){
  }
 
  const tomorrow=new Date(Date.now()+86400000);date.value=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
+ form.querySelector('#uaPreviewClassProgress').onclick=async()=>{
+  const host=form.querySelector('#uaClassProgressReport'),button=form.querySelector('#uaPreviewClassProgress');
+  const klass=form.elements['class'].value,kind=form.elements.kind.value;
+  if(!klass){host.textContent='Choose a class before checking progress.';return}
+  if(app==='writing'&&kind==='sentence'&&(!form.elements.book.value||!form.elements.unit.value)){host.textContent='Choose a textbook and unit first.';return}
+  button.disabled=true;host.textContent='Checking previous class assignments…';
+  try{
+   const route='/.netlify/functions/homework_api?action=list_assignments';
+   const response=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch(route,{credentials:'include'}):fetch(route,{credentials:'include'}));
+   const data=await response.json();if(!response.ok||!data.success)throw Error('Assignment records unavailable');
+   const candidates=(data.assignments||[]).filter(a=>
+     a.class===klass&&a.list_meta?.creative_type===(app==='writing'?'writing_genius':'puzzles')&&a.list_meta?.kind===kind&&
+     (app!=='writing'||kind!=='sentence'||(String(a.list_meta?.book_id)===form.elements.book.value&&String(a.list_meta?.unit_id)===form.elements.unit.value))
+   ).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+   const latest=candidates[0],rows=[];
+   if(latest){
+    const endpoint=app==='puzzles'?'teacher_puzzle_homework_progress_v1':kind==='sentence'?'teacher_writing_sentence_homework_progress_v1':'teacher_creative_writing_progress_v1';
+    const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+    if(!token)throw Error('Teacher sign-in required');
+    const res=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/'+endpoint,{
+      method:'POST',headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
+    if(!res.ok)throw Error('Previous progress unavailable ('+res.status+')');
+    const all=await res.json(),result=(Array.isArray(all)?all:[]).find(a=>String(a.id)===String(latest.id));
+    for(const st of result?.student_rows||[]){
+      const pct=kind==='sentence'?Number(st.progress_percent):st.completed===true?100:0;
+      rows.push({name:st.name||st.korean_name,percent:Number.isFinite(pct)?pct:null});
+    }
+   }
+   window.WillenaGeniusHomeworkCard?.classReadiness(host,rows,
+     'Previous '+(app==='writing'?'Writing Genius':'Puzzles')+' homework completion for this class and activity; not a prediction.');
+  }catch(error){host.textContent='Previous class progress unavailable: '+error.message}
+  finally{button.disabled=false}
+ };
  form.onsubmit=async e=>{
   e.preventDefault();
   const button=form.querySelector('button[type="submit"]'),status=form.querySelector('#uaNewHomeworkStatus');
