@@ -8,7 +8,7 @@ export function createFreeTalkingVoice({host,getToken}){
  let questionBank=[],preferredUnit=1,preloadEpoch=0,destroyed=false,voiceConfirmed=false;
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
- const VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar','bunny','bunny-v3','bunny-multilingual-v2','jock','sgt-steve','lily']);
+ const VOICES=new Set(['marin','bunny-v3']);
  const PREFERENCE_KEY='willena-free-talking-voice-v1';
  try{
   const saved=localStorage.getItem(PREFERENCE_KEY);
@@ -43,14 +43,11 @@ export function createFreeTalkingVoice({host,getToken}){
  audio.addEventListener('pause',()=>{setPlaying(false);if(!audio.ended)status('다시 듣기를 눌러 주세요.')});
  audio.addEventListener('ended',()=>{setPlaying(false);status('다시 듣기를 누르면 질문을 또 들을 수 있어요.')});
  audio.addEventListener('error',()=>{setPlaying(false);status('음성을 불러오지 못했어요. 질문을 읽고 답해 주세요.')});
- const modelForVoice=voice=>voice==='bunny-v3'?'eleven_v3':
-  voice==='bunny-multilingual-v2'?'eleven_multilingual_v2':
-  ['jock','sgt-steve','lily'].includes(voice)?'eleven_v3':null;
+ const modelForVoice=voice=>voice==='bunny-v3'?'eleven_v3':null;
  async function fetchVoice(questionId,voice){
   const expectedModel=modelForVoice(voice);
-  const bunnyVariant=voice==='bunny-v3'||voice==='bunny-multilingual-v2';
-  const requestedVoice=bunnyVariant?'bunny':voice;
-  const requestBody={question_id:questionId,voice:requestedVoice,...(bunnyVariant?{compare_model:expectedModel}:{})};
+  const requestedVoice=voice;
+  const requestBody={question_id:questionId,voice:requestedVoice};
   const call=async access=>fetch('/api/free-talking-audio',{
    method:'POST',credentials:'include',cache:'no-store',
    headers:{'Content-Type':'application/json',Authorization:'Bearer '+access},
@@ -116,7 +113,7 @@ export function createFreeTalkingVoice({host,getToken}){
    if(v!==version)return
    if(v!==version)return;
    // Never advertise or play a different voice than the one requested.
-   const actualVoice=['bunny-v3','bunny-multilingual-v2'].includes(requestedVoice)?'bunny':requestedVoice;
+   const actualVoice=requestedVoice;
    if(String(file.voice||'').toLowerCase()!==actualVoice)throw Error('Voice mismatch: selected '+actualVoice+', received '+String(file.voice||'unknown'));
    if(modelForVoice(requestedVoice)&&file.model!==modelForVoice(requestedVoice))throw Error('Model mismatch: expected '+modelForVoice(requestedVoice));
    currentUrl=file.url;
