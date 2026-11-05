@@ -18,7 +18,7 @@ export async function generateQuestionWav({apiKey,text,model='gpt-realtime-2.1-m
  const chunks=[];
  let bytes=0,settled=false;
  const result=await new Promise((resolve,reject)=>{
-  const timeout=setTimeout(()=>finish(new Error('Realtime audio timed out')),40000);
+  const timeout=setTimeout(()=>finish(new Error('Realtime audio timed out')),11000);
   const finish=(error,value)=>{
    if(settled)return;settled=true;clearTimeout(timeout);
    try{socket.close(1000,'done')}catch{}
@@ -33,7 +33,7 @@ export async function generateQuestionWav({apiKey,text,model='gpt-realtime-2.1-m
     if(data.type==='session.created'){
      socket.send(JSON.stringify({type:'session.update',session:{
       type:'realtime',output_modalities:['audio'],instructions,
-      audio:{output:{format:{type:'audio/pcm'},voice}}
+      audio:{output:{format:{type:'audio/pcm',rate:24000},voice}}
      }}));
     }else if(data.type==='session.updated'){
      socket.send(JSON.stringify({type:'response.create',response:{
