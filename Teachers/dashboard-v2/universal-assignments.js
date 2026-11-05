@@ -15,8 +15,8 @@ function showWordPanel(body){const panel=document.querySelector('[data-vocab-sub
 
 
 const newHomeworkApps={
- writing:{heading:'Assign writing homework',types:[['diary','Daily diary'],['topic','Topic writing'],['sentence','Sentence writing (textbook)']]},
- puzzles:{heading:'Assign puzzle homework',types:[['boggle','Boggle'],['wordsearch','Word Search'],['crossword','Crossword'],['mixmatch','Mix & Match']]}
+ writing:{heading:'Assign writing mission',types:[['diary','Daily diary'],['topic','Topic writing'],['sentence','Sentence writing (textbook)']]},
+ puzzles:{heading:'Assign puzzle mission',types:[['boggle','Boggle'],['wordsearch','Word Search'],['crossword','Crossword'],['mixmatch','Mix & Match']]}
 };
 function homeworkForm(app,body){
  const spec=newHomeworkApps[app];
@@ -31,7 +31,7 @@ function homeworkForm(app,body){
  '<label>Due date <input class="control" name="due" type="date" required></label>'+ 
  '<label>Repeat <select class="control" name="repeat"><option value="none">One time</option><option value="daily">Every day</option><option value="weekly">Every week</option></select></label>'+
  '<div><div id="uaClassProgressReport" aria-live="polite"></div></div>'+
- '<button class="control ua-primary" type="submit">Assign homework →</button><div id="uaNewHomeworkStatus" role="status"></div></form>';
+ '<button class="control ua-primary" type="submit">Assign mission →</button><div id="uaNewHomeworkStatus" role="status"></div></form>';
  const form=body.querySelector('form'),date=form.elements.due;
  if(app==='writing'){
   const fields=body.querySelector('#uaSentenceBookFields'),message=body.querySelector('#uaSentenceBookStatus');
@@ -322,7 +322,7 @@ function render(){
  root.innerHTML=
  '<div class="ua-app-tabs" role="tablist" aria-label="Assignment app">'+apps.map(a=>'<button type="button" role="tab" aria-selected="'+(active===a.id)+'" class="ua-app-tab'+(active===a.id?' active':'')+'" data-ua-tab="'+a.id+'"><span class="ua-app-icon" aria-hidden="true">'+a.icon+'</span><span class="ua-app-label"><b>'+a.label+'</b></span></button>').join('')+'</div>'+
  '<section class="ua-workspace" aria-label="'+selected.label+' assignments"><div class="ua-section-heading"><div><div class="ua-eyebrow">'+(['my','all','calendar'].includes(active)?'REVIEW HOMEWORK':'CREATE & MANAGE')+'</div><h3>'+selected.label+'</h3></div><span class="ua-section-count" id="uaStatus">'+(active==='naesin'?groups.length+' exam groups':active==='word'?'Word Genius homework':active==='grammar'?'Connected · Grammar Genius':active==='sentence'?'Connected · Sentence Genius':active==='writing'?'Writing homework':active==='puzzles'?'Puzzle homework':'Homework overview')+'</span></div>'+
- (['my','all','calendar'].includes(active)?'':'<div class="ua-subtabs" role="tablist" aria-label="Homework workflow"><button type="button" role="tab" data-ua-sub="manage" class="ua-subtab'+(sub==='manage'?' active':'')+'" aria-selected="'+(sub==='manage')+'">Manage Homework</button><button type="button" role="tab" data-ua-sub="create" class="ua-subtab'+(sub==='create'?' active':'')+'" aria-selected="'+(sub==='create')+'">Assign Homework</button></div>')+
+ (['my','all','calendar'].includes(active)?'':'<div class="ua-subtabs" role="tablist" aria-label="Homework workflow"><button type="button" role="tab" data-ua-sub="manage" class="ua-subtab'+(sub==='manage'?' active':'')+'" aria-selected="'+(sub==='manage')+'">Manage Homework</button><button type="button" role="tab" data-ua-sub="create" class="ua-subtab'+(sub==='create'?' active':'')+'" aria-selected="'+(sub==='create')+'">Assign Mission</button></div>')+
  '<div class="ua-app-body" id="uaAppBody"></div></section>';
  const nextStrip=root.querySelector('.ua-app-tabs');if(nextStrip){nextStrip.scrollLeft=previousScroll;nextStrip.addEventListener('scroll',()=>{try{const value=JSON.parse(sessionStorage.getItem(stateKey)||'{}');value.scrollLeft=nextStrip.scrollLeft;sessionStorage.setItem(stateKey,JSON.stringify(value))}catch{}},{passive:true})}
  root.querySelectorAll('[data-ua-tab]').forEach(b=>b.addEventListener('click',()=>{const next=b.dataset.uaTab;if(!['my','all','calendar'].includes(next))subviews[next]=subviews[active];active=next;remember();render()}));
