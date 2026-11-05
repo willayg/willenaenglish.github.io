@@ -157,7 +157,7 @@
     const teacher=a.teacher_name||a.created_by_name||'';
     const shared=window.WillenaGeniusHomeworkCard;
     if(!shared)return '<div class="empty">Homework card component unavailable.</div>';
-    return shared.card({id:a.id,className:a.class,task,dueAt:a.due_at,teacher,createdBy:a.created_by,
+    return shared.card({id:a.id,className:a.class,task,dueAt:a.due_at,teacher,createdBy:a.created_by,qrUrl:'https://students.willenaenglish.com/students/vocab-study/?open=wordtest&assignment_id='+encodeURIComponent(a.id),
       progressLabel:'Student progress',body:cardSummaryMarkup(a)+
       '<button type="button" class="control ghc-open" data-assignment-id="'+esc(a.id)+'">Open details</button>'});
   }
