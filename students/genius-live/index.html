@@ -35,15 +35,15 @@ function finish(){return '<div class="grid"><section class="card pink"><h1>Game 
 function paint(){const key=state?state.status+"|"+state.questionNumber+"|"+state.answeredCount+"|"+state.players.length+"|"+state.myAnswer+"|"+state.myPoints:"join";if(last===key)return;last=key;$("#app").innerHTML=!state?joinForm():state.status==="lobby"?lobby():["question","reveal"].includes(state.status)?quiz():finish();
  const join=$("#joinForm");if(join)join.onsubmit=e=>{e.preventDefault();pin=$("#pinInput").value.trim();joinGame()};
  document.querySelectorAll("[data-answer]").forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));
- const leave=$("#leave");if(leave)leave.onclick=()=>{pin="";state=null;last="";sessionStorage.removeItem("genius.live.student.pin");paint()};
+ const leave=$("#leave");if(leave)leave.onclick=()=>{pin="";state=null;last="";sessionStorage.removeItem("genius.live.student.pin");sessionStorage.removeItem("genius.live.student.joined");paint()};
  tick()}
-async function joinGame(){if(working)return;working=true;notice("Joining…");try{state=await api("join",{pin});sessionStorage.setItem("genius.live.student.pin",pin);last="";notice("");paint()}catch(e){notice(e.message,true);if(e.status===401)showLogin()}finally{working=false}}
+async function joinGame(){if(working)return;working=true;notice("Joining…");try{state=await api("join",{pin});sessionStorage.setItem("genius.live.student.pin",pin);sessionStorage.setItem("genius.live.student.joined","1");last="";notice("");paint()}catch(e){notice(e.message,true);if(e.status===401)showLogin()}finally{working=false}}
 function showLogin(){const link=document.createElement("a");link.href="/students/signin.html?redirect="+encodeURIComponent(location.pathname+location.search);link.textContent=" Sign in to Willena";$("#message").append(" · ",link)}
-async function refresh(){if(!pin||working)return;try{const fresh=await api("state",{pin});state=fresh;notice("");paint()}catch(e){if(e.status===401){notice("Please sign in to your Willena account.",true);showLogin()}else if(/not found|expired|cancelled|not joined/i.test(e.message)){state=null;last="";sessionStorage.removeItem("genius.live.student.pin");notice(e.message,true);paint()}else notice(e.message,true)}}
+async function refresh(){if(!pin||working)return;try{const fresh=await api("state",{pin});state=fresh;notice("");paint()}catch(e){if(e.status===401){notice("Please sign in to your Willena account.",true);showLogin()}else if(/not found|expired|cancelled|not joined/i.test(e.message)){state=null;last="";sessionStorage.removeItem("genius.live.student.pin");sessionStorage.removeItem("genius.live.student.joined");notice(e.message,true);paint()}else notice(e.message,true)}}
 async function answer(choice){if(working||!state||state.myAnswer!==null||state.status!=="question")return;working=true;try{await api("answer",{pin,choice,questionIndex:state.questionNumber-1});await refreshDirect()}catch(e){notice(e.message,true)}finally{working=false}}
 async function refreshDirect(){const fresh=await api("state",{pin});state=fresh;last="";paint()}
 function tick(){if(!state||state.status!=="question")return;const rem=Math.max(0,Date.parse(state.deadline)-Date.now()),t=$("#timer"),b=$("#timerBar");if(t)t.textContent=Math.ceil(rem/1000)+"s";if(b)b.style.width=(100*rem/(state.seconds*1000))+"%";if(rem===0)document.querySelectorAll("[data-answer]").forEach(b=>b.disabled=true)}
 setInterval(()=>{if(pin&&state&&document.visibilityState==="visible")refresh()},1900);
 setInterval(tick,200);document.addEventListener("visibilitychange",()=>{if(!document.hidden&&pin)refresh()});
-paint();if(pin)refresh();
+paint();if(pin&&sessionStorage.getItem("genius.live.student.joined")==="1")refresh();
 </script></body></html>
