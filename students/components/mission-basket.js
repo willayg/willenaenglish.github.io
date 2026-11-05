@@ -229,7 +229,7 @@ function missionPastDue(x){
  if(x.done||x.archived||state.archives.has(x.id)||!x.dueAt)return false;
  const due=new Date(x.dueAt);
  if(!Number.isFinite(due.getTime()))return false;
- const day=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+ const day=d=>{const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d).map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day};
  return day(due)<day(new Date());
 }
 function render(){
@@ -285,7 +285,7 @@ function render(){
 }
 async function mount(host,options={}){
  if(!host||host.dataset.missionMounted==='true')return;
- if(!document.getElementById('willenaMissionBasketStyles')){const link=document.createElement('link');link.id='willenaMissionBasketStyles';link.rel='stylesheet';link.href='/students/dashboard-v2/mission-basket.css?v=20261031-rings11';document.head.appendChild(link)}
+ if(!document.getElementById('willenaMissionBasketStyles')){const link=document.createElement('link');link.id='willenaMissionBasketStyles';link.rel='stylesheet';link.href='/students/dashboard-v2/mission-basket.css?v=20261105-overdue-missions1';document.head.appendChild(link)}
  state.host=host;state.appFilter=options.app||null;host.dataset.missionMounted='true';host.classList.add('dashboard-mission-basket');host.setAttribute('aria-label','미션 바구니');
  state.collapsed=true;
  restoreLocalMedals();
