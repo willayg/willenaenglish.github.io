@@ -31,7 +31,7 @@ export function createFreeTalkingVoice({host,getToken}){
   if(typeof data.audio!=='string'||!data.audio.length)throw Error('Missing generated audio');
   const binary=atob(data.audio),bytes=new Uint8Array(binary.length);
   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-  return {url:URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'})),owned:true};
+  return {url:URL.createObjectURL(new Blob([bytes],{type:data.content_type==='audio/wav'?'audio/wav':'audio/mpeg'})),owned:true};
  }
  async function play(){
   if(!currentUrl||!selected)return;
