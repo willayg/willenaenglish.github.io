@@ -79,6 +79,8 @@ export function createScreens(actions){
     // identifies the exact unit; normal study retains all unit tabs.
     const bookScreen=$('bookScreen');
     bookScreen?.classList.toggle('sg-focused-homework',!!activeHomework);
+    const unitSelector=$('unitStrip')?.closest('.vocab-unit-selector');
+    if(unitSelector)unitSelector.hidden=!!activeHomework;
     let toolbar=$('sgFocusedHomeworkToolbar');
     if(!toolbar&&bookScreen){
       toolbar=document.createElement('div');
