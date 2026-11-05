@@ -49,7 +49,7 @@ function destinationFor(a){
  if(source==='puzzles')return {app:'Puzzles',href:'/students/wordsearch/?homework='+encodeURIComponent(a.id)+'&mode='+encodeURIComponent(a.list_meta?.kind||'boggle'),buttonLabel:'Puzzles에서 숙제 시작하기'};
  if(source==='sentence_genius'){
   const meta=a?.list_meta||{},q=new URLSearchParams(),book=meta.source_book_id||a.book_id,unit=meta.source_unit_id||a.unit_id;
-  if(book)q.set('book',book);if(unit)q.set('unit',unit);
+  if(book)q.set('book',book);if(unit)q.set('unit',unit);if(a.id)q.set('homework',a.id);
   return {app:'Sentence Genius',href:'/students/sentence-genius/'+(q.size?'?'+q:''),buttonLabel:'Sentence Genius에서 숙제 시작하기'};
  }
  if(source==='vocab_study')return {app:'Word Genius',href:'/students/vocab-study/?open=wordtest&assignment_id='+encodeURIComponent(a.id),buttonLabel:'Word Genius에서 숙제 시작하기'};
