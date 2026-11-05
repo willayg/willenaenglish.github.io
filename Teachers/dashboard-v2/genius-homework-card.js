@@ -47,7 +47,7 @@ document.head.appendChild(dateStyle);
 function classReadiness(host,rows=[],subtitle='Prior assignment results for the selected content'){
  if(!host)return;
  const safe=(rows||[]).filter(x=>x&&String(x.name||'').trim()).map(x=>({
-   name:String(x.name),pct:Number.isFinite(Number(x.percent))?Math.max(0,Math.min(100,Math.round(Number(x.percent)))):null
+   name:String(x.name),pct:x.percent!==null&&x.percent!==undefined&&x.percent!==''&&Number.isFinite(Number(x.percent))?Math.max(0,Math.min(100,Math.round(Number(x.percent)))):null
  })).sort((a,b)=>a.name.localeCompare(b.name,'en'));
  host.innerHTML='<section class="ghc-readiness"><h4>Class progress before assigning</h4>'+
  '<p>'+esc(subtitle)+'</p>'+
