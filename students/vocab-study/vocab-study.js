@@ -2852,6 +2852,7 @@ async function closeSession({historyMode='back'}={}){
 }
 async function boot(){
   let bootLoaderReleased=false;
+  const deepLinkAssignmentId=(()=>{try{return new URLSearchParams(location.search).get('assignment_id')||''}catch(_){return ''}})();
   const openWordTestRequested=(()=>{
     try{return new URLSearchParams(location.search).get('open')==='wordtest'}catch(_){return false}
   })();
@@ -2899,8 +2900,29 @@ async function boot(){
       background(async()=>{
         await loadTeacherAssignments({showLoader:false});
         renderFrontMenu();
-        if(openWordTestRequested&&state.activeScreen==='home'){
+        if((openWordTestRequested||deepLinkAssignmentId)&&state.activeScreen==='home'){
           openWordTestScreen({historyMode:'replace'});
+        }
+        if(deepLinkAssignmentId){
+          const index=state.teacherAssignments.findIndex(row=>String(row?.assignment?.id)===String(deepLinkAssignmentId));
+          if(index>=0){
+            const card=teacherPracticeListEl?.querySelectorAll('.vocab-teacher-card')?.[index];
+            if(card){
+              card.style.outline='3px solid #df91bf';
+              card.style.outlineOffset='4px';
+              card.scrollIntoView({block:'center',behavior:'auto'});
+              const hint=document.createElement('p');
+              hint.textContent='QR 숙제 · 아래에서 활동을 선택하세요.';
+              hint.style.cssText='font-weight:700;color:#19777e;margin:8px 0;';
+              card.prepend(hint);
+            }
+          }else{
+            const notice=document.createElement('p');
+            notice.setAttribute('role','status');
+            notice.textContent='이 숙제를 찾을 수 없어요. 내 숙제 목록이나 선생님에게 확인해 주세요.';
+            notice.style.cssText='padding:12px;border:1px solid #dda6be;border-radius:10px;color:#8e3d65;';
+            teacherPracticeEl?.prepend(notice);
+          }
         }
       },'teacher word tests');
     }
