@@ -149,7 +149,7 @@ async function saveR2(key,audio,format='wav',env={}){
     !res.ok?'R2_UPLOAD_HTTP_'+res.status:'R2_UPLOAD_RESPONSE_INVALID';
    throw Error(reason);
   }
-  if(data.path!=null&&data.path!==filename)throw Error('R2_UPLOAD_KEY_MISMATCH');
+  if(data.path!=null&&data.path!==filename)throw Error('R2_UPLOAD_KEY_MISMATCH expected='+filename+' actual='+String(data.path).slice(0,110));
   if(data.verified===true&&data.path===filename)return {stored:true,path:'r2_shared'};
   // Compatibility while the verified Netlify upload function is deploying.
   let verified=null;
@@ -247,7 +247,7 @@ async function probeAudioStorage(env){
  chars(36,'data');view.setUint32(40,4,true);
  const saved=await saveR2('ft_storage_probe_v1',base64(bytes.buffer),'wav',env);
  return {success:saved.stored===true,storage_ready:saved.stored===true,
-  storage_path:saved.path||null,code:saved.stored?'R2_READY':saved.reason||'R2_WRITE_FAILED'};
+  storage_path:saved.path||null,code:saved.stored?'R2_READY':(saved.reason||'R2_WRITE_FAILED').split(' ')[0],detail:saved.stored?null:saved.reason||'R2_WRITE_FAILED'};
 }
 export async function onRequestPost({request,env,context}){
  try{
