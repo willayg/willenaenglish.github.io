@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 
 exports.handler = async (event) => {
   const corsHeaders = {
@@ -58,8 +58,14 @@ exports.handler = async (event) => {
       CacheControl: 'public, max-age=31536000, immutable',
     }));
 
+    // Verify using the SAME bucket and credentials that wrote the object.
+    // A subsequent cross-service lookup may be delayed/misconfigured.
+    const head = await s3.send(new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key }));
+    if (Number(head.ContentLength) !== buffer.length) {
+      throw new Error('R2 object size did not match the uploaded file');
+    }
     const url = `${R2_PUBLIC_BASE.replace(/\/$/, '')}/${Key}`;
-    return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, path: Key, url }) };
+    return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, path: Key, url, verified: true, size: buffer.length }) };
   } catch (err) {
     return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'upload_audio failed', message: err.message }) };
   }
