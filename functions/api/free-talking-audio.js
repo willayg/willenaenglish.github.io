@@ -144,7 +144,18 @@ async function saveR2(key,audio,format='wav',env={}){
   const data=await res.json().catch(()=>null);
   if(!res.ok||data?.success!==true||data?.path!==filename)throw Error('R2 upload not confirmed ('+res.status+')');
   // A 200 from upload alone is insufficient: verify through the reader used on reload.
-  const verified=await cachedAudio(key,format,{});
+  // R2 HEAD can be briefly inconsistent after a write. Retry verification without
+  // regenerating the TTS bytes. Do not report saved until a read succeeds.
+  let verified=null;
+  for(let attempt=0;attempt<3;attempt++){
+   try{
+    verified=await cachedAudio(key,format,{});
+    if(verified?.source==='r2_shared')break;
+   }catch(e){
+    if(attempt===2)throw e;
+   }
+   if(attempt<2)await new Promise(resolve=>setTimeout(resolve,300*(attempt+1)));
+  }
   if(!verified||verified.source!=='r2_shared')throw Error('R2 upload not readable after writing');
   return {stored:true,path:'r2_shared'};
  }catch(e){
@@ -185,8 +196,13 @@ export async function onRequestPost({request,env,context}){
      voice:chosenVoice,provider:'elevenlabs',content_type:'audio/mpeg',
      stored:saved.stored,r2_status:saved.path||'not_saved',ai_generated:true});
    }catch(e){
-    console.warn('[Free Talking audio] ElevenLabs generation failed',String(e?.message||e).slice(0,160));
-    return json(502,{success:false,error:'ElevenLabs voice unavailable. Please select another voice.'});
+    const reason=String(e?.message||e);
+    console.warn('[Free Talking audio] ElevenLabs generation failed',reason.slice(0,160));
+    // Report category, not provider response bodies or credentials.
+    const category=/429|rate.limit/i.test(reason)?'rate_limit':
+     /timeout|timed.out|abort/i.test(reason)?'timeout':
+     /proxy|HTTP 5\d\d/i.test(reason)?'provider_unavailable':'generation_error';
+    return json(502,{success:false,error:'ElevenLabs '+category+'; this clip will be retried.',code:category});
    }
   }
   const ttsModel=model(env),ttsVoice=chosenVoice||voice(env),key=await cacheKey(t,ttsModel,ttsVoice);
