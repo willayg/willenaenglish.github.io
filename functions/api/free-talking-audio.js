@@ -143,6 +143,8 @@ async function saveR2(key,audio,format='wav',env={}){
    body:JSON.stringify({word:key,fileDataBase64:audio,format}),signal:AbortSignal.timeout(15000),cache:'no-store'});
   const data=await res.json().catch(()=>null);
   if(!res.ok||data?.success!==true||data?.path!==filename)throw Error('R2 upload not confirmed ('+res.status+')');
+  // The upload service now verifies a HEAD in its own R2 bucket.
+  if(data.verified===true&&Number(data.size)>0)return {stored:true,path:'r2_shared'};
   // A 200 from upload alone is insufficient: verify through the reader used on reload.
   // R2 HEAD can be briefly inconsistent after a write. Retry verification without
   // regenerating the TTS bytes. Do not report saved until a read succeeds.
