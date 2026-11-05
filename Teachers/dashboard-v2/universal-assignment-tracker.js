@@ -630,11 +630,13 @@ async function loadOverview(scopeName='my',force=false){
       return prefix+'<article class="ua-homework-card" data-ua-card="'+i+'"><button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(dday(row.due_at))+'</small><strong>'+esc(status)+(visiblePct===null?'':' · '+visiblePct+'%')+' ▾</strong></button>'+
         '<div class="ua-homework-expanded ghc-overview-expanded" id="uaExpanded'+i+'" hidden><p class="ghc-overview-detail">'+esc(detail)+'</p>'+
         (grammarResult?.student_rows?overviewStudentProgress(grammarResult.student_rows,{kind:'grammar'}):'')+
-        (wordResult?.student_rows
+        // A single Word Genius assignment already has the shared student bars
+        // above. Keep the nested chart only for multi-assignment groups.
+        ((groupByKey.get(thisGroup.key)?.items.length===1&&row.app==='Word Genius')?'':(wordResult?.student_rows
           ?(wordCompletionCache.has(id(row.id))
              ?overviewStudentProgress((wordCompletionCache.get(id(row.id))?.students||[]).map(st=>({...st,assignment_id:id(row.id)})),{kind:'word-completion'})
              :'<div class="ghc-student-list" data-word-pending="'+esc(row.id)+'"><small>Loading verified homework completion…</small></div>')
-          :'')+
+          :''))+
         (writingResult?.student_rows?overviewStudentProgress(writingResult.student_rows,{kind:row.list_key==='writing_genius:sentence'?'writing-sentence':'completion'}):'')+
         (puzzleResult?.student_rows?overviewStudentProgress(puzzleResult.student_rows,{kind:'completion'}):'')+'</div>'+
         (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
