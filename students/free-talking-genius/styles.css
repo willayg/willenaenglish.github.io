@@ -69,3 +69,38 @@
 #ftQuestionHost{padding:14px 10px}
 #ftSession .vocab-session-main{padding:13px}
 }
+
+
+/* Pass 1B · AI Willi question voice, isolated from shared Word Genius styles. */
+.ft-willi-voice{display:flex;align-items:center;gap:16px;padding:13px 16px;margin:0 0 17px;background:var(--vocab-card,#fff);border:2px solid #bdecef;border-radius:22px;min-height:112px}
+.ft-willi-avatar{width:90px;height:90px;flex:0 0 90px;position:relative}
+.ft-willi-avatar svg{display:block;width:90px;height:90px;overflow:visible}
+.ft-willi-halo{fill:#dff7f8;stroke:#64cfd9;stroke-width:2}
+.ft-willi-face{fill:#fff;stroke:#d1eff0;stroke-width:2}
+.ft-willi-eye{fill:#245760;transform-box:fill-box;transform-origin:center;animation:ft-willi-blink 5.5s ease-in-out infinite}
+.ft-willi-cheek{fill:#f6bdd7;opacity:.68}
+.ft-willi-mouth{fill:none;stroke:#e44f96;stroke-width:3.5;stroke-linecap:round;transform-box:fill-box;transform-origin:center}
+.ft-willi-headphones{stroke:#50c2cf;stroke-width:5;fill:none;stroke-linecap:round}
+.ft-willi-earpad{fill:#50c2cf}
+.ft-willi-wave{position:absolute;right:-9px;top:17px;display:flex;gap:3px;align-items:center;height:25px;opacity:0;transition:opacity .18s}
+.ft-willi-wave i{display:block;width:3px;height:7px;border-radius:5px;background:#e44f96}
+.ft-willi-avatar.is-talking .ft-willi-mouth{animation:ft-willi-talk .24s ease-in-out infinite alternate}
+.ft-willi-avatar.is-talking .ft-willi-wave{opacity:1}
+.ft-willi-avatar.is-talking .ft-willi-wave i{animation:ft-willi-bar .55s ease-in-out infinite alternate}
+.ft-willi-avatar.is-talking .ft-willi-wave i:nth-child(2){animation-delay:.11s}
+.ft-willi-avatar.is-talking .ft-willi-wave i:nth-child(3){animation-delay:.19s}
+.ft-willi-avatar.is-talking .ft-willi-wave i:nth-child(4){animation-delay:.28s}
+.ft-willi-avatar.is-talking .ft-willi-wave i:nth-child(5){animation-delay:.38s}
+.ft-willi-voice-copy{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0;flex:1}
+.ft-willi-voice-copy strong{font-size:1rem;color:#264f5a;font-weight:850}
+.ft-willi-voice-copy strong small{display:block;font-size:.69rem;font-weight:600;color:#81949d;margin-top:3px}
+.ft-willi-listen{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:2px solid #92dee6;background:#fff;color:#d51f83;border-radius:999px;min-height:39px;font:800 13px Poppins,sans-serif;cursor:pointer}
+.ft-willi-listen.is-playing{border-color:#e44f96;background:#fff0f7}
+.ft-willi-listen:disabled{cursor:wait;opacity:.48}
+.ft-willi-listen:focus-visible{outline:3px solid #db4091;outline-offset:3px}
+.ft-willi-status{color:#677d88;font-size:11px;line-height:1.45;min-height:16px}
+@keyframes ft-willi-blink{0%,43%,46%,100%{transform:scaleY(1)}44.5%{transform:scaleY(.12)}}
+@keyframes ft-willi-talk{from{transform:scaleY(.65) translateY(-1px)}to{transform:scaleY(1.65) translateY(2px)}}
+@keyframes ft-willi-bar{from{height:5px}to{height:24px}}
+@media(max-width:620px){.ft-willi-voice{padding:10px 12px;gap:12px}.ft-willi-avatar{width:72px;height:72px;flex-basis:72px}.ft-willi-avatar svg{width:72px;height:72px}.ft-willi-status{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.ft-willi-avatar *, .ft-willi-wave i{animation:none!important}.ft-willi-avatar.is-talking .ft-willi-wave{opacity:1}}
