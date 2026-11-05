@@ -11,7 +11,7 @@ const json=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Co
 const model=env=>env.FREE_TALKING_TTS_MODEL||'gpt-4o-mini-tts';
 const voice=env=>env.FREE_TALKING_TTS_VOICE||'shimmer';
 async function verifyStudent(request){
- const token=(request.headers.get('Authorization')||'').replace(/^Bearer\\s+/i,'').trim();
+ const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
  if(token.length<40)return null;
  const headers={apikey:SCORES_KEY,Authorization:'Bearer '+token};
  const userResponse=await fetch(SCORES+'/auth/v1/user',{headers,cache:'no-store',signal:AbortSignal.timeout(10000)});
