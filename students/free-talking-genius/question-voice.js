@@ -1,10 +1,18 @@
-// Free Talking Genius question voice. Reuses a cached OpenAI MP3 per published question.
+// Free Talking Genius voice preview. Each Realtime voice has its own verified R2 cache key.
 // No browser-generated voice fallback: the text stays readable when audio is unavailable.
 export function createFreeTalkingVoice({host,getToken}){
  const audio=new Audio();audio.preload='auto';
- let selected='',version=0,currentUrl='',objectUrl='',playing=false;
+ let selected='',version=0,currentUrl='',playing=false;
  const stored=new Map();
  const button=host.querySelector('[data-ft-listen]');
+ const voicePicker=host.querySelector('[data-ft-voice-picker]');
+ const VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar']);
+ const PREFERENCE_KEY='willena-free-talking-voice-v1';
+ try{
+  const saved=localStorage.getItem(PREFERENCE_KEY);
+  if(voicePicker&&VOICES.has(saved))voicePicker.value=saved;
+ }catch(_){}
+ const activeVoice=()=>voicePicker&&VOICES.has(voicePicker.value)?voicePicker.value:'marin';
  const label=host.querySelector('[data-ft-voice-status]');
  const modelLabel=host.querySelector('[data-ft-voice-model]');
  function showModel(file){
@@ -29,11 +37,11 @@ export function createFreeTalkingVoice({host,getToken}){
  audio.addEventListener('pause',()=>{setPlaying(false);if(!audio.ended)status('다시 듣기를 눌러 주세요.')});
  audio.addEventListener('ended',()=>{setPlaying(false);status('다시 듣기를 누르면 질문을 또 들을 수 있어요.')});
  audio.addEventListener('error',()=>{setPlaying(false);status('음성을 불러오지 못했어요. 질문을 읽고 답해 주세요.')});
- async function fetchVoice(questionId){
+ async function fetchVoice(questionId,voice){
   const call=async access=>fetch('/api/free-talking-audio',{
    method:'POST',credentials:'include',cache:'no-store',
    headers:{'Content-Type':'application/json',Authorization:'Bearer '+access},
-   body:JSON.stringify({question_id:questionId}),signal:AbortSignal.timeout(70000)});
+   body:JSON.stringify({question_id:questionId,voice}),signal:AbortSignal.timeout(70000)});
   let response=await call(await getToken());
   if(response.status===401)response=await call(await getToken(true));
   const data=await response.json().catch(()=>null);
@@ -67,8 +75,10 @@ export function createFreeTalkingVoice({host,getToken}){
   showModel(null);
   if(!selected)return;
   try{
-   let file=stored.get(selected);
-   if(!file){file=await fetchVoice(selected);if(v!==version){if(file.owned)URL.revokeObjectURL(file.url);return}stored.set(selected,file)}
+   const requestedVoice=activeVoice();
+   const cacheId=selected+'|'+requestedVoice;
+   let file=stored.get(cacheId);
+   if(!file){file=await fetchVoice(selected,requestedVoice);if(v!==version){if(file.owned)URL.revokeObjectURL(file.url);return}stored.set(cacheId,file)}
    if(v!==version)return;
    currentUrl=file.url;
    showModel(file);
@@ -94,6 +104,11 @@ export function createFreeTalkingVoice({host,getToken}){
   showModel(null);
   if(button)button.disabled=true;
  }
+ voicePicker?.addEventListener('change',()=>{
+  const chosen=activeVoice();
+  try{localStorage.setItem(PREFERENCE_KEY,chosen)}catch(_){}
+  if(selected)void select(selected,{autoplay:true});
+ });
  button?.addEventListener('click',async()=>{
   if(playing){audio.pause();return}
   if(currentUrl){await play();return}
