@@ -119,6 +119,7 @@ async function drawCreate(){
  '<strong>Activities</strong><div class="gb-mode-row">'+MODES.map(([id,title])=>'<label><input type="checkbox" data-grammar-mode="'+id+'" checked> '+esc(title)+'</label>').join('')+'</div></div>'+
  '<div class="gf-hw-form-grid"><label>Available from<input class="control" type="date" name="start" required></label>'+
  '<label>Due date<input class="control" type="date" name="due" required></label></div>'+
+ '<div class="gf-hw-pre-assignment"><button type="button" class="control" id="gbHwPreview">Check class progress</button><div id="gbHwPreviewReport" aria-live="polite"></div></div>'+
  '<div class="gf-hw-footer"><button type="submit" class="control ua-primary" id="gbHwSubmit" disabled>Assign homework →</button>'+
  '<span id="gbHwNotice" role="status"></span></div></form>';
  const form=$('#gbHwForm',el),bookSelect=form.elements.book,classSelect=form.elements.klass;
@@ -162,6 +163,32 @@ async function drawCreate(){
  bookSelect.addEventListener('change',()=>{
   if(bookSelect.value==='__other__'){expanded=true;populateBooks(true);return}
   selectBook();
+ });
+ $('#gbHwPreview',el).addEventListener('click',async()=>{
+  const host=$('#gbHwPreviewReport',el),button=$('#gbHwPreview',el);
+  const klass=classSelect.value,bookId=bookSelect.value;
+  const selected=$('[data-chapter]:checked',form).map(x=>Number(x.dataset.chapter));
+  if(!klass||!bookId||!selected.length){host.textContent='Select a class, textbook and at least one unit first.';return}
+  button.disabled=true;host.textContent='Checking previous homework progress…';
+  try{
+   await fetchRecords();
+   if(!host.isConnected)return;
+   const picked=new Map();
+   store.assignments.filter(a=>a.class===klass&&String(a.list_meta?.source_book_id)===String(bookId)&&selected.includes(Number(a.list_meta?.chapter))).forEach(a=>{
+    const chapter=Number(a.list_meta?.chapter);
+    if(!picked.has(chapter))picked.set(chapter,a);
+   });
+   const byStudent=new Map();
+   for(const a of picked.values())for(const r of progressFor(a).rows){
+    const name=String(r.student?.name||'').trim();
+    if(!name||!r.total)continue;
+    const prev=byStudent.get(name)||{name,done:0,total:0};
+    prev.done+=Math.min(r.total,r.done);prev.total+=r.total;byStudent.set(name,prev);
+   }
+   window.WillenaGeniusHomeworkCard?.classReadiness(host,[...byStudent.values()].map(r=>({name:r.name,percent:100*r.done/r.total})),
+    'Previous Grammar Genius homework results for selected units. New assignments start separately.');
+  }catch(e){host.textContent='Previous progress unavailable: '+e.message}
+  finally{button.disabled=false}
  });
  $('#gbSelectAll',el).addEventListener('change',event=>{
   $$('[data-chapter]',form).forEach(input=>input.checked=event.target.checked);
