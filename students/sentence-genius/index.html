@@ -27,6 +27,13 @@
 <link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261031-app-uniform12">
 <style>.app-mission-basket-slot .dashboard-mission-basket{width:100%;max-width:none;margin:12px 0 20px}.app-mission-basket-slot:empty{display:none}.sg-assigned-homework{display:none!important}</style>
 <script src="/students/components/homework-deeplink-splash.js?v=20261105-pass2-displayfix1"></script>
+<style>
+#bookScreen.sg-focused-homework .vocab-unit-selector{display:none!important}
+#bookScreen .sg-focused-toolbar[hidden]{display:none!important}
+#bookScreen .sg-focused-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:15px 17px;margin:8px 0 22px;border:2.5px solid #b8e9ed;border-radius:22px;background:#fff;box-shadow:0 9px 27px rgba(30,121,132,.07)}
+#bookScreen .sg-focused-label{font-size:.84rem;font-weight:900;color:#267e87}
+#bookScreen .sg-focused-view-all{border:1.5px solid #b6e8ed;border-radius:999px;background:#fff;color:#267e87;padding:10px 15px;font:800 .74rem Poppins,system-ui,sans-serif;cursor:pointer}
+</style>
 </head>
 <body>
 <div id="willenaHomeworkOpening" role="status" aria-live="polite" style="display:none"><div class="wh-card"><div class="wh-mark" aria-hidden="true"><svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="8" height="8"/><rect x="14" y="2" width="8" height="8"/><rect x="2" y="14" width="8" height="8"/><path d="M14 14h3v3h-3zM21 14v4h-3M14 21h4"/></svg></div><strong>숙제를 불러오는 중...</strong><small>Opening your homework</small><span class="wh-bar" aria-hidden="true"></span></div></div>
@@ -287,7 +294,7 @@
 </div>
 
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
-<script type="module" src="./app.js?v=20261105-pass2-qr1"></script>
+<script type="module" src="./app.js?v=20261105-unit-focus3"></script>
 
 <script src="/students/components/mission-basket.js?v=20261105-pass2-qr2"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
