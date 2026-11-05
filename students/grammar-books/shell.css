@@ -53,3 +53,27 @@
 
 /* Shared-question feedback: show the Korean grammar explanation for every answer. */
 .grammar-book-explanation{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:rgba(38,156,165,.08);color:#245b64;font-size:13px;line-height:1.65;font-weight:650;white-space:pre-wrap}
+
+
+/* Focused assignment matches Word Genius Style A, without normal-unit distractions. */
+.grammar-book-shell .grammar-focused-homework .vocab-unit-selector{display:none!important}
+.grammar-book-shell .grammar-focused-toolbar{
+ display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+ padding:16px 18px;margin:7px 0 21px;border:2.5px solid #b8e9ed;
+ border-radius:22px;background:var(--vocab-card,#fff);
+ box-shadow:0 9px 27px rgba(30,121,132,.07)
+}
+.grammar-book-shell .grammar-focused-label{
+ display:inline-flex;align-items:center;gap:8px;color:#267e87;
+ font-size:.84rem;font-weight:900;letter-spacing:.01em
+}
+.grammar-book-shell .grammar-focused-label::before{
+ content:'✓';display:inline-grid;place-items:center;width:23px;height:23px;
+ border:1.5px solid #96dce3;border-radius:50%;background:#e8f8f9;color:#267e87
+}
+.grammar-book-shell .grammar-view-all{
+ border:1.5px solid #b6e8ed;border-radius:999px;background:#fff;color:#267e87;
+ font:800 .74rem Poppins,system-ui,sans-serif;padding:10px 15px;cursor:pointer
+}
+.grammar-book-shell .grammar-view-all:focus-visible{outline:3px solid #267e87;outline-offset:2px}
+@media(max-width:600px){.grammar-book-shell .grammar-focused-toolbar{padding:13px 12px;border-radius:18px}}
