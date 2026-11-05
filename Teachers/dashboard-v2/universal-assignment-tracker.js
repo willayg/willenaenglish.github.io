@@ -660,18 +660,18 @@ async function loadOverview(scopeName='my',force=false){
      const key=id(row.id);
      if(wordCompletionCache.has(key))return;
      if(wordCompletionPending.has(key))return;
-     const task=get('rpc/get_vocab_assignment_progress_v1',{
+     const task=get('rpc/teacher_vocab_assignment_progress_v1',{
        method:'POST',headers:{'Content-Type':'application/json'},
        body:JSON.stringify({p_assignment_id:key})
      }).then(data=>{
        if(data?.success&&Array.isArray(data.students)){
          wordCompletionCache.set(key,{assignment:{...(data.assignment||{}),list_meta:row.list_meta||{}},students:data.students});
        }else{
-         wordCompletionCache.set(key,{assignment:{},students:[]});
+         wordCompletionCache.set(key,{assignment:{},students:[],error:'No verified completion data returned'});
        }
      }).catch(error=>{
        console.warn('[Homework overview] Word Genius completion unavailable',key,error);
-       wordCompletionCache.set(key,{assignment:{},students:[]});
+       wordCompletionCache.set(key,{assignment:{},students:[],error:String(error?.message||error)});
      }).finally(()=>{wordCompletionPending.delete(key);rerenderWhenReady()});
      wordCompletionPending.set(key,task);
    };
