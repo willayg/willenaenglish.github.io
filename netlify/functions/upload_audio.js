@@ -40,19 +40,21 @@ exports.handler = async (event) => {
 
     const parsed = JSON.parse(event.body || '{}');
     const { word, fileDataBase64 } = parsed;
+    // WAV is opt-in for Free Talking realtime audio. Legacy callers remain MP3.
+    const format = parsed.format === 'wav' ? 'wav' : 'mp3';
     if (!word || !fileDataBase64) {
       return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Missing word or fileDataBase64' }) };
     }
 
     const safeWord = String(word).trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_\-]/g, '');
     const buffer = Buffer.from(fileDataBase64, 'base64');
-    const Key = `${safeWord}.mp3`;
+    const Key = `${safeWord}.${format}`;
 
     await s3.send(new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,
       Key,
       Body: buffer,
-      ContentType: 'audio/mpeg',
+      ContentType: format === 'wav' ? 'audio/wav' : 'audio/mpeg',
       CacheControl: 'public, max-age=31536000, immutable',
     }));
 
