@@ -142,18 +142,15 @@ async function saveR2(key,audio,format='wav',env={}){
    method:'POST',headers:{'Content-Type':'application/json'},
    body:JSON.stringify({word:key,fileDataBase64:audio,format,verify:true}),signal:AbortSignal.timeout(20000),cache:'no-store'});
   const data=await res.json().catch(()=>null);
-  if(!res.ok||data?.success!==true||data?.path!==filename){
+  if(!res.ok||data?.success!==true){
    const upstream=String(data?.error||'');
    const reason=/Missing R2 environment variables/.test(upstream)?'R2_CONFIG_MISSING':
     /upload_audio failed/.test(upstream)?'R2_WRITE_FAILED':
     !res.ok?'R2_UPLOAD_HTTP_'+res.status:'R2_UPLOAD_RESPONSE_INVALID';
    throw Error(reason);
   }
-  // The upload service now verifies a HEAD in its own R2 bucket.
-  if(data.verified===true&&Number(data.size)>0)return {stored:true,path:'r2_shared'};
-  // The upload function verified this exact object by HEAD in its own bucket.
-  // Avoid a second remote reader HEAD causing a false "unsaved" report.
-  if(data.verified===true)return {stored:true,path:'r2_shared'};
+  if(data.path!=null&&data.path!==filename)throw Error('R2_UPLOAD_KEY_MISMATCH');
+  if(data.verified===true&&data.path===filename)return {stored:true,path:'r2_shared'};
   // Compatibility while the verified Netlify upload function is deploying.
   let verified=null;
   for(let attempt=0;attempt<3;attempt++){
