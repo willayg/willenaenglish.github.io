@@ -30,7 +30,7 @@ function homeworkForm(app,body){
  (app==='writing'?'<label>Writing instructions / topic <textarea class="control" name="prompt" rows="4" maxlength="1500" placeholder="What should students write about?"></textarea></label>':'')+
  '<label>Due date <input class="control" name="due" type="date" required></label>'+ 
  '<label>Repeat <select class="control" name="repeat"><option value="none">One time</option><option value="daily">Every day</option><option value="weekly">Every week</option></select></label>'+
- '<div><button type="button" class="control" id="uaPreviewClassProgress">Check class progress</button><div id="uaClassProgressReport" aria-live="polite"></div></div>'+
+ '<div><div id="uaClassProgressReport" aria-live="polite"></div></div>'+
  '<button class="control ua-primary" type="submit">Assign homework →</button><div id="uaNewHomeworkStatus" role="status"></div></form>';
  const form=body.querySelector('form'),date=form.elements.due;
  if(app==='writing'){
@@ -94,12 +94,26 @@ function homeworkForm(app,body){
  }
 
  const tomorrow=new Date(Date.now()+86400000);date.value=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
- form.querySelector('#uaPreviewClassProgress').onclick=async()=>{
-  const host=form.querySelector('#uaClassProgressReport'),button=form.querySelector('#uaPreviewClassProgress');
+ let progressStamp=0,progressTimer=null;
+ function scheduleClassProgress(){
+  const stamp=++progressStamp;clearTimeout(progressTimer);
+  const host=form.querySelector('#uaClassProgressReport');
   const klass=form.elements['class'].value,kind=form.elements.kind.value;
-  if(!klass){host.textContent='Choose a class before checking progress.';return}
-  if(app==='writing'&&kind==='sentence'&&(!form.elements.book.value||!form.elements.unit.value)){host.textContent='Choose a textbook and unit first.';return}
-  button.disabled=true;host.textContent='Checking previous class assignments…';
+  if(!klass||(app==='writing'&&kind==='sentence'&&(!form.elements.book.value||!form.elements.unit.value))){host.replaceChildren();return}
+  host.textContent='Loading class progress…';
+  progressTimer=setTimeout(()=>void showClassProgress(stamp),250);
+ }
+ form.elements['class'].addEventListener('change',scheduleClassProgress);
+ form.elements.kind.addEventListener('change',scheduleClassProgress);
+ if(app==='writing'){
+  form.elements.book.addEventListener('change',scheduleClassProgress);
+  form.elements.unit.addEventListener('change',scheduleClassProgress);
+ }
+ async function showClassProgress(stamp){
+  const host=form.querySelector('#uaClassProgressReport');
+  const klass=form.elements['class'].value,kind=form.elements.kind.value;
+  if(!klass||(app==='writing'&&kind==='sentence'&&(!form.elements.book.value||!form.elements.unit.value))){host.replaceChildren();return}
+  host.textContent='Checking previous class assignments…';
   try{
    const route='/.netlify/functions/homework_api?action=list_assignments';
    const response=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch(route,{credentials:'include'}):fetch(route,{credentials:'include'}));
@@ -122,11 +136,11 @@ function homeworkForm(app,body){
       rows.push({name:st.name||st.korean_name,percent:Number.isFinite(pct)?pct:null});
     }
    }
+   if(stamp!==progressStamp||!host.isConnected)return;
    window.WillenaGeniusHomeworkCard?.classReadiness(host,rows,
      'Previous '+(app==='writing'?'Writing Genius':'Puzzles')+' homework completion for this class and activity; not a prediction.');
-  }catch(error){host.textContent='Previous class progress unavailable: '+error.message}
-  finally{button.disabled=false}
- };
+  }catch(error){if(stamp===progressStamp)host.textContent='Previous class progress unavailable: '+error.message}
+ }
  form.onsubmit=async e=>{
   e.preventDefault();
   const button=form.querySelector('button[type="submit"]'),status=form.querySelector('#uaNewHomeworkStatus');
