@@ -34,7 +34,7 @@ async function elevenAudio({env,text,voiceId,modelId=ELEVEN_MODEL}){
   if(audio.byteLength<500||audio.byteLength>1200000)throw Error('Invalid ElevenLabs MP3');
   return audio;
  }
- throw Error('ELEVENLABS_KEY_NOT_CONFIGURED_ON_CLOUDFLARE');
+ throw Error('ELEVENLABS_KEY_NOT_AVAILABLE_IN_THIS_DEPLOYMENT');
 }
 async function verifyStudent(request){
  const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
@@ -203,7 +203,7 @@ export async function onRequestPost({request,env,context}){
    }catch(e){
     const reason=String(e?.message||e);
     if(reason==='R2_WRITE_FAILED')return json(503,{success:false,error:reason,code:reason,cache_status:'storage_error'});
-    if(reason==='ELEVENLABS_KEY_NOT_CONFIGURED_ON_CLOUDFLARE')return json(503,{success:false,error:reason,code:reason});
+    if(reason==='ELEVENLABS_KEY_NOT_AVAILABLE_IN_THIS_DEPLOYMENT')return json(503,{success:false,error:reason,code:reason});
     console.warn('[Free Talking audio] ElevenLabs generation failed',reason.slice(0,160));
     // Report category, not provider response bodies or credentials.
     const category=/429|rate.limit/i.test(reason)?'rate_limit':
