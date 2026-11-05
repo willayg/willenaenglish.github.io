@@ -12,6 +12,8 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 const modes=[{id:'choose',label:'빈칸 선택',ko:'빈칸에 알맞은 말을 고르시오.',icon:'◉'},{id:'check',label:'문장 판단',ko:'어법에 맞는 문장이나 틀린 문장을 고르시오.',icon:'✓'},{id:'hunt',label:'오류 찾기',ko:'밑줄 친 부분 중 어법상 틀린 것을 고르시오.',icon:'⌕'}];
 const COURSE_BOOKS={
  '8e949813-fa91-4adc-a709-905efc980d8b':{key:'buzz6',title:'Oxford Buzz 6'},
+ '23e0ff51-d41c-4a28-bf2f-8d51e320b5d6':{key:'buzz3',title:'Oxford Buzz 3'},
+ '1a591740-46d2-4375-a22e-fb4b5ec6737d':{key:'buzz4',title:'Oxford Buzz 4'},
  'c437909b-f399-468a-bc31-996147d82fd8':{key:'eu5',title:'Everybody Up 5 (3rd Edition)'},
  '89872c50-a590-4879-aa0c-7273aabcaf8c':{key:'eu6',title:'Everybody Up 6 (3rd Edition)'}
 };
@@ -22,10 +24,10 @@ const unitRoundSize=()=>isTen(activeBook)?8:5;
 let coursePacks=null;
 async function loadCoursePacks(){
  if(coursePacks)return coursePacks;
- const response=await fetch('./coursebook-question-packs.json?v=20261105-a',{cache:'no-store'});
+ const response=await fetch('./coursebook-question-packs.json?v=20261105-buzz34-v1',{cache:'no-store'});
  if(!response.ok)throw Error('Coursebook grammar questions unavailable ('+response.status+')');
  const data=await response.json();
- if(!Array.isArray(data.books)||data.books.length!==3)throw Error('Coursebook grammar inventory incomplete');
+ if(!Array.isArray(data.books)||data.books.length!==5)throw Error('Coursebook grammar inventory incomplete');
  for(const book of data.books){
   if(!Array.isArray(book.chapters)||book.chapters.length!==8)throw Error('Incomplete book '+book.key);
   for(const chapter of book.chapters){
