@@ -31,6 +31,20 @@ function groupCardStart({key,title,task,teacher,dueAt,dueLabel,checkbox='',progr
   '<div class="ghc-details"><button type="button" class="ua-overview-progress-toggle" data-ua-group-toggle="'+esc(key)+'" aria-expanded="false"><span>Student progress</span><span class="ghc-chevron">▾</span></button></div>'+
   '<div class="ua-group-body" hidden>';
 }
+// One verified progress layout reused by Word Genius and the My/All overview.
+function progressPanel({students=[],average=null,completed=0,notStarted=0,label='Class progress'}={}){
+ const valid=Number.isFinite(average),pct=valid?Math.max(0,Math.min(100,Math.round(average))):null;
+ const lines=students.map(st=>{
+  const n=Number(st.percent),known=st.percent!==null&&st.percent!==undefined&&Number.isFinite(n);
+  const p=known?Math.max(0,Math.min(100,Math.round(n))):0;
+  return '<div class="ghc-student-row"><span class="ghc-student-name">'+esc(st.name||'Student')+'</span>'+
+   '<span class="ghc-student-track" role="progressbar" aria-label="'+esc(st.name||'Student')+' progress" aria-valuemin="0" aria-valuemax="100"'+(known?' aria-valuenow="'+p+'"':'')+'><i style="width:'+p+'%"></i></span>'+
+   '<strong class="ghc-student-pct">'+(known?p+'%':'—')+'</strong></div>';
+ }).join('');
+ return '<div class="ghc-shared-progress"><div class="ghc-progress-summary"><span>'+esc(label)+' <b>'+(valid?pct+'%':'—')+'</b></span><span>'+completed+'/'+students.length+' complete · '+notStarted+' not started</span></div>'+
+  '<div class="ghc-progress-track" role="progressbar" aria-label="Class homework progress" aria-valuemin="0" aria-valuemax="100"'+(valid?' aria-valuenow="'+pct+'"':'')+'><i style="width:'+(valid?pct:0)+'%"></i></div>'+
+  '<div class="ghc-student-list">'+lines+'</div></div>';
+}
 // Date-grouped assignment cards. Uses the teacher's Korean calendar date, not due dates.
 function dateKey(value){
  if(!value)return 'undated';
@@ -136,6 +150,6 @@ document.addEventListener('click',event=>{
  overlay.querySelector('.ghc-qr-close').focus();
 });
 
-window.WillenaGeniusHomeworkCard={card,groupCardStart,dday,escape:esc,hydrateTeachers,updateRing,groupByDate,classReadiness};
+window.WillenaGeniusHomeworkCard={card,groupCardStart,progressPanel,dday,escape:esc,hydrateTeachers,updateRing,groupByDate,classReadiness};
 
 })();
