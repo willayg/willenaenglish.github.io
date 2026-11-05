@@ -15,6 +15,7 @@ export function createFreeTalkingVoice({host,getToken}){
   if(voicePicker&&VOICES.has(saved))voicePicker.value=saved;
  }catch(_){}
  const activeVoice=()=>voicePicker&&VOICES.has(voicePicker.value)?voicePicker.value:'marin';
+ let pickerVoice=activeVoice();
  const label=host.querySelector('[data-ft-voice-status]');
  const modelLabel=host.querySelector('[data-ft-voice-model]');
  const preloadLabel=host.querySelector('[data-ft-voice-preload]');
@@ -152,7 +153,8 @@ export function createFreeTalkingVoice({host,getToken}){
  }
  function changeVoice(){
   const chosen=activeVoice();
-  if(chosen===loadedVoice)return;
+  if(chosen===pickerVoice)return;
+  pickerVoice=chosen;
   try{localStorage.setItem(PREFERENCE_KEY,chosen)}catch(_){}
   preload(preferredUnit);
   if(selected)void select(selected,{autoplay:true});
