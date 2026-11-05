@@ -8754,6 +8754,3428 @@
           }
         }
       ]
+    },
+    {
+      "key": "buzz1",
+      "title": "Oxford Buzz 1",
+      "source": "Original Willena beginner grammar practice aligned to stored coursebook unit targets",
+      "chapters": [
+        {
+          "unit": 1,
+          "title": "At School",
+          "grammarFocus": "What is it? / It's a/an",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz1-u1-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nIt _______ a pencil.",
+                "options": [
+                  "is",
+                  "are",
+                  "an",
+                  "blue"
+                ],
+                "answerIndex": 0,
+                "explanation": "It 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u1-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nWhat _______ it in the picture?",
+                "options": [
+                  "are",
+                  "an",
+                  "blue",
+                  "is"
+                ],
+                "answerIndex": 3,
+                "explanation": "What is it?이 올바른 질문입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u1-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nIt's _______ apple on the desk.",
+                "options": [
+                  "a",
+                  "is",
+                  "an",
+                  "blue"
+                ],
+                "answerIndex": 2,
+                "explanation": "모음 소리로 시작하는 apple 앞에는 an을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u1-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nIt is a _______ school bag.",
+                "options": [
+                  "blues",
+                  "blue",
+                  "is",
+                  "an"
+                ],
+                "answerIndex": 1,
+                "explanation": "색깔 형용사 blue에는 -s를 붙이지 않습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u1-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\n_______ it a ruler on the desk?",
+                "options": [
+                  "Is",
+                  "Are",
+                  "is",
+                  "an"
+                ],
+                "answerIndex": 0,
+                "explanation": "It의 의문문에는 Is를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz1-u1-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "What is it in the picture?",
+                  "It are a pencil.",
+                  "It's an apple on the desk.",
+                  "It is a blue school bag."
+                ],
+                "answerIndex": 1,
+                "explanation": "It 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u1-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "It is a pencil.",
+                  "It's an apple on the desk.",
+                  "What are it in the picture?",
+                  "It is a blue school bag."
+                ],
+                "answerIndex": 2,
+                "explanation": "What is it?이 올바른 질문입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u1-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "It is a pencil.",
+                  "What is it in the picture?",
+                  "It is a blue school bag.",
+                  "It's a apple on the desk."
+                ],
+                "answerIndex": 3,
+                "explanation": "모음 소리로 시작하는 apple 앞에는 an을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u1-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "It is a blues school bag.",
+                  "It is a pencil.",
+                  "What is it in the picture?",
+                  "It's an apple on the desk."
+                ],
+                "answerIndex": 0,
+                "explanation": "색깔 형용사 blue에는 -s를 붙이지 않습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u1-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "It is a pencil.",
+                  "Are it a ruler on the desk?",
+                  "What is it in the picture?",
+                  "It's an apple on the desk."
+                ],
+                "answerIndex": 1,
+                "explanation": "It의 의문문에는 Is를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz1-u1-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "It are a pencil.",
+                "options": [
+                  "It",
+                  "are",
+                  "a pencil",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "It 뒤에는 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u1-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "What are it in the picture?",
+                "options": [
+                  "What",
+                  "are",
+                  "it in the picture",
+                  "?"
+                ],
+                "answerIndex": 1,
+                "explanation": "What is it?이 올바른 질문입니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u1-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "It's a apple on the desk.",
+                "options": [
+                  "It's",
+                  "a",
+                  "apple on the desk",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "모음 소리로 시작하는 apple 앞에는 an을 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u1-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "It is a blues school bag.",
+                "options": [
+                  "It is a",
+                  "blues",
+                  "school bag",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "색깔 형용사 blue에는 -s를 붙이지 않습니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u1-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Are it a ruler on the desk?",
+                "options": [
+                  "Are",
+                  "it a ruler on the",
+                  "desk",
+                  "?"
+                ],
+                "answerIndex": 0,
+                "explanation": "It의 의문문에는 Is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 2,
+          "title": "My Things",
+          "grammarFocus": "have/don't have; my/your",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz1-u2-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI _______ a new pencil today.",
+                "options": [
+                  "have",
+                  "has",
+                  "don't",
+                  "my"
+                ],
+                "answerIndex": 0,
+                "explanation": "I와 함께 have를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u2-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI _______ have a red bag.",
+                "options": [
+                  "doesn't",
+                  "have",
+                  "my",
+                  "don't"
+                ],
+                "answerIndex": 3,
+                "explanation": "I의 부정문에는 don't를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u2-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThis is _______ school book.",
+                "options": [
+                  "me",
+                  "have",
+                  "my",
+                  "don't"
+                ],
+                "answerIndex": 2,
+                "explanation": "명사 앞에는 소유격 my를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u2-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nIs this _______ blue ruler?",
+                "options": [
+                  "you",
+                  "your",
+                  "have",
+                  "don't"
+                ],
+                "answerIndex": 1,
+                "explanation": "명사 앞에는 소유격 your를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u2-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI _______ an eraser in my bag.",
+                "options": [
+                  "have",
+                  "has",
+                  "don't",
+                  "my"
+                ],
+                "answerIndex": 0,
+                "explanation": "I에는 have를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz1-u2-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I don't have a red bag.",
+                  "I has a new pencil today.",
+                  "This is my school book.",
+                  "Is this your blue ruler?"
+                ],
+                "answerIndex": 1,
+                "explanation": "I와 함께 have를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u2-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I have a new pencil today.",
+                  "This is my school book.",
+                  "I doesn't have a red bag.",
+                  "Is this your blue ruler?"
+                ],
+                "answerIndex": 2,
+                "explanation": "I의 부정문에는 don't를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u2-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I have a new pencil today.",
+                  "I don't have a red bag.",
+                  "Is this your blue ruler?",
+                  "This is me school book."
+                ],
+                "answerIndex": 3,
+                "explanation": "명사 앞에는 소유격 my를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u2-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Is this you blue ruler?",
+                  "I have a new pencil today.",
+                  "I don't have a red bag.",
+                  "This is my school book."
+                ],
+                "answerIndex": 0,
+                "explanation": "명사 앞에는 소유격 your를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u2-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I have a new pencil today.",
+                  "I has an eraser in my bag.",
+                  "I don't have a red bag.",
+                  "This is my school book."
+                ],
+                "answerIndex": 1,
+                "explanation": "I에는 have를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz1-u2-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I has a new pencil today.",
+                "options": [
+                  "I",
+                  "has",
+                  "a new pencil today",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "I와 함께 have를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u2-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I doesn't have a red bag.",
+                "options": [
+                  "I",
+                  "doesn't",
+                  "have a red bag",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "I의 부정문에는 don't를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u2-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "This is me school book.",
+                "options": [
+                  "This is",
+                  "me",
+                  "school book",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "명사 앞에는 소유격 my를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u2-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Is this you blue ruler?",
+                "options": [
+                  "Is this",
+                  "you",
+                  "blue ruler",
+                  "?"
+                ],
+                "answerIndex": 1,
+                "explanation": "명사 앞에는 소유격 your를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u2-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I has an eraser in my bag.",
+                "options": [
+                  "I",
+                  "has",
+                  "an eraser in my bag",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "I에는 have를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 3,
+          "title": "Fun with Friends",
+          "grammarFocus": "can/can't; Can you?",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz1-u3-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI _______ jump very high.",
+                "options": [
+                  "can",
+                  "cans",
+                  "ride",
+                  "can't"
+                ],
+                "answerIndex": 0,
+                "explanation": "can은 주어에 따라 변하지 않습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u3-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nCan you _______ a bike?",
+                "options": [
+                  "rides",
+                  "can",
+                  "can't",
+                  "ride"
+                ],
+                "answerIndex": 3,
+                "explanation": "Can 뒤에는 동사원형 ride가 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u3-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nShe _______ sing very well.",
+                "options": [
+                  "cans",
+                  "ride",
+                  "can",
+                  "can't"
+                ],
+                "answerIndex": 2,
+                "explanation": "조동사 can에는 -s를 붙이지 않습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u3-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI _______ swim in the pool yet.",
+                "options": [
+                  "doesn't",
+                  "can't",
+                  "can",
+                  "ride"
+                ],
+                "answerIndex": 1,
+                "explanation": "능력이 없다는 뜻에는 can't를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u3-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\n_______ you draw a funny cat?",
+                "options": [
+                  "Can",
+                  "Cans",
+                  "can",
+                  "ride"
+                ],
+                "answerIndex": 0,
+                "explanation": "Can you ...?라고 묻습니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz1-u3-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Can you ride a bike?",
+                  "I cans jump very high.",
+                  "She can sing very well.",
+                  "I can't swim in the pool yet."
+                ],
+                "answerIndex": 1,
+                "explanation": "can은 주어에 따라 변하지 않습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u3-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I can jump very high.",
+                  "She can sing very well.",
+                  "Can you rides a bike?",
+                  "I can't swim in the pool yet."
+                ],
+                "answerIndex": 2,
+                "explanation": "Can 뒤에는 동사원형 ride가 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u3-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I can jump very high.",
+                  "Can you ride a bike?",
+                  "I can't swim in the pool yet.",
+                  "She cans sing very well."
+                ],
+                "answerIndex": 3,
+                "explanation": "조동사 can에는 -s를 붙이지 않습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u3-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I doesn't swim in the pool yet.",
+                  "I can jump very high.",
+                  "Can you ride a bike?",
+                  "She can sing very well."
+                ],
+                "answerIndex": 0,
+                "explanation": "능력이 없다는 뜻에는 can't를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u3-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I can jump very high.",
+                  "Cans you draw a funny cat?",
+                  "Can you ride a bike?",
+                  "She can sing very well."
+                ],
+                "answerIndex": 1,
+                "explanation": "Can you ...?라고 묻습니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz1-u3-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I cans jump very high.",
+                "options": [
+                  "I",
+                  "cans",
+                  "jump very high",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "can은 주어에 따라 변하지 않습니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u3-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Can you rides a bike?",
+                "options": [
+                  "Can you",
+                  "rides",
+                  "a bike",
+                  "?"
+                ],
+                "answerIndex": 1,
+                "explanation": "Can 뒤에는 동사원형 ride가 옵니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u3-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She cans sing very well.",
+                "options": [
+                  "She",
+                  "cans",
+                  "sing very well",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "조동사 can에는 -s를 붙이지 않습니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u3-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I doesn't swim in the pool yet.",
+                "options": [
+                  "I",
+                  "doesn't",
+                  "swim in the pool yet",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "능력이 없다는 뜻에는 can't를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u3-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Cans you draw a funny cat?",
+                "options": [
+                  "Cans",
+                  "you draw a funny",
+                  "cat",
+                  "?"
+                ],
+                "answerIndex": 0,
+                "explanation": "Can you ...?라고 묻습니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 4,
+          "title": "Outdoors",
+          "grammarFocus": "Is it?; There is/are",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz1-u4-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThere _______ a tree in the park.",
+                "options": [
+                  "is",
+                  "are",
+                  "Is",
+                  "am"
+                ],
+                "answerIndex": 0,
+                "explanation": "a tree는 단수이므로 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u4-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThere _______ two birds outside.",
+                "options": [
+                  "is",
+                  "Is",
+                  "am",
+                  "are"
+                ],
+                "answerIndex": 3,
+                "explanation": "two birds는 복수이므로 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u4-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\n_______ it a butterfly on the flower?",
+                "options": [
+                  "Are",
+                  "is",
+                  "Is",
+                  "are"
+                ],
+                "answerIndex": 2,
+                "explanation": "It과 함께 Is를 사용합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u4-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThere _______ three flowers here.",
+                "options": [
+                  "is",
+                  "are",
+                  "Is",
+                  "am"
+                ],
+                "answerIndex": 1,
+                "explanation": "three flowers는 복수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u4-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nIt _______ a big rock.",
+                "options": [
+                  "is",
+                  "are",
+                  "Is",
+                  "am"
+                ],
+                "answerIndex": 0,
+                "explanation": "It 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz1-u4-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There are two birds outside.",
+                  "There are a tree in the park.",
+                  "Is it a butterfly on the flower?",
+                  "There are three flowers here."
+                ],
+                "answerIndex": 1,
+                "explanation": "a tree는 단수이므로 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u4-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There is a tree in the park.",
+                  "Is it a butterfly on the flower?",
+                  "There is two birds outside.",
+                  "There are three flowers here."
+                ],
+                "answerIndex": 2,
+                "explanation": "two birds는 복수이므로 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u4-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There is a tree in the park.",
+                  "There are two birds outside.",
+                  "There are three flowers here.",
+                  "Are it a butterfly on the flower?"
+                ],
+                "answerIndex": 3,
+                "explanation": "It과 함께 Is를 사용합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u4-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There is three flowers here.",
+                  "There is a tree in the park.",
+                  "There are two birds outside.",
+                  "Is it a butterfly on the flower?"
+                ],
+                "answerIndex": 0,
+                "explanation": "three flowers는 복수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u4-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There is a tree in the park.",
+                  "It are a big rock.",
+                  "There are two birds outside.",
+                  "Is it a butterfly on the flower?"
+                ],
+                "answerIndex": 1,
+                "explanation": "It 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz1-u4-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There are a tree in the park.",
+                "options": [
+                  "There",
+                  "are",
+                  "a tree in the park",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "a tree는 단수이므로 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u4-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There is two birds outside.",
+                "options": [
+                  "There",
+                  "is",
+                  "two birds outside",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "two birds는 복수이므로 are를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u4-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Are it a butterfly on the flower?",
+                "options": [
+                  "Are",
+                  "it a butterfly on the",
+                  "flower",
+                  "?"
+                ],
+                "answerIndex": 0,
+                "explanation": "It과 함께 Is를 사용합니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u4-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There is three flowers here.",
+                "options": [
+                  "There",
+                  "is",
+                  "three flowers here",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "three flowers는 복수입니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u4-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "It are a big rock.",
+                "options": [
+                  "It",
+                  "are",
+                  "a big rock",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "It 뒤에는 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 5,
+          "title": "My Body",
+          "grammarFocus": "This is; These are; it has",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz1-u5-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThese _______ my two hands.",
+                "options": [
+                  "are",
+                  "is",
+                  "has",
+                  "am"
+                ],
+                "answerIndex": 0,
+                "explanation": "These는 복수이므로 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u5-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThis _______ my little nose.",
+                "options": [
+                  "are",
+                  "has",
+                  "am",
+                  "is"
+                ],
+                "answerIndex": 3,
+                "explanation": "This는 단수이므로 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u5-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nIt _______ two big eyes.",
+                "options": [
+                  "have",
+                  "are",
+                  "has",
+                  "is"
+                ],
+                "answerIndex": 2,
+                "explanation": "It은 3인칭 단수이므로 has를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u5-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThese _______ my two feet.",
+                "options": [
+                  "is",
+                  "are",
+                  "has",
+                  "am"
+                ],
+                "answerIndex": 1,
+                "explanation": "These는 복수이므로 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u5-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThis _______ my big head.",
+                "options": [
+                  "is",
+                  "are",
+                  "has",
+                  "am"
+                ],
+                "answerIndex": 0,
+                "explanation": "This는 단수입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz1-u5-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "This is my little nose.",
+                  "These is my two hands.",
+                  "It has two big eyes.",
+                  "These are my two feet."
+                ],
+                "answerIndex": 1,
+                "explanation": "These는 복수이므로 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u5-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "These are my two hands.",
+                  "It has two big eyes.",
+                  "This are my little nose.",
+                  "These are my two feet."
+                ],
+                "answerIndex": 2,
+                "explanation": "This는 단수이므로 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u5-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "These are my two hands.",
+                  "This is my little nose.",
+                  "These are my two feet.",
+                  "It have two big eyes."
+                ],
+                "answerIndex": 3,
+                "explanation": "It은 3인칭 단수이므로 has를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u5-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "These is my two feet.",
+                  "These are my two hands.",
+                  "This is my little nose.",
+                  "It has two big eyes."
+                ],
+                "answerIndex": 0,
+                "explanation": "These는 복수이므로 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u5-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "These are my two hands.",
+                  "This are my big head.",
+                  "This is my little nose.",
+                  "It has two big eyes."
+                ],
+                "answerIndex": 1,
+                "explanation": "This는 단수입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz1-u5-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "These is my two hands.",
+                "options": [
+                  "These",
+                  "is",
+                  "my two hands",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "These는 복수이므로 are를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u5-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "This are my little nose.",
+                "options": [
+                  "This",
+                  "are",
+                  "my little nose",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "This는 단수이므로 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u5-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "It have two big eyes.",
+                "options": [
+                  "It",
+                  "have",
+                  "two big eyes",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "It은 3인칭 단수이므로 has를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u5-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "These is my two feet.",
+                "options": [
+                  "These",
+                  "is",
+                  "my two feet",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "These는 복수이므로 are를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u5-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "This are my big head.",
+                "options": [
+                  "This",
+                  "are",
+                  "my big head",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "This는 단수입니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 6,
+          "title": "My Family",
+          "grammarFocus": "Who's he/she?; be",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz1-u6-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nHe _______ my father.",
+                "options": [
+                  "is",
+                  "are",
+                  "Who",
+                  "Are"
+                ],
+                "answerIndex": 0,
+                "explanation": "He에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u6-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nShe _______ my older sister.",
+                "options": [
+                  "am",
+                  "Who",
+                  "are",
+                  "is"
+                ],
+                "answerIndex": 3,
+                "explanation": "She에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u6-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\n_______ is he in the photo?",
+                "options": [
+                  "What",
+                  "is",
+                  "Who",
+                  "are"
+                ],
+                "answerIndex": 2,
+                "explanation": "사람을 물을 때 Who를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u6-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThey _______ my two parents.",
+                "options": [
+                  "is",
+                  "are",
+                  "Who",
+                  "Are"
+                ],
+                "answerIndex": 1,
+                "explanation": "They는 복수이므로 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u6-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\n_______ you my new cousin?",
+                "options": [
+                  "Are",
+                  "Is",
+                  "is",
+                  "Who"
+                ],
+                "answerIndex": 0,
+                "explanation": "You와 함께 Are를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz1-u6-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She is my older sister.",
+                  "He are my father.",
+                  "Who is he in the photo?",
+                  "They are my two parents."
+                ],
+                "answerIndex": 1,
+                "explanation": "He에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u6-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He is my father.",
+                  "Who is he in the photo?",
+                  "She am my older sister.",
+                  "They are my two parents."
+                ],
+                "answerIndex": 2,
+                "explanation": "She에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u6-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He is my father.",
+                  "She is my older sister.",
+                  "They are my two parents.",
+                  "What is he in the photo?"
+                ],
+                "answerIndex": 3,
+                "explanation": "사람을 물을 때 Who를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u6-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "They is my two parents.",
+                  "He is my father.",
+                  "She is my older sister.",
+                  "Who is he in the photo?"
+                ],
+                "answerIndex": 0,
+                "explanation": "They는 복수이므로 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u6-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He is my father.",
+                  "Is you my new cousin?",
+                  "She is my older sister.",
+                  "Who is he in the photo?"
+                ],
+                "answerIndex": 1,
+                "explanation": "You와 함께 Are를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz1-u6-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "He are my father.",
+                "options": [
+                  "He",
+                  "are",
+                  "my father",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "He에는 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u6-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She am my older sister.",
+                "options": [
+                  "She",
+                  "am",
+                  "my older sister",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "She에는 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u6-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "What is he in the photo?",
+                "options": [
+                  "What",
+                  "is he in the",
+                  "photo",
+                  "?"
+                ],
+                "answerIndex": 0,
+                "explanation": "사람을 물을 때 Who를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u6-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "They is my two parents.",
+                "options": [
+                  "They",
+                  "is",
+                  "my two parents",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "They는 복수이므로 are를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u6-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Is you my new cousin?",
+                "options": [
+                  "Is",
+                  "you my new",
+                  "cousin",
+                  "?"
+                ],
+                "answerIndex": 0,
+                "explanation": "You와 함께 Are를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 7,
+          "title": "My Clothes",
+          "grammarFocus": "his/her; this/these",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz1-u7-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThis is _______ new hat.",
+                "options": [
+                  "his",
+                  "he",
+                  "are",
+                  "is"
+                ],
+                "answerIndex": 0,
+                "explanation": "명사 앞에는 소유격 his를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u7-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThese _______ her new shoes.",
+                "options": [
+                  "is",
+                  "his",
+                  "her",
+                  "are"
+                ],
+                "answerIndex": 3,
+                "explanation": "These는 복수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u7-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThis _______ my blue jacket.",
+                "options": [
+                  "are",
+                  "his",
+                  "is",
+                  "her"
+                ],
+                "answerIndex": 2,
+                "explanation": "This에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u7-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThat is _______ pink dress.",
+                "options": [
+                  "she",
+                  "her",
+                  "his",
+                  "are"
+                ],
+                "answerIndex": 1,
+                "explanation": "명사 앞에는 소유격 her를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u7-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThese are _______ red socks.",
+                "options": [
+                  "my",
+                  "me",
+                  "his",
+                  "are"
+                ],
+                "answerIndex": 0,
+                "explanation": "명사 앞에는 소유격 my를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz1-u7-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "These are her new shoes.",
+                  "This is he new hat.",
+                  "This is my blue jacket.",
+                  "That is her pink dress."
+                ],
+                "answerIndex": 1,
+                "explanation": "명사 앞에는 소유격 his를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u7-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "This is his new hat.",
+                  "This is my blue jacket.",
+                  "These is her new shoes.",
+                  "That is her pink dress."
+                ],
+                "answerIndex": 2,
+                "explanation": "These는 복수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u7-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "This is his new hat.",
+                  "These are her new shoes.",
+                  "That is her pink dress.",
+                  "This are my blue jacket."
+                ],
+                "answerIndex": 3,
+                "explanation": "This에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u7-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "That is she pink dress.",
+                  "This is his new hat.",
+                  "These are her new shoes.",
+                  "This is my blue jacket."
+                ],
+                "answerIndex": 0,
+                "explanation": "명사 앞에는 소유격 her를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u7-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "This is his new hat.",
+                  "These are me red socks.",
+                  "These are her new shoes.",
+                  "This is my blue jacket."
+                ],
+                "answerIndex": 1,
+                "explanation": "명사 앞에는 소유격 my를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz1-u7-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "This is he new hat.",
+                "options": [
+                  "This is",
+                  "he",
+                  "new hat",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "명사 앞에는 소유격 his를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u7-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "These is her new shoes.",
+                "options": [
+                  "These",
+                  "is",
+                  "her new shoes",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "These는 복수입니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u7-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "This are my blue jacket.",
+                "options": [
+                  "This",
+                  "are",
+                  "my blue jacket",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "This에는 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u7-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "That is she pink dress.",
+                "options": [
+                  "That is",
+                  "she",
+                  "pink dress",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "명사 앞에는 소유격 her를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u7-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "These are me red socks.",
+                "options": [
+                  "These are",
+                  "me",
+                  "red socks",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "명사 앞에는 소유격 my를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 8,
+          "title": "Food",
+          "grammarFocus": "like/don't like; some",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz1-u8-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI _______ red apples.",
+                "options": [
+                  "like",
+                  "likes",
+                  "don't",
+                  "some"
+                ],
+                "answerIndex": 0,
+                "explanation": "I에는 like를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u8-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI _______ like raw onions.",
+                "options": [
+                  "doesn't",
+                  "like",
+                  "some",
+                  "don't"
+                ],
+                "answerIndex": 3,
+                "explanation": "I의 부정문에는 don't를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u8-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nCan I have _______ water, please?",
+                "options": [
+                  "a",
+                  "like",
+                  "some",
+                  "don't"
+                ],
+                "answerIndex": 2,
+                "explanation": "water는 불가산명사이므로 some을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u8-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nShe _______ yellow bananas.",
+                "options": [
+                  "like",
+                  "likes",
+                  "don't",
+                  "some"
+                ],
+                "answerIndex": 1,
+                "explanation": "She에는 likes를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u8-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\n_______ I have some juice, please?",
+                "options": [
+                  "Can",
+                  "Cans",
+                  "like",
+                  "don't"
+                ],
+                "answerIndex": 0,
+                "explanation": "허락을 구할 때 Can I ...?라고 합니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz1-u8-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I don't like raw onions.",
+                  "I likes red apples.",
+                  "Can I have some water, please?",
+                  "She likes yellow bananas."
+                ],
+                "answerIndex": 1,
+                "explanation": "I에는 like를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u8-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I like red apples.",
+                  "Can I have some water, please?",
+                  "I doesn't like raw onions.",
+                  "She likes yellow bananas."
+                ],
+                "answerIndex": 2,
+                "explanation": "I의 부정문에는 don't를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u8-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I like red apples.",
+                  "I don't like raw onions.",
+                  "She likes yellow bananas.",
+                  "Can I have a water, please?"
+                ],
+                "answerIndex": 3,
+                "explanation": "water는 불가산명사이므로 some을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u8-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She like yellow bananas.",
+                  "I like red apples.",
+                  "I don't like raw onions.",
+                  "Can I have some water, please?"
+                ],
+                "answerIndex": 0,
+                "explanation": "She에는 likes를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz1-u8-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I like red apples.",
+                  "Cans I have some juice, please?",
+                  "I don't like raw onions.",
+                  "Can I have some water, please?"
+                ],
+                "answerIndex": 1,
+                "explanation": "허락을 구할 때 Can I ...?라고 합니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz1-u8-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I likes red apples.",
+                "options": [
+                  "I",
+                  "likes",
+                  "red apples",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "I에는 like를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u8-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I doesn't like raw onions.",
+                "options": [
+                  "I",
+                  "doesn't",
+                  "like raw onions",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "I의 부정문에는 don't를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u8-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Can I have a water, please?",
+                "options": [
+                  "Can I have",
+                  "a",
+                  "water, please",
+                  "?"
+                ],
+                "answerIndex": 1,
+                "explanation": "water는 불가산명사이므로 some을 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u8-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She like yellow bananas.",
+                "options": [
+                  "She",
+                  "like",
+                  "yellow bananas",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "She에는 likes를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "buzz1-u8-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Cans I have some juice, please?",
+                "options": [
+                  "Cans",
+                  "I have some juice,",
+                  "please",
+                  "?"
+                ],
+                "answerIndex": 0,
+                "explanation": "허락을 구할 때 Can I ...?라고 합니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "key": "eu2",
+      "title": "Everybody Up 2 (3rd Edition)",
+      "source": "Original Willena beginner grammar practice aligned to stored coursebook unit targets",
+      "chapters": [
+        {
+          "unit": 1,
+          "title": "How We Feel",
+          "grammarFocus": "am/is/are; feelings",
+          "modes": {
+            "choose": [
+              {
+                "id": "eu2-u1-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nShe _______ happy today.",
+                "options": [
+                  "is",
+                  "are",
+                  "am",
+                  "isn't"
+                ],
+                "answerIndex": 0,
+                "explanation": "She 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u1-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nHe _______ sad this morning.",
+                "options": [
+                  "am",
+                  "are",
+                  "isn't",
+                  "is"
+                ],
+                "answerIndex": 3,
+                "explanation": "He 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u1-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI _______ very tired today.",
+                "options": [
+                  "is",
+                  "are",
+                  "am",
+                  "isn't"
+                ],
+                "answerIndex": 2,
+                "explanation": "I와 함께 am을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u1-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThey _______ excited about the game.",
+                "options": [
+                  "is",
+                  "are",
+                  "am",
+                  "isn't"
+                ],
+                "answerIndex": 1,
+                "explanation": "They는 복수이므로 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u1-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nShe _______ angry; she is happy.",
+                "options": [
+                  "isn't",
+                  "aren't",
+                  "is",
+                  "am"
+                ],
+                "answerIndex": 0,
+                "explanation": "She is의 부정형은 isn't입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "eu2-u1-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He is sad this morning.",
+                  "She are happy today.",
+                  "I am very tired today.",
+                  "They are excited about the game."
+                ],
+                "answerIndex": 1,
+                "explanation": "She 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u1-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She is happy today.",
+                  "I am very tired today.",
+                  "He am sad this morning.",
+                  "They are excited about the game."
+                ],
+                "answerIndex": 2,
+                "explanation": "He 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u1-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She is happy today.",
+                  "He is sad this morning.",
+                  "They are excited about the game.",
+                  "I is very tired today."
+                ],
+                "answerIndex": 3,
+                "explanation": "I와 함께 am을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u1-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "They is excited about the game.",
+                  "She is happy today.",
+                  "He is sad this morning.",
+                  "I am very tired today."
+                ],
+                "answerIndex": 0,
+                "explanation": "They는 복수이므로 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u1-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She is happy today.",
+                  "She aren't angry; she is happy.",
+                  "He is sad this morning.",
+                  "I am very tired today."
+                ],
+                "answerIndex": 1,
+                "explanation": "She is의 부정형은 isn't입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "eu2-u1-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She are happy today.",
+                "options": [
+                  "She",
+                  "are",
+                  "happy today",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "She 뒤에는 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u1-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "He am sad this morning.",
+                "options": [
+                  "He",
+                  "am",
+                  "sad this morning",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "He 뒤에는 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u1-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I is very tired today.",
+                "options": [
+                  "I",
+                  "is",
+                  "very tired today",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "I와 함께 am을 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u1-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "They is excited about the game.",
+                "options": [
+                  "They",
+                  "is",
+                  "excited about the game",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "They는 복수이므로 are를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u1-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She aren't angry; she is happy.",
+                "options": [
+                  "She",
+                  "aren't",
+                  "angry; she is happy",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "She is의 부정형은 isn't입니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 2,
+          "title": "In Town",
+          "grammarFocus": "jobs; be",
+          "modes": {
+            "choose": [
+              {
+                "id": "eu2-u2-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nHe _______ a firefighter in town.",
+                "options": [
+                  "is",
+                  "are",
+                  "Is",
+                  "am"
+                ],
+                "answerIndex": 0,
+                "explanation": "He 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u2-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nShe _______ a doctor at the hospital.",
+                "options": [
+                  "am",
+                  "are",
+                  "Is",
+                  "is"
+                ],
+                "answerIndex": 3,
+                "explanation": "She 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u2-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThey _______ teachers at our school.",
+                "options": [
+                  "is",
+                  "Is",
+                  "are",
+                  "am"
+                ],
+                "answerIndex": 2,
+                "explanation": "They는 복수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u2-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\n_______ he a police officer in town?",
+                "options": [
+                  "Are",
+                  "Is",
+                  "is",
+                  "are"
+                ],
+                "answerIndex": 1,
+                "explanation": "He를 묻는 질문은 Is he ...?입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u2-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nMy mom _______ a nurse at the hospital.",
+                "options": [
+                  "is",
+                  "are",
+                  "Is",
+                  "am"
+                ],
+                "answerIndex": 0,
+                "explanation": "My mom은 단수이므로 is입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "eu2-u2-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She is a doctor at the hospital.",
+                  "He are a firefighter in town.",
+                  "They are teachers at our school.",
+                  "Is he a police officer in town?"
+                ],
+                "answerIndex": 1,
+                "explanation": "He 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u2-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He is a firefighter in town.",
+                  "They are teachers at our school.",
+                  "She am a doctor at the hospital.",
+                  "Is he a police officer in town?"
+                ],
+                "answerIndex": 2,
+                "explanation": "She 뒤에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u2-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He is a firefighter in town.",
+                  "She is a doctor at the hospital.",
+                  "Is he a police officer in town?",
+                  "They is teachers at our school."
+                ],
+                "answerIndex": 3,
+                "explanation": "They는 복수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u2-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Are he a police officer in town?",
+                  "He is a firefighter in town.",
+                  "She is a doctor at the hospital.",
+                  "They are teachers at our school."
+                ],
+                "answerIndex": 0,
+                "explanation": "He를 묻는 질문은 Is he ...?입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u2-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He is a firefighter in town.",
+                  "My mom are a nurse at the hospital.",
+                  "She is a doctor at the hospital.",
+                  "They are teachers at our school."
+                ],
+                "answerIndex": 1,
+                "explanation": "My mom은 단수이므로 is입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "eu2-u2-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "He are a firefighter in town.",
+                "options": [
+                  "He",
+                  "are",
+                  "a firefighter in town",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "He 뒤에는 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u2-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She am a doctor at the hospital.",
+                "options": [
+                  "She",
+                  "am",
+                  "a doctor at the hospital",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "She 뒤에는 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u2-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "They is teachers at our school.",
+                "options": [
+                  "They",
+                  "is",
+                  "teachers at our school",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "They는 복수입니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u2-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Are he a police officer in town?",
+                "options": [
+                  "Are",
+                  "he a police officer in",
+                  "town",
+                  "?"
+                ],
+                "answerIndex": 0,
+                "explanation": "He를 묻는 질문은 Is he ...?입니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u2-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "My mom are a nurse at the hospital.",
+                "options": [
+                  "My mom",
+                  "are",
+                  "a nurse at the hospital",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "My mom은 단수이므로 is입니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 3,
+          "title": "Things to Eat",
+          "grammarFocus": "wants/has; do/does",
+          "modes": {
+            "choose": [
+              {
+                "id": "eu2-u3-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nHe _______ some grapes for lunch.",
+                "options": [
+                  "wants",
+                  "want",
+                  "has",
+                  "Do"
+                ],
+                "answerIndex": 0,
+                "explanation": "He에는 wants를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u3-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI _______ an apple for lunch.",
+                "options": [
+                  "wants",
+                  "has",
+                  "Do",
+                  "want"
+                ],
+                "answerIndex": 3,
+                "explanation": "I에는 want를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u3-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nShe _______ a banana in her bag.",
+                "options": [
+                  "have",
+                  "wants",
+                  "has",
+                  "want"
+                ],
+                "answerIndex": 2,
+                "explanation": "She에는 has를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u3-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\n_______ you want some cold milk?",
+                "options": [
+                  "Does",
+                  "Do",
+                  "wants",
+                  "want"
+                ],
+                "answerIndex": 1,
+                "explanation": "You의 질문에는 Do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u3-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\n_______ he want an orange today?",
+                "options": [
+                  "Does",
+                  "Do",
+                  "wants",
+                  "want"
+                ],
+                "answerIndex": 0,
+                "explanation": "He의 질문에는 Does를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "eu2-u3-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I want an apple for lunch.",
+                  "He want some grapes for lunch.",
+                  "She has a banana in her bag.",
+                  "Do you want some cold milk?"
+                ],
+                "answerIndex": 1,
+                "explanation": "He에는 wants를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u3-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He wants some grapes for lunch.",
+                  "She has a banana in her bag.",
+                  "I wants an apple for lunch.",
+                  "Do you want some cold milk?"
+                ],
+                "answerIndex": 2,
+                "explanation": "I에는 want를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u3-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He wants some grapes for lunch.",
+                  "I want an apple for lunch.",
+                  "Do you want some cold milk?",
+                  "She have a banana in her bag."
+                ],
+                "answerIndex": 3,
+                "explanation": "She에는 has를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u3-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Does you want some cold milk?",
+                  "He wants some grapes for lunch.",
+                  "I want an apple for lunch.",
+                  "She has a banana in her bag."
+                ],
+                "answerIndex": 0,
+                "explanation": "You의 질문에는 Do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u3-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He wants some grapes for lunch.",
+                  "Do he want an orange today?",
+                  "I want an apple for lunch.",
+                  "She has a banana in her bag."
+                ],
+                "answerIndex": 1,
+                "explanation": "He의 질문에는 Does를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "eu2-u3-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "He want some grapes for lunch.",
+                "options": [
+                  "He",
+                  "want",
+                  "some grapes for lunch",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "He에는 wants를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u3-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I wants an apple for lunch.",
+                "options": [
+                  "I",
+                  "wants",
+                  "an apple for lunch",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "I에는 want를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u3-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She have a banana in her bag.",
+                "options": [
+                  "She",
+                  "have",
+                  "a banana in her bag",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "She에는 has를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u3-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Does you want some cold milk?",
+                "options": [
+                  "Does",
+                  "you want some cold",
+                  "milk",
+                  "?"
+                ],
+                "answerIndex": 0,
+                "explanation": "You의 질문에는 Do를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u3-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Do he want an orange today?",
+                "options": [
+                  "Do",
+                  "he want an orange",
+                  "today",
+                  "?"
+                ],
+                "answerIndex": 0,
+                "explanation": "He의 질문에는 Does를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 4,
+          "title": "Things to Wear",
+          "grammarFocus": "present progressive",
+          "modes": {
+            "choose": [
+              {
+                "id": "eu2-u4-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nShe _______ wearing a pink skirt.",
+                "options": [
+                  "is",
+                  "are",
+                  "wearing",
+                  "am"
+                ],
+                "answerIndex": 0,
+                "explanation": "She is wearing이 올바릅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u4-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThey _______ wearing yellow hats.",
+                "options": [
+                  "is",
+                  "wearing",
+                  "am",
+                  "are"
+                ],
+                "answerIndex": 3,
+                "explanation": "They에는 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u4-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI am _______ a blue shirt.",
+                "options": [
+                  "wear",
+                  "is",
+                  "wearing",
+                  "are"
+                ],
+                "answerIndex": 2,
+                "explanation": "am 뒤에는 -ing형을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u4-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nHe _______ wearing a warm jacket.",
+                "options": [
+                  "am",
+                  "is",
+                  "are",
+                  "wearing"
+                ],
+                "answerIndex": 1,
+                "explanation": "He에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u4-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nWe are _______ our new shoes.",
+                "options": [
+                  "wearing",
+                  "wears",
+                  "is",
+                  "are"
+                ],
+                "answerIndex": 0,
+                "explanation": "are 뒤에는 wearing을 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "eu2-u4-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "They are wearing yellow hats.",
+                  "She are wearing a pink skirt.",
+                  "I am wearing a blue shirt.",
+                  "He is wearing a warm jacket."
+                ],
+                "answerIndex": 1,
+                "explanation": "She is wearing이 올바릅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u4-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She is wearing a pink skirt.",
+                  "I am wearing a blue shirt.",
+                  "They is wearing yellow hats.",
+                  "He is wearing a warm jacket."
+                ],
+                "answerIndex": 2,
+                "explanation": "They에는 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u4-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She is wearing a pink skirt.",
+                  "They are wearing yellow hats.",
+                  "He is wearing a warm jacket.",
+                  "I am wear a blue shirt."
+                ],
+                "answerIndex": 3,
+                "explanation": "am 뒤에는 -ing형을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u4-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He am wearing a warm jacket.",
+                  "She is wearing a pink skirt.",
+                  "They are wearing yellow hats.",
+                  "I am wearing a blue shirt."
+                ],
+                "answerIndex": 0,
+                "explanation": "He에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u4-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She is wearing a pink skirt.",
+                  "We are wears our new shoes.",
+                  "They are wearing yellow hats.",
+                  "I am wearing a blue shirt."
+                ],
+                "answerIndex": 1,
+                "explanation": "are 뒤에는 wearing을 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "eu2-u4-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She are wearing a pink skirt.",
+                "options": [
+                  "She",
+                  "are",
+                  "wearing a pink skirt",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "She is wearing이 올바릅니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u4-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "They is wearing yellow hats.",
+                "options": [
+                  "They",
+                  "is",
+                  "wearing yellow hats",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "They에는 are를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u4-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I am wear a blue shirt.",
+                "options": [
+                  "I am",
+                  "wear",
+                  "a blue shirt",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "am 뒤에는 -ing형을 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u4-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "He am wearing a warm jacket.",
+                "options": [
+                  "He",
+                  "am",
+                  "wearing a warm jacket",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "He에는 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u4-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "We are wears our new shoes.",
+                "options": [
+                  "We are",
+                  "wears",
+                  "our new shoes",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "are 뒤에는 wearing을 씁니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 5,
+          "title": "Things to Do",
+          "grammarFocus": "progressive questions/negatives",
+          "modes": {
+            "choose": [
+              {
+                "id": "eu2-u5-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\n_______ you playing soccer now?",
+                "options": [
+                  "Are",
+                  "Is",
+                  "reading",
+                  "isn't"
+                ],
+                "answerIndex": 0,
+                "explanation": "You의 진행형 질문에는 Are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u5-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nShe is _______ a book now.",
+                "options": [
+                  "read",
+                  "Are",
+                  "isn't",
+                  "reading"
+                ],
+                "answerIndex": 3,
+                "explanation": "is 뒤에는 -ing형을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u5-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nHe _______ dancing right now.",
+                "options": [
+                  "aren't",
+                  "Are",
+                  "isn't",
+                  "reading"
+                ],
+                "answerIndex": 2,
+                "explanation": "He의 부정형에는 isn't를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u5-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThey _______ drawing pictures now.",
+                "options": [
+                  "is",
+                  "are",
+                  "Are",
+                  "reading"
+                ],
+                "answerIndex": 1,
+                "explanation": "They에는 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u5-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nWhat _______ she doing right now?",
+                "options": [
+                  "is",
+                  "are",
+                  "Are",
+                  "reading"
+                ],
+                "answerIndex": 0,
+                "explanation": "She에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "eu2-u5-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She is reading a book now.",
+                  "Is you playing soccer now?",
+                  "He isn't dancing right now.",
+                  "They are drawing pictures now."
+                ],
+                "answerIndex": 1,
+                "explanation": "You의 진행형 질문에는 Are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u5-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Are you playing soccer now?",
+                  "He isn't dancing right now.",
+                  "She is read a book now.",
+                  "They are drawing pictures now."
+                ],
+                "answerIndex": 2,
+                "explanation": "is 뒤에는 -ing형을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u5-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Are you playing soccer now?",
+                  "She is reading a book now.",
+                  "They are drawing pictures now.",
+                  "He aren't dancing right now."
+                ],
+                "answerIndex": 3,
+                "explanation": "He의 부정형에는 isn't를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u5-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "They is drawing pictures now.",
+                  "Are you playing soccer now?",
+                  "She is reading a book now.",
+                  "He isn't dancing right now."
+                ],
+                "answerIndex": 0,
+                "explanation": "They에는 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u5-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Are you playing soccer now?",
+                  "What are she doing right now?",
+                  "She is reading a book now.",
+                  "He isn't dancing right now."
+                ],
+                "answerIndex": 1,
+                "explanation": "She에는 is를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "eu2-u5-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Is you playing soccer now?",
+                "options": [
+                  "Is",
+                  "you playing soccer",
+                  "now",
+                  "?"
+                ],
+                "answerIndex": 0,
+                "explanation": "You의 진행형 질문에는 Are를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u5-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She is read a book now.",
+                "options": [
+                  "She is",
+                  "read",
+                  "a book now",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "is 뒤에는 -ing형을 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u5-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "He aren't dancing right now.",
+                "options": [
+                  "He",
+                  "aren't",
+                  "dancing right now",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "He의 부정형에는 isn't를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u5-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "They is drawing pictures now.",
+                "options": [
+                  "They",
+                  "is",
+                  "drawing pictures now",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "They에는 are를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u5-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "What are she doing right now?",
+                "options": [
+                  "What",
+                  "are",
+                  "she doing right now",
+                  "?"
+                ],
+                "answerIndex": 1,
+                "explanation": "She에는 is를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 6,
+          "title": "Home",
+          "grammarFocus": "there is/are; prepositions",
+          "modes": {
+            "choose": [
+              {
+                "id": "eu2-u6-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThere _______ a sofa in the room.",
+                "options": [
+                  "is",
+                  "are",
+                  "under",
+                  "on"
+                ],
+                "answerIndex": 0,
+                "explanation": "a sofa는 단수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u6-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThere _______ two beds in my room.",
+                "options": [
+                  "is",
+                  "under",
+                  "on",
+                  "are"
+                ],
+                "answerIndex": 3,
+                "explanation": "two beds는 복수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u6-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThe cat is _______ the table now.",
+                "options": [
+                  "unders",
+                  "is",
+                  "under",
+                  "are"
+                ],
+                "answerIndex": 2,
+                "explanation": "전치사 under에는 -s를 붙이지 않습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u6-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThere _______ three chairs in the kitchen.",
+                "options": [
+                  "is",
+                  "are",
+                  "under",
+                  "on"
+                ],
+                "answerIndex": 1,
+                "explanation": "three chairs는 복수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u6-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThe lamp is _______ the desk now.",
+                "options": [
+                  "on",
+                  "ons",
+                  "is",
+                  "are"
+                ],
+                "answerIndex": 0,
+                "explanation": "전치사 on은 형태가 변하지 않습니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "eu2-u6-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There are two beds in my room.",
+                  "There are a sofa in the room.",
+                  "The cat is under the table now.",
+                  "There are three chairs in the kitchen."
+                ],
+                "answerIndex": 1,
+                "explanation": "a sofa는 단수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u6-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There is a sofa in the room.",
+                  "The cat is under the table now.",
+                  "There is two beds in my room.",
+                  "There are three chairs in the kitchen."
+                ],
+                "answerIndex": 2,
+                "explanation": "two beds는 복수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u6-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There is a sofa in the room.",
+                  "There are two beds in my room.",
+                  "There are three chairs in the kitchen.",
+                  "The cat is unders the table now."
+                ],
+                "answerIndex": 3,
+                "explanation": "전치사 under에는 -s를 붙이지 않습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u6-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There is three chairs in the kitchen.",
+                  "There is a sofa in the room.",
+                  "There are two beds in my room.",
+                  "The cat is under the table now."
+                ],
+                "answerIndex": 0,
+                "explanation": "three chairs는 복수입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u6-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There is a sofa in the room.",
+                  "The lamp is ons the desk now.",
+                  "There are two beds in my room.",
+                  "The cat is under the table now."
+                ],
+                "answerIndex": 1,
+                "explanation": "전치사 on은 형태가 변하지 않습니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "eu2-u6-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There are a sofa in the room.",
+                "options": [
+                  "There",
+                  "are",
+                  "a sofa in the room",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "a sofa는 단수입니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u6-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There is two beds in my room.",
+                "options": [
+                  "There",
+                  "is",
+                  "two beds in my room",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "two beds는 복수입니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u6-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "The cat is unders the table now.",
+                "options": [
+                  "The cat is",
+                  "unders",
+                  "the table now",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "전치사 under에는 -s를 붙이지 않습니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u6-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There is three chairs in the kitchen.",
+                "options": [
+                  "There",
+                  "is",
+                  "three chairs in the kitchen",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "three chairs는 복수입니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u6-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "The lamp is ons the desk now.",
+                "options": [
+                  "The lamp is",
+                  "ons",
+                  "the desk now",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "전치사 on은 형태가 변하지 않습니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 7,
+          "title": "My Day",
+          "grammarFocus": "routines; telling time",
+          "modes": {
+            "choose": [
+              {
+                "id": "eu2-u7-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI _______ breakfast at seven every day.",
+                "options": [
+                  "eat",
+                  "eats",
+                  "gets",
+                  "do"
+                ],
+                "answerIndex": 0,
+                "explanation": "I에는 eat을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u7-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nShe _______ up at six every day.",
+                "options": [
+                  "get",
+                  "eat",
+                  "do",
+                  "gets"
+                ],
+                "answerIndex": 3,
+                "explanation": "She의 현재형에는 gets를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u7-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nWhat time _______ you go to bed?",
+                "options": [
+                  "does",
+                  "eat",
+                  "do",
+                  "gets"
+                ],
+                "answerIndex": 2,
+                "explanation": "You의 질문에는 do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u7-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nHe _______ lunch at noon every day.",
+                "options": [
+                  "eat",
+                  "eats",
+                  "gets",
+                  "do"
+                ],
+                "answerIndex": 1,
+                "explanation": "He에는 eats를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u7-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nWe _______ to school at eight every day.",
+                "options": [
+                  "go",
+                  "goes",
+                  "eat",
+                  "gets"
+                ],
+                "answerIndex": 0,
+                "explanation": "We에는 go를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "eu2-u7-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She gets up at six every day.",
+                  "I eats breakfast at seven every day.",
+                  "What time do you go to bed?",
+                  "He eats lunch at noon every day."
+                ],
+                "answerIndex": 1,
+                "explanation": "I에는 eat을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u7-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I eat breakfast at seven every day.",
+                  "What time do you go to bed?",
+                  "She get up at six every day.",
+                  "He eats lunch at noon every day."
+                ],
+                "answerIndex": 2,
+                "explanation": "She의 현재형에는 gets를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u7-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I eat breakfast at seven every day.",
+                  "She gets up at six every day.",
+                  "He eats lunch at noon every day.",
+                  "What time does you go to bed?"
+                ],
+                "answerIndex": 3,
+                "explanation": "You의 질문에는 do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u7-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "He eat lunch at noon every day.",
+                  "I eat breakfast at seven every day.",
+                  "She gets up at six every day.",
+                  "What time do you go to bed?"
+                ],
+                "answerIndex": 0,
+                "explanation": "He에는 eats를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u7-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I eat breakfast at seven every day.",
+                  "We goes to school at eight every day.",
+                  "She gets up at six every day.",
+                  "What time do you go to bed?"
+                ],
+                "answerIndex": 1,
+                "explanation": "We에는 go를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "eu2-u7-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I eats breakfast at seven every day.",
+                "options": [
+                  "I",
+                  "eats",
+                  "breakfast at seven every day",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "I에는 eat을 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u7-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She get up at six every day.",
+                "options": [
+                  "She",
+                  "get",
+                  "up at six every day",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "She의 현재형에는 gets를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u7-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "What time does you go to bed?",
+                "options": [
+                  "What time",
+                  "does",
+                  "you go to bed",
+                  "?"
+                ],
+                "answerIndex": 1,
+                "explanation": "You의 질문에는 do를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u7-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "He eat lunch at noon every day.",
+                "options": [
+                  "He",
+                  "eat",
+                  "lunch at noon every day",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "He에는 eats를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u7-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "We goes to school at eight every day.",
+                "options": [
+                  "We",
+                  "goes",
+                  "to school at eight every day",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "We에는 go를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        },
+        {
+          "unit": 8,
+          "title": "My Week",
+          "grammarFocus": "days; schedules",
+          "modes": {
+            "choose": [
+              {
+                "id": "eu2-u8-choose-1",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nI have English _______ Monday morning.",
+                "options": [
+                  "on",
+                  "in",
+                  "has",
+                  "have"
+                ],
+                "answerIndex": 0,
+                "explanation": "요일 앞에는 on을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u8-choose-2",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nShe _______ math on Tuesday.",
+                "options": [
+                  "have",
+                  "on",
+                  "Does",
+                  "has"
+                ],
+                "answerIndex": 3,
+                "explanation": "She에는 has를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u8-choose-3",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nWe _______ art on Friday afternoon.",
+                "options": [
+                  "has",
+                  "on",
+                  "have",
+                  "Does"
+                ],
+                "answerIndex": 2,
+                "explanation": "We에는 have를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u8-choose-4",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\n_______ he have music on Monday?",
+                "options": [
+                  "Do",
+                  "Does",
+                  "on",
+                  "has"
+                ],
+                "answerIndex": 1,
+                "explanation": "He의 질문에는 Does를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u8-choose-5",
+                "prompt": "다음 빈칸에 들어갈 알맞은 말을 고르시오.\nThey _______ science on Thursday morning.",
+                "options": [
+                  "have",
+                  "has",
+                  "on",
+                  "Does"
+                ],
+                "answerIndex": 0,
+                "explanation": "They에는 have를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "eu2-u8-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She has math on Tuesday.",
+                  "I have English in Monday morning.",
+                  "We have art on Friday afternoon.",
+                  "Does he have music on Monday?"
+                ],
+                "answerIndex": 1,
+                "explanation": "요일 앞에는 on을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u8-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I have English on Monday morning.",
+                  "We have art on Friday afternoon.",
+                  "She have math on Tuesday.",
+                  "Does he have music on Monday?"
+                ],
+                "answerIndex": 2,
+                "explanation": "She에는 has를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u8-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I have English on Monday morning.",
+                  "She has math on Tuesday.",
+                  "Does he have music on Monday?",
+                  "We has art on Friday afternoon."
+                ],
+                "answerIndex": 3,
+                "explanation": "We에는 have를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u8-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Do he have music on Monday?",
+                  "I have English on Monday morning.",
+                  "She has math on Tuesday.",
+                  "We have art on Friday afternoon."
+                ],
+                "answerIndex": 0,
+                "explanation": "He의 질문에는 Does를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "eu2-u8-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I have English on Monday morning.",
+                  "They has science on Thursday morning.",
+                  "She has math on Tuesday.",
+                  "We have art on Friday afternoon."
+                ],
+                "answerIndex": 1,
+                "explanation": "They에는 have를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "eu2-u8-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I have English in Monday morning.",
+                "options": [
+                  "I have English",
+                  "in",
+                  "Monday morning",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "요일 앞에는 on을 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u8-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She have math on Tuesday.",
+                "options": [
+                  "She",
+                  "have",
+                  "math on Tuesday",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "She에는 has를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u8-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "We has art on Friday afternoon.",
+                "options": [
+                  "We",
+                  "has",
+                  "art on Friday afternoon",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "We에는 have를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u8-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Do he have music on Monday?",
+                "options": [
+                  "Do",
+                  "he have music on",
+                  "Monday",
+                  "?"
+                ],
+                "answerIndex": 0,
+                "explanation": "He의 질문에는 Does를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              },
+              {
+                "id": "eu2-u8-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "They has science on Thursday morning.",
+                "options": [
+                  "They",
+                  "has",
+                  "science on Thursday morning",
+                  "."
+                ],
+                "answerIndex": 1,
+                "explanation": "They에는 have를 씁니다.",
+                "displayStyle": "beginner-underlined"
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }
