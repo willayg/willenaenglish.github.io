@@ -79,6 +79,24 @@ export function createScreens(actions){
     // identifies the exact unit; normal study retains all unit tabs.
     const bookScreen=$('bookScreen');
     bookScreen?.classList.toggle('sg-focused-homework',!!activeHomework);
+    let toolbar=$('sgFocusedHomeworkToolbar');
+    if(!toolbar&&bookScreen){
+      toolbar=document.createElement('div');
+      toolbar.id='sgFocusedHomeworkToolbar';
+      toolbar.className='sg-focused-toolbar';
+      bookScreen.querySelector('.vocab-unit-summary')?.before(toolbar);
+    }
+    if(toolbar){
+      toolbar.hidden=!activeHomework;
+      toolbar.replaceChildren();
+      if(activeHomework){
+        const label=el('strong','sg-focused-label','✓ 선택한 숙제 · Your Homework');
+        const button=el('button','sg-focused-view-all','모든 단원 보기 · View all');
+        button.type='button';
+        button.addEventListener('click',actions.viewAllHomework);
+        toolbar.append(label,button);
+      }
+    }
     // The book header already indicates homework; no redundant explanation card.
     $('sgHomeworkSessionBanner')?.remove();
     $('bookName').textContent=(activeHomework?'숙제 / Homework · ':'')+(book?.title||'Sentence Genius');
