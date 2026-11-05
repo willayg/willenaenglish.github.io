@@ -8,7 +8,7 @@ export function createFreeTalkingVoice({host,getToken}){
  let questionBank=[],preferredUnit=1,preloadEpoch=0,destroyed=false,voiceConfirmed=false;
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
- const VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar','bunny','jock','sgt-steve','lily']);
+ const VOICES=new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar','bunny','bunny-v3','bunny-multilingual-v2','jock','sgt-steve','lily']);
  const PREFERENCE_KEY='willena-free-talking-voice-v1';
  try{
   const saved=localStorage.getItem(PREFERENCE_KEY);
