@@ -1006,3 +1006,15 @@ body.willena-kb-open .vocab-session-main{
 .vocab-session-home:hover,.vocab-session-home:focus-visible{
   border-color:#e984b7;background:#fff4fa;outline-offset:3px;
 }
+
+
+/* Selected homework: soft-cyan Word Genius styling, with unchanged skill cards. */
+.vocab-focused-toolbar[hidden]{display:none!important}
+.vocab-focused-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0 16px}
+.vocab-focused-label{display:inline-flex;align-items:center;gap:7px;color:#267e87;font-size:.78rem;font-weight:900;letter-spacing:.015em}
+.vocab-focused-label::before{content:'✓';display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;background:#e8f8f9;border:1.5px solid #96dce3;color:#267e87}
+.vocab-view-all-homework{border:1.5px solid #b6e8ed;border-radius:999px;background:#fff;color:#267e87;padding:10px 15px;font:800 .74rem Poppins,system-ui,sans-serif;cursor:pointer}
+.vocab-view-all-homework:focus-visible{outline:3px solid #267e87;outline-offset:2px}
+.vocab-focused-homework .vocab-teacher-card.is-focused{border:2.5px solid #b8e9ed;border-radius:24px;background:#fff;padding:20px 16px;box-shadow:0 9px 27px rgba(30,121,132,.07)}
+.vocab-focused-homework .vocab-old-tests{display:none!important}
+@media(max-width:600px){.vocab-focused-homework .vocab-teacher-card.is-focused{padding:14px 10px;border-radius:19px}.vocab-focused-toolbar{align-items:flex-start}}
