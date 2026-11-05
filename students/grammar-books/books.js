@@ -400,7 +400,7 @@ function renderModeCards(){
  const max=unitRoundSize();
  const count=activeHomework?Math.min(max,Number(homeworkModeEvidence.get(mode.id)?.correct_count)||0):bestScore(activeUnit,mode.id);
  const pct=Math.round(count/max*100),stars=starsForPercent(pct);
- return '<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:'+pct+'"><span>'+pct+'%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">'+(activeHomework?'HOMEWORK':'STEP '+(i+1))+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">'+(activeHomework?count+'/'+max+' completed':'★ '+stars+'/5')+'</span></span></button>'}).join('');
+ return '<button class="vocab-skill-card '+['vocab-skill-quiz','vocab-skill-spelling','vocab-skill-pronunciation'][i]+'" type="button" data-grammar-mode="'+mode.id+'"><span class="vocab-skill-ring" style="--progress:'+pct+'"><span>'+pct+'%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">'+(activeHomework?'HOMEWORK':'STEP '+(i+1))+'</small><strong>'+mode.label+'</strong><span class="vocab-card-stars">'+(activeHomework?count+'/'+max+' correct':'★ '+stars+'/5')+'</span></span></button>'}).join('');
 }
 async function showBook(book,push=true,requestedUnit=null){
  if(!book)return;
