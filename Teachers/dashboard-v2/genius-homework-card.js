@@ -8,10 +8,10 @@ function dday(value){
  const diff=Math.round((at(due)-at(now))/86400000);
  return diff===0?'D-Day':diff>0?'D-'+diff:'D+'+Math.abs(diff);
 }
-function card({className,task,dueAt,teacher,progressLabel='Progress',progressPercent=null,body='',action='',id='',createdBy='' }){
+function card({className,task,dueAt,teacher,progressLabel='Progress',progressPercent=null,body='',action='',id='',createdBy='',qrUrl='' }){
  const pct=Number(progressPercent),valid=progressPercent!==null&&progressPercent!==undefined&&Number.isFinite(pct);
  return '<article class="genius-homework-card" data-genius-card="'+esc(id)+'">'+
- '<div class="ghc-top"><strong class="ghc-class">'+esc(className||'Class unavailable')+'</strong><span class="ghc-day">'+esc(dday(dueAt))+'</span></div>'+
+ '<div class="ghc-top"><strong class="ghc-class">'+esc(className||'Class unavailable')+'</strong><span class="ghc-day">'+esc(dday(dueAt))+'</span>'+(qrUrl?'<button type="button" class="ghc-qr-trigger" data-ghc-qr="'+esc(qrUrl)+'" data-ghc-qr-title="'+esc(className||'Homework')+'" data-ghc-qr-task="'+esc(task||'Homework')+'" aria-label="Show homework QR code" title="Show homework QR code"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="8" height="8"/><rect x="14" y="2" width="8" height="8"/><rect x="2" y="14" width="8" height="8"/><path d="M14 14h3v3h-3zM21 14v4h-3M14 21h4m3 0v-2"/></svg></button>':'')+'</div>'+
  '<div class="ghc-task">'+esc(task||'Homework')+'</div>'+
  '<div class="ghc-teacher" data-ghc-teacher="'+esc(createdBy)+'">'+esc(teacher||'Teacher')+'</div>'+ 
  '<div class="ghc-ring" data-ghc-ring="'+esc(id)+'" role="img" aria-label="Class progress not available"><span>—</span></div>'+
@@ -56,6 +56,36 @@ function updateRing(id,value,root=document){
  const bounded=Math.max(0,Math.min(100,Math.round(pct)));
  node.classList.add('has-data');node.style.setProperty('--ghc-pct',bounded+'%');node.querySelector('span').textContent=bounded+'%';node.setAttribute('aria-label','Class progress '+bounded+'%');
 }
+
+// The QR encodes only a normal assignment URL; student authentication and
+// assignment eligibility are enforced by the existing student homework API.
+const qrStyle=document.createElement('style');
+qrStyle.textContent='.ghc-qr-trigger{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;background:#fff;color:#247c83;border:1.5px solid #e5a2c4;border-radius:10px;cursor:pointer}.ghc-qr-trigger:focus-visible{outline:3px solid #247c83;outline-offset:2px}.ghc-qr-overlay{position:fixed;inset:0;z-index:2147483000;background:rgba(22,35,44,.7);display:flex;align-items:center;justify-content:center;padding:16px}.ghc-qr-dialog{width:min(92vw,430px);max-height:90vh;overflow:auto;background:white;border-radius:20px;padding:22px;color:#263a40;text-align:center;box-shadow:0 20px 65px #0005}.ghc-qr-dialog h2{font-size:21px;margin:0 34px 5px}.ghc-qr-dialog p{margin:6px 0 15px;color:#62737a}.ghc-qr-image{background:white;border:10px solid white;border-radius:12px;display:block;width:min(100%,320px);height:auto;aspect-ratio:1;margin:10px auto}.ghc-qr-actions{display:flex;gap:10px;justify-content:center;margin-top:16px}.ghc-qr-actions button,.ghc-qr-close{border:1px solid #d2e3e5;background:white;border-radius:9px;padding:10px 14px;cursor:pointer}.ghc-qr-close{float:right;padding:3px 9px;font-size:24px}.ghc-qr-dialog.is-enlarged{width:min(96vw,680px)}.ghc-qr-dialog.is-enlarged .ghc-qr-image{width:min(100%,570px)}';
+document.head.appendChild(qrStyle);
+document.addEventListener('click',event=>{
+ const button=event.target.closest?.('[data-ghc-qr]');
+ if(!button)return;
+ event.preventDefault();event.stopPropagation();
+ const raw=button.dataset.ghcQr;
+ let link;
+ try{link=new URL(raw,location.origin);if(link.protocol!=='https:'||link.hostname!=='students.willenaenglish.com')return}catch(_){return}
+ document.querySelector('.ghc-qr-overlay')?.remove();
+ const overlay=document.createElement('div');overlay.className='ghc-qr-overlay';
+ overlay.innerHTML='<section role="dialog" aria-modal="true" aria-label="Homework QR code" class="ghc-qr-dialog"><button type="button" class="ghc-qr-close" aria-label="Close">×</button><h2></h2><p></p><img class="ghc-qr-image" alt="Scannable homework QR code"><div>Scan to open this assignment</div><div class="ghc-qr-actions"><button type="button" data-ghc-copy>Copy link</button><button type="button" data-ghc-enlarge>Enlarge</button></div></section>';
+ overlay.querySelector('h2').textContent=button.dataset.ghcQrTitle||'Homework';
+ overlay.querySelector('p').textContent=button.dataset.ghcQrTask||'';
+ overlay.querySelector('img').src='https://quickchart.io/qr?size=600&margin=2&text='+encodeURIComponent(link.href);
+ const close=()=>{overlay.remove();document.removeEventListener('keydown',onKey)};
+ const onKey=e=>{if(e.key==='Escape')close()};
+ overlay.querySelector('.ghc-qr-close').onclick=close;
+ overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
+ overlay.querySelector('[data-ghc-copy]').onclick=async e=>{try{await navigator.clipboard.writeText(link.href);e.currentTarget.textContent='Copied!'}catch(_){prompt('Copy assignment link',link.href)}};
+ overlay.querySelector('[data-ghc-enlarge]').onclick=e=>{const enlarged=overlay.querySelector('.ghc-qr-dialog').classList.toggle('is-enlarged');e.currentTarget.textContent=enlarged?'Smaller':'Enlarge'};
+ document.addEventListener('keydown',onKey);
+ document.body.appendChild(overlay);
+ overlay.querySelector('.ghc-qr-close').focus();
+});
+
 window.WillenaGeniusHomeworkCard={card,dday,escape:esc,hydrateTeachers,updateRing};
 
 })();
