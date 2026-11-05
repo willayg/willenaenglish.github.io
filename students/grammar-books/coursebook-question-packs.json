@@ -5252,6 +5252,1757 @@
           }
         }
       ]
+    },
+    {
+      "key": "buzz3",
+      "title": "Oxford Buzz 3",
+      "source": "Original Willena questions based on unit grammar metadata",
+      "chapters": [
+        {
+          "unit": 1,
+          "title": "My Day",
+          "grammarFocus": "Simple present routines; time; do/does",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz3-u1-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nI _______ breakfast at seven every morning.",
+                "options": [
+                  "eat",
+                  "eats",
+                  "eating",
+                  "ate",
+                  "eaten"
+                ],
+                "answerIndex": 0,
+                "explanation": "I의 매일 반복하는 습관에는 동사원형 eat을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u1-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWhat time _______ Mina get up on weekdays?",
+                "options": [
+                  "do",
+                  "is",
+                  "does",
+                  "are",
+                  "did"
+                ],
+                "answerIndex": 2,
+                "explanation": "3인칭 단수 Mina의 현재 습관을 물을 때 does를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u1-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nMy brother _______ to school at eight.",
+                "options": [
+                  "go",
+                  "going",
+                  "went",
+                  "gone",
+                  "goes"
+                ],
+                "answerIndex": 4,
+                "explanation": "3인칭 단수 주어 뒤의 현재형 go에는 -es를 붙입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u1-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThey _______ their homework after dinner.",
+                "options": [
+                  "does",
+                  "do",
+                  "doing",
+                  "did",
+                  "done"
+                ],
+                "answerIndex": 1,
+                "explanation": "They는 복수 주어이므로 현재형 do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u1-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\n_______ you brush your teeth before bed?",
+                "options": [
+                  "Does",
+                  "Are",
+                  "Is",
+                  "Do",
+                  "Did"
+                ],
+                "answerIndex": 3,
+                "explanation": "you의 현재 습관을 묻는 의문문에는 Do를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz3-u1-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "What time does Mina get up on weekdays?",
+                  "I eats breakfast at seven every morning.",
+                  "My brother goes to school at eight.",
+                  "They do their homework after dinner.",
+                  "Do you brush your teeth before bed?"
+                ],
+                "answerIndex": 1,
+                "explanation": "I의 매일 반복하는 습관에는 동사원형 eat을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u1-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I eat breakfast at seven every morning.",
+                  "My brother goes to school at eight.",
+                  "They do their homework after dinner.",
+                  "What time do Mina get up on weekdays?",
+                  "Do you brush your teeth before bed?"
+                ],
+                "answerIndex": 3,
+                "explanation": "3인칭 단수 Mina의 현재 습관을 물을 때 does를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u1-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "My brother go to school at eight.",
+                  "I eat breakfast at seven every morning.",
+                  "What time does Mina get up on weekdays?",
+                  "They do their homework after dinner.",
+                  "Do you brush your teeth before bed?"
+                ],
+                "answerIndex": 0,
+                "explanation": "3인칭 단수 주어 뒤의 현재형 go에는 -es를 붙입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u1-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I eat breakfast at seven every morning.",
+                  "What time does Mina get up on weekdays?",
+                  "They does their homework after dinner.",
+                  "My brother goes to school at eight.",
+                  "Do you brush your teeth before bed?"
+                ],
+                "answerIndex": 2,
+                "explanation": "They는 복수 주어이므로 현재형 do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u1-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I eat breakfast at seven every morning.",
+                  "What time does Mina get up on weekdays?",
+                  "My brother goes to school at eight.",
+                  "They do their homework after dinner.",
+                  "Does you brush your teeth before bed?"
+                ],
+                "answerIndex": 4,
+                "explanation": "you의 현재 습관을 묻는 의문문에는 Do를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz3-u1-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I eats breakfast at seven every morning.",
+                "options": [
+                  "I",
+                  "eats",
+                  "breakfast",
+                  "at seven every morning."
+                ],
+                "answerIndex": 1,
+                "explanation": "I의 매일 반복하는 습관에는 동사원형 eat을 씁니다."
+              },
+              {
+                "id": "buzz3-u1-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "What time do Mina get up on weekdays?",
+                "options": [
+                  "What",
+                  "time",
+                  "do",
+                  "Mina get up on weekdays?"
+                ],
+                "answerIndex": 2,
+                "explanation": "3인칭 단수 Mina의 현재 습관을 물을 때 does를 씁니다."
+              },
+              {
+                "id": "buzz3-u1-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "My brother go to school at eight.",
+                "options": [
+                  "My",
+                  "brother",
+                  "go",
+                  "to school at eight."
+                ],
+                "answerIndex": 2,
+                "explanation": "3인칭 단수 주어 뒤의 현재형 go에는 -es를 붙입니다."
+              },
+              {
+                "id": "buzz3-u1-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "They does their homework after dinner.",
+                "options": [
+                  "They",
+                  "does",
+                  "their",
+                  "homework after dinner."
+                ],
+                "answerIndex": 1,
+                "explanation": "They는 복수 주어이므로 현재형 do를 씁니다."
+              },
+              {
+                "id": "buzz3-u1-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Does you brush your teeth before bed?",
+                "options": [
+                  "Does",
+                  "you",
+                  "brush",
+                  "your teeth before bed?"
+                ],
+                "answerIndex": 0,
+                "explanation": "you의 현재 습관을 묻는 의문문에는 Do를 씁니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 2,
+          "title": "My Talents",
+          "grammarFocus": "can/can't; like/don't like; abilities",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz3-u2-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nShe _______ play the piano very well.",
+                "options": [
+                  "can",
+                  "cans",
+                  "is",
+                  "does",
+                  "coulds"
+                ],
+                "answerIndex": 0,
+                "explanation": "조동사 can은 주어에 관계없이 형태가 같습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u2-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nI enjoy music, so I _______ singing.",
+                "options": [
+                  "likes",
+                  "liking",
+                  "like",
+                  "liked",
+                  "am"
+                ],
+                "answerIndex": 2,
+                "explanation": "I의 현재 선호는 like로 나타냅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u2-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nMy sister _______ swim yet, so she takes lessons.",
+                "options": [
+                  "don't",
+                  "isn't",
+                  "doesn't",
+                  "aren't",
+                  "can't"
+                ],
+                "answerIndex": 4,
+                "explanation": "수영할 능력이 없다는 뜻이므로 can't를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u2-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nCan your friends _______ a bicycle?",
+                "options": [
+                  "rides",
+                  "ride",
+                  "riding",
+                  "rode",
+                  "ridden"
+                ],
+                "answerIndex": 1,
+                "explanation": "can 뒤에는 동사원형 ride가 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u2-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nHe _______ like spicy food.",
+                "options": [
+                  "don't",
+                  "isn't",
+                  "aren't",
+                  "doesn't",
+                  "hasn't"
+                ],
+                "answerIndex": 3,
+                "explanation": "3인칭 단수 현재 부정문은 doesn't + 동사원형입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz3-u2-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I enjoy music, so I like singing.",
+                  "She cans play the piano very well.",
+                  "My sister can't swim yet, so she takes lessons.",
+                  "Can your friends ride a bicycle?",
+                  "He doesn't like spicy food."
+                ],
+                "answerIndex": 1,
+                "explanation": "조동사 can은 주어에 관계없이 형태가 같습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u2-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She can play the piano very well.",
+                  "My sister can't swim yet, so she takes lessons.",
+                  "Can your friends ride a bicycle?",
+                  "I enjoy music, so I likes singing.",
+                  "He doesn't like spicy food."
+                ],
+                "answerIndex": 3,
+                "explanation": "I의 현재 선호는 like로 나타냅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u2-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "My sister don't swim yet, so she takes lessons.",
+                  "She can play the piano very well.",
+                  "I enjoy music, so I like singing.",
+                  "Can your friends ride a bicycle?",
+                  "He doesn't like spicy food."
+                ],
+                "answerIndex": 0,
+                "explanation": "수영할 능력이 없다는 뜻이므로 can't를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u2-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She can play the piano very well.",
+                  "I enjoy music, so I like singing.",
+                  "Can your friends rides a bicycle?",
+                  "My sister can't swim yet, so she takes lessons.",
+                  "He doesn't like spicy food."
+                ],
+                "answerIndex": 2,
+                "explanation": "can 뒤에는 동사원형 ride가 옵니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u2-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "She can play the piano very well.",
+                  "I enjoy music, so I like singing.",
+                  "My sister can't swim yet, so she takes lessons.",
+                  "Can your friends ride a bicycle?",
+                  "He don't like spicy food."
+                ],
+                "answerIndex": 4,
+                "explanation": "3인칭 단수 현재 부정문은 doesn't + 동사원형입니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz3-u2-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "She cans play the piano very well.",
+                "options": [
+                  "She",
+                  "cans",
+                  "play",
+                  "the piano very well."
+                ],
+                "answerIndex": 1,
+                "explanation": "조동사 can은 주어에 관계없이 형태가 같습니다."
+              },
+              {
+                "id": "buzz3-u2-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I enjoy music, so I likes singing.",
+                "options": [
+                  "I enjoy music, so",
+                  "I",
+                  "likes",
+                  "singing."
+                ],
+                "answerIndex": 2,
+                "explanation": "I의 현재 선호는 like로 나타냅니다."
+              },
+              {
+                "id": "buzz3-u2-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "My sister don't swim yet, so she takes lessons.",
+                "options": [
+                  "My",
+                  "sister",
+                  "don't",
+                  "swim yet, so she takes lessons."
+                ],
+                "answerIndex": 2,
+                "explanation": "수영할 능력이 없다는 뜻이므로 can't를 씁니다."
+              },
+              {
+                "id": "buzz3-u2-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Can your friends rides a bicycle?",
+                "options": [
+                  "Can your",
+                  "friends",
+                  "rides",
+                  "a bicycle?"
+                ],
+                "answerIndex": 2,
+                "explanation": "can 뒤에는 동사원형 ride가 옵니다."
+              },
+              {
+                "id": "buzz3-u2-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "He don't like spicy food.",
+                "options": [
+                  "He",
+                  "don't",
+                  "like",
+                  "spicy food."
+                ],
+                "answerIndex": 1,
+                "explanation": "3인칭 단수 현재 부정문은 doesn't + 동사원형입니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 3,
+          "title": "My Home",
+          "grammarFocus": "there is/are; prepositions; comparatives",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz3-u3-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThere _______ two bedrooms in our apartment.",
+                "options": [
+                  "are",
+                  "is",
+                  "am",
+                  "was",
+                  "be"
+                ],
+                "answerIndex": 0,
+                "explanation": "two bedrooms는 복수이므로 There are를 사용합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u3-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThere _______ a big table in the kitchen.",
+                "options": [
+                  "are",
+                  "am",
+                  "is",
+                  "were",
+                  "be"
+                ],
+                "answerIndex": 2,
+                "explanation": "a big table은 단수이므로 There is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u3-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThe cat is sleeping _______ the sofa.",
+                "options": [
+                  "at",
+                  "from",
+                  "to",
+                  "of",
+                  "on"
+                ],
+                "answerIndex": 4,
+                "explanation": "소파 위에 있다는 위치를 나타낼 때 on을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u3-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nOur living room is _______ than my bedroom.",
+                "options": [
+                  "biggest",
+                  "bigger",
+                  "big",
+                  "more big",
+                  "bigly"
+                ],
+                "answerIndex": 1,
+                "explanation": "than과 함께 두 대상을 비교하므로 bigger를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u3-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThere _______ any chairs in the small room.",
+                "options": [
+                  "isn't",
+                  "doesn't",
+                  "hasn't",
+                  "aren't",
+                  "wasn't"
+                ],
+                "answerIndex": 3,
+                "explanation": "chairs는 복수이므로 부정형 aren't를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz3-u3-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There is a big table in the kitchen.",
+                  "There is two bedrooms in our apartment.",
+                  "The cat is sleeping on the sofa.",
+                  "Our living room is bigger than my bedroom.",
+                  "There aren't any chairs in the small room."
+                ],
+                "answerIndex": 1,
+                "explanation": "two bedrooms는 복수이므로 There are를 사용합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u3-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There are two bedrooms in our apartment.",
+                  "The cat is sleeping on the sofa.",
+                  "Our living room is bigger than my bedroom.",
+                  "There are a big table in the kitchen.",
+                  "There aren't any chairs in the small room."
+                ],
+                "answerIndex": 3,
+                "explanation": "a big table은 단수이므로 There is를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u3-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "The cat is sleeping at the sofa.",
+                  "There are two bedrooms in our apartment.",
+                  "There is a big table in the kitchen.",
+                  "Our living room is bigger than my bedroom.",
+                  "There aren't any chairs in the small room."
+                ],
+                "answerIndex": 0,
+                "explanation": "소파 위에 있다는 위치를 나타낼 때 on을 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u3-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There are two bedrooms in our apartment.",
+                  "There is a big table in the kitchen.",
+                  "Our living room is biggest than my bedroom.",
+                  "The cat is sleeping on the sofa.",
+                  "There aren't any chairs in the small room."
+                ],
+                "answerIndex": 2,
+                "explanation": "than과 함께 두 대상을 비교하므로 bigger를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u3-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There are two bedrooms in our apartment.",
+                  "There is a big table in the kitchen.",
+                  "The cat is sleeping on the sofa.",
+                  "Our living room is bigger than my bedroom.",
+                  "There isn't any chairs in the small room."
+                ],
+                "answerIndex": 4,
+                "explanation": "chairs는 복수이므로 부정형 aren't를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz3-u3-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There is two bedrooms in our apartment.",
+                "options": [
+                  "There",
+                  "is",
+                  "two",
+                  "bedrooms in our apartment."
+                ],
+                "answerIndex": 1,
+                "explanation": "two bedrooms는 복수이므로 There are를 사용합니다."
+              },
+              {
+                "id": "buzz3-u3-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There are a big table in the kitchen.",
+                "options": [
+                  "There",
+                  "are",
+                  "a",
+                  "big table in the kitchen."
+                ],
+                "answerIndex": 1,
+                "explanation": "a big table은 단수이므로 There is를 씁니다."
+              },
+              {
+                "id": "buzz3-u3-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "The cat is sleeping at the sofa.",
+                "options": [
+                  "The cat is",
+                  "sleeping",
+                  "at",
+                  "the sofa."
+                ],
+                "answerIndex": 2,
+                "explanation": "소파 위에 있다는 위치를 나타낼 때 on을 씁니다."
+              },
+              {
+                "id": "buzz3-u3-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Our living room is biggest than my bedroom.",
+                "options": [
+                  "Our living room",
+                  "is",
+                  "biggest",
+                  "than my bedroom."
+                ],
+                "answerIndex": 2,
+                "explanation": "than과 함께 두 대상을 비교하므로 bigger를 씁니다."
+              },
+              {
+                "id": "buzz3-u3-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There isn't any chairs in the small room.",
+                "options": [
+                  "There",
+                  "isn't",
+                  "any",
+                  "chairs in the small room."
+                ],
+                "answerIndex": 1,
+                "explanation": "chairs는 복수이므로 부정형 aren't를 씁니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 4,
+          "title": "Days Out",
+          "grammarFocus": "was/were; past of be; weather",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz3-u4-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThe weather _______ sunny yesterday.",
+                "options": [
+                  "was",
+                  "is",
+                  "were",
+                  "are",
+                  "be"
+                ],
+                "answerIndex": 0,
+                "explanation": "yesterday와 단수 주어 the weather에는 was를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u4-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWe _______ at the park last Sunday.",
+                "options": [
+                  "was",
+                  "are",
+                  "were",
+                  "is",
+                  "be"
+                ],
+                "answerIndex": 2,
+                "explanation": "We의 과거 be동사는 were입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u4-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\n_______ your friends tired after the trip?",
+                "options": [
+                  "Was",
+                  "Are",
+                  "Did",
+                  "Does",
+                  "Were"
+                ],
+                "answerIndex": 4,
+                "explanation": "과거 복수 주어 friends의 상태를 묻기 때문에 Were를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u4-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nI _______ at home on Saturday because it rained.",
+                "options": [
+                  "were",
+                  "was",
+                  "am",
+                  "are",
+                  "be"
+                ],
+                "answerIndex": 1,
+                "explanation": "I의 과거 be동사는 was입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u4-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThe children _______ happy with the weather.",
+                "options": [
+                  "was",
+                  "is",
+                  "am",
+                  "were",
+                  "be"
+                ],
+                "answerIndex": 3,
+                "explanation": "The children은 복수이므로 과거형 were를 사용합니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz3-u4-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "We were at the park last Sunday.",
+                  "The weather is sunny yesterday.",
+                  "Were your friends tired after the trip?",
+                  "I was at home on Saturday because it rained.",
+                  "The children were happy with the weather."
+                ],
+                "answerIndex": 1,
+                "explanation": "yesterday와 단수 주어 the weather에는 was를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u4-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "The weather was sunny yesterday.",
+                  "Were your friends tired after the trip?",
+                  "I was at home on Saturday because it rained.",
+                  "We was at the park last Sunday.",
+                  "The children were happy with the weather."
+                ],
+                "answerIndex": 3,
+                "explanation": "We의 과거 be동사는 were입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u4-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Was your friends tired after the trip?",
+                  "The weather was sunny yesterday.",
+                  "We were at the park last Sunday.",
+                  "I was at home on Saturday because it rained.",
+                  "The children were happy with the weather."
+                ],
+                "answerIndex": 0,
+                "explanation": "과거 복수 주어 friends의 상태를 묻기 때문에 Were를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u4-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "The weather was sunny yesterday.",
+                  "We were at the park last Sunday.",
+                  "I were at home on Saturday because it rained.",
+                  "Were your friends tired after the trip?",
+                  "The children were happy with the weather."
+                ],
+                "answerIndex": 2,
+                "explanation": "I의 과거 be동사는 was입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u4-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "The weather was sunny yesterday.",
+                  "We were at the park last Sunday.",
+                  "Were your friends tired after the trip?",
+                  "I was at home on Saturday because it rained.",
+                  "The children was happy with the weather."
+                ],
+                "answerIndex": 4,
+                "explanation": "The children은 복수이므로 과거형 were를 사용합니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz3-u4-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "The weather is sunny yesterday.",
+                "options": [
+                  "The",
+                  "weather",
+                  "is",
+                  "sunny yesterday."
+                ],
+                "answerIndex": 2,
+                "explanation": "yesterday와 단수 주어 the weather에는 was를 씁니다."
+              },
+              {
+                "id": "buzz3-u4-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "We was at the park last Sunday.",
+                "options": [
+                  "We",
+                  "was",
+                  "at",
+                  "the park last Sunday."
+                ],
+                "answerIndex": 1,
+                "explanation": "We의 과거 be동사는 were입니다."
+              },
+              {
+                "id": "buzz3-u4-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Was your friends tired after the trip?",
+                "options": [
+                  "Was",
+                  "your",
+                  "friends",
+                  "tired after the trip?"
+                ],
+                "answerIndex": 0,
+                "explanation": "과거 복수 주어 friends의 상태를 묻기 때문에 Were를 씁니다."
+              },
+              {
+                "id": "buzz3-u4-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I were at home on Saturday because it rained.",
+                "options": [
+                  "I",
+                  "were",
+                  "at",
+                  "home on Saturday because it rained."
+                ],
+                "answerIndex": 1,
+                "explanation": "I의 과거 be동사는 was입니다."
+              },
+              {
+                "id": "buzz3-u4-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "The children was happy with the weather.",
+                "options": [
+                  "The",
+                  "children",
+                  "was",
+                  "happy with the weather."
+                ],
+                "answerIndex": 2,
+                "explanation": "The children은 복수이므로 과거형 were를 사용합니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 5,
+          "title": "Our Friends",
+          "grammarFocus": "have/has; appearance; superlatives",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz3-u5-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nMy friend Jina _______ long, curly hair.",
+                "options": [
+                  "has",
+                  "have",
+                  "having",
+                  "had",
+                  "is"
+                ],
+                "answerIndex": 0,
+                "explanation": "3인칭 단수 Jina의 현재 소유는 has로 나타냅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u5-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThey _______ brown eyes.",
+                "options": [
+                  "has",
+                  "having",
+                  "have",
+                  "had",
+                  "are"
+                ],
+                "answerIndex": 2,
+                "explanation": "복수 주어 They에는 have를 사용합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u5-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThis is the _______ student in our class.",
+                "options": [
+                  "taller",
+                  "tall",
+                  "most tall",
+                  "tallly",
+                  "tallest"
+                ],
+                "answerIndex": 4,
+                "explanation": "집단 내 최고를 나타내는 표현에는 the tallest를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u5-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nMy brother is the _______ child in our family.",
+                "options": [
+                  "younger",
+                  "youngest",
+                  "young",
+                  "more young",
+                  "youngly"
+                ],
+                "answerIndex": 1,
+                "explanation": "가족 중 가장 어리다는 최상급에는 youngest가 알맞습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u5-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\n_______ your cousin have glasses?",
+                "options": [
+                  "Do",
+                  "Is",
+                  "Are",
+                  "Does",
+                  "Has"
+                ],
+                "answerIndex": 3,
+                "explanation": "3인칭 단수의 일반동사 의문문에는 Does + 주어 + 동사원형을 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz3-u5-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "They have brown eyes.",
+                  "My friend Jina have long, curly hair.",
+                  "This is the tallest student in our class.",
+                  "My brother is the youngest child in our family.",
+                  "Does your cousin have glasses?"
+                ],
+                "answerIndex": 1,
+                "explanation": "3인칭 단수 Jina의 현재 소유는 has로 나타냅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u5-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "My friend Jina has long, curly hair.",
+                  "This is the tallest student in our class.",
+                  "My brother is the youngest child in our family.",
+                  "They has brown eyes.",
+                  "Does your cousin have glasses?"
+                ],
+                "answerIndex": 3,
+                "explanation": "복수 주어 They에는 have를 사용합니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u5-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "This is the taller student in our class.",
+                  "My friend Jina has long, curly hair.",
+                  "They have brown eyes.",
+                  "My brother is the youngest child in our family.",
+                  "Does your cousin have glasses?"
+                ],
+                "answerIndex": 0,
+                "explanation": "집단 내 최고를 나타내는 표현에는 the tallest를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u5-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "My friend Jina has long, curly hair.",
+                  "They have brown eyes.",
+                  "My brother is the younger child in our family.",
+                  "This is the tallest student in our class.",
+                  "Does your cousin have glasses?"
+                ],
+                "answerIndex": 2,
+                "explanation": "가족 중 가장 어리다는 최상급에는 youngest가 알맞습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u5-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "My friend Jina has long, curly hair.",
+                  "They have brown eyes.",
+                  "This is the tallest student in our class.",
+                  "My brother is the youngest child in our family.",
+                  "Do your cousin have glasses?"
+                ],
+                "answerIndex": 4,
+                "explanation": "3인칭 단수의 일반동사 의문문에는 Does + 주어 + 동사원형을 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz3-u5-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "My friend Jina have long, curly hair.",
+                "options": [
+                  "My friend",
+                  "Jina",
+                  "have",
+                  "long, curly hair."
+                ],
+                "answerIndex": 2,
+                "explanation": "3인칭 단수 Jina의 현재 소유는 has로 나타냅니다."
+              },
+              {
+                "id": "buzz3-u5-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "They has brown eyes.",
+                "options": [
+                  "They",
+                  "has",
+                  "brown",
+                  "eyes."
+                ],
+                "answerIndex": 1,
+                "explanation": "복수 주어 They에는 have를 사용합니다."
+              },
+              {
+                "id": "buzz3-u5-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "This is the taller student in our class.",
+                "options": [
+                  "This is",
+                  "the",
+                  "taller",
+                  "student in our class."
+                ],
+                "answerIndex": 2,
+                "explanation": "집단 내 최고를 나타내는 표현에는 the tallest를 씁니다."
+              },
+              {
+                "id": "buzz3-u5-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "My brother is the younger child in our family.",
+                "options": [
+                  "My brother is",
+                  "the",
+                  "younger",
+                  "child in our family."
+                ],
+                "answerIndex": 2,
+                "explanation": "가족 중 가장 어리다는 최상급에는 youngest가 알맞습니다."
+              },
+              {
+                "id": "buzz3-u5-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Do your cousin have glasses?",
+                "options": [
+                  "Do",
+                  "your",
+                  "cousin",
+                  "have glasses?"
+                ],
+                "answerIndex": 0,
+                "explanation": "3인칭 단수의 일반동사 의문문에는 Does + 주어 + 동사원형을 씁니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 6,
+          "title": "In the City",
+          "grammarFocus": "present progressive; negatives and questions",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz3-u6-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nLook! The bus _______ coming now.",
+                "options": [
+                  "is",
+                  "are",
+                  "am",
+                  "does",
+                  "has"
+                ],
+                "answerIndex": 0,
+                "explanation": "지금 일어나고 있는 동작은 is coming으로 나타냅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u6-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThe children _______ crossing the road.",
+                "options": [
+                  "is",
+                  "am",
+                  "are",
+                  "do",
+                  "has"
+                ],
+                "answerIndex": 2,
+                "explanation": "복수 주어 children과 현재진행형에는 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u6-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nI _______ waiting for my friend at the station.",
+                "options": [
+                  "is",
+                  "are",
+                  "be",
+                  "do",
+                  "am"
+                ],
+                "answerIndex": 4,
+                "explanation": "I와 함께 쓰는 현재진행형 be동사는 am입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u6-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\n_______ she looking for the museum?",
+                "options": [
+                  "Are",
+                  "Is",
+                  "Do",
+                  "Does",
+                  "Has"
+                ],
+                "answerIndex": 1,
+                "explanation": "현재진행형 의문문은 Is + 주어 + -ing 형태입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u6-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nHe isn't _______ his bicycle today.",
+                "options": [
+                  "ride",
+                  "rides",
+                  "rode",
+                  "riding",
+                  "ridden"
+                ],
+                "answerIndex": 3,
+                "explanation": "현재진행형 부정문 isn't 뒤에도 동사 -ing형 riding을 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz3-u6-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "The children are crossing the road.",
+                  "Look! The bus are coming now.",
+                  "I am waiting for my friend at the station.",
+                  "Is she looking for the museum?",
+                  "He isn't riding his bicycle today."
+                ],
+                "answerIndex": 1,
+                "explanation": "지금 일어나고 있는 동작은 is coming으로 나타냅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u6-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Look! The bus is coming now.",
+                  "I am waiting for my friend at the station.",
+                  "Is she looking for the museum?",
+                  "The children is crossing the road.",
+                  "He isn't riding his bicycle today."
+                ],
+                "answerIndex": 3,
+                "explanation": "복수 주어 children과 현재진행형에는 are를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u6-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "I is waiting for my friend at the station.",
+                  "Look! The bus is coming now.",
+                  "The children are crossing the road.",
+                  "Is she looking for the museum?",
+                  "He isn't riding his bicycle today."
+                ],
+                "answerIndex": 0,
+                "explanation": "I와 함께 쓰는 현재진행형 be동사는 am입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u6-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Look! The bus is coming now.",
+                  "The children are crossing the road.",
+                  "Are she looking for the museum?",
+                  "I am waiting for my friend at the station.",
+                  "He isn't riding his bicycle today."
+                ],
+                "answerIndex": 2,
+                "explanation": "현재진행형 의문문은 Is + 주어 + -ing 형태입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u6-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Look! The bus is coming now.",
+                  "The children are crossing the road.",
+                  "I am waiting for my friend at the station.",
+                  "Is she looking for the museum?",
+                  "He isn't ride his bicycle today."
+                ],
+                "answerIndex": 4,
+                "explanation": "현재진행형 부정문 isn't 뒤에도 동사 -ing형 riding을 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz3-u6-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Look! The bus are coming now.",
+                "options": [
+                  "Look! The",
+                  "bus",
+                  "are",
+                  "coming now."
+                ],
+                "answerIndex": 2,
+                "explanation": "지금 일어나고 있는 동작은 is coming으로 나타냅니다."
+              },
+              {
+                "id": "buzz3-u6-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "The children is crossing the road.",
+                "options": [
+                  "The",
+                  "children",
+                  "is",
+                  "crossing the road."
+                ],
+                "answerIndex": 2,
+                "explanation": "복수 주어 children과 현재진행형에는 are를 씁니다."
+              },
+              {
+                "id": "buzz3-u6-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "I is waiting for my friend at the station.",
+                "options": [
+                  "I",
+                  "is",
+                  "waiting",
+                  "for my friend at the station."
+                ],
+                "answerIndex": 1,
+                "explanation": "I와 함께 쓰는 현재진행형 be동사는 am입니다."
+              },
+              {
+                "id": "buzz3-u6-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Are she looking for the museum?",
+                "options": [
+                  "Are",
+                  "she",
+                  "looking",
+                  "for the museum?"
+                ],
+                "answerIndex": 0,
+                "explanation": "현재진행형 의문문은 Is + 주어 + -ing 형태입니다."
+              },
+              {
+                "id": "buzz3-u6-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "He isn't ride his bicycle today.",
+                "options": [
+                  "He",
+                  "isn't",
+                  "ride",
+                  "his bicycle today."
+                ],
+                "answerIndex": 2,
+                "explanation": "현재진행형 부정문 isn't 뒤에도 동사 -ing형 riding을 씁니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 7,
+          "title": "Our Busy World",
+          "grammarFocus": "wh questions; present negatives; jobs",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz3-u7-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWhere _______ your father work?",
+                "options": [
+                  "does",
+                  "do",
+                  "is",
+                  "are",
+                  "has"
+                ],
+                "answerIndex": 0,
+                "explanation": "3인칭 단수의 현재 직업을 물을 때 does를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u7-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWhat _______ nurses do at a hospital?",
+                "options": [
+                  "does",
+                  "are",
+                  "do",
+                  "is",
+                  "has"
+                ],
+                "answerIndex": 2,
+                "explanation": "복수 주어 nurses가 하는 일을 묻는 현재형에는 do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u7-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nMy aunt _______ work on Sundays.",
+                "options": [
+                  "don't",
+                  "isn't",
+                  "aren't",
+                  "hasn't",
+                  "doesn't"
+                ],
+                "answerIndex": 4,
+                "explanation": "3인칭 단수 현재 부정문은 doesn't + 동사원형입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u7-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWhere _______ the firefighters work?",
+                "options": [
+                  "does",
+                  "do",
+                  "are",
+                  "is",
+                  "has"
+                ],
+                "answerIndex": 1,
+                "explanation": "복수 주어 firefighters의 일반동사 의문문에는 do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u7-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nHe _______ sick people every day.",
+                "options": [
+                  "help",
+                  "helping",
+                  "helped",
+                  "helps",
+                  "is help"
+                ],
+                "answerIndex": 3,
+                "explanation": "3인칭 단수의 반복적인 일을 나타낼 때 helps를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz3-u7-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "What do nurses do at a hospital?",
+                  "Where do your father work?",
+                  "My aunt doesn't work on Sundays.",
+                  "Where do the firefighters work?",
+                  "He helps sick people every day."
+                ],
+                "answerIndex": 1,
+                "explanation": "3인칭 단수의 현재 직업을 물을 때 does를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u7-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Where does your father work?",
+                  "My aunt doesn't work on Sundays.",
+                  "Where do the firefighters work?",
+                  "What does nurses do at a hospital?",
+                  "He helps sick people every day."
+                ],
+                "answerIndex": 3,
+                "explanation": "복수 주어 nurses가 하는 일을 묻는 현재형에는 do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u7-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "My aunt don't work on Sundays.",
+                  "Where does your father work?",
+                  "What do nurses do at a hospital?",
+                  "Where do the firefighters work?",
+                  "He helps sick people every day."
+                ],
+                "answerIndex": 0,
+                "explanation": "3인칭 단수 현재 부정문은 doesn't + 동사원형입니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u7-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Where does your father work?",
+                  "What do nurses do at a hospital?",
+                  "Where does the firefighters work?",
+                  "My aunt doesn't work on Sundays.",
+                  "He helps sick people every day."
+                ],
+                "answerIndex": 2,
+                "explanation": "복수 주어 firefighters의 일반동사 의문문에는 do를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u7-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "Where does your father work?",
+                  "What do nurses do at a hospital?",
+                  "My aunt doesn't work on Sundays.",
+                  "Where do the firefighters work?",
+                  "He help sick people every day."
+                ],
+                "answerIndex": 4,
+                "explanation": "3인칭 단수의 반복적인 일을 나타낼 때 helps를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz3-u7-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Where do your father work?",
+                "options": [
+                  "Where",
+                  "do",
+                  "your",
+                  "father work?"
+                ],
+                "answerIndex": 1,
+                "explanation": "3인칭 단수의 현재 직업을 물을 때 does를 씁니다."
+              },
+              {
+                "id": "buzz3-u7-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "What does nurses do at a hospital?",
+                "options": [
+                  "What",
+                  "does",
+                  "nurses",
+                  "do at a hospital?"
+                ],
+                "answerIndex": 1,
+                "explanation": "복수 주어 nurses가 하는 일을 묻는 현재형에는 do를 씁니다."
+              },
+              {
+                "id": "buzz3-u7-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "My aunt don't work on Sundays.",
+                "options": [
+                  "My",
+                  "aunt",
+                  "don't",
+                  "work on Sundays."
+                ],
+                "answerIndex": 2,
+                "explanation": "3인칭 단수 현재 부정문은 doesn't + 동사원형입니다."
+              },
+              {
+                "id": "buzz3-u7-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Where does the firefighters work?",
+                "options": [
+                  "Where",
+                  "does",
+                  "the",
+                  "firefighters work?"
+                ],
+                "answerIndex": 1,
+                "explanation": "복수 주어 firefighters의 일반동사 의문문에는 do를 씁니다."
+              },
+              {
+                "id": "buzz3-u7-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "He help sick people every day.",
+                "options": [
+                  "He",
+                  "help",
+                  "sick",
+                  "people every day."
+                ],
+                "answerIndex": 1,
+                "explanation": "3인칭 단수의 반복적인 일을 나타낼 때 helps를 씁니다."
+              }
+            ]
+          }
+        },
+        {
+          "unit": 8,
+          "title": "Let's Explore!",
+          "grammarFocus": "there was/were; could/couldn't; past be",
+          "modes": {
+            "choose": [
+              {
+                "id": "buzz3-u8-choose-1",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThere _______ a beautiful lake near the campsite last year.",
+                "options": [
+                  "was",
+                  "were",
+                  "is",
+                  "are",
+                  "be"
+                ],
+                "answerIndex": 0,
+                "explanation": "과거에 단수 lake가 있었다는 뜻이므로 There was를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u8-choose-2",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nThere _______ many birds in the forest yesterday.",
+                "options": [
+                  "was",
+                  "are",
+                  "were",
+                  "is",
+                  "be"
+                ],
+                "answerIndex": 2,
+                "explanation": "과거의 복수 명사 many birds에는 were가 알맞습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u8-choose-3",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWhen I was six, I _______ climb that hill.",
+                "options": [
+                  "can't",
+                  "don't",
+                  "isn't",
+                  "doesn't",
+                  "couldn't"
+                ],
+                "answerIndex": 4,
+                "explanation": "과거에 할 수 없었던 능력은 couldn't로 나타냅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u8-choose-4",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\n_______ there any deer in the park last year?",
+                "options": [
+                  "Was",
+                  "Were",
+                  "Are",
+                  "Is",
+                  "Did"
+                ],
+                "answerIndex": 1,
+                "explanation": "과거 복수 deer의 존재를 물을 때 Were there를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u8-choose-5",
+                "prompt": "다음 빈칸에 들어갈 가장 알맞은 것을 고르시오.\nWe _______ see the stars clearly last night.",
+                "options": [
+                  "can",
+                  "cans",
+                  "are",
+                  "could",
+                  "did"
+                ],
+                "answerIndex": 3,
+                "explanation": "last night에 가능했던 일을 말할 때 could를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "check": [
+              {
+                "id": "buzz3-u8-check-1",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There were many birds in the forest yesterday.",
+                  "There were a beautiful lake near the campsite last year.",
+                  "When I was six, I couldn't climb that hill.",
+                  "Were there any deer in the park last year?",
+                  "We could see the stars clearly last night."
+                ],
+                "answerIndex": 1,
+                "explanation": "과거에 단수 lake가 있었다는 뜻이므로 There was를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u8-check-2",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There was a beautiful lake near the campsite last year.",
+                  "When I was six, I couldn't climb that hill.",
+                  "Were there any deer in the park last year?",
+                  "There was many birds in the forest yesterday.",
+                  "We could see the stars clearly last night."
+                ],
+                "answerIndex": 3,
+                "explanation": "과거의 복수 명사 many birds에는 were가 알맞습니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u8-check-3",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "When I was six, I can't climb that hill.",
+                  "There was a beautiful lake near the campsite last year.",
+                  "There were many birds in the forest yesterday.",
+                  "Were there any deer in the park last year?",
+                  "We could see the stars clearly last night."
+                ],
+                "answerIndex": 0,
+                "explanation": "과거에 할 수 없었던 능력은 couldn't로 나타냅니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u8-check-4",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There was a beautiful lake near the campsite last year.",
+                  "There were many birds in the forest yesterday.",
+                  "Was there any deer in the park last year?",
+                  "When I was six, I couldn't climb that hill.",
+                  "We could see the stars clearly last night."
+                ],
+                "answerIndex": 2,
+                "explanation": "과거 복수 deer의 존재를 물을 때 Were there를 씁니다.",
+                "displayStyle": "sentence-options"
+              },
+              {
+                "id": "buzz3-u8-check-5",
+                "prompt": "다음 중 어법상 틀린 문장을 고르시오.",
+                "options": [
+                  "There was a beautiful lake near the campsite last year.",
+                  "There were many birds in the forest yesterday.",
+                  "When I was six, I couldn't climb that hill.",
+                  "Were there any deer in the park last year?",
+                  "We can see the stars clearly last night."
+                ],
+                "answerIndex": 4,
+                "explanation": "last night에 가능했던 일을 말할 때 could를 씁니다.",
+                "displayStyle": "sentence-options"
+              }
+            ],
+            "hunt": [
+              {
+                "id": "buzz3-u8-hunt-1",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There were a beautiful lake near the campsite last year.",
+                "options": [
+                  "There",
+                  "were",
+                  "a",
+                  "beautiful lake near the campsite last year."
+                ],
+                "answerIndex": 1,
+                "explanation": "과거에 단수 lake가 있었다는 뜻이므로 There was를 씁니다."
+              },
+              {
+                "id": "buzz3-u8-hunt-2",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "There was many birds in the forest yesterday.",
+                "options": [
+                  "There",
+                  "was",
+                  "many",
+                  "birds in the forest yesterday."
+                ],
+                "answerIndex": 1,
+                "explanation": "과거의 복수 명사 many birds에는 were가 알맞습니다."
+              },
+              {
+                "id": "buzz3-u8-hunt-3",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "When I was six, I can't climb that hill.",
+                "options": [
+                  "When I was six,",
+                  "I",
+                  "can't",
+                  "climb that hill."
+                ],
+                "answerIndex": 2,
+                "explanation": "과거에 할 수 없었던 능력은 couldn't로 나타냅니다."
+              },
+              {
+                "id": "buzz3-u8-hunt-4",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "Was there any deer in the park last year?",
+                "options": [
+                  "Was",
+                  "there",
+                  "any",
+                  "deer in the park last year?"
+                ],
+                "answerIndex": 0,
+                "explanation": "과거 복수 deer의 존재를 물을 때 Were there를 씁니다."
+              },
+              {
+                "id": "buzz3-u8-hunt-5",
+                "prompt": "다음 문장에서 밑줄 친 부분 중 어법상 틀린 것을 고르시오.",
+                "sentence": "We can see the stars clearly last night.",
+                "options": [
+                  "We",
+                  "can",
+                  "see",
+                  "the stars clearly last night."
+                ],
+                "answerIndex": 1,
+                "explanation": "last night에 가능했던 일을 말할 때 could를 씁니다."
+              }
+            ]
+          }
+        }
+      ]
     }
   ]
 }
