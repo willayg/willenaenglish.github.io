@@ -17,6 +17,7 @@ assignmentDateStyle.textContent += '.ua-overview-genius-card{width:100%;margin:0
 assignmentDateStyle.textContent += '.ua-toolbar .ua-bulk-icon{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;width:56px;height:46px;min-width:56px;min-height:46px;padding:7px;border-radius:12px;background:#fff;line-height:1;border:1.5px solid #a9d7dc;color:#26868f;cursor:pointer}.ua-toolbar .ua-bulk-delete{border-color:#e2b4c7;color:#b25b74}.ua-toolbar .ua-bulk-icon svg{flex:none}.ua-toolbar .ua-bulk-count{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}.ua-toolbar .ua-bulk-icon:disabled{opacity:.4;cursor:not-allowed}.ua-toolbar .ua-bulk-icon:focus-visible{outline:3px solid #2899a5;outline-offset:2px}';
 assignmentDateStyle.textContent += '.ua-overview-filters{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0 12px}.ua-overview-filters label{display:flex;flex:1 1 200px;min-width:0;flex-direction:column;gap:5px;font-size:12px;font-weight:750;color:#54737d}.ua-overview-filters select{width:100%;max-width:100%;background:#fff;box-sizing:border-box;min-height:42px}\n';
 assignmentDateStyle.textContent += '.ua-naesin-qr{margin:8px 0 8px 12px;vertical-align:middle}';
+assignmentDateStyle.textContent += '.ua-overview-genius-card .ghc-app-label{font-size:14px;font-weight:850;color:#227e87;margin:10px 0 2px;line-height:1.5;overflow-wrap:anywhere}.ua-overview-genius-card .ghc-app-label+.ghc-task{margin-top:2px}';
 assignmentDateStyle.textContent += '.ua-overview-genius-card .ua-single-assignment-detail{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:8px 0 0!important;margin:0!important;min-height:0!important}.ua-overview-open-details{appearance:none;background:#fff;border:1px solid #d9e7ea;border-radius:12px;padding:10px 14px;font:inherit;font-size:13px;color:#2b5963;cursor:pointer;min-height:43px}.ua-overview-open-details:hover{border-color:#9ad6dd;background:#f6fcfc}.ua-overview-open-details:focus-visible{outline:3px solid #2a9ca5;outline-offset:2px}.ua-single-assignment-detail .ua-homework-expanded{margin:10px 0 0!important;padding:12px 0!important}.ua-single-assignment-detail .ua-homework-actions,.ua-single-assignment-detail .ua-delete-area{margin-top:8px}';
 document.head.appendChild(assignmentDateStyle);
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
@@ -33,10 +34,10 @@ const dday=x=>{
  return offset===0?'D-Day':offset>0?'D-'+offset:'D+'+Math.abs(offset);
 };
 const id=x=>String(x||'');
-function sharedHomeworkGroupStart({key,title,sub,label,average=null,checkbox='',overviewStyle=false,due='',teacher=''}) {
+function sharedHomeworkGroupStart({key,title,sub,label,average=null,checkbox='',overviewStyle=false,due='',teacher='',apps=[]}) {
  if(overviewStyle){
   return window.WillenaGeniusHomeworkCard.groupCardStart({
-    key,title,task:sub,teacher,dueLabel:due,checkbox,progressPercent:average
+    key,title,task:sub,teacher,dueLabel:due,checkbox,progressPercent:average,apps
   });
 
  }
@@ -569,7 +570,8 @@ async function loadOverview(scopeName='my',force=false){
     const dueDates=g.items.map(row=>row.due_at).filter(Boolean).sort();
     const dueLabel=dueDates.length?(new Set(dueDates.map(x=>assignedDateKey(x))).size===1?dday(dueDates[0]):'Next '+dday(dueDates[0])):'';
     const teacherLabels=[...new Set(g.items.map(row=>authors.get(id(row.created_by))||'Unknown'))];
-    const shell=sharedHomeworkGroupStart({key:g.key,title:g.title,sub:g.items.length+' assignment'+(g.items.length===1?'':'s')+' · '+g.sub,label,average,checkbox:groupSelect,overviewStyle:true,due:dueLabel,teacher:teacherLabels.length===1?teacherLabels[0]+' Teacher':teacherLabels.length+' teachers'});
+    const appNames=[...new Set(g.items.map(row=>String(row.app||'Homework')))];
+    const shell=sharedHomeworkGroupStart({key:g.key,title:g.title,sub:g.items.length+' assignment'+(g.items.length===1?'':'s')+' · '+g.sub,label,average,checkbox:groupSelect,overviewStyle:true,due:dueLabel,teacher:teacherLabels.length===1?teacherLabels[0]+' Teacher':teacherLabels.length+' teachers',apps:appNames});
     // Show the same verified progress panel as Word Genius without requiring
     // a second assignment-detail click. Keep existing detail/actions below it.
     if(g.items.length===1&&g.items[0].app==='Word Genius'){
