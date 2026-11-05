@@ -12,3 +12,8 @@
 .gf-homework-done .gf-homework-result{color:#96640c}
 .gf-homework-card:focus-visible{outline:3px solid #4fb9c8;outline-offset:2px}
 @media(max-width:550px){.gf-homework{padding:14px}.gf-homework-list{grid-template-columns:1fr}}
+
+.gf-focused-homework{border:2.5px solid #b8e9ed;border-radius:23px;background:#fff;padding:17px 15px;margin:16px 0 22px;box-shadow:0 9px 27px rgba(30,121,132,.07)}
+.gf-focused-title{color:#267e87;font-weight:900;font-size:.86rem;margin:0 0 12px}
+.gf-focused-homework .gf-homework{margin:0}
+.gf-view-all-homework{display:block;margin:15px auto 0;padding:10px 16px;border:1.5px solid #b6e8ed;border-radius:999px;background:white;color:#267e87;font-size:.8rem;font-weight:800;cursor:pointer}
