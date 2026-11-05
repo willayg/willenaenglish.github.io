@@ -64,13 +64,6 @@ exports.handler = async (event) => {
     if (Number(head.ContentLength) !== buffer.length) {
       throw new Error('R2 object size did not match the uploaded file');
     }
-    // Verify on the same R2 bucket used for the PUT; older callers are unchanged.
-    let verified = false;
-    if (parsed.verify === true) {
-      const head = await s3.send(new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key }));
-      verified = Number(head.ContentLength) === buffer.byteLength;
-      if (!verified) throw new Error('Uploaded R2 object size mismatch');
-    }
     const url = `${R2_PUBLIC_BASE.replace(/\/$/, '')}/${Key}`;
     return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, path: Key, url, verified: true, size: buffer.length }) };
   } catch (err) {
