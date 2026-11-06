@@ -277,3 +277,5 @@
 .free-talking-genius #ftTranscriptRow{order:8}
 .free-talking-genius #ftFeedback{order:9}
 .free-talking-genius #ftAttemptStatus{order:10}
+
+.free-talking-genius .ft-turn-circle[data-phase="feedback"] .ft-circle-score{font-size:clamp(38px,7vw,50px);font-weight:900;letter-spacing:-.04em}
