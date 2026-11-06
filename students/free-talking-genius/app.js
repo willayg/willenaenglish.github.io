@@ -6,10 +6,10 @@ import {fetchClassBookAssignments,extractClassBookAssignments} from '/students/s
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261107-stt-rollback1';
 import {renderStudentSessionFinish} from '/students/components/student-session-finish.js?v=1';
-import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
+import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
-import {createFreeTalkingVoice} from './question-voice.js?v=20261106-explicit-start1';
+import {createFreeTalkingVoice} from './question-voice.js?v=20261107-character-choice1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
@@ -70,6 +70,11 @@ function setTurn(phase){
  $('ftTurnStatus').textContent=labels[phase];
  $('ftTurnStatus').hidden=phase==='ready'||phase==='feedback';
  $('ftQuestionStage').dataset.phase=phase;
+ const hintsVisible=phase==='student';
+ const hints=$('ftHintActions');
+ hints.classList.toggle('is-concealed',!hintsVisible);
+ hints.setAttribute('aria-hidden',String(!hintsVisible));
+ hints.inert=!hintsVisible;
  circle.setAttribute('aria-label',phase==='ready'?'Start question audio':phase==='student'?(state.mode==='speaking'?'Tap to start or stop speaking':'Tap to focus your writing answer'):'AI question circle');
  if(phase!=='student')circle.dataset.listening='false';
 }
@@ -164,7 +169,7 @@ function clearError(){$('ftError').hidden=true;$('ftError').textContent=''}
 // Navigation history belongs to this app, not to the student's saved attempts.
 // Store the screen and unit in browser history; never use history to modify scores.
 const FT_NAV_KEY='willenaFreeTalkingNavV1';
-const FT_SCREENS=new Set(['ftHome','ftBook','ftSession','ftFinish']);
+const FT_SCREENS=new Set(['ftHome','ftBook','ftCharacter','ftSession','ftFinish']);
 let visibleScreen='ftHome',navigatingHistory=false;
 function navState(screen){
  return {screen,bookId:state.bookId||null,unit:state.unit,mode:state.mode||null,
@@ -208,6 +213,7 @@ function restoreNavigation(nav){
    // in-memory session; a refresh must start via the normal authenticated flow.
    view('ftBook',{record:false});return;
   }
+  if(nav.screen==='ftCharacter'){view('ftBook',{record:false});return;}
   if(nav.screen==='ftFinish'&&state.session?.id===nav.sessionId&&state.session.status==='completed'){
    view('ftFinish',{record:false});return;
   }
@@ -402,7 +408,7 @@ function markFeedback(attempt){
  $('ftFeedback').hidden=false;
  closeTranscriptModal();
  $('ftHeardSentence').hidden=true;
- $('ftHintActions').hidden=true;
+ // Hint visibility follows the turn and fades away on feedback.
  $('ftHintTranslationText').hidden=true;
  $('ftHintStarterText').hidden=true;
  $('ftHintCap').hidden=true;
@@ -468,7 +474,7 @@ function renderQuestion({retry=false}={}){
  state.questionStarted=false;
  state.aiWasPlaying=false;
  $('ftListenAgain').disabled=true;
- $('ftHintActions').hidden=false;
+ // Turn state controls the hint toolbar.
  $('ftQuestionHost').hidden=false;
  $('ftHeardSentence').hidden=true;
  $('ftHeardText').textContent='';
@@ -530,9 +536,29 @@ function renderQuestion({retry=false}={}){
  view('ftSession');
  void questionVoice.select(state.current.id,{autoplay:false});
 }
-async function openMode(mode){
- if(state.loading)return;
- if(!['speaking','writing'].includes(mode))return;
+let roundChoice=null;
+function chooseRoundVoice(voice){
+ if(!['marin','bunny-v3'].includes(voice))return;
+ roundChoice=voice;
+ for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3']])
+  $(id).setAttribute('aria-pressed',String(value===voice));
+ $('ftCharacterContinue').disabled=false;
+}
+function openMode(mode){
+ if(state.loading||!['speaking','writing'].includes(mode))return;
+ state.pendingMode=mode;roundChoice=null;
+ $('ftCharacterRound').textContent=bookTitle()+' · Unit '+state.unit+' · '+(mode==='speaking'?'말하기':'쓰기');
+ for(const id of ['ftChooseWilli','ftChooseLili'])$(id).setAttribute('aria-pressed','false');
+ $('ftCharacterContinue').disabled=true;
+ preloadStudentSfx();
+ view('ftCharacter');
+}
+async function beginRound(mode){
+ if(state.loading||!['speaking','writing'].includes(mode)||!roundChoice)return;
+ if(!questionVoice.setVoice(roundChoice)){
+  showError('캐릭터 음성을 선택할 수 없어요.');return;
+ }
+
  state.mode=mode;state.identity=geniusSessionContext({bookId:BOOK(),unitId:groups()[0]?.unit_id,mode});
  setBusy(true);
  try{
@@ -574,6 +600,7 @@ async function submit(){
   const prior=bestUnitPoints(state.unit,state.mode,question.id);
   if(!state.attempts.some(row=>row.id===attempt.id))state.attempts.push(attempt);
   state.feedback=attempt;markFeedback(attempt);
+  playFreeTalkingScoreSfx(Number(attempt.score_total_v2??Math.round((Number(attempt.grammar_points)+Number(attempt.quality_points))*2.5)));
   const best=bestUnitPoints(state.unit,state.mode,question.id);
   try{
    if(best>0)await syncQuestionReward(question,best);
@@ -583,8 +610,7 @@ async function submit(){
    state.awards.delete(state.mode+':'+question.id);
    $('ftAttemptStatus').textContent='답변과 점수는 저장됐지만 포인트 동기화가 필요해요: '+pointError.message;
   }
-  playFreeTalkingScoreSfx(Number.isFinite(Number(attempt.score_total_v2))&&attempt.score_total_v2!==null?
-   Number(attempt.score_total_v2):Math.round((Number(attempt.grammar_points)+Number(attempt.quality_points))*2.5));
+
   const answered=groups().filter(q=>attemptsFor(state.session.id,q.id).length>0).length;
   $('ftSessionProgress').textContent=answered+'/8 answered';
   $('ftProgressFill').style.width=pct(answered/8*100)+'%';
@@ -669,6 +695,7 @@ async function exit(){
 }
 async function startup(){
  try{
+  preloadStudentSfx();
   state.student=await studentIdentity();
   state.profile=await signedInProfile(state.student.id);
   if(state.profile?.role!=='student'||state.profile?.approved===false)throw Error('Student sign-in required');
@@ -683,6 +710,10 @@ async function startup(){
 }
 // Book cards are created dynamically from the student's active class assignments.
 $('ftBackHome').addEventListener('click',()=>view('ftHome'));
+$('ftChooseWilli').addEventListener('click',()=>chooseRoundVoice('marin'));
+$('ftChooseLili').addEventListener('click',()=>chooseRoundVoice('bunny-v3'));
+$('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pendingMode));
+$('ftCharacterBack').addEventListener('click',()=>view('ftBook'));
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
 $('ftWritingCard').addEventListener('click',()=>void openMode('writing'));
 $('ftTranscriptEdit').addEventListener('input',()=>{
