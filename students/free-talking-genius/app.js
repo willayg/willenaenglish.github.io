@@ -33,10 +33,12 @@ function setTurn(phase){
  if(phase!=='student')circle.dataset.listening='false';
 }
 async function requestHint(kind){
- if(state.loading||!state.current||!state.session||!['translation','starter'].includes(kind))return;
- const target=kind==='translation'?'ftHintTranslationText':'ftHintStarterText';
- if(!$(target).hidden)return;
- const button=$(kind==='translation'?'ftHintTranslation':'ftHintStarter');
+ if(state.loading||!state.current||!state.session||
+  !['translation','starter','english_prompt','typed_review'].includes(kind))return false;
+ if(state.hints.get(kind))return true;
+ const buttons={translation:'ftHintTranslation',starter:'ftHintStarter',
+  english_prompt:'ftHintEnglish',typed_review:'ftEditTranscript'};
+ const button=$(buttons[kind]);
  button.disabled=true;
  $('ftAttemptStatus').textContent='힌트를 준비하는 중…';
  try{
@@ -49,16 +51,26 @@ async function requestHint(kind){
   if(res.status===401)res=await call(await token(true));
   const body=await res.json().catch(()=>null);
   if(!res.ok||!body?.success)throw Error(body?.error||'Hint unavailable');
-  $(target).textContent=body.value||'';
-  $(target).hidden=false;
+  if(kind==='translation'||kind==='starter'){
+   const target=$(kind==='translation'?'ftHintTranslationText':'ftHintStarterText');
+   target.textContent=body.value||'';
+   target.hidden=false;
+  }else if(kind==='english_prompt'){
+   $('ftQuestionText').textContent=body.value||state.current.question_en;
+   $('ftQuestionText').hidden=false;
+  }
   state.hints.set(kind,true);
-  const deduction=(state.hints.get('translation')?1:0)+(state.hints.get('starter')?2:0);
+  button.disabled=kind!=='typed_review';
+  const deduction=(state.hints.get('translation')?1:0)+(state.hints.get('starter')?2:0)+
+   (state.hints.get('english_prompt')?1:0)+(state.hints.get('typed_review')?1:0);
   $('ftHintCap').hidden=false;
   $('ftHintCap').textContent='이번 시도 최대 '+(10-deduction)+'/10점';
   $('ftAttemptStatus').textContent='';
+  return true;
  }catch(error){
   button.disabled=false;
-  $('ftAttemptStatus').textContent='힌트를 열 수 없어요. '+error.message;
+  $('ftAttemptStatus').textContent='도움말을 열 수 없어요. '+error.message;
+  return false;
  }
 }
 function resetHints(){
@@ -66,6 +78,11 @@ function resetHints(){
  for(const [button,result] of [['ftHintTranslation','ftHintTranslationText'],['ftHintStarter','ftHintStarterText']]){
   $(button).disabled=false;$(result).hidden=true;$(result).textContent='';
  }
+ $('ftHintEnglish').disabled=false;
+ $('ftQuestionText').hidden=state.mode==='speaking';
+ $('ftEditTranscript').disabled=false;
+ $('ftTranscriptRow').hidden=true;
+ $('ftEditTranscript').setAttribute('aria-expanded','false');
  $('ftHintCap').textContent='';
  $('ftHintCap').hidden=true;
 }
@@ -388,6 +405,8 @@ function renderQuestion({retry=false}={}){
  $('ftSession').dataset.mode=state.mode;
  $('ftPromptLabel').textContent='QUESTION '+(idx+1);
  $('ftQuestionText').textContent=state.current.question_en;
+ $('ftHintEnglish').hidden=state.mode!=='speaking';
+ $('ftQuestionText').hidden=state.mode==='speaking';
  const answered=questions.filter(q=>attemptsFor(state.session.id,q.id).length>0).length;
  $('ftSessionProgress').textContent=answered+'/8 answered';
  $('ftProgressFill').style.width=pct(answered/8*100)+'%';
@@ -416,7 +435,7 @@ function renderQuestion({retry=false}={}){
  // Speech transcript is stored for scoring, but the editor is opt-in.
  $('ftTranscriptRow').hidden=true;
  $('ftEditTranscript').hidden=state.mode!=='speaking';
- $('ftEditTranscript').textContent='Review / edit answer';
+ $('ftEditTranscript').innerHTML='Review / edit answer <small>−1</small>';
  $('ftEditTranscript').setAttribute('aria-expanded','false');
  $('ftTranscriptEdit').value='';
  if(state.mode==='speaking'){
@@ -587,11 +606,16 @@ $('ftBackHome').addEventListener('click',()=>view('ftHome'));
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
 $('ftWritingCard').addEventListener('click',()=>void openMode('writing'));
 $('ftTranscriptEdit').addEventListener('input',()=>{$('ftSubmit').disabled=state.loading||!validAnswer()});
-$('ftEditTranscript').addEventListener('click',()=>{
+$('ftEditTranscript').addEventListener('click',async()=>{
+ if(state.loading||state.mode!=='speaking')return;
+ if(!state.hints.get('typed_review')){
+  const ok=await requestHint('typed_review');
+  if(!ok)return;
+ }
  const row=$('ftTranscriptRow'),button=$('ftEditTranscript');
  row.hidden=!row.hidden;
  button.setAttribute('aria-expanded',String(!row.hidden));
- button.textContent=row.hidden?'Review / edit answer':'Hide answer editor';
+ button.innerHTML=row.hidden?'Review / edit answer <small>−1</small>':'Hide answer editor <small>−1</small>';
  if(!row.hidden)$('ftTranscriptEdit').focus();
 });
 $('ftWilliVoice').addEventListener('ft:voice-playing',e=>{
@@ -616,6 +640,7 @@ $('ftTurnCircle').addEventListener('click',()=>{
  }else $('ftQuestionHost').querySelector('textarea.answer')?.focus();
 });
 $('ftListenAgain').addEventListener('click',()=>{if(!state.loading&&state.current&&state.aiWasPlaying) $('ftWilliVoice').querySelector('[data-ft-listen]')?.click()});
+$('ftHintEnglish').addEventListener('click',()=>void requestHint('english_prompt'));
 $('ftHintTranslation').addEventListener('click',()=>void requestHint('translation'));
 $('ftHintStarter').addEventListener('click',()=>void requestHint('starter'));
 $('ftQuestionHost').addEventListener('click',e=>{
