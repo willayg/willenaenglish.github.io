@@ -1094,3 +1094,42 @@
 .free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start.ft-orbit-visual{
  z-index:4!important;opacity:1!important;visibility:visible!important;
 }
+
+/* One unlocked hint at a time, with cycling on tap. */
+.free-talking-genius #ftSession #ftHintViewer.ft-hint-viewer{
+ order:5!important;align-self:stretch!important;
+ display:flex!important;flex-direction:column;justify-content:center;gap:7px;
+ width:100%!important;max-width:625px!important;
+ min-height:82px;margin:7px auto!important;
+ padding:14px 17px!important;border:2px solid #ace4e9!important;
+ border-radius:18px!important;background:#f5fcfd!important;
+ background-image:none!important;box-shadow:none!important;
+ text-align:center!important;cursor:pointer;
+ color:#285f69!important;font-family:Poppins,system-ui,sans-serif!important;
+}
+.free-talking-genius #ftSession #ftHintViewer.ft-hint-viewer[hidden]{
+ display:none!important;
+}
+.free-talking-genius #ftSession #ftHintViewer .ft-hint-viewer-top{
+ display:flex;justify-content:center;align-items:center;gap:12px;
+ color:#d17fa9;font-size:12px;font-weight:900;
+}
+.free-talking-genius #ftSession #ftHintViewer .ft-hint-viewer-value{
+ display:block;font-size:clamp(15px,2.8vw,18px);
+ line-height:1.55;font-weight:850;overflow-wrap:anywhere;
+}
+.free-talking-genius #ftSession #ftHintViewer .ft-hint-viewer-guide{
+ color:#68949c;font-size:11px;line-height:1.3;font-weight:700;
+}
+.free-talking-genius #ftSession #ftHintViewer:disabled{
+ opacity:1!important;cursor:default;
+}
+.free-talking-genius #ftSession #ftHintActions>.ft-hint-button.is-current{
+ border-color:#dd96bb!important;background:#fff7fb!important;
+}
+.free-talking-genius #ftSession #ftQuestionStage[data-phase="feedback"] #ftHintViewer,
+.free-talking-genius #ftSession #ftQuestionStage[data-phase="thinking"] #ftHintViewer,
+.free-talking-genius #ftSession #ftQuestionStage[data-phase="ai"] #ftHintViewer,
+.free-talking-genius #ftSession #ftQuestionStage[data-phase="ready"] #ftHintViewer{
+ display:none!important;
+}
