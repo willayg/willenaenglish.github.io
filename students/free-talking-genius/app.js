@@ -53,8 +53,9 @@ async function requestHint(kind){
   $(target).hidden=false;
   state.hints.set(kind,true);
   const deduction=(state.hints.get('translation')?1:0)+(state.hints.get('starter')?2:0);
-  $('ftHintCap').textContent='이번 시도 최대 '+(10-deduction)+'/10점 · 다시 힌트 없이 답하면 만점을 받을 수 있어요.';
-  $('ftAttemptStatus').textContent='힌트를 참고해서 자신의 답변을 만들어 보세요.';
+  $('ftHintCap').hidden=false;
+  $('ftHintCap').textContent='이번 시도 최대 '+(10-deduction)+'/10점';
+  $('ftAttemptStatus').textContent='';
  }catch(error){
   button.disabled=false;
   $('ftAttemptStatus').textContent='힌트를 열 수 없어요. '+error.message;
@@ -65,7 +66,8 @@ function resetHints(){
  for(const [button,result] of [['ftHintTranslation','ftHintTranslationText'],['ftHintStarter','ftHintStarterText']]){
   $(button).disabled=false;$(result).hidden=true;$(result).textContent='';
  }
- $('ftHintCap').textContent='힌트 없이 최고 10점 · 한국어 −1, 문장 시작 −2 (이번 시도에만 적용)';
+ $('ftHintCap').textContent='';
+ $('ftHintCap').hidden=true;
 }
 function updateMicListening(){
  const recognition=state.renderer?.speechRecognition;
@@ -349,8 +351,7 @@ function markFeedback(attempt){
  $('ftNext').hidden=false;
  $('ftSubmit').hidden=true;
  $('ftSkip').hidden=true;
- $('ftAttemptStatus').textContent=total===max?'좋아요! 다음 질문으로 가도 되고, 연습을 계속할 수도 있어요.':
-  '다시 답하면 점수를 올릴 수 있어요. 힌트를 사용했다면 다음 시도는 힌트 없이 도전할 수 있어요.';
+ $('ftAttemptStatus').textContent='';
  setTurn('feedback');
 }
 function questionIndexAfter(start=0){
@@ -370,7 +371,8 @@ function renderQuestion({retry=false}={}){
  if(idx<0){void conclude();return}
  state.cursor=idx;state.current=questions[idx];state.feedback=null;
  $('ftFeedback').hidden=true;$('ftSubmit').hidden=false;$('ftNext').hidden=true;$('ftRetry').hidden=true;$('ftSkip').hidden=false;
- $('ftAttemptStatus').textContent=retry?'답을 더 자연스럽게 고쳐서 다시 시도해 보세요.':'자신의 생각으로 자유롭게 답해 보세요.';
+ $('ftAttemptStatus').textContent='';
+ $('ftSession').dataset.mode=state.mode;
  $('ftPromptLabel').textContent='QUESTION '+(idx+1);
  $('ftQuestionText').textContent=state.current.question_en;
  const answered=questions.filter(q=>attemptsFor(state.session.id,q.id).length>0).length;
@@ -409,8 +411,7 @@ function renderQuestion({retry=false}={}){
  }
  $('ftSubmit').disabled=true;
  // A restored unfinished question shows its previously saved guidance.
- const previous=attemptsFor(state.session.id,state.current.id);
- if(previous.length)$('ftAttemptStatus').textContent='이전에 '+previous.length+'번 답했어요. 더 좋은 답으로 다시 도전해 보세요.';
+ // Earlier attempts are retained without showing a second progress message.
  view('ftSession');
  void questionVoice.select(state.current.id,{autoplay:!retry});
 }
@@ -582,6 +583,7 @@ $('ftTurnCircle').addEventListener('click',()=>{
   requestAnimationFrame(updateMicListening);
  }else $('ftQuestionHost').querySelector('textarea.answer')?.focus();
 });
+$('ftListenAgain').addEventListener('click',()=>{if(!state.loading&&state.current) $('ftWilliVoice').querySelector('[data-ft-listen]')?.click()});
 $('ftHintTranslation').addEventListener('click',()=>void requestHint('translation'));
 $('ftHintStarter').addEventListener('click',()=>void requestHint('starter'));
 $('ftQuestionHost').addEventListener('click',e=>{
