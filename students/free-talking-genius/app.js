@@ -176,7 +176,7 @@ function sameNav(a,b){
 }
 function view(which,{record=true}={}){
  if(!FT_SCREENS.has(which))return;
- if(which!=='ftSession')questionVoice.stop();
+ if(which!=='ftSession'){questionVoice.stop();try{state.renderer?.speechRecognition?.stopExtended?.()}catch{}}
  for(const id of FT_SCREENS)$(id).hidden=id!==which;
  visibleScreen=which;clearError();
  if(record&&!navigatingHistory){
@@ -484,10 +484,10 @@ function renderQuestion({retry=false}={}){
  $('ftSessionProgress').textContent=answered+'/8 answered';
  $('ftProgressFill').style.width=pct(answered/8*100)+'%';
  $('ftSessionTitle').textContent=(state.mode==='speaking'?'Speaking':'Writing')+' · Unit '+state.unit;
- try{state.renderer?.speechRecognition?.stop?.()}catch{}
+ try{state.renderer?.speechRecognition?.stopExtended?.();state.renderer?.speechRecognition?.stop?.()}catch{}
  state.renderer=new QuestionRenderer($('ftQuestionHost'));
  const form=state.mode==='speaking'?'speaking':'write';
- state.renderer.render({form,prompt:state.current.question_en,context:{},answer:[],
+ state.renderer.render({form,speakingExtended:form==='speaking',prompt:state.current.question_en,context:{},answer:[],
   ...(form==='write'?{hints:{placeholder:'Write your own English answer...'}}:{})},{
   onChange:()=>{
    if(state.mode==='speaking'){
@@ -559,6 +559,7 @@ async function openMode(mode){
 async function submit(){
  if(state.loading||!state.current||!validAnswer())return;
  const answer=captureAnswer(),question=state.current;
+ try{state.renderer?.speechRecognition?.stopExtended?.()}catch{}
  setBusy(true);setTurn('thinking');$('ftAttemptStatus').textContent='';
  try{
   const run=async access=>fetch('/api/free-talking-grade',{
