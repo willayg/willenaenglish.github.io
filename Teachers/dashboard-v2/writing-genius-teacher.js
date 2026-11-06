@@ -6,7 +6,7 @@ const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const $=(sel,root=document)=>root.querySelector(sel);
 const $$=(sel,root=document)=>[...root.querySelectorAll(sel)];
 const kindName={sentence:'Free sentences',diary:'Daily diary',topic:'Topic writing'};
-const state={rows:[],sessions:[],classes:[],activeId:null,activeSessionId:null,tab:'submissions',loaded:false,loading:false};
+const state={rows:[],sessions:[],classes:[],activeId:null,activeSessionId:null,tab:'submissions',writingFilter:'submitted',loaded:false,loading:false};
 const formatDate=s=>s?new Date(s).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
 function make(tag,className,text){
  const node=document.createElement(tag);if(className)node.className=className;
@@ -16,8 +16,9 @@ function mount(){
  if($('#view-writing-genius'))return;
  const workspace=$('.workspace');if(!workspace)return;
  const view=make('section','view');view.id='view-writing-genius';
- view.innerHTML='<div class="page-head"><div><h1>Writing Genius</h1><div class="panel-sub">Student writing submissions</div></div></div>'+
+ view.innerHTML='<div class="page-head"><div><h1>Writing Genius</h1><div class="panel-sub">Submitted writing and saved drafts</div></div></div>'+
   '<div class="wg-t-tabs" role="tablist" aria-label="Writing Genius teacher views"><button type="button" class="wg-t-tab is-active" data-wg-tab="submissions">Writing Submissions</button><button type="button" class="wg-t-tab" data-wg-tab="practice">Sentence Practice</button></div>'+
+  '<div class="wg-t-filter" id="wgTeacherWritingFilters"><label for="wgTeacherWritingStatus" style="font-size:13px;font-weight:600">Show</label><select class="control" id="wgTeacherWritingStatus" aria-label="Writing status"><option value="submitted">Submitted</option><option value="draft">Drafts</option><option value="all">All writing</option></select></div>'+
   '<div class="wg-t-filter"><select class="control" id="wgTeacherClass" aria-label="Class"><option value="">All classes</option></select>'+
   '<select class="control" id="wgTeacherKind" aria-label="Writing type"><option value="">All writing</option><option value="diary">Diaries</option><option value="topic">Topics</option></select>'+
   '<input class="control search" id="wgTeacherSearch" type="search" placeholder="Search student or title…" aria-label="Search submissions">'+
@@ -27,7 +28,8 @@ function mount(){
   '<div id="wgTeacherList" class="wg-t-list"><p class="wg-t-empty">Select Writing Genius to load submissions.</p></div></section>'+
   '</div><div class="wg-t-modal" id="wgTeacherModal" hidden><div class="wg-t-modal-backdrop" data-wg-close></div><section class="wg-t-modal-dialog" role="dialog" aria-modal="true" aria-label="Student writing"><button type="button" class="wg-t-modal-close" id="wgTeacherModalClose" aria-label="Close">×</button><div id="wgTeacherDetail"></div></section></div>';
  workspace.append(view);
- $$('.wg-t-tab',view).forEach(b=>b.onclick=()=>{state.tab=b.dataset.wgTab;state.activeId=null;state.activeSessionId=null;closeDiaryModal();$$('.wg-t-tab',view).forEach(x=>x.classList.toggle('is-active',x===b));$('#wgTeacherKind').hidden=state.tab==='practice';render()});
+ $$('.wg-t-tab',view).forEach(b=>b.onclick=()=>{state.tab=b.dataset.wgTab;state.activeId=null;state.activeSessionId=null;closeDiaryModal();$$('.wg-t-tab',view).forEach(x=>x.classList.toggle('is-active',x===b));$('#wgTeacherKind').hidden=state.tab==='practice';$('#wgTeacherWritingFilters').hidden=state.tab==='practice';render()});
+ $('#wgTeacherWritingStatus').onchange=e=>{state.writingFilter=e.target.value;render()};
  $('#wgTeacherClass').onchange=()=>void load();
  $('#wgTeacherKind').onchange=render;
  $('#wgTeacherSearch').oninput=render;
@@ -121,18 +123,20 @@ function render(){
  const container=$('#wgTeacherList'),count=$('#wgTeacherCount');if(!container)return;
  const q=($('#wgTeacherSearch')?.value||'').trim().toLowerCase();
  const kind=$('#wgTeacherKind')?.value||'';
- const rows=state.rows.filter(e=>(!kind||e.kind===kind)&&(!q||[e.name,e.korean_name,e.title,e.class_name,e.body].some(v=>String(v||'').toLowerCase().includes(q))))
-  .sort((a,b)=>new Date(b.submitted_at||0)-new Date(a.submitted_at||0));
- container.replaceChildren();count.textContent=String(rows.length);
- if(!rows.length){container.append(make('p','wg-t-empty',state.loaded?'No matching submitted writing.':'No writing loaded.'));return}
+ const filter=state.writingFilter;
+ const rows=state.rows.filter(e=>(filter==='all'||e.status===filter)&&(!kind||e.kind===kind)&&(!q||[e.name,e.korean_name,e.title,e.class_name,e.body].some(v=>String(v||'').toLowerCase().includes(q))))
+  .sort((a,b)=>new Date(b.activity_at||b.submitted_at||b.updated_at||0)-new Date(a.activity_at||a.submitted_at||a.updated_at||0));
+ container.replaceChildren();count.textContent=String(rows.length);container.closest('.wg-t-list-panel')?.querySelector('.panel-title')?.replaceChildren(document.createTextNode(filter==='draft'?'Saved drafts':filter==='all'?'All writing':'Submitted writing'));
+ if(!rows.length){container.append(make('p','wg-t-empty',state.loaded?'No matching writing in this view.':'No writing loaded.'));return}
  let previousDate='';
  const dateLabel=timestamp=>timestamp?new Date(timestamp).toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric',timeZone:'Asia/Seoul'}):'Unknown date';
  for(const e of rows){
-  const date=dateLabel(e.submitted_at);
+  const date=dateLabel(e.activity_at||e.submitted_at||e.updated_at);
   if(date!==previousDate){const group=make('h3','wg-t-date-heading',date);container.append(group);previousDate=date}
   const b=make('button','wg-t-item wg-t-submission-card');b.type='button';b.dataset.entryId=e.id;
   b.append(make('strong','wg-t-item-name',e.korean_name||e.name||'Student'));
-  b.append(make('span','wg-t-item-meta',kindName[e.kind]||'Writing'));
+  const stages={started:'Draft opened',writing:'Writing draft',reviewed:'AI review done',speaking_done:'Speaking recorded',completed:'Completed'};
+  b.append(make('span','wg-t-item-meta',(kindName[e.kind]||'Writing')+' · '+(stages[e.stage]||(e.status==='draft'?'Draft':'Completed'))));
   b.append(make('strong','wg-t-card-title',e.title||'Untitled'));
   b.onclick=()=>{state.activeId=e.id;detail(e);const modal=$('#wgTeacherModal');modal.hidden=false;document.body.classList.add('wg-modal-open');$('#wgTeacherModalClose').focus()};
   container.append(b);
@@ -144,11 +148,12 @@ function closeDiaryModal(){const modal=$('#wgTeacherModal');if(modal)modal.hidde
 async function feedbackApi(entryId,feedback,bonus){const access=await token();const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/writing_genius_teacher_feedback_v1',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+access,'Content-Type':'application/json'},body:JSON.stringify({p_entry_id:entryId,...(feedback!==undefined?{p_text:feedback}:{}),...(bonus!==undefined?{p_bonus:bonus}:{})})});const result=await response.json();if(!response.ok)throw Error(result.message||result.error||'Could not save feedback');return result}
 function detail(entry){
  const host=$('#wgTeacherDetail');if(!host)return;host.replaceChildren();
- if(!entry){host.append(make('div','wg-t-empty','Choose submitted writing to read it.'));return}
+ if(!entry){host.append(make('div','wg-t-empty','Choose student writing to read it.'));return}
  const head=make('div','wg-t-detail-head');
- head.append(make('span','wg-t-tag',kindName[entry.kind]||entry.kind));
+ const stages={started:'Draft opened',writing:'Writing draft',reviewed:'AI review done',speaking_done:'Speaking recorded',completed:'Completed'};
+ head.append(make('span','wg-t-tag',(kindName[entry.kind]||entry.kind)+' · '+(stages[entry.stage]||entry.status)));
  head.append(make('h2','',entry.title||kindName[entry.kind]));
- head.append(make('p','',(entry.korean_name||entry.name||'Student')+' · '+(entry.class_name||'')+' · '+formatDate(entry.submitted_at)));
+ head.append(make('p','',(entry.korean_name||entry.name||'Student')+' · '+(entry.class_name||'')+' · '+formatDate(entry.activity_at||entry.submitted_at||entry.updated_at)));
  host.append(head);
  if(entry.prompt_text)host.append(make('div','wg-t-prompt',entry.prompt_text));
  const section=(title,body,cls)=>{const wrapper=make('section','wg-t-version');wrapper.append(make('h3','wg-t-version-title',title),make('div','wg-t-paper '+(cls||''),body));host.append(wrapper)};
@@ -165,6 +170,7 @@ function detail(entry){
   if(!changes.length)host.append(make('p','wg-t-note','AI Willi suggested no corrections.'));
   else host.append(make('p','wg-t-note','AI suggestions shown; the student’s final choices are not yet stored centrally.'));
  }else host.append(make('p','wg-t-note','No saved AI correction is available for this submission.'));
+ if(entry.status!=='submitted'){host.append(make('p','wg-t-note','This is a saved draft. Teacher feedback and bonus points become available after the student finishes.'));return}
  const form=make('section','wg-t-feedback');form.append(make('h3','','Teacher feedback'));
  const textarea=make('textarea','wg-t-feedback-input');textarea.placeholder='Write a message to the student…';textarea.maxLength=1500;
  const label=make('label','wg-t-bonus-label','Extra points (0–50, cumulative)');
