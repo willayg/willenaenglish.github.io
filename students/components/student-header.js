@@ -76,8 +76,8 @@ class StudentHeader extends HTMLElement {
     if ((this._points == null || this._stars == null) && !this._fetchingOverview) {
       this._fetchOverview();
     }
-  // Defer mission modal check a tick to avoid blocking initial paint
-  try { setTimeout(() => this._maybeShowMissionModal(), 0); } catch {}
+  // The legacy 'You Have A Mission' popup is retired. Missions remain available in the basket.
+  // Do not auto-open a separate mission modal on student app entry.
   }
 
   disconnectedCallback() {
