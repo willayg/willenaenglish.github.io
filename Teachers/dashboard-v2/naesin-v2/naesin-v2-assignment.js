@@ -3,7 +3,7 @@
 const EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-assignments-v2';
 const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const LABELS={vocabulary:'단어 학습',vocab_test:'어휘 문제',communication:'의사소통',grammar:'문법',sentences:'본문',reading:'독해',constructed_response:'서술형'};
-const state={groupId:null,item:null,rows:[],unit:null,practice:null,studentIds:new Set(),saving:false};
+const state={groupId:null,item:null,rows:[],unit:null,practice:null,studentIds:new Set(),saving:false,openSequence:0};
 const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function groupItem(id){return (window.NaesinV2Data?.getCachedGroups?.()||[]).find(x=>String((x?.group||x)?.id)===String(id))||null}
@@ -17,11 +17,51 @@ function scopeRows(item){const g=groupOf(item),scope=g.scope||{};const textbook=
 async function assignmentRows(item){const rows=scopeRows(item);try{const catalog=await window.NaesinV2EditorApi?.loadExternalPassages?.()||[];const byId=new Map(catalog.map(x=>[String(x.id),x]));for(const row of rows){if(!row.external)continue;const meta=byId.get(String(row.unit_id));if(meta){row.sections=[...(meta.sections||[])];row.bookLabel=meta.bookLabel||''}}}catch(e){console.warn('[Naesin V2 assignment] external metadata unavailable',e)}return rows}
 function practices(row){const set=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(set.has('vocabulary'))set.add('vocab_test');return [...set].filter(x=>LABELS[x])}
 function mount(){if(q('#na2AssignBg'))return;const bg=document.createElement('div');bg.className='na2-assignment-bg';bg.id='na2AssignBg';bg.innerHTML=`<section class="na2-assignment-modal" role="dialog" aria-modal="true"><header class="na2-assignment-head"><div><h2>과제 보내기</h2><p id="na2AssignMeta"></p></div><button class="na2-assignment-close" type="button" data-assign-close>×</button></header><div class="na2-assignment-body"><div class="na2-assignment-field"><label>범위</label><select id="na2AssignUnit" class="na2-assignment-control"></select></div><div class="na2-assignment-field"><label>활동</label><div id="na2AssignPractices" class="na2-assignment-practices"></div></div><div class="na2-assignment-grid"><div class="na2-assignment-field"><label>문항 수</label><input id="na2AssignCount" class="na2-assignment-control" type="number" min="1" max="500" value="10"></div><div class="na2-assignment-field"><label>마감</label><input id="na2AssignDue" class="na2-assignment-control" type="datetime-local"></div></div><div class="na2-assignment-field"><div class="na2-assignment-student-title"><label>학생</label><button type="button" data-select-all>전체 선택</button></div><div id="na2AssignStudents" class="na2-assignment-students"></div></div><div id="na2AssignStatus" class="na2-assignment-status"></div></div><footer class="na2-assignment-foot"><button class="na2-assignment-btn" type="button" data-assign-cancel>취소</button><button class="na2-assignment-btn primary" type="button" data-assign-send>과제 보내기</button></footer></section>`;document.body.appendChild(bg);q('[data-assign-close]',bg).onclick=close;q('[data-assign-cancel]',bg).onclick=close;q('[data-assign-send]',bg).onclick=send;q('#na2AssignUnit',bg).onchange=()=>{selectUnit(q('#na2AssignUnit').value)};q('[data-select-all]',bg).onclick=()=>{const ids=membersOf(state.item).map(m=>String(m?.student?.id||m?.plan?.student_id||m?.student_id||'')).filter(Boolean);const all=ids.length&&ids.every(id=>state.studentIds.has(id));state.studentIds=all?new Set():new Set(ids);renderStudents()};bg.addEventListener('click',e=>{if(e.target===bg)close()})}
-function close(){q('#na2AssignBg')?.classList.remove('open');document.body.classList.remove('na2-modal-open')}
-function selectUnit(id){state.unit=state.rows.find(x=>String(x.unit_id)===String(id))||state.rows[0]||null;const ps=practices(state.unit);state.practice=ps.length?[ps[0]]:[];renderPractices()}
+function close(){if(state.saving)return;state.openSequence++;q('#na2AssignBg')?.classList.remove('open');document.body.classList.remove('na2-modal-open')}
+function selectUnit(id){state.unit=state.rows.find(x=>String(x.unit_id)===String(id))||null;const picker=q('#na2AssignUnit');if(picker)picker.value=state.unit?String(state.unit.unit_id):'';const ps=practices(state.unit);state.practice=ps.length?[ps[0]]:[];renderPractices()}
 function renderPractices(){const box=q('#na2AssignPractices');if(!box)return;const ps=practices(state.unit),chosen=Array.isArray(state.practice)?state.practice:[];box.innerHTML=ps.map(p=>'<label class="na2-assignment-practice '+(chosen.includes(p)?'on':'')+'"><input type="checkbox" data-practice="'+esc(p)+'" '+(chosen.includes(p)?'checked':'')+'>'+esc(LABELS[p])+'</label>').join('');qa('[data-practice]',box).forEach(b=>b.onchange=()=>{state.practice=ps.filter(p=>q('[data-practice="'+p+'"]',box)?.checked);renderPractices()})}
 function renderStudents(){const box=q('#na2AssignStudents');if(!box)return;const rows=membersOf(state.item);box.innerHTML=rows.map(m=>{const id=String(m?.student?.id||m?.plan?.student_id||m?.student_id||''),meta=[m?.student?.class,m?.student?.school].filter(Boolean).join(' · ');return `<label class="na2-assignment-student"><span><b>${esc(nameOf(m))}</b><small>${esc(meta)}</small></span><input type="checkbox" value="${esc(id)}" ${state.studentIds.has(id)?'checked':''}></label>`}).join('');qa('input',box).forEach(i=>i.onchange=()=>i.checked?state.studentIds.add(i.value):state.studentIds.delete(i.value))}
-async function open(groupId,defaults={}){mount();state.groupId=String(groupId||'');state.item=groupItem(groupId);if(!state.item){alert('시험 정보를 찾지 못했습니다.');return}q('#na2AssignMeta').textContent='범위를 불러오는 중…';q('#na2AssignBg').classList.add('open');document.body.classList.add('na2-modal-open');state.rows=await assignmentRows(state.item);if(!state.rows.length){q('#na2AssignStatus').textContent='과제를 만들 범위를 찾지 못했습니다.';return}const availableIds=membersOf(state.item).map(m=>String(m?.student?.id||m?.plan?.student_id||m?.student_id||'')).filter(Boolean);const requestedStudent=String(defaults?.studentId||'');state.studentIds=new Set(requestedStudent&&availableIds.includes(requestedStudent)?[requestedStudent]:availableIds);q('#na2AssignMeta').textContent=`${groupOf(state.item).school||''} · ${groupOf(state.item).book_label||''}`;q('#na2AssignUnit').innerHTML=state.rows.map(x=>`<option value="${esc(x.unit_id)}">${x.external?'[외부지문] ':''}${esc(x.label)}${x.external&&x.bookLabel?` · ${esc(x.bookLabel)}`:''}</option>`).join('');q('#na2AssignCount').value='10';q('#na2AssignDue').value='';q('#na2AssignStatus').textContent='';selectUnit(state.rows.find(x=>String(x.unit_id)===String(defaults?.unitId))?.unit_id||state.rows[0].unit_id);if(defaults?.practiceType&&practices(state.unit).includes(defaults.practiceType)){state.practice=[defaults.practiceType];renderPractices()}renderStudents()}
-async function send(){if(state.saving)return;const status=q('#na2AssignStatus'),btn=q('[data-assign-send]'),selected=Array.isArray(state.practice)?state.practice:[];if(!state.unit||!selected.length){status.textContent='활동을 선택하세요.';return}if(!state.studentIds.size){status.textContent='학생을 선택하세요.';return}const count=Math.max(1,Math.min(500,Number(q('#na2AssignCount').value)||10)),due=q('#na2AssignDue').value;state.saving=true;btn.disabled=true;let done=0;try{for(const practice of selected){status.textContent='보내는 중… '+(done+1)+'/'+selected.length;await post({group_id:state.groupId,student_ids:[...state.studentIds],lesson:state.unit.label,unit_id:state.unit.unit_id,external:!!state.unit.external,practice_type:practice,target_count:count,due_at:due?new Date(due).toISOString():null,title:state.unit.label+' '+(LABELS[practice]||practice)});done++}status.textContent=done+'개 활동 과제가 전송되었습니다.';window.dispatchEvent(new CustomEvent('willena:assignment-created',{detail:{message:done+' 내신 homework activities'}}));setTimeout(close,650)}catch(e){status.textContent=done+'개 저장됨. '+(e.message||'전송 실패')}finally{state.saving=false;btn.disabled=false}}
-window.NaesinV2Assignment={version:'r11.5',open,close};
+async function open(groupId,defaults={}){
+ if(state.saving)return;
+ mount();
+ const request=++state.openSequence;
+ state.groupId=String(groupId||'');
+ state.item=groupItem(groupId);
+ state.rows=[];state.unit=null;state.practice=[];state.studentIds=new Set();
+ if(!state.item){alert('시험 정보를 찾지 못했습니다.');return}
+ q('#na2AssignMeta').textContent='범위를 불러오는 중…';
+ q('#na2AssignStatus').textContent='';
+ q('#na2AssignUnit').innerHTML='';
+ q('#na2AssignPractices').innerHTML='';
+ q('#na2AssignStudents').innerHTML='';
+ q('[data-assign-send]').disabled=true;
+ q('#na2AssignBg').classList.add('open');
+ document.body.classList.add('na2-modal-open');
+ let rows;
+ try{rows=await assignmentRows(state.item)}
+ catch(e){if(request===state.openSequence)q('#na2AssignStatus').textContent='범위를 불러오지 못했습니다. '+(e.message||e);return}
+ if(request!==state.openSequence)return;
+ state.rows=rows;
+ if(!rows.length){q('#na2AssignStatus').textContent='과제를 만들 범위를 찾지 못했습니다.';return}
+ const availableIds=membersOf(state.item).map(m=>String(m?.student?.id||m?.plan?.student_id||m?.student_id||'')).filter(Boolean);
+ const requestedStudent=String(defaults?.studentId||'');
+ if(requestedStudent&&!availableIds.includes(requestedStudent)){q('#na2AssignStatus').textContent='선택한 학생을 이 시험에서 찾지 못했습니다.';return}
+ state.studentIds=new Set(requestedStudent?[requestedStudent]:availableIds);
+ const requestedUnit=String(defaults?.unitId||'');
+ const matchedUnit=requestedUnit?rows.find(x=>String(x.unit_id)===requestedUnit):rows[0];
+ if(!matchedUnit){q('#na2AssignStatus').textContent='선택한 레슨이 이 시험 범위에 없습니다. 다른 레슨으로 변경하지 않았습니다.';return}
+ q('#na2AssignMeta').textContent=`${groupOf(state.item).school||''} · ${groupOf(state.item).book_label||''}`;
+ q('#na2AssignUnit').innerHTML=rows.map(x=>`<option value="${esc(x.unit_id)}">${x.external?'[외부지문] ':''}${esc(x.label)}${x.external&&x.bookLabel?` · ${esc(x.bookLabel)}`:''}</option>`).join('');
+ q('#na2AssignCount').value='10';q('#na2AssignDue').value='';
+ selectUnit(matchedUnit.unit_id);
+ const requestedPractice=String(defaults?.practiceType||'');
+ if(requestedPractice){
+  if(!practices(state.unit).includes(requestedPractice)){q('#na2AssignStatus').textContent='선택한 학습 영역이 이 레슨에 없습니다.';return}
+  state.practice=[requestedPractice];renderPractices();
+ }
+ renderStudents();
+ q('[data-assign-send]').disabled=false;
+}
+async function send(){if(state.saving)return;const status=q('#na2AssignStatus'),btn=q('[data-assign-send]'),selected=Array.isArray(state.practice)?state.practice:[];if(!state.unit||!selected.length){status.textContent='활동을 선택하세요.';return}if(!state.studentIds.size){status.textContent='학생을 선택하세요.';return}if(String(q('#na2AssignUnit').value)!==String(state.unit.unit_id)||!state.rows.some(x=>String(x.unit_id)===String(state.unit.unit_id))){status.textContent='선택한 레슨이 일치하지 않습니다. 다시 선택하세요.';return}const checkedStudents=new Set(qa('#na2AssignStudents input:checked').map(x=>x.value));if(checkedStudents.size!==state.studentIds.size||[...checkedStudents].some(id=>!state.studentIds.has(id))){status.textContent='선택한 학생이 일치하지 않습니다. 다시 확인하세요.';return}const count=Math.max(1,Math.min(500,Number(q('#na2AssignCount').value)||10)),due=q('#na2AssignDue').value;state.saving=true;btn.disabled=true;let done=0;try{for(const practice of selected){status.textContent='보내는 중… '+(done+1)+'/'+selected.length;await post({group_id:state.groupId,student_ids:[...state.studentIds],lesson:state.unit.label,unit_id:state.unit.unit_id,external:!!state.unit.external,practice_type:practice,target_count:count,due_at:due?new Date(due).toISOString():null,title:state.unit.label+' '+(LABELS[practice]||practice)});done++}status.textContent=done+'개 활동 과제가 전송되었습니다.';window.dispatchEvent(new CustomEvent('willena:assignment-created',{detail:{message:done+' 내신 homework activities'}}));setTimeout(close,650)}catch(e){status.textContent=done+'개 저장됨. '+(e.message||'전송 실패')}finally{state.saving=false;btn.disabled=false}}
+window.NaesinV2Assignment={version:'r11.6-quick-assign-state-fix',open,close};
 })();
