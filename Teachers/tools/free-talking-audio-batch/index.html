@@ -32,12 +32,12 @@ progress{width:100%;height:14px;accent-color:#40bdcb}
 .status{min-height:24px;font-weight:800;color:#267e88;margin-top:8px}
 .note{background:#fffaf3;border:1px solid #f0dca6;border-radius:14px;padding:13px 16px;color:#846b32;font-size:12px;font-weight:650;line-height:1.7}
 .list{border:1px solid #d1e9eb;border-radius:16px;overflow:auto;max-height:460px;margin-top:13px}
-.row{display:grid;grid-template-columns:60px minmax(0,1fr) 150px;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #e5f1f2;font-size:12px}
+.row{display:grid;grid-template-columns:32px 60px minmax(0,1fr) 150px;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #e5f1f2;font-size:12px}
 .row:last-child{border-bottom:0}.row .n{color:#58949c;font-weight:800}
-.row .q{font-weight:700;overflow-wrap:anywhere}.row .state{text-align:right;font-weight:800;color:#7b8c92}
+.row .q{font-weight:700;overflow-wrap:anywhere}.row .q small{display:block;color:#6d8a91;margin-bottom:2px;font-size:10px}.row input[type=checkbox]{accent-color:#eb188b;width:17px;height:17px}.row .state{text-align:right;font-weight:800;color:#7b8c92}
 .row .state.saved{color:#249e79}.row .state.failed{color:#bf4972}.row .state.cached{color:#2b91a5}
 [hidden]{display:none!important}
-@media(max-width:680px){.controls{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.row{grid-template-columns:35px minmax(0,1fr) 75px}.row .state{font-size:10px}}
+@media(max-width:680px){.controls{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.row{grid-template-columns:22px 28px minmax(0,1fr) 75px}.row .state{font-size:10px}}
 </style></head><body>
 <section class="panel">
  <div class="top"><div><h1>Free Talking · Audio Batch</h1><p class="sub">Prepare the same R2 MP3 recordings used by Free Talking Genius. Teacher access only.</p></div><span class="tag">Shared R2: tts-audio</span></div>
@@ -45,11 +45,11 @@ progress{width:100%;height:14px;accent-color:#40bdcb}
  <div class="controls">
   <label>Textbook<select id="book" disabled><option>Loading books…</option></select></label>
   <label>Unit<select id="unit" disabled><option value="all">All units</option></select></label>
-  <label>Voice / format<select id="voice"><option value="lili">AI Lili · Bunny v3 · MP3</option><option value="willi_mp3">AI Willi · Marin backup · MP3</option></select></label>
+  <label>Voice / format<select id="voice"><option value="both">Both voices · all MP3s</option><option value="lili">AI Lili · Bunny v3 · MP3</option><option value="willi_mp3">AI Willi · Marin backup · MP3</option></select></label>
  </div>
  <div class="actions">
-  <button id="check" type="button" disabled>Check R2 files</button>
-  <button id="run" class="primary" type="button" disabled>Generate missing MP3s</button>
+  <button id="check" type="button" disabled>Check Everything in R2</button>
+  <button id="run" class="primary" type="button" disabled>Generate All Missing MP3s</button>
   <button id="stop" class="danger" type="button" disabled>Stop after current file</button>
  </div>
  <div class="stats">
@@ -59,13 +59,16 @@ progress{width:100%;height:14px;accent-color:#40bdcb}
   <div class="stat"><strong id="failed">0</strong><small>Failed</small></div>
  </div>
  <progress id="progress" value="0" max="1"></progress><div class="status" id="status" role="status" aria-live="polite">Checking teacher login…</div>
+ <div class="actions"><button id="selectAll" type="button" disabled>Select all</button><button id="selectMissing" type="button" disabled>Select missing only</button><button id="deselectAll" type="button" disabled>Clear selection</button><span id="selectedCount" class="tag">0 selected</span></div>
  <div id="rows" class="list" aria-label="Question audio preparation status"></div>
  <p class="sub" style="margin-top:15px">Files are verified by R2 HEAD checks; this tool never changes Free Talking questions, student scores, or existing audio files.</p>
 </section>
 <script type="module">
 const $=id=>document.getElementById(id);
 let books=[],questions=[],jobs=[],busy=false,stopping=false,checked=false;
-const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','&quot;':'&quot;'}[c]));
+const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const voices=()=> $('voice').value==='both'?['lili','willi_mp3']:[$('voice').value];
+const labels={lili:'AI Lili',willi_mp3:'AI Willi MP3'};
 function token(){const t=window.WillenaAPI?.getLocalAccessToken?.();if(t)return t;
  try{return decodeURIComponent(document.cookie.split('; ').find(x=>x.startsWith('sb_access='))?.slice(10)||'')}catch{return ''}}
 async function call(body){
@@ -78,78 +81,111 @@ async function call(body){
  return data;
 }
 function status(message){$('status').textContent=message}
-function controls(){$('book').disabled=busy||!books.length;$('unit').disabled=busy||!books.length;
+function controls(){
+ $('book').disabled=busy||!books.length;$('unit').disabled=busy||!books.length||$('book').value==='all';
  $('voice').disabled=busy;$('check').disabled=busy||!jobs.length;
- $('run').disabled=busy||!jobs.length||(checked&&!jobs.some(j=>!j.exists));
- $('stop').disabled=!busy}
+ $('run').disabled=busy||!checked||!jobs.some(j=>j.selected&&!j.exists);
+ $('stop').disabled=!busy;
+ for(const id of ['selectAll','selectMissing','deselectAll'])$(id).disabled=busy||!jobs.length;
+ $('selectedCount').textContent=jobs.filter(j=>j.selected).length+' selected · '+jobs.length+' recordings';
+}
 function render(){
  $('total').textContent=jobs.length;$('cached').textContent=jobs.filter(j=>j.exists).length;
  $('saved').textContent=jobs.filter(j=>j.status==='generated_saved').length;
  $('failed').textContent=jobs.filter(j=>j.status==='failed').length;
- const complete=jobs.filter(j=>j.exists||j.status==='generated_saved'||j.status==='failed').length;
- $('progress').max=Math.max(1,jobs.length);$('progress').value=complete;
- $('rows').innerHTML=jobs.map((j,i)=>'<div class="row"><span class="n">'+(i+1)+'</span><span class="q">'+escape(j.text)+'</span><span class="state '+(j.status==='failed'?'failed':j.status==='generated_saved'?'saved':j.exists?'cached':'')+'">'+
-  escape(j.status==='failed'?j.error||'Failed':j.status==='generated_saved'?'Saved to R2':j.status==='generating'?'Generating…':j.exists?'R2 cached':'Missing')+'</span></div>').join('');
+ const done=jobs.filter(j=>j.exists||j.status==='failed').length;
+ $('progress').max=Math.max(1,jobs.length);$('progress').value=done;
+ $('rows').innerHTML=jobs.map((j,i)=>'<div class="row">'+
+  '<input type="checkbox" data-job="'+i+'" aria-label="Select '+escape(j.text)+' · '+labels[j.voice]+'" '+(j.selected?'checked ':'')+(busy?'disabled ':'')+'/>'+
+  '<span class="n">'+(i+1)+'</span>'+
+  '<span class="q"><small>'+escape(j.bookTitle)+' · Unit '+Number(j.unit_number)+' · '+labels[j.voice]+'</small>'+escape(j.text)+'</span>'+
+  '<span class="state '+(j.status==='failed'?'failed':j.status==='generated_saved'?'saved':j.exists?'cached':'')+'">'+
+  escape(j.status==='failed'?j.error||'Failed':j.status==='generated_saved'?'Saved to R2':j.status==='generating'?'Generating…':j.exists?'R2 cached':checked?'Missing':'Not checked')+
+  '</span></div>').join('');
  controls();
 }
 function select(){
  const bookId=$('book').value,unit=$('unit').value;
- jobs=questions.filter(q=>q.book_id===bookId&&(unit==='all'||Number(q.unit_number)===Number(unit)))
-  .map(q=>({...q,exists:false,status:'pending'}));
+ const titleById=new Map(books.map(b=>[b.id,b.title]));
+ jobs=questions.filter(q=>(bookId==='all'||q.book_id===bookId)&&(unit==='all'||Number(q.unit_number)===Number(unit)))
+  .flatMap(q=>voices().map(voice=>({...q,voice,bookTitle:titleById.get(q.book_id)||'Textbook',selected:true,exists:false,status:'pending'})));
  checked=false;render();
- status(jobs.length+' question(s) selected. Check R2 before generating.');
+ status(jobs.length+' recordings across '+new Set(jobs.map(j=>j.book_id)).size+' books. Press Check Everything to inspect R2 without charges.');
 }
 function setUnits(){
  const book=books.find(b=>b.id===$('book').value);
- const current=$('unit').value;
  $('unit').replaceChildren(new Option('All units','all'));
  for(const n of book?.units||[])$('unit').add(new Option('Unit '+n,String(n)));
- $('unit').value=[...$('unit').options].some(o=>o.value===current)?current:'all';
- select();
+ $('unit').value='all';select();
 }
 async function check(){
  if(!jobs.length||busy)return;
- busy=true;controls();status('Checking R2 for existing MP3 recordings…');
+ busy=true;controls();status('Checking R2 for all selected books and voices. No audio is being generated…');
  try{
-  // Chunk inventories to avoid large requests; no audio synthesis in this step.
+  // Each chunk belongs to exactly one voice. Keep this stage read-only.
   const lookup=new Map();
-  for(let i=0;i<jobs.length;i+=100){
-   const part=jobs.slice(i,i+100);
-   const result=await call({action:'inventory',voice:$('voice').value,question_ids:part.map(j=>j.id)});
-   for(const entry of result.files||[])lookup.set(entry.id,entry);
+  for(const voice of voices()){
+   const unique=[...new Map(jobs.filter(j=>j.voice===voice).map(j=>[j.id,j])).values()];
+   for(let i=0;i<unique.length;i+=100){
+    const part=unique.slice(i,i+100);
+    const result=await call({action:'inventory',voice,question_ids:part.map(j=>j.id)});
+    for(const entry of result.files||[])lookup.set(entry.id+'|'+voice,entry);
+    status('Checking R2: '+lookup.size+' / '+jobs.length+' recordings inspected…');
+   }
   }
-  if(lookup.size!==jobs.length)throw Error('R2 inventory incomplete — no audio generated');
-  jobs=jobs.map(job=>({...job,exists:lookup.get(job.id)?.exists===true,file:lookup.get(job.id)?.file,status:'pending'}));
-  checked=true;render();status(jobs.filter(j=>j.exists).length+' already saved; '+jobs.filter(j=>!j.exists).length+' missing.');
- }catch(e){checked=false;status('Inventory failed: '+e.message);render()}
+  if(lookup.size!==jobs.length)throw Error('R2 inventory incomplete — generation disabled');
+  jobs=jobs.map(job=>({...job,exists:lookup.get(job.id+'|'+job.voice)?.exists===true,
+   file:lookup.get(job.id+'|'+job.voice)?.file,status:'pending'}));
+  checked=true;
+  // Default to only missing files after a full inspection. Teachers may
+  // override the selection using checkboxes before starting the paid batch.
+  jobs.forEach(job=>job.selected=!job.exists);
+  render();status('R2 check complete: '+jobs.filter(j=>j.exists).length+' cached · '+
+   jobs.filter(j=>!j.exists).length+' missing. Review the list, then Generate All Missing.');
+ }catch(e){checked=false;status('Inventory failed — generation disabled: '+e.message);render()}
  finally{busy=false;controls()}
 }
 async function run(){
- if(busy)return;
- if(!checked)await check(); // One-click operation: inventory first, no duplicate charges.
  if(busy||!checked)return;
- const remaining=jobs.filter(j=>!j.exists);if(!remaining.length){status('Everything is already saved in R2.');return}
+ const remaining=jobs.filter(j=>j.selected&&!j.exists);
+ if(!remaining.length){status('No missing recordings selected.');return}
+ // Confirm before potentially spending paid provider credits across all books.
+ if(!confirm('Generate '+remaining.length+' missing MP3 recordings across '+
+  new Set(remaining.map(j=>j.book_id)).size+' book(s)? Existing R2 files will be skipped.'))return;
  busy=true;stopping=false;controls();let successes=0,errors=0;
  for(const job of remaining){
   if(stopping)break;
-  job.status='generating';render();status('Generating and verifying '+(successes+errors+1)+'/'+remaining.length+'…');
+  job.status='generating';render();
+  status('Generating and verifying '+(successes+errors+1)+' / '+remaining.length+' · '+labels[job.voice]);
   try{
-   const result=await call({action:'generate',question_id:job.id,voice:$('voice').value});
+   const result=await call({action:'generate',question_id:job.id,voice:job.voice});
    if(result.file!==job.file)throw Error('Returned file does not match inventory');
-   job.exists=true;job.status=result.status;successes++;
-  }catch(e){job.status='failed';job.error=e.message;errors++;console.warn('[FT audio batch]',job.id,e.message)}
+   job.exists=true;job.selected=false;job.status=result.status;successes++;
+  }catch(e){
+   job.status='failed';job.error=e.message;errors++;
+   console.warn('[FT audio batch]',job.id,job.voice,e.message);
+  }
   render();
-  // One provider request at a time; the next starts only after R2 confirms save.
+  // One request at a time, wait for R2 verification, then gently pace the next.
   if(!stopping)await new Promise(resolve=>setTimeout(resolve,350));
  }
- busy=false;controls();status((stopping?'Stopped. ':'Complete. ')+successes+' saved/cached, '+errors+' failed.');
+ busy=false;controls();
+ status((stopping?'Stopped. ':'Complete. ')+successes+' saved or already cached; '+errors+
+  ' failed. Failed rows remain selected for retry.');
 }
 $('book').addEventListener('change',setUnits);
 $('unit').addEventListener('change',select);
-$('voice').addEventListener('change',()=>{checked=false;jobs=jobs.map(j=>({...j,exists:false,status:'pending'}));render();status('Voice changed. Check R2 again.')});
+$('voice').addEventListener('change',select);
 $('check').addEventListener('click',check);
 $('run').addEventListener('click',run);
 $('stop').addEventListener('click',()=>{stopping=true;status('Stopping after the current recording finishes…')});
+$('selectAll').addEventListener('click',()=>{jobs.forEach(j=>j.selected=true);render()});
+$('selectMissing').addEventListener('click',()=>{jobs.forEach(j=>j.selected=checked&&!j.exists);render()});
+$('deselectAll').addEventListener('click',()=>{jobs.forEach(j=>j.selected=false);render()});
+$('rows').addEventListener('change',e=>{
+ const el=e.target.closest('input[data-job]');if(!el||busy)return;
+ const job=jobs[Number(el.dataset.job)];if(job){job.selected=el.checked;controls()}
+});
 (async()=>{
  try{
   const {ensureTeacherSession}=await import('/Teachers/auth-refresh.js?v=20261021-sessionfix1');
@@ -157,7 +193,7 @@ $('stop').addEventListener('click',()=>{stopping=true;status('Stopping after the
   if(!session?.success)throw Error('Teacher login required. Open Teachers Dashboard and sign in.');
   const data=await call({action:'catalog'});
   books=data.books||[];questions=data.questions||[];
-  $('book').replaceChildren();
+  $('book').replaceChildren(new Option('All books ('+books.length+')','all'));
   for(const book of books)$('book').add(new Option(book.title,book.id));
   if(books.length)setUnits();else status('No published Free Talking questions were found.');
   controls();
