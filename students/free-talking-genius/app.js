@@ -445,7 +445,7 @@ function renderQuestion({retry=false}={}){
  // Speech transcript is stored for scoring, but the editor is opt-in.
  $('ftTranscriptRow').hidden=true;
  $('ftEditTranscript').hidden=state.mode!=='speaking';
- $('ftEditTranscript').innerHTML='Review / edit answer <small>−1</small>';
+ $('ftEditTranscript').innerHTML='답변 수정 <small>−1</small>';
  $('ftEditTranscript').setAttribute('aria-expanded','false');
  $('ftTranscriptEdit').value='';
  if(state.mode==='speaking'){
@@ -629,7 +629,7 @@ $('ftEditTranscript').addEventListener('click',async()=>{
  const row=$('ftTranscriptRow'),button=$('ftEditTranscript');
  row.hidden=!row.hidden;
  button.setAttribute('aria-expanded',String(!row.hidden));
- button.innerHTML=row.hidden?'Review / edit answer <small>−1</small>':'Hide answer editor <small>−1</small>';
+ button.innerHTML=row.hidden?'답변 수정 <small>−1</small>':'수정 닫기 <small>−1</small>';
  if(!row.hidden)$('ftTranscriptEdit').focus();
 });
 $('ftWilliVoice').addEventListener('ft:voice-playing',e=>{
