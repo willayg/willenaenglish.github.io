@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./styles.css?v=20261106-modal-hint2">
+<link rel="stylesheet" href="./styles.css?v=20261107-character-screen1">
 <link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261105-overdue-missions1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -72,6 +72,23 @@
   </button>
  </div>
 </section>
+<section id="ftCharacter" class="ft-character-screen" hidden aria-labelledby="ftCharacterHeading">
+ <div class="ft-character-panel">
+  <span class="ft-character-eyebrow">FREE TALKING</span>
+  <h2 id="ftCharacterHeading">누구와 이야기할까요?</h2>
+  <p id="ftCharacterRound" class="ft-character-round"></p>
+  <div class="ft-character-options" role="group" aria-label="대화 캐릭터 선택">
+   <button id="ftChooseWilli" class="ft-character-option" type="button" data-voice="marin" aria-pressed="false">
+    <span class="ft-character-symbol" aria-hidden="true">W</span><strong>AI Willi</strong><small>영어 질문 듣기</small>
+   </button>
+   <button id="ftChooseLili" class="ft-character-option" type="button" data-voice="bunny-v3" aria-pressed="false">
+    <span class="ft-character-symbol" aria-hidden="true">L</span><strong>AI Lili</strong><small>영어 질문 듣기</small>
+   </button>
+  </div>
+  <button id="ftCharacterContinue" class="ft-character-continue" type="button" disabled>시작하기</button>
+  <button id="ftCharacterBack" class="ft-character-back" type="button">← 교재로 돌아가기</button>
+ </div>
+</section>
 <section id="ftSession" class="vocab-session ft-conversation" hidden>
  <div class="ft-screen-data" hidden aria-hidden="true">
   <strong id="ftSessionTitle"></strong><span id="ftSessionProgress"></span><div id="ftProgressFill"></div>
@@ -79,7 +96,7 @@
  </div>
  <div id="ftQuestionStage" class="vocab-session-main" data-willena-keyboard-safe>
   <div id="ftGameCard" class="ft-game-card">
-  <div id="ftHintActions" class="ft-hint-actions">
+  <div id="ftHintActions" class="ft-hint-actions is-concealed" aria-hidden="true" inert>
    <button id="ftHintEnglish" type="button" class="ft-hint-button">영어 질문 <small>−1</small></button>
    <button id="ftHintTranslation" type="button" class="ft-hint-button">한국어 뜻 <small>−1</small></button>
    <button id="ftHintStarter" type="button" class="ft-hint-button">문장 힌트 <small>−1</small></button>
@@ -88,7 +105,7 @@
   <section id="ftWilliVoice" class="ft-willi-voice" aria-label="Free Talking conversation">
    <button type="button" id="ftTurnCircle" class="ft-turn-circle" data-ft-avatar data-phase="ready" aria-label="Listen to the question">
     <span class="ft-circle-glow"></span>
-    <span class="ft-circle-start" aria-hidden="true"><strong>START</strong></span>
+    <span class="ft-circle-start" aria-hidden="true"><span class="ft-voice-placeholder">AI</span></span>
     <span class="ft-circle-ai" aria-hidden="true"><span class="ft-circle-bars"><i></i><i></i><i></i><i></i><i></i></span></span>
     <span class="ft-circle-mic" aria-hidden="true"><svg viewBox="0 0 48 48" width="72" height="72"><rect x="17" y="5" width="14" height="26" rx="7" fill="currentColor"/><path d="M11 22a13 13 0 0 0 26 0M24 35v8M16 43h16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>
     <span class="ft-circle-thinking" aria-hidden="true"><span class="ft-thinking-swirl"></span></span>
@@ -142,7 +159,7 @@
 </section>
 <div class="ft-footer-version">Free Talking Genius · 10-point conversation · v2.3</div>
 </main></div>
-<script type="module" src="./app.js?v=20261106-starter-bank-long-speech1"></script>
+<script type="module" src="./app.js?v=20261107-character-screen1"></script>
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
 <script src="/students/components/mission-basket.js?v=20261105-overdue-missions1"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
