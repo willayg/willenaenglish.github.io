@@ -219,20 +219,49 @@ export class QuestionRenderer{
       const recognition=new Recognition();
       this.speechRecognition=recognition;
       recognition.lang='en-US';
-      recognition.interimResults=false;
+      // Free Talking alone receives long-form capture; Word Genius keeps its original short-word flow.
+      const longForm=q.speakingLongForm===true;
+      recognition.interimResults=longForm;
       recognition.maxAlternatives=5;
-      recognition.continuous=false;
+      recognition.continuous=longForm;
+      let completedText='';
+      let stopping=false;
       const setListening=on=>{
         mic?.classList.toggle('is-listening',!!on);
-        if(status)status.textContent=on?'듣고 있어요… 영어로 말해 보세요.':'마이크를 누르고 영어로 말해 보세요.';
+        if(status)status.textContent=on
+          ?'듣고 있어요… 천천히 말하세요. 끝나면 원을 다시 누르세요.'
+          :longForm?'계속 말하려면 원을 다시 누르세요. 이전 문장은 남아 있어요.':'마이크를 누르고 영어로 말해 보세요.';
+      };
+      recognition.stopExtended=()=>{
+        stopping=true;
+        try{recognition.stop()}catch{}
+        setListening(false);
       };
       recognition.onstart=()=>setListening(true);
       recognition.onend=()=>setListening(false);
       recognition.onerror=e=>{
         setListening(false);
-        if(status)status.textContent=e?.error==='not-allowed'?'마이크 권한이 필요해요.':'잘 듣지 못했어요. 다시 눌러 말해 보세요.';
+        if(status)status.textContent=e?.error==='not-allowed'?'마이크 권한이 필요해요.'
+          :longForm?'잠시 멈췄어요. 다시 눌러 계속 말해 보세요.':'잘 듣지 못했어요. 다시 눌러 말해 보세요.';
       };
       recognition.onresult=e=>{
+        if(longForm){
+          // Each browser event includes the entire current recognition session.
+          // Rebuild from its final + interim results, never append snapshots to themselves.
+          const finals=[],interims=[];
+          for(let i=0;i<(e.results?.length||0);i++){
+            const result=e.results[i],value=String(result?.[0]?.transcript||'').trim();
+            if(value)(result.isFinal?finals:interims).push(value);
+          }
+          const value=[completedText,...finals,...interims].filter(Boolean).join(' ').trim();
+          if(value===this.state.speakingTranscript)return;
+          this.state.speakingTranscript=value;
+          this.state.speakingAlternatives=value?[value]:[];
+          if(transcript){transcript.hidden=!value;transcript.textContent=value?'“'+value+'”':''}
+          this.emit();
+          if(value&&typeof this.onSpeechResult==='function')this.onSpeechResult([value]);
+          return;
+        }
         const result=e?.results?.[0];
         const alternatives=[];
         if(result&&typeof result.length==='number'){
@@ -255,13 +284,21 @@ export class QuestionRenderer{
       mic?.addEventListener('click',()=>{
         if(this.disabled)return;
         try{
-          if(mic.classList.contains('is-listening'))recognition.stop();
-          else{
-            this.state.speakingTranscript='';
-            this.state.speakingAlternatives=[];
-            if(transcript){transcript.hidden=true;transcript.textContent=''}
-            recognition.start();
+          if(mic.classList.contains('is-listening')){
+            recognition.stop();return;
           }
+          if(longForm){
+            // Manual resume retains previous text; never automatically restart or
+            // append old result snapshots again.
+            completedText=String(this.state.speakingTranscript||'').trim();
+            stopping=false;
+            recognition.start();
+            return;
+          }
+          this.state.speakingTranscript='';
+          this.state.speakingAlternatives=[];
+          if(transcript){transcript.hidden=true;transcript.textContent=''}
+          recognition.start();
         }catch{}
       });
       return;
