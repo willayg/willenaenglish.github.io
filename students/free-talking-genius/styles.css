@@ -126,3 +126,52 @@
 .ft-book-list{display:grid;gap:12px;width:100%}
 .ft-book-list .ft-book-choice{width:100%;text-align:left}
 .ft-book-list:empty{display:none}
+
+/* Free Talking front menu: use Word Genius's shared home, cards, missions and stats. */
+.free-talking-genius{background:var(--vocab-page,#e9fbfc);color:var(--ink,#234f55)}
+.ft-page{width:min(920px,100%);max-width:none;box-sizing:border-box}
+.free-talking-genius #ftHome.ft-home{
+ max-width:none;margin:18px 0 12px;padding:clamp(24px,5vw,42px);
+ background:var(--vocab-card,#f2f8f9);border:4px solid var(--vocab-border,#c9f1f4);
+ border-radius:28px;box-shadow:var(--shadow)
+}
+.ft-home-intro{margin:0 0 8px}
+.ft-home-intro h1{margin:8px 0 5px;color:var(--vocab-heading,#244f56);font-size:clamp(23px,3.5vw,34px);font-weight:900;line-height:1.2}
+.ft-home-intro p{margin:0;color:var(--muted,#6f8190);font-size:.83rem;font-weight:650;line-height:1.65}
+.free-talking-genius .app-mission-basket-slot .dashboard-mission-basket{
+ width:100%;max-width:none;margin:12px 0 20px
+}
+.free-talking-genius .app-mission-basket-slot:empty{display:none}
+.free-talking-genius .ft-book-list{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px
+}
+.free-talking-genius .ft-book-list .ft-book-choice{
+ width:100%;min-width:0;min-height:118px;margin:0;gap:12px;
+ padding:18px;display:flex;align-items:center;justify-content:space-between;
+ border:4px solid var(--vocab-border,#bfecef);border-radius:22px;
+ background:var(--vocab-card,#fff);color:var(--ink,#234f55);
+ box-shadow:0 12px 30px rgba(34,106,116,.13),0 3px 8px rgba(34,106,116,.07)
+}
+.free-talking-genius .ft-book-choice .vocab-front-card-main{
+ display:flex;align-items:center;gap:12px;min-width:0;flex:1
+}
+.free-talking-genius .ft-book-icon{
+ display:grid;place-items:center;flex:0 0 54px;width:54px;height:54px;
+ border:2px solid var(--vocab-border,#c9f1f4);background:var(--cyan-soft,#e9fbfc);
+ border-radius:16px
+}
+.free-talking-genius .ft-book-choice .vocab-front-card-copy{min-width:0;flex:1}
+.free-talking-genius .ft-book-choice .vocab-front-card-copy strong{
+ font-size:clamp(1rem,2vw,1.28rem);overflow-wrap:anywhere;
+ color:var(--vocab-heading,#244f56)
+}
+.free-talking-genius .ft-book-choice .vocab-front-card-copy small{font-size:.72rem}
+.free-talking-genius .ft-book-choice:disabled{opacity:.55;cursor:not-allowed}
+.free-talking-genius .ft-home .vocab-front-achievements{margin-top:22px!important}
+@media(max-width:620px){
+ .ft-page{padding:14px 10px 36px}
+ .free-talking-genius #ftHome.ft-home{padding:24px 19px;border-radius:23px}
+ .free-talking-genius .ft-book-list{grid-template-columns:1fr}
+ .free-talking-genius .ft-book-list .ft-book-choice{min-height:96px;padding:17px 16px;border-radius:18px}
+ .free-talking-genius .ft-book-icon{flex-basis:48px;width:48px;height:48px}
+}
