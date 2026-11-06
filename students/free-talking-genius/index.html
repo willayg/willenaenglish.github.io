@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./styles.css?v=20261106-booktabs1">
+<link rel="stylesheet" href="./styles.css?v=20261106-turncircle-rubric2">
 <link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261105-overdue-missions1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -79,23 +79,17 @@
  <button id="ftSessionHome" class="vocab-session-home" type="button">⌂ 홈</button></div>
  <div class="vocab-progress-track"><div id="ftProgressFill" class="vocab-progress-fill" style="width:0%"></div></div></header>
  <div id="ftQuestionStage" class="vocab-session-main" data-willena-keyboard-safe>
- <div class="ft-question-intro"><span id="ftPromptLabel" class="ft-eyebrow">QUESTION 1</span><span class="ft-pts-label">GRAMMAR 2 + ANSWER 2</span></div>
+ <div class="ft-question-intro"><span id="ftPromptLabel" class="ft-eyebrow">QUESTION 1</span><span class="ft-pts-label">5 SKILLS · 10 POINTS</span></div>
+
+ <div id="ftQuestionHost" class="vocab-question-wrap"></div>
  <section id="ftWilliVoice" class="ft-willi-voice" aria-label="AI Willi question audio">
-  <div class="ft-willi-avatar" data-ft-avatar aria-hidden="true">
-   <svg viewBox="0 0 90 90" width="90" height="90" role="img" aria-label="AI Willi">
-    <circle class="ft-willi-halo" cx="45" cy="45" r="39"/>
-    <circle class="ft-willi-face" cx="45" cy="45" r="31"/>
-    <ellipse class="ft-willi-eye" cx="33" cy="39" rx="3.5" ry="4.5"/>
-    <ellipse class="ft-willi-eye" cx="57" cy="39" rx="3.5" ry="4.5"/>
-    <ellipse class="ft-willi-cheek" cx="25" cy="50" rx="6" ry="3"/>
-    <ellipse class="ft-willi-cheek" cx="65" cy="50" rx="6" ry="3"/>
-    <path class="ft-willi-mouth" d="M34 55 Q45 64 56 55"/>
-    <path class="ft-willi-headphones" d="M14 45 C13 0 77 0 76 45"/>
-    <rect class="ft-willi-earpad" x="9" y="38" width="9" height="18" rx="5"/>
-    <rect class="ft-willi-earpad" x="72" y="38" width="9" height="18" rx="5"/>
-   </svg>
-   <span class="ft-willi-wave"><i></i><i></i><i></i><i></i><i></i></span>
-  </div>
+  <button type="button" id="ftTurnCircle" class="ft-turn-circle" data-ft-avatar data-phase="ready" aria-label="Listen to the question or tap to speak">
+   <span class="ft-circle-glow"></span>
+   <span class="ft-circle-ai" aria-hidden="true"><span class="ft-circle-bars"><i></i><i></i><i></i><i></i><i></i></span></span>
+   <span class="ft-circle-mic" aria-hidden="true"><svg viewBox="0 0 48 48" width="72" height="72"><rect x="17" y="5" width="14" height="26" rx="7" fill="currentColor"/><path d="M11 22a13 13 0 0 0 26 0M24 35v8M16 43h16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>
+   <span class="ft-circle-thinking" aria-hidden="true">···</span>
+   <span class="ft-circle-score" aria-hidden="true">★</span>
+  </button>
   <div class="ft-willi-voice-copy"><strong><span data-ft-character-name>AI Willi</span> <small>AI 생성 음성</small></strong>
    <div class="ft-willi-voice-controls">
     <button type="button" class="ft-willi-listen" data-ft-listen disabled aria-pressed="false"><span aria-hidden="true">▶</span> Listen again</button>
@@ -111,13 +105,16 @@
    <span class="ft-willi-preload" data-ft-voice-preload role="status" aria-live="polite"></span>
   </div>
  </section>
- <div id="ftQuestionHost" class="vocab-question-wrap"></div>
+ <div id="ftTurnStatus" class="ft-turn-status" role="status">AI가 질문을 읽으면 답해 보세요.</div>
+ <div class="ft-hint-actions"><button id="ftHintTranslation" type="button" class="ft-hint-button">한국어 뜻 <small>−1</small></button><button id="ftHintStarter" type="button" class="ft-hint-button">문장 시작 힌트 <small>−2</small></button></div>
+ <div id="ftHintTranslationText" class="ft-hint-result" hidden></div><div id="ftHintStarterText" class="ft-hint-result" hidden></div>
+ <p id="ftHintCap" class="ft-hint-cap">힌트 없이 최고 10점 · 힌트를 쓰면 그 시도의 최고 점수가 낮아져요.</p>
  <div id="ftTranscriptRow" class="ft-transcript-row" hidden><label for="ftTranscriptEdit">말한 문장 확인 · 직접 입력도 가능해요</label>
  <textarea id="ftTranscriptEdit" rows="3" lang="en" placeholder="인식된 영어를 확인하거나 직접 영어 답변을 입력하세요."></textarea></div>
  <div id="ftFeedback" class="ft-feedback" hidden>
   <h3 id="ftFeedbackTitle"></h3>
-  <div class="ft-feedback-grid"><div><strong>Grammar</strong><b id="ftGrammarScore">0/2</b><p id="ftGrammarFeedback"></p></div>
-  <div><strong>Answer quality</strong><b id="ftQualityScore">0/2</b><p id="ftQualityFeedback"></p></div></div>
+  <div id="ftFeedbackTotal" class="ft-feedback-total">0/10</div><div id="ftFeedbackGrid" class="ft-feedback-grid"></div>
+  <p id="ftHintSummary" class="ft-hint-cap"></p>
   <div class="ft-correction"><strong>Better English</strong><p id="ftCorrection"></p></div>
  </div><p id="ftAttemptStatus" class="ft-status" role="status"></p></div>
  <footer class="vocab-session-bottom"><div class="vocab-action-row">
@@ -130,9 +127,9 @@
 <section id="ftFinish" class="ft-shell" hidden><div id="ftFinishContent"></div><div id="ftFinishStatus" class="ft-status" role="status"></div>
  <div class="ft-finish-actions"><button id="ftRetrySync" class="vocab-action" hidden type="button">Retry points sync</button><button id="ftFinishHome" class="vocab-action" type="button">Back to Units</button></div>
 </section>
-<div class="ft-footer-version">Free Talking Genius · Character voices · dynamic books · v2.2</div>
+<div class="ft-footer-version">Free Talking Genius · 10-point conversation · v2.3</div>
 </main></div>
-<script type="module" src="./app.js?v=20261106-booktabs1"></script>
+<script type="module" src="./app.js?v=20261106-turncircle-rubric2"></script>
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
 <script src="/students/components/mission-basket.js?v=20261105-overdue-missions1"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
