@@ -739,3 +739,115 @@
   width:23px;height:23px;flex-basis:23px;
  }
 }
+
+/* Readable hint labels, with persistent buttons and one-time deduction animation. */
+.free-talking-genius #ftSession #ftHintActions{
+ gap:9px!important;
+}
+.free-talking-genius #ftSession #ftHintActions>.ft-hint-button,
+.free-talking-genius #ftSession #ftEditTranscript.ft-hint-button{
+ position:relative;
+ font-size:clamp(14px,1.35vw,17px)!important;
+ line-height:1.3!important;
+ font-weight:900!important;
+ min-height:53px!important;
+ padding:10px 8px!important;
+ overflow:visible!important;
+}
+.free-talking-genius #ftSession #ftHintActions>.ft-hint-button small{
+ font-size:13px!important;
+}
+.free-talking-genius #ftSession #ftHintActions>.ft-hint-button.is-used{
+ opacity:1!important;
+ background:#f8fdfd!important;
+ color:#ba4388!important;
+ cursor:pointer!important;
+}
+.free-talking-genius #ftSession #ftHintActions>.ft-hint-button:disabled{
+ opacity:.48!important;
+ cursor:not-allowed!important;
+}
+.free-talking-genius #ftSession .ft-hint-cost-float{
+ position:absolute;top:2px;left:50%;z-index:30;
+ font-size:23px;font-weight:900;color:#ed338c;
+ pointer-events:none;
+ text-shadow:0 2px 3px #fff;
+ animation:ftHintMinusDrop .9s ease-out forwards;
+}
+@keyframes ftHintMinusDrop{
+ 0%{transform:translate(-50%,0) scale(.8);opacity:0}
+ 20%{transform:translate(-50%,-15px) scale(1.1);opacity:1}
+ 100%{transform:translate(-50%,46px) scale(1);opacity:0}
+}
+/* True overlay dialog: does not grow the game card or move its circle. */
+.free-talking-genius #ftSession #ftTranscriptRow.ft-transcript-modal,
+.free-talking-genius #ftSession #ftTranscriptRow.ft-transcript-modal[hidden]{
+ order:unset!important;
+ max-width:none!important;
+ margin:0!important;
+ border:0!important;
+ border-radius:0!important;
+ box-shadow:none!important;
+}
+.free-talking-genius #ftSession #ftTranscriptRow.ft-transcript-modal{
+ position:fixed!important;
+ inset:0!important;
+ z-index:2147482500!important;
+ display:flex!important;
+ justify-content:center!important;
+ align-items:center!important;
+ padding:18px!important;
+ width:100vw!important;height:100dvh!important;
+ background:rgba(25,70,78,.46)!important;
+ backdrop-filter:blur(3px);
+ overflow-y:auto!important;
+ text-align:left!important;
+}
+.free-talking-genius #ftSession #ftTranscriptRow.ft-transcript-modal[hidden]{
+ display:none!important;
+}
+.free-talking-genius #ftSession .ft-transcript-dialog{
+ display:flex;flex-direction:column;gap:13px;
+ width:min(490px,100%);
+ max-height:calc(100dvh - 36px);
+ overflow-y:auto;
+ padding:22px;
+ background:#fff;border:3px solid #9de4e9;border-radius:23px;
+ box-shadow:0 22px 80px #16445238;
+}
+.free-talking-genius #ftSession .ft-modal-head{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.free-talking-genius #ftSession .ft-modal-head h3{font-size:20px;margin:0;color:#265965}
+.free-talking-genius #ftSession .ft-modal-close{
+ display:grid;place-items:center;min-width:40px;min-height:40px;
+ padding:0;border:2px solid #bce9ec;border-radius:50%;
+ background:#fff;color:#2e6670;font-size:28px;line-height:1;cursor:pointer;
+}
+.free-talking-genius #ftSession .ft-transcript-dialog label{
+ font-size:13px;font-weight:800;color:#4d737b;
+}
+.free-talking-genius #ftSession .ft-transcript-dialog textarea{
+ display:block;width:100%;min-height:145px;resize:vertical;
+ background:#fff!important;border:2px solid #bbe8ed;border-radius:14px;
+ padding:13px 15px;text-align:left!important;
+ font:600 16px/1.55 Poppins,system-ui,sans-serif;color:#285660;
+}
+.free-talking-genius #ftSession .ft-modal-save{
+ min-height:47px;border:2px solid #9de2e8;border-radius:14px;
+ background:#fff;color:#cc368c;font:900 15px Poppins,system-ui,sans-serif;
+ cursor:pointer;
+}
+@media(max-width:600px){
+ .free-talking-genius #ftSession #ftHintActions{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+ .free-talking-genius #ftSession #ftHintActions>.ft-hint-button,
+ .free-talking-genius #ftSession #ftEditTranscript.ft-hint-button{
+  font-size:15px!important;
+  min-height:48px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .free-talking-genius #ftSession .ft-hint-cost-float{animation:none;opacity:0}
+}
