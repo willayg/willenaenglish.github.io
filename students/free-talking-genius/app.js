@@ -21,7 +21,46 @@ const state={student:null,profile:null,books:[],bookId:null,questions:[],unitTit
  current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),phase:'ready'};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
-const RUBRIC_NAMES={grammar:'Grammar',length:'Sentence length & detail',creativity:'Creativity',appropriate:'Appropriate response',vocabulary:'Vocabulary & expression'};
+const RUBRIC_NAMES={grammar:'문법',length:'문장 길이와 내용',creativity:'창의성',appropriate:'질문에 맞는 답변',vocabulary:'어휘와 표현'};
+const SCORE_SFX_BANDS=[
+ {min:0,max:2,sfx:'wrong'}, // needs more practice
+ {min:3,max:5,sfx:'correct'}, // okay
+ {min:6,max:8,sfx:'star'}, // good
+ {min:9,max:10,sfx:'complete'} // excellent
+];
+function playFreeTalkingScoreSfx(points){
+ const score=Math.max(0,Math.min(10,Math.round(Number(points)||0)));
+ const band=SCORE_SFX_BANDS.find(b=>score>=b.min&&score<=b.max);
+ if(band)playStudentSfx(band.sfx);
+}
+// Same gold Points coin as the student dashboard leaderboard metric tab.
+function createScoreCoin(earned){
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+ svg.setAttribute('viewBox','0 0 32 32');
+ svg.setAttribute('aria-hidden','true');
+ svg.setAttribute('class','ft-point-coin'+(earned?' is-earned':' is-unearned'));
+ const circle=(radius,fill,stroke,width)=>{
+  const el=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  for(const [k,v] of Object.entries({cx:'16',cy:'16',r:String(radius),fill,stroke,'stroke-width':String(width)}))el.setAttribute(k,v);
+  svg.appendChild(el);
+ };
+ circle(12.5,'#f7c948','#d99a12',2);
+ circle(8.2,'#ffd96d','#e3aa22',1.2);
+ const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+ for(const [k,v] of Object.entries({d:'M16 10.3v11.4M12.7 13.1c1-2.1 6.4-2 6.8.2.4 2.4-6.2 1.8-6.4 4.3-.2 2.2 5.8 2.8 6.8.3',fill:'none',stroke:'#a46b00','stroke-width':'1.7','stroke-linecap':'round'}))path.setAttribute(k,v);
+ svg.appendChild(path);
+ return svg;
+}
+function appendCriterionCoins(summary,value){
+ const coins=document.createElement('span');
+ coins.className='ft-criterion-coins';
+ const score=Math.max(0,Math.min(2,Math.round(Number(value)||0)));
+ coins.setAttribute('role','img');
+ coins.setAttribute('aria-label',score+'점 / 최대 2점');
+ for(let i=0;i<2;i++)coins.appendChild(createScoreCoin(i<score));
+ summary.appendChild(coins);
+}
+
 function setTurn(phase){
  if(!['ready','ai','student','thinking','feedback'].includes(phase))phase='ready';
  state.phase=phase;
@@ -357,17 +396,18 @@ function markFeedback(attempt){
    const item=document.createElement('details');
    const summary=document.createElement('summary');
    const heading=document.createElement('strong');heading.textContent=title;
-   const points=document.createElement('b');points.textContent=(Number(entries[key])||0)+'/2';
    const note=document.createElement('p');note.textContent=rubric.feedback?.[key]||'';
-   summary.append(heading,points);item.append(summary,note);grid.append(item);
+   summary.append(heading);appendCriterionCoins(summary,entries[key]);
+   item.append(summary,note);grid.append(item);
   }
  }else{
-  for(const [title,value,note] of [['Grammar',attempt.grammar_points,attempt.grammar_feedback_ko],
-   ['Answer',attempt.quality_points,attempt.quality_feedback_ko]]){
+  for(const [title,value,note] of [['문법',attempt.grammar_points,attempt.grammar_feedback_ko],
+   ['답변',attempt.quality_points,attempt.quality_feedback_ko]]){
    const item=document.createElement('details');const summary=document.createElement('summary');
    const h=document.createElement('strong');h.textContent=title;
-   const b=document.createElement('b');b.textContent=value+'/2';const p=document.createElement('p');p.textContent=note||'';
-   summary.append(h,b);item.append(summary,p);grid.append(item);
+   const p=document.createElement('p');p.textContent=note||'';
+   summary.append(h);appendCriterionCoins(summary,value);
+   item.append(summary,p);grid.append(item);
   }
  }
  const deduction=Number(attempt.hint_deduction_v2)||0;
@@ -514,7 +554,8 @@ async function submit(){
    state.awards.delete(state.mode+':'+question.id);
    $('ftAttemptStatus').textContent='답변과 점수는 저장됐지만 포인트 동기화가 필요해요: '+pointError.message;
   }
-  playStudentSfx(Number(attempt.score_total_v2)===10?'correct':'wrong');
+  playFreeTalkingScoreSfx(Number.isFinite(Number(attempt.score_total_v2))&&attempt.score_total_v2!==null?
+   Number(attempt.score_total_v2):Math.round((Number(attempt.grammar_points)+Number(attempt.quality_points))*2.5));
   const answered=groups().filter(q=>attemptsFor(state.session.id,q.id).length>0).length;
   $('ftSessionProgress').textContent=answered+'/8 answered';
   $('ftProgressFill').style.width=pct(answered/8*100)+'%';
