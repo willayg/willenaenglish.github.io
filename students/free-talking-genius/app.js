@@ -316,6 +316,12 @@ function captureAnswer(){
 function markFeedback(attempt){
  if(!attempt)return;
  $('ftFeedback').hidden=false;
+ $('ftHintActions').hidden=true;
+ $('ftHintTranslationText').hidden=true;
+ $('ftHintStarterText').hidden=true;
+ $('ftHintCap').hidden=true;
+ $('ftQuestionHost').hidden=true;
+ $('ftTranscriptRow').hidden=true;
  const rubric=attempt.rubric_v2;
  const entries=rubric?.scores||null;
  const isV2=entries&&Number.isFinite(Number(attempt.score_total_v2));
@@ -370,6 +376,8 @@ function renderQuestion({retry=false}={}){
  const idx=sameQuestion?questions.findIndex(q=>q.id===state.current.id):questionIndexAfter(state.cursor);
  if(idx<0){void conclude();return}
  state.cursor=idx;state.current=questions[idx];state.feedback=null;
+ $('ftHintActions').hidden=false;
+ $('ftQuestionHost').hidden=false;
  resetHints();setTurn(retry?'student':'ready');
  $('ftFeedback').hidden=true;$('ftSubmit').hidden=false;$('ftNext').hidden=true;$('ftRetry').hidden=true;$('ftSkip').hidden=false;
  $('ftAttemptStatus').textContent='';
