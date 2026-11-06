@@ -462,10 +462,9 @@ async function startup(){
   await loadQuestions();
   await detectBooks();
   renderBookChoices();
-  const ready=state.books.filter(b=>b.ready).length;
-  $('ftLoading').textContent=state.books.length?
-   state.books.length+' assigned textbook(s) detected · '+ready+' with Free Talking questions':
-   'No active textbook assignments were found for your class.';
+  // Only show an empty-state message when there are genuinely no assigned books.
+  $('ftLoading').hidden=state.books.length>0;
+  $('ftLoading').textContent=state.books.length?'':'아직 배정된 교재가 없어요.';
  }catch(error){showError('Free Talking을 열 수 없어요. '+error.message);
   $('ftLoading').textContent='로그인이나 Content Database 연결을 확인해 주세요.'}
 }
