@@ -357,6 +357,12 @@ export function createFreeTalkingVoice({host,getToken}){
   preload(preferredUnit);
   if(selected)void select(selected,{autoplay:false});
  }
+ function setVoice(nextVoice){
+  if(!VOICES.has(nextVoice)||!voicePicker)return false;
+  voicePicker.value=nextVoice;
+  changeVoice();
+  return activeVoice()===nextVoice;
+ }
  voicePicker?.addEventListener('input',changeVoice);
  voicePicker?.addEventListener('change',changeVoice);
  button?.addEventListener('click',async()=>{
@@ -371,5 +377,5 @@ export function createFreeTalkingVoice({host,getToken}){
   for(const file of stored.values())if(file.owned)URL.revokeObjectURL(file.url);
   stored.clear();
  }
- return {select,start,stop,destroy,preload,setQuestionBank};
+ return {select,start,stop,destroy,preload,setQuestionBank,setVoice,getVoice:activeVoice};
 }
