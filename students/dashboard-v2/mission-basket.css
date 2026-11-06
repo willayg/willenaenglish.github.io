@@ -168,3 +168,16 @@ html[data-dashboard-theme] .dashboard-mission-basket .dm-item.dm-done{
 .dashboard-mission-basket .dm-tabs [data-tab="overdue"][aria-pressed="true"]{background:#fff1f6;border-color:#eaa9c7;color:#a54f76}
 .dashboard-mission-basket .dm-tabs [data-tab="overdue"] span{white-space:nowrap}
 @media(max-width:380px){.dashboard-mission-basket .dm-tabs{gap:4px}.dashboard-mission-basket .dm-tabs button{font-size:11px;padding:7px 2px}}
+
+
+/* Pending-mission indicator: pulse only the existing number pill, never the whole basket. */
+.dashboard-mission-basket .dm-count.dm-count-pending{
+ animation:dmCountPinkPulse 2.2s ease-in-out infinite;
+}
+@keyframes dmCountPinkPulse{
+ 0%,100%{box-shadow:0 0 0 0 rgba(247,89,164,0),0 0 0 rgba(247,89,164,0);border-color:#b9eaf0}
+ 50%{box-shadow:0 0 0 5px rgba(247,89,164,.12),0 0 18px 5px rgba(247,89,164,.42);border-color:#f47cad}
+}
+@media(prefers-reduced-motion:reduce){
+ .dashboard-mission-basket .dm-count.dm-count-pending{animation:none}
+}
