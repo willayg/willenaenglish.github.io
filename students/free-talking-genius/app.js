@@ -322,6 +322,7 @@ function markFeedback(attempt){
  $('ftHintCap').hidden=true;
  $('ftQuestionHost').hidden=true;
  $('ftTranscriptRow').hidden=true;
+ $('ftEditTranscript').hidden=true;
  const rubric=attempt.rubric_v2;
  const entries=rubric?.scores||null;
  const isV2=entries&&Number.isFinite(Number(attempt.score_total_v2));
@@ -409,7 +410,11 @@ function renderQuestion({retry=false}={}){
   state.micObserver=new MutationObserver(()=>updateMicListening());
   state.micObserver.observe(micButton,{attributes:true,attributeFilter:['class']});
  }
- $('ftTranscriptRow').hidden=state.mode!=='speaking';
+ // Speech transcript is stored for scoring, but the editor is opt-in.
+ $('ftTranscriptRow').hidden=true;
+ $('ftEditTranscript').hidden=state.mode!=='speaking';
+ $('ftEditTranscript').textContent='Review / edit answer';
+ $('ftEditTranscript').setAttribute('aria-expanded','false');
  $('ftTranscriptEdit').value='';
  if(state.mode==='speaking'){
   const supported=Boolean(window.SpeechRecognition||window.webkitSpeechRecognition);
@@ -579,6 +584,13 @@ $('ftBackHome').addEventListener('click',()=>view('ftHome'));
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
 $('ftWritingCard').addEventListener('click',()=>void openMode('writing'));
 $('ftTranscriptEdit').addEventListener('input',()=>{$('ftSubmit').disabled=state.loading||!validAnswer()});
+$('ftEditTranscript').addEventListener('click',()=>{
+ const row=$('ftTranscriptRow'),button=$('ftEditTranscript');
+ row.hidden=!row.hidden;
+ button.setAttribute('aria-expanded',String(!row.hidden));
+ button.textContent=row.hidden?'Review / edit answer':'Hide answer editor';
+ if(!row.hidden)$('ftTranscriptEdit').focus();
+});
 $('ftWilliVoice').addEventListener('ft:voice-playing',e=>{
  if(visibleScreen!=='ftSession'||state.phase==='thinking'||state.phase==='feedback')return;
  setTurn(e.detail?.playing?'ai':'student');
