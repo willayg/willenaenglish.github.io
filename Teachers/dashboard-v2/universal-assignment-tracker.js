@@ -600,6 +600,12 @@ async function loadOverview(scopeName='my',force=false){
         return shell+window.WillenaGeniusHomeworkCard.progressPanel({students:items,average,completed,notStarted});
       }
     }
+    if(g.items.length===1&&g.items[0].app==='Writing Genius'&&g.items[0].list_key!=='writing_genius:sentence'){
+      const record=writingProgress.get(id(g.items[0].id));
+      if(record?.student_rows?.length){
+        return shell+'<div class="ghc-student-list" style="padding:12px 16px"><strong style="display:block;margin-bottom:8px">Student draft stages · '+Number(record.completed||0)+'/'+Number(record.students||0)+' completed</strong>'+overviewStudentProgress(record.student_rows,{kind:'writing-draft'})+'</div>';
+      }
+    }
     return shell;
    };
    const selectable=visible.filter(r=>id(r.created_by)===teacher);
@@ -658,7 +664,7 @@ async function loadOverview(scopeName='my',force=false){
              ?overviewStudentProgress((wordCompletionCache.get(id(row.id))?.students||[]).map(st=>({...st,assignment_id:id(row.id)})),{kind:'word-completion'})
              :'<div class="ghc-student-list" data-word-pending="'+esc(row.id)+'"><small>Loading verified homework completion…</small></div>')
           :''))+
-        (writingResult?.student_rows?overviewStudentProgress(writingResult.student_rows,{kind:row.list_key==='writing_genius:sentence'?'writing-sentence':'writing-draft'}):'')+
+        (writingResult?.student_rows&&!(isSingle&&row.app==='Writing Genius'&&row.list_key!=='writing_genius:sentence')?overviewStudentProgress(writingResult.student_rows,{kind:row.list_key==='writing_genius:sentence'?'writing-sentence':'writing-draft'}):'')+
         (puzzleResult?.student_rows?overviewStudentProgress(puzzleResult.student_rows,{kind:'completion'}):'')+'</div>'+
         (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
         (ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label>'+(overviewStage==='active'?'<button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button>':'')+'</div>':'')+'</article>';
