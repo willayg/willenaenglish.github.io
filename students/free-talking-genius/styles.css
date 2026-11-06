@@ -305,3 +305,14 @@
 .free-talking-genius #ftSession .vocab-action-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:9px}
 .free-talking-genius #ftSession .ft-hint-result[hidden],.free-talking-genius #ftSession #ftHintCap[hidden]{display:none!important}
 @media(max-width:560px){.free-talking-genius #ftSession #ftQuestionStage{padding:16px 14px 14px}.free-talking-genius #ftSession #ftQuestionText{margin-bottom:16px}.free-talking-genius #ftSession #ftTurnStatus{margin:14px 0 12px}.free-talking-genius #ftSession .ft-hint-actions{gap:8px}.free-talking-genius #ftSession .ft-hint-button{font-size:12px;padding:10px 12px}.free-talking-genius #ftSession .vocab-action-row{gap:7px}}
+
+/* Speaking transcript stays collapsed until the student chooses to review it. */
+.free-talking-genius #ftSession #ftEditTranscript{
+ order:9;align-self:center;margin:9px auto 0;border:0;background:transparent;
+ color:#2f8691;text-decoration:underline;text-underline-offset:3px;
+ font:800 12px Poppins,system-ui,sans-serif;cursor:pointer;padding:9px 12px;
+}
+.free-talking-genius #ftSession #ftEditTranscript[hidden]{display:none!important}
+.free-talking-genius #ftSession #ftTranscriptRow{order:10}
+.free-talking-genius #ftSession #ftFeedback{order:11}
+.free-talking-genius #ftSession #ftAttemptStatus{order:12}
