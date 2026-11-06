@@ -9,7 +9,7 @@ import {renderStudentSessionFinish} from '/students/components/student-session-f
 import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
-import {createFreeTalkingVoice} from './question-voice.js?v=20261106-fast-preload2';
+import {createFreeTalkingVoice} from './question-voice.js?v=20261106-turn-events1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
@@ -18,9 +18,61 @@ const bookTitle=()=>state.books.find(b=>b.id===state.bookId)?.title||'Textbook';
 const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const state={student:null,profile:null,books:[],bookId:null,questions:[],unitTitles:new Map(),unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
- current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set()};
+ current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),phase:'ready'};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
+const RUBRIC_NAMES={grammar:'Grammar',length:'Sentence length & detail',creativity:'Creativity',appropriate:'Appropriate response',vocabulary:'Vocabulary & expression'};
+function setTurn(phase){
+ if(!['ready','ai','student','thinking','feedback'].includes(phase))phase='ready';
+ state.phase=phase;
+ const circle=$('ftTurnCircle');
+ circle.dataset.phase=phase;
+ const labels={ready:'질문을 들어 보세요.',ai:'AI가 질문을 읽는 중…',student:state.mode==='speaking'?'내 차례! 원을 눌러 영어로 말해 보세요.':'내 차례! 영어로 답변을 작성해 보세요.',thinking:'AI가 답변을 확인하고 있어요…',feedback:'점수가 나왔어요. 피드백을 확인해 보세요.'};
+ $('ftTurnStatus').textContent=labels[phase];
+ circle.setAttribute('aria-label',phase==='student'?(state.mode==='speaking'?'Tap to start or stop speaking':'Tap to focus your writing answer'):'AI question circle');
+ if(phase!=='student')circle.dataset.listening='false';
+}
+async function requestHint(kind){
+ if(state.loading||!state.current||!state.session||!['translation','starter'].includes(kind))return;
+ const target=kind==='translation'?'ftHintTranslationText':'ftHintStarterText';
+ if(!$(target).hidden)return;
+ const button=$(kind==='translation'?'ftHintTranslation':'ftHintStarter');
+ button.disabled=true;
+ $('ftAttemptStatus').textContent='힌트를 준비하는 중…';
+ try{
+  const call=async access=>fetch('/api/free-talking-grade',{
+   method:'POST',credentials:'include',cache:'no-store',
+   headers:{Authorization:'Bearer '+access,'Content-Type':'application/json'},
+   body:JSON.stringify({action:'hint',session_id:state.session.id,question_id:state.current.id,hint_type:kind}),
+   signal:AbortSignal.timeout(24000)});
+  let res=await call(await token());
+  if(res.status===401)res=await call(await token(true));
+  const body=await res.json().catch(()=>null);
+  if(!res.ok||!body?.success)throw Error(body?.error||'Hint unavailable');
+  $(target).textContent=body.value||'';
+  $(target).hidden=false;
+  state.hints.set(kind,true);
+  const deduction=(state.hints.get('translation')?1:0)+(state.hints.get('starter')?2:0);
+  $('ftHintCap').textContent='이번 시도 최대 '+(10-deduction)+'/10점 · 다시 힌트 없이 답하면 만점을 받을 수 있어요.';
+  $('ftAttemptStatus').textContent='힌트를 참고해서 자신의 답변을 만들어 보세요.';
+ }catch(error){
+  button.disabled=false;
+  $('ftAttemptStatus').textContent='힌트를 열 수 없어요. '+error.message;
+ }
+}
+function resetHints(){
+ state.hints.clear();
+ for(const [button,result] of [['ftHintTranslation','ftHintTranslationText'],['ftHintStarter','ftHintStarterText']]){
+  $(button).disabled=false;$(result).hidden=true;$(result).textContent='';
+ }
+ $('ftHintCap').textContent='힌트 없이 최고 10점 · 한국어 −1, 문장 시작 −2 (이번 시도에만 적용)';
+}
+function updateMicListening(){
+ const recognition=state.renderer?.speechRecognition;
+ const button=$('ftQuestionHost').querySelector('[data-speaking-mic]');
+ $('ftTurnCircle').dataset.listening=button?.classList.contains('is-listening')?'true':'false';
+ if(recognition?.onspeechstart&&state.phase==='ready')setTurn('student');
+}
 function showError(message){$('ftError').textContent=message||'Unknown error';$('ftError').hidden=false;console.error('[Free Talking]',message)}
 function clearError(){$('ftError').hidden=true;$('ftError').textContent=''}
 // Navigation history belongs to this app, not to the student's saved attempts.
@@ -262,19 +314,43 @@ function captureAnswer(){
 function markFeedback(attempt){
  if(!attempt)return;
  $('ftFeedback').hidden=false;
- const grammar=Number(attempt.grammar_points),quality=Number(attempt.quality_points),sum=grammar+quality;
- $('ftFeedbackTitle').textContent=sum===4?'잘했어요! · 4/4 points':sum>=2?'좋아요! 조금만 고쳐 봐요. · '+sum+'/4':'한 번 더 도전해 봐요. · '+sum+'/4';
- $('ftGrammarScore').textContent=grammar+'/2';
- $('ftQualityScore').textContent=quality+'/2';
- $('ftGrammarFeedback').textContent=attempt.grammar_feedback_ko||'';
- $('ftQualityFeedback').textContent=attempt.quality_feedback_ko||'';
+ const rubric=attempt.rubric_v2;
+ const entries=rubric?.scores||null;
+ const isV2=entries&&Number.isFinite(Number(attempt.score_total_v2));
+ const total=isV2?Number(attempt.score_total_v2):Number(attempt.grammar_points)+Number(attempt.quality_points);
+ const max=isV2?10:4;
+ $('ftFeedbackTitle').textContent=total===max?'잘했어요!':'좋아요! 다시 도전할 수 있어요.';
+ $('ftFeedbackTotal').textContent=total+'/'+max;
+ const grid=$('ftFeedbackGrid');grid.replaceChildren();
+ if(isV2){
+  for(const [key,title] of Object.entries(RUBRIC_NAMES)){
+   const item=document.createElement('div');
+   const heading=document.createElement('strong');heading.textContent=title;
+   const points=document.createElement('b');points.textContent=(Number(entries[key])||0)+'/2';
+   const note=document.createElement('p');note.textContent=rubric.feedback?.[key]||'';
+   item.append(heading,points,note);grid.append(item);
+  }
+ }else{
+  for(const [title,value,note] of [['Grammar',attempt.grammar_points,attempt.grammar_feedback_ko],
+   ['Answer',attempt.quality_points,attempt.quality_feedback_ko]]){
+   const item=document.createElement('div');const h=document.createElement('strong');h.textContent=title;
+   const b=document.createElement('b');b.textContent=value+'/2';const p=document.createElement('p');p.textContent=note||'';
+   item.append(h,b,p);grid.append(item);
+  }
+ }
+ const deduction=Number(attempt.hint_deduction_v2)||0;
+ $('ftHintSummary').textContent=isV2?
+  'Answer: '+Number(attempt.raw_total_v2)+'/10 · Hint deduction: −'+deduction+' · Final: '+total+'/10':'';
  $('ftCorrection').textContent=attempt.correction||attempt.answer_text||'';
- $('ftRetry').hidden=sum===4||attemptsFor(state.session.id,state.current.id).length>=5;
+ // Scoring targets and passing thresholds are intentionally undecided.
+ // A fresh unaided retry may recover points; duplicate answers remain blocked by the backend.
+ $('ftRetry').hidden=attemptsFor(state.session.id,state.current.id).length>=5;
  $('ftNext').hidden=false;
  $('ftSubmit').hidden=true;
  $('ftSkip').hidden=true;
- $('ftAttemptStatus').textContent=sum===4?'이 질문은 숙달했어요. 다음 질문으로 넘어가요.':
- '다시 답하면 점수를 올릴 수 있어요. 바로 다음 질문으로 가도 괜찮아요.';
+ $('ftAttemptStatus').textContent=total===max?'좋아요! 다음 질문으로 가도 되고, 연습을 계속할 수도 있어요.':
+  '다시 답하면 점수를 올릴 수 있어요. 힌트를 사용했다면 다음 시도는 힌트 없이 도전할 수 있어요.';
+ setTurn('feedback');
 }
 function questionIndexAfter(start=0){
  const questions=groups();
@@ -288,7 +364,7 @@ function questionIndexAfter(start=0){
 function renderQuestion({retry=false}={}){
  const questions=groups();
  if(!state.session||!questions.length)return;
- const sameQuestion=retry&&state.current&&attemptsFor(state.session.id,state.current.id).length<5&&questionBest(state.session.id,state.current.id)<4;
+ const sameQuestion=retry&&state.current&&attemptsFor(state.session.id,state.current.id).length<5;
  const idx=sameQuestion?questions.findIndex(q=>q.id===state.current.id):questionIndexAfter(state.cursor);
  if(idx<0){void conclude();return}
  state.cursor=idx;state.current=questions[idx];state.feedback=null;
@@ -302,7 +378,7 @@ function renderQuestion({retry=false}={}){
  try{state.renderer?.speechRecognition?.stop?.()}catch{}
  state.renderer=new QuestionRenderer($('ftQuestionHost'));
  const form=state.mode==='speaking'?'speaking':'write';
- state.renderer.render({form,prompt:state.current.question_en,context:{korean:state.current.question_ko},answer:[],
+ state.renderer.render({form,prompt:state.current.question_en,context:{},answer:[],
   ...(form==='write'?{hints:{placeholder:'Write your own English answer...'}}:{})},{
   onChange:()=>{
    if(state.mode==='speaking'){
@@ -381,7 +457,7 @@ async function submit(){
    state.awards.delete(state.mode+':'+question.id);
    $('ftAttemptStatus').textContent='답변과 점수는 저장됐지만 포인트 동기화가 필요해요: '+pointError.message;
   }
-  playStudentSfx(Number(attempt.grammar_points)+Number(attempt.quality_points)===4?'correct':'wrong');
+  playStudentSfx(Number(attempt.score_total_v2)===10?'correct':'wrong');
   const answered=groups().filter(q=>attemptsFor(state.session.id,q.id).length>0).length;
   $('ftSessionProgress').textContent=answered+'/8 answered';
   $('ftProgressFill').style.width=pct(answered/8*100)+'%';
@@ -483,6 +559,25 @@ $('ftBackHome').addEventListener('click',()=>view('ftHome'));
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
 $('ftWritingCard').addEventListener('click',()=>void openMode('writing'));
 $('ftTranscriptEdit').addEventListener('input',()=>{$('ftSubmit').disabled=state.loading||!validAnswer()});
+$('ftWilliVoice').addEventListener('ft:voice-playing',e=>{
+ if(visibleScreen!=='ftSession'||state.phase==='thinking'||state.phase==='feedback')return;
+ setTurn(e.detail?.playing?'ai':'student');
+});
+$('ftTurnCircle').addEventListener('click',()=>{
+ if(state.loading||!state.current||state.phase==='thinking'||state.phase==='feedback')return;
+ if(state.phase==='ai'){ $('ftWilliVoice').querySelector('[data-ft-listen]')?.click();return; }
+ setTurn('student');
+ if(state.mode==='speaking'){
+  const mic=$('ftQuestionHost').querySelector('[data-speaking-mic]');
+  mic?.click();
+  requestAnimationFrame(updateMicListening);
+ }else $('ftQuestionHost').querySelector('textarea.answer')?.focus();
+});
+$('ftHintTranslation').addEventListener('click',()=>void requestHint('translation'));
+$('ftHintStarter').addEventListener('click',()=>void requestHint('starter'));
+$('ftQuestionHost').addEventListener('click',e=>{
+ if(e.target.closest('[data-speaking-mic]')){setTurn('student');requestAnimationFrame(updateMicListening);}
+});
 $('ftSubmit').addEventListener('click',()=>void submit());
 $('ftRetry').addEventListener('click',()=>renderQuestion({retry:true}));
 $('ftSkip').addEventListener('click',()=>{state.cursor=(state.cursor+1)%8;renderQuestion()});
