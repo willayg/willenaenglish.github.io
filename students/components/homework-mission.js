@@ -212,6 +212,8 @@ function renderMission(assignment, destination) {
 let checkInFlight = null;
 
 export async function showHomeworkMission() {
+  // Retired intentionally: use Mission Basket for pending assignments instead.
+  return;
   if (checkInFlight) return checkInFlight;
 
   checkInFlight = (async () => {
