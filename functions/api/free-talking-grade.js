@@ -86,7 +86,7 @@ export async function onRequestPost({request,env}){
   const nextAttempt=past.length+1;
   if(past.length>=5)return reply(429,{success:false,error:'Maximum five attempts for this question.'});
   if(isHint){
-   if(!['translation','starter'].includes(hintType))return reply(400,{success:false,error:'Unknown hint'});
+   if(!['translation','starter','english_prompt','typed_review'].includes(hintType))return reply(400,{success:false,error:'Unknown hint'});
    if(hintType==='translation'&&!String(prompt.question_ko||'').trim())
     return reply(404,{success:false,error:'이 질문은 한국어 번역이 아직 없어요. 감점되지 않습니다.'});
    const row={session_id:sessionId,question_id:questionId,student_id:auth.id,attempt_no:nextAttempt,hint_type:hintType};
@@ -95,13 +95,14 @@ export async function onRequestPost({request,env}){
    // Duplicate views count once: a 409 unique conflict is safe; all other failures block reveal.
    if(!written.ok&&written.status!==409)return reply(503,{success:false,error:'Could not save hint usage'});
    return reply(200,{success:true,hint_type:hintType,value:hintType==='translation'?
-    String(prompt.question_ko||'한국어 번역이 준비되지 않았어요.'):starterFor(prompt),attempt_no:nextAttempt});
+    String(prompt.question_ko||'한국어 번역이 준비되지 않았어요.'):hintType==='starter'?starterFor(prompt):hintType==='english_prompt'?String(prompt.question_en||''):'review_enabled',attempt_no:nextAttempt});
   }
   const hintRows=await db('free_talking_hint_usage?select=hint_type&session_id=eq.'+sessionId+
    '&question_id=eq.'+questionId+'&attempt_no=eq.'+nextAttempt,auth.token);
   if(!hintRows.ok)return reply(503,{success:false,error:'Could not verify hint usage'});
   const used=new Set((hintRows.value||[]).map(row=>row.hint_type));
-  const hintDeduction=(used.has('translation')?1:0)+(used.has('starter')?2:0);
+  const hintDeduction=(used.has('translation')?1:0)+(used.has('starter')?2:0)+
+   (used.has('english_prompt')?1:0)+(used.has('typed_review')?1:0);
   if(past.length&&past.at(-1)?.answer_text===answer){
    // A copied retry is not a fresh independent response. Return the original score.
    return reply(200,{success:true,attempt:past.at(-1),reused:true});
@@ -118,7 +119,8 @@ export async function onRequestPost({request,env}){
    grammar_points:result.scores.grammar,quality_points:result.scores.appropriate,
    grammar_feedback_ko:result.feedback.grammar,quality_feedback_ko:result.feedback.appropriate,
    feedback_ko:Object.values(result.feedback).join(' '),correction:result.correction,grade_source:'ai',
-   rubric_v2:{scores:result.scores,feedback:result.feedback,hints:{translation:used.has('translation'),starter:used.has('starter')}},
+   rubric_v2:{scores:result.scores,feedback:result.feedback,hints:{translation:used.has('translation'),starter:used.has('starter'),
+    english_prompt:used.has('english_prompt'),typed_review:used.has('typed_review')}},
    raw_total_v2:result.rawTotal,hint_deduction_v2:hintDeduction,score_total_v2:scoreTotal};
   const saved=await db('free_talking_attempts',auth.token,{method:'POST',body:row});
   if(!saved.ok||!saved.value?.[0])return reply(503,{success:false,error:'AI feedback was generated but could not be saved. Please retry.'});
