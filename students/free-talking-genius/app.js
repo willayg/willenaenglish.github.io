@@ -10,7 +10,7 @@ import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
 import {createFreeTalkingVoice} from './question-voice.js?v=20261107-character-choice1';
-import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-ai-30s-ring1';
+import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-prearm-mic1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
@@ -66,6 +66,7 @@ function applySpeechPath(){
   ?'AI 녹음 · 최대 30초 · 원을 눌러 시작 / 다시 눌러 종료'
   :'브라우저 음성 인식 · 원을 눌러 말하기';
  $('ftTurnCircle').dataset.listening='false';
+ if(useAiAudio())void aiRecorder.prepare();
 }
 
 const RUBRIC_NAMES={grammar:'문법',length:'문장 길이와 내용',creativity:'창의성',appropriate:'질문에 맞는 답변',vocabulary:'어휘와 표현'};
@@ -617,6 +618,7 @@ function renderQuestion({retry=false}={}){
  // A restored unfinished question shows its previously saved guidance.
  // Earlier attempts are retained without showing a second progress message.
  view('ftSession');
+ if(useAiAudio())void aiRecorder.prepare();
  void questionVoice.select(state.current.id,{autoplay:false});
 }
 let roundChoice=null;
