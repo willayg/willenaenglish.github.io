@@ -6,6 +6,7 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
  const startGraceMs=6500;
  let run=0,stream=null,recorder=null,stopTimer=null,request=null,starting=false,recording=false,processing=false;
  let audioContext=null,audioSource=null,analyser=null,voiceTimer=null,progressTimer=null;
+ let preparing=null;
  const say=message=>onStatus?.(message);
  const status=()=>onState?.({recording,processing:starting||processing});
  const clearTimer=()=>{if(stopTimer!==null){clearTimeout(stopTimer);stopTimer=null}if(progressTimer!==null){clearInterval(progressTimer);progressTimer=null}};
@@ -61,22 +62,48 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
  const release=()=>{if(stream){for(const track of stream.getTracks())try{track.stop()}catch{}stream=null}};
  function cancel(){
   ++run;clearTimer();stopVoiceMonitor();request?.abort();request=null;
+  preparing=null;
   try{if(recorder?.state==='recording')recorder.stop()}catch{}
   recorder=null;starting=false;recording=false;processing=false;release();onProgress?.(0);status();
+ }
+ // Pre-arm the microphone when AI mode is selected, so the first spoken
+ // syllable is not lost while Android opens a microphone on the actual Speak tap.
+ // No audio is recorded or uploaded until start() is explicitly pressed.
+ async function prepare(){
+  if(recording||processing)return false;
+  if(stream?.active&&stream.getAudioTracks().some(t=>t.readyState==='live'))return true;
+  if(preparing)return preparing;
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){
+   say('이 브라우저는 AI 녹음을 지원하지 않아요.');return false;
+  }
+  const id=run;
+  say('마이크 준비 중…');
+  preparing=(async()=>{
+   try{
+    const media=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}});
+    if(id!==run){media.getTracks().forEach(t=>t.stop());return false}
+    stream=media;
+    say('마이크 준비 완료 · 원을 누르면 바로 녹음해요.');
+    return true;
+   }catch(e){
+    if(id===run)say(e?.name==='NotAllowedError'?'마이크 권한을 허용해 주세요.':'마이크를 준비하지 못했어요.');
+    return false;
+   }finally{if(id===run)preparing=null}
+  })();
+  return preparing;
  }
  async function start(sessionId,questionId){
   if(starting||recording||processing)return;
   if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){
    say('이 브라우저는 AI 녹음을 지원하지 않아요. 브라우저 방식을 사용해 주세요.');return;
   }
-  cancel();
   const id=run;
-  starting=true;status();say('마이크 연결 중…');
-  let media;
-  try{media=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}})}
-  catch(e){if(id===run){starting=false;status();say(e?.name==='NotAllowedError'?'마이크 권한을 허용해 주세요.':'마이크를 시작하지 못했어요.')}return}
-  if(id!==run){media.getTracks().forEach(t=>t.stop());return}
-  stream=media;
+  starting=true;status();
+  if(!(stream?.active&&stream.getAudioTracks().some(t=>t.readyState==='live'))){
+   // Only the first use should need this fallback. prepare() normally runs on toggle.
+   if(!(await prepare())||id!==run){starting=false;status();return}
+  }
+  if(id!==run){starting=false;status();return}
   try{
    const mime=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus','audio/ogg']
     .find(t=>MediaRecorder.isTypeSupported(t));
@@ -134,5 +161,5 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
   recording=false;processing=true;status();
   try{recorder.stop()}catch{cancel();say('녹음을 완료하지 못했어요. 다시 시도해 주세요.')}
  }
- return {start,stop,cancel,isRecording:()=>recording,isProcessing:()=>starting||processing};
+ return {prepare,start,stop,cancel,isReady:()=>Boolean(stream?.active&&stream.getAudioTracks().some(t=>t.readyState==='live')),isRecording:()=>recording,isProcessing:()=>starting||processing};
 }
