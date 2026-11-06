@@ -255,7 +255,12 @@ async function creativeManage(app,body){
     const matches=await response.json(),result=matches.find(x=>x.id===button.dataset.creativeProgress);
     if(!result){host.textContent='No linked student progress yet.';return}
     const isSentence=record?.list_key==='writing_genius:sentence';
-    host.innerHTML=isSentence?'<p><b>'+Number(result.progress_percent||0)+'%</b> progress · '+Number(result.checked||0)+'/'+Number(result.total_questions||0)+' questions checked</p>'+(result.student_rows||[]).map(st=>'<div class="ua-creative-student-row"><span>'+esc(st.name)+'</span><span>'+Number(st.checked||0)+'/'+Number(st.total||0)+' · '+Number(st.progress_percent||0)+'%</span></div>').join(''):'<p><b>'+result.completed+' / '+result.students+'</b> completed</p>'+(result.student_rows||[]).map(st=>'<div class="ua-creative-student-row"><span>'+esc(st.name)+'</span><span>'+(st.completed?'✓ Completed':'Not completed')+'</span></div>').join('');
+    const writingStage=st=>({not_started:'Not started',started:'Draft opened',writing:'Writing draft',reviewed:'AI review done',speaking_done:'Speaking recorded',completed:'Completed'})[st.stage]||(st.completed?'Completed':'Not started');
+    host.innerHTML=isSentence?'<p><b>'+Number(result.progress_percent||0)+'%</b> progress · '+Number(result.checked||0)+'/'+Number(result.total_questions||0)+' questions checked</p>'+(result.student_rows||[]).map(st=>'<div class="ua-creative-student-row"><span>'+esc(st.name)+'</span><span>'+Number(st.checked||0)+'/'+Number(st.total||0)+' · '+Number(st.progress_percent||0)+'%</span></div>').join(''):'<p><b>'+result.completed+' / '+result.students+'</b> completed</p>'+(result.student_rows||[]).map(st=>{
+      const body=String(st.draft_body||'').trim();
+      const preview=body&&!st.completed?'<details style="margin:4px 0 12px;padding:8px 12px;border:1px solid #cde6e8;border-radius:10px"><summary style="cursor:pointer;color:#25838b">View saved draft'+(st.draft_title?' · '+esc(st.draft_title):'')+'</summary><p style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(body)+'</p></details>':'';
+      return '<div class="ua-creative-student-row"><span>'+esc(st.name)+'</span><span>'+esc(writingStage(st))+'</span></div>'+preview;
+    }).join('');
    }catch(e){host.textContent=e.message}
   }))};
   paint();
