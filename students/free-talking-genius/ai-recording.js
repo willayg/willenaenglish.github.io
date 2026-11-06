@@ -2,26 +2,27 @@
 // Cancel increments the run ID; stale async results are never added to a later question.
 export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onState}){
  const maxMs=60000;
- let run=0,stream=null,recorder=null,stopTimer=null,request=null,recording=false,processing=false;
+ let run=0,stream=null,recorder=null,stopTimer=null,request=null,starting=false,recording=false,processing=false;
  const say=message=>onStatus?.(message);
- const status=()=>onState?.({recording,processing});
+ const status=()=>onState?.({recording,processing:starting||processing});
  const clearTimer=()=>{if(stopTimer!==null){clearTimeout(stopTimer);stopTimer=null}};
  const release=()=>{if(stream){for(const track of stream.getTracks())try{track.stop()}catch{}stream=null}};
  function cancel(){
   ++run;clearTimer();request?.abort();request=null;
   try{if(recorder?.state==='recording')recorder.stop()}catch{}
-  recorder=null;recording=false;processing=false;release();status();
+  recorder=null;starting=false;recording=false;processing=false;release();status();
  }
  async function start(sessionId,questionId){
-  if(recording||processing)return;
+  if(starting||recording||processing)return;
   if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){
    say('이 브라우저는 AI 녹음을 지원하지 않아요. 브라우저 방식을 사용해 주세요.');return;
   }
   cancel();
   const id=run;
+  starting=true;status();say('마이크 연결 중…');
   let media;
   try{media=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}})}
-  catch(e){if(id===run)say(e?.name==='NotAllowedError'?'마이크 권한을 허용해 주세요.':'마이크를 시작하지 못했어요.');return}
+  catch(e){if(id===run){starting=false;status();say(e?.name==='NotAllowedError'?'마이크 권한을 허용해 주세요.':'마이크를 시작하지 못했어요.')}return}
   if(id!==run){media.getTracks().forEach(t=>t.stop());return}
   stream=media;
   try{
@@ -66,7 +67,7 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
     }
    };
    recorder.start(250);
-   recording=true;processing=false;status();
+   starting=false;recording=true;processing=false;status();
    say('녹음 중 · 천천히 말하세요. 끝나면 원을 다시 누르세요. (최대 60초)');
    stopTimer=setTimeout(()=>stop(),maxMs);
   }catch(e){if(id===run){cancel();say(String(e?.message||'녹음을 시작하지 못했어요.'))}}
@@ -74,7 +75,8 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
  function stop(){
   if(!recording||!recorder)return;
   clearTimer();
+  recording=false;processing=true;status();
   try{recorder.stop()}catch{cancel();say('녹음을 완료하지 못했어요. 다시 시도해 주세요.')}
  }
- return {start,stop,cancel,isRecording:()=>recording,isProcessing:()=>processing};
+ return {start,stop,cancel,isRecording:()=>recording,isProcessing:()=>starting||processing};
 }
