@@ -409,7 +409,7 @@ async function saveEntry({submit=false,force=false}={}){
   clearTimeout(state.timer);
   if(entry.saving){try{await entry.saving}catch{};if(state.active!==entry)return false}
   if(!submit&&!force&&!entry.dirty)return true;
-  const data=readForm();data.status=submit?'submitted':'draft';
+  const data=readForm();data.status=(submit||entry.status==='submitted')?'submitted':'draft';
   if(submit&&data.body.trim().length<3){notice('영어 문장을 먼저 써 주세요.',true);$('wgBody').focus();return false}
   const snapshotRev=entry.rev;
   saveState(submit?'제출하는 중…':'저장 중…');
