@@ -379,6 +379,7 @@ function renderQuestion({retry=false}={}){
  state.cursor=idx;state.current=questions[idx];state.feedback=null;
  state.questionStarted=false;
  state.aiWasPlaying=false;
+ $('ftListenAgain').disabled=true;
  $('ftHintActions').hidden=false;
  $('ftQuestionHost').hidden=false;
  resetHints();setTurn('ready');
@@ -402,7 +403,7 @@ function renderQuestion({retry=false}={}){
     if(heard)$('ftTranscriptEdit').value=heard;
    }
    $('ftSubmit').disabled=state.loading||!validAnswer();
-   if(!state.loading&&state.phase!=='feedback')setTurn('student');
+   if(state.questionStarted&&state.aiWasPlaying&&!state.loading&&state.phase!=='feedback')setTurn('student');
   }
  });
  state.micObserver?.disconnect?.();
@@ -595,7 +596,7 @@ $('ftEditTranscript').addEventListener('click',()=>{
 });
 $('ftWilliVoice').addEventListener('ft:voice-playing',e=>{
  if(visibleScreen!=='ftSession'||state.phase==='thinking'||state.phase==='feedback'||!state.questionStarted)return;
- if(e.detail?.playing){state.aiWasPlaying=true;setTurn('ai');}
+ if(e.detail?.playing){state.aiWasPlaying=true;$('ftListenAgain').disabled=false;setTurn('ai');}
  else if(state.aiWasPlaying)setTurn('student');
 });
 $('ftTurnCircle').addEventListener('click',()=>{
@@ -614,7 +615,7 @@ $('ftTurnCircle').addEventListener('click',()=>{
   requestAnimationFrame(updateMicListening);
  }else $('ftQuestionHost').querySelector('textarea.answer')?.focus();
 });
-$('ftListenAgain').addEventListener('click',()=>{if(!state.loading&&state.current) $('ftWilliVoice').querySelector('[data-ft-listen]')?.click()});
+$('ftListenAgain').addEventListener('click',()=>{if(!state.loading&&state.current&&state.aiWasPlaying) $('ftWilliVoice').querySelector('[data-ft-listen]')?.click()});
 $('ftHintTranslation').addEventListener('click',()=>void requestHint('translation'));
 $('ftHintStarter').addEventListener('click',()=>void requestHint('starter'));
 $('ftQuestionHost').addEventListener('click',e=>{
