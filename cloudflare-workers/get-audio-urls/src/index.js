@@ -430,7 +430,7 @@ const FT_SCORES_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const FT_CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const FT_CONTENT_KEY='sb_publishable_G-FYhHfDL4OGdL892gY1Zg_epdbEeqO';
 const FT_UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const FT_FILE=/^(ft_realtime_v1_|ft_eleven_v1_|ft_fallback_v1_)[0-9a-f]{32}\.(wav|mp3)$/;
+const FT_FILE=/^(ft_realtime_v1_|ft_eleven_v1_|ft_fallback_v1_|ft_retry_v1_)[0-9a-f]{32}\.(wav|mp3)$/;
 const ftJson=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
 async function ftAuth(request){
   const token=String(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
@@ -463,6 +463,18 @@ async function ftAuthorizedWrite(body){
   const id=String(body.question_id||'');
   if(!FT_UUID.test(id))return false;
   const variant=String(body.variant||''),key=String(body.key||''),format=String(body.format||'');
+  if(variant==='retry'){
+    // Whitelisted encouragement only, never browser-provided TTS text.
+    if(format!=='mp3')return false;
+    const allowed=(body.model==='eleven_v3'&&body.voice==='M7zl2TS7ORAIGUejDfoy')||
+      (body.model==='gpt-4o-mini-tts'&&body.voice==='marin');
+    if(!allowed)return false;
+    const phrase='잘 안 들렸어! 조금 더 크게 말해 줄래?';
+    const source=['free_talking_retry_v1',body.model,body.voice,phrase].join('|');
+    const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(source));
+    const expected='ft_retry_v1_'+Array.from(new Uint8Array(hash),v=>v.toString(16).padStart(2,'0')).join('').slice(0,32);
+    return key===expected;
+  }
   if(!['realtime','elevenlabs','fallback'].includes(variant))return false;
   const allowed=variant==='realtime'?format==='wav'&&body.voice==='marin'&&
     /^gpt-realtime-[a-zA-Z0-9.-]{1,40}$/.test(String(body.model||'')):
