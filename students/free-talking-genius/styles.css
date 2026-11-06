@@ -588,3 +588,23 @@
  .free-talking-genius #ftSession #ftGameCard{padding:17px 13px;border-radius:22px}
  .free-talking-genius #ftSession #ftQuestionStage{padding:11px 9px 16px!important}
 }
+
+/* Collapsible feedback keeps scores readable without five paragraphs on entry. */
+.free-talking-genius #ftSession #ftFeedbackGrid>details{
+ display:block;padding:0!important;background:#f5fbfc!important;
+ border:1px solid #cbeaec!important;border-radius:12px!important;
+}
+.free-talking-genius #ftSession #ftFeedbackGrid>details>summary{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ padding:12px 14px;cursor:pointer;list-style:none;
+}
+.free-talking-genius #ftSession #ftFeedbackGrid>details>summary::-webkit-details-marker{display:none}
+.free-talking-genius #ftSession #ftFeedbackGrid>details>summary strong{
+ color:#335f68;font-size:13px;font-weight:800;
+}
+.free-talking-genius #ftSession #ftFeedbackGrid>details>summary b{
+ color:#ce3989;font-size:15px;white-space:nowrap;
+}
+.free-talking-genius #ftSession #ftFeedbackGrid>details>p{
+ padding:0 14px 12px;margin:0;color:#58747c;font-size:12px;line-height:1.5;
+}
