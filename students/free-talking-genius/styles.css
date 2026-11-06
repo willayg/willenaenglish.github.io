@@ -944,3 +944,73 @@
 @media(prefers-reduced-motion:reduce){
  .free-talking-genius #ftSession #ftHintActions,.free-talking-genius #ftCharacter .ft-character-option{transition:none}
 }
+
+/* Minimal character choice — two round character controls and one Start button. */
+.free-talking-genius #ftCharacter .ft-character-panel{
+ width:min(520px,100%);gap:20px;padding:clamp(22px,5vw,34px);
+ border-radius:26px;
+}
+.free-talking-genius #ftCharacter .ft-character-panel h2{
+ font-size:clamp(21px,4vw,27px);margin:0 0 4px;
+}
+.free-talking-genius #ftCharacter .ft-character-options{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ justify-items:center;gap:20px;width:100%;margin:4px 0 0;
+}
+.free-talking-genius #ftCharacter .ft-character-option,
+.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"]{
+ display:flex;flex-direction:column;justify-content:center;align-items:center;
+ gap:12px;min-height:0;padding:0;
+ border:0;background:transparent;background-image:none;
+ border-radius:0;box-shadow:none;
+ color:#32636c;transform:none;
+}
+.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol{
+ display:grid;place-items:center;
+ width:clamp(105px,28vw,152px);height:clamp(105px,28vw,152px);
+ padding:0;box-sizing:border-box;border-radius:50%;
+ border:9px solid #b0e7ec;outline:3px solid #dcf5f6;
+ background:#e8f9fb;color:#56afb9;
+ font-size:clamp(38px,8vw,56px);font-weight:900;
+ transition:transform .18s,border-color .18s,box-shadow .18s;
+}
+.free-talking-genius #ftCharacter .ft-character-lili .ft-character-symbol{
+ border-color:#f2c0dc;outline-color:#fceaf4;
+ background:#fff1f8;color:#da80ae;
+}
+.free-talking-genius #ftCharacter .ft-character-option strong{
+ font-size:clamp(15px,3vw,19px);font-weight:900;
+}
+.free-talking-genius #ftCharacter .ft-character-willi strong{color:#4699a4}
+.free-talking-genius #ftCharacter .ft-character-lili strong{color:#d77eac}
+.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"] .ft-character-symbol{
+ transform:scale(1.045);box-shadow:0 0 0 5px #7fcbd588;
+}
+.free-talking-genius #ftCharacter .ft-character-lili[aria-pressed="true"] .ft-character-symbol{
+ box-shadow:0 0 0 5px #e9a8ca88;
+}
+.free-talking-genius #ftCharacter .ft-character-start-container{
+ width:100%;padding:12px;border:2px solid #d3eff1;
+ border-radius:18px;background:#f7fdfd;
+}
+.free-talking-genius #ftCharacter .ft-character-continue{
+ display:block;width:100%;min-height:55px;margin:0;
+ background:#fff;border:3px solid #a6e5eb;border-radius:14px;
+ color:#c74b93;font-size:18px;
+}
+.free-talking-genius #ftCharacter .ft-character-continue:disabled{opacity:.42}
+.free-talking-genius #ftCharacter .ft-character-back[hidden],
+.free-talking-genius #ftCharacter #ftCharacterRound[hidden]{display:none!important}
+/* Ready: a headphone symbol instead of START, AI letters, or a play triangle. */
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start{
+ display:flex!important;align-items:center;justify-content:center;
+ color:#79c8d0!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-ai{display:none!important}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start svg{
+ width:clamp(60px,12vw,82px);height:auto;
+}
+@media(max-width:420px){
+ .free-talking-genius #ftCharacter .ft-character-options{gap:12px}
+ .free-talking-genius #ftCharacter .ft-character-panel{padding:23px 17px}
+}
