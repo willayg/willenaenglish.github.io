@@ -246,6 +246,7 @@ export class QuestionRenderer{
       };
       recognition.onresult=e=>{
         if(longForm){
+          if(stopping)return;
           // Each browser event includes the entire current recognition session.
           // Rebuild from its final + interim results, never append snapshots to themselves.
           const finals=[],interims=[];
