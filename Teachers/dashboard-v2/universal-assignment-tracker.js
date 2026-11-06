@@ -464,6 +464,10 @@ async function loadOverview(scopeName='my',force=false){
     });
     return Math.max(0,Math.min(100,Math.round(percents.reduce((a,b)=>a+b,0)/percents.length)));
   }
+  function writingDraftStage(st){
+    const stages={not_started:'Not started',started:'Draft opened',writing:'Writing draft',reviewed:'AI review done',speaking_done:'Speaking recorded',completed:'Completed'};
+    return stages[String(st?.stage||'')]||(st?.completed?'Completed':'Not started');
+  }
   function overviewStudentProgress(records,{kind='completion'}={}){
     if(!Array.isArray(records)||!records.length)return '';
     const rows=records.map(st=>{
@@ -480,6 +484,9 @@ async function loadOverview(scopeName='my',force=false){
       }else if(kind==='word-completion'){
         percentage=wordStudentPercent(st,wordCompletionCache.get(id(st.assignment_id))?.assignment);
         note=percentage===null?'Progress unavailable':'Required homework modes';
+      }else if(kind==='writing-draft'){
+        percentage=st.completed?100:0;
+        note=writingDraftStage(st);
       }else if(kind==='writing-sentence'){
         const done=Number(st.checked),total=Number(st.total);
         if(Number.isFinite(done)&&Number.isFinite(total)&&total>0){
@@ -488,6 +495,13 @@ async function loadOverview(scopeName='my',force=false){
       }else{
         percentage=st.completed?100:0;
         note=st.completed?'Completed':'Not completed';
+      }
+      if(kind==='writing-draft'){
+        const body=String(st.draft_body||'').trim();
+        const preview=!st.completed&&body
+          ?'<details class="ua-writing-draft-preview" style="margin:3px 0 9px 16px;padding:8px 12px;border:1px solid #cde6e8;border-radius:10px"><summary style="cursor:pointer;color:#25838b">View saved draft'+(st.draft_title?' · '+esc(st.draft_title):'')+'</summary><div style="white-space:pre-wrap;overflow-wrap:anywhere;margin-top:8px">'+esc(body)+'</div></details>'
+          :'';
+        return '<div class="ghc-student-row"><span class="ghc-student-name">'+name+'</span><span class="ghc-student-note">'+esc(note)+'</span><strong class="ghc-student-pct">'+(st.completed?'100%':'—')+'</strong></div>'+preview;
       }
       return '<div class="ghc-student-row"><span class="ghc-student-name">'+name+'</span>'+
        (percentage===null?'<span class="ghc-student-note">'+esc(note)+'</span>':
@@ -644,7 +658,7 @@ async function loadOverview(scopeName='my',force=false){
              ?overviewStudentProgress((wordCompletionCache.get(id(row.id))?.students||[]).map(st=>({...st,assignment_id:id(row.id)})),{kind:'word-completion'})
              :'<div class="ghc-student-list" data-word-pending="'+esc(row.id)+'"><small>Loading verified homework completion…</small></div>')
           :''))+
-        (writingResult?.student_rows?overviewStudentProgress(writingResult.student_rows,{kind:row.list_key==='writing_genius:sentence'?'writing-sentence':'completion'}):'')+
+        (writingResult?.student_rows?overviewStudentProgress(writingResult.student_rows,{kind:row.list_key==='writing_genius:sentence'?'writing-sentence':'writing-draft'}):'')+
         (puzzleResult?.student_rows?overviewStudentProgress(puzzleResult.student_rows,{kind:'completion'}):'')+'</div>'+
         (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
         (ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label>'+(overviewStage==='active'?'<button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button>':'')+'</div>':'')+'</article>';
