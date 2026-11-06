@@ -9,7 +9,7 @@ import {renderStudentSessionFinish} from '/students/components/student-session-f
 import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
-import {createFreeTalkingVoice} from './question-voice.js?v=20261106-turn-events1';
+import {createFreeTalkingVoice} from './question-voice.js?v=20261106-explicit-start1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
@@ -27,9 +27,9 @@ function setTurn(phase){
  state.phase=phase;
  const circle=$('ftTurnCircle');
  circle.dataset.phase=phase;
- const labels={ready:'질문을 들어 보세요.',ai:'AI가 질문을 읽는 중…',student:state.mode==='speaking'?'내 차례! 원을 눌러 영어로 말해 보세요.':'내 차례! 영어로 답변을 작성해 보세요.',thinking:'AI가 답변을 확인하고 있어요…',feedback:'점수가 나왔어요. 피드백을 확인해 보세요.'};
+ const labels={ready:'원을 눌러 질문을 시작하세요.',ai:'AI가 질문을 읽는 중…',student:state.mode==='speaking'?'내 차례! 원을 눌러 영어로 말해 보세요.':'내 차례! 영어로 답변을 작성해 보세요.',thinking:'AI가 답변을 확인하고 있어요…',feedback:'점수가 나왔어요. 피드백을 확인해 보세요.'};
  $('ftTurnStatus').textContent=labels[phase];
- circle.setAttribute('aria-label',phase==='student'?(state.mode==='speaking'?'Tap to start or stop speaking':'Tap to focus your writing answer'):'AI question circle');
+ circle.setAttribute('aria-label',phase==='ready'?'Start question audio':phase==='student'?(state.mode==='speaking'?'Tap to start or stop speaking':'Tap to focus your writing answer'):'AI question circle');
  if(phase!=='student')circle.dataset.listening='false';
 }
 async function requestHint(kind){
@@ -377,9 +377,10 @@ function renderQuestion({retry=false}={}){
  const idx=sameQuestion?questions.findIndex(q=>q.id===state.current.id):questionIndexAfter(state.cursor);
  if(idx<0){void conclude();return}
  state.cursor=idx;state.current=questions[idx];state.feedback=null;
+ state.questionStarted=false;
  $('ftHintActions').hidden=false;
  $('ftQuestionHost').hidden=false;
- resetHints();setTurn(retry?'student':'ready');
+ resetHints();setTurn('ready');
  $('ftFeedback').hidden=true;$('ftSubmit').hidden=false;$('ftNext').hidden=true;$('ftRetry').hidden=true;$('ftSkip').hidden=false;
  $('ftAttemptStatus').textContent='';
  $('ftSession').dataset.mode=state.mode;
@@ -428,7 +429,7 @@ function renderQuestion({retry=false}={}){
  // A restored unfinished question shows its previously saved guidance.
  // Earlier attempts are retained without showing a second progress message.
  view('ftSession');
- void questionVoice.select(state.current.id,{autoplay:!retry});
+ void questionVoice.select(state.current.id,{autoplay:false});
 }
 async function openMode(mode){
  if(state.loading)return;
@@ -592,11 +593,17 @@ $('ftEditTranscript').addEventListener('click',()=>{
  if(!row.hidden)$('ftTranscriptEdit').focus();
 });
 $('ftWilliVoice').addEventListener('ft:voice-playing',e=>{
- if(visibleScreen!=='ftSession'||state.phase==='thinking'||state.phase==='feedback')return;
+ if(visibleScreen!=='ftSession'||state.phase==='thinking'||state.phase==='feedback'||!state.questionStarted)return;
  setTurn(e.detail?.playing?'ai':'student');
 });
 $('ftTurnCircle').addEventListener('click',()=>{
  if(state.loading||!state.current||state.phase==='thinking'||state.phase==='feedback')return;
+ if(state.phase==='ready'){
+  state.questionStarted=true;
+  $('ftTurnStatus').textContent='질문 음성을 준비하는 중…';
+  void questionVoice.start();
+  return;
+ }
  if(state.phase==='ai'){ $('ftWilliVoice').querySelector('[data-ft-listen]')?.click();return; }
  setTurn('student');
  if(state.mode==='speaking'){
