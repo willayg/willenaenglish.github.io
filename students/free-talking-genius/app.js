@@ -70,9 +70,9 @@ function setTurn(phase){
  const prominent=phase==='student'&&state.listenFinished===true;
  replay.classList.toggle('is-replay-ready',prominent);
  replay.setAttribute('aria-label',prominent?'질문이 어려웠나요? 다시 듣기':'질문 다시 듣기');
- const labels={ready:'',ai:'AI가 질문을 읽는 중…',student:state.mode==='speaking'?'내 차례! 원을 눌러 영어로 말해 보세요.':'내 차례! 영어로 답변을 작성해 보세요.',thinking:'AI가 답변을 확인하고 있어요…',feedback:'점수가 나왔어요. 피드백을 확인해 보세요.'};
+ const labels={ready:'원을 눌러 질문을 들어 보세요.',ai:'AI가 질문을 읽는 중…',student:state.mode==='speaking'?'내 차례! 원을 눌러 영어로 말해 보세요.':'내 차례! 영어로 답변을 작성해 보세요.',thinking:'AI가 답변을 확인하고 있어요…',feedback:'점수가 나왔어요. 피드백을 확인해 보세요.'};
  $('ftTurnStatus').textContent=labels[phase];
- $('ftTurnStatus').hidden=phase==='ready'||phase==='feedback';
+ $('ftTurnStatus').hidden=phase==='feedback';
  $('ftQuestionStage').dataset.phase=phase;
  const hintsVisible=phase==='student';
  const hints=$('ftHintActions');
