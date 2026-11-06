@@ -136,6 +136,7 @@ async function finishRound(){
 }
 async function startMode(mode,{practiceAgain=false}={}){
   if(!ctx||!unlocked(mode))return false;
+  let startStage='preparation';
   try{
     await saveChain;
     const previous=ctx.mode;
@@ -145,14 +146,18 @@ async function startMode(mode,{practiceAgain=false}={}){
     const ids=practiceAgain||complete(mode)?ctx.items.map(x=>String(x.id)):remaining(mode),wanted=new Set(ids);ctx.queue=shuffle(ctx.items.filter(x=>wanted.has(String(x.id))));
     if(!ctx.queue.length){await saveProgress({[COMPLETE[mode]]:true});const next=ORDER[ORDER.indexOf(mode)+1];if(next)modal('다음 단계가 열렸어요!',`${LABEL[mode]}을 완료했어요. ${LABEL[next]} 단계가 열렸습니다.`,`${LABEL[next]} 시작`,()=>startMode(next));else modal('Vocabulary 완료!','모든 단계를 완료했어요.','레슨으로 돌아가기',exit);return false}
     shell(`<div class="vp-result"><h2>${esc(LABEL[mode])}</h2><p>학습을 준비하고 있어요…</p></div>`,LABEL[mode]);
+    startStage='session';
     await startSession('vocabulary');
+    startStage='question';
     renderQuestion();
     return true;
   }catch(e){
-    console.error('[v2.15 vocab] mode start failed',mode,e);
+    console.error('[v2.15 vocab] mode start failed',mode,startStage,e);
     if(!ctx)return false;
+    const detail=String(e?.message||e||'Unknown error').slice(0,220);
+    const code=startStage==='session'?'SESSION':'QUESTION';
     ctx.mode=mode;ctx.queue=[];ctx.index=0;ctx.renderer=null;ctx.question=null;
-    shell(`<div class="vp-result"><h2>학습을 시작하지 못했어요</h2><p>연결을 확인한 뒤 다시 시도해 주세요.</p><button class="vp-next" id="vpRetryMode" type="button">다시 시도</button></div>`,LABEL[mode]);
+    shell(`<div class="vp-result"><h2>학습을 시작하지 못했어요</h2><p>문제가 발생했어요. 선생님에게 아래 오류를 보여 주세요.</p><p class="vp-error-detail" style="overflow-wrap:anywhere;font-size:.8rem;opacity:.8">[${code}] ${esc(detail)}</p><button class="vp-next" id="vpRetryMode" type="button">다시 시도</button></div>`,LABEL[mode]);
     const retry=ctx.host.querySelector('#vpRetryMode');if(retry)retry.onclick=()=>startMode(mode,{practiceAgain});
     return false;
   }
