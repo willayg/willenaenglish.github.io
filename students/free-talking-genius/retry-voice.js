@@ -3,7 +3,7 @@
 export function createFreeTalkingRetryVoice({getToken,onFinished}){
  const voices=['marin','bunny-v3'];
  const files=new Map(),inflight=new Map(),attempted=new Set();
- let sound=null,disposed=false;
+ let sound=null,disposed=false,playVersion=0;
  const status={marin:'not_loaded','bunny-v3':'not_loaded'};
  const parseAudio=base64=>{
   const binary=atob(base64),bytes=new Uint8Array(binary.length);
@@ -46,7 +46,8 @@ export function createFreeTalkingRetryVoice({getToken,onFinished}){
  async function play(voice){
   if(disposed||!voices.includes(voice))return false;
   stop();
-  if(!await preload(voice)||disposed)return false;
+  const epoch=playVersion;
+  if(!await preload(voice)||disposed||epoch!==playVersion)return false;
   const audio=new Audio(files.get(voice));
   audio.preload='auto';
   sound=audio;
@@ -60,6 +61,7 @@ export function createFreeTalkingRetryVoice({getToken,onFinished}){
   }
  }
  function stop(){
+  playVersion++;
   if(sound){try{sound.pause();sound.currentTime=0}catch{}sound=null}
  }
  function destroy(){disposed=true;stop();for(const url of files.values())URL.revokeObjectURL(url);files.clear()}
