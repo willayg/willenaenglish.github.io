@@ -212,6 +212,17 @@ async function chooseBook(id){
   renderBook();view('ftBook');
  }catch(error){showError('Could not open this textbook: '+error.message)}
 }
+function renderBookTabs(){
+ const host=$('ftBookTabs');host.replaceChildren();
+ for(const book of state.books.filter(b=>b.ready)){
+  const button=document.createElement('button');
+  button.type='button';button.className='vocab-book-choice'+(book.id===state.bookId?' is-active':'');
+  button.textContent=book.title;button.setAttribute('aria-pressed',String(book.id===state.bookId));
+  button.addEventListener('click',()=>{if(book.id!==state.bookId)void chooseBook(book.id)});
+  host.append(button);
+ }
+ $('ftBookPicker').hidden=host.childElementCount<2;
+}
 function renderUnitStrip(){
  const host=$('ftUnitStrip');host.replaceChildren();
  for(const n of [...new Set(state.questions.filter(q=>q.book_id===state.bookId).map(q=>Number(q.unit_number)))].sort((a,b)=>a-b)){
@@ -223,16 +234,15 @@ function renderUnitStrip(){
  }
 }
 function renderBook(){
+ renderBookTabs();
  renderUnitStrip();
- const prompts=groups();$('ftBookTitle').textContent=bookTitle();
  $('ftUnitTitle').textContent='Unit '+state.unit+' · '+(state.unitTitles.get(state.bookId+':'+state.unit)||'');
- $('ftUnitFocus').textContent=prompts[0]?.grammar_focus?'Grammar opportunity · '+prompts[0].grammar_focus:'';
  for(const mode of ['speaking','writing']){
   const count=masteryCount(state.unit,mode),card=$('ft'+(mode==='speaking'?'Speaking':'Writing')+'Card');
   const percent=pct(count/8*100);
   card.querySelector('.vocab-skill-ring').style.setProperty('--progress',percent);
   card.querySelector('.vocab-skill-ring span').textContent=percent+'%';
-  card.querySelector('.vocab-card-stars').textContent=count+'/8 mastered';
+  card.querySelector('.vocab-card-stars').textContent=count+'/8';
  }
 }
 function selectUnit(n){state.unit=n;renderBook();view('ftBook');questionVoice.preload(n);}
