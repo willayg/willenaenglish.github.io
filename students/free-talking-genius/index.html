@@ -11,21 +11,54 @@
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./styles.css?v=20261105-books-dynamic1">
+<link rel="stylesheet" href="./styles.css?v=20261106-shared-home1">
+<link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261105-overdue-missions1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261101-menu-prominent1"></script>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
 </head><body>
 <div class="study-app free-talking-genius">
+<div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
+ <button type="button" class="vocab-theme-pip" data-theme="cyan" aria-label="Cyan 테마" title="Cyan" aria-pressed="false"></button>
+ <button type="button" class="vocab-theme-pip" data-theme="sunbeam" aria-label="Sunbeam 테마" title="Sunbeam" aria-pressed="false"></button>
+ <button type="button" class="vocab-theme-pip" data-theme="pink" aria-label="Pink 테마" title="Pink" aria-pressed="false"></button>
+ <button type="button" class="vocab-theme-pip" data-theme="paper" aria-label="Paper 테마" title="Paper" aria-pressed="false"></button>
+ <button type="button" class="vocab-theme-pip" data-theme="dark" aria-label="Dark 테마" title="Dark" aria-pressed="false"></button>
+ <button type="button" class="vocab-theme-pip" data-theme="cyberpunk" aria-label="Cyberpunk 테마" title="Cyberpunk" aria-pressed="false"></button>
+</div>
 <student-header title="프리토킹 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
 <main class="ft-page">
 <div id="ftError" class="ft-error" role="alert" hidden></div>
-<section id="ftHome" class="ft-shell">
- <div class="vocab-front-intro"><small class="ft-eyebrow">WILLENA · FREE TALKING GENIUS</small>
- <h1>Free Talking Genius</h1><p>교재에 나온 주제로 내 생각을 자유롭게 말하고 써 봐요.</p></div>
- <div id="ftBookChoices" class="ft-book-list" aria-label="My Free Talking textbooks"></div>
- <p id="ftLoading" class="ft-status">교재와 학습 기록을 확인하는 중…</p>
+<section id="ftHome" class="vocab-front-menu ft-home">
+ <section id="appMissionBasket" class="app-mission-basket-slot" aria-label="미션 바구니"></section>
+ <div class="vocab-front-intro ft-home-intro">
+  <small class="eyebrow">WILLENA · FREE TALKING GENIUS</small>
+  <h1>Free Talking Genius</h1>
+  <p>교재에 나온 주제로 내 생각을 자유롭게 말하고 써 봐요.</p>
+ </div>
+ <div class="vocab-front-divider" aria-hidden="true"></div>
+ <section class="vocab-front-books" aria-label="My Free Talking textbooks">
+  <div class="vocab-front-section-head">
+   <div><span class="eyebrow">내 교재</span><strong>교재를 선택하세요</strong></div>
+  </div>
+  <div id="ftBookChoices" class="vocab-front-book-list ft-book-list"></div>
+ </section>
+ <p id="ftLoading" class="ft-status" role="status">교재와 학습 기록을 확인하는 중…</p>
+ <section id="ftFrontAchievements" data-shared-achievements class="vocab-front-achievements" hidden aria-label="Shared learning streaks and medals">
+  <div class="vocab-front-achievement">
+   <img src="/shared/svgs/streak.svg?v=20260927-icons1" alt="" aria-hidden="true">
+   <div><strong id="ftStreakCurrent">–</strong><small>연속 학습</small></div>
+  </div>
+  <div class="vocab-front-achievement">
+   <img src="/shared/svgs/best-streak.svg?v=20260927-icons1" alt="" aria-hidden="true">
+   <div><strong id="ftStreakBest">–</strong><small>최고 연속</small></div>
+  </div>
+  <div class="vocab-front-achievement vocab-front-achievement-gold">
+   <img src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="" aria-hidden="true">
+   <div><strong id="ftMedalCount">–</strong><small>gold medals</small></div>
+  </div>
+ </section>
 </section>
 <section id="ftBook" class="ft-shell" hidden>
  <div class="ft-topline"><button id="ftBackHome" class="vocab-back" type="button">← 홈</button><span class="ft-eyebrow">교재 공부</span></div>
@@ -104,7 +137,11 @@
 </section>
 <div class="ft-footer-version">Free Talking Genius · Character voices · dynamic books · v2.2</div>
 </main></div>
-<script type="module" src="./app.js?v=20261106-nav-history1"></script>
+<script type="module" src="./app.js?v=20261106-shared-home1"></script>
+<script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
+<script src="/students/components/mission-basket.js?v=20261105-overdue-missions1"></script>
+<script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const slot=document.getElementById('appMissionBasket');if(slot)window.WillenaMissionBasket?.mount(slot,{app:'Free Talking Genius'})});</script>
 <script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261103-idle1"></script>
 </body></html>
