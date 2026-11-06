@@ -461,7 +461,6 @@ async function ftHash(text,ttsModel,ttsVoice,variant){
 }
 async function ftAuthorizedWrite(body){
   const id=String(body.question_id||'');
-  if(!FT_UUID.test(id))return false;
   const variant=String(body.variant||''),key=String(body.key||''),format=String(body.format||'');
   if(variant==='retry'){
     // Whitelisted encouragement only, never browser-provided TTS text.
@@ -475,6 +474,7 @@ async function ftAuthorizedWrite(body){
     const expected='ft_retry_v1_'+Array.from(new Uint8Array(hash),v=>v.toString(16).padStart(2,'0')).join('').slice(0,32);
     return key===expected;
   }
+  if(!FT_UUID.test(id))return false;
   if(!['realtime','elevenlabs','fallback'].includes(variant))return false;
   const allowed=variant==='realtime'?format==='wav'&&body.voice==='marin'&&
     /^gpt-realtime-[a-zA-Z0-9.-]{1,40}$/.test(String(body.model||'')):
