@@ -1133,3 +1133,67 @@
 .free-talking-genius #ftSession #ftQuestionStage[data-phase="ready"] #ftHintViewer{
  display:none!important;
 }
+
+/* Alpha comparison: compact speech-method switch directly below the turn circle. */
+.free-talking-genius #ftSession #ftSpeechPath{
+ order:2!important;
+ display:flex;flex-direction:column;align-items:center;
+ gap:5px;margin:7px auto 10px!important;max-width:100%;
+ padding:4px 8px!important;color:#386e79;
+}
+.free-talking-genius #ftSession #ftSpeechPath[hidden]{display:none!important}
+.free-talking-genius #ftSession #ftSpeechPath .ft-speech-path-control{
+ display:inline-flex;align-items:center;justify-content:center;gap:11px;
+ padding:7px 12px;border:2px solid #c5ebee;border-radius:22px;
+ background:#fff;cursor:pointer;font:850 13px/1.25 Poppins,system-ui,sans-serif;
+ white-space:nowrap;
+}
+.free-talking-genius #ftSession #ftSpeechPath .ft-speech-path-control>span:last-child{
+ color:#cf75a6;
+}
+.free-talking-genius #ftSession #ftSpeechPath .ft-speech-path-control small{
+ display:inline-block;margin-left:3px;font-size:9px;color:#ad829a;vertical-align:middle;
+}
+.free-talking-genius #ftSession #ftUseAiRecording{
+ position:absolute;width:1px;height:1px;opacity:0;
+}
+.free-talking-genius #ftSession #ftSpeechPath .ft-speech-toggle-track{
+ display:inline-flex;align-items:center;flex:none;
+ width:43px;height:25px;padding:3px;border-radius:100px;
+ background:#c1e7ec;transition:background .2s;
+}
+.free-talking-genius #ftSession #ftSpeechPath .ft-speech-toggle-thumb{
+ width:19px;height:19px;flex:none;border-radius:50%;
+ background:#fff;box-shadow:0 1px 4px #2f66702b;
+ transition:transform .2s;
+}
+.free-talking-genius #ftSession #ftUseAiRecording:checked+.ft-speech-toggle-track{background:#e9accc}
+.free-talking-genius #ftSession #ftUseAiRecording:checked+.ft-speech-toggle-track .ft-speech-toggle-thumb{
+ transform:translateX(18px);
+}
+.free-talking-genius #ftSession #ftUseAiRecording:focus-visible+.ft-speech-toggle-track{
+ outline:3px solid #6dcbd6;outline-offset:3px;
+}
+.free-talking-genius #ftSession #ftUseAiRecording:disabled+.ft-speech-toggle-track{opacity:.5}
+.free-talking-genius #ftSession #ftSpeechPath #ftRecordStatus{
+ margin:0;max-width:460px;text-align:center;
+ color:#6c9299;font:700 11px/1.4 Poppins,system-ui,sans-serif;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-transcribing="true"]{
+ pointer-events:none;opacity:.65;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-transcribing="true"] .ft-circle-mic{
+ animation:ftTranscribeBreath 1s ease-in-out infinite alternate;
+}
+@keyframes ftTranscribeBreath{from{opacity:.45;transform:scale(.9)}to{opacity:1;transform:scale(1.08)}}
+@media(max-width:390px){
+ .free-talking-genius #ftSession #ftSpeechPath .ft-speech-path-control{gap:7px;font-size:11px;padding:7px}
+ .free-talking-genius #ftSession #ftSpeechPath .ft-speech-path-control small{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+ .free-talking-genius #ftSession #ftSpeechPath .ft-speech-toggle-track,
+ .free-talking-genius #ftSession #ftSpeechPath .ft-speech-toggle-thumb,
+ .free-talking-genius #ftSession #ftTurnCircle[data-transcribing="true"] .ft-circle-mic{
+  transition:none!important;animation:none!important;
+ }
+}
