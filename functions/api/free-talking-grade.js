@@ -101,7 +101,7 @@ export async function onRequestPost({request,env}){
    '&question_id=eq.'+questionId+'&attempt_no=eq.'+nextAttempt,auth.token);
   if(!hintRows.ok)return reply(503,{success:false,error:'Could not verify hint usage'});
   const used=new Set((hintRows.value||[]).map(row=>row.hint_type));
-  const hintDeduction=(used.has('translation')?1:0)+(used.has('starter')?2:0)+
+  const hintDeduction=(used.has('translation')?1:0)+(used.has('starter')?1:0)+
    (used.has('english_prompt')?1:0)+(used.has('typed_review')?1:0);
   if(past.length&&past.at(-1)?.answer_text===answer){
    // A copied retry is not a fresh independent response. Return the original score.
