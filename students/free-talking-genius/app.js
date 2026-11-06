@@ -378,6 +378,7 @@ function renderQuestion({retry=false}={}){
  if(idx<0){void conclude();return}
  state.cursor=idx;state.current=questions[idx];state.feedback=null;
  state.questionStarted=false;
+ state.aiWasPlaying=false;
  $('ftHintActions').hidden=false;
  $('ftQuestionHost').hidden=false;
  resetHints();setTurn('ready');
@@ -594,7 +595,8 @@ $('ftEditTranscript').addEventListener('click',()=>{
 });
 $('ftWilliVoice').addEventListener('ft:voice-playing',e=>{
  if(visibleScreen!=='ftSession'||state.phase==='thinking'||state.phase==='feedback'||!state.questionStarted)return;
- setTurn(e.detail?.playing?'ai':'student');
+ if(e.detail?.playing){state.aiWasPlaying=true;setTurn('ai');}
+ else if(state.aiWasPlaying)setTurn('student');
 });
 $('ftTurnCircle').addEventListener('click',()=>{
  if(state.loading||!state.current||state.phase==='thinking'||state.phase==='feedback')return;
