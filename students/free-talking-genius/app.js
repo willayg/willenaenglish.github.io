@@ -19,7 +19,7 @@ const bookTitle=()=>state.books.find(b=>b.id===state.bookId)?.title||'Textbook';
 const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const state={student:null,profile:null,books:[],bookId:null,questions:[],unitTitles:new Map(),unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
- current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),speechPath:'browser',phase:'ready'};
+ current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready'};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
 const aiRecorder=createFreeTalkingRecorder({
@@ -29,7 +29,7 @@ const aiRecorder=createFreeTalkingRecorder({
   $('ftTurnCircle').style.setProperty('--ft-record-offset',String(Math.max(0,Math.min(100,progress*100))));
  },
  onTranscript:text=>{
-  if(visibleScreen!=='ftSession'||state.mode!=='speaking'||!$('ftUseAiRecording').checked)return;
+  if(visibleScreen!=='ftSession'||state.mode!=='speaking')return;
   $('ftTranscriptEdit').value=text;
   $('ftHeardText').textContent=text;
   $('ftHeardSentence').hidden=false;
@@ -40,11 +40,10 @@ const aiRecorder=createFreeTalkingRecorder({
   $('ftTurnCircle').dataset.listening=recording?'true':'false';
   $('ftTurnCircle').dataset.aiRecording=recording?'true':'false';
   $('ftTurnCircle').dataset.transcribing=processing?'true':'false';
-  $('ftUseAiRecording').disabled=recording||processing;
   $('ftSubmit').disabled=state.loading||recording||processing||!validAnswer();
  }
 });
-function useAiAudio(){return state.mode==='speaking'&&$('ftUseAiRecording').checked}
+function useAiAudio(){return state.mode==='speaking'}
 function resetSpeechAnswer(){
  $('ftTranscriptEdit').value='';
  $('ftHeardText').textContent='';
@@ -62,9 +61,7 @@ function applySpeechPath(){
  aiRecorder.cancel();
  try{state.renderer?.speechRecognition?.stop?.()}catch{}
  resetSpeechAnswer();
- $('ftRecordStatus').textContent=useAiAudio()
-  ?'AI 녹음 · 최대 30초 · 원을 눌러 시작 / 다시 눌러 종료'
-  :'브라우저 음성 인식 · 원을 눌러 말하기';
+ $('ftRecordStatus').textContent='AI 녹음 · 최대 30초 · 원을 눌러 시작 / 다시 눌러 종료';
  $('ftTurnCircle').dataset.listening='false';
  if(useAiAudio())void aiRecorder.prepare();
 }
@@ -560,12 +557,7 @@ function renderQuestion({retry=false}={}){
  $('ftFeedback').hidden=true;$('ftSubmit').hidden=false;$('ftNext').hidden=true;$('ftRetry').hidden=true;$('ftSkip').hidden=false;
  $('ftAttemptStatus').textContent='';
  $('ftSession').dataset.mode=state.mode;
- $('ftSpeechPath').hidden=state.mode!=='speaking';
- $('ftUseAiRecording').disabled=false;
- $('ftUseAiRecording').checked=state.speechPath==='ai';
- $('ftRecordStatus').textContent=state.speechPath==='ai'
-  ?'AI 녹음 · 최대 30초 · 원을 눌러 시작 / 다시 눌러 종료'
-  :'브라우저 음성 인식 · 원을 눌러 말하기';
+ $('ftRecordStatus').textContent='AI 녹음 · 최대 30초 · 원을 눌러 시작 / 다시 눌러 종료';
  $('ftPromptLabel').textContent='QUESTION '+(idx+1);
  $('ftQuestionText').textContent=state.current.question_en;
  $('ftHintEnglish').hidden=state.mode!=='speaking';
@@ -800,10 +792,7 @@ $('ftChooseWilli').addEventListener('click',()=>chooseRoundVoice('marin'));
 $('ftChooseLili').addEventListener('click',()=>chooseRoundVoice('bunny-v3'));
 $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pendingMode));
 $('ftCharacterBack').addEventListener('click',()=>view('ftBook'));
-$('ftUseAiRecording').addEventListener('change',()=>{
- state.speechPath=$('ftUseAiRecording').checked?'ai':'browser';
- applySpeechPath();
-});
+
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
 $('ftWritingCard').addEventListener('click',()=>void openMode('writing'));
 $('ftTranscriptEdit').addEventListener('input',()=>{
