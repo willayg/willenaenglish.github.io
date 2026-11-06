@@ -354,23 +354,24 @@ function markFeedback(attempt){
  const grid=$('ftFeedbackGrid');grid.replaceChildren();
  if(isV2){
   for(const [key,title] of Object.entries(RUBRIC_NAMES)){
-   const item=document.createElement('div');
+   const item=document.createElement('details');
+   const summary=document.createElement('summary');
    const heading=document.createElement('strong');heading.textContent=title;
    const points=document.createElement('b');points.textContent=(Number(entries[key])||0)+'/2';
    const note=document.createElement('p');note.textContent=rubric.feedback?.[key]||'';
-   item.append(heading,points,note);grid.append(item);
+   summary.append(heading,points);item.append(summary,note);grid.append(item);
   }
  }else{
   for(const [title,value,note] of [['Grammar',attempt.grammar_points,attempt.grammar_feedback_ko],
    ['Answer',attempt.quality_points,attempt.quality_feedback_ko]]){
-   const item=document.createElement('div');const h=document.createElement('strong');h.textContent=title;
+   const item=document.createElement('details');const summary=document.createElement('summary');
+   const h=document.createElement('strong');h.textContent=title;
    const b=document.createElement('b');b.textContent=value+'/2';const p=document.createElement('p');p.textContent=note||'';
-   item.append(h,b,p);grid.append(item);
+   summary.append(h,b);item.append(summary,p);grid.append(item);
   }
  }
  const deduction=Number(attempt.hint_deduction_v2)||0;
- $('ftHintSummary').textContent=isV2?
-  'Answer: '+Number(attempt.raw_total_v2)+'/10 · Hint deduction: −'+deduction+' · Final: '+total+'/10':'';
+ $('ftHintSummary').textContent=isV2&&deduction>0?'Hints −'+deduction+' point'+(deduction===1?'':'s'):'';
  $('ftCorrection').textContent=attempt.correction||attempt.answer_text||'';
  // Scoring targets and passing thresholds are intentionally undecided.
  // A fresh unaided retry may recover points; duplicate answers remain blocked by the backend.
