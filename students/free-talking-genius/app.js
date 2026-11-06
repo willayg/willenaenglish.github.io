@@ -370,6 +370,7 @@ function renderQuestion({retry=false}={}){
  const idx=sameQuestion?questions.findIndex(q=>q.id===state.current.id):questionIndexAfter(state.cursor);
  if(idx<0){void conclude();return}
  state.cursor=idx;state.current=questions[idx];state.feedback=null;
+ resetHints();setTurn(retry?'student':'ready');
  $('ftFeedback').hidden=true;$('ftSubmit').hidden=false;$('ftNext').hidden=true;$('ftRetry').hidden=true;$('ftSkip').hidden=false;
  $('ftAttemptStatus').textContent='';
  $('ftSession').dataset.mode=state.mode;
@@ -390,6 +391,7 @@ function renderQuestion({retry=false}={}){
     if(heard)$('ftTranscriptEdit').value=heard;
    }
    $('ftSubmit').disabled=state.loading||!validAnswer();
+   if(!state.loading&&state.phase!=='feedback')setTurn('student');
   }
  });
  state.micObserver?.disconnect?.();
@@ -444,7 +446,7 @@ async function openMode(mode){
 async function submit(){
  if(state.loading||!state.current||!validAnswer())return;
  const answer=captureAnswer(),question=state.current;
- setBusy(true);$('ftAttemptStatus').textContent='AI Willi가 문법과 답변 내용을 확인하는 중…';
+ setBusy(true);setTurn('thinking');$('ftAttemptStatus').textContent='';
  try{
   const run=async access=>fetch('/api/free-talking-grade',{
    method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+access,'Content-Type':'application/json'},
@@ -471,7 +473,7 @@ async function submit(){
   const answered=groups().filter(q=>attemptsFor(state.session.id,q.id).length>0).length;
   $('ftSessionProgress').textContent=answered+'/8 answered';
   $('ftProgressFill').style.width=pct(answered/8*100)+'%';
- }catch(error){$('ftAttemptStatus').textContent='저장하지 못했어요. '+error.message;console.warn('[Free Talking] grade',error)}
+ }catch(error){setTurn('student');$('ftAttemptStatus').textContent='저장하지 못했어요. '+error.message;console.warn('[Free Talking] grade',error)}
  finally{setBusy(false)}
 }
 async function conclude(){
