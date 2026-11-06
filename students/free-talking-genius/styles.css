@@ -851,3 +851,96 @@
 @media(prefers-reduced-motion:reduce){
  .free-talking-genius #ftSession .ft-hint-cost-float{animation:none;opacity:0}
 }
+
+/* Character-selection splash: shown before a new Speaking or Writing round. */
+.free-talking-genius #ftCharacter[hidden]{display:none!important}
+.free-talking-genius #ftCharacter{
+ display:flex;align-items:center;justify-content:center;
+ min-height:calc(100dvh - 130px);padding:24px 16px;
+}
+.free-talking-genius #ftCharacter .ft-character-panel{
+ width:min(620px,100%);display:flex;flex-direction:column;align-items:center;
+ gap:14px;padding:clamp(22px,5vw,40px);
+ background:#fff;border:3px solid #b7eaed;border-radius:28px;
+ text-align:center;box-shadow:none;
+}
+.free-talking-genius #ftCharacter .ft-character-eyebrow{
+ color:#d782ae;font-weight:900;font-size:12px;letter-spacing:.12em;
+}
+.free-talking-genius #ftCharacter h2{margin:0;color:#285f68;font-size:clamp(23px,4vw,31px)}
+.free-talking-genius #ftCharacter .ft-character-round{margin:0;color:#63828b;font-weight:700;font-size:13px}
+.free-talking-genius #ftCharacter .ft-character-options{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;
+ width:100%;margin:12px 0 4px;
+}
+.free-talking-genius #ftCharacter .ft-character-option{
+ display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;
+ min-height:190px;padding:18px 10px;border:3px solid #b9e8ed;border-radius:22px;
+ background:#fff;background-image:none;color:#28646d;box-shadow:none;
+ cursor:pointer;transition:transform .18s,border-color .18s,background-color .18s;
+}
+.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"]{
+ border-color:#edadd0;background:#fff6fa;
+}
+.free-talking-genius #ftCharacter .ft-character-option:hover{transform:translateY(-2px)}
+.free-talking-genius #ftCharacter .ft-character-option strong{font-size:20px;font-weight:900}
+.free-talking-genius #ftCharacter .ft-character-option small{font-size:12px;font-weight:700;color:#72909a}
+.free-talking-genius #ftCharacter .ft-character-symbol{
+ display:grid;place-items:center;width:73px;height:73px;
+ border:7px solid #b3edf0;outline:3px solid #f4c4da;border-radius:50%;
+ background:#fff;color:#5bafb7;font-size:30px;font-weight:900;
+}
+.free-talking-genius #ftCharacter .ft-character-continue{
+ width:min(350px,100%);min-height:52px;margin-top:5px;
+ border:3px solid #ace8ec;border-radius:17px;background:#fff;
+ color:#cc4992;font:900 17px Poppins,system-ui,sans-serif;
+ cursor:pointer;
+}
+.free-talking-genius #ftCharacter .ft-character-continue:disabled{opacity:.4;cursor:not-allowed}
+.free-talking-genius #ftCharacter .ft-character-back{
+ padding:10px;border:0;background:transparent;color:#517f89;
+ font:800 13px Poppins,system-ui,sans-serif;cursor:pointer;
+}
+/* Flip hints on only during the student's answer turn. */
+.free-talking-genius #ftSession #ftHintActions{
+ transition:opacity .22s ease,transform .22s ease,max-height .28s ease,margin .25s ease;
+ max-height:200px;opacity:1;transform:translateY(0);
+ visibility:visible;will-change:opacity,transform;
+}
+.free-talking-genius #ftSession #ftHintActions.is-concealed{
+ max-height:0!important;margin:0!important;padding:0!important;
+ opacity:0;transform:translateY(-12px);visibility:hidden;
+ overflow:hidden!important;pointer-events:none;
+}
+/* Lighter two-tone ring, thicker inner cyan/pink band and thinner outer trim. */
+.free-talking-genius #ftSession #ftTurnCircle{
+ border:12px solid #afe8ed!important;
+ outline:3px solid #f3bfd9!important;
+ background:#fff!important;background-image:none!important;
+ box-shadow:none!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="student"]{
+ border:12px solid #f3c1dd!important;
+ outline:3px solid #b4e8ec!important;
+ background:#f5feff!important;
+ color:#8acfd7!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="student"][data-listening="true"]{
+ border:12px solid #f0b7d5!important;
+ outline:3px solid #a9e5ed!important;
+ background:#fff!important;color:#dc68a1!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="thinking"]{
+ border-color:#afe8ed!important;outline-color:#f3bfd9!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start{
+ display:none!important;
+}
+@media(max-width:480px){
+ .free-talking-genius #ftCharacter .ft-character-option{min-height:155px;padding:14px 7px}
+ .free-talking-genius #ftCharacter .ft-character-symbol{width:60px;height:60px;font-size:25px}
+ .free-talking-genius #ftCharacter .ft-character-option strong{font-size:18px}
+}
+@media(prefers-reduced-motion:reduce){
+ .free-talking-genius #ftSession #ftHintActions,.free-talking-genius #ftCharacter .ft-character-option{transition:none}
+}
