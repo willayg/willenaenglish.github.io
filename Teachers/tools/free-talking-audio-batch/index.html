@@ -80,7 +80,7 @@ async function call(body){
 function status(message){$('status').textContent=message}
 function controls(){$('book').disabled=busy||!books.length;$('unit').disabled=busy||!books.length;
  $('voice').disabled=busy;$('check').disabled=busy||!jobs.length;
- $('run').disabled=busy||!checked||!jobs.some(j=>!j.exists);
+ $('run').disabled=busy||!jobs.length||(checked&&!jobs.some(j=>!j.exists));
  $('stop').disabled=!busy}
 function render(){
  $('total').textContent=jobs.length;$('cached').textContent=jobs.filter(j=>j.exists).length;
@@ -125,6 +125,8 @@ async function check(){
  finally{busy=false;controls()}
 }
 async function run(){
+ if(busy)return;
+ if(!checked)await check(); // One-click operation: inventory first, no duplicate charges.
  if(busy||!checked)return;
  const remaining=jobs.filter(j=>!j.exists);if(!remaining.length){status('Everything is already saved in R2.');return}
  busy=true;stopping=false;controls();let successes=0,errors=0;
