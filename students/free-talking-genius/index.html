@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./styles.css?v=20261107-orbit-hotfix3">
+<link rel="stylesheet" href="./styles.css?v=20261107-curved-orbits-longform1">
 <link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261105-overdue-missions1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -104,7 +104,14 @@
   <section id="ftWilliVoice" class="ft-willi-voice" aria-label="Free Talking conversation">
    <button type="button" id="ftTurnCircle" class="ft-turn-circle" data-ft-avatar data-phase="ready" aria-label="Listen to the question">
     <span class="ft-circle-glow"></span>
-    <span class="ft-circle-start ft-orbit-visual" aria-hidden="true"><span class="ft-orbit-core"></span><span class="ft-orbit-track ft-orbit-cyan"><span class="ft-orbit-particle"></span></span><span class="ft-orbit-track ft-orbit-pink"><span class="ft-orbit-particle"></span></span></span>
+    <span class="ft-circle-start ft-orbit-visual" aria-hidden="true">
+     <svg class="ft-orbit-art" viewBox="0 0 120 120" width="120" height="120" fill="none">
+      <circle cx="60" cy="60" r="29" stroke="#e3f6f7" stroke-width="7"/>
+      <g class="ft-orbit-arc ft-orbit-arc-cyan"><path d="M60 31 A29 29 0 0 1 87.2 70" stroke="#80ccd6" stroke-width="7" stroke-linecap="round"/></g>
+      <g class="ft-orbit-arc ft-orbit-arc-pink"><path d="M60 89 A29 29 0 0 1 32.8 50" stroke="#edb1d0" stroke-width="7" stroke-linecap="round"/></g>
+      <circle cx="60" cy="60" r="11" fill="#f8e6f1"/>
+     </svg>
+    </span>
     <span class="ft-circle-ai" aria-hidden="true"><span class="ft-circle-bars"><i></i><i></i><i></i><i></i><i></i></span></span>
     <span class="ft-circle-mic" aria-hidden="true"><svg viewBox="0 0 48 48" width="72" height="72"><rect x="17" y="5" width="14" height="26" rx="7" fill="currentColor"/><path d="M11 22a13 13 0 0 0 26 0M24 35v8M16 43h16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>
     <span class="ft-circle-thinking" aria-hidden="true"><span class="ft-thinking-swirl"></span></span>
@@ -158,7 +165,7 @@
 </section>
 <div class="ft-footer-version">Free Talking Genius · 10-point conversation · v2.3</div>
 </main></div>
-<script type="module" src="./app.js?v=20261107-orbit-hotfix3"></script>
+<script type="module" src="./app.js?v=20261107-curved-orbits-longform1"></script>
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
 <script src="/students/components/mission-basket.js?v=20261105-overdue-missions1"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
