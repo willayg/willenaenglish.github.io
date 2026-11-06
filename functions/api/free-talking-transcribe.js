@@ -71,7 +71,7 @@ export async function onRequestPost({request,env}){
   // Reject known prompt echoes and model instructions (do not display or grade).
   // Even if a transcription provider accidentally emits its own context,
   // a child's response must not be replaced with instructional prose.
-  const leakedContext=/english\\s+language\\s+speaking\\s+practice\\s+by\\s+korean\\s+children|transcribe\\s+the\\s+english\\s+actually\\s+spoken|preserve\\s+incomplete\\s+sentences|do\\s+not\\s+translate\\s+korean\\s+speech|do\\s+not\\s+invent\\s+an\\s+answer/i;
+  const leakedContext=/english\s+language\s+speaking\s+practice\s+by\s+korean\s+children|transcribe\s+the\s+english\s+actually\s+spoken|preserve\s+incomplete\s+sentences|do\s+not\s+translate\s+korean\s+speech|do\s+not\s+invent\s+an\s+answer/i;
   if(leakedContext.test(transcript)){
    console.warn('[Free Talking transcribe] rejected model prompt echo');
    return reply(422,{success:false,error:'음성을 제대로 듣지 못했어요. 다시 녹음해 주세요.'});
