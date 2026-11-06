@@ -66,6 +66,10 @@ function setTurn(phase){
  state.phase=phase;
  const circle=$('ftTurnCircle');
  circle.dataset.phase=phase;
+ const replay=$('ftListenAgain');
+ const prominent=phase==='student'&&state.listenFinished===true;
+ replay.classList.toggle('is-replay-ready',prominent);
+ replay.setAttribute('aria-label',prominent?'질문이 어려웠나요? 다시 듣기':'질문 다시 듣기');
  const labels={ready:'',ai:'AI가 질문을 읽는 중…',student:state.mode==='speaking'?'내 차례! 원을 눌러 영어로 말해 보세요.':'내 차례! 영어로 답변을 작성해 보세요.',thinking:'AI가 답변을 확인하고 있어요…',feedback:'점수가 나왔어요. 피드백을 확인해 보세요.'};
  $('ftTurnStatus').textContent=labels[phase];
  $('ftTurnStatus').hidden=phase==='ready'||phase==='feedback';
@@ -473,7 +477,9 @@ function renderQuestion({retry=false}={}){
  state.cursor=idx;state.current=questions[idx];state.feedback=null;
  state.questionStarted=false;
  state.aiWasPlaying=false;
+ state.listenFinished=false;
  $('ftListenAgain').disabled=true;
+ $('ftListenAgain').classList.remove('is-replay-ready');
  // Turn state controls the hint toolbar.
  $('ftQuestionHost').hidden=false;
  $('ftHeardSentence').hidden=true;
@@ -737,8 +743,15 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('ftTranscriptRow
 
 $('ftWilliVoice').addEventListener('ft:voice-playing',e=>{
  if(visibleScreen!=='ftSession'||state.phase==='thinking'||state.phase==='feedback'||!state.questionStarted)return;
- if(e.detail?.playing){state.aiWasPlaying=true;$('ftListenAgain').disabled=false;setTurn('ai');}
- else if(state.aiWasPlaying)setTurn('student');
+ if(e.detail?.playing){
+  state.aiWasPlaying=true;state.listenFinished=false;
+  $('ftListenAgain').disabled=true;
+  setTurn('ai');
+ }else if(state.aiWasPlaying){
+  state.listenFinished=true;
+  $('ftListenAgain').disabled=false;
+  setTurn('student');
+ }
 });
 $('ftTurnCircle').addEventListener('click',()=>{
  if(state.loading||!state.current||state.phase==='thinking'||state.phase==='feedback')return;
@@ -756,7 +769,12 @@ $('ftTurnCircle').addEventListener('click',()=>{
   requestAnimationFrame(updateMicListening);
  }else $('ftQuestionHost').querySelector('textarea.answer')?.focus();
 });
-$('ftListenAgain').addEventListener('click',()=>{if(!state.loading&&state.current&&state.aiWasPlaying) $('ftWilliVoice').querySelector('[data-ft-listen]')?.click()});
+$('ftListenAgain').addEventListener('click',()=>{
+ if(state.loading||!state.current||!state.listenFinished)return;
+ state.listenFinished=false;
+ $('ftListenAgain').classList.remove('is-replay-ready');
+ $('ftWilliVoice').querySelector('[data-ft-listen]')?.click();
+});
 $('ftHintEnglish').addEventListener('click',()=>void requestHint('english_prompt'));
 $('ftHintTranslation').addEventListener('click',()=>void requestHint('translation'));
 $('ftHintStarter').addEventListener('click',()=>void requestHint('starter'));
