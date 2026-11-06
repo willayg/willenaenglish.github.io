@@ -10,6 +10,7 @@ import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
 import {createFreeTalkingVoice} from './question-voice.js?v=20261107-character-choice1';
+import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-ai-record-alpha1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
@@ -18,9 +19,51 @@ const bookTitle=()=>state.books.find(b=>b.id===state.bookId)?.title||'Textbook';
 const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const state={student:null,profile:null,books:[],bookId:null,questions:[],unitTitles:new Map(),unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
- current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready'};
+ current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),speechPath:'browser',phase:'ready'};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
+const aiRecorder=createFreeTalkingRecorder({
+ getToken:token,
+ onStatus:message=>{$('ftRecordStatus').textContent=message},
+ onTranscript:text=>{
+  if(visibleScreen!=='ftSession'||state.mode!=='speaking'||!$('ftUseAiRecording').checked)return;
+  $('ftTranscriptEdit').value=text;
+  $('ftHeardText').textContent=text;
+  $('ftHeardSentence').hidden=false;
+  $('ftEditTranscript').disabled=false;
+  $('ftSubmit').disabled=state.loading||!validAnswer();
+ },
+ onState:({recording,processing})=>{
+  $('ftTurnCircle').dataset.listening=recording?'true':'false';
+  $('ftTurnCircle').dataset.transcribing=processing?'true':'false';
+  $('ftUseAiRecording').disabled=recording||processing;
+  $('ftSubmit').disabled=state.loading||recording||processing||!validAnswer();
+ }
+});
+function useAiAudio(){return state.mode==='speaking'&&$('ftUseAiRecording').checked}
+function resetSpeechAnswer(){
+ $('ftTranscriptEdit').value='';
+ $('ftHeardText').textContent='';
+ $('ftHeardSentence').hidden=true;
+ $('ftEditTranscript').disabled=true;
+ $('ftSubmit').disabled=true;
+ if(state.renderer){
+  state.renderer.state.speakingTranscript='';
+  state.renderer.state.speakingAlternatives=[];
+  const shown=$('ftQuestionHost').querySelector('[data-speaking-transcript]');
+  if(shown){shown.hidden=true;shown.textContent=''}
+ }
+}
+function applySpeechPath(){
+ aiRecorder.cancel();
+ try{state.renderer?.speechRecognition?.stop?.()}catch{}
+ resetSpeechAnswer();
+ $('ftRecordStatus').textContent=useAiAudio()
+  ?'AI 녹음 · 최대 60초 · 원을 눌러 시작 / 다시 눌러 종료'
+  :'브라우저 음성 인식 · 원을 눌러 말하기';
+ $('ftTurnCircle').dataset.listening='false';
+}
+
 const RUBRIC_NAMES={grammar:'문법',length:'문장 길이와 내용',creativity:'창의성',appropriate:'질문에 맞는 답변',vocabulary:'어휘와 표현'};
 const SCORE_SFX_BANDS=[
  {min:0,max:2,sfx:'wrong'}, // needs more practice
@@ -186,6 +229,7 @@ function openTranscriptModal(){
  $('ftTranscriptEdit').focus();
 }
 function updateMicListening(){
+ if(useAiAudio())return;
  const recognition=state.renderer?.speechRecognition;
  const button=$('ftQuestionHost').querySelector('[data-speaking-mic]');
  $('ftTurnCircle').dataset.listening=button?.classList.contains('is-listening')?'true':'false';
@@ -208,7 +252,7 @@ function sameNav(a,b){
 }
 function view(which,{record=true}={}){
  if(!FT_SCREENS.has(which))return;
- if(which!=='ftSession'){questionVoice.stop();try{state.renderer?.speechRecognition?.stopExtended?.()}catch{}}
+ if(which!=='ftSession'){aiRecorder.cancel();questionVoice.stop();try{state.renderer?.speechRecognition?.stopExtended?.();state.renderer?.speechRecognition?.stop?.()}catch{}}
  for(const id of FT_SCREENS)$(id).hidden=id!==which;
  visibleScreen=which;clearError();
  if(record&&!navigatingHistory){
@@ -491,6 +535,7 @@ function questionIndexAfter(start=0){
  return -1;
 }
 function renderQuestion({retry=false}={}){
+ aiRecorder.cancel();
  const questions=groups();
  if(!state.session||!questions.length)return;
  const sameQuestion=retry&&state.current&&attemptsFor(state.session.id,state.current.id).length<5;
@@ -510,6 +555,12 @@ function renderQuestion({retry=false}={}){
  $('ftFeedback').hidden=true;$('ftSubmit').hidden=false;$('ftNext').hidden=true;$('ftRetry').hidden=true;$('ftSkip').hidden=false;
  $('ftAttemptStatus').textContent='';
  $('ftSession').dataset.mode=state.mode;
+ $('ftSpeechPath').hidden=state.mode!=='speaking';
+ $('ftUseAiRecording').disabled=false;
+ $('ftUseAiRecording').checked=state.speechPath==='ai';
+ $('ftRecordStatus').textContent=state.speechPath==='ai'
+  ?'AI 녹음 · 최대 60초 · 원을 눌러 시작 / 다시 눌러 종료'
+  :'브라우저 음성 인식 · 원을 눌러 말하기';
  $('ftPromptLabel').textContent='QUESTION '+(idx+1);
  $('ftQuestionText').textContent=state.current.question_en;
  $('ftHintEnglish').hidden=state.mode!=='speaking';
@@ -524,7 +575,7 @@ function renderQuestion({retry=false}={}){
  state.renderer.render({form,prompt:state.current.question_en,context:{},answer:[],
   ...(form==='write'?{hints:{placeholder:'Write your own English answer...'}}:{})},{
   onChange:()=>{
-   if(state.mode==='speaking'){
+   if(state.mode==='speaking'&&!useAiAudio()){
     const heard=String(state.renderer?.getResponse()||'').trim();
     if(heard){
      $('ftTranscriptEdit').value=heard;
@@ -611,7 +662,7 @@ async function beginRound(mode){
  finally{setBusy(false)}
 }
 async function submit(){
- if(state.loading||!state.current||!validAnswer())return;
+ if(state.loading||aiRecorder.isRecording()||aiRecorder.isProcessing()||!state.current||!validAnswer())return;
  const answer=captureAnswer(),question=state.current;
  try{state.renderer?.speechRecognition?.stopExtended?.()}catch{}
  setBusy(true);setTurn('thinking');$('ftAttemptStatus').textContent='';
@@ -712,6 +763,7 @@ async function renderFinish(data){
 }
 async function exit(){
  if(state.loading)return;
+ aiRecorder.cancel();
  questionVoice.stop();
  try{state.renderer?.speechRecognition?.stopExtended?.();state.renderer?.speechRecognition?.stop?.()}catch{}state.current=null;state.session=null;
  try{await refreshData()}catch(error){console.warn('[Free Talking] refresh',error)}
@@ -742,6 +794,10 @@ $('ftChooseWilli').addEventListener('click',()=>chooseRoundVoice('marin'));
 $('ftChooseLili').addEventListener('click',()=>chooseRoundVoice('bunny-v3'));
 $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pendingMode));
 $('ftCharacterBack').addEventListener('click',()=>view('ftBook'));
+$('ftUseAiRecording').addEventListener('change',()=>{
+ state.speechPath=$('ftUseAiRecording').checked?'ai':'browser';
+ applySpeechPath();
+});
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
 $('ftWritingCard').addEventListener('click',()=>void openMode('writing'));
 $('ftTranscriptEdit').addEventListener('input',()=>{
@@ -785,6 +841,15 @@ $('ftTurnCircle').addEventListener('click',()=>{
  }
  if(state.phase==='ai'){ $('ftWilliVoice').querySelector('[data-ft-listen]')?.click();return; }
  setTurn('student');
+ if(state.mode==='speaking'&&useAiAudio()){
+  if(aiRecorder.isProcessing())return;
+  if(aiRecorder.isRecording())aiRecorder.stop();
+  else{
+   resetSpeechAnswer();
+   void aiRecorder.start(state.session.id,state.current.id);
+  }
+  return;
+ }
  if(state.mode==='speaking'){
   const mic=$('ftQuestionHost').querySelector('[data-speaking-mic]');
   mic?.click();
