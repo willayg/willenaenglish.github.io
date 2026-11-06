@@ -6,7 +6,7 @@ const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const $=(sel,root=document)=>root.querySelector(sel);
 const $$=(sel,root=document)=>[...root.querySelectorAll(sel)];
 const kindName={sentence:'Free sentences',diary:'Daily diary',topic:'Topic writing'};
-const state={rows:[],sessions:[],classes:[],activeId:null,activeSessionId:null,tab:'submissions',writingFilter:'submitted',loaded:false,loading:false};
+const state={rows:[],sessions:[],classes:[],activeId:null,activeSessionId:null,tab:'submissions',writingFilter:'submitted',reviewFilter:'needs',loaded:false,loading:false};
 const formatDate=s=>s?new Date(s).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
 function make(tag,className,text){
  const node=document.createElement(tag);if(className)node.className=className;
@@ -19,6 +19,7 @@ function mount(){
  view.innerHTML='<div class="page-head"><div><h1>Writing Genius</h1><div class="panel-sub">Submitted writing and saved drafts</div></div></div>'+
   '<div class="wg-t-tabs" role="tablist" aria-label="Writing Genius teacher views"><button type="button" class="wg-t-tab is-active" data-wg-tab="submissions">Writing Submissions</button><button type="button" class="wg-t-tab" data-wg-tab="practice">Sentence Practice</button></div>'+
   '<div class="wg-t-filter" id="wgTeacherWritingFilters"><label for="wgTeacherWritingStatus" style="font-size:13px;font-weight:600">Show</label><select class="control" id="wgTeacherWritingStatus" aria-label="Writing status"><option value="submitted">Submitted</option><option value="draft">Drafts</option><option value="all">All writing</option></select></div>'+
+  '<div class="wg-t-filter" id="wgTeacherReviewFilters"><label for="wgTeacherReviewStatus" style="font-size:13px;font-weight:600">Feedback</label><select class="control" id="wgTeacherReviewStatus" aria-label="Teacher feedback status"><option value="needs">Needs feedback</option><option value="sent">Feedback sent</option><option value="all">All</option></select></div>'+
   '<div class="wg-t-filter"><select class="control" id="wgTeacherClass" aria-label="Class"><option value="">All classes</option></select>'+
   '<select class="control" id="wgTeacherKind" aria-label="Writing type"><option value="">All writing</option><option value="diary">Diaries</option><option value="topic">Topics</option></select>'+
   '<input class="control search" id="wgTeacherSearch" type="search" placeholder="Search student or title…" aria-label="Search submissions">'+
@@ -28,8 +29,9 @@ function mount(){
   '<div id="wgTeacherList" class="wg-t-list"><p class="wg-t-empty">Select Writing Genius to load submissions.</p></div></section>'+
   '</div><div class="wg-t-modal" id="wgTeacherModal" hidden><div class="wg-t-modal-backdrop" data-wg-close></div><section class="wg-t-modal-dialog" role="dialog" aria-modal="true" aria-label="Student writing"><button type="button" class="wg-t-modal-close" id="wgTeacherModalClose" aria-label="Close">×</button><div id="wgTeacherDetail"></div></section></div>';
  workspace.append(view);
- $$('.wg-t-tab',view).forEach(b=>b.onclick=()=>{state.tab=b.dataset.wgTab;state.activeId=null;state.activeSessionId=null;closeDiaryModal();$$('.wg-t-tab',view).forEach(x=>x.classList.toggle('is-active',x===b));$('#wgTeacherKind').hidden=state.tab==='practice';$('#wgTeacherWritingFilters').hidden=state.tab==='practice';render()});
- $('#wgTeacherWritingStatus').onchange=e=>{state.writingFilter=e.target.value;render()};
+ $$('.wg-t-tab',view).forEach(b=>b.onclick=()=>{state.tab=b.dataset.wgTab;state.activeId=null;state.activeSessionId=null;closeDiaryModal();$$('.wg-t-tab',view).forEach(x=>x.classList.toggle('is-active',x===b));$('#wgTeacherKind').hidden=state.tab==='practice';$('#wgTeacherWritingFilters').hidden=state.tab==='practice';$('#wgTeacherReviewFilters').hidden=state.tab==='practice'||state.writingFilter!=='submitted';render()});
+ $('#wgTeacherWritingStatus').onchange=e=>{state.writingFilter=e.target.value;$('#wgTeacherReviewFilters').hidden=state.writingFilter!=='submitted';render()};
+ $('#wgTeacherReviewStatus').onchange=e=>{state.reviewFilter=e.target.value;render()};
  $('#wgTeacherClass').onchange=()=>void load();
  $('#wgTeacherKind').onchange=render;
  $('#wgTeacherSearch').oninput=render;
@@ -124,7 +126,7 @@ function render(){
  const q=($('#wgTeacherSearch')?.value||'').trim().toLowerCase();
  const kind=$('#wgTeacherKind')?.value||'';
  const filter=state.writingFilter;
- const rows=state.rows.filter(e=>(filter==='all'||e.status===filter)&&(!kind||e.kind===kind)&&(!q||[e.name,e.korean_name,e.title,e.class_name,e.body].some(v=>String(v||'').toLowerCase().includes(q))))
+ const rows=state.rows.filter(e=>(filter==='all'||e.status===filter)&&(filter!=='submitted'||state.reviewFilter==='all'||(state.reviewFilter==='sent' ? e.has_teacher_feedback===true : e.has_teacher_feedback!==true))&&(!kind||e.kind===kind)&&(!q||[e.name,e.korean_name,e.title,e.class_name,e.body].some(v=>String(v||'').toLowerCase().includes(q))))
   .sort((a,b)=>new Date(b.activity_at||b.submitted_at||b.updated_at||0)-new Date(a.activity_at||a.submitted_at||a.updated_at||0));
  container.replaceChildren();count.textContent=String(rows.length);container.closest('.wg-t-list-panel')?.querySelector('.panel-title')?.replaceChildren(document.createTextNode(filter==='draft'?'Saved drafts':filter==='all'?'All writing':'Submitted writing'));
  if(!rows.length){container.append(make('p','wg-t-empty',state.loaded?'No matching writing in this view.':'No writing loaded.'));return}
@@ -138,6 +140,12 @@ function render(){
   const stages={started:'Draft opened',writing:'Writing draft',reviewed:'AI review done',speaking_done:'Speaking recorded',completed:'Completed'};
   b.append(make('span','wg-t-item-meta',(kindName[e.kind]||'Writing')+' · '+(stages[e.stage]||(e.status==='draft'?'Draft':'Completed'))));
   b.append(make('strong','wg-t-card-title',e.title||'Untitled'));
+  if(e.status==='submitted'){
+   const sent=e.has_teacher_feedback===true;
+   const badge=make('span','wg-t-feedback-badge '+(sent?'is-sent':'is-needed'),sent?'✓ Feedback sent':'● Needs feedback');
+   if(sent&&e.feedback_sent_at)badge.title='Saved '+new Date(e.feedback_sent_at).toLocaleString('en-US',{timeZone:'Asia/Seoul'});
+   b.append(badge);
+  }
   b.onclick=()=>{state.activeId=e.id;detail(e);const modal=$('#wgTeacherModal');modal.hidden=false;document.body.classList.add('wg-modal-open');$('#wgTeacherModalClose').focus()};
   container.append(b);
  }
@@ -178,8 +186,8 @@ function detail(entry){
  const note=make('p','wg-t-feedback-note','Loading feedback…');
  const save=make('button','wg-t-save-feedback','Send feedback & award points');save.type='button';
  label.append(input);form.append(textarea,label,save,note);host.append(form);
- feedbackApi(entry.id).then(result=>{textarea.value=result.feedback||'';input.value=result.bonus_points||0;note.textContent=result.bonus_points?'Already awarded: '+result.bonus_points+' points':'No teacher feedback yet.'}).catch(e=>note.textContent=e.message);
- save.onclick=async()=>{const bonus=Number(input.value);if(!Number.isInteger(bonus)||bonus<0||bonus>50){note.textContent='Choose 0–50 points.';return}save.disabled=true;note.textContent='Saving…';try{const data=await feedbackApi(entry.id,textarea.value,bonus);note.textContent='Feedback sent!';const splash=make('div','wg-t-sent-splash');splash.setAttribute('role','status');splash.innerHTML='<span class="wg-t-sent-check" aria-hidden="true">✓</span><strong>Feedback sent!</strong><span>학생에게 전달했어요.</span>';const dialog=$('.wg-t-modal-dialog');dialog?.append(splash);setTimeout(()=>{splash.remove();closeDiaryModal()},1200)}catch(e){note.textContent=e.message}finally{save.disabled=false}};
+ feedbackApi(entry.id).then(result=>{textarea.value=result.feedback||'';input.value=result.bonus_points||0;note.textContent=result.feedback?.trim()?'Feedback already sent'+(entry.feedback_sent_at?' · '+new Date(entry.feedback_sent_at).toLocaleString('en-US',{timeZone:'Asia/Seoul'}):'')+(result.bonus_points?' · '+result.bonus_points+' points':''):'No teacher feedback yet.'}).catch(e=>note.textContent=e.message);
+ save.onclick=async()=>{const bonus=Number(input.value);if(!Number.isInteger(bonus)||bonus<0||bonus>50){note.textContent='Choose 0–50 points.';return}save.disabled=true;note.textContent='Saving…';try{const data=await feedbackApi(entry.id,textarea.value,bonus);note.textContent='Feedback sent!';entry.has_teacher_feedback=Boolean(String(data.feedback||'').trim());entry.feedback_sent_at=new Date().toISOString();render();const splash=make('div','wg-t-sent-splash');splash.setAttribute('role','status');splash.innerHTML='<span class="wg-t-sent-check" aria-hidden="true">✓</span><strong>Feedback sent!</strong><span>학생에게 전달했어요.</span>';const dialog=$('.wg-t-modal-dialog');dialog?.append(splash);setTimeout(()=>{splash.remove();closeDiaryModal()},1200)}catch(e){note.textContent=e.message}finally{save.disabled=false}};
 }
 function renderPractice(){
  const container=$('#wgTeacherList'),count=$('#wgTeacherCount');if(!container)return;
@@ -229,7 +237,7 @@ function detailPractice(entry){
 }
 function openView(){try{localStorage.setItem('willena.teachers.activeView.v1','writing-genius')}catch{};show();if(!state.loaded)void load()}
 function boot(){
- const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261101-feedback-sent1';
+ const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261107-feedback-status1';
  document.head.append(css);addNav();mount();
 }
 window.WritingGeniusTeacher={openView,refresh:load};
