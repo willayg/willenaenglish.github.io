@@ -411,3 +411,42 @@
   padding:18px 14px 20px;
  }
 }
+
+/* White conversation circle with a strong cyan inner ring and pink outer ring. */
+.free-talking-genius #ftSession #ftTurnCircle,
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="student"],
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="thinking"],
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="feedback"]{
+ background:#fff!important;
+ background-image:none!important;
+ border:8px solid #5bcbd7!important;
+ outline:6px solid #f091be;
+ outline-offset:0;
+ box-shadow:none!important;
+ color:#d52d90;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="student"]{
+ border-color:#ed6cad!important;
+ outline-color:#62ced8;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="thinking"]{color:#8b70bf}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="feedback"]{color:#b18d30}
+/* Hints stay in the conversation column; opening them never moves the footer. */
+.free-talking-genius #ftSession #ftQuestionText[hidden]{display:none!important}
+.free-talking-genius #ftSession #ftHintEnglish[hidden]{display:none!important}
+.free-talking-genius #ftSession #ftHintActions{flex-wrap:wrap;max-width:710px;align-self:center}
+.free-talking-genius #ftSession #ftEditTranscript.ft-hint-button{
+ text-decoration:none;
+ border:2px solid #bcecf0;
+ background:#fff!important;
+ color:#cf3385;
+ font:800 13px Poppins,sans-serif;
+ border-radius:100px;
+ padding:11px 17px;
+ margin:0;
+}
+.free-talking-genius #ftSession #ftEditTranscript.ft-hint-button small{margin-left:8px;color:#a26985}
+.free-talking-genius #ftSession #ftEditTranscript.ft-hint-button[disabled]{opacity:.55}
+@media(max-width:560px){
+ .free-talking-genius #ftSession #ftEditTranscript.ft-hint-button{font-size:12px;padding:10px 12px}
+}
