@@ -98,13 +98,26 @@ async function createMp3(env,text,voice){
  return bytes;
 }
 async function catalog(){
- const rows=await contentRows('free_talking_questions?select=id,book_id,unit_number,question_number,question_en&is_published=eq.true&order=book_id.asc,unit_number.asc,question_number.asc&limit=800');
- const ids=[...new Set(rows.map(q=>q.book_id).filter(id=>UUID.test(String(id))))];
+ // Fetch every published Free Talking question instead of silently stopping
+ // at the first 800 results. Paginate with a deterministic primary-key order.
+ const rows=[];const batch=500;const max=15000;
+ for(let offset=0;offset<max;offset+=batch){
+  const page=await contentRows('free_talking_questions?select=id,book_id,unit_number,question_number,question_en&is_published=eq.true&order=id.asc&limit='+batch+'&offset='+offset);
+  rows.push(...page);
+  if(page.length<batch)break;
+  if(offset+batch>=max)throw Error('CATALOG_LIMIT_REACHED');
+ }
+ const valid=rows.filter(q=>UUID.test(String(q.id))&&UUID.test(String(q.book_id))&&String(q.question_en||'').trim());
+ const ids=[...new Set(valid.map(q=>q.book_id))];
  if(!ids.length)return {books:[],questions:[]};
- const books=await contentRows('content_books?select=id,title&id=in.('+ids.join(',')+')&limit=100');
+ const books=[];
+ for(let i=0;i<ids.length;i+=80)books.push(...await contentRows('content_books?select=id,title&id=in.('+ids.slice(i,i+80).join(',')+')&limit=100'));
  const titles=new Map(books.map(b=>[b.id,b.title]));
- return {books:ids.map(id=>({id,title:titles.get(id)||'Textbook',units:[...new Set(rows.filter(x=>x.book_id===id).map(x=>Number(x.unit_number)))].sort((a,b)=>a-b)})),
-  questions:rows.filter(q=>UUID.test(String(q.id))&&UUID.test(String(q.book_id))&&String(q.question_en||'').trim()).map(q=>({id:q.id,book_id:q.book_id,unit_number:q.unit_number,question_number:q.question_number,text:q.question_en}))};
+ valid.sort((a,b)=>String(titles.get(a.book_id)||a.book_id).localeCompare(String(titles.get(b.book_id)||b.book_id))||
+  Number(a.unit_number)-Number(b.unit_number)||Number(a.question_number)-Number(b.question_number));
+ return {books:ids.map(id=>({id,title:titles.get(id)||'Textbook',units:[...new Set(valid.filter(x=>x.book_id===id).map(x=>Number(x.unit_number)))].sort((a,b)=>a-b)}))
+   .sort((a,b)=>a.title.localeCompare(b.title)),
+  questions:valid.map(q=>({id:q.id,book_id:q.book_id,unit_number:q.unit_number,question_number:q.question_number,text:q.question_en}))};
 }
 export async function onRequestPost({request,env}){
  try{
