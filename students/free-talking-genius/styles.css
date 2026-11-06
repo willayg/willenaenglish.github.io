@@ -1014,3 +1014,11 @@
  .free-talking-genius #ftCharacter .ft-character-options{gap:12px}
  .free-talking-genius #ftCharacter .ft-character-panel{padding:23px 17px}
 }
+
+/* Character buttons: white fill for BOTH choices, including when selected. */
+.free-talking-genius #ftCharacter .ft-character-willi .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-lili .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"] .ft-character-symbol{
+ background:#fff!important;
+ background-image:none!important;
+}
