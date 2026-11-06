@@ -371,6 +371,7 @@ function renderQuestion({retry=false}={}){
  $('ftFeedback').hidden=true;$('ftSubmit').hidden=false;$('ftNext').hidden=true;$('ftRetry').hidden=true;$('ftSkip').hidden=false;
  $('ftAttemptStatus').textContent=retry?'답을 더 자연스럽게 고쳐서 다시 시도해 보세요.':'자신의 생각으로 자유롭게 답해 보세요.';
  $('ftPromptLabel').textContent='QUESTION '+(idx+1);
+ $('ftQuestionText').textContent=state.current.question_en;
  const answered=questions.filter(q=>attemptsFor(state.session.id,q.id).length>0).length;
  $('ftSessionProgress').textContent=answered+'/8 answered';
  $('ftProgressFill').style.width=pct(answered/8*100)+'%';
@@ -388,6 +389,13 @@ function renderQuestion({retry=false}={}){
    $('ftSubmit').disabled=state.loading||!validAnswer();
   }
  });
+ state.micObserver?.disconnect?.();
+ state.micObserver=null;
+ const micButton=$('ftQuestionHost').querySelector('[data-speaking-mic]');
+ if(micButton){
+  state.micObserver=new MutationObserver(()=>updateMicListening());
+  state.micObserver.observe(micButton,{attributes:true,attributeFilter:['class']});
+ }
  $('ftTranscriptRow').hidden=state.mode!=='speaking';
  $('ftTranscriptEdit').value='';
  if(state.mode==='speaking'){
