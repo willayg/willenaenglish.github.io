@@ -4,7 +4,7 @@
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
 import {fetchClassBookAssignments,extractClassBookAssignments} from '/students/shared/class-book-assignments.js?v=20261105-shared1';
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261107-stt-rollback1';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261107-longform-manual2';
 import {renderStudentSessionFinish} from '/students/components/student-session-finish.js?v=1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
@@ -499,7 +499,7 @@ function renderQuestion({retry=false}={}){
  try{state.renderer?.speechRecognition?.stopExtended?.();state.renderer?.speechRecognition?.stop?.()}catch{}
  state.renderer=new QuestionRenderer($('ftQuestionHost'));
  const form=state.mode==='speaking'?'speaking':'write';
- state.renderer.render({form,prompt:state.current.question_en,context:{},answer:[],
+ state.renderer.render({form,speakingLongForm:form==='speaking',prompt:state.current.question_en,context:{},answer:[],
   ...(form==='write'?{hints:{placeholder:'Write your own English answer...'}}:{})},{
   onChange:()=>{
    if(state.mode==='speaking'){
@@ -691,7 +691,7 @@ async function renderFinish(data){
 async function exit(){
  if(state.loading)return;
  questionVoice.stop();
- try{state.renderer?.speechRecognition?.stop?.()}catch{}state.current=null;state.session=null;
+ try{state.renderer?.speechRecognition?.stopExtended?.();state.renderer?.speechRecognition?.stop?.()}catch{}state.current=null;state.session=null;
  try{await refreshData()}catch(error){console.warn('[Free Talking] refresh',error)}
  renderBook();
  // The session was entered from its unit screen; go back to that history
