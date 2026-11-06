@@ -7,8 +7,8 @@ import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.j
 import {createPerfDebug} from './perf-debug.js?v=1.0.0';
 import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=20261026-multi-answer-fix';
 import {initTracking,refreshTrackingState,refreshPlanSnapshot,setTrackingContext,startSession,recordAttempt,completeSession,homeworkSet,loadHomeworkArchives,archiveHomework,trackingState} from './tracking-client.js?v=20261102-mobile-refresh';
-import {startVocabularyLearning} from './vocab-learning.js?v=2.15.1';
-import {startSentencePracticeV1,stopSentencePracticeV1} from './sentence-practice-v1.js?v=1.2.0';
+import {startVocabularyLearning} from './vocab-learning.js?v=20261106-tracking-context-fix';
+import {startSentencePracticeV1,stopSentencePracticeV1} from './sentence-practice-v1.js?v=20261106-tracking-context-fix';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
 import {renderMockTestPreflight,stopMockTest} from './mock-test.js?v=1.4.3';
