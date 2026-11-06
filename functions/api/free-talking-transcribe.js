@@ -30,7 +30,8 @@ export async function onRequestPost({request,env}){
   const file=data.get('audio');
   if(!UUID.test(sessionId)||!UUID.test(questionId)||!file||typeof file.arrayBuffer!=='function')
    return reply(400,{success:false,error:'Missing recording information'});
-  if(file.size<600||file.size>5_000_000)return reply(413,{success:false,error:'녹음 파일 크기가 올바르지 않아요.'});
+  if(file.size<600)return reply(422,{success:false,error_code:'QUIET_AUDIO',error:'목소리가 잘 안 들려요. 조금 더 크게 말해 볼까요?'});
+  if(file.size>5_000_000)return reply(413,{success:false,error:'녹음 파일 크기가 너무 커요.'});
   const mime=String(file.type||'').toLowerCase().split(';')[0];
   const extensions={'audio/webm':'webm','audio/mp4':'mp4','audio/ogg':'ogg','audio/mpeg':'mp3','audio/wav':'wav'};
   const extension=extensions[mime];
@@ -67,14 +68,14 @@ export async function onRequestPost({request,env}){
   }
   const payload=await result.json().catch(()=>null);
   const transcript=String(payload?.text||'').trim().slice(0,800);
-  if(!transcript)return reply(422,{success:false,error:'음성이 잘 들리지 않았어요. 다시 녹음해 주세요.'});
+  if(!transcript)return reply(422,{success:false,error_code:'QUIET_AUDIO',error:'목소리가 잘 안 들려요. 조금 더 크게 말해 볼까요?'});
   // Reject known prompt echoes and model instructions (do not display or grade).
   // Even if a transcription provider accidentally emits its own context,
   // a child's response must not be replaced with instructional prose.
   const leakedContext=/english\s+language\s+speaking\s+practice\s+by\s+korean\s+children|transcribe\s+the\s+english\s+actually\s+spoken|preserve\s+incomplete\s+sentences|do\s+not\s+translate\s+korean\s+speech|do\s+not\s+invent\s+an\s+answer/i;
   if(leakedContext.test(transcript)){
    console.warn('[Free Talking transcribe] rejected model prompt echo');
-   return reply(422,{success:false,error:'음성을 제대로 듣지 못했어요. 다시 녹음해 주세요.'});
+   return reply(422,{success:false,error_code:'QUIET_AUDIO',error:'목소리가 잘 안 들려요. 조금 더 크게 말해 볼까요?'});
   }
 
   // Guard against mistaken language detection: don't silently translate Korean
