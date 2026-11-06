@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./styles.css?v=20261106-turncircle-rubric4">
+<link rel="stylesheet" href="./styles.css?v=20261106-clean-conversation1">
 <link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261105-overdue-missions1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -72,57 +72,59 @@
   </button>
  </div>
 </section>
-<section id="ftSession" class="vocab-session" hidden>
- <header class="vocab-session-top">
- <div class="vocab-session-topline"><button id="ftSessionExit" class="vocab-back" type="button" aria-label="돌아가기">←</button>
- <div class="vocab-progress-copy"><strong id="ftSessionTitle">Free Talking</strong><small id="ftSessionProgress">1 / 8</small></div>
- <button id="ftSessionHome" class="vocab-session-home" type="button">⌂ 홈</button></div>
- <div class="vocab-progress-track"><div id="ftProgressFill" class="vocab-progress-fill" style="width:0%"></div></div></header>
- <div id="ftQuestionStage" class="vocab-session-main" data-willena-keyboard-safe>
- <div class="ft-question-intro"><span id="ftPromptLabel" class="ft-eyebrow">QUESTION 1</span><span class="ft-pts-label">5 SKILLS · 10 POINTS</span></div>
-
- <h2 id="ftQuestionText" class="ft-question-title"></h2>
- <div id="ftQuestionHost" class="vocab-question-wrap"></div>
- <section id="ftWilliVoice" class="ft-willi-voice" aria-label="AI Willi question audio">
-  <button type="button" id="ftTurnCircle" class="ft-turn-circle" data-ft-avatar data-phase="ready" aria-label="Listen to the question or tap to speak">
-   <span class="ft-circle-glow"></span>
-   <span class="ft-circle-ai" aria-hidden="true"><span class="ft-circle-bars"><i></i><i></i><i></i><i></i><i></i></span></span>
-   <span class="ft-circle-mic" aria-hidden="true"><svg viewBox="0 0 48 48" width="72" height="72"><rect x="17" y="5" width="14" height="26" rx="7" fill="currentColor"/><path d="M11 22a13 13 0 0 0 26 0M24 35v8M16 43h16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>
-   <span class="ft-circle-thinking" aria-hidden="true">···</span>
-   <span id="ftCircleScore" class="ft-circle-score" aria-hidden="true">★</span>
-  </button>
-  <div class="ft-willi-voice-copy"><strong><span data-ft-character-name>AI Willi</span> <small>AI 생성 음성</small></strong>
-   <div class="ft-willi-voice-controls">
-    <button type="button" class="ft-willi-listen" data-ft-listen disabled aria-pressed="false"><span aria-hidden="true">▶</span> Listen again</button>
-    <label class="ft-voice-select-label" for="ftVoicePicker">Voice
-     <select id="ftVoicePicker" class="ft-voice-select" data-ft-voice-picker aria-label="Choose AI Willi or AI Lili">
-       <option value="marin" selected>AI Willi · OpenAI Marin</option>
-       <option value="bunny-v3">AI Lili · Bunny v3</option>
-     </select>
-    </label>
+<section id="ftSession" class="vocab-session ft-conversation" hidden>
+ <div class="ft-screen-data" hidden aria-hidden="true">
+  <strong id="ftSessionTitle"></strong><span id="ftSessionProgress"></span><div id="ftProgressFill"></div>
+  <span id="ftPromptLabel"></span><button id="ftSessionHome" type="button"></button>
+ </div>
+ <main id="ftQuestionStage" class="vocab-session-main" data-willena-keyboard-safe>
+  <h2 id="ftQuestionText" class="ft-question-title"></h2>
+  <section id="ftWilliVoice" class="ft-willi-voice" aria-label="Free Talking conversation">
+   <button type="button" id="ftTurnCircle" class="ft-turn-circle" data-ft-avatar data-phase="ready" aria-label="Listen to the question">
+    <span class="ft-circle-glow"></span>
+    <span class="ft-circle-ai" aria-hidden="true"><span class="ft-circle-bars"><i></i><i></i><i></i><i></i><i></i></span></span>
+    <span class="ft-circle-mic" aria-hidden="true"><svg viewBox="0 0 48 48" width="72" height="72"><rect x="17" y="5" width="14" height="26" rx="7" fill="currentColor"/><path d="M11 22a13 13 0 0 0 26 0M24 35v8M16 43h16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>
+    <span class="ft-circle-thinking" aria-hidden="true">···</span>
+    <span id="ftCircleScore" class="ft-circle-score" aria-hidden="true">★</span>
+   </button>
+   <div class="ft-voice-engine" hidden aria-hidden="true">
+    <span data-ft-character-name></span>
+    <button type="button" data-ft-listen disabled></button>
+    <select id="ftVoicePicker" data-ft-voice-picker>
+     <option value="marin">AI Willi</option><option value="bunny-v3">AI Lili</option>
+    </select>
+    <span data-ft-voice-status></span><span data-ft-voice-model></span><span data-ft-voice-preload></span>
    </div>
-   <span class="ft-willi-status" data-ft-voice-status role="status">질문 음성을 준비하는 중…</span>
-   <span class="ft-willi-model" data-ft-voice-model data-state="loading">Voice model: checking…</span>
-   <span class="ft-willi-preload" data-ft-voice-preload role="status" aria-live="polite"></span>
+  </section>
+  <p id="ftTurnStatus" class="ft-turn-status" role="status" aria-live="polite">질문을 듣고 답해 보세요.</p>
+  <div class="ft-hint-actions">
+   <button id="ftHintTranslation" type="button" class="ft-hint-button">한국어 뜻 <small>−1</small></button>
+   <button id="ftHintStarter" type="button" class="ft-hint-button">문장 시작 힌트 <small>−2</small></button>
   </div>
- </section>
- <div id="ftTurnStatus" class="ft-turn-status" role="status">AI가 질문을 읽으면 답해 보세요.</div>
- <div class="ft-hint-actions"><button id="ftHintTranslation" type="button" class="ft-hint-button">한국어 뜻 <small>−1</small></button><button id="ftHintStarter" type="button" class="ft-hint-button">문장 시작 힌트 <small>−2</small></button></div>
- <div id="ftHintTranslationText" class="ft-hint-result" hidden></div><div id="ftHintStarterText" class="ft-hint-result" hidden></div>
- <p id="ftHintCap" class="ft-hint-cap">힌트 없이 최고 10점 · 힌트를 쓰면 그 시도의 최고 점수가 낮아져요.</p>
- <div id="ftTranscriptRow" class="ft-transcript-row" hidden><label for="ftTranscriptEdit">말한 문장 확인 · 직접 입력도 가능해요</label>
- <textarea id="ftTranscriptEdit" rows="3" lang="en" placeholder="인식된 영어를 확인하거나 직접 영어 답변을 입력하세요."></textarea></div>
- <div id="ftFeedback" class="ft-feedback" hidden>
-  <h3 id="ftFeedbackTitle"></h3>
-  <div id="ftFeedbackTotal" class="ft-feedback-total">0/10</div><div id="ftFeedbackGrid" class="ft-feedback-grid"></div>
-  <p id="ftHintSummary" class="ft-hint-cap"></p>
-  <div class="ft-correction"><strong>Better English</strong><p id="ftCorrection"></p></div>
- </div><p id="ftAttemptStatus" class="ft-status" role="status"></p></div>
+  <div id="ftHintTranslationText" class="ft-hint-result" hidden></div>
+  <div id="ftHintStarterText" class="ft-hint-result" hidden></div>
+  <p id="ftHintCap" class="ft-hint-cap" hidden></p>
+  <div id="ftQuestionHost" class="vocab-question-wrap"></div>
+  <div id="ftTranscriptRow" class="ft-transcript-row" hidden>
+   <label for="ftTranscriptEdit">내 답변</label>
+   <textarea id="ftTranscriptEdit" rows="3" lang="en" placeholder="말한 문장을 확인하거나 직접 입력하세요."></textarea>
+  </div>
+  <div id="ftFeedback" class="ft-feedback" hidden>
+   <h3 id="ftFeedbackTitle"></h3>
+   <div id="ftFeedbackTotal" class="ft-feedback-total">0/10</div>
+   <div id="ftFeedbackGrid" class="ft-feedback-grid"></div>
+   <p id="ftHintSummary" class="ft-hint-cap"></p>
+   <div class="ft-correction"><strong>Better English</strong><p id="ftCorrection"></p></div>
+  </div>
+  <p id="ftAttemptStatus" class="ft-status" role="status"></p>
+ </main>
  <footer class="vocab-session-bottom"><div class="vocab-action-row">
- <button id="ftSkip" type="button" class="vocab-skip-action">Next question</button>
- <button id="ftRetry" type="button" class="vocab-skip-action" hidden>Try again</button>
- <button id="ftSubmit" type="button" class="vocab-action" disabled>Check Answer</button>
- <button id="ftNext" type="button" class="vocab-action" hidden>Next →</button>
+  <button id="ftSessionExit" type="button" class="vocab-skip-action">← Units</button>
+  <button id="ftListenAgain" type="button" class="vocab-skip-action">Listen again</button>
+  <button id="ftSkip" type="button" class="vocab-skip-action">Next question</button>
+  <button id="ftRetry" type="button" class="vocab-skip-action" hidden>Try again</button>
+  <button id="ftSubmit" type="button" class="vocab-action" disabled>Check Answer</button>
+  <button id="ftNext" type="button" class="vocab-action" hidden>Next →</button>
  </div></footer>
 </section>
 <section id="ftFinish" class="ft-shell" hidden><div id="ftFinishContent"></div><div id="ftFinishStatus" class="ft-status" role="status"></div>
@@ -130,7 +132,7 @@
 </section>
 <div class="ft-footer-version">Free Talking Genius · 10-point conversation · v2.3</div>
 </main></div>
-<script type="module" src="./app.js?v=20261106-turncircle-rubric4"></script>
+<script type="module" src="./app.js?v=20261106-clean-conversation1"></script>
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
 <script src="/students/components/mission-basket.js?v=20261105-overdue-missions1"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
