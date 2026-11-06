@@ -11,7 +11,7 @@ import {capturePointOrigin,showPointAward} from '/students/components/student-po
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
 import {createFreeTalkingVoice} from './question-voice.js?v=20261107-character-choice1';
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-spoken-quiet-r2-v1';
-import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261107-r2retry1';
+import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261107-english-r2retry2';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
