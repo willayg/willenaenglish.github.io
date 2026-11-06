@@ -269,3 +269,11 @@
 @keyframes ft-circle-dots{50%{opacity:.3}}
 @media(max-width:620px){.free-talking-genius .ft-feedback-grid{grid-template-columns:1fr}.free-talking-genius .ft-turn-circle{width:175px;height:175px}.free-talking-genius #ftQuestionHost{padding:0}}
 @media(prefers-reduced-motion:reduce){.free-talking-genius .ft-turn-circle,.free-talking-genius .ft-circle-bars i,.free-talking-genius .ft-circle-thinking{animation:none!important;transition:none!important}}
+
+/* Question above fixed conversation circle; writing entry beneath it. */
+.free-talking-genius #ftQuestionText{order:1;margin:4px auto 8px;max-width:710px;font-size:clamp(21px,3vw,30px);font-weight:900;line-height:1.45;color:var(--ft-ink);text-align:center}
+.free-talking-genius #ftQuestionHost{order:7;margin:0 auto;width:100%;max-width:710px}
+.free-talking-genius #ftQuestionHost .prompt{display:none!important}
+.free-talking-genius #ftTranscriptRow{order:8}
+.free-talking-genius #ftFeedback{order:9}
+.free-talking-genius #ftAttemptStatus{order:10}
