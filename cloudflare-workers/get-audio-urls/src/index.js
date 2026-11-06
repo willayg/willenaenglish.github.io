@@ -424,7 +424,7 @@ go.onclick=run;document.getElementById('stop').onclick=()=>stopRequested=true;do
 
 
 // Free Talking storage bridge. Reuses the existing R2 bucket without requiring
-// a Pages R2 binding. Only authenticated, approved students can use this route.
+// a Pages R2 binding. Only authenticated students or teachers/admins can use this route.
 const FT_SCORES='https://fiieuiktlsivwfgyivai.supabase.co';
 const FT_SCORES_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const FT_CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -444,7 +444,8 @@ async function ftAuth(request){
     headers,signal:AbortSignal.timeout(9000)});
   if(!profile.ok)return false;
   const rows=await profile.json().catch(()=>[]);
-  return rows?.[0]?.role==='student'&&rows?.[0]?.approved===true;
+  const role=String(rows?.[0]?.role||'').toLowerCase();
+  return (role==='student'&&rows?.[0]?.approved===true)||role==='teacher'||role==='admin';
 }
 function ftToBase64(buf){
   const bytes=new Uint8Array(buf);let s='';
