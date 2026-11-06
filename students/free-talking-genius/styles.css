@@ -279,3 +279,29 @@
 .free-talking-genius #ftAttemptStatus{order:10}
 
 .free-talking-genius .ft-turn-circle[data-phase="feedback"] .ft-circle-score{font-size:clamp(38px,7vw,50px);font-weight:900;letter-spacing:-.04em}
+
+/* Clean Free Talking conversation screen: shared renderer/voice internals stay hidden. */
+.free-talking-genius #ftSession.ft-conversation{width:min(900px,100%);max-width:900px;margin:12px auto;background:var(--vocab-card,#fff);border:2px solid var(--ft-cyan);border-radius:26px;overflow:hidden}
+.free-talking-genius #ftSession #ftQuestionStage{display:flex;flex-direction:column;align-items:stretch;gap:0;padding:clamp(16px,3.5vw,34px) clamp(16px,4vw,38px) 18px}
+.free-talking-genius #ftSession #ftQuestionText{order:1;max-width:690px;margin:0 auto 20px;padding:0;text-align:center;line-height:1.38;font-size:clamp(21px,3.5vw,32px)}
+.free-talking-genius #ftSession #ftWilliVoice{order:2;align-self:center;width:100%;margin:0;padding:0;min-height:0;display:flex;align-items:center;justify-content:center;border:none!important;background:transparent!important;box-shadow:none!important}
+.free-talking-genius #ftSession #ftTurnCircle{margin:0 auto}
+.free-talking-genius #ftSession #ftTurnStatus{order:3;margin:16px auto 14px;text-align:center;font-size:14px;line-height:1.5;max-width:540px}
+.free-talking-genius #ftSession .ft-hint-actions{order:4;display:flex;justify-content:center;gap:10px;margin:0 0 12px}
+.free-talking-genius #ftSession #ftHintTranslationText{order:5}
+.free-talking-genius #ftSession #ftHintStarterText{order:6}
+.free-talking-genius #ftSession #ftHintCap{order:7;margin:2px 0 8px}
+.free-talking-genius #ftSession #ftQuestionHost{order:8;width:min(100%,670px);max-width:670px;margin:10px auto 0;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+.free-talking-genius #ftSession #ftQuestionHost .prompt,.free-talking-genius #ftSession #ftQuestionHost .context,.free-talking-genius #ftSession #ftQuestionHost [data-feedback],.free-talking-genius #ftSession #ftQuestionHost .guidance{display:none!important}
+.free-talking-genius #ftSession #ftQuestionHost textarea.answer{display:block;min-height:112px;margin:0;width:100%;border-radius:18px;border:2px solid #bdecef;background:#fff;box-shadow:none}
+.free-talking-genius #ftSession[data-mode="speaking"] #ftQuestionHost{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important}
+.free-talking-genius #ftSession #ftTranscriptRow{order:9;align-self:center;width:min(100%,670px);margin:8px auto 2px;padding:0;background:transparent;border:0;gap:7px}
+.free-talking-genius #ftSession #ftTranscriptRow label{font-weight:800;font-size:12px;color:#68848b}
+.free-talking-genius #ftSession #ftTranscriptEdit{min-height:110px;border:2px solid #bdecef;border-radius:18px;padding:15px;line-height:1.6;background:#fff}
+.free-talking-genius #ftSession #ftFeedback{order:10;align-self:center;width:min(100%,720px);margin:16px auto 0}
+.free-talking-genius #ftSession #ftAttemptStatus{order:11;align-self:center;text-align:center;margin:0;min-height:0}
+.free-talking-genius #ftSession #ftAttemptStatus:empty{display:none!important}
+.free-talking-genius #ftSession .vocab-session-bottom{position:relative;display:block;z-index:3;border-top:1px solid #dbeef0;background:var(--vocab-card,#fff)}
+.free-talking-genius #ftSession .vocab-action-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:9px}
+.free-talking-genius #ftSession .ft-hint-result[hidden],.free-talking-genius #ftSession #ftHintCap[hidden]{display:none!important}
+@media(max-width:560px){.free-talking-genius #ftSession #ftQuestionStage{padding:16px 14px 14px}.free-talking-genius #ftSession #ftQuestionText{margin-bottom:16px}.free-talking-genius #ftSession #ftTurnStatus{margin:14px 0 12px}.free-talking-genius #ftSession .ft-hint-actions{gap:8px}.free-talking-genius #ftSession .ft-hint-button{font-size:12px;padding:10px 12px}.free-talking-genius #ftSession .vocab-action-row{gap:7px}}
