@@ -468,7 +468,7 @@ async function ftAuthorizedWrite(body){
     const allowed=(body.model==='eleven_v3'&&body.voice==='M7zl2TS7ORAIGUejDfoy')||
       (body.model==='gpt-4o-mini-tts'&&body.voice==='marin');
     if(!allowed)return false;
-    const phrase='잘 안 들렸어! 조금 더 크게 말해 줄래?';
+    const phrase='I couldn’t hear you. Could you speak a little louder?';
     const source=['free_talking_retry_v1',body.model,body.voice,phrase].join('|');
     const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(source));
     const expected='ft_retry_v1_'+Array.from(new Uint8Array(hash),v=>v.toString(16).padStart(2,'0')).join('').slice(0,32);
