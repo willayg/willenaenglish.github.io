@@ -175,3 +175,8 @@
  .free-talking-genius .ft-book-list .ft-book-choice{min-height:96px;padding:17px 16px;border-radius:18px}
  .free-talking-genius .ft-book-icon{flex-basis:48px;width:48px;height:48px}
 }
+
+/* Book cards are text-only; never display decorative medal art. */
+.free-talking-genius #ftBookChoices .ft-book-icon,
+.free-talking-genius #ftBookChoices .vocab-front-card-icon,
+.free-talking-genius #ftBookChoices img{display:none!important}
