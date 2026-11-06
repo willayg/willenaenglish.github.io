@@ -22,26 +22,14 @@ async function student(request){
  return p.ok&&p.value?.[0]?.role==='student'&&p.value[0].approved===true?{id:user.id,token}:null;
 }
 async function contentQuestion(id){
- const res=await fetch(CONTENT+'/rest/v1/free_talking_questions?select=id,book_id,unit_id,unit_number,question_number,question_en,question_ko,grammar_focus&is_published=eq.true&id=eq.'+encodeURIComponent(id)+'&limit=1',{headers:{apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY},cache:'no-store',signal:AbortSignal.timeout(9000)});
+ const res=await fetch(CONTENT+'/rest/v1/free_talking_questions?select=id,book_id,unit_id,unit_number,question_number,question_en,question_ko,grammar_focus,starter_en&is_published=eq.true&id=eq.'+encodeURIComponent(id)+'&limit=1',{headers:{apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY},cache:'no-store',signal:AbortSignal.timeout(9000)});
  if(!res.ok)throw Error('Question database unavailable');
  return (await res.json())?.[0]||null;
 }
 function safeString(value,max=260){return String(value||'').trim().slice(0,max)}
 function parseScore(value){const n=Number(value);if(!Number.isInteger(n)||n<0||n>2)throw Error('Invalid AI scoring');return n}
 const CRITERIA=['grammar','length','creativity','appropriate','vocabulary'];
-function starterFor(question){
- const q=String(question.question_en||'').trim();
- if(/^what would you/i.test(q))return 'I would...';
- if(/^what do you want/i.test(q))return 'I want to...';
- if(/^where would you/i.test(q))return 'I would like to go to...';
- if(/^why\b/i.test(q))return 'I think... because...';
- if(/^how would you/i.test(q))return 'I would...';
- if(/^if\b/i.test(q))return 'If that happened, I would...';
- if(/^do you\b|^would you\b|^can you\b/i.test(q))return 'Yes, I... because...';
- if(/^who\b/i.test(q))return 'I would choose... because...';
- if(/^tell me\b/i.test(q))return 'I think...';
- return 'I think... because...';
-}
+function starterFor(question){return String(question?.starter_en||'').trim()}
 async function judge(key,question,answer,mode,previous=[]){
  const response=await fetch('https://api.openai.com/v1/chat/completions',{
   method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
@@ -87,6 +75,8 @@ export async function onRequestPost({request,env}){
   if(past.length>=5)return reply(429,{success:false,error:'Maximum five attempts for this question.'});
   if(isHint){
    if(!['translation','starter','english_prompt','typed_review'].includes(hintType))return reply(400,{success:false,error:'Unknown hint'});
+   if(hintType==='starter'&&!starterFor(prompt))
+    return reply(404,{success:false,error:'이 질문은 문장 힌트가 아직 준비되지 않았어요. 감점되지 않습니다.'});
    if(hintType==='translation'&&!String(prompt.question_ko||'').trim())
     return reply(404,{success:false,error:'이 질문은 한국어 번역이 아직 없어요. 감점되지 않습니다.'});
    const row={session_id:sessionId,question_id:questionId,student_id:auth.id,attempt_no:nextAttempt,hint_type:hintType};
