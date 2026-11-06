@@ -27,8 +27,10 @@ function setTurn(phase){
  state.phase=phase;
  const circle=$('ftTurnCircle');
  circle.dataset.phase=phase;
- const labels={ready:'원을 눌러 질문을 시작하세요.',ai:'AI가 질문을 읽는 중…',student:state.mode==='speaking'?'내 차례! 원을 눌러 영어로 말해 보세요.':'내 차례! 영어로 답변을 작성해 보세요.',thinking:'AI가 답변을 확인하고 있어요…',feedback:'점수가 나왔어요. 피드백을 확인해 보세요.'};
+ const labels={ready:'',ai:'AI가 질문을 읽는 중…',student:state.mode==='speaking'?'내 차례! 원을 눌러 영어로 말해 보세요.':'내 차례! 영어로 답변을 작성해 보세요.',thinking:'AI가 답변을 확인하고 있어요…',feedback:'점수가 나왔어요. 피드백을 확인해 보세요.'};
  $('ftTurnStatus').textContent=labels[phase];
+ $('ftTurnStatus').hidden=phase==='ready'||phase==='feedback';
+ $('ftQuestionStage').dataset.phase=phase;
  circle.setAttribute('aria-label',phase==='ready'?'Start question audio':phase==='student'?(state.mode==='speaking'?'Tap to start or stop speaking':'Tap to focus your writing answer'):'AI question circle');
  if(phase!=='student')circle.dataset.listening='false';
 }
@@ -333,6 +335,7 @@ function captureAnswer(){
 function markFeedback(attempt){
  if(!attempt)return;
  $('ftFeedback').hidden=false;
+ $('ftHeardSentence').hidden=true;
  $('ftHintActions').hidden=true;
  $('ftHintTranslationText').hidden=true;
  $('ftHintStarterText').hidden=true;
@@ -399,6 +402,8 @@ function renderQuestion({retry=false}={}){
  $('ftListenAgain').disabled=true;
  $('ftHintActions').hidden=false;
  $('ftQuestionHost').hidden=false;
+ $('ftHeardSentence').hidden=true;
+ $('ftHeardText').textContent='';
  resetHints();setTurn('ready');
  $('ftFeedback').hidden=true;$('ftSubmit').hidden=false;$('ftNext').hidden=true;$('ftRetry').hidden=true;$('ftSkip').hidden=false;
  $('ftAttemptStatus').textContent='';
@@ -419,7 +424,11 @@ function renderQuestion({retry=false}={}){
   onChange:()=>{
    if(state.mode==='speaking'){
     const heard=String(state.renderer?.getResponse()||'').trim();
-    if(heard)$('ftTranscriptEdit').value=heard;
+    if(heard){
+     $('ftTranscriptEdit').value=heard;
+     $('ftHeardText').textContent=heard;
+     $('ftHeardSentence').hidden=false;
+    }
    }
    $('ftSubmit').disabled=state.loading||!validAnswer();
    if(state.questionStarted&&state.aiWasPlaying&&!state.loading&&state.phase!=='feedback')setTurn('student');
@@ -605,7 +614,11 @@ async function startup(){
 $('ftBackHome').addEventListener('click',()=>view('ftHome'));
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
 $('ftWritingCard').addEventListener('click',()=>void openMode('writing'));
-$('ftTranscriptEdit').addEventListener('input',()=>{$('ftSubmit').disabled=state.loading||!validAnswer()});
+$('ftTranscriptEdit').addEventListener('input',()=>{
+ $('ftHeardText').textContent=$('ftTranscriptEdit').value.trim();
+ $('ftHeardSentence').hidden=!$('ftTranscriptEdit').value.trim();
+ $('ftSubmit').disabled=state.loading||!validAnswer();
+});
 $('ftEditTranscript').addEventListener('click',async()=>{
  if(state.loading||state.mode!=='speaking')return;
  if(!state.hints.get('typed_review')){
