@@ -335,6 +335,12 @@ export function createFreeTalkingVoice({host,getToken}){
    if(button)button.disabled=false;
   }
  }
+ // Explicit student-initiated playback; selecting a question only prepares audio.
+ async function start(){
+  if(!selected)return;
+  if(currentUrl&&loadedVoice===activeVoice())return play();
+  return select(selected,{autoplay:true});
+ }
  function stop(){
   version++;selected='';currentUrl='';loadedVoice='';
   audio.pause();audio.removeAttribute('src');audio.load();setPlaying(false);
@@ -349,7 +355,7 @@ export function createFreeTalkingVoice({host,getToken}){
   updateCharacterName();
   try{localStorage.setItem(PREFERENCE_KEY,chosen)}catch(_){}
   preload(preferredUnit);
-  if(selected)void select(selected,{autoplay:true});
+  if(selected)void select(selected,{autoplay:false});
  }
  voicePicker?.addEventListener('input',changeVoice);
  voicePicker?.addEventListener('change',changeVoice);
@@ -365,5 +371,5 @@ export function createFreeTalkingVoice({host,getToken}){
   for(const file of stored.values())if(file.owned)URL.revokeObjectURL(file.url);
   stored.clear();
  }
- return {select,stop,destroy,preload,setQuestionBank};
+ return {select,start,stop,destroy,preload,setQuestionBank};
 }
