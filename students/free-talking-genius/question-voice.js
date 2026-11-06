@@ -45,6 +45,7 @@ export function createFreeTalkingVoice({host,getToken}){
  function setPlaying(value){
   playing=!!value;
   avatar?.classList.toggle('is-talking',playing);
+  host.dispatchEvent(new CustomEvent('ft:voice-playing',{detail:{playing}}));
   button?.classList.toggle('is-playing',playing);
   if(button)button.setAttribute('aria-pressed',String(playing));
  }
