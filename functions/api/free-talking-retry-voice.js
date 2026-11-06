@@ -2,7 +2,7 @@
 // Strict R2-first: generate only on cache miss, verify put/get before serving audio.
 const BASE='https://fiieuiktlsivwfgyivai.supabase.co';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const TEXT='잘 안 들렸어! 조금 더 크게 말해 줄래?';
+const TEXT='I couldn’t hear you. Could you speak a little louder?';
 const LILI_ID='M7zl2TS7ORAIGUejDfoy';
 const STORAGE='https://get-audio-urls.willena.workers.dev/free-talking-store';
 const reply=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
@@ -61,7 +61,7 @@ async function synthesize(voice,env){
  const response=await fetch('https://api.openai.com/v1/audio/speech',{
   method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
   body:JSON.stringify({model:'gpt-4o-mini-tts',voice:'marin',input:TEXT,response_format:'mp3',
-   instructions:'Say the Korean sentence gently and warmly to a young child, and do not add anything else.'}),
+   instructions:'Say this short English encouragement warmly and naturally to a young English learner. Speak clearly, in English only, without adding anything.'}),
   signal:AbortSignal.timeout(25000)});
  if(!response.ok)throw Error('OpenAI TTS '+response.status);
  return b64(await response.arrayBuffer());
