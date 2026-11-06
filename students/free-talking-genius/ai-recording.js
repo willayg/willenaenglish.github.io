@@ -1,14 +1,14 @@
-// Free Talking alpha: explicit 60-second recording, no browser STT or live transcript.
+// Free Talking alpha: explicit 30-second recording, no browser STT or live transcript.
 // Cancel increments the run ID; stale async results are never added to a later question.
-export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onState}){
- const maxMs=60000;
+export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onState,onProgress}){
+ const maxMs=30000;
  const silenceMs=3000;
  const startGraceMs=6500;
  let run=0,stream=null,recorder=null,stopTimer=null,request=null,starting=false,recording=false,processing=false;
- let audioContext=null,audioSource=null,analyser=null,voiceTimer=null;
+ let audioContext=null,audioSource=null,analyser=null,voiceTimer=null,progressTimer=null;
  const say=message=>onStatus?.(message);
  const status=()=>onState?.({recording,processing:starting||processing});
- const clearTimer=()=>{if(stopTimer!==null){clearTimeout(stopTimer);stopTimer=null}};
+ const clearTimer=()=>{if(stopTimer!==null){clearTimeout(stopTimer);stopTimer=null}if(progressTimer!==null){clearInterval(progressTimer);progressTimer=null}};
  function stopVoiceMonitor(){
   if(voiceTimer!==null){clearInterval(voiceTimer);voiceTimer=null}
   try{audioSource?.disconnect()}catch{}
@@ -62,7 +62,7 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
  function cancel(){
   ++run;clearTimer();stopVoiceMonitor();request?.abort();request=null;
   try{if(recorder?.state==='recording')recorder.stop()}catch{}
-  recorder=null;starting=false;recording=false;processing=false;release();status();
+  recorder=null;starting=false;recording=false;processing=false;release();onProgress?.(0);status();
  }
  async function start(sessionId,questionId){
   if(starting||recording||processing)return;
@@ -120,7 +120,10 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
    };
    recorder.start(250);
    starting=false;recording=true;processing=false;status();
-   say('녹음 중 · 천천히 말하세요. 끝나면 원을 다시 누르세요. (최대 60초)');
+   say('녹음 중 · 천천히 말하세요. 끝나면 원을 다시 누르세요. (최대 30초)');
+   const recordStartedAt=performance.now();
+   onProgress?.(0);
+   progressTimer=setInterval(()=>onProgress?.(Math.min(1,(performance.now()-recordStartedAt)/maxMs)),100);
    stopTimer=setTimeout(()=>stop(),maxMs);
    monitorVoice(id);
   }catch(e){if(id===run){cancel();say(String(e?.message||'녹음을 시작하지 못했어요.'))}}
