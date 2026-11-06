@@ -321,6 +321,7 @@ function markFeedback(attempt){
  const max=isV2?10:4;
  $('ftFeedbackTitle').textContent=total===max?'잘했어요!':'좋아요! 다시 도전할 수 있어요.';
  $('ftFeedbackTotal').textContent=total+'/'+max;
+ $('ftCircleScore').textContent=total+'/'+max;
  const grid=$('ftFeedbackGrid');grid.replaceChildren();
  if(isV2){
   for(const [key,title] of Object.entries(RUBRIC_NAMES)){
