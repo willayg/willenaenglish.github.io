@@ -196,10 +196,11 @@ function renderBookChoices(){
   const count=state.questions.filter(q=>q.book_id===b.id).length;
   button.disabled=!b.ready;
   if(!b.ready)button.title='This textbook is assigned, but Free Talking questions are not available yet.';
-  button.innerHTML='<span class="ft-book-icon"><img src="/shared/svgs/golden-unit.svg" alt=""></span>'+
-   '<span class="vocab-front-card-copy"><strong>'+escape(b.title)+'</strong><small>'+
+  button.innerHTML='<span class="vocab-front-card-main"><span class="vocab-front-card-icon ft-book-icon">'+
+   '<img src="/shared/svgs/golden-unit.svg" alt="" aria-hidden="true"></span>'+
+   '<span class="vocab-front-card-copy"><span class="eyebrow">FREE TALKING</span><strong>'+escape(b.title)+'</strong><small>'+
    (b.ready?count+' questions · Speaking & Writing':'Assigned textbook · Free Talking questions not available yet')+
-   '</small></span><span class="ft-chevron">'+(b.ready?'›':'')+'</span>';
+   '</small></span></span><span class="vocab-front-arrow" aria-hidden="true">'+(b.ready?'›':'')+'</span>';
   if(b.ready)button.addEventListener('click',()=>void chooseBook(b.id));host.append(button);
  }
 }
