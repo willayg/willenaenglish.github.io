@@ -11,6 +11,7 @@ import {capturePointOrigin,showPointAward} from '/students/components/student-po
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
 import {createFreeTalkingVoice} from './question-voice.js?v=20261107-character-choice1';
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-prearm-mic1';
+import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261107-r2retry1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
@@ -22,9 +23,23 @@ const state={student:null,profile:null,books:[],bookId:null,questions:[],unitTit
  current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready'};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
+const retryVoice=createFreeTalkingRetryVoice({
+ getToken:token,
+ onFinished:()=>{
+  if(visibleScreen==='ftSession'&&state.mode==='speaking'&&state.current&&state.phase==='student')
+   void aiRecorder.prepare();
+ }
+});
+function encourageQuietSpeech(){
+ if(visibleScreen!=='ftSession'||state.mode!=='speaking'||!state.current||state.phase!=='student')return;
+ $('ftRecordStatus').textContent='목소리가 잘 안 들려요. 조금 더 크게 말해 볼까요?';
+ void retryVoice.play(questionVoice.getVoice());
+}
+
 const aiRecorder=createFreeTalkingRecorder({
  getToken:token,
  onStatus:message=>{$('ftRecordStatus').textContent=message},
+ onQuiet:encourageQuietSpeech,
  onProgress:progress=>{
   $('ftTurnCircle').style.setProperty('--ft-record-offset',String(Math.max(0,Math.min(100,progress*100))));
  },
@@ -254,7 +269,7 @@ function sameNav(a,b){
 }
 function view(which,{record=true}={}){
  if(!FT_SCREENS.has(which))return;
- if(which!=='ftSession'){aiRecorder.cancel();questionVoice.stop();try{state.renderer?.speechRecognition?.stopExtended?.();state.renderer?.speechRecognition?.stop?.()}catch{}}
+ if(which!=='ftSession'){retryVoice.stop();aiRecorder.cancel();questionVoice.stop();try{state.renderer?.speechRecognition?.stopExtended?.();state.renderer?.speechRecognition?.stop?.()}catch{}}
  for(const id of FT_SCREENS)$(id).hidden=id!==which;
  visibleScreen=which;clearError();
  if(record&&!navigatingHistory){
@@ -537,6 +552,7 @@ function questionIndexAfter(start=0){
  return -1;
 }
 function renderQuestion({retry=false}={}){
+ retryVoice.stop();
  aiRecorder.cancel();
  const questions=groups();
  if(!state.session||!questions.length)return;
@@ -617,6 +633,7 @@ let roundChoice=null;
 function chooseRoundVoice(voice){
  if(!['marin','bunny-v3'].includes(voice))return;
  roundChoice=voice;
+ retryVoice.preloadBoth();
  for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3']])
   $(id).setAttribute('aria-pressed',String(value===voice));
  $('ftCharacterContinue').disabled=false;
@@ -761,6 +778,7 @@ async function renderFinish(data){
 }
 async function exit(){
  if(state.loading)return;
+ retryVoice.stop();
  aiRecorder.cancel();
  questionVoice.stop();
  try{state.renderer?.speechRecognition?.stopExtended?.();state.renderer?.speechRecognition?.stop?.()}catch{}state.current=null;state.session=null;
@@ -840,6 +858,7 @@ $('ftTurnCircle').addEventListener('click',()=>{
   if(aiRecorder.isProcessing())return;
   if(aiRecorder.isRecording())aiRecorder.stop();
   else{
+   retryVoice.stop();
    resetSpeechAnswer();
    void aiRecorder.start(state.session.id,state.current.id);
   }
