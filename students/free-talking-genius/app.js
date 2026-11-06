@@ -18,7 +18,7 @@ const bookTitle=()=>state.books.find(b=>b.id===state.bookId)?.title||'Textbook';
 const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const state={student:null,profile:null,books:[],bookId:null,questions:[],unitTitles:new Map(),unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
- current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),phase:'ready'};
+ current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready'};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
 const RUBRIC_NAMES={grammar:'문법',length:'문장 길이와 내용',creativity:'창의성',appropriate:'질문에 맞는 답변',vocabulary:'어휘와 표현'};
@@ -90,6 +90,28 @@ function updateHintCap(){
  $('ftHintCap').hidden=deduction===0;
  $('ftHintCap').textContent=deduction?'이번 시도 최고 '+(10-deduction)+'/10점':'';
 }
+const VISIBLE_HINTS=['english_prompt','translation','starter'];
+const HINT_TITLES={english_prompt:'영어 질문',translation:'한국어 뜻',starter:'문장 힌트'};
+let activeHint=null;
+function showHint(kind){
+ const unlocked=VISIBLE_HINTS.filter(k=>state.hints.get(k)&&state.hintTexts?.get(k));
+ if(!unlocked.length){$('ftHintViewer').hidden=true;activeHint=null;return}
+ activeHint=unlocked.includes(kind)?kind:(unlocked.includes(activeHint)?activeHint:unlocked[0]);
+ const idx=unlocked.indexOf(activeHint);
+ $('ftHintViewerTitle').textContent=HINT_TITLES[activeHint];
+ $('ftHintViewerValue').textContent=state.hintTexts.get(activeHint);
+ $('ftHintViewerCount').textContent=unlocked.length>1?(idx+1)+' / '+unlocked.length:'';
+ $('ftHintViewerGuide').textContent=unlocked.length>1?'탭하면 다른 힌트를 볼 수 있어요 ↻':'';
+ $('ftHintViewer').hidden=false;
+ $('ftHintViewer').disabled=unlocked.length<2;
+ $('ftHintViewer').setAttribute('aria-label',unlocked.length>1?HINT_TITLES[activeHint]+' · 누르면 다음 힌트':'열어 본 힌트: '+HINT_TITLES[activeHint]);
+ for(const k of VISIBLE_HINTS)hintButton(k)?.classList.toggle('is-current',k===activeHint);
+}
+function cycleHints(){
+ const unlocked=VISIBLE_HINTS.filter(k=>state.hints.get(k)&&state.hintTexts?.get(k));
+ if(unlocked.length<2)return;
+ showHint(unlocked[(unlocked.indexOf(activeHint)+1)%unlocked.length]);
+}
 function animateHintCost(button){
  const marker=document.createElement('span');
  marker.className='ft-hint-cost-float';marker.textContent='−1';
@@ -100,7 +122,10 @@ function animateHintCost(button){
 async function requestHint(kind){
  if(state.loading||!state.current||!state.session||
   !['translation','starter','english_prompt','typed_review'].includes(kind))return false;
- if(state.hints.get(kind))return true;
+ if(state.hints.get(kind)){
+  if(kind!=='typed_review')showHint(kind);
+  return true;
+ }
  const button=hintButton(kind);button.disabled=true;
  $('ftAttemptStatus').textContent='힌트를 준비하는 중…';
  try{
@@ -113,14 +138,9 @@ async function requestHint(kind){
   if(res.status===401)res=await call(await token(true));
   const body=await res.json().catch(()=>null);
   if(!res.ok||!body?.success)throw Error(body?.error||'Hint unavailable');
-  if(kind==='translation'||kind==='starter'){
-   const target=$(kind==='translation'?'ftHintTranslationText':'ftHintStarterText');
-   target.textContent=body.value||'';target.hidden=false;
-  }else if(kind==='english_prompt'){
-   $('ftQuestionText').textContent=body.value||state.current.question_en;
-   $('ftQuestionText').hidden=false;
-  }
+  if(kind!=='typed_review')state.hintTexts.set(kind,String(body.value||((kind==='english_prompt'&&state.current.question_en)||'')).trim());
   state.hints.set(kind,true);
+  if(kind!=='typed_review')showHint(kind);
   button.disabled=false;
   button.querySelector('small')?.remove();
   button.classList.add('is-used');
@@ -136,15 +156,18 @@ async function requestHint(kind){
 }
 function resetHints(){
  state.hints.clear();
- for(const [id,label,target] of [
-  ['ftHintTranslation','한국어 뜻','ftHintTranslationText'],
-  ['ftHintStarter','문장 힌트','ftHintStarterText'],
-  ['ftHintEnglish','영어 질문',null],
-  ['ftEditTranscript','답변 수정',null]]){
-  const button=$(id);button.disabled=false;button.classList.remove('is-used');
+ state.hintTexts=new Map();
+ activeHint=null;
+ $('ftHintViewer').hidden=true;
+ for(const [id,label] of [
+  ['ftHintTranslation','한국어 뜻'],
+  ['ftHintStarter','문장 힌트'],
+  ['ftHintEnglish','영어 질문'],
+  ['ftEditTranscript','답변 수정']]){
+  const button=$(id);button.disabled=false;
+  button.classList.remove('is-used','is-current');
   button.replaceChildren(document.createTextNode(label+' '));
   const cost=document.createElement('small');cost.textContent='−1';button.append(cost);
-  if(target){$(target).hidden=true;$(target).textContent='';}
  }
  $('ftQuestionText').hidden=state.mode==='speaking';
  closeTranscriptModal();
@@ -413,8 +436,7 @@ function markFeedback(attempt){
  closeTranscriptModal();
  $('ftHeardSentence').hidden=true;
  // Hint visibility follows the turn and fades away on feedback.
- $('ftHintTranslationText').hidden=true;
- $('ftHintStarterText').hidden=true;
+ $('ftHintViewer').hidden=true;
  $('ftHintCap').hidden=true;
  $('ftQuestionHost').hidden=true;
  $('ftTranscriptRow').hidden=true;
@@ -778,6 +800,7 @@ $('ftListenAgain').addEventListener('click',()=>{
 $('ftHintEnglish').addEventListener('click',()=>void requestHint('english_prompt'));
 $('ftHintTranslation').addEventListener('click',()=>void requestHint('translation'));
 $('ftHintStarter').addEventListener('click',()=>void requestHint('starter'));
+$('ftHintViewer').addEventListener('click',cycleHints);
 $('ftQuestionHost').addEventListener('click',e=>{
  if(e.target.closest('[data-speaking-mic]')){setTurn('student');requestAnimationFrame(updateMicListening);}
 });
