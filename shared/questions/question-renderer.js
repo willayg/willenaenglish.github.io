@@ -219,53 +219,20 @@ export class QuestionRenderer{
       const recognition=new Recognition();
       this.speechRecognition=recognition;
       recognition.lang='en-US';
-      const longForm=Boolean(q.speakingExtended);
-      recognition.interimResults=longForm;
+      recognition.interimResults=false;
       recognition.maxAlternatives=5;
-      recognition.continuous=longForm;
-      let keepRecording=false, accumulated='',lastFinal='',resumeTimer=null;
-      recognition.stopExtended=()=>{
-        keepRecording=false;
-        if(resumeTimer!==null){clearTimeout(resumeTimer);resumeTimer=null}
-        try{recognition.stop()}catch{}
-      };
+      recognition.continuous=false;
       const setListening=on=>{
         mic?.classList.toggle('is-listening',!!on);
         if(status)status.textContent=on?'듣고 있어요… 영어로 말해 보세요.':'마이크를 누르고 영어로 말해 보세요.';
       };
       recognition.onstart=()=>setListening(true);
-      recognition.onend=()=>{
-        if(!longForm||!keepRecording){setListening(false);return}
-        accumulated=[accumulated,lastFinal].filter(Boolean).join(' ').trim();
-        lastFinal='';
-        resumeTimer=setTimeout(()=>{
-          resumeTimer=null;
-          if(!keepRecording||this.disabled)return;
-          try{recognition.start()}catch{}
-        },300);
-      };
+      recognition.onend=()=>setListening(false);
       recognition.onerror=e=>{
-        if(longForm&&['not-allowed','service-not-allowed','audio-capture'].includes(e?.error))keepRecording=false;
-        if(!longForm||!keepRecording)setListening(false);
+        setListening(false);
         if(status)status.textContent=e?.error==='not-allowed'?'마이크 권한이 필요해요.':'잘 듣지 못했어요. 다시 눌러 말해 보세요.';
       };
       recognition.onresult=e=>{
-        if(longForm){
-          const finalParts=[],partialParts=[];
-          for(let i=0;i<(e.results?.length||0);i++){
-            const result=e.results[i],value=String(result?.[0]?.transcript||'').trim();
-            if(!value)continue;
-            (result.isFinal?finalParts:partialParts).push(value);
-          }
-          lastFinal=finalParts.join(' ');
-          const value=[accumulated,lastFinal,partialParts.join(' ')].filter(Boolean).join(' ').trim();
-          this.state.speakingTranscript=value;
-          this.state.speakingAlternatives=value?[value]:[];
-          if(transcript){transcript.hidden=!value;transcript.textContent=value?'“'+value+'”':''}
-          this.emit();
-          if(value&&typeof this.onSpeechResult==='function')this.onSpeechResult([value]);
-          return;
-        }
         const result=e?.results?.[0];
         const alternatives=[];
         if(result&&typeof result.length==='number'){
@@ -288,20 +255,6 @@ export class QuestionRenderer{
       mic?.addEventListener('click',()=>{
         if(this.disabled)return;
         try{
-          if(longForm){
-            if(keepRecording){
-              keepRecording=false;
-              if(resumeTimer!==null){clearTimeout(resumeTimer);resumeTimer=null}
-              setListening(false);recognition.stop();
-            }else{
-              keepRecording=true;
-              accumulated=this.state.speakingTranscript||accumulated;
-              lastFinal='';
-              setListening(true);
-              recognition.start();
-            }
-            return;
-          }
           if(mic.classList.contains('is-listening'))recognition.stop();
           else{
             this.state.speakingTranscript='';
