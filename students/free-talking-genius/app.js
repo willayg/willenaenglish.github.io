@@ -10,7 +10,7 @@ import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
 import {createFreeTalkingVoice} from './question-voice.js?v=20261107-character-choice1';
-import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-silence-stop3s1';
+import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-ai-30s-ring1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
@@ -25,6 +25,9 @@ const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:toke
 const aiRecorder=createFreeTalkingRecorder({
  getToken:token,
  onStatus:message=>{$('ftRecordStatus').textContent=message},
+ onProgress:progress=>{
+  $('ftTurnCircle').style.setProperty('--ft-record-offset',String(Math.max(0,Math.min(100,progress*100))));
+ },
  onTranscript:text=>{
   if(visibleScreen!=='ftSession'||state.mode!=='speaking'||!$('ftUseAiRecording').checked)return;
   $('ftTranscriptEdit').value=text;
@@ -35,6 +38,7 @@ const aiRecorder=createFreeTalkingRecorder({
  },
  onState:({recording,processing})=>{
   $('ftTurnCircle').dataset.listening=recording?'true':'false';
+  $('ftTurnCircle').dataset.aiRecording=recording?'true':'false';
   $('ftTurnCircle').dataset.transcribing=processing?'true':'false';
   $('ftUseAiRecording').disabled=recording||processing;
   $('ftSubmit').disabled=state.loading||recording||processing||!validAnswer();
@@ -59,7 +63,7 @@ function applySpeechPath(){
  try{state.renderer?.speechRecognition?.stop?.()}catch{}
  resetSpeechAnswer();
  $('ftRecordStatus').textContent=useAiAudio()
-  ?'AI 녹음 · 최대 60초 · 원을 눌러 시작 / 다시 눌러 종료'
+  ?'AI 녹음 · 최대 30초 · 원을 눌러 시작 / 다시 눌러 종료'
   :'브라우저 음성 인식 · 원을 눌러 말하기';
  $('ftTurnCircle').dataset.listening='false';
 }
@@ -559,7 +563,7 @@ function renderQuestion({retry=false}={}){
  $('ftUseAiRecording').disabled=false;
  $('ftUseAiRecording').checked=state.speechPath==='ai';
  $('ftRecordStatus').textContent=state.speechPath==='ai'
-  ?'AI 녹음 · 최대 60초 · 원을 눌러 시작 / 다시 눌러 종료'
+  ?'AI 녹음 · 최대 30초 · 원을 눌러 시작 / 다시 눌러 종료'
   :'브라우저 음성 인식 · 원을 눌러 말하기';
  $('ftPromptLabel').textContent='QUESTION '+(idx+1);
  $('ftQuestionText').textContent=state.current.question_en;
