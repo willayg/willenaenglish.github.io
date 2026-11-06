@@ -110,8 +110,8 @@ class StudentHeader extends HTMLElement {
     if ((this._points == null || this._stars == null) && !this._fetchingOverview) {
       this._fetchOverview();
     }
-  // Defer mission modal check a tick to avoid blocking initial paint
-  try { setTimeout(() => this._maybeShowMissionModal(), 0); } catch {}
+  // Retired: the mission basket is the only entry point for outstanding missions.
+  // Do not auto-open the legacy "You Have A Mission" popup.
     this._ensureAudioDefaults();
     this._ensureMusicAudio();
     this._syncMusicPlaybackWithPreference();
