@@ -129,15 +129,7 @@
     <span data-ft-voice-status></span><span data-ft-voice-model></span><span data-ft-voice-preload></span>
    </div>
   </section>
-  <div id="ftSpeechPath" class="ft-speech-path" hidden>
-   <label class="ft-speech-path-control" for="ftUseAiRecording">
-    <span>브라우저</span>
-    <input type="checkbox" id="ftUseAiRecording" role="switch" aria-label="AI 녹음 방식 사용">
-    <span class="ft-speech-toggle-track" aria-hidden="true"><span class="ft-speech-toggle-thumb"></span></span>
-    <span>AI 녹음 <small>ALPHA</small></span>
-   </label>
-   <p id="ftRecordStatus" class="ft-record-status" role="status" aria-live="polite">브라우저 음성 인식</p>
-  </div>
+  <p id="ftRecordStatus" class="ft-record-status" role="status" aria-live="polite" hidden></p>
   <p id="ftTurnStatus" class="ft-turn-status" role="status" aria-live="polite" hidden></p>
   <div id="ftHeardSentence" class="ft-heard-sentence" hidden aria-live="polite"><span id="ftHeardText"></span></div>
   <h2 id="ftQuestionText" class="ft-question-title" hidden></h2>
@@ -180,7 +172,7 @@
 </section>
 <div class="ft-footer-version">Free Talking Genius · 10-point conversation · v2.3</div>
 </main></div>
-<script type="module" src="./app.js?v=20261107-prearm-mic1"></script>
+<script type="module" src="./app.js?v=20261107-ai-default1"></script>
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
 <script src="/students/components/mission-basket.js?v=20261105-overdue-missions1"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
