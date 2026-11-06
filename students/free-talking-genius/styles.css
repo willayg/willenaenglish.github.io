@@ -1017,40 +1017,28 @@
 }
 
 
-/* Real three-element orbital ready animation. Exactly one visual per phase. */
+/* Curved, continuous voice-signal arcs: reference-inspired instead of three floating dots. */
 .free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start.ft-orbit-visual{
- position:relative!important;grid-area:1/1;
- display:block!important;width:116px!important;height:116px!important;
- color:transparent!important;pointer-events:none;
+ position:relative!important;grid-area:1/1;z-index:4!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:120px!important;height:120px!important;pointer-events:none;
+ opacity:1!important;visibility:visible!important;
 }
-.free-talking-genius #ftSession .ft-orbit-core{
- position:absolute;top:50%;left:50%;width:19px;height:19px;
- transform:translate(-50%,-50%);border-radius:50%;
- background:#d2f2f5;border:3px solid #a6e0e7;
- box-shadow:0 0 0 6px #eaf9fb;
+.free-talking-genius #ftSession .ft-orbit-art{
+ display:block!important;overflow:visible;width:clamp(100px,23vw,120px)!important;
+ height:clamp(100px,23vw,120px)!important;flex:none;
 }
-.free-talking-genius #ftSession .ft-orbit-track{
- position:absolute;top:50%;left:50%;
- width:84px;height:84px;margin:-42px 0 0 -42px;
- border-radius:50%;pointer-events:none;
+.free-talking-genius #ftSession .ft-orbit-arc{
+ transform-origin:60px 60px;transform-box:view-box;
 }
-.free-talking-genius #ftSession .ft-orbit-cyan{
- animation:ftOrbitReadyClockwise 3s linear infinite;
+.free-talking-genius #ftSession .ft-orbit-arc-cyan{
+ animation:ftArcCyan 3.4s linear infinite;
 }
-.free-talking-genius #ftSession .ft-orbit-pink{
- animation:ftOrbitReadyCounter 3.7s linear infinite;
+.free-talking-genius #ftSession .ft-orbit-arc-pink{
+ animation:ftArcPink 4.2s linear infinite;
 }
-.free-talking-genius #ftSession .ft-orbit-particle{
- position:absolute;top:-8px;left:50%;transform:translateX(-50%);
- width:17px;height:17px;border-radius:50%;background:#98dce5;
- box-shadow:0 0 0 4px #eaf9fb;
-}
-.free-talking-genius #ftSession .ft-orbit-pink .ft-orbit-particle{
- width:13px;height:13px;top:-6px;
- background:#f2bfd8;box-shadow:0 0 0 3px #ffeff7;
-}
-@keyframes ftOrbitReadyClockwise{to{transform:rotate(360deg)}}
-@keyframes ftOrbitReadyCounter{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}
+@keyframes ftArcCyan{to{transform:rotate(360deg)}}
+@keyframes ftArcPink{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}
 .free-talking-genius #ftSession #ftTurnCircle:not([data-phase="ready"]) .ft-circle-start{
  display:none!important;
 }
@@ -1085,7 +1073,7 @@
  50%{transform:scale(1.035);box-shadow:0 0 0 7px #d7f4f8}
 }
 @media(prefers-reduced-motion:reduce){
- .free-talking-genius #ftSession .ft-orbit-track,
+ .free-talking-genius #ftSession .ft-orbit-arc,
  .free-talking-genius #ftSession #ftListenAgain.is-replay-ready{
   animation:none!important;
  }
