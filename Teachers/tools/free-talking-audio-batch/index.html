@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Free Talking Audio Batch · Willena Teachers</title>
+<script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
+<script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{font-family:Poppins,system-ui,sans-serif;color:#244e55;background:#f3fbfc;font-size:14px}
+*{box-sizing:border-box}body{margin:0;padding:clamp(13px,3vw,28px)}
+.panel{max-width:1050px;margin:auto;background:#fff;border:2px solid #caedef;border-radius:24px;padding:clamp(17px,3vw,28px);box-shadow:0 14px 30px #28788713}
+h1{font-size:clamp(23px,3vw,32px);margin:4px 0 6px}h2{font-size:17px;margin:0 0 9px}
+.sub{color:#68848b;margin:0 0 18px;line-height:1.6}
+.top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.tag{border:1px solid #bce8ec;border-radius:100px;padding:6px 12px;font-weight:800;color:#247d86;background:#f1fcfc;align-self:flex-start}
+fieldset{border:0;padding:0;margin:0;min-width:0}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+label{display:grid;gap:6px;font-weight:800;color:#426871;font-size:12px}
+select{width:100%;min-width:0;padding:12px;background:#fff;border:2px solid #bce5e9;border-radius:12px;color:#214c55;font:700 13px Poppins,sans-serif}
+select:focus-visible,button:focus-visible{outline:3px solid #e969ae;outline-offset:2px}
+.actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:18px 0}
+button{border:2px solid #b9e6eb;background:#fff;color:#247880;border-radius:13px;min-height:44px;padding:10px 18px;font:800 13px Poppins,sans-serif;cursor:pointer}
+button.primary{background:#ec158e;border-color:#ec158e;color:#fff}
+button:disabled{opacity:.46;cursor:wait}
+button.danger{border-color:#e7bfcf;color:#b14770}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:18px 0}
+.stat{background:#f6fcfc;border:1.5px solid #cfeced;border-radius:15px;padding:14px;text-align:center}
+.stat strong{display:block;font-size:23px;color:#276b74}
+.stat small{font-weight:800;color:#718a91}
+progress{width:100%;height:14px;accent-color:#40bdcb}
+.status{min-height:24px;font-weight:800;color:#267e88;margin-top:8px}
+.note{background:#fffaf3;border:1px solid #f0dca6;border-radius:14px;padding:13px 16px;color:#846b32;font-size:12px;font-weight:650;line-height:1.7}
+.list{border:1px solid #d1e9eb;border-radius:16px;overflow:auto;max-height:460px;margin-top:13px}
+.row{display:grid;grid-template-columns:60px minmax(0,1fr) 150px;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #e5f1f2;font-size:12px}
+.row:last-child{border-bottom:0}.row .n{color:#58949c;font-weight:800}
+.row .q{font-weight:700;overflow-wrap:anywhere}.row .state{text-align:right;font-weight:800;color:#7b8c92}
+.row .state.saved{color:#249e79}.row .state.failed{color:#bf4972}.row .state.cached{color:#2b91a5}
+[hidden]{display:none!important}
+@media(max-width:680px){.controls{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.row{grid-template-columns:35px minmax(0,1fr) 75px}.row .state{font-size:10px}}
+</style></head><body>
+<section class="panel">
+ <div class="top"><div><h1>Free Talking · Audio Batch</h1><p class="sub">Prepare the same R2 MP3 recordings used by Free Talking Genius. Teacher access only.</p></div><span class="tag">Shared R2: tts-audio</span></div>
+ <p class="note">AI Lili = ElevenLabs Bunny v3 MP3 (the student's exact preferred Lili cache). AI Willi MP3 = OpenAI Marin fallback (the student prefers Realtime WAV when available). Existing files are always skipped. Audio costs apply only to missing files.</p>
+ <div class="controls">
+  <label>Textbook<select id="book" disabled><option>Loading books…</option></select></label>
+  <label>Unit<select id="unit" disabled><option value="all">All units</option></select></label>
+  <label>Voice / format<select id="voice"><option value="lili">AI Lili · Bunny v3 · MP3</option><option value="willi_mp3">AI Willi · Marin backup · MP3</option></select></label>
+ </div>
+ <div class="actions">
+  <button id="check" type="button" disabled>Check R2 files</button>
+  <button id="run" class="primary" type="button" disabled>Generate missing MP3s</button>
+  <button id="stop" class="danger" type="button" disabled>Stop after current file</button>
+ </div>
+ <div class="stats">
+  <div class="stat"><strong id="total">0</strong><small>Questions</small></div>
+  <div class="stat"><strong id="cached">0</strong><small>Already in R2</small></div>
+  <div class="stat"><strong id="saved">0</strong><small>Newly saved</small></div>
+  <div class="stat"><strong id="failed">0</strong><small>Failed</small></div>
+ </div>
+ <progress id="progress" value="0" max="1"></progress><div class="status" id="status" role="status" aria-live="polite">Checking teacher login…</div>
+ <div id="rows" class="list" aria-label="Question audio preparation status"></div>
+ <p class="sub" style="margin-top:15px">Files are verified by R2 HEAD checks; this tool never changes Free Talking questions, student scores, or existing audio files.</p>
+</section>
+<script type="module">
+const $=id=>document.getElementById(id);
+let books=[],questions=[],jobs=[],busy=false,stopping=false,checked=false;
+const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','&quot;':'&quot;'}[c]));
+function token(){const t=window.WillenaAPI?.getLocalAccessToken?.();if(t)return t;
+ try{return decodeURIComponent(document.cookie.split('; ').find(x=>x.startsWith('sb_access='))?.slice(10)||'')}catch{return ''}}
+async function call(body){
+ const access=token();if(!access)throw Error('No teacher access token. Sign in to Teachers Dashboard again.');
+ const res=await fetch('/api/free-talking-teacher-audio',{
+  method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+access,'Content-Type':'application/json'},
+  body:JSON.stringify(body),signal:AbortSignal.timeout(65000)});
+ const data=await res.json().catch(()=>({}));
+ if(!res.ok||!data.success)throw Error(data.error||'Audio request failed ('+res.status+')');
+ return data;
+}
+function status(message){$('status').textContent=message}
+function controls(){$('book').disabled=busy||!books.length;$('unit').disabled=busy||!books.length;
+ $('voice').disabled=busy;$('check').disabled=busy||!jobs.length;
+ $('run').disabled=busy||!checked||!jobs.some(j=>!j.exists);
+ $('stop').disabled=!busy}
+function render(){
+ $('total').textContent=jobs.length;$('cached').textContent=jobs.filter(j=>j.exists).length;
+ $('saved').textContent=jobs.filter(j=>j.status==='generated_saved').length;
+ $('failed').textContent=jobs.filter(j=>j.status==='failed').length;
+ const complete=jobs.filter(j=>j.exists||j.status==='generated_saved'||j.status==='failed').length;
+ $('progress').max=Math.max(1,jobs.length);$('progress').value=complete;
+ $('rows').innerHTML=jobs.map((j,i)=>'<div class="row"><span class="n">'+(i+1)+'</span><span class="q">'+escape(j.text)+'</span><span class="state '+(j.status==='failed'?'failed':j.status==='generated_saved'?'saved':j.exists?'cached':'')+'">'+
+  escape(j.status==='failed'?j.error||'Failed':j.status==='generated_saved'?'Saved to R2':j.status==='generating'?'Generating…':j.exists?'R2 cached':'Missing')+'</span></div>').join('');
+ controls();
+}
+function select(){
+ const bookId=$('book').value,unit=$('unit').value;
+ jobs=questions.filter(q=>q.book_id===bookId&&(unit==='all'||Number(q.unit_number)===Number(unit)))
+  .map(q=>({...q,exists:false,status:'pending'}));
+ checked=false;render();
+ status(jobs.length+' question(s) selected. Check R2 before generating.');
+}
+function setUnits(){
+ const book=books.find(b=>b.id===$('book').value);
+ const current=$('unit').value;
+ $('unit').replaceChildren(new Option('All units','all'));
+ for(const n of book?.units||[])$('unit').add(new Option('Unit '+n,String(n)));
+ $('unit').value=[...$('unit').options].some(o=>o.value===current)?current:'all';
+ select();
+}
+async function check(){
+ if(!jobs.length||busy)return;
+ busy=true;controls();status('Checking R2 for existing MP3 recordings…');
+ try{
+  // Chunk inventories to avoid large requests; no audio synthesis in this step.
+  const lookup=new Map();
+  for(let i=0;i<jobs.length;i+=100){
+   const part=jobs.slice(i,i+100);
+   const result=await call({action:'inventory',voice:$('voice').value,question_ids:part.map(j=>j.id)});
+   for(const entry of result.files||[])lookup.set(entry.id,entry);
+  }
+  if(lookup.size!==jobs.length)throw Error('R2 inventory incomplete — no audio generated');
+  jobs=jobs.map(job=>({...job,exists:lookup.get(job.id)?.exists===true,file:lookup.get(job.id)?.file,status:'pending'}));
+  checked=true;render();status(jobs.filter(j=>j.exists).length+' already saved; '+jobs.filter(j=>!j.exists).length+' missing.');
+ }catch(e){checked=false;status('Inventory failed: '+e.message);render()}
+ finally{busy=false;controls()}
+}
+async function run(){
+ if(busy||!checked)return;
+ const remaining=jobs.filter(j=>!j.exists);if(!remaining.length){status('Everything is already saved in R2.');return}
+ busy=true;stopping=false;controls();let successes=0,errors=0;
+ for(const job of remaining){
+  if(stopping)break;
+  job.status='generating';render();status('Generating and verifying '+(successes+errors+1)+'/'+remaining.length+'…');
+  try{
+   const result=await call({action:'generate',question_id:job.id,voice:$('voice').value});
+   if(result.file!==job.file)throw Error('Returned file does not match inventory');
+   job.exists=true;job.status=result.status;successes++;
+  }catch(e){job.status='failed';job.error=e.message;errors++;console.warn('[FT audio batch]',job.id,e.message)}
+  render();
+  // One provider request at a time; the next starts only after R2 confirms save.
+  if(!stopping)await new Promise(resolve=>setTimeout(resolve,350));
+ }
+ busy=false;controls();status((stopping?'Stopped. ':'Complete. ')+successes+' saved/cached, '+errors+' failed.');
+}
+$('book').addEventListener('change',setUnits);
+$('unit').addEventListener('change',select);
+$('voice').addEventListener('change',()=>{checked=false;jobs=jobs.map(j=>({...j,exists:false,status:'pending'}));render();status('Voice changed. Check R2 again.')});
+$('check').addEventListener('click',check);
+$('run').addEventListener('click',run);
+$('stop').addEventListener('click',()=>{stopping=true;status('Stopping after the current recording finishes…')});
+(async()=>{
+ try{
+  const {ensureTeacherSession}=await import('/Teachers/auth-refresh.js?v=20261021-sessionfix1');
+  const session=await ensureTeacherSession();
+  if(!session?.success)throw Error('Teacher login required. Open Teachers Dashboard and sign in.');
+  const data=await call({action:'catalog'});
+  books=data.books||[];questions=data.questions||[];
+  $('book').replaceChildren();
+  for(const book of books)$('book').add(new Option(book.title,book.id));
+  if(books.length)setUnits();else status('No published Free Talking questions were found.');
+  controls();
+ }catch(e){status('Cannot open audio utility: '+e.message)}
+})();
+</script></body></html>
