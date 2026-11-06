@@ -1023,95 +1023,77 @@
  background-image:none!important;
 }
 
-/* CSS-only ready animation: orbiting cyan/pink particles, no headphone asset. */
-.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start{
- display:block!important;
- position:relative!important;
- width:112px!important;
- height:112px!important;
- color:transparent!important;
+
+/* Real three-element orbital ready animation. Exactly one visual per phase. */
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start.ft-orbit-visual{
+ position:relative!important;grid-area:1/1;
+ display:block!important;width:116px!important;height:116px!important;
+ color:transparent!important;pointer-events:none;
 }
-.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start svg{
+.free-talking-genius #ftSession .ft-orbit-core{
+ position:absolute;top:50%;left:50%;width:19px;height:19px;
+ transform:translate(-50%,-50%);border-radius:50%;
+ background:#d2f2f5;border:3px solid #a6e0e7;
+ box-shadow:0 0 0 6px #eaf9fb;
+}
+.free-talking-genius #ftSession .ft-orbit-track{
+ position:absolute;top:50%;left:50%;
+ width:84px;height:84px;margin:-42px 0 0 -42px;
+ border-radius:50%;pointer-events:none;
+}
+.free-talking-genius #ftSession .ft-orbit-cyan{
+ animation:ftOrbitReadyClockwise 3s linear infinite;
+}
+.free-talking-genius #ftSession .ft-orbit-pink{
+ animation:ftOrbitReadyCounter 3.7s linear infinite;
+}
+.free-talking-genius #ftSession .ft-orbit-particle{
+ position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+ width:17px;height:17px;border-radius:50%;background:#98dce5;
+ box-shadow:0 0 0 4px #eaf9fb;
+}
+.free-talking-genius #ftSession .ft-orbit-pink .ft-orbit-particle{
+ width:13px;height:13px;top:-6px;
+ background:#f2bfd8;box-shadow:0 0 0 3px #ffeff7;
+}
+@keyframes ftOrbitReadyClockwise{to{transform:rotate(360deg)}}
+@keyframes ftOrbitReadyCounter{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}
+.free-talking-genius #ftSession #ftTurnCircle:not([data-phase="ready"]) .ft-circle-start{
  display:none!important;
 }
-.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start::before,
-.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start::after{
- content:"";
- display:block;
- position:absolute;
- box-sizing:border-box;
- width:16px;
- height:16px;
- left:calc(50% - 8px);
- top:calc(50% - 8px);
- border-radius:50%;
- pointer-events:none;
-}
-.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start::before{
- width:17px;height:17px;left:calc(50% - 8.5px);top:calc(50% - 8.5px);
- background:#98dce5;
- box-shadow:0 0 0 5px #eaf9fb,0 0 0 8px #c6ecf0;
- animation:ftReadyCyanOrbit 3s linear infinite;
-}
-.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start::after{
- width:12px;height:12px;left:calc(50% - 6px);top:calc(50% - 6px);
- background:#f1bed7;
- box-shadow:0 0 0 3px #ffeff7;
- animation:ftReadyPinkOrbit 3.7s linear infinite;
-}
-@keyframes ftReadyCyanOrbit{
- from{transform:rotate(0deg) translateX(37px) rotate(0deg)}
- to{transform:rotate(360deg) translateX(37px) rotate(-360deg)}
-}
-@keyframes ftReadyPinkOrbit{
- from{transform:rotate(360deg) translateX(37px) rotate(-360deg)}
- to{transform:rotate(0deg) translateX(37px) rotate(0deg)}
-}
-/* A distinct replay control appears as soon as first playback makes it available. */
+/* Replay is accessible, real content, and only highlighted after the question finishes. */
 .free-talking-genius #ftSession #ftListenAgain{
- background:#fff!important;
- background-image:none!important;
- color:#c56e9e!important;
- border:2px solid #c9ebef!important;
- border-radius:15px!important;
- font-size:0!important;
- font-weight:900!important;
- line-height:1.2!important;
- min-height:49px;
- padding:9px 17px!important;
- box-shadow:none!important;
- transition:border-color .2s,background-color .2s,transform .2s;
+ display:inline-flex;align-items:center;justify-content:center;gap:8px;
+ background:#fff!important;background-image:none!important;
+ color:#658b94!important;
+ border:2px solid #ccecf0!important;border-radius:15px!important;
+ font:850 14px/1.2 Poppins,system-ui,sans-serif!important;
+ min-height:49px;padding:9px 16px!important;
+ box-shadow:none!important;transform:none;
+ transition:border-color .2s,background-color .2s,transform .2s,box-shadow .2s;
 }
-.free-talking-genius #ftSession #ftListenAgain::before{
- content:"↻";
- display:inline-block;
- margin-right:9px;
+.free-talking-genius #ftSession #ftListenAgain::before,
+.free-talking-genius #ftSession #ftListenAgain::after{content:none!important}
+.free-talking-genius #ftSession #ftListenAgain .ft-replay-icon{
  font:900 25px/1 Poppins,system-ui,sans-serif;
- vertical-align:middle;
-}
-.free-talking-genius #ftSession #ftListenAgain::after{
- content:"다시 듣기";
- font:900 16px/1.35 Poppins,system-ui,sans-serif;
- vertical-align:middle;
-}
-.free-talking-genius #ftSession #ftListenAgain:not(:disabled){
- color:#cf4993!important;
- border:3px solid #84dbe4!important;
- background:#f5fdfe!important;
- box-shadow:0 0 0 4px #e5f9fb!important;
- animation:ftReplayNotice 1.65s ease-in-out infinite;
- cursor:pointer;
 }
 .free-talking-genius #ftSession #ftListenAgain:disabled{
- opacity:.45;
- animation:none;
+ opacity:.43!important;animation:none!important;cursor:not-allowed;
 }
-@keyframes ftReplayNotice{
- 0%,100%{transform:scale(1);box-shadow:0 0 0 3px #e9f8fa}
- 50%{transform:scale(1.035);box-shadow:0 0 0 7px #d8f5f8}
+.free-talking-genius #ftSession #ftListenAgain.is-replay-ready:not(:disabled){
+ color:#cb4b95!important;
+ border:3px solid #8bdde6!important;
+ background:#f4fcfd!important;
+ box-shadow:0 0 0 4px #e4f8fa!important;
+ animation:ftReplayPrompt 1.8s ease-in-out infinite;
+}
+@keyframes ftReplayPrompt{
+ 0%,100%{transform:scale(1);box-shadow:0 0 0 3px #e6f9fa}
+ 50%{transform:scale(1.035);box-shadow:0 0 0 7px #d7f4f8}
 }
 @media(prefers-reduced-motion:reduce){
- .free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start::before,
- .free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start::after,
- .free-talking-genius #ftSession #ftListenAgain:not(:disabled){animation:none!important}
+ .free-talking-genius #ftSession .ft-orbit-track,
+ .free-talking-genius #ftSession #ftListenAgain.is-replay-ready{
+  animation:none!important;
+ }
 }
