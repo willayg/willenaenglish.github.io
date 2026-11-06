@@ -57,11 +57,29 @@ async function createMp3(env,text,voice){
  let response;
  if(voice==='lili'){
   const secret=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
-  if(!secret)throw Error('ELEVEN_LABS_API_KEY_NOT_AVAILABLE_IN_TEACHERS_PREVIEW');
-  response=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+VOICES.lili.voice+'?output_format=mp3_44100_128',{
-   method:'POST',headers:{'xi-api-key':secret,'Content-Type':'application/json','Accept':'audio/mpeg'},
-   body:JSON.stringify({text,model_id:'eleven_v3',voice_settings:{stability:0.5}}),
-   signal:AbortSignal.timeout(35000)});
+  if(secret){
+   response=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+VOICES.lili.voice+'?output_format=mp3_44100_128',{
+    method:'POST',headers:{'xi-api-key':secret,'Content-Type':'application/json','Accept':'audio/mpeg'},
+    body:JSON.stringify({text,model_id:'eleven_v3',voice_settings:{stability:0.5}}),
+    signal:AbortSignal.timeout(35000)});
+  }else{
+   // Reuse the established Willena proxy only when the Pages Preview secret is
+   // unavailable. Generated MP3s still save to the exact shared Cloudflare R2 key.
+   const proxy=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text,voice_id:VOICES.lili.voice,model_id:'eleven_v3',voice_settings:{stability:0.5}}),
+    signal:AbortSignal.timeout(35000)});
+   if(!proxy.ok)throw Error('ELEVENLABS_PROXY_HTTP_'+proxy.status);
+   const payload=await proxy.json().catch(()=>null);
+   if(!payload||typeof payload.audio!=='string')throw Error('ELEVENLABS_PROXY_INVALID_RESPONSE');
+   const binary=atob(payload.audio);
+   if(binary.length<500||binary.length>1250000)throw Error('ELEVENLABS_PROXY_INVALID_MP3');
+   const bytes=new Uint8Array(binary.length);
+   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+   const mp3=(bytes[0]===73&&bytes[1]===68&&bytes[2]===51)||(bytes[0]===255&&(bytes[1]&224)===224);
+   if(!mp3)throw Error('ELEVENLABS_PROXY_INVALID_MP3');
+   return bytes.buffer;
+  }
  }else{
   const secret=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
   if(!secret)throw Error('OPENAI_KEY_NOT_AVAILABLE_IN_TEACHERS_PREVIEW');
