@@ -1,6 +1,6 @@
 // Free Talking alpha: explicit 30-second recording, no browser STT or live transcript.
 // Cancel increments the run ID; stale async results are never added to a later question.
-export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onState,onProgress}){
+export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onState,onProgress,onQuiet}){
  const maxMs=30000;
  const silenceMs=3000;
  const startGraceMs=6500;
@@ -51,7 +51,7 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
      stop();
     }else if(!heardSpeech&&now-startedAt>=startGraceMs){
      // Do not upload empty microphone recordings.
-     cancel();say('말소리가 들리지 않았어요. 다시 녹음해 주세요.');
+     cancel();say('목소리가 잘 안 들려요. 조금 더 크게 말해 볼까요?');onQuiet?.();
     }
    },120);
   }catch(error){
@@ -116,7 +116,7 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
     if(id!==run)return;
     clearTimer();stopVoiceMonitor();recording=false;processing=true;release();status();
     const audio=new Blob(chunks,{type:mime});
-    if(audio.size<600){processing=false;status();say('녹음된 음성이 없어요. 다시 말해 보세요.');return}
+    if(audio.size<600){processing=false;status();say('목소리가 잘 안 들려요. 조금 더 크게 말해 볼까요?');onQuiet?.();return}
     say('AI가 전체 답변을 받아쓰고 있어요…');
     const controller=new AbortController();
     request=controller;
@@ -132,7 +132,13 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
      let response=await send(await getToken());
      if(response.status===401)response=await send(await getToken(true));
      const payload=await response.json().catch(()=>null);
-     if(!response.ok||payload?.success!==true)throw Error(payload?.error||'AI 음성 인식에 실패했어요.');
+     if(!response.ok||payload?.success!==true){
+      if(payload?.error_code==='QUIET_AUDIO'){
+       if(id===run){say('목소리가 잘 안 들려요. 조금 더 크게 말해 볼까요?');onQuiet?.()}
+       return;
+      }
+      throw Error(payload?.error||'AI 음성 인식에 실패했어요.');
+     }
      const transcript=String(payload.transcript||'').trim();
      if(!transcript)throw Error('영어가 들리지 않았어요. 다시 시도해 주세요.');
      if(id!==run)return;
