@@ -87,6 +87,8 @@ export async function onRequestPost({request,env}){
   if(past.length>=5)return reply(429,{success:false,error:'Maximum five attempts for this question.'});
   if(isHint){
    if(!['translation','starter'].includes(hintType))return reply(400,{success:false,error:'Unknown hint'});
+   if(hintType==='translation'&&!String(prompt.question_ko||'').trim())
+    return reply(404,{success:false,error:'이 질문은 한국어 번역이 아직 없어요. 감점되지 않습니다.'});
    const row={session_id:sessionId,question_id:questionId,student_id:auth.id,attempt_no:nextAttempt,hint_type:hintType};
    const written=await db('free_talking_hint_usage?on_conflict=session_id,question_id,attempt_no,hint_type',auth.token,{
     method:'POST',body:row});
