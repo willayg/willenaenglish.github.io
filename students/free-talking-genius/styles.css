@@ -316,3 +316,15 @@
 .free-talking-genius #ftSession #ftTranscriptRow{order:10}
 .free-talking-genius #ftSession #ftFeedback{order:11}
 .free-talking-genius #ftSession #ftAttemptStatus{order:12}
+
+/* Tap-to-start: the same conversation circle begins audio only on student action. */
+.free-talking-genius .ft-turn-circle .ft-circle-start{
+ grid-area:1/1;display:none;flex-direction:column;align-items:center;
+ justify-content:center;gap:8px;position:relative;z-index:2;
+ color:#2694a4;font:900 17px Poppins,system-ui,sans-serif;letter-spacing:.04em;
+}
+.free-talking-genius .ft-turn-circle .ft-start-play{
+ font-size:62px;line-height:1;transform:translateX(5px);
+}
+.free-talking-genius .ft-turn-circle[data-phase="ready"] .ft-circle-start{display:flex}
+.free-talking-genius .ft-turn-circle[data-phase="ready"] .ft-circle-ai{display:none}
