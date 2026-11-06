@@ -1230,3 +1230,18 @@
 .free-talking-genius #ftSession #ftTurnCircle[data-ai-recording="true"] .ft-record-countdown{
  display:block!important;
 }
+
+/* Recording countdown owns the entire rim. Override the older student/listening
+   12px pink border + 3px outline rules, which otherwise survive underneath it. */
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="student"][data-ai-recording="true"],
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="student"][data-listening="true"][data-ai-recording="true"]{
+  border:12px solid transparent!important;
+  outline:0!important;
+  box-shadow:none!important;
+  animation:none!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-ai-recording="true"]::before,
+.free-talking-genius #ftSession #ftTurnCircle[data-ai-recording="true"]::after{
+  box-shadow:none!important;
+  border-color:transparent!important;
+}
