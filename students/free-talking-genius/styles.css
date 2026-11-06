@@ -1214,7 +1214,18 @@
  stroke-linecap:round;
 }
 .free-talking-genius #ftSession #ftTurnCircle[data-ai-recording="true"]{
+ /* The SVG is the ONLY visible rim during recording. Remove both legacy
+    border layers and any pink microphone pulse shadow beneath it. */
  border-color:transparent!important;
+ outline:none!important;
+ box-shadow:none!important;
+ animation:none!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-ai-recording="true"] .ft-circle-glow{
+ border-color:transparent!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-ai-recording="true"] .ft-record-countdown-track{
+ stroke-linecap:butt!important; /* no pink semicircle left when offset reaches 100 */
 }
 .free-talking-genius #ftSession #ftTurnCircle[data-ai-recording="true"] .ft-record-countdown{
  display:block!important;
