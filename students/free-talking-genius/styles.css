@@ -1001,15 +1001,8 @@
 .free-talking-genius #ftCharacter .ft-character-continue:disabled{opacity:.42}
 .free-talking-genius #ftCharacter .ft-character-back[hidden],
 .free-talking-genius #ftCharacter #ftCharacterRound[hidden]{display:none!important}
-/* Ready: a headphone symbol instead of START, AI letters, or a play triangle. */
-.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start{
- display:flex!important;align-items:center;justify-content:center;
- color:#79c8d0!important;
-}
+/* Ready phase now uses ft-orbit-visual; no headphone fallback. */
 .free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-ai{display:none!important}
-.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start svg{
- width:clamp(60px,12vw,82px);height:auto;
-}
 @media(max-width:420px){
  .free-talking-genius #ftCharacter .ft-character-options{gap:12px}
  .free-talking-genius #ftCharacter .ft-character-panel{padding:23px 17px}
@@ -1096,4 +1089,20 @@
  .free-talking-genius #ftSession #ftListenAgain.is-replay-ready{
   animation:none!important;
  }
+}
+
+/* Ready guidance and reliable centering above the session footer. */
+.free-talking-genius #ftSession #ftQuestionStage[data-phase="ready"] #ftTurnStatus{
+ display:block!important;visibility:visible!important;
+ color:#5d8991;font-weight:850;font-size:clamp(13px,2.8vw,16px);
+ line-height:1.5;margin:12px auto 8px!important;text-align:center;
+}
+.free-talking-genius #ftSession #ftQuestionStage[data-phase="ready"] #ftWilliVoice{
+ flex:0 0 auto!important;min-height:240px!important;
+}
+.free-talking-genius #ftSession #ftQuestionStage[data-phase="ready"] #ftGameCard{
+ justify-content:center!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="ready"] .ft-circle-start.ft-orbit-visual{
+ z-index:4!important;opacity:1!important;visibility:visible!important;
 }
