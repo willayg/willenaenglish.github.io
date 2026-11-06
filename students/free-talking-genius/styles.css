@@ -1197,3 +1197,25 @@
   transition:none!important;animation:none!important;
  }
 }
+
+/* AI recording countdown: the pink button border gradually vanishes clockwise.
+   This overlay is decorative; the existing button remains the sole recording control. */
+.free-talking-genius #ftSession #ftTurnCircle{
+ position:relative!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle .ft-record-countdown{
+ display:none!important;position:absolute;
+ inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);
+ overflow:visible;z-index:6;pointer-events:none;transform:rotate(-90deg);
+}
+.free-talking-genius #ftSession #ftTurnCircle .ft-record-countdown-track{
+ fill:none;stroke:#f0b7d5;stroke-width:11;
+ stroke-dasharray:100;stroke-dashoffset:var(--ft-record-offset,0);
+ stroke-linecap:round;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-ai-recording="true"]{
+ border-color:transparent!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-ai-recording="true"] .ft-record-countdown{
+ display:block!important;
+}
