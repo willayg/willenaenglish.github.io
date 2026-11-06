@@ -328,3 +328,86 @@
 }
 .free-talking-genius .ft-turn-circle[data-phase="ready"] .ft-circle-start{display:flex}
 .free-talking-genius .ft-turn-circle[data-phase="ready"] .ft-circle-ai{display:none}
+
+/* Conversation viewport: the old 3-row quiz grid reserved a missing header row,
+   leaving the content pinned to the top. Keep only content + footer. */
+.free-talking-genius #ftSession.ft-conversation{
+ position:fixed!important;
+ inset:0!important;
+ box-sizing:border-box;
+ width:100%!important;
+ max-width:none!important;
+ height:100vh;
+ height:100dvh;
+ margin:0!important;
+ padding:0!important;
+ border:0!important;
+ border-radius:0!important;
+ display:grid;
+ grid-template-columns:minmax(0,1fr);
+ grid-template-rows:minmax(0,1fr) auto;
+ background:#ecfafb;
+ box-shadow:none!important;
+ overflow:hidden;
+}
+.free-talking-genius #ftSession #ftQuestionStage{
+ grid-column:1;
+ grid-row:1;
+ min-height:0;
+ overflow-y:auto;
+ overscroll-behavior:contain;
+ justify-content:safe center;
+ padding:22px clamp(16px,4vw,38px);
+}
+.free-talking-genius #ftSession .vocab-session-bottom{
+ grid-column:1;
+ grid-row:2;
+ min-height:0;
+ background:#fff!important;
+ padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+ box-shadow:none!important;
+ backdrop-filter:none!important;
+}
+.free-talking-genius #ftSession .vocab-session-bottom button,
+.free-talking-genius #ftSession .ft-hint-button,
+.free-talking-genius #ftSession #ftEditTranscript{
+ background-image:none!important;
+ box-shadow:none!important;
+}
+.free-talking-genius #ftSession .vocab-action-row .vocab-skip-action{
+ background:#fff!important;
+ color:#2c6a72;
+ border-color:#bcecef;
+}
+.free-talking-genius #ftSession .vocab-action-row .vocab-action{
+ background:#fff!important;
+ color:#d33787;
+ border-color:#bcecef;
+}
+.free-talking-genius #ftSession .vocab-action-row .vocab-action:not(:disabled){
+ background:#ed188d!important;
+ color:#fff;
+ border-color:#ed188d;
+}
+.free-talking-genius #ftSession .ft-hint-button{
+ background:#fff!important;
+ color:#cf3385;
+}
+.free-talking-genius #ftSession .ft-turn-circle{
+ background:#e3f8fa!important;
+ background-image:none!important;
+}
+.free-talking-genius #ftSession .ft-turn-circle[data-phase="student"]{
+ background:#ffecf6!important;
+}
+.free-talking-genius #ftSession .ft-turn-circle[data-phase="thinking"]{
+ background:#f0ebff!important;
+}
+.free-talking-genius #ftSession .ft-turn-circle[data-phase="feedback"]{
+ background:#fff6df!important;
+}
+@media(max-width:560px){
+ .free-talking-genius #ftSession #ftQuestionStage{
+  padding:18px 14px 20px;
+ }
+}
