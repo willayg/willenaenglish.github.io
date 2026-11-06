@@ -720,3 +720,22 @@
 @media(prefers-reduced-motion:reduce){
  .free-talking-genius #ftSession #ftTurnCircle[data-listening="true"]{animation:none!important}
 }
+
+/* Leaderboard point coins replace 1/2 text in each feedback criterion. */
+.free-talking-genius #ftSession #ftFeedbackGrid>details>summary{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.free-talking-genius #ftSession .ft-criterion-coins{
+ flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;
+}
+.free-talking-genius #ftSession .ft-point-coin{
+ display:block;width:25px;height:25px;flex:0 0 25px;
+}
+.free-talking-genius #ftSession .ft-point-coin.is-unearned{
+ opacity:.20;filter:grayscale(1);
+}
+@media(max-width:560px){
+ .free-talking-genius #ftSession .ft-point-coin{
+  width:23px;height:23px;flex-basis:23px;
+ }
+}
