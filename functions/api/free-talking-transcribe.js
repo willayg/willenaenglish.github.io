@@ -56,6 +56,8 @@ export async function onRequestPost({request,env}){
   upstream.append('file',file,'answer.'+extension);
   upstream.append('model','gpt-4o-mini-transcribe');
   upstream.append('language','en');
+  // Stronger English-first recognition context. Do not translate or complete a child's answer.
+  upstream.append('prompt','English language speaking practice by Korean children learning English. Transcribe the English actually spoken, in English spelling and Latin letters. Preserve incomplete sentences, grammatical mistakes, fillers, and repetitions. Do not translate Korean speech into English and do not invent an answer.');
   upstream.append('response_format','json');
   const result=await fetch('https://api.openai.com/v1/audio/transcriptions',{
    method:'POST',headers:{Authorization:'Bearer '+key},body:upstream,signal:AbortSignal.timeout(55000)});
@@ -66,6 +68,13 @@ export async function onRequestPost({request,env}){
   const payload=await result.json().catch(()=>null);
   const transcript=String(payload?.text||'').trim().slice(0,800);
   if(!transcript)return reply(422,{success:false,error:'음성이 잘 들리지 않았어요. 다시 녹음해 주세요.'});
+  // Guard against mistaken language detection: don't silently translate Korean
+  // or grade an unintended Korean-script transcript as an English answer.
+  const hangul=(transcript.match(/[\uAC00-\uD7A3]/g)||[]).length;
+  const letters=(transcript.match(/[a-z]/gi)||[]).length;
+  if(hangul>0&&hangul>=letters/3){
+   return reply(422,{success:false,error:'영어 답변으로 인식되지 않았어요. 영어로 다시 녹음해 주세요.'});
+  }
   return reply(200,{success:true,transcript});
  }catch(e){
   console.error('[Free Talking transcribe]',String(e));
