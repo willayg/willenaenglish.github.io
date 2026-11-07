@@ -9,6 +9,7 @@ const WORKER='https://get-audio-urls.willena.workers.dev/free-talking-store';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const VOICES={
  lili:{model:'eleven_v3',voice:'M7zl2TS7ORAIGUejDfoy',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
+ pigfish:{model:'eleven_v3',voice:'W7UbuMY4ypluqgZS2UzT',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
  willi_mp3:{model:'gpt-4o-mini-tts',voice:'marin',variant:'fallback',prefix:'ft_fallback_v1_',tag:'free_talking_legacy_fallback_mp3_v1'}
 };
 const json=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
@@ -54,47 +55,55 @@ function base64(buffer){
  return btoa(str);
 }
 async function createMp3(env,text,voice){
- let response;
- if(voice==='lili'){
-  const secret=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
+ if(voice==='lili'||voice==='pigfish'){
+  const cfg=VOICES[voice],secret=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
+  const settings={stability:0.5};
   if(secret){
-   response=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+VOICES.lili.voice+'?output_format=mp3_44100_128',{
-    method:'POST',headers:{'xi-api-key':secret,'Content-Type':'application/json','Accept':'audio/mpeg'},
-    body:JSON.stringify({text,model_id:'eleven_v3',voice_settings:{stability:0.5}}),
-    signal:AbortSignal.timeout(35000)});
-  }else{
-   // Reuse the established Willena proxy only when the Pages Preview secret is
-   // unavailable. Generated MP3s still save to the exact shared Cloudflare R2 key.
-   const proxy=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text,voice_id:VOICES.lili.voice,model_id:'eleven_v3',voice_settings:{stability:0.5}}),
-    signal:AbortSignal.timeout(35000)});
-   if(!proxy.ok)throw Error('ELEVENLABS_PROXY_HTTP_'+proxy.status);
-   const payload=await proxy.json().catch(()=>null);
-   if(!payload||typeof payload.audio!=='string')throw Error('ELEVENLABS_PROXY_INVALID_RESPONSE');
-   const binary=atob(payload.audio);
-   if(binary.length<500||binary.length>1250000)throw Error('ELEVENLABS_PROXY_INVALID_MP3');
-   const bytes=new Uint8Array(binary.length);
-   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-   const mp3=(bytes[0]===73&&bytes[1]===68&&bytes[2]===51)||(bytes[0]===255&&(bytes[1]&224)===224);
-   if(!mp3)throw Error('ELEVENLABS_PROXY_INVALID_MP3');
-   return bytes.buffer;
+   try{
+    const direct=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+cfg.voice+'?output_format=mp3_44100_128',{
+     method:'POST',headers:{'xi-api-key':secret,'Content-Type':'application/json','Accept':'audio/mpeg'},
+     body:JSON.stringify({text,model_id:'eleven_v3',voice_settings:settings}),
+     signal:AbortSignal.timeout(18000)});
+    if(!direct.ok)throw Error('ELEVENLABS_HTTP_'+direct.status);
+    const bytes=await direct.arrayBuffer();
+    if(bytes.byteLength<500||bytes.byteLength>1250000)throw Error('ELEVENLABS_INVALID_MP3_SIZE');
+    const data=new Uint8Array(bytes);
+    if(!((data[0]===73&&data[1]===68&&data[2]===51)||(data[0]===255&&(data[1]&224)===224)))
+     throw Error('ELEVENLABS_INVALID_MP3_FORMAT');
+    return bytes;
+   }catch(error){
+    console.warn('[Teacher batch] Direct ElevenLabs unavailable; using Netlify proxy',String(error?.message||error).slice(0,100));
+   }
   }
- }else{
-  const secret=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
-  if(!secret)throw Error('OPENAI_KEY_NOT_AVAILABLE_IN_TEACHERS_PREVIEW');
-  response=await fetch('https://api.openai.com/v1/audio/speech',{
-   method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json'},
-   body:JSON.stringify({model:'gpt-4o-mini-tts',voice:'marin',input:text,response_format:'mp3',
-    instructions:'Ask this question naturally, with friendly American English intonation. Speak at a comfortable, unhurried pace without exaggerating syllables. Say only the question.'}),
+  // Netlify fallback is used both for missing Cloudflare secrets and direct TTS errors/timeouts.
+  const proxy=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({text,voice_id:cfg.voice,model_id:'eleven_v3',voice_settings:settings}),
    signal:AbortSignal.timeout(35000)});
+  if(!proxy.ok)throw Error('ELEVENLABS_PROXY_HTTP_'+proxy.status);
+  const payload=await proxy.json().catch(()=>null);
+  if(typeof payload?.audio!=='string')throw Error('ELEVENLABS_PROXY_INVALID_RESPONSE');
+  const binary=atob(payload.audio);
+  if(binary.length<500||binary.length>1250000)throw Error('ELEVENLABS_PROXY_INVALID_MP3');
+  const bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  if(!((bytes[0]===73&&bytes[1]===68&&bytes[2]===51)||(bytes[0]===255&&(bytes[1]&224)===224)))
+   throw Error('ELEVENLABS_PROXY_INVALID_MP3_FORMAT');
+  return bytes.buffer;
  }
- if(!response.ok)throw Error((voice==='lili'?'ELEVENLABS':'OPENAI')+'_TTS_HTTP_'+response.status);
+ const secret=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
+ if(!secret)throw Error('OPENAI_KEY_NOT_AVAILABLE_IN_TEACHERS_PREVIEW');
+ const response=await fetch('https://api.openai.com/v1/audio/speech',{
+  method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json'},
+  body:JSON.stringify({model:'gpt-4o-mini-tts',voice:'marin',input:text,response_format:'mp3',
+   instructions:'Ask this question naturally, with friendly American English intonation. Speak at a comfortable, unhurried pace without exaggerating syllables. Say only the question.'}),
+  signal:AbortSignal.timeout(35000)});
+ if(!response.ok)throw Error('OPENAI_TTS_HTTP_'+response.status);
  const bytes=await response.arrayBuffer();
  if(bytes.byteLength<500||bytes.byteLength>1250000)throw Error('INVALID_TTS_MP3_SIZE');
  const data=new Uint8Array(bytes);
- const mp3=(data[0]===73&&data[1]===68&&data[2]===51)||(data[0]===255&&(data[1]&224)===224);
- if(!mp3)throw Error('INVALID_TTS_MP3_FORMAT');
+ if(!((data[0]===73&&data[1]===68&&data[2]===51)||(data[0]===255&&(data[1]&224)===224)))
+  throw Error('INVALID_TTS_MP3_FORMAT');
  return bytes;
 }
 async function catalog(){
@@ -126,7 +135,7 @@ export async function onRequestPost({request,env}){
   const body=await request.json().catch(()=>null);
   if(!body||typeof body!=='object')return json(400,{success:false,error:'Invalid request'});
   if(body.action==='catalog')return json(200,{success:true,...await catalog(),
-   formats:{lili:'ElevenLabs Bunny v3 · MP3',willi_mp3:'OpenAI Marin fallback · MP3'}});
+   formats:{lili:'ElevenLabs Bunny v3 · MP3',pigfish:'ElevenLabs Pigfish v3 · MP3',willi_mp3:'OpenAI Marin fallback · MP3'}});
   const voice=String(body.voice||'');
   const config=VOICES[voice];
   if(!config)return json(400,{success:false,error:'Choose an available MP3 voice'});
