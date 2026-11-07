@@ -83,3 +83,55 @@
 
 /* Keep Willi's original circle entirely untouched. */
 .free-talking-genius #ftTurnCircle .bf-actor[hidden]{display:none!important}
+
+/* Wider desktop character panel; readable stacked cards on phones. */
+@media(min-width:701px){
+ .free-talking-genius #ftCharacter .ft-character-panel{
+  width:min(920px,100%)!important;
+  max-width:none!important;
+ }
+ .free-talking-genius #ftCharacter .ft-character-options{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:20px;
+ }
+ .free-talking-genius #ftCharacter .ft-character-option{
+  min-height:205px;
+ }
+}
+@media(max-width:700px){
+ .free-talking-genius #ftCharacter{
+  padding:18px 12px!important;
+ }
+ .free-talking-genius #ftCharacter .ft-character-panel{
+  width:100%!important;
+  padding:22px 16px!important;
+  gap:12px;
+ }
+ .free-talking-genius #ftCharacter .ft-character-options{
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:11px!important;
+  margin:8px 0!important;
+ }
+ .free-talking-genius #ftCharacter .ft-character-option{
+  min-height:110px!important;
+  display:flex!important;
+  flex-direction:row!important;
+  justify-content:flex-start!important;
+  align-items:center!important;
+  gap:18px!important;
+  padding:10px 20px!important;
+  border-radius:20px!important;
+ }
+ .free-talking-genius #ftCharacter .ft-character-symbol{
+  width:94px!important;height:94px!important;
+  min-width:94px!important;max-width:94px!important;
+  flex:0 0 94px!important;
+ }
+ .free-talking-genius #ftCharacter .ft-character-option strong{
+  font-size:clamp(19px,5vw,25px)!important;
+  text-align:left;
+ }
+ .free-talking-genius #ftCharacter .ft-character-start-container{
+  width:100%;
+ }
+}
