@@ -101,12 +101,12 @@ export async function onRequestPost({request,env}){
   const prompt=await contentQuestion(questionId);
   if(!prompt||prompt.book_id!==session.book_id||prompt.unit_id!==session.unit_id||Number(prompt.unit_number)!==session.unit_number)
    return reply(400,{success:false,error:'Question is not in this textbook unit.'});
-  const query='free_talking_attempts?select=*&session_id=eq.'+sessionId+'&question_id=eq.'+questionId+'&order=attempt_no.asc&limit=5';
+  const query='free_talking_attempts?select=*&session_id=eq.'+sessionId+'&question_id=eq.'+questionId+'&order=attempt_no.asc&limit=20';
   const recent=await db(query,auth.token);
   if(!recent.ok)return reply(503,{success:false,error:'Could not verify previous answers'});
   const past=recent.value||[];
   const nextAttempt=past.length+1;
-  if(past.length>=5)return reply(429,{success:false,error:'Maximum five attempts for this question.'});
+  if(past.length>=20)return reply(429,{success:false,error:'Maximum twenty attempts for this question.'});
   if(isHint){
    if(!['translation','starter','english_prompt','typed_review'].includes(hintType))return reply(400,{success:false,error:'Unknown hint'});
    if(hintType==='starter'&&!starterFor(prompt))
