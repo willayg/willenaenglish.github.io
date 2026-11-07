@@ -362,6 +362,41 @@ async function syncQuestionReward(question,bonus){
   state.awards.add(awardKey);
  }
 }
+// Creativity is a rare one-time gift, independent of the scored answer.
+async function syncCreativityGift(question){
+ const key='creative:'+state.mode+':'+question.id;
+ if(state.awards.has(key))return false;
+ const rewardId=await stableRewardUuid('free-talking-creative-v1|'+state.student.id+'|'+state.mode+'|'+question.id);
+ const payload={reward_only:true,session_id:rewardId,client_attempt_id:rewardId,
+  book_id:BOOK(),unit_id:question.unit_id,reward_mode:'free_talking_creativity_gift',
+  reward_list_name:'Free Talking Genius · Creative Surprise · '+bookTitle()+' · Q'+question.question_number,
+  reward_list_size:1,reward_started_at:state.session?.created_at||new Date().toISOString(),
+  reward_summary:{completed:true,stars:0,percent:100,accuracy:1,score:5,total:5,
+   points_earned:5,book_id:BOOK(),unit_id:question.unit_id,
+   free_talking_question_id:question.id,free_talking_mode:state.mode,
+   reward_scheme:'free-talking-creativity-gift-v1',session_source:'student'}};
+ const fn=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
+ const response=await fn('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+  method:'POST',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({payload})});
+ const data=await response.json().catch(()=>null);
+ if(!response.ok||data?.success!==true)throw Error(data?.error||'Creativity gift sync failed');
+ state.awards.add(key);
+ return true;
+}
+function showCreativitySurprise(reason){
+ const popup=document.createElement('div');popup.className='ft-creativity-surprise';
+ popup.setAttribute('role','status');
+ const coin=document.createElement('div');coin.className='ft-creativity-surprise-coin';
+ coin.appendChild(createScoreCoin(true));
+ const heading=document.createElement('strong');heading.textContent='Creative Surprise! +5';
+ const detail=document.createElement('p');detail.textContent=reason||'정말 특별한 생각이에요!';
+ popup.append(coin,heading,detail);
+ document.body.appendChild(popup);
+ try{const sound=new Audio('/Games/english_arcade/assets/audio/right-answer.mp3');sound.volume=.7;void sound.play().catch(()=>{});}catch{}
+ void showPointAward({amount:5,origin:capturePointOrigin(coin)}).catch(()=>{});
+ setTimeout(()=>popup.remove(),3200);
+}
 async function syncPendingQuestionRewards(){
  for(const question of groups()){
   const bonus=bestUnitBonus(state.unit,state.mode,question.id);
