@@ -982,11 +982,38 @@ $('ftRetry').addEventListener('click',()=>{if(!state.feedback||attemptPassed(sta
 $('ftSkip').addEventListener('click',()=>{}); // Disabled in guided practice
 $('ftNext').addEventListener('click',()=>{if(!state.current||!unitHasPass(state.unit,state.mode,state.current.id))return;state.cursor=(state.cursor+1)%8;renderQuestion()});
 $('ftCorrectionAck').addEventListener('change',()=>{$('ftRetry').disabled=!$('ftCorrectionAck').checked});
-$('ftCorrectionListen').addEventListener('click',()=>{
- if(!window.speechSynthesis||!state.feedback)return;
- window.speechSynthesis.cancel();
- const u=new SpeechSynthesisUtterance(state.feedback.correction||state.feedback.answer_text||'');
- u.lang='en-US';u.rate=.87;window.speechSynthesis.speak(u);
+let correctionPlayback=null;
+$('ftCorrectionListen').addEventListener('click',async()=>{
+ if(!state.feedback?.id)return;
+ const button=$('ftCorrectionListen');
+ button.disabled=true;button.textContent='음성을 준비하고 있어요…';
+ if(correctionPlayback){try{correctionPlayback.pause()}catch{}correctionPlayback=null}
+ try{
+  const play=async access=>fetch('/api/free-talking-audio',{
+   method:'POST',credentials:'include',cache:'no-store',
+   headers:{Authorization:'Bearer '+access,'Content-Type':'application/json'},
+   body:JSON.stringify({correction_attempt_id:state.feedback.id,voice:questionVoice.getVoice()}),
+   signal:AbortSignal.timeout(65000)});
+  let response=await play(await token());
+  if(response.status===401)response=await play(await token(true));
+  const data=await response.json().catch(()=>null);
+  if(!response.ok||data?.success!==true||data.stored!==true||!data.audio)throw Error('Correction audio not ready');
+  const raw=atob(data.audio),bytes=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+  const url=URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'}));
+  const audio=new Audio(url);correctionPlayback=audio;
+  const cleanup=()=>{URL.revokeObjectURL(url);if(correctionPlayback===audio)correctionPlayback=null};
+  audio.addEventListener('ended',cleanup,{once:true});
+  audio.addEventListener('error',cleanup,{once:true});
+  await audio.play();
+ }catch(error){
+  console.warn('[Free Talking] Corrected sentence voice unavailable',String(error?.message||error));
+  if(window.speechSynthesis){
+   window.speechSynthesis.cancel();
+   const u=new SpeechSynthesisUtterance(state.feedback.correction||state.feedback.answer_text||'');
+   u.lang='en-US';u.rate=.85;window.speechSynthesis.speak(u);
+  }
+ }finally{button.disabled=false;button.textContent='🔊 고친 문장 듣기'}
 });
 $('ftSessionExit').addEventListener('click',()=>void exit());
 $('ftSessionHome').addEventListener('click',()=>void exit());
