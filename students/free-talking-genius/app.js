@@ -586,7 +586,7 @@ function markFeedback(attempt){
  const max=isV2?10:4;
  const passed=attemptPassed(attempt);
  const contextMissing=rubric?.context_required===true&&rubric?.context_pass===false;
- $('ftFeedbackTitle').textContent=passed?(total>6?'통과! 보너스 +'+(total-6)+'점':'통과! 잘했어요!'):contextMissing?'질문에 맞는 시제나 문법을 사용해 보세요.':'조금만 더! 6점부터 완료돼요.';
+ // Guided feedback title is set below, after the required correction state is calculated.
  $('ftFeedbackTotal').textContent=total+'/'+max;
  $('ftCircleScore').textContent=total+'/'+max;
  const grid=$('ftFeedbackGrid');grid.replaceChildren();
