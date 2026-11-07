@@ -10,7 +10,14 @@
  status.type='button';
  status.className='ft-ring-action-pill';
  status.setAttribute('aria-label','눌러서 듣기');
- status.textContent='눌러서 듣기';
+ const spinner=document.createElement('span');
+ spinner.className='ft-ring-thinking-icon';
+ spinner.setAttribute('aria-hidden','true');
+ const spinnerCore=document.createElement('span');spinnerCore.className='ft-ring-thinking-core';
+ spinner.appendChild(spinnerCore);
+ const statusText=document.createElement('span');statusText.className='ft-ring-action-label';
+ statusText.textContent='눌러서 듣기';
+ status.append(spinner,statusText);
  stage.insertAdjacentElement('afterend',status);
  // Correction flow: a real button directly beneath the corrected sentence.
  const correction=document.querySelector('#ftRepeatScreen .ft-repeat-sentence.is-corrected');
@@ -39,14 +46,18 @@
    repeatButton.dataset.state=processing?'thinking':recording?'recording':'ready';
    repeatButton.disabled=processing;
   }
-  if(!usable)return;
+  if(!usable){
+   session.dataset.ringThinking=repeatActive&&repeatButton.dataset.state==='thinking'?'true':'false';
+   return;
+  }
   const phase=circle.dataset.phase||'ready';
   const recording=circle.dataset.aiRecording==='true'||circle.dataset.listening==='true';
   const processing=circle.dataset.transcribing==='true'||phase==='thinking';
   const state=processing?'thinking':recording?'recording':phase==='ai'?'playing':phase==='ready'?'listen':'speak';
   const words={thinking:'생각 중…',recording:'녹음 중…',playing:'듣는 중…',listen:'눌러서 듣기',speak:'눌러서 말하기'};
   if(status.dataset.state!==state)status.dataset.state=state;
-  if(status.textContent!==words[state])status.textContent=words[state];
+  if(statusText.textContent!==words[state])statusText.textContent=words[state];
+  session.dataset.ringThinking=state==='thinking'?'true':'false';
   status.disabled=processing||phase==='ai'||phase==='feedback';
   status.setAttribute('aria-label',words[state]);
  };
