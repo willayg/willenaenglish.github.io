@@ -53,6 +53,55 @@
 .bf-demo-ribbon small{font-size:12px;font-weight:500}
 @media(max-width:600px){#ftTurnCircle .bf-actor{width:185px;height:185px}.bf-demo-ribbon{font-size:13px}}
 @media(prefers-reduced-motion:reduce){.bf-svg *{animation:none!important}}
+
+/* V2: remove legacy orbit/countdown/score overlays from Bunny's face. */
+.free-talking-genius #ftSession #ftTurnCircle .ft-circle-glow,
+.free-talking-genius #ftSession #ftTurnCircle .ft-orbit-visual,
+.free-talking-genius #ftSession #ftTurnCircle .ft-circle-start,
+.free-talking-genius #ftSession #ftTurnCircle .ft-circle-ai,
+.free-talking-genius #ftSession #ftTurnCircle .ft-circle-mic,
+.free-talking-genius #ftSession #ftTurnCircle .ft-circle-thinking,
+.free-talking-genius #ftSession #ftTurnCircle .ft-circle-score,
+.free-talking-genius #ftSession #ftTurnCircle .ft-record-countdown {display:none!important;visibility:hidden!important;opacity:0!important}
+.free-talking-genius #ftSession #ftTurnCircle{
+  background:transparent!important;background-image:none!important;border:0!important;
+  box-shadow:none!important;outline-offset:7px;overflow:visible!important;
+  width:clamp(205px,35vw,255px);height:clamp(205px,35vw,255px);
+  animation:none!important;touch-action:manipulation;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase]{
+  background:transparent!important;background-image:none!important;
+  border:0!important;box-shadow:none!important;animation:none!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle .bf-actor{
+  width:100%!important;height:100%!important;z-index:10!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="student"][data-listening="false"] .bf-actor{
+  filter:drop-shadow(0 0 11px #f8a9d5);
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="student"][data-listening="false"]{
+  cursor:pointer;
+}
+.bf-tap-guide {
+  border:0;display:flex;align-items:center;justify-content:center;gap:8px;
+  margin:12px auto 0;padding:12px 20px;border-radius:999px;
+  font:800 16px/1.25 Poppins,sans-serif;background:#fce1f1;color:#a51e72;
+  box-shadow:0 4px 0 #efb5d4;max-width:min(94%,330px);
+  transition:background .18s,transform .18s;cursor:pointer;touch-action:manipulation;
+}
+.bf-tap-guide[hidden]{display:none!important}
+.bf-tap-guide[data-kind="recording"]{background:#dbf9f6;color:#087e87;box-shadow:0 4px 0 #a8e9e6}
+.bf-tap-guide[data-kind="thinking"]{background:#f1eaff;color:#6856a9;box-shadow:none;cursor:default}
+.bf-tap-guide[data-kind="ai"]{background:#edf9fa;color:#47828a;box-shadow:none;cursor:default}
+.bf-tap-guide[data-kind="ready"]{background:#e4f8fb;color:#197b87}
+.bf-tap-guide[data-kind="feedback"]{background:#fff6d6;color:#977113;box-shadow:none}
+.bf-tap-guide[data-kind="student"]{animation:bfCall 1.7s ease-in-out infinite}
+@keyframes bfCall{0%,100%{transform:scale(1)}50%{transform:scale(1.055)}}
+@media(max-width:600px){
+ .free-talking-genius #ftSession #ftTurnCircle{width:220px!important;height:220px!important}
+ .bf-tap-guide{font-size:15px;padding:11px 18px}
+}
+
 </style></head><body>
 <div class="study-app free-talking-genius">
 <div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
@@ -267,6 +316,37 @@
       if(!$('ftFinish')?.hidden){setState('celebrating');setTimeout(()=>setState('idle'),1500)}
     });
     if($('ftFinish'))finishObserver.observe($('ftFinish'),{attributes:true,attributeFilter:['hidden']});
+
+    // Dedicated call-to-action for children. It clicks the real app button,
+    // so recording, permissions, grading and session logic remain unchanged.
+    const guide=document.createElement('button');
+    guide.type='button';guide.className='bf-tap-guide';guide.dataset.kind='ready';
+    guide.textContent='🔊 Bunny를 눌러 질문 듣기';
+    voice.insertBefore(guide,circle.nextSibling);
+    const mode=()=> $('ftSession')?.dataset.mode || 'speaking';
+    function updateGuide(){
+      if($('ftSession')?.hidden){guide.hidden=true;return}
+      guide.hidden=false;
+      const phase=circle.dataset.phase||'ready';
+      const recording=circle.dataset.aiRecording==='true'||circle.dataset.listening==='true';
+      const thinking=circle.dataset.transcribing==='true';
+      const writing=mode()==='writing';
+      if(thinking){guide.dataset.kind='thinking';guide.textContent='⏳ 목소리를 확인하고 있어요';}
+      else if(recording){guide.dataset.kind='recording';guide.textContent='🎙️ 듣고 있어요 · 다시 눌러 끝내기';}
+      else if(phase==='student'){guide.dataset.kind='student';guide.textContent=writing?'✏️ 답변을 써 보세요':'🎤 Bunny를 눌러 영어로 말하기';}
+      else if(phase==='ai'){guide.dataset.kind='ai';guide.textContent='🐰 Bunny가 말하고 있어요';}
+      else if(phase==='thinking'){guide.dataset.kind='thinking';guide.textContent='💭 Bunny가 생각하고 있어요';}
+      else if(phase==='feedback'){guide.dataset.kind='feedback';guide.textContent='⭐ 피드백을 확인해 보세요';}
+      else {guide.dataset.kind='ready';guide.textContent='🔊 Bunny를 눌러 질문 듣기';}
+      guide.disabled=guide.dataset.kind==='thinking'||guide.dataset.kind==='ai'||guide.dataset.kind==='feedback'||(writing&&phase==='student');
+    }
+    guide.addEventListener('click',()=>{if(!guide.disabled)circle.click()});
+    const guideObserver=new MutationObserver(updateGuide);
+    guideObserver.observe(circle,{attributes:true,attributeFilter:['data-phase','data-listening','data-ai-recording','data-transcribing']});
+    guideObserver.observe($('ftSession'),{attributes:true,attributeFilter:['hidden','data-mode']});
+    voice.addEventListener('ft:voice-playing',updateGuide);
+    updateGuide();
+
     selectBunny();
     window.BunnyFox={setState,actor};
   };
