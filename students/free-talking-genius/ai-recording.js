@@ -92,7 +92,7 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
   })();
   return preparing;
  }
- async function start(sessionId,questionId){
+ async function start(sessionId,questionId,purpose='answer'){
   if(starting||recording||processing)return;
   if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){
    say('이 브라우저는 AI 녹음을 지원하지 않아요. 브라우저 방식을 사용해 주세요.');return;
@@ -124,6 +124,7 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
     try{
      const data=new FormData();
      data.append('session_id',sessionId);data.append('question_id',questionId);
+     data.append('purpose',purpose);
      data.append('audio',audio,'answer.'+(mime.includes('mp4')?'mp4':mime.includes('ogg')?'ogg':'webm'));
      const send=async token=>fetch('/api/free-talking-transcribe',{
       method:'POST',credentials:'include',
