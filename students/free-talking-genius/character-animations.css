@@ -162,3 +162,41 @@
  transform:scale(1.045)!important;
  box-shadow:0 0 0 5px #7fcbd588!important;
 }
+
+/* Character selection: circles are BACKDROP layers, not borders drawn over art. */
+.free-talking-genius #ftCharacter .ft-character-option{
+ -webkit-tap-highlight-color:transparent!important;
+ touch-action:manipulation;
+ -webkit-appearance:none;
+ appearance:none;
+}
+.free-talking-genius #ftCharacter .ft-character-option:active{
+ background:#fff!important;
+}
+.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol:has(.bf-svg){
+ position:relative!important;
+ isolation:isolate!important;
+ border:0!important;outline:0!important;box-shadow:none!important;
+ border-radius:50%!important;background:transparent!important;
+ overflow:visible!important;
+ -webkit-tap-highlight-color:transparent!important;
+}
+.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol:has(.bf-svg)::before{
+ content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+ box-sizing:border-box;border-radius:50%;
+ background:#e8f9fb;border:8px solid #aee8ed;
+}
+.free-talking-genius #ftCharacter .ft-character-lili .ft-character-symbol::before{
+ background:#fff1f8!important;border-color:#f1bedb!important;
+}
+.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol .bf-svg{
+ position:relative!important;z-index:1!important;
+ display:block;overflow:visible!important;
+}
+.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"] .ft-character-symbol:has(.bf-svg){
+ box-shadow:0 0 0 5px #7fcbd588!important;
+ transform:scale(1.045)!important;
+}
+.free-talking-genius #ftCharacter .ft-character-lili[aria-pressed="true"] .ft-character-symbol:has(.bf-svg){
+ box-shadow:0 0 0 5px #e9a8ca88!important;
+}
