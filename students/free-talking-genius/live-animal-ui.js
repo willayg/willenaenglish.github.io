@@ -41,8 +41,13 @@
    const repeating=animal&&step==='repeat';
    // Main app moves the original circle for score/repeat and each new
    // question. Do not fight its correction placement.
-   if(!relocating&&normal&&circle.parentElement!==anchor){
-    relocating=true;anchor.appendChild(circle);relocating=false;
+   if(!relocating){
+    if(normal&&circle.parentElement!==anchor){
+     relocating=true;anchor.appendChild(circle);relocating=false;
+    }else if(!animal&&step!=='repeat'&&circle.parentElement===anchor){
+     // AI Willi must keep his original circle outside the hidden animal UI.
+     relocating=true;voice.insertBefore(circle,stage);relocating=false;
+    }
    }
    stage.hidden=!normal;pill.hidden=!normal;repeat.hidden=!repeating;
    if(!animal){session.dataset.animalThinking='false';return}
