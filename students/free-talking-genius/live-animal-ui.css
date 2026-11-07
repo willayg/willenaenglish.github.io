@@ -1,0 +1,175 @@
+/* Approved Concept A promoted to the live Free Talking page.
+   All visual rules are limited to Bunny Fox / Pigfish. AI Willi is unchanged. */
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftGameCard{
+ min-height:calc(100dvh - 246px)!important;
+ height:auto!important;overflow:visible!important;
+ justify-content:flex-start!important;gap:0!important;
+}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftWilliVoice{
+ width:100%!important;display:flex!important;align-items:center!important;
+ justify-content:center!important;flex-direction:column!important;
+ min-height:302px!important;height:302px!important;flex:0 0 302px!important;
+ order:1!important;margin:0!important;padding:0!important;gap:0!important;
+ position:relative!important;overflow:visible!important;
+}
+.free-talking-genius #ftSession .ft-animal-stage{
+ width:225px;height:225px;min-width:225px;min-height:225px;
+ flex:0 0 225px;display:grid;place-items:center;
+ position:relative;margin:0 auto;
+}
+.free-talking-genius #ftSession .ft-animal-stage[hidden],
+.free-talking-genius #ftSession .ft-animal-action[hidden],
+.free-talking-genius #ftSession .ft-animal-rerecord[hidden]{display:none!important}
+.free-talking-genius #ftSession .ft-animal-avatar{
+ width:208px;height:208px;min-width:208px;min-height:208px;
+ position:relative;display:grid;place-items:center;z-index:3;
+}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-animal-avatar::before{
+ content:"";inset:0;position:absolute;pointer-events:none;
+ z-index:0;border:4px solid #d9eff1;border-radius:50%;background:white;
+}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-animal-avatar #ftTurnCircle{
+ width:207px!important;height:207px!important;
+ min-width:207px!important;min-height:207px!important;
+ display:grid!important;place-items:center!important;
+ padding:0!important;margin:0!important;
+ position:relative!important;z-index:4!important;
+ overflow:visible!important;isolation:isolate;
+ border:0!important;outline:0!important;box-shadow:none!important;
+ background:transparent!important;background-image:none!important;
+ animation:none!important;transform:none!important;
+ border-radius:50%!important;cursor:pointer;
+ -webkit-tap-highlight-color:transparent!important;
+}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-animal-avatar #ftTurnCircle::before,
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-animal-avatar #ftTurnCircle::after{content:none!important;display:none!important}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftTurnCircle .bf-actor,
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftTurnCircle[data-phase="student"] .bf-actor{
+ width:81%!important;height:81%!important;
+ position:absolute!important;top:50%!important;left:50%!important;
+ transform:translate(-50%,-50%)!important;
+ z-index:6!important;pointer-events:none!important;
+ display:block!important;filter:none!important;box-shadow:none!important;
+}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftTurnCircle .bf-svg{
+ width:100%!important;height:100%!important;max-width:100%!important;
+ display:block!important;overflow:visible!important;filter:none!important;
+}
+.free-talking-genius #ftSession .ft-animal-timer{
+ position:absolute;inset:0;display:block;z-index:1;pointer-events:none;
+}
+.free-talking-genius #ftSession .ft-animal-timer svg{
+ width:100%;height:100%;display:block;overflow:visible;
+ transform:rotate(-90deg);
+}
+.free-talking-genius #ftSession .ft-animal-timer circle{
+ fill:none;stroke-width:18;stroke-linecap:round;
+}
+.free-talking-genius #ftSession .ft-animal-track{stroke:#bcf0f3}
+.free-talking-genius #ftSession .ft-animal-progress{
+ stroke:#53c5d1;stroke-dasharray:100;stroke-dashoffset:0;
+ transition:stroke-dashoffset .12s linear;
+}
+.free-talking-genius #ftSession .ft-animal-stage[data-recording="true"] .ft-animal-progress{
+ stroke-dashoffset:var(--ft-animal-record-progress,0);
+}
+/* A single tappable pill below each animal; keeps native microphone listener. */
+.free-talking-genius #ftSession .ft-animal-action{
+ display:flex;align-items:center;justify-content:center;gap:12px;
+ position:relative;z-index:10;
+ width:190px;max-width:90%;min-height:52px;
+ margin:10px auto 2px;padding:8px 15px;
+ border:5px solid #e9a8c9;border-radius:24px;
+ background:white;color:#697f85;
+ font:850 clamp(15px,2.6vw,18px)/1.25 Poppins,system-ui,sans-serif;
+ cursor:pointer;box-shadow:none;
+ -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.free-talking-genius #ftSession .ft-animal-action[data-state="speak"],
+.free-talking-genius #ftSession .ft-animal-action[data-state="recording"]{border-color:#91dce5}
+.free-talking-genius #ftSession .ft-animal-action[data-state="thinking"]{border-color:#b7dfe3}
+.free-talking-genius #ftSession .ft-animal-action:disabled{opacity:1;cursor:default}
+.free-talking-genius #ftSession .ft-animal-action:focus-visible,
+.free-talking-genius #ftSession .ft-animal-rerecord:focus-visible{outline:3px solid #72cbd4;outline-offset:3px}
+.free-talking-genius #ftSession .ft-animal-spinner{
+ display:none;flex:0 0 27px;position:relative;
+ width:27px;height:27px;box-sizing:border-box;
+ border:4px solid #e7f8f9;border-radius:50%;
+ border-top-color:#ee8fc0;border-right-color:#53c9d7;
+ animation:ftAnimalSpin .85s linear infinite;
+}
+.free-talking-genius #ftSession .ft-animal-spinner i{
+ position:absolute;inset:3px;border:3px solid transparent;
+ border-left-color:#66cfda;border-bottom-color:#ef9cc5;border-radius:50%;
+ animation:ftAnimalSpin .6s linear reverse infinite;
+}
+.free-talking-genius #ftSession .ft-animal-action[data-state="thinking"] .ft-animal-spinner{display:block}
+@keyframes ftAnimalSpin{to{transform:rotate(360deg)}}
+.free-talking-genius #ftSession[data-animal-thinking="true"][data-character="bunny-v3"] .bf-actor .bf-eyes,
+.free-talking-genius #ftSession[data-animal-thinking="true"][data-character="pigfish"] .bf-actor .pf-eyes{
+ transform-box:fill-box!important;transform-origin:center center!important;
+ animation:ftAnimalSquint 1.6s ease-in-out infinite!important;
+}
+@keyframes ftAnimalSquint{0%,100%{transform:scaleY(.75)}50%{transform:scaleY(.35)}}
+/* Stable hint section even when unlocked hints change. */
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintActions{
+ order:4!important;min-height:104px!important;flex:0 0 104px!important;
+ margin:6px auto!important;align-content:center!important;
+}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintActions.is-concealed{
+ display:flex!important;visibility:hidden!important;pointer-events:none!important;opacity:0!important;
+}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintViewer{
+ min-height:76px!important;flex:0 0 76px!important;
+ margin:5px auto!important;justify-content:center!important;
+ padding:12px 16px!important;
+}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintViewer[hidden]{
+ display:flex!important;visibility:hidden!important;pointer-events:none!important;opacity:0!important;
+}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftHintViewer .ft-hint-viewer-top,
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftHintViewer .ft-hint-viewer-guide{
+ display:none!important;
+}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftHintViewer .ft-hint-viewer-value{
+ font-size:clamp(16px,3vw,19px)!important;
+}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftTurnStatus{
+ display:none!important;visibility:hidden!important;height:0!important;
+ min-height:0!important;margin:0!important;padding:0!important;
+}
+/* Correction follows the same working recorder with a button directly under
+   the corrected sentence. */
+.free-talking-genius #ftSession .ft-animal-rerecord{
+ display:flex;align-items:center;justify-content:center;
+ width:min(100%,430px);min-height:56px;
+ margin:14px auto 4px;padding:12px 22px;
+ border:3px solid #98dce4;border-radius:22px;
+ background:white;color:#5c777e;
+ font:850 clamp(17px,3.5vw,20px)/1.3 Poppins,system-ui,sans-serif;
+ cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.free-talking-genius #ftSession .ft-animal-rerecord[data-state="recording"]{
+ background:#e3f9fb;border-color:#5bc9d7;
+}
+.free-talking-genius #ftSession .ft-animal-rerecord[data-state="thinking"]{
+ border-color:#cbdfe2;cursor:default;
+}
+.free-talking-genius #ftSession .ft-animal-rerecord:disabled{opacity:1}
+.free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftRepeatMessage{display:none!important}
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] .ft-animal-stage,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] .ft-animal-stage{display:none!important}
+@media(max-width:560px){
+ .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftGameCard{
+  min-height:calc(100dvh - 246px)!important;
+ }
+ .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftWilliVoice{
+  height:296px!important;min-height:296px!important;flex-basis:296px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .free-talking-genius #ftSession .ft-animal-spinner,
+ .free-talking-genius #ftSession .ft-animal-spinner i,
+ .free-talking-genius #ftSession .bf-actor .bf-eyes,
+ .free-talking-genius #ftSession .bf-actor .pf-eyes{animation:none!important}
+}
