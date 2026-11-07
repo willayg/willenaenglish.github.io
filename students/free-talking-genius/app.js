@@ -13,7 +13,7 @@ import {createFreeTalkingVoice} from './question-voice.js?v=20261107-exact-chara
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-route8';
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261107-exact-characters1';
 import {createFreeTalkingCharacters} from './character-actor.js?v=20261107-pig-original4';
-import {createFreeTalkingGuide} from './guide.js?v=20261107-guide1';
+import {createFreeTalkingGuide} from './guide.js?v=20261107-guide-kids2';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
