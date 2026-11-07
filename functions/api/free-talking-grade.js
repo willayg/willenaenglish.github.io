@@ -92,7 +92,7 @@ function enforceRelevance(result,answer){
 // Rehearsal is a separate low-cost pronunciation/transcription check.
 // Compare to the saved corrected sentence, not to browser-supplied reference text.
 function rehearseSimilarity(spoken,expected){
- const clean=x=>String(x||'').toLowerCase().normalize('NFKC').replace(/[’‘]/g,"'").replace(/[^a-z0-9' ]/g,' ').replace(/\\s+/g,' ').trim();
+ const clean=x=>String(x||'').toLowerCase().normalize('NFKC').replace(/[’‘]/g,"'").replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ').trim();
  const a=clean(spoken).split(' ').filter(Boolean),b=clean(expected).split(' ').filter(Boolean);
  if(!a.length||!b.length)return 0;
  // Character Levenshtein tolerates recognition punctuation and small substitutions.
@@ -134,6 +134,8 @@ async function judge(key,question,answer,mode,previous=[]){
  return {scores,feedback,rawTotal,contextRequired:x.context_required===true,challengeMet:x.challenge_met===true,correctionReason:koreanFeedback(x.correction_reason_ko,'context'),creativityGift:x.creativity_gift===true,creativityReason:safeString(x.creativity_reason,120),correction:safeString(x.corrected_answer,800)||answer};
 }
 export async function onRequestPost({request,env}){
+ const started=Date.now();
+ const timing={};
  try{
   const auth=await student(request);
   if(!auth)return reply(401,{success:false,error:'학생 로그인을 확인해 주세요.'});
@@ -176,7 +178,9 @@ export async function onRequestPost({request,env}){
      scores:{grammar:2,context:2,appropriate:2,length:1,vocabulary:1},
      creativity_gift:false,challenge_met:true,context_pass:true},
     raw_total_v2:8,hint_deduction_v2:0,score_total_v2:8};
-   const saved=await db('free_talking_attempts',auth.token,{method:'POST',body:row});
+   const saveStarted=Date.now();
+  const saved=await db('free_talking_attempts',auth.token,{method:'POST',body:row});
+  timing.save_ms=Date.now()-saveStarted;
    if(!saved.ok||!saved.value?.[0])return reply(503,{success:false,error:'연습 결과를 저장하지 못했어요.'});
    return reply(200,{success:true,passed:true,attempt:saved.value[0]});
   }
@@ -210,7 +214,9 @@ export async function onRequestPost({request,env}){
   if(!apiKey)return reply(503,{success:false,error:'AI grading is not configured'});
   const quota=await db('rpc/wg_sentence_ai_quota_v1',auth.token,{method:'POST',body:{p_claim:true}});
   if(!quota.ok||!quota.value?.allowed)return reply(429,{success:false,error:'오늘 AI 확인 횟수를 모두 사용했어요.',quota:quota.value||null});
+  const modelStarted=Date.now();
   const result=enforceAnswerQuality(enforceRelevance(await judge(apiKey,prompt,answer,session.mode,past),answer),answer);
+  timing.model_ms=Date.now()-modelStarted;
   const scoreTotal=Math.max(0,result.rawTotal-hintDeduction);
   const contextPass=result.scores.grammar>=1&&result.scores.context>=1;
   const challengeMet=!String(prompt.grammar_focus||'').startsWith('Challenge:')||result.challengeMet;
@@ -227,9 +233,12 @@ export async function onRequestPost({request,env}){
    raw_total_v2:result.rawTotal,hint_deduction_v2:hintDeduction,score_total_v2:scoreTotal};
   const saved=await db('free_talking_attempts',auth.token,{method:'POST',body:row});
   if(!saved.ok||!saved.value?.[0])return reply(503,{success:false,error:'AI feedback was generated but could not be saved. Please retry.'});
-  return reply(200,{success:true,attempt:saved.value[0],quota:quota.value});
+  timing.total_ms=Date.now()-started;
+  timing.other_ms=Math.max(0,timing.total_ms-(timing.model_ms||0)-(timing.save_ms||0));
+  console.info('[Free Talking] grade timings',JSON.stringify(timing));
+  return reply(200,{success:true,attempt:saved.value[0],quota:quota.value,timings_ms:timing});
  }catch(error){
-  console.error('[Free Talking] grading failed',String(error));
+  console.error('[Free Talking] grading failed',String(error),'duration_ms',Date.now()-started);
   return reply(503,{success:false,error:'AI Willi 확인이나 저장에 문제가 있어요. 다시 시도해 주세요.'});
  }
 }
