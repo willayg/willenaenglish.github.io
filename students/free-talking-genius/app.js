@@ -13,6 +13,7 @@ import {createFreeTalkingVoice} from './question-voice.js?v=20261107-exact-chara
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-route8';
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261107-exact-characters1';
 import {createFreeTalkingCharacters} from './character-actor.js?v=20261107-pig-original4';
+import {createFreeTalkingGuide} from './guide.js?v=20261107-guide1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
@@ -20,11 +21,12 @@ const BOOK=()=>state.bookId;
 const bookTitle=()=>state.books.find(b=>b.id===state.bookId)?.title||'Textbook';
 const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
-const state={student:null,profile:null,books:[],bookId:null,questions:[],unitTitles:new Map(),unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
+const state={skippedIds:new Set(),student:null,profile:null,books:[],bookId:null,questions:[],unitTitles:new Map(),unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
  current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready',repeatStep:false,repeatTranscript:null,repeatChecking:false,seenChallenges:new Set()};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
 const characters=createFreeTalkingCharacters({circle:$('ftTurnCircle'),session:$('ftSession'),voiceHost:$('ftWilliVoice'),choices:{ftChooseLili:'bunny-v3',ftChoosePigfish:'pigfish'}});
+const guide=createFreeTalkingGuide();
 const retryVoice=createFreeTalkingRetryVoice({
  getToken:token,
  onFinished:()=>{
@@ -633,8 +635,9 @@ function markFeedback(attempt){
  $('ftScoreSplash').classList.remove('is-showing');
  void $('ftScoreSplash').offsetWidth;
  $('ftScoreSplash').classList.add('is-showing');
- $('ftNext').hidden=false;$('ftNext').textContent=passed?'다음 문제':'다음';
- $('ftRetry').hidden=true;$('ftSkip').hidden=true;$('ftSubmit').hidden=true;
+ $('ftNext').hidden=false;$('ftNext').textContent=passed?'다음 문제':'문장 고치기';
+ $('ftRetry').hidden=passed;$('ftRetry').textContent='새 아이디어';
+ $('ftSkip').hidden=passed;$('ftSkip').textContent='건너뛰기 · 0점';$('ftSubmit').hidden=true;
  $('ftAttemptStatus').textContent='';
  setTurn('feedback');
 }
@@ -687,12 +690,15 @@ async function submitRepetition(transcript){
   if(state.repeatStep)void aiRecorder.prepare();
  }
 }
+function skippedKey(){return 'ft_skips_'+(state.session?.id||'none')}
+function loadSkips(){try{state.skippedIds=new Set(JSON.parse(sessionStorage.getItem(skippedKey())||'[]'))}catch{state.skippedIds=new Set()}}
+function persistSkips(){try{sessionStorage.setItem(skippedKey(),JSON.stringify([...state.skippedIds]))}catch{}}
 function questionIndexAfter(start=0){
  const questions=groups();
- // Only scores of 6/10 or higher count as completed; higher scores earn bonuses.
+ // Passed questions count as complete; skipped questions earn no points.
  for(let i=0;i<questions.length;i++){
   const index=(start+i)%questions.length,q=questions[index];
-  if(!unitHasPass(state.unit,state.mode,q.id))return index;
+  if(!unitHasPass(state.unit,state.mode,q.id)&&!state.skippedIds.has(q.id))return index;
  }
  return -1;
 }
@@ -741,11 +747,9 @@ function renderQuestion({retry=false}={}){
   :challenge.startsWith('Challenge:')?challenge.slice(10).trim():'완전한 문장 + 자세한 내용';
  $('ftLanguageChallenge').hidden=true;
  $('ftChallengeText').textContent='';
- const splashKey=state.session.id+':'+state.current.id;
- const splash=$('ftChallengeSplash');
- splash.classList.remove('is-dismissing');
+ // The per-question challenge splash is replaced by session onboarding.
+ $('ftChallengeSplash').hidden=true;
  $('ftChallengeSplashText').textContent=goal;
- splash.hidden=retry||state.seenChallenges.has(splashKey);
  $('ftHintEnglish').hidden=state.mode!=='speaking';
  $('ftQuestionText').hidden=state.mode==='speaking';
  const answered=questions.filter(q=>unitHasPass(state.unit,state.mode,q.id)).length;
@@ -796,12 +800,14 @@ function renderQuestion({retry=false}={}){
  // A restored unfinished question shows its previously saved guidance.
  // Earlier attempts are retained without showing a second progress message.
  view('ftSession');
+ guide.showOnSessionStart(state.student?.id,state.session?.id);
  aiRecorder.releaseIdle();
  void questionVoice.select(state.current.id,{autoplay:false});
 }
 let roundChoice=null;
 function chooseRoundVoice(voice){
  if(!['marin','bunny-v3','pigfish'].includes(voice))return;
+ if(roundChoice===voice&&!state.loading&&state.pendingMode){void beginRound(state.pendingMode);return}
  roundChoice=voice;
  retryVoice.preloadBoth();
  for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3'],['ftChoosePigfish','pigfish']])
@@ -843,6 +849,7 @@ async function beginRound(mode){
    state.sessions.unshift(session);
   }
   state.session=session;state.cursor=0;
+  loadSkips();
   renderQuestion();
  }catch(error){showError('세션을 시작할 수 없어요. '+error.message)}
  finally{setBusy(false)}
@@ -1073,8 +1080,17 @@ $('ftQuestionHost').addEventListener('click',e=>{
  if(e.target.closest('[data-speaking-mic]')){setTurn('student');requestAnimationFrame(updateMicListening);}
 });
 $('ftSubmit').addEventListener('click',()=>void submit());
-$('ftRetry').addEventListener('click',()=>{});
-$('ftSkip').addEventListener('click',()=>{});
+$('ftRetry').addEventListener('click',()=>{
+ if(state.loading||!state.current||!state.feedback||attemptPassed(state.feedback))return;
+ state.skippedIds.delete(state.current.id);persistSkips();
+ renderQuestion({retry:true});
+});
+$('ftSkip').addEventListener('click',()=>{
+ if(state.loading||!state.current||!state.feedback||attemptPassed(state.feedback))return;
+ state.skippedIds.add(state.current.id);persistSkips();
+ state.cursor=(state.cursor+1)%groups().length;
+ renderQuestion();
+});
 $('ftNext').addEventListener('click',()=>{
  if(!state.current||!state.feedback)return;
  if(!attemptPassed(state.feedback)){showRepeatScreen();return}
