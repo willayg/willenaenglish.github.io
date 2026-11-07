@@ -12,11 +12,33 @@
  status.setAttribute('aria-label','눌러서 듣기');
  status.textContent='눌러서 듣기';
  stage.insertAdjacentElement('afterend',status);
+ // Correction flow: a real button directly beneath the corrected sentence.
+ const correction=document.querySelector('#ftRepeatScreen .ft-repeat-sentence.is-corrected');
+ const repeatButton=document.createElement('button');
+ repeatButton.type='button';repeatButton.className='ft-ring-rerecord';
+ repeatButton.textContent='눌러서 다시 녹음하기';
+ repeatButton.setAttribute('aria-label','고친 문장 다시 녹음하기');
+ repeatButton.hidden=true;
+ correction?.insertAdjacentElement('afterend',repeatButton);
+ repeatButton.addEventListener('click',()=>{
+  if(!repeatButton.hidden&&!repeatButton.disabled)circle.click();
+ });
+
  const update=()=>{
   const special=!session.hidden&&['bunny-v3','pigfish'].includes(session.dataset.character);
   const step=document.getElementById('ftQuestionStage')?.dataset.step;
   const usable=special&&step!=='score'&&step!=='repeat';
   status.hidden=!usable;
+  const repeatActive=special&&step==='repeat';
+  repeatButton.hidden=!repeatActive;
+  if(repeatActive){
+   const recording=circle.dataset.aiRecording==='true'||circle.dataset.listening==='true';
+   const processing=circle.dataset.transcribing==='true'||circle.disabled;
+   const label=processing?'확인 중…':recording?'녹음 끝내기':'눌러서 다시 녹음하기';
+   if(repeatButton.textContent!==label)repeatButton.textContent=label;
+   repeatButton.dataset.state=processing?'thinking':recording?'recording':'ready';
+   repeatButton.disabled=processing;
+  }
   if(!usable)return;
   const phase=circle.dataset.phase||'ready';
   const recording=circle.dataset.aiRecording==='true'||circle.dataset.listening==='true';
