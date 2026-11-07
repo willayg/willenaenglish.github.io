@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="robots" content="noindex,nofollow"/>
+<title>Free Talking · Magic creativity card concepts</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{font-family:Poppins,system-ui,sans-serif;color:#244f59;background:#eefafb}
+*{box-sizing:border-box}body{margin:0;padding:24px 16px 70px}main{max-width:1120px;margin:auto}
+h1{font-size:clamp(25px,4vw,40px);margin:0 0 5px;color:#2c6873}p.intro{margin:0 0 20px;color:#708a94;font-size:14px;font-weight:700}
+.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.sample{display:flex;flex-direction:column;gap:12px}.sample h2{font-size:19px;margin:0}.sample>p{font-size:12px;color:#69858d;line-height:1.6;margin:0;min-height:38px}
+.card{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;border-radius:27px;min-height:390px;padding:28px 22px;text-align:center;cursor:pointer;transition:transform .25s;outline:none}
+.card:hover,.card:focus-visible{transform:translateY(-5px)}.card h3{position:relative;font-size:clamp(21px,2vw,28px);line-height:1.2;margin:0;z-index:3}
+.card p{position:relative;font-size:14px;line-height:1.7;margin:0;font-weight:700;z-index:3}
+.card .reward{position:relative;display:grid;place-items:center;width:110px;height:110px;border-radius:50%;z-index:2}
+.reward strong{font-size:33px;font-weight:900}
+.card .close{position:relative;font-size:11px;font-weight:700;z-index:3;opacity:.8}
+.spark{position:absolute;width:7px;height:7px;transform:rotate(45deg);z-index:1;animation:glimmer 2.2s ease-in-out infinite}
+.spark:after,.spark:before{content:"";position:absolute;inset:0;border-radius:4px;background:currentColor}
+.spark:after{transform:rotate(90deg)}
+.spark:nth-child(1){top:12%;left:16%;animation-delay:0s}.spark:nth-child(2){top:18%;right:14%;animation-delay:.8s}.spark:nth-child(3){top:36%;left:11%;animation-delay:1.3s}.spark:nth-child(4){bottom:20%;right:11%;animation-delay:.3s}.spark:nth-child(5){bottom:13%;left:23%;animation-delay:1.7s}.spark:nth-child(6){top:59%;right:26%;animation-delay:1.1s}
+@keyframes glimmer{0%,100%{opacity:.15;transform:rotate(45deg) scale(.45)}50%{opacity:1;transform:rotate(45deg) scale(1.6)}}
+.a{background:radial-gradient(circle at 50% 32%,#453477,#19132e 75%);border:3px solid #a987ed;color:#f7eefa;box-shadow:0 16px 40px #30204b27}
+.a:before{content:"";position:absolute;width:190px;height:190px;border:2px solid #aa88dd;border-radius:50%;top:75px;animation:orbit 9s linear infinite;box-shadow:0 0 26px #a57cee8a,inset 0 0 28px #916ec883}
+.a .spark{color:#b6f7fb}.a .reward{border:2px solid #a69bff;background:radial-gradient(circle,#826dce,#3e2f74);box-shadow:0 0 45px #a38add,0 0 10px #b4f6f0 inset;color:#fff}
+@keyframes orbit{to{transform:rotate(360deg)}}
+.b{background:radial-gradient(circle at 50% 35%,#fff3fe,#ebd7fc 80%);border:3px solid #cba5e7;color:#65417c;box-shadow:0 12px 34px #8b6d9930}
+.b:before{content:"";position:absolute;inset:17px;border:2px dashed #b994da75;border-radius:22px}
+.b .spark{color:#cf75bf}.b .reward{border:3px solid #d2afea;background:linear-gradient(135deg,#fff9ff,#d0b5f2);box-shadow:0 7px 15px #8e65aa33;color:#8b53b2}
+.b .reward:after{content:"";position:absolute;inset:-12px;border:1px solid #bf97db;border-radius:50%;animation:breath 2.6s ease-in-out infinite}
+@keyframes breath{50%{transform:scale(1.11);opacity:.22}}
+.c{background:linear-gradient(145deg,#e6fbfd 10%,#f9f5ff 58%,#ffeaf6);border:3px solid #8cdce7;color:#3d6b79;box-shadow:0 12px 34px #437f9f22}
+.c:before{content:"";position:absolute;width:340px;height:340px;border:30px solid #6dd0db24;border-radius:50%;top:-100px;left:50%;transform:translateX(-50%)}
+.c .spark{color:#d65dac}.c .reward{border:3px solid #fff;background:linear-gradient(140deg,#75d5df,#bf87e4,#f2accf);box-shadow:0 0 28px #a8bfedb0;color:#fff}
+.c .reward:before{content:"";position:absolute;inset:-9px;border:5px dotted #de9fd5;border-radius:50%;animation:orbit 12s linear infinite}
+.try{border:2px solid #b5e8ed;border-radius:14px;background:#fff;color:#407780;padding:10px 14px;font:800 13px Poppins;cursor:pointer}
+.try.is-selected{border-color:#ce85b8;color:#b84c91;background:#fff5fa}
+.note{margin:25px auto 0;border:1px solid #b7e6e9;border-radius:15px;max-width:620px;padding:12px 15px;text-align:center;color:#64848d;font-weight:700;font-size:12px}
+@media(max-width:850px){.choices{grid-template-columns:1fr}.sample{max-width:460px;width:100%;margin:auto}.card{min-height:340px}.sample>p{min-height:0}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style></head>
+<body><main><h1>Creativity surprise · 3 concepts</h1><p class="intro">특별한 아이디어를 발견했을 때 · +5 reward · 디자인 비교용</p>
+<div class="choices">
+<section class="sample"><h2>A · Secret constellation</h2><p>어두운 밤하늘, 빛나는 포털. 가장 신비로운 느낌.</p>
+<div class="card a" tabindex="0"><i class="spark"></i><i class="spark"></i><i class="spark"></i><i class="spark"></i><i class="spark"></i><i class="spark"></i><div class="reward"><strong>+5</strong></div><h3>반짝 아이디어!</h3><p>상상력이 돋보였어요!<br/>친구들과 만든 이야기가 특별해요.</p><span class="close">화면을 눌러 닫기</span></div><button class="try" data-choice="A">Select concept A</button></section>
+<section class="sample"><h2>B · Enchanted letter</h2><p>환상적인 편지처럼 부드럽고 다정한 마법 효과.</p>
+<div class="card b" tabindex="0"><i class="spark"></i><i class="spark"></i><i class="spark"></i><i class="spark"></i><i class="spark"></i><i class="spark"></i><div class="reward"><strong>+5</strong></div><h3>반짝 아이디어!</h3><p>상상력이 돋보였어요!<br/>친구들과 만든 이야기가 특별해요.</p><span class="close">화면을 눌러 닫기</span></div><button class="try" data-choice="B">Select concept B</button></section>
+<section class="sample"><h2>C · Crystal discovery</h2><p>수정 속에 숨겨진 보석을 발견하는 느낌. 밝고 활기참.</p>
+<div class="card c" tabindex="0"><i class="spark"></i><i class="spark"></i><i class="spark"></i><i class="spark"></i><i class="spark"></i><i class="spark"></i><div class="reward"><strong>+5</strong></div><h3>반짝 아이디어!</h3><p>상상력이 돋보였어요!<br/>친구들과 만든 이야기가 특별해요.</p><span class="close">화면을 눌러 닫기</span></div><button class="try" data-choice="C">Select concept C</button></section>
+</div><div class="note" id="choiceStatus">These are design previews only. No student points or records will change.</div></main>
+<script>document.querySelectorAll('[data-choice]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.try').forEach(x=>x.classList.toggle('is-selected',x===b));document.getElementById('choiceStatus').textContent='Concept '+b.dataset.choice+' selected for comparison. The live reward popup is unchanged.'}));</script>
+</body></html>
