@@ -91,3 +91,17 @@ html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pig
   height:296px!important;min-height:296px!important;flex-basis:296px!important;
  }
 }
+
+/* Keep the character artwork in front of the permanent countdown ring. */
+html[data-ft-concept="ring"] .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-concept-timer{
+ z-index:1!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-concept-avatar-anchor{
+ z-index:3!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftTurnCircle{
+ z-index:4!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftTurnCircle .bf-actor{
+ z-index:6!important;
+}
