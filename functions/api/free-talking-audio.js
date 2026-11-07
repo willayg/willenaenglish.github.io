@@ -144,23 +144,26 @@ async function audioInventory(bookId,env,request){
    id:q.id,
    marin:await cacheKey(text,model(env),'marin'),
    lili:await cacheKey(text,ELEVEN_MODEL,ELEVEN_VOICES['bunny-v3'],'elevenlabs'),
+   pigfish:await cacheKey(text,ELEVEN_MODEL,ELEVEN_VOICES.pigfish,'elevenlabs'),
    fallback:await cacheKey(text,'gpt-4o-mini-tts','marin','fallback')
   });
  }
- const files=records.flatMap(r=>[r.marin+'.wav',r.lili+'.mp3',r.fallback+'.mp3']);
+ const files=records.flatMap(r=>[r.marin+'.wav',r.lili+'.mp3',r.pigfish+'.mp3',r.fallback+'.mp3']);
  const result=await audioStore(request,{action:'inventory',files});
  const statuses=new Map();
  for(const file of files){const key=file.slice(0,file.lastIndexOf('.'));statuses.set(key,{exists:!!result.exists?.[file],url:null});}
  return {
   success:true,book_id:bookId,questions:records.map(r=>{
-   const willi=statuses.get(r.marin),backup=statuses.get(r.fallback),lili=statuses.get(r.lili);
+   const willi=statuses.get(r.marin),backup=statuses.get(r.fallback),lili=statuses.get(r.lili),pigfish=statuses.get(r.pigfish);
    const williResolved=willi?.exists?willi:backup?.exists?backup:{exists:false,url:null};
    return {id:r.id,marin:{cached:!!williResolved.exists,url:williResolved.url,
      model:willi?.exists?model(env):'gpt-4o-mini-tts',voice:'marin',
      source:williResolved.url?'r2_shared':'r2_direct',content_type:willi?.exists?'audio/wav':'audio/mpeg'},
     'bunny-v3':{cached:!!lili?.exists,url:lili?.url||null,
      model:ELEVEN_MODEL,voice:'bunny',source:lili?.url?'r2_shared':'r2_direct',
-     content_type:'audio/mpeg'}};
+     content_type:'audio/mpeg'},
+    pigfish:{cached:!!pigfish?.exists,url:pigfish?.url||null,
+     model:ELEVEN_MODEL,voice:'pigfish',source:pigfish?.url?'r2_shared':'r2_direct',content_type:'audio/mpeg'}};
   })
  };
 }
