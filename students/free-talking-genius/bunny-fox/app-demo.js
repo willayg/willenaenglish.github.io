@@ -9,9 +9,9 @@ import {renderStudentSessionFinish} from '/students/components/student-session-f
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
-import {createFreeTalkingVoice} from './bunny-fox/question-voice-demo.js';
-import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-score-repeat1';
-import {createFreeTalkingRetryVoice} from './bunny-fox/retry-voice-demo.js';
+import {createFreeTalkingVoice} from './question-voice-demo.js';
+import {createFreeTalkingRecorder} from '../ai-recording.js?v=20261107-score-repeat1';
+import {createFreeTalkingRetryVoice} from './retry-voice-demo.js';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
