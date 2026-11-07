@@ -42,6 +42,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   voiceSpeaking=false;
   update();
  }
+ function setSpeaking(playing){voiceSpeaking=Boolean(playing);if(actor.dataset.state==='celebrating'&&!playing)actor.dataset.state='idle';update()}
  function celebrate(){
   if(!ART[selected])return;
   clearTimeout(celebrateTimer);
@@ -55,5 +56,5 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   update();
  });
  select('marin');
- return {select,celebrate,actor};
+ return {select,celebrate,setSpeaking,actor};
 }
