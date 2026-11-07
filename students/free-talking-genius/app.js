@@ -616,12 +616,18 @@ function markFeedback(attempt){
  $('ftOriginalAnswer').textContent=attempt.answer_text||'';
  renderCorrectionDiff(attempt.answer_text,attempt.correction||attempt.answer_text||'');
  $('ftCorrectionReason').textContent=rubric?.correction_reason_ko||rubric?.feedback?.grammar||'문장을 확인하고 다시 답해 보세요.';
- $('ftFeedbackTitle').textContent=passed?(total>8?'통과! 보너스 +'+(total-8)+'점':'통과! 잘했어요!'):'8점부터 통과! 분홍색 부분을 확인하고 다시 답해 보세요.';
+ $('ftFeedbackTitle').textContent=passed?(total>8?'통과! 보너스 +'+(total-8)+'점':'통과! 잘했어요!')
+  :total>=8?'도전 표현과 문법을 더 정확하게! 분홍색 부분을 고쳐 보세요.'
+  :'8점부터 통과! 분홍색 부분을 확인하고 다시 답해 보세요.';
  $('ftRetry').hidden=passed||attemptsFor(state.session.id,state.current.id).length>=20;
  $('ftRetry').disabled=!passed;
  $('ftNext').hidden=!passed;
  $('ftSkip').hidden=true;$('ftSubmit').hidden=true;
- $('ftAttemptStatus').textContent='';
+ const attempts=attemptsFor(state.session.id,state.current.id).length;
+ $('ftAttemptStatus').textContent=!passed&&attempts>=20?'20번 도전했어요. 선생님에게 도움을 요청해 주세요.':'';
+ $('ftCorrectionGuide').textContent=!passed&&attempts>=3
+  ?'잘하고 싶은 표현을 먼저 확인해 보세요. 고친 문장을 듣고, 같은 뜻을 직접 다시 만들어 말하세요.'
+  :'고친 부분을 확인한 후 직접 다시 답해 보세요. 8점 이상이면 다음 질문으로 넘어갈 수 있어요.';
  setTurn('feedback');
 }
 function questionIndexAfter(start=0){
