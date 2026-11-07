@@ -82,6 +82,10 @@ export async function onRequestPost({request,env}){
   // or grade an unintended Korean-script transcript as an English answer.
   const hangul=(transcript.match(/[\uAC00-\uD7A3]/g)||[]).length;
   const letters=(transcript.match(/[a-z]/gi)||[]).length;
+  const han=(transcript.match(/\p{Script=Han}/gu)||[]).length;
+  if(han>=2&&han>=letters/3){
+   return reply(422,{success:false,error_code:'WRONG_LANGUAGE',error:'영어로 잘 인식되지 않았어요. 영어로 다시 말해 주세요.'});
+  }
   if(hangul>0&&hangul>=letters/3){
    return reply(422,{success:false,error:'영어 답변으로 인식되지 않았어요. 영어로 다시 녹음해 주세요.'});
   }
