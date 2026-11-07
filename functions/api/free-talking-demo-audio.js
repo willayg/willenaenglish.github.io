@@ -156,9 +156,17 @@ async function audioInventory(bookId,env,request){
   });
  }
  const files=records.flatMap(r=>[r.marin+'.wav',r.lili+'.mp3',r.pigfish+'.mp3',r.fallback+'.mp3']);
- const result=await audioStore(request,{action:'inventory',files});
+ // The shared worker allows at most 300 files per inventory request.
+ // Four formats per question can exceed that limit for larger textbooks.
  const statuses=new Map();
- for(const file of files){const key=file.slice(0,file.lastIndexOf('.'));statuses.set(key,{exists:!!result.exists?.[file],url:null});}
+ for(let offset=0;offset<files.length;offset+=240){
+  const batch=files.slice(offset,offset+240);
+  const result=await audioStore(request,{action:'inventory',files:batch});
+  for(const file of batch){
+   const key=file.slice(0,file.lastIndexOf('.'));
+   statuses.set(key,{exists:!!result.exists?.[file],url:null});
+  }
+ }
  return {
   success:true,book_id:bookId,questions:records.map(r=>{
    const willi=statuses.get(r.marin),backup=statuses.get(r.fallback),lili=statuses.get(r.lili),pigfish=statuses.get(r.pigfish);
