@@ -158,10 +158,19 @@ function setTurn(phase){
 function hintButton(kind){
  return $(({translation:'ftHintTranslation',starter:'ftHintStarter',english_prompt:'ftHintEnglish',typed_review:'ftEditTranscript'})[kind]);
 }
+const ALL_HINTS=['translation','starter','english_prompt','typed_review'];
 function updateHintCap(){
- const deduction=['translation','starter','english_prompt','typed_review'].filter(k=>state.hints.get(k)).length;
+ const used=ALL_HINTS.filter(k=>state.hints.get(k)).length;
+ const deduction=Math.max(0,used-1);
  $('ftHintCap').hidden=deduction===0;
- $('ftHintCap').textContent=deduction?'이번 시도 최고 '+(10-deduction)+'/10점':'';
+ $('ftHintCap').textContent=deduction?'힌트 −'+deduction+'점':'';
+ for(const kind of ALL_HINTS){
+  const button=hintButton(kind);
+  if(!button||state.hints.get(kind))continue;
+  let cost=button.querySelector('small');
+  if(!cost){cost=document.createElement('small');button.appendChild(cost)}
+  cost.textContent=used?'−1':'무료';
+ }
 }
 const VISIBLE_HINTS=['english_prompt','translation','starter'];
 const HINT_TITLES={english_prompt:'영어 질문',translation:'한국어 뜻',starter:'문장 힌트'};
@@ -217,7 +226,7 @@ async function requestHint(kind){
   button.disabled=false;
   button.querySelector('small')?.remove();
   button.classList.add('is-used');
-  animateHintCost(button);
+  if(ALL_HINTS.filter(k=>state.hints.get(k)).length>1)animateHintCost(button);
   updateHintCap();
   $('ftAttemptStatus').textContent='';
   return true;
@@ -240,7 +249,7 @@ function resetHints(){
   const button=$(id);button.disabled=false;
   button.classList.remove('is-used','is-current');
   button.replaceChildren(document.createTextNode(label+' '));
-  const cost=document.createElement('small');cost.textContent='−1';button.append(cost);
+  const cost=document.createElement('small');cost.textContent='무료';button.append(cost);
  }
  $('ftQuestionText').hidden=state.mode==='speaking';
  closeTranscriptModal();
