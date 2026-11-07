@@ -22,7 +22,7 @@ const bookTitle=()=>state.books.find(b=>b.id===state.bookId)?.title||'Textbook';
 const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const state={skippedIds:new Set(),student:null,profile:null,books:[],bookId:null,questions:[],unitTitles:new Map(),unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
- current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready',repeatStep:false,repeatTranscript:null,repeatChecking:false,seenChallenges:new Set()};
+ current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready',repeatStep:false,repeatMode:null,repeatTranscript:null,repeatChecking:false,seenChallenges:new Set()};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
 const characters=createFreeTalkingCharacters({circle:$('ftTurnCircle'),session:$('ftSession'),voiceHost:$('ftWilliVoice'),choices:{ftChooseLili:'bunny-v3',ftChoosePigfish:'pigfish'}});
@@ -67,7 +67,14 @@ const aiRecorder=createFreeTalkingRecorder({
   if(state.repeatStep&&processing)$('ftRepeatMessage').textContent='확인 중…';
   if(state.repeatStep&&!recording&&!processing&&state.repeatTranscript&&!state.repeatChecking){
    const spoken=state.repeatTranscript;state.repeatTranscript=null;
-   void submitRepetition(spoken);
+   if(state.repeatMode==='new')void submitNewIdea(spoken);
+   else void submitRepetition(spoken);
+  }
+  const newIdea=$('ftRepeatNewIdea');
+  if(newIdea&&state.repeatStep){
+   newIdea.disabled=state.repeatChecking||processing||(recording&&state.repeatMode!=='new');
+   newIdea.classList.toggle('is-recording',recording&&state.repeatMode==='new');
+   newIdea.textContent=recording&&state.repeatMode==='new'?'녹음 끝내기':'새 아이디어';
   }
   $('ftTurnCircle').dataset.listening=recording?'true':'false';
   $('ftTurnCircle').dataset.aiRecording=recording?'true':'false';
@@ -595,7 +602,7 @@ function renderCorrectionDiff(original,corrected){
 }
 function markFeedback(attempt){
  if(!attempt)return;
- state.repeatStep=false;state.repeatTranscript=null;
+ state.repeatStep=false;state.repeatMode=null;state.repeatTranscript=null;
  $('ftQuestionStage').dataset.step='score';
  $('ftFeedback').hidden=false;
  $('ftScoreSplash').hidden=false;$('ftRepeatScreen').hidden=true;
@@ -635,25 +642,50 @@ function markFeedback(attempt){
  void $('ftScoreSplash').offsetWidth;
  $('ftScoreSplash').classList.add('is-showing');
  $('ftNext').hidden=false;$('ftNext').textContent=passed?'다음 문제':'문장 고치기';
- $('ftRetry').hidden=passed;$('ftRetry').textContent='새 아이디어';
+ $('ftRetry').hidden=true;
  $('ftSkip').hidden=passed;$('ftSkip').textContent='건너뛰기 · 0점';$('ftSubmit').hidden=true;
  $('ftAttemptStatus').textContent='';
  setTurn('feedback');
 }
 function showRepeatScreen(){
  if(!state.feedback||attemptPassed(state.feedback))return;
- state.repeatStep=true;state.repeatTranscript=null;state.repeatChecking=false;
+ state.repeatStep=true;state.repeatMode=null;state.repeatTranscript=null;state.repeatChecking=false;
  aiRecorder.cancel();retryVoice.stop();
  $('ftQuestionStage').dataset.step='repeat';
  $('ftScoreSplash').hidden=true;$('ftRepeatScreen').hidden=false;
  $('ftOriginalAnswer').textContent=state.feedback.answer_text||'';
  renderCorrectionDiff(state.feedback.answer_text,state.feedback.correction||state.feedback.answer_text||'');
- $('ftRepeatMessage').textContent='원을 눌러 다시 말하세요.';
+ $('ftRepeatMessage').textContent='원을 눌러 고친 문장으로 다시 말하세요.';
  $('ftRepeatCircleMount').appendChild($('ftTurnCircle'));
+ $('ftRepeatNewIdea').hidden=!['pigfish','bunny-v3'].includes(questionVoice.getVoice());
+ $('ftRepeatNewIdea').disabled=false;
+ $('ftRepeatNewIdea').classList.remove('is-recording');
+ $('ftRepeatNewIdea').textContent='새 아이디어';
  $('ftNext').hidden=true;$('ftRetry').hidden=true;$('ftSubmit').hidden=true;
  $('ftListenAgain').disabled=true;
  setTurn('student');
  void aiRecorder.prepare();
+}
+async function submitNewIdea(transcript){
+ if(!state.repeatStep||state.repeatChecking||!state.current||!state.session)return;
+ state.repeatChecking=true;
+ const previous=state.feedback;
+ $('ftRepeatMessage').textContent='새 문장을 확인하고 있어요…';
+ $('ftTranscriptEdit').value=transcript;
+ $('ftHeardText').textContent=transcript;
+ $('ftEditTranscript').disabled=false;
+ state.repeatStep=false;
+ try{
+  await submit();
+  if(state.feedback?.id===previous?.id){
+   state.repeatStep=true;
+   $('ftQuestionStage').dataset.step='repeat';
+   $('ftRepeatMessage').textContent='채점하지 못했어요. 다시 시도해 주세요.';
+  }
+ }finally{
+  state.repeatChecking=false;state.repeatMode=null;
+  $('ftRepeatNewIdea').disabled=false;
+ }
 }
 async function submitRepetition(transcript){
  if(!state.repeatStep||state.repeatChecking||!state.feedback?.id||!state.session?.id)return;
@@ -1038,7 +1070,7 @@ $('ftTurnCircle').addEventListener('click',()=>{
  if(state.repeatStep){
   if(state.repeatChecking||aiRecorder.isProcessing())return;
   if(aiRecorder.isRecording())aiRecorder.stop();
-  else{state.repeatTranscript=null;void aiRecorder.start(state.session.id,state.current.id,'rehearse');}
+  else{state.repeatMode='fixed';state.repeatTranscript=null;void aiRecorder.start(state.session.id,state.current.id,'rehearse');}
   return;
  }
  if(state.phase==='feedback')return;
@@ -1081,6 +1113,16 @@ $('ftQuestionHost').addEventListener('click',e=>{
  if(e.target.closest('[data-speaking-mic]')){setTurn('student');requestAnimationFrame(updateMicListening);}
 });
 $('ftSubmit').addEventListener('click',()=>void submit());
+$('ftRepeatNewIdea').addEventListener('click',()=>{
+ if(!state.repeatStep||state.repeatChecking||state.loading||aiRecorder.isProcessing()||!['pigfish','bunny-v3'].includes(questionVoice.getVoice()))return;
+ if(aiRecorder.isRecording()){
+  if(state.repeatMode==='new')aiRecorder.stop();
+  return;
+ }
+ state.repeatMode='new';state.repeatTranscript=null;
+ $('ftRepeatMessage').textContent='새로운 문장을 말해 보세요.';
+ void aiRecorder.start(state.session.id,state.current.id);
+});
 $('ftRetry').addEventListener('click',()=>{
  if(state.loading||!state.current||!state.feedback||attemptPassed(state.feedback))return;
  state.skippedIds.delete(state.current.id);persistSkips();
