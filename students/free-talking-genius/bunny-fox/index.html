@@ -102,6 +102,33 @@
  .bf-tap-guide{font-size:15px;padding:11px 18px}
 }
 
+
+/* Bunny demo buttons: clean white fill with pink/cyan outlines. */
+.free-talking-genius #ftBook button:not(.vocab-theme-pip),
+.free-talking-genius #ftSession button:not(#ftTurnCircle):not(.vocab-theme-pip),
+.free-talking-genius #ftFinish button:not(.vocab-theme-pip),
+.free-talking-genius .bf-tap-guide {
+  background:#fff!important;background-image:none!important;
+  border:2px solid #b9e9ed!important;color:#20525a!important;
+  box-shadow:none!important;
+}
+.free-talking-genius #ftBook button:is(.is-active,.active,[aria-selected="true"],[aria-pressed="true"]),
+.free-talking-genius #ftSession button:is(.is-active,.active,[aria-pressed="true"]),
+.free-talking-genius .bf-tap-guide[data-kind="student"],
+.free-talking-genius .bf-tap-guide[data-kind="recording"] {
+  background:#fff!important;border-color:#f09ccc!important;color:#a42a76!important;
+}
+.free-talking-genius #ftBook button:disabled,
+.free-talking-genius #ftSession button:disabled:not(#ftTurnCircle),
+.free-talking-genius #ftFinish button:disabled {
+  background:#fff!important;border-color:#d4e9eb!important;color:#98aeb1!important;
+}
+.free-talking-genius .bf-tap-guide {border-radius:999px!important}
+.free-talking-genius #ftSession button:not(#ftTurnCircle):focus-visible,
+.free-talking-genius #ftBook button:focus-visible {
+  outline:3px solid #f09ccc;outline-offset:2px;
+}
+
 </style></head><body>
 <div class="study-app free-talking-genius">
 <div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
