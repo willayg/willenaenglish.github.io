@@ -1,8 +1,10 @@
 /* Free Talking concept previews only: no changes to canonical app styles. */
 .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftGameCard{
  width:min(760px,100%)!important;
- min-height:min(640px,calc(100dvh - 238px))!important;
- justify-content:center!important;
+ height:min(640px,calc(100dvh - 238px))!important;
+ min-height:0!important;
+ overflow-y:auto!important;
+ justify-content:flex-start!important;
  gap:0!important;
 }
 .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftWilliVoice{
@@ -86,7 +88,8 @@ html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-concept-ring-se
  color:#247983;font:900 17px Poppins,sans-serif;
  padding:5px 11px;min-width:58px;text-align:center;
 }
-html[data-ft-concept="ring"] .free-talking-genius #ftSession #ftTurnCircle{
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle{
  border:0!important;outline:0!important;box-shadow:none!important;
 }
 /* Concept B: no ring, compact horizontal countdown bar underneath. */
@@ -120,7 +123,7 @@ html[data-ft-concept="bar"] .free-talking-genius #ftSession .ft-concept-bar-fill
 @keyframes ftConceptBlink{50%{opacity:.25}}
 @media(max-width:560px){
  .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftGameCard{
-  min-height:calc(100dvh - 230px)!important;
+  height:calc(100dvh - 230px)!important;min-height:0!important;
  }
  .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftWilliVoice{
   height:300px!important;min-height:300px!important;flex-basis:300px!important;
