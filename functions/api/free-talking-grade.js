@@ -29,6 +29,40 @@ async function contentQuestion(id){
 function safeString(value,max=260){return String(value||'').trim().slice(0,max)}
 function parseScore(value){const n=Number(value);if(!Number.isInteger(n)||n<0||n>2)throw Error('Invalid AI scoring');return n}
 const CRITERIA=['grammar','length','creativity','appropriate','vocabulary'];
+const KOREAN_FALLBACK={
+ grammar:'문법을 확인하고 자연스러운 문장으로 다시 말해 보세요.',
+ length:'질문에 맞는 내용을 조금 더 구체적으로 말해 보세요.',
+ creativity:'자신의 생각이나 이유를 한 가지 더 말해 보세요.',
+ appropriate:'질문에 맞게 답해 보세요.',
+ vocabulary:'상황에 맞는 영어 단어와 표현을 사용해 보세요.'
+};
+function koreanFeedback(value,key){
+ const text=safeString(value,200);
+ // Korean learner feedback must never leak Chinese or other foreign-language feedback.
+ return text && /[가-힣]/.test(text) && !/\p{Script=Han}/u.test(text) ? text : KOREAN_FALLBACK[key];
+}
+function nonAnswer(text){
+ const normalized=String(text||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z' ]/g,' ').replace(/\s+/g,' ').trim();
+ return /^(?:(?:i |we )?(?:do not|don't|dont) know|(?:i |we )?(?:cannot|can't|cant) answer|(?:i |we )?(?:have no idea|am not sure)|(?:no idea|not sure|idk|i dunno|whatever|nothing|none|skip|pass))(?: (?:the answer|about that|really|sorry|to this question))?$/.test(normalized);
+}
+function enforceRelevance(result,answer){
+ const scores={...result.scores},feedback={...result.feedback};
+ const evasive=nonAnswer(answer);
+ if(evasive){scores.appropriate=0;feedback.appropriate='모른다고만 하면 질문에 답한 것이 아니에요. 자신의 경험이나 생각을 영어로 말해 보세요.';}
+ if(scores.appropriate===0){
+  // Good grammar in a non-answer is not a good conversation response.
+  scores.grammar=Math.min(scores.grammar,evasive?1:2);
+  scores.length=0;scores.creativity=0;scores.vocabulary=0;
+  if(!evasive)feedback.appropriate='질문과 관련 없는 답변이에요. 질문을 다시 듣고 알맞게 답해 보세요.';
+ }else if(scores.appropriate===1){
+  // A partly relevant answer cannot receive a high overall score.
+  for(const key of ['creativity','vocabulary','length','grammar']){
+   const total=CRITERIA.reduce((n,k)=>n+scores[k],0);
+   scores[key]=Math.max(0,scores[key]-Math.max(0,total-5));
+  }
+ }
+ return {...result,scores,feedback,rawTotal:CRITERIA.reduce((n,k)=>n+scores[k],0)};
+}
 function starterFor(question){return String(question?.starter_en||'').trim()}
 async function judge(key,question,answer,mode,previous=[]){
  const response=await fetch('https://api.openai.com/v1/chat/completions',{
@@ -44,7 +78,7 @@ async function judge(key,question,answer,mode,previous=[]){
  const scores={},feedback={};
  for(const k of CRITERIA){
   scores[k]=parseScore(x.scores?.[k]);
-  feedback[k]=safeString(x.feedback?.[k],200)||'좋아요! 조금 더 자세히 표현해 보세요.';
+  feedback[k]=koreanFeedback(x.feedback?.[k],k);
  }
  const rawTotal=CRITERIA.reduce((n,k)=>n+scores[k],0);
  return {scores,feedback,rawTotal,correction:safeString(x.corrected_answer,800)||answer};
@@ -101,7 +135,7 @@ export async function onRequestPost({request,env}){
   if(!apiKey)return reply(503,{success:false,error:'AI grading is not configured'});
   const quota=await db('rpc/wg_sentence_ai_quota_v1',auth.token,{method:'POST',body:{p_claim:true}});
   if(!quota.ok||!quota.value?.allowed)return reply(429,{success:false,error:'오늘 AI 확인 횟수를 모두 사용했어요.',quota:quota.value||null});
-  const result=await judge(apiKey,prompt,answer,session.mode,past);
+  const result=enforceRelevance(await judge(apiKey,prompt,answer,session.mode,past),answer);
   const scoreTotal=Math.max(0,result.rawTotal-hintDeduction);
   const row={session_id:sessionId,student_id:auth.id,question_id:questionId,question_number:prompt.question_number,
    attempt_no:nextAttempt,answer_text:answer,
