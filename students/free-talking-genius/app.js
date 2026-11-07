@@ -369,7 +369,7 @@ async function syncCreativityGift(question){
  const rewardId=await stableRewardUuid('free-talking-creative-v1|'+state.student.id+'|'+state.mode+'|'+question.id);
  const payload={reward_only:true,session_id:rewardId,client_attempt_id:rewardId,
   book_id:BOOK(),unit_id:question.unit_id,reward_mode:'free_talking_creativity_gift',
-  reward_list_name:'Free Talking Genius · Creative Surprise · '+bookTitle()+' · Q'+question.question_number,
+  reward_list_name:'Free Talking Genius · 반짝 아이디어 보너스 · '+bookTitle()+' · Q'+question.question_number,
   reward_list_size:1,reward_started_at:state.session?.created_at||new Date().toISOString(),
   reward_summary:{completed:true,stars:0,percent:100,accuracy:1,score:5,total:5,
    points_earned:5,book_id:BOOK(),unit_id:question.unit_id,
@@ -385,17 +385,29 @@ async function syncCreativityGift(question){
  return true;
 }
 function showCreativitySurprise(reason){
- const popup=document.createElement('div');popup.className='ft-creativity-surprise';
- popup.setAttribute('role','status');
- const coin=document.createElement('div');coin.className='ft-creativity-surprise-coin';
- coin.appendChild(createScoreCoin(true));
- const heading=document.createElement('strong');heading.textContent='Creative Surprise! +5';
- const detail=document.createElement('p');detail.textContent=reason||'정말 특별한 생각이에요!';
- popup.append(coin,heading,detail);
- document.body.appendChild(popup);
+ // Keep the child's individual AI comment; only the reward framing is translated.
+ document.querySelector('.ft-creativity-overlay')?.remove();
+ const overlay=document.createElement('div');
+ overlay.className='ft-creativity-overlay';
+ const popup=document.createElement('button');
+ popup.type='button';popup.className='ft-creativity-surprise';
+ popup.setAttribute('aria-label','반짝 아이디어 보너스 5점. 화면을 눌러 닫기');
+ const icon=document.createElement('span');
+ icon.className='ft-creativity-sparkle';
+ icon.setAttribute('aria-hidden','true');
+ icon.innerHTML='<svg viewBox="0 0 112 112" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M56 5L66 36L98 25L80 53L108 72L75 74L68 106L51 79L19 94L34 63L6 44L40 43Z" fill="#8E6BCE" stroke="#5B4299" stroke-width="5" stroke-linejoin="round"/><path d="M55 23L61 47L85 40L71 58L91 70L66 69L63 92L52 73L31 81L42 60L23 49L47 50Z" fill="#D8C6F5"/><circle cx="21" cy="16" r="6" fill="#62C8D0"/><circle cx="96" cy="99" r="5" fill="#62C8D0"/><path d="M93 5v18m-9-9h18" stroke="#62C8D0" stroke-width="4" stroke-linecap="round"/></svg>';
+ const heading=document.createElement('strong');heading.textContent='반짝 아이디어! +5';
+ const detail=document.createElement('p');detail.textContent=reason||'상상력이 반짝였어요!';
+ const hint=document.createElement('span');hint.className='ft-creativity-dismiss';hint.textContent='화면을 눌러 닫기';
+ popup.append(icon,heading,detail,hint);
+ overlay.appendChild(popup);document.body.appendChild(overlay);
+ const dismiss=()=>{document.removeEventListener('keydown',onKey);overlay.remove()};
+ const onKey=e=>{if(e.key==='Escape')dismiss()};
+ overlay.addEventListener('click',dismiss);
+ document.addEventListener('keydown',onKey);
+ popup.focus({preventScroll:true});
  try{const sound=new Audio('/Games/english_arcade/assets/audio/right-answer.mp3');sound.volume=.7;void sound.play().catch(()=>{});}catch{}
- void showPointAward({amount:5,origin:capturePointOrigin(coin)}).catch(()=>{});
- setTimeout(()=>popup.remove(),3200);
+ void showPointAward({amount:5,origin:capturePointOrigin(icon)}).catch(()=>{});
 }
 async function syncPendingQuestionRewards(){
  for(const question of groups()){
