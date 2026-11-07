@@ -51,11 +51,11 @@ function nonAnswer(text){
 // answers such as "I think there is a bear inside."
 function isDisconnectedGuessList(answer){
  const text=String(answer||'').trim().replace(/[.!?]+$/,'');
- const normalized=text.replace(/\\s+/g,' ').toLowerCase();
- if(!/^i (?:think|guess)(?: that)?(?: there (?:is|are|might be|could be))?\\s*(?:maybe|perhaps)\\b/.test(normalized))return false;
- const rest=normalized.replace(/^i (?:think|guess)(?: that)?(?: there (?:is|are|might be|could be))?\\s*(?:maybe|perhaps)\\s*/, '');
+ const normalized=text.replace(/\s+/g,' ').toLowerCase();
+ if(!/^i (?:think|guess)(?: that)?(?: there (?:is|are|might be|could be))?\s*(?:maybe|perhaps)\b/.test(normalized))return false;
+ const rest=normalized.replace(/^i (?:think|guess)(?: that)?(?: there (?:is|are|might be|could be))?\s*(?:maybe|perhaps)\s*/, '');
  if((rest.match(/,/g)||[]).length<2)return false;
- const finite=/\\b(?:is|are|was|were|has|have|had|might|could|would|should|will|can|went|saw|lives|live|looks|look|hides|hide|contains|contain|plays|play|sits|sit|jumps|jump|runs|run|swims|swim)\\b/i;
+ const finite=/\b(?:is|are|was|were|has|have|had|might|could|would|should|will|can|went|saw|lives|live|looks|look|hides|hide|contains|contain|plays|play|sits|sit|jumps|jump|runs|run|swims|swim)\b/i;
  return !finite.test(rest);
 }
 function enforceAnswerQuality(result,answer){
