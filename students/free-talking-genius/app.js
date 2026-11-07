@@ -849,6 +849,8 @@ async function beginRound(mode){
    state.sessions.unshift(session);
   }
   state.session=session;state.cursor=0;
+  // A skip applies only to this visit. Students can retry the question later.
+  try{sessionStorage.removeItem(skippedKey())}catch{}
   loadSkips();
   renderQuestion();
  }catch(error){showError('세션을 시작할 수 없어요. '+error.message)}
