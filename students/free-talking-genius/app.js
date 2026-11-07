@@ -12,7 +12,7 @@ import {geniusSessionContext} from '/students/components/genius-session-context.
 import {createFreeTalkingVoice} from './question-voice.js?v=20261107-exact-characters1';
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-score-repeat1';
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261107-exact-characters1';
-import {createFreeTalkingCharacters} from './character-actor.js?v=20261107-exact-art1';
+import {createFreeTalkingCharacters} from './character-actor.js?v=20261107-pig-gradient2';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
