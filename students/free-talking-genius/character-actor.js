@@ -2,6 +2,18 @@
 // No audio interception, app cloning, auth, recording, grading or progress logic.
 import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js';
 const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART};
+/* Duplicate SVG gradient IDs resolve against the hidden selection portrait on
+   some Android browsers, leaving Pigfish's in-game body transparent.
+   Scope references per instance; artwork, colours and animations are unchanged. */
+function scopedCharacterArt(markup,suffix){
+ if(!markup.includes('pf-svg'))return markup;
+ for(const id of ['pigBody','pigBelly']){
+  markup=markup.replaceAll('id="'+id+'"','id="'+id+'-'+suffix+'"')
+   .replaceAll('url(#'+id+')','url(#'+id+'-'+suffix+')');
+ }
+ return markup;
+}
+
 export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
  const actor=document.createElement('span');
  actor.className='bf-actor';
@@ -10,7 +22,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
  circle.appendChild(actor);
  for(const [id,character] of Object.entries(choices)){
   const slot=document.getElementById(id)?.querySelector('.ft-character-symbol');
-  if(slot&&ART[character])slot.innerHTML=ART[character];
+  if(slot&&ART[character])slot.innerHTML=scopedCharacterArt(ART[character],'portrait');
  }
  let selected='marin',voiceSpeaking=false,celebrateTimer=null;
  function update(){
@@ -25,7 +37,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   selected=ART[character]?character:'marin';
   session.dataset.character=selected;
   actor.hidden=!ART[selected];
-  actor.innerHTML=ART[selected]||'';
+  actor.innerHTML=ART[selected]?scopedCharacterArt(ART[selected],'stage'):'';
   actor.dataset.state='idle';
   voiceSpeaking=false;
   update();
