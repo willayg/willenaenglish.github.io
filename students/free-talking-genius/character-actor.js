@@ -1,6 +1,6 @@
 // Visual-only bridge to the exact SVG animation assets from the Bunny Fox demo.
 // No audio interception, app cloning, auth, recording, grading or progress logic.
-import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js';
+import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261107-soft-fin3';
 const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART};
 /* Duplicate SVG gradient IDs resolve against the hidden selection portrait on
    some Android browsers, leaving Pigfish's in-game body transparent.
