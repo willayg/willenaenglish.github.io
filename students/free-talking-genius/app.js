@@ -12,6 +12,7 @@ import {geniusSessionContext} from '/students/components/genius-session-context.
 import {createFreeTalkingVoice} from './question-voice.js?v=20261107-character-choice1';
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-score-repeat1';
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261107-english-r2retry2';
+import {createFreeTalkingCharacters} from './character-actor.js?v=20261107-exact-art1';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
@@ -23,6 +24,7 @@ const state={student:null,profile:null,books:[],bookId:null,questions:[],unitTit
  current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready',repeatStep:false,repeatTranscript:null,repeatChecking:false,seenChallenges:new Set()};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
+const characters=createFreeTalkingCharacters({circle:$('ftTurnCircle'),session:$('ftSession'),voiceHost:$('ftWilliVoice'),choices:{ftChooseLili:'bunny-v3',ftChoosePigfish:'pigfish'}});
 const retryVoice=createFreeTalkingRetryVoice({
  getToken:token,
  onFinished:()=>{
@@ -676,6 +678,7 @@ async function submitRepetition(transcript){
   $('ftProgressFill').style.width=pct(completed/8*100)+'%';
   $('ftWilliVoice').prepend($('ftTurnCircle'));
   markFeedback(data.attempt);
+  characters.celebrate();
   playFreeTalkingScoreSfx(8);
  }catch(error){
   $('ftRepeatMessage').textContent=String(error.message||'다시 녹음해 주세요.');
@@ -798,10 +801,10 @@ function renderQuestion({retry=false}={}){
 }
 let roundChoice=null;
 function chooseRoundVoice(voice){
- if(!['marin','bunny-v3'].includes(voice))return;
+ if(!['marin','bunny-v3','pigfish'].includes(voice))return;
  roundChoice=voice;
  retryVoice.preloadBoth();
- for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3']])
+ for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3'],['ftChoosePigfish','pigfish']])
   $(id).setAttribute('aria-pressed',String(value===voice));
  $('ftCharacterContinue').disabled=false;
 }
@@ -809,7 +812,7 @@ function openMode(mode){
  if(state.loading||!['speaking','writing'].includes(mode))return;
  state.pendingMode=mode;roundChoice=null;
  $('ftCharacterRound').textContent=bookTitle()+' · Unit '+state.unit+' · '+(mode==='speaking'?'말하기':'쓰기');
- for(const id of ['ftChooseWilli','ftChooseLili'])$(id).setAttribute('aria-pressed','false');
+ for(const id of ['ftChooseWilli','ftChooseLili','ftChoosePigfish'])$(id).setAttribute('aria-pressed','false');
  $('ftCharacterContinue').disabled=true;
  preloadStudentSfx();
  view('ftCharacter');
@@ -819,6 +822,7 @@ async function beginRound(mode){
  if(!questionVoice.setVoice(roundChoice)){
   showError('캐릭터 음성을 선택할 수 없어요.');return;
  }
+ characters.select(roundChoice);
 
  state.mode=mode;state.identity=geniusSessionContext({bookId:BOOK(),unitId:groups()[0]?.unit_id,mode});
  setBusy(true);
@@ -862,6 +866,7 @@ async function submit(){
   const previouslyCreative=unitAttempts(state.unit,state.mode,question.id).some(a=>a.rubric_v2?.creativity_gift===true);
   if(!state.attempts.some(row=>row.id===attempt.id))state.attempts.push(attempt);
   state.feedback=attempt;markFeedback(attempt);
+  if(attemptPassed(attempt))characters.celebrate();
   if(attemptPassed(attempt))playFreeTalkingScoreSfx(attemptScore(attempt));
   else playStudentSfx('wrong');
   const best=bestUnitBonus(state.unit,state.mode,question.id);
@@ -981,6 +986,7 @@ async function startup(){
 $('ftBackHome').addEventListener('click',()=>view('ftHome'));
 $('ftChooseWilli').addEventListener('click',()=>chooseRoundVoice('marin'));
 $('ftChooseLili').addEventListener('click',()=>chooseRoundVoice('bunny-v3'));
+$('ftChoosePigfish').addEventListener('click',()=>chooseRoundVoice('pigfish'));
 $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pendingMode));
 $('ftCharacterBack').addEventListener('click',()=>view('ftBook'));
 
