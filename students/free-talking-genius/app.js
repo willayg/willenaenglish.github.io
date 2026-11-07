@@ -591,6 +591,28 @@ function markFeedback(attempt){
  $('ftHintViewer').hidden=true;$('ftHintActions').classList.add('is-concealed');
  $('ftLanguageChallenge').hidden=true;$('ftTranscriptRow').hidden=true;
  const passed=attemptPassed(attempt),score=attemptScore(attempt);
+ const skills=$('ftSplashSkills');skills.replaceChildren();
+ const details=attempt.rubric_v2?.scores||{};
+ const labels=[
+  ['grammar','문법'],
+  ['context','문법 · 문맥'],
+  ['appropriate','질문에 맞는 답변'],
+  ['length','내용'],
+  ['vocabulary','어휘']
+ ];
+ for(const [index,[key,label]] of labels.entries()){
+  const row=document.createElement('div');row.className='ft-skill-pop';
+  row.style.setProperty('--reveal-index',index);
+  const name=document.createElement('strong');name.textContent=label;
+  const indicators=document.createElement('span');indicators.className='ft-skill-indicators';
+  const earned=Math.max(0,Math.min(2,Number(details[key]??0)));
+  for(let dot=0;dot<2;dot++){
+   const pip=document.createElement('i');pip.className='ft-skill-pip'+(dot<earned?' is-earned':'');
+   indicators.appendChild(pip);
+  }
+  const value=document.createElement('b');value.textContent=earned+'/2';
+  row.append(name,indicators,value);skills.appendChild(row);
+ }
  $('ftSplashScore').textContent=score+'/10';
  $('ftSplashPassIcon').hidden=!passed;$('ftSplashRetryIcon').hidden=passed;
  $('ftSplashTitle').textContent=passed?'통과!':'다시 연습';
