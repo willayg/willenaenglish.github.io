@@ -624,7 +624,10 @@ function markFeedback(attempt){
  }
  $('ftSplashScore').textContent=score+' out of 10';
  $('ftSplashPassIcon').hidden=!passed;$('ftSplashRetryIcon').hidden=passed;
- $('ftSplashTitle').textContent=passed?'통과!':'다시 연습';
+ const passMessages=['Pass!','Nice!','Awesome!','Great job!','Well done!'];
+ const retryMessages=['Try again!','One more time!','Almost there!','Give it another go!'];
+ const messages=passed?passMessages:retryMessages;
+ $('ftSplashTitle').textContent=messages[Math.floor(Math.random()*messages.length)];
  $('ftScoreSplash').classList.remove('is-showing');
  void $('ftScoreSplash').offsetWidth;
  $('ftScoreSplash').classList.add('is-showing');
