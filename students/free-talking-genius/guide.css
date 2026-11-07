@@ -1,0 +1,40 @@
+/* Free Talking visual tutorial — uses the existing character artwork as images. */
+.ft-guide-overlay[hidden]{display:none!important}
+.ft-guide-overlay{position:fixed;inset:0;z-index:2147482500;display:grid;place-items:center;padding:14px;background:rgba(24,57,67,.45);font-family:Poppins,system-ui,sans-serif}
+.ft-guide-card{width:min(510px,100%);max-height:calc(100dvh - 30px);overflow-y:auto;display:flex;flex-direction:column;gap:12px;border:3px solid #a5e3e8;border-radius:26px;padding:17px 20px 20px;background:#fff;box-shadow:0 18px 55px rgba(18,64,70,.18);color:#285c66}
+.ft-guide-top{display:flex;align-items:center;justify-content:space-between;color:#ae7e9e;font-size:12px;font-weight:900}
+.ft-guide-close{border:1px solid #bde8ea;border-radius:20px;padding:7px 15px;background:#fff;color:#557780;font-size:12px;font-weight:850;cursor:pointer}
+.ft-guide-card h2{text-align:center;font-size:clamp(23px,5vw,32px);line-height:1.25;font-weight:900;margin:0;color:#326772}
+.ft-guide-description{text-align:center;font-size:clamp(15px,3.8vw,17px);font-weight:750;line-height:1.55;margin:0}
+.ft-guide-visual{display:grid;place-items:center;min-height:235px;padding:10px;border:2px solid #c8ecef;border-radius:22px;background:#effbfc}
+.ft-guide-mini{width:min(340px,100%);display:flex;flex-direction:column;align-items:center;gap:9px;background:#fff;border:2px solid #caebed;border-radius:19px;padding:15px 14px;text-align:center;color:#326772;font-weight:800}
+.ft-guide-mini-title{font-size:17px;font-weight:900}
+.ft-guide-mini-avatar{height:100px;width:100px;display:grid;place-items:center;background:#fff;border-radius:50%;border:5px solid #aee4e9}
+.ft-guide-mini-avatar .bf-svg{height:100%;width:100%;display:block;overflow:visible}
+.ft-guide-mini-label{color:#c96a9c;font-size:15px}
+.ft-guide-mini-select{border:2px solid #9fdbe1;border-radius:14px;color:#5792a0;background:#fff;padding:7px 24px;font-size:13px}
+.ft-guide-talk .ft-guide-mini-avatar{width:130px;height:130px}
+.ft-guide-mini-action{width:min(225px,100%);padding:9px 16px;border:3px solid;border-radius:16px;background:#fff;color:#526e77;font-size:15px}
+.ft-guide-mini-action.pink{border-color:#e9a5cb}.ft-guide-mini-action.cyan{border-color:#85d7e0}.ft-guide-mini-action strong{margin-left:9px;color:#bc72a0}
+.ft-guide-example{width:100%;border-radius:13px;border:2px solid #aee8ed;background:#f4fbfc;text-align:left;padding:11px 12px}
+.ft-guide-example small{display:block;margin-bottom:5px;color:#668e97;font-size:11px}
+.ft-guide-example b{font-size:clamp(14px,3vw,17px);line-height:1.5}
+.ft-guide-example.weak{border-color:#d9e4e7;color:#718e94}
+.ft-guide-example.good{border-color:#e9b2d0;background:#fff3f9;color:#bc3d89}
+.ft-guide-points>strong{font-size:38px;color:#41afbb;letter-spacing:-.04em;line-height:1.1}
+.ft-guide-points>span{font-size:20px;color:#be4a98}
+.ft-guide-mini-bonuses{display:flex;gap:14px;color:#be4a98}.ft-guide-mini-bonuses b{background:#fff2f8;border-radius:12px;padding:8px 15px;border:1px solid #f0c1d7}
+.ft-guide-points p{font-size:12px;margin:0;color:#64858d}
+.ft-guide-mini-creative{background:#efe6ff;color:#7f5bb1;border-radius:13px;padding:9px 14px;border:1px solid #c8afe8;font-size:14px}
+.ft-guide-mini-score{font-size:27px;color:#c05195}
+.ft-guide-mini-buttons{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.ft-guide-mini-buttons span{font-size:10px;padding:7px 9px;border:1px solid #9bdfe3;border-radius:10px;color:#3f8291}
+.ft-guide-never{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:800;color:#69858d;cursor:pointer}
+.ft-guide-never input{width:18px;height:18px;accent-color:#d44d96}
+.ft-guide-navigation{display:flex;gap:12px;justify-content:space-between;margin-top:2px}
+.ft-guide-navigation button{flex:1;border:3px solid #a3e0e6;border-radius:15px;padding:11px 16px;font:850 16px Poppins,system-ui,sans-serif;background:#fff;color:#46838c;cursor:pointer}
+.ft-guide-navigation button:last-child{border-color:#e9a4ca;color:#c54890}
+.ft-guide-navigation button:disabled{opacity:.4}
+.ft-footer-version .ft-guide-help{display:inline-flex;align-items:center;justify-content:center;margin-left:12px;padding:5px 9px;min-height:26px;border:1px solid #b8e7eb;border-radius:20px;background:#fff;color:#607e87;font:750 10px Poppins,system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+@media(max-width:520px){.ft-guide-card{padding:14px;gap:9px}.ft-guide-visual{min-height:205px}.ft-guide-mini{padding:10px 12px}.ft-guide-mini-avatar{width:84px;height:84px}}
+@media(prefers-reduced-motion:reduce){.ft-guide-card *{animation:none!important}}
