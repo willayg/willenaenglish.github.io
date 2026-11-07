@@ -466,7 +466,7 @@ function completedCount(unit,mode){
  const prompts=state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===unit);
  return prompts.filter(q=>unitHasPass(unit,mode,q.id)).length;
 }
-function unitComplete(unit){return completedCount(unit,'speaking')===8&&completedCount(unit,'writing')===8}
+function unitComplete(unit){return completedCount(unit,'speaking')===8}
 async function refreshData(){
  const list=await api('free_talking_sessions',{params:'?select=*&student_id=eq.'+state.student.id+'&book_id=eq.'+BOOK()+'&order=created_at.desc&limit=200'});
  state.sessions=Array.isArray(list)?list:[];
@@ -514,7 +514,7 @@ function renderBookChoices(){
   if(!b.ready)button.title='This textbook is assigned, but Free Talking questions are not available yet.';
   button.innerHTML='<span class="vocab-front-card-main">'+
    '<span class="vocab-front-card-copy"><span class="eyebrow">FREE TALKING</span><strong>'+escape(b.title)+'</strong><small>'+
-   (b.ready?count+' questions · Speaking & Writing':'Assigned textbook · Free Talking questions not available yet')+
+   (b.ready?count+' questions · Speaking':'Assigned textbook · Free Talking questions not available yet')+
    '</small></span></span><span class="vocab-front-arrow" aria-hidden="true">'+(b.ready?'›':'')+'</span>';
   if(b.ready)button.addEventListener('click',()=>void chooseBook(b.id));host.append(button);
  }
@@ -545,7 +545,7 @@ function renderUnitStrip(){
   const button=document.createElement('button');
   button.type='button';button.className=(n===state.unit?'is-current ':'')+(unitComplete(n)?'is-complete':'');
   button.textContent='Unit '+n;
-  if(unitComplete(n)){button.title='Speaking and Writing completed';button.setAttribute('aria-label','Unit '+n+' completed')}
+  if(unitComplete(n)){button.title='Speaking completed · Golden Unit';button.setAttribute('aria-label','Unit '+n+' Speaking completed · Golden Unit')}
   button.addEventListener('click',()=>selectUnit(n));host.append(button);
  }
 }
@@ -553,13 +553,12 @@ function renderBook(){
  renderBookTabs();
  renderUnitStrip();
  $('ftUnitTitle').textContent='Unit '+state.unit+' · '+(state.unitTitles.get(state.bookId+':'+state.unit)||'');
- for(const mode of ['speaking','writing']){
-  const count=completedCount(state.unit,mode),card=$('ft'+(mode==='speaking'?'Speaking':'Writing')+'Card');
-  const percent=pct(count/8*100);
-  card.querySelector('.vocab-skill-ring').style.setProperty('--progress',percent);
-  card.querySelector('.vocab-skill-ring span').textContent=percent+'%';
-  card.querySelector('.vocab-card-stars').textContent=count+'/8';
- }
+ const count=completedCount(state.unit,'speaking'),card=$('ftSpeakingCard');
+ const percent=pct(count/8*100);
+ card.querySelector('.vocab-skill-ring').style.setProperty('--progress',percent);
+ card.querySelector('.vocab-skill-ring span').textContent=percent+'%';
+ card.querySelector('.vocab-card-stars').textContent=count+'/8';
+
 }
 function selectUnit(n){state.unit=n;renderBook();view('ftBook');questionVoice.preload(n);}
 function setBusy(value){
@@ -1000,7 +999,7 @@ $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pend
 $('ftCharacterBack').addEventListener('click',()=>view('ftBook'));
 
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
-$('ftWritingCard').addEventListener('click',()=>void openMode('writing'));
+// Free Talking is a disabled coming-soon card; Writing is no longer offered here.
 $('ftTranscriptEdit').addEventListener('input',()=>{
  $('ftHeardText').textContent=$('ftTranscriptEdit').value.trim();
  $('ftHeardSentence').hidden=!$('ftTranscriptEdit').value.trim();
