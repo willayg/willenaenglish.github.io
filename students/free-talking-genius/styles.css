@@ -1518,3 +1518,23 @@
  .free-talking-genius #ftChallengeSplash .ft-challenge-card{animation:none!important}
  .free-talking-genius #ftSession #ftChallengeSplash.is-dismissing{transition:none}
 }
+
+/* Second study step is a future free-conversation mode, not a Golden Unit requirement. */
+.free-talking-genius #ftFreeTalkingCard.ft-coming-soon-card,
+.free-talking-genius #ftFreeTalkingCard.ft-coming-soon-card:disabled{
+ cursor:default!important;
+ opacity:.55!important;
+ filter:grayscale(1)!important;
+ background:#f2f5f6!important;
+ border-color:#cbd8db!important;
+ color:#75858a!important;
+ box-shadow:none!important;
+ pointer-events:none!important;
+}
+.free-talking-genius #ftFreeTalkingCard .vocab-skill-ring{
+ --progress:0!important;
+}
+.free-talking-genius #ftFreeTalkingCard .vocab-card-stars{
+ color:#7d8f96!important;
+ font-size:clamp(11px,2vw,14px)!important;
+}
