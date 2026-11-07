@@ -25,16 +25,22 @@ const ELEVEN_MODEL='eleven_v3';
 async function elevenAudio({env,text,voiceId,modelId=ELEVEN_MODEL}){
  const settings=modelId==='eleven_v3'?{stability:0.5}:{stability:0.55,similarity_boost:0.8,style:0,use_speaker_boost:false};
  const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
+ // Direct Cloudflare TTS is preferred, but any network/timeout/provider failure
+ // must fall back to the established Netlify ElevenLabs proxy.
  if(key){
-  const response=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId)+'?output_format=mp3_44100_128',{
-   method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
-   body:JSON.stringify({text,model_id:modelId,voice_settings:settings}),
-   signal:AbortSignal.timeout(25000)
-  });
-  if(!response.ok)throw Error('ElevenLabs TTS HTTP '+response.status);
-  const audio=await response.arrayBuffer();
-  if(audio.byteLength<500||audio.byteLength>1200000)throw Error('Invalid ElevenLabs MP3');
-  return audio;
+  try{
+   const response=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId)+'?output_format=mp3_44100_128',{
+    method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
+    body:JSON.stringify({text,model_id:modelId,voice_settings:settings}),
+    signal:AbortSignal.timeout(18000)
+   });
+   if(!response.ok)throw Error('ELEVENLABS_DIRECT_HTTP_'+response.status);
+   const audio=await response.arrayBuffer();
+   if(audio.byteLength<500||audio.byteLength>1200000)throw Error('ELEVENLABS_DIRECT_INVALID_MP3');
+   return audio;
+  }catch(error){
+   console.warn('[Pigfish demo audio] Direct ElevenLabs failed; trying Netlify proxy',String(error?.message||error).slice(0,110));
+  }
  }
  // The existing Willena ElevenLabs proxy was the previous working voice path.
  // Pages Preview can omit secrets that are present on the Production project.
