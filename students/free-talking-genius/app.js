@@ -613,7 +613,7 @@ function markFeedback(attempt){
   const value=document.createElement('b');value.textContent=earned+'/2';
   row.append(name,indicators,value);skills.appendChild(row);
  }
- $('ftSplashScore').textContent=score+'/10';
+ $('ftSplashScore').textContent=score+' out of 10';
  $('ftSplashPassIcon').hidden=!passed;$('ftSplashRetryIcon').hidden=passed;
  $('ftSplashTitle').textContent=passed?'통과!':'다시 연습';
  $('ftScoreSplash').classList.remove('is-showing');
