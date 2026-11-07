@@ -340,31 +340,32 @@ async function stableRewardUuid(value){
  const h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');
  return [h.slice(0,8),h.slice(8,12),h.slice(12,16),h.slice(16,20),h.slice(20,32)].join('-');
 }
-async function syncQuestionReward(question,bestPoints){
- const pts=Math.max(0,Math.min(4,Number(bestPoints)||0));
- if(!pts)return;
- const rewardId=await stableRewardUuid('free-talking-question-v1|'+state.student.id+'|'+state.mode+'|'+question.id);
- const payload={reward_only:true,session_id:rewardId,client_attempt_id:rewardId,
-  book_id:BOOK(),unit_id:question.unit_id,
-  reward_mode:'free_talking_'+state.mode+'_question',
-  reward_list_name:'Free Talking Genius · '+bookTitle()+' · Unit '+state.unit+' · '+state.mode+' · Q'+question.question_number,
-  reward_list_size:1,reward_started_at:state.session?.created_at||new Date().toISOString(),
-  reward_summary:{completed:true,stars:0,percent:pts*25,accuracy:pts/4,score:pts,total:4,
-   points_earned:pts,book_id:BOOK(),unit_id:question.unit_id,
-   free_talking_question_id:question.id,free_talking_mode:state.mode,
-   reward_scheme:'free-talking-question-v1',session_source:'student'}};
+async function syncQuestionReward(question,bonus){
+ const earned=Math.max(0,Math.min(4,bonus));
+ const legacy=legacyQuestionPoints(state.unit,state.mode,question.id);
  const fn=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
- const response=await fn('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
-  method:'POST',credentials:'include',cache:'no-store',
-  headers:{'Content-Type':'application/json'},body:JSON.stringify({payload})});
- const result=await response.json().catch(()=>null);
- if(!response.ok||result?.success!==true)throw Error(result?.error||'Question points could not be confirmed');
- state.awards.add(state.mode+':'+question.id);
+ for(let tier=legacy+1;tier<=earned;tier++){
+  const awardKey=state.mode+':'+question.id+':'+tier;
+  if(state.awards.has(awardKey))continue;
+  const rewardId=await stableRewardUuid('free-talking-bonus-v2|'+state.student.id+'|'+state.mode+'|'+question.id+'|'+tier);
+  const payload={reward_only:true,session_id:rewardId,client_attempt_id:rewardId,
+   book_id:BOOK(),unit_id:question.unit_id,reward_mode:'free_talking_'+state.mode+'_bonus',
+   reward_list_name:'Free Talking Genius · '+bookTitle()+' · Unit '+state.unit+' · Q'+question.question_number+' · Bonus '+tier,
+   reward_list_size:1,reward_started_at:state.session?.created_at||new Date().toISOString(),
+   reward_summary:{completed:true,stars:0,percent:100,accuracy:1,score:1,total:1,points_earned:1,
+    book_id:BOOK(),unit_id:question.unit_id,free_talking_question_id:question.id,
+    free_talking_mode:state.mode,reward_scheme:'free-talking-bonus-v2',session_source:'student'}};
+  const response=await fn('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+   method:'POST',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload})});
+  const result=await response.json().catch(()=>null);
+  if(!response.ok||result?.success!==true)throw Error(result?.error||'Bonus points could not be confirmed');
+  state.awards.add(awardKey);
+ }
 }
 async function syncPendingQuestionRewards(){
  for(const question of groups()){
-  const best=bestUnitPoints(state.unit,state.mode,question.id);
-  if(best>0&&!state.awards.has(state.mode+':'+question.id))await syncQuestionReward(question,best);
+  const bonus=bestUnitBonus(state.unit,state.mode,question.id);
+  if(bonus>legacyQuestionPoints(state.unit,state.mode,question.id))await syncQuestionReward(question,bonus);
  }
 }
 const pct=x=>Math.max(0,Math.min(100,Math.round(Number(x)||0)));
@@ -372,21 +373,24 @@ function attemptsFor(sessionId,questionId){
  return state.attempts.filter(a=>a.session_id===sessionId&&a.question_id===questionId)
   .sort((a,b)=>a.attempt_no-b.attempt_no);
 }
-function questionBest(sessionId,id){return Math.max(0,...attemptsFor(sessionId,id).map(a=>Number(a.grammar_points)+Number(a.quality_points)))}
-function bestUnitPoints(unit,mode,questionId){
- const ids=new Set(state.sessions.filter(s=>s.book_id===BOOK()&&s.unit_number===unit&&s.mode===mode).map(s=>s.id));
- return Math.max(0,...state.attempts.filter(a=>ids.has(a.session_id)&&a.question_id===questionId)
-  .map(a=>Number(a.grammar_points)+Number(a.quality_points)));
+const FT_PASS_SCORE=6;
+function attemptScore(a){return a?.score_total_v2!=null?Number(a.score_total_v2):Math.round((Number(a?.grammar_points||0)+Number(a?.quality_points||0))*2.5)}
+function bestScore(sessionId,id){return Math.max(0,...attemptsFor(sessionId,id).map(attemptScore))}
+function unitAttempts(unit,mode,id){
+ const ids=new Set(state.sessions.filter(s=>s.book_id===BOOK()&&Number(s.unit_number)===unit&&s.mode===mode).map(s=>s.id));
+ return state.attempts.filter(a=>ids.has(a.session_id)&&a.question_id===id);
 }
-// Free Talking progress tracks participation, not perfect-answer mastery.
-// Each question counts once as soon as a graded answer is saved, across sessions.
-function answeredCount(unit,mode){
+function bestUnitScore(unit,mode,id){return Math.max(0,...unitAttempts(unit,mode,id).map(attemptScore))}
+function bestUnitBonus(unit,mode,id){return Math.max(0,bestUnitScore(unit,mode,id)-FT_PASS_SCORE)}
+function legacyQuestionPoints(unit,mode,id){
+ return Math.max(0,...unitAttempts(unit,mode,id).filter(a=>!a.rubric_v2?.bonus_scheme)
+  .map(a=>Number(a.grammar_points||0)+Number(a.quality_points||0)));
+}
+function completedCount(unit,mode){
  const prompts=state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===unit);
- const sessionIds=new Set(state.sessions.filter(s=>s.book_id===BOOK()&&Number(s.unit_number)===unit&&s.mode===mode).map(s=>s.id));
- const answered=new Set(state.attempts.filter(a=>sessionIds.has(a.session_id)).map(a=>a.question_id));
- return prompts.filter(q=>answered.has(q.id)).length;
+ return prompts.filter(q=>bestUnitScore(unit,mode,q.id)>=FT_PASS_SCORE).length;
 }
-function unitComplete(unit){return answeredCount(unit,'speaking')===8&&answeredCount(unit,'writing')===8}
+function unitComplete(unit){return completedCount(unit,'speaking')===8&&completedCount(unit,'writing')===8}
 async function refreshData(){
  const list=await api('free_talking_sessions',{params:'?select=*&student_id=eq.'+state.student.id+'&book_id=eq.'+BOOK()+'&order=created_at.desc&limit=200'});
  state.sessions=Array.isArray(list)?list:[];
@@ -474,7 +478,7 @@ function renderBook(){
  renderUnitStrip();
  $('ftUnitTitle').textContent='Unit '+state.unit+' · '+(state.unitTitles.get(state.bookId+':'+state.unit)||'');
  for(const mode of ['speaking','writing']){
-  const count=answeredCount(state.unit,mode),card=$('ft'+(mode==='speaking'?'Speaking':'Writing')+'Card');
+  const count=completedCount(state.unit,mode),card=$('ft'+(mode==='speaking'?'Speaking':'Writing')+'Card');
   const percent=pct(count/8*100);
   card.querySelector('.vocab-skill-ring').style.setProperty('--progress',percent);
   card.querySelector('.vocab-skill-ring span').textContent=percent+'%';
@@ -511,7 +515,7 @@ function markFeedback(attempt){
  const isV2=entries&&Number.isFinite(Number(attempt.score_total_v2));
  const total=isV2?Number(attempt.score_total_v2):Number(attempt.grammar_points)+Number(attempt.quality_points);
  const max=isV2?10:4;
- $('ftFeedbackTitle').textContent=total===max?'잘했어요!':'좋아요! 다시 도전할 수 있어요.';
+ $('ftFeedbackTitle').textContent=total>=6?(total>6?'통과! 보너스 +'+(total-6)+'점':'통과! 잘했어요!'):'조금만 더! 6점부터 완료돼요.';
  $('ftFeedbackTotal').textContent=total+'/'+max;
  $('ftCircleScore').textContent=total+'/'+max;
  const grid=$('ftFeedbackGrid');grid.replaceChildren();
@@ -551,7 +555,7 @@ function questionIndexAfter(start=0){
  // Every saved first answer counts as finished. Improving to 4/4 is optional.
  for(let i=0;i<questions.length;i++){
   const index=(start+i)%questions.length,q=questions[index];
-  if(attemptsFor(state.session.id,q.id).length===0)return index;
+  if(bestScore(state.session.id,q.id)<FT_PASS_SCORE)return index;
  }
  return -1;
 }
@@ -582,8 +586,8 @@ function renderQuestion({retry=false}={}){
  $('ftQuestionText').textContent=state.current.question_en;
  $('ftHintEnglish').hidden=state.mode!=='speaking';
  $('ftQuestionText').hidden=state.mode==='speaking';
- const answered=questions.filter(q=>attemptsFor(state.session.id,q.id).length>0).length;
- $('ftSessionProgress').textContent=answered+'/8 answered';
+ const answered=questions.filter(q=>bestScore(state.session.id,q.id)>=FT_PASS_SCORE).length;
+ $('ftSessionProgress').textContent=answered+'/8 completed';
  $('ftProgressFill').style.width=pct(answered/8*100)+'%';
  $('ftSessionTitle').textContent=(state.mode==='speaking'?'Speaking':'Writing')+' · Unit '+state.unit;
  try{state.renderer?.speechRecognition?.stopExtended?.();state.renderer?.speechRecognition?.stop?.()}catch{}
@@ -665,7 +669,7 @@ async function beginRound(mode){
   if(session){
    // Keep unfinished sessions, even if eight answers are already present:
    // renderQuestion will safely finalize the session rather than orphaning it.
-   const hasUnanswered=groups().some(q=>attemptsFor(session.id,q.id).length===0);
+   const hasUnanswered=groups().some(q=>bestScore(session.id,q.id)<FT_PASS_SCORE);
    if(!hasUnanswered)state.cursor=0;
   }
   if(!session){
@@ -695,22 +699,21 @@ async function submit(){
   if(!response.ok||payload?.success!==true)throw Error(payload?.error||'AI feedback request failed');
   const attempt=payload.attempt;
   if(!attempt?.id)throw Error('Feedback was not confirmed as saved');
-  const prior=bestUnitPoints(state.unit,state.mode,question.id);
+  const prior=bestUnitBonus(state.unit,state.mode,question.id);
   if(!state.attempts.some(row=>row.id===attempt.id))state.attempts.push(attempt);
   state.feedback=attempt;markFeedback(attempt);
   playFreeTalkingScoreSfx(Number(attempt.score_total_v2??Math.round((Number(attempt.grammar_points)+Number(attempt.quality_points))*2.5)));
-  const best=bestUnitPoints(state.unit,state.mode,question.id);
+  const best=bestUnitBonus(state.unit,state.mode,question.id);
   try{
-   if(best>0)await syncQuestionReward(question,best);
-   const gained=Math.max(0,best-prior);
+   if(best>legacyQuestionPoints(state.unit,state.mode,question.id))await syncQuestionReward(question,best);
+   const gained=Math.max(0,best-Math.max(prior,legacyQuestionPoints(state.unit,state.mode,question.id)));
    if(gained>0)void showPointAward({amount:gained,origin:capturePointOrigin($('ftSubmit'))}).catch(()=>{});
   }catch(pointError){
-   state.awards.delete(state.mode+':'+question.id);
-   $('ftAttemptStatus').textContent='답변과 점수는 저장됐지만 포인트 동기화가 필요해요: '+pointError.message;
+   $('ftAttemptStatus').textContent='보너스 포인트 동기화가 필요해요: '+pointError.message;
   }
 
-  const answered=groups().filter(q=>attemptsFor(state.session.id,q.id).length>0).length;
-  $('ftSessionProgress').textContent=answered+'/8 answered';
+  const answered=groups().filter(q=>bestScore(state.session.id,q.id)>=FT_PASS_SCORE).length;
+  $('ftSessionProgress').textContent=answered+'/8 completed';
   $('ftProgressFill').style.width=pct(answered/8*100)+'%';
  }catch(error){setTurn('student');$('ftAttemptStatus').textContent='저장하지 못했어요. '+error.message;console.warn('[Free Talking] grade',error)}
  finally{setBusy(false)}
@@ -727,8 +730,8 @@ async function conclude(){
   }else{
    view('ftFinish');
    $('ftFinishContent').innerHTML=renderStudentSessionFinish({title:'아직 답하지 않은 질문이 있어요.',
-     description:'각 질문에 한 번씩 답하면 완료돼요. 10점 만점은 필요하지 않아요.',
-     stats:[{label:'Answered',value:groups().filter(q=>attemptsFor(state.session.id,q.id).length>0).length+'/8'}]});
+     description:'모든 질문에서 6점 이상 받으면 완료돼요. 다시 도전해 보세요.',
+     stats:[{label:'Completed',value:groups().filter(q=>bestScore(state.session.id,q.id)>=FT_PASS_SCORE).length+'/8'}]});
    $('ftFinishStatus').textContent='지금까지의 답변은 모두 저장되어 있어요.';
    $('ftRetrySync').hidden=true;
   }
@@ -770,8 +773,8 @@ async function renderFinish(data){
  const reward='<student-reward-celebration percent="'+pct(scores.percent)+'" stars="'+scores.stars+
   '" star-max="5" points="'+scores.points+'" label="FREE TALKING REWARD"></student-reward-celebration>';
  $('ftFinishContent').innerHTML=renderStudentSessionFinish({title:'잘했어요! · Unit '+state.unit+' complete',
-  description:'8개 질문의 답변과 AI 피드백을 저장했어요. 만점이 아니어도 활동을 마칠 수 있어요.',
-  stats:[{label:'First-try accuracy',value:pct(scores.percent)+'%'},
+  description:'8개 질문 모두 6점 이상! 7점부터는 보너스 포인트를 받아요.',
+  stats:[{label:'Completed',value:'8/8'},
    {label:'Stars',value:scores.stars+'/5'},{label:'Points',value:scores.points}],
   rewardHtml:reward});
  $('ftRetrySync').hidden=true;
