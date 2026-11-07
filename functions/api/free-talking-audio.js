@@ -193,6 +193,45 @@ export async function onRequestPost({request,env,context}){
     return json(503,{success:false,error:'R2 inventory unavailable; no new audio generated',code:'INVENTORY_UNAVAILABLE'});
    }
   }
+  // Student-owned correction playback only. The browser cannot supply speech text.
+  if(body?.correction_attempt_id){
+   const attemptId=String(body.correction_attempt_id);
+   const chosen=String(body.voice||'marin').toLowerCase();
+   if(!UUID.test(attemptId)||!SELECTABLE_VOICES.has(chosen))return json(400,{success:false,error:'Invalid correction request'});
+   const bearer=(request.headers.get('Authorization')||'').replace(/^Bearer\\s+/i,'').trim();
+   const attemptRes=await fetch(SCORES+'/rest/v1/free_talking_attempts?select=id,question_id,correction,answer_text&student_id=eq.'+
+    userId+'&id=eq.'+attemptId+'&limit=1',{
+    headers:{apikey:SCORES_KEY,Authorization:'Bearer '+bearer},cache:'no-store',signal:AbortSignal.timeout(10000)});
+   if(!attemptRes.ok)return json(503,{success:false,error:'Could not load correction'});
+   const attempt=(await attemptRes.json().catch(()=>[]))?.[0];
+   if(!attempt)return json(404,{success:false,error:'Correction not found'});
+   const corrected=String(attempt.correction||attempt.answer_text||'').trim().slice(0,550);
+   if(!corrected||corrected.length<3)return json(422,{success:false,error:'Correction text unavailable'});
+   const isLili=chosen==='bunny-v3';
+   const ttsModel=isLili?ELEVEN_MODEL:'gpt-4o-mini-tts';
+   const ttsVoice=isLili?ELEVEN_VOICES['bunny-v3']:'marin';
+   const key=await cacheKey(corrected,ttsModel,ttsVoice,isLili?'elevenlabs':'fallback');
+   const existing=await cachedAudio(key,'mp3',request);
+   if(existing)return json(200,{success:true,...existing,content_type:'audio/mpeg',voice:chosen,stored:true});
+   let bytes;
+   if(isLili)bytes=await elevenAudio({env,text:corrected,voiceId:ttsVoice});
+   else {
+    const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
+    if(!apiKey)return json(503,{success:false,error:'Speech not configured'});
+    const response=await fetch('https://api.openai.com/v1/audio/speech',{
+     method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
+     body:JSON.stringify({model:ttsModel,voice:ttsVoice,input:corrected,response_format:'mp3',
+      instructions:'Read the corrected English sentence gently and naturally so a young learner can repeat it. Say only the English sentence.'}),
+     signal:AbortSignal.timeout(22000)
+    });
+    if(!response.ok)return json(502,{success:false,error:'Correction voice unavailable'});
+    bytes=await response.arrayBuffer();
+   }
+   if(bytes.byteLength<500||bytes.byteLength>1200000)throw Error('Invalid corrected speech audio');
+   const audio=base64(bytes);
+   await saveR2(key,audio,'mp3',request,attempt.question_id,ttsModel,ttsVoice,'correction');
+   return json(200,{success:true,audio,content_type:'audio/mpeg',voice:chosen,stored:true,source:'correction_r2'});
+  }
   const id=String(body?.question_id||'');
   // Preloader receives cache status only; it never downloads the audio bytes.
   const warmOnly=body?.warm_only===true;
