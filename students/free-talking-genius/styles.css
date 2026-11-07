@@ -1335,3 +1335,86 @@
  display:inline!important;margin:0!important;font-size:12px!important;
  font-weight:700!important;line-height:1.3!important;
 }
+
+/* Guided Free Talking: compact two-step feedback, no old explanation wall. */
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftGameCard,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] #ftGameCard{
+ min-height:0!important;justify-content:center!important;gap:0!important;
+}
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftFeedback,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] #ftFeedback{
+ display:block!important;width:min(100%,680px)!important;margin:0 auto!important;
+ padding:0!important;box-shadow:none!important;background:transparent!important;border:0!important;
+}
+.free-talking-genius #ftSession #ftScoreSplash[hidden],
+.free-talking-genius #ftSession #ftRepeatScreen[hidden]{display:none!important}
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftWilliVoice,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] #ftWilliVoice,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftHintActions,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] #ftHintActions,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftTurnStatus,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] #ftTurnStatus,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftRecordStatus,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] #ftRecordStatus,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftLanguageChallenge,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] #ftLanguageChallenge,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftQuestionText,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] #ftQuestionText{
+ display:none!important
+}
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftGameCard{
+ min-height:min(65dvh,520px)!important;
+}
+.free-talking-genius .ft-score-splash{text-align:center;display:flex;align-items:center;justify-content:center;
+ flex-direction:column;gap:14px;min-height:300px;padding:25px 12px}
+.free-talking-genius .ft-splash-score{
+ font-size:clamp(64px,15vw,110px);line-height:1;font-weight:950;
+ letter-spacing:-.07em;color:#c42b83;
+}
+.free-talking-genius .ft-splash-symbol svg{display:block;width:104px;height:104px}
+.free-talking-genius .ft-splash-symbol svg[hidden]{display:none!important}
+.free-talking-genius .ft-score-splash h3{font-size:clamp(22px,5vw,33px);font-weight:900;margin:0;color:#2f6068}
+.free-talking-genius .ft-score-splash.is-showing .ft-splash-score{animation:ft-score-enter .55s cubic-bezier(.13,1.4,.3,1) both}
+.free-talking-genius .ft-score-splash.is-showing .ft-splash-symbol{animation:ft-score-enter .48s .22s cubic-bezier(.16,1.3,.3,1) both}
+.free-talking-genius .ft-score-splash.is-showing h3{animation:ft-score-enter .42s .35s both}
+@keyframes ft-score-enter{
+ from{opacity:0;transform:translateY(22px) scale(.6)}
+ to{opacity:1;transform:translateY(0) scale(1)}
+}
+.free-talking-genius .ft-repeat-screen{
+ width:min(100%,630px);margin:0 auto;display:flex;flex-direction:column;
+ align-items:stretch;gap:13px;padding:10px 2px 20px;
+}
+.free-talking-genius .ft-repeat-sentence{
+ border:2px solid #cde9ec;border-radius:16px;padding:13px 16px;background:#f5fafb;
+}
+.free-talking-genius .ft-repeat-sentence.is-corrected{background:#fff7fb;border-color:#f2bfdc}
+.free-talking-genius .ft-repeat-sentence small{display:block;color:#607980;font-size:12px;font-weight:800;margin-bottom:6px}
+.free-talking-genius .ft-repeat-sentence p{margin:0;font-size:clamp(17px,3.2vw,23px);line-height:1.5;font-weight:750;color:#244d55}
+.free-talking-genius .ft-repeat-sentence .ft-pink-fix{
+ background:#ffd5e9!important;color:#b01d72!important;border-radius:4px;padding:0 3px;font-weight:900;
+}
+.free-talking-genius #ftRepeatCircleMount{display:flex;justify-content:center;margin:8px auto 0}
+.free-talking-genius #ftRepeatCircleMount #ftTurnCircle{
+ display:grid!important;width:clamp(180px,33vw,240px)!important;height:clamp(180px,33vw,240px)!important;
+ cursor:pointer;
+}
+.free-talking-genius #ftRepeatCircleMount #ftTurnCircle .ft-circle-mic{display:flex!important}
+.free-talking-genius #ftRepeatCircleMount #ftTurnCircle .ft-circle-start,
+.free-talking-genius #ftRepeatCircleMount #ftTurnCircle .ft-circle-score,
+.free-talking-genius #ftRepeatCircleMount #ftTurnCircle .ft-circle-ai{
+ display:none!important
+}
+.free-talking-genius .ft-repeat-message{text-align:center;font-size:15px;font-weight:800;color:#2c6770;margin:0}
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftFeedback[hidden],
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] #ftFeedback[hidden]{display:none!important}
+@media(max-width:540px){
+ .free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftGameCard{
+  min-height:calc(100dvh - 280px)!important;
+ }
+ .free-talking-genius .ft-repeat-screen{gap:10px;padding:4px 2px 14px}
+ .free-talking-genius .ft-repeat-sentence{padding:11px 13px}
+}
+@media(prefers-reduced-motion:reduce){
+ .free-talking-genius .ft-score-splash.is-showing *{animation:none!important}
+}
