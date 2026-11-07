@@ -560,7 +560,7 @@ function markFeedback(attempt){
  $('ftCircleScore').textContent=total+'/'+max;
  const grid=$('ftFeedbackGrid');grid.replaceChildren();
  if(isV2){
-  for(const [key,title] of Object.entries(RUBRIC_NAMES)){
+  for(const [key,title] of Object.entries(entries.context===undefined?{grammar:'문법',length:'문장 길이와 내용',creativity:'창의성',appropriate:'질문에 맞는 답변',vocabulary:'어휘와 표현'}:RUBRIC_NAMES)){
    const item=document.createElement('details');
    const summary=document.createElement('summary');
    const heading=document.createElement('strong');heading.textContent=title;
