@@ -1,6 +1,6 @@
 // Free Talking: preload the fixed quiet-audio encouragement for both characters.
 // Server returns audio only after verifying the clip is saved to shared R2.
-export function createFreeTalkingRetryVoice({getToken,onFinished}){
+export function createFreeTalkingRetryVoice({getToken,onFinished,onPlaying}){
  const voices=['marin','bunny-v3','pigfish'];
  const files=new Map(),inflight=new Map(),attempted=new Set();
  let sound=null,disposed=false,playVersion=0;
@@ -51,18 +51,18 @@ export function createFreeTalkingRetryVoice({getToken,onFinished}){
   const audio=new Audio(files.get(voice));
   audio.preload='auto';
   sound=audio;
-  audio.addEventListener('ended',()=>{if(sound===audio){sound=null;onFinished?.()}},{once:true});
-  audio.addEventListener('error',()=>{if(sound===audio){sound=null;onFinished?.()}},{once:true});
-  try{await audio.play();return true}
+  audio.addEventListener('ended',()=>{if(sound===audio){sound=null;onPlaying?.(false);onFinished?.()}},{once:true});
+  audio.addEventListener('error',()=>{if(sound===audio){sound=null;onPlaying?.(false);onFinished?.()}},{once:true});
+  try{await audio.play();if(sound===audio)onPlaying?.(true);return true}
   catch(error){
-   if(sound===audio){sound=null;onFinished?.()}
+   if(sound===audio){sound=null;onPlaying?.(false);onFinished?.()}
    console.warn('[Free Talking] Encouragement audio blocked',String(error?.name||error));
    return false;
   }
  }
  function stop(){
   playVersion++;
-  if(sound){try{sound.pause();sound.currentTime=0}catch{}sound=null}
+  if(sound){try{sound.pause();sound.currentTime=0}catch{}sound=null;onPlaying?.(false)}
  }
  function destroy(){disposed=true;stop();for(const url of files.values())URL.revokeObjectURL(url);files.clear()}
  return {preload,preloadBoth,play,stop,destroy,status};
