@@ -71,3 +71,12 @@
 .free-talking-genius .ft-character-symbol .bf-svg{width:100%;height:100%}
 @media(max-width:600px){.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle,.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle{width:220px!important;height:220px!important}}
 @media(prefers-reduced-motion:reduce){.free-talking-genius .bf-svg *{animation:none!important}}
+
+/* Selection portraits retain exact character SVGs without round masks. */
+.free-talking-genius #ftCharacter .ft-character-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.free-talking-genius #ftCharacter .ft-character-option{min-height:170px;padding:13px 8px}
+.free-talking-genius #ftCharacter .ft-character-symbol{width:110px;height:110px;max-width:100%;border:0;outline:0;border-radius:0;background:transparent;overflow:visible}
+.free-talking-genius #ftCharacter .ft-character-symbol .bf-svg{display:block;width:100%;height:100%;overflow:visible}
+.free-talking-genius #ftCharacter .ft-willi-portrait{border:0;outline:0}
+.free-talking-genius #ftCharacter .ft-willi-portrait svg{width:90px;height:90px;max-width:100%}
+@media(max-width:620px){.free-talking-genius #ftCharacter .ft-character-options{gap:6px}.free-talking-genius #ftCharacter .ft-character-option{min-height:145px;padding:8px 4px;font-size:12px}.free-talking-genius #ftCharacter .ft-character-symbol{width:85px;height:85px}}
