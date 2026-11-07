@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./styles.css?v=20261107-short-goal4">
+<link rel="stylesheet" href="./styles.css?v=20261107-score-repeat1">
 <link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261105-overdue-missions1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -151,19 +151,20 @@
    </div>
   </div>
   <div id="ftFeedback" class="ft-feedback" hidden>
-   <h3 id="ftFeedbackTitle"></h3>
-   <div id="ftFeedbackTotal" class="ft-feedback-total">0/10</div>
-   <div id="ftFeedbackGrid" class="ft-feedback-grid"></div>
-   <p id="ftHintSummary" class="ft-hint-cap"></p>
-   <div id="ftCorrectionPanel" class="ft-correction" hidden>
-     <strong>문장 고치기 · Fix Your Sentence</strong>
-     <div class="ft-correction-original"><small>내가 쓴 문장</small><p id="ftOriginalAnswer"></p></div>
-     <div class="ft-correction-improved"><small>고쳐 볼 문장 · 분홍색 부분을 확인하세요</small><p id="ftCorrection"></p></div>
-     <p id="ftCorrectionReason" class="ft-correction-reason"></p>
-     <button type="button" id="ftCorrectionListen" class="ft-correction-listen">🔊 고친 문장 듣기</button>
-     <label class="ft-correction-ack"><input type="checkbox" id="ftCorrectionAck">고친 부분을 확인했어요.</label>
-     <p id="ftCorrectionGuide" class="ft-correction-guide">확인한 후 직접 다시 답해 보세요. 8점 이상이면 다음 질문으로 넘어갈 수 있어요.</p>
+   <section id="ftScoreSplash" class="ft-score-splash">
+    <div id="ftSplashScore" class="ft-splash-score" aria-live="polite">0/10</div>
+    <div id="ftSplashSymbol" class="ft-splash-symbol" aria-hidden="true">
+     <svg id="ftSplashPassIcon" viewBox="0 0 100 100" hidden><circle cx="50" cy="50" r="43" fill="#E5F8F5"/><path d="M25 50l18 17 31-34" fill="none" stroke="#30AC96" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+     <svg id="ftSplashRetryIcon" viewBox="0 0 100 100" hidden><circle cx="50" cy="50" r="43" fill="#FFF0F6"/><path d="M33 33l34 34M67 33L33 67" stroke="#D95399" stroke-width="8" stroke-linecap="round"/></svg>
     </div>
+    <h3 id="ftSplashTitle">다시 도전</h3>
+   </section>
+   <section id="ftRepeatScreen" class="ft-repeat-screen" hidden>
+    <div class="ft-repeat-sentence"><small>내 문장</small><p id="ftOriginalAnswer"></p></div>
+    <div class="ft-repeat-sentence is-corrected"><small>고친 문장</small><p id="ftCorrection"></p></div>
+    <div id="ftRepeatCircleMount" class="ft-repeat-circle-mount"></div>
+    <p id="ftRepeatMessage" class="ft-repeat-message" role="status">원을 눌러 다시 말하세요.</p>
+   </section>
   </div>
   <p id="ftAttemptStatus" class="ft-status" role="status"></p>
   </div>
@@ -182,7 +183,7 @@
 </section>
 <div class="ft-footer-version">Free Talking Genius · 10-point conversation · v2.3</div>
 </main></div>
-<script type="module" src="./app.js?v=20261107-short-goal4"></script>
+<script type="module" src="./app.js?v=20261107-score-repeat1"></script>
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
 <script src="/students/components/mission-basket.js?v=20261105-overdue-missions1"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
