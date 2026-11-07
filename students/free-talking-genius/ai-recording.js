@@ -60,6 +60,12 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
   }
  }
  const release=()=>{if(stream){for(const track of stream.getTracks())try{track.stop()}catch{}stream=null}};
+ // Release an idle / pre-armed mic before character playback so Android can
+ // route audio as normal media, without cancelling an active student recording.
+ function releaseIdle(){
+  if(recording||processing||starting)return false;
+  ++run;preparing=null;stopVoiceMonitor();release();return true;
+ }
  function cancel(){
   ++run;clearTimer();stopVoiceMonitor();request?.abort();request=null;
   preparing=null;
@@ -168,5 +174,5 @@ export function createFreeTalkingRecorder({getToken,onStatus,onTranscript,onStat
   recording=false;processing=true;status();
   try{recorder.stop()}catch{cancel();say('녹음을 완료하지 못했어요. 다시 시도해 주세요.')}
  }
- return {prepare,start,stop,cancel,isReady:()=>Boolean(stream?.active&&stream.getAudioTracks().some(t=>t.readyState==='live')),isRecording:()=>recording,isProcessing:()=>starting||processing};
+ return {prepare,start,stop,cancel,releaseIdle,isReady:()=>Boolean(stream?.active&&stream.getAudioTracks().some(t=>t.readyState==='live')),isRecording:()=>recording,isProcessing:()=>starting||processing};
 }
