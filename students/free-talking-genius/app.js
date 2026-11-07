@@ -551,7 +551,7 @@ function captureAnswer(){
 }
 function renderCorrectionDiff(original,corrected){
  const host=$('ftCorrection');host.replaceChildren();
- const a=(String(original||'').match(/\\S+/g)||[]).slice(0,120),b=(String(corrected||'').match(/\\S+/g)||[]).slice(0,120);
+ const a=(String(original||'').match(/\S+/g)||[]).slice(0,120),b=(String(corrected||'').match(/\S+/g)||[]).slice(0,120);
  const dp=Array.from({length:a.length+1},()=>new Uint16Array(b.length+1));
  for(let i=a.length-1;i>=0;i--)for(let j=b.length-1;j>=0;j--)
   dp[i][j]=a[i].toLowerCase()===b[j].toLowerCase()?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);
@@ -781,7 +781,8 @@ async function submit(){
   const previouslyCreative=unitAttempts(state.unit,state.mode,question.id).some(a=>a.rubric_v2?.creativity_gift===true);
   if(!state.attempts.some(row=>row.id===attempt.id))state.attempts.push(attempt);
   state.feedback=attempt;markFeedback(attempt);
-  playFreeTalkingScoreSfx(Number(attempt.score_total_v2??Math.round((Number(attempt.grammar_points)+Number(attempt.quality_points))*2.5)));
+  if(attemptPassed(attempt))playFreeTalkingScoreSfx(attemptScore(attempt));
+  else playStudentSfx('wrong');
   const best=bestUnitBonus(state.unit,state.mode,question.id);
   try{
    if(best>legacyQuestionPoints(state.unit,state.mode,question.id))await syncQuestionReward(question,best);
