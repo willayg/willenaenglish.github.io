@@ -1,0 +1,73 @@
+/* Exact demo animations (unmodified keyframes and character rules). */
+#ftTurnCircle .bf-actor {position:absolute;z-index:3;top:50%;left:50%;width:clamp(185px,28vw,245px);height:clamp(185px,28vw,245px);transform:translate(-50%,-50%);pointer-events:none;display:block}
+.bf-svg {width:100%;height:100%;overflow:visible}
+.bf-svg g{transform-box:view-box}
+.bf-ear-left{transform-origin:158px 254px;animation:bfEarLeft 5.3s ease-in-out infinite}
+.bf-ear-right{transform-origin:456px 260px;animation:bfEarRight 6.1s ease-in-out infinite}
+.bf-tail{transform-origin:515px 715px;animation:bfTail 3.6s ease-in-out infinite}
+.bf-body{transform-origin:342px 743px;animation:bfBreathe 3.25s ease-in-out infinite}
+.bf-head{transform-origin:301px 478px;animation:bfHead 5s ease-in-out infinite}
+.bf-eyes{transform-origin:300px 330px;animation:bfBlink 5.2s infinite}
+.bf-talk-mouth {opacity:0}.bf-blush{opacity:0;transition:opacity .2s}
+@keyframes bfEarLeft {0%,77%,100%{transform:rotate(0)}81%{transform:rotate(-7deg)}86%{transform:rotate(3deg)}}
+@keyframes bfEarRight {0%,73%,100%{transform:rotate(0)}78%{transform:rotate(6deg)}85%{transform:rotate(-3deg)}}
+@keyframes bfTail{0%,100%{transform:rotate(-2deg)}45%{transform:rotate(5deg)}73%{transform:rotate(-5deg)}}
+@keyframes bfBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.013,.989)}}
+@keyframes bfHead{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1deg) translateY(-3px)}}
+@keyframes bfBlink{0%,27%,29%,74%,76%,100%{transform:scaleY(1)}28%,75%{transform:scaleY(.07)}}
+@keyframes bfListen{0%,100%{transform:rotate(-8deg) translate(-3px,-6px)}50%{transform:rotate(-5deg) translate(1px,-4px)}}
+@keyframes bfThink{0%,100%{transform:rotate(9deg) translateY(-2px)}50%{transform:rotate(11deg) translateY(1px)}}
+@keyframes bfJump{0%,100%{transform:translateY(0)}30%{transform:translateY(-25px)}55%{transform:translateY(0)}75%{transform:translateY(-12px)}}
+@keyframes bfTalk{0%,100%{transform:scaleY(.3)}25%{transform:scaleY(1.5)}55%{transform:scaleY(.5)}80%{transform:scaleY(1.8)}}
+.bf-actor[data-state="listening"] .bf-head{animation:bfListen 2.1s ease-in-out infinite}
+.bf-actor[data-state="thinking"] .bf-head{animation:bfThink 2.6s ease-in-out infinite}
+.bf-actor[data-state="speaking"] .bf-talk-mouth{opacity:1}
+.bf-actor[data-state="speaking"] .bf-rest-mouth{opacity:0}
+.bf-actor[data-state="speaking"] .bf-talk-mouth ellipse{transform-box:fill-box;transform-origin:center;animation:bfTalk .5s infinite}
+.bf-actor[data-state="celebrating"] .bf-svg{animation:bfJump 1.1s}
+.bf-actor[data-state="celebrating"] .bf-blush{opacity:.7}
+.pf-svg{overflow:visible}
+.pf-svg .pf-tail{transform-origin:768px 557px;animation:pfWag 2.7s ease-in-out infinite}
+.pf-svg .pf-fins{animation:none!important}
+.pf-svg .pf-front-fin{transform-origin:549px 585px;animation:pfFin 2.2s ease-in-out infinite}
+.pf-svg .pf-float{animation:pfSwim 3.4s ease-in-out infinite}
+.pf-svg .pf-eyes{transform-origin:215px 397px;animation:pfBlink 5.4s infinite}
+.pf-svg .pf-talk-mouth {opacity:0}
+.pf-svg .pf-rest-mouth{opacity:1}
+.bf-actor[data-state="speaking"] .pf-svg .pf-talk-mouth{opacity:1}
+.bf-actor[data-state="speaking"] .pf-svg .pf-rest-mouth{opacity:0}
+.bf-actor[data-state="speaking"] .pf-svg .pf-talk-mouth{transform-origin:175px 649px;animation:pfTalk .35s ease-in-out infinite}
+.bf-actor[data-state="listening"] .pf-svg .pf-float{animation:pfListen 2.1s ease-in-out infinite}
+.bf-actor[data-state="thinking"] .pf-svg .pf-float{animation:pfThink 2.5s ease-in-out infinite}
+.bf-actor[data-state="celebrating"] .pf-svg{animation:pfCelebrate 1.1s ease-in-out}
+@keyframes pfSwim{0%,100%{transform:translateY(2px) rotate(-.4deg)}50%{transform:translateY(-6px) rotate(.4deg)}}
+@keyframes pfWag{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(4deg)}}
+@keyframes pfFin{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(3deg)}}
+@keyframes pfBlink{0%,33%,35%,82%,84%,100%{transform:scaleY(1)}34%,83%{transform:scaleY(.08)}}
+@keyframes pfTalk{0%,100%{transform:scaleY(.45)}42%{transform:scaleY(1.4)}72%{transform:scaleY(.7)}}
+@keyframes pfListen{0%,100%{transform:rotate(-5deg) translateY(-4px)}50%{transform:rotate(-2deg) translateY(1px)}}
+@keyframes pfThink{0%,100%{transform:rotate(3deg)}50%{transform:rotate(7deg) translateY(-4px)}}
+@keyframes pfCelebrate{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-20px) rotate(-7deg)}65%{transform:translateY(-7px) rotate(7deg)}}
+@media(prefers-reduced-motion:reduce){.pf-svg *{animation:none!important}}
+
+/* Integration wrapper: same animations, no visible circle or extra ring. */
+.free-talking-genius #ftTurnCircle .bf-actor{position:absolute;z-index:3;top:50%;left:50%;width:100%;height:100%;transform:translate(-50%,-50%);pointer-events:none;display:block;filter:drop-shadow(0 0 8px rgba(108,229,240,.65)) drop-shadow(0 0 18px rgba(151,244,249,.48))}
+.free-talking-genius #ftTurnCircle[data-phase="student"] .bf-actor,.free-talking-genius #ftTurnCircle[data-listening="true"] .bf-actor{filter:drop-shadow(0 0 10px rgba(92,227,238,.85)) drop-shadow(0 0 23px rgba(137,241,248,.65))}
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle,
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle{
+ border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;background-image:none!important;overflow:visible!important;animation:none!important;isolation:isolate;width:clamp(205px,35vw,255px)!important;height:clamp(205px,35vw,255px)!important;
+}
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle::before,
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle::after,
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle::before,
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle::after{content:none!important;display:none!important}
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle :is(.ft-circle-glow,.ft-orbit-visual,.ft-circle-start,.ft-circle-ai,.ft-circle-mic,.ft-circle-thinking,.ft-circle-score,.ft-record-countdown),
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle :is(.ft-circle-glow,.ft-orbit-visual,.ft-circle-start,.ft-circle-ai,.ft-circle-mic,.ft-circle-thinking,.ft-circle-score,.ft-record-countdown){display:none!important}
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle:focus-visible,
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle:focus-visible{outline:0!important}
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle:focus-visible .bf-actor,
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle:focus-visible .bf-actor{filter:drop-shadow(0 0 13px rgba(100,232,241,.95))!important}
+.free-talking-genius .ft-character-symbol:has(.bf-svg){display:block;width:min(100%,95px);height:95px;overflow:visible}
+.free-talking-genius .ft-character-symbol .bf-svg{width:100%;height:100%}
+@media(max-width:600px){.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle,.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle{width:220px!important;height:220px!important}}
+@media(prefers-reduced-motion:reduce){.free-talking-genius .bf-svg *{animation:none!important}}
