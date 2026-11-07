@@ -1418,3 +1418,15 @@
 @media(prefers-reduced-motion:reduce){
  .free-talking-genius .ft-score-splash.is-showing *{animation:none!important}
 }
+
+/* Only relevant footer actions are visible in score and rehearsal. */
+.free-talking-genius #ftSession:has(#ftQuestionStage[data-step="score"]) #ftListenAgain,
+.free-talking-genius #ftSession:has(#ftQuestionStage[data-step="repeat"]) #ftListenAgain{
+ display:none!important;
+}
+.free-talking-genius #ftSession #ftNext[hidden],
+.free-talking-genius #ftSession #ftRetry[hidden],
+.free-talking-genius #ftSession #ftSubmit[hidden],
+.free-talking-genius #ftSession #ftSkip[hidden]{
+ display:none!important;
+}
