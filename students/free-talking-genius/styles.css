@@ -1538,3 +1538,9 @@
  color:#7d8f96!important;
  font-size:clamp(11px,2vw,14px)!important;
 }
+
+/* Pigfish and Bunny Fox optional new answer; original circle remains. */
+.free-talking-genius #ftRepeatNewIdea[hidden]{display:none!important}
+.free-talking-genius .ft-repeat-new-idea{width:min(100%,450px);min-height:66px;border:3px solid #e6abc9;border-radius:18px;background:#fff;color:#bb3480;font:inherit;font-weight:850;font-size:clamp(17px,3vw,22px);cursor:pointer;padding:10px 20px;margin:10px auto 0}
+.free-talking-genius .ft-repeat-new-idea.is-recording{background:#fff0f7;box-shadow:0 0 0 4px #f0c8dc}
+.free-talking-genius .ft-repeat-new-idea:disabled{opacity:.55;cursor:wait}
