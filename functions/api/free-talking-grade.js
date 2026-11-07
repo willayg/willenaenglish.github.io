@@ -89,6 +89,30 @@ function enforceRelevance(result,answer){
  }
  return {...result,scores,feedback,rawTotal:CRITERIA.reduce((n,k)=>n+scores[k],0)};
 }
+// Rehearsal is a separate low-cost pronunciation/transcription check.
+// Compare to the saved corrected sentence, not to browser-supplied reference text.
+function rehearseSimilarity(spoken,expected){
+ const clean=x=>String(x||'').toLowerCase().normalize('NFKC').replace(/[’‘]/g,"'").replace(/[^a-z0-9' ]/g,' ').replace(/\\s+/g,' ').trim();
+ const a=clean(spoken).split(' ').filter(Boolean),b=clean(expected).split(' ').filter(Boolean);
+ if(!a.length||!b.length)return 0;
+ // Character Levenshtein tolerates recognition punctuation and small substitutions.
+ const left=a.join(' '),right=b.join(' ');
+ if(left.length<Math.max(8,right.length*.55))return 0;
+ const dist=new Uint16Array(right.length+1);
+ for(let j=0;j<=right.length;j++)dist[j]=j;
+ for(let i=1;i<=left.length;i++){
+  let previous=dist[0];dist[0]=i;
+  for(let j=1;j<=right.length;j++){
+   const above=dist[j],cost=left[i-1]===right[j-1]?0:1;
+   dist[j]=Math.min(dist[j]+1,dist[j-1]+1,previous+cost);previous=above;
+  }
+ }
+ const charSimilarity=1-dist[right.length]/Math.max(left.length,right.length);
+ const important=b.filter(w=>w.length>3&&!['there','that','this','with','from','into','have','were','they','your','some','very','about'].includes(w));
+ const contentMatches=important.filter(w=>a.includes(w)).length;
+ const contentRatio=important.length?contentMatches/important.length:1;
+ return charSimilarity>=.79&&contentRatio>=.63?charSimilarity:0;
+}
 function starterFor(question){return String(question?.starter_en||'').trim()}
 async function judge(key,question,answer,mode,previous=[]){
  const response=await fetch('https://api.openai.com/v1/chat/completions',{
@@ -132,6 +156,31 @@ export async function onRequestPost({request,env}){
   if(!recent.ok)return reply(503,{success:false,error:'Could not verify previous answers'});
   const past=recent.value||[];
   const nextAttempt=past.length+1;
+  if(input?.action==='rehearse'){
+   if(session.mode!=='speaking'&&session.mode!=='writing')return reply(400,{success:false,error:'Invalid session mode'});
+   const originalId=String(input?.original_attempt_id||'');
+   const original=past.find(a=>a.id===originalId);
+   if(!original||original.rubric_v2?.passed!==false||!String(original.correction||'').trim())
+    return reply(409,{success:false,error:'Correction not available'});
+   const expected=String(original.correction).trim();
+   const likeness=rehearseSimilarity(answer,expected);
+   if(!likeness)return reply(200,{success:true,passed:false,message:'다시 한 번 말해 보세요.'});
+   if(past.length>=20)return reply(429,{success:false,error:'Attempt limit reached'});
+   const row={session_id:sessionId,student_id:auth.id,question_id:questionId,
+    question_number:prompt.question_number,attempt_no:nextAttempt,answer_text:answer,
+    grammar_points:2,quality_points:2,grade_source:'rehearsal',
+    grammar_feedback_ko:'고친 문장을 잘 따라 말했어요.',quality_feedback_ko:'연습 통과',
+    feedback_ko:'고친 문장을 잘 따라 말했어요.',correction:expected,
+    rubric_v2:{pass_score:8,passed:true,bonus_scheme:'free-talking-guided-rehearsal-v1',
+     rehearsal:true,original_attempt_id:original.id,similarity:Math.round(likeness*100)/100,
+     scores:{grammar:2,context:2,appropriate:2,length:1,vocabulary:1},
+     creativity_gift:false,challenge_met:true,context_pass:true},
+    raw_total_v2:8,hint_deduction_v2:0,score_total_v2:8};
+   const saved=await db('free_talking_attempts',auth.token,{method:'POST',body:row});
+   if(!saved.ok||!saved.value?.[0])return reply(503,{success:false,error:'연습 결과를 저장하지 못했어요.'});
+   return reply(200,{success:true,passed:true,attempt:saved.value[0]});
+  }
+
   if(past.length>=20)return reply(429,{success:false,error:'Maximum twenty attempts for this question.'});
   if(isHint){
    if(!['translation','starter','english_prompt','typed_review'].includes(hintType))return reply(400,{success:false,error:'Unknown hint'});
