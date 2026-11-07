@@ -1,0 +1,138 @@
+/* Free Talking concept previews only: no changes to canonical app styles. */
+.free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftGameCard{
+ width:min(760px,100%)!important;
+ min-height:min(640px,calc(100dvh - 238px))!important;
+ justify-content:center!important;
+ gap:0!important;
+}
+.free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftWilliVoice{
+ order:1!important;min-height:320px!important;height:320px!important;
+ flex:0 0 320px!important;display:flex!important;align-items:center!important;
+ justify-content:center!important;flex-direction:column!important;
+ margin:0!important;padding:0!important;position:relative!important;gap:0!important;
+}
+.free-talking-genius #ftSession .ft-concept-character-stage{
+ width:285px;height:275px;min-width:285px;min-height:275px;flex:0 0 275px;
+ position:relative;display:grid;place-items:center;margin:0 auto;
+}
+.free-talking-genius #ftSession .ft-concept-avatar-anchor{
+ display:grid;place-items:center;position:relative;
+ width:255px;height:255px;
+}
+.free-talking-genius #ftSession .ft-concept-avatar-anchor #ftTurnCircle{margin:0!important}
+.free-talking-genius #ftSession .ft-concept-timer{
+ pointer-events:none;
+ visibility:hidden;opacity:0;
+ transition:opacity .2s ease,visibility .2s ease;
+}
+.free-talking-genius #ftSession[data-concept-recording="true"] .ft-concept-timer{
+ visibility:visible;opacity:1;
+}
+/* The original speaking control stays clickable and uses its original events. */
+.free-talking-genius #ftSession .ft-concept-avatar-anchor #ftTurnCircle{
+ position:relative;z-index:3!important;
+}
+.free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintActions{
+ order:4!important;min-height:104px!important;
+ flex:0 0 104px!important;align-content:start!important;
+ margin:0 auto 6px!important;
+}
+.free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintActions.is-concealed{
+ display:grid!important;visibility:hidden!important;pointer-events:none!important;
+ opacity:0!important;
+}
+.free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintViewer[hidden]{
+ display:flex!important;visibility:hidden!important;pointer-events:none!important;
+ opacity:0!important;
+}
+.free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintViewer{
+ min-height:76px!important;max-height:95px;overflow:auto;
+}
+/* Keep feedback, score animation, and corrected-sentence recorder unmodified. */
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] .ft-concept-timer,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] .ft-concept-timer{
+ display:none!important;
+}
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] .ft-concept-character-stage,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] .ft-concept-character-stage{
+ display:none!important;
+}
+.free-talking-genius #ftSession #ftQuestionStage[data-step="repeat"] #ftWilliVoice,
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftWilliVoice{
+ min-height:0!important;height:0!important;
+}
+/* Concept A: outer, unobstructed countdown perimeter. */
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-concept-ring-svg{
+ position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible;
+ transform:rotate(-90deg);
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-concept-timer{
+ position:absolute;inset:-3px 0 0;z-index:8;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-concept-ring-svg circle{
+ fill:none;stroke-width:8;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-concept-ring-track{
+ stroke:#e3f4f5;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-concept-ring-fill{
+ stroke:#4fc8d6;stroke-linecap:round;
+ stroke-dasharray:100;stroke-dashoffset:var(--concept-progress,0);
+ transition:stroke-dashoffset .12s linear;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-concept-ring-seconds{
+ position:absolute;bottom:0;left:50%;transform:translate(-50%,56%);
+ border:2px solid #8edfe6;border-radius:30px;background:#fff;
+ color:#247983;font:900 17px Poppins,sans-serif;
+ padding:5px 11px;min-width:58px;text-align:center;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession #ftTurnCircle{
+ border:0!important;outline:0!important;box-shadow:none!important;
+}
+/* Concept B: no ring, compact horizontal countdown bar underneath. */
+html[data-ft-concept="bar"] .free-talking-genius #ftSession .ft-concept-character-stage{
+ flex-basis:255px;height:255px;min-height:255px;
+}
+html[data-ft-concept="bar"] .free-talking-genius #ftSession .ft-concept-timer{
+ position:relative;width:min(245px,80vw);height:46px;
+ flex:0 0 46px;margin:0 auto;z-index:5;
+}
+html[data-ft-concept="bar"] .free-talking-genius #ftSession .ft-concept-bar-header{
+ display:flex;justify-content:center;align-items:center;gap:7px;
+ height:23px;font:800 13px Poppins,sans-serif;color:#3d7d87;
+}
+html[data-ft-concept="bar"] .free-talking-genius #ftSession .ft-concept-rec-dot{
+ width:8px;height:8px;border-radius:50%;background:#d83f95;
+ animation:ftConceptBlink 1.2s infinite;
+}
+html[data-ft-concept="bar"] .free-talking-genius #ftSession .ft-concept-bar-seconds{
+ margin-left:auto;color:#247b86;font-size:15px;
+}
+html[data-ft-concept="bar"] .free-talking-genius #ftSession .ft-concept-bar-track{
+ width:100%;height:10px;border-radius:20px;background:#e5f4f5;
+ border:1px solid #ceebee;overflow:hidden;
+}
+html[data-ft-concept="bar"] .free-talking-genius #ftSession .ft-concept-bar-fill{
+ width:100%;height:100%;display:block;border-radius:20px;
+ background:linear-gradient(90deg,#71d7e0,#3bbcc9);
+ transition:width .12s linear;
+}
+@keyframes ftConceptBlink{50%{opacity:.25}}
+@media(max-width:560px){
+ .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftGameCard{
+  min-height:calc(100dvh - 230px)!important;
+ }
+ .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftWilliVoice{
+  height:300px!important;min-height:300px!important;flex-basis:300px!important;
+ }
+ .free-talking-genius #ftSession .ft-concept-character-stage{
+  transform:scale(.90);transform-origin:center center;
+ }
+ .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintActions{
+  min-height:104px!important;flex-basis:104px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .free-talking-genius #ftSession .ft-concept-timer{transition:none!important}
+ .free-talking-genius #ftSession .ft-concept-rec-dot{animation:none!important}
+}
