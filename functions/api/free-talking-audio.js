@@ -198,7 +198,7 @@ export async function onRequestPost({request,env,context}){
    const attemptId=String(body.correction_attempt_id);
    const chosen=String(body.voice||'marin').toLowerCase();
    if(!UUID.test(attemptId)||!SELECTABLE_VOICES.has(chosen))return json(400,{success:false,error:'Invalid correction request'});
-   const bearer=(request.headers.get('Authorization')||'').replace(/^Bearer\\s+/i,'').trim();
+   const bearer=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
    const attemptRes=await fetch(SCORES+'/rest/v1/free_talking_attempts?select=id,question_id,correction,answer_text&student_id=eq.'+
     userId+'&id=eq.'+attemptId+'&limit=1',{
     headers:{apikey:SCORES_KEY,Authorization:'Bearer '+bearer},cache:'no-store',signal:AbortSignal.timeout(10000)});
