@@ -10,7 +10,7 @@ import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
 import {createFreeTalkingVoice} from './question-voice.js?v=20261107-character-choice1';
-import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-spoken-quiet-r2-v1';
+import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-score-repeat1';
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261107-english-r2retry2';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -31,6 +31,7 @@ const retryVoice=createFreeTalkingRetryVoice({
  }
 });
 function encourageQuietSpeech(){
+ if(state.repeatStep){$('ftRepeatMessage').textContent='조금 더 크게 다시 말해 보세요.';return}
  if(visibleScreen!=='ftSession'||state.mode!=='speaking'||!state.current||state.phase!=='student')return;
  $('ftRecordStatus').textContent='목소리가 잘 안 들려요. 조금 더 크게 말해 볼까요?';
  void retryVoice.play(questionVoice.getVoice());
@@ -58,6 +59,8 @@ const aiRecorder=createFreeTalkingRecorder({
   $('ftSubmit').disabled=state.loading||!validAnswer();
  },
  onState:({recording,processing})=>{
+  if(state.repeatStep&&recording)$('ftRepeatMessage').textContent='녹음 중…';
+  if(state.repeatStep&&processing)$('ftRepeatMessage').textContent='확인 중…';
   if(state.repeatStep&&!recording&&!processing&&state.repeatTranscript&&!state.repeatChecking){
    const spoken=state.repeatTranscript;state.repeatTranscript=null;
    void submitRepetition(spoken);
