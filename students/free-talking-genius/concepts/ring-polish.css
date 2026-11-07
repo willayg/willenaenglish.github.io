@@ -171,3 +171,55 @@ html[data-ft-concept="ring"] .free-talking-genius #ftSession #ftRepeatScreen .ft
 html[data-ft-concept="ring"] .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) #ftRepeatMessage{
  display:none!important;
 }
+
+/* Strong, visible concept A controls — override earlier thin borders. */
+html[data-ft-concept="ring"] .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-ring-action-pill{
+ border:5px solid #e9a8c9!important;border-radius:24px!important;
+ min-height:52px!important;gap:12px!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-ring-action-pill[data-state="speak"],
+html[data-ft-concept="ring"] .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-ring-action-pill[data-state="recording"]{
+ border-color:#91dce5!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-concept-ring-svg .ft-concept-ring-track,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-concept-ring-svg .ft-concept-ring-fill{
+ stroke-width:18px!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession:is([data-character="bunny-v3"],[data-character="pigfish"]) .ft-concept-avatar-anchor::before{
+ border-width:4px!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-thinking-icon{
+ display:none;position:relative;flex:0 0 27px;
+ width:27px;height:27px;border-radius:50%;
+ border:4px solid #e7f8f9;border-top-color:#ee8fc0;border-right-color:#53c9d7;
+ box-sizing:border-box;animation:ftRingSpin .85s linear infinite;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-thinking-core{
+ position:absolute;inset:3px;border:3px solid transparent;border-left-color:#66cfda;
+ border-bottom-color:#ef9cc5;border-radius:50%;
+ animation:ftRingSpin .6s linear reverse infinite;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-action-pill[data-state="thinking"]::before{
+ content:none!important;display:none!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-action-pill[data-state="thinking"] .ft-ring-thinking-icon{
+ display:block!important;
+}
+@keyframes ftRingSpin{to{transform:rotate(360deg)}}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-ring-thinking="true"][data-character="bunny-v3"] .bf-actor .bf-eyes,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-ring-thinking="true"][data-character="pigfish"] .bf-actor .pf-eyes{
+ transform-box:fill-box!important;transform-origin:center center!important;
+ animation:ftRingSquint 1.6s ease-in-out infinite!important;
+}
+@keyframes ftRingSquint{
+ 0%,100%{transform:scaleY(.75)}
+ 50%{transform:scaleY(.35)}
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-thinking-icon,
+ html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-thinking-core,
+ html[data-ft-concept="ring"] .free-talking-genius #ftSession .bf-actor .bf-eyes,
+ html[data-ft-concept="ring"] .free-talking-genius #ftSession .bf-actor .pf-eyes{
+  animation:none!important;
+ }
+}
