@@ -1,0 +1,93 @@
+/* Concept A refinement: isolated to the ring URL and animal characters.
+   AI Willi retains every one of its original appearance and behaviours. */
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] .ft-concept-character-stage,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] .ft-concept-character-stage{
+ width:225px!important;height:225px!important;min-width:225px!important;min-height:225px!important;
+ flex:0 0 225px!important;transform:none!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] .ft-concept-avatar-anchor,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] .ft-concept-avatar-anchor{
+ width:208px!important;height:208px!important;min-width:208px!important;min-height:208px!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] .ft-concept-avatar-anchor::before,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] .ft-concept-avatar-anchor::before{
+ inset:0!important;background:#fff!important;border:2px solid #d9eff1!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] .ft-concept-avatar-anchor #ftTurnCircle,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] .ft-concept-avatar-anchor #ftTurnCircle{
+ width:207px!important;height:207px!important;min-width:207px!important;min-height:207px!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle .bf-actor,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle .bf-actor,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle[data-phase="student"] .bf-actor,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle[data-phase="student"] .bf-actor{
+ width:81%!important;height:81%!important;
+ filter:none!important;box-shadow:none!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle .bf-svg,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle .bf-svg{
+ filter:none!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] .ft-concept-timer,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] .ft-concept-timer{
+ inset:0!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] .ft-concept-ring-seconds,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] .ft-concept-ring-seconds{
+ display:none!important;
+}
+/* Status text is replaced by one lightweight working action below the circle. */
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnStatus,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] #ftTurnStatus{
+ display:none!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-action-pill{
+ display:flex;align-items:center;justify-content:center;
+ width:190px;max-width:90%;min-height:45px;
+ margin:11px auto 2px;padding:8px 15px;
+ border:2px solid #e9a8c9;border-radius:15px;
+ background:#fff;color:#697f85;
+ font:850 clamp(15px,2.6vw,18px)/1.25 Poppins,system-ui,sans-serif;
+ box-shadow:none;cursor:pointer;
+ -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-action-pill[hidden]{display:none!important}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-action-pill[data-state="speak"],
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-action-pill[data-state="recording"]{
+ border-color:#91dce5;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-action-pill[data-state="thinking"]{
+ border-color:#d0dfe2;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-action-pill:disabled{
+ opacity:1;cursor:default;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession .ft-ring-action-pill:focus-visible{
+ outline:3px solid #72cbd4;outline-offset:3px;
+}
+/* Keep character area steady, even when hints arrive or are cycled. */
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] #ftWilliVoice,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] #ftWilliVoice{
+ height:300px!important;min-height:300px!important;flex:0 0 300px!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] #ftHintViewer .ft-hint-viewer-top,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] #ftHintViewer .ft-hint-viewer-top,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] #ftHintViewer .ft-hint-viewer-guide,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] #ftHintViewer .ft-hint-viewer-guide{
+ display:none!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] #ftHintViewer,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] #ftHintViewer{
+ padding:12px 16px!important;min-height:72px!important;
+ justify-content:center!important;
+}
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] #ftHintViewer .ft-hint-viewer-value,
+html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] #ftHintViewer .ft-hint-viewer-value{
+ font-size:clamp(16px,3vw,19px)!important;
+}
+@media(max-width:560px){
+ html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="bunny-v3"] #ftWilliVoice,
+ html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-character="pigfish"] #ftWilliVoice{
+  height:296px!important;min-height:296px!important;flex-basis:296px!important;
+ }
+}
