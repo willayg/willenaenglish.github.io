@@ -143,7 +143,7 @@ export async function onRequestPost({request,env}){
    grammar_points:result.scores.grammar,quality_points:result.scores.appropriate,
    grammar_feedback_ko:result.feedback.grammar,quality_feedback_ko:result.feedback.appropriate,
    feedback_ko:Object.values(result.feedback).join(' '),correction:result.correction,grade_source:'ai',
-   rubric_v2:{scores:result.scores,feedback:result.feedback,hints:{translation:used.has('translation'),starter:used.has('starter'),
+   rubric_v2:{bonus_scheme:'free-talking-bonus-v2',pass_score:6,scores:result.scores,feedback:result.feedback,hints:{translation:used.has('translation'),starter:used.has('starter'),
     english_prompt:used.has('english_prompt'),typed_review:used.has('typed_review')}},
    raw_total_v2:result.rawTotal,hint_deduction_v2:hintDeduction,score_total_v2:scoreTotal};
   const saved=await db('free_talking_attempts',auth.token,{method:'POST',body:row});
