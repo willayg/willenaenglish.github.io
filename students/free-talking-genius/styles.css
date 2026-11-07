@@ -451,11 +451,17 @@
  .free-talking-genius #ftSession #ftEditTranscript.ft-hint-button{font-size:12px;padding:10px 12px}
 }
 
+/* Session overlays the page cleanly; the page version label must never bleed through. */
+.free-talking-genius .ft-page:has(#ftSession:not([hidden])) > .ft-footer-version{display:none!important}
+.free-talking-genius #ftSession.ft-conversation{
+ z-index:20!important;
+ background:var(--vocab-page,#e9fbfc)!important;
+}
 /* Clean session 2026-11-06: one game card; no legacy quiz overlays. */
 .free-talking-genius #ftSession.ft-conversation{
  inset:100px 0 0!important;
  height:calc(100dvh - 100px)!important;
- background:#e7f9fa!important;
+ background:var(--vocab-page,#e9fbfc)!important;
 }
 .free-talking-genius #ftSession #ftQuestionStage{
  display:flex!important;flex-direction:column!important;
