@@ -135,3 +135,22 @@
   width:100%;
  }
 }
+
+/* AI Willi: the portrait SVG owns all its rings. Disable the legacy
+   border/outline on its wrapper, which drew an off-centre extra circle. */
+.free-talking-genius #ftCharacter .ft-character-option .ft-willi-portrait,
+.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"] .ft-willi-portrait{
+ display:grid!important;place-items:center!important;
+ box-sizing:border-box!important;
+ padding:0!important;
+ border:0!important;outline:0!important;box-shadow:none!important;
+ border-radius:0!important;background:transparent!important;
+ transform:none!important;
+}
+.free-talking-genius #ftCharacter .ft-willi-portrait svg{
+ display:block!important;
+ width:100%!important;height:100%!important;
+ max-width:100%!important;
+ margin:0!important;padding:0!important;
+ transform:none!important;transform-origin:center center!important;
+}
