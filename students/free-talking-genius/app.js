@@ -20,7 +20,7 @@ const bookTitle=()=>state.books.find(b=>b.id===state.bookId)?.title||'Textbook';
 const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const state={student:null,profile:null,books:[],bookId:null,questions:[],unitTitles:new Map(),unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
- current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready',repeatStep:false,repeatTranscript:null,repeatChecking:false};
+ current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready',repeatStep:false,repeatTranscript:null,repeatChecking:false,seenChallenges:new Set()};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
 const retryVoice=createFreeTalkingRetryVoice({
@@ -598,7 +598,7 @@ function markFeedback(attempt){
  $('ftScoreSplash').hidden=false;$('ftRepeatScreen').hidden=true;
  $('ftQuestionHost').hidden=true;$('ftHeardSentence').hidden=true;
  $('ftHintViewer').hidden=true;$('ftHintActions').classList.add('is-concealed');
- $('ftLanguageChallenge').hidden=true;$('ftTranscriptRow').hidden=true;
+ $('ftLanguageChallenge').hidden=true;$('ftChallengeSplash').hidden=true;$('ftTranscriptRow').hidden=true;
  const passed=attemptPassed(attempt),score=attemptScore(attempt);
  const skills=$('ftSplashSkills');skills.replaceChildren();
  const details=attempt.rubric_v2?.scores||{};
@@ -733,10 +733,16 @@ function renderQuestion({retry=false}={}){
   8:'would/could + 야영 활동'
  };
  const isForestUnit=state.current.book_id==='c437909b-f399-468a-bc31-996147d82fd8'&&Number(state.unit)===2;
- $('ftLanguageChallenge').hidden=false;
- $('ftChallengeText').textContent=isForestUnit
+ const goal=isForestUnit
   ?goals[Number(state.current.question_number)]||'완전한 문장 + 자세한 내용'
-  :'완전한 문장 + 자세한 내용';
+  :challenge.startsWith('Challenge:')?challenge.slice(10).trim():'완전한 문장 + 자세한 내용';
+ $('ftLanguageChallenge').hidden=true;
+ $('ftChallengeText').textContent='';
+ const splashKey=state.session.id+':'+state.current.id;
+ const splash=$('ftChallengeSplash');
+ splash.classList.remove('is-dismissing');
+ $('ftChallengeSplashText').textContent=goal;
+ splash.hidden=retry||state.seenChallenges.has(splashKey);
  $('ftHintEnglish').hidden=state.mode!=='speaking';
  $('ftQuestionText').hidden=state.mode==='speaking';
  const answered=questions.filter(q=>unitHasPass(state.unit,state.mode,q.id)).length;
@@ -1064,6 +1070,17 @@ $('ftNext').addEventListener('click',()=>{
  if(!state.current||!state.feedback)return;
  if(!attemptPassed(state.feedback)){showRepeatScreen();return}
  state.cursor=(state.cursor+1)%8;renderQuestion();
+});
+$('ftChallengeSplash').addEventListener('click',()=>{
+ const splash=$('ftChallengeSplash');
+ if(splash.hidden||splash.classList.contains('is-dismissing'))return;
+ if(state.session&&state.current)state.seenChallenges.add(state.session.id+':'+state.current.id);
+ splash.classList.add('is-dismissing');
+ setTimeout(()=>{
+  if(!splash.classList.contains('is-dismissing'))return;
+  splash.hidden=true;splash.classList.remove('is-dismissing');
+  $('ftTurnCircle').focus({preventScroll:true});
+ },190);
 });
 $('ftSessionExit').addEventListener('click',()=>void exit());
 $('ftSessionHome').addEventListener('click',()=>void exit());
