@@ -980,13 +980,21 @@ async function rewardSync(data){
 async function renderFinish(data){
  view('ftFinish');
  const earnedBonus=groups().reduce((sum,q)=>sum+Math.max(0,bestUnitBonus(state.unit,state.mode,q.id)-legacyQuestionPoints(state.unit,state.mode,q.id)),0);
- const scores={percent:Number(data.percent)||0,stars:Number(data.stars)||0,points:earnedBonus};
+ // Replaying a mastered unit gives no duplicate stars, but the earned stars
+ // remain part of the unit's achievement and must not appear to be lost.
+ const earnedStars=Number(data.stars)||0;
+ const unitStars=Math.max(earnedStars,...state.sessions
+  .filter(s=>s.book_id===BOOK()&&s.unit_id===state.session?.unit_id&&s.mode===state.mode&&s.status==='completed')
+  .map(s=>Number(s.reward_stars)||0),0);
+ const scores={percent:Number(data.percent)||0,stars:unitStars,points:earnedBonus};
+ const repeatAward=unitStars>earnedStars;
  const reward='<student-reward-celebration percent="'+pct(scores.percent)+'" stars="'+scores.stars+
-  '" star-max="5" points="'+scores.points+'" label="FREE TALKING REWARD"></student-reward-celebration>';
+  '" star-max="5" points="'+scores.points+'" label="'+(repeatAward?'FREE TALKING · EARNED STARS':'FREE TALKING REWARD')+'"></student-reward-celebration>'+
+  (repeatAward?'<p class="ft-repeat-star-note">이미 받은 별 '+unitStars+'개 · 이번 세션 추가 별 '+earnedStars+'개</p>':'');
  $('ftFinishContent').innerHTML=renderStudentSessionFinish({title:'잘했어요! · Unit '+state.unit+' complete',
   description:'8개 질문 모두 8점 이상! 9점부터는 보너스 포인트를 받아요.',
   stats:[{label:'Completed',value:'8/8'},
-   {label:'Stars',value:scores.stars+'/5'},{label:'Bonus points',value:scores.points}],
+   {label:'Stars earned',value:scores.stars+'/5'},{label:'Bonus points',value:scores.points}],
   rewardHtml:reward});
  $('ftRetrySync').hidden=true;
  $('ftFinishStatus').textContent='진행 상황이 저장됐어요. 별과 포인트를 연결하는 중…';
