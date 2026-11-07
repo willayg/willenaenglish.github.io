@@ -277,7 +277,7 @@
     <span data-ft-character-name></span>
     <button type="button" data-ft-listen disabled></button>
     <select id="ftVoicePicker" data-ft-voice-picker>
-     <option value="marin">AI Willi</option><option value="bunny-v3">AI Lili</option>
+     <option value="marin">AI Willi</option><option value="bunny-v3">AI Lili</option><option value="pigfish">Pigfish</option>
     </select>
     <span data-ft-voice-status></span><span data-ft-voice-model></span><span data-ft-voice-preload></span>
    </div>
@@ -334,7 +334,7 @@
 </section>
 <div class="ft-footer-version">Free Talking Genius · 10-point conversation · v2.3</div>
 </main></div>
-<script type="module" src="./app.js?v=20261107-guided-eight1"></script>
+<script type="module" src="/students/free-talking-genius/bunny-fox/app-demo.js?v=pigfish1"></script>
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
 <script src="/students/components/mission-basket.js?v=20261105-overdue-missions1"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
@@ -396,6 +396,7 @@
       const guide=document.querySelector('.bf-tap-guide');
       if(guide){guide.dispatchEvent(new Event('bf:character-changed'))}
       try{localStorage.setItem('willena-ftg-demo-character',activeCharacter)}catch(_){}
+      window.dispatchEvent(new CustomEvent('ft-demo-character',{detail:{character:activeCharacter}}));
     }
     function makeChooser(){
       const wrap=document.createElement('div');
