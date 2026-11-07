@@ -38,3 +38,22 @@
 .ft-footer-version .ft-guide-help{display:inline-flex;align-items:center;justify-content:center;margin-left:12px;padding:5px 9px;min-height:26px;border:1px solid #b8e7eb;border-radius:20px;background:#fff;color:#607e87;font:750 10px Poppins,system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
 @media(max-width:520px){.ft-guide-card{padding:14px;gap:9px}.ft-guide-visual{min-height:205px}.ft-guide-mini{padding:10px 12px}.ft-guide-mini-avatar{width:84px;height:84px}}
 @media(prefers-reduced-motion:reduce){.ft-guide-card *{animation:none!important}}
+
+/* Younger students: three friendly examples, with none labelled wrong. */
+.ft-guide-sentence{gap:10px!important}
+.ft-guide-sentence .ft-guide-example{border-width:2px;border-radius:14px;padding:10px 13px}
+.ft-guide-sentence .ft-guide-example.simple{
+ border-color:#c6e4e8;background:#f4fcfd;color:#517882;
+}
+.ft-guide-sentence .ft-guide-example.better{
+ border-color:#a6e2e5;background:#ebfcfc;color:#267884;
+}
+.ft-guide-sentence .ft-guide-example.best{
+ border-color:#efadd1;background:#fff0f8;color:#b33882;
+}
+.ft-guide-sentence .ft-guide-example small{
+ font-size:13px;font-weight:900;margin-bottom:3px;
+}
+.ft-guide-sentence .ft-guide-example b{
+ font-size:clamp(15px,3.3vw,18px);line-height:1.35;font-weight:850;
+}
