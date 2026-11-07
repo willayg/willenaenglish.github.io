@@ -401,6 +401,7 @@ async function syncPendingQuestionRewards(){
  for(const question of groups()){
   const bonus=bestUnitBonus(state.unit,state.mode,question.id);
   if(bonus>legacyQuestionPoints(state.unit,state.mode,question.id))await syncQuestionReward(question,bonus);
+  if(unitAttempts(state.unit,state.mode,question.id).some(a=>a.rubric_v2?.creativity_gift===true))await syncCreativityGift(question);
  }
 }
 const pct=x=>Math.max(0,Math.min(100,Math.round(Number(x)||0)));
@@ -738,6 +739,7 @@ async function submit(){
   const attempt=payload.attempt;
   if(!attempt?.id)throw Error('Feedback was not confirmed as saved');
   const prior=bestUnitBonus(state.unit,state.mode,question.id);
+  const previouslyCreative=unitAttempts(state.unit,state.mode,question.id).some(a=>a.rubric_v2?.creativity_gift===true);
   if(!state.attempts.some(row=>row.id===attempt.id))state.attempts.push(attempt);
   state.feedback=attempt;markFeedback(attempt);
   playFreeTalkingScoreSfx(Number(attempt.score_total_v2??Math.round((Number(attempt.grammar_points)+Number(attempt.quality_points))*2.5)));
@@ -746,6 +748,10 @@ async function submit(){
    if(best>legacyQuestionPoints(state.unit,state.mode,question.id))await syncQuestionReward(question,best);
    const gained=Math.max(0,best-Math.max(prior,legacyQuestionPoints(state.unit,state.mode,question.id)));
    if(gained>0)void showPointAward({amount:gained,origin:capturePointOrigin($('ftSubmit'))}).catch(()=>{});
+   if(attempt.rubric_v2?.creativity_gift===true){
+    const confirmed=await syncCreativityGift(question);
+    if(confirmed&&!previouslyCreative&&!payload.reused)showCreativitySurprise(attempt.rubric_v2.creativity_reason);
+   }
   }catch(pointError){
    $('ftAttemptStatus').textContent='보너스 포인트 동기화가 필요해요: '+pointError.message;
   }
