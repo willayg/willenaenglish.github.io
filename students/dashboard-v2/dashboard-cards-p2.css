@@ -13,3 +13,9 @@
 /* Free Talking Genius uses the original Bunny Fox artwork, sized like the other app marks. */
 .free-talking-node .free-talking-icon{width:clamp(66px,8vw,86px);height:clamp(66px,8vw,86px);object-fit:contain;overflow:visible}
 .free-talking-node .badge-label{line-height:1.15}
+
+/* Free Talking: title / Bunny Fox / Genius, centered in the third dashboard card. */
+.free-talking-node .node-link{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.free-talking-node .free-talking-heading,.free-talking-node .free-talking-footer{display:block;line-height:1.1;text-align:center;white-space:nowrap}
+.free-talking-node .free-talking-icon{display:block;width:clamp(60px,7vw,82px);height:clamp(60px,7vw,82px);flex:0 1 auto;object-fit:contain}
+@media(max-width:360px){.free-talking-node .node-link{gap:4px}.free-talking-node .free-talking-heading{font-size:11px}.free-talking-node .free-talking-icon{width:59px;height:59px}}
