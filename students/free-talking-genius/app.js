@@ -541,8 +541,7 @@ function markFeedback(attempt){
  const deduction=Number(attempt.hint_deduction_v2)||0;
  $('ftHintSummary').textContent=isV2&&deduction>0?'Hints −'+deduction+' point'+(deduction===1?'':'s'):'';
  $('ftCorrection').textContent=attempt.correction||attempt.answer_text||'';
- // Scoring targets and passing thresholds are intentionally undecided.
- // A fresh unaided retry may recover points; duplicate answers remain blocked by the backend.
+ // Six points completes a question; retries can earn up to four bonus points.
  $('ftRetry').hidden=attemptsFor(state.session.id,state.current.id).length>=20;
  $('ftNext').hidden=false;
  $('ftSubmit').hidden=true;
@@ -552,7 +551,7 @@ function markFeedback(attempt){
 }
 function questionIndexAfter(start=0){
  const questions=groups();
- // Every saved first answer counts as finished. Improving to 4/4 is optional.
+ // Only scores of 6/10 or higher count as completed; higher scores earn bonuses.
  for(let i=0;i<questions.length;i++){
   const index=(start+i)%questions.length,q=questions[index];
   if(bestUnitScore(state.unit,state.mode,q.id)<FT_PASS_SCORE)return index;
@@ -769,13 +768,14 @@ async function rewardSync(data){
 }
 async function renderFinish(data){
  view('ftFinish');
- const scores={percent:Number(data.percent)||0,stars:Number(data.stars)||0,points:Number(data.points)||0};
+ const earnedBonus=groups().reduce((sum,q)=>sum+Math.max(0,bestUnitBonus(state.unit,state.mode,q.id)-legacyQuestionPoints(state.unit,state.mode,q.id)),0);
+ const scores={percent:Number(data.percent)||0,stars:Number(data.stars)||0,points:earnedBonus};
  const reward='<student-reward-celebration percent="'+pct(scores.percent)+'" stars="'+scores.stars+
   '" star-max="5" points="'+scores.points+'" label="FREE TALKING REWARD"></student-reward-celebration>';
  $('ftFinishContent').innerHTML=renderStudentSessionFinish({title:'잘했어요! · Unit '+state.unit+' complete',
   description:'8개 질문 모두 6점 이상! 7점부터는 보너스 포인트를 받아요.',
   stats:[{label:'Completed',value:'8/8'},
-   {label:'Stars',value:scores.stars+'/5'},{label:'Points',value:scores.points}],
+   {label:'Stars',value:scores.stars+'/5'},{label:'Bonus points',value:scores.points}],
   rewardHtml:reward});
  $('ftRetrySync').hidden=true;
  $('ftFinishStatus').textContent='진행 상황이 저장됐어요. 별과 포인트를 연결하는 중…';
