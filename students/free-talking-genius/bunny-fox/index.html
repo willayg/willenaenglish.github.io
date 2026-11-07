@@ -170,6 +170,31 @@
 @keyframes pfCelebrate{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-20px) rotate(-7deg)}65%{transform:translateY(-7px) rotate(7deg)}}
 @media(prefers-reduced-motion:reduce){.pf-svg *{animation:none!important}}
 
+
+/* Demo characters are never framed by a circle, in any recording phase. */
+.free-talking-genius #ftSession #ftTurnCircle,
+.free-talking-genius #ftSession #ftTurnCircle[data-phase],
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="student"],
+.free-talking-genius #ftSession #ftTurnCircle[data-listening="true"],
+.free-talking-genius #ftSession #ftTurnCircle[data-ai-recording="true"],
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="student"][data-listening="true"][data-ai-recording="true"],
+.free-talking-genius #ftSession #ftTurnCircle[data-transcribing="true"]{
+ background:transparent!important;background-image:none!important;
+ border:0 solid transparent!important;outline:0!important;outline-offset:0!important;
+ box-shadow:none!important;animation:none!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle::before,
+.free-talking-genius #ftSession #ftTurnCircle::after{content:none!important;display:none!important;border:0!important;box-shadow:none!important}
+.free-talking-genius #ftSession #ftTurnCircle .ft-record-countdown,
+.free-talking-genius #ftSession #ftTurnCircle[data-ai-recording="true"] .ft-record-countdown,
+.free-talking-genius #ftSession #ftTurnCircle .ft-circle-glow{
+ display:none!important;visibility:hidden!important;opacity:0!important;
+}
+.free-talking-genius #ftSession #ftTurnCircle:focus-visible{outline:0!important}
+.free-talking-genius #ftSession #ftTurnCircle:focus-visible .bf-actor{
+ filter:drop-shadow(0 0 13px rgba(100,232,241,.95))!important;
+}
+
 </style></head><body>
 <div class="study-app free-talking-genius">
 <div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
@@ -312,7 +337,7 @@
      <div class="ft-correction-original"><small>내가 쓴 문장</small><p id="ftOriginalAnswer"></p></div>
      <div class="ft-correction-improved"><small>고쳐 볼 문장 · 분홍색 부분을 확인하세요</small><p id="ftCorrection"></p></div>
      <p id="ftCorrectionReason" class="ft-correction-reason"></p>
-     <button type="button" id="ftCorrectionListen" class="ft-correction-listen">🔊 고친 문장 듣기</button>
+     <button type="button" id="ftCorrectionListen" class="ft-correction-listen">고친 문장 듣기</button>
      <label class="ft-correction-ack"><input type="checkbox" id="ftCorrectionAck">고친 부분을 확인했어요.</label>
      <p class="ft-correction-guide">확인한 후 직접 다시 답해 보세요. 8점 이상이면 다음 질문으로 넘어갈 수 있어요.</p>
     </div>
@@ -414,7 +439,7 @@
     try{if(localStorage.getItem('willena-ftg-demo-character')==='pigfish')applyCharacter('pigfish')}catch(_){}
 
     const ribbon=document.createElement('div');ribbon.className='bf-demo-ribbon';
-    ribbon.innerHTML='<span>🐰 Bunny Fox · DEMO</span><small>AI Lili voice · same lessons and progress</small>';
+    ribbon.innerHTML='<span>Bunny Fox · DEMO</span><small>AI Lili voice · same lessons and progress</small>';
     $('ftBook')?.insertBefore(ribbon,$('ftBookPicker'));
     function setState(value){if(actor.dataset.state!==value)actor.dataset.state=value}
     let autoSelecting=false;
@@ -461,12 +486,12 @@
       const recording=circle.dataset.aiRecording==='true'||circle.dataset.listening==='true';
       const thinking=circle.dataset.transcribing==='true';
       const writing=mode()==='writing';
-      if(thinking){guide.dataset.kind='thinking';guide.textContent='⏳ 목소리를 확인하고 있어요';}
-      else if(recording){guide.dataset.kind='recording';guide.textContent='🎙️ 듣고 있어요 · 다시 눌러 끝내기';}
+      if(thinking){guide.dataset.kind='thinking';guide.textContent='목소리를 확인하고 있어요';}
+      else if(recording){guide.dataset.kind='recording';guide.textContent='듣고 있어요 · 다시 눌러 끝내기';}
       else if(phase==='student'){guide.dataset.kind='student';guide.textContent=writing?'답변을 써 보세요':charName()+'를 눌러 영어로 말하기';}
       else if(phase==='ai'){guide.dataset.kind='ai';guide.textContent=charName()+'가 말하고 있어요';}
       else if(phase==='thinking'){guide.dataset.kind='thinking';guide.textContent=charName()+'가 생각하고 있어요';}
-      else if(phase==='feedback'){guide.dataset.kind='feedback';guide.textContent='⭐ 피드백을 확인해 보세요';}
+      else if(phase==='feedback'){guide.dataset.kind='feedback';guide.textContent='피드백을 확인해 보세요';}
       else {guide.dataset.kind='ready';guide.textContent=charName()+'를 눌러 질문 듣기';}
       guide.disabled=guide.dataset.kind==='thinking'||guide.dataset.kind==='ai'||guide.dataset.kind==='feedback'||(writing&&phase==='student');
     }
