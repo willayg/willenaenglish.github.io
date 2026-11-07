@@ -27,6 +27,7 @@ export async function onRequestPost({request,env}){
   const data=await request.formData();
   const sessionId=String(data.get('session_id')||'');
   const questionId=String(data.get('question_id')||'');
+  const purpose=String(data.get('purpose')||'answer');
   const file=data.get('audio');
   if(!UUID.test(sessionId)||!UUID.test(questionId)||!file||typeof file.arrayBuffer!=='function')
    return reply(400,{success:false,error:'Missing recording information'});
@@ -38,8 +39,14 @@ export async function onRequestPost({request,env}){
   if(!extension)return reply(415,{success:false,error:'지원하지 않는 녹음 형식이에요.'});
   const session=await db('free_talking_sessions?select=id,student_id,mode,status&student_id=eq.'+auth.id+'&id=eq.'+sessionId+'&limit=1',auth.token);
   if(!session.ok)return reply(503,{success:false,error:'Could not verify recording session'});
-  if(session.value?.[0]?.status!=='in_progress'||session.value[0].mode!=='speaking')
+  if(session.value?.[0]?.status!=='in_progress'||(session.value[0].mode!=='speaking'&&purpose!=='rehearse'))
    return reply(409,{success:false,error:'Start a speaking round first'});
+  if(purpose==='rehearse'){
+   const prior=await db('free_talking_attempts?select=id,rubric_v2&session_id=eq.'+sessionId+
+    '&student_id=eq.'+auth.id+'&question_id=eq.'+questionId+'&limit=20',auth.token);
+   if(!prior.ok||!prior.value?.some(a=>a.rubric_v2?.passed===false))
+    return reply(409,{success:false,error:'Correction rehearsal not available'});
+  }
   // Questions reside in Content DB, not score DB. Verify this question against
   // the session's assignment by using its actual Content DB record below.
   const active=await db('free_talking_sessions?select=book_id,unit_id,unit_number&student_id=eq.'+auth.id+'&id=eq.'+sessionId+'&limit=1',auth.token);
