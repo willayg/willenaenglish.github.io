@@ -45,7 +45,7 @@ progress{width:100%;height:14px;accent-color:#40bdcb}
  <div class="controls">
   <label>Textbook<select id="book" disabled><option>Loading books…</option></select></label>
   <label>Unit<select id="unit" disabled><option value="all">All units</option></select></label>
-  <label>Voice / format<select id="voice"><option value="both">Both voices · all MP3s</option><option value="lili">AI Lili · Bunny v3 · MP3</option><option value="willi_mp3">AI Willi · Marin backup · MP3</option></select></label>
+  <label>Voice / format<select id="voice"><option value="both">All voices · all MP3s</option><option value="pigfish">Pigfish · ElevenLabs v3 · MP3</option><option value="lili">AI Lili · Bunny v3 · MP3</option><option value="willi_mp3">AI Willi · Marin backup · MP3</option></select></label>
  </div>
  <div class="actions">
   <button id="check" type="button" disabled>Check Everything in R2</button>
@@ -67,8 +67,8 @@ progress{width:100%;height:14px;accent-color:#40bdcb}
 const $=id=>document.getElementById(id);
 let books=[],questions=[],jobs=[],busy=false,stopping=false,checked=false;
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const voices=()=> $('voice').value==='both'?['lili','willi_mp3']:[$('voice').value];
-const labels={lili:'AI Lili',willi_mp3:'AI Willi MP3'};
+const voices=()=> $('voice').value==='both'?['lili','pigfish','willi_mp3']:[$('voice').value];
+const labels={lili:'AI Lili',pigfish:'Pigfish',willi_mp3:'AI Willi MP3'};
 function token(){const t=window.WillenaAPI?.getLocalAccessToken?.();if(t)return t;
  try{return decodeURIComponent(document.cookie.split('; ').find(x=>x.startsWith('sb_access='))?.slice(10)||'')}catch{return ''}}
 async function call(body){
