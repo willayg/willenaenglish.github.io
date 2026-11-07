@@ -1430,3 +1430,46 @@
 .free-talking-genius #ftSession #ftSkip[hidden]{
  display:none!important;
 }
+
+/* Score reveal: five independent skill pips, then total and result. */
+.free-talking-genius .ft-score-splash{gap:8px!important;padding:18px 12px!important}
+.free-talking-genius .ft-splash-skills{
+ display:grid;gap:7px;width:min(100%,520px);margin:0 auto 10px;
+}
+.free-talking-genius .ft-skill-pop{
+ display:grid;grid-template-columns:minmax(0,1fr) 64px 45px;
+ align-items:center;gap:10px;text-align:left;
+ padding:9px 13px;border:1px solid #cdebed;border-radius:13px;
+ background:#f4fbfc;opacity:1;transform:none;
+}
+.free-talking-genius .ft-skill-pop strong{font-size:clamp(12px,2.8vw,16px);font-weight:800;color:#315b64}
+.free-talking-genius .ft-skill-pop b{font-size:20px;font-weight:900;text-align:right;color:#ca368b}
+.free-talking-genius .ft-skill-indicators{display:flex;justify-content:flex-end;gap:7px}
+.free-talking-genius .ft-skill-pip{display:block;width:21px;height:21px;border-radius:50%;background:#edf0f1;border:2px solid #d9e3e5}
+.free-talking-genius .ft-skill-pip.is-earned{background:#f2bc41;border-color:#d4981b;box-shadow:inset 0 0 0 3px #f9d66f}
+.free-talking-genius .ft-score-splash.is-showing .ft-skill-pop{
+ animation:ft-skill-score-pop .4s cubic-bezier(.18,1.5,.28,1) both;
+ animation-delay:calc(.12s + var(--reveal-index)*.25s);
+}
+.free-talking-genius .ft-score-splash.is-showing .ft-splash-score{
+ animation:ft-score-enter .48s cubic-bezier(.18,1.4,.3,1) both;
+ animation-delay:1.48s;
+}
+.free-talking-genius .ft-score-splash.is-showing .ft-splash-symbol{
+ animation:ft-score-enter .4s cubic-bezier(.16,1.3,.3,1) both;
+ animation-delay:1.65s;
+}
+.free-talking-genius .ft-score-splash.is-showing h3{
+ animation:ft-score-enter .36s both;
+ animation-delay:1.78s;
+}
+@keyframes ft-skill-score-pop{
+ from{opacity:0;transform:translateY(12px) scale(.88)}
+ to{opacity:1;transform:translateY(0) scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+ .free-talking-genius .ft-score-splash.is-showing .ft-skill-pop,
+ .free-talking-genius .ft-score-splash.is-showing .ft-splash-score,
+ .free-talking-genius .ft-score-splash.is-showing .ft-splash-symbol,
+ .free-talking-genius .ft-score-splash.is-showing h3{animation:none!important}
+}
