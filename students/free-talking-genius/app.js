@@ -543,7 +543,7 @@ function markFeedback(attempt){
  $('ftCorrection').textContent=attempt.correction||attempt.answer_text||'';
  // Scoring targets and passing thresholds are intentionally undecided.
  // A fresh unaided retry may recover points; duplicate answers remain blocked by the backend.
- $('ftRetry').hidden=attemptsFor(state.session.id,state.current.id).length>=5;
+ $('ftRetry').hidden=attemptsFor(state.session.id,state.current.id).length>=20;
  $('ftNext').hidden=false;
  $('ftSubmit').hidden=true;
  $('ftSkip').hidden=true;
@@ -555,7 +555,7 @@ function questionIndexAfter(start=0){
  // Every saved first answer counts as finished. Improving to 4/4 is optional.
  for(let i=0;i<questions.length;i++){
   const index=(start+i)%questions.length,q=questions[index];
-  if(bestScore(state.session.id,q.id)<FT_PASS_SCORE)return index;
+  if(bestUnitScore(state.unit,state.mode,q.id)<FT_PASS_SCORE)return index;
  }
  return -1;
 }
@@ -564,7 +564,7 @@ function renderQuestion({retry=false}={}){
  aiRecorder.cancel();
  const questions=groups();
  if(!state.session||!questions.length)return;
- const sameQuestion=retry&&state.current&&attemptsFor(state.session.id,state.current.id).length<5;
+ const sameQuestion=retry&&state.current&&attemptsFor(state.session.id,state.current.id).length<20;
  const idx=sameQuestion?questions.findIndex(q=>q.id===state.current.id):questionIndexAfter(state.cursor);
  if(idx<0){void conclude();return}
  state.cursor=idx;state.current=questions[idx];state.feedback=null;
@@ -586,7 +586,7 @@ function renderQuestion({retry=false}={}){
  $('ftQuestionText').textContent=state.current.question_en;
  $('ftHintEnglish').hidden=state.mode!=='speaking';
  $('ftQuestionText').hidden=state.mode==='speaking';
- const answered=questions.filter(q=>bestScore(state.session.id,q.id)>=FT_PASS_SCORE).length;
+ const answered=questions.filter(q=>bestUnitScore(state.unit,state.mode,q.id)>=FT_PASS_SCORE).length;
  $('ftSessionProgress').textContent=answered+'/8 completed';
  $('ftProgressFill').style.width=pct(answered/8*100)+'%';
  $('ftSessionTitle').textContent=(state.mode==='speaking'?'Speaking':'Writing')+' · Unit '+state.unit;
@@ -669,7 +669,7 @@ async function beginRound(mode){
   if(session){
    // Keep unfinished sessions, even if eight answers are already present:
    // renderQuestion will safely finalize the session rather than orphaning it.
-   const hasUnanswered=groups().some(q=>bestScore(session.id,q.id)<FT_PASS_SCORE);
+   const hasUnanswered=groups().some(q=>bestUnitScore(state.unit,mode,q.id)<FT_PASS_SCORE);
    if(!hasUnanswered)state.cursor=0;
   }
   if(!session){
@@ -712,7 +712,7 @@ async function submit(){
    $('ftAttemptStatus').textContent='보너스 포인트 동기화가 필요해요: '+pointError.message;
   }
 
-  const answered=groups().filter(q=>bestScore(state.session.id,q.id)>=FT_PASS_SCORE).length;
+  const answered=groups().filter(q=>bestUnitScore(state.unit,state.mode,q.id)>=FT_PASS_SCORE).length;
   $('ftSessionProgress').textContent=answered+'/8 completed';
   $('ftProgressFill').style.width=pct(answered/8*100)+'%';
  }catch(error){setTurn('student');$('ftAttemptStatus').textContent='저장하지 못했어요. '+error.message;console.warn('[Free Talking] grade',error)}
@@ -731,7 +731,7 @@ async function conclude(){
    view('ftFinish');
    $('ftFinishContent').innerHTML=renderStudentSessionFinish({title:'아직 답하지 않은 질문이 있어요.',
      description:'모든 질문에서 6점 이상 받으면 완료돼요. 다시 도전해 보세요.',
-     stats:[{label:'Completed',value:groups().filter(q=>bestScore(state.session.id,q.id)>=FT_PASS_SCORE).length+'/8'}]});
+     stats:[{label:'Completed',value:groups().filter(q=>bestUnitScore(state.unit,state.mode,q.id)>=FT_PASS_SCORE).length+'/8'}]});
    $('ftFinishStatus').textContent='지금까지의 답변은 모두 저장되어 있어요.';
    $('ftRetrySync').hidden=true;
   }
