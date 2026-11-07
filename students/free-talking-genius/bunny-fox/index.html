@@ -129,6 +129,17 @@
   outline:3px solid #f09ccc;outline-offset:2px;
 }
 
+
+/* Bunny only: soft cyan silhouette glow, no circular recording ring. */
+.free-talking-genius #ftSession #ftTurnCircle .bf-actor {
+  filter:drop-shadow(0 0 8px rgba(108,229,240,.65)) drop-shadow(0 0 18px rgba(151,244,249,.48))!important;
+  transition:filter .24s ease;
+}
+.free-talking-genius #ftSession #ftTurnCircle[data-phase="student"] .bf-actor,
+.free-talking-genius #ftSession #ftTurnCircle[data-listening="true"] .bf-actor {
+  filter:drop-shadow(0 0 10px rgba(92,227,238,.85)) drop-shadow(0 0 23px rgba(137,241,248,.65))!important;
+}
+
 </style></head><body>
 <div class="study-app free-talking-genius">
 <div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
