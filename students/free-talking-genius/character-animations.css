@@ -80,3 +80,6 @@
 .free-talking-genius #ftCharacter .ft-willi-portrait{border:0;outline:0}
 .free-talking-genius #ftCharacter .ft-willi-portrait svg{width:90px;height:90px;max-width:100%}
 @media(max-width:620px){.free-talking-genius #ftCharacter .ft-character-options{gap:6px}.free-talking-genius #ftCharacter .ft-character-option{min-height:145px;padding:8px 4px;font-size:12px}.free-talking-genius #ftCharacter .ft-character-symbol{width:85px;height:85px}}
+
+/* Keep Willi's original circle entirely untouched. */
+.free-talking-genius #ftTurnCircle .bf-actor[hidden]{display:none!important}
