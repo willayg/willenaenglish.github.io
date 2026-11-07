@@ -9,3 +9,7 @@
   .arcade-logo { width: min(82%, 135px); max-height: 90px; }
   .puzzles-logo { width: min(88%, 155px); max-height: 112px; }
 }
+
+/* Free Talking Genius uses the original Bunny Fox artwork, sized like the other app marks. */
+.free-talking-node .free-talking-icon{width:clamp(66px,8vw,86px);height:clamp(66px,8vw,86px);object-fit:contain;overflow:visible}
+.free-talking-node .badge-label{line-height:1.15}
