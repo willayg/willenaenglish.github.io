@@ -660,8 +660,10 @@ function renderQuestion({retry=false}={}){
  $('ftPromptLabel').textContent='QUESTION '+(idx+1);
  $('ftQuestionText').textContent=state.current.question_en;
  const challenge=String(state.current.grammar_focus||'');
- $('ftLanguageChallenge').hidden=!challenge.startsWith('Challenge:');
- $('ftChallengeText').textContent=challenge.startsWith('Challenge:')?challenge.slice(10).trim():'';
+ $('ftLanguageChallenge').hidden=false;
+ $('ftChallengeText').textContent=challenge.startsWith('Challenge:')
+  ?challenge.slice(10).trim()
+  :'질문에 맞는 시제와 표현으로 완전한 문장을 말하고, 이유나 자세한 내용을 하나 더 넣어 보세요.';
  $('ftHintEnglish').hidden=state.mode!=='speaking';
  $('ftQuestionText').hidden=state.mode==='speaking';
  const answered=questions.filter(q=>unitHasPass(state.unit,state.mode,q.id)).length;
