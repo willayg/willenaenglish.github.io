@@ -277,6 +277,36 @@
 /* Separate Bunny demo page. No app.js / shared CSS / API / scoring code is modified. */
 (function(){
   const $=id=>document.getElementById(id);
+  // The quiet-speech encouragement uses a separate detached Audio() instance
+  // and does not emit the normal ft:voice-playing event. Observe its playback
+  // only inside this isolated Bunny page; preserve the native play() promise.
+  const nativePlay=HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play=function(...args){
+    const sound=this;
+    const quietText=$('ftRecordStatus')?.textContent||'';
+    const quietClip=($('ftSession')?.hidden===false)
+      &&($('ftTurnCircle')?.dataset.phase==='student')
+      &&quietText.includes('목소리가 잘 안 들려요')
+      &&String(sound.currentSrc||sound.src||'').startsWith('blob:');
+    if(quietClip){
+      const start=()=>{
+        window.BunnyFox?.setState('speaking');
+        const guide=document.querySelector('.bf-tap-guide');
+        if(guide){guide.dataset.kind='ai';guide.textContent='Bunny가 다시 말해 주고 있어요';guide.disabled=true}
+      };
+      const finish=()=>{
+        if(sound.__bfQuietDone)return;
+        sound.__bfQuietDone=true;
+        window.BunnyFox?.setState('idle');
+        document.querySelector('.bf-tap-guide')?.dispatchEvent(new Event('bf:quiet-ended'));
+      };
+      sound.addEventListener('playing',start,{once:true});
+      sound.addEventListener('ended',finish,{once:true});
+      sound.addEventListener('error',finish,{once:true});
+      sound.addEventListener('pause',finish,{once:true});
+    }
+    return nativePlay.apply(this,args);
+  };
   const onReady=()=>{
     const circle=$('ftTurnCircle'),voice=$('ftWilliVoice'),choice=$('ftCharacter');
     if(!circle||!voice||!choice)return;
@@ -341,6 +371,7 @@
       guide.disabled=guide.dataset.kind==='thinking'||guide.dataset.kind==='ai'||guide.dataset.kind==='feedback'||(writing&&phase==='student');
     }
     guide.addEventListener('click',()=>{if(!guide.disabled)circle.click()});
+    guide.addEventListener('bf:quiet-ended',updateGuide);
     const guideObserver=new MutationObserver(updateGuide);
     guideObserver.observe(circle,{attributes:true,attributeFilter:['data-phase','data-listening','data-ai-recording','data-transcribing']});
     guideObserver.observe($('ftSession'),{attributes:true,attributeFilter:['hidden','data-mode']});
