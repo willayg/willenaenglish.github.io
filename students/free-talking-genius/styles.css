@@ -1473,3 +1473,11 @@
  .free-talking-genius .ft-score-splash.is-showing .ft-splash-symbol,
  .free-talking-genius .ft-score-splash.is-showing h3{animation:none!important}
 }
+
+/* Smaller cyan final score, with explicit out-of-ten wording. */
+.free-talking-genius #ftSession .ft-splash-score{
+ font-size:clamp(37px,8vw,66px)!important;
+ letter-spacing:-.035em!important;
+ color:#39bdcb!important;
+ line-height:1.12!important;
+}
