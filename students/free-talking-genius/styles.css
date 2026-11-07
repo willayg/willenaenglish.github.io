@@ -1547,3 +1547,15 @@
 
 /* Clarify that five stars shown on a repeat were previously earned. */
 .free-talking-genius .ft-repeat-star-note{text-align:center;color:#547880;font-weight:850;font-size:clamp(14px,2.5vw,18px);margin:12px auto 0;padding:0 12px}
+
+.free-talking-genius .ft-repeat-choice-row{width:min(100%,650px);display:flex;gap:12px;justify-content:center;margin:5px auto 8px}
+.free-talking-genius .ft-repeat-choice-row .ft-repeat-choice-action{flex:1;min-width:0;min-height:68px;border:3px solid #a5dfe4;border-radius:20px;background:#fff;color:#315f68;font:850 clamp(16px,2.7vw,22px) Poppins,Arial,sans-serif;padding:12px;cursor:pointer;box-shadow:none}
+.free-talking-genius .ft-repeat-choice-row #ftRepeatNewIdea{border-color:#e6abc9;color:#b83280;width:auto;margin:0;font:850 clamp(16px,2.7vw,22px) Poppins,Arial,sans-serif}
+.free-talking-genius .ft-repeat-choice-row .ft-repeat-choice-action.is-recording{background:#e8f8fa;box-shadow:0 0 0 3px #bdecef}
+.free-talking-genius .ft-repeat-choice-row #ftRepeatNewIdea.is-recording{background:#fff0f7;box-shadow:0 0 0 3px #f2c5dc}
+@media(max-width:540px){.free-talking-genius .ft-repeat-choice-row{flex-direction:column}.free-talking-genius .ft-repeat-choice-row .ft-repeat-choice-action{width:100%;min-height:58px}}
+.free-talking-genius .ft-units button.is-golden{background:#fff3c7!important;border-color:#d9ad39!important;color:#805d16!important;box-shadow:inset 0 0 0 1px #f6d46e}
+.free-talking-genius .ft-units button.is-golden.is-current{outline:2px solid #e7bf48;outline-offset:2px}
+.free-talking-genius #ftSpeakingCard.ft-golden-skill{border-color:#dfbd56!important;background:#fffdf3!important}
+.free-talking-genius #ftSpeakingCard.ft-golden-skill .vocab-card-stars{color:#b78a22!important}
+.free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftListenAgain{display:none!important}
