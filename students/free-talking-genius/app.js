@@ -10,7 +10,7 @@ import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
 import {createFreeTalkingVoice} from './question-voice.js?v=20261107-exact-characters1';
-import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-score-repeat1';
+import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-route8';
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261107-exact-characters1';
 import {createFreeTalkingCharacters} from './character-actor.js?v=20261107-pig-gradient2';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
@@ -93,7 +93,7 @@ function applySpeechPath(){
  resetSpeechAnswer();
  $('ftRecordStatus').textContent='AI 녹음 · 최대 30초 · 원을 눌러 시작 / 다시 눌러 종료';
  $('ftTurnCircle').dataset.listening='false';
- if(useAiAudio())void aiRecorder.prepare();
+ // Keep microphone closed until the child's turn begins.
 }
 
 const RUBRIC_NAMES={grammar:'문법',length:'문장 길이와 내용',context:'문법 · 질문에 맞는 시제',appropriate:'질문에 맞는 답변',vocabulary:'어휘와 표현'};
@@ -796,7 +796,7 @@ function renderQuestion({retry=false}={}){
  // A restored unfinished question shows its previously saved guidance.
  // Earlier attempts are retained without showing a second progress message.
  view('ftSession');
- if(useAiAudio())void aiRecorder.prepare();
+ aiRecorder.releaseIdle();
  void questionVoice.select(state.current.id,{autoplay:false});
 }
 let roundChoice=null;
@@ -1015,12 +1015,14 @@ $('ftWilliVoice').addEventListener('ft:voice-playing',e=>{
  if(visibleScreen!=='ftSession'||state.phase==='thinking'||state.phase==='feedback'||!state.questionStarted)return;
  if(e.detail?.playing){
   state.aiWasPlaying=true;state.listenFinished=false;
+  aiRecorder.releaseIdle();
   $('ftListenAgain').disabled=true;
   setTurn('ai');
  }else if(state.aiWasPlaying){
   state.listenFinished=true;
   $('ftListenAgain').disabled=false;
   setTurn('student');
+  if(useAiAudio())void aiRecorder.prepare();
  }
 });
 $('ftTurnCircle').addEventListener('click',()=>{
@@ -1035,6 +1037,7 @@ $('ftTurnCircle').addEventListener('click',()=>{
  if(state.phase==='ready'){
   state.questionStarted=true;
   $('ftTurnStatus').textContent='질문 음성을 준비하는 중…';
+  aiRecorder.releaseIdle();
   void questionVoice.start();
   return;
  }
