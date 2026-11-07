@@ -1252,22 +1252,26 @@
   border-color:transparent!important;
 }
 
-/* Rare Free Talking creativity Easter egg, separate from the answer grade. */
-.ft-creativity-surprise{
- position:fixed;z-index:2147483100;top:50%;left:50%;width:min(340px,calc(100vw - 40px));
- transform:translate(-50%,-50%);pointer-events:none;text-align:center;
- padding:22px 18px 20px;border-radius:26px;border:3px solid #f0c75e;
- background:linear-gradient(160deg,#fffdf2,#fff2cb);color:#7a5518;
- box-shadow:0 20px 65px #4936154d,0 0 0 9999px #1d344124;
- font-family:Poppins,system-ui,sans-serif;animation:ft-creativity-pop 3s ease-in-out both;
+/* Rare idea gift. The panel is intentionally flat, not another gold coin. */
+.ft-creativity-overlay{
+ position:fixed;inset:0;z-index:2147483100;
+ display:flex;align-items:center;justify-content:center;
+ padding:20px;background:rgba(23,35,56,.38);
 }
-.ft-creativity-surprise-coin{display:flex;align-items:center;justify-content:center;margin:0 auto 7px;width:110px;height:110px;
- border-radius:100%;background:radial-gradient(circle at 35% 25%,#fffbd6,#f5c845 67%,#ce931b);
- box-shadow:inset 0 0 0 6px #ffeb8f,0 9px 24px #b1873266;
- animation:ft-creativity-coin .75s cubic-bezier(.2,1.3,.35,1) both;}
-.ft-creativity-surprise-coin svg{width:78px;height:78px;filter:drop-shadow(0 2px 1px #a8772777)}
-.ft-creativity-surprise strong{display:block;font-size:clamp(20px,5vw,27px);font-weight:900;line-height:1.2}
-.ft-creativity-surprise p{font-size:14px;margin:9px 0 0;line-height:1.45;font-weight:700}
-@keyframes ft-creativity-pop{0%{opacity:0;transform:translate(-50%,-42%) scale(.65)}12%,75%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-55%) scale(.96)}}
-@keyframes ft-creativity-coin{0%{transform:rotateY(-90deg) scale(.3)}65%{transform:rotateY(18deg) scale(1.16)}100%{transform:rotateY(0) scale(1)}}
-@media(prefers-reduced-motion:reduce){.ft-creativity-surprise,.ft-creativity-surprise-coin{animation:none!important}}
+.ft-creativity-surprise{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+ width:min(360px,100%);max-height:min(82dvh,650px);overflow-y:auto;
+ padding:24px 20px 19px;border:3px solid #A78BD9;border-radius:27px;
+ background:#F7F3FF;background-image:none;color:#59427F;text-align:center;
+ box-shadow:0 18px 52px rgba(41,31,71,.25);
+ font-family:Poppins,system-ui,sans-serif;cursor:pointer;
+ animation:ft-idea-enter .38s cubic-bezier(.18,1.4,.3,1) both;
+}
+.ft-creativity-surprise:focus-visible{outline:3px solid #62C8D0;outline-offset:4px}
+.ft-creativity-sparkle{display:block;width:112px;height:112px;margin:0 auto 10px}
+.ft-creativity-sparkle svg{display:block;width:100%;height:100%;filter:drop-shadow(0 7px 4px rgba(81,59,128,.16))}
+.ft-creativity-surprise strong{font-size:clamp(22px,5vw,29px);font-weight:900;line-height:1.25;color:#6744AC}
+.ft-creativity-surprise p{font-size:14px;line-height:1.55;font-weight:750;color:#5D5075;margin:12px 0 17px}
+.ft-creativity-dismiss{font-size:12px;font-weight:700;color:#7D6F98}
+@keyframes ft-idea-enter{from{opacity:0;transform:scale(.78) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@media(prefers-reduced-motion:reduce){.ft-creativity-surprise{animation:none!important}}
