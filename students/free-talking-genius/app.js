@@ -11,8 +11,8 @@ import {capturePointOrigin,showPointAward} from '/students/components/student-po
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
 import {createFreeTalkingVoice} from './question-voice.js?v=20261107-exact-characters1';
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-route8';
-import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261107-exact-characters1';
-import {createFreeTalkingCharacters} from './character-actor.js?v=20261107-pig-original4';
+import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261108-quiet-mouth2';
+import {createFreeTalkingCharacters} from './character-actor.js?v=20261108-quiet-mouth2';
 import {createFreeTalkingGuide} from './guide.js?v=20261107-guide-kids2';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -32,7 +32,8 @@ const retryVoice=createFreeTalkingRetryVoice({
  onFinished:()=>{
   if(visibleScreen==='ftSession'&&state.mode==='speaking'&&state.current&&state.phase==='student')
    void aiRecorder.prepare();
- }
+ },
+ onPlaying:playing=>characters.setSpeaking(playing)
 });
 function encourageQuietSpeech(){
  if(state.repeatStep){$('ftRepeatMessage').textContent='조금 더 크게 다시 말해 보세요.';return}
