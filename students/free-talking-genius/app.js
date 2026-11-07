@@ -72,6 +72,10 @@ const aiRecorder=createFreeTalkingRecorder({
   }
   const newIdea=$('ftRepeatNewIdea');
   if(newIdea&&state.repeatStep){
+   const fixed=$('ftRepeatFixedAction');
+   fixed.disabled=state.repeatChecking||processing||(recording&&state.repeatMode==='new');
+   fixed.classList.toggle('is-recording',recording&&state.repeatMode==='fixed');
+   fixed.textContent=recording&&state.repeatMode==='fixed'?'녹음 끝내기':'고친 문장 녹음';
    newIdea.disabled=state.repeatChecking||processing||(recording&&state.repeatMode!=='new');
    newIdea.classList.toggle('is-recording',recording&&state.repeatMode==='new');
    newIdea.textContent=recording&&state.repeatMode==='new'?'녹음 끝내기':'새 아이디어';
@@ -550,9 +554,10 @@ function renderUnitStrip(){
  const host=$('ftUnitStrip');host.replaceChildren();
  for(const n of [...new Set(state.questions.filter(q=>q.book_id===state.bookId).map(q=>Number(q.unit_number)))].sort((a,b)=>a-b)){
   const button=document.createElement('button');
-  button.type='button';button.className=(n===state.unit?'is-current ':'')+(unitComplete(n)?'is-complete':'');
+  button.type='button';button.className=(n===state.unit?'is-current ':'')+(unitComplete(n)?'is-complete is-golden':'');
   button.textContent='Unit '+n;
-  if(unitComplete(n)){button.title='Speaking completed · Golden Unit';button.setAttribute('aria-label','Unit '+n+' Speaking completed · Golden Unit')}
+  if(unitComplete(n)){button.title='Speaking completed · Golden Unit';button.setAttribute('aria-label','Unit '+n+' Speaking completed · Golden Unit');
+ const img=document.createElement('img');img.src='/shared/svgs/golden-unit.svg?v=20260927-icons1';img.alt='';img.setAttribute('aria-hidden','true');button.append(img)}
   button.addEventListener('click',()=>selectUnit(n));host.append(button);
  }
 }
@@ -564,7 +569,8 @@ function renderBook(){
  const percent=pct(count/8*100);
  card.querySelector('.vocab-skill-ring').style.setProperty('--progress',percent);
  card.querySelector('.vocab-skill-ring span').textContent=percent+'%';
- card.querySelector('.vocab-card-stars').textContent=count+'/8';
+ card.querySelector('.vocab-card-stars').textContent=count+'/8'+(count===8?' · Golden Unit':'');
+ card.classList.toggle('ft-golden-skill',count===8);
 
 }
 function selectUnit(n){state.unit=n;renderBook();view('ftBook');questionVoice.preload(n);}
@@ -642,6 +648,7 @@ function markFeedback(attempt){
  void $('ftScoreSplash').offsetWidth;
  $('ftScoreSplash').classList.add('is-showing');
  $('ftNext').hidden=false;$('ftNext').textContent=passed?'다음 문제':'문장 고치기';
+ $('ftListenAgain').hidden=true;
  $('ftRetry').hidden=true;
  $('ftSkip').hidden=passed;$('ftSkip').textContent='건너뛰기 · 0점';$('ftSubmit').hidden=true;
  $('ftAttemptStatus').textContent='';
@@ -660,9 +667,11 @@ function showRepeatScreen(){
  $('ftRepeatNewIdea').hidden=!['pigfish','bunny-v3'].includes(questionVoice.getVoice());
  $('ftRepeatNewIdea').disabled=false;
  $('ftRepeatNewIdea').classList.remove('is-recording');
+ $('ftRepeatFixedAction').disabled=false;
  $('ftRepeatNewIdea').textContent='새 아이디어';
  $('ftNext').hidden=true;$('ftRetry').hidden=true;$('ftSubmit').hidden=true;
  $('ftListenAgain').disabled=true;
+ $('ftListenAgain').hidden=true;
  setTurn('student');
  void aiRecorder.prepare();
 }
@@ -748,6 +757,7 @@ function renderQuestion({retry=false}={}){
  state.questionStarted=false;
  state.aiWasPlaying=false;
  state.listenFinished=false;
+ $('ftListenAgain').hidden=false;
  $('ftListenAgain').disabled=true;
  $('ftListenAgain').classList.remove('is-replay-ready');
  // Turn state controls the hint toolbar.
@@ -1121,6 +1131,11 @@ $('ftQuestionHost').addEventListener('click',e=>{
  if(e.target.closest('[data-speaking-mic]')){setTurn('student');requestAnimationFrame(updateMicListening);}
 });
 $('ftSubmit').addEventListener('click',()=>void submit());
+$('ftRepeatFixedAction').addEventListener('click',()=>{
+ if(!state.repeatStep||state.repeatChecking||state.loading||aiRecorder.isProcessing())return;
+ if(aiRecorder.isRecording()){if(state.repeatMode==='fixed')aiRecorder.stop();return}
+ $('ftTurnCircle').click();
+});
 $('ftRepeatNewIdea').addEventListener('click',()=>{
  if(!state.repeatStep||state.repeatChecking||state.loading||aiRecorder.isProcessing()||!['pigfish','bunny-v3'].includes(questionVoice.getVoice()))return;
  if(aiRecorder.isRecording()){
