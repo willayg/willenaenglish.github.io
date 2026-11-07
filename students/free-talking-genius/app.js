@@ -81,7 +81,7 @@ function applySpeechPath(){
  if(useAiAudio())void aiRecorder.prepare();
 }
 
-const RUBRIC_NAMES={grammar:'문법',length:'문장 길이와 내용',creativity:'창의성',appropriate:'질문에 맞는 답변',vocabulary:'어휘와 표현'};
+const RUBRIC_NAMES={grammar:'문법',length:'문장 길이와 내용',context:'문법 · 질문에 맞는 시제',appropriate:'질문에 맞는 답변',vocabulary:'어휘와 표현'};
 const SCORE_SFX_BANDS=[
  {min:0,max:2,sfx:'wrong'}, // needs more practice
  {min:3,max:5,sfx:'correct'}, // okay
@@ -380,15 +380,17 @@ function unitAttempts(unit,mode,id){
  const ids=new Set(state.sessions.filter(s=>s.book_id===BOOK()&&Number(s.unit_number)===unit&&s.mode===mode).map(s=>s.id));
  return state.attempts.filter(a=>ids.has(a.session_id)&&a.question_id===id);
 }
+function attemptPassed(a){return typeof a?.rubric_v2?.passed==='boolean'?a.rubric_v2.passed:attemptScore(a)>=FT_PASS_SCORE}
+function unitHasPass(unit,mode,id){return unitAttempts(unit,mode,id).some(attemptPassed)}
 function bestUnitScore(unit,mode,id){return Math.max(0,...unitAttempts(unit,mode,id).map(attemptScore))}
-function bestUnitBonus(unit,mode,id){return Math.max(0,bestUnitScore(unit,mode,id)-FT_PASS_SCORE)}
+function bestUnitBonus(unit,mode,id){return Math.max(0,...unitAttempts(unit,mode,id).filter(attemptPassed).map(a=>attemptScore(a)-FT_PASS_SCORE))}
 function legacyQuestionPoints(unit,mode,id){
  return Math.max(0,...unitAttempts(unit,mode,id).filter(a=>!a.rubric_v2?.bonus_scheme)
   .map(a=>Number(a.grammar_points||0)+Number(a.quality_points||0)));
 }
 function completedCount(unit,mode){
  const prompts=state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===unit);
- return prompts.filter(q=>bestUnitScore(unit,mode,q.id)>=FT_PASS_SCORE).length;
+ return prompts.filter(q=>unitHasPass(unit,mode,q.id)).length;
 }
 function unitComplete(unit){return completedCount(unit,'speaking')===8&&completedCount(unit,'writing')===8}
 async function refreshData(){
@@ -515,7 +517,9 @@ function markFeedback(attempt){
  const isV2=entries&&Number.isFinite(Number(attempt.score_total_v2));
  const total=isV2?Number(attempt.score_total_v2):Number(attempt.grammar_points)+Number(attempt.quality_points);
  const max=isV2?10:4;
- $('ftFeedbackTitle').textContent=total>=6?(total>6?'통과! 보너스 +'+(total-6)+'점':'통과! 잘했어요!'):'조금만 더! 6점부터 완료돼요.';
+ const passed=attemptPassed(attempt);
+ const contextMissing=rubric?.context_required===true&&rubric?.context_pass===false;
+ $('ftFeedbackTitle').textContent=passed?(total>6?'통과! 보너스 +'+(total-6)+'점':'통과! 잘했어요!'):contextMissing?'질문에 맞는 시제나 문법을 사용해 보세요.':'조금만 더! 6점부터 완료돼요.';
  $('ftFeedbackTotal').textContent=total+'/'+max;
  $('ftCircleScore').textContent=total+'/'+max;
  const grid=$('ftFeedbackGrid');grid.replaceChildren();
@@ -554,7 +558,7 @@ function questionIndexAfter(start=0){
  // Only scores of 6/10 or higher count as completed; higher scores earn bonuses.
  for(let i=0;i<questions.length;i++){
   const index=(start+i)%questions.length,q=questions[index];
-  if(bestUnitScore(state.unit,state.mode,q.id)<FT_PASS_SCORE)return index;
+  if(!unitHasPass(state.unit,state.mode,q.id))return index;
  }
  return -1;
 }
@@ -585,7 +589,7 @@ function renderQuestion({retry=false}={}){
  $('ftQuestionText').textContent=state.current.question_en;
  $('ftHintEnglish').hidden=state.mode!=='speaking';
  $('ftQuestionText').hidden=state.mode==='speaking';
- const answered=questions.filter(q=>bestUnitScore(state.unit,state.mode,q.id)>=FT_PASS_SCORE).length;
+ const answered=questions.filter(q=>unitHasPass(state.unit,state.mode,q.id)).length;
  $('ftSessionProgress').textContent=answered+'/8 completed';
  $('ftProgressFill').style.width=pct(answered/8*100)+'%';
  $('ftSessionTitle').textContent=(state.mode==='speaking'?'Speaking':'Writing')+' · Unit '+state.unit;
@@ -668,7 +672,7 @@ async function beginRound(mode){
   if(session){
    // Keep unfinished sessions, even if eight answers are already present:
    // renderQuestion will safely finalize the session rather than orphaning it.
-   const hasUnanswered=groups().some(q=>bestUnitScore(state.unit,mode,q.id)<FT_PASS_SCORE);
+   const hasUnanswered=groups().some(q=>!unitHasPass(state.unit,mode,q.id));
    if(!hasUnanswered)state.cursor=0;
   }
   if(!session){
@@ -711,7 +715,7 @@ async function submit(){
    $('ftAttemptStatus').textContent='보너스 포인트 동기화가 필요해요: '+pointError.message;
   }
 
-  const answered=groups().filter(q=>bestUnitScore(state.unit,state.mode,q.id)>=FT_PASS_SCORE).length;
+  const answered=groups().filter(q=>unitHasPass(state.unit,state.mode,q.id)).length;
   $('ftSessionProgress').textContent=answered+'/8 completed';
   $('ftProgressFill').style.width=pct(answered/8*100)+'%';
  }catch(error){setTurn('student');$('ftAttemptStatus').textContent='저장하지 못했어요. '+error.message;console.warn('[Free Talking] grade',error)}
@@ -730,7 +734,7 @@ async function conclude(){
    view('ftFinish');
    $('ftFinishContent').innerHTML=renderStudentSessionFinish({title:'아직 답하지 않은 질문이 있어요.',
      description:'모든 질문에서 6점 이상 받으면 완료돼요. 다시 도전해 보세요.',
-     stats:[{label:'Completed',value:groups().filter(q=>bestUnitScore(state.unit,state.mode,q.id)>=FT_PASS_SCORE).length+'/8'}]});
+     stats:[{label:'Completed',value:groups().filter(q=>unitHasPass(state.unit,state.mode,q.id)).length+'/8'}]});
    $('ftFinishStatus').textContent='지금까지의 답변은 모두 저장되어 있어요.';
    $('ftRetrySync').hidden=true;
   }
