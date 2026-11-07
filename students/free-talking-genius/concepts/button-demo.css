@@ -1,0 +1,158 @@
+/* Concept C — presentation only. Canonical Free Talking files are untouched. */
+html[data-ft-concept="button"] .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftGameCard{
+ width:min(710px,100%)!important;min-height:calc(100dvh - 250px)!important;
+ height:auto!important;overflow:visible!important;justify-content:center!important;
+ padding:clamp(12px,3vw,22px)!important;gap:0!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftWilliVoice{
+ order:1!important;display:flex!important;justify-content:center!important;
+ flex-direction:column!important;align-items:center!important;
+ min-height:355px!important;height:355px!important;flex:0 0 355px!important;
+ padding:0!important;margin:0!important;gap:0!important;overflow:visible!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-stage{
+ width:min(100%,360px)!important;min-height:350px!important;
+ display:flex!important;flex-direction:column!important;
+ align-items:center!important;justify-content:center!important;gap:20px!important;
+ margin:0 auto!important;position:relative!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-stage[hidden]{display:none!important}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-avatar{
+ height:238px!important;width:250px!important;flex:0 0 238px!important;
+ position:relative!important;display:grid!important;place-items:center!important;
+ pointer-events:none!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-avatar #ftTurnCircle{
+ pointer-events:none!important;cursor:default!important;
+ transform:none!important;
+ -webkit-tap-highlight-color:transparent!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession[data-character="pigfish"] .ft-c-avatar #ftTurnCircle,
+html[data-ft-concept="button"] .free-talking-genius #ftSession[data-character="bunny-v3"] .ft-c-avatar #ftTurnCircle{
+ width:220px!important;height:220px!important;min-width:220px!important;
+ min-height:220px!important;border:0!important;outline:0!important;
+ background:transparent!important;background-image:none!important;
+ box-shadow:none!important;animation:none!important;overflow:visible!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-avatar #ftTurnCircle .bf-actor{
+ width:87%!important;height:87%!important;z-index:3!important;
+ display:block!important;pointer-events:none!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-control{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:min(340px,100%)!important;height:74px!important;min-height:74px!important;
+ position:relative!important;flex:0 0 74px!important;
+ margin:0 auto!important;padding:8px 18px!important;
+ overflow:hidden!important;isolation:isolate!important;
+ border:3px solid #ef95c5!important;border-radius:19px!important;
+ background:#fff!important;background-image:none!important;
+ color:#75858a!important;box-shadow:none!important;
+ font:900 clamp(17px,3.4vw,22px)/1.2 Poppins,system-ui,sans-serif!important;
+ cursor:pointer!important;
+ -webkit-tap-highlight-color:transparent!important;touch-action:manipulation!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-control[hidden]{display:none!important}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-control:disabled{
+ opacity:1!important;cursor:default!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-control[data-state="listen"],
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-control[data-state="playing"]{
+ border-color:#ed92c1!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-control[data-state="speak"],
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-control[data-state="recording"]{
+ border-color:#9de0e6!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-control[data-state="processing"]{
+ border-color:#c5e4e7!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-label{
+ position:relative!important;z-index:3!important;
+ font:inherit!important;max-width:100%!important;white-space:normal!important;
+ text-align:center!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-seconds{
+ position:absolute!important;right:12px!important;top:9px!important;
+ z-index:4!important;color:#347c83!important;font:900 12px Poppins,system-ui,sans-serif!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-fill{
+ position:absolute!important;inset:0 auto 0 0!important;height:100%!important;
+ width:0%;display:block!important;z-index:1!important;
+ background:linear-gradient(90deg,#b3f0f3,#def8fa)!important;
+ transition:width .10s linear!important;pointer-events:none!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-swirl{
+ display:none!important;position:absolute!important;z-index:2!important;
+ inset:0!important;align-items:center!important;justify-content:center!important;
+ pointer-events:none!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-control[data-state="processing"] .ft-c-swirl{
+ display:flex!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-control[data-state="processing"] .ft-c-label{
+ position:relative!important;z-index:4!important;
+ background:rgba(255,255,255,.80)!important;border-radius:9px!important;padding:3px 10px!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-swirl i{
+ display:block!important;position:absolute!important;
+ width:52px!important;height:52px!important;border-radius:50%!important;
+ border:5px solid transparent!important;
+ border-top-color:#f29cc8!important;border-left-color:#5accd6!important;
+ animation:ftConceptSwirl .8s linear infinite!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-swirl i+ i{
+ width:37px!important;height:37px!important;
+ border-top-color:#62d1da!important;border-left-color:#f09cc6!important;
+ animation-direction:reverse!important;animation-duration:.63s!important;
+}
+@keyframes ftConceptSwirl{to{transform:rotate(360deg)}}
+html[data-ft-concept="button"] .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintActions{
+ min-height:104px!important;flex:0 0 104px!important;
+ margin:10px auto 2px!important;align-content:center!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintActions.is-concealed{
+ display:grid!important;visibility:hidden!important;pointer-events:none!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintViewer{
+ min-height:76px!important;flex:0 0 76px!important;
+ margin:5px auto!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftHintViewer[hidden]{
+ display:flex!important;visibility:hidden!important;pointer-events:none!important;
+}
+/* A correction uses the SAME proxy button rather than making the child tap the avatar. */
+html[data-ft-concept="button"] .free-talking-genius #ftRepeatCircleMount{
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ justify-content:center!important;gap:10px!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftQuestionStage[data-step="repeat"] #ftRepeatCircleMount #ftTurnCircle{
+ position:absolute!important;width:1px!important;height:1px!important;
+ overflow:hidden!important;opacity:0!important;pointer-events:none!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftQuestionStage[data-step="repeat"] .ft-c-control{
+ display:flex!important;
+}
+html[data-ft-concept="button"] .free-talking-genius #ftQuestionStage[data-step="score"] .ft-c-control,
+html[data-ft-concept="button"] .free-talking-genius #ftQuestionStage[data-step="score"] .ft-c-stage{
+ display:none!important;
+}
+@media(max-width:560px){
+ html[data-ft-concept="button"] .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftGameCard{
+  min-height:calc(100dvh - 246px)!important;
+ }
+ html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-stage{
+  min-height:330px!important;gap:12px!important;
+ }
+ html[data-ft-concept="button"] .free-talking-genius #ftSession #ftQuestionStage:not([data-step="score"]):not([data-step="repeat"]) #ftWilliVoice{
+  height:334px!important;min-height:334px!important;flex-basis:334px!important;
+ }
+ html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-avatar{
+  height:236px!important;flex-basis:236px!important;
+ }
+ html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-control{
+  min-height:70px!important;height:70px!important;flex-basis:70px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html[data-ft-concept="button"] .free-talking-genius #ftSession .ft-c-swirl i{animation:none!important}
+}
