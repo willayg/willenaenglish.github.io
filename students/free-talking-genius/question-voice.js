@@ -14,7 +14,7 @@ export function createFreeTalkingVoice({host,getToken}){
  const PRELOAD_GENERATION_GAP_MS=300;
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
- const VOICES=new Set(['marin','bunny-v3']);
+ const VOICES=new Set(['marin','bunny-v3','pigfish']);
  const PREFERENCE_KEY='willena-free-talking-voice-v1';
  try{
   const saved=localStorage.getItem(PREFERENCE_KEY);
@@ -26,7 +26,7 @@ export function createFreeTalkingVoice({host,getToken}){
  const modelLabel=host.querySelector('[data-ft-voice-model]');
  const preloadLabel=host.querySelector('[data-ft-voice-preload]');
  const characterName=host.querySelector('[data-ft-character-name]');
- function updateCharacterName(){if(characterName)characterName.textContent=activeVoice()==='bunny-v3'?'AI Lili':'AI Willi'}
+ function updateCharacterName(){if(characterName)characterName.textContent=activeVoice()==='pigfish'?'Pigfish':activeVoice()==='bunny-v3'?'Bunny Fox':'AI Willi'}
  updateCharacterName();
  const isElevenVoice=v=>['bunny','jock','sgt-steve','lily'].includes(v);
  function preloadingText(text){if(preloadLabel)preloadLabel.textContent=text||''}
@@ -53,7 +53,7 @@ export function createFreeTalkingVoice({host,getToken}){
  audio.addEventListener('pause',()=>{setPlaying(false);if(!audio.ended)status('다시 듣기를 눌러 주세요.')});
  audio.addEventListener('ended',()=>{setPlaying(false);status('다시 듣기를 누르면 질문을 또 들을 수 있어요.')});
  audio.addEventListener('error',()=>{setPlaying(false);status('음성을 불러오지 못했어요. 질문을 읽고 답해 주세요.')});
- const modelForVoice=voice=>voice==='bunny-v3'?'eleven_v3':null;
+ const modelForVoice=voice=>['bunny-v3','pigfish'].includes(voice)?'eleven_v3':null;
  async function fetchVoice(questionId,voice){
   const expectedModel=modelForVoice(voice);
   // Use the exact Bunny v3 protocol that worked in the comparison test.
@@ -160,7 +160,7 @@ export function createFreeTalkingVoice({host,getToken}){
    (Number(a.unit_number)===preferredUnit?0:1)-(Number(b.unit_number)===preferredUnit?0:1)
    ||Number(a.unit_number)-Number(b.unit_number)||Number(a.question_number)-Number(b.question_number));
   const total=orderedQuestions.length;
-  const complete={'marin':0,'bunny-v3':0};
+  const complete={'marin':0,'bunny-v3':0,pigfish:0};
   const current=()=>epoch===preloadEpoch&&!destroyed;
   // Short sleeps make cancellations responsive: a unit switch never spawns
   // another concurrent batch of R2 downloads or paid TTS requests.
@@ -175,8 +175,7 @@ export function createFreeTalkingVoice({host,getToken}){
   }
   function render(message=''){
    if(!current())return;
-   preloadingText('AI Willi '+complete.marin+'/'+total+' · AI Lili '+
-    complete['bunny-v3']+'/'+total+' R2 ready'+message);
+   preloadingText(selectedVoice+' '+complete[selectedVoice]+'/'+total+' R2 ready'+message);
   }
   async function run(){
    if(!current())return;
