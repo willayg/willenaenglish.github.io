@@ -378,11 +378,15 @@ function bestUnitPoints(unit,mode,questionId){
  return Math.max(0,...state.attempts.filter(a=>ids.has(a.session_id)&&a.question_id===questionId)
   .map(a=>Number(a.grammar_points)+Number(a.quality_points)));
 }
-function masteryCount(unit,mode){
+// Free Talking progress tracks participation, not perfect-answer mastery.
+// Each question counts once as soon as a graded answer is saved, across sessions.
+function answeredCount(unit,mode){
  const prompts=state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===unit);
- return prompts.filter(q=>bestUnitPoints(unit,mode,q.id)===4).length;
+ const sessionIds=new Set(state.sessions.filter(s=>s.book_id===BOOK()&&Number(s.unit_number)===unit&&s.mode===mode).map(s=>s.id));
+ const answered=new Set(state.attempts.filter(a=>sessionIds.has(a.session_id)).map(a=>a.question_id));
+ return prompts.filter(q=>answered.has(q.id)).length;
 }
-function unitGold(unit){return masteryCount(unit,'speaking')===8&&masteryCount(unit,'writing')===8}
+function unitComplete(unit){return answeredCount(unit,'speaking')===8&&answeredCount(unit,'writing')===8}
 async function refreshData(){
  const list=await api('free_talking_sessions',{params:'?select=*&student_id=eq.'+state.student.id+'&book_id=eq.'+BOOK()+'&order=created_at.desc&limit=200'});
  state.sessions=Array.isArray(list)?list:[];
@@ -459,9 +463,9 @@ function renderUnitStrip(){
  const host=$('ftUnitStrip');host.replaceChildren();
  for(const n of [...new Set(state.questions.filter(q=>q.book_id===state.bookId).map(q=>Number(q.unit_number)))].sort((a,b)=>a-b)){
   const button=document.createElement('button');
-  button.type='button';button.className=(n===state.unit?'is-current ':'')+(unitGold(n)?'is-golden':'');
+  button.type='button';button.className=(n===state.unit?'is-current ':'')+(unitComplete(n)?'is-complete':'');
   button.textContent='Unit '+n;
-  if(unitGold(n)){const img=document.createElement('img');img.src='/shared/svgs/golden-unit.svg';img.alt='Gold';button.append(img)}
+  if(unitComplete(n)){button.title='Speaking and Writing completed';button.setAttribute('aria-label','Unit '+n+' completed')}
   button.addEventListener('click',()=>selectUnit(n));host.append(button);
  }
 }
@@ -470,7 +474,7 @@ function renderBook(){
  renderUnitStrip();
  $('ftUnitTitle').textContent='Unit '+state.unit+' · '+(state.unitTitles.get(state.bookId+':'+state.unit)||'');
  for(const mode of ['speaking','writing']){
-  const count=masteryCount(state.unit,mode),card=$('ft'+(mode==='speaking'?'Speaking':'Writing')+'Card');
+  const count=answeredCount(state.unit,mode),card=$('ft'+(mode==='speaking'?'Speaking':'Writing')+'Card');
   const percent=pct(count/8*100);
   card.querySelector('.vocab-skill-ring').style.setProperty('--progress',percent);
   card.querySelector('.vocab-skill-ring span').textContent=percent+'%';
@@ -723,8 +727,8 @@ async function conclude(){
   }else{
    view('ftFinish');
    $('ftFinishContent').innerHTML=renderStudentSessionFinish({title:'아직 답하지 않은 질문이 있어요.',
-     description:'완료하려면 여덟 질문에 한 번씩 답해 주세요. 4/4 만점은 선택 사항이에요.',
-     stats:[{label:'Answered',value:groups().filter(q=>attemptsFor(state.session.id,q.id).length>0).length+'/8'},{label:'Mastered',value:(data?.mastered||0)+'/8'}]});
+     description:'각 질문에 한 번씩 답하면 완료돼요. 10점 만점은 필요하지 않아요.',
+     stats:[{label:'Answered',value:groups().filter(q=>attemptsFor(state.session.id,q.id).length>0).length+'/8'}]});
    $('ftFinishStatus').textContent='지금까지의 답변은 모두 저장되어 있어요.';
    $('ftRetrySync').hidden=true;
   }
