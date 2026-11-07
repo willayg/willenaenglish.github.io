@@ -1275,3 +1275,42 @@
 .ft-creativity-dismiss{font-size:12px;font-weight:700;color:#7D6F98}
 @keyframes ft-idea-enter{from{opacity:0;transform:scale(.78) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
 @media(prefers-reduced-motion:reduce){.ft-creativity-surprise{animation:none!important}}
+
+/* Guided practice: language goal and mandatory corrective rehearsal. */
+.free-talking-genius #ftSession #ftLanguageChallenge{
+ order:4;align-self:stretch;width:100%;max-width:690px;margin:3px auto 15px;
+ padding:12px 15px;border:2px solid #b9e6e9;border-radius:15px;
+ background:#f4fbfd;color:#315a65;text-align:left;font-family:Poppins,system-ui,sans-serif;
+}
+.free-talking-genius #ftLanguageChallenge strong{display:block;font-size:13px;color:#cf278b;margin-bottom:4px}
+.free-talking-genius #ftLanguageChallenge p{font-size:13px;line-height:1.5;margin:0;font-weight:650}
+.free-talking-genius #ftSession #ftCorrectionPanel{
+ display:grid;gap:11px;background:#fff!important;border:2px solid #f1c5db!important;
+ padding:17px 14px;border-radius:18px;margin-top:15px;
+}
+.free-talking-genius #ftCorrectionPanel>strong{font-size:17px;color:#b91f79}
+.free-talking-genius #ftCorrectionPanel small{display:block;font-size:11px;font-weight:900;color:#677b85;margin-bottom:5px}
+.free-talking-genius #ftCorrectionPanel .ft-correction-original,
+.free-talking-genius #ftCorrectionPanel .ft-correction-improved{
+ padding:12px 14px;border-radius:12px;background:#f5fafb;border:1px solid #d3ebee;
+}
+.free-talking-genius #ftCorrectionPanel .ft-correction-improved{background:#fff6fa;border-color:#f3c2d9}
+.free-talking-genius #ftCorrectionPanel p{margin:0;line-height:1.58;font-size:15px;color:#234f55}
+.free-talking-genius #ftCorrectionPanel .ft-pink-fix{
+ display:inline;background:#ffd3e9!important;color:#b60067!important;
+ border-radius:4px;padding:1px 2px;font-weight:900;
+}
+.free-talking-genius #ftCorrectionPanel .ft-correction-reason{
+ font-size:13px;color:#8c3570;font-weight:700;
+}
+.free-talking-genius #ftCorrectionPanel .ft-correction-listen{
+ padding:12px;border:2px solid #bcecef;background:#fff;color:#b71c79;border-radius:13px;
+ font:800 13px Poppins,system-ui,sans-serif;cursor:pointer;
+}
+.free-talking-genius #ftCorrectionPanel .ft-correction-ack{
+ display:flex;align-items:center;gap:10px;font-weight:850;color:#294f57;
+ padding:10px;border:2px solid #c8eaed;border-radius:12px;cursor:pointer;
+}
+.free-talking-genius #ftCorrectionPanel .ft-correction-ack input{width:22px;height:22px;accent-color:#db258c}
+.free-talking-genius #ftCorrectionPanel .ft-correction-guide{font-size:12px;opacity:.8}
+.free-talking-genius #ftSession #ftRetry:disabled{opacity:.43!important;cursor:not-allowed!important}
