@@ -154,3 +154,19 @@
  margin:0!important;padding:0!important;
  transform:none!important;transform-origin:center center!important;
 }
+
+/* Match the visibly selected state of Bunny Fox and Pigfish for AI Willi.
+   Preserve the centred SVG; highlight its button and concentric rings. */
+.free-talking-genius #ftCharacter .ft-character-willi[aria-pressed="true"]{
+ border-color:#5bc9d5!important;
+ background:#ecfafb!important;
+ box-shadow:inset 0 0 0 2px #b2eef1!important;
+}
+.free-talking-genius #ftCharacter .ft-character-willi[aria-pressed="true"] .ft-willi-portrait svg{
+ transform:scale(1.075)!important;
+ transform-origin:50% 50%!important;
+ filter:drop-shadow(0 0 7px rgba(76,197,214,.65));
+}
+.free-talking-genius #ftCharacter .ft-character-willi[aria-pressed="true"] strong{
+ color:#248c9b!important;
+}
