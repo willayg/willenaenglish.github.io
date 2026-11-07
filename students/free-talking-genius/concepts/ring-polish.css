@@ -223,3 +223,11 @@ html[data-ft-concept="ring"] .free-talking-genius #ftSession[data-ring-thinking=
   animation:none!important;
  }
 }
+
+/* Concept A animal characters: no instructional sentence beneath the avatar.
+   The action pill alone gives the instruction; AI Willi is unaffected. */
+html[data-ft-concept="ring"] body:has(#ftSession[data-character="bunny-v3"]) #ftTurnStatus,
+html[data-ft-concept="ring"] body:has(#ftSession[data-character="pigfish"]) #ftTurnStatus{
+ display:none!important;visibility:hidden!important;
+ height:0!important;min-height:0!important;margin:0!important;padding:0!important;
+}
