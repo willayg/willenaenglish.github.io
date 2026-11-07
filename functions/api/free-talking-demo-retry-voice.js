@@ -43,21 +43,28 @@ async function synthesize(voice,env){
   const voiceId=voice==='pigfish'?PIGFISH_ID:LILI_ID;
   const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
   const settings={stability:0.5};
-  if(!key){
-   const proxy=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text:TEXT,voice_id:voiceId,model_id:'eleven_v3',voice_settings:settings}),
-    signal:AbortSignal.timeout(35000)});
-   const result=proxy.ok?await proxy.json().catch(()=>null):null;
-   if(typeof result?.audio!=='string')throw Error('ElevenLabs proxy unavailable');
-   return result.audio;
+  // Try Cloudflare first, then Netlify on missing key, HTTP errors or timeouts.
+  if(key){
+   try{
+    const response=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+voiceId+'?output_format=mp3_44100_128',{
+     method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
+     body:JSON.stringify({text:TEXT,model_id:'eleven_v3',voice_settings:settings}),
+     signal:AbortSignal.timeout(18000)});
+    if(!response.ok)throw Error('ElevenLabs direct HTTP '+response.status);
+    const audio=await response.arrayBuffer();
+    if(audio.byteLength<500||audio.byteLength>1250000)throw Error('Invalid direct MP3');
+    return b64(audio);
+   }catch(error){
+    console.warn('[Demo retry voice] ElevenLabs direct failed; using Netlify',String(error?.message||error).slice(0,100));
+   }
   }
-  const response=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+voiceId+'?output_format=mp3_44100_128',{
-   method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
-   body:JSON.stringify({text:TEXT,model_id:'eleven_v3',voice_settings:settings}),
-   signal:AbortSignal.timeout(30000)});
-  if(!response.ok)throw Error('ElevenLabs TTS '+response.status);
-  return b64(await response.arrayBuffer());
+  const proxy=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({text:TEXT,voice_id:voiceId,model_id:'eleven_v3',voice_settings:settings}),
+   signal:AbortSignal.timeout(35000)});
+  const result=proxy.ok?await proxy.json().catch(()=>null):null;
+  if(typeof result?.audio!=='string')throw Error('ElevenLabs proxy unavailable');
+  return result.audio;
  }
  const key=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
  if(!key)throw Error('OpenAI voice key missing');
