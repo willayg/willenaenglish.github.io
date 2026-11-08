@@ -1,4 +1,4 @@
-// Demo-only authenticated ElevenLabs Flash streaming proxy.
+// Demo-only authenticated ElevenLabs v3 Conversational TTS proxy.
 // The existing Free Talking Genius endpoints and files are untouched.
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co';
 const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -12,20 +12,11 @@ export async function onRequestPost({request,env}){
  if(bearer.length<40)return reply(401,'Sign in first');
  let data;try{data=await request.json()}catch{return reply(400,'Invalid request')}
  const character=String(data?.character||''),sentence=String(data?.text||'').trim();
- // Explicit comparison mode only. Normal student conversation is unchanged.
- const testModel=String(data?.test_model||'');
- const models=Object.freeze({
-  flash90:{id:'eleven_flash_v2_5',speed:0.90},
-  flash85:{id:'eleven_flash_v2_5',speed:0.85},
-  v3:{id:'eleven_v3'},
-  v3convo:{id:'eleven_v3_conversational'}
- });
- if(testModel&&!Object.hasOwn(models,testModel))return reply(400,'Unknown test model');
- if(testModel&&(character==='willi'||sentence.length>150))return reply(400,'Voice test requires Bunny or Pigfish and short text');
- const selectedModel=testModel?models[testModel]:{id:'eleven_flash_v2_5'};
+ // Use the chosen natural conversation model for every newly generated reply.
+ const selectedModel={id:'eleven_v3_conversational'};
  if(!Object.hasOwn(VOICES,character)||sentence.length<2||sentence.length>350)return reply(400,'Invalid voice or response length');
  const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY||env.ELEVENLABS_API||env.ELEVENLABS_KEY;
- // Match existing Free Talking audio: production Cloudflare key first, established Netlify fallback when missing.
+ // Preserve the proven production Cloudflare-first, Netlify-fallback routes.
  try{
   const auth=await fetch(ROOT+'/auth/v1/user',{headers:{apikey:PUB,Authorization:'Bearer '+bearer},signal:AbortSignal.timeout(8000)});
   if(!auth.ok)return reply(401,'Session expired');
@@ -46,9 +37,7 @@ export async function onRequestPost({request,env}){
    return new Response(speech.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Willena-TTS-Route':'openai-marin','X-Content-Type-Options':'nosniff'}});
   }
   const voiceId=VOICES[character];
-  const voiceSettings=selectedModel.id==='eleven_v3'||selectedModel.id==='eleven_v3_conversational'
-   ?{stability:0.5,similarity_boost:0.8,use_speaker_boost:false}
-   :{stability:0.55,similarity_boost:0.8,style:0,use_speaker_boost:false,...(selectedModel.speed?{speed:selectedModel.speed}:{})};
+  const voiceSettings={stability:0.5,similarity_boost:0.8,use_speaker_boost:false};
   if(key){
    const upstream=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId)+'/stream?output_format=mp3_44100_128',{
     method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
