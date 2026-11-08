@@ -14,7 +14,7 @@ export async function onRequestPost({request,env}){
  const character=String(data?.character||''),sentence=String(data?.text||'').trim();
  if(!Object.hasOwn(VOICES,character)||sentence.length<2||sentence.length>350)return reply(400,'Invalid voice or response length');
  const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY||env.ELEVENLABS_API||env.ELEVENLABS_KEY;
- if(!key)return reply(503,'ElevenLabs key not configured');
+ // Match existing Free Talking audio: production Cloudflare key first, established Netlify fallback when missing.
  try{
   const auth=await fetch(ROOT+'/auth/v1/user',{headers:{apikey:PUB,Authorization:'Bearer '+bearer},signal:AbortSignal.timeout(8000)});
   if(!auth.ok)return reply(401,'Session expired');
@@ -23,12 +23,29 @@ export async function onRequestPost({request,env}){
    headers:{apikey:PUB,Authorization:'Bearer '+bearer},signal:AbortSignal.timeout(8000)});
   const profile=p.ok?(await p.json())[0]:null;
   if(!profile||profile.approved!==true||!['student','teacher','admin','owner'].includes(profile.role))return reply(403,'Not authorized');
-  const upstream=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+VOICES[character]+'/stream?output_format=mp3_44100_128',{
-   method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
-   body:JSON.stringify({text:sentence,model_id:'eleven_flash_v2_5',voice_settings:{stability:0.5,similarity_boost:0.8,style:0,use_speaker_boost:false,speed:1}}),
-   signal:AbortSignal.timeout(24000)
+  const voiceId=VOICES[character];
+  const voiceSettings={stability:0.55,similarity_boost:0.8,style:0,use_speaker_boost:false};
+  if(key){
+   const upstream=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId)+'/stream?output_format=mp3_44100_128',{
+    method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
+    body:JSON.stringify({text:sentence,model_id:'eleven_flash_v2_5',voice_settings:voiceSettings}),
+    signal:AbortSignal.timeout(24000)
+   });
+   if(!upstream.ok||!upstream.body){console.warn('ElevenLabs Flash',upstream.status);return reply(502,'ElevenLabs Flash HTTP '+upstream.status)}
+   return new Response(upstream.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Willena-TTS':'eleven_flash_v2_5','X-Willena-TTS-Route':'direct'}});
+  }
+  // Preview deployments often lack the Cloudflare ElevenLabs key. Reuse the
+  // EXACT previous proxy service already used in functions/api/free-talking-audio.js.
+  const fallback=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({text:sentence,voice_id:voiceId,model_id:'eleven_flash_v2_5',voice_settings:voiceSettings}),
+   signal:AbortSignal.timeout(30000)
   });
-  if(!upstream.ok||!upstream.body){console.warn('ElevenLabs Flash error',upstream.status);return reply(502,'ElevenLabs speech unavailable ('+upstream.status+')')}
-  return new Response(upstream.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Willena-TTS':'eleven_flash_v2_5'}});
+  if(!fallback.ok){console.warn('ElevenLabs proxy',fallback.status);return reply(502,'ElevenLabs fallback HTTP '+fallback.status)}
+  const payload=await fallback.json().catch(()=>null);
+  if(typeof payload?.audio!=='string')return reply(502,'ElevenLabs fallback did not return audio');
+  const bytes=Uint8Array.from(atob(payload.audio),c=>c.charCodeAt(0));
+  if(bytes.length<500||bytes.length>1200000)return reply(502,'Invalid ElevenLabs audio');
+  return new Response(bytes,{status:200,headers:{'Content-Type':'audio/mpeg','Content-Length':String(bytes.length),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Willena-TTS':'eleven_flash_v2_5','X-Willena-TTS-Route':'netlify-fallback'}});
  }catch(error){console.warn('ElevenLabs realtime demo error',String(error));return reply(502,'Speech connection failed')}
 }
