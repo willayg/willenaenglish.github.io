@@ -269,10 +269,46 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar::after{
  content:none!important;display:none!important;border:0!important;outline:0!important;
 }
+
+/* Eight-question ticker and independent soft countdown: experiment only. */
+#demo #talk{position:relative!important}
+#demo .topic-ticker{
+ flex:0 0 auto;position:relative;z-index:6;
+ display:flex;align-items:center;justify-content:space-between;
+ gap:12px;width:100%;background:transparent;
+ padding:9px 14px 3px;
+}
+#demo .topic-steps{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;flex:1;min-width:0}
+#demo .topic-step{
+ display:grid;place-items:center;height:28px;min-width:0;
+ border:1px solid #cbdfe2;background:#f7fbfc;
+ border-radius:9px;font:700 12px/1 system-ui,sans-serif;color:#71909a;
+}
+#demo .topic-step.is-active{border:2px solid #21a7b5;background:#e3f8fa;color:#146d7b}
+#demo .topic-step.is-done{border-color:#90cdd2;background:#e3f8fa;color:#146d7b}
+#demo .topic-step svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+#demo .topic-clock{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+#demo .topic-time-rail{height:40px;width:8px;background:#dbeef0;border-radius:10px;position:relative;overflow:hidden}
+#demo #topicTimeFill{height:100%;width:100%;background:#23a8b6;position:absolute;bottom:0;left:0;transition:height .12s linear;border-radius:10px}
+#demo #topicTimeValue{font:700 12px/1 system-ui,sans-serif;color:#286f7a;width:27px;font-variant-numeric:tabular-nums}
+#demo .topic-clock.is-ended #topicTimeFill{background:#e7a45c}
+@media(max-width:430px){
+ #demo .topic-ticker{gap:7px;padding:7px 9px 2px}
+ #demo .topic-steps{gap:3px}
+ #demo .topic-step{height:25px;border-radius:7px;font-size:11px}
+ #demo .topic-time-rail{height:32px}
+}
 </style></head><body>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
 <div id="demo" hidden><main class="wrap">
 <div class="panel" id="talk">
+ <div id="topicTicker" class="topic-ticker" aria-label="Question progress">
+  <div id="topicSteps" class="topic-steps" aria-label="Eight textbook questions"></div>
+  <div class="topic-clock">
+   <div class="topic-time-rail" aria-hidden="true"><div id="topicTimeFill"></div></div>
+   <output id="topicTimeValue" aria-label="Seconds remaining">20s</output>
+  </div>
+ </div>
  <div id="actorStage" class="actor-stage" data-phase="ready"></div>
  <div class="conversation-text" aria-label="Current conversation">
   <p id="anchorText" class="anchor-question" aria-live="polite">Your first question will appear here.</p>
@@ -306,4 +342,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261109-vocabulary-guard19"></script></body></html>
+<script type="module" src="./extension.js?v=20261109-soft-ticker20"></script></body></html>
