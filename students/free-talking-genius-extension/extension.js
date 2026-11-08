@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -160,11 +160,11 @@ function prepareCard(){
  const d=appDocument(),card=d?.getElementById('ftFreeTalkingCard');if(!card)return;
  if(card.dataset.extension==='ready')return;
  card.dataset.extension='ready';card.disabled=false;card.removeAttribute('aria-disabled');card.classList.remove('ft-coming-soon-card');
- card.setAttribute('aria-label','Free Talking · 3-minute conversation');
+ card.setAttribute('aria-label','Free Talking · 8 textbook questions');
  card.style.cssText+=';opacity:1!important;filter:none!important;cursor:pointer;pointer-events:auto;';
  const step=card.querySelector('.vocab-skill-step');if(step)step.textContent='STEP 2';
- const detail=card.querySelector('.vocab-card-stars');if(detail)detail.textContent='3분 자유 대화 · 골든 유닛 조건 아님';
- const ring=card.querySelector('.vocab-skill-ring span');if(ring)ring.textContent='3m';
+ const detail=card.querySelector('.vocab-card-stars');if(detail)detail.textContent='8개 질문으로 대화 · 골든 유닛 조건 아님';
+ const ring=card.querySelector('.vocab-skill-ring span');if(ring)ring.textContent='8Q';
 }
 function bindOriginalFrame(){
  const d=appDocument();if(!d||d.documentElement.dataset.ftRealtimeExtensionBound==='1')return;
@@ -220,11 +220,11 @@ async function openDemo(){
  const unitMatch=(d.querySelector('#ftUnitTitle')?.textContent||'').match(/Unit\s+(\d+)/i);
  if(!title||!unitMatch){error('Choose a book and unit first.');return}
  error('');state.book=null;state.unit=null;state.seconds=180;state.character='willi';
- $('heading').textContent='Free Talking · 3 minutes';
+ $('heading').textContent='Free Talking · 8 Questions';
  $('lesson').textContent=title+' · Unit '+unitMatch[1];
  // Stay on the ORIGINAL in-app friend-selection screen, not a duplicate overlay.
  const note=d.getElementById('ftCharacterRound');
- if(note){note.hidden=false;note.textContent='자유 대화 · 3분 · AI Willi / Bunny Fox / Pigfish';}
+ if(note){note.hidden=false;note.textContent='자유 대화 · 교재 질문 8개 · AI Willi / Bunny Fox / Pigfish';}
  const characterBack=d.getElementById('ftCharacterBack');
  if(characterBack)characterBack.hidden=false;
 
@@ -292,6 +292,9 @@ function stopSpeech(){
 }
 function endSession(reason='Conversation finished.'){
  clearInterval(state.timer);state.timer=null;
+ clearTimeout(state.anchorTimer);state.anchorTimer=null;state.anchorToken++;
+ for(const entry of state.anchorClipCache.values())if(entry?.owned)URL.revokeObjectURL(entry.url);
+ state.anchorClipCache.clear();state.anchorClipPromises.clear();state.anchors=[];state.anchorPhase='idle';state.anchorResponding=false;
  stopMicMonitor();
  state.actor?.setSpeaking(false);state.actor=null;
  stopSpeech();
@@ -439,10 +442,10 @@ async function startConversation(){
  $('heading').textContent='Talk with '+NAMES[state.character];
  $('log').replaceChildren();showActor();message('Connecting…');
  $('mute').disabled=false;$('end').disabled=false;$('mute').textContent='Mute microphone';
- const character=state.character;state.voiceMode=character==='willi'?'audio':'eleven';
- $('testVoice').hidden=state.voiceMode!=='eleven';
+ const character=state.character;state.voiceMode='eleven'; // guided text responses use controlled TTS for ALL three voices
+ $('testVoice').hidden=state.character==='willi';
  try{
-  const res=await authorizedDemoFetch('/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id},startAbort.signal);
+  const res=await authorizedDemoFetch('/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id,guided:true},startAbort.signal);
   if(startId!==activeStartId)return;
   const session=await res.json().catch(()=>({}));
   if(startId!==activeStartId)return;
@@ -452,6 +455,11 @@ async function startConversation(){
    $('lessonFocus').textContent='Lesson focus: '+(l.grammar||l.prompts?.[0]||l.unit||'Current unit');
   }
   if(!res.ok||!session.token)throw Error(session.error||'Realtime connection failed');
+  state.anchors=Array.isArray(session.lesson?.anchors)?session.lesson.anchors.filter(x=>x.id&&x.text).slice(0,8):[];
+  if(!state.anchors.length)throw Error('This unit has no published question anchors');
+  state.anchorIndex=0;state.anchorPhase='ready';state.anchorResponding=false;state.anchorResponseText='';
+  $('clock').textContent='Question 1 / '+state.anchors.length;
+  $('anchorText').textContent=state.anchors[0].text;
   const peer=new RTCPeerConnection();state.peer=peer;
   if(state.voiceMode==='audio'){
    const audio=document.createElement('audio');audio.autoplay=true;audio.playsInline=true;
@@ -480,9 +488,7 @@ async function startConversation(){
   };
   channel.onmessage=e=>{try{handleRealtime(JSON.parse(e.data))}catch(err){console.warn(err)}};
   channel.onopen=()=>{
-   if(state.voiceMode==='eleven'){
-    channel.send(JSON.stringify({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:true,interrupt_response:true}}}}}));
-   }else{state.alreadySpoken=true;channel.send(JSON.stringify({type:'response.create'}))}
+   channel.send(JSON.stringify({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:false,interrupt_response:false}}}}}));
   };
   const offer=await peer.createOffer();await peer.setLocalDescription(offer);
   const answer=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',headers:{Authorization:'Bearer '+session.token,'Content-Type':'application/sdp'},body:offer.sdp,signal:AbortSignal.timeout(18000)});
@@ -492,7 +498,8 @@ async function startConversation(){
   if(startId!==activeStartId)return;
   startAbort=null;
   state.micUserMuted=false;state.ttsPlaying=false;
-  state.active=true;state.starting=false;message('Connected. Say hello!');actorPhase('listening');ticking();$('listenCheck').textContent='Mic active · speak after Willi asks';$('restart').disabled=true;
+  state.active=true;state.starting=false;message('Connected · starting cached textbook question');actorPhase('ready');
+  $('listenCheck').textContent='Listen to the question, then answer';$('restart').disabled=true;
  }catch(e){
   if(startId!==activeStartId)return;
   console.error('[Free Talking Realtime demo] failed to start',e);
