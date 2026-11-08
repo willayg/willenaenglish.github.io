@@ -1,0 +1,58 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<title>Free Talking Genius · Realtime Extension Demo</title>
+<link rel="stylesheet" href="/students/free-talking-genius/character-animations.css?v=20261107-layer-fin3">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#fff;font-family:Poppins,Arial,sans-serif;color:#263c50}
+#original{border:0;display:block;width:100%;height:100dvh;background:#fff}
+#demo{position:fixed;inset:0;z-index:9999;background:radial-gradient(ellipse at top,#e8fbfd,#f8fafc 60%,#fef6fa);overflow:auto;padding:16px}
+#demo[hidden]{display:none!important}
+.wrap{max-width:820px;margin:0 auto;padding:18px 0 40px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:22px}.back{background:white;border:2px solid #d4edf0;border-radius:16px;padding:11px 15px;font-weight:800;color:#267f89;cursor:pointer}.tag{font-size:10px;letter-spacing:1.4px;color:#65909b;font-weight:900}
+h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#607685;font-size:13px;margin:7px 0 20px}
+.panel{background:#fff;border:1px solid #dcecf0;box-shadow:0 12px 38px #245b7612;border-radius:25px;padding:23px;margin-bottom:15px}
+.chars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.character{background:#fff;border:2px solid #dcebf0;border-radius:23px;padding:13px 5px 16px;min-width:0;cursor:pointer;font:800 12px Poppins,Arial;color:#385569;transition:transform .15s,border .15s}
+.character[aria-pressed=true]{border-color:#25b8c6;background:#f0fcfd;box-shadow:0 0 0 3px #d6f6f8}
+.character .portrait{height:clamp(85px,20vw,155px);display:flex;align-items:center;justify-content:center;position:relative}.portrait svg{height:100%;width:100%}.portrait .bf-svg{width:100%;height:100%}
+.character strong{display:block;white-space:nowrap;margin-top:8px;font-size:clamp(11px,2.5vw,15px)}
+.willi-icon{width:74%;height:74%;border:12px solid #7de0e8;border-radius:50%;box-shadow:inset 0 0 0 8px #e4f9fb;position:relative}.willi-icon::after{content:"";position:absolute;inset:28%;border-radius:50%;background:#35c2d0}
+.primary{border:2px solid #4dc5d1;border-radius:17px;background:#d8f9fc;color:#087987;font:900 15px Poppins;padding:14px 20px;min-height:48px;cursor:pointer}.primary:disabled{opacity:.45}
+.row{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap}
+.secondary{border:2px solid #d0e4e8;background:white;border-radius:16px;padding:11px 16px;color:#396b7a;font:800 13px Poppins;cursor:pointer}
+#start{width:100%;margin-top:20px}
+#talk{display:none}#talk.is-visible{display:block}#choose.is-hidden{display:none}
+.actor-stage{height:260px;display:grid;place-items:center;position:relative}
+.demo-actor{width:min(260px,72vw);height:min(260px,72vw);display:block;position:relative;filter:drop-shadow(0 7px 18px #31a3bb40)}
+.demo-actor .bf-svg{width:100%;height:100%}
+.demo-actor[data-state=speaking] .bf-talk-mouth,.demo-actor[data-state=speaking] .pf-talk-mouth{opacity:1}
+.demo-actor[data-state=speaking] .bf-rest-mouth,.demo-actor[data-state=speaking] .pf-rest-mouth{opacity:0}
+.willi-stage{width:190px;height:190px;background:radial-gradient(circle at 30% 20%,#efffff,#85e1ec 54%,#1da7bf);border:6px solid white;border-radius:50%;box-shadow:0 5px 35px #43ccd459;display:grid;place-items:center}
+.willi-stage i{display:block;width:66px;height:66px;border:16px solid #b9f8fb;border-radius:50%}
+[data-phase=speaking] .willi-stage{animation:pulse 1s alternate infinite}
+@keyframes pulse{to{transform:scale(1.05);box-shadow:0 0 35px #17b4c9}}
+.time{font-size:35px;letter-spacing:1px;font-weight:900;color:#198c9b;text-align:center}
+#status{text-align:center;color:#60808c;font-size:13px;min-height:24px;margin:8px 0 16px}
+#log{max-height:165px;overflow:auto;display:flex;flex-direction:column;gap:6px;margin:18px 0}
+.entry{font-size:13px;padding:9px 11px;border-radius:13px;background:#f1f9fb}.entry.me{background:#fff1f5}.entry b{display:block;font-size:10px;color:#6c8b96}
+.small{font-size:11px;color:#778b96;line-height:1.6}
+#error{font-size:12px;color:#b03454;text-align:center;min-height:22px}
+#volumeBox{display:flex;align-items:center;justify-content:center;gap:12px;color:#597685;font-size:12px;font-weight:800;margin:12px 0}
+#volume{width:min(240px,55vw);accent-color:#1aa9b8}
+@media(max-width:450px){.panel{padding:17px}.character{padding:8px 2px 12px}.chars{gap:7px}.actor-stage{height:220px}}
+</style></head><body>
+<iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
+<div id="demo" hidden><main class="wrap"><div class="top"><div><div class="tag">FREE TALKING GENIUS · EXPERIMENT</div><h1 id="heading">Choose your conversation friend</h1><p class="sub" id="lesson">Loading lesson…</p></div><button id="back" class="back" type="button">Back</button></div>
+<div class="panel" id="choose"><div class="chars">
+<button type="button" class="character" data-character="willi" aria-pressed="true"><div class="portrait"><div class="willi-icon"></div></div><strong>AI Willi</strong></button>
+<button type="button" class="character" data-character="bunny" aria-pressed="false"><div class="portrait" id="bunnyPortrait"></div><strong>Bunny Fox</strong></button>
+<button type="button" class="character" data-character="pigfish" aria-pressed="false"><div class="portrait" id="pigfishPortrait"></div><strong>Pigfish</strong></button>
+</div><p class="small" style="text-align:center">One conversation · Three minutes total · Practice only<br>Bunny Fox and Pigfish use ElevenLabs Flash · AI Willi uses OpenAI Realtime</p><button id="start" class="primary" type="button">Start 3-minute conversation</button></div>
+<div class="panel" id="talk"><div id="actorStage" class="actor-stage" data-phase="ready"></div><div class="time" id="clock">03:00</div><div id="status" role="status">Starting…</div>
+<div class="row"><button type="button" class="secondary" id="mute">Mute microphone</button><button type="button" class="secondary" id="end">End conversation</button></div>
+<label id="volumeBox">Speaker volume <input id="volume" type="range" min="0" max="100" value="70" step="5"><output id="volumeNumber">70%</output></label><div id="log" aria-live="polite"></div><p class="small" style="text-align:center">Free Talking practice: no homework, stars, or golden-unit credit.</p></div>
+<p id="error" role="alert"></p>
+</main></div>
+<script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
+<script type="module" src="./extension.js?v=20261108-demo1"></script></body></html>
