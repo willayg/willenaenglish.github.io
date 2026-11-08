@@ -2,7 +2,7 @@
 // The existing Free Talking Genius endpoints and files are untouched.
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co';
 const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const VOICES={bunny:'M7zl2TS7ORAIGUejDfoy',pigfish:'W7UbuMY4ypluqgZS2UzT'};
+const VOICES={willi:'marin',bunny:'M7zl2TS7ORAIGUejDfoy',pigfish:'W7UbuMY4ypluqgZS2UzT'};
 const reply=(status,message)=>new Response(JSON.stringify({error:message}),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
 export async function onRequestPost({request,env}){
  const origin=request.headers.get('Origin');
@@ -23,6 +23,17 @@ export async function onRequestPost({request,env}){
    headers:{apikey:PUB,Authorization:'Bearer '+bearer},signal:AbortSignal.timeout(8000)});
   const profile=p.ok?(await p.json())[0]:null;
   if(!profile||profile.approved!==true||!['student','teacher','admin','owner'].includes(profile.role))return reply(403,'Not authorized');
+  if(character==='willi'){
+   const openaiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
+   if(!openaiKey)return reply(503,'OpenAI speech is not configured');
+   const speech=await fetch('https://api.openai.com/v1/audio/speech',{
+    method:'POST',headers:{Authorization:'Bearer '+openaiKey,'Content-Type':'application/json'},
+    body:JSON.stringify({model:'gpt-4o-mini-tts',voice:'marin',input:sentence,response_format:'mp3',speed:1.04}),
+    signal:AbortSignal.timeout(25000)
+   });
+   if(!speech.ok||!speech.body)return reply(502,'AI Willi speech unavailable ('+speech.status+')');
+   return new Response(speech.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Willena-TTS-Route':'openai-marin','X-Content-Type-Options':'nosniff'}});
+  }
   const voiceId=VOICES[character];
   const voiceSettings={stability:0.55,similarity_boost:0.8,style:0,use_speaker_boost:false};
   if(key){
