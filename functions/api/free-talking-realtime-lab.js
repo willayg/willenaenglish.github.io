@@ -184,6 +184,7 @@ function responseGuide(book,unit){
   'PREFERRED GRAMMAR AND VOCABULARY: '+guide.grammar,
   'UNIT LANGUAGE TARGETS OVERRIDE GENERAL BAND ONLY WHEN SPECIFICALLY TAUGHT: '+fmt(unitPatterns,500),
   'APPROVED EXAMPLES OF STYLE AND DIFFICULTY (not a script or facts about the student): '+guide.examples.join(' | '),
+  'Conversational interjections and discourse markers should be appropriate to the level: Starter–2: Oh!, Wow!, Hey!, Hmm, Okay!; Levels 3–5: Nice!, Cool!, Really?, Well, So, Anyway; Levels 6–10: No way!, Actually, To be fair, I mean, Hang on, You know. Use sparingly and only when natural.',
   'Match this level in EVERY reaction, follow-up, clarification and transition. Prefer direct familiar questions. Never use difficult structures just to sound natural.',
   'For Levels Starter–5 do not use hypothetical would/could questions unless this exact unit teaches them. Prefer do you want to, do you like to, can you, are you going to, and simple present/past as actually taught.',
   'Choose reactions that fit what the student really said. If meaning is unclear, say you did not understand and ask for repetition. Never guess events, feelings or experiences.',
@@ -262,12 +263,13 @@ export async function onRequestPost({request,env}){
   const anchors=questions.slice().sort((a,b)=>a.question_number-b.question_number).slice(0,8).map(q=>({id:q.id,number:q.question_number,text:q.question_en,korean:q.question_ko}));
  const lesson={book:book.title,unit:unit.title,unit_number:unit.unit_number,level:bookConversationLevel(book),grammar:fmt(unit.metadata?.grammar||unit.metadata?.main_grammar_points||unit.metadata?.curriculum||'',800),examples:examples.map(x=>x.source_text),vocabulary:words.map(x=>x.source_text),prompts:questions.map(x=>x.question_en),anchors};
   const guidedRules=guided?[
- 'GUIDED ANCHOR TRACK OVERRIDES: The client plays the official textbook questions using cached recordings. Never ask an anchor question yourself.',
- 'Only respond to the current anchor and the child\'s answer. The app will explicitly tell you whether this is a short FOLLOW-UP turn or REACTION ONLY turn.',
- 'For FOLLOW-UP turns, respond with a brief appropriate reaction and ONE simple, relevant question related to the current anchor. Never ask another anchor question or change topics.',
- 'For REACTION ONLY turns, respond with a short appropriate acknowledgement (two to eight words), NO question; the app will immediately play the next cached anchor.',
- 'If you cannot understand the child, ask them to repeat rather than inventing what they said. Never assume a movie, activity, or experience that was not stated.',
- 'No scoring, correction lecture, or lesson-topic substitution. Keep grammar and vocabulary appropriate to the selected unit.'
+ 'GUIDED ANCHOR TRACK: The application speaks the official textbook questions from cached audio. Never produce the next anchor question yourself.',
+ 'RHYTHM: textbook question, student answer, ONE AI follow-up question closely tied to the answer, student answer, NEXT cached textbook question. No extra reaction after the second answer. After the final answer, the application says goodbye.',
+ 'Only generate text when the app explicitly requests the single FOLLOW-UP turn. React briefly if appropriate, then ask precisely one specific, easy question about what the child actually said.',
+ 'Talk like a lively, friendly conversational partner, not a polite chatbot or an examiner. Use level-appropriate informal speech, interjections, linking words and everyday slang naturally and sparingly: Oh!, Hmm, Whoa!, Really?, No way!, Cool!, Nice!, Well, Actually, So, Anyway.',
+ 'Never say thanks for sharing, thanks for telling me, I appreciate you sharing, that is interesting to hear, or stock AI compliments. Do not praise every answer or use the same phrase repeatedly.',
+ 'Do not overuse slang, repeat children\'s profanities, swear, or insult the student. Follow the book-level language band and unit structures strictly, especially want to and like to rather than hypothetical would for Levels 1–5.',
+ 'If you cannot understand the child, ask to repeat instead of inventing events, feelings or topics. Do not drift away from the selected textbook unit.'
  ].join('\\n'):'';
  const config={session:{type:'realtime',model:'gpt-realtime-2.1-mini',instructions:lessonInstructions({book,unit,questions,examples,words})+'\\n'+responseGuide(book,unit)+(guided?'\\n'+guidedRules:''),audio:{output:{voice:'marin'},input:{turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:!guided,interrupt_response:!guided}}}}};
   const key=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
