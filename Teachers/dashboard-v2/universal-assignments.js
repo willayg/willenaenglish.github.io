@@ -2,12 +2,12 @@
 (()=>{'use strict';
 const root=document.getElementById('universalAssignments');if(!root)return;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const apps=[{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'All',sub:'All homework',icon:'▦'},{id:'calendar',label:'Calendar',sub:'Assignment dates',icon:'▦'},{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'writing',label:'Writing Genius',sub:'Diaries & topic writing',icon:'✎'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
+const apps=[{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'All',sub:'All homework',icon:'▦'},{id:'calendar',label:'Calendar',sub:'Assignment dates',icon:'▦'},{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'free-talking',label:'Free Talking Genius',sub:'Speaking missions',icon:'FT'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'writing',label:'Writing Genius',sub:'Diaries & topic writing',icon:'✎'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
 const stateKey='willena.teachers.assignments.v2';
 let saved={};try{saved=JSON.parse(sessionStorage.getItem(stateKey)||'{}')||{}}catch{}
 let active=apps.some(a=>a.id===saved.active)?saved.active:'my',loading=false,groups=[];
 const remember=()=>{try{sessionStorage.setItem(stateKey,JSON.stringify({active,subviews,scrollLeft:(root.querySelector('.ua-app-tabs')?.scrollLeft??Number(saved.scrollLeft)??0)}))}catch{}};
-const subviews={my:'manage',all:'manage',calendar:'manage',naesin:'manage',word:'manage',grammar:'manage',sentence:'manage',puzzles:'manage',writing:'manage'};
+const subviews={my:'manage',all:'manage',calendar:'manage',naesin:'manage',word:'manage',grammar:'manage','free-talking':'manage',sentence:'manage',puzzles:'manage',writing:'manage'};
 Object.keys(subviews).forEach(k=>{if(saved.subviews?.[k]==='create'||saved.subviews?.[k]==='manage')subviews[k]=saved.subviews[k]});
 let wordPanel=null,wordHome=null;
 function restoreWordPanel(){if(wordPanel&&wordHome&&wordPanel.parentElement!==wordHome)wordHome.appendChild(wordPanel)}
@@ -326,7 +326,7 @@ function render(){
  const selected=apps.find(a=>a.id===active),sub=subviews[active];
  root.innerHTML=
  '<div class="ua-app-tabs" role="tablist" aria-label="Assignment app">'+apps.map(a=>'<button type="button" role="tab" aria-selected="'+(active===a.id)+'" class="ua-app-tab'+(active===a.id?' active':'')+'" data-ua-tab="'+a.id+'"><span class="ua-app-icon" aria-hidden="true">'+a.icon+'</span><span class="ua-app-label"><b>'+a.label+'</b></span></button>').join('')+'</div>'+
- '<section class="ua-workspace" aria-label="'+selected.label+' assignments"><div class="ua-section-heading"><div><div class="ua-eyebrow">'+(['my','all','calendar'].includes(active)?'REVIEW HOMEWORK':'CREATE & MANAGE')+'</div><h3>'+selected.label+'</h3></div><span class="ua-section-count" id="uaStatus">'+(active==='naesin'?groups.length+' exam groups':active==='word'?'Word Genius homework':active==='grammar'?'Connected · Grammar Genius':active==='sentence'?'Connected · Sentence Genius':active==='writing'?'Writing homework':active==='puzzles'?'Puzzle homework':'Homework overview')+'</span></div>'+
+ '<section class="ua-workspace" aria-label="'+selected.label+' assignments"><div class="ua-section-heading"><div><div class="ua-eyebrow">'+(['my','all','calendar'].includes(active)?'REVIEW HOMEWORK':'CREATE & MANAGE')+'</div><h3>'+selected.label+'</h3></div><span class="ua-section-count" id="uaStatus">'+(active==='naesin'?groups.length+' exam groups':active==='word'?'Word Genius homework':active==='free-talking'?'Connected · Free Talking Genius':active==='grammar'?'Connected · Grammar Genius':active==='sentence'?'Connected · Sentence Genius':active==='writing'?'Writing homework':active==='puzzles'?'Puzzle homework':'Homework overview')+'</span></div>'+
  (['my','all','calendar'].includes(active)?'':'<div class="ua-subtabs" role="tablist" aria-label="Homework workflow"><button type="button" role="tab" data-ua-sub="manage" class="ua-subtab'+(sub==='manage'?' active':'')+'" aria-selected="'+(sub==='manage')+'">Manage Homework</button><button type="button" role="tab" data-ua-sub="create" class="ua-subtab'+(sub==='create'?' active':'')+'" aria-selected="'+(sub==='create')+'">Assign Mission</button></div>')+
  '<div class="ua-app-body" id="uaAppBody"></div></section>';
  const nextStrip=root.querySelector('.ua-app-tabs');if(nextStrip){nextStrip.scrollLeft=previousScroll;nextStrip.addEventListener('scroll',()=>{try{const value=JSON.parse(sessionStorage.getItem(stateKey)||'{}');value.scrollLeft=nextStrip.scrollLeft;sessionStorage.setItem(stateKey,JSON.stringify(value))}catch{}},{passive:true})}
@@ -350,6 +350,11 @@ function render(){
  if(sub==='manage'){showWordPanel(body)}
  else{body.innerHTML='<div class="ua-word-actions"><div><h4>Assign Word Genius homework</h4><p>Choose database books and units or use Word Builder.</p></div><a class="control ua-primary" href="/Teachers/tools/wordtest/wordtest2.html">Open Word Builder →</a></div><div class="ua-catalog-host"></div>';window.dispatchEvent(new CustomEvent('ua:word-mounted'))}
  return;
+ }
+ if(active==='free-talking'){
+   body.innerHTML='<div id="uaFreeTalkingHomework"></div>';
+   window.dispatchEvent(new CustomEvent('ua:free-talking-mounted',{detail:{sub}}));
+   return;
  }
  if(active==='grammar'){
    body.innerHTML='<div id="uaGrammarHomework"></div>';
