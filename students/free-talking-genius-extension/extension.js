@@ -475,7 +475,14 @@ function releaseMicForPlayback(){
   const track=old?.getAudioTracks()[0];
   if(!track)return;
   track.enabled=false;
-  await state.audioSender.replaceTrack(null);
+  try{
+   await state.audioSender.replaceTrack(null);
+  }catch(e){
+   // Audio must still play if a browser refuses transmitter replacement.
+   // Keep the track disabled to prevent echo, but do not block the lesson.
+   console.warn('[Free Talking] Android mic release not supported; playing with muted mic',e);
+   return;
+  }
   state.micReleased=true;
   stopMicMonitor();
   track.stop();
