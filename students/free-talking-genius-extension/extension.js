@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:''};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -140,6 +140,9 @@ function monitorMicrophone(stream){
    let sum=0;for(let i=0;i<sample.length;i++){const d=(sample[i]-128)/128;sum+=d*d}
    const rms=Math.sqrt(sum/sample.length);
    const level=Math.min(100,Math.round(rms*550));
+   if(state.speechStartedAt&&state.active&&
+      (state.anchorPhase==='awaitingFirst'||state.anchorPhase==='awaitingSecond'))
+     state.speechPeak=Math.max(state.speechPeak,level);
    $('micLevel').textContent='Mic level: '+level+'%';
    if(level>=5){state.micNoiseSeen=true;if(!state.serverHeard)$('listenCheck').textContent='Microphone picking up sound · waiting for AI';}
   };
@@ -148,7 +151,7 @@ function monitorMicrophone(stream){
 }
 
 function message(s){$('status').textContent=s}
-function error(s){$('error').textContent=String(s||'Unknown error')}
+function error(s){$('error').textContent=s==null?'':String(s)}
 function buttonState(c){
  state.character=c;
  const doc=appDocument();
@@ -310,6 +313,7 @@ function stopSpeech(){
 function endSession(reason='Conversation finished.'){
  clearInterval(state.timer);state.timer=null;
  clearTimeout(state.anchorTimer);state.anchorTimer=null;state.anchorToken++;
+ clearPendingSpeech();state.speechStartedAt=0;state.speechPeak=0;state.lastSpeechDuration=0;state.verifiedAnswer='';
  for(const entry of state.anchorClipCache.values())if(entry?.owned)URL.revokeObjectURL(entry.url);
  state.anchorClipCache.clear();state.anchorClipPromises.clear();state.anchors=[];state.anchorPhase='idle';state.anchorResponding=false;state.guidedSessionReady=false;
  stopMicMonitor();
@@ -455,6 +459,7 @@ async function playAnchor(index){
  const anchor=state.anchors[index];
  const run=++state.anchorToken;
  state.anchorIndex=index;state.anchorPhase='playingAnchor';state.anchorResponding=false;
+ state.speechStartedAt=0;state.speechPeak=0;state.lastSpeechDuration=0;clearPendingSpeech();
  $('clock').textContent='Question '+(index+1)+' / '+state.anchors.length;
  $('anchorText').textContent=anchor.text;
  message('Playing textbook question '+(index+1));
@@ -514,6 +519,39 @@ function shortenGuidedResponse(text,second,level){
  const complete=cut.match(/^(.*[.!?])(?:\s|$)/);
  return complete?complete[1]:second?cut.replace(/[,:;.!?]+$/,'')+'.':cut;
 }
+
+function clearPendingSpeech(){
+ for(const pending of state.pendingSpeech.values())clearTimeout(pending.timeout);
+ state.pendingSpeech.clear();
+}
+function voiceTurnValid(text,pending){
+ const transcript=String(text||'').replace(/\s+/g,' ').trim();
+ const clean=transcript.replace(/[\p{P}\p{S}\s]/gu,'');
+ const nonSpeech=/^(?:\[?silence\]?|\[?inaudible\]?|\[?noise\]?|\[?music\]?|\[?applause\]?|\[?background noise\]?|thank you for watching|thanks for watching|subtitles by.*)$/i;
+ if(!clean||nonSpeech.test(transcript)||clean.length>400)return false;
+ if(pending.duration<280)return false;
+ // Allow very quiet, longer answers, but reject brief microphone glitches.
+ if(pending.peak<5&&pending.duration<550)return false;
+ return /[\p{L}\p{N}]/u.test(transcript);
+}
+function resolveCommittedSpeech(itemId,transcript,failed=false){
+ const pending=state.pendingSpeech.get(itemId);
+ if(!pending)return;
+ clearTimeout(pending.timeout);state.pendingSpeech.delete(itemId);
+ if(!state.active||pending.anchorToken!==state.anchorToken||pending.phase!==state.anchorPhase)return;
+ if(failed||!voiceTurnValid(transcript,pending)){
+  message('I could not hear an answer. Please speak again.');
+  $('listenCheck').textContent='Listening for your answer';
+  actorPhase('listening');
+  // Remove unverified audio from conversation context.
+  sendRealtime({type:'conversation.item.delete',item_id:itemId});
+  return;
+ }
+ state.serverHeard=true;
+ appendLine('You',String(transcript||'').trim());
+ state.verifiedAnswer=String(transcript||'').trim();
+ requestGuidedReply();
+}
 function requestGuidedReply(){
  if(!state.active||state.anchorResponding)return;
  const phase=state.anchorPhase;
@@ -523,7 +561,9 @@ function requestGuidedReply(){
  state.anchorResponding=true;state.anchorResponseText='';
  state.anchorPhase=second?'respondingSecond':'respondingFirst';
  const cap=second?reactionWordCap(state.lessonLevel):replyWordCap(state.lessonLevel);
+ const verified=String(state.verifiedAnswer||'').slice(0,350);state.verifiedAnswer='';
  const directive=[
+  'Verified latest student speech: "'+verified+'". Base your answer ONLY on these actual words; do not invent student responses.',
   'Current textbook question: "'+anchor.text+'". React to the STUDENT\'S MOST RECENT ANSWER, not an earlier answer.',
   second
    ?'SECOND ANSWER. Make one short and genuinely relevant reaction or playful observation about what the student just said. NO QUESTION. Do NOT introduce the next topic, because the app will play the next cached question. You may occasionally finish with a tiny segue like "So..." or "Anyway...".'
@@ -582,22 +622,31 @@ function handleRealtime(data){
    if(state.active&&state.anchorPhase==='ready')void playAnchor(0);
    break;
   case 'input_audio_buffer.speech_started':
-   if(state.ttsPlaying||state.anchorPhase==='playingAnchor'||state.anchorPhase==='playingReply')break;
-   state.serverHeard=true;$('listenCheck').textContent='AI heard your voice';
-   actorPhase('listening');message('Listening…');break;
+   if(state.ttsPlaying||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))break;
+   state.speechStartedAt=performance.now();state.speechPeak=0;
+   $('listenCheck').textContent='Listening to your speech';actorPhase('listening');message('Listening…');break;
   case 'input_audio_buffer.speech_stopped':
-   if(state.ttsPlaying)break;
-   state.serverHeard=true;$('listenCheck').textContent='Speech received';
-   actorPhase('thinking');message('Checking your answer…');break;
-  case 'input_audio_buffer.committed':
-   // VAD auto-commits student audio, but never automatically generates replies.
-   // We request the appropriate reaction/follow-up deterministically.
-   if(!state.ttsPlaying)requestGuidedReply();
+   if(state.ttsPlaying||!state.speechStartedAt)break;
+   state.lastSpeechDuration=Math.max(0,performance.now()-state.speechStartedAt);
+   state.speechStartedAt=0;message('Checking your answer…');break;
+  case 'input_audio_buffer.committed':{
+   // VAD has committed audio, but that does NOT prove the child spoke.
+   // Wait for an item-matched transcript, and reject silence/noise.
+   if(state.ttsPlaying||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))break;
+   const id=String(data.item_id||'');if(!id||state.pendingSpeech.has(id))break;
+   const record={phase:state.anchorPhase,anchorToken:state.anchorToken,
+    duration:Number(state.lastSpeechDuration)||0,peak:state.speechPeak,timeout:null};
+   record.timeout=setTimeout(()=>resolveCommittedSpeech(id,'',true),7500);
+   state.pendingSpeech.set(id,record);state.lastSpeechDuration=0;state.speechPeak=0;
    break;
+  }
   case 'response.output_text.delta':case 'response.text.delta':
    state.anchorResponseText+=data.delta||'';break;
   case 'conversation.item.input_audio_transcription.completed':
-   if(data.transcript){state.serverHeard=true;appendLine('You',data.transcript)}
+   resolveCommittedSpeech(String(data.item_id||''),data.transcript);
+   break;
+  case 'conversation.item.input_audio_transcription.failed':
+   resolveCommittedSpeech(String(data.item_id||''),'',true);
    break;
   case 'response.done':
    void finishGuidedReply(data).catch(e=>error('Conversation response: '+e.message));break;
@@ -716,7 +765,10 @@ async function startConversation(){
    // Start as soon as the data channel connects; no need to wait for
    // session.updated, which can be absent after negotiating a Realtime call.
    state.guidedSessionReady=true;
-   channel.send(JSON.stringify({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:false,interrupt_response:false}}}}}));
+   channel.send(JSON.stringify({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{
+    transcription:{model:'gpt-4o-mini-transcribe',language:'en'},
+    turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:false,interrupt_response:false}
+   }}}}));
    if(state.active&&state.anchorPhase==='ready')void playAnchor(0);
   };
   const offer=await peer.createOffer();await peer.setLocalDescription(offer);
