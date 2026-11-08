@@ -51,6 +51,10 @@ async function standardHomework(){
     const chapter=Number(a.list_meta?.chapter)||1;
     url='/students/grammar-books/?book='+encodeURIComponent(a.list_meta?.source_book_id||'1e3a2112-07be-45e2-a8fc-ce20011e0e57')+'&unit='+chapter+'&homework='+encodeURIComponent(a.id);
   }
+  else if(source==='free_talking_genius'){
+    app='Free Talking Genius';
+    url='/students/free-talking-genius/?book='+encodeURIComponent(a.list_meta?.book_id||'')+'&unit='+encodeURIComponent(a.list_meta?.unit_number||'')+'&homework='+encodeURIComponent(a.id);
+  }
   else if(source==='vocab_study'){app='Word Genius';url='/students/vocab-study/?open=wordtest&assignment_id='+encodeURIComponent(a.id)}
   else if(['wordlist','english_arcade','arcade','saved_game','grammar','phonics'].includes(source)){
     app='English Arcade';url='/Games/english_arcade/index.html?openHomework=1';
@@ -87,6 +91,25 @@ async function standardHomework(){
         if(Array.isArray(evidence)&&evidence.length){entry.done=true;entry.progress=100}
       }catch(error){entry.detail='진행 상황 확인 중';console.warn('[mission basket] Creative homework evidence unavailable',a.id,error)}
     }
+  }
+  if(app==='Free Talking Genius'){
+   // Use the real scored speaking attempts. Student RLS restricts these
+   // reads to their own records; no new assessment/progress table.
+   try{
+    const bookId=String(a.list_meta?.book_id||''),unitId=String(a.list_meta?.unit_id||'');
+    if(!bookId||!unitId)throw Error('Mission is missing its unit');
+    const sessions=await authed(SUPA+'/rest/v1/free_talking_sessions?select=id&book_id=eq.'+encodeURIComponent(bookId)+'&unit_id=eq.'+encodeURIComponent(unitId)+'&mode=eq.speaking&limit=150');
+    const ids=(sessions||[]).map(x=>x.id);
+    const attempts=ids.length?await authed(SUPA+'/rest/v1/free_talking_attempts?select=question_id,score_total_v2,grammar_points,quality_points,rubric_v2,created_at&session_id=in.('+ids.map(encodeURIComponent).join(',')+')&limit=1200'):[];
+    const fresh=a.list_meta?.fresh_session===true,created=Date.parse(a.start_at||a.created_at||'');
+    const passed=new Set((attempts||[]).filter(x=>
+      (!fresh||!Number.isFinite(created)||Date.parse(x.created_at)>=created)&&
+      Number(x.score_total_v2??Math.round((Number(x.grammar_points||0)+Number(x.quality_points||0))*2.5))>=8&&
+      (x.rubric_v2?.pass_score===8?x.rubric_v2?.passed===true:x.rubric_v2?.passed!==false)
+    ).map(x=>x.question_id));
+    entry.progress=Math.round(Math.min(8,passed.size)*12.5);
+    entry.done=passed.size>=8;entry.detail=Math.min(8,passed.size)+'/8 speaking questions';
+   }catch(e){console.warn('[mission basket] Free Talking progress unavailable',a.id,e);entry.detail='Speaking progress unavailable'}
   }
   if(app==='Word Genius'){
    try{
