@@ -676,9 +676,10 @@ function requestGuidedReply(){
  const second=phase==='awaitingSecond';
  state.anchorResponding=true;state.anchorResponseText='';
  state.anchorPhase=second?'respondingSecond':'respondingFirst';
- const cap=second?reactionWordCap(state.lessonLevel):replyWordCap(state.lessonLevel);
  const verified=String(state.verifiedAnswer||'').slice(0,350);state.verifiedAnswer='';
  const studentQuestion=/(?:\?|\bdo you (?:like|want|have|think|know)\b|\bwhat about you\b)/i.test(verified);
+ state.answerIncludesQuestion=studentQuestion;
+ const cap=(second?reactionWordCap(state.lessonLevel):replyWordCap(state.lessonLevel))+(studentQuestion?8:0);
  const directive=[
   'STRICT ENGLISH-ONLY MODE. Every reaction and follow-up must be entirely in English. Never answer in Korean, Japanese or another language, even if the learner uses it. Never translate or mirror a foreign-language response. Ask for English in simple English.',
   'Verified latest student speech: "'+verified+'". Base your answer ONLY on these actual words; do not invent student responses.',
@@ -718,7 +719,8 @@ async function finishGuidedReply(data){
  let responseText=String(data.response?.output?.flatMap(x=>x.content||[])
   .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';
- if(!aside)responseText=shortenGuidedResponse(responseText,second,state.lessonLevel);
+ if(!aside)responseText=shortenGuidedResponse(responseText,second,Math.min(10,state.lessonLevel+(state.answerIncludesQuestion?5:0)));
+ state.answerIncludesQuestion=false;
  // Vocabulary detours may contain Hangul, but never Japanese or Chinese.
  if(aside&&/[\u3040-\u30ff\u3400-\u9fff]/u.test(responseText))responseText='Let me explain that in simple English.';
  if(!aside&&/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u.test(responseText)){
