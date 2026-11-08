@@ -588,6 +588,10 @@ async function getAnchorClip(anchor){
   if(r.status===401)r=await call(await originalStudentToken(true));
   const file=await r.json().catch(()=>null);
   if(!r.ok||file?.success!==true)throw Error(file?.error||('Question audio unavailable: '+r.status));
+  // Selected ElevenLabs characters must never play an OpenAI cached voice.
+  if((state.character==='bunny'||state.character==='pigfish')&&file.provider!=='elevenlabs'){
+   throw Error('Wrong cached voice provider; requesting character ElevenLabs fallback');
+  }
   let clip;
   if(typeof file.audio==='string'&&file.audio.length){
    const binary=atob(file.audio),bytes=new Uint8Array(binary.length);
@@ -765,11 +769,16 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
  state.verifiedAnswer=String(transcript||'').trim();
  const speech=state.verifiedAnswer;
  if(state.questionExpired){state.questionExpired=false;state.questionRemainingMs=Math.max(6000,state.questionRemainingMs)}
+  if(state.pendingWordConfirmation&&/^(?:no[, .]+)?(?:i (?:said|mean|meant)[, ]+)?(?:type|hype|plain|plane|play|playing|draw|drawing|tape)[.!? ]*$/i.test(speech)){
+   const term=speech.toLowerCase().match(/(?:type|hype|plain|plane|play|playing|draw|drawing|tape)/i)?.[0];
+   if(term){state.pendingWordConfirmation=null;state.asideKind='vocabulary';state.asideTerm=term;sendRealtime({type:'conversation.item.delete',item_id:itemId});requestGuidedAside();return}
+  }
  const category=classifyStudentTurn(speech);
  if(category.kind==='clarify'){
    sendRealtime({type:'conversation.item.delete',item_id:itemId});
    state.questionRemainingMs=Math.max(12000,state.questionRemainingMs);
-   void redirectToLesson('Sorry! Please say that word again, slowly.');
+   const word=String(category.term||'').toLowerCase();
+   void redirectToLesson(word==='type'||word==='hype'?'Type or hype? Please say it again.':word==='plain'||word==='plane'?'Plain or plane? Say it again, please.':'Sorry! Please say that word again, slowly.');
   }else if(category.kind==='vocabulary'){
   state.asideKind='vocabulary';
   // Strip student instructions from the model context; the isolated term is
@@ -987,7 +996,7 @@ async function finishGuidedReply(data){
  }else if(aside){
   // Korean gloss is mandatory. Avoid unusable English-only definitions.
   const term=String(state.replyAsideTerm||'').toLowerCase().trim();
-  const glosses={question:'질문',pencil:'연필',flour:'밀가루',colour:'색깔',color:'색깔',eraser:'지우개',answer:'대답',sentence:'문장',word:'단어',book:'책',school:'학교',teacher:'선생님',friend:'친구'};
+  const glosses={question:'질문',pencil:'연필',flour:'밀가루',colour:'색깔',color:'색깔',eraser:'지우개',answer:'대답',sentence:'문장',word:'단어',book:'책',school:'학교',teacher:'선생님',friend:'친구',type:'종류',hype:'과장된 관심',plain:'무늬가 없는',plane:'비행기',draw:'그리다',drawing:'그림',play:'놀다',playing:'노는 것'};
   const hangul=(responseText.match(/[\uac00-\ud7af]+/gu)||[]);
   const count=hangul.reduce((n,v)=>n+v.length,0);
   if(!hangul.length||count>20||/[\u3040-\u30ff\u3400-\u9fff]/u.test(responseText)){
