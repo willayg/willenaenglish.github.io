@@ -1,7 +1,9 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow"><meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
 <title>Free Talking Genius · Realtime Extension Demo</title>
+<link rel="stylesheet" href="/students/free-talking-genius/styles.css?v=20261108-golden-actions3">
 <link rel="stylesheet" href="/students/free-talking-genius/character-animations.css?v=20261107-layer-fin3">
+<link rel="stylesheet" href="/students/free-talking-genius/live-animal-ui.css?v=20261107-live-animals1">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}body{margin:0;background:#fff;font-family:Poppins,Arial,sans-serif;color:#263c50}
@@ -40,6 +42,35 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #error{font-size:12px;color:#b03454;text-align:center;min-height:22px}
 #volumeBox{display:flex;align-items:center;justify-content:center;gap:12px;color:#597685;font-size:12px;font-weight:800;margin:12px 0}
 #volume{width:min(240px,55vw);accent-color:#1aa9b8}
+/* Keep the EXACT Free Talking speaking circle, SVG art and character animation.
+   Only the enclosing experimental layout is new. No replacement actor graphics. */
+#actorStage .free-talking-genius{width:100%;display:flex;align-items:center;justify-content:center}
+#actorStage #ftExtensionOriginalShell #ftSession{
+  width:100%!important;max-width:none!important;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  box-shadow:none!important;overflow:visible!important;display:flex!important;
+  align-items:center!important;justify-content:center!important
+}
+#actorStage #ftWilliVoice{padding:0!important;margin:0!important;min-height:0!important;
+  width:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  border:0!important;background:transparent!important;box-shadow:none!important}
+#actorStage #ftTurnCircle{pointer-events:none!important;cursor:default!important;
+  width:min(240px,56vw)!important;height:min(240px,56vw)!important}
+#actorStage #ftTurnCircle .bf-actor{width:100%!important;height:100%!important}
+#actorStage #ftTurnCircle:disabled{opacity:1!important;filter:none!important}
+#actorStage #ftSession[data-character="bunny-v3"] #ftTurnCircle,
+#actorStage #ftSession[data-character="pigfish"] #ftTurnCircle{
+  background:transparent!important;border-color:transparent!important;box-shadow:none!important;overflow:visible!important
+}
+#actorStage #ftSession[data-character="bunny-v3"] #ftTurnCircle > :not(.bf-actor),
+#actorStage #ftSession[data-character="pigfish"] #ftTurnCircle > :not(.bf-actor){display:none!important}
+#actorStage #ftTurnCircle .ft-circle-start{display:none!important}
+#actorStage #ftTurnCircle[data-phase="ai"] .ft-circle-ai{display:flex!important}
+#actorStage #ftTurnCircle[data-phase="student"] .ft-circle-ai{display:none!important}
+#actorStage #ftTurnCircle[data-phase="student"] .ft-circle-mic{display:flex!important}
+#demo .top{position:sticky;top:0;z-index:25;background:#f8fcfdf2;padding:8px 0 14px;
+  border-radius:15px}
+
 @media(max-width:450px){.panel{padding:17px}.character{padding:8px 2px 12px}.chars{gap:7px}.actor-stage{height:220px}}
 </style></head><body>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
@@ -50,4 +81,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 <p id="error" role="alert"></p>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-nav-history4"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-real-actor-auth5"></script></body></html>
