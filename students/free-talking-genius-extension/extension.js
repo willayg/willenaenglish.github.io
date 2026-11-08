@@ -25,8 +25,9 @@ function prepareCard(){
  const detail=card.querySelector('.vocab-card-stars');if(detail)detail.textContent='3분 자유 대화 · 골든 유닛 조건 아님';
  const ring=card.querySelector('.vocab-skill-ring span');if(ring)ring.textContent='3m';
 }
-frame.addEventListener('load',()=>{
- const d=appDocument();if(!d)return;
+function bindOriginalFrame(){
+ const d=appDocument();if(!d||d.documentElement.dataset.ftRealtimeExtensionBound==='1')return;
+ d.documentElement.dataset.ftRealtimeExtensionBound='1';
  prepareCard();
  const observer=new MutationObserver(()=>prepareCard());
  observer.observe(d.body,{childList:true,subtree:true});
@@ -35,7 +36,10 @@ frame.addEventListener('load',()=>{
   event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
   void openDemo();
  },true);
-});
+}
+frame.addEventListener('load',bindOriginalFrame);
+// Module imports can finish after the iframe's load event, especially on fast networks.
+if(frame.contentDocument?.readyState==='complete')bindOriginalFrame();
 async function openDemo(){
  const d=appDocument();if(!d)return;
  const title=d.querySelector('#ftBookTabs .is-active')?.textContent?.trim();
