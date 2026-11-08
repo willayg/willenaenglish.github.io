@@ -650,7 +650,13 @@ function handleRealtime(data){
    break;
   case 'response.done':
    void finishGuidedReply(data).catch(e=>error('Conversation response: '+e.message));break;
-  case 'error':error('Realtime: '+String(data.error?.message||'Unknown error').slice(0,160));break;
+  case 'error':{
+   const details=data.error||{};
+   const reason=String(details.message||details.code||details.type||'Audio connection error');
+   console.warn('[Free Talking] Realtime event error',details);
+   error('Realtime: '+reason.slice(0,160));
+   break;
+  }
  }
 }
 async function speakEleven(text){
