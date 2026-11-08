@@ -60,16 +60,16 @@ window.addEventListener('popstate',()=>{
 });
 
 function volumeFraction(){
- const x=Math.max(0,Math.min(100,Number($('volume').value)||0))/100;
- // Linear control: the previous squared 25% default produced only 6.25% gain.
+ const x=Math.max(0,Math.min(150,Number($('volume').value)||0))/100;
+ // Linear gain; 100% is normal, 101–150% is an optional Web Audio boost.
  return x;
 }
 function setAudioLevels(){
  const level=volumeFraction();
- if(state.audioGain)state.audioGain.gain.value=level;
+ if(state.audioGain)state.audioGain.gain.setTargetAtTime(level,state.audioContext.currentTime,.012);
  for(const a of [state.remote,state.speaker].filter(Boolean)){
   a.muted=level===0;
-  a.volume=state.quietMode&&state.audioGain?1:level;
+  a.volume=state.linkedSources.has(a)?1:Math.min(1,level);
  }
  $('volumeNumber').textContent=Math.round(Number($('volume').value))+'%';
 }
