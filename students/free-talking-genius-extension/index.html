@@ -165,7 +165,7 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  position:relative!important;display:block!important;flex:1 1 auto!important;
  width:100%!important;height:auto!important;min-height:0!important;
  padding:0!important;overflow:hidden!important;
- background:#e9fbfc!important;
+ background:transparent!important;
 }
 #demo #actorStage #ftExtensionOriginalShell,
 #demo #actorStage #ftSession,
@@ -201,14 +201,6 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  transform:translate(-50%,-50%)!important;
 }
 #demo #actorStage .ft-extension-avatar .bf-svg{width:100%!important;height:100%!important;overflow:visible!important}
-#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .bf-eyes,
-#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .pf-eyes,
-#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .bf-rest-mouth,
-#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .pf-rest-mouth{opacity:0!important}
-#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral])[data-state]:not([data-state=speaking]) .bf-talk-mouth,
-#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral])[data-state]:not([data-state=speaking]) .pf-talk-mouth{opacity:0!important}
-#demo #actorStage .bf-actor[data-state=speaking] .extension-expression-mouth{opacity:0!important}
-/* Only AI Willi retains his original circular waveform and ring. */
 #demo #actorStage .ft-extension-willi-circle{
  width:min(65vw,39dvh,340px)!important;height:min(65vw,39dvh,340px)!important;
  background:#fff!important;border-radius:50%!important;
@@ -230,6 +222,34 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 @media(max-height:620px){
  #demo #actorStage #ftTurnCircle{top:48%!important;width:min(63vw,31dvh,270px)!important;height:min(63vw,31dvh,270px)!important}
  #demo .conversation-text{min-height:75px!important;max-height:28dvh!important}
+}
+
+/* Remove inherited recorder outlines/background boxes from animal characters.
+   These are wrappers only; the original character SVGs remain unchanged. */
+#demo #actorStage,
+#demo #actorStage #ftExtensionOriginalShell,
+#demo #actorStage #ftSession,
+#demo #actorStage #ftWilliVoice,
+#demo #actorStage .ft-extension-avatar,
+#demo #actorStage .ft-extension-avatar .bf-actor{
+ border:0!important;outline:0!important;box-shadow:none!important;
+ background:transparent!important;background-image:none!important;
+}
+#demo #actorStage .ft-extension-avatar{
+ filter:none!important;outline-offset:0!important;
+}
+#demo #actorStage .ft-extension-avatar:before,
+#demo #actorStage .ft-extension-avatar:after,
+#demo #actorStage .ft-extension-avatar .bf-actor:before,
+#demo #actorStage .ft-extension-avatar .bf-actor:after{
+ content:none!important;display:none!important;
+}
+#demo #actorStage .ft-extension-avatar .bf-actor{
+ filter:none!important;
+}
+/* AI Willi's existing round element is intentionally preserved. */
+#demo #actorStage .ft-extension-willi-circle{
+ background:#fff!important;border-radius:50%!important;
 }
 </style></head><body>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
@@ -268,4 +288,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-avatar-stage15"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-detours-neutral16"></script></body></html>
