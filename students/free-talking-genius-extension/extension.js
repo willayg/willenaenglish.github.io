@@ -149,8 +149,7 @@ function handleRealtime(data){
 }
 async function speakEleven(text){
  if(!state.active||!text)return;
- const gen=++state.generation;
- stopSpeech(); // also increments generation so use the renewed value
+ stopSpeech(); // abort any previous utterance before starting this reply
  const current=state.generation;
  appendLine(NAMES[state.character],text);
  actorPhase('ready');message(NAMES[state.character]+' is speaking…');
@@ -174,7 +173,7 @@ async function speakEleven(text){
     await new Promise((resolve,reject)=>{
      buffer.addEventListener('updateend',resolve,{once:true});buffer.addEventListener('error',reject,{once:true});buffer.appendBuffer(next.value);
     });
-    if(!began){began=true;await audio.play()}
+    if(!began){began=true;void audio.play().catch(err=>{if(!control.signal.aborted)error('Speaker blocked: '+err.message)})}
    }
    if(media.readyState==='open'&&!buffer.updating)media.endOfStream();
   }else{
