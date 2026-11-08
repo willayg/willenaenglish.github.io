@@ -31,6 +31,7 @@ h1{font-size:clamp(26px,5vw,38px);margin:3px 0 0;letter-spacing:-1.1px;line-heig
 .orb[data-phase="speaking"] .mouth{animation:talk .35s ease-in-out infinite alternate}
 .orb[data-phase="listening"]{box-shadow:0 0 0 13px #d8f6ff,0 0 0 23px #e7faff}
 @keyframes talk{from{height:6px}to{height:26px}}@keyframes bob{to{transform:translateY(-4px)}}
+.volume-control{display:flex;align-items:center;gap:12px;width:min(300px,100%);font-size:12px;font-weight:800;color:#527789}.volume-control input{flex:1;min-width:0;accent-color:#18a8b9;cursor:pointer;height:30px}.volume-control output{min-width:39px;text-align:right;color:#137c8c}
 .actor-name{font-size:24px;font-weight:900;margin:0}.actor-state{color:#577585;min-height:22px}
 .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
 button.action{cursor:pointer;min-height:46px;border-radius:15px;border:2px solid var(--cyan);background:#fff;color:#087a87;padding:10px 20px;font-weight:800}
@@ -62,6 +63,7 @@ footer{color:#7c919f;text-align:center;font-size:11px;margin-top:22px}
 <h2 class="actor-name">AI Willi</h2>
 <div id="phase" class="actor-state" aria-live="polite">Choose a lesson to begin.</div>
 <div id="timer" class="pill">03:00 maximum</div>
+<label class="volume-control" for="williVolume"><span>Volume</span><input id="williVolume" type="range" min="0" max="100" step="5" value="65" aria-label="AI Willi speaker volume"><output id="volumeValue" for="williVolume">65%</output></label>
 <div class="actions"><button id="start" class="action primary" disabled>Start talking</button><button id="mute" class="action" disabled>Mute mic</button><button id="stop" class="action stop" disabled>End</button></div>
 <div id="error" class="status-error" role="alert" aria-live="polite"></div>
 </div>
@@ -78,5 +80,5 @@ footer{color:#7c919f;text-align:center;font-size:11px;margin-top:22px}
 </section></div>
 <footer>Independent experiment · No link or changes to the existing Free Talking app</footer>
 </main>
-<script type="module" src="./lab.js?v=20261108-a"></script>
+<script type="module" src="./lab.js?v=20261108-short-volume1"></script>
 </body></html>
