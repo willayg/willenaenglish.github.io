@@ -731,7 +731,7 @@ function classifyStudentTurn(text){
   return {kind:'redirect',message:'We’re practising English! Let’s answer the question.'};
  }
  const patterns=[
-  /^(?:please\s+)?(?:what (?:does|do) (.{1,65}?) mean|what is the meaning of (.{1,65}?)|what'?s the meaning of (.{1,65}?)|what does the word (.{1,65}?) mean)\??[.! ]*$/i,
+  /^(?:please\s+)?(?:what (?:does|do) (.{1,65}?) mean|what is the meaning of (.{1,65}?)|what'?s the meaning of (.{1,65}?)|what does the word (.{1,65}?) mean)(?: in korean)?\??[.! ]*$/i,
   /^(?:please\s+)?(?:what is|what'?s) (.{1,65}?)\??[.! ]*$/i,
   /^(?:please\s+)?(?:can you|could you|please) (?:explain|define) (?:the word |the phrase )?(.{1,65}?)\??[.! ]*$/i,
   /^(?:please\s+)?(?:how do you say|what is|what'?s) (.{1,65}?) in korean\??[.! ]*$/i,
