@@ -299,10 +299,13 @@ function setExpression(expression='neutral',duration=0){
  let markup='';
  for(const [x,y,rx,ry] of coords){
   if(mood==='happy')markup+='<path d="M'+(x-rx)+' '+y+' Q'+x+' '+(y-ry*.86)+' '+(x+rx)+' '+y+'" fill="none" stroke="'+stroke+'" stroke-width="13" stroke-linecap="round"/>';
-  else if(mood==='sad')markup+='<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx*.7+'" ry="'+ry*.8+'" fill="'+stroke+'"/><path d="M'+(x-rx)+' '+(y-ry)+' Q'+x+' '+(y-ry*.3)+' '+(x+rx)+' '+(y-ry*.7)+'" fill="none" stroke="'+stroke+'" stroke-width="10"/>';
+  else if(mood==='sad')markup+='<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx*.7+'" ry="'+ry*.8+'" fill="'+stroke+'"/>'+
+   '<ellipse cx="'+(x+rx*.25)+'" cy="'+(y-ry*.32)+'" rx="9" ry="10" fill="#fffdf9"/>'+
+   '<path d="M'+(x-rx)+' '+(y-ry)+' Q'+x+' '+(y-ry*.3)+' '+(x+rx)+' '+(y-ry*.7)+'" fill="none" stroke="'+stroke+'" stroke-width="10"/>';
   else{
    const wide=mood==='shocked'?1.13:mood==='surprised'?1:.78;
-   markup+='<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx*wide+'" ry="'+ry*(mood==='shocked'?1.16:1)+'" fill="'+stroke+'"/>';
+   markup+='<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx*wide+'" ry="'+ry*(mood==='shocked'?1.16:1)+'" fill="'+stroke+'"/>'+
+    '<ellipse cx="'+(x+rx*.32)+'" cy="'+(y-ry*.38)+'" rx="'+(pig?11:10)+'" ry="'+(pig?13:10)+'" fill="#fffdf9"/>';
    if(mood==='angry')markup+='<path d="M'+(x-rx)+' '+(y-ry*1.2)+' L'+(x+rx)+' '+(y-ry*.62)+'" stroke="'+stroke+'" stroke-width="13" stroke-linecap="round"/>';
    if(mood==='curious')markup+='<path d="M'+(x-rx)+' '+(y-ry*1.3)+' Q'+x+' '+(y-ry*1.7)+' '+(x+rx)+' '+(y-ry*1.25)+'" fill="none" stroke="'+stroke+'" stroke-width="9"/>';
   }
@@ -315,7 +318,10 @@ function setExpression(expression='neutral',duration=0){
  else mouth='<path d="M'+(cx-38)+' '+(cy-8)+' Q'+cx+' '+(cy+43)+' '+(cx+38)+' '+(cy-8)+'" fill="none" stroke="'+stroke+'" stroke-width="9" stroke-linecap="round"/>';
  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
  g.setAttribute('data-extension-expression',mood);
- g.innerHTML=markup+'<g class="extension-expression-mouth">'+mouth+'</g>';
+ // Bunny's original nose-to-mouth bridge belongs to .bf-rest-mouth,
+ // which is hidden during expressions. Restore that fine detail explicitly.
+ const noseBridge=pig?'':'<path d="M301 401 V422" fill="none" stroke="'+stroke+'" stroke-width="7" stroke-linecap="round"/>';
+ g.innerHTML=markup+noseBridge+'<g class="extension-expression-mouth">'+mouth+'</g>';
  svg.appendChild(g);
  if(duration)state.emotionTimer=setTimeout(()=>setExpression('neutral'),duration);
 }
@@ -335,17 +341,24 @@ function showActor(){
  const shell=document.createElement('div');shell.className='free-talking-genius';shell.id='ftExtensionOriginalShell';
  const session=document.createElement('section');session.id='ftSession';session.className='ft-conversation';session.hidden=false;
  const voice=document.createElement('section');voice.id='ftWilliVoice';voice.className='ft-willi-voice';
- // This is a display-only SVG canvas, NOT the Speaking app's record button.
- // Keeping the Speaking .ft-turn-circle class would import its ring,
- // mic states and interaction styling into the experimental conversation.
- const circle=document.createElement('div');
- circle.id='ftTurnCircle';circle.className='ft-extension-avatar';
- circle.setAttribute('role','img');
- circle.setAttribute('aria-label','Conversation character');
- circle.innerHTML='<span class="ft-willi-avatar" aria-hidden="true"><svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"><path d="M20 58v8M40 39v45M60 24v73M80 39v45M100 58v8"/></svg></span>'+
-  '<span class="ft-circle-ai" aria-hidden="true"><span class="ft-circle-bars"><i></i><i></i><i></i><i></i><i></i></span></span>'+
-  '<span class="ft-circle-mic" aria-hidden="true"><svg viewBox="0 0 48 48" width="72" height="72"><rect x="17" y="5" width="14" height="26" rx="7" fill="currentColor"/><path d="M11 22a13 13 0 0 0 26 0M24 35v8M16 43h16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>'+
-  '<span class="ft-circle-thinking" aria-hidden="true"><span class="ft-thinking-swirl"></span></span>';
+ // Two deliberately different displays: Willi retains the original
+ // circular waveform/orbit, while Bunny and Pigfish have ring-free artwork.
+ const willi=state.character==='willi';
+ const original=willi?appDocument()?.getElementById('ftTurnCircle'):null;
+ const circle=original?original.cloneNode(true):document.createElement('div');
+ circle.id='ftTurnCircle';
+ if(willi){
+  circle.classList.add('ft-extension-willi-circle');
+  circle.disabled=true;
+  circle.removeAttribute('aria-label');
+  circle.setAttribute('aria-label','AI Willi voice circle');
+ }else{
+  circle.className='ft-extension-avatar';
+  circle.setAttribute('role','img');
+  circle.setAttribute('aria-label','Conversation character');
+  circle.innerHTML='<span class="ft-circle-ai" aria-hidden="true"><span class="ft-circle-bars"><i></i><i></i><i></i><i></i><i></i></span></span>'+
+   '<span class="ft-circle-mic" aria-hidden="true"><svg viewBox="0 0 48 48" width="72" height="72"><rect x="17" y="5" width="14" height="26" rx="7" fill="currentColor"/><path d="M11 22a13 13 0 0 0 26 0M24 35v8M16 43h16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>';
+ }
  voice.append(circle);session.append(voice);shell.append(session);host.append(shell);
  state.actor=createFreeTalkingCharacters({circle,session,voiceHost:voice,choices:{}});
  state.actor.select(state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':'marin');
