@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -294,7 +294,7 @@ function endSession(reason='Conversation finished.'){
  clearInterval(state.timer);state.timer=null;
  clearTimeout(state.anchorTimer);state.anchorTimer=null;state.anchorToken++;
  for(const entry of state.anchorClipCache.values())if(entry?.owned)URL.revokeObjectURL(entry.url);
- state.anchorClipCache.clear();state.anchorClipPromises.clear();state.anchors=[];state.anchorPhase='idle';state.anchorResponding=false;
+ state.anchorClipCache.clear();state.anchorClipPromises.clear();state.anchors=[];state.anchorPhase='idle';state.anchorResponding=false;state.guidedSessionReady=false;
  stopMicMonitor();
  state.actor?.setSpeaking(false);state.actor=null;
  stopSpeech();
@@ -510,12 +510,9 @@ function handleRealtime(data){
  if(!state.active&&!state.starting)return;
  switch(data.type){
   case 'session.updated':
-   if(!state.alreadySpoken){
-    state.alreadySpoken=true;
-    // Wait for the peer to become active before playing the first cached clip.
-    if(state.active)void playAnchor(0);
-    else setTimeout(()=>{if(state.active&&state.anchorPhase==='ready')void playAnchor(0)},250);
-   }break;
+   state.guidedSessionReady=true;
+   if(state.active&&state.anchorPhase==='ready')void playAnchor(0);
+   break;
   case 'input_audio_buffer.speech_started':
    if(state.ttsPlaying||state.anchorPhase==='playingAnchor'||state.anchorPhase==='playingReply')break;
    state.serverHeard=true;$('listenCheck').textContent='AI heard your voice';
@@ -610,7 +607,7 @@ async function startConversation(){
   if(!res.ok||!session.token)throw Error(session.error||'Realtime connection failed');
   state.anchors=Array.isArray(session.lesson?.anchors)?session.lesson.anchors.filter(x=>x.id&&x.text).slice(0,8):[];
   if(!state.anchors.length)throw Error('This unit has no published question anchors');
-  state.anchorIndex=0;state.anchorPhase='ready';state.anchorResponding=false;state.anchorResponseText='';
+  state.anchorIndex=0;state.anchorPhase='ready';state.anchorResponding=false;state.anchorResponseText='';state.guidedSessionReady=false;
   $('clock').textContent='Question 1 / '+state.anchors.length;
   $('anchorText').textContent=state.anchors[0].text;
   const peer=new RTCPeerConnection();state.peer=peer;
@@ -652,6 +649,7 @@ async function startConversation(){
   startAbort=null;
   state.micUserMuted=false;state.ttsPlaying=false;
   state.active=true;state.starting=false;message('Connected · starting cached textbook question');actorPhase('ready');
+  if(state.guidedSessionReady&&state.anchorPhase==='ready')void playAnchor(0);
   $('listenCheck').textContent='Listen to the question, then answer';$('restart').disabled=true;
  }catch(e){
   if(startId!==activeStartId)return;
