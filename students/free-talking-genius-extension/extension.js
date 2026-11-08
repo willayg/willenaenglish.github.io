@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionClock:null,questionTickAt:0,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -288,6 +288,8 @@ function renderTopicTicker(){
 }
 function haltQuestionClock(){
  if(state.questionClock!=null)clearInterval(state.questionClock);
+ if(state.questionGrace!=null)clearTimeout(state.questionGrace);
+ state.questionGrace=null;
  state.questionClock=null;state.questionTickAt=0;
 }
 function resetQuestionClock(){
@@ -314,7 +316,13 @@ function startQuestionClock(){
    renderTopicTicker();
    if(state.questionRemainingMs===0){
     state.questionExpired=true;haltQuestionClock();
-    if(!studentTurnInProgress())void finishTimedQuestion();
+    // A short grace window catches late server VAD speech-start events. A
+    // child who begins a sentence near zero must not be interrupted.
+    const anchor=state.anchorToken;
+    state.questionGrace=setTimeout(()=>{
+     state.questionGrace=null;
+     if(state.active&&anchor===state.anchorToken&&!studentTurnInProgress())void finishTimedQuestion();
+    },850);
    }
   }
   state.questionTickAt=now;
@@ -332,7 +340,9 @@ async function finishTimedQuestion(){
  state.finishingTopic=true;haltQuestionClock();clearTimeout(state.idleTimer);
  const token=state.anchorToken;
  state.anchorPhase='betweenAnchors';setMicEnabled(false);
- const spoken=state.topicHadAnswer?'Okay! Let’s move on.':'No worries! Let’s try the next one.';
+ const answered=['Got it! Moving on.','Okay, nice! Next one.','Fair enough! Here’s another one.'];
+ const silent=['No worries! Let’s try another one.','That’s okay! Next question.','No problem! Moving on.'];
+ const spoken=(state.topicHadAnswer?answered:silent)[state.anchorIndex%3];
  try{await speakEleven(spoken)}catch(e){console.warn('[Free Talking] soft timer transition',e)}
  if(state.active&&token===state.anchorToken)await moveToNextTopic();
 }
