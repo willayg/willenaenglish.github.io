@@ -174,17 +174,26 @@ async function showCreate(host){
    if(stamp!==bookEpoch)return;
    const assigned=new Set((Array.isArray(ids)?ids:[]).map(x=>String(x.id)));
    book.replaceChildren(new Option('Choose textbook',''));
-   for(const b of state.books.filter(x=>assigned.has(String(x.id))))book.add(new Option(b.title,b.id));
-   book.add(new Option('Other book — browse all textbooks','__other__'));
-   $('#ftTeacherBookNotice',host).textContent='Assigned textbooks first. Other book opens the full catalog.';
+   const ready=state.books.filter(b=>b.id);
+   const primary=ready.filter(b=>assigned.has(String(b.id)));
+   const others=ready.filter(b=>!assigned.has(String(b.id)));
+   const first=document.createElement('optgroup');first.label='Assigned to '+klass.value;
+   for(const b of primary)first.appendChild(new Option(b.title,b.id));
+   if(primary.length)book.appendChild(first);
+   const second=document.createElement('optgroup');second.label='Other textbooks · select to check speaking units';
+   for(const b of others)second.appendChild(new Option(b.title,b.id));
+   if(others.length)book.appendChild(second);
+   book.dataset.assignedIds=JSON.stringify([...assigned]);
+   $('#ftTeacherBookNotice',host).textContent='All textbooks are shown. Books assigned to this class appear first. Other textbooks may need class assignment before students can open them.';
   }catch(e){if(stamp===bookEpoch)$('#ftTeacherBookNotice',host).textContent=e.message}
  });
  book.addEventListener('change',async()=>{
   const stamp=++unitsEpoch;unitList.textContent='Loading published speaking questions…';status();
-  if(book.value==='__other__'){
-   book.replaceChildren(new Option('Choose textbook',''));
-   for(const b of state.books)book.add(new Option(b.title,b.id));
-   return;
+  const ids=new Set(JSON.parse(book.dataset.assignedIds||'[]'));
+  if(book.value&&!ids.has(book.value)){
+   $('#ftTeacherBookNotice',host).textContent='This book is not assigned to '+klass.value+'. You can preview its Free Talking units, but students need class textbook access to open the mission.';
+  }else{
+   $('#ftTeacherBookNotice',host).textContent='Textbook assigned to '+klass.value+'.';
   }
   if(!book.value){unitList.textContent='Choose a textbook.';return}
   try{
