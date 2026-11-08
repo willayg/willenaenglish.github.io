@@ -845,8 +845,21 @@ function classifyStudentTurn(text){
   .filter(w=>w.length>=3));
  const recent=[...$('log').querySelectorAll('.entry:not(.me) span')].slice(-2).map(n=>n.textContent).join(' ');
  const topicTerms=tokens((state.anchors[state.anchorIndex]?.text||'')+' '+recent);
+ // Small semantic families for common textbook topics. Relevant curiosity
+ // should be answered even when the child uses a different word than the
+ // official question ("Do I need eggs?" during a flour/pancake lesson).
+ const related=[
+  ['pancake','flour','batter','cook','ingredient','recipe','egg','milk','butter','syrup','sugar','breakfast','pan','topping','bread','cake'],
+  ['school','classroom','teacher','student','pencil','pen','eraser','desk','bag','backpack','lesson','homework','class','book','study'],
+  ['train','ride','travel','trip','journey','ticket','seat','passenger','station','railway','camping','camp'],
+  ['camp','camping','tent','nature','forest','mountain','outdoor','fire','hike','sleep','river'],
+  ['color','colour','blue','red','green','yellow','purple','pink','black','white','orange','shade','paint','bright'],
+  ['soccer','football','sports','play','team','friend','goal','ball','match','game'],
+  ['food','eat','meal','cook','breakfast','lunch','dinner','rice','noodle','pizza','chicken','restaurant']
+ ];
  const words=tokens(speech);
- const overlap=[...words].some(w=>topicTerms.has(w));
+ const overlap=[...words].some(w=>topicTerms.has(w))||
+  related.some(group=>group.some(w=>topicTerms.has(w))&&group.some(w=>words.has(w)));
  const reference=/\b(?:it|them|that|these|those|they|the ingredients|the recipe|the word|the one you said)\b/i.test(speech);
  // Standalone questions do not earn a response or advance a lesson. A
  // reciprocal question appended to a real answer is handled by the standard
