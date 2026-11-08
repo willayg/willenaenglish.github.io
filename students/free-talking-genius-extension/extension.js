@@ -4,7 +4,7 @@ import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {staffAccessToken} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
 const $=id=>document.getElementById(id);
-const frame=$('original'),veil=$('demo'),choices=[...document.querySelectorAll('.character')];
+const frame=$('original'),veil=$('demo');
 const state={book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio'};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 const fixArt=(art,key)=>art.replaceAll('id="pigBody"','id="pigBody-'+key+'"').replaceAll('url(#pigBody)','url(#pigBody-'+key+')').replaceAll('id="pigBelly"','id="pigBelly-'+key+'"').replaceAll('url(#pigBelly)','url(#pigBelly-'+key+')');
@@ -12,8 +12,14 @@ $('bunnyPortrait').innerHTML=BUNNY_FOX_ART;
 $('pigfishPortrait').innerHTML=fixArt(PIGFISH_ART,'demo-portrait');
 function message(s){$('status').textContent=s}
 function error(s){$('error').textContent=String(s||'Unknown error')}
-function buttonState(c){state.character=c;for(const b of choices)b.setAttribute('aria-pressed',String(b.dataset.character===c));}
-choices.forEach(b=>b.addEventListener('click',()=>buttonState(b.dataset.character)));
+function buttonState(c){
+ state.character=c;
+ const doc=appDocument();
+ for(const [id,key] of [['ftChooseWilli','willi'],['ftChooseLili','bunny'],['ftChoosePigfish','pigfish']]){
+  doc?.getElementById(id)?.setAttribute('aria-pressed',String(key===c));
+ }
+ const go=doc?.getElementById('ftCharacterContinue');if(go)go.disabled=false;
+}
 function appDocument(){try{return frame.contentDocument}catch{return null}}
 function prepareCard(){
  const d=appDocument(),card=d?.getElementById('ftFreeTalkingCard');if(!card)return;
@@ -32,9 +38,31 @@ function bindOriginalFrame(){
  const observer=new MutationObserver(()=>prepareCard());
  observer.observe(d.body,{childList:true,subtree:true});
  d.addEventListener('click',event=>{
-  if(!event.target.closest('#ftFreeTalkingCard'))return;
-  event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
-  void openDemo();
+  const card=event.target.closest('#ftFreeTalkingCard');
+  if(card){
+   event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+   // Let the ORIGINAL application open its existing character selector.
+   d.getElementById('ftSpeakingCard')?.click();
+   void openDemo();
+   return;
+  }
+  const character=event.target.closest('#ftChooseWilli,#ftChooseLili,#ftChoosePigfish');
+  if(character&&!d.getElementById('ftCharacter').hidden){
+   event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+   const type=character.id==='ftChooseLili'?'bunny':character.id==='ftChoosePigfish'?'pigfish':'willi';
+   buttonState(type);
+   return;
+  }
+  const go=event.target.closest('#ftCharacterContinue');
+  if(go&&!d.getElementById('ftCharacter').hidden){
+   event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+   if(!state.book||!state.unit){
+    const label=d.getElementById('ftCharacterRound');
+    if(label){label.hidden=false;label.textContent='교재를 확인하는 중입니다. 다시 눌러 주세요.';}
+    return;
+   }
+   void startConversation();
+  }
  },true);
 }
 frame.addEventListener('load',bindOriginalFrame);
@@ -45,11 +73,15 @@ async function openDemo(){
  const title=d.querySelector('#ftBookTabs .is-active')?.textContent?.trim();
  const unitMatch=(d.querySelector('#ftUnitTitle')?.textContent||'').match(/Unit\s+(\d+)/i);
  if(!title||!unitMatch){error('Choose a book and unit first.');return}
- error('');state.book=null;state.unit=null;state.seconds=180;state.character='willi';buttonState('willi');
- $('heading').textContent='Choose your conversation friend';
+ error('');state.book=null;state.unit=null;state.seconds=180;state.character='willi';
+ $('heading').textContent='Free Talking · 3 minutes';
  $('lesson').textContent=title+' · Unit '+unitMatch[1];
- $('choose').classList.remove('is-hidden');$('talk').classList.remove('is-visible');
- $('start').disabled=true;veil.hidden=false;
+ $('choose').classList.add('is-hidden');$('talk').classList.remove('is-visible');
+ $('start').disabled=true;
+ // Stay on the ORIGINAL in-app friend-selection screen, not a duplicate overlay.
+ const note=d.getElementById('ftCharacterRound');
+ if(note){note.hidden=false;note.textContent='자유 대화 · 3분 · AI Willi / Bunny Fox / Pigfish';}
+
  try{
   const books=await contentDbGet('/rest/v1/content_books?select=id,title&title=eq.'+encodeURIComponent(title)+'&limit=2');
   const book=books.find(x=>x.title===title);if(!book)throw Error('Textbook not found in Content Database');
@@ -58,7 +90,11 @@ async function openDemo(){
   state.book=book;state.unit=units[0];
   $('lesson').textContent=book.title+' · Unit '+state.unit.unit_number+' · '+state.unit.title;
   $('start').disabled=false;
- }catch(e){error('Could not load the selected lesson: '+e.message)}
+ }catch(e){
+  const note=d.getElementById('ftCharacterRound');
+  if(note){note.hidden=false;note.textContent='교재 정보를 불러오지 못했어요: '+e.message;}
+  error('Could not load the selected lesson: '+e.message);
+ }
 }
 function appendLine(who,text){
  if(!String(text||'').trim())return;
@@ -94,8 +130,12 @@ function endSession(reason='Conversation finished.'){
  message(reason);actorPhase('ready');
  $('mute').disabled=true;$('end').disabled=true;
 }
-function back(){endSession('Finished.');veil.hidden=true}
-$('back').addEventListener('click',back);$('end').addEventListener('click',()=>endSession('Conversation ended.'));
+function back(){
+ endSession('Finished.');veil.hidden=true;
+ // Return to the original app's unit-selection screen via its own existing button.
+ const d=appDocument();if(d&&!d.getElementById('ftCharacter').hidden)d.getElementById('ftCharacterBack')?.click();
+}
+$('back').addEventListener('click',back);$('end').addEventListener('click',back);
 window.addEventListener('pagehide',()=>endSession());
 $('mute').addEventListener('click',()=>{
  const track=state.stream?.getAudioTracks()[0];if(!track)return;
@@ -187,7 +227,7 @@ async function speakEleven(text){
 async function startConversation(){
  if(state.starting||state.active||!state.unit||!state.book)return;
  state.starting=true;error('');state.alreadySpoken=false;state.turnText='';state.pendingText=false;
- $('choose').classList.add('is-hidden');$('talk').classList.add('is-visible');
+ veil.hidden=false;$('choose').classList.add('is-hidden');$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
  $('log').replaceChildren();showActor();message('Connecting…');
  $('mute').disabled=false;$('end').disabled=false;$('mute').textContent='Mute microphone';
@@ -216,6 +256,11 @@ async function startConversation(){
   if(!answer.ok)throw Error('Realtime negotiation failed ('+answer.status+')');
   await peer.setRemoteDescription({type:'answer',sdp:await answer.text()});
   state.active=true;state.starting=false;message('Connected. Say hello!');actorPhase('listening');ticking();
- }catch(e){error(e.message);endSession('Could not connect.');$('choose').classList.remove('is-hidden');$('talk').classList.remove('is-visible');$('heading').textContent='Choose your conversation friend'}
+ }catch(e){
+  // Never kick the student out on an error. Keep the session screen and actionable message.
+  endSession('Connection failed. Use Back to return to your lesson.');
+  error('Could not start: '+(e?.message||'Unknown connection error'));
+  $('choose').classList.add('is-hidden');$('talk').classList.add('is-visible');veil.hidden=false;
+ }
 }
 $('start').addEventListener('click',()=>void startConversation());
