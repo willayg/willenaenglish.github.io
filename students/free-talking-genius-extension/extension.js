@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,idleTimer:null,sessionDeadline:null};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -43,7 +43,7 @@ function closeActivity(){
  activeStartId++;
  try{startAbort?.abort()}catch{}
  startAbort=null;
- state.paused=false;state.resumeIndex=0;
+ state.paused=false;state.resumeIndex=0;state.resumePhase=null;state.resumeLog=null;state.lastChoice=null;
  endSession('Conversation ended.');
  veil.hidden=true;
  $('talk').classList.remove('is-visible');
@@ -197,7 +197,9 @@ function bindOriginalFrame(){
   if(character&&!d.getElementById('ftCharacter').hidden){
    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
    const type=character.id==='ftChooseLili'?'bunny':character.id==='ftChoosePigfish'?'pigfish':'willi';
-   buttonState(type);
+   const secondTap=state.lastChoice===type;
+   buttonState(type);state.lastChoice=type;
+   if(secondTap)d.getElementById('ftCharacterContinue')?.click();
    return;
   }
   const characterBack=event.target.closest('#ftCharacterBack');
@@ -236,6 +238,7 @@ frame.addEventListener('load',bindOriginalFrame);
 if(frame.contentDocument?.readyState==='complete')bindOriginalFrame();
 async function openDemo({preserveCharacter=false}={}){
  const d=appDocument();if(!d)return;
+ if(!preserveCharacter)state.lastChoice=null;
  const title=d.querySelector('#ftBookTabs .is-active')?.textContent?.trim();
  const unitMatch=(d.querySelector('#ftUnitTitle')?.textContent||'').match(/Unit\s+(\d+)/i);
  if(!title||!unitMatch){error('Choose a book and unit first.');throw Error('Choose a book and unit first.')}
@@ -339,13 +342,23 @@ function setPauseButton(paused){
 function pauseConversation(reason='Paused. Tap play to continue.'){
  if(state.paused||(!state.active&&!state.starting))return;
  const index=state.anchorIndex;
+ const phase=state.anchorPhase;
+ // Preserve where we are in the actual exchange, not just the question number.
+ state.resumePhase=phase==='awaitingFirst'||phase==='awaitingSecond'?phase:
+  phase==='respondingFirst'?'awaitingFirst':
+  phase==='respondingSecond'?'awaitingSecond':
+  phase==='playingReply'?(state.replyWasSecond?'awaitingSecond':'awaitingFirst'):null;
+ state.resumeLog=[...$('log').querySelectorAll('.entry')].map(row=>({
+  role:row.classList.contains('me')?'user':'assistant',
+  text:row.querySelector('span')?.textContent||''
+ })).filter(row=>row.text.trim()).slice(-12);
  activeStartId++;
  try{startAbort?.abort()}catch{}
  startAbort=null;
  state.paused=true;state.resumeIndex=index;
  endSession(reason);
  setPauseButton(true);
- $('anchorText').textContent=reason;
+ $('listenCheck').textContent=reason;
  $('mute').disabled=true;
 }
 function armIdleTimeout(){
@@ -474,6 +487,26 @@ async function getAnchorClip(anchor){
   return clip;
  })().finally(()=>state.anchorClipPromises.delete(key));
  state.anchorClipPromises.set(key,job);return job;
+}
+function restoreAfterPause(){
+ if(!state.active||!state.resumePhase||state.anchorPhase!=='ready')return false;
+ const phase=state.resumePhase;state.resumePhase=null;
+ const saved=state.resumeLog||[];state.resumeLog=null;
+ const relevant=saved.slice(-8);
+ for(const turn of relevant){
+  sendRealtime({type:'conversation.item.create',item:{
+   type:'message',role:turn.role,
+   content:[{type:turn.role==='user'?'input_text':'output_text',text:turn.text}]
+  }});
+ }
+ if(!relevant.length){
+  const anchor=state.anchors[state.anchorIndex];
+  if(anchor)sendRealtime({type:'conversation.item.create',item:{type:'message',role:'assistant',content:[{type:'output_text',text:anchor.text}]}});
+ }
+ state.anchorPhase=phase;
+ state.ttsPlaying=false;setMicEnabled(true);actorPhase('listening');armIdleTimeout();
+ message('Ready. Continue speaking.');$('listenCheck').textContent='Listening for your answer';
+ return true;
 }
 function playLocalClip(url,direct=false){
  return new Promise((resolve,reject)=>{
@@ -641,7 +674,7 @@ async function finishGuidedReply(data){
   .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';
  responseText=shortenGuidedResponse(responseText,second,state.lessonLevel);
- const run=state.anchorToken;state.anchorPhase='playingReply';setMicEnabled(false);
+ const run=state.anchorToken;state.replyWasSecond=second;state.anchorPhase='playingReply';setMicEnabled(false);
  if(responseText)await speakEleven(responseText);
  else if(!second)error('No follow-up returned. Please try again.');
  if(!state.active||run!==state.anchorToken)return;
@@ -662,7 +695,7 @@ function handleRealtime(data){
  switch(data.type){
   case 'session.updated':
    state.guidedSessionReady=true;
-   if(state.active&&state.anchorPhase==='ready')void playAnchor(state.anchorIndex);
+   if(state.active&&state.anchorPhase==='ready'&&!restoreAfterPause())void playAnchor(state.anchorIndex);
    break;
   case 'input_audio_buffer.speech_started':
    if(state.ttsPlaying||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))break;
@@ -748,6 +781,7 @@ async function speakEleven(text){
 async function startConversation(){
  if(state.starting||state.active)return;
  if(!state.unit||!state.book)throw Error('No lesson loaded. Select a book and unit first.');
+ const continuing=Boolean(state.resumePhase);
  state.starting=true;state.paused=false;setPauseButton(false);
  $('pauseResume').disabled=false;
  error('');state.alreadySpoken=false;state.turnText='';state.pendingText=false;
@@ -759,7 +793,7 @@ async function startConversation(){
  if(!hasActivityHistory())history.pushState({...history.state,[EXT_NAV_KEY]:'activity'},'');
  veil.hidden=false;$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
- $('log').replaceChildren();message('Connecting…');
+ if(!continuing)$('log').replaceChildren();message('Connecting…');
  $('mute').disabled=false;$('end').disabled=false;
  $('mute').setAttribute('aria-pressed','false');
  $('mute').setAttribute('aria-label','Mute microphone');
@@ -820,7 +854,7 @@ async function startConversation(){
     transcription:{model:'gpt-4o-mini-transcribe',language:'en'},
     turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:false,interrupt_response:false}
    }}}}));
-   if(state.active&&state.anchorPhase==='ready')void playAnchor(state.anchorIndex);
+   if(state.active&&state.anchorPhase==='ready'&&!restoreAfterPause())void playAnchor(state.anchorIndex);
   };
   const offer=await peer.createOffer();await peer.setLocalDescription(offer);
   const answer=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',headers:{Authorization:'Bearer '+session.token,'Content-Type':'application/sdp'},body:offer.sdp,signal:AbortSignal.timeout(18000)});
@@ -834,9 +868,9 @@ async function startConversation(){
   message('Connected · starting cached textbook question');actorPhase('ready');
   clearTimeout(state.sessionDeadline);
   state.sessionDeadline=setTimeout(()=>{if(state.active)pauseConversation('Paused after 12 minutes. Tap play to continue.');},12*60*1000);
-  if(state.guidedSessionReady&&state.anchorPhase==='ready')void playAnchor(state.anchorIndex);
+  if(state.guidedSessionReady&&state.anchorPhase==='ready'&&!restoreAfterPause())void playAnchor(state.anchorIndex);
   setTimeout(()=>{
-   if(state.active&&state.anchorPhase==='ready'&&state.channel?.readyState==='open')void playAnchor(state.anchorIndex);
+   if(state.active&&state.anchorPhase==='ready'&&state.channel?.readyState==='open'&&!restoreAfterPause())void playAnchor(state.anchorIndex);
   },900);
   $('listenCheck').textContent='Listen to the question, then answer';$('restart').disabled=true;
  }catch(e){
