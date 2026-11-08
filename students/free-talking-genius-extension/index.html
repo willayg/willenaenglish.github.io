@@ -41,7 +41,8 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 .small{font-size:11px;color:#778b96;line-height:1.6}
 #error{font-size:12px;color:#b03454;text-align:center;min-height:22px}
 #volumeBox{display:flex;align-items:center;justify-content:center;gap:12px;color:#597685;font-size:12px;font-weight:800;margin:12px 0}
-#volume{width:min(240px,55vw);accent-color:#1aa9b8}.lesson-focus{margin:0 auto 12px;padding:8px 12px;border-radius:12px;background:#eef9fb;color:#35727d;font-size:12px;text-align:center;max-width:560px}
+#volume{width:min(240px,55vw);accent-color:#1aa9b8}
+.anchor-question{max-width:560px;margin:6px auto 12px;text-align:center;color:#275f70;font-weight:800;font-size:clamp(16px,3.2vw,22px);line-height:1.4;min-height:42px}.lesson-focus{margin:0 auto 12px;padding:8px 12px;border-radius:12px;background:#eef9fb;color:#35727d;font-size:12px;text-align:center;max-width:560px}
 /* Keep the EXACT Free Talking speaking circle, SVG art and character animation.
    Only the enclosing experimental layout is new. No replacement actor graphics. */
 #actorStage .free-talking-genius{width:100%;display:flex;align-items:center;justify-content:center}
@@ -88,7 +89,9 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </style></head><body>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
 <div id="demo" hidden><main class="wrap"><div class="top"><div><div class="tag">FREE TALKING GENIUS · EXPERIMENT</div><h1 id="heading">Choose your conversation friend</h1><p class="sub" id="lesson">Loading lesson…</p></div><button id="back" class="back" type="button">Back</button></div>
-<div class="panel" id="talk"><div id="actorStage" class="actor-stage" data-phase="ready"></div><div class="time" id="clock">03:00</div><div id="status" role="status">Starting…</div><div id="lessonFocus" class="lesson-focus">Lesson focus: loading current unit…</div>
+<div class="panel" id="talk"><div id="actorStage" class="actor-stage" data-phase="ready"></div><div class="time" id="clock">Question 1 / 8</div>
+<p id="anchorText" class="anchor-question" aria-live="polite">Your first textbook question will appear here.</p>
+<div id="status" role="status">Starting…</div><div id="lessonFocus" class="lesson-focus">Lesson focus: loading current unit…</div>
 <div class="control-dock">
 <div id="listenCheck" role="status">Microphone: waiting to connect</div>
 <div class="row"><span id="micLevel">Mic level: —</span><button id="restart" class="secondary" type="button" disabled>Start / Retry</button></div>
@@ -100,4 +103,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div><div id="log" aria-live="polite"></div><p class="small" style="text-align:center">Free Talking practice: no homework, stars, or golden-unit credit.</p></div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-eleven-volume9"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-guided-anchors1"></script></body></html>
