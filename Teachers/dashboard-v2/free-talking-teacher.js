@@ -243,13 +243,63 @@ function mountDashboard(){
   $$('[data-ft-view]',view).forEach(b=>b.onclick=()=>{state.view=b.dataset.ftView;void renderDashboard()});
  }
 }
+async function showGeneralProgress(host){
+ if(!host)return;
+ host.innerHTML='<div class="ua-empty">Loading Free Talking speaking activity…</div>';
+ try{
+  const [rows]=await Promise.all([
+   db('rpc/teacher_free_talking_general_progress_v1',{}),
+   loadBase()
+  ]);
+  if(!host.isConnected)return;
+  const cards=window.WillenaGeniusHomeworkCard;
+  if(!cards)throw Error('Shared Word Genius progress component unavailable');
+  const items=Array.isArray(rows)?rows:[];
+  const classes=[...new Set(items.map(x=>x.class).filter(Boolean))].sort();
+  const selected=state.classFilter==='all'?items:items.filter(x=>x.class===state.classFilter);
+  const groups=new Map();
+  for(const row of selected){
+   const key=[row.class,row.book_id,row.unit_id].join(':');
+   if(!groups.has(key))groups.set(key,{class:row.class,book_id:row.book_id,unit_id:row.unit_id,
+    unit_number:row.unit_number,students:[],created_at:row.last_activity,title:''});
+   const group=groups.get(key);group.students.push(row);
+   if(String(row.last_activity||'')>String(group.created_at||''))group.created_at=row.last_activity;
+  }
+  const output=[...groups.values()].sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+  const bookTitles=new Map((state.books||[]).map(b=>[String(b.id),b.title]));
+  host.innerHTML='<div class="gf-hw-toolbar">'+
+   '<label>Class <select class="control" id="ftTeacherGeneralClass"><option value="all">All classes</option>'+classes.map(c=>'<option value="'+esc(c)+'"'+(state.classFilter===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label>'+
+   '<button type="button" class="control" data-ft-general-refresh>Refresh</button></div>'+
+   '<p class="ua-note">All speaking practice, including free sessions · Passing score 8/10 · 8 questions per Golden Unit</p>'+
+   '<div class="ua-genius-manage-list">'+(output.length?cards.groupByDate(output,g=>{
+    const students=g.students||[];
+    const average=Math.round(students.reduce((sum,x)=>sum+Number(x.percent||0),0)/students.length);
+    const book=bookTitles.get(String(g.book_id))||'Textbook';
+    return cards.card({id:[g.class,g.book_id,g.unit_id].join(':'),className:g.class,
+     task:book+' · Unit '+g.unit_number,teacher:'Free Talking Genius',createdBy:'',
+     dueAt:null,progressPercent:average,progressLabel:'Student speaking progress',
+     body:cards.progressPanel({students,average,completed:students.filter(x=>x.complete).length,
+      notStarted:students.filter(x=>!x.passed).length,label:'Speaking · 8 questions'})
+    });
+   }):'<div class="ua-empty">No Free Talking speaking attempts recorded'+(state.classFilter==='all'?'':' for this class')+'.</div>')+'</div>';
+  for(const g of output){
+   const average=Math.round(g.students.reduce((sum,x)=>sum+Number(x.percent||0),0)/g.students.length);
+   cards.updateRing([g.class,g.book_id,g.unit_id].join(':'),average,host);
+  }
+  $('#ftTeacherGeneralClass',host)?.addEventListener('change',e=>{state.classFilter=e.target.value;void showGeneralProgress(host)});
+  $('[data-ft-general-refresh]',host)?.addEventListener('click',()=>void showGeneralProgress(host));
+ }catch(e){
+  if(host.isConnected){host.innerHTML='<div class="ua-empty">Speaking activity unavailable: '+esc(e.message)+' <button type="button" class="control" data-ft-general-retry>Retry</button></div>';
+   $('[data-ft-general-retry]',host)?.addEventListener('click',()=>void showGeneralProgress(host))}
+ }
+}
 async function renderDashboard(){
  const view=$('#view-free-talking-genius'),host=$('#ftTeacherPanel');if(!view||!host)return;
  $$('[data-ft-view]',view).forEach(b=>b.classList.toggle('active',b.dataset.ftView===state.view));
  if(state.view==='progress'){
-  host.innerHTML='<div class="panel-title">Speaking progress by assigned mission</div><div class="panel-sub">Each question is counted once after a passing answer, including free practice.</div><div id="ftTeacherProgressContent"></div>';
+  host.innerHTML='<div class="panel-title">General Speaking Progress</div><div class="panel-sub">Student mastery from the main Free Talking app, including free practice.</div><div id="ftTeacherProgressContent"></div>';
   const panel=$('#ftTeacherProgressContent',host);
-  await showManage(panel,true);
+  await showGeneralProgress(panel);
  }else{
   host.innerHTML='<div class="ua-subtabs"><button class="ua-subtab active" data-ft-mode="manage" type="button">Manage Homework</button><button class="ua-subtab" data-ft-mode="create" type="button">Assign Mission</button></div><div id="ftTeacherAssignmentContent"></div>';
   const panel=$('#ftTeacherAssignmentContent',host);
