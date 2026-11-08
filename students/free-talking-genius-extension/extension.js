@@ -342,7 +342,7 @@ function showActor(){
  circle.id='ftTurnCircle';circle.className='ft-extension-avatar';
  circle.setAttribute('role','img');
  circle.setAttribute('aria-label','Conversation character');
- circle.innerHTML='<span class="ft-circle-glow"></span>'+
+ circle.innerHTML='<span class="ft-willi-avatar" aria-hidden="true"><svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"><path d="M20 58v8M40 39v45M60 24v73M80 39v45M100 58v8"/></svg></span>'+
   '<span class="ft-circle-ai" aria-hidden="true"><span class="ft-circle-bars"><i></i><i></i><i></i><i></i><i></i></span></span>'+
   '<span class="ft-circle-mic" aria-hidden="true"><svg viewBox="0 0 48 48" width="72" height="72"><rect x="17" y="5" width="14" height="26" rx="7" fill="currentColor"/><path d="M11 22a13 13 0 0 0 26 0M24 35v8M16 43h16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>'+
   '<span class="ft-circle-thinking" aria-hidden="true"><span class="ft-thinking-swirl"></span></span>';
