@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<title>AI Willi · Realtime Lesson Lab</title><link rel="icon" href="/Assets/Images/Logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
+<link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
+<script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
+<script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
+<script type="module" src="/students/components/student-header.js?v=20261101-menu-prominent1"></script>
+<style>
+:root{--cyan:#25b9c9;--ink:#26364a;--light:#ecfbfd;--line:#dce9ef;--rose:#f48cae}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% 0%,#d9f8fb 0%,#f6fafc 38%,#f4f6fa 100%);color:var(--ink);font:500 15px/1.5 Poppins,Arial,sans-serif;min-height:100vh}
+button,select{font:inherit}
+main{max-width:940px;margin:0 auto;padding:26px 18px 54px}
+.lab-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+.lab-tag{font-size:11px;letter-spacing:1.8px;font-weight:900;color:#087b89}
+h1{font-size:clamp(26px,5vw,38px);margin:3px 0 0;letter-spacing:-1.1px;line-height:1.2}
+.sub{color:#677c8c;font-size:13px;margin:6px 0 0}
+.pill{color:#426478;border:1px solid #bfdee5;border-radius:99px;padding:7px 12px;font-size:12px;font-weight:700;white-space:nowrap}
+.layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:18px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 14px 38px #294f6810;padding:22px}
+.lab-actor{min-height:345px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
+.orb{width:180px;height:180px;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle at 34% 28%,#fdffff,#a4ecf4 50%,#38b6c8 100%);border:6px solid white;box-shadow:0 10px 50px #2bb9c85e,inset 0 -12px 25px #00869f29;transition:transform .2s,box-shadow .2s;position:relative}
+.orb::before,.orb::after{content:"";position:absolute;top:70px;width:16px;height:23px;background:#204d65;border-radius:50%}
+.orb::before{left:51px}.orb::after{right:51px}
+.mouth{position:absolute;width:32px;height:9px;border-radius:0 0 22px 22px;background:#1c5970;top:111px;transition:height .12s}
+.orb[data-phase="speaking"]{box-shadow:0 0 0 16px #b8f4f880,0 14px 60px #10bbd17d;animation:bob 1s ease-in-out infinite alternate}
+.orb[data-phase="speaking"] .mouth{animation:talk .35s ease-in-out infinite alternate}
+.orb[data-phase="listening"]{box-shadow:0 0 0 13px #d8f6ff,0 0 0 23px #e7faff}
+@keyframes talk{from{height:6px}to{height:26px}}@keyframes bob{to{transform:translateY(-4px)}}
+.actor-name{font-size:24px;font-weight:900;margin:0}.actor-state{color:#577585;min-height:22px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
+button.action{cursor:pointer;min-height:46px;border-radius:15px;border:2px solid var(--cyan);background:#fff;color:#087a87;padding:10px 20px;font-weight:800}
+button.action.primary{background:#d8f9fc}
+button.action.stop{border-color:#e7adbf;color:#ab4569}
+button.action:disabled{opacity:.4;cursor:not-allowed}
+.field{display:block;margin:0 0 7px;font-size:12px;font-weight:800;color:#426174}
+select{width:100%;background:white;border:1px solid #bfd8e1;border-radius:13px;color:var(--ink);padding:12px;margin-bottom:16px;min-height:47px}
+select:disabled{opacity:.55}
+.section-title{font-size:17px;font-weight:900;margin:0 0 12px}
+.chip-list{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 18px}
+.chip{border-radius:10px;background:#eff9fb;color:#276d79;padding:6px 9px;font-size:12px}
+.copy{font-size:13px;color:#5c7381}
+.notice{background:#f5fafb;border-radius:12px;padding:13px;color:#47697a;font-size:12px;margin-top:15px}
+#history{min-height:64px;max-height:195px;overflow:auto;display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.line{border-radius:12px;padding:9px 11px;background:#f0f7fa;font-size:13px;overflow-wrap:anywhere}
+.line.me{background:#fdf1f6}
+.line b{display:block;font-size:10px;color:#6e8897;text-transform:uppercase;margin-bottom:3px}
+.status-error{color:#b5355c;font-size:12px;min-height:22px}
+footer{color:#7c919f;text-align:center;font-size:11px;margin-top:22px}
+@media(max-width:730px){.layout{grid-template-columns:1fr}.lab-top{align-items:flex-start}.panel{padding:18px}.lab-actor{min-height:295px}.orb{width:145px;height:145px}.orb::before,.orb::after{top:56px}.orb::before{left:38px}.orb::after{right:38px}.mouth{top:91px}}
+</style></head><body>
+<main>
+<div class="lab-top"><div><div class="lab-tag">WILLENA · PRIVATE EXPERIMENT</div><h1>Free Talking with AI Willi</h1><p class="sub">Your book. Your unit. A real conversation.</p></div><span class="pill">REALTIME LAB</span></div>
+<div class="layout">
+<section class="panel">
+<div class="lab-actor">
+<div id="orb" class="orb" data-phase="ready"><span class="mouth"></span></div>
+<h2 class="actor-name">AI Willi</h2>
+<div id="phase" class="actor-state" aria-live="polite">Choose a lesson to begin.</div>
+<div id="timer" class="pill">03:00 maximum</div>
+<div class="actions"><button id="start" class="action primary" disabled>Start talking</button><button id="mute" class="action" disabled>Mute mic</button><button id="stop" class="action stop" disabled>End</button></div>
+<div id="error" class="status-error" role="alert" aria-live="polite"></div>
+</div>
+<h3 class="section-title">Conversation</h3>
+<div id="history"><div class="copy">Willi will ask one short question, listen, and follow your answer.</div></div>
+</section>
+<section class="panel">
+<h2 class="section-title">Your textbook lesson</h2>
+<label class="field" for="book">BOOK</label><select id="book" disabled><option>Loading your books…</option></select>
+<label class="field" for="unit">UNIT</label><select id="unit" disabled><option>Select a book first</option></select>
+<div class="field">LESSON OBJECTIVE</div><p id="focus" class="copy">Sign in to your Willena account to see the exact lesson focus.</p>
+<div class="field">LESSON LANGUAGE</div><div id="examples" class="chip-list"><span class="chip">Loaded from the content database</span></div>
+<div class="notice"><strong>Test mode only.</strong> This experiment does not submit homework, give points, create golden units, or change your existing Speaking records. AI Willi uses a standard OpenAI Realtime voice for this test. Conversation audio is processed live, not stored by this page.</div>
+</section></div>
+<footer>Independent experiment · No link or changes to the existing Free Talking app</footer>
+</main>
+<script type="module" src="./lab.js?v=20261108-a"></script>
+</body></html>
