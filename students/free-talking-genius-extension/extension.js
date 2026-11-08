@@ -373,7 +373,7 @@ async function getAnchorClip(anchor){
    headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
    body:JSON.stringify({question_id:anchor.id,voice:guidedCharacterVoice(),
     ...(state.character==='bunny'?{compare_model:'eleven_v3'}:{})}),
-   signal:AbortSignal.timeout(65000)
+   signal:AbortSignal.timeout(11000)
   });
   let r=await call(await originalStudentToken());
   if(r.status===401)r=await call(await originalStudentToken(true));
@@ -590,11 +590,12 @@ async function startConversation(){
  if(!hasActivityHistory())history.pushState({...history.state,[EXT_NAV_KEY]:'activity'},'');
  veil.hidden=false;$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
- $('log').replaceChildren();showActor();message('Connecting…');
+ $('log').replaceChildren();message('Connecting…');
  $('mute').disabled=false;$('end').disabled=false;$('mute').textContent='Mute microphone';
  const character=state.character;state.voiceMode='eleven'; // guided text responses use controlled TTS for ALL three voices
  $('testVoice').hidden=state.character==='willi';
  try{
+  showActor();
   const res=await authorizedDemoFetch('/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id,guided:true},startAbort.signal);
   if(startId!==activeStartId)return;
   const session=await res.json().catch(()=>({}));
@@ -638,7 +639,11 @@ async function startConversation(){
   };
   channel.onmessage=e=>{try{handleRealtime(JSON.parse(e.data))}catch(err){console.warn(err)}};
   channel.onopen=()=>{
+   // Start as soon as the data channel connects; no need to wait for
+   // session.updated, which can be absent after negotiating a Realtime call.
+   state.guidedSessionReady=true;
    channel.send(JSON.stringify({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:false,interrupt_response:false}}}}}));
+   if(state.active&&state.anchorPhase==='ready')void playAnchor(0);
   };
   const offer=await peer.createOffer();await peer.setLocalDescription(offer);
   const answer=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',headers:{Authorization:'Bearer '+session.token,'Content-Type':'application/sdp'},body:offer.sdp,signal:AbortSignal.timeout(18000)});
@@ -650,6 +655,9 @@ async function startConversation(){
   state.micUserMuted=false;state.ttsPlaying=false;
   state.active=true;state.starting=false;message('Connected · starting cached textbook question');actorPhase('ready');
   if(state.guidedSessionReady&&state.anchorPhase==='ready')void playAnchor(0);
+  setTimeout(()=>{
+   if(state.active&&state.anchorPhase==='ready'&&state.channel?.readyState==='open')void playAnchor(0);
+  },900);
   $('listenCheck').textContent='Listen to the question, then answer';$('restart').disabled=true;
  }catch(e){
   if(startId!==activeStartId)return;
