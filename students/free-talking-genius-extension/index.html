@@ -159,98 +159,78 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  #demo #actorStage #ftTurnCircle{width:min(55vw,40dvh,280px)!important;height:min(55vw,40dvh,280px)!important}
 }
 
-/* Extension experiment only: true illustration (no imported Speaking circle). */
-#demo #talk .actor-stage{align-items:flex-start!important;justify-content:center!important;padding:clamp(12px,3dvh,34px) 8px 0!important}
-#demo #actorStage .free-talking-genius{align-items:flex-start!important;justify-content:center!important;min-height:0!important;height:auto!important;background:transparent!important}
-#demo #actorStage #ftSession,#demo #actorStage #ftWilliVoice{
- background:transparent!important;min-height:0!important;height:auto!important;align-items:flex-start!important;
+/* Experimental conversation character stage: one positioning authority.
+   The stage is the containing block; inherited Speaking flex layouts are not. */
+#demo #talk .actor-stage{
+ position:relative!important;display:block!important;flex:1 1 auto!important;
+ width:100%!important;height:auto!important;min-height:0!important;
+ padding:0!important;overflow:hidden!important;
+ background:#e9fbfc!important;
 }
-#demo #actorStage #ftTurnCircle,#demo #actorStage .ft-extension-avatar{
- width:min(62vw,36dvh,310px)!important;height:min(62vw,36dvh,310px)!important;
- background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;
- overflow:visible!important;padding:0!important;
+#demo #actorStage #ftExtensionOriginalShell,
+#demo #actorStage #ftSession,
+#demo #actorStage #ftWilliVoice{
+ position:static!important;display:contents!important;transform:none!important;
+ margin:0!important;padding:0!important;min-height:0!important;
 }
-#demo #actorStage .ft-extension-avatar::before,#demo #actorStage .ft-extension-avatar::after,
-#demo #actorStage .ft-circle-glow,#demo #actorStage .ft-circle-ai,
-#demo #actorStage .ft-circle-mic,#demo #actorStage .ft-circle-thinking,
-#demo #actorStage .ft-record-countdown{display:none!important}
-#demo #actorStage .bf-actor,#demo #actorStage .bf-svg{width:100%!important;height:100%!important}
-#demo .conversation-text{position:relative;z-index:3;max-height:min(30dvh,245px);min-height:130px}
-#demo .conversation-text #anchorText{max-height:3.8em}
-#demo .conversation-text #log{max-height:150px}
-
-/* The conversational character sits clearly above its own transcript box. */
-#demo #talk .actor-stage{isolation:isolate!important}
-#demo #actorStage .free-talking-genius{transform:translateY(-8dvh)!important}
-#demo #actorStage #ftTurnCircle{width:min(57vw,34dvh,285px)!important;height:min(57vw,34dvh,285px)!important}
-#demo #actorStage #ftTurnCircle,
-#demo #actorStage #ftTurnCircle::before,
-#demo #actorStage #ftTurnCircle::after{
- border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;
+#demo #actorStage #ftTurnCircle{
+ position:absolute!important;top:49%!important;left:50%!important;
+ transform:translate(-50%,-50%)!important;
+ width:min(65vw,37dvh,325px)!important;
+ height:min(65vw,37dvh,325px)!important;
+ min-width:0!important;max-width:none!important;min-height:0!important;max-height:none!important;
+ padding:0!important;margin:0!important;
+ box-sizing:border-box!important;overflow:visible!important;
 }
-#demo #actorStage #ftTurnCircle>.ft-circle-glow,
-#demo #actorStage #ftTurnCircle>.ft-circle-ai,
-#demo #actorStage #ftTurnCircle>.ft-circle-mic,
-#demo #actorStage #ftTurnCircle>.ft-circle-thinking{display:none!important}
+#demo #actorStage .ft-extension-avatar{
+ border:0!important;outline:0!important;box-shadow:none!important;
+ background:transparent!important;animation:none!important;
+ pointer-events:none!important;
+}
+#demo #actorStage .ft-extension-avatar::before,
+#demo #actorStage .ft-extension-avatar::after{
+ display:none!important;content:none!important;
+}
+#demo #actorStage .ft-extension-avatar>.ft-circle-ai,
+#demo #actorStage .ft-extension-avatar>.ft-circle-mic,
+#demo #actorStage .ft-extension-avatar>.ft-circle-thinking,
+#demo #actorStage .ft-extension-avatar>.ft-circle-glow{display:none!important}
+#demo #actorStage .ft-extension-avatar .bf-actor{
+ position:absolute!important;top:50%!important;left:50%!important;
+ width:100%!important;height:100%!important;
+ transform:translate(-50%,-50%)!important;
+}
+#demo #actorStage .ft-extension-avatar .bf-svg{width:100%!important;height:100%!important;overflow:visible!important}
 #demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .bf-eyes,
-#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .pf-eyes{opacity:0!important}
+#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .pf-eyes,
 #demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .bf-rest-mouth,
 #demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .pf-rest-mouth{opacity:0!important}
 #demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral])[data-state]:not([data-state=speaking]) .bf-talk-mouth,
 #demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral])[data-state]:not([data-state=speaking]) .pf-talk-mouth{opacity:0!important}
 #demo #actorStage .bf-actor[data-state=speaking] .extension-expression-mouth{opacity:0!important}
-#demo .conversation-text{z-index:5!important}
-
-/* AI Willi also has an independent actor, without the Speaking recorder ring. */
-#demo #actorStage .ft-willi-avatar{display:none;place-items:center;position:absolute;inset:0;color:#269eaf}
-#demo #actorStage #ftSession[data-character="marin"] .ft-willi-avatar{display:grid}
-#demo #actorStage .ft-willi-avatar svg{width:70%;height:70%}
-#demo #actorStage[data-phase="speaking"] .ft-willi-avatar svg{animation:ftExtWilliPulse .8s ease-in-out infinite alternate}
-@keyframes ftExtWilliPulse{to{transform:scale(1.1);opacity:.65}}
-/* Layout correction: center the whole illustration within the blue stage.
-   No translateY shortcut: it clipped ears at the top of Samsung screens. */
-#demo #talk .actor-stage{
- align-items:center!important;justify-content:center!important;
- padding:0 12px!important;overflow:hidden!important;
+/* Only AI Willi retains his original circular waveform and ring. */
+#demo #actorStage .ft-extension-willi-circle{
+ width:min(65vw,39dvh,340px)!important;height:min(65vw,39dvh,340px)!important;
+ background:#fff!important;border-radius:50%!important;
 }
-#demo #actorStage .free-talking-genius{
- transform:none!important;align-items:center!important;justify-content:center!important;
- height:100%!important;min-height:0!important;width:100%!important;
+#demo #actorStage .ft-extension-willi-circle>.ft-circle-glow{display:block!important}
+#demo #actorStage .ft-extension-willi-circle>.ft-circle-ai,
+#demo #actorStage .ft-extension-willi-circle>.ft-circle-mic,
+#demo #actorStage .ft-extension-willi-circle>.ft-circle-thinking{display:none!important}
+#demo #actorStage .ft-extension-willi-circle[data-phase="ai"]>.ft-circle-ai{display:flex!important}
+#demo #actorStage .ft-extension-willi-circle[data-phase="student"]>.ft-circle-mic{display:flex!important}
+#demo #actorStage .ft-extension-willi-circle[data-phase="thinking"]>.ft-circle-thinking{display:flex!important}
+#demo .conversation-text{
+ position:relative!important;z-index:5!important;
+ width:100%!important;flex:0 0 auto!important;
+ min-height:105px!important;max-height:min(30dvh,245px)!important;
+ overflow:hidden!important;display:flex!important;flex-direction:column!important;
 }
-#demo #actorStage #ftSession,#demo #actorStage #ftWilliVoice{
- align-items:center!important;justify-content:center!important;
- display:flex!important;height:100%!important;min-height:0!important;width:100%!important;
+#demo .conversation-text #log{flex:1 1 auto!important;min-height:0!important;overflow:auto!important}
+@media(max-height:620px){
+ #demo #actorStage #ftTurnCircle{top:48%!important;width:min(63vw,31dvh,270px)!important;height:min(63vw,31dvh,270px)!important}
+ #demo .conversation-text{min-height:75px!important;max-height:28dvh!important}
 }
-#demo #actorStage .ft-extension-avatar{
- width:min(57vw,34dvh,285px)!important;height:min(57vw,34dvh,285px)!important;
- position:relative!important;overflow:visible!important;flex:none!important;
-}
-/* The ring belongs to AI Willi only. The imported speaking control is not
-   reused for the animal portraits. */
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle{
- display:flex!important;align-items:center!important;justify-content:center!important;
- width:min(61vw,40dvh,340px)!important;height:min(61vw,40dvh,340px)!important;
- position:relative!important;overflow:visible!important;flex:none!important;
- border-radius:50%!important;background:#fff!important;
-}
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-glow,
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-ai,
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-mic,
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-thinking,
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle .ft-orbit-visual{
- display:flex!important;
-}
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-ai,
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-mic,
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-thinking{display:none!important}
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle[data-phase="ai"]>.ft-circle-ai{display:flex!important}
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle[data-phase="student"]>.ft-circle-mic{display:flex!important}
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle[data-phase="thinking"]>.ft-circle-thinking{display:flex!important}
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-glow{display:block!important}
-#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle.ft-turn-circle{
- border:0!important;box-shadow:none!important;outline:none!important;
-}
-#demo .conversation-text{z-index:5!important}
 </style></head><body>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
 <div id="demo" hidden><main class="wrap">
@@ -288,4 +268,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-faces-audio-layout14"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-avatar-stage15"></script></body></html>
