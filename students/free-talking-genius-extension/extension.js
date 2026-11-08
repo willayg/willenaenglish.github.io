@@ -380,22 +380,34 @@ async function getAnchorClip(anchor){
   const file=await r.json().catch(()=>null);
   if(!r.ok||file?.success!==true)throw Error(file?.error||('Question audio unavailable: '+r.status));
   let clip;
-  if(file.audio_url?.startsWith('https://'))clip={url:file.audio_url,owned:false};
-  else if(typeof file.audio==='string'&&file.audio.length){
+  if(typeof file.audio==='string'&&file.audio.length){
    const binary=atob(file.audio),bytes=new Uint8Array(binary.length);
    for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
    clip={url:URL.createObjectURL(new Blob([bytes],{type:file.content_type==='audio/wav'?'audio/wav':'audio/mpeg'})),owned:true};
+  }else if(file.audio_url?.startsWith('https://')){
+   // A cross-origin media element routed into Web Audio can be silent unless
+   // the host grants CORS. Prefer a same-origin Blob when possible.
+   try{
+    const cached=await fetch(file.audio_url,{signal:AbortSignal.timeout(18000)});
+    if(!cached.ok)throw Error('Cached audio download failed');
+    const blob=await cached.blob();
+    if(blob.size<500)throw Error('Cached audio file is empty');
+    clip={url:URL.createObjectURL(blob),owned:true};
+   }catch{
+    clip={url:file.audio_url,owned:false,direct:true};
+   }
   }else throw Error('Cached question audio was empty');
   state.anchorClipCache.set(key,clip);
   return clip;
  })().finally(()=>state.anchorClipPromises.delete(key));
  state.anchorClipPromises.set(key,job);return job;
 }
-function playLocalClip(url){
+function playLocalClip(url,direct=false){
  return new Promise((resolve,reject)=>{
   const audio=new Audio();state.speaker=audio;state.playing=audio;
   audio.preload='auto';audio.setAttribute('playsinline','');
-  routeAudio(audio);audio.src=url;
+  if(direct){audio.volume=Math.min(1,volumeFraction())}else routeAudio(audio);
+  audio.src=url;
   state.ttsPlaying=true;setMicEnabled(false);actorPhase('speaking');
   let settled=false;
   const finish=error=>{
@@ -425,7 +437,7 @@ async function playAnchor(index){
  try{
   const clip=await getAnchorClip(anchor);
   if(!state.active||run!==state.anchorToken)return;
-  await playLocalClip(clip.url);
+  await playLocalClip(clip.url,clip.direct===true);
  }catch(e){
   if(!state.active||run!==state.anchorToken)return;
   console.warn('[Guided Free Talking] cached anchor unavailable',e);
