@@ -324,7 +324,7 @@ function openView(){
  const view=$('#view-free-talking-genius');if(!view)return;
  $$('.view').forEach(x=>x.classList.toggle('active',x===view));
  $$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view==='free-talking-genius'));
- try{localStorage.setItem('willena.teacher.last-view','free-talking-genius')}catch{}
+ try{localStorage.setItem('willena.teachers.activeView.v1','free-talking-genius')}catch{}
  void renderDashboard();
 }
 window.FreeTalkingGeniusTeacher={openView,mountDashboard,showWorkspace,refresh:()=>renderDashboard()};
