@@ -7,6 +7,30 @@ const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
 const state={book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio'};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
+const EXT_NAV_KEY='willenaFtRealtimeExtensionV1';
+let activeStartId=0;
+let startAbort=null;
+function hasActivityHistory(){return history.state?.[EXT_NAV_KEY]==='activity'}
+function closeActivity(){
+ activeStartId++;
+ try{startAbort?.abort()}catch{}
+ startAbort=null;
+ endSession('Conversation ended.');
+ veil.hidden=true;
+ $('talk').classList.remove('is-visible');
+ // Preserve the original app's character selector and its own history entry.
+ // Do NOT click its Back button: that would skip character selection.
+}
+function navigateBack(){
+ const hadEntry=hasActivityHistory();
+ closeActivity();
+ if(hadEntry)history.back();
+}
+window.addEventListener('popstate',()=>{
+ // Android/browser Back consumes our top-level activity entry. The underlying
+ // iframe owns the preceding character and book history entries.
+ if(!hasActivityHistory()&&!veil.hidden)closeActivity();
+});
 const fixArt=(art,key)=>art.replaceAll('id="pigBody"','id="pigBody-'+key+'"').replaceAll('url(#pigBody)','url(#pigBody-'+key+')').replaceAll('id="pigBelly"','id="pigBelly-'+key+'"').replaceAll('url(#pigBelly)','url(#pigBelly-'+key+')');
 function message(s){$('status').textContent=s}
 function error(s){$('error').textContent=String(s||'Unknown error')}
@@ -125,13 +149,9 @@ function endSession(reason='Conversation finished.'){
  message(reason);actorPhase('ready');
  $('mute').disabled=true;$('end').disabled=true;
 }
-function back(){
- endSession('Finished.');veil.hidden=true;
- // Return to the original app's unit-selection screen via its own existing button.
- const d=appDocument();if(d&&!d.getElementById('ftCharacter').hidden)d.getElementById('ftCharacterBack')?.click();
-}
-$('back').addEventListener('click',back);$('end').addEventListener('click',back);
-window.addEventListener('pagehide',()=>endSession());
+$('back').addEventListener('click',navigateBack);
+$('end').addEventListener('click',navigateBack);
+window.addEventListener('pagehide',()=>{activeStartId++;try{startAbort?.abort()}catch{}endSession()});
 $('mute').addEventListener('click',()=>{
  const track=state.stream?.getAudioTracks()[0];if(!track)return;
  track.enabled=!track.enabled;$('mute').textContent=track.enabled?'Mute microphone':'Unmute microphone';
@@ -222,6 +242,11 @@ async function speakEleven(text){
 async function startConversation(){
  if(state.starting||state.active||!state.unit||!state.book)return;
  state.starting=true;error('');state.alreadySpoken=false;state.turnText='';state.pendingText=false;
+ const startId=++activeStartId;
+ startAbort=new AbortController();
+ // Add a real top-level history entry AFTER the original app's character
+ // screen, so native Back visits character selection before the unit screen.
+ history.pushState({...history.state,[EXT_NAV_KEY]:'activity'},'');
  veil.hidden=false;$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
  $('log').replaceChildren();showActor();message('Connecting…');
@@ -229,8 +254,12 @@ async function startConversation(){
  const character=state.character;state.voiceMode=character==='willi'?'audio':'eleven';
  try{
   const token=await staffAccessToken();
-  const res=await fetch('/api/free-talking-realtime-lab',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({book_id:state.book.id,unit_id:state.unit.id}),signal:AbortSignal.timeout(24000)});
-  const session=await res.json().catch(()=>({}));if(!res.ok||!session.token)throw Error(session.error||'Realtime connection failed');
+  if(startId!==activeStartId)return;
+  const res=await fetch('/api/free-talking-realtime-lab',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({book_id:state.book.id,unit_id:state.unit.id}),signal:startAbort.signal});
+  if(startId!==activeStartId)return;
+  const session=await res.json().catch(()=>({}));
+  if(startId!==activeStartId)return;
+  if(!res.ok||!session.token)throw Error(session.error||'Realtime connection failed');
   const peer=new RTCPeerConnection();state.peer=peer;
   if(state.voiceMode==='audio'){
    const audio=document.createElement('audio');audio.autoplay=true;audio.playsInline=true;audio.volume=Number($('volume').value)/100;
@@ -238,7 +267,9 @@ async function startConversation(){
    peer.ontrack=e=>{audio.srcObject=e.streams[0];void audio.play().catch(()=>{});actorPhase('speaking')};
   }
   const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
-  state.stream=mic;peer.addTrack(mic.getAudioTracks()[0],mic);
+  state.stream=mic;
+  if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
+  peer.addTrack(mic.getAudioTracks()[0],mic);
   const channel=peer.createDataChannel('oai-events');state.channel=channel;
   channel.onmessage=e=>{try{handleRealtime(JSON.parse(e.data))}catch(err){console.warn(err)}};
   channel.onopen=()=>{
@@ -248,10 +279,14 @@ async function startConversation(){
   };
   const offer=await peer.createOffer();await peer.setLocalDescription(offer);
   const answer=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',headers:{Authorization:'Bearer '+session.token,'Content-Type':'application/sdp'},body:offer.sdp,signal:AbortSignal.timeout(18000)});
+  if(startId!==activeStartId)return;
   if(!answer.ok)throw Error('Realtime negotiation failed ('+answer.status+')');
   await peer.setRemoteDescription({type:'answer',sdp:await answer.text()});
+  if(startId!==activeStartId)return;
+  startAbort=null;
   state.active=true;state.starting=false;message('Connected. Say hello!');actorPhase('listening');ticking();
  }catch(e){
+  if(startId!==activeStartId)return;
   console.error('[Free Talking Realtime demo] failed to start',e);
   // Never kick the student out on an error. Keep the session screen and actionable message.
   endSession('Connection failed. Use Back to return to your lesson.');
