@@ -23,7 +23,7 @@
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-editor.css?v=20260924-r14-25">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-assignment.css?v=20260912-r12-2">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-r12-2.css?v=20260912-r12-2">
-<script src="./dashboard-shell-polish.js?v=20261001-iconfix1" defer></script>
+<script src="./dashboard-shell-polish.js?v=20261108-free-talking-nav1" defer></script>
 <style>
 /* Concrete student activity and current homework overview. */
 #view-students .filters{flex-wrap:wrap;justify-content:flex-end}
@@ -792,7 +792,7 @@ function openStudentsSubtab(tab){
 document.querySelectorAll('[data-students-tab]').forEach(btn=>btn.addEventListener('click',()=>openStudentsSubtab(btn.dataset.studentsTab)));
 try{openStudentsSubtab(sessionStorage.getItem(teacherStudentsTabKey)||'tracking')}catch{openStudentsSubtab('tracking')}
 const teacherViewKey='willena.teachers.activeView.v1';
-function switchView(v){try{localStorage.setItem(teacherViewKey,v)}catch{};if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='utilities'){const frame=$('#freeTalkingAudioBatchFrame');if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src;}if(v==='assignments'){window.UniversalAssignments?.activate?.();window.UniversalAssignments?.refresh?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='class-leaders')loadClassLeaders();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
+function switchView(v){if(v==='free-talking-genius'&&window.FreeTalkingGeniusTeacher?.openView){window.FreeTalkingGeniusTeacher.openView();return}try{localStorage.setItem(teacherViewKey,v)}catch{};if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='utilities'){const frame=$('#freeTalkingAudioBatchFrame');if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src;}if(v==='assignments'){window.UniversalAssignments?.activate?.();window.UniversalAssignments?.refresh?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='class-leaders')loadClassLeaders();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#rosterAssignmentFilter').onchange=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#leaderScope').onchange=()=>loadTeacherLeaderboard(true);$('#leaderMetric').onchange=()=>loadTeacherLeaderboard(true);$('#leaderRefreshBtn').onclick=()=>loadTeacherLeaderboard(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 (async()=>{if(await auth()){loadClasses();let restored='students';try{restored=localStorage.getItem(teacherViewKey)||sessionStorage.getItem(teacherViewKey)||'students'}catch{};if(restored==='writing-genius')window.WritingGeniusTeacher?.openView?.();else if(document.getElementById('view-'+restored))switchView(restored)}})();
@@ -818,13 +818,13 @@ window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 
 <script src="./free-talking-teacher.js?v=20261108-ft-teachers1"></script>
 <script src="./book-select-helper.js?v=20261102-secure-classbook2"></script>
-<script src="./universal-assignments.js?v=20261106-writing-draft-stages1"></script>
+<script src="./universal-assignments.js?v=20261108-free-talking-tab1"></script>
 <script src="./sentence-genius-teacher.js?v=20261105-mission-history3"></script>
 <script src="./grammar-homework.js?v=20261105-mission-history2"></script>
 <script src="./grammar-books-homework.js?v=20261105-mission-history3"></script>
 <script src="./grammar-homework-students.js?v=20261019-studentcards1"></script>
 <script src="./word-genius-catalog-assignment.js?v=20261105-mission-history3"></script>
-<script src="./universal-assignment-tracker.js?v=20261106-writing-draft-stages2"></script>
+<script src="./universal-assignment-tracker.js?v=20261108-free-talking-tracker1"></script>
 <script src="./grammar-foundations-teacher.js?v=20261019-grammar-genius1"></script>
 <script src="./grammar-books-teacher.js?v=20261104-grammar-progress2"></script>
 <script src="./writing-genius-teacher.js?v=20261106-drafts-visible2"></script>
