@@ -207,6 +207,50 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #demo #actorStage .ft-willi-avatar svg{width:70%;height:70%}
 #demo #actorStage[data-phase="speaking"] .ft-willi-avatar svg{animation:ftExtWilliPulse .8s ease-in-out infinite alternate}
 @keyframes ftExtWilliPulse{to{transform:scale(1.1);opacity:.65}}
+/* Layout correction: center the whole illustration within the blue stage.
+   No translateY shortcut: it clipped ears at the top of Samsung screens. */
+#demo #talk .actor-stage{
+ align-items:center!important;justify-content:center!important;
+ padding:0 12px!important;overflow:hidden!important;
+}
+#demo #actorStage .free-talking-genius{
+ transform:none!important;align-items:center!important;justify-content:center!important;
+ height:100%!important;min-height:0!important;width:100%!important;
+}
+#demo #actorStage #ftSession,#demo #actorStage #ftWilliVoice{
+ align-items:center!important;justify-content:center!important;
+ display:flex!important;height:100%!important;min-height:0!important;width:100%!important;
+}
+#demo #actorStage .ft-extension-avatar{
+ width:min(57vw,34dvh,285px)!important;height:min(57vw,34dvh,285px)!important;
+ position:relative!important;overflow:visible!important;flex:none!important;
+}
+/* The ring belongs to AI Willi only. The imported speaking control is not
+   reused for the animal portraits. */
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:min(61vw,40dvh,340px)!important;height:min(61vw,40dvh,340px)!important;
+ position:relative!important;overflow:visible!important;flex:none!important;
+ border-radius:50%!important;background:#fff!important;
+}
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-glow,
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-ai,
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-mic,
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-thinking,
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle .ft-orbit-visual{
+ display:flex!important;
+}
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-ai,
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-mic,
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-thinking{display:none!important}
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle[data-phase="ai"]>.ft-circle-ai{display:flex!important}
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle[data-phase="student"]>.ft-circle-mic{display:flex!important}
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle[data-phase="thinking"]>.ft-circle-thinking{display:flex!important}
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle>.ft-circle-glow{display:block!important}
+#demo #actorStage #ftSession[data-character="marin"] .ft-extension-willi-circle.ft-turn-circle{
+ border:0!important;box-shadow:none!important;outline:none!important;
+}
+#demo .conversation-text{z-index:5!important}
 </style></head><body>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
 <div id="demo" hidden><main class="wrap">
@@ -238,10 +282,10 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
   <button id="volumeToggle" class="dock-icon" type="button" aria-label="Adjust AI voice volume" aria-controls="volumeBox" aria-expanded="false" title="Volume"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a5 5 0 0 1 0 6M19 6a9 9 0 0 1 0 12"/></svg></button>
   <div id="volumeBox" hidden>
    <output id="volumeNumber" for="volume">100%</output>
-   <input id="volume" type="range" min="0" max="150" value="100" step="5" aria-label="AI voice volume" orient="vertical">
+   <input id="volume" type="range" min="0" max="100" value="100" step="5" aria-label="AI voice volume" orient="vertical">
   </div>
  </div>
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-english-expressions13"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-faces-audio-layout14"></script></body></html>
