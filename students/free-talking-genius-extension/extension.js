@@ -275,56 +275,6 @@ function appendLine(who,text){
  $('log').scrollTop=$('log').scrollHeight;
 }
 
-function expressionFromText(text){
- const t=String(text||'').toLowerCase();
- if(/oh no|i'm sorry|that's sad|feel sad|poor you|too bad|unfortunately|miss you/.test(t))return 'sad';
- if(/watch out|that's dangerous|stop that|not okay|don't do|be careful|hey!/.test(t))return 'angry';
- if(/no way|whoa|wow|seriously|unbelievable|shocked/.test(t))return 'shocked';
- if(/really\?|huh\?|wait|oh\?|surpris/.test(t))return 'surprised';
- if(/hmm|i wonder|how come|why do|tell me/.test(t))return 'curious';
- if(/haha|ha!|great|awesome|cool|nice|fun|love|yes!|yay/.test(t))return 'happy';
- return 'neutral';
-}
-function setExpression(expression='neutral',duration=0){
- const actor=state.actor?.actor;if(!actor)return;
- const moods=['neutral','happy','sad','angry','surprised','shocked','curious'];
- const mood=moods.includes(expression)?expression:'neutral';
- clearTimeout(state.emotionTimer);state.emotionTimer=null;
- actor.dataset.expression=mood;
- const svg=actor.querySelector('svg.bf-svg');if(!svg)return;
- svg.querySelector('[data-extension-expression]')?.remove();
- if(mood==='neutral')return;
- const pig=state.character==='pigfish',stroke=pig?'#211715':'#211a15';
- const coords=pig?[[108,393,38,54],[319,412,39,54]]:[[218,330,39,47],[388,332,39,47]];
- let markup='';
- for(const [x,y,rx,ry] of coords){
-  if(mood==='happy')markup+='<path d="M'+(x-rx)+' '+y+' Q'+x+' '+(y-ry*.86)+' '+(x+rx)+' '+y+'" fill="none" stroke="'+stroke+'" stroke-width="13" stroke-linecap="round"/>';
-  else if(mood==='sad')markup+='<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx*.7+'" ry="'+ry*.8+'" fill="'+stroke+'"/>'+
-   '<ellipse cx="'+(x+rx*.25)+'" cy="'+(y-ry*.32)+'" rx="9" ry="10" fill="#fffdf9"/>'+
-   '<path d="M'+(x-rx)+' '+(y-ry)+' Q'+x+' '+(y-ry*.3)+' '+(x+rx)+' '+(y-ry*.7)+'" fill="none" stroke="'+stroke+'" stroke-width="10"/>';
-  else{
-   const wide=mood==='shocked'?1.13:mood==='surprised'?1:.78;
-   markup+='<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx*wide+'" ry="'+ry*(mood==='shocked'?1.16:1)+'" fill="'+stroke+'"/>'+
-    '<ellipse cx="'+(x+rx*.32)+'" cy="'+(y-ry*.38)+'" rx="'+(pig?11:10)+'" ry="'+(pig?13:10)+'" fill="#fffdf9"/>';
-   if(mood==='angry')markup+='<path d="M'+(x-rx)+' '+(y-ry*1.2)+' L'+(x+rx)+' '+(y-ry*.62)+'" stroke="'+stroke+'" stroke-width="13" stroke-linecap="round"/>';
-   if(mood==='curious')markup+='<path d="M'+(x-rx)+' '+(y-ry*1.3)+' Q'+x+' '+(y-ry*1.7)+' '+(x+rx)+' '+(y-ry*1.25)+'" fill="none" stroke="'+stroke+'" stroke-width="9"/>';
-  }
- }
- const cx=pig?175:301,cy=pig?649:424;
- let mouth;
- if(mood==='surprised'||mood==='shocked')mouth='<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(pig?27:16)+'" ry="'+(mood==='shocked'?(pig?37:27):(pig?23:18))+'" fill="#6e3443" stroke="'+stroke+'" stroke-width="6"/>';
- else if(mood==='sad')mouth='<path d="M'+(cx-36)+' '+(cy+20)+' Q'+cx+' '+(cy-20)+' '+(cx+36)+' '+(cy+20)+'" fill="none" stroke="'+stroke+'" stroke-width="9" stroke-linecap="round"/>';
- else if(mood==='angry')mouth='<path d="M'+(cx-36)+' '+(cy+7)+' Q'+cx+' '+(cy-16)+' '+(cx+36)+' '+(cy+7)+'" fill="none" stroke="'+stroke+'" stroke-width="9" stroke-linecap="round"/>';
- else mouth='<path d="M'+(cx-38)+' '+(cy-8)+' Q'+cx+' '+(cy+43)+' '+(cx+38)+' '+(cy-8)+'" fill="none" stroke="'+stroke+'" stroke-width="9" stroke-linecap="round"/>';
- const g=document.createElementNS('http://www.w3.org/2000/svg','g');
- g.setAttribute('data-extension-expression',mood);
- // Bunny's original nose-to-mouth bridge belongs to .bf-rest-mouth,
- // which is hidden during expressions. Restore that fine detail explicitly.
- const noseBridge=pig?'':'<path d="M301 401 V422" fill="none" stroke="'+stroke+'" stroke-width="7" stroke-linecap="round"/>';
- g.innerHTML=markup+noseBridge+'<g class="extension-expression-mouth">'+mouth+'</g>';
- svg.appendChild(g);
- if(duration)state.emotionTimer=setTimeout(()=>setExpression('neutral'),duration);
-}
 function actorPhase(phase){
  $('actorStage').dataset.phase=phase;
  const circle=$('ftTurnCircle');
@@ -362,7 +312,7 @@ function showActor(){
  voice.append(circle);session.append(voice);shell.append(session);host.append(shell);
  state.actor=createFreeTalkingCharacters({circle,session,voiceHost:voice,choices:{}});
  state.actor.select(state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':'marin');
- actorPhase('ready');setExpression('happy',1300);
+ actorPhase('ready');
 }
 function stopSpeech(){
  state.generation++;
@@ -377,7 +327,7 @@ function endSession(reason='Conversation finished.'){
  clearTimeout(state.idleTimer);state.idleTimer=null;
  clearTimeout(state.sessionDeadline);state.sessionDeadline=null;
  clearTimeout(state.anchorTimer);state.anchorTimer=null;state.anchorToken++;
- clearPendingSpeech();clearTimeout(state.emotionTimer);state.emotionTimer=null;
+ clearPendingSpeech();
  state.speechStartedAt=0;state.speechPeak=0;state.lastSpeechDuration=0;state.verifiedAnswer='';
  for(const entry of state.anchorClipCache.values())if(entry?.owned)URL.revokeObjectURL(entry.url);
  state.anchorClipCache.clear();state.anchorClipPromises.clear();state.anchors=[];state.anchorPhase='idle';state.anchorResponding=false;state.guidedSessionReady=false;
@@ -605,7 +555,6 @@ async function playAnchor(index){
  sendRealtime({type:'conversation.item.create',item:{type:'message',role:'assistant',
   content:[{type:'output_text',text:anchor.text}]}});
  appendLine(NAMES[state.character],anchor.text);
- setExpression('curious',2200);
  try{
   const clip=await getAnchorClip(anchor);
   if(!state.active||run!==state.anchorToken)return;
@@ -692,7 +641,32 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
  state.serverHeard=true;
  appendLine('You',String(transcript||'').trim());
  state.verifiedAnswer=String(transcript||'').trim();
- requestGuidedReply();
+ const speech=state.verifiedAnswer;
+ // Standalone vocabulary and language questions are side conversations,
+ // NOT textbook answers. Mixed answer + question remains the current turn.
+ const isAside=/\b(?:what (?:does|do|is)|what'?s|how (?:do|can|would)|can you (?:explain|tell|translate|say)|could you (?:explain|tell|translate)|what'?s the (?:meaning|difference)|(?:meaning|mean) (?:of|in korean))\b/i.test(speech) &&
+   (/\?|\b(?:mean|meaning|explain|translate|in korean|in english|how do you say)\b/i.test(speech));
+ const isAnswerPrefix=/^(?:yes|yeah|yep|no|nope|i (?:do|don't|like|love|want|have|think|can|am|prefer)|it'?s|they'?re|we|my|because)\b/i.test(speech);
+ if(isAside&&!isAnswerPrefix){
+  requestGuidedAside();
+ }else requestGuidedReply();
+}
+function requestGuidedAside(){
+ if(!state.active||state.anchorResponding||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
+ state.asideReturnPhase=state.anchorPhase;
+ state.anchorPhase='respondingAside';state.anchorResponding=true;state.anchorResponseText='';
+ const question=String(state.verifiedAnswer||'').slice(0,300);state.verifiedAnswer='';
+ const directive=[
+  'STUDENT QUESTION DETOUR. The learner just asked: "'+question+'". Answer their actual question directly and warmly, as a real conversational partner.',
+  'If they ask for the meaning of a word or sentence, explain it in very simple English with a tiny example; when helpful include a SHORT accurate Korean gloss (e.g. cozy = 아늑한, 편안한). This limited Korean vocabulary help is allowed. Never use Japanese.',
+  'If they ask about your tastes or feelings, answer naturally in first person as the character, briefly and without claiming human experiences. For example: "Yeah, blue is lovely! I like sky blue."',
+  'Keep it short: at most 35 words for a definition or 18 for a personal question. No routine praise or long lectures.',
+  'Do NOT ask the next textbook question, and DO NOT count this question as an answer. The app will resume listening to the same lesson turn after you reply.'
+ ].join(' ');
+ if(!sendRealtime({type:'response.create',response:{output_modalities:['text'],instructions:directive}})){
+  state.anchorResponding=false;state.anchorPhase=state.asideReturnPhase;
+  error('The connection closed. Please retry your question.');
+ }else{actorPhase('thinking');message('Answering your question…')}
 }
 function requestGuidedReply(){
  if(!state.active||state.anchorResponding)return;
@@ -704,10 +678,12 @@ function requestGuidedReply(){
  state.anchorPhase=second?'respondingSecond':'respondingFirst';
  const cap=second?reactionWordCap(state.lessonLevel):replyWordCap(state.lessonLevel);
  const verified=String(state.verifiedAnswer||'').slice(0,350);state.verifiedAnswer='';
+ const studentQuestion=/(?:\?|\bdo you (?:like|want|have|think|know)\b|\bwhat about you\b)/i.test(verified);
  const directive=[
   'STRICT ENGLISH-ONLY MODE. Every reaction and follow-up must be entirely in English. Never answer in Korean, Japanese or another language, even if the learner uses it. Never translate or mirror a foreign-language response. Ask for English in simple English.',
   'Verified latest student speech: "'+verified+'". Base your answer ONLY on these actual words; do not invent student responses.',
   'Current textbook question: "'+anchor.text+'". React to the STUDENT\'S MOST RECENT ANSWER, not an earlier answer.',
+  studentQuestion?'The student ALSO asked you a question. Answer their question naturally in one short sentence BEFORE the usual reaction or follow-up. For example, "Yes, I like blue!" Never ignore a question directed at you.':'',
   second
    ?'SECOND ANSWER. Make one short and genuinely relevant reaction or playful observation about what the student just said. NO QUESTION. Do NOT introduce the next topic, because the app will play the next cached question. You may occasionally finish with a tiny segue like "So..." or "Anyway...".'
    :'FIRST ANSWER. If appropriate, start with a tiny natural reaction, then ask exactly ONE follow-up QUESTION tied to a detail of the student\'s specific answer. End with that question. Do not ask the next textbook question.',
@@ -735,23 +711,31 @@ async function finishConversation(){
 }
 async function finishGuidedReply(data){
  const phase=state.anchorPhase;
- if(phase!=='respondingFirst'&&phase!=='respondingSecond')return;
+ const aside=phase==='respondingAside';
+ if(!aside&&phase!=='respondingFirst'&&phase!=='respondingSecond')return;
  const second=phase==='respondingSecond';
  state.anchorResponding=false;
  let responseText=String(data.response?.output?.flatMap(x=>x.content||[])
   .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';
- responseText=shortenGuidedResponse(responseText,second,state.lessonLevel);
- if(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u.test(responseText)){
+ if(!aside)responseText=shortenGuidedResponse(responseText,second,state.lessonLevel);
+ // Vocabulary detours may contain Hangul, but never Japanese or Chinese.
+ if(aside&&/[\u3040-\u30ff\u3400-\u9fff]/u.test(responseText))responseText='Let me explain that in simple English.';
+ if(!aside&&/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u.test(responseText)){
   console.warn('[Free Talking] Refused non-English model reply');
   responseText=second?'Okay, moving on!':'Can you tell me more?';
  }
- setExpression(expressionFromText(responseText),4000);
  const run=state.anchorToken;state.replyWasSecond=second;state.anchorPhase='playingReply';setMicEnabled(false);
  if(responseText)await speakEleven(responseText);
  else if(!second)error('No follow-up returned. Please try again.');
  if(!state.active||run!==state.anchorToken)return;
- if(second){
+ if(aside){
+  state.anchorPhase=state.asideReturnPhase||'awaitingFirst';
+  state.asideReturnPhase=null;
+  setMicEnabled(true);actorPhase('listening');armIdleTimeout();
+  message('You can ask another question or continue answering.');
+  $('listenCheck').textContent='Listening for your answer';
+ }else if(second){
   // Play next cached anchor only after the short reaction finishes speaking.
   state.anchorPhase='betweenAnchors';
   if(state.anchorIndex+1>=state.anchors.length)void finishConversation();
@@ -813,7 +797,6 @@ async function speakEleven(text){
  stopSpeech(); // abort any previous utterance before starting this reply
  const current=state.generation;
  appendLine(NAMES[state.character],text);
- setExpression(expressionFromText(text),4000);
  actorPhase('ready');message(NAMES[state.character]+' is speaking…');
  const control=new AbortController();state.controller=control;
  try{
