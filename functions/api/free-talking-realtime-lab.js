@@ -170,7 +170,7 @@ const LEVEL_RESPONSE_GUIDES=[
  }
 ];
 function bookConversationLevel(book){
- const value=Number(book.public_level);
+ const value=book.public_level===null||book.public_level===undefined?NaN:Number(book.public_level);
  // The Content Database's book public_level is authoritative; never infer
  // level from a title (e.g. Buzz 6 has public_level 7).
  return Number.isInteger(value)&&value>=0&&value<=10?value:2;
