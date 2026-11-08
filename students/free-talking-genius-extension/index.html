@@ -178,6 +178,28 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #demo .conversation-text{position:relative;z-index:3;max-height:min(30dvh,245px);min-height:130px}
 #demo .conversation-text #anchorText{max-height:3.8em}
 #demo .conversation-text #log{max-height:150px}
+
+/* The conversational character sits clearly above its own transcript box. */
+#demo #talk .actor-stage{isolation:isolate!important}
+#demo #actorStage .free-talking-genius{transform:translateY(-8dvh)!important}
+#demo #actorStage #ftTurnCircle{width:min(57vw,34dvh,285px)!important;height:min(57vw,34dvh,285px)!important}
+#demo #actorStage #ftTurnCircle,
+#demo #actorStage #ftTurnCircle::before,
+#demo #actorStage #ftTurnCircle::after{
+ border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;
+}
+#demo #actorStage #ftTurnCircle>.ft-circle-glow,
+#demo #actorStage #ftTurnCircle>.ft-circle-ai,
+#demo #actorStage #ftTurnCircle>.ft-circle-mic,
+#demo #actorStage #ftTurnCircle>.ft-circle-thinking{display:none!important}
+#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .bf-eyes,
+#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .pf-eyes{opacity:0!important}
+#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .bf-rest-mouth,
+#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral]) .pf-rest-mouth{opacity:0!important}
+#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral])[data-state]:not([data-state=speaking]) .bf-talk-mouth,
+#demo #actorStage .bf-actor[data-expression]:not([data-expression=neutral])[data-state]:not([data-state=speaking]) .pf-talk-mouth{opacity:0!important}
+#demo #actorStage .bf-actor[data-state=speaking] .extension-expression-mouth{opacity:0!important}
+#demo .conversation-text{z-index:5!important}
 </style></head><body>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
 <div id="demo" hidden><main class="wrap">
@@ -215,4 +237,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-expressions-stage10"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-english-expressions11"></script></body></html>
