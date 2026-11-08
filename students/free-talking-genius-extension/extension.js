@@ -8,8 +8,6 @@ const frame=$('original'),veil=$('demo');
 const state={book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio'};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 const fixArt=(art,key)=>art.replaceAll('id="pigBody"','id="pigBody-'+key+'"').replaceAll('url(#pigBody)','url(#pigBody-'+key+')').replaceAll('id="pigBelly"','id="pigBelly-'+key+'"').replaceAll('url(#pigBelly)','url(#pigBelly-'+key+')');
-$('bunnyPortrait').innerHTML=BUNNY_FOX_ART;
-$('pigfishPortrait').innerHTML=fixArt(PIGFISH_ART,'demo-portrait');
 function message(s){$('status').textContent=s}
 function error(s){$('error').textContent=String(s||'Unknown error')}
 function buttonState(c){
@@ -76,8 +74,6 @@ async function openDemo(){
  error('');state.book=null;state.unit=null;state.seconds=180;state.character='willi';
  $('heading').textContent='Free Talking · 3 minutes';
  $('lesson').textContent=title+' · Unit '+unitMatch[1];
- $('choose').classList.add('is-hidden');$('talk').classList.remove('is-visible');
- $('start').disabled=true;
  // Stay on the ORIGINAL in-app friend-selection screen, not a duplicate overlay.
  const note=d.getElementById('ftCharacterRound');
  if(note){note.hidden=false;note.textContent='자유 대화 · 3분 · AI Willi / Bunny Fox / Pigfish';}
@@ -89,7 +85,6 @@ async function openDemo(){
   if(!units.length)throw Error('Unit not found in Content Database');
   state.book=book;state.unit=units[0];
   $('lesson').textContent=book.title+' · Unit '+state.unit.unit_number+' · '+state.unit.title;
-  $('start').disabled=false;
  }catch(e){
   const note=d.getElementById('ftCharacterRound');
   if(note){note.hidden=false;note.textContent='교재 정보를 불러오지 못했어요: '+e.message;}
@@ -260,7 +255,5 @@ async function startConversation(){
   // Never kick the student out on an error. Keep the session screen and actionable message.
   endSession('Connection failed. Use Back to return to your lesson.');
   error('Could not start: '+(e?.message||'Unknown connection error'));
-  $('choose').classList.add('is-hidden');$('talk').classList.add('is-visible');veil.hidden=false;
  }
 }
-$('start').addEventListener('click',()=>void startConversation());
