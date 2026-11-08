@@ -291,7 +291,7 @@ function handleRealtime(data){
  switch(data.type){
  case 'session.updated':
   if(state.voiceMode==='eleven'&&!state.alreadySpoken){state.alreadySpoken=true;
-   state.channel.send(JSON.stringify({type:'response.create',response:{output_modalities:['text'],instructions:'Greet the child in under 5 words, then ask one easy question from this unit. MAXIMUM 15 words.'}}));
+   state.channel.send(JSON.stringify({type:'response.create',response:{output_modalities:['text']}}));
   }break;
  case 'input_audio_buffer.speech_started':
   if(state.voiceMode==='eleven'&&state.playing)stopSpeech();
@@ -400,7 +400,7 @@ async function startConversation(){
   channel.onopen=()=>{
    if(state.voiceMode==='eleven'){
     channel.send(JSON.stringify({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:true,interrupt_response:true}}}}}));
-   }else{state.alreadySpoken=true;channel.send(JSON.stringify({type:'response.create',response:{instructions:'Say a brief greeting and ONE easy question about the selected unit. Under 15 words.'}}))}
+   }else{state.alreadySpoken=true;channel.send(JSON.stringify({type:'response.create'}))}
   };
   const offer=await peer.createOffer();await peer.setLocalDescription(offer);
   const answer=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',headers:{Authorization:'Bearer '+session.token,'Content-Type':'application/sdp'},body:offer.sdp,signal:AbortSignal.timeout(18000)});
@@ -409,7 +409,7 @@ async function startConversation(){
   await peer.setRemoteDescription({type:'answer',sdp:await answer.text()});
   if(startId!==activeStartId)return;
   startAbort=null;
-  state.active=true;state.starting=false;message('Connected. Say hello!');actorPhase('listening');ticking();
+  state.active=true;state.starting=false;message('Connected. Say hello!');actorPhase('listening');ticking();$('listenCheck').textContent='Microphone connected · speak English';$('restart').disabled=true;
  }catch(e){
   if(startId!==activeStartId)return;
   console.error('[Free Talking Realtime demo] failed to start',e);
