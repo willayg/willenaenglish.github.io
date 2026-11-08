@@ -271,7 +271,7 @@ export async function onRequestPost({request,env}){
  'Do not overuse slang, repeat children\'s profanities, swear, or insult the student. Follow the book-level language band and unit structures strictly, especially want to and like to rather than hypothetical would for Levels 1–5.',
  'If you cannot understand the child, ask to repeat instead of inventing events, feelings or topics. Do not drift away from the selected textbook unit.'
  ].join('\\n'):'';
- const config={session:{type:'realtime',model:'gpt-realtime-2.1-mini',instructions:lessonInstructions({book,unit,questions,examples,words})+'\\n'+responseGuide(book,unit)+(guided?'\\n'+guidedRules:''),audio:{output:{voice:'marin'},input:{turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:!guided,interrupt_response:!guided}}}}};
+ const config={session:{type:'realtime',model:'gpt-realtime-2.1-mini',instructions:lessonInstructions({book,unit,questions,examples,words})+'\\n'+responseGuide(book,unit)+(guided?'\\n'+guidedRules:''),audio:{output:{voice:'marin'},input:{...(guided?{transcription:{model:'gpt-4o-mini-transcribe',language:'en'}}:{}),turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:!guided,interrupt_response:!guided}}}}};
   const key=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
   const safetyId=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('willena-realtime-lab:'+user.id)).then(b=>[...new Uint8Array(b)].map(v=>v.toString(16).padStart(2,'0')).join(''));
   const response=await fetch('https://api.openai.com/v1/realtime/client_secrets',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json','OpenAI-Safety-Identifier':safetyId},body:JSON.stringify(config),signal:AbortSignal.timeout(16000)});
