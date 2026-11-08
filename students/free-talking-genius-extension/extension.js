@@ -321,6 +321,12 @@ $('restart').addEventListener('click',()=>{
  void startConversation();
 });
 $('volume').addEventListener('input',()=>{resumeMixer();setAudioLevels()});
+$('testVoice').addEventListener('click',()=>{
+ if(state.voiceMode!=='eleven'||!state.active)return;
+ error('');
+ // This bypasses OpenAI response-generation: it verifies voice, proxy and MP3 playback.
+ void speakEleven('Hello! Let us talk about your lesson.');
+});
 $('soundFallback').addEventListener('click',()=>{
  // Retain a reliable browser speaker path, with a choice to switch it back.
  state.quietMode=!state.quietMode;
@@ -403,7 +409,7 @@ async function speakEleven(text){
    control.signal.addEventListener('abort',resolve,{once:true});
   });
   if(state.active&&current===state.generation){actorPhase('listening');message('Your turn.')}
- }catch(e){if(e.name!=='AbortError'&&state.active)error('ElevenLabs audio: '+e.message)}
+ }catch(e){if(e.name!=='AbortError'&&state.active){error('ElevenLabs audio: '+e.message);message('Voice playback failed — see the error below')}}
 }
 async function startConversation(){
  if(state.starting||state.active||!state.unit||!state.book)return;
@@ -419,6 +425,7 @@ async function startConversation(){
  $('log').replaceChildren();showActor();message('Connecting…');
  $('mute').disabled=false;$('end').disabled=false;$('mute').textContent='Mute microphone';
  const character=state.character;state.voiceMode=character==='willi'?'audio':'eleven';
+ $('testVoice').hidden=state.voiceMode!=='eleven';
  try{
   const res=await authorizedDemoFetch('/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id},startAbort.signal);
   if(startId!==activeStartId)return;
