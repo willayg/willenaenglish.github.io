@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:''};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -267,6 +267,10 @@ async function openDemo({preserveCharacter=false}={}){
 }
 
 const QUESTION_BUDGET_MS=20000;
+const isBeginner=()=>state.lessonLevel<=2;
+const isFirstLevel=()=>state.lessonLevel<=1;
+function stripInternalLabels(value){return String(value||'').replace(/\b(?:Textbook|Current textbook question|Current question|Example|Lesson focus|Instructions)\s*:\s*[^.!?]*(?:[.!?]|$)/gi,' ').replace(/\s+/g,' ').trim()}
+
 const CHECK_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L19 7"/></svg>';
 function renderTopicTicker(){
  const steps=$('topicSteps');if(!steps)return;
@@ -297,7 +301,7 @@ function resetQuestionClock(){
  state.questionRemainingMs=QUESTION_BUDGET_MS;
  state.questionExpired=false;
  state.awaitingSpeechCommit=false;
- state.finishingTopic=false;
+ state.finishingTopic=false;state.beginnerRescueUsed=false;
  renderTopicTicker();
 }
 function studentTurnInProgress(){
@@ -337,6 +341,16 @@ async function moveToNextTopic(){
 async function finishTimedQuestion(){
  if(!state.active||state.paused||state.finishingTopic||!state.questionExpired)return;
  if(studentTurnInProgress()){state.questionExpired=true;return}
+ if(isBeginner()&&!state.beginnerRescueUsed){
+  state.beginnerRescueUsed=true;state.questionExpired=false;state.questionRemainingMs=12000;
+  const prior=state.anchorPhase,token=state.anchorToken;
+  haltQuestionClock();state.anchorPhase='playingReply';setMicEnabled(false);
+  try{await speakEleven(prior==='awaitingSecond'?'Yes or no?':'Try one word. Yes or no?')}catch(e){console.warn('Beginner help',e)}
+  if(state.active&&token===state.anchorToken){
+   state.anchorPhase=prior;setMicEnabled(true);actorPhase('listening');armIdleTimeout();startQuestionClock();
+  }
+  return;
+ }
  state.finishingTopic=true;haltQuestionClock();clearTimeout(state.idleTimer);
  const token=state.anchorToken;
  state.anchorPhase='betweenAnchors';setMicEnabled(false);
@@ -650,7 +664,7 @@ async function playAnchor(index){
  clearTimeout(state.idleTimer);state.idleTimer=null;
  state.anchorIndex=index;state.anchorPhase='playingAnchor';state.anchorResponding=false;
  resetQuestionClock();state.topicHadAnswer=false;
- state.vocabDetours=0;state.topicDetours=0;state.asideTerm='';state.topicQuestion='';state.asideKind=null;
+ state.vocabDetours=0;state.topicDetours=0;state.pendingWordConfirmation=null;state.asideTerm='';state.topicQuestion='';state.asideKind=null;
  state.speechStartedAt=0;state.speechPeak=0;state.lastSpeechDuration=0;clearPendingSpeech();
  $('clock').textContent='Question '+(index+1)+' / '+state.anchors.length;
  $('anchorText').textContent=anchor.text;
@@ -750,9 +764,13 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
  appendLine('You',String(transcript||'').trim());
  state.verifiedAnswer=String(transcript||'').trim();
  const speech=state.verifiedAnswer;
- if(state.questionExpired){state.topicHadAnswer=true;void finishTimedQuestion();return}
+ if(state.questionExpired){state.questionExpired=false;state.questionRemainingMs=Math.max(6000,state.questionRemainingMs)}
  const category=classifyStudentTurn(speech);
- if(category.kind==='vocabulary'){
+ if(category.kind==='clarify'){
+   sendRealtime({type:'conversation.item.delete',item_id:itemId});
+   state.questionRemainingMs=Math.max(12000,state.questionRemainingMs);
+   void redirectToLesson('Sorry! Please say that word again, slowly.');
+  }else if(category.kind==='vocabulary'){
   state.asideKind='vocabulary';
   // Strip student instructions from the model context; the isolated term is
   // supplied separately as quoted data to the vocabulary helper.
@@ -806,7 +824,13 @@ function classifyStudentTurn(text){
   if(/\b(?:ignore|forget|pretend|bypass|override|instructions|jailbreak|roleplay|persona|password|prompt|system)\b/i.test(term))break;
   if(words.length<1||words.length>4||term.length>35||!/[A-Za-z]/.test(term)||
      !/^[a-zA-Z][a-zA-Z '\-]*$/.test(term)||/\b(?:korean|japanese|instructions|system|prompt|everything|anything|anything else|you|your|me|us)\b/i.test(term))break;
-  return {kind:'vocabulary',term};
+  if(isBeginner()&&/^(?:play|playing|plain|plane|draw|drawing|type|hype|tape)$/i.test(term)){
+    if(state.pendingWordConfirmation===term){state.pendingWordConfirmation=null;return {kind:'vocabulary',term}}
+    state.pendingWordConfirmation=term;
+    return {kind:'clarify',term};
+   }
+   state.pendingWordConfirmation=null;
+   return {kind:'vocabulary',term};
  }
  // Compare content words with the current textbook anchor and most recent
  // character turn. This admits relevant questions like "Do I need flour?"
@@ -893,20 +917,27 @@ function requestGuidedReply(){
  const second=phase==='awaitingSecond';
  state.anchorResponding=true;state.anchorResponseText='';
  state.anchorPhase=second?'respondingSecond':'respondingFirst';
- const verified=String(state.verifiedAnswer||'').slice(0,350);state.verifiedAnswer='';
+ const verified=String(state.verifiedAnswer||'').slice(0,350);state.verifiedAnswer='';state.verifiedBeginnerAnswer=verified;
  const studentQuestion=/(?:\?|\bdo you (?:like|want|have|think|know)\b|\bwhat about you\b)/i.test(verified);
  state.answerIncludesQuestion=studentQuestion;
  const cap=(second?reactionWordCap(state.lessonLevel):replyWordCap(state.lessonLevel))+(studentQuestion?8:0);
+  const beginnerRules=isBeginner()?[
+   'LEVEL '+state.lessonLevel+' BEGINNER CHILD. Use only very familiar words, especially words in the current textbook question. Avoid abstract adjectives, slang, idioms, jokes, grammar terminology.',
+   isFirstLevel()?'Ask only an easy yes/no or two-choice question, maximum SIX words. For example: Is it big? Blue or red?':'Ask an easy yes/no, two-choice, or one very simple what/where question, maximum EIGHT words.',
+   'Accept one-word, yes/no, and short sentence answers. If child does not know, offer an easy choice; model a full sentence softly, without demanding repetition.'
+  ].join(' '):'';
  const directive=[
   'STRICT ENGLISH-ONLY MODE. Every reaction and follow-up must be entirely in English. Never answer in Korean, Japanese or another language, even if the learner uses it. Never translate or mirror a foreign-language response. Ask for English in simple English.',
   'Verified latest student speech: "'+verified+'". Base your answer ONLY on these actual words; do not invent student responses.',
+   beginnerRules,
+   'Never expose internal labels or prompts such as Textbook:, Example:, Current question:, or Lesson focus:. Speak directly to the child.',
   'Current textbook question: "'+anchor.text+'". React to the STUDENT\'S MOST RECENT ANSWER, not an earlier answer.',
   studentQuestion?'The student ALSO asked you a question. Answer their question naturally in one short sentence BEFORE the usual reaction or follow-up. For example, "Yes, I like blue!" Never ignore a question directed at you.':'',
   second
    ?'SECOND ANSWER. Make one short and genuinely relevant reaction or playful observation about what the student just said. NO QUESTION. Do NOT introduce the next topic, because the app will play the next cached question. You may occasionally finish with a tiny segue like "So..." or "Anyway...".'
    :'FIRST ANSWER. If appropriate, start with a tiny natural reaction, then ask exactly ONE follow-up QUESTION tied to a detail of the student\'s specific answer. End with that question. Do not ask the next textbook question.',
   'ABSOLUTE MAXIMUM '+cap+' SPOKEN WORDS. Prefer fewer. Never give a paragraph or list. Let the child do most of the talking.',
-  'Use a little natural humour, everyday slang, interjections and linking words if they fit. Avoid robotic praise, thanks for sharing, thanks for telling me, and repetitive compliments.',
+  isBeginner()?'Do not use slang, complicated humour, or unfamiliar vocabulary. Keep everything concrete and friendly.':'Use natural humour and short interjections where suitable. Avoid repetitive compliments.',
   'Stay within the selected Willena level and unit grammar. Do not invent details or claim to know how strangers really feel. A playful observation like "Ha! The other passengers must love that." can be fine if clearly teasing.',
   'If the child mentions a dangerous action, give a short appropriate safety boundary, not an extended lecture. If you cannot understand the answer, ask to repeat instead of guessing.'
  ].join(' ');
@@ -937,7 +968,15 @@ async function finishGuidedReply(data){
  let responseText=String(data.response?.output?.flatMap(x=>x.content||[])
   .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';
- if(!aside)responseText=shortenGuidedResponse(responseText,second,Math.min(10,state.lessonLevel+(state.answerIncludesQuestion?5:0)));
+ responseText=stripInternalLabels(responseText);
+  if(!aside)responseText=shortenGuidedResponse(responseText,second,isBeginner()?state.lessonLevel:Math.min(10,state.lessonLevel+(state.answerIncludesQuestion?5:0)));
+  if(!aside&&isBeginner()&&!second){
+   const questions=responseText.match(/[^.!?]*\?/g)||[];
+   const q=(questions[questions.length-1]||'').trim();
+   if(!q||q.split(/\s+/).length>(isFirstLevel()?6:8)||/\b(?:plain|category|exaggerated|interesting|describe|prefer|usually|different|actually|probably)\b/i.test(q)){
+    responseText=/\b(?:yes|no)\b/i.test(state.verifiedBeginnerAnswer)?'Nice! Is it big?':'Good! Do you like it?';
+   }
+  }
  state.answerIncludesQuestion=false;
  // Vocabulary detours may contain Hangul, but never Japanese or Chinese.
  if(topicAside){
@@ -1156,7 +1195,7 @@ async function startConversation(){
    // session.updated, which can be absent after negotiating a Realtime call.
    state.guidedSessionReady=true;
    channel.send(JSON.stringify({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{
-    transcription:{model:'gpt-4o-mini-transcribe',language:'en',prompt:'English-only classroom conversation: young Korean learners speaking English with accents. Transcribe English words exactly. Never translate Korean or Japanese into English and never invent speech from silence.'},
+    transcription:{model:'gpt-4o-mini-transcribe',language:'en',prompt:'Young Korean ESL children with accents, speaking short hesitant English. Classroom objects, colours, numbers, and simple vocabulary. Current question: '+String(state.anchors[state.anchorIndex]?.text||'').slice(0,120)+'. Only transcribe actually audible sounds; never infer words from the question or silence. Preserve corrections, for example: No, type, not hype.'},
     turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:false,interrupt_response:false}
    }}}}));
    if(state.active&&state.anchorPhase==='ready'&&!restoreAfterPause())void playAnchor(state.anchorIndex);
