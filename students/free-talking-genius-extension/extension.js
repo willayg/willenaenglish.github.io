@@ -408,7 +408,7 @@ function endSession(reason='Conversation finished.'){
  try{state.channel?.close()}catch{};try{state.peer?.close()}catch{};
  try{state.stream?.getTracks().forEach(t=>t.stop())}catch{}
  if(state.remote){state.remote.pause();state.remote.srcObject=null;state.remote.remove()}
- state.peer=null;state.channel=null;state.stream=null;state.audioSender=null;state.micReleased=false;state.remote=null;state.remoteStream=null;state.active=false;state.starting=false;state.ttsPlaying=false;
+ state.peer=null;state.channel=null;state.stream=null;state.audioSender=null;state.micReleased=false;state.bluetoothAudio=false;state.remote=null;state.remoteStream=null;state.active=false;state.starting=false;state.ttsPlaying=false;
  if(state.audioContext){const context=state.audioContext;state.audioContext=null;state.audioGain=null;void context.close().catch(()=>{})}
  message(reason);actorPhase('ready');
  $('mute').disabled=true;$('end').disabled=true;
@@ -542,6 +542,9 @@ function cycleMic(work){
 function releaseMicForPlayback(){
  return cycleMic(async()=>{
   if(!state.active||state.micReleased||!state.audioSender)return;
+  // Bluetooth headsets switch HFP/A2DP profiles when microphone hardware
+  // repeatedly starts/stops. Keep its capture route stable for the session.
+  if(state.bluetoothAudio){setMicEnabled(false);return}
   const old=state.stream;
   const track=old?.getAudioTracks()[0];
   if(!track)return;
@@ -1142,6 +1145,14 @@ async function startConversation(){
   }
   const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
   state.stream=mic;
+  // Detect Bluetooth input OR output devices after microphone permission.
+  // Device labels may be absent on some Android browsers; in that case we
+  // cannot force an output route from the web app.
+  const devices=await navigator.mediaDevices.enumerateDevices().catch(()=>[]);
+  const bluetoothLabel=/bluetooth|airpods|galaxy buds|buds[0-9+ ]|headset|hands.free|handsfree|a2dp|bt audio/i;
+  state.bluetoothAudio=bluetoothLabel.test(mic.getAudioTracks()[0]?.label||'')||
+   devices.some(d=>d.kind==='audiooutput'&&bluetoothLabel.test(d.label||''));
+  if(state.bluetoothAudio)console.info('[Free Talking] Bluetooth detected; using stable capture route during TTS');
   if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
   monitorMicrophone(mic);
   state.audioSender=peer.addTrack(mic.getAudioTracks()[0],mic);
