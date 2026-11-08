@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet()};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -101,6 +101,48 @@ function routeAudio(audio){
 }
 function resumeMixer(){
  if(state.audioContext?.state==='suspended')void state.audioContext.resume().catch(()=>{});
+}
+
+
+function stopMicMonitor(){
+ if(state.micRaf)cancelAnimationFrame(state.micRaf);
+ state.micRaf=null;
+ try{state.micSource?.disconnect()}catch{}
+ state.micSource=null;state.micAnalyzer=null;
+ if(state.micContext&&state.micContext!==state.audioContext)void state.micContext.close().catch(()=>{});
+ state.micContext=null;state.micNoiseSeen=false;state.serverHeard=false;
+}
+function monitorMicrophone(stream){
+ stopMicMonitor();
+ const track=stream.getAudioTracks()[0];
+ if(!track){$('listenCheck').textContent='No microphone track was found';return}
+ $('listenCheck').textContent='Microphone permission granted · checking audio';
+ track.addEventListener('ended',()=>{$('listenCheck').textContent='Microphone disconnected'});
+ track.addEventListener('mute',()=>{$('listenCheck').textContent='Microphone paused by phone or browser'});
+ track.addEventListener('unmute',()=>{$('listenCheck').textContent='Microphone active'});
+ const Ctx=window.AudioContext||window.webkitAudioContext;
+ if(!Ctx){$('micLevel').textContent='Mic: connected';return}
+ try{
+  const context=state.audioContext||new Ctx({latencyHint:'interactive'});
+  state.micContext=context;
+  const analyser=context.createAnalyser();analyser.fftSize=512;
+  const source=context.createMediaStreamSource(stream);source.connect(analyser);
+  state.micSource=source;state.micAnalyzer=analyser;
+  void context.resume().catch(()=>{});
+  const sample=new Uint8Array(analyser.fftSize);let tick=0;
+  const frame=()=>{
+   if(!state.stream||state.stream!==stream)return;
+   state.micRaf=requestAnimationFrame(frame);
+   if(++tick%6)return;
+   analyser.getByteTimeDomainData(sample);
+   let sum=0;for(let i=0;i<sample.length;i++){const d=(sample[i]-128)/128;sum+=d*d}
+   const rms=Math.sqrt(sum/sample.length);
+   const level=Math.min(100,Math.round(rms*550));
+   $('micLevel').textContent='Mic level: '+level+'%';
+   if(level>=5){state.micNoiseSeen=true;if(!state.serverHeard)$('listenCheck').textContent='Microphone picking up sound · waiting for AI';}
+  };
+  frame();
+ }catch(ex){console.warn('Mic level monitor unavailable',ex);$('micLevel').textContent='Mic: connected'}
 }
 
 function message(s){$('status').textContent=s}
@@ -250,6 +292,7 @@ function stopSpeech(){
 }
 function endSession(reason='Conversation finished.'){
  clearInterval(state.timer);state.timer=null;
+ stopMicMonitor();
  state.actor?.setSpeaking(false);state.actor=null;
  stopSpeech();
  try{state.channel?.close()}catch{};try{state.peer?.close()}catch{};
@@ -259,6 +302,7 @@ function endSession(reason='Conversation finished.'){
  if(state.audioContext){const context=state.audioContext;state.audioContext=null;state.audioGain=null;void context.close().catch(()=>{})}
  message(reason);actorPhase('ready');
  $('mute').disabled=true;$('end').disabled=true;
+ $('restart').disabled=state.seconds===0;
 }
 $('back').addEventListener('click',navigateBack);
 $('end').addEventListener('click',navigateBack);
@@ -267,6 +311,14 @@ $('mute').addEventListener('click',()=>{
  const track=state.stream?.getAudioTracks()[0];if(!track)return;
  track.enabled=!track.enabled;$('mute').textContent=track.enabled?'Mute microphone':'Unmute microphone';
  message(track.enabled?'Listening…':'Microphone muted');
+});
+$('restart').addEventListener('click',()=>{
+ if(state.starting)return;
+ if(state.active){
+  // A reconnect replaces the current connection and retains the selected character.
+  endSession('Reconnecting…');
+ }
+ void startConversation();
 });
 $('volume').addEventListener('input',()=>{resumeMixer();setAudioLevels()});
 $('soundFallback').addEventListener('click',()=>{
@@ -295,8 +347,9 @@ function handleRealtime(data){
   }break;
  case 'input_audio_buffer.speech_started':
   if(state.voiceMode==='eleven'&&state.playing)stopSpeech();
+  state.serverHeard=true;$('listenCheck').textContent='AI heard your voice';
   actorPhase('listening');message('Listening…');break;
- case 'input_audio_buffer.speech_stopped':actorPhase('ready');message('Thinking…');break;
+ case 'input_audio_buffer.speech_stopped':state.serverHeard=true;$('listenCheck').textContent='Speech received · AI preparing answer';actorPhase('ready');message('Thinking…');break;
  case 'response.created':message('Thinking…');break;
  case 'response.output_text.delta':case 'response.text.delta':
   state.turnText+=data.delta||'';break;
@@ -308,7 +361,7 @@ function handleRealtime(data){
  case 'response.audio_transcript.done':case 'response.output_audio_transcript.done':
   if(state.voiceMode==='audio'&&data.transcript)appendLine('AI Willi',data.transcript);break;
  case 'conversation.item.input_audio_transcription.completed':
-  if(data.transcript)appendLine('You',data.transcript);break;
+  if(data.transcript){state.serverHeard=true;$('listenCheck').textContent='AI heard: '+data.transcript.slice(0,45);appendLine('You',data.transcript)}break;
  case 'response.done':
   if(state.voiceMode==='eleven'){
    if(state.turnText.trim()&&!state.pendingText){const text=state.turnText.trim();state.turnText='';state.pendingText=true;void speakEleven(text).finally(()=>{state.pendingText=false})}
@@ -361,7 +414,7 @@ async function startConversation(){
  startAbort=new AbortController();
  // Add a real top-level history entry AFTER the original app's character
  // screen, so native Back visits character selection before the unit screen.
- history.pushState({...history.state,[EXT_NAV_KEY]:'activity'},'');
+ if(!hasActivityHistory())history.pushState({...history.state,[EXT_NAV_KEY]:'activity'},'');
  veil.hidden=false;$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
  $('log').replaceChildren();showActor();message('Connecting…');
@@ -394,8 +447,16 @@ async function startConversation(){
   const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
   state.stream=mic;
   if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
+  monitorMicrophone(mic);
   peer.addTrack(mic.getAudioTracks()[0],mic);
   const channel=peer.createDataChannel('oai-events');state.channel=channel;
+  channel.onclose=()=>{if(state.active)$('listenCheck').textContent='AI data connection closed'};
+  peer.onconnectionstatechange=()=>{
+   if(peer.connectionState==='failed'||peer.connectionState==='disconnected'){
+    $('listenCheck').textContent='Voice connection '+peer.connectionState;
+    if(state.active)error('Voice connection interrupted. Press Retry connection.');
+   }
+  };
   channel.onmessage=e=>{try{handleRealtime(JSON.parse(e.data))}catch(err){console.warn(err)}};
   channel.onopen=()=>{
    if(state.voiceMode==='eleven'){
@@ -409,12 +470,14 @@ async function startConversation(){
   await peer.setRemoteDescription({type:'answer',sdp:await answer.text()});
   if(startId!==activeStartId)return;
   startAbort=null;
-  state.active=true;state.starting=false;message('Connected. Say hello!');actorPhase('listening');ticking();$('listenCheck').textContent='Microphone connected · speak English';$('restart').disabled=true;
+  state.active=true;state.starting=false;message('Connected. Say hello!');actorPhase('listening');ticking();$('listenCheck').textContent='Mic active · speak after Willi asks';$('restart').disabled=true;
  }catch(e){
   if(startId!==activeStartId)return;
   console.error('[Free Talking Realtime demo] failed to start',e);
   // Never kick the student out on an error. Keep the session screen and actionable message.
   endSession('Connection failed. Use Back to return to your lesson.');
   error('Could not start: '+(e?.message||'Unknown connection error'));
+  $('restart').disabled=false;
+  $('listenCheck').textContent='Connection failed · retry available';
  }
 }
