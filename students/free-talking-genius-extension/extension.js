@@ -46,6 +46,7 @@ function closeActivity(){
  endSession('Conversation ended.');
  veil.hidden=true;
  $('talk').classList.remove('is-visible');
+ $('volumeBox').hidden=true;$('volumeToggle').setAttribute('aria-expanded','false');
  // Preserve the original app's character selector and its own history entry.
  // Do NOT click its Back button: that would skip character selection.
 }
@@ -330,7 +331,9 @@ $('mute').addEventListener('click',()=>{
  const track=state.stream?.getAudioTracks()[0];if(!track)return;
  state.micUserMuted=!state.micUserMuted;
  track.enabled=!state.micUserMuted&&!state.ttsPlaying;
- $('mute').textContent=state.micUserMuted?'Unmute microphone':'Mute microphone';
+ $('mute').setAttribute('aria-pressed',String(state.micUserMuted));
+ $('mute').setAttribute('aria-label',state.micUserMuted?'Unmute microphone':'Mute microphone');
+ $('mute').title=state.micUserMuted?'Unmute microphone':'Mute microphone';
  message(state.micUserMuted?'Microphone muted':state.ttsPlaying?'AI is speaking':'Listening…');
 });
 $('restart').addEventListener('click',()=>{
@@ -342,6 +345,23 @@ $('restart').addEventListener('click',()=>{
  void startConversation();
 });
 $('volume').addEventListener('input',()=>{resumeMixer();setAudioLevels()});
+const volumeToggle=$('volumeToggle'),volumeBox=$('volumeBox');
+function closeVolume(){
+ volumeBox.hidden=true;
+ volumeToggle.setAttribute('aria-expanded','false');
+}
+volumeToggle.addEventListener('click',event=>{
+ event.stopPropagation();
+ const opening=volumeBox.hidden;
+ volumeBox.hidden=!opening;
+ volumeToggle.setAttribute('aria-expanded',String(opening));
+});
+volumeBox.addEventListener('click',event=>event.stopPropagation());
+volumeBox.addEventListener('pointerdown',event=>event.stopPropagation());
+document.addEventListener('pointerdown',event=>{
+ if(!volumeBox.hidden&&!volumeBox.contains(event.target)&&!volumeToggle.contains(event.target))closeVolume();
+});
+document.addEventListener('keydown',event=>{if(event.key==='Escape')closeVolume()});
 $('soundFallback').addEventListener('click',()=>{
  // Retain a reliable browser speaker path, with a choice to switch it back.
  state.quietMode=!state.quietMode;
@@ -640,7 +660,11 @@ async function startConversation(){
  veil.hidden=false;$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
  $('log').replaceChildren();message('Connecting…');
- $('mute').disabled=false;$('end').disabled=false;$('mute').textContent='Mute microphone';
+ $('mute').disabled=false;$('end').disabled=false;
+ $('mute').setAttribute('aria-pressed','false');
+ $('mute').setAttribute('aria-label','Mute microphone');
+ $('mute').title='Mute microphone';
+ $('volumeBox').hidden=true;$('volumeToggle').setAttribute('aria-expanded','false');
  const character=state.character;state.voiceMode='eleven'; // guided text responses use controlled TTS for ALL three voices
 
  try{
