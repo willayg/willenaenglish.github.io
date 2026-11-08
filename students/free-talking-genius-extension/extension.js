@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,voiceTestAudio:null,voiceTestUrl:null,voiceTestController:null};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -291,7 +291,6 @@ function stopSpeech(){
  state.speaker=null;state.playing=null;
 }
 function endSession(reason='Conversation finished.'){
- stopVoiceTest();
  clearInterval(state.timer);state.timer=null;
  clearTimeout(state.anchorTimer);state.anchorTimer=null;state.anchorToken++;
  for(const entry of state.anchorClipCache.values())if(entry?.owned)URL.revokeObjectURL(entry.url);
@@ -327,49 +326,6 @@ $('restart').addEventListener('click',()=>{
  void startConversation();
 });
 $('volume').addEventListener('input',()=>{resumeMixer();setAudioLevels()});
-function stopVoiceTest(){
- try{state.voiceTestController?.abort()}catch{}
- state.voiceTestController=null;
- if(state.voiceTestAudio){try{state.voiceTestAudio.pause();state.voiceTestAudio.src=''}catch{}}
- state.voiceTestAudio=null;
- if(state.voiceTestUrl){URL.revokeObjectURL(state.voiceTestUrl);state.voiceTestUrl=null}
-}
-$('testVoice').addEventListener('click',()=>{
- const panel=$('voiceTestPanel');
- panel.hidden=!panel.hidden;
- if(!panel.hidden)$('voiceTestCharacter').value=state.character==='pigfish'?'pigfish':'bunny';
- else stopVoiceTest();
-});
-$('closeVoiceTest').addEventListener('click',()=>{$('voiceTestPanel').hidden=true;stopVoiceTest()});
-for(const button of document.querySelectorAll('[data-test-model]')){
- button.addEventListener('click',async()=>{
-  const model=button.dataset.testModel,character=$('voiceTestCharacter').value;
-  const status=$('voiceTestStatus');
-  stopVoiceTest();
-  const abort=new AbortController();state.voiceTestController=abort;
-  status.textContent='Generating '+model+' sample…';
-  for(const btn of document.querySelectorAll('[data-test-model]'))btn.disabled=true;
-  try{
-   // Same text on every run: comparison is strictly the voice model.
-   const text='Oh, really? That sounds fun! What do you want to do next?';
-   const res=await authorizedDemoFetch('/api/free-talking-realtime-eleven',
-    {character,text,test_model:model},abort.signal);
-   if(!res.ok){const data=await res.json().catch(()=>({}));throw Error(data.error||'TTS HTTP '+res.status)}
-   const blob=await res.blob();
-   if(blob.size<500)throw Error('Audio was empty');
-   if(abort.signal.aborted)return;
-   const url=URL.createObjectURL(blob);state.voiceTestUrl=url;
-   const audio=new Audio();state.voiceTestAudio=audio;audio.volume=Math.min(1,volumeFraction());
-   audio.src=url;
-   status.textContent='Playing '+model+' · '+Math.round(blob.size/1024)+' KB';
-   await audio.play();
-   await new Promise(resolve=>{audio.onended=resolve;audio.onerror=resolve;abort.signal.addEventListener('abort',resolve,{once:true})});
-   if(!abort.signal.aborted)status.textContent='Finished '+model+'. Choose another to compare.';
-  }catch(e){if(!abort.signal.aborted)status.textContent='Voice test error: '+e.message}
-  finally{if(state.voiceTestController===abort)state.voiceTestController=null;
-   for(const btn of document.querySelectorAll('[data-test-model]'))btn.disabled=false;}
- });
-}
 $('soundFallback').addEventListener('click',()=>{
  // Retain a reliable browser speaker path, with a choice to switch it back.
  state.quietMode=!state.quietMode;
@@ -502,47 +458,54 @@ function requestGuidedReply(){
  const phase=state.anchorPhase;
  if(phase!=='awaitingFirst'&&phase!=='awaitingSecond')return;
  const anchor=state.anchors[state.anchorIndex];if(!anchor)return;
- state.anchorResponding=true;
- state.anchorPhase=phase==='awaitingFirst'?'respondingFirst':'respondingSecond';
- state.anchorResponseText='';
- const directive=phase==='awaitingFirst'
-  ?'FOLLOW-UP TURN. The student just answered this anchor: "'+anchor.text+'". Respond naturally in 2–6 words, then ask ONE short level-appropriate follow-up about the SAME answer and topic. Never ask the next textbook question. Do not invent facts.'
-  :'REACTION ONLY TURN. The student just answered a follow-up to "'+anchor.text+'". React to what they ACTUALLY said in 2–8 words. Do NOT ask a question. The app plays the NEXT cached textbook question. Never invent facts.';
- sendRealtime({type:'conversation.item.create',item:{type:'message',role:'system',
-  content:[{type:'input_text',text:directive}]}});
- if(!sendRealtime({type:'response.create',response:{output_modalities:['text']}})){
-  state.anchorResponding=false;state.anchorPhase=phase;
-  error('Conversation connection closed. Please retry.');
+ state.anchorResponding=true;state.anchorResponseText='';
+ if(phase==='awaitingSecond'){
+  // No separate AI reaction: second student answer -> next question or goodbye.
+  state.anchorPhase='betweenAnchors';setMicEnabled(false);
+  if(state.anchorIndex+1>=state.anchors.length)void finishConversation();
+  else void playAnchor(state.anchorIndex+1);
+  return;
+ }
+ state.anchorPhase='respondingFirst';
+ const directive=[
+  'FOLLOW-UP QUESTION ONLY. The official question was: "'+anchor.text+'".',
+  'The student has just answered. Give a short genuine reaction IF one fits, then exactly ONE follow-up question that specifically connects to something in their answer.',
+  'Speak like a lively person, not a tutor or chatbot. Occasionally use natural level-appropriate interjections, slang and discourse markers: Oh!, Whoa!, Nice!, Really?, No way!, Actually, Hmm, Well, Anyway. Use only when they fit; do not force or repeat them.',
+  'Never say thanks for sharing, thanks for telling me, I appreciate you sharing, that is interesting to hear, or other robotic filler.',
+  'No generic praise, repetition, multiple questions, invented details or next textbook anchor.',
+  'Stay within the current student language level and unit grammar. Never echo profanity or insults; use child-appropriate casual language.',
+  'If speech was unclear, ask the student to repeat; never invent an answer.'
+ ].join(' ');
+ if(!sendRealtime({type:'response.create',response:{output_modalities:['text'],instructions:directive}})){
+  state.anchorResponding=false;state.anchorPhase=phase;error('Conversation connection closed. Please retry.');
  }else{actorPhase('thinking');message('Thinking about your answer…')}
 }
+async function finishConversation(){
+ if(!state.active||state.anchorPhase==='finished'||state.anchorPhase==='goodbye')return;
+ const run=state.anchorToken,count=state.anchors.length;
+ state.anchorPhase='goodbye';setMicEnabled(false);
+ $('listenCheck').textContent='Conversation complete';message('Finishing your conversation…');
+ const goodbye=state.character==='pigfish'?'That was fun! Catch you later!':'That was fun! See you next time!';
+ try{await speakEleven(goodbye)}catch(e){console.warn('Guided goodbye',e)}
+ if(!state.active||run!==state.anchorToken)return;
+ state.anchorPhase='finished';endSession('Conversation complete. See you next time!');
+ $('clock').textContent=count+' / '+count+' complete';
+ $('anchorText').textContent='Great talking! See you next time!';
+ $('listenCheck').textContent='Finished';
+}
 async function finishGuidedReply(data){
- const phase=state.anchorPhase;
- if(phase!=='respondingFirst'&&phase!=='respondingSecond')return;
+ if(state.anchorPhase!=='respondingFirst')return;
  state.anchorResponding=false;
- const text=String(data.response?.output?.flatMap(x=>x.content||[])
+ const responseText=String(data.response?.output?.flatMap(x=>x.content||[])
   .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';
- const run=state.anchorToken,index=state.anchorIndex;
- state.anchorPhase='playingReply';
- setMicEnabled(false);
- if(text){
-  await speakEleven(text);
- }else{
-  error('No response text was returned. Advancing the lesson.');
- }
+ const run=state.anchorToken;state.anchorPhase='playingReply';setMicEnabled(false);
+ if(responseText)await speakEleven(responseText);
+ else error('No follow-up returned. Try answering again.');
  if(!state.active||run!==state.anchorToken)return;
- if(phase==='respondingFirst'){
-  state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');
-  message('Your turn. Answer the follow-up question!');
-  $('listenCheck').textContent='Listening for your follow-up answer';
- }else if(index+1>=state.anchors.length){
-  state.anchorPhase='finished';endSession('All '+state.anchors.length+' questions finished. Great talking!');
-  $('clock').textContent=state.anchors.length+' / '+state.anchors.length+' complete';
-  $('anchorText').textContent='Excellent! You finished your conversation.';
- }else{
-  state.anchorPhase='betweenAnchors';
-  void playAnchor(index+1);
- }
+ state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');
+ message('Your turn. Answer the follow-up question!');
+ $('listenCheck').textContent='Listening for your follow-up answer';
 }
 function handleRealtime(data){
  if(!state.active&&!state.starting)return;
@@ -631,7 +594,7 @@ async function startConversation(){
  $('log').replaceChildren();message('Connecting…');
  $('mute').disabled=false;$('end').disabled=false;$('mute').textContent='Mute microphone';
  const character=state.character;state.voiceMode='eleven'; // guided text responses use controlled TTS for ALL three voices
- $('testVoice').hidden=false;
+
  try{
   showActor();
   const res=await authorizedDemoFetch('/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id,guided:true},startAbort.signal);
