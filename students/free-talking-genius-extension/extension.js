@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -469,28 +469,45 @@ async function playAnchor(index){
  // Preload just the next anchor while the student answers this one.
  if(index+1<state.anchors.length)void getAnchorClip(state.anchors[index+1]).catch(()=>{});
 }
+function replyWordCap(level){return [6,8,9,10,11,12,13,14,15,16,17][Math.max(0,Math.min(10,Number(level)||0))]}
+function reactionWordCap(level){return [3,4,5,6,7,7,8,8,9,9,10][Math.max(0,Math.min(10,Number(level)||0))]}
+function shortenGuidedResponse(text,second,level){
+ let value=String(text||'').replace(/\s+/g,' ').trim();
+ value=value.replace(/\b(?:thanks for sharing|thanks for telling me(?: that)?|i appreciate you sharing|that's interesting to hear)\b[.!?, ]*/gi,'').trim();
+ if(!value)return '';
+ if(second){const q=value.indexOf('?');if(q>=0)value=value.slice(0,q).trim();}
+ else{const q=value.indexOf('?');if(q>=0)value=value.slice(0,q+1);}
+ const max=second?reactionWordCap(level):replyWordCap(level), words=value.split(/\s+/).filter(Boolean);
+ if(words.length<=max)return value;
+ if(!second&&value.includes('?')){
+  // Save a short follow-up question rather than rambling introductory praise.
+  const q=value.indexOf('?'),prior=value.slice(0,q+1);
+  const boundary=Math.max(prior.lastIndexOf('.'),prior.lastIndexOf('!'));
+  const question=prior.slice(boundary+1).trim();
+  if(question.split(/\s+/).length<=max)return question;
+ }
+ const cut=words.slice(0,max).join(' ');
+ const complete=cut.match(/^(.*[.!?])(?:\s|$)/);
+ return complete?complete[1]:second?cut.replace(/[,:;.!?]+$/,'')+'.':cut;
+}
 function requestGuidedReply(){
  if(!state.active||state.anchorResponding)return;
  const phase=state.anchorPhase;
  if(phase!=='awaitingFirst'&&phase!=='awaitingSecond')return;
  const anchor=state.anchors[state.anchorIndex];if(!anchor)return;
+ const second=phase==='awaitingSecond';
  state.anchorResponding=true;state.anchorResponseText='';
- if(phase==='awaitingSecond'){
-  // No separate AI reaction: second student answer -> next question or goodbye.
-  state.anchorPhase='betweenAnchors';setMicEnabled(false);
-  if(state.anchorIndex+1>=state.anchors.length)void finishConversation();
-  else void playAnchor(state.anchorIndex+1);
-  return;
- }
- state.anchorPhase='respondingFirst';
+ state.anchorPhase=second?'respondingSecond':'respondingFirst';
+ const cap=second?reactionWordCap(state.lessonLevel):replyWordCap(state.lessonLevel);
  const directive=[
-  'FOLLOW-UP QUESTION ONLY. The official question was: "'+anchor.text+'".',
-  'The student has just answered. Give a short genuine reaction IF one fits, then exactly ONE follow-up question that specifically connects to something in their answer.',
-  'Speak like a lively person, not a tutor or chatbot. Occasionally use natural level-appropriate interjections, slang and discourse markers: Oh!, Whoa!, Nice!, Really?, No way!, Actually, Hmm, Well, Anyway. Use only when they fit; do not force or repeat them.',
-  'Never say thanks for sharing, thanks for telling me, I appreciate you sharing, that is interesting to hear, or other robotic filler.',
-  'No generic praise, repetition, multiple questions, invented details or next textbook anchor.',
-  'Stay within the current student language level and unit grammar. Never echo profanity or insults; use child-appropriate casual language.',
-  'If speech was unclear, ask the student to repeat; never invent an answer.'
+  'Current textbook question: "'+anchor.text+'". React to the STUDENT\'S MOST RECENT ANSWER, not an earlier answer.',
+  second
+   ?'SECOND ANSWER. Make one short and genuinely relevant reaction or playful observation about what the student just said. NO QUESTION. Do NOT introduce the next topic, because the app will play the next cached question. You may occasionally finish with a tiny segue like "So..." or "Anyway...".'
+   :'FIRST ANSWER. If appropriate, start with a tiny natural reaction, then ask exactly ONE follow-up QUESTION tied to a detail of the student\'s specific answer. End with that question. Do not ask the next textbook question.',
+  'ABSOLUTE MAXIMUM '+cap+' SPOKEN WORDS. Prefer fewer. Never give a paragraph or list. Let the child do most of the talking.',
+  'Use a little natural humour, everyday slang, interjections and linking words if they fit. Avoid robotic praise, thanks for sharing, thanks for telling me, and repetitive compliments.',
+  'Stay within the selected Willena level and unit grammar. Do not invent details or claim to know how strangers really feel. A playful observation like "Ha! The other passengers must love that." can be fine if clearly teasing.',
+  'If the child mentions a dangerous action, give a short appropriate safety boundary, not an extended lecture. If you cannot understand the answer, ask to repeat instead of guessing.'
  ].join(' ');
  if(!sendRealtime({type:'response.create',response:{output_modalities:['text'],instructions:directive}})){
   state.anchorResponding=false;state.anchorPhase=phase;error('Conversation connection closed. Please retry.');
@@ -510,18 +527,28 @@ async function finishConversation(){
  $('listenCheck').textContent='Finished';
 }
 async function finishGuidedReply(data){
- if(state.anchorPhase!=='respondingFirst')return;
+ const phase=state.anchorPhase;
+ if(phase!=='respondingFirst'&&phase!=='respondingSecond')return;
+ const second=phase==='respondingSecond';
  state.anchorResponding=false;
- const responseText=String(data.response?.output?.flatMap(x=>x.content||[])
+ let responseText=String(data.response?.output?.flatMap(x=>x.content||[])
   .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';
+ responseText=shortenGuidedResponse(responseText,second,state.lessonLevel);
  const run=state.anchorToken;state.anchorPhase='playingReply';setMicEnabled(false);
  if(responseText)await speakEleven(responseText);
- else error('No follow-up returned. Try answering again.');
+ else if(!second)error('No follow-up returned. Please try again.');
  if(!state.active||run!==state.anchorToken)return;
- state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');
- message('Your turn. Answer the follow-up question!');
- $('listenCheck').textContent='Listening for your follow-up answer';
+ if(second){
+  // Play next cached anchor only after the short reaction finishes speaking.
+  state.anchorPhase='betweenAnchors';
+  if(state.anchorIndex+1>=state.anchors.length)void finishConversation();
+  else void playAnchor(state.anchorIndex+1);
+ }else{
+  state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');
+  message('Your turn. Answer the follow-up question!');
+  $('listenCheck').textContent='Listening for your follow-up answer';
+ }
 }
 function handleRealtime(data){
  if(!state.active&&!state.starting)return;
@@ -566,7 +593,7 @@ async function speakEleven(text){
   if(!response.ok){const e=await response.json().catch(()=>({}));throw Error(e.error||'ElevenLabs unavailable ('+response.status+')')}
   if(current!==state.generation||!state.active)return;
   // Android: avoid MediaSource audio/mpeg support differences. The server
-  // requests ElevenLabs Flash streaming, then the browser plays its short MP3.
+  // requests ElevenLabs v3 Conversational audio, then the browser plays its short MP3.
   const blob=await response.blob();
   if(control.signal.aborted||current!==state.generation||!state.active)return;
   if(blob.size<500)throw Error('ElevenLabs returned an empty recording');
@@ -620,6 +647,7 @@ async function startConversation(){
   if(startId!==activeStartId)return;
   if(session.lesson){
    const l=session.lesson;
+   state.lessonLevel=Number.isInteger(l.level)?Math.max(0,Math.min(10,l.level)):2;
    $('lesson').textContent=(l.book||state.book.title)+' · Unit '+(l.unit_number||state.unit.unit_number)+' · '+(l.unit||state.unit.title);
    $('lessonFocus').textContent='Lesson focus: '+(l.grammar||l.prompts?.[0]||l.unit||'Current unit');
   }
