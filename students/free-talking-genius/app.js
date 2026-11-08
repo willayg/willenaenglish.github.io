@@ -21,7 +21,7 @@ const BOOK=()=>state.bookId;
 const bookTitle=()=>state.books.find(b=>b.id===state.bookId)?.title||'Textbook';
 const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
-const state={skippedIds:new Set(),student:null,profile:null,books:[],bookId:null,questions:[],unitTitles:new Map(),unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
+const state={skippedIds:new Set(),student:null,profile:null,books:[],bookId:null,missionAssignments:[],missionError:'',questions:[],unitTitles:new Map(),unit:1,mode:null,sessions:[],attempts:[],session:null,renderer:null,
  current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready',repeatStep:false,repeatMode:null,repeatTranscript:null,repeatChecking:false,seenChallenges:new Set()};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
@@ -515,6 +515,36 @@ async function detectBooks(){
  if(!state.books.length){state.bookId=null;return;}
  const previous=state.bookId;
  state.bookId=state.books.some(b=>b.id===previous)?previous:state.books[0].id;
+}
+async function loadStudentSpeakingMissions(){
+ // The normal student homework API verifies the JWT and restricts the
+ // returned assignments to this student's actual class.
+ const route='/.netlify/functions/homework_api?action=list_assignments&mode=student&_='+Date.now();
+ const apiFetch=window.WillenaAPI?.fetch||fetch;
+ const r=await apiFetch(route,{credentials:'include',cache:'no-store'});
+ const data=await r.json().catch(()=>({}));
+ if(!r.ok||data.success!==true)throw Error(data.error||'Assigned missions unavailable');
+ const now=Date.now(),ownId=String(state.student?.id||'');
+ state.missionAssignments=(data.assignments||[]).filter(a=>{
+  const m=a.list_meta||{};
+  const speaking=m.source_app==='free_talking_genius'||String(a.list_key||'').startsWith('free_talking:');
+  const targets=Array.isArray(m.target_student_ids)?m.target_student_ids:Array.isArray(m.target_students)?m.target_students.map(x=>x.id||x.student_id):[];
+  return speaking&&a.active!==false&&a.status==='active'&&!a.ended_at&&
+   (!a.start_at||Date.parse(a.start_at)<=now)&&
+   (!a.due_at||Date.parse(a.due_at)>=now)&&
+   (!targets.length||targets.some(id=>String(id)===ownId));
+ });
+ // Homework is an explicit book entitlement even when teachers select a
+ // textbook not yet present in the class's normal book list.
+ const byId=new Map(state.books.map(b=>[String(b.id),b]));
+ const available=new Set(state.questions.map(q=>q.book_id));
+ const titles=new Map((state.catalog||[]).map(b=>[String(b.id),b.title]));
+ for(const a of state.missionAssignments){
+  const id=String(a.list_meta?.book_id||'');
+  if(!id||byId.has(id))continue;
+  byId.set(id,{id,title:titles.get(id)||a.title?.split(' · Unit ')[0]||'Textbook',ready:available.has(id),fromMission:true});
+ }
+ state.books=[...byId.values()].sort((a,b)=>a.title.localeCompare(b.title));
 }
 function renderBookChoices(){
  const host=$('ftBookChoices');host.replaceChildren();
@@ -1034,20 +1064,24 @@ async function startup(){
   if(state.profile?.role!=='student'||state.profile?.approved===false)throw Error('Student sign-in required');
   await loadQuestions();
   await detectBooks();
-  renderBookChoices();
-  // The shared mission basket / QR link opens the textbook and unit directly.
-  // Only the main Speaking app is assignable; the experimental conversation
-  // extension is not included in any homework completion requirement.
   const missionParams=new URLSearchParams(location.search);
-  const missionBook=missionParams.get('book'),missionUnit=Number(missionParams.get('unit'));
-  if(missionParams.has('homework')&&missionBook&&Number.isInteger(missionUnit)){
-   const target=state.books.find(b=>b.id===missionBook&&b.ready);
-   const available=state.questions.some(q=>q.book_id===missionBook&&Number(q.unit_number)===missionUnit);
-   if(target&&available){
-    await chooseBook(missionBook);
-    selectUnit(missionUnit);
-    openMode('speaking');
-   }
+  const missionId=missionParams.get('homework');
+  try{await loadStudentSpeakingMissions()}
+  catch(e){state.missionError=e.message;console.warn('[Free Talking] Student mission lookup failed',e)}
+  renderBookChoices();
+  if(missionId){
+   if(state.missionError)throw Error('Could not verify this mission: '+state.missionError);
+   const assignment=state.missionAssignments.find(a=>String(a.id)===missionId);
+   if(!assignment)throw Error('This speaking mission is not active for your class or account.');
+   const book=String(assignment.list_meta?.book_id||''),unit=Number(assignment.list_meta?.unit_number);
+   const unitId=String(assignment.list_meta?.unit_id||'');
+   const ready=state.books.some(b=>b.id===book&&b.ready)&&
+    state.questions.some(q=>q.book_id===book&&Number(q.unit_number)===unit&&String(q.unit_id)===unitId);
+   if(!ready)throw Error('This assigned textbook unit has no published speaking questions.');
+   await chooseBook(book);
+   if(state.bookId!==book)throw Error('Unable to open this assigned textbook.');
+   selectUnit(unit);
+   openMode('speaking');
   }
   // Only show an empty-state message when there are genuinely no assigned books.
   $('ftLoading').hidden=state.books.length>0;
