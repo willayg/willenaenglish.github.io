@@ -37,6 +37,7 @@ async function authorizedDemoFetch(path,body,signal){
 const EXT_NAV_KEY='willenaFtRealtimeExtensionV1';
 let activeStartId=0;
 let startAbort=null;
+let lessonLoad=null;
 function hasActivityHistory(){return history.state?.[EXT_NAV_KEY]==='activity'}
 function closeActivity(){
  activeStartId++;
@@ -183,7 +184,8 @@ function bindOriginalFrame(){
    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
    // Let the ORIGINAL application open its existing character selector.
    d.getElementById('ftSpeakingCard')?.click();
-   void openDemo();
+   lessonLoad=openDemo();
+   void lessonLoad.catch(e=>console.warn('[Guided Free Talking] initial lesson lookup failed',e));
    return;
   }
   const character=event.target.closest('#ftChooseWilli,#ftChooseLili,#ftChoosePigfish');
@@ -202,24 +204,37 @@ function bindOriginalFrame(){
   const go=event.target.closest('#ftCharacterContinue');
   if(go&&!d.getElementById('ftCharacter').hidden){
    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
-   if(!state.book||!state.unit){
-    const label=d.getElementById('ftCharacterRound');
-    if(label){label.hidden=false;label.textContent='교재를 확인하는 중입니다. 다시 눌러 주세요.';}
-    return;
-   }
-   void startConversation();
+   void (async()=>{
+    const goButton=d.getElementById('ftCharacterContinue');
+    if(goButton)goButton.disabled=true;
+    try{
+     if(lessonLoad)await lessonLoad.catch(()=>{});
+     if(!state.book||!state.unit){
+      lessonLoad=openDemo({preserveCharacter:true});
+      await lessonLoad;
+     }
+     if(!state.book||!state.unit)throw Error('Book or unit could not be loaded. Please choose the lesson again.');
+     await startConversation();
+    }catch(e){
+     const label=d.getElementById('ftCharacterRound');
+     if(label){label.hidden=false;label.textContent='시작할 수 없어요: '+(e?.message||'Please choose the unit again.');}
+     console.error('[Guided Free Talking] start from character screen',e);
+    }finally{
+     if(goButton&&!state.starting&&!state.active)goButton.disabled=false;
+    }
+   })();
   }
  },true);
 }
 frame.addEventListener('load',bindOriginalFrame);
 // Module imports can finish after the iframe's load event, especially on fast networks.
 if(frame.contentDocument?.readyState==='complete')bindOriginalFrame();
-async function openDemo(){
+async function openDemo({preserveCharacter=false}={}){
  const d=appDocument();if(!d)return;
  const title=d.querySelector('#ftBookTabs .is-active')?.textContent?.trim();
  const unitMatch=(d.querySelector('#ftUnitTitle')?.textContent||'').match(/Unit\s+(\d+)/i);
- if(!title||!unitMatch){error('Choose a book and unit first.');return}
- error('');state.book=null;state.unit=null;state.seconds=180;state.character='willi';
+ if(!title||!unitMatch){error('Choose a book and unit first.');throw Error('Choose a book and unit first.')}
+ error('');state.book=null;state.unit=null;state.seconds=180;if(!preserveCharacter)state.character='willi';
  $('heading').textContent='Free Talking · 8 Questions';
  $('lesson').textContent=title+' · Unit '+unitMatch[1];
  // Stay on the ORIGINAL in-app friend-selection screen, not a duplicate overlay.
@@ -239,6 +254,7 @@ async function openDemo(){
   const note=d.getElementById('ftCharacterRound');
   if(note){note.hidden=false;note.textContent='교재 정보를 불러오지 못했어요: '+e.message;}
   error('Could not load the selected lesson: '+e.message);
+  throw e;
  }
 }
 function appendLine(who,text){
@@ -581,7 +597,8 @@ async function speakEleven(text){
  }
 }
 async function startConversation(){
- if(state.starting||state.active||!state.unit||!state.book)return;
+ if(state.starting||state.active)return;
+ if(!state.unit||!state.book)throw Error('No lesson loaded. Select a book and unit first.');
  state.starting=true;error('');state.alreadySpoken=false;state.turnText='';state.pendingText=false;
  createAudioMixer();
  const startId=++activeStartId;
