@@ -70,18 +70,28 @@ export async function onRequestPost({request,env}){
    const list=Array.isArray(assigned.assignments)&&assigned.assignments.length?assigned.assignments:(assigned.assignment?[assigned.assignment]:[]);
    if(!list.some(a=>a?.book_id===input.book_id))return json(403,{error:'That book is not assigned to your class'});
   }
+  const guided=input.guided===true;
   const [bookRows,unitRows,questions,occurrences]=await Promise.all([
    get(CONTENT+'/rest/v1/content_books?select=id,title,status&id=eq.'+input.book_id+'&limit=1',contentHeaders,signal),
    get(CONTENT+'/rest/v1/content_units?select=id,book_id,unit_number,title,metadata,status&id=eq.'+input.unit_id+'&book_id=eq.'+input.book_id+'&limit=1',contentHeaders,signal),
-   get(CONTENT+'/rest/v1/free_talking_questions?select=question_en,question_ko,question_number&book_id=eq.'+input.book_id+'&unit_id=eq.'+input.unit_id+'&is_published=eq.true&order=question_number.asc&limit=12',contentHeaders,signal),
+   get(CONTENT+'/rest/v1/free_talking_questions?select=id,question_en,question_ko,question_number&book_id=eq.'+input.book_id+'&unit_id=eq.'+input.unit_id+'&is_published=eq.true&order=question_number.asc&limit=12',contentHeaders,signal),
    get(CONTENT+'/rest/v1/source_content_occurrences?select=source_text,sentence_id,lexical_entry_id,occurrence_type&book_id=eq.'+input.book_id+'&unit_id=eq.'+input.unit_id+'&status=in.(published,review)&limit=160',contentHeaders,signal)
   ]);
   const book=bookRows[0],unit=unitRows[0];
   if(!book||!unit||!['published','review'].includes(book.status)||!['published','review'].includes(unit.status)||!questions.length)return json(404,{error:'This textbook unit has no published speaking content'});
   const examples=occurrences.filter(x=>x.sentence_id&&x.source_text).slice(0,12);
   const words=occurrences.filter(x=>x.lexical_entry_id&&!x.sentence_id&&x.source_text).slice(0,20);
-  const lesson={book:book.title,unit:unit.title,unit_number:unit.unit_number,grammar:fmt(unit.metadata?.grammar||unit.metadata?.main_grammar_points||'',800),examples:examples.map(x=>x.source_text),vocabulary:words.map(x=>x.source_text),prompts:questions.map(x=>x.question_en)};
-  const config={session:{type:'realtime',model:'gpt-realtime-2.1-mini',instructions:lessonInstructions({book,unit,questions,examples,words}),audio:{output:{voice:'marin'},input:{turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:true,interrupt_response:true}}}}};
+  const anchors=questions.slice().sort((a,b)=>a.question_number-b.question_number).slice(0,8).map(q=>({id:q.id,number:q.question_number,text:q.question_en,korean:q.question_ko}));
+ const lesson={book:book.title,unit:unit.title,unit_number:unit.unit_number,grammar:fmt(unit.metadata?.grammar||unit.metadata?.main_grammar_points||'',800),examples:examples.map(x=>x.source_text),vocabulary:words.map(x=>x.source_text),prompts:questions.map(x=>x.question_en),anchors};
+  const guidedRules=guided?[
+ 'GUIDED ANCHOR TRACK OVERRIDES: The client plays the official textbook questions using cached recordings. Never ask an anchor question yourself.',
+ 'Only respond to the current anchor and the child\'s answer. The app will explicitly tell you whether this is a short FOLLOW-UP turn or REACTION ONLY turn.',
+ 'For FOLLOW-UP turns, respond with a brief appropriate reaction and ONE simple, relevant question related to the current anchor. Never ask another anchor question or change topics.',
+ 'For REACTION ONLY turns, respond with a short appropriate acknowledgement (two to eight words), NO question; the app will immediately play the next cached anchor.',
+ 'If you cannot understand the child, ask them to repeat rather than inventing what they said. Never assume a movie, activity, or experience that was not stated.',
+ 'No scoring, correction lecture, or lesson-topic substitution. Keep grammar and vocabulary appropriate to the selected unit.'
+ ].join('\\n'):'';
+ const config={session:{type:'realtime',model:'gpt-realtime-2.1-mini',instructions:lessonInstructions({book,unit,questions,examples,words})+(guided?'\\n'+guidedRules:''),audio:{output:{voice:'marin'},input:{turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:!guided,interrupt_response:!guided}}}}};
   const key=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
   const safetyId=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('willena-realtime-lab:'+user.id)).then(b=>[...new Uint8Array(b)].map(v=>v.toString(16).padStart(2,'0')).join(''));
   const response=await fetch('https://api.openai.com/v1/realtime/client_secrets',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json','OpenAI-Safety-Identifier':safetyId},body:JSON.stringify(config),signal:AbortSignal.timeout(16000)});
