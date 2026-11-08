@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio'};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet()};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -58,6 +58,51 @@ window.addEventListener('popstate',()=>{
  // iframe owns the preceding character and book history entries.
  if(!hasActivityHistory()&&!veil.hidden)closeActivity();
 });
+
+function volumeFraction(){
+ const x=Math.max(0,Math.min(100,Number($('volume').value)||0))/100;
+ // Below 50%, use a finer scale to keep kids' speech comfortable.
+ return x*x;
+}
+function setAudioLevels(){
+ const level=volumeFraction();
+ if(state.audioGain)state.audioGain.gain.value=level;
+ for(const a of [state.remote,state.speaker].filter(Boolean)){
+  a.muted=level===0;
+  a.volume=state.quietMode?1:level;
+ }
+ $('volumeNumber').textContent=Math.round(Number($('volume').value))+'%';
+}
+function createAudioMixer(){
+ if(!state.quietMode||state.audioContext)return;
+ const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+ if(!AudioContextClass){state.quietMode=false;return}
+ try{
+  const ctx=new AudioContextClass({latencyHint:'interactive'});
+  const gain=ctx.createGain();
+  gain.gain.value=volumeFraction();
+  gain.connect(ctx.destination);
+  state.audioContext=ctx;state.audioGain=gain;
+  // This is created on the Start button's user gesture, before network waits.
+  void ctx.resume().catch(e=>console.warn('Realtime audio context needs resuming',e));
+ }catch(e){console.warn('Audio mixer unavailable',e);state.quietMode=false}
+}
+function routeAudio(audio){
+ if(!audio)return;
+ if(state.quietMode&&state.audioContext&&state.audioGain){
+  try{
+   const source=state.audioContext.createMediaElementSource(audio);
+   source.connect(state.audioGain);
+   state.linkedSources.add(audio);
+   void state.audioContext.resume().catch(()=>{});
+  }catch(e){console.warn('Audio routing failed, reverting to browser playback',e)}
+ }
+ setAudioLevels();
+}
+function resumeMixer(){
+ if(state.audioContext?.state==='suspended')void state.audioContext.resume().catch(()=>{});
+}
+
 function message(s){$('status').textContent=s}
 function error(s){$('error').textContent=String(s||'Unknown error')}
 function buttonState(c){
@@ -210,7 +255,8 @@ function endSession(reason='Conversation finished.'){
  try{state.channel?.close()}catch{};try{state.peer?.close()}catch{};
  try{state.stream?.getTracks().forEach(t=>t.stop())}catch{}
  if(state.remote){state.remote.pause();state.remote.srcObject=null;state.remote.remove()}
- state.peer=null;state.channel=null;state.stream=null;state.remote=null;state.active=false;state.starting=false;
+ state.peer=null;state.channel=null;state.stream=null;state.remote=null;state.remoteStream=null;state.active=false;state.starting=false;
+ if(state.audioContext){const context=state.audioContext;state.audioContext=null;state.audioGain=null;void context.close().catch(()=>{})}
  message(reason);actorPhase('ready');
  $('mute').disabled=true;$('end').disabled=true;
 }
@@ -222,10 +268,14 @@ $('mute').addEventListener('click',()=>{
  track.enabled=!track.enabled;$('mute').textContent=track.enabled?'Mute microphone':'Unmute microphone';
  message(track.enabled?'Listening…':'Microphone muted');
 });
-$('volume').addEventListener('input',()=>{
- const v=Number($('volume').value)/100;$('volumeNumber').textContent=Math.round(v*100)+'%';
- if(state.remote)state.remote.volume=v;
- if(state.speaker)state.speaker.volume=v;
+$('volume').addEventListener('input',()=>{resumeMixer();setAudioLevels()});
+$('soundFallback').addEventListener('click',()=>{
+ // Retain a reliable browser speaker path, with a choice to switch it back.
+ state.quietMode=!state.quietMode;
+ $('soundFallback').textContent=state.quietMode?'Use phone speaker':'Use adjustable quiet sound';
+ if(state.active||state.starting){
+  message('Sound mode changed. End and restart to apply the new audio route.');
+ }else setAudioLevels();
 });
 function ticking(){
  clearInterval(state.timer);state.seconds=180;
@@ -279,7 +329,7 @@ async function speakEleven(text){
   const response=await authorizedDemoFetch('/api/free-talking-realtime-eleven',{character:state.character,text},control.signal);
   if(!response.ok){const e=await response.json().catch(()=>({}));throw Error(e.error||'ElevenLabs unavailable ('+response.status+')')}
   if(current!==state.generation||!state.active)return;
-  const audio=new Audio();audio.volume=Number($('volume').value)/100;state.speaker=audio;state.playing=audio;actorPhase('speaking');
+  const audio=new Audio();state.speaker=audio;state.playing=audio;routeAudio(audio);actorPhase('speaking');
   if(window.MediaSource?.isTypeSupported?.('audio/mpeg')&&response.body){
    const media=new MediaSource();state.mediaURL=URL.createObjectURL(media);audio.src=state.mediaURL;
    await new Promise((resolve,reject)=>{media.addEventListener('sourceopen',resolve,{once:true});media.addEventListener('error',reject,{once:true})});
@@ -306,6 +356,7 @@ async function speakEleven(text){
 async function startConversation(){
  if(state.starting||state.active||!state.unit||!state.book)return;
  state.starting=true;error('');state.alreadySpoken=false;state.turnText='';state.pendingText=false;
+ createAudioMixer();
  const startId=++activeStartId;
  startAbort=new AbortController();
  // Add a real top-level history entry AFTER the original app's character
@@ -321,12 +372,24 @@ async function startConversation(){
   if(startId!==activeStartId)return;
   const session=await res.json().catch(()=>({}));
   if(startId!==activeStartId)return;
+  if(session.lesson){
+   const l=session.lesson;
+   $('lesson').textContent=(l.book||state.book.title)+' · Unit '+(l.unit_number||state.unit.unit_number)+' · '+(l.unit||state.unit.title);
+   $('lessonFocus').textContent='Lesson focus: '+(l.grammar||l.prompts?.[0]||l.unit||'Current unit');
+  }
   if(!res.ok||!session.token)throw Error(session.error||'Realtime connection failed');
   const peer=new RTCPeerConnection();state.peer=peer;
   if(state.voiceMode==='audio'){
-   const audio=document.createElement('audio');audio.autoplay=true;audio.playsInline=true;audio.volume=Number($('volume').value)/100;
+   const audio=document.createElement('audio');audio.autoplay=true;audio.playsInline=true;
    state.remote=audio;document.body.append(audio);
-   peer.ontrack=e=>{audio.srcObject=e.streams[0];void audio.play().catch(()=>{});actorPhase('speaking')};
+   routeAudio(audio);
+   peer.ontrack=e=>{
+    state.remoteStream=e.streams?.[0]||new MediaStream([e.track]);
+    audio.srcObject=state.remoteStream;
+    resumeMixer();
+    void audio.play().catch(ex=>error('Speaker could not play: '+ex.message));
+    actorPhase('speaking');
+   };
   }
   const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
   state.stream=mic;
