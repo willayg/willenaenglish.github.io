@@ -1035,6 +1035,20 @@ async function startup(){
   await loadQuestions();
   await detectBooks();
   renderBookChoices();
+  // The shared mission basket / QR link opens the textbook and unit directly.
+  // Only the main Speaking app is assignable; the experimental conversation
+  // extension is not included in any homework completion requirement.
+  const missionParams=new URLSearchParams(location.search);
+  const missionBook=missionParams.get('book'),missionUnit=Number(missionParams.get('unit'));
+  if(missionParams.has('homework')&&missionBook&&Number.isInteger(missionUnit)){
+   const target=state.books.find(b=>b.id===missionBook&&b.ready);
+   const available=state.questions.some(q=>q.book_id===missionBook&&Number(q.unit_number)===missionUnit);
+   if(target&&available){
+    await chooseBook(missionBook);
+    selectUnit(missionUnit);
+    openMode('speaking');
+   }
+  }
   // Only show an empty-state message when there are genuinely no assigned books.
   $('ftLoading').hidden=state.books.length>0;
   $('ftLoading').textContent=state.books.length?'':'아직 배정된 교재가 없어요.';
