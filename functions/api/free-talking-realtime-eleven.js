@@ -12,8 +12,9 @@ export async function onRequestPost({request,env}){
  if(bearer.length<40)return reply(401,'Sign in first');
  let data;try{data=await request.json()}catch{return reply(400,'Invalid request')}
  const character=String(data?.character||''),sentence=String(data?.text||'').trim();
- // Use the chosen natural conversation model for every newly generated reply.
- const selectedModel={id:'eleven_v3_conversational'};
+ // Match the ElevenLabs model used to cache this character's textbook questions.
+ // Never substitute an OpenAI voice for Bunny or Pigfish.
+ const selectedModel={id:'eleven_v3'};
  if(!Object.hasOwn(VOICES,character)||sentence.length<2||sentence.length>350)return reply(400,'Invalid voice or response length');
  const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY||env.ELEVENLABS_API||env.ELEVENLABS_KEY;
  // Preserve the proven production Cloudflare-first, Netlify-fallback routes.
