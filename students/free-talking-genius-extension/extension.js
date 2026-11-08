@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -337,7 +337,7 @@ function endSession(reason='Conversation finished.'){
  try{state.channel?.close()}catch{};try{state.peer?.close()}catch{};
  try{state.stream?.getTracks().forEach(t=>t.stop())}catch{}
  if(state.remote){state.remote.pause();state.remote.srcObject=null;state.remote.remove()}
- state.peer=null;state.channel=null;state.stream=null;state.remote=null;state.remoteStream=null;state.active=false;state.starting=false;state.ttsPlaying=false;
+ state.peer=null;state.channel=null;state.stream=null;state.audioSender=null;state.micReleased=false;state.remote=null;state.remoteStream=null;state.active=false;state.starting=false;state.ttsPlaying=false;
  if(state.audioContext){const context=state.audioContext;state.audioContext=null;state.audioGain=null;void context.close().catch(()=>{})}
  message(reason);actorPhase('ready');
  $('mute').disabled=true;$('end').disabled=true;
@@ -462,6 +462,48 @@ function setMicEnabled(enabled){
  const mic=state.stream?.getAudioTracks()[0];
  if(mic)mic.enabled=Boolean(enabled)&&!state.micUserMuted;
 }
+function cycleMic(work){
+ // Serialize stop/reacquire during long TTS and rapid navigation changes.
+ const job=state.micCyclePromise.then(work,work);
+ state.micCyclePromise=job.catch(()=>{});
+ return job;
+}
+function releaseMicForPlayback(){
+ return cycleMic(async()=>{
+  if(!state.active||state.micReleased||!state.audioSender)return;
+  const old=state.stream;
+  const track=old?.getAudioTracks()[0];
+  if(!track)return;
+  track.enabled=false;
+  await state.audioSender.replaceTrack(null);
+  state.micReleased=true;
+  stopMicMonitor();
+  track.stop();
+  state.stream=null;
+  // Android can switch from communication audio to normal media playback
+  // once microphone capture ends; a brief yield lets its audio route settle.
+  await new Promise(resolve=>setTimeout(resolve,120));
+ });
+}
+function restoreMicAfterPlayback(){
+ return cycleMic(async()=>{
+  if(!state.active||!state.micReleased||!state.audioSender)return;
+  try{
+   const stream=await navigator.mediaDevices.getUserMedia({
+    audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}
+   });
+   if(!state.active){stream.getTracks().forEach(track=>track.stop());return}
+   const track=stream.getAudioTracks()[0];
+   track.enabled=!state.micUserMuted;
+   await state.audioSender.replaceTrack(track);
+   state.stream=stream;state.micReleased=false;
+   monitorMicrophone(stream);
+  }catch(e){
+   error('Could not restart microphone: '+(e?.message||'Permission denied')+'. Use Pause and Resume to retry.');
+   throw e;
+  }
+ });
+}
 async function getAnchorClip(anchor){
  const key=guidedCharacterVoice()+':'+anchor.id;
  if(state.anchorClipCache.has(key))return state.anchorClipCache.get(key);
@@ -521,23 +563,31 @@ function restoreAfterPause(){
  message('Ready. Continue speaking.');$('listenCheck').textContent='Listening for your answer';
  return true;
 }
-function playLocalClip(url,direct=false){
- return new Promise((resolve,reject)=>{
-  const audio=new Audio();state.speaker=audio;state.playing=audio;
-  audio.preload='auto';audio.setAttribute('playsinline','');
-  if(direct){audio.volume=Math.min(1,volumeFraction())}else routeAudio(audio);
-  audio.src=url;
-  state.ttsPlaying=true;setMicEnabled(false);actorPhase('speaking');
-  let settled=false;
-  const finish=error=>{
-   if(settled)return;settled=true;
-   audio.onended=null;audio.onerror=null;
-   if(error)reject(error);else resolve();
-  };
-  audio.onended=()=>finish();
-  audio.onerror=()=>finish(Error('Audio playback failed'));
-  audio.play().catch(finish);
- });
+async function playLocalClip(url,direct=false){
+ // Close the physical microphone during TTS so Android can use the media
+ // speaker route. Keep the Realtime signaling/data connection alive.
+ await releaseMicForPlayback();
+ try{
+  return await new Promise((resolve,reject)=>{
+   const audio=new Audio();state.speaker=audio;state.playing=audio;
+   audio.preload='auto';audio.setAttribute('playsinline','');
+   if(direct){audio.volume=Math.min(1,volumeFraction())}else routeAudio(audio);
+   audio.src=url;
+   state.ttsPlaying=true;setMicEnabled(false);actorPhase('speaking');
+   let settled=false;
+   const finish=err=>{
+    if(settled)return;settled=true;
+    audio.onended=null;audio.onerror=null;
+    if(err)reject(err);else resolve();
+   };
+   audio.onended=()=>finish();
+   audio.onerror=()=>finish(Error('Audio playback failed'));
+   audio.play().catch(finish);
+  });
+ }finally{
+  state.ttsPlaying=false;
+  if(state.active)await restoreMicAfterPlayback();
+ }
 }
 async function playAnchor(index){
  if(!state.active||index>=state.anchors.length)return;
@@ -819,8 +869,8 @@ async function speakEleven(text){
   // Half-duplex while ElevenLabs speaks. Without this, the phone's own
   // speaker audio trips server VAD and immediately aborts the TTS playback.
   state.ttsPlaying=true;
-  const mic=state.stream?.getAudioTracks()[0];
-  if(mic)mic.enabled=false;
+  await releaseMicForPlayback();
+  if(!state.active||current!==state.generation)return;
   await audio.play();
   await new Promise(resolve=>{
    if(audio.ended){resolve();return}
@@ -832,8 +882,7 @@ async function speakEleven(text){
  finally{
   if(current===state.generation){
    state.ttsPlaying=false;
-   const mic=state.stream?.getAudioTracks()[0];
-   if(mic&&state.active)mic.enabled=!state.micUserMuted;
+   if(state.active)await restoreMicAfterPlayback().catch(e=>console.warn('[Free Talking] mic reacquisition failed',e));
   }
  }
 }
@@ -895,7 +944,8 @@ async function startConversation(){
   state.stream=mic;
   if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
   monitorMicrophone(mic);
-  peer.addTrack(mic.getAudioTracks()[0],mic);
+  state.audioSender=peer.addTrack(mic.getAudioTracks()[0],mic);
+  state.micReleased=false;
   const channel=peer.createDataChannel('oai-events');state.channel=channel;
   channel.onclose=()=>{if(state.active)$('listenCheck').textContent='AI data connection closed'};
   peer.onconnectionstatechange=()=>{
