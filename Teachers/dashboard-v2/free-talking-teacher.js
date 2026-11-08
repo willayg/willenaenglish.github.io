@@ -219,7 +219,7 @@ async function showCreate(host){
    for(const u of chosen){
     const title=(state.books.find(x=>x.id===book.value)?.title||'Free Talking')+' · Unit '+u.unit_number;
     const payload={class:klass.value,title,list_title:title,description:'Free Talking Genius · Speaking (8 questions)',list_key:'free_talking:'+book.value+':'+u.id,list_meta:{
-      source_app:'free_talking_genius',source_type:'free_talking_genius',app:'free_talking_genius',
+      source_app:'free_talking_genius',source_type:'wordlist',app:'free_talking_genius',
       book_id:book.value,unit_id:u.id,unit_number:u.unit_number,required_modes:['speaking'],
       question_count:8,pass_score:8,fresh_session:form.elements.fresh.checked,
       assignment_group_id:groupId,assignment_group_title:title
