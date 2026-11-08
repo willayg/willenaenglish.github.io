@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -63,13 +63,13 @@ window.addEventListener('popstate',()=>{
 });
 
 function volumeFraction(){
- const x=Math.max(0,Math.min(150,Number($('volume').value)||0))/100;
- // Linear gain; 100% is normal, 101–150% is an optional Web Audio boost.
+ const x=Math.max(0,Math.min(100,Number($('volume').value)||0))/100;
+ // Never amplify past unity: 150% gain caused clipping on phone speakers.
  return x;
 }
 function setAudioLevels(){
  const level=volumeFraction();
- if(state.audioGain)state.audioGain.gain.setTargetAtTime(level,state.audioContext.currentTime,.012);
+ if(state.audioGain&&state.audioContext)state.audioGain.gain.setTargetAtTime(level,state.audioContext.currentTime,.012);
  for(const a of [state.remote,state.speaker].filter(Boolean)){
   a.muted=level===0;
   a.volume=state.linkedSources.has(a)?1:Math.min(1,level);
