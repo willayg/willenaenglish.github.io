@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,voiceTestAudio:null,voiceTestUrl:null,voiceTestController:null};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -291,6 +291,7 @@ function stopSpeech(){
  state.speaker=null;state.playing=null;
 }
 function endSession(reason='Conversation finished.'){
+ stopVoiceTest();
  clearInterval(state.timer);state.timer=null;
  clearTimeout(state.anchorTimer);state.anchorTimer=null;state.anchorToken++;
  for(const entry of state.anchorClipCache.values())if(entry?.owned)URL.revokeObjectURL(entry.url);
@@ -326,12 +327,49 @@ $('restart').addEventListener('click',()=>{
  void startConversation();
 });
 $('volume').addEventListener('input',()=>{resumeMixer();setAudioLevels()});
+function stopVoiceTest(){
+ try{state.voiceTestController?.abort()}catch{}
+ state.voiceTestController=null;
+ if(state.voiceTestAudio){try{state.voiceTestAudio.pause();state.voiceTestAudio.src=''}catch{}}
+ state.voiceTestAudio=null;
+ if(state.voiceTestUrl){URL.revokeObjectURL(state.voiceTestUrl);state.voiceTestUrl=null}
+}
 $('testVoice').addEventListener('click',()=>{
- if(state.voiceMode!=='eleven'||!state.active)return;
- error('');
- // This bypasses OpenAI response-generation: it verifies voice, proxy and MP3 playback.
- void speakEleven('Hello! Let us talk about your lesson.');
+ const panel=$('voiceTestPanel');
+ panel.hidden=!panel.hidden;
+ if(!panel.hidden)$('voiceTestCharacter').value=state.character==='pigfish'?'pigfish':'bunny';
+ else stopVoiceTest();
 });
+$('closeVoiceTest').addEventListener('click',()=>{$('voiceTestPanel').hidden=true;stopVoiceTest()});
+for(const button of document.querySelectorAll('[data-test-model]')){
+ button.addEventListener('click',async()=>{
+  const model=button.dataset.testModel,character=$('voiceTestCharacter').value;
+  const status=$('voiceTestStatus');
+  stopVoiceTest();
+  const abort=new AbortController();state.voiceTestController=abort;
+  status.textContent='Generating '+model+' sample…';
+  for(const btn of document.querySelectorAll('[data-test-model]'))btn.disabled=true;
+  try{
+   // Same text on every run: comparison is strictly the voice model.
+   const text='Oh, really? That sounds fun! What do you want to do next?';
+   const res=await authorizedDemoFetch('/api/free-talking-realtime-eleven',
+    {character,text,test_model:model},abort.signal);
+   if(!res.ok){const data=await res.json().catch(()=>({}));throw Error(data.error||'TTS HTTP '+res.status)}
+   const blob=await res.blob();
+   if(blob.size<500)throw Error('Audio was empty');
+   if(abort.signal.aborted)return;
+   const url=URL.createObjectURL(blob);state.voiceTestUrl=url;
+   const audio=new Audio();state.voiceTestAudio=audio;audio.volume=Math.min(1,volumeFraction());
+   audio.src=url;
+   status.textContent='Playing '+model+' · '+Math.round(blob.size/1024)+' KB';
+   await audio.play();
+   await new Promise(resolve=>{audio.onended=resolve;audio.onerror=resolve;abort.signal.addEventListener('abort',resolve,{once:true})});
+   if(!abort.signal.aborted)status.textContent='Finished '+model+'. Choose another to compare.';
+  }catch(e){if(!abort.signal.aborted)status.textContent='Voice test error: '+e.message}
+  finally{if(state.voiceTestController===abort)state.voiceTestController=null;
+   for(const btn of document.querySelectorAll('[data-test-model]'))btn.disabled=false;}
+ });
+}
 $('soundFallback').addEventListener('click',()=>{
  // Retain a reliable browser speaker path, with a choice to switch it back.
  state.quietMode=!state.quietMode;
@@ -593,7 +631,7 @@ async function startConversation(){
  $('log').replaceChildren();message('Connecting…');
  $('mute').disabled=false;$('end').disabled=false;$('mute').textContent='Mute microphone';
  const character=state.character;state.voiceMode='eleven'; // guided text responses use controlled TTS for ALL three voices
- $('testVoice').hidden=state.character==='willi';
+ $('testVoice').hidden=false;
  try{
   showActor();
   const res=await authorizedDemoFetch('/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id,guided:true},startAbort.signal);
