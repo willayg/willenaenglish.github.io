@@ -1,12 +1,39 @@
 // Demo overlay. The ORIGINAL Free Talking Genius runs unchanged inside the same-origin iframe.
 // Everything here is additive; no production app source is patched.
-import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261107-pig-original4';
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
-import {staffAccessToken} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
+import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio'};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio'};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
+// Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
+// The extension's previous staffAccessToken() path was inappropriate for students.
+function validJwt(token){
+ if(!token||token.split('.').length!==3)return false;
+ try{
+  const claims=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+  return Number(claims.exp)*1000>Date.now()+30000;
+ }catch{return false}
+}
+async function originalStudentToken(force=false){
+ const original=frame.contentWindow;
+ const gateway=original?.WillenaAPI||window.WillenaAPI;
+ const cached=gateway?.getLocalAccessToken?.();
+ if(!force&&validJwt(cached))return cached;
+ const fn=gateway?.fetch?gateway.fetch.bind(gateway):fetch;
+ const res=await fn('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'});
+ const data=await res.json().catch(()=>null);
+ if(!res.ok||!validJwt(data?.access_token))throw Error('Willena login needs refreshing. Sign in and reopen the demo.');
+ gateway?.setLocalTokens?.(data.access_token,data.refresh_token||'');
+ return data.access_token;
+}
+async function authorizedDemoFetch(path,body,signal){
+ const call=async token=>fetch(path,{method:'POST',credentials:'same-origin',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body),signal,cache:'no-store'});
+ let response=await call(await originalStudentToken());
+ if(response.status===401)response=await call(await originalStudentToken(true));
+ return response;
+}
+
 const EXT_NAV_KEY='willenaFtRealtimeExtensionV1';
 let activeStartId=0;
 let startAbort=null;
@@ -31,7 +58,6 @@ window.addEventListener('popstate',()=>{
  // iframe owns the preceding character and book history entries.
  if(!hasActivityHistory()&&!veil.hidden)closeActivity();
 });
-const fixArt=(art,key)=>art.replaceAll('id="pigBody"','id="pigBody-'+key+'"').replaceAll('url(#pigBody)','url(#pigBody-'+key+')').replaceAll('id="pigBelly"','id="pigBelly-'+key+'"').replaceAll('url(#pigBelly)','url(#pigBelly-'+key+')');
 function message(s){$('status').textContent=s}
 function error(s){$('error').textContent=String(s||'Unknown error')}
 function buttonState(c){
@@ -137,11 +163,36 @@ function appendLine(who,text){
  if($('log').children.length>30)$('log').firstElementChild.remove();
  $('log').scrollTop=$('log').scrollHeight;
 }
-function actorPhase(phase){$('actorStage').dataset.phase=phase;const a=$('demoActor');if(a)a.dataset.state=phase==='speaking'?'speaking':phase==='listening'?'listening':'idle'}
+function actorPhase(phase){
+ $('actorStage').dataset.phase=phase;
+ const circle=$('ftTurnCircle');
+ if(circle){
+  circle.dataset.phase=phase==='speaking'?'ai':phase==='listening'?'student':phase==='thinking'?'thinking':'ready';
+  circle.dataset.listening=phase==='listening'?'true':'false';
+ }
+ state.actor?.setSpeaking(phase==='speaking');
+}
 function showActor(){
- $('actorStage').replaceChildren();
- if(state.character==='willi'){const orb=document.createElement('div');orb.className='willi-stage';orb.innerHTML='<i></i>';$('actorStage').append(orb)}
- else{const div=document.createElement('div');div.id='demoActor';div.className='demo-actor bf-actor';div.dataset.state='idle';div.innerHTML=state.character==='bunny'?BUNNY_FOX_ART:fixArt(PIGFISH_ART,'demo-stage');$('actorStage').append(div)}
+ const originalCircle=appDocument()?.getElementById('ftTurnCircle');
+ if(!originalCircle)throw Error('Original Free Talking character animation is unavailable');
+ const host=$('actorStage');host.replaceChildren();
+ // Clone the live app's REAL circle + original SVG and orbit markup.
+ // The existing character-actor module adds the exact Bunny/Pigfish drawings,
+ // same speaking-mouth animation and same character switching.
+ const shell=document.createElement('div');
+ shell.className='free-talking-genius';shell.id='ftExtensionOriginalShell';
+ const session=document.createElement('section');
+ session.id='ftSession';session.className='ft-conversation';
+ session.hidden=false;
+ const voice=document.createElement('section');
+ voice.id='ftWilliVoice';voice.className='ft-willi-voice';
+ const circle=originalCircle.cloneNode(true);
+ circle.id='ftTurnCircle';circle.removeAttribute('aria-label');
+ circle.type='button';circle.disabled=true;
+ // Remove the original app's record button handler by cloning just the DOM.
+ voice.append(circle);session.append(voice);shell.append(session);host.append(shell);
+ state.actor=createFreeTalkingCharacters({circle,session,voiceHost:voice,choices:{}});
+ state.actor.select(state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':'marin');
  actorPhase('ready');
 }
 function stopSpeech(){
@@ -154,6 +205,7 @@ function stopSpeech(){
 }
 function endSession(reason='Conversation finished.'){
  clearInterval(state.timer);state.timer=null;
+ state.actor?.setSpeaking(false);state.actor=null;
  stopSpeech();
  try{state.channel?.close()}catch{};try{state.peer?.close()}catch{};
  try{state.stream?.getTracks().forEach(t=>t.stop())}catch{}
@@ -223,9 +275,8 @@ async function speakEleven(text){
  actorPhase('ready');message(NAMES[state.character]+' is speaking…');
  const control=new AbortController();state.controller=control;
  try{
-  const token=await staffAccessToken();
   if(!state.active||current!==state.generation)return;
-  const response=await fetch('/api/free-talking-realtime-eleven',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({character:state.character,text}),signal:control.signal});
+  const response=await authorizedDemoFetch('/api/free-talking-realtime-eleven',{character:state.character,text},control.signal);
   if(!response.ok){const e=await response.json().catch(()=>({}));throw Error(e.error||'ElevenLabs unavailable ('+response.status+')')}
   if(current!==state.generation||!state.active)return;
   const audio=new Audio();audio.volume=Number($('volume').value)/100;state.speaker=audio;state.playing=audio;actorPhase('speaking');
@@ -266,9 +317,7 @@ async function startConversation(){
  $('mute').disabled=false;$('end').disabled=false;$('mute').textContent='Mute microphone';
  const character=state.character;state.voiceMode=character==='willi'?'audio':'eleven';
  try{
-  const token=await staffAccessToken();
-  if(startId!==activeStartId)return;
-  const res=await fetch('/api/free-talking-realtime-lab',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({book_id:state.book.id,unit_id:state.unit.id}),signal:startAbort.signal});
+  const res=await authorizedDemoFetch('/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id},startAbort.signal);
   if(startId!==activeStartId)return;
   const session=await res.json().catch(()=>({}));
   if(startId!==activeStartId)return;
