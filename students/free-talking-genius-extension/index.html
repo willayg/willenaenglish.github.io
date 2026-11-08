@@ -110,14 +110,66 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #demo #volume{appearance:auto;width:36px!important;height:158px;min-height:0;writing-mode:vertical-lr;direction:rtl;accent-color:#17aebc;touch-action:none}
 #demo #volumeToggle[aria-expanded=true]{background:#ebfbfc}
 @media(max-width:450px){#demo .wrap{padding:7px 7px calc(77px + env(safe-area-inset-bottom,0px))}#demo #talk{padding:0!important}#demo #actorStage #ftTurnCircle{width:min(82vw,57dvh)!important;height:min(82vw,57dvh)!important}}
+/* Extension-only conversation layout. Never change the source Speaking app. */
+#demo .wrap{padding:8px 10px calc(78px + env(safe-area-inset-bottom,0px))!important}
+#demo #talk{justify-content:initial!important;display:flex!important;flex-direction:column!important;gap:0!important}
+#demo #talk .actor-stage{
+ flex:1 1 auto!important;min-height:0!important;height:auto!important;
+ overflow:hidden!important;position:relative!important;display:flex!important;
+ align-items:center!important;justify-content:center!important;
+ padding:2px 12px 0!important;
+}
+#demo #actorStage #ftTurnCircle{
+ width:min(67vw,42dvh,340px)!important;height:min(67vw,42dvh,340px)!important;
+ max-width:100%!important;max-height:100%!important;
+}
+#demo #actorStage .free-talking-genius{width:100%;height:100%;min-height:0!important;display:flex;align-items:center;justify-content:center}
+#demo .conversation-text{
+ width:100%;flex:0 0 auto;max-height:min(24dvh,210px);min-height:78px;
+ background:#fff;border-top:1px solid #d7edef;
+ padding:12px 14px 14px;overflow:hidden;display:flex;flex-direction:column;gap:7px;
+}
+#demo .conversation-text #anchorText{
+ display:block!important;flex:0 0 auto;min-height:0!important;margin:0!important;
+ font-size:clamp(13px,2.8vw,18px);line-height:1.4;font-weight:700;
+ color:#366a76;text-align:center;white-space:normal;
+ max-height:3em;overflow:auto;
+}
+#demo .conversation-text #log{
+ display:flex!important;flex:1 1 auto;min-height:0;max-height:100px;
+ overflow:auto;flex-direction:column;gap:5px;margin:0!important;
+ scrollbar-width:thin;overscroll-behavior:contain;
+}
+#demo .conversation-text #log .entry{
+ background:#eef9fa;border-radius:10px;max-width:100%;
+ padding:6px 10px!important;font-size:clamp(12px,2.5vw,14px);line-height:1.3;
+ overflow-wrap:anywhere;
+}
+#demo .conversation-text #log .entry.me{background:#fff2f7}
+#demo .conversation-text #log .entry b{font-size:10px}
+#demo #pauseResume[aria-pressed=true]{background:#e9f9fb;border-color:#70cbd6}
+#demo #pauseResume .resume-icon{display:none}
+#demo #pauseResume[aria-pressed=true] .pause-icon{display:none}
+#demo #pauseResume[aria-pressed=true] .resume-icon{display:block}
+#demo .control-dock{gap:10px!important;padding-inline:8px!important}
+#demo .dock-icon{width:49px!important;height:49px!important;border-radius:14px!important}
+#demo .dock-icon svg{width:23px!important;height:23px!important}
+@media(max-height:620px){
+ #demo .conversation-text{min-height:62px;max-height:28dvh;padding:5px 9px}
+ #demo #actorStage #ftTurnCircle{width:min(55vw,40dvh,280px)!important;height:min(55vw,40dvh,280px)!important}
+}
 </style></head><body>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
 <div id="demo" hidden><main class="wrap">
 <div class="panel" id="talk">
  <div id="actorStage" class="actor-stage" data-phase="ready"></div>
+ <div class="conversation-text" aria-label="Current conversation">
+  <p id="anchorText" class="anchor-question" aria-live="polite">Your first question will appear here.</p>
+  <div id="log" aria-live="polite"></div>
+ </div>
  <div id="conversationDiagnostics" aria-live="polite">
   <h1 id="heading" hidden></h1><p id="lesson" hidden></p>
-  <div id="clock" hidden></div><p id="anchorText" hidden></p>
+  <div id="clock" hidden></div>
   <p id="status" hidden></p><p id="lessonFocus" hidden></p>
   <div id="listenCheck" role="status" hidden></div><span id="micLevel" hidden></span>
   <button id="restart" type="button" hidden disabled>Retry connection</button>
@@ -125,11 +177,14 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
   <button id="soundFallback" type="button" hidden>Use phone speaker</button>
   <p id="error" role="alert"></p>
  </div>
- <div id="log" hidden aria-live="polite"></div>
 </div>
 <div class="control-dock" aria-label="Conversation controls">
  <button id="back" class="dock-icon" type="button" aria-label="Back to character selection" title="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
  <button id="mute" class="dock-icon" type="button" disabled aria-label="Mute microphone" title="Mute microphone" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg><svg class="mic-slash" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16"/></svg></button>
+ <button id="pauseResume" class="dock-icon" type="button" aria-label="Pause conversation" title="Pause conversation" aria-pressed="false">
+  <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+  <svg class="resume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>
+ </button>
  <div class="volume-control">
   <button id="volumeToggle" class="dock-icon" type="button" aria-label="Adjust AI voice volume" aria-controls="volumeBox" aria-expanded="false" title="Volume"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a5 5 0 0 1 0 6M19 6a9 9 0 0 1 0 12"/></svg></button>
   <div id="volumeBox" hidden>
@@ -140,4 +195,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-transcript-silence8"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-pause-idle-layout9"></script></body></html>
