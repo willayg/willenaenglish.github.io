@@ -251,6 +251,24 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #demo #actorStage .ft-extension-willi-circle{
  background:#fff!important;border-radius:50%!important;
 }
+/* FINAL OVERRIDE: source Speaking CSS uses two IDs and !important for a cyan
+   border, white fill and outline. This extension-specific selector has higher
+   specificity and removes those recorder styles on animal portraits only. */
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar,
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar:hover,
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar:focus,
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar[data-phase]{
+ border:0!important;border-width:0!important;border-style:none!important;
+ outline:0!important;outline-width:0!important;outline-style:none!important;
+ outline-offset:0!important;box-shadow:none!important;
+ background:transparent!important;background-color:transparent!important;
+ background-image:none!important;border-radius:0!important;
+ -webkit-appearance:none!important;appearance:none!important;
+}
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar::before,
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar::after{
+ content:none!important;display:none!important;border:0!important;outline:0!important;
+}
 </style></head><body>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
 <div id="demo" hidden><main class="wrap">
@@ -288,4 +306,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-detours-neutral16"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-no-recorder-border17"></script></body></html>
