@@ -647,6 +647,9 @@ function clearPendingSpeech(){
 }
 function voiceTurnValid(text,pending){
  const transcript=String(text||'').replace(/\s+/g,' ').trim();
+ // Do not advance an English lesson on misrecognized Korean/Japanese.
+ if(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u.test(transcript))return false;
+ if(/^(?:arigatou|arigato|konnichiwa|sayonara|annyeong|gomawo|kamsahamnida)[.!? ]*$/i.test(transcript))return false;
  const clean=transcript.replace(/[\p{P}\p{S}\s]/gu,'');
  const nonSpeech=/^(?:\[?silence\]?|\[?inaudible\]?|\[?noise\]?|\[?music\]?|\[?applause\]?|\[?background noise\]?|thank you for watching|thanks for watching|subtitles by.*)$/i;
  if(!clean||nonSpeech.test(transcript)||clean.length>400)return false;
@@ -661,7 +664,7 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
  clearTimeout(pending.timeout);state.pendingSpeech.delete(itemId);
  if(!state.active||pending.anchorToken!==state.anchorToken||pending.phase!==state.anchorPhase)return;
  if(failed||!voiceTurnValid(transcript,pending)){
-  message('I could not hear an answer. Please speak again.');
+  message('Please answer in English. Try again.');
   $('listenCheck').textContent='Listening for your answer';
   actorPhase('listening');
   // Remove unverified audio from conversation context.
@@ -685,6 +688,7 @@ function requestGuidedReply(){
  const cap=second?reactionWordCap(state.lessonLevel):replyWordCap(state.lessonLevel);
  const verified=String(state.verifiedAnswer||'').slice(0,350);state.verifiedAnswer='';
  const directive=[
+  'STRICT ENGLISH-ONLY MODE. Every reaction and follow-up must be entirely in English. Never answer in Korean, Japanese or another language, even if the learner uses it. Never translate or mirror a foreign-language response. Ask for English in simple English.',
   'Verified latest student speech: "'+verified+'". Base your answer ONLY on these actual words; do not invent student responses.',
   'Current textbook question: "'+anchor.text+'". React to the STUDENT\'S MOST RECENT ANSWER, not an earlier answer.',
   second
@@ -721,6 +725,10 @@ async function finishGuidedReply(data){
   .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';
  responseText=shortenGuidedResponse(responseText,second,state.lessonLevel);
+ if(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u.test(responseText)){
+  console.warn('[Free Talking] Refused non-English model reply');
+  responseText=second?'Okay, moving on!':'Can you tell me more?';
+ }
  setExpression(expressionFromText(responseText),4000);
  const run=state.anchorToken;state.replyWasSecond=second;state.anchorPhase='playingReply';setMicEnabled(false);
  if(responseText)await speakEleven(responseText);
@@ -900,7 +908,7 @@ async function startConversation(){
    // session.updated, which can be absent after negotiating a Realtime call.
    state.guidedSessionReady=true;
    channel.send(JSON.stringify({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{
-    transcription:{model:'gpt-4o-mini-transcribe',language:'en'},
+    transcription:{model:'gpt-4o-mini-transcribe',language:'en',prompt:'English-only classroom conversation: young Korean learners speaking English with accents. Transcribe English words exactly. Never translate Korean or Japanese into English and never invent speech from silence.'},
     turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:false,interrupt_response:false}
    }}}}));
    if(state.active&&state.anchorPhase==='ready'&&!restoreAfterPause())void playAnchor(state.anchorIndex);
