@@ -229,7 +229,7 @@ async function startConversation(){
  const character=state.character;state.voiceMode=character==='willi'?'audio':'eleven';
  try{
   const token=await staffAccessToken();
-  const res=await fetch('/api/free-talking-realtime-lab',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({book_id:state.book.id,unit_id:state.unit.id})});
+  const res=await fetch('/api/free-talking-realtime-lab',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({book_id:state.book.id,unit_id:state.unit.id}),signal:AbortSignal.timeout(24000)});
   const session=await res.json().catch(()=>({}));if(!res.ok||!session.token)throw Error(session.error||'Realtime connection failed');
   const peer=new RTCPeerConnection();state.peer=peer;
   if(state.voiceMode==='audio'){
@@ -247,11 +247,12 @@ async function startConversation(){
    }else{state.alreadySpoken=true;channel.send(JSON.stringify({type:'response.create',response:{instructions:'Say a brief greeting and ONE easy question about the selected unit. Under 15 words.'}}))}
   };
   const offer=await peer.createOffer();await peer.setLocalDescription(offer);
-  const answer=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',headers:{Authorization:'Bearer '+session.token,'Content-Type':'application/sdp'},body:offer.sdp});
+  const answer=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',headers:{Authorization:'Bearer '+session.token,'Content-Type':'application/sdp'},body:offer.sdp,signal:AbortSignal.timeout(18000)});
   if(!answer.ok)throw Error('Realtime negotiation failed ('+answer.status+')');
   await peer.setRemoteDescription({type:'answer',sdp:await answer.text()});
   state.active=true;state.starting=false;message('Connected. Say hello!');actorPhase('listening');ticking();
  }catch(e){
+  console.error('[Free Talking Realtime demo] failed to start',e);
   // Never kick the student out on an error. Keep the session screen and actionable message.
   endSession('Connection failed. Use Back to return to your lesson.');
   error('Could not start: '+(e?.message||'Unknown connection error'));
