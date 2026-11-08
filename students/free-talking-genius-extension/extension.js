@@ -644,8 +644,8 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
  const speech=state.verifiedAnswer;
  // Standalone vocabulary and language questions are side conversations,
  // NOT textbook answers. Mixed answer + question remains the current turn.
- const isAside=/\b(?:what (?:does|do|is)|what'?s|how (?:do|can|would)|can you (?:explain|tell|translate|say)|could you (?:explain|tell|translate)|what'?s the (?:meaning|difference)|(?:meaning|mean) (?:of|in korean))\b/i.test(speech) &&
-   (/\?|\b(?:mean|meaning|explain|translate|in korean|in english|how do you say)\b/i.test(speech));
+ const isAside=/(?:\b(?:what (?:does|do|is|about)|what'?s|how (?:do|can|would)|why (?:do|is)|do you|are you|can you|could you|would you|is it|is that|what'?s the|(?:meaning|mean) (?:of|in korean))\b|\?)/i.test(speech) &&
+  (/\?|\b(?:mean|meaning|explain|translate|in korean|in english|how do you say)\b/i.test(speech));
  const isAnswerPrefix=/^(?:yes|yeah|yep|no|nope|i (?:do|don't|like|love|want|have|think|can|am|prefer)|it'?s|they'?re|we|my|because)\b/i.test(speech);
  if(isAside&&!isAnswerPrefix){
   requestGuidedAside();
