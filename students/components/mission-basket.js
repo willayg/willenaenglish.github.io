@@ -40,7 +40,7 @@ async function standardHomework(){
   }catch(error){console.warn('[mission basket] Grammar Books homework progress unavailable',error)}
  }
  const entries=await Promise.all((d.assignments||[]).map(async a=>{
-  const source=String(a.list_meta?.creative_type||a.list_meta?.source_type||a.source_type||a.list_meta?.app||'').toLowerCase().trim();
+  const source=(a.list_meta?.source_app==='free_talking_genius'||String(a.list_key||'').startsWith('free_talking:'))?'free_talking_genius':String(a.list_meta?.creative_type||a.list_meta?.source_type||a.source_type||a.list_meta?.app||'').toLowerCase().trim();
   // Sentence Genius has its own live feed below. Never misroute its rows to Arcade.
   if(source==='sentence_genius')return null;
   let app,url;
