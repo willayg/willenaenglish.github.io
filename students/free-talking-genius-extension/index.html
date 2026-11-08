@@ -82,6 +82,12 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #demo #micLevel{display:inline-block;min-width:140px;text-align:center;color:#447687;font-size:12px;font-weight:750}
 #demo #listenCheck{display:block;color:#447687;font-size:12px;min-height:19px;text-align:center}
 #demo #restart{border-color:#81d2da;background:#e6fbfd}
+#demo .voice-test-panel{border:1px solid #b9e6eb;border-radius:13px;padding:10px;display:grid;gap:8px;max-height:42dvh;overflow-y:auto;background:#f7fdfe}
+#demo .voice-test-panel[hidden]{display:none!important}
+#demo .voice-test-panel select{border-radius:9px;border:1px solid #b9e6eb;background:#fff;padding:5px 9px;color:#26556a}
+#demo .voice-test-panel .row{gap:5px}
+#demo .voice-test-panel [data-test-model]{min-height:38px;padding:6px 9px;font-size:12px}
+#demo .voice-test-panel #voiceTestStatus{font-size:12px;margin:0}
 #demo .top{position:sticky;top:0;z-index:25;background:#f8fcfdf2;padding:8px 0 14px;
   border-radius:15px}
 
@@ -97,10 +103,22 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 <div class="row"><span id="micLevel">Mic level: —</span><button id="restart" class="secondary" type="button" disabled>Start / Retry</button></div>
 <div class="row"><button type="button" class="secondary" id="mute" disabled>Mute microphone</button><button type="button" class="secondary" id="end">End conversation</button></div>
 <label id="volumeBox">AI voice volume <input id="volume" type="range" min="0" max="150" value="100" step="5" aria-label="AI voice playback volume"><output id="volumeNumber">100%</output></label>
-<div class="row"><button type="button" class="secondary" id="soundFallback">Use phone speaker</button><button type="button" class="secondary" id="testVoice" hidden>Test ElevenLabs voice</button></div>
+<div class="row"><button type="button" class="secondary" id="soundFallback">Use phone speaker</button><button type="button" class="secondary" id="testVoice">Compare ElevenLabs voices</button></div>
+<section id="voiceTestPanel" hidden class="voice-test-panel">
+ <div class="row" style="align-items:center;justify-content:space-between"><strong>Voice comparison</strong><button id="closeVoiceTest" type="button" class="secondary">Close</button></div>
+ <label>Character <select id="voiceTestCharacter"><option value="bunny">Bunny Fox</option><option value="pigfish">Pigfish</option></select></label>
+ <div class="row">
+  <button class="secondary" data-test-model="flash90" type="button">Flash 0.90×</button>
+  <button class="secondary" data-test-model="flash85" type="button">Flash 0.85×</button>
+  <button class="secondary" data-test-model="v3convo" type="button">v3 Conversational</button>
+  <button class="secondary" data-test-model="v3" type="button">Standard v3</button>
+ </div>
+ <p id="voiceTestStatus" role="status">Tap a model to hear the same sentence.</p>
+ <p class="small">Each new sample uses ElevenLabs API credits. Normal conversation settings will not change.</p>
+</section>
 <div class="small" style="text-align:center">100% normal · up to 150% boost when adjustable sound is supported</div>
 <p id="error" role="alert" style="margin:0;font-weight:750"></p>
 </div><div id="log" aria-live="polite"></div><p class="small" style="text-align:center">Free Talking practice: no homework, stars, or golden-unit credit.</p></div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-guided-startfix2"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-voice-comparison3"></script></body></html>
