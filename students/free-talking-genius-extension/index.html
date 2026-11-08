@@ -93,10 +93,11 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 <div id="listenCheck" role="status">Microphone: waiting to connect</div>
 <div class="row"><span id="micLevel">Mic level: —</span><button id="restart" class="secondary" type="button" disabled>Start / Retry</button></div>
 <div class="row"><button type="button" class="secondary" id="mute" disabled>Mute microphone</button><button type="button" class="secondary" id="end">End conversation</button></div>
-<label id="volumeBox">AI voice volume <input id="volume" type="range" min="0" max="100" value="25" step="5"><output id="volumeNumber">25%</output></label>
-<div class="row"><button type="button" class="secondary" id="soundFallback">Use phone speaker</button></div>
+<label id="volumeBox">AI voice volume <input id="volume" type="range" min="0" max="150" value="100" step="5" aria-label="AI voice playback volume"><output id="volumeNumber">100%</output></label>
+<div class="row"><button type="button" class="secondary" id="soundFallback">Use phone speaker</button><button type="button" class="secondary" id="testVoice" hidden>Test ElevenLabs voice</button></div>
+<div class="small" style="text-align:center">100% normal · up to 150% boost when adjustable sound is supported</div>
+<p id="error" role="alert" style="margin:0;font-weight:750"></p>
 </div><div id="log" aria-live="polite"></div><p class="small" style="text-align:center">Free Talking practice: no homework, stars, or golden-unit credit.</p></div>
-<p id="error" role="alert"></p>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-lesson-mic-controls8"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-eleven-volume9"></script></body></html>
