@@ -274,6 +274,51 @@ function appendLine(who,text){
  if($('log').children.length>30)$('log').firstElementChild.remove();
  $('log').scrollTop=$('log').scrollHeight;
 }
+
+function expressionFromText(text){
+ const t=String(text||'').toLowerCase();
+ if(/oh no|i'm sorry|that's sad|feel sad|poor you|too bad|unfortunately|miss you/.test(t))return 'sad';
+ if(/watch out|that's dangerous|stop that|not okay|don't do|be careful|hey!/.test(t))return 'angry';
+ if(/no way|whoa|wow|seriously|unbelievable|shocked/.test(t))return 'shocked';
+ if(/really\?|huh\?|wait|oh\?|surpris/.test(t))return 'surprised';
+ if(/hmm|i wonder|how come|why do|tell me/.test(t))return 'curious';
+ if(/haha|ha!|great|awesome|cool|nice|fun|love|yes!|yay/.test(t))return 'happy';
+ return 'neutral';
+}
+function setExpression(expression='neutral',duration=0){
+ const actor=state.actor?.actor;if(!actor)return;
+ const moods=['neutral','happy','sad','angry','surprised','shocked','curious'];
+ const mood=moods.includes(expression)?expression:'neutral';
+ clearTimeout(state.emotionTimer);state.emotionTimer=null;
+ actor.dataset.expression=mood;
+ const svg=actor.querySelector('svg.bf-svg');if(!svg)return;
+ svg.querySelector('[data-extension-expression]')?.remove();
+ if(mood==='neutral')return;
+ const pig=state.character==='pigfish',stroke=pig?'#211715':'#211a15';
+ const coords=pig?[[108,393,38,54],[319,412,39,54]]:[[218,330,39,47],[388,332,39,47]];
+ let markup='';
+ for(const [x,y,rx,ry] of coords){
+  if(mood==='happy')markup+='<path d="M'+(x-rx)+' '+y+' Q'+x+' '+(y-ry*.86)+' '+(x+rx)+' '+y+'" fill="none" stroke="'+stroke+'" stroke-width="13" stroke-linecap="round"/>';
+  else if(mood==='sad')markup+='<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx*.7+'" ry="'+ry*.8+'" fill="'+stroke+'"/><path d="M'+(x-rx)+' '+(y-ry)+' Q'+x+' '+(y-ry*.3)+' '+(x+rx)+' '+(y-ry*.7)+'" fill="none" stroke="'+stroke+'" stroke-width="10"/>';
+  else{
+   const wide=mood==='shocked'?1.13:mood==='surprised'?1:.78;
+   markup+='<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx*wide+'" ry="'+ry*(mood==='shocked'?1.16:1)+'" fill="'+stroke+'"/>';
+   if(mood==='angry')markup+='<path d="M'+(x-rx)+' '+(y-ry*1.2)+' L'+(x+rx)+' '+(y-ry*.62)+'" stroke="'+stroke+'" stroke-width="13" stroke-linecap="round"/>';
+   if(mood==='curious')markup+='<path d="M'+(x-rx)+' '+(y-ry*1.3)+' Q'+x+' '+(y-ry*1.7)+' '+(x+rx)+' '+(y-ry*1.25)+'" fill="none" stroke="'+stroke+'" stroke-width="9"/>';
+  }
+ }
+ const cx=pig?175:301,cy=pig?649:424;
+ let mouth;
+ if(mood==='surprised'||mood==='shocked')mouth='<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+(pig?27:16)+'" ry="'+(mood==='shocked'?(pig?37:27):(pig?23:18))+'" fill="#6e3443" stroke="'+stroke+'" stroke-width="6"/>';
+ else if(mood==='sad')mouth='<path d="M'+(cx-36)+' '+(cy+20)+' Q'+cx+' '+(cy-20)+' '+(cx+36)+' '+(cy+20)+'" fill="none" stroke="'+stroke+'" stroke-width="9" stroke-linecap="round"/>';
+ else if(mood==='angry')mouth='<path d="M'+(cx-36)+' '+(cy+7)+' Q'+cx+' '+(cy-16)+' '+(cx+36)+' '+(cy+7)+'" fill="none" stroke="'+stroke+'" stroke-width="9" stroke-linecap="round"/>';
+ else mouth='<path d="M'+(cx-38)+' '+(cy-8)+' Q'+cx+' '+(cy+43)+' '+(cx+38)+' '+(cy-8)+'" fill="none" stroke="'+stroke+'" stroke-width="9" stroke-linecap="round"/>';
+ const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+ g.setAttribute('data-extension-expression',mood);
+ g.innerHTML=markup+'<g class="extension-expression-mouth">'+mouth+'</g>';
+ svg.appendChild(g);
+ if(duration)state.emotionTimer=setTimeout(()=>setExpression('neutral'),duration);
+}
 function actorPhase(phase){
  $('actorStage').dataset.phase=phase;
  const circle=$('ftTurnCircle');
@@ -300,7 +345,7 @@ function showActor(){
  voice.append(circle);session.append(voice);shell.append(session);host.append(shell);
  state.actor=createFreeTalkingCharacters({circle,session,voiceHost:voice,choices:{}});
  state.actor.select(state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':'marin');
- actorPhase('ready');
+ actorPhase('ready');setExpression('happy',1300);
 }
 function stopSpeech(){
  state.generation++;
@@ -315,7 +360,8 @@ function endSession(reason='Conversation finished.'){
  clearTimeout(state.idleTimer);state.idleTimer=null;
  clearTimeout(state.sessionDeadline);state.sessionDeadline=null;
  clearTimeout(state.anchorTimer);state.anchorTimer=null;state.anchorToken++;
- clearPendingSpeech();state.speechStartedAt=0;state.speechPeak=0;state.lastSpeechDuration=0;state.verifiedAnswer='';
+ clearPendingSpeech();clearTimeout(state.emotionTimer);state.emotionTimer=null;
+ state.speechStartedAt=0;state.speechPeak=0;state.lastSpeechDuration=0;state.verifiedAnswer='';
  for(const entry of state.anchorClipCache.values())if(entry?.owned)URL.revokeObjectURL(entry.url);
  state.anchorClipCache.clear();state.anchorClipPromises.clear();state.anchors=[];state.anchorPhase='idle';state.anchorResponding=false;state.guidedSessionReady=false;
  stopMicMonitor();
@@ -542,6 +588,7 @@ async function playAnchor(index){
  sendRealtime({type:'conversation.item.create',item:{type:'message',role:'assistant',
   content:[{type:'output_text',text:anchor.text}]}});
  appendLine(NAMES[state.character],anchor.text);
+ setExpression('curious',2200);
  try{
   const clip=await getAnchorClip(anchor);
   if(!state.active||run!==state.anchorToken)return;
@@ -674,6 +721,7 @@ async function finishGuidedReply(data){
   .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';
  responseText=shortenGuidedResponse(responseText,second,state.lessonLevel);
+ setExpression(expressionFromText(responseText),4000);
  const run=state.anchorToken;state.replyWasSecond=second;state.anchorPhase='playingReply';setMicEnabled(false);
  if(responseText)await speakEleven(responseText);
  else if(!second)error('No follow-up returned. Please try again.');
@@ -740,6 +788,7 @@ async function speakEleven(text){
  stopSpeech(); // abort any previous utterance before starting this reply
  const current=state.generation;
  appendLine(NAMES[state.character],text);
+ setExpression(expressionFromText(text),4000);
  actorPhase('ready');message(NAMES[state.character]+' is speaking…');
  const control=new AbortController();state.controller=control;
  try{
