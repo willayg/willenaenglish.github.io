@@ -3,6 +3,16 @@ import {studentIdentity,signedInProfile,staffAccessToken,loadTeacherBookCatalog,
 const $=id=>document.getElementById(id);
 const state={identity:null,profile:null,books:[],units:[],peer:null,stream:null,channel:null,audio:null,endTimer:null,seconds:180,active:false,busy:false,muted:false,turns:0,lesson:null};
 const params=new URLSearchParams(location.search);
+function setVolume(value){
+ const n=Math.max(0,Math.min(100,Number(value)||0));
+ $('williVolume').value=String(n);
+ $('volumeValue').value=n+'%';
+ $('volumeValue').textContent=n+'%';
+ if(state.audio)state.audio.volume=n/100;
+ try{localStorage.setItem('ft-realtime-willi-volume',String(n))}catch{}
+}
+try{const remembered=localStorage.getItem('ft-realtime-willi-volume');if(remembered!==null)setVolume(remembered)}catch{}
+$('williVolume').addEventListener('input',e=>setVolume(e.target.value));
 function status(text,phase='ready'){ $('phase').textContent=text;$('orb').dataset.phase=phase; }
 function fail(text){$('error').textContent=String(text||'Unexpected error');status('Not connected','ready');}
 const choice=select=>select.options[select.selectedIndex]?.textContent||'';
@@ -108,7 +118,7 @@ async function start(){
   clear($('examples'));
   for(const x of [...data.lesson.vocabulary.slice(0,12),...data.lesson.examples.slice(0,4)]){const el=document.createElement('span');el.className='chip';el.textContent=x;$('examples').append(el)}
   const peer=new RTCPeerConnection();state.peer=peer;
-  const audio=document.createElement('audio');audio.autoplay=true;audio.setAttribute('playsinline','');state.audio=audio;document.body.append(audio);
+  const audio=document.createElement('audio');audio.autoplay=true;audio.setAttribute('playsinline','');audio.volume=Number($('williVolume').value)/100;state.audio=audio;document.body.append(audio);
   peer.ontrack=e=>{audio.srcObject=e.streams[0];audio.play().catch(()=>{})};
   peer.onconnectionstatechange=()=>{if(['failed','closed','disconnected'].includes(peer.connectionState)&&state.active){fail('Voice connection disconnected');stop()}};
   status('Allow microphone access…');
@@ -118,7 +128,7 @@ async function start(){
   channel.onmessage=e=>{try{handleEvent(JSON.parse(e.data))}catch{}};
   channel.onopen=()=>{
    status('Willi is starting the conversation…','speaking');
-   channel.send(JSON.stringify({type:'response.create',response:{instructions:'Say hello briefly, mention the unit topic, and ask one easy, personal question. Keep your response under 30 words.'}}));
+   channel.send(JSON.stringify({type:'response.create',response:{instructions:'Say a tiny hello and ask ONE easy, personal question about the unit. Maximum 15 words total. No explanations or extra questions.'}}));
   };
   const offer=await peer.createOffer();await peer.setLocalDescription(offer);
   const connect=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',headers:{Authorization:'Bearer '+data.token,'Content-Type':'application/sdp'},body:offer.sdp});
