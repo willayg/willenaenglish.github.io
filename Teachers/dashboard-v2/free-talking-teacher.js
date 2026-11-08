@@ -101,7 +101,16 @@ function renderManage(host){
   if(!restoring&&!confirm('End this mission? Students keep their speaking progress.'))return;
   b.disabled=true;
   try{
+   const source=state.assignments.find(a=>a.id===id);
    const patch=restoring?{active:true,status:'active',ended_at:null}:{active:false,status:'ended',ended_at:new Date().toISOString()};
+   if(restoring&&source?.due_at&&Date.parse(source.due_at)<Date.now()){
+    const next=new Date(Date.now()+7*86400000).toISOString().slice(0,10);
+    const day=prompt('This mission is overdue. Choose a new due date (YYYY-MM-DD):',next);
+    if(!day){b.disabled=false;return}
+    const due=new Date(day+'T23:59:59+09:00');
+    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(day)||!Number.isFinite(+due)||due.getTime()<=Date.now())throw Error('Choose a valid future due date');
+    patch.due_at=due.toISOString();
+   }
    const t=token()||await refreshToken();
    const r=await fetch(OP+'homework_assignments?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{apikey:OPKEY,Authorization:'Bearer '+t,'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(patch)});
    const data=await r.json().catch(()=>null);
