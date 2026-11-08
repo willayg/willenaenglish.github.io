@@ -56,6 +56,11 @@ function prepareCard(){
 function bindOriginalFrame(){
  const d=appDocument();if(!d||d.documentElement.dataset.ftRealtimeExtensionBound==='1')return;
  d.documentElement.dataset.ftRealtimeExtensionBound='1';
+ const characterBack=d.getElementById('ftCharacterBack');
+ if(characterBack){
+  characterBack.hidden=false;
+  characterBack.textContent='← 교재로 돌아가기';
+ }
  prepareCard();
  const observer=new MutationObserver(()=>prepareCard());
  observer.observe(d.body,{childList:true,subtree:true});
@@ -73,6 +78,12 @@ function bindOriginalFrame(){
    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
    const type=character.id==='ftChooseLili'?'bunny':character.id==='ftChoosePigfish'?'pigfish':'willi';
    buttonState(type);
+   return;
+  }
+  const characterBack=event.target.closest('#ftCharacterBack');
+  if(characterBack&&!d.getElementById('ftCharacter').hidden){
+   event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+   frame.contentWindow.history.back();
    return;
   }
   const go=event.target.closest('#ftCharacterContinue');
@@ -101,6 +112,8 @@ async function openDemo(){
  // Stay on the ORIGINAL in-app friend-selection screen, not a duplicate overlay.
  const note=d.getElementById('ftCharacterRound');
  if(note){note.hidden=false;note.textContent='자유 대화 · 3분 · AI Willi / Bunny Fox / Pigfish';}
+ const characterBack=d.getElementById('ftCharacterBack');
+ if(characterBack)characterBack.hidden=false;
 
  try{
   const books=await contentDbGet('/rest/v1/content_books?select=id,title&title=eq.'+encodeURIComponent(title)+'&limit=2');
