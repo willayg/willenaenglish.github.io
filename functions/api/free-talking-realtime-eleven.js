@@ -13,7 +13,7 @@ export async function onRequestPost({request,env}){
  let data;try{data=await request.json()}catch{return reply(400,'Invalid request')}
  const character=String(data?.character||''),sentence=String(data?.text||'').trim();
  if(!Object.hasOwn(VOICES,character)||sentence.length<2||sentence.length>350)return reply(400,'Invalid voice or response length');
- const key=env.ELEVENLABS_API_KEY||env.ELEVENLABS_API||env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_KEY;
+ const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY||env.ELEVENLABS_API||env.ELEVENLABS_KEY;
  if(!key)return reply(503,'ElevenLabs key not configured');
  try{
   const auth=await fetch(ROOT+'/auth/v1/user',{headers:{apikey:PUB,Authorization:'Bearer '+bearer},signal:AbortSignal.timeout(8000)});
