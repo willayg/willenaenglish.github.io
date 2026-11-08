@@ -158,6 +158,26 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  #demo .conversation-text{min-height:62px;max-height:28dvh;padding:5px 9px}
  #demo #actorStage #ftTurnCircle{width:min(55vw,40dvh,280px)!important;height:min(55vw,40dvh,280px)!important}
 }
+
+/* Extension experiment only: true illustration (no imported Speaking circle). */
+#demo #talk .actor-stage{align-items:flex-start!important;justify-content:center!important;padding:clamp(12px,3dvh,34px) 8px 0!important}
+#demo #actorStage .free-talking-genius{align-items:flex-start!important;justify-content:center!important;min-height:0!important;height:auto!important;background:transparent!important}
+#demo #actorStage #ftSession,#demo #actorStage #ftWilliVoice{
+ background:transparent!important;min-height:0!important;height:auto!important;align-items:flex-start!important;
+}
+#demo #actorStage #ftTurnCircle,#demo #actorStage .ft-extension-avatar{
+ width:min(62vw,36dvh,310px)!important;height:min(62vw,36dvh,310px)!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;
+ overflow:visible!important;padding:0!important;
+}
+#demo #actorStage .ft-extension-avatar::before,#demo #actorStage .ft-extension-avatar::after,
+#demo #actorStage .ft-circle-glow,#demo #actorStage .ft-circle-ai,
+#demo #actorStage .ft-circle-mic,#demo #actorStage .ft-circle-thinking,
+#demo #actorStage .ft-record-countdown{display:none!important}
+#demo #actorStage .bf-actor,#demo #actorStage .bf-svg{width:100%!important;height:100%!important}
+#demo .conversation-text{position:relative;z-index:3;max-height:min(30dvh,245px);min-height:130px}
+#demo .conversation-text #anchorText{max-height:3.8em}
+#demo .conversation-text #log{max-height:150px}
 </style></head><body>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
 <div id="demo" hidden><main class="wrap">
@@ -195,4 +215,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-pause-idle-layout9"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-expressions-stage10"></script></body></html>
