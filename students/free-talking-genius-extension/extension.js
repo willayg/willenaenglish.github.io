@@ -557,7 +557,7 @@ async function speakEleven(text){
   routeAudio(audio);actorPhase('speaking');
   state.mediaURL=URL.createObjectURL(blob);
   audio.src=state.mediaURL;
-  message(NAMES[state.character]+' · ElevenLabs '+(response.headers.get('X-Willena-TTS-Route')||'audio'));
+  message(NAMES[state.character]+' is speaking…');
   // Half-duplex while ElevenLabs speaks. Without this, the phone's own
   // speaker audio trips server VAD and immediately aborts the TTS playback.
   state.ttsPlaying=true;
