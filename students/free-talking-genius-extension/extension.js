@@ -678,6 +678,11 @@ async function playAnchor(index){
  // context of a short student answer like "Pizza!".
  sendRealtime({type:'conversation.item.create',item:{type:'message',role:'assistant',
   content:[{type:'output_text',text:anchor.text}]}});
+ // Refresh the vocabulary hint when the lesson moves to a different question.
+ sendRealtime({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{
+  transcription:{model:'gpt-4o-mini-transcribe',language:'en',prompt:'Young Korean ESL children. Current question: '+String(anchor.text||'').slice(0,120)+'. Listen for short hesitant answers, colours and classroom words. Transcribe audible speech only; preserve corrections, never guess from silence.'},
+  turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:false,interrupt_response:false}
+ }}}});
  appendLine(NAMES[state.character],anchor.text);
  try{
   const clip=await getAnchorClip(anchor);
@@ -978,6 +983,7 @@ async function finishGuidedReply(data){
   .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';
  responseText=stripInternalLabels(responseText);
+  if(!responseText)responseText=aside?'Please say that again.':second?'Okay!':'Good! Is it big?';
   if(!aside)responseText=shortenGuidedResponse(responseText,second,isBeginner()?state.lessonLevel:Math.min(10,state.lessonLevel+(state.answerIncludesQuestion?5:0)));
   if(!aside&&isBeginner()&&!second){
    const questions=responseText.match(/[^.!?]*\?/g)||[];
