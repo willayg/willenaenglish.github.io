@@ -222,7 +222,7 @@ async function speakEleven(text){
 async function startConversation(){
  if(state.starting||state.active||!state.unit||!state.book)return;
  state.starting=true;error('');state.alreadySpoken=false;state.turnText='';state.pendingText=false;
- veil.hidden=false;$('choose').classList.add('is-hidden');$('talk').classList.add('is-visible');
+ veil.hidden=false;$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
  $('log').replaceChildren();showActor();message('Connecting…');
  $('mute').disabled=false;$('end').disabled=false;$('mute').textContent='Mute microphone';
