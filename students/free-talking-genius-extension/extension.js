@@ -335,8 +335,12 @@ function showActor(){
  const shell=document.createElement('div');shell.className='free-talking-genius';shell.id='ftExtensionOriginalShell';
  const session=document.createElement('section');session.id='ftSession';session.className='ft-conversation';session.hidden=false;
  const voice=document.createElement('section');voice.id='ftWilliVoice';voice.className='ft-willi-voice';
- const circle=document.createElement('button');
- circle.id='ftTurnCircle';circle.type='button';circle.disabled=true;circle.className='ft-turn-circle ft-extension-avatar';
+ // This is a display-only SVG canvas, NOT the Speaking app's record button.
+ // Keeping the Speaking .ft-turn-circle class would import its ring,
+ // mic states and interaction styling into the experimental conversation.
+ const circle=document.createElement('div');
+ circle.id='ftTurnCircle';circle.className='ft-extension-avatar';
+ circle.setAttribute('role','img');
  circle.setAttribute('aria-label','Conversation character');
  circle.innerHTML='<span class="ft-circle-glow"></span>'+
   '<span class="ft-circle-ai" aria-hidden="true"><span class="ft-circle-bars"><i></i><i></i><i></i><i></i><i></i></span></span>'+
