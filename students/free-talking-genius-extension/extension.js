@@ -281,23 +281,19 @@ function actorPhase(phase){
  state.actor?.setSpeaking(phase==='speaking');
 }
 function showActor(){
- const originalCircle=appDocument()?.getElementById('ftTurnCircle');
- if(!originalCircle)throw Error('Original Free Talking character animation is unavailable');
  const host=$('actorStage');host.replaceChildren();
- // Clone the live app's REAL circle + original SVG and orbit markup.
- // The existing character-actor module adds the exact Bunny/Pigfish drawings,
- // same speaking-mouth animation and same character switching.
- const shell=document.createElement('div');
- shell.className='free-talking-genius';shell.id='ftExtensionOriginalShell';
- const session=document.createElement('section');
- session.id='ftSession';session.className='ft-conversation';
- session.hidden=false;
- const voice=document.createElement('section');
- voice.id='ftWilliVoice';voice.className='ft-willi-voice';
- const circle=originalCircle.cloneNode(true);
- circle.id='ftTurnCircle';circle.removeAttribute('aria-label');
- circle.type='button';circle.disabled=true;
- // Remove the original app's record button handler by cloning just the DOM.
+ // Build the experimental actor locally. Do not clone, mutate or restyle
+ // the original Speaking track's controls or transcript interface.
+ const shell=document.createElement('div');shell.className='free-talking-genius';shell.id='ftExtensionOriginalShell';
+ const session=document.createElement('section');session.id='ftSession';session.className='ft-conversation';session.hidden=false;
+ const voice=document.createElement('section');voice.id='ftWilliVoice';voice.className='ft-willi-voice';
+ const circle=document.createElement('button');
+ circle.id='ftTurnCircle';circle.type='button';circle.disabled=true;circle.className='ft-turn-circle ft-extension-avatar';
+ circle.setAttribute('aria-label','Conversation character');
+ circle.innerHTML='<span class="ft-circle-glow"></span>'+
+  '<span class="ft-circle-ai" aria-hidden="true"><span class="ft-circle-bars"><i></i><i></i><i></i><i></i><i></i></span></span>'+
+  '<span class="ft-circle-mic" aria-hidden="true"><svg viewBox="0 0 48 48" width="72" height="72"><rect x="17" y="5" width="14" height="26" rx="7" fill="currentColor"/><path d="M11 22a13 13 0 0 0 26 0M24 35v8M16 43h16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>'+
+  '<span class="ft-circle-thinking" aria-hidden="true"><span class="ft-thinking-swirl"></span></span>';
  voice.append(circle);session.append(voice);shell.append(session);host.append(shell);
  state.actor=createFreeTalkingCharacters({circle,session,voiceHost:voice,choices:{}});
  state.actor.select(state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':'marin');
@@ -330,6 +326,7 @@ function endSession(reason='Conversation finished.'){
  message(reason);actorPhase('ready');
  $('mute').disabled=true;$('end').disabled=true;
  $('restart').disabled=state.seconds===0;
+ $('pauseResume').disabled=!state.paused;
 }
 // Disconnect entirely during pause so silent WebRTC traffic cannot consume
 // Realtime usage. Resume reconnects to the selected textbook question.
@@ -752,6 +749,7 @@ async function startConversation(){
  if(state.starting||state.active)return;
  if(!state.unit||!state.book)throw Error('No lesson loaded. Select a book and unit first.');
  state.starting=true;state.paused=false;setPauseButton(false);
+ $('pauseResume').disabled=false;
  error('');state.alreadySpoken=false;state.turnText='';state.pendingText=false;
  createAudioMixer();
  const startId=++activeStartId;
@@ -845,8 +843,9 @@ async function startConversation(){
   if(startId!==activeStartId)return;
   console.error('[Free Talking Realtime demo] failed to start',e);
   // Never kick the student out on an error. Keep the session screen and actionable message.
-  endSession('Connection failed. Use Back to return to your lesson.');
-  error('Could not start: '+(e?.message||'Unknown connection error'));
+  endSession('Connection failed. Tap play to retry or go back.');
+  state.paused=true;setPauseButton(true);
+  error('Could not start: '+(e?.message||'Connection unavailable'));
   $('restart').disabled=false;
   $('listenCheck').textContent='Connection failed · retry available';
  }
