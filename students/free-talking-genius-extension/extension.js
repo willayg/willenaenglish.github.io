@@ -349,41 +349,182 @@ function ticking(){
   if(!state.seconds)endSession('Three minutes finished. Great talking!');
  },1000);
 }
+
+// The published question IDs are the conversation track. Reactions and
+// follow-ups are the only generated speech; question playback reuses Willena R2.
+function guidedCharacterVoice(){
+ return state.character==='bunny'?'bunny':state.character==='pigfish'?'pigfish':'marin';
+}
+function sendRealtime(item){
+ if(state.channel?.readyState!=='open')return false;
+ state.channel.send(JSON.stringify(item));return true;
+}
+function setMicEnabled(enabled){
+ const mic=state.stream?.getAudioTracks()[0];
+ if(mic)mic.enabled=Boolean(enabled)&&!state.micUserMuted;
+}
+async function getAnchorClip(anchor){
+ const key=guidedCharacterVoice()+':'+anchor.id;
+ if(state.anchorClipCache.has(key))return state.anchorClipCache.get(key);
+ if(state.anchorClipPromises.has(key))return state.anchorClipPromises.get(key);
+ const job=(async()=>{
+  const call=async token=>fetch('/api/free-talking-audio',{
+   method:'POST',credentials:'same-origin',cache:'no-store',
+   headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+   body:JSON.stringify({question_id:anchor.id,voice:guidedCharacterVoice(),
+    ...(state.character==='bunny'?{compare_model:'eleven_v3'}:{})}),
+   signal:AbortSignal.timeout(65000)
+  });
+  let r=await call(await originalStudentToken());
+  if(r.status===401)r=await call(await originalStudentToken(true));
+  const file=await r.json().catch(()=>null);
+  if(!r.ok||file?.success!==true)throw Error(file?.error||('Question audio unavailable: '+r.status));
+  let clip;
+  if(file.audio_url?.startsWith('https://'))clip={url:file.audio_url,owned:false};
+  else if(typeof file.audio==='string'&&file.audio.length){
+   const binary=atob(file.audio),bytes=new Uint8Array(binary.length);
+   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+   clip={url:URL.createObjectURL(new Blob([bytes],{type:file.content_type==='audio/wav'?'audio/wav':'audio/mpeg'})),owned:true};
+  }else throw Error('Cached question audio was empty');
+  state.anchorClipCache.set(key,clip);
+  return clip;
+ })().finally(()=>state.anchorClipPromises.delete(key));
+ state.anchorClipPromises.set(key,job);return job;
+}
+function playLocalClip(url){
+ return new Promise((resolve,reject)=>{
+  const audio=new Audio();state.speaker=audio;state.playing=audio;
+  audio.preload='auto';audio.setAttribute('playsinline','');
+  routeAudio(audio);audio.src=url;
+  state.ttsPlaying=true;setMicEnabled(false);actorPhase('speaking');
+  let settled=false;
+  const finish=error=>{
+   if(settled)return;settled=true;
+   audio.onended=null;audio.onerror=null;
+   if(error)reject(error);else resolve();
+  };
+  audio.onended=()=>finish();
+  audio.onerror=()=>finish(Error('Audio playback failed'));
+  audio.play().catch(finish);
+ });
+}
+async function playAnchor(index){
+ if(!state.active||index>=state.anchors.length)return;
+ const anchor=state.anchors[index];
+ const run=++state.anchorToken;
+ state.anchorIndex=index;state.anchorPhase='playingAnchor';state.anchorResponding=false;
+ $('clock').textContent='Question '+(index+1)+' / '+state.anchors.length;
+ $('anchorText').textContent=anchor.text;
+ message('Playing textbook question '+(index+1));
+ setMicEnabled(false);
+ // OpenAI must see what the cached voice asked, or it can hallucinate the
+ // context of a short student answer like "Pizza!".
+ sendRealtime({type:'conversation.item.create',item:{type:'message',role:'assistant',
+  content:[{type:'output_text',text:anchor.text}]}});
+ appendLine(NAMES[state.character],anchor.text);
+ try{
+  const clip=await getAnchorClip(anchor);
+  if(!state.active||run!==state.anchorToken)return;
+  await playLocalClip(clip.url);
+ }catch(e){
+  if(!state.active||run!==state.anchorToken)return;
+  console.warn('[Guided Free Talking] cached anchor unavailable',e);
+  message('Using voice fallback for this textbook question');
+  try{
+   const r=await authorizedDemoFetch('/api/free-talking-realtime-eleven',
+    {character:state.character,text:anchor.text});
+   if(!r.ok)throw Error('Voice fallback failed ('+r.status+')');
+   const blob=await r.blob();
+   const url=URL.createObjectURL(blob);
+   try{await playLocalClip(url)}finally{URL.revokeObjectURL(url)}
+  }catch(ex){error('Question audio: '+ex.message)}
+ }
+ if(!state.active||run!==state.anchorToken)return;
+ state.ttsPlaying=false;setMicEnabled(true);state.playing=null;
+ state.anchorPhase='awaitingFirst';actorPhase('listening');
+ message('Your turn. Answer the question!');
+ $('listenCheck').textContent='Listening for your answer';
+ // Preload just the next anchor while the student answers this one.
+ if(index+1<state.anchors.length)void getAnchorClip(state.anchors[index+1]).catch(()=>{});
+}
+function requestGuidedReply(){
+ if(!state.active||state.anchorResponding)return;
+ const phase=state.anchorPhase;
+ if(phase!=='awaitingFirst'&&phase!=='awaitingSecond')return;
+ const anchor=state.anchors[state.anchorIndex];if(!anchor)return;
+ state.anchorResponding=true;
+ state.anchorPhase=phase==='awaitingFirst'?'respondingFirst':'respondingSecond';
+ state.anchorResponseText='';
+ const directive=phase==='awaitingFirst'
+  ?'FOLLOW-UP TURN. The student just answered this anchor: "'+anchor.text+'". Respond naturally in 2–6 words, then ask ONE short level-appropriate follow-up about the SAME answer and topic. Never ask the next textbook question. Do not invent facts.'
+  :'REACTION ONLY TURN. The student just answered a follow-up to "'+anchor.text+'". React to what they ACTUALLY said in 2–8 words. Do NOT ask a question. The app plays the NEXT cached textbook question. Never invent facts.';
+ sendRealtime({type:'conversation.item.create',item:{type:'message',role:'system',
+  content:[{type:'input_text',text:directive}]}});
+ if(!sendRealtime({type:'response.create',response:{output_modalities:['text']}})){
+  state.anchorResponding=false;state.anchorPhase=phase;
+  error('Conversation connection closed. Please retry.');
+ }else{actorPhase('thinking');message('Thinking about your answer…')}
+}
+async function finishGuidedReply(data){
+ const phase=state.anchorPhase;
+ if(phase!=='respondingFirst'&&phase!=='respondingSecond')return;
+ state.anchorResponding=false;
+ const text=String(data.response?.output?.flatMap(x=>x.content||[])
+  .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
+ state.anchorResponseText='';
+ const run=state.anchorToken,index=state.anchorIndex;
+ state.anchorPhase='playingReply';
+ setMicEnabled(false);
+ if(text){
+  await speakEleven(text);
+ }else{
+  error('No response text was returned. Advancing the lesson.');
+ }
+ if(!state.active||run!==state.anchorToken)return;
+ if(phase==='respondingFirst'){
+  state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');
+  message('Your turn. Answer the follow-up question!');
+  $('listenCheck').textContent='Listening for your follow-up answer';
+ }else if(index+1>=state.anchors.length){
+  state.anchorPhase='finished';endSession('All '+state.anchors.length+' questions finished. Great talking!');
+  $('clock').textContent=state.anchors.length+' / '+state.anchors.length+' complete';
+  $('anchorText').textContent='Excellent! You finished your conversation.';
+ }else{
+  state.anchorPhase='betweenAnchors';
+  void playAnchor(index+1);
+ }
+}
 function handleRealtime(data){
  if(!state.active&&!state.starting)return;
  switch(data.type){
- case 'session.updated':
-  if(state.voiceMode==='eleven'&&!state.alreadySpoken){state.alreadySpoken=true;
-   state.channel.send(JSON.stringify({type:'response.create',response:{output_modalities:['text']}}));
-  }break;
- case 'input_audio_buffer.speech_started':
-  // Ignore residual speaker echo during TTS; the microphone track is held off.
-  if(state.voiceMode==='eleven'&&state.playing&&!state.ttsPlaying)stopSpeech();
-  state.serverHeard=true;$('listenCheck').textContent='AI heard your voice';
-  actorPhase('listening');message('Listening…');break;
- case 'input_audio_buffer.speech_stopped':state.serverHeard=true;$('listenCheck').textContent='Speech received · AI preparing answer';actorPhase('ready');message('Thinking…');break;
- case 'response.created':message('Thinking…');break;
- case 'response.output_text.delta':case 'response.text.delta':
-  state.turnText+=data.delta||'';break;
- case 'response.output_text.done':case 'response.text.done':{
-  const text=String(data.text||state.turnText).trim();state.turnText='';
-  if(text&&!state.pendingText){state.pendingText=true;void speakEleven(text).finally(()=>{state.pendingText=false})}
-  break;
- }
- case 'response.audio_transcript.done':case 'response.output_audio_transcript.done':
-  if(state.voiceMode==='audio'&&data.transcript)appendLine('AI Willi',data.transcript);break;
- case 'conversation.item.input_audio_transcription.completed':
-  if(data.transcript){state.serverHeard=true;$('listenCheck').textContent='AI heard: '+data.transcript.slice(0,45);appendLine('You',data.transcript)}break;
- case 'response.done':
-  if(state.voiceMode==='eleven'){
-   const content=data.response?.output?.flatMap(item=>item.content||[]).map(x=>x.text).filter(Boolean).join(' ').trim();
-   const text=state.turnText.trim()||content||'';
-   state.turnText='';
-   if(text&&!state.pendingText){state.pendingText=true;void speakEleven(text).finally(()=>{state.pendingText=false})}
-   else if(!text&&!state.pendingText){error('ElevenLabs received no response text from OpenAI.');}
-  }else{actorPhase('listening');message('Your turn.')}
-  break;
- case 'error':error('Realtime: '+String(data.error?.message||'Unknown error').slice(0,180));break;
+  case 'session.updated':
+   if(!state.alreadySpoken){
+    state.alreadySpoken=true;
+    // Wait for the peer to become active before playing the first cached clip.
+    if(state.active)void playAnchor(0);
+    else setTimeout(()=>{if(state.active&&state.anchorPhase==='ready')void playAnchor(0)},250);
+   }break;
+  case 'input_audio_buffer.speech_started':
+   if(state.ttsPlaying||state.anchorPhase==='playingAnchor'||state.anchorPhase==='playingReply')break;
+   state.serverHeard=true;$('listenCheck').textContent='AI heard your voice';
+   actorPhase('listening');message('Listening…');break;
+  case 'input_audio_buffer.speech_stopped':
+   if(state.ttsPlaying)break;
+   state.serverHeard=true;$('listenCheck').textContent='Speech received';
+   actorPhase('thinking');message('Checking your answer…');break;
+  case 'input_audio_buffer.committed':
+   // VAD auto-commits student audio, but never automatically generates replies.
+   // We request the appropriate reaction/follow-up deterministically.
+   if(!state.ttsPlaying)requestGuidedReply();
+   break;
+  case 'response.output_text.delta':case 'response.text.delta':
+   state.anchorResponseText+=data.delta||'';break;
+  case 'conversation.item.input_audio_transcription.completed':
+   if(data.transcript){state.serverHeard=true;appendLine('You',data.transcript)}
+   break;
+  case 'response.done':
+   void finishGuidedReply(data).catch(e=>error('Conversation response: '+e.message));break;
+  case 'error':error('Realtime: '+String(data.error?.message||'Unknown error').slice(0,160));break;
  }
 }
 async function speakEleven(text){
