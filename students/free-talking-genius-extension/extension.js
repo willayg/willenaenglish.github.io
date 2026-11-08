@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionClock:null,questionTickAt:0,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:''};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -43,7 +43,7 @@ function closeActivity(){
  activeStartId++;
  try{startAbort?.abort()}catch{}
  startAbort=null;
- state.paused=false;state.resumeIndex=0;state.resumePhase=null;state.resumeLog=null;state.lastChoice=null;
+ state.paused=false;state.resumeIndex=0;state.resumePhase=null;state.resumeLog=null;state.lastChoice=null;state.topicCompleted.clear();resetQuestionClock();
  endSession('Conversation ended.');
  veil.hidden=true;
  $('talk').classList.remove('is-visible');
@@ -265,6 +265,77 @@ async function openDemo({preserveCharacter=false}={}){
   throw e;
  }
 }
+
+const QUESTION_BUDGET_MS=20000;
+const CHECK_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L19 7"/></svg>';
+function renderTopicTicker(){
+ const steps=$('topicSteps');if(!steps)return;
+ const count=Math.min(8,state.anchors.length||8);
+ steps.replaceChildren();
+ for(let i=0;i<count;i++){
+  const cell=document.createElement('span');
+  const done=state.topicCompleted.has(i);
+  cell.className='topic-step'+(done?' is-done':i===state.anchorIndex?' is-active':'');
+  cell.setAttribute('aria-label','Question '+(i+1)+(done?', completed':i===state.anchorIndex?', current':''));
+  if(done)cell.innerHTML=CHECK_SVG;
+  else cell.textContent=String(i+1);
+  steps.append(cell);
+ }
+ const left=Math.max(0,state.questionRemainingMs);
+ $('topicTimeFill').style.height=Math.min(100,left/QUESTION_BUDGET_MS*100)+'%';
+ $('topicTimeValue').textContent=Math.ceil(left/1000)+'s';
+ document.querySelector('#demo .topic-clock')?.classList.toggle('is-ended',left<=0);
+}
+function haltQuestionClock(){
+ if(state.questionClock!=null)clearInterval(state.questionClock);
+ state.questionClock=null;state.questionTickAt=0;
+}
+function resetQuestionClock(){
+ haltQuestionClock();
+ state.questionRemainingMs=QUESTION_BUDGET_MS;
+ state.questionExpired=false;
+ state.awaitingSpeechCommit=false;
+ state.finishingTopic=false;
+ renderTopicTicker();
+}
+function studentTurnInProgress(){
+ return Boolean(state.speechStartedAt||state.awaitingSpeechCommit||state.pendingSpeech.size);
+}
+function startQuestionClock(){
+ haltQuestionClock();
+ if(!state.active||state.paused||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
+ if(state.questionRemainingMs<=0){void finishTimedQuestion();return}
+ state.questionTickAt=performance.now();
+ state.questionClock=setInterval(()=>{
+  if(!state.active||state.paused){haltQuestionClock();return}
+  const now=performance.now();
+  if(['awaitingFirst','awaitingSecond'].includes(state.anchorPhase)){
+   state.questionRemainingMs=Math.max(0,state.questionRemainingMs-(now-state.questionTickAt));
+   renderTopicTicker();
+   if(state.questionRemainingMs===0){
+    state.questionExpired=true;haltQuestionClock();
+    if(!studentTurnInProgress())void finishTimedQuestion();
+   }
+  }
+  state.questionTickAt=now;
+ },100);
+}
+async function moveToNextTopic(){
+ if(!state.active)return;
+ state.topicCompleted.add(state.anchorIndex);renderTopicTicker();
+ if(state.anchorIndex+1>=state.anchors.length)await finishConversation();
+ else await playAnchor(state.anchorIndex+1);
+}
+async function finishTimedQuestion(){
+ if(!state.active||state.paused||state.finishingTopic||!state.questionExpired)return;
+ if(studentTurnInProgress()){state.questionExpired=true;return}
+ state.finishingTopic=true;haltQuestionClock();clearTimeout(state.idleTimer);
+ const token=state.anchorToken;
+ state.anchorPhase='betweenAnchors';setMicEnabled(false);
+ const spoken=state.topicHadAnswer?'Okay! Let’s move on.':'No worries! Let’s try the next one.';
+ try{await speakEleven(spoken)}catch(e){console.warn('[Free Talking] soft timer transition',e)}
+ if(state.active&&token===state.anchorToken)await moveToNextTopic();
+}
 function appendLine(who,text){
  if(!String(text||'').trim())return;
  const row=document.createElement('div');row.className='entry'+(who==='You'?' me':'');
@@ -323,7 +394,7 @@ function stopSpeech(){
  state.speaker=null;state.playing=null;
 }
 function endSession(reason='Conversation finished.'){
- clearInterval(state.timer);state.timer=null;
+ clearInterval(state.timer);state.timer=null;haltQuestionClock();
  clearTimeout(state.idleTimer);state.idleTimer=null;
  clearTimeout(state.sessionDeadline);state.sessionDeadline=null;
  clearTimeout(state.anchorTimer);state.anchorTimer=null;state.anchorToken++;
@@ -566,7 +637,7 @@ function restoreAfterPause(){
   if(anchor)sendRealtime({type:'conversation.item.create',item:{type:'message',role:'assistant',content:[{type:'output_text',text:anchor.text}]}});
  }
  state.anchorPhase=phase;
- state.ttsPlaying=false;setMicEnabled(true);actorPhase('listening');armIdleTimeout();
+ state.ttsPlaying=false;setMicEnabled(true);actorPhase('listening');armIdleTimeout();startQuestionClock();
  message('Ready. Continue speaking.');$('listenCheck').textContent='Listening for your answer';
  return true;
 }
@@ -602,6 +673,7 @@ async function playAnchor(index){
  const run=++state.anchorToken;
  clearTimeout(state.idleTimer);state.idleTimer=null;
  state.anchorIndex=index;state.anchorPhase='playingAnchor';state.anchorResponding=false;
+ resetQuestionClock();state.topicHadAnswer=false;
  state.vocabDetours=0;state.asideTerm='';
  state.speechStartedAt=0;state.speechPeak=0;state.lastSpeechDuration=0;clearPendingSpeech();
  $('clock').textContent='Question '+(index+1)+' / '+state.anchors.length;
@@ -633,7 +705,7 @@ async function playAnchor(index){
  if(!state.active||run!==state.anchorToken)return;
  state.ttsPlaying=false;setMicEnabled(true);state.playing=null;
  state.anchorPhase='awaitingFirst';actorPhase('listening');
- armIdleTimeout();
+ armIdleTimeout();startQuestionClock();
  message('Your turn. Answer the question!');
  $('listenCheck').textContent='Listening for your answer';
  // Preload just the next anchor while the student answers this one.
@@ -685,7 +757,7 @@ function voiceTurnValid(text,pending){
 function resolveCommittedSpeech(itemId,transcript,failed=false){
  const pending=state.pendingSpeech.get(itemId);
  if(!pending)return;
- clearTimeout(pending.timeout);state.pendingSpeech.delete(itemId);
+ clearTimeout(pending.timeout);state.pendingSpeech.delete(itemId);state.awaitingSpeechCommit=false;
  if(!state.active||pending.anchorToken!==state.anchorToken||pending.phase!==state.anchorPhase)return;
  if(failed||!voiceTurnValid(transcript,pending)){
   message('Please answer in English. Try again.');
@@ -693,13 +765,16 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
   actorPhase('listening');
   // Remove unverified audio from conversation context.
   sendRealtime({type:'conversation.item.delete',item_id:itemId});
+  if(state.questionExpired)void finishTimedQuestion();
   return;
  }
  clearTimeout(state.idleTimer);state.idleTimer=null;
  state.serverHeard=true;
+ haltQuestionClock();
  appendLine('You',String(transcript||'').trim());
  state.verifiedAnswer=String(transcript||'').trim();
  const speech=state.verifiedAnswer;
+ if(state.questionExpired){state.topicHadAnswer=true;void finishTimedQuestion();return}
  const category=classifyStudentTurn(speech);
  if(category.kind==='vocabulary'){
   // Strip student instructions from the model context; the isolated term is
@@ -757,13 +832,13 @@ function classifyStudentTurn(text){
 async function redirectToLesson(text){
  if(!state.active||state.anchorResponding||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
  const before=state.anchorPhase,token=state.anchorToken;
- state.verifiedAnswer='';
+ haltQuestionClock();state.verifiedAnswer='';
  // Do not let the rejected student instruction persist in Realtime context.
  state.anchorPhase='playingReply';setMicEnabled(false);clearTimeout(state.idleTimer);
  try{await speakEleven(text)}
  finally{
   if(state.active&&token===state.anchorToken){
-   state.anchorPhase=before;setMicEnabled(true);actorPhase('listening');armIdleTimeout();
+   state.anchorPhase=before;setMicEnabled(true);actorPhase('listening');armIdleTimeout();startQuestionClock();
    message('Your turn. Answer the textbook question.');
   }
  }
@@ -772,6 +847,7 @@ function requestGuidedAside(){
  if(!state.active||state.anchorResponding||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
  state.asideReturnPhase=state.anchorPhase;
  state.anchorPhase='respondingAside';state.anchorResponding=true;state.anchorResponseText='';
+ haltQuestionClock();
  const term=state.asideTerm;
  state.verifiedAnswer='';state.asideTerm='';
  const anchor=state.anchors[state.anchorIndex];
@@ -791,6 +867,7 @@ function requestGuidedReply(){
  if(!state.active||state.anchorResponding)return;
  const phase=state.anchorPhase;
  if(phase!=='awaitingFirst'&&phase!=='awaitingSecond')return;
+ haltQuestionClock();state.topicHadAnswer=true;
  const anchor=state.anchors[state.anchorIndex];if(!anchor)return;
  const second=phase==='awaitingSecond';
  state.anchorResponding=true;state.anchorResponseText='';
@@ -819,7 +896,7 @@ function requestGuidedReply(){
 async function finishConversation(){
  if(!state.active||state.anchorPhase==='finished'||state.anchorPhase==='goodbye')return;
  const run=state.anchorToken,count=state.anchors.length;
- state.anchorPhase='goodbye';setMicEnabled(false);
+ state.anchorPhase='goodbye';haltQuestionClock();state.topicCompleted.add(state.anchorIndex);renderTopicTicker();setMicEnabled(false);
  $('listenCheck').textContent='Conversation complete';message('Finishing your conversation…');
  const goodbye=state.character==='pigfish'?'That was fun! Catch you later!':'That was fun! See you next time!';
  try{await speakEleven(goodbye)}catch(e){console.warn('Guided goodbye',e)}
@@ -866,17 +943,16 @@ async function finishGuidedReply(data){
  if(aside){
   state.anchorPhase=state.asideReturnPhase||'awaitingFirst';
   state.asideReturnPhase=null;
-  setMicEnabled(true);actorPhase('listening');armIdleTimeout();
+  setMicEnabled(true);actorPhase('listening');armIdleTimeout();startQuestionClock();
   message('Your turn. Continue answering the textbook question.');
   $('listenCheck').textContent='Listening for your answer';
  }else if(second){
   // Play next cached anchor only after the short reaction finishes speaking.
   state.anchorPhase='betweenAnchors';
-  if(state.anchorIndex+1>=state.anchors.length)void finishConversation();
-  else void playAnchor(state.anchorIndex+1);
+  void moveToNextTopic();
  }else{
   state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');
-  armIdleTimeout();
+  armIdleTimeout();startQuestionClock();
   message('Your turn. Answer the follow-up question!');
   $('listenCheck').textContent='Listening for your follow-up answer';
  }
@@ -890,7 +966,7 @@ function handleRealtime(data){
    break;
   case 'input_audio_buffer.speech_started':
    if(state.ttsPlaying||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))break;
-   state.speechStartedAt=performance.now();state.speechPeak=0;
+   state.speechStartedAt=performance.now();state.speechPeak=0;state.awaitingSpeechCommit=true;
    $('listenCheck').textContent='Listening to your speech';actorPhase('listening');message('Listening…');break;
   case 'input_audio_buffer.speech_stopped':
    if(state.ttsPlaying||!state.speechStartedAt)break;
@@ -1005,6 +1081,7 @@ async function startConversation(){
   }
   if(!res.ok||!session.token)throw Error(session.error||'Realtime connection failed');
   state.anchors=Array.isArray(session.lesson?.anchors)?session.lesson.anchors.filter(x=>x.id&&x.text).slice(0,8):[];
+  if(!continuing){state.topicCompleted.clear();resetQuestionClock()}else renderTopicTicker();
   if(!state.anchors.length)throw Error('This unit has no published question anchors');
   state.anchorIndex=Math.min(Math.max(0,state.resumeIndex||0),Math.max(0,state.anchors.length-1));state.anchorPhase='ready';state.anchorResponding=false;state.anchorResponseText='';state.guidedSessionReady=false;
   $('clock').textContent='Question '+(state.anchorIndex+1)+' / '+state.anchors.length;
