@@ -61,15 +61,15 @@ window.addEventListener('popstate',()=>{
 
 function volumeFraction(){
  const x=Math.max(0,Math.min(100,Number($('volume').value)||0))/100;
- // Below 50%, use a finer scale to keep kids' speech comfortable.
- return x*x;
+ // Linear control: the previous squared 25% default produced only 6.25% gain.
+ return x;
 }
 function setAudioLevels(){
  const level=volumeFraction();
  if(state.audioGain)state.audioGain.gain.value=level;
  for(const a of [state.remote,state.speaker].filter(Boolean)){
   a.muted=level===0;
-  a.volume=state.quietMode?1:level;
+  a.volume=state.quietMode&&state.audioGain?1:level;
  }
  $('volumeNumber').textContent=Math.round(Number($('volume').value))+'%';
 }
@@ -89,7 +89,7 @@ function createAudioMixer(){
 }
 function routeAudio(audio){
  if(!audio)return;
- if(state.quietMode&&state.audioContext&&state.audioGain){
+ if(state.quietMode&&state.audioContext&&state.audioGain&&state.audioContext.state==='running'){
   try{
    const source=state.audioContext.createMediaElementSource(audio);
    source.connect(state.audioGain);
@@ -364,7 +364,11 @@ function handleRealtime(data){
   if(data.transcript){state.serverHeard=true;$('listenCheck').textContent='AI heard: '+data.transcript.slice(0,45);appendLine('You',data.transcript)}break;
  case 'response.done':
   if(state.voiceMode==='eleven'){
-   if(state.turnText.trim()&&!state.pendingText){const text=state.turnText.trim();state.turnText='';state.pendingText=true;void speakEleven(text).finally(()=>{state.pendingText=false})}
+   const content=data.response?.output?.flatMap(item=>item.content||[]).map(x=>x.text).filter(Boolean).join(' ').trim();
+   const text=state.turnText.trim()||content||'';
+   state.turnText='';
+   if(text&&!state.pendingText){state.pendingText=true;void speakEleven(text).finally(()=>{state.pendingText=false})}
+   else if(!text&&!state.pendingText){error('ElevenLabs received no response text from OpenAI.');}
   }else{actorPhase('listening');message('Your turn.')}
   break;
  case 'error':error('Realtime: '+String(data.error?.message||'Unknown error').slice(0,180));break;
@@ -382,27 +386,22 @@ async function speakEleven(text){
   const response=await authorizedDemoFetch('/api/free-talking-realtime-eleven',{character:state.character,text},control.signal);
   if(!response.ok){const e=await response.json().catch(()=>({}));throw Error(e.error||'ElevenLabs unavailable ('+response.status+')')}
   if(current!==state.generation||!state.active)return;
-  const audio=new Audio();state.speaker=audio;state.playing=audio;routeAudio(audio);actorPhase('speaking');
-  if(window.MediaSource?.isTypeSupported?.('audio/mpeg')&&response.body){
-   const media=new MediaSource();state.mediaURL=URL.createObjectURL(media);audio.src=state.mediaURL;
-   await new Promise((resolve,reject)=>{media.addEventListener('sourceopen',resolve,{once:true});media.addEventListener('error',reject,{once:true})});
-   if(control.signal.aborted)return;
-   const buffer=media.addSourceBuffer('audio/mpeg');
-   const reader=response.body.getReader();let began=false;
-   while(true){
-    const next=await reader.read();if(next.done)break;
-    if(control.signal.aborted||current!==state.generation){await reader.cancel().catch(()=>{});return}
-    await new Promise((resolve,reject)=>{
-     buffer.addEventListener('updateend',resolve,{once:true});buffer.addEventListener('error',reject,{once:true});buffer.appendBuffer(next.value);
-    });
-    if(!began){began=true;void audio.play().catch(err=>{if(!control.signal.aborted)error('Speaker blocked: '+err.message)})}
-   }
-   if(media.readyState==='open'&&!buffer.updating)media.endOfStream();
-  }else{
-   const blob=await response.blob();if(control.signal.aborted||current!==state.generation)return;
-   state.mediaURL=URL.createObjectURL(blob);audio.src=state.mediaURL;await audio.play();
-  }
-  await new Promise(resolve=>{if(audio.ended){resolve();return}audio.onended=resolve;audio.onerror=resolve;control.signal.addEventListener('abort',resolve,{once:true})});
+  // Android: avoid MediaSource audio/mpeg support differences. The server
+  // requests ElevenLabs Flash streaming, then the browser plays its short MP3.
+  const blob=await response.blob();
+  if(control.signal.aborted||current!==state.generation||!state.active)return;
+  if(blob.size<500)throw Error('ElevenLabs returned an empty recording');
+  const audio=new Audio();state.speaker=audio;state.playing=audio;
+  routeAudio(audio);actorPhase('speaking');
+  state.mediaURL=URL.createObjectURL(blob);
+  audio.src=state.mediaURL;
+  message(NAMES[state.character]+' · ElevenLabs '+(response.headers.get('X-Willena-TTS-Route')||'audio'));
+  await audio.play();
+  await new Promise(resolve=>{
+   if(audio.ended){resolve();return}
+   audio.onended=resolve;audio.onerror=resolve;
+   control.signal.addEventListener('abort',resolve,{once:true});
+  });
   if(state.active&&current===state.generation){actorPhase('listening');message('Your turn.')}
  }catch(e){if(e.name!=='AbortError'&&state.active)error('ElevenLabs audio: '+e.message)}
 }
