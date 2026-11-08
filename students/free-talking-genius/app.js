@@ -1063,11 +1063,20 @@ async function startup(){
   state.profile=await signedInProfile(state.student.id);
   if(state.profile?.role!=='student'||state.profile?.approved===false)throw Error('Student sign-in required');
   await loadQuestions();
-  await detectBooks();
+  let normalBooksError=null;
+  try{await detectBooks()}catch(e){
+   // The teacher's direct mission link should still work when the optional
+   // class-book lookup is unavailable. The mission API independently verifies
+   // the student and class before granting textbook access.
+   normalBooksError=e;
+   console.warn('[Free Talking] Class book lookup unavailable',e);
+   state.books=[];
+  }
   const missionParams=new URLSearchParams(location.search);
   const missionId=missionParams.get('homework');
   try{await loadStudentSpeakingMissions()}
   catch(e){state.missionError=e.message;console.warn('[Free Talking] Student mission lookup failed',e)}
+  if(normalBooksError&&!state.books.length)throw Error('Could not load textbooks: '+normalBooksError.message+(state.missionError?' · '+state.missionError:''));
   renderBookChoices();
   if(missionId){
    if(state.missionError)throw Error('Could not verify this mission: '+state.missionError);
