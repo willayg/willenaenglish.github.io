@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:true,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -298,7 +298,7 @@ function endSession(reason='Conversation finished.'){
  try{state.channel?.close()}catch{};try{state.peer?.close()}catch{};
  try{state.stream?.getTracks().forEach(t=>t.stop())}catch{}
  if(state.remote){state.remote.pause();state.remote.srcObject=null;state.remote.remove()}
- state.peer=null;state.channel=null;state.stream=null;state.remote=null;state.remoteStream=null;state.active=false;state.starting=false;
+ state.peer=null;state.channel=null;state.stream=null;state.remote=null;state.remoteStream=null;state.active=false;state.starting=false;state.ttsPlaying=false;
  if(state.audioContext){const context=state.audioContext;state.audioContext=null;state.audioGain=null;void context.close().catch(()=>{})}
  message(reason);actorPhase('ready');
  $('mute').disabled=true;$('end').disabled=true;
@@ -309,8 +309,10 @@ $('end').addEventListener('click',navigateBack);
 window.addEventListener('pagehide',()=>{activeStartId++;try{startAbort?.abort()}catch{}endSession()});
 $('mute').addEventListener('click',()=>{
  const track=state.stream?.getAudioTracks()[0];if(!track)return;
- track.enabled=!track.enabled;$('mute').textContent=track.enabled?'Mute microphone':'Unmute microphone';
- message(track.enabled?'Listening…':'Microphone muted');
+ state.micUserMuted=!state.micUserMuted;
+ track.enabled=!state.micUserMuted&&!state.ttsPlaying;
+ $('mute').textContent=state.micUserMuted?'Unmute microphone':'Mute microphone';
+ message(state.micUserMuted?'Microphone muted':state.ttsPlaying?'AI is speaking':'Listening…');
 });
 $('restart').addEventListener('click',()=>{
  if(state.starting)return;
@@ -352,7 +354,8 @@ function handleRealtime(data){
    state.channel.send(JSON.stringify({type:'response.create',response:{output_modalities:['text']}}));
   }break;
  case 'input_audio_buffer.speech_started':
-  if(state.voiceMode==='eleven'&&state.playing)stopSpeech();
+  // Ignore residual speaker echo during TTS; the microphone track is held off.
+  if(state.voiceMode==='eleven'&&state.playing&&!state.ttsPlaying)stopSpeech();
   state.serverHeard=true;$('listenCheck').textContent='AI heard your voice';
   actorPhase('listening');message('Listening…');break;
  case 'input_audio_buffer.speech_stopped':state.serverHeard=true;$('listenCheck').textContent='Speech received · AI preparing answer';actorPhase('ready');message('Thinking…');break;
@@ -402,14 +405,26 @@ async function speakEleven(text){
   state.mediaURL=URL.createObjectURL(blob);
   audio.src=state.mediaURL;
   message(NAMES[state.character]+' · ElevenLabs '+(response.headers.get('X-Willena-TTS-Route')||'audio'));
+  // Half-duplex while ElevenLabs speaks. Without this, the phone's own
+  // speaker audio trips server VAD and immediately aborts the TTS playback.
+  state.ttsPlaying=true;
+  const mic=state.stream?.getAudioTracks()[0];
+  if(mic)mic.enabled=false;
   await audio.play();
   await new Promise(resolve=>{
    if(audio.ended){resolve();return}
    audio.onended=resolve;audio.onerror=resolve;
    control.signal.addEventListener('abort',resolve,{once:true});
   });
-  if(state.active&&current===state.generation){actorPhase('listening');message('Your turn.')}
+  if(state.active&&current===state.generation){actorPhase('listening');message('Your turn.');state.playing=null}
  }catch(e){if(e.name!=='AbortError'&&state.active){error('ElevenLabs audio: '+e.message);message('Voice playback failed — see the error below')}}
+ finally{
+  if(current===state.generation){
+   state.ttsPlaying=false;
+   const mic=state.stream?.getAudioTracks()[0];
+   if(mic&&state.active)mic.enabled=!state.micUserMuted;
+  }
+ }
 }
 async function startConversation(){
  if(state.starting||state.active||!state.unit||!state.book)return;
@@ -476,6 +491,7 @@ async function startConversation(){
   await peer.setRemoteDescription({type:'answer',sdp:await answer.text()});
   if(startId!==activeStartId)return;
   startAbort=null;
+  state.micUserMuted=false;state.ttsPlaying=false;
   state.active=true;state.starting=false;message('Connected. Say hello!');actorPhase('listening');ticking();$('listenCheck').textContent='Mic active · speak after Willi asks';$('restart').disabled=true;
  }catch(e){
   if(startId!==activeStartId)return;
