@@ -475,7 +475,11 @@ function shortenGuidedResponse(text,second,level){
  let value=String(text||'').replace(/\s+/g,' ').trim();
  value=value.replace(/\b(?:thanks for sharing|thanks for telling me(?: that)?|i appreciate you sharing|that's interesting to hear)\b[.!?, ]*/gi,'').trim();
  if(!value)return '';
- if(second){const q=value.indexOf('?');if(q>=0)value=value.slice(0,q).trim();}
+ if(second){
+  // A rhetorical interjection ("Really?") is fine, but not another
+  // information-seeking follow-up after the child's second answer.
+  value=value.replace(/\b(?:who|what|where|when|why|how|do|does|did|can|could|will|would|are|is|have|has)\b[^.!?]*\?/gi,'').replace(/\s+/g,' ').trim();
+ }
  else{const q=value.indexOf('?');if(q>=0)value=value.slice(0,q+1);}
  const max=second?reactionWordCap(level):replyWordCap(level), words=value.split(/\s+/).filter(Boolean);
  if(words.length<=max)return value;
