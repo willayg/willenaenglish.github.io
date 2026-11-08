@@ -108,7 +108,7 @@ function renderManage(host){
     const day=prompt('This mission is overdue. Choose a new due date (YYYY-MM-DD):',next);
     if(!day){b.disabled=false;return}
     const due=new Date(day+'T23:59:59+09:00');
-    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(day)||!Number.isFinite(+due)||due.getTime()<=Date.now())throw Error('Choose a valid future due date');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||!Number.isFinite(+due)||due.getTime()<=Date.now())throw Error('Choose a valid future due date');
     patch.due_at=due.toISOString();
    }
    const t=token()||await refreshToken();
