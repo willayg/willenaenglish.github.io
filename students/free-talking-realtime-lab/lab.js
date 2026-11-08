@@ -1,14 +1,13 @@
 // Separate AI Willi Realtime lab; NEVER imported by the live Free Talking app.
 import {studentIdentity,signedInProfile,staffAccessToken,loadTeacherBookCatalog,loadUnits,assignedBooks} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
 const $=id=>document.getElementById(id);
-const state={identity:null,profile:null,books:[],units:[],peer:null,stream:null,channel:null,audio:null,audioContext:null,audioGain:null,audioSource:null,endTimer:null,seconds:180,active:false,busy:false,muted:false,turns:0,lesson:null};
+const state={identity:null,profile:null,books:[],units:[],peer:null,stream:null,channel:null,audio:null,endTimer:null,seconds:180,active:false,busy:false,muted:false,turns:0,lesson:null};
 const params=new URLSearchParams(location.search);
 function setVolume(value){
  const n=Math.max(0,Math.min(100,Number(value)||0));
  $('williVolume').value=String(n);
  $('volumeValue').value=n+'%';
  $('volumeValue').textContent=n+'%';
- if(state.audioGain)state.audioGain.gain.value=n/100;
  if(state.audio)state.audio.volume=n/100;
  try{localStorage.setItem('ft-realtime-willi-volume',String(n))}catch{}
 }
@@ -34,10 +33,7 @@ function stop(){
  try{state.peer?.close()}catch{}
  try{state.stream?.getTracks().forEach(track=>track.stop())}catch{}
  if(state.audio){state.audio.pause();state.audio.srcObject=null;state.audio.remove()}
- try{state.audioSource?.disconnect()}catch{}
- try{state.audioGain?.disconnect()}catch{}
- if(state.audioContext){const context=state.audioContext;void context.close().catch(()=>{})}
- state.peer=null;state.stream=null;state.channel=null;state.audio=null;state.audioContext=null;state.audioGain=null;state.audioSource=null;state.muted=false;state.turns=0;$('mute').textContent='Mute mic';$('timer').textContent='03:00 maximum';
+ state.peer=null;state.stream=null;state.channel=null;state.audio=null;state.muted=false;state.turns=0;$('mute').textContent='Mute mic';$('timer').textContent='03:00 maximum';
  setAvailable();status('Session ended. Choose a lesson or start again.','ready');
 }
 function countdown(){
@@ -111,22 +107,6 @@ function handleEvent(data){
 async function start(){
  if(state.busy||state.active||!$('unit').value)return;
  state.busy=true;setAvailable();$('error').textContent='';
- // Create and resume the audio graph directly from the tap: Android browsers can
- // ignore HTMLMediaElement.volume for remote WebRTC tracks.
- const AudioContextClass=window.AudioContext||window.webkitAudioContext;
- if(AudioContextClass){
-  try{
-   state.audioContext=new AudioContextClass();
-   state.audioGain=state.audioContext.createGain();
-   state.audioGain.gain.value=Number($('williVolume').value)/100;
-   state.audioGain.connect(state.audioContext.destination);
-   await state.audioContext.resume();
-  }catch(error){
-   try{await state.audioContext?.close()}catch{}
-   state.audioContext=null;state.audioGain=null;
-   console.warn('Web Audio volume unavailable, using media element fallback',error);
-  }
- }
  status('Checking your lesson…');clear($('history'));
  try{
   const token=await userToken();
@@ -138,23 +118,8 @@ async function start(){
   clear($('examples'));
   for(const x of [...data.lesson.vocabulary.slice(0,12),...data.lesson.examples.slice(0,4)]){const el=document.createElement('span');el.className='chip';el.textContent=x;$('examples').append(el)}
   const peer=new RTCPeerConnection();state.peer=peer;
-  // Route the incoming remote audio track into a GainNode: a real speaker volume
-  // control on Android WebRTC, not just the ignored <audio>.volume property.
-  peer.ontrack=e=>{
-   const remoteStream=e.streams?.[0]||new MediaStream([e.track]);
-   if(state.audioContext&&state.audioGain){
-    try{
-     state.audioSource?.disconnect();
-     state.audioSource=state.audioContext.createMediaStreamSource(remoteStream);
-     state.audioSource.connect(state.audioGain);
-     void state.audioContext.resume().catch(()=>{});
-     return;
-    }catch(error){console.warn('Realtime Web Audio route failed, trying media fallback',error)}
-   }
-   const audio=document.createElement('audio');audio.autoplay=true;audio.setAttribute('playsinline','');
-   audio.volume=Number($('williVolume').value)/100;state.audio=audio;document.body.append(audio);
-   audio.srcObject=remoteStream;void audio.play().catch(()=>{});
-  };
+  const audio=document.createElement('audio');audio.autoplay=true;audio.setAttribute('playsinline','');audio.volume=Number($('williVolume').value)/100;state.audio=audio;document.body.append(audio);
+  peer.ontrack=e=>{audio.srcObject=e.streams[0];audio.play().catch(()=>{})};
   peer.onconnectionstatechange=()=>{if(['failed','closed','disconnected'].includes(peer.connectionState)&&state.active){fail('Voice connection disconnected');stop()}};
   status('Allow microphone access…');
   const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
