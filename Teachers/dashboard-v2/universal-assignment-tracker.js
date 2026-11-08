@@ -384,6 +384,7 @@ async function loadOverview(scopeName='my',force=false){
      else if(kind.includes('puzzle')||key.startsWith('puzzles:'))app='Puzzles';
      else if(kind.includes('sentence')||sourceKind==='sentence_genius')app='Sentence Genius';
      else if(sourceKind==='grammar_books')app='Grammar Genius';
+     else if(kind==='free_talking_genius'||key.startsWith('free_talking:'))app='Free Talking Genius';
     }
     return {...row,_table:source.table,app,label:source.label(row),isActive:source.isActive(row)};
    });
@@ -411,6 +412,7 @@ async function loadOverview(scopeName='my',force=false){
    {name:'Class progress',enabled:hasApp('Grammar Genius'),path:'rpc/teacher_homework_class_progress_v1',body:'{}'},
    {name:'Grammar book progress',enabled:rows.some(row=>row.source_type==='grammar_books'),path:'rpc/teacher_grammar_book_homework_progress_v1',body:'{}'},
    {name:'Word class activity',enabled:hasApp('Word Genius'),path:'rpc/teacher_word_homework_class_progress_v1',body:'{}'},
+   {name:'Free Talking speaking progress',enabled:hasApp('Free Talking Genius'),path:'rpc/teacher_free_talking_mission_progress_v1',body:JSON.stringify({p_assignment_id:null})},
    {name:'Writing progress',enabled:rows.some(row=>row.app==='Writing Genius'&&row.list_key!=='writing_genius:sentence'),path:'rpc/teacher_creative_writing_progress_v1',body:'{}'},
    {name:'Sentence writing progress',enabled:hasWritingSentence,path:'rpc/teacher_writing_sentence_homework_progress_v1',body:'{}'},
    {name:'Puzzle progress',enabled:hasApp('Puzzles'),path:'rpc/teacher_puzzle_homework_progress_v1',body:'{}'},
@@ -443,6 +445,7 @@ async function loadOverview(scopeName='my',force=false){
   const classProgress=asMap('Class progress');
   const grammarBookProgress=asMap('Grammar book progress');
   const wordClassProgress=asMap('Word class activity');
+  const freeTalkingProgress=asMap('Free Talking speaking progress','assignment_id');
   const writingProgress=asMap('Writing progress');
   const writingSentenceProgress=asMap('Sentence writing progress');
   const puzzleProgress=asMap('Puzzle progress');
@@ -567,6 +570,10 @@ async function loadOverview(scopeName='my',force=false){
      if(row.app==='Puzzles'){
       const x=puzzleProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
      }
+     if(row.app==='Free Talking Genius'){
+      const p=freeTalkingProgress.get(id(row.id)),list=p?.students||[];
+      return list.length?list.reduce((sum,st)=>sum+Number(st.percent||0),0)/list.length/100:null;
+     }
      if(row.app==='Word Genius'){
       const data=wordCompletionCache.get(id(row.id));
       const students=data?.students||[];
@@ -600,6 +607,13 @@ async function loadOverview(scopeName='my',force=false){
         return shell+window.WillenaGeniusHomeworkCard.progressPanel({students:items,average,completed,notStarted});
       }
     }
+    if(g.items.length===1&&g.items[0].app==='Free Talking Genius'){
+      const p=freeTalkingProgress.get(id(g.items[0].id)),items=p?.students||[];
+      if(items.length){
+       const avg=Math.round(items.reduce((sum,st)=>sum+Number(st.percent||0),0)/items.length);
+       return shell+window.WillenaGeniusHomeworkCard.progressPanel({students:items.map(st=>({name:st.name,percent:st.percent})),average:avg,completed:items.filter(st=>st.complete).length,notStarted:items.filter(st=>!st.passed).length,label:'Speaking · 8 questions'});
+      }
+     }
     if(g.items.length===1&&g.items[0].app==='Writing Genius'&&g.items[0].list_key!=='writing_genius:sentence'){
       const record=writingProgress.get(id(g.items[0].id));
       if(record?.student_rows?.length){
@@ -637,15 +651,18 @@ async function loadOverview(scopeName='my',force=false){
       const verifiedGrammarPct=verifiedGrammarRows.length&&row.source_type==='grammar_books'
        ?Math.round(verifiedGrammarRows.reduce((sum,st)=>sum+(Number(st.total)>0?100*Math.min(Number(st.done)||0,Number(st.total))/Number(st.total):0),0)/verifiedGrammarRows.length)
        :null;
-      const visiblePct=row.app==='Grammar Genius'&&Number(grammarResult?.students)>0
+      const ftStudents=freeTalkingProgress.get(id(row.id))?.students||[];
+      const visiblePct=row.app==='Free Talking Genius'&&ftStudents.length?Math.round(ftStudents.reduce((sum,st)=>sum+Number(st.percent||0),0)/ftStudents.length):row.app==='Grammar Genius'&&Number(grammarResult?.students)>0
        ?(row.source_type==='grammar_books'?verifiedGrammarPct:Math.round(100*Number(grammarResult.passed)/Number(grammarResult.students))):pct;
       const wordResult=row.app==='Word Genius'?wordClassProgress.get(id(row.id)):null;
+      const freeTalkingResult=row.app==='Free Talking Genius'?freeTalkingProgress.get(id(row.id)):null;
       const writingResult=row.app==='Writing Genius'?(row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id))):null;
       const puzzleResult=row.app==='Puzzles'?puzzleProgress.get(id(row.id)):null;
       const detail=result?'Correct '+done+'/'+target+' · Attempted '+(result.attempted??'—')+' · First-try accuracy '+(result.accuracy_percent??'—')+'% · 오답 remaining '+(result.unresolved??'—')
         :grammarResult?grammarResult.passed+'/'+grammarResult.students+' students passed'
         :wordResult?wordResult.started+'/'+wordResult.students+' students attempted (not a pass rate)'
         :writingResult?(row.list_key==='writing_genius:sentence'?Number(writingResult.checked||0)+'/'+Number(writingResult.total_questions||0)+' questions checked · '+Number(writingResult.progress_percent||0)+'%':writingResult.completed+'/'+writingResult.students+' submitted')
+        :freeTalkingResult?(freeTalkingResult.students||[]).filter(st=>st.complete).length+'/'+(freeTalkingResult.students||[]).length+' students completed 8 speaking questions'
         :puzzleResult?puzzleResult.completed+'/'+puzzleResult.students+' completed puzzles'
         :'Completion data not available for this app';
       const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
@@ -657,6 +674,7 @@ async function loadOverview(scopeName='my',force=false){
       return prefix+'<article class="ua-homework-card'+(isSingle?' ua-single-assignment-detail':'')+'" data-ua-card="'+i+'">'+detailTrigger+
         '<div class="ua-homework-expanded ghc-overview-expanded" id="uaExpanded'+i+'" hidden><p class="ghc-overview-detail">'+esc(detail)+'</p>'+
         (grammarResult?.student_rows?overviewStudentProgress(grammarResult.student_rows,{kind:'grammar'}):'')+
+        (freeTalkingResult?.students&&!(isSingle&&row.app==='Free Talking Genius')?window.WillenaGeniusHomeworkCard.progressPanel({students:freeTalkingResult.students.map(st=>({name:st.name,percent:st.percent})),average:ftStudents.length?Math.round(ftStudents.reduce((sum,st)=>sum+Number(st.percent||0),0)/ftStudents.length):null,completed:ftStudents.filter(st=>st.complete).length,notStarted:ftStudents.filter(st=>!st.passed).length,label:'Speaking · 8 questions'}):'')+
         // A single Word Genius assignment already has the shared student bars
         // above. Keep the nested chart only for multi-assignment groups.
         ((groupByKey.get(thisGroup.key)?.items.length===1&&row.app==='Word Genius')?'':(wordResult?.student_rows
