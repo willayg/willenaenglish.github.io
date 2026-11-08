@@ -41,7 +41,7 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 .small{font-size:11px;color:#778b96;line-height:1.6}
 #error{font-size:12px;color:#b03454;text-align:center;min-height:22px}
 #volumeBox{display:flex;align-items:center;justify-content:center;gap:12px;color:#597685;font-size:12px;font-weight:800;margin:12px 0}
-#volume{width:min(240px,55vw);accent-color:#1aa9b8}
+#volume{width:min(240px,55vw);accent-color:#1aa9b8}.lesson-focus{margin:0 auto 12px;padding:8px 12px;border-radius:12px;background:#eef9fb;color:#35727d;font-size:12px;text-align:center;max-width:560px}
 /* Keep the EXACT Free Talking speaking circle, SVG art and character animation.
    Only the enclosing experimental layout is new. No replacement actor graphics. */
 #actorStage .free-talking-genius{width:100%;display:flex;align-items:center;justify-content:center}
@@ -75,10 +75,12 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </style></head><body>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
 <div id="demo" hidden><main class="wrap"><div class="top"><div><div class="tag">FREE TALKING GENIUS · EXPERIMENT</div><h1 id="heading">Choose your conversation friend</h1><p class="sub" id="lesson">Loading lesson…</p></div><button id="back" class="back" type="button">Back</button></div>
-<div class="panel" id="talk"><div id="actorStage" class="actor-stage" data-phase="ready"></div><div class="time" id="clock">03:00</div><div id="status" role="status">Starting…</div>
+<div class="panel" id="talk"><div id="actorStage" class="actor-stage" data-phase="ready"></div><div class="time" id="clock">03:00</div><div id="status" role="status">Starting…</div><div id="lessonFocus" class="lesson-focus">Lesson focus: loading current unit…</div>
 <div class="row"><button type="button" class="secondary" id="mute">Mute microphone</button><button type="button" class="secondary" id="end">End conversation</button></div>
-<label id="volumeBox">Speaker volume <input id="volume" type="range" min="0" max="100" value="70" step="5"><output id="volumeNumber">70%</output></label><div id="log" aria-live="polite"></div><p class="small" style="text-align:center">Free Talking practice: no homework, stars, or golden-unit credit.</p></div>
+<label id="volumeBox">AI voice volume <input id="volume" type="range" min="0" max="100" value="25" step="5"><output id="volumeNumber">25%</output></label>
+<div class="row"><button type="button" class="secondary" id="soundFallback">Use phone speaker</button></div>
+<p class="small" style="text-align:center">Adjustable quiet sound is experimental on Android. If you cannot hear Willi, choose “Use phone speaker,” then restart the conversation.</p><div id="log" aria-live="polite"></div><p class="small" style="text-align:center">Free Talking practice: no homework, stars, or golden-unit credit.</p></div>
 <p id="error" role="alert"></p>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261108-real-actor-auth5"></script></body></html>
+<script type="module" src="./extension.js?v=20261108-lesson-quiet6"></script></body></html>
