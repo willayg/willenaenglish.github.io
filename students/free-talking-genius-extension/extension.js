@@ -283,7 +283,7 @@ function renderFtGuide(){
  $('ftGuideBack').disabled=state.guideIndex===0;
  $('ftGuideNext').textContent=state.guideIndex===FT_GUIDE.length-1?(state.guideLaunch?'Start talking':'Close'):'Next';
 }
-function showFtGuide(launch=false){state.guideIndex=0;state.guideLaunch=launch;$('ftGuide').hidden=false;renderFtGuide()}
+function showFtGuide(launch=false){state.guideIndex=0;state.guideLaunch=launch;veil.hidden=false;$('ftGuide').hidden=false;renderFtGuide()}
 $('ftGuideBack').addEventListener('click',()=>{if(state.guideIndex){state.guideIndex--;renderFtGuide()}});
 $('ftGuideNext').addEventListener('click',()=>{
  if(state.guideIndex<FT_GUIDE.length-1){state.guideIndex++;renderFtGuide();return}
