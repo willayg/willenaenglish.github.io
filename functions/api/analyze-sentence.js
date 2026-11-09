@@ -25,7 +25,8 @@ async function handleSttLab({ request, env }) {
   const json=(body,status=200)=>new Response(JSON.stringify(body),{
     status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}
   });
-  if(!env.AI)return json({error:'Cloudflare Workers AI binding is not configured for this site.'},503);
+  // Binding availability is determined after staff authentication. A binding
+  // attached to another Worker or preview environment is not available here.
   const token=/^Bearer (.+)$/.exec(request.headers.get('Authorization')||'')?.[1];
   if(!token)return json({error:'Teacher login required.'},401);
   try{
@@ -40,6 +41,22 @@ async function handleSttLab({ request, env }) {
     if(!profileResponse.ok)return json({error:'Cannot verify teacher role.'},403);
     const [profile]=await profileResponse.json();
     if(!profile?.approved||!['admin','teacher'].includes(profile.role))return json({error:'Staff permission required.'},403);
+    const candidateNames=['AI','Ai','ai','WORKERS_AI','WorkersAI'];
+    const matched=candidateNames.find(name=>typeof env?.[name]?.run==='function');
+    const ai=matched?env[matched]:null;
+    if(!ai){
+      const visibleNames=candidateNames.filter(name=>Object.prototype.hasOwnProperty.call(env||{},name));
+      return json({
+        code:'AI_NOT_IN_FUNCTION_RUNTIME',
+        error:'Workers AI is not available to this specific Pages Function deployment.',
+        diagnostics:{
+          host:new URL(request.url).hostname,
+          declared_ai_bindings:visibleNames,
+          ai_binding_type:visibleNames.includes('AI')?(typeof env.AI?.run==='function'?'Workers AI':'not a Workers AI run binding'):'missing',
+          possible_causes:['Binding exists on a different Cloudflare project or Worker','Production and preview bindings differ','Deployment predates the binding','Binding variable name differs']
+        }
+      },503);
+    }
     if(Number(request.headers.get('content-length')||0)>3_800_000)return json({error:'Recording too large.'},413);
     const body=await request.json().catch(()=>null);
     const raw=body?.audio;
@@ -55,7 +72,7 @@ async function handleSttLab({ request, env }) {
     const results=await Promise.all(models.map(async m=>{
       const start=Date.now();
       try{
-        const output=await env.AI.run(m.id,{audio:raw,task:'transcribe',language:'en'});
+        const output=await ai.run(m.id,{audio:raw,task:'transcribe',language:'en'});
         return {model:m.model,transcript:String(output?.text||'').trim(),latency_ms:Date.now()-start};
       }catch(e){
         console.warn('[stt-lab] Model failed:',m.id,String(e?.message||e).slice(0,180));
