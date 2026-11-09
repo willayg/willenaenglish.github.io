@@ -420,8 +420,8 @@ function openCurriculumCreate(context){
   if(stage==='class'){
    const el=scope.querySelector(config.class);
    if(!optionReady(el,target.className))return;
-   choose(el,target.className);stage='book';
-   if(!config.book){stage='done'}
+   choose(el,target.className);stage=config.book?'book':'done';
+   if(stage==='done'){finished=true;notice('Selected class '+target.className+'. Choose the puzzle game and its content before assigning.');cleanup();}
    return;
   }
   if(stage==='book'){
