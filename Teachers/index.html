@@ -863,7 +863,7 @@ function renderStudents(){
  const summary=$('#rosterSummary');
  if(summary){
   const loaded=rosterCurriculum.className===state.className&&rosterCurriculum.overview;
-  const titles=loaded?rosterCurriculum.books.map(b=>String(b.book_title||'').replace(/^Oxford\\s+/i,'').replace(/^Speed\\s+/i,'').trim()).filter(Boolean):[];
+  const titles=loaded?rosterCurriculum.books.map(b=>String(b.book_title||'').replace(/^Oxford\s+/i,'').replace(/^Speed\s+/i,'').trim()).filter(Boolean):[];
   summary.innerHTML=titles.length?'<span>'+titles.map(esc).join('</span><span>')+'</span>':'';
  }
  if(!list.length){$('#studentList').innerHTML='<div class="empty">No students match these filters.</div>';return}
