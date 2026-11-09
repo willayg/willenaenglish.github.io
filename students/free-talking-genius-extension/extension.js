@@ -2,9 +2,11 @@
 // Everything here is additive; no production app source is patched.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
+import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261107-pig-original4';
+import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -40,6 +42,7 @@ let startAbort=null;
 let lessonLoad=null;
 function hasActivityHistory(){return history.state?.[EXT_NAV_KEY]==='activity'}
 function closeActivity(){
+ $('ftBootSpinner').hidden=true;
  activeStartId++;
  try{startAbort?.abort()}catch{}
  startAbort=null;
@@ -162,15 +165,19 @@ function buttonState(c){
  const go=doc?.getElementById('ftCharacterContinue');if(go)go.disabled=false;
 }
 function appDocument(){try{return frame.contentDocument}catch{return null}}
+function ftCompletionKey(){return state.book&&state.unit?'willena-free-talking-completion-v1:'+state.book.id+':'+state.unit.id:null}
+function ftCompletionRead(){try{return ftCompletionKey()?JSON.parse(localStorage.getItem(ftCompletionKey())||'null'):null}catch{return null}}
+function ftCompletionSave(result){const key=ftCompletionKey();if(!key)return;try{const old=ftCompletionRead();const completed=Math.max(Number(old?.answered)||0,result.answered);localStorage.setItem(key,JSON.stringify({answered:completed,stars:Math.max(Number(old?.stars)||0,result.stars),updatedAt:Date.now()}))}catch{}}
 function prepareCard(){
  const d=appDocument(),card=d?.getElementById('ftFreeTalkingCard');if(!card)return;
- if(card.dataset.extension==='ready')return;
  card.dataset.extension='ready';card.disabled=false;card.removeAttribute('aria-disabled');card.classList.remove('ft-coming-soon-card');
  card.setAttribute('aria-label','Free Talking · 8 textbook questions');
  card.style.cssText+=';opacity:1!important;filter:none!important;cursor:pointer;pointer-events:auto;';
  const step=card.querySelector('.vocab-skill-step');if(step)step.textContent='STEP 2';
- const detail=card.querySelector('.vocab-card-stars');if(detail)detail.textContent='8개 질문으로 대화 · 골든 유닛 조건 아님';
- const ring=card.querySelector('.vocab-skill-ring span');if(ring)ring.textContent='8Q';
+ const completed=ftCompletionRead();const answered=Math.min(8,Number(completed?.answered)||0);
+ const detail=card.querySelector('.vocab-card-stars');if(detail)detail.textContent=answered?answered+'/8 completed · 골든 유닛 조건 아님':'8개 질문으로 대화 · 골든 유닛 조건 아님';
+ const ring=card.querySelector('.vocab-skill-ring span');if(ring)ring.textContent=answered?Math.round(answered/8*100)+'%':'0%';
+ const ringHost=card.querySelector('.vocab-skill-ring');if(ringHost)ringHost.style.setProperty('--progress',String(answered/8*100));
 }
 function bindOriginalFrame(){
  const d=appDocument();if(!d||d.documentElement.dataset.ftRealtimeExtensionBound==='1')return;
@@ -309,18 +316,21 @@ function ftFinishScores(){
 }
 function ftShowFinish(result){
  $('ftGuide').hidden=true;$('ftCelebration').hidden=false;
- const host=$('ftResultStars');host.replaceChildren();
- for(let i=0;i<5;i++){const el=document.createElement('span');el.textContent='★';if(i<result.stars)el.className='earned';host.append(el)}
- host.setAttribute('aria-label',result.stars+' of 5 stars');
- $('ftResultPoints').textContent='+'+result.points+' Session Points';
- const oldMascot=$('ftResultMascot');if(oldMascot)oldMascot.replaceChildren();
- const artwork=$('actorStage')?.querySelector('.bf-svg,.pf-svg,.bf-actor,svg');
- if(oldMascot&&artwork){const art=artwork.cloneNode(true);art.style.cssText='display:block;width:100%;height:100%;transform:none;max-width:none;max-height:none';oldMascot.append(art)}
- $('ftResultSummary').innerHTML='<div><strong>'+result.answered+'/8</strong>Questions answered</div><div><strong>'+result.helps+'</strong>Help requests</div>';
- $('ftRewardDetail').textContent=result.rows.map((r,i)=>'Q'+(i+1)+': '+r.points+'/3').join(' · ');
- $('ftRewardSync').textContent='연습 결과 미리보기 · 실제 별과 포인트는 아직 계정에 저장되지 않아요.';
- $('ftRetryReward').hidden=true;
+ const stars=$('ftResultStars');stars.replaceChildren();
+ for(let i=0;i<5;i++){const el=document.createElement('span');el.textContent='★';if(i<result.stars)el.className='earned';stars.append(el)}
+ stars.setAttribute('aria-label',result.stars+' out of 5 stars');
+ $('ftResultPoints').textContent='+'+result.points+' Points';
+ const portrait=$('ftResultMascot');portrait.replaceChildren();
+ if(state.character==='bunny')portrait.innerHTML=BUNNY_FOX_ART;
+ else if(state.character==='pigfish'){
+  portrait.innerHTML=PIGFISH_ART.replaceAll('id="pigBody"','id="pigBody-finish"').replaceAll('id="pigBelly"','id="pigBelly-finish"').replaceAll('url(#pigBody)','url(#pigBody-finish)').replaceAll('url(#pigBelly)','url(#pigBelly-finish)');
+ }else{
+  portrait.innerHTML='<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="48" fill="#e9fafc" stroke="#68cbd5" stroke-width="5"/><circle cx="60" cy="60" r="21" fill="none" stroke="#23a5b4" stroke-width="9"/><path d="M38 73a25 25 0 0 0 44 0" fill="none" stroke="#eda4c2" stroke-width="6" stroke-linecap="round"/></svg>';
+ }
+ ftCompletionSave(result);prepareCard();
+ try{preloadStudentSfx();playStudentSfx('complete',{volume:.7})}catch{}
 }
+
 $('ftFinishClose').addEventListener('click',()=>{$('ftCelebration').hidden=true;navigateBack()});
 
 const QUESTION_BUDGET_MS=20000;
@@ -328,7 +338,7 @@ const isBeginner=()=>state.lessonLevel<=2;
 const isFirstLevel=()=>state.lessonLevel<=1;
 function stripInternalLabels(value){return String(value||'').replace(/\b(?:Textbook|Current textbook question|Current question|Example|Lesson focus|Instructions)\s*:\s*[^.!?]*(?:[.!?]|$)/gi,' ').replace(/\s+/g,' ').trim()}
 
-const CHECK_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L19 7"/></svg>';
+
 function renderTopicTicker(){
  const steps=$('topicSteps');if(!steps)return;
  const count=Math.min(8,state.anchors.length||8);
@@ -338,8 +348,7 @@ function renderTopicTicker(){
   const done=state.topicCompleted.has(i);
   cell.className='topic-step'+(done?' is-done':i===state.anchorIndex?' is-active':'');
   cell.setAttribute('aria-label','Question '+(i+1)+(done?', completed':i===state.anchorIndex?', current':''));
-  if(done)cell.innerHTML=CHECK_SVG;
-  else cell.textContent=String(i+1);
+  // Progress is colour only: white waiting pip, cyan completed pip.
   steps.append(cell);
  }
  const left=Math.max(0,state.questionRemainingMs);
@@ -723,6 +732,7 @@ async function playAnchor(index){
  const anchor=state.anchors[index];
  const run=++state.anchorToken;
  clearTimeout(state.idleTimer);state.idleTimer=null;
+ if(!$('ftBootSpinner').hidden)$('ftBootSpinner').hidden=true;
  state.anchorIndex=index;state.anchorPhase='playingAnchor';state.anchorResponding=false;
  resetQuestionClock();state.topicHadAnswer=false;
  state.vocabDetours=0;state.topicDetours=0;state.pendingWordConfirmation=null;state.asideTerm='';state.topicQuestion='';state.asideKind=null;
@@ -1191,6 +1201,7 @@ async function startConversation(){
  const continuing=Boolean(state.resumePhase);
  if(!continuing&&!state.guideAccepted){let dismissed=false;try{dismissed=localStorage.getItem(FT_GUIDE_KEY)==='1'}catch{}if(!dismissed){showFtGuide(true);return}}
  state.guideAccepted=false;if(!continuing)state.questionRewards.clear();
+ if(!continuing&&!state.initialLoadingShown){state.initialLoadingShown=true;$('ftBootSpinner').hidden=false;}
  state.starting=true;state.paused=false;setPauseButton(false);
  $('pauseResume').disabled=false;
  error('');state.alreadySpoken=false;state.turnText='';state.pendingText=false;
