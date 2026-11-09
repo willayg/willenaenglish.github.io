@@ -6,7 +6,7 @@ import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -350,21 +350,20 @@ function ftShowFinish(result){
 
 $('ftFinishClose').addEventListener('click',()=>{$('ftCelebration').hidden=true;navigateBack()});
 
-const QUESTION_BUDGET_MS=20000;
-const QUESTION_EXTENDED_BUDGET_MS=30000;
+const QUESTION_BUDGET_MS=30000;
 const QUESTION_BOOST_MS=10000;
-const questionBaseMs=()=>state.lessonLevel>3?QUESTION_EXTENDED_BUDGET_MS:QUESTION_BUDGET_MS;
+const questionBaseMs=()=>QUESTION_BUDGET_MS;
 function updateTimeBoostButton(){
  const button=$('timeBoost');if(!button)return;
- const available=state.active&&state.lessonLevel>3&&!state.questionBoostUsed&&!state.questionExpired&&!state.finishingTopic&&['awaitingFirst','awaitingSecond'].includes(state.anchorPhase);
- button.hidden=state.lessonLevel<=3;
+ const available=state.active&&!state.questionBoostUsed&&!state.questionExpired&&!state.finishingTopic&&['awaitingFirst','awaitingSecond'].includes(state.anchorPhase);
+ button.hidden=false;
  button.disabled=!available;
  button.setAttribute('aria-label',state.questionBoostUsed?'Extra time already used for this question':'Add ten seconds to this question');
  button.title=state.questionBoostUsed?'Extra time used':'+10 seconds (once per question)';
  button.setAttribute('aria-pressed',String(state.questionBoostUsed));
 }
 $('timeBoost').addEventListener('click',()=>{
- if(!state.active||state.lessonLevel<=3||state.questionBoostUsed||state.questionExpired||state.finishingTopic||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
+ if(!state.active||state.questionBoostUsed||state.questionExpired||state.finishingTopic||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
  state.questionBoostUsed=true;
  state.questionRemainingMs+=QUESTION_BOOST_MS;
  state.questionTotalMs+=QUESTION_BOOST_MS;
@@ -417,7 +416,7 @@ function resetQuestionClock(){
  renderTopicTicker();
 }
 function studentTurnInProgress(){
- return Boolean(state.speechStartedAt||state.awaitingSpeechCommit||state.pendingSpeech.size);
+ return Boolean(state.speechStartedAt||state.awaitingSpeechCommit||state.pendingSpeech.size||state.turnFragments.length||state.turnGraceTimer);
 }
 function startQuestionClock(){
  haltQuestionClock();
@@ -847,6 +846,8 @@ function shortenGuidedResponse(text,second,level){
 function clearPendingSpeech(){
  for(const pending of state.pendingSpeech.values())clearTimeout(pending.timeout);
  state.pendingSpeech.clear();
+ clearTimeout(state.turnGraceTimer);state.turnGraceTimer=null;
+ state.turnGraceToken++;state.turnFragments=[];
 }
 function voiceTurnValid(text,pending){
  const transcript=String(text||'').replace(/\s+/g,' ').trim();
@@ -875,27 +876,63 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
   // Remove unverified audio from conversation context.
   sendRealtime({type:'conversation.item.delete',item_id:itemId});
   if(state.questionExpired)void finishTimedQuestion();
+  else if(!state.speechStartedAt&&!state.turnFragments.length)startQuestionClock();
   return;
  }
+ // Semantic VAD can commit a phrase while a child is still thinking.
+ queueSpeechFragment(itemId,String(transcript||'').trim(),pending.anchorToken,pending.phase);
+}
+function unfinishedSpeech(text){
+ const v=String(text||'').trim().replace(/[.!?,]+$/,'').toLowerCase();
+ return /\b(?:because|and|but|so|or|if|when|while|that|than|with|to|for|of|the|a|an|then)$/i.test(v)||
+  /\b(?:i (?:think|want|need|would|can|could|might|was|am|will)|she (?:was|is|will)|he (?:was|is|will)|they (?:were|are|will)|it (?:was|is|will))$/i.test(v);
+}
+function scheduleSpeechGrace(){
+ clearTimeout(state.turnGraceTimer);
+ if(!state.turnFragments.length)return;
+ const joined=state.turnFragments.map(x=>x.text).join(' ');
+ const delay=unfinishedSpeech(joined)?3400:2200;
+ const token=++state.turnGraceToken;
+ state.turnGraceTimer=setTimeout(()=>{
+  if(token!==state.turnGraceToken)return;
+  state.turnGraceTimer=null;
+  if(!state.active||state.paused){state.turnFragments=[];return}
+  if(state.speechStartedAt||state.pendingSpeech.size){scheduleSpeechGrace();return}
+  const items=state.turnFragments.splice(0);
+  if(!items.length||items.some(x=>x.anchorToken!==state.anchorToken||x.phase!==state.anchorPhase))return;
+  const speech=items.map(x=>x.text).join(' ').replace(/\s+/g,' ').trim();
+  processVerifiedSpeech(items.map(x=>x.itemId),speech);
+ },delay);
+}
+function queueSpeechFragment(itemId,text,anchorToken,phase){
+ if(!state.active||anchorToken!==state.anchorToken||phase!==state.anchorPhase)return;
+ state.turnFragments.push({itemId,text,anchorToken,phase});
+ message('Take your time. Listening for more…');
+ $('listenCheck').textContent='Thinking time · keep speaking when ready';
+ scheduleSpeechGrace();
+}
+function processVerifiedSpeech(itemIds,speech){
+ if(!state.active||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
+ const itemId=itemIds[itemIds.length-1];
+ const deleteSpeech=()=>{for(const id of itemIds)sendRealtime({type:'conversation.item.delete',item_id:id})};
  clearTimeout(state.idleTimer);state.idleTimer=null;
  state.serverHeard=true;
  haltQuestionClock();
- appendLine('You',String(transcript||'').trim());
- state.verifiedAnswer=String(transcript||'').trim();
- const speech=state.verifiedAnswer;
+ appendLine('You',speech);
+ state.verifiedAnswer=speech;
  if(state.questionExpired){state.questionExpired=false;state.questionRemainingMs=Math.max(6000,state.questionRemainingMs)}
   if(state.pendingWordConfirmation&&/^(?:no[, .]+)?(?:i (?:said|mean|meant)[, ]+)?(?:type|hype|plain|plane|play|playing|draw|drawing|tape)[.!? ]*$/i.test(speech)){
    const term=speech.toLowerCase().match(/(?:type|hype|plain|plane|play|playing|draw|drawing|tape)/i)?.[0];
-   if(term){state.pendingWordConfirmation=null;ftTopicReward().help=true;state.asideKind='vocabulary';state.asideTerm=term;sendRealtime({type:'conversation.item.delete',item_id:itemId});requestGuidedAside();return}
+   if(term){state.pendingWordConfirmation=null;ftTopicReward().help=true;state.asideKind='vocabulary';state.asideTerm=term;deleteSpeech();requestGuidedAside();return}
   }
  const category=classifyStudentTurn(speech);
  if(category.kind==='question_help'){
    // The question itself needs a bilingual explanation. No answer credit yet.
-   sendRealtime({type:'conversation.item.delete',item_id:itemId});
+   deleteSpeech();
    ftTopicReward().help=true;
    state.asideKind='question_help';requestGuidedAside();
   }else if(category.kind==='clarify'){
-   sendRealtime({type:'conversation.item.delete',item_id:itemId});
+   deleteSpeech();
    state.questionRemainingMs=Math.max(12000,state.questionRemainingMs);
    const word=String(category.term||'').toLowerCase();
    void redirectToLesson(word==='type'||word==='hype'?'Type or hype? Please say it again.':word==='plain'||word==='plane'?'Plain or plane? Say it again, please.':'Sorry! Please say that word again, slowly.');
@@ -903,7 +940,7 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
   state.asideKind='vocabulary';
   // Strip student instructions from the model context; the isolated term is
   // supplied separately as quoted data to the vocabulary helper.
-  sendRealtime({type:'conversation.item.delete',item_id:itemId});
+  deleteSpeech();
   if(state.vocabDetours>=6){
    void redirectToLesson('Let’s try the question now. You can ask about more words next time.');
   }else{
@@ -914,7 +951,7 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
  }else if(category.kind==='topic'){
   // Relevant student curiosity is educational: answer in English, return to
   // the current textbook turn. Never treat it as a new chat topic.
-  sendRealtime({type:'conversation.item.delete',item_id:itemId});
+  deleteSpeech();
   if(state.topicDetours>=2)void redirectToLesson('Good question! Let’s try answering this one first.');
   else{
    state.topicDetours++;ftTopicReward().help=true;
@@ -923,7 +960,7 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
   }
  }else if(category.kind==='redirect'){
   // Prevent an off-topic spoken command from poisoning later lesson turns.
-  sendRealtime({type:'conversation.item.delete',item_id:itemId});
+  deleteSpeech();
   void redirectToLesson(category.message);
  }else{ftRecordAnswer(speech,state.anchorPhase==='awaitingSecond');requestGuidedReply();}
 }
@@ -1203,6 +1240,8 @@ function handleRealtime(data){
    break;
   case 'input_audio_buffer.speech_started':
    if(state.ttsPlaying||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))break;
+   clearTimeout(state.turnGraceTimer);state.turnGraceTimer=null;state.turnGraceToken++;
+   haltQuestionClock(); // The timer stops once the child begins speaking.
    state.speechStartedAt=performance.now();state.speechPeak=0;state.awaitingSpeechCommit=true;
    $('listenCheck').textContent='Listening to your speech';actorPhase('listening');message('Listening…');break;
   case 'input_audio_buffer.speech_stopped':
@@ -1369,7 +1408,7 @@ async function startConversation(){
    state.guidedSessionReady=true;
    channel.send(JSON.stringify({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{
     transcription:{model:'gpt-4o-mini-transcribe',language:'en'},
-    turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:false,interrupt_response:false}
+    turn_detection:{type:'semantic_vad',eagerness:'low',create_response:false,interrupt_response:false}
    }}}}));
    if(state.active&&state.anchorPhase==='ready'&&!restoreAfterPause())void playAnchor(state.anchorIndex);
   };
