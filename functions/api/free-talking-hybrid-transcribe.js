@@ -8,8 +8,12 @@ export async function onRequestPost({request,env}){
  const bearer=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
  if(bearer.length<40)return reply(401,{error:'Sign in first'});
  if(!request.headers.get('content-type')?.includes('multipart/form-data'))return reply(415,{error:'Multipart audio required'});
- const key=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
- if(!key)return reply(503,{error:'Transcription not configured'});
+ const requested=request.headers.get('X-Willena-STT')||'openai-mini';
+ if(!['openai-mini','eleven-scribe-v2'].includes(requested))return reply(400,{error:'Unknown STT engine'});
+ const key=requested==='eleven-scribe-v2'
+  ?(env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY||env.ELEVENLABS_API||env.ELEVENLABS_KEY)
+  :(env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY);
+ if(!key)return reply(503,{error:requested==='eleven-scribe-v2'?'ElevenLabs key missing on this deployment':'OpenAI key missing on this deployment'});
  try{
   const auth=await fetch(ROOT+'/auth/v1/user',{headers:{apikey:PUB,Authorization:'Bearer '+bearer},signal:AbortSignal.timeout(8000)});
   if(!auth.ok)return reply(401,{error:'Session expired'});
@@ -21,12 +25,24 @@ export async function onRequestPost({request,env}){
   const audio=form.get('audio');
   if(!(audio instanceof File)||audio.size<350||audio.size>1500000)return reply(400,{error:'Invalid recording size'});
   const outgoing=new FormData();
-  outgoing.set('model','gpt-4o-mini-transcribe');
-  outgoing.set('language','en');
-  outgoing.set('file',audio,'answer.webm');
-  const r=await fetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{Authorization:'Bearer '+key},body:outgoing,signal:AbortSignal.timeout(25000)});
+  const eleven=requested==='eleven-scribe-v2';
+  if(eleven){
+   outgoing.set('model_id','scribe_v2');
+   outgoing.set('language_code','en');
+   outgoing.set('tag_audio_events','false');
+   outgoing.set('diarize','false');
+   outgoing.set('file',audio,'answer.webm');
+  }else{
+   outgoing.set('model','gpt-4o-mini-transcribe');
+   outgoing.set('language','en');
+   outgoing.set('file',audio,'answer.webm');
+  }
+  const r=await fetch(eleven?'https://api.elevenlabs.io/v1/speech-to-text':'https://api.openai.com/v1/audio/transcriptions',{
+   method:'POST',
+   headers:eleven?{'xi-api-key':key}:{Authorization:'Bearer '+key},
+   body:outgoing,signal:AbortSignal.timeout(25000)});
   const data=await r.json().catch(()=>null);
-  if(!r.ok)return reply(502,{error:'Transcription failed ('+r.status+')'});
-  return reply(200,{text:String(data?.text||'').slice(0,500),model:'gpt-4o-mini-transcribe'});
+  if(!r.ok)return reply(502,{error:(eleven?'ElevenLabs':'OpenAI')+' STT failed ('+r.status+'): '+String(data?.detail?.message||data?.error?.message||'').slice(0,130)});
+  return reply(200,{text:String(data?.text||'').slice(0,500),model:eleven?'scribe_v2':'gpt-4o-mini-transcribe'});
  }catch(e){console.warn('hybrid transcription',String(e));return reply(502,{error:'Transcription unavailable'})}
 }
