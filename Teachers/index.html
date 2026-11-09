@@ -187,9 +187,17 @@ try{
 .cc-cell:hover{filter:brightness(.97);border-color:#53b5bf}
 .cc-drilldown{border:1px solid #cce5e7;border-radius:17px;background:#fff;padding:20px;margin-top:18px}
 .cc-primary{background:#1b8994;color:white;border-color:#1b8994}.cc-primary:hover{background:#147987}
-.cc-student-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin:18px 0}
-.cc-student-row{display:flex;gap:8px;justify-content:space-between;align-items:center;padding:11px;border:1px solid #e2e9eb;border-radius:10px;font-size:12px}
-.cc-student-row strong{font-weight:700}.cc-student-row span{text-align:right;font-size:11px}
+.cc-student-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:11px;margin:18px 0}
+.cc-student-row{display:flex;flex-direction:column;gap:8px;align-items:stretch;padding:14px;border:1px solid #dce8ea;border-radius:12px;background:#fff;min-height:125px;font-size:12px}
+.cc-student-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cc-student-row strong{font-weight:750;font-size:14px;color:#133c48}
+.cc-student-row .cc-percent{font-size:17px;font-weight:800;color:#147e85;white-space:nowrap}
+.cc-student-row .cc-percent-muted{font-size:11px;font-weight:600;color:#7f9299}
+.cc-unit-subtitle{font-size:11px;font-weight:650;color:#496873}
+.cc-student-progress{height:8px;background:#eaf1f2;border-radius:10px;overflow:hidden}
+.cc-student-progress i{display:block;height:100%;background:#259da4;border-radius:10px}
+.cc-student-details{color:#57717b;font-size:11px;line-height:1.55}
+.cc-student-details strong{font-size:11px;color:#246e75}
 .cc-present{color:#1f8c75}.cc-absent{color:#82939c}
 .cc-empty{padding:24px;background:#fff;border:1px solid #dfebed;border-radius:12px;color:#607987}
 @media(max-width:680px){.cc-class-grid{grid-template-columns:1fr}.cc-detail-top{flex-wrap:wrap}.cc-progress-heading,.cc-drill-head{align-items:start;flex-direction:column}.cc-toolbar input{min-width:180px}.cc-book-tabs button{flex:1}}
@@ -799,7 +807,7 @@ async function openStudent(id){window.rosterDrawerStudent=String(id);const base=
 /* Class Curriculum — read from staff-scoped operations RPC and shared content catalog. */
 const curriculum={
  data:null, selectedClass:'', selectedBook:'', selectedUnit:'', selectedSkill:'', unitCache:new Map(),
- pending:false, request:0, search:'', error:''
+ pending:false, request:0, search:'', error:'', puzzleDetail:new Map()
 };
 const ccHost=()=>document.getElementById('classGrid');
 const ccOp='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
@@ -912,7 +920,7 @@ function ccRenderDetail(){
  host.querySelector('[data-cc-action="back"]').onclick=()=>{curriculum.selectedClass='';curriculum.selectedBook='';ccRenderOverview()};
  host.querySelector('[data-cc-action="students"]').onclick=()=>openClassFromOverview(c.name,30);
  host.querySelectorAll('[data-cc-book]').forEach(b=>b.onclick=()=>{curriculum.selectedBook=b.dataset.ccBook;curriculum.selectedUnit='';curriculum.selectedSkill='';ccRenderDetail()});
- host.querySelectorAll('[data-cc-unit]').forEach(b=>b.onclick=()=>{curriculum.selectedUnit=b.dataset.ccUnit;curriculum.selectedSkill=b.dataset.ccSkill;ccRenderDetail();host.querySelector('.cc-drilldown')?.scrollIntoView({behavior:'smooth',block:'nearest'})});
+ host.querySelectorAll('[data-cc-unit]').forEach(b=>b.onclick=async()=>{curriculum.selectedUnit=b.dataset.ccUnit;curriculum.selectedSkill=b.dataset.ccSkill;const selectedBook=book,selectedUnit=units.find(u=>u.id===curriculum.selectedUnit);const selectedClass=c.name;ccRenderDetail();host.querySelector('.cc-drilldown')?.scrollIntoView({behavior:'smooth',block:'nearest'});if(curriculum.selectedSkill==='puzzles'&&selectedUnit){try{await ccLoadPuzzleDetail(selectedBook,selectedUnit);if(curriculum.selectedClass===selectedClass&&curriculum.selectedBook===selectedBook.id&&curriculum.selectedUnit===selectedUnit.id&&curriculum.selectedSkill==='puzzles')ccRenderDetail()}catch(e){console.warn('[Class Curriculum] Puzzle detail:',e);}}});
  const taught=host.querySelector('#ccTaught');
  if(taught){taught.onchange=async()=>{const before=book.current_unit;const val=taught.value||null;taught.disabled=true;
   try{await ccRpc('teacher_curriculum_set_unit_v1',{p_assignment_id:book.id,p_unit:val});book.current_unit=val;ccRenderDetail()}
@@ -921,22 +929,62 @@ function ccRenderDetail(){
  host.querySelectorAll('[data-cc-student]').forEach(b=>b.onclick=()=>openClassFromOverview(c.name,30));
  host.querySelectorAll('[data-cc-mission]').forEach(b=>b.onclick=()=>{switchView('assignments');window.UniversalAssignments?.activate?.();const select=document.querySelector('#assignmentClassFilter');if(select&&[...select.options].some(o=>o.value===c.name)){select.value=c.name;select.dispatchEvent(new Event('change',{bubbles:true}))}});
 }
+const ccPuzzleModeNames={wordsearch:'Word Search',crossword:'Crossword',boggle:'Boggle',mixmatch:'Mix & Match',wordle:'Wordle'};
+const ccPuzzleCacheKey=(book,unit)=>[curriculum.selectedClass,book.book_id,unit.id].join(':');
+async function ccLoadPuzzleDetail(book,unit){
+ const key=ccPuzzleCacheKey(book,unit);
+ if(curriculum.puzzleDetail.has(key))return;
+ const rows=await ccRpc('teacher_curriculum_puzzle_unit_v1',{p_class:curriculum.selectedClass,p_book_id:book.book_id,p_unit_id:unit.id});
+ curriculum.puzzleDetail.set(key,Array.isArray(rows)?rows:[]);
+}
+function ccActivityTime(value){
+ if(!value)return '';
+ const d=new Date(value);
+ return Number.isFinite(d.getTime())?d.toLocaleString('en-GB',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+}
 function ccRenderStudentDrilldown(book,unit,group){
  if(!group)return '';
  const d=ccSkillData(book,unit,group);
  const students=ccClassStudents(curriculum.selectedClass);
- return '<section class="cc-drilldown"><div class="cc-drill-head"><div><h3>Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name)+'</h3><p>'+d.touched.size+' of '+students.length+' students have recorded practice · No score averaging</p></div><button type="button" class="cc-btn cc-primary" data-cc-mission="1">Assign mission →</button></div>'+
- '<div class="cc-student-grid">'+students.map(s=>{const rows=d.rows.filter(r=>String(r.student_id)===String(s.id));
- const skills=[...new Set(rows.filter(r=>Number(r.attempts)>0||Number(r.attempted_content_count)>0).map(r=>r.skill))];
- return '<div class="cc-student-row"><strong>'+ccEscape(s.name||s.username||s.korean_name||'Student')+'</strong><span class="'+(skills.length?'cc-present':'cc-absent')+'">'+(skills.length?'Practised: '+ccEscape(skills.map(sk=>sk.replaceAll('_',' ')).join(', ')):'No recorded practice')+'</span></div>'}).join('')+'</div>'+
- '<p class="cc-helper">Use Assign Mission to open the existing assignment workspace. Select this book and unit there; no mission is created until you confirm it.</p></section>';
+ const puzzleRecords=curriculum.puzzleDetail.get(ccPuzzleCacheKey(book,unit));
+ const puzzleByStudent=new Map((puzzleRecords||[]).map(r=>[String(r.student_id),r]));
+ return '<section class="cc-drilldown"><div class="cc-drill-head"><div><h3>Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name)+'</h3><p>'+d.touched.size+' of '+students.length+' students have recorded practice · '+(group.key==='puzzles'?'Puzzle completion is based on 5 different game types':'Recorded practice, not a test average')+'</p></div><button type="button" class="cc-btn cc-primary" data-cc-mission="1">Assign mission →</button></div>'+
+ '<div class="cc-student-grid">'+students.map(student=>{
+ const rows=d.rows.filter(r=>String(r.student_id)===String(student.id));
+ const hasPractice=rows.some(r=>Number(r.attempts)>0||Number(r.attempted_content_count)>0);
+ const name=ccEscape(student.name||student.username||student.korean_name||'Student');
+ const base='<div class="cc-student-top"><strong>'+name+'</strong>';
+ const subtitle='<div class="cc-unit-subtitle">Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name)+'</div>';
+ if(group.key==='puzzles'){
+  const record=puzzleByStudent.get(String(student.id));
+  if(!puzzleRecords)return '<div class="cc-student-row">'+base+'<span class="cc-percent-muted">Loading…</span></div>'+subtitle+'</div>';
+  const modes=Array.isArray(record?.modes)?record.modes.filter(mode=>ccPuzzleModeNames[mode]):[];
+  const done=modes.length,percent=Math.round(100*done/5);
+  const last=ccActivityTime(record?.last_at||rows.map(r=>r.updated_at).sort().at(-1));
+  const details=done?modes.map(m=>ccPuzzleModeNames[m]).join(', '):hasPractice?'Practice recorded, no finished game yet':'No recorded practice';
+  return '<div class="cc-student-row">'+base+'<span class="'+(done?'cc-percent':'cc-percent-muted')+'">'+(done?percent+'% complete':'Not started')+'</span></div>'+subtitle+
+   '<div class="cc-student-progress" role="progressbar" aria-label="Puzzle types completed" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="5"><i style="width:'+percent+'%"></i></div>'+
+   '<div class="cc-student-details">'+ccEscape(done+' of 5 game types · '+Number(record?.sessions||0)+' completed session(s)')+'</div>'+
+   '<div class="cc-student-details">'+ccEscape(details)+(last?' · Last '+ccEscape(last):'')+'</div></div>';
+ }
+ const count=rows.reduce((sum,r)=>sum+Number(r.attempts||0),0);
+ const tried=rows.reduce((sum,r)=>sum+Number(r.attempted_content_count||0),0);
+ const mastered=rows.reduce((sum,r)=>sum+Number(r.mastered_content_count||0),0);
+ const last=ccActivityTime(rows.map(r=>r.updated_at).filter(Boolean).sort().at(-1));
+ const skills=rows.filter(r=>Number(r.attempts)>0).map(r=>r.skill.replaceAll('_',' '));
+ return '<div class="cc-student-row">'+base+'<span class="cc-percent-muted">'+(count?'Practice recorded':'No record')+'</span></div>'+subtitle+
+  '<div class="cc-student-details">'+(count?ccEscape(tried+' items attempted · '+mastered+' mastered · '+count+' attempts'):'No recorded practice')+'</div>'+
+  (skills.length?'<div class="cc-student-details">'+ccEscape([...new Set(skills)].join(', '))+'</div>':'')+
+  (last?'<div class="cc-student-details">Last '+ccEscape(last)+'</div>':'')+'</div>';
+ }).join('')+'</div>'+
+ '<p class="cc-helper">'+(group.key==='puzzles'?'Completion = distinct puzzle game types finished (Word Search, Crossword, Boggle, Mix & Match, Wordle). Repeating the same game does not increase the percentage. ':'')+'Use Assign Mission to open the existing assignment workspace; no mission is created until confirmed.</p></section>';
 }
 async function loadClassOverview(force=false){
  if(curriculum.pending)return;
  if(curriculum.data&&!force){if(curriculum.selectedClass)ccRenderDetail();else ccRenderOverview();return}
  curriculum.pending=true;ccHost().innerHTML='<div class="empty">Loading active class books and practice records…</div>';
  try{
-  if(force)curriculum.unitCache.clear();
+  if(force){curriculum.unitCache.clear();curriculum.puzzleDetail.clear();}
   curriculum.data=await ccRpc('teacher_curriculum_overview_v1');
   const allIds=[...new Set(curriculum.data.books.map(b=>b.book_id).filter(Boolean))];
   const byId=new Map();
