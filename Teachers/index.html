@@ -894,11 +894,16 @@ function ccUnitStatus(book,unit,className){
  // This conservative fallback remains pink while other Genius completion
  // totals aren't available, rather than presenting activity as mastery.
  const pct=Math.round(100*puzzleComplete/roster.length);
- return {status:started.size?'in-progress':'not-started',percent:pct,started:started.size};
+ const otherActivity=rows.some(r=>r.skill!=='puzzle'&&(Number(r.attempts)>0||Number(r.attempted_content_count)>0));
+ // Only a puzzle-only unit with fully verifiable completion can be cyan.
+ // Other app mastery cannot be calculated from attempts alone.
+ const verifiedComplete=pct>90&&!otherActivity;
+ return {status:verifiedComplete?'complete':started.size?'in-progress':'not-started',percent:pct,started:started.size};
 }
 function ccClassStatus(books,className){
  const stats=books.flatMap(b=>(b._units||[]).map(u=>ccUnitStatus(b,u,className)));
  if(!stats.length)return 'not-started';
+ if(stats.every(x=>x.status==='complete'))return 'complete';
  return stats.some(x=>x.status!=='not-started')?'in-progress':'not-started';
 }
 function ccStudentLabel(student,roster){
