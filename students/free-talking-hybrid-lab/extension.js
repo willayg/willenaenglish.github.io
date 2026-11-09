@@ -9,7 +9,20 @@ const frame=$('original'),veil=$('demo');
 const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:30000,questionTotalMs:30000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 const enginePicker=document.getElementById('ftEngineSelect');
-const hybrid={history:[],ctx:null,analyser:null,source:null,raf:null,recorder:null,chunks:[],voiceAt:0,lastLoud:0,peak:0,transcribing:false,responding:false,sequence:0,secondsTranscribed:0};
+const sttPicker=document.getElementById('ftSttSelect');
+const sttDetails=document.getElementById('ftSttDetails');
+function selectedStt(){return sttPicker?.value||'openai-mini'}
+function updateSttPicker(){
+ if(sttPicker)sttPicker.disabled=enginePicker?.value==='realtime';
+ if(sttDetails)sttDetails.textContent=enginePicker?.value==='realtime'?'Original Realtime uses its own audio engine.':{
+  'openai-mini':'Recorded audio · browser silence detection · OpenAI Mini',
+  'eleven-scribe-v2':'Recorded audio · ElevenLabs Scribe v2',
+  'eleven-scribe-realtime':'Live streamed audio · ElevenLabs Scribe v2 Realtime turn detection'
+ }[selectedStt()];
+}
+enginePicker?.addEventListener('change',updateSttPicker);
+sttPicker?.addEventListener('change',updateSttPicker);updateSttPicker();
+const hybrid={history:[],ctx:null,analyser:null,source:null,raf:null,recorder:null,chunks:[],voiceAt:0,lastLoud:0,peak:0,transcribing:false,responding:false,sequence:0,secondsTranscribed:0,scribeSocket:null,scribeProcessor:null,scribeGain:null,scribeAudioSeconds:0,scribeSpeechStarted:0,scribeReady:false};
 function selectedEngine(){return enginePicker?.value||'gpt-6-luna'}
 function hybridMode(){return selectedEngine()!=='realtime'}
 // Read-only cost diagnostics: counts reported by OpenAI, not estimated dollars.
@@ -739,13 +752,104 @@ function guidedCharacterVoice(){
 
 function hybridStop(){
  hybrid.sequence++;
+ hybrid.scribeReady=false;
+ try{hybrid.scribeProcessor?.disconnect()}catch{}
+ try{hybrid.scribeGain?.disconnect()}catch{}
+ try{hybrid.scribeSocket?.close(1000,'Conversation ended')}catch{}
+ hybrid.scribeSocket=null;hybrid.scribeProcessor=null;hybrid.scribeGain=null;hybrid.scribeSpeechStarted=0;
  cancelAnimationFrame(hybrid.raf);hybrid.raf=null;
  try{if(hybrid.recorder?.state==='recording')hybrid.recorder.stop()}catch{}
  hybrid.recorder=null;hybrid.chunks=[];hybrid.transcribing=false;hybrid.responding=false;
  try{hybrid.source?.disconnect()}catch{}
  try{hybrid.ctx?.close()}catch{}
- hybrid.source=null;hybrid.ctx=null;hybrid.analyser=null;hybrid.history=[];
+ hybrid.source=null;hybrid.ctx=null;hybrid.analyser=null;hybrid.history=[];hybrid.secondsTranscribed=0;hybrid.scribeAudioSeconds=0;
 }
+
+// ElevenLabs Scribe v2 Realtime uses an authenticated single-use token.
+// PCM only streams while a child can answer; session ends on pause/end.
+function scribePcm(samples,rate){
+ const factor=rate/16000,count=Math.floor(samples.length/factor);
+ if(!count)return '';
+ const bytes=new Uint8Array(count*2);
+ for(let i=0;i<count;i++){
+  const value=Math.max(-1,Math.min(1,samples[Math.floor(i*factor)]));
+  const v=value<0?Math.round(value*32768):Math.round(value*32767);
+  bytes[i*2]=v&255;bytes[i*2+1]=(v>>8)&255;
+ }
+ let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+ return btoa(binary);
+}
+async function scribeStart(stream){
+ hybridStop();
+ const r=await authorizedDemoFetch('/api/free-talking-hybrid-scribe-token',{});
+ const info=await r.json().catch(()=>({}));
+ if(!r.ok||!info.token)throw Error(info.error||'Could not obtain Scribe token');
+ const query=new URLSearchParams({token:info.token,model_id:'scribe_v2_realtime',
+  audio_format:'pcm_16000',language_code:'en',commit_strategy:'vad',vad_silence_threshold_secs:'1.6',
+  min_speech_duration_ms:'280'});
+ const socket=new WebSocket('wss://api.elevenlabs.io/v1/speech-to-text/realtime?'+query);
+ hybrid.scribeSocket=socket;
+ await new Promise((resolve,reject)=>{
+  let settled=false;
+  const timer=setTimeout(()=>{if(!settled){settled=true;reject(Error('Scribe connection timeout'))}},13000);
+  socket.onopen=()=>{if(!settled){settled=true;clearTimeout(timer);resolve()}};
+  socket.onerror=()=>{if(!settled){settled=true;clearTimeout(timer);reject(Error('Scribe WebSocket error'))}};
+  socket.onclose=()=>{if(!settled){settled=true;clearTimeout(timer);reject(Error('Scribe connection closed'))}};
+ });
+ if(hybrid.scribeSocket!==socket||!state.active)return;
+ hybrid.scribeReady=true;
+ socket.onmessage=event=>{
+  if(!state.active||state.paused||hybrid.scribeSocket!==socket)return;
+  let data;try{data=JSON.parse(event.data)}catch{return}
+  if(data.message_type==='partial_transcript'){
+   if(!state.ttsPlaying&&['awaitingFirst','awaitingSecond'].includes(state.anchorPhase)){
+    if(!hybrid.scribeSpeechStarted){
+     hybrid.scribeSpeechStarted=performance.now();
+     handleRealtime({type:'input_audio_buffer.speech_started'});
+    }
+    $('listenCheck').textContent='Scribe is listening…';
+   }
+   return;
+  }
+  if(data.message_type==='committed_transcript'){
+   if(state.ttsPlaying||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
+   const speech=String(data.text||'').trim();if(!speech)return;
+   const duration=hybrid.scribeSpeechStarted?performance.now()-hybrid.scribeSpeechStarted:750;
+   handleRealtime({type:'input_audio_buffer.speech_stopped'});
+   hybrid.scribeSpeechStarted=0;
+   const id='scribe-'+(++hybrid.sequence),phase=state.anchorPhase;
+   state.pendingSpeech.set(id,{phase,anchorToken:state.anchorToken,duration:Math.max(600,duration),peak:Math.max(12,state.speechPeak),timeout:null});
+   hybrid.history.push({id,role:'user',text:speech});
+   if(ftUsage.current){ftUsage.current.transcriptionRequests++;ftUsage.current.sttModel='scribe_v2_realtime'}
+   resolveCommittedSpeech(id,speech);
+  }else if(/error|throttled|quota|rate_limited/i.test(data.message_type||'')){
+   error('Scribe: '+String(data.error||data.message_type).slice(0,130));
+  }
+ };
+ socket.onclose=()=>{
+  hybrid.scribeReady=false;
+  if(state.active&&!state.paused&&state.hybrid&&state.sttEngine==='eleven-scribe-realtime')
+   error('Scribe connection ended. Pause and resume to reconnect.');
+ };
+ const Ctx=window.AudioContext||window.webkitAudioContext;
+ if(!Ctx)throw Error('AudioContext not available');
+ hybrid.ctx=new Ctx({latencyHint:'interactive'});await hybrid.ctx.resume();
+ hybrid.source=hybrid.ctx.createMediaStreamSource(stream);
+ const processor=hybrid.ctx.createScriptProcessor(4096,1,1);hybrid.scribeProcessor=processor;
+ const gain=hybrid.ctx.createGain();gain.gain.value=0;hybrid.scribeGain=gain;
+ hybrid.source.connect(processor);processor.connect(gain);gain.connect(hybrid.ctx.destination);
+ processor.onaudioprocess=event=>{
+  if(!state.active||state.paused||!hybrid.scribeReady||socket.readyState!==WebSocket.OPEN||
+   state.ttsPlaying||state.micUserMuted||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase)||hybrid.responding||
+   socket.bufferedAmount>180000)return;
+  const samples=event.inputBuffer.getChannelData(0),audio=scribePcm(samples,hybrid.ctx.sampleRate);
+  if(!audio)return;
+  socket.send(JSON.stringify({message_type:'input_audio_chunk',audio_base_64:audio}));
+  hybrid.scribeAudioSeconds+=samples.length/hybrid.ctx.sampleRate;
+  if(ftUsage.current)ftUsage.current.streamingAudioSeconds=Math.round(hybrid.scribeAudioSeconds*10)/10;
+ };
+}
+
 function hybridStart(stream){
  hybridStop();
  const AudioCtx=window.AudioContext||window.webkitAudioContext;
@@ -797,11 +901,11 @@ async function hybridOnRecorded(rec){
  try{
   const form=new FormData();form.append('audio',audio,'student-answer.webm');
   const bearer=await originalStudentToken();
-  const response=await fetch('/api/free-talking-hybrid-transcribe',{method:'POST',headers:{Authorization:'Bearer '+bearer},body:form,signal:AbortSignal.timeout(28000)});
+  const response=await fetch('/api/free-talking-hybrid-transcribe',{method:'POST',headers:{Authorization:'Bearer '+bearer,'X-Willena-STT':state.sttEngine||'openai-mini'},body:form,signal:AbortSignal.timeout(28000)});
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw Error(data.error||'Could not transcribe speech');
   hybrid.secondsTranscribed+=duration/1000;
-  if(ftUsage.current){ftUsage.current.transcribedAudioSeconds=Math.round(hybrid.secondsTranscribed*10)/10;ftUsage.current.transcriptionRequests++}
+  if(ftUsage.current){ftUsage.current.transcribedAudioSeconds=Math.round(hybrid.secondsTranscribed*10)/10;ftUsage.current.transcriptionRequests++;ftUsage.current.sttModel=data.model||state.sttEngine}
   if(state.active&&state.anchorToken===at&&state.anchorPhase===phase){
    const transcript=String(data.text||'').trim();
    if(transcript)hybrid.history.push({id:itemId,role:'user',text:transcript});
@@ -1571,7 +1675,7 @@ async function startConversation(){
  try{
   showActor();
   state.hybrid=hybridMode();
-  state.hybridModel=selectedEngine();
+  state.hybridModel=selectedEngine();state.sttEngine=selectedStt();
   const res=await authorizedDemoFetch(state.hybrid?'/api/free-talking-hybrid-lab':'/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id,guided:true,action:'lesson'},startAbort.signal);
   if(startId!==activeStartId)return;
   const session=await res.json().catch(()=>({}));
@@ -1591,17 +1695,18 @@ async function startConversation(){
   $('clock').textContent='Question '+(state.anchorIndex+1)+' / '+state.anchors.length;
   $('anchorText').textContent=state.anchors[state.anchorIndex].text;
   if(state.hybrid){
-   if(!window.MediaRecorder)throw Error('This browser does not support recording for Hybrid mode');
+   if(state.sttEngine!=='eleven-scribe-realtime'&&!window.MediaRecorder)throw Error('This browser does not support recording for Hybrid mode');
    const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
    if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
    state.stream=mic;monitorMicrophone(mic);
    state.micUserMuted=false;state.ttsPlaying=false;
    state.active=true;state.starting=false;state.resumeIndex=0;
    ftUsage.begin();
-   if(ftUsage.current){ftUsage.current.engine='hybrid';ftUsage.current.model=state.hybridModel;ftUsage.current.transcribedAudioSeconds=0;ftUsage.current.transcriptionRequests=0}
-   hybridStart(mic);
+   if(ftUsage.current){ftUsage.current.engine='hybrid';ftUsage.current.model=state.hybridModel;ftUsage.current.sttModel=state.sttEngine;ftUsage.current.transcribedAudioSeconds=0;ftUsage.current.transcriptionRequests=0}
+   if(state.sttEngine==='eleven-scribe-realtime')await scribeStart(mic);
+   else hybridStart(mic);
    state.guidedSessionReady=true;
-   message('Hybrid · '+state.hybridModel+' · starting textbook question');
+   message('Hybrid · '+state.hybridModel+' · '+state.sttEngine+' · starting textbook question');
    if(!restoreAfterPause())void playAnchor(state.anchorIndex);
    return;
   }
