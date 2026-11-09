@@ -45,17 +45,45 @@ async function handleSttLab({ request, env }) {
     const matched=candidateNames.find(name=>typeof env?.[name]?.run==='function');
     const ai=matched?env[matched]:null;
     if(!ai){
-      const visibleNames=candidateNames.filter(name=>Object.prototype.hasOwnProperty.call(env||{},name));
-      return json({
-        code:'AI_NOT_IN_FUNCTION_RUNTIME',
-        error:'Workers AI is not available to this specific Pages Function deployment.',
-        diagnostics:{
-          host:new URL(request.url).hostname,
-          declared_ai_bindings:visibleNames,
-          ai_binding_type:visibleNames.includes('AI')?(typeof env.AI?.run==='function'?'Workers AI':'not a Workers AI run binding'):'missing',
-          possible_causes:['Binding exists on a different Cloudflare project or Worker','Production and preview bindings differ','Deployment predates the binding','Binding variable name differs']
-        }
-      },503);
+      // This Pages deployment has no Workers AI binding. Reuse the existing
+      // staff-authenticated Netlify STT endpoint server-to-server. Browser
+      // CORS is not involved; do not expose API keys or modify student routes.
+      const size=Number(request.headers.get('content-length')||0);
+      if(size>3_800_000)return json({error:'Recording too large.'},413);
+      const controller=new AbortController();
+      const timer=setTimeout(()=>controller.abort(),40000);
+      try {
+        const upstream=await fetch('https://willenaenglish.netlify.app/.netlify/functions/analyze-sentence?mode=stt-lab',{
+          method:'POST',
+          headers:{
+            'Content-Type':request.headers.get('Content-Type')||'application/json',
+            'Authorization':'Bearer '+token,
+            'Origin':'https://teachers.willenaenglish.com'
+          },
+          body:request.body,
+          signal:controller.signal
+        });
+        const payload=await upstream.json().catch(()=>null);
+        if(!upstream.ok)return json({
+          code:'FALLBACK_STT_ERROR',
+          error:payload?.error||('Existing Netlify STT returned HTTP '+upstream.status)
+        },502);
+        if(!Array.isArray(payload?.results))return json({code:'FALLBACK_INVALID_RESPONSE',error:'Existing transcription function returned no model results.'},502);
+        const aliases={
+          'whisper-1':['whisper-v3-turbo','Whisper 1 (OpenAI)'],
+          'gpt-4o-mini-transcribe':['whisper-standard','GPT-4o Mini Transcribe (OpenAI)'],
+          'gpt-4o-transcribe':['whisper-tiny-en','GPT-4o Transcribe (OpenAI)']
+        };
+        return json({
+          provider:'existing-netlify-openai',
+          results:payload.results.map(x=>({
+            ...x,model:aliases[x.model]?.[0]||x.model,
+            engine_name:aliases[x.model]?.[1]||x.model
+          }))
+        });
+      }catch(error){
+        return json({code:'FALLBACK_UNREACHABLE',error:'Existing STT backend could not be reached: '+String(error.message||error).slice(0,110)},502);
+      }finally{clearTimeout(timer)}
     }
     if(Number(request.headers.get('content-length')||0)>3_800_000)return json({error:'Recording too large.'},413);
     const body=await request.json().catch(()=>null);
