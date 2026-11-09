@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Willena Staff Calendar · Preview</title><meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{font-family:Poppins,Arial,sans-serif;color:#293744;background:#f5f8fa;--cyan:#6ecdd7;--pink:#e9609b;--line:#e2eaef}
+*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button{cursor:pointer}
+header{background:#343946;color:#fff;border-bottom:3px solid var(--cyan);padding:15px max(22px,calc((100vw - 1380px)/2));display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+.logo{width:48px;height:48px;object-fit:contain}.identity{flex:1}.identity strong{font-size:19px;display:block}.identity small{font-size:11px;color:#c6d6da}
+header a{color:white;text-decoration:none;border:1px solid #8dcfd7;border-radius:10px;padding:9px 12px;font-size:12px}
+main{max-width:1380px;margin:auto;padding:25px 21px 60px}
+.kicker{font-size:11px;color:#c14a82;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.titlebar{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-bottom:19px}
+h1{margin:3px 0;font-size:27px;letter-spacing:-.04em}p{margin:4px 0;color:#697d87;font-size:12px}
+button{border:1px solid #d8e5e9;border-radius:10px;background:white;color:#34535c;padding:10px 14px;font-size:12px;font-weight:700}
+button:hover{background:#f0fbfd}button.primary{border:1px solid #d54c88;background:#e9609b;color:#fff}
+button.primary:hover{background:#d9508b}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #89d9e4;outline-offset:2px}
+.banner{padding:12px 15px;border:1px solid #e7d6a3;border-radius:12px;background:#fff9e8;color:#786032;font-size:12px;margin-bottom:17px}
+.panel{background:white;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 25px #2a48510c;overflow:hidden}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px}
+.controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:19px;border-bottom:1px solid var(--line)}
+.controls h2{margin:0 12px 0 0;font-size:21px;min-width:180px}.viewbuttons{margin-left:auto;display:flex;gap:5px;padding:4px;border:1px solid var(--line);border-radius:12px}
+.viewbuttons button{padding:7px 11px;border:0}.viewbuttons button.active{background:#e8f9fa;color:#137e8b}
+.weekdays,.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.weekdays{background:#f6fafb;border-bottom:1px solid var(--line)}
+.weekdays span{text-align:center;padding:13px 0;font-size:11px;font-weight:700;color:#80939b}
+.day{border-right:1px solid #edf1f4;border-bottom:1px solid #edf1f4;min-height:112px;padding:9px 6px;overflow:hidden;cursor:pointer}
+.day:nth-child(7n){border-right:0}.day.outside{background:#fbfcfd;color:#b7c2c6}.day.today .number{background:#e9609b;color:#fff}
+.day:hover{background:#f7fcfd}.number{display:grid;place-items:center;width:26px;height:26px;margin:0 0 6px 3px;border-radius:50%;font-size:11px;font-weight:700}
+.event{display:block;width:100%;padding:5px 7px;border:0;border-left:3px solid #4eb4c5;background:#e8f7fa;color:#295c66;border-radius:5px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;font-size:10px;font-weight:600}
+.event.staff{background:#fff0f7;border-color:#dd669f;color:#9b3a6d}.event.academic{background:#f1efff;border-color:#9387dd;color:#6552a1}.event.deadline{background:#fff4e8;border-color:#e3aa4b;color:#96621b}
+.event time{font-weight:700;margin-right:5px}.more{font-size:10px;color:#647a84;padding:3px 6px}
+.side{padding:19px}.side h3{font-size:15px;margin:0 0 13px}.side .legend{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:19px}
+.legend button{padding:7px 9px;font-size:10px}.legend button.off{opacity:.37;text-decoration:line-through}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4eb4c5;margin-right:5px}.dot.staff{background:#dd669f}.dot.academic{background:#9387dd}.dot.deadline{background:#e3aa4b}
+.upcoming{border-top:1px solid var(--line);padding-top:14px}.upcoming button{border:0;border-bottom:1px solid #edf2f4;border-radius:0;width:100%;text-align:left;padding:12px 0}
+.upcoming b{display:block;font-size:12px}.upcoming small{font-size:10px;color:#7d8d95}.empty{color:#83949b;font-size:12px;line-height:1.6}
+dialog{border:1px solid #d5e6e9;border-radius:19px;box-shadow:0 20px 80px #182a3650;width:min(500px,calc(100vw - 25px));padding:0;color:#293744}
+dialog::backdrop{background:#1f3344a8}.modalhead{padding:19px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.modalhead h2{margin:0;font-size:19px}.modalbody{padding:20px 22px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field.full{grid-column:1/-1}.field label{font-size:11px;color:#506773;font-weight:700}input,select,textarea{padding:11px 12px;border:1px solid #d6e5e9;border-radius:9px;background:white;color:#283c43;width:100%;font-size:13px}
+textarea{min-height:75px;resize:vertical}.modalfoot{display:flex;justify-content:flex-end;gap:8px;padding:12px 22px 20px}
+#deleteEvent{margin-right:auto;color:#b24666;border-color:#f3c5d3}.hidden{display:none!important}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr;gap:16px}.upcoming{border:0;padding:0}}
+@media(max-width:570px){main{padding:14px 9px}.controls{padding:12px;gap:5px}.controls h2{font-size:17px;min-width:0;flex:1}.viewbuttons{margin-left:0}.day{min-height:87px;padding:6px 2px}.number{margin-left:1px;width:22px;height:22px}.event{font-size:9px;padding:4px 3px}.event time{display:none}.side{display:block}.fields{grid-template-columns:1fr}.titlebar h1{font-size:23px}}
+</style></head>
+<body><header><img class="logo" src="/Assets/Images/Logo.png" alt="Willena"><div class="identity"><strong>Willena Staff Calendar</strong><small>Teachers &amp; Admin · Standalone prototype</small></div><a href="/Teachers/">Back to Teachers</a></header>
+<main><div class="titlebar"><div><span class="kicker">Staff workspace · Preview</span><h1>Everyone on the same page.</h1><p>Academy events, staff schedules and important dates in one place.</p></div><button class="primary" id="newEvent">+ New Event</button></div>
+<div class="banner" role="status"><strong>Preview mode:</strong> Events are saved in this browser only. They are not yet shared across teachers or synced with Google Calendar. Use this to test the layout and workflow.</div>
+<div class="layout"><section class="panel"><div class="controls"><h2 id="period"></h2><button id="prev" aria-label="Previous period">‹</button><button id="today">Today</button><button id="next" aria-label="Next period">›</button><div class="viewbuttons"><button id="month" class="active">Month</button><button id="week">Week</button></div></div><div class="weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="days" id="days"></div></section>
+<aside class="panel side"><div><h3>Categories</h3><div class="legend" id="legend"></div></div><div class="upcoming"><h3>Coming up</h3><div id="upcoming"></div></div></aside></div></main>
+<dialog id="editor"><form id="eventForm"><div class="modalhead"><h2 id="editorTitle">New event</h2><button type="button" id="close" aria-label="Close">×</button></div><div class="modalbody"><div class="fields">
+<div class="field full"><label for="eventTitle">Event title</label><input id="eventTitle" maxlength="120" required placeholder="e.g. Monthly teacher meeting"></div>
+<div class="field"><label for="eventDate">Date</label><input id="eventDate" type="date" required></div>
+<div class="field"><label for="eventTime">Time (optional)</label><input id="eventTime" type="time"></div>
+<div class="field"><label for="eventCategory">Category</label><select id="eventCategory"><option value="events">Willena events</option><option value="staff">Staff</option><option value="academic">Academic</option><option value="deadline">Deadlines</option></select></div>
+<div class="field"><label for="eventRepeat">Repeat</label><select id="eventRepeat"><option value="none">Doesn't repeat</option><option value="weekly">Every week</option><option value="monthly">Every month</option></select></div>
+<div class="field full"><label for="eventNotes">Notes</label><textarea id="eventNotes" maxlength="1200" placeholder="Details for other staff"></textarea></div></div></div><div class="modalfoot"><button type="button" id="deleteEvent" class="hidden">Delete</button><button type="button" id="cancel">Cancel</button><button class="primary" type="submit">Save event</button></div></form></dialog>
+<script>
+(()=>{
+"use strict";
+const KEY="willena.staff-calendar.prototype.v1";
+const $=id=>document.getElementById(id);
+const cats={events:"Willena events",staff:"Staff",academic:"Academic",deadline:"Deadlines"};
+const pad=n=>String(n).padStart(2,"0"),dateKey=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const today=new Date();let cursor=new Date(today.getFullYear(),today.getMonth(),1),view="month",editId=null;
+let events=[];try{const arr=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(arr))events=arr.filter(e=>e&&e.id&&e.date&&e.title)}catch{}
+const visible=new Set(Object.keys(cats));
+function save(){localStorage.setItem(KEY,JSON.stringify(events))}
+function dateMatch(ev,d){
+ const a=parse(ev.date);if(d<a)return false;
+ if(ev.repeat==="weekly")return (Math.round((d-a)/86400000)%7)===0;
+ if(ev.repeat==="monthly")return d.getDate()===a.getDate();
+ return dateKey(a)===dateKey(d);
+}
+function occurrences(d){return events.filter(e=>visible.has(e.category||"events")&&dateMatch(e,d)).sort((a,b)=>(a.time||"99:99").localeCompare(b.time||"99:99"))}
+function eventButton(e,d){const b=document.createElement("button");b.className="event "+e.category;b.title=(e.time?e.time+" ":"")+e.title+(e.notes?" — "+e.notes:"");if(e.time){const t=document.createElement("time");t.textContent=e.time;b.append(t)}b.append(document.createTextNode(e.title));b.onclick=event=>{event.stopPropagation();openEditor(e)};return b}
+function paint(){
+ $("period").textContent=view==="month"?cursor.toLocaleDateString("en-US",{year:"numeric",month:"long"}):weekStart(cursor).toLocaleDateString("en-US",{month:"short",day:"numeric"})+" – "+new Date(weekStart(cursor).getTime()+6*86400000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+ $("month").classList.toggle("active",view==="month");$("week").classList.toggle("active",view==="week");
+ const grid=$("days");grid.replaceChildren();const start=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth(),1):weekStart(cursor);
+ start.setDate(start.getDate()- (view==="month"?start.getDay():0));const count=view==="month"?42:7;
+ for(let i=0;i<count;i++){const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),day=document.createElement("div");day.className="day"+(view==="month"&&d.getMonth()!==cursor.getMonth()?" outside":"")+(dateKey(d)===dateKey(today)?" today":"");
+ day.setAttribute("role","button");day.setAttribute("tabindex","0");day.setAttribute("aria-label","Add event on "+dateKey(d));
+ const num=document.createElement("span");num.className="number";num.textContent=d.getDate();day.append(num);const list=occurrences(d);for(const e of list.slice(0,view==="week"?12:3))day.append(eventButton(e,d));
+ if(list.length>(view==="week"?12:3)){const more=document.createElement("div");more.className="more";more.textContent="+"+(list.length-(view==="week"?12:3))+" more";day.append(more)}
+ day.onclick=()=>openEditor(null,dateKey(d));day.onkeydown=e=>{if(e.target===day&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openEditor(null,dateKey(d))}};grid.append(day)}
+ paintUpcoming();
+}
+function weekStart(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-x.getDay());return x}
+function paintUpcoming(){const root=$("upcoming");root.replaceChildren();let found=0;const from=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+ for(let i=0;i<90&&found<7;i++){const d=new Date(from.getFullYear(),from.getMonth(),from.getDate()+i);for(const ev of occurrences(d)){const btn=document.createElement("button"),small=document.createElement("small"),name=document.createElement("b");small.textContent=d.toLocaleDateString("en-US",{month:"short",day:"numeric",weekday:"short"})+(ev.time?" · "+ev.time:"");name.textContent=ev.title;btn.append(small,name);btn.onclick=()=>openEditor(ev);root.append(btn);if(++found>=7)break}}
+ if(!found){const msg=document.createElement("p");msg.className="empty";msg.textContent="No upcoming events yet. Add your first event to test the calendar.";root.append(msg)}
+}
+function openEditor(ev=null,date=dateKey(today)){editId=ev?.id||null;$("editorTitle").textContent=ev?"Edit event":"New event";$("eventTitle").value=ev?.title||"";$("eventDate").value=ev?.date||date;$("eventTime").value=ev?.time||"";$("eventCategory").value=ev?.category||"events";$("eventRepeat").value=ev?.repeat||"none";$("eventNotes").value=ev?.notes||"";$("deleteEvent").classList.toggle("hidden",!ev);$("editor").showModal();$("eventTitle").focus()}
+function close(){$("editor").close()}
+$("newEvent").onclick=()=>openEditor();$("close").onclick=$("cancel").onclick=close;
+$("prev").onclick=()=>{cursor=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth()-1,1):new Date(cursor.getFullYear(),cursor.getMonth(),cursor.getDate()-7);paint()};
+$("next").onclick=()=>{cursor=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth()+1,1):new Date(cursor.getFullYear(),cursor.getMonth(),cursor.getDate()+7);paint()};
+$("today").onclick=()=>{cursor=new Date(today);paint()};
+$("month").onclick=()=>{view="month";paint()};$("week").onclick=()=>{view="week";paint()};
+$("legend").replaceChildren(...Object.entries(cats).map(([id,name])=>{const btn=document.createElement("button");btn.innerHTML='<span class="dot '+id+'"></span>';btn.append(document.createTextNode(name));btn.onclick=()=>{if(visible.has(id))visible.delete(id);else visible.add(id);btn.classList.toggle("off",!visible.has(id));paint()};return btn}));
+$("eventForm").onsubmit=e=>{e.preventDefault();const ev={id:editId||((window.crypto?.randomUUID?.())||String(Date.now())),title:$("eventTitle").value.trim(),date:$("eventDate").value,time:$("eventTime").value,category:$("eventCategory").value,repeat:$("eventRepeat").value,notes:$("eventNotes").value.trim()};if(!ev.title||!ev.date)return;events=editId?events.map(x=>x.id===editId?ev:x):[...events,ev];save();close();paint()};
+$("deleteEvent").onclick=()=>{if(!editId||!confirm("Delete this event and all of its repeats?"))return;events=events.filter(e=>e.id!==editId);save();close();paint()};
+paint();
+})();
+</script></body></html>
