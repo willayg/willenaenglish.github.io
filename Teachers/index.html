@@ -653,7 +653,7 @@ function renderStudents(){
    summary.innerHTML='<span><b>'+state.students.length+'</b> Students in class</span>'+
     '<span><b>'+(rosterAssignments.loading?'…':rosterAssignments.error?'—':assigned)+'</b> With current missions</span>'+
     '<span><b>'+(rosterAssignments.loading?'…':rosterAssignments.error?'—':done)+'</b> Finished all missions</span>'+
-    '<span><b>'+(rosterAssignments.loading?'…':rosterAssignments.error?'—':rosterAssignments.items.length)+'</b> Active missions';
+    '<span><b>'+(rosterAssignments.loading?'…':rosterAssignments.error?'—':rosterAssignments.items.length)+'</b> Active missions</span>';
   }
   if(!list.length){$('#studentList').innerHTML='<div class="empty">No students match these filters.</div>';return}
   const repeats=new Map();
@@ -1000,7 +1000,7 @@ function ccExtraCompletion(book,unit,group,className){
  const finished=new Set(ids.filter(id=>{
   const student=rows.filter(r=>String(r.student_id)===id);
   if(group.key==='grammar')return ['choose','check','hunt'].every(mode=>student.some(r=>r.skill===mode&&Number(r.done)>=8));
-  return student.some(r=>r.skill==='speaking'&&Number(r.done)>=1);
+  return student.some(r=>r.skill==='speaking'&&r.finished===true);
  }));
  return {rows,started:new Set(ids),finished};
 }
@@ -1250,7 +1250,7 @@ function ccRenderStudentDrilldown(book,unit,group){
    const evidence=ccExtraRows(book,unit,group,curriculum.selectedClass).filter(r=>String(r.student_id)===String(student.id));
    const modes=group.key==='grammar'?[['choose','Choose the blank'],['check','Correct / Incorrect'],['hunt','Find the wrong part']]:[['speaking','Speaking']];
    const skills=modes.map(([mode,name])=>{const v=evidence.find(r=>r.skill===mode);return {name,done:Number(v?.done||0),total:Number(v?.total|| (group.key==='grammar'?8:1)),started:Boolean(v)}});
-   const allDone=skills.every(v=>v.done>=v.total),hasEvidence=evidence.length>0||started;
+   const allDone=group.key==='talking'?evidence.some(r=>r.skill==='speaking'&&r.finished===true):skills.every(v=>v.done>=v.total),hasEvidence=evidence.length>0||started;
    const status=allDone?'Completed':hasEvidence?'In progress':'Not started';
    const lastExtra=ccActivityTime(evidence.map(v=>v.last_at).filter(Boolean).sort().at(-1));
    return '<div class="cc-student-row cc-'+(allDone?'complete':hasEvidence?'in-progress':'not-started')+'">'+first+'<span class="cc-percent-muted">'+status+'</span></div>'+subtitle+
