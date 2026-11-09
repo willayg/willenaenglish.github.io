@@ -908,7 +908,7 @@ function ccRenderDetail(){
  '<div class="cc-grid-scroll"><div class="cc-matrix"><div class="cc-matrix-head"><span>Unit</span>'+groups.map(g=>'<span>'+ccEscape(g.name)+'</span>').join('')+'</div>'+
  units.map(u=>'<div class="cc-matrix-row"><div class="cc-unit-name"><strong>Unit '+ccEscape(u.unit_number)+'</strong><small>'+ccEscape(u.title||'')+'</small></div>'+
  groups.map(g=>{const d=ccSkillData(book,u,g),count=d.touched.size;return '<button type="button" class="cc-cell '+(count===d.total&&d.total?'cc-full':count?'cc-partial':'cc-empty-cell')+(selected?.id===u.id&&curriculum.selectedSkill===g.key?' cc-selected':'')+'" data-cc-unit="'+ccEscape(u.id)+'" data-cc-skill="'+g.key+'" aria-label="Unit '+ccEscape(u.unit_number)+' '+g.name+', '+count+' of '+d.total+' with recorded practice"><b>'+(count?count+'/'+d.total:'—')+'</b><small>'+(count?'practised':'no record')+'</small></button>'}).join('')+'</div>').join('')+'</div></div>')+
- (selected&&curriculum.selectedSkill?ccRenderStudentDrilldown(book,selected,groups.find(g=>g.key===curriculum.selectedSkill)):'')));
+ (selected&&curriculum.selectedSkill?ccRenderStudentDrilldown(book,selected,groups.find(g=>g.key===curriculum.selectedSkill)):''));
  host.querySelector('[data-cc-action="back"]').onclick=()=>{curriculum.selectedClass='';curriculum.selectedBook='';ccRenderOverview()};
  host.querySelector('[data-cc-action="students"]').onclick=()=>openClassFromOverview(c.name,30);
  host.querySelectorAll('[data-cc-book]').forEach(b=>b.onclick=()=>{curriculum.selectedBook=b.dataset.ccBook;curriculum.selectedUnit='';curriculum.selectedSkill='';ccRenderDetail()});
