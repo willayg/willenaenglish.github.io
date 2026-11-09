@@ -876,7 +876,8 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
   // Remove unverified audio from conversation context.
   sendRealtime({type:'conversation.item.delete',item_id:itemId});
   if(state.questionExpired)void finishTimedQuestion();
-  else if(!state.speechStartedAt&&!state.turnFragments.length)startQuestionClock();
+  else if(state.turnFragments.length&&!state.speechStartedAt)scheduleSpeechGrace();
+  else if(!state.speechStartedAt&&!state.pendingSpeech.size)startQuestionClock();
   return;
  }
  // Semantic VAD can commit a phrase while a child is still thinking.
