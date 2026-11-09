@@ -681,68 +681,213 @@ function renderHomeworkDetails(id){
     return `<div class="roster-assignment-detail"><div class="roster-assignment-head"><strong>${esc(a.title||a.list_title||'Assignment')}</strong><span>${status}${r.unknown?'':` · ${r.percent}%`}</span></div><small>${(a.list_meta?.creative_type||a.list_meta?.source_type)==='writing_genius'?'Writing Genius':(a.list_meta?.creative_type||a.list_meta?.source_type)==='puzzles'?'Puzzles':String(a.source_type||'').toLowerCase()==='vocab_study'?'Word Genius':String(a.source_type||'').toLowerCase()==='sentence_genius'?'Sentence Genius':'Homework'}${a.due_at?` · Due ${esc(fmtDate(a.due_at))}${overdue?' · Past due':''}`:''}</small>${r.unknown?'':`<div class="roster-progress"><i style="width:${r.percent}%"></i></div><div class="roster-sections">${r.sections.length?r.sections.map(s=>`<span><b>${esc(s.label)}</b> ${s.done}/${s.total} ${String(a.source_type||'').toLowerCase()==='sentence_genius'?'sentence steps mastered':'words completed'} · ${Math.max(0,s.total-s.done)} remaining</span>`).join(''):`<span>${esc(r.detail)}</span>`}</div>`}</div>`;
   }).join('');
 }
-function renderStudents(){
-  const query=($('#searchInput').value||'').trim().toLowerCase(),filter=$('#rosterAssignmentFilter')?.value||'all';
-  const list=state.students.filter(s=>{
-    if(query&&!String(s.name||'').toLowerCase().includes(query)&&!String(s.korean_name||'').toLowerCase().includes(query))return false;
-    if(filter==='all'||rosterAssignments.loading||rosterAssignments.error)return true;
-    const h=homeworkSummary(s.user_id);
-    return filter==='assigned'?h.rows.length>0:filter==='none'?h.rows.length===0:filter==='complete'?h.rows.length>0&&!h.unknown&&h.complete===h.rows.length:filter==='not_started'?h.known.some(x=>!x.result.started&&!x.result.complete):h.known.some(x=>x.result.started&&!x.result.complete);
-  });
-  $('#panelTitle').textContent=state.className+' students';
-  $('#studentCount').textContent=list.length+' students';
-  $('#statusText').textContent='Learning activity: last '+state.days+' days · Current missions: active assignments';
-  const summary=$('#rosterSummary');
-  if(summary){
-   const assigned=state.students.filter(s=>studentHomework(s.user_id).length>0).length;
-   const done=state.students.filter(s=>{const h=homeworkSummary(s.user_id);return h.rows.length&&!h.unknown&&h.complete===h.rows.length}).length;
-   summary.innerHTML='<span><b>'+state.students.length+'</b> Students in class</span>'+
-    '<span><b>'+(rosterAssignments.loading?'…':rosterAssignments.error?'—':assigned)+'</b> With current missions</span>'+
-    '<span><b>'+(rosterAssignments.loading?'…':rosterAssignments.error?'—':done)+'</b> Finished all missions</span>'+
-    '<span><b>'+(rosterAssignments.loading?'…':rosterAssignments.error?'—':rosterAssignments.items.length)+'</b> Active missions</span>';
-  }
-  if(!list.length){$('#studentList').innerHTML='<div class="empty">No students match these filters.</div>';return}
-  const repeats=new Map();
-  state.students.forEach(s=>{const key=String(s.name||'').trim().toLowerCase();repeats.set(key,(repeats.get(key)||0)+1)});
-  $('#studentList').innerHTML=list.map(s=>{
-    const h=s.habits||{},l=s.learning||{},hw=homeworkSummary(s.user_id);
-    const loaded=!rosterAssignments.loading&&!rosterAssignments.error;
-    const hasMissions=loaded&&hw.rows.length>0;
-    const complete=hasMissions&&hw.unknown===0&&hw.complete===hw.rows.length;
-    const progressing=hasMissions&&hw.known.some(x=>x.result.started&&!x.result.complete);
-    const stateName=complete?'Complete':progressing?'In progress':hasMissions?'Assigned':'No missions';
-    const cardColor=complete?'is-complete':progressing?'is-in-progress':'';
-    const percent=loaded&&hw.percent!=null?Math.max(0,Math.min(100,hw.percent)):null;
-    const missionLabel=rosterAssignments.loading?'Loading mission progress…':rosterAssignments.error?'Mission data unavailable':hasMissions?hw.complete+' of '+hw.rows.length+' missions completed':'No current missions';
-    const percentLabel=percent==null?'—':percent+'%';
-    const next=hasMissions?hw.rows.find(x=>!x.result.complete)?.assignment:null;
-    const missionNote=next?String(next.title||next.list_title||'Current mission')+(next.due_at?' · Due '+fmtDate(next.due_at):''):complete?'All current missions completed':rosterAssignments.error?'Try refreshing':rosterAssignments.loading?'Loading current class work':'No outstanding missions';
-    const name=String(s.name||'Student'),korean=String(s.korean_name||'').trim();
-    const duplicate=(repeats.get(name.trim().toLowerCase())||0)>1;
-    const identity=korean|| (duplicate?'ID '+String(s.user_id||'').slice(0,6):'');
-    const days=Number(h.active_days_7)||0;
-    const sessions=h.completed_sessions==null?'—':h.completed_sessions;
-    const initials=name.trim().split(/\s+/).map(w=>w.charAt(0)).slice(0,2).join('').toUpperCase()||'S';
-    return '<article class="roster-student-card roster-row '+cardColor+'" data-id="'+esc(s.user_id)+'" role="button" tabindex="0" aria-label="Open student details for '+esc(name)+'">'+
-      '<div class="roster-student-card-head"><div class="roster-student-identity"><div class="roster-student-avatar">'+esc(initials)+'</div>'+
-      '<div><div class="roster-student-name">'+esc(name)+'</div><div class="roster-student-ko">'+esc(identity||state.className)+'</div></div></div>'+
-      '<span class="roster-student-badge">'+esc(stateName)+'</span></div>'+
-      '<div class="roster-student-mission"><div class="roster-mission-top"><strong>'+esc(missionLabel)+'</strong><span>'+percentLabel+'</span></div>'+
-      (percent==null?'':'<div class="roster-progress" role="progressbar" aria-label="Current mission progress" aria-valuenow="'+percent+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+percent+'%"></i></div>')+
-      '<div class="roster-student-mission-note">'+esc(missionNote)+'</div></div>'+
-      '<div class="roster-student-metrics"><div class="roster-student-metric"><b>'+esc(days)+' / 7</b><small>Active days this week</small></div>'+
-      '<div class="roster-student-metric"><b>'+esc(sessions)+'</b><small>Sessions in selected period</small></div></div>'+
-      '<div class="roster-student-foot"><span>Last active: '+esc(fmtDate(s.last_activity))+'</span><span class="roster-student-open">View student →</span></div></article>';
-  }).join('');
-  $$('.roster-row').forEach(row=>{row.onclick=()=>openStudent(row.dataset.id);row.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openStudent(row.dataset.id)}}});
+
+const rosterCurriculum={request:0,className:'',loading:false,error:'',books:[],units:new Map(),overview:null,word:[],extra:[],sentences:[],writing:[],puzzles:[],special:[],vocabTotals:new Map(),sentenceTotals:new Map()};
+async function rsCatalogTotals(bookId,table,field,filter){
+ const url=ccCatalog+table+'?select=unit_id,'+field+'&book_id=eq.'+encodeURIComponent(bookId)+(filter||'')+'&limit=4000';
+ const response=await fetch(url,{headers:{apikey:ccCatalogKey,Authorization:'Bearer '+ccCatalogKey},cache:'no-store'});
+ if(!response.ok)throw Error('Catalog '+table+' unavailable ('+response.status+')');
+ const records=await response.json(),byUnit=new Map();
+ for(const r of records){if(!r.unit_id||!r[field])continue;const id=String(r.unit_id),ids=byUnit.get(id)||new Set();ids.add(String(r[field]));byUnit.set(id,ids)}
+ return byUnit;
 }
+async function loadRosterCurriculum(className){
+ const request=++rosterCurriculum.request;
+ rosterCurriculum.className=className;rosterCurriculum.loading=true;rosterCurriculum.error='';
+ renderStudents();
+ try{
+  const [overview,extra,sentences,writing,puzzles,supplement]=await Promise.all([
+   ccRpc('teacher_curriculum_overview_v1'),
+   ccRpc('teacher_curriculum_extra_activity_v1'),
+   ccRpc('teacher_curriculum_sentence_overview_v1'),
+   ccRpc('teacher_curriculum_writing_overview_v1'),
+   ccRpc('teacher_curriculum_puzzle_overview_v1'),
+   ccRpc('teacher_student_curriculum_supplement_v1',{p_class:className})
+  ]);
+  if(request!==rosterCurriculum.request)return;
+  const c=(overview.classes||[]).find(c=>String(c.name).toLowerCase()===String(className).toLowerCase());
+  const books=(overview.books||[]).filter(b=>b.class_id===c?.id);
+  const unitEntries=await Promise.all(books.map(async b=>{
+   try{return [String(b.book_id),await ccUnits(b.book_id)]}catch(e){console.warn('Students catalog units:',e);return [String(b.book_id),[]]}
+  }));
+  const counts=await Promise.all(books.map(async b=>{
+   const id=String(b.book_id);
+   const [v,w]=await Promise.all([
+    rsCatalogTotals(id,'unit_vocab_targets','lexical_entry_id','&active=eq.true').catch(()=>null),
+    rsCatalogTotals(id,'source_content_occurrences','sentence_id','&sentence_id=not.is.null&status=in.(review,published)').catch(()=>null)
+   ]);
+   return {id,v,w};
+  }));
+  if(request!==rosterCurriculum.request)return;
+  const vocabTotals=new Map(),sentenceTotals=new Map();
+  counts.forEach(({v,w})=>{
+   if(v)for(const [unit,items] of v)vocabTotals.set(unit,items.size);
+   if(w)for(const [unit,items] of w)sentenceTotals.set(unit,items.size);
+  });
+  Object.assign(rosterCurriculum,{
+   overview,books,units:new Map(unitEntries),extra:Array.isArray(extra)?extra:[],
+   sentences:Array.isArray(sentences)?sentences:[],
+   writing:Array.isArray(writing?.unit_rows)?writing.unit_rows:[],
+   puzzles:Array.isArray(puzzles)?puzzles:[],
+   word:Array.isArray(supplement?.word)?supplement.word:[],
+   special:Array.isArray(supplement?.special)?supplement.special:[],
+   vocabTotals,sentenceTotals,loading:false,error:''
+  });
+ }catch(e){if(request!==rosterCurriculum.request)return;rosterCurriculum.loading=false;rosterCurriculum.error=e.message||'Could not load curriculum';console.warn('Student curriculum:',e)}
+ if(request===rosterCurriculum.request)renderStudents();
+}
+const rsApps=[
+ ['word','Word Genius'],['sentence','Sentence Genius'],['grammar','Grammar Genius'],
+ ['talking','Free Talking'],['writing','Writing Genius'],['puzzles','Puzzles']
+];
+function rsAppProgress(studentId,book,unit){
+ const id=String(studentId),bid=String(book.book_id),uid=String(unit.id),number=Number(unit.unit_number);
+ const present=(obj)=>String(obj.student_id)===id;
+ const word=rosterCurriculum.word.find(r=>present(r)&&String(r.book_id)===bid&&String(r.unit_id)===uid);
+ const totalVocab=rosterCurriculum.vocabTotals.get(uid);
+ const level=Number(book.catalog_level);
+ const wordKeys=Number.isFinite(level)&&level>0&&level<3?
+  ['vocabulary_passed_count','spelling_coach_passed_count','speaking_passed_count']:
+  ['vocabulary_passed_count','spelling_test_passed_count','speaking_passed_count'];
+ const wordParts=wordKeys.map(k=>Number(word?.[k]||0));
+ const wordHas=Boolean(word&&[word.vocabulary_passed_count,word.spelling_coach_passed_count,word.spelling_test_passed_count,word.speaking_passed_count].some(n=>Number(n)>0));
+ const wordPct=totalVocab>0?Math.round(100*wordParts.reduce((a,v)=>a+Math.min(v,totalVocab),0)/(totalVocab*3)):null;
+ const sentences=rosterCurriculum.sentences.filter(r=>present(r)&&String(r.book_id)===bid&&String(r.unit_id)===uid);
+ const sentenceTotal=rosterCurriculum.sentenceTotals.get(uid);
+ const sentenceModes=['sentence_coach','sentence_unscramble','sentence_speaking'];
+ const sentencePassed=sentenceModes.map(skill=>Math.max(0,...sentences.filter(r=>r.skill===skill).map(r=>Number(r.done||0))));
+ const sentencePct=sentenceTotal>0?Math.round(100*sentencePassed.reduce((a,v)=>a+Math.min(v,sentenceTotal),0)/(sentenceTotal*3)):null;
+ const grammar=rosterCurriculum.extra.filter(r=>present(r)&&String(r.book_id)===bid&&Number(r.unit_number)===number&&r.app==='grammar');
+ const grammarModes=['choose','check','hunt'];const gParts=grammarModes.map(m=>Math.max(0,...grammar.filter(r=>r.skill===m).map(r=>Math.min(Number(r.done)||0,8))));
+ const gPct=grammar.length?Math.round(100*gParts.reduce((a,b)=>a+b,0)/24):null;
+ const talking=rosterCurriculum.extra.filter(r=>present(r)&&String(r.book_id)===bid&&Number(r.unit_number)===number&&r.app==='talking'&&r.skill==='speaking');
+ const bestTalk=talking.sort((a,b)=>Number(b.done||0)-Number(a.done||0))[0];
+ const talkPct=bestTalk&&Number(bestTalk.total)>0?Math.round(100*Math.min(Number(bestTalk.done)||0,Number(bestTalk.total))/Number(bestTalk.total)):null;
+ const writing=rosterCurriculum.writing.filter(r=>present(r)&&String(r.book_id)===bid&&String(r.unit_id)===uid);
+ const writingComplete=writing.length>0&&writing.every(r=>r.completed===true);
+ const puzzle=rosterCurriculum.puzzles.find(r=>present(r)&&String(r.book_id)===bid&&String(r.unit_id)===uid);
+ const puzzleDone=Math.min(5,Number(puzzle?.completed_modes||0));
+ const tracked=[
+  {id:'word',percent:wordPct,started:wordHas,complete:wordPct!=null&&wordParts.every(v=>v/totalVocab>.9)},
+  {id:'sentence',percent:sentencePct,started:sentences.some(r=>Number(r.done)>0),complete:sentencePct!=null&&sentencePassed.every(v=>v/sentenceTotal>.9)},
+  {id:'grammar',percent:gPct,started:grammar.length>0,complete:gParts.every(v=>v/8>.9)},
+  {id:'talking',percent:talkPct,started:talking.length>0,complete:talking.some(r=>r.finished===true)},
+  {id:'writing',percent:writingComplete?100:null,started:writing.length>0,complete:writingComplete,detail:writing.length&&!writingComplete?'In progress':null},
+  {id:'puzzles',percent:puzzle?Math.round(puzzleDone/5*100):0,started:puzzleDone>0,complete:puzzleDone===5}
+ ];
+ return tracked;
+}
+function rsUnitState(studentId,book,unit){
+ const apps=rsAppProgress(studentId,book,unit).filter(x=>x.started);
+ if(!apps.length)return 'not-started';
+ return apps.every(x=>x.complete)?'complete':'progress';
+}
+function rsBookCurrentUnit(studentId,book,units){
+ const status=units.map(u=>({unit:u,status:rsUnitState(studentId,book,u)}));
+ const active=status.filter(x=>x.status==='progress');
+ if(active.length)return active[active.length-1].unit;
+ const teacher=Number(String(book.current_unit||'').match(/\d+/)?.[0]);
+ if(Number.isFinite(teacher)&&teacher>0){
+  const matched=units.find(u=>Number(u.unit_number)===teacher);
+  if(matched)return matched;
+ }
+ const complete=status.filter(x=>x.status==='complete');
+ if(complete.length)return units[Math.min(units.length-1,units.indexOf(complete[complete.length-1].unit)+1)];
+ return units[0];
+}
+function rsAppBar(app){
+ const value=Number.isFinite(app.percent)?Math.max(0,Math.min(100,app.percent)):null;
+ return '<div class="roster-app-row"><span class="roster-app-label">'+esc(rsApps.find(x=>x[0]===app.id)?.[1]||app.id)+'</span>'+
+ (value===null?'<span class="roster-app-no-data">'+esc(app.started?(app.detail||'In progress'):'Not started')+'</span>':'<span class="roster-app-meter"><i style="width:'+value+'%"></i></span>')+
+ '<span class="roster-app-number">'+(value===null?'—':value+'%')+'</span></div>';
+}
+function rsBookCard(studentId,book){
+ const units=rosterCurriculum.units.get(String(book.book_id))||[];
+ if(!units.length)return '<div class="roster-book"><strong class="roster-book-title">'+esc(book.book_title||'Textbook')+'</strong><small class="roster-app-no-data">No published unit catalogue available</small></div>';
+ const focus=rsBookCurrentUnit(studentId,book,units),apps=rsAppProgress(studentId,book,focus);
+ const complete=units.filter(u=>rsUnitState(studentId,book,u)==='complete').length;
+ const lesson=String(book.current_unit||'').trim();
+ return '<div class="roster-book"><div><div class="roster-book-title">'+esc(book.book_title||'Textbook')+'</div>'+
+ '<div class="roster-book-sub">Unit '+esc(focus.unit_number)+' · '+esc(focus.title||'Current progress')+'</div></div>'+
+ '<div class="roster-unit-strip" aria-label="'+complete+' of '+units.length+' tracked units completed">'+
+ units.map(u=>{const st=rsUnitState(studentId,book,u);return '<i class="'+(st==='complete'?'rs-complete':st==='progress'?'rs-progress':'')+'" title="Unit '+esc(u.unit_number)+' · '+(st==='complete'?'Recorded skills complete':st==='progress'?'In progress':'Not started')+'"></i>'}).join('')+'</div>'+
+ '<div>'+apps.map(rsAppBar).join('')+'</div>'+
+ '<div class="roster-book-footer"><span>'+complete+' of '+units.length+' units verified complete</span><span>Class unit: '+esc(lesson||'Not set')+'</span></div></div>';
+}
+function rsAssignmentsPanelRender(id,tab){
+ const target=$('#rosterAssignmentsBody');if(!target)return;
+ const tabs=$$('.rs-assign-tabs button');
+ tabs.forEach(b=>b.classList.toggle('active',b.dataset.rsAssignTab===tab));
+ if(tab==='current'){
+  target.innerHTML=renderHomeworkDetails(id);
+  return;
+ }
+ if(rosterAssignments.loading){target.innerHTML='<div class="empty">Loading mission history…</div>';return}
+ if(rosterAssignments.error){target.innerHTML='<div class="empty">'+esc(rosterAssignments.error)+'</div>';return}
+ const rows=(rosterAssignments.history||[]).filter(a=>homeworkForStudent(a,id));
+ target.innerHTML=rows.length?rows.map(a=>'<div class="rs-assign-item"><strong>'+esc(a.title||a.list_title||'Mission')+'</strong><small>'+
+ esc(String(a.status||'History'))+(a.due_at?' · Due '+esc(fmtDate(a.due_at)):'')+
+ (a.ended_at?' · Moved to history '+esc(fmtDate(a.ended_at)):'')+'</small></div>').join(''):
+ '<div class="empty">No past assignments found for this student.</div>';
+}
+function rsOpenAssignments(id){
+ const s=state.students.find(x=>String(x.user_id)===String(id));if(!s)return;
+ window.rsAssignmentStudent=String(id);
+ $('#rosterAssignmentsTitle').textContent=(s.name||'Student')+' · Assignments';
+ $('#rosterAssignmentsOverlay').hidden=false;
+ rsAssignmentsPanelRender(id,'current');
+}
+function rsCloseAssignments(){$('#rosterAssignmentsOverlay').hidden=true;window.rsAssignmentStudent=null}
+function renderStudents(){
+ const query=($('#searchInput').value||'').trim().toLowerCase(),filter=$('#rosterAssignmentFilter')?.value||'all';
+ const list=state.students.filter(s=>{
+  if(query&&!String(s.name||'').toLowerCase().includes(query)&&!String(s.korean_name||'').toLowerCase().includes(query))return false;
+  if(filter==='all'||rosterAssignments.loading||rosterAssignments.error)return true;
+  const h=homeworkSummary(s.user_id);
+  return filter==='assigned'?h.rows.length>0:filter==='none'?h.rows.length===0:filter==='complete'?h.rows.length>0&&!h.unknown&&h.complete===h.rows.length:filter==='not_started'?h.known.some(x=>!x.result.started&&!x.result.complete):h.known.some(x=>x.result.started&&!x.result.complete);
+ });
+ $('#panelTitle').textContent=state.className+' students';
+ $('#studentCount').textContent=list.length+' students';
+ $('#statusText').textContent='Textbooks and Genius apps · Live learning records';
+ const summary=$('#rosterSummary');
+ if(summary){
+  const all=rosterCurriculum.className===state.className&&rosterCurriculum.overview;
+  const books=all?rosterCurriculum.books.length:'—';
+  const units=all?rosterCurriculum.books.reduce((n,b)=>n+(rosterCurriculum.units.get(String(b.book_id))||[]).length,0):'—';
+  summary.innerHTML='<span><b>'+state.students.length+'</b> Students in class</span><span><b>'+books+'</b> Assigned textbooks</span><span><b>'+units+'</b> Curriculum units</span><span><b>'+(rosterCurriculum.loading?'…':rosterCurriculum.error?'—':'Live')+'</b> Progress records</span>';
+ }
+ if(!list.length){$('#studentList').innerHTML='<div class="empty">No students match these filters.</div>';return}
+ const duplicates=new Map();state.students.forEach(s=>{const k=String(s.name||'').trim().toLowerCase();duplicates.set(k,(duplicates.get(k)||0)+1)});
+ const ready=rosterCurriculum.className===state.className&&!rosterCurriculum.loading&&!rosterCurriculum.error&&rosterCurriculum.overview;
+ $('#studentList').innerHTML=list.map(s=>{
+  const id=String(s.user_id),name=String(s.name||'Student'),initials=name.split(/\s+/).map(x=>x.charAt(0)).slice(0,2).join('').toUpperCase();
+  const isDuplicate=duplicates.get(name.trim().toLowerCase())>1;
+  const ko=String(s.korean_name||'').trim(),secondary=ko|| (isDuplicate?'ID '+id.slice(0,6):state.className);
+  const assigned=ready?rosterCurriculum.books:[];
+  const books=ready?(assigned.length?assigned.map(b=>rsBookCard(id,b)).join(''):'<div class="roster-book">No textbooks assigned to this class</div>'):
+   '<div class="roster-book">'+esc(rosterCurriculum.error||'Loading textbook progress…')+'</div>';
+  const special=ready?rosterCurriculum.special.find(x=>String(x.student_id)===id):null;
+  const extras=[];
+  if(special&&Number(special.naesin_questions)>0)extras.push('내신 · '+Number(special.naesin_units||0)+' lessons');
+  if(special&&Number(special.gf_passed_stages)>0)extras.push('GF · '+Number(special.gf_passed_stages)+' stages passed');
+  return '<article class="roster-student-card roster-row" data-id="'+esc(id)+'" role="button" tabindex="0" aria-label="View '+esc(name)+' student details">'+
+   '<div class="roster-student-card-head"><div class="roster-student-identity"><div class="roster-student-avatar">'+esc(initials)+'</div><div><div class="roster-student-name">'+esc(name)+'</div><div class="roster-student-ko">'+esc(secondary)+'</div></div></div>'+
+   '<span class="roster-student-badge">'+(ready?assigned.length+' books':'Loading')+'</span></div>'+books+
+   (extras.length?'<div class="roster-specials">'+extras.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>':'')+
+   '<div class="roster-card-actions"><button type="button" data-rs-assignments="'+esc(id)+'">Assignments · Current / History</button><button type="button" data-rs-detail="'+esc(id)+'">Full student details</button></div></article>';
+ }).join('');
+ $$('.roster-row').forEach(row=>{row.onclick=e=>{if(e.target.closest('button'))return;openStudent(row.dataset.id)};row.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openStudent(row.dataset.id)}}});
+ $$('[data-rs-assignments]').forEach(b=>b.onclick=e=>{e.stopPropagation();rsOpenAssignments(b.dataset.rsAssignments)});
+ $$('[data-rs-detail]').forEach(b=>b.onclick=e=>{e.stopPropagation();openStudent(b.dataset.rsDetail)});
+}
+
 async function loadClass(){
   const name=$('#classSelect').value;if(!name)return;
   const request=(state.rosterRequest||0)+1;state.rosterRequest=request;
   state.className=name;state.days=Number($('#daysSelect').value)||30;state.students=[];
   ++rosterAssignments.request;Object.assign(rosterAssignments,{className:name,loading:true,error:'',items:[],history:[]});
   $('#studentList').innerHTML='<div class="empty">Loading students…</div>';$('#statusText').textContent='';
-  try{const j=await api(endpoint('teacher_class_insights',{class:name,days:String(state.days)}));if(state.rosterRequest!==request)return;state.students=j.students||[];renderStudents();await loadRosterAssignments(name)}catch(e){if(state.rosterRequest!==request)return;$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load student data.'}
+  try{const j=await api(endpoint('teacher_class_insights',{class:name,days:String(state.days)}));if(state.rosterRequest!==request)return;state.students=j.students||[];renderStudents();void loadRosterCurriculum(name);await loadRosterAssignments(name)}catch(e){if(state.rosterRequest!==request)return;$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load student data.'}
 }
 
 function renderSkills(skills){if(!skills?.length)return'<div class="empty">No skill-level evidence yet.</div>';return skills.map(s=>`<div class="skill"><div><div class="skill-name">${esc(friendly(s.skill))}</div><div class="skill-meta">${esc(s.correct)}/${esc(s.attempts)} correct${typeof s.trend==='number'?` · ${s.trend>0?'+':''}${esc(s.trend)} pts trend`:''}</div></div><div class="skill-acc">${s.accuracy==null?'—':esc(s.accuracy)+'%'}</div></div>`).join('')}
@@ -1377,6 +1522,10 @@ document.querySelectorAll('[data-students-tab]').forEach(btn=>btn.addEventListen
 try{openStudentsSubtab(sessionStorage.getItem(teacherStudentsTabKey)||'tracking')}catch{openStudentsSubtab('tracking')}
 const teacherViewKey='willena.teachers.activeView.v1';
 function switchView(v){if(v==='free-talking-genius'&&window.FreeTalkingGeniusTeacher?.openView){window.FreeTalkingGeniusTeacher.openView();return}try{localStorage.setItem(teacherViewKey,v)}catch{};if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='utilities'){const frame=$('#freeTalkingAudioBatchFrame');if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src;}if(v==='assignments'){window.UniversalAssignments?.activate?.();window.UniversalAssignments?.refresh?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='class-leaders')loadClassLeaders();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
+$('#rosterAssignmentsClose').onclick=rsCloseAssignments;
+$('#rosterAssignmentsOverlay').onclick=e=>{if(e.target.id==='rosterAssignmentsOverlay')rsCloseAssignments()};
+$('[data-rs-assign-tab]').forEach(b=>b.onclick=()=>{if(window.rsAssignmentStudent)rsAssignmentsPanelRender(window.rsAssignmentStudent,b.dataset.rsAssignTab)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#rosterAssignmentsOverlay').hidden)rsCloseAssignments()});
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#rosterAssignmentFilter').onchange=renderStudents;$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#leaderScope').onchange=()=>loadTeacherLeaderboard(true);$('#leaderMetric').onchange=()=>loadTeacherLeaderboard(true);$('#leaderRefreshBtn').onclick=()=>loadTeacherLeaderboard(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 (async()=>{if(await auth()){loadClasses();let restored='students';try{restored=localStorage.getItem(teacherViewKey)||sessionStorage.getItem(teacherViewKey)||'students'}catch{};if(restored==='writing-genius')window.WritingGeniusTeacher?.openView?.();else if(document.getElementById('view-'+restored))switchView(restored)}})();
