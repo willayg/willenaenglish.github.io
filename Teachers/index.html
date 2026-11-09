@@ -513,7 +513,7 @@ try{
  <section class="panel stt-lab" id="sttLab">
   <div class="stt-lab-head"><div><span class="stt-lab-eyebrow">TEACHER UTILITIES · SPEECH TESTING</span><h2>STT Testing Lab</h2>
   <p>Record once, send the identical audio to three speech recognizers, and compare what they hear. No recordings are saved to Willena.</p></div><span class="stt-lab-pill">Staff only</span></div>
-  <div class="stt-lab-controls"><button type="button" id="sttStart" class="control ua-primary">Start recording</button><button type="button" id="sttStop" class="control" disabled>Stop</button><button type="button" id="sttRun" class="control" disabled>Compare STT</button><button type="button" id="sttClear" class="control">Clear</button>
+  <div class="stt-lab-controls"><button type="button" id="sttStart" class="control ua-primary">Start recording</button><button type="button" id="sttStop" class="control" disabled>Stop</button><button type="button" id="sttRun" class="control" disabled>Compare STT</button><button type="button" id="sttClear" class="control">Clear</button><button type="button" id="sttBrowserStart" class="control">Test Chrome microphone</button><button type="button" id="sttBrowserStop" class="control" disabled>Stop Chrome</button>
   <span id="sttClock" class="stt-lab-clock">00:00</span></div>
   <p id="sttMessage" class="stt-lab-message" role="status">Use Chrome on your phone or computer. Allow microphone access when prompted. Maximum 20 seconds per sample.</p>
   <audio id="sttPlayback" controls hidden></audio>
@@ -1664,9 +1664,9 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
  'use strict';
  const lab=document.getElementById('sttLab');if(!lab)return;
  const $=(s)=>lab.querySelector(s);
- const start=$('#sttStart'),stop=$('#sttStop'),run=$('#sttRun'),clear=$('#sttClear'),copy=$('#sttCopy');
+ const start=$('#sttStart'),stop=$('#sttStop'),run=$('#sttRun'),clear=$('#sttClear'),copy=$('#sttCopy'),browserStartButton=$('#sttBrowserStart'),browserStopButton=$('#sttBrowserStop');
  const message=$('#sttMessage'),playback=$('#sttPlayback'),clock=$('#sttClock'),reference=$('#sttReference');
- let stream=null,recorder=null,chunks=[],audio=null,audioUrl='',startedAt=0,clockTimer=null,limitTimer=null,browserRecognition=null,browserText='',browserStart=0,browserLatency=0,results=null,working=false;
+ let stream=null,recorder=null,chunks=[],audio=null,audioUrl='',startedAt=0,clockTimer=null,limitTimer=null,browserRecognition=null,browserText='',browserStart=0,browserLatency=0,results=null,working=false,browserListening=false,browserError='',browserSawResult=false,browserTimer=null;
  const names={'whisper-v3-turbo':'Whisper Large V3 Turbo','whisper-standard':'Whisper Standard','whisper-tiny-en':'Whisper Tiny English',browser:'Chrome Speech Recognition'};
  const formatClock=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
  const status=t=>{message.textContent=t};
@@ -1696,34 +1696,79 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
    setEngine(id,r.error?'error':'ok',r.error||r.transcript||'No speech detected',bits.join(' · '));
   }
  }
- function browserBegin(){
-  const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
-  browserText='';browserLatency=0;
-  if(!Speech){setEngine('browser','error','Browser speech recognition is not supported here.','Use Chrome with speech services enabled.');return}
-  try{
-   browserRecognition=new Speech();browserRecognition.lang='en-US';browserRecognition.continuous=true;browserRecognition.interimResults=true;
-   let finalText='',partial='';
-   browserRecognition.onresult=event=>{
-    partial='';
-    for(let i=event.resultIndex;i<event.results.length;i++){const item=event.results[i];if(item.isFinal)finalText+=' '+item[0].transcript;else partial+=' '+item[0].transcript}
-    browserText=(finalText+' '+partial).trim();setEngine('browser','loading',browserText,'Listening live…');
-   };
-   browserRecognition.onerror=e=>{setEngine('browser','error','Browser recognizer: '+e.error,'');};
-   browserStart=performance.now();browserRecognition.start();
-  }catch(e){setEngine('browser','error',String(e.message||e),'')}
+ function endBrowserTest(){
+   clearTimeout(browserTimer);browserTimer=null;
+   if(!browserRecognition)return;
+   try{browserRecognition.stop()}catch{}
  }
+ function browserBegin(){
+   if(recorder?.state==='recording'){status('Stop the shared audio recording before testing Chrome. On Android both microphone systems can conflict.');return}
+   if(browserListening)return;
+   const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+   browserText='';browserLatency=0;browserError='';browserSawResult=false;
+   if(!Speech){setEngine('browser','error','SpeechRecognition API not available in this browser.','Browser support unavailable');return}
+   try{
+    browserRecognition=new Speech();
+    browserRecognition.lang='en-US';
+    // Android Chrome often ends continuous sessions immediately or fails
+    // microphone arbitration with MediaRecorder. Use an independent single turn.
+    browserRecognition.continuous=false;
+    browserRecognition.interimResults=true;
+    browserRecognition.maxAlternatives=1;
+    let finalText='',partial='';
+    browserRecognition.onstart=()=>{
+      browserListening=true;browserStartButton.disabled=true;browserStopButton.disabled=false;
+      setEngine('browser','loading','Listening… Speak clearly into the microphone.','Chrome microphone active');
+    };
+    browserRecognition.onaudiostart=()=>setEngine('browser','loading','Audio capture started. Speak now.','Microphone connected');
+    browserRecognition.onspeechstart=()=>setEngine('browser','loading','Speech detected…','Recognizing speech');
+    browserRecognition.onresult=event=>{
+      browserSawResult=true;partial='';
+      for(let i=event.resultIndex;i<event.results.length;i++){
+       const item=event.results[i];
+       if(item.isFinal)finalText+=' '+item[0].transcript;
+       else partial+=' '+item[0].transcript;
+      }
+      browserText=(finalText+' '+partial).trim();
+      browserLatency=Math.round(performance.now()-browserStart);
+      setEngine('browser','loading',browserText||'Processing speech…','Speech recognized');
+    };
+    browserRecognition.onerror=e=>{
+      browserError=e.error||'unknown';
+      setEngine('browser','error','Chrome recognition error: '+browserError,
+       browserError==='not-allowed'?'Check Chrome microphone and speech permissions':
+       browserError==='network'?'Chrome speech service/network failed':
+       browserError==='no-speech'?'Chrome did not detect speech in this session':'Browser speech service error');
+    };
+    browserRecognition.onend=()=>{
+      browserListening=false;browserStartButton.disabled=false;browserStopButton.disabled=true;clearTimeout(browserTimer);
+      browserLatency=Math.round(performance.now()-browserStart);
+      if(!browserError){
+       setEngine('browser',browserText?'ok':'error',browserText||'No speech was recognized.',
+         browserText?'Chrome live result':'Chrome returned no transcript. Retry with Chrome microphone test.');
+      }
+      results={...(results||{}),browser:{transcript:browserText,error:browserError?('Chrome: '+browserError):undefined,latency_ms:browserLatency}};
+      refreshMetrics();if(Object.keys(results).length)copy.disabled=false;
+    };
+    browserStart=performance.now();
+    browserRecognition.start();
+    browserTimer=setTimeout(endBrowserTest,15000);
+   }catch(e){
+    browserListening=false;browserStartButton.disabled=false;browserStopButton.disabled=true;
+    setEngine('browser','error',String(e.message||e),'Could not start browser microphone');
+   }
+ }
+ browserStartButton.onclick=()=>{if(working||recorder?.state==='recording')return status('Stop the other recording before testing Chrome.');browserBegin()};
+ browserStopButton.onclick=endBrowserTest;
  function finishCapture(){
   clearInterval(clockTimer);clearTimeout(limitTimer);
   stream?.getTracks().forEach(t=>t.stop());stream=null;
-  try{browserRecognition?.stop()}catch{}
   const mime=recorder?.mimeType||'audio/webm';
   audio=new Blob(chunks,{type:mime});
   if(audioUrl)URL.revokeObjectURL(audioUrl);
   audioUrl=URL.createObjectURL(audio);playback.src=audioUrl;playback.hidden=false;
-  stop.disabled=true;start.disabled=false;run.disabled=!audio.size;
-  browserLatency=Math.round(performance.now()-browserStart);
-  results={browser:{transcript:browserText,latency_ms:browserLatency}};
-  refreshMetrics();
+  stop.disabled=true;start.disabled=false;browserStartButton.disabled=false;run.disabled=!audio.size;
+  results=results||{};
   status('Recording ready ('+(audio.size/1024).toFixed(0)+' KB). Press Compare STT to send it to the three cloud engines.');
  }
  start.onclick=async()=>{
@@ -1733,18 +1778,19 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
    const mime=['audio/webm;codecs=opus','audio/mp4','audio/webm','audio/ogg'].find(t=>MediaRecorder.isTypeSupported(t))||'';
    recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
-   chunks=[];audio=null;results=null;copy.disabled=true;run.disabled=true;stop.disabled=false;start.disabled=true;
+   chunks=[];audio=null;results=null;copy.disabled=true;run.disabled=true;stop.disabled=false;start.disabled=true;browserStartButton.disabled=true;
    Object.keys(names).forEach(id=>setEngine(id,'idle','',''));
    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
    recorder.onstop=finishCapture;recorder.onerror=()=>{status('Recording failed. Please retry.');if(recorder.state==='recording')recorder.stop()};
-   startedAt=performance.now();recorder.start(250);browserBegin();
+   startedAt=performance.now();recorder.start(250);
+   setEngine('browser','idle','Use Test Chrome microphone separately.','Android cannot reliably share this microphone capture.');
    clockTimer=setInterval(()=>{clock.textContent=formatClock(Math.floor((performance.now()-startedAt)/1000))},200);
    limitTimer=setTimeout(()=>{if(recorder?.state==='recording')recorder.stop()},20000);
    status('Recording… Speak naturally. This sample will be used for all three cloud STT models.');
   }catch(e){stream?.getTracks().forEach(t=>t.stop());start.disabled=false;stop.disabled=true;status('Microphone unavailable: '+String(e.message||e))}
  };
  stop.onclick=()=>{if(recorder?.state==='recording')recorder.stop()};
- clear.onclick=()=>{if(working||recorder?.state==='recording'){status('Stop the recording before clearing.');return}audio=null;chunks=[];results=null;run.disabled=true;copy.disabled=true;playback.hidden=true;playback.removeAttribute('src');if(audioUrl)URL.revokeObjectURL(audioUrl);audioUrl='';clock.textContent='00:00';reference.value='';Object.keys(names).forEach(id=>setEngine(id,'idle','',''));status('Cleared. Ready for a new recording.');};
+ clear.onclick=()=>{if(working||recorder?.state==='recording'||browserListening){status('Stop the active recording before clearing.');return}audio=null;chunks=[];results=null;run.disabled=true;copy.disabled=true;playback.hidden=true;playback.removeAttribute('src');if(audioUrl)URL.revokeObjectURL(audioUrl);audioUrl='';clock.textContent='00:00';reference.value='';Object.keys(names).forEach(id=>setEngine(id,'idle','',''));status('Cleared. Ready for a new recording.');};
  const toBase64=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');reader.onerror=()=>reject(Error('Could not read the recording'));reader.readAsDataURL(blob)});
  run.onclick=async()=>{
   if(!audio||working)return;
