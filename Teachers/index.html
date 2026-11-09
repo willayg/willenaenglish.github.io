@@ -1346,7 +1346,17 @@ function ccRenderDetail(){
   catch(e){taught.disabled=false;taught.value=before||'';alert('Could not save current unit: '+e.message)}
  }}
  host.querySelectorAll('[data-cc-student]').forEach(b=>b.onclick=()=>openClassFromOverview(c.name,30));
- host.querySelectorAll('[data-cc-mission]').forEach(b=>b.onclick=()=>{switchView('assignments');window.UniversalAssignments?.activate?.();const select=document.querySelector('#assignmentClassFilter');if(select&&[...select.options].some(o=>o.value===c.name)){select.value=c.name;select.dispatchEvent(new Event('change',{bubbles:true}))}});
+ host.querySelectorAll('[data-cc-mission]').forEach(b=>b.onclick=()=>{
+  const unit=units.find(u=>u.id===curriculum.selectedUnit);
+  const group=groups.find(g=>g.key===curriculum.selectedSkill);
+  if(!book||!unit||!group){alert('Select a textbook, unit and app first.');return}
+  switchView('assignments');
+  const ok=window.UniversalAssignments?.openCreate?.({
+    skill:group.key,className:c.name,bookId:book.book_id,
+    bookTitle:book.book_title,unitId:unit.id,unitNumber:unit.unit_number
+  });
+  if(!ok)alert('The assignment editor is not ready. Select the app and Assign Mission manually.');
+ });
 }
 const ccPuzzleModeNames={wordsearch:'Word Search',crossword:'Crossword',boggle:'Boggle',mixmatch:'Mix & Match',wordle:'Wordle'};
 const ccPuzzleCacheKey=(book,unit)=>[curriculum.selectedClass,book.book_id,unit.id].join(':');
