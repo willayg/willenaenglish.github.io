@@ -1763,8 +1763,12 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
    });
    const data=await response.json().catch(()=>({}));
    if(!response.ok){
-    if(response.status===503&&/Workers AI binding/i.test(String(data.error||''))){
-      const e=new Error('Workers AI is not connected to the Teachers Pages project. In Cloudflare: Workers & Pages → this project → Settings → Bindings → Add → Workers AI, name AI, then redeploy.');
+    if(response.status===503&&(data.code==='AI_NOT_IN_FUNCTION_RUNTIME'||/Workers AI binding/i.test(String(data.error||'')))){
+      const info=data.diagnostics||{};
+      const bindingNames=Array.isArray(info.declared_ai_bindings)?info.declared_ai_bindings.join(', '):'';
+      const e=new Error('The STT endpoint on '+(info.host||'this site')+' cannot see a usable Workers AI binding.'+
+        (bindingNames?' It sees these AI-named bindings: '+bindingNames+'.':' No AI-named binding is visible in this deployed Function.')+
+        ' Please check that the existing AI binding belongs to the Pages project and environment serving this hostname, then redeploy.');
       e.code='AI_BINDING_MISSING';throw e;
     }
     throw Error(data.error||'STT comparison service returned '+response.status);
