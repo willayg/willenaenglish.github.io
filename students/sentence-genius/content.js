@@ -146,9 +146,15 @@ const topics=value=>{
   const text=str(value);return text?[text]:[];
 };
 export async function loadSentences(bookId,unitId,unit={}){
-  const rows=await content('source_content_occurrences?select=id,sentence_id,source_text,page_number'+
+  const occurrences=await content('source_content_occurrences?select=id,sentence_id,source_text,page_number,source_key,status,metadata'+
     '&book_id=eq.'+encodeURIComponent(bookId)+'&unit_id=eq.'+encodeURIComponent(unitId)+
     '&sentence_id=not.is.null&status='+available+'&order=page_number.asc');
+  // Keep only the eight original syllabus-aligned examples for Everybody Up.
+  // Writing Genius p4 prompts and review drafts are not Sentence Genius tasks.
+  // Sentence IDs remain unchanged, preserving progress on retained examples.
+  const isEverybodyUp=occurrences.some(row=>/^eu3e\d+:/.test(str(row.source_key)));
+  const rows=isEverybodyUp?occurrences.filter(row=>row.status==='published'&&
+    /^eu3e\d+:(?:aligned-sentence:unit:|sentence-occurrence:)/.test(str(row.source_key))):occurrences;
   const ids=[...new Set(rows.map(row=>str(row.sentence_id)).filter(Boolean))];
   if(!ids.length)return [];
 
