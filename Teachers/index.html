@@ -916,6 +916,7 @@ function ccUnitStatus(book,unit,className){
   const evidence=ccExtraCompletion(book,unit,group,className);
   for(const id of evidence.started)started.add(id);
  }
+ for(const evidence of ccSentenceRows(book,unit,className))started.add(String(evidence.student_id));
  // Completed puzzles provide a known five-mode denominator. Other apps need
  // an authoritative total before claiming a percentage is complete.
  const completedByStudent=new Map();
