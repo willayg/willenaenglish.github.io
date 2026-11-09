@@ -373,6 +373,13 @@ $('timeBoost').addEventListener('click',()=>{
 const isBeginner=()=>state.lessonLevel<=2;
 const isFirstLevel=()=>state.lessonLevel<=1;
 function stripInternalLabels(value){return String(value||'').replace(/\b(?:Textbook|Current textbook question|Current question|Example|Lesson focus|Instructions)\s*:\s*[^.!?]*(?:[.!?]|$)/gi,' ').replace(/\s+/g,' ').trim()}
+function removeSpokenLaughter(value){
+ // ElevenLabs reads written laughter literally ("ha ha") instead of laughing.
+ // Remove stage directions and leading fake laughter from all AI speech.
+ return String(value||'').replace(/\[(?:laugh(?:ing|s)?|chuckl(?:e|ing)|giggl(?:e|ing))\]/gi,'')
+  .replace(/(?:^|[.!?]\s+)(?:(?:ha[\s,!-]*){2,}|(?:he[\s,!-]*){2,}|haha+|hehe+|lol|lmao)(?:[!.,\s]+|$)/gi,' ')
+  .replace(/\s+/g,' ').trim();
+}
 
 
 function renderTopicTicker(){
@@ -882,7 +889,12 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
    if(term){state.pendingWordConfirmation=null;ftTopicReward().help=true;state.asideKind='vocabulary';state.asideTerm=term;sendRealtime({type:'conversation.item.delete',item_id:itemId});requestGuidedAside();return}
   }
  const category=classifyStudentTurn(speech);
- if(category.kind==='clarify'){
+ if(category.kind==='question_help'){
+   // The question itself needs a bilingual explanation. No answer credit yet.
+   sendRealtime({type:'conversation.item.delete',item_id:itemId});
+   ftTopicReward().help=true;
+   state.asideKind='question_help';requestGuidedAside();
+  }else if(category.kind==='clarify'){
    sendRealtime({type:'conversation.item.delete',item_id:itemId});
    state.questionRemainingMs=Math.max(12000,state.questionRemainingMs);
    const word=String(category.term||'').toLowerCase();
@@ -922,6 +934,9 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
 function classifyStudentTurn(text){
  const speech=String(text||'').replace(/\s+/g,' ').trim();
  const normal=speech.replace(/[‘’]/g,"'").toLowerCase();
+ // Asking what the CURRENT question means is learning help, not off-topic chat.
+ // Check before the vocabulary/general-topic classifier to avoid rejecting it.
+ if(/^(?:please[, ]*)?(?:(?:i (?:do not|don't|cannot|can't) understand(?: (?:the|this|your) question| what (?:you|that) (?:mean|said))?)|(?:what (?:does|do) (?:the|this|your) question mean)|(?:what(?:'s| is) (?:this|the|your) question (?:asking|about|mean(?:ing)?))|(?:what (?:does|do) (?:this|that|it) mean)|(?:what (?:this|the|your) question mean(?:s)?)|(?:can|could|would) you (?:please )?(?:explain|translate|say|tell me|help me (?:understand|with)) (?:the|this|your) question(?: in korean| in english)?|(?:can|could) you (?:please )?explain (?:it|that)(?: in korean)?|(?:i (?:need|want) help (?:with|understanding) (?:the|this|your) question))\s*[?!. ]*$/i.test(normal))return {kind:'question_help'};
  const languageSwitch=/\b(?:speak|talk|answer|reply|respond|continue|chat|converse|switch|change|use|only|everything|entirely)\b.{0,55}\b(?:korean|japanese|hangul|hangeul|한국어|일본어)\b|\b(?:in korean|in japanese)\b.{0,36}\b(?:from now on|instead|all the time|every time|please)\b/i;
  const promptAttack=/\b(?:ignore (?:your|the|all|previous)|forget (?:the|your|all) (?:instructions|rules|lesson)|pretend (?:you are|to be)|you are now|new instructions|system prompt|developer message|act as|stop (?:the|this) lesson|don't ask (?:the|any) question)\b/i;
  if(languageSwitch.test(normal)||promptAttack.test(normal)){
@@ -1009,7 +1024,11 @@ function requestGuidedAside(){
  const term=state.asideTerm,topicQuestion=state.topicQuestion;
  state.verifiedAnswer='';state.asideTerm='';state.topicQuestion='';state.asideKind=null;
  const anchor=state.anchors[state.anchorIndex];
- const directive=kind==='topic'?[
+ const directive=kind==='question_help'?[
+  'QUESTION EXPLANATION for a Korean English learner at level '+state.lessonLevel+'. Current question: '+JSON.stringify(anchor?.text||'')+'.',
+  'The child DOES NOT UNDERSTAND the question. FIRST explain in natural, simple KOREAN what the question is asking (one short sentence). THEN give a very easy ENGLISH rephrasing and ONE simple possible sample answer. Do NOT present the sample as the child\'s answer. Do NOT ask a new question.',
+  'Keep Korean concise and age-appropriate, English extremely simple, and use the current question only. Korean Hangul is REQUIRED. Never show labels such as Textbook:, Instructions:, or Example:. The child will try answering the same question afterward.'
+ ].join(' '):kind==='topic'?[
   'LESSON-RELATED QUESTION DETOUR. The child asked '+JSON.stringify(topicQuestion)+'. The current textbook question is '+JSON.stringify(anchor?.text||'')+'.',
   'Answer the question helpfully in simple ENGLISH, 25 words maximum. Never refuse an on-topic question. Resume the textbook question afterward.'
  ].join(' '):[
@@ -1055,7 +1074,7 @@ function requestGuidedReply(){
    :'FIRST ANSWER. If appropriate, start with a tiny natural reaction, then ask exactly ONE follow-up QUESTION tied to a detail of the student\'s specific answer. End with that question. Do not ask the next textbook question.',
   'ABSOLUTE MAXIMUM '+cap+' SPOKEN WORDS. Prefer fewer. Never give a paragraph or list. Let the child do most of the talking.',
   isBeginner()?'Do not use slang, complicated humour, or unfamiliar vocabulary. Keep everything concrete and friendly.':'Use natural humour and short interjections where suitable. Avoid repetitive compliments.',
-  'Stay within the selected Willena level and unit grammar. Do not invent details or claim to know how strangers really feel. A playful observation like "Ha! The other passengers must love that." can be fine if clearly teasing.',
+  'Stay within the selected Willena level and unit grammar. Do not invent details or claim to know how strangers really feel. Do NOT write laughter like haha, ha ha, hehe, lol, or stage directions such as [laughs]. The speech voice reads them as words rather than actually laughing. Use a natural friendly sentence instead.',
   'If the child mentions a dangerous action, give a short appropriate safety boundary, not an extended lecture. If you cannot understand the answer, ask to repeat instead of guessing.'
  ].join(' ');
  if(!sendRealtime({type:'response.create',response:{output_modalities:['text'],instructions:directive}})){
@@ -1087,13 +1106,14 @@ async function finishGuidedReply(data){
  const phase=state.anchorPhase;
  const aside=phase==='respondingAside';
  const topicAside=aside&&state.replyAsideKind==='topic';
+ const questionHelpAside=aside&&state.replyAsideKind==='question_help';
  if(!aside&&phase!=='respondingFirst'&&phase!=='respondingSecond')return;
  const second=phase==='respondingSecond';
  state.anchorResponding=false;
  let responseText=String(data.response?.output?.flatMap(x=>x.content||[])
   .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';
- responseText=stripInternalLabels(responseText);
+ responseText=removeSpokenLaughter(stripInternalLabels(responseText));
   if(!responseText)responseText=aside?'Please say that again.':second?'Okay!':'Good! Is it big?';
   if(!aside)responseText=shortenGuidedResponse(responseText,second,isBeginner()?state.lessonLevel:Math.min(10,state.lessonLevel+(state.answerIncludesQuestion?5:0)));
   if(!aside&&isBeginner()&&!second){
@@ -1105,7 +1125,18 @@ async function finishGuidedReply(data){
   }
  state.answerIncludesQuestion=false;
  // Vocabulary detours may contain Hangul, but never Japanese or Chinese.
- if(topicAside){
+ if(questionHelpAside){
+  const hasKorean=/[\uac00-\ud7af]/u.test(responseText);
+  if(!hasKorean&&!state.vocabRetryUsed){
+   state.vocabRetryUsed=true;state.anchorResponding=true;state.anchorResponseText='';
+   const retry='A Korean child did not understand this exact question: '+JSON.stringify(state.anchors[state.anchorIndex]?.text||'')+'. Explain what it is asking in simple Korean Hangul FIRST. Then rephrase in simple English and show ONE short possible answer. The Korean explanation is mandatory. No English-only answer, no labels, no new question.';
+   if(sendRealtime({type:'response.create',response:{output_modalities:['text'],instructions:retry}})){actorPhase('thinking');return}
+   state.anchorResponding=false;
+  }
+  if(!/[\uac00-\ud7af]/u.test(responseText))responseText='이 질문을 쉽게 설명하지 못했어요. 다시 한 번 물어봐 주세요. Please ask me again.';
+  // Don't truncate Korean: meaning and a short example are more helpful than a rigid word cap.
+  responseText=responseText.slice(0,340);
+ }else if(topicAside){
   // A topic detour is fully English, not a vocabulary translation.
   if(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u.test(responseText))
    responseText='Good question! Let’s think about that in English.';
