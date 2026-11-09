@@ -138,6 +138,51 @@ try{
 <aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="leaderboard"><span class="nav-icon">★</span><span>Leaderboard</span></button><button class="nav" data-view="assignments"><span class="nav-icon">☑</span><span>Assignments</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Word Genius</span></button><button class="nav" data-view="sentence-genius"><span class="nav-icon">S</span><span>Sentence Genius</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="utilities"><span class="nav-icon">⚙</span><span>Utilities</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><button class="nav" data-view="achievement-tests"><span class="nav-icon">▤</span><span>Achievement Tests</span></button><button class="nav" data-view="english-arcade"><span class="nav-icon">EA</span><span>English Arcade</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace"><section class="view" id="view-sentence-genius"><div class="page-head"><div><h1>Sentence Genius</h1><div class="panel-sub">Student statistics, textbook mastery, and grading tools</div></div></div><div class="panel sgt-dashboard" id="sgTeacherWorkspace"></div></section>
 <section class="view" id="view-achievement-tests"><div class="page-head"><div><h1 style="display:flex;align-items:center;gap:12px">Achievement Tests <a href="/Teachers/tools/assessment_grid/" target="_blank" rel="noopener noreferrer" aria-label="Open Achievement Tests in full page" title="Open full page" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #d4e0e6;border-radius:7px;background:#fff;color:#486b7b;font-size:17px;font-weight:500;text-decoration:none;flex-shrink:0">↗</a></h1><div class="panel-sub">Assessment scores and report cards</div></div></div><iframe id="achievementTestsFrame" title="Achievement Tests" loading="lazy" style="width:100%;height:calc(100vh - 190px);min-height:720px;border:1px solid #d9e5ed;border-radius:12px;background:white"></iframe></section>
+<style id="studentRosterRedesign20261109">
+#view-students{--rs-cyan:#24afbd;--rs-soft-cyan:#e8f9fb;--rs-soft-pink:#fff3f8;--rs-border:#dbe8ec;--rs-ink:#193f4c}
+#view-students .page-head{align-items:flex-start;gap:14px;flex-wrap:wrap;margin:14px 0 20px}
+#view-students .page-head h1{font-size:26px;letter-spacing:-.7px}
+#view-students .page-head .filters{display:flex;flex-wrap:wrap;gap:9px;justify-content:flex-start;align-items:center}
+#view-students .page-head .filters .control{min-height:42px;background:#fff;border:1px solid #bedde4;border-radius:11px;box-shadow:none}
+#view-students .page-head .filters .search{min-width:190px}
+#view-students .roster-workspace{border:1px solid var(--rs-border);border-radius:20px;padding:20px;background:#fff;box-shadow:none}
+#view-students .roster-workspace>.panel-head{border:0;padding:0 0 14px;gap:14px}
+#view-students .roster-dashboard-summary{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px;margin:0 0 18px;border:0}
+#view-students .roster-dashboard-summary>span{background:#f5fafb;border:1px solid #e1edf0;border-radius:13px;padding:14px;display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:1.4;color:#627d86}
+#view-students .roster-dashboard-summary b{font-size:23px;font-weight:800;line-height:1.1;color:#204653}
+#view-students .roster-workspace-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:13px 0 18px}
+#view-students .roster-workspace-heading h2{font-size:17px;margin:0 0 3px;color:var(--rs-ink)}
+#view-students .roster-workspace-heading p{font-size:12px;margin:0;color:#6f8891}
+#view-students .roster-readonly-note{background:#eff8fa;color:#227c87;border-radius:20px;padding:7px 10px;font-size:11px;font-weight:650;white-space:nowrap}
+#view-students #studentList.student-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));align-items:stretch;gap:13px;border:0;padding:0}
+#view-students .roster-student-card{background:#fff;border:1px solid #d8e5e9;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:13px;min-height:235px;cursor:pointer;transition:border-color .14s,box-shadow .14s,transform .14s}
+#view-students .roster-student-card:hover{border-color:#6bc6cf;box-shadow:0 6px 20px rgba(20,86,99,.08);transform:translateY(-1px)}
+#view-students .roster-student-card:focus-visible{outline:3px solid #4cbfc9;outline-offset:2px}
+#view-students .roster-student-card.is-complete{background:#effbfc;border-color:#b2e4eb}
+#view-students .roster-student-card.is-in-progress{background:#fff7fa;border-color:#f0d7e2}
+#view-students .roster-student-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+#view-students .roster-student-identity{display:flex;gap:10px;align-items:center;min-width:0}
+#view-students .roster-student-avatar{display:grid;place-items:center;flex:0 0 39px;width:39px;height:39px;border-radius:12px;background:#e1f4f6;color:#147f8d;font-weight:800;font-size:14px}
+#view-students .roster-student-name{font-size:16px;line-height:1.3;font-weight:800;color:#193e4c}
+#view-students .roster-student-ko{font-size:11px;color:#728995;margin-top:2px}
+#view-students .roster-student-badge{border:1px solid #d8e5e9;border-radius:20px;background:#fff;padding:5px 9px;font-weight:700;font-size:10px;white-space:nowrap;color:#637e87}
+#view-students .roster-student-card.is-complete .roster-student-badge{color:#117889;border-color:#b6e9ee}
+#view-students .roster-student-card.is-in-progress .roster-student-badge{color:#986478;border-color:#edcfdf}
+#view-students .roster-student-mission{border:1px solid #e0ebee;background:rgba(255,255,255,.78);padding:11px 12px;border-radius:11px;display:grid;gap:7px}
+#view-students .roster-mission-top{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#4f707a;font-size:11px}
+#view-students .roster-mission-top strong{color:#1a5665;font-size:13px}
+#view-students .roster-student-mission .roster-progress{height:8px;background:#e8f0f2;border-radius:10px;overflow:hidden;margin:0}
+#view-students .roster-student-mission .roster-progress i{background:var(--rs-cyan);height:100%;display:block}
+#view-students .roster-student-mission-note{font-size:11px;color:#58727e;line-height:1.45}
+#view-students .roster-student-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#view-students .roster-student-metric{background:rgba(255,255,255,.7);border:1px solid #e6edf0;padding:9px 10px;border-radius:10px;display:grid;gap:3px}
+#view-students .roster-student-metric b{font-size:14px;color:#1d4857}
+#view-students .roster-student-metric small{color:#7c929b;font-size:10px}
+#view-students .roster-student-foot{display:flex;justify-content:space-between;gap:10px;align-items:center;padding-top:7px;margin-top:auto;border-top:1px solid #e7edef;font-size:11px;color:#65828d}
+#view-students .roster-student-open{font-weight:800;color:#137b8b}
+@media(max-width:800px){#view-students .roster-dashboard-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#view-students .roster-workspace-heading{align-items:flex-start}#view-students #studentList.student-list{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}}
+@media(max-width:520px){#view-students .roster-workspace{padding:12px}#view-students .roster-dashboard-summary{gap:7px}#view-students .roster-dashboard-summary>span{padding:10px}#view-students #studentList.student-list{grid-template-columns:1fr}#view-students .roster-readonly-note{display:none}}
+</style>
 <section class="view active" id="view-students">
 <div class="class-leaders-tabs" id="studentsSubtabs" role="tablist" aria-label="Students views">
   <button class="class-leaders-tab active" type="button" data-students-tab="tracking" role="tab" aria-selected="true">Student Tracking</button>
@@ -145,7 +190,7 @@ try{
 </div>
 <div id="studentTrackingPanel">
 <div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><select class="control" id="rosterAssignmentFilter" aria-label="Filter by assignment progress"><option value="all">All students</option><option value="assigned">Has assignments</option><option value="not_started">Not started</option><option value="in_progress">In progress</option><option value="complete">All assignments complete</option><option value="none">No assignments</option></select><button class="control" id="refreshBtn">Refresh</button></div></div>
-<div class="panel"><div class="panel-head"><div><div class="panel-title" id="panelTitle">Students</div><div class="panel-sub" id="statusText"></div></div><span class="count-pill" id="studentCount">0 students</span></div><div id="rosterSummary" class="roster-summary"></div><div class="roster-columns"><span>Student</span><span>Current assignments</span><span>Recorded results</span><span>Activity</span></div><div class="student-list" id="studentList"><div class="empty">Loading…</div></div></div>
+<div class="panel roster-workspace"><div class="panel-head"><div><div class="panel-title" id="panelTitle">Students</div><div class="panel-sub" id="statusText"></div></div><span class="count-pill" id="studentCount">0 students</span></div><div id="rosterSummary" class="roster-summary roster-dashboard-summary"></div><div class="roster-workspace-heading"><div><h2>Student overview</h2><p>Current missions, engagement and recorded learning. Select a student to view full details.</p></div><span class="roster-readonly-note">Live student records</span></div><div class="student-list" id="studentList"><div class="empty">Loading…</div></div></div>
 </div>
 <div id="studentLivePanel" hidden>
  <iframe id="studentLiveFrame" title="Live Classroom" loading="lazy" style="display:block;width:100%;height:calc(100vh - 225px);min-height:640px;border:1px solid #dce9ec;border-radius:12px;background:#fff"></iframe>
@@ -598,15 +643,50 @@ function renderStudents(){
     const h=homeworkSummary(s.user_id);
     return filter==='assigned'?h.rows.length>0:filter==='none'?h.rows.length===0:filter==='complete'?h.rows.length>0&&!h.unknown&&h.complete===h.rows.length:filter==='not_started'?h.known.some(x=>!x.result.started&&!x.result.complete):h.known.some(x=>x.result.started&&!x.result.complete);
   });
-  $('#panelTitle').textContent=`${state.className} students`;$('#studentCount').textContent=`${list.length} students`;
-  $('#statusText').textContent=`Activity: last ${state.days} days · Assignments: current work`;
+  $('#panelTitle').textContent=state.className+' students';
+  $('#studentCount').textContent=list.length+' students';
+  $('#statusText').textContent='Learning activity: last '+state.days+' days · Current missions: active assignments';
   const summary=$('#rosterSummary');
-  if(summary){const assigned=state.students.filter(s=>studentHomework(s.user_id).length>0).length;const done=state.students.filter(s=>{const h=homeworkSummary(s.user_id);return h.rows.length&&!h.unknown&&h.complete===h.rows.length}).length;summary.innerHTML=`<span><b>${state.students.length}</b> students</span><span><b>${rosterAssignments.loading?'…':rosterAssignments.error?'—':assigned}</b> with assignments</span><span><b>${rosterAssignments.loading?'…':rosterAssignments.error?'—':done}</b> completed all assigned work</span><span><b>${rosterAssignments.loading?'…':rosterAssignments.error?'—':rosterAssignments.items.length}</b> current assignments</span>`}
+  if(summary){
+   const assigned=state.students.filter(s=>studentHomework(s.user_id).length>0).length;
+   const done=state.students.filter(s=>{const h=homeworkSummary(s.user_id);return h.rows.length&&!h.unknown&&h.complete===h.rows.length}).length;
+   summary.innerHTML='<span><b>'+state.students.length+'</b> Students in class</span>'+
+    '<span><b>'+(rosterAssignments.loading?'…':rosterAssignments.error?'—':assigned)+'</b> With current missions</span>'+
+    '<span><b>'+(rosterAssignments.loading?'…':rosterAssignments.error?'—':done)+'</b> Finished all missions</span>'+
+    '<span><b>'+(rosterAssignments.loading?'…':rosterAssignments.error?'—':rosterAssignments.items.length)+'</b> Active missions';
+  }
   if(!list.length){$('#studentList').innerHTML='<div class="empty">No students match these filters.</div>';return}
+  const repeats=new Map();
+  state.students.forEach(s=>{const key=String(s.name||'').trim().toLowerCase();repeats.set(key,(repeats.get(key)||0)+1)});
   $('#studentList').innerHTML=list.map(s=>{
-    const h=s.habits||{},l=s.learning||{},skills=l.skills||[];
-    const results=skills.filter(x=>Number(x.attempts)>0).slice(0,4).map(x=>`<span><b>${esc(friendly(x.skill))}</b> ${x.accuracy==null?'—':esc(x.accuracy)+'%'} <small>(${esc(x.attempts)} attempts)</small></span>`).join('');
-    return `<div class="student-row roster-row" data-id="${esc(s.user_id)}" role="button" tabindex="0" aria-label="View ${esc(s.name)}"><div><div class="student-name">${esc(s.name)}</div><div class="student-ko">${esc(s.korean_name||'')}</div></div><div class="roster-homework">${renderHomeworkCell(s.user_id)}</div><div class="roster-results">${results||'<span>No recorded question results in this period</span>'}${s.puzzles?.total?`<span>${esc(s.puzzles.total)} puzzles completed</span>`:''}</div><div class="roster-activity"><strong>${esc(fmtDate(s.last_activity))}</strong><small>Last activity</small><small>${esc(h.active_days_7??0)} active days in last 7</small></div></div>`;
+    const h=s.habits||{},l=s.learning||{},hw=homeworkSummary(s.user_id);
+    const loaded=!rosterAssignments.loading&&!rosterAssignments.error;
+    const hasMissions=loaded&&hw.rows.length>0;
+    const complete=hasMissions&&hw.unknown===0&&hw.complete===hw.rows.length;
+    const progressing=hasMissions&&hw.known.some(x=>x.result.started&&!x.result.complete);
+    const stateName=complete?'Complete':progressing?'In progress':hasMissions?'Assigned':'No missions';
+    const cardColor=complete?'is-complete':progressing?'is-in-progress':'';
+    const percent=loaded&&hw.percent!=null?Math.max(0,Math.min(100,hw.percent)):null;
+    const missionLabel=rosterAssignments.loading?'Loading mission progress…':rosterAssignments.error?'Mission data unavailable':hasMissions?hw.complete+' of '+hw.rows.length+' missions completed':'No current missions';
+    const percentLabel=percent==null?'—':percent+'%';
+    const next=hasMissions?hw.rows.find(x=>!x.result.complete)?.assignment:null;
+    const missionNote=next?String(next.title||next.list_title||'Current mission')+(next.due_at?' · Due '+fmtDate(next.due_at):''):complete?'All current missions completed':rosterAssignments.error?'Try refreshing':rosterAssignments.loading?'Loading current class work':'No outstanding missions';
+    const name=String(s.name||'Student'),korean=String(s.korean_name||'').trim();
+    const duplicate=(repeats.get(name.trim().toLowerCase())||0)>1;
+    const identity=korean|| (duplicate?'ID '+String(s.user_id||'').slice(0,6):'');
+    const days=Number(h.active_days_7)||0;
+    const sessions=h.completed_sessions==null?'—':h.completed_sessions;
+    const initials=name.trim().split(/\s+/).map(w=>w.charAt(0)).slice(0,2).join('').toUpperCase()||'S';
+    return '<article class="roster-student-card roster-row '+cardColor+'" data-id="'+esc(s.user_id)+'" role="button" tabindex="0" aria-label="Open student details for '+esc(name)+'">'+
+      '<div class="roster-student-card-head"><div class="roster-student-identity"><div class="roster-student-avatar">'+esc(initials)+'</div>'+
+      '<div><div class="roster-student-name">'+esc(name)+'</div><div class="roster-student-ko">'+esc(identity||state.className)+'</div></div></div>'+
+      '<span class="roster-student-badge">'+esc(stateName)+'</span></div>'+
+      '<div class="roster-student-mission"><div class="roster-mission-top"><strong>'+esc(missionLabel)+'</strong><span>'+percentLabel+'</span></div>'+
+      (percent==null?'':'<div class="roster-progress" role="progressbar" aria-label="Current mission progress" aria-valuenow="'+percent+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+percent+'%"></i></div>')+
+      '<div class="roster-student-mission-note">'+esc(missionNote)+'</div></div>'+
+      '<div class="roster-student-metrics"><div class="roster-student-metric"><b>'+esc(days)+' / 7</b><small>Active days this week</small></div>'+
+      '<div class="roster-student-metric"><b>'+esc(sessions)+'</b><small>Sessions in selected period</small></div></div>'+
+      '<div class="roster-student-foot"><span>Last active: '+esc(fmtDate(s.last_activity))+'</span><span class="roster-student-open">View student →</span></div></article>';
   }).join('');
   $$('.roster-row').forEach(row=>{row.onclick=()=>openStudent(row.dataset.id);row.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openStudent(row.dataset.id)}}});
 }
