@@ -154,7 +154,7 @@ try{
 #view-students .roster-workspace-heading h2{font-size:17px;margin:0 0 3px;color:var(--rs-ink)}
 #view-students .roster-workspace-heading p{font-size:12px;margin:0;color:#6f8891}
 #view-students .roster-readonly-note{background:#eff8fa;color:#227c87;border-radius:20px;padding:7px 10px;font-size:11px;font-weight:650;white-space:nowrap}
-#view-students #studentList.student-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));align-items:stretch;gap:13px;border:0;padding:0}
+#view-students #studentList.student-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));align-items:stretch;gap:13px;border:0;padding:0;max-height:none;overflow:visible}
 #view-students .roster-student-card{background:#fff;border:1px solid #d8e5e9;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:13px;min-height:235px;cursor:pointer;transition:border-color .14s,box-shadow .14s,transform .14s}
 #view-students .roster-student-card:hover{border-color:#6bc6cf;box-shadow:0 6px 20px rgba(20,86,99,.08);transform:translateY(-1px)}
 #view-students .roster-student-card:focus-visible{outline:3px solid #4cbfc9;outline-offset:2px}
@@ -182,6 +182,16 @@ try{
 #view-students .roster-student-open{font-weight:800;color:#137b8b}
 @media(max-width:800px){#view-students .roster-dashboard-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#view-students .roster-workspace-heading{align-items:flex-start}#view-students #studentList.student-list{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}}
 @media(max-width:520px){#view-students .roster-workspace{padding:12px}#view-students .roster-dashboard-summary{gap:7px}#view-students .roster-dashboard-summary>span{padding:10px}#view-students #studentList.student-list{grid-template-columns:1fr}#view-students .roster-readonly-note{display:none}}
+#drawerBg .drawer{width:min(820px,100vw);background:#f5f9fa}
+#drawerBg .drawer-head{padding:19px 24px;background:#304852;border-bottom:3px solid #24b7c7}
+#drawerBg .drawer-name{font-size:21px;letter-spacing:-.3px}
+#drawerBg .drawer-body{padding:20px;display:grid;gap:12px}
+#drawerBg .detail,#drawerBg .big-card{border:1px solid #dce8ec;border-radius:16px;padding:17px;box-shadow:none;background:#fff;margin:0}
+#drawerBg .detail h3,#drawerBg .big-card h3{font-size:14px;color:#1c5867}
+#drawerBg .rating-grid{gap:12px;margin:0}
+#drawerBg .big-rating{font-size:22px;color:#1c6978}
+#drawerBg .close{display:grid;place-items:center;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12)}
+@media(max-width:600px){#drawerBg .drawer-body{padding:12px}#drawerBg .rating-grid{grid-template-columns:1fr}}
 </style>
 <section class="view active" id="view-students">
 <div class="class-leaders-tabs" id="studentsSubtabs" role="tablist" aria-label="Students views">
