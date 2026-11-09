@@ -1356,6 +1356,7 @@ function ccRenderDetail(){
     bookTitle:book.book_title,unitId:unit.id,unitNumber:unit.unit_number
   });
   if(!ok)alert('The assignment editor is not ready. Select the app and Assign Mission manually.');
+  else requestAnimationFrame(()=>document.getElementById('universalAssignments')?.scrollIntoView({behavior:'smooth',block:'start'}));
  });
 }
 const ccPuzzleModeNames={wordsearch:'Word Search',crossword:'Crossword',boggle:'Boggle',mixmatch:'Mix & Match',wordle:'Wordle'};
