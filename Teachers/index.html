@@ -907,6 +907,10 @@ function ccUnitStatus(book,unit,className){
  const ids=new Set(roster.map(s=>String(s.id)));
  const rows=(curriculum.data?.progress||[]).filter(r=>r.book_id===book.book_id&&r.unit_id===unit.id&&ids.has(String(r.student_id)));
  const started=new Set(rows.filter(r=>Number(r.attempts)>0||Number(r.attempted_content_count)>0).map(r=>String(r.student_id)));
+ for(const group of [ccSkillGroups.find(g=>g.key==='grammar'),ccSkillGroups.find(g=>g.key==='talking')]){
+  const evidence=ccExtraCompletion(book,unit,group,className);
+  for(const id of evidence.started)started.add(id);
+ }
  // Completed puzzles provide a known five-mode denominator. Other apps need
  // an authoritative total before claiming a percentage is complete.
  const completedByStudent=new Map();
