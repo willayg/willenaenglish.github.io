@@ -293,7 +293,7 @@ const FT_GUIDE_KEY='ft-genius-help-20261109-v1';
 const FT_GUIDE=[
  ['Talk with Bunny, Pigfish or Willi!','8개 질문에 영어로 대답해요. 한 단어만 말해도 괜찮아요!',[['Bunny','What colour is your chair?'],['You','Purple!'],['Bunny','Is it big?']]],
  ['Every try counts','영어로 대답하면 포인트가 쌓여요. 틀려도 괜찮아요!',[['You','Purple.'],['Tip','말하기 +1 · 뜻이 통하면 +1'],['You','My chair is purple and big!'],['Tip','자세히 말하기 +1']]],
- ['Asking for help is smart!','모르는 단어는 물어봐요. 도움 요청도 좋은 영어 연습이에요!',[['You','What does purple mean?'],['Bunny','Purple means 보라색.'],['Tip','도움을 요청하면 보너스 기회!']]],
+ ['Asking for help is smart!','단어나 질문을 이해하지 못하면 물어봐요. 한국어와 쉬운 영어로 도와줄게요!',[['You','What does this question mean?'],['Bunny','한국어로 설명해 줄게요! I can help you.'],['Tip','도움을 요청하면 보너스 기회!']]],
  ['Earn stars and points','8개 주제에 참여하면 최대 별 5개! 주제마다 최대 3점, 총 24점에 도전하세요.',[['Tip','대답하기 +1'],['Tip','생각 전달 +1'],['Tip','더 말하거나 도움 요청 +1']]]];
 function renderFtGuide(){
  const info=FT_GUIDE[state.guideIndex];
@@ -376,8 +376,8 @@ function stripInternalLabels(value){return String(value||'').replace(/\b(?:Textb
 function removeSpokenLaughter(value){
  // ElevenLabs reads written laughter literally ("ha ha") instead of laughing.
  // Remove stage directions and leading fake laughter from all AI speech.
- return String(value||'').replace(/\[(?:laugh(?:ing|s)?|chuckl(?:e|ing)|giggl(?:e|ing))\]/gi,'')
-  .replace(/(?:^|[.!?]\s+)(?:(?:ha[\s,!-]*){2,}|(?:he[\s,!-]*){2,}|haha+|hehe+|lol|lmao)(?:[!.,\s]+|$)/gi,' ')
+ return String(value||'').replace(/[[(](?:laugh(?:ing|s)?|chuckl(?:e|ing)|giggl(?:e|ing))[\])]/gi,'')
+  .replace(/(?:^|[.!?]\s+)(?:(?:ha[\s,!-]*){1,}|(?:he[\s,!-]*){2,}|haha+|hehe+|lol|lmao)(?:[!.,\s]+|$)/gi,' ')
   .replace(/\s+/g,' ').trim();
 }
 
@@ -936,7 +936,7 @@ function classifyStudentTurn(text){
  const normal=speech.replace(/[‘’]/g,"'").toLowerCase();
  // Asking what the CURRENT question means is learning help, not off-topic chat.
  // Check before the vocabulary/general-topic classifier to avoid rejecting it.
- if(/^(?:please[, ]*)?(?:(?:i (?:do not|don't|cannot|can't) understand(?: (?:the|this|your) question| what (?:you|that) (?:mean|said))?)|(?:what (?:does|do) (?:the|this|your) question mean)|(?:what(?:'s| is) (?:this|the|your) question (?:asking|about|mean(?:ing)?))|(?:what (?:does|do) (?:this|that|it) mean)|(?:what (?:this|the|your) question mean(?:s)?)|(?:can|could|would) you (?:please )?(?:explain|translate|say|tell me|help me (?:understand|with)) (?:the|this|your) question(?: in korean| in english)?|(?:can|could) you (?:please )?explain (?:it|that)(?: in korean)?|(?:i (?:need|want) help (?:with|understanding) (?:the|this|your) question))\s*[?!. ]*$/i.test(normal))return {kind:'question_help'};
+ if(/^(?:please[, ]*)?(?:(?:i (?:do not|don't|cannot|can't) understand(?: (?:the|this|your) question| what (?:you|that) (?:mean|said))?|i (?:do not|don't) get (?:it|the question)|what are you asking)|(?:what (?:does|do) (?:the|this|your) question mean(?: in korean| in english)?)|(?:what(?:'s| is) (?:this|the|your) question (?:asking|about|mean(?:ing)?))|(?:what (?:does|do) (?:this|that|it) mean)|(?:what (?:this|the|your) question mean(?:s)?)|(?:can|could|would) you (?:please )?(?:explain|translate|say|tell me|help me (?:understand|with)) (?:the|this|your) question(?: in korean| in english)?|(?:can|could) you (?:please )?explain (?:it|that)(?: in korean)?|(?:i (?:need|want) help (?:with|understanding) (?:the|this|your) question))\s*[?!. ]*$/i.test(normal))return {kind:'question_help'};
  const languageSwitch=/\b(?:speak|talk|answer|reply|respond|continue|chat|converse|switch|change|use|only|everything|entirely)\b.{0,55}\b(?:korean|japanese|hangul|hangeul|한국어|일본어)\b|\b(?:in korean|in japanese)\b.{0,36}\b(?:from now on|instead|all the time|every time|please)\b/i;
  const promptAttack=/\b(?:ignore (?:your|the|all|previous)|forget (?:the|your|all) (?:instructions|rules|lesson)|pretend (?:you are|to be)|you are now|new instructions|system prompt|developer message|act as|stop (?:the|this) lesson|don't ask (?:the|any) question)\b/i;
  if(languageSwitch.test(normal)||promptAttack.test(normal)){
