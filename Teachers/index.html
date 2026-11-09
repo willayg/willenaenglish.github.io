@@ -778,9 +778,16 @@ function rsAppProgress(studentId,book,unit){
  return tracked;
 }
 function rsUnitState(studentId,book,unit){
- const apps=rsAppProgress(studentId,book,unit).filter(x=>x.started);
+ const all=rsAppProgress(studentId,book,unit),apps=all.filter(x=>x.started);
  if(!apps.length)return 'not-started';
- return apps.every(x=>x.complete)?'complete':'progress';
+ // A finished optional mode cannot independently turn a textbook unit cyan:
+ // required book-backed vocabulary/sentence work must also be complete.
+ const required=[];
+ if(Number(rosterCurriculum.vocabTotals.get(String(unit.id))||0)>0)required.push('word');
+ if(Number(rosterCurriculum.sentenceTotals.get(String(unit.id))||0)>0)required.push('sentence');
+ if(/^Grammar Ten/i.test(String(book.book_title||'')))required.push('grammar');
+ const verified=required.every(key=>all.some(x=>x.id===key&&x.complete));
+ return verified&&apps.every(x=>x.complete)?'complete':'progress';
 }
 function rsBookCurrentUnit(studentId,book,units){
  const status=units.map(u=>({unit:u,status:rsUnitState(studentId,book,u)}));
