@@ -290,6 +290,7 @@ $('ftGuideNext').addEventListener('click',()=>{
  try{if($('ftNeverShowGuide').checked)localStorage.setItem(FT_GUIDE_KEY,'1')}catch{}
  $('ftGuide').hidden=true;
  if(state.guideLaunch){state.guideLaunch=false;state.guideAccepted=true;void startConversation().catch(e=>error('Start failed: '+e.message))}
+ else if(state.active)startQuestionClock()
 });
 $('ftHelpBtn').addEventListener('click',()=>{if(state.active)haltQuestionClock();showFtGuide(false)});
 function ftTopicReward(){
@@ -312,6 +313,9 @@ function ftShowFinish(result){
  for(let i=0;i<5;i++){const el=document.createElement('span');el.textContent='★';if(i<result.stars)el.className='earned';host.append(el)}
  host.setAttribute('aria-label',result.stars+' of 5 stars');
  $('ftResultPoints').textContent='+'+result.points+' Session Points';
+ const oldMascot=$('ftResultMascot');if(oldMascot)oldMascot.replaceChildren();
+ const artwork=$('actorStage')?.querySelector('.bf-svg,.pf-svg,.bf-actor,svg');
+ if(oldMascot&&artwork){const art=artwork.cloneNode(true);art.style.cssText='display:block;width:100%;height:100%;transform:none;max-width:none;max-height:none';oldMascot.append(art)}
  $('ftResultSummary').innerHTML='<div><strong>'+result.answered+'/8</strong>Questions answered</div><div><strong>'+result.helps+'</strong>Help requests</div>';
  $('ftRewardDetail').textContent=result.rows.map((r,i)=>'Q'+(i+1)+': '+r.points+'/3').join(' · ');
  $('ftRewardSync').textContent='연습 결과 미리보기 · 실제 별과 포인트는 아직 계정에 저장되지 않아요.';
