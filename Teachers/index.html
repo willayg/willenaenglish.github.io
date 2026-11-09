@@ -682,7 +682,7 @@ function renderHomeworkDetails(id){
   }).join('');
 }
 
-const rosterCurriculum={request:0,className:'',loading:false,error:'',books:[],units:new Map(),overview:null,word:[],extra:[],sentences:[],writing:[],puzzles:[],special:[],vocabTotals:new Map(),sentenceTotals:new Map()};
+const rosterCurriculum={request:0,className:'',loading:false,error:'',books:[],units:new Map(),overview:null,word:[],extra:[],sentences:[],writing:[],writingEntries:[],puzzles:[],special:[],vocabTotals:new Map(),sentenceTotals:new Map()};
 async function rsCatalogTotals(bookId,table,field,filter){
  const url=ccCatalog+table+'?select=unit_id,'+field+'&book_id=eq.'+encodeURIComponent(bookId)+(filter||'')+'&limit=4000';
  const response=await fetch(url,{headers:{apikey:ccCatalogKey,Authorization:'Bearer '+ccCatalogKey},cache:'no-store'});
@@ -727,7 +727,7 @@ async function loadRosterCurriculum(className){
   Object.assign(rosterCurriculum,{
    overview,books,units:new Map(unitEntries),extra:Array.isArray(extra)?extra:[],
    sentences:Array.isArray(sentences)?sentences:[],
-   writing:Array.isArray(writing?.unit_rows)?writing.unit_rows:[],
+   writing:Array.isArray(writing?.unit_rows)?writing.unit_rows:[],writingEntries:Array.isArray(writing?.writing_rows)?writing.writing_rows:[],
    puzzles:Array.isArray(puzzles)?puzzles:[],
    word:Array.isArray(supplement?.word)?supplement.word:[],
    special:Array.isArray(supplement?.special)?supplement.special:[],
@@ -877,6 +877,9 @@ function renderStudents(){
   const extras=[];
   if(special&&Number(special.naesin_questions)>0)extras.push('내신 · '+Number(special.naesin_units||0)+' lessons');
   if(special&&Number(special.gf_passed_stages)>0)extras.push('GF · '+Number(special.gf_passed_stages)+' stages passed');
+  const freeWriting=ready?rosterCurriculum.writingEntries.filter(x=>String(x.student_id)===id):[];
+  const submitted=freeWriting.reduce((n,x)=>n+Number(x.submitted||0),0),drafts=freeWriting.reduce((n,x)=>n+Number(x.drafts||0),0);
+  if(submitted||drafts)extras.push('Writing Genius · '+submitted+' submitted · '+drafts+' drafts');
   return '<article class="roster-student-card roster-row" data-id="'+esc(id)+'" role="button" tabindex="0" aria-label="View '+esc(name)+' student details">'+
    '<div class="roster-student-card-head"><div class="roster-student-identity"><div class="roster-student-avatar">'+esc(initials)+'</div><div><div class="roster-student-name">'+esc(name)+'</div><div class="roster-student-ko">'+esc(secondary)+'</div></div></div>'+
    '<span class="roster-student-badge">'+(ready?assigned.length+' books':'Loading')+'</span></div>'+books+
