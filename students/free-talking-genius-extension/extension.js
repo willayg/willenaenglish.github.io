@@ -8,6 +8,48 @@ const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
 const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:30000,questionTotalMs:30000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
+// Read-only cost diagnostics: counts reported by OpenAI, not estimated dollars.
+// Kept locally on the current device; never stores transcripts, names or audio.
+const ftUsage={
+ current:null,
+ begin(){
+  if(this.current)return;
+  this.current={startedAt:new Date().toISOString(),character:state.character,book:String(state.book?.title||''),unit:Number(state.unit?.unit_number)||null,responses:0,inputTokens:0,outputTokens:0,cachedInputTokens:0,audioInputTokens:0,textInputTokens:0,audioOutputTokens:0,textOutputTokens:0,usageReported:0};
+ },
+ record(response){
+  const u=response?.usage;
+  if(!this.current||!u)return;
+  const n=v=>Number.isFinite(Number(v))?Math.max(0,Number(v)):0;
+  const input=u.input_token_details||u.input_tokens_details||{};
+  const output=u.output_token_details||u.output_tokens_details||{};
+  const c=this.current;
+  c.usageReported++;
+  c.inputTokens+=n(u.input_tokens);
+  c.outputTokens+=n(u.output_tokens);
+  c.cachedInputTokens+=n(input.cached_tokens);
+  c.audioInputTokens+=n(input.audio_tokens);
+  c.textInputTokens+=n(input.text_tokens);
+  c.audioOutputTokens+=n(output.audio_tokens);
+  c.textOutputTokens+=n(output.text_tokens);
+ },
+ response(){if(this.current)this.current.responses++},
+ end(reason){
+  const c=this.current;if(!c)return;
+  this.current=null;c.endedAt=new Date().toISOString();c.durationSeconds=Math.round((Date.parse(c.endedAt)-Date.parse(c.startedAt))/1000);c.endReason=String(reason||'ended').slice(0,80);
+  try{
+   const key='willena-ft-realtime-usage-v1';
+   const past=JSON.parse(localStorage.getItem(key)||'[]');
+   const recent=Array.isArray(past)?past.slice(-19):[];
+   recent.push(c);localStorage.setItem(key,JSON.stringify(recent));
+  }catch(e){console.warn('[Free Talking] Could not save local usage totals',e)}
+  console.info('[Free Talking] Realtime usage (tokens, not dollars)',c);
+ }
+};
+window.WillenaFreeTalkingUsage={
+ getSessions(){try{return JSON.parse(localStorage.getItem('willena-ft-realtime-usage-v1')||'[]')}catch{return []}},
+ getCurrent(){return ftUsage.current?{...ftUsage.current}:null}
+};
+
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
 function validJwt(token){
@@ -529,6 +571,7 @@ function stopSpeech(){
  state.speaker=null;state.playing=null;
 }
 function endSession(reason='Conversation finished.'){
+ ftUsage.end(reason);
  clearInterval(state.timer);state.timer=null;haltQuestionClock();
  clearTimeout(state.idleTimer);state.idleTimer=null;
  clearTimeout(state.sessionDeadline);state.sessionDeadline=null;
@@ -1296,6 +1339,7 @@ function handleRealtime(data){
    resolveCommittedSpeech(String(data.item_id||''),'',true);
    break;
   case 'response.done':
+   ftUsage.record(data.response);ftUsage.response();
    void finishGuidedReply(data).catch(e=>error('Conversation response: '+e.message));break;
   case 'error':{
    const details=data.error||{};
@@ -1449,6 +1493,7 @@ async function startConversation(){
   startAbort=null;
   state.micUserMuted=false;state.ttsPlaying=false;
   state.active=true;state.starting=false;state.resumeIndex=0;
+  ftUsage.begin();
   message('Connected · starting cached textbook question');actorPhase('ready');
   clearTimeout(state.sessionDeadline);
   state.sessionDeadline=setTimeout(()=>{if(state.active)pauseConversation('Paused after 12 minutes. Tap play to continue.');},12*60*1000);
