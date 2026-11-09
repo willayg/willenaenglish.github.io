@@ -1,0 +1,445 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<title>Free Talking Genius · Realtime Extension Demo</title>
+<link rel="stylesheet" href="/students/free-talking-genius/styles.css?v=20261108-golden-actions3">
+<link rel="stylesheet" href="/students/free-talking-genius/character-animations.css?v=20261107-layer-fin3">
+<link rel="stylesheet" href="/students/free-talking-genius/live-animal-ui.css?v=20261107-live-animals1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#fff;font-family:Poppins,Arial,sans-serif;color:#263c50}
+#original{border:0;display:block;width:100%;height:100dvh;background:#fff}
+#demo{position:fixed;inset:0;z-index:9999;background:radial-gradient(ellipse at top,#e8fbfd,#f8fafc 60%,#fef6fa);overflow:auto;padding:16px}
+#demo[hidden]{display:none!important}
+.wrap{max-width:820px;margin:0 auto;padding:18px 0 40px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:22px}.back{background:white;border:2px solid #d4edf0;border-radius:16px;padding:11px 15px;font-weight:800;color:#267f89;cursor:pointer}.tag{font-size:10px;letter-spacing:1.4px;color:#65909b;font-weight:900}
+h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#607685;font-size:13px;margin:7px 0 20px}
+.panel{background:#fff;border:1px solid #dcecf0;box-shadow:0 12px 38px #245b7612;border-radius:25px;padding:23px;margin-bottom:15px}
+.chars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.character{background:#fff;border:2px solid #dcebf0;border-radius:23px;padding:13px 5px 16px;min-width:0;cursor:pointer;font:800 12px Poppins,Arial;color:#385569;transition:transform .15s,border .15s}
+.character[aria-pressed=true]{border-color:#25b8c6;background:#f0fcfd;box-shadow:0 0 0 3px #d6f6f8}
+.character .portrait{height:clamp(85px,20vw,155px);display:flex;align-items:center;justify-content:center;position:relative}.portrait svg{height:100%;width:100%}.portrait .bf-svg{width:100%;height:100%}
+.character strong{display:block;white-space:nowrap;margin-top:8px;font-size:clamp(11px,2.5vw,15px)}
+.willi-icon{width:74%;height:74%;border:12px solid #7de0e8;border-radius:50%;box-shadow:inset 0 0 0 8px #e4f9fb;position:relative}.willi-icon::after{content:"";position:absolute;inset:28%;border-radius:50%;background:#35c2d0}
+.primary{border:2px solid #4dc5d1;border-radius:17px;background:#d8f9fc;color:#087987;font:900 15px Poppins;padding:14px 20px;min-height:48px;cursor:pointer}.primary:disabled{opacity:.45}
+.row{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap}
+.secondary{border:2px solid #d0e4e8;background:white;border-radius:16px;padding:11px 16px;color:#396b7a;font:800 13px Poppins;cursor:pointer}
+#start{width:100%;margin-top:20px}
+#talk{display:none}#talk.is-visible{display:block}#choose.is-hidden{display:none}
+.actor-stage{height:260px;display:grid;place-items:center;position:relative}
+.demo-actor{width:min(260px,72vw);height:min(260px,72vw);display:block;position:relative;filter:drop-shadow(0 7px 18px #31a3bb40)}
+.demo-actor .bf-svg{width:100%;height:100%}
+.demo-actor[data-state=speaking] .bf-talk-mouth,.demo-actor[data-state=speaking] .pf-talk-mouth{opacity:1}
+.demo-actor[data-state=speaking] .bf-rest-mouth,.demo-actor[data-state=speaking] .pf-rest-mouth{opacity:0}
+.willi-stage{width:190px;height:190px;background:radial-gradient(circle at 30% 20%,#efffff,#85e1ec 54%,#1da7bf);border:6px solid white;border-radius:50%;box-shadow:0 5px 35px #43ccd459;display:grid;place-items:center}
+.willi-stage i{display:block;width:66px;height:66px;border:16px solid #b9f8fb;border-radius:50%}
+[data-phase=speaking] .willi-stage{animation:pulse 1s alternate infinite}
+@keyframes pulse{to{transform:scale(1.05);box-shadow:0 0 35px #17b4c9}}
+.time{font-size:35px;letter-spacing:1px;font-weight:900;color:#198c9b;text-align:center}
+#status{text-align:center;color:#60808c;font-size:13px;min-height:24px;margin:8px 0 16px}
+#log{max-height:165px;overflow:auto;display:flex;flex-direction:column;gap:6px;margin:18px 0}
+.entry{font-size:13px;padding:9px 11px;border-radius:13px;background:#f1f9fb}.entry.me{background:#fff1f5}.entry b{display:block;font-size:10px;color:#6c8b96}
+.small{font-size:11px;color:#778b96;line-height:1.6}
+#error{font-size:12px;color:#b03454;text-align:center;min-height:22px}
+#volumeBox{display:flex;align-items:center;justify-content:center;gap:12px;color:#597685;font-size:12px;font-weight:800;margin:12px 0}
+#volume{width:min(240px,55vw);accent-color:#1aa9b8}
+.anchor-question{max-width:560px;margin:6px auto 12px;text-align:center;color:#275f70;font-weight:800;font-size:clamp(16px,3.2vw,22px);line-height:1.4;min-height:42px}.lesson-focus{margin:0 auto 12px;padding:8px 12px;border-radius:12px;background:#eef9fb;color:#35727d;font-size:12px;text-align:center;max-width:560px}
+/* Keep the EXACT Free Talking speaking circle, SVG art and character animation.
+   Only the enclosing experimental layout is new. No replacement actor graphics. */
+#actorStage .free-talking-genius{width:100%;display:flex;align-items:center;justify-content:center}
+#actorStage #ftExtensionOriginalShell #ftSession{
+  width:100%!important;max-width:none!important;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  box-shadow:none!important;overflow:visible!important;display:flex!important;
+  align-items:center!important;justify-content:center!important
+}
+#actorStage #ftWilliVoice{padding:0!important;margin:0!important;min-height:0!important;
+  width:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  border:0!important;background:transparent!important;box-shadow:none!important}
+#actorStage #ftTurnCircle{pointer-events:none!important;cursor:default!important;
+  width:min(240px,56vw)!important;height:min(240px,56vw)!important}
+#actorStage #ftTurnCircle .bf-actor{width:100%!important;height:100%!important}
+#actorStage #ftTurnCircle:disabled{opacity:1!important;filter:none!important}
+#actorStage #ftSession[data-character="bunny-v3"] #ftTurnCircle,
+#actorStage #ftSession[data-character="pigfish"] #ftTurnCircle{
+  background:transparent!important;border-color:transparent!important;box-shadow:none!important;overflow:visible!important
+}
+#actorStage #ftSession[data-character="bunny-v3"] #ftTurnCircle > :not(.bf-actor),
+#actorStage #ftSession[data-character="pigfish"] #ftTurnCircle > :not(.bf-actor){display:none!important}
+#actorStage #ftTurnCircle .ft-circle-start{display:none!important}
+#actorStage #ftTurnCircle[data-phase="ai"] .ft-circle-ai{display:flex!important}
+#actorStage #ftTurnCircle[data-phase="student"] .ft-circle-ai{display:none!important}
+#actorStage #ftTurnCircle[data-phase="student"] .ft-circle-mic{display:flex!important}
+#demo{padding:0!important;overscroll-behavior:contain}
+#demo .wrap{padding:0 12px 190px}
+#demo .top{position:sticky;top:0;z-index:30;background:#f8fcfd;padding:calc(8px + env(safe-area-inset-top,0px)) 8px 10px!important;border-bottom:1px solid #d8eef1;box-shadow:0 3px 12px #1d66810b}
+#demo .top .back{flex:none}
+#demo #talk{margin-top:12px}
+#demo #talk .actor-stage{height:min(240px,32dvh)}
+#demo .control-dock{position:fixed;z-index:40;left:0;right:0;bottom:0;padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px));border-top:2px solid #caebee;background:#fffffffb;box-shadow:0 -9px 35px #153f621c;display:grid;gap:9px}
+#demo .control-dock .row{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+#demo .control-dock .row button{min-height:46px}
+#demo .control-dock #volumeBox{margin:0}
+#demo #micLevel{display:inline-block;min-width:140px;text-align:center;color:#447687;font-size:12px;font-weight:750}
+#demo #listenCheck{display:block;color:#447687;font-size:12px;min-height:19px;text-align:center}
+#demo #restart{border-color:#81d2da;background:#e6fbfd}
+#demo .top{position:sticky;top:0;z-index:25;background:#f8fcfdf2;padding:8px 0 14px;
+  border-radius:15px}
+
+@media(max-width:450px){.panel{padding:17px}.character{padding:8px 2px 12px}.chars{gap:7px}.actor-stage{height:220px}}
+/* Minimal full-screen conversation: no header, no stacked footer controls. */
+#demo{overflow:hidden!important;padding:0!important}
+#demo .wrap{max-width:none;width:100%;height:100dvh;padding:10px 10px calc(78px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column}
+#demo #talk{display:flex!important;flex:1;min-height:0;margin:0!important;padding:0!important;border-radius:23px;overflow:hidden;flex-direction:column;align-items:center;justify-content:center}
+#demo #talk .actor-stage{height:100%!important;min-height:0!important;width:100%;display:flex;align-items:center;justify-content:center;background:#e9fbfc;overflow:hidden}
+#demo #actorStage #ftTurnCircle{width:min(72vw,58dvh,440px)!important;height:min(72vw,58dvh,440px)!important}
+#demo #actorStage .free-talking-genius{height:100%;min-height:0}
+#demo #conversationDiagnostics> :not(#error){display:none!important}
+#demo #error{position:absolute;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:min(90vw,460px);z-index:41;color:#a52f52;background:#fff;box-shadow:0 3px 20px #173b5030;padding:7px 13px;border-radius:12px;font-size:12px;text-align:center;display:none}
+#demo #error:not(:empty){display:block}
+#demo .control-dock{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:9px 16px calc(9px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-evenly;align-items:center;gap:14px;background:white;border-top:1px solid #d6eaee;box-shadow:0 -3px 16px #143e5611}
+#demo .dock-icon{display:grid;place-items:center;position:relative;flex:0 0 auto;width:52px;height:52px;padding:12px;cursor:pointer;color:#278b97;border:2px solid #b7e3e8;border-radius:16px;background:#fff}
+#demo .dock-icon:disabled{opacity:.5}
+#demo .dock-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#demo #mute .mic-slash{display:none;position:absolute;inset:12px;width:25px;height:25px;stroke:#ce5079;stroke-width:2.4}
+#demo #mute[aria-pressed=true]{background:#fff1f5;border-color:#efb0c5}
+#demo #mute[aria-pressed=true] .mic-slash{display:block}
+#demo .volume-control{position:relative}
+#demo #volumeBox{position:absolute;bottom:calc(100% + 18px);left:50%;transform:translateX(-50%);width:76px;height:228px;padding:13px 12px 18px;background:white;border:2px solid #b7e3e8;border-radius:20px;box-shadow:0 6px 24px #183e5629;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin:0;color:#306978}
+#demo #volumeBox[hidden]{display:none!important}
+#demo #volumeNumber{font-size:12px;font-weight:800}
+#demo #volume{appearance:auto;width:36px!important;height:158px;min-height:0;writing-mode:vertical-lr;direction:rtl;accent-color:#17aebc;touch-action:none}
+#demo #volumeToggle[aria-expanded=true]{background:#ebfbfc}
+@media(max-width:450px){#demo .wrap{padding:7px 7px calc(77px + env(safe-area-inset-bottom,0px))}#demo #talk{padding:0!important}#demo #actorStage #ftTurnCircle{width:min(82vw,57dvh)!important;height:min(82vw,57dvh)!important}}
+/* Extension-only conversation layout. Never change the source Speaking app. */
+#demo .wrap{padding:8px 10px calc(78px + env(safe-area-inset-bottom,0px))!important}
+#demo #talk{justify-content:initial!important;display:flex!important;flex-direction:column!important;gap:0!important}
+#demo #talk .actor-stage{
+ flex:1 1 auto!important;min-height:0!important;height:auto!important;
+ overflow:hidden!important;position:relative!important;display:flex!important;
+ align-items:center!important;justify-content:center!important;
+ padding:2px 12px 0!important;
+}
+#demo #actorStage #ftTurnCircle{
+ width:min(67vw,42dvh,340px)!important;height:min(67vw,42dvh,340px)!important;
+ max-width:100%!important;max-height:100%!important;
+}
+#demo #actorStage .free-talking-genius{width:100%;height:100%;min-height:0!important;display:flex;align-items:center;justify-content:center}
+#demo .conversation-text{
+ width:100%;flex:0 0 auto;max-height:min(24dvh,210px);min-height:78px;
+ background:#fff;border-top:1px solid #d7edef;
+ padding:12px 14px 14px;overflow:hidden;display:flex;flex-direction:column;gap:7px;
+}
+#demo .conversation-text #anchorText{
+ display:block!important;flex:0 0 auto;min-height:0!important;margin:0!important;
+ font-size:clamp(13px,2.8vw,18px);line-height:1.4;font-weight:700;
+ color:#366a76;text-align:center;white-space:normal;
+ max-height:3em;overflow:auto;
+}
+#demo .conversation-text #log{
+ display:flex!important;flex:1 1 auto;min-height:0;max-height:100px;
+ overflow:auto;flex-direction:column;gap:5px;margin:0!important;
+ scrollbar-width:thin;overscroll-behavior:contain;
+}
+#demo .conversation-text #log .entry{
+ background:#eef9fa;border-radius:10px;max-width:100%;
+ padding:6px 10px!important;font-size:clamp(12px,2.5vw,14px);line-height:1.3;
+ overflow-wrap:anywhere;
+}
+#demo .conversation-text #log .entry.me{background:#fff2f7}
+#demo .conversation-text #log .entry b{font-size:10px}
+#demo #pauseResume[aria-pressed=true]{background:#e9f9fb;border-color:#70cbd6}
+#demo #pauseResume .resume-icon{display:none}
+#demo #pauseResume[aria-pressed=true] .pause-icon{display:none}
+#demo #pauseResume[aria-pressed=true] .resume-icon{display:block}
+#demo .control-dock{gap:10px!important;padding-inline:8px!important}
+#demo .dock-icon{width:49px!important;height:49px!important;border-radius:14px!important}
+#demo .dock-icon svg{width:23px!important;height:23px!important}
+@media(max-height:620px){
+ #demo .conversation-text{min-height:62px;max-height:28dvh;padding:5px 9px}
+ #demo #actorStage #ftTurnCircle{width:min(55vw,40dvh,280px)!important;height:min(55vw,40dvh,280px)!important}
+}
+
+/* Experimental conversation character stage: one positioning authority.
+   The stage is the containing block; inherited Speaking flex layouts are not. */
+#demo #talk .actor-stage{
+ position:relative!important;display:block!important;flex:1 1 auto!important;
+ width:100%!important;height:auto!important;min-height:0!important;
+ padding:0!important;overflow:hidden!important;
+ background:transparent!important;
+}
+#demo #actorStage #ftExtensionOriginalShell,
+#demo #actorStage #ftSession,
+#demo #actorStage #ftWilliVoice{
+ position:static!important;display:contents!important;transform:none!important;
+ margin:0!important;padding:0!important;min-height:0!important;
+}
+#demo #actorStage #ftTurnCircle{
+ position:absolute!important;top:49%!important;left:50%!important;
+ transform:translate(-50%,-50%)!important;
+ width:min(65vw,37dvh,325px)!important;
+ height:min(65vw,37dvh,325px)!important;
+ min-width:0!important;max-width:none!important;min-height:0!important;max-height:none!important;
+ padding:0!important;margin:0!important;
+ box-sizing:border-box!important;overflow:visible!important;
+}
+#demo #actorStage .ft-extension-avatar{
+ border:0!important;outline:0!important;box-shadow:none!important;
+ background:transparent!important;animation:none!important;
+ pointer-events:none!important;
+}
+#demo #actorStage .ft-extension-avatar::before,
+#demo #actorStage .ft-extension-avatar::after{
+ display:none!important;content:none!important;
+}
+#demo #actorStage .ft-extension-avatar>.ft-circle-ai,
+#demo #actorStage .ft-extension-avatar>.ft-circle-mic,
+#demo #actorStage .ft-extension-avatar>.ft-circle-thinking,
+#demo #actorStage .ft-extension-avatar>.ft-circle-glow{display:none!important}
+#demo #actorStage .ft-extension-avatar .bf-actor{
+ position:absolute!important;top:50%!important;left:50%!important;
+ width:100%!important;height:100%!important;
+ transform:translate(-50%,-50%)!important;
+}
+#demo #actorStage .ft-extension-avatar .bf-svg{width:100%!important;height:100%!important;overflow:visible!important}
+#demo #actorStage .ft-extension-willi-circle{
+ width:min(65vw,39dvh,340px)!important;height:min(65vw,39dvh,340px)!important;
+ background:#fff!important;border-radius:50%!important;
+}
+#demo #actorStage .ft-extension-willi-circle>.ft-circle-glow{display:block!important}
+#demo #actorStage .ft-extension-willi-circle>.ft-circle-ai,
+#demo #actorStage .ft-extension-willi-circle>.ft-circle-mic,
+#demo #actorStage .ft-extension-willi-circle>.ft-circle-thinking{display:none!important}
+#demo #actorStage .ft-extension-willi-circle[data-phase="ai"]>.ft-circle-ai{display:flex!important}
+#demo #actorStage .ft-extension-willi-circle[data-phase="student"]>.ft-circle-mic{display:flex!important}
+#demo #actorStage .ft-extension-willi-circle[data-phase="thinking"]>.ft-circle-thinking{display:flex!important}
+#demo .conversation-text{
+ position:relative!important;z-index:5!important;
+ width:100%!important;flex:0 0 auto!important;
+ min-height:105px!important;max-height:min(30dvh,245px)!important;
+ overflow:hidden!important;display:flex!important;flex-direction:column!important;
+}
+#demo .conversation-text #log{flex:1 1 auto!important;min-height:0!important;overflow:auto!important}
+@media(max-height:620px){
+ #demo #actorStage #ftTurnCircle{top:48%!important;width:min(63vw,31dvh,270px)!important;height:min(63vw,31dvh,270px)!important}
+ #demo .conversation-text{min-height:75px!important;max-height:28dvh!important}
+}
+
+/* Remove inherited recorder outlines/background boxes from animal characters.
+   These are wrappers only; the original character SVGs remain unchanged. */
+#demo #actorStage,
+#demo #actorStage #ftExtensionOriginalShell,
+#demo #actorStage #ftSession,
+#demo #actorStage #ftWilliVoice,
+#demo #actorStage .ft-extension-avatar,
+#demo #actorStage .ft-extension-avatar .bf-actor{
+ border:0!important;outline:0!important;box-shadow:none!important;
+ background:transparent!important;background-image:none!important;
+}
+#demo #actorStage .ft-extension-avatar{
+ filter:none!important;outline-offset:0!important;
+}
+#demo #actorStage .ft-extension-avatar:before,
+#demo #actorStage .ft-extension-avatar:after,
+#demo #actorStage .ft-extension-avatar .bf-actor:before,
+#demo #actorStage .ft-extension-avatar .bf-actor:after{
+ content:none!important;display:none!important;
+}
+#demo #actorStage .ft-extension-avatar .bf-actor{
+ filter:none!important;
+}
+/* AI Willi's existing round element is intentionally preserved. */
+#demo #actorStage .ft-extension-willi-circle{
+ background:#fff!important;border-radius:50%!important;
+}
+/* FINAL OVERRIDE: source Speaking CSS uses two IDs and !important for a cyan
+   border, white fill and outline. This extension-specific selector has higher
+   specificity and removes those recorder styles on animal portraits only. */
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar,
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar:hover,
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar:focus,
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar[data-phase]{
+ border:0!important;border-width:0!important;border-style:none!important;
+ outline:0!important;outline-width:0!important;outline-style:none!important;
+ outline-offset:0!important;box-shadow:none!important;
+ background:transparent!important;background-color:transparent!important;
+ background-image:none!important;border-radius:0!important;
+ -webkit-appearance:none!important;appearance:none!important;
+}
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar::before,
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-avatar::after{
+ content:none!important;display:none!important;border:0!important;outline:0!important;
+}
+
+#demo .control-dock .ft-time-boost{font-size:13px;font-weight:900;letter-spacing:-.04em;color:#167f8c;background:#e8fbfd;border-color:#50bdca;white-space:nowrap;padding:6px;width:52px;height:52px}
+#demo .control-dock .ft-time-boost[hidden]{display:none!important}
+#demo .control-dock .ft-time-boost:disabled{opacity:.42;background:#f5f7f8;color:#8ca4ac;border-color:#dce6e9}
+@media(max-width:470px){#demo .control-dock{gap:5px;justify-content:space-around;padding-left:5px;padding-right:5px}#demo .dock-icon,#demo .control-dock .ft-time-boost{width:46px;height:46px;border-radius:13px}#demo .dock-icon{padding:10px}}
+/* Eight-question ticker and independent soft countdown: experiment only. */
+#demo #talk{position:relative!important}
+#demo .topic-ticker{
+ flex:0 0 auto;position:relative;z-index:6;
+ display:flex;align-items:center;justify-content:space-between;
+ gap:12px;width:100%;background:transparent;
+ padding:9px 14px 3px;
+}
+#demo .topic-steps{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;flex:1;min-width:0}
+#demo .topic-step{
+ display:grid;place-items:center;height:28px;min-width:0;
+ border:1.5px solid #cbdfe2;background:#fff;
+ border-radius:9px;font-size:0;color:transparent;
+}
+#demo .topic-step.is-active{border:2px solid #21a7b5;background:#fff;color:transparent}
+#demo .topic-step.is-done{border-color:#21a7b5;background:#21a7b5;color:transparent}
+#demo .topic-step svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+#demo .topic-ticker{display:grid;grid-template-columns:1fr auto;column-gap:10px;row-gap:6px;align-items:center}
+#demo .topic-clock{display:contents}
+#demo .topic-time-rail{grid-column:1/-1;grid-row:2;height:6px;width:100%;background:#dbeef0;border-radius:10px;position:relative;overflow:hidden}
+#demo #topicTimeFill{height:100%;width:100%;background:#23a8b6;position:absolute;top:0;left:0;transition:width .12s linear;border-radius:10px}
+#demo #topicTimeValue{grid-column:2;grid-row:1;text-align:right;font:700 12px/1 system-ui,sans-serif;color:#286f7a;min-width:27px;font-variant-numeric:tabular-nums}
+#demo .topic-clock.is-ended #topicTimeFill{background:#e7a45c}
+@media(max-width:430px){
+ #demo .topic-ticker{gap:7px;padding:7px 9px 2px}
+ #demo .topic-steps{gap:3px}
+ #demo .topic-step{height:25px;border-radius:7px;font-size:11px}
+ #demo .topic-time-rail{height:6px}
+}
+
+/* Goodbye → celebration: fade the old scene, then reveal the same character
+   with a soft rise; award elements follow in a short stagger. */
+#demo #talk{transition:opacity .32s ease,transform .32s ease}
+#demo #talk.is-ending{opacity:0;transform:scale(.985);pointer-events:none}
+#demo #ftCelebration{opacity:0;transition:opacity .35s ease;pointer-events:none}
+#demo #ftCelebration.is-revealed{opacity:1;pointer-events:auto}
+#demo #ftCelebration #ftResultMascot{opacity:0;transform:translateY(28px) scale(.86);transition:opacity .45s ease .08s,transform .65s cubic-bezier(.2,1.2,.3,1) .08s}
+#demo #ftCelebration.is-revealed #ftResultMascot{opacity:1;transform:translateY(0) scale(1)}
+#demo #ftCelebration .ft-stars{opacity:0;transform:translateY(12px) scale(.9);transition:opacity .35s ease .3s,transform .45s cubic-bezier(.2,1.2,.3,1) .3s}
+#demo #ftCelebration.is-revealed .ft-stars{opacity:1;transform:translateY(0) scale(1)}
+#demo #ftCelebration .ft-score,#demo #ftCelebration .ft-actions{opacity:0;transform:translateY(10px);transition:opacity .35s ease .52s,transform .4s ease .52s}
+#demo #ftCelebration.is-revealed .ft-score,#demo #ftCelebration.is-revealed .ft-actions{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){
+ #demo #talk,#demo #ftCelebration,#demo #ftCelebration #ftResultMascot,#demo #ftCelebration .ft-stars,#demo #ftCelebration .ft-score,#demo #ftCelebration .ft-actions{transition:none!important;transform:none!important}
+}
+
+/* Extension-only beginner guide and conversation celebration */
+#demo .ft-layer[hidden]{display:none!important}
+#demo .ft-layer{position:fixed;inset:0;z-index:85;background:#f6fcfd;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:16px}
+#demo .ft-sheet{width:min(100%,560px);max-height:calc(100dvh - 32px);overflow:auto;border-radius:26px;background:#fff;border:1px solid #cfe6eb;box-shadow:0 15px 44px #164f6422;padding:clamp(18px,4vw,30px);color:#294b59}
+#demo .ft-sheet h2{margin:4px 0 10px;font-size:clamp(23px,5vw,30px);text-align:center;color:#286f7c}
+#demo .ft-sheet p{line-height:1.6;margin:8px 0;font-size:15px}
+#demo .ft-mini{font-size:12px!important;color:#668592;text-align:center}
+#demo .ft-steps{display:flex;justify-content:center;gap:8px;margin:12px 0}
+#demo .ft-steps span{width:9px;height:9px;border-radius:50%;background:#d4e9ed}
+#demo .ft-steps span.on{background:#1da6b5}
+#demo .ft-example{background:#f3fbfc;border:1px solid #d7edf0;border-radius:18px;padding:15px;margin:18px 0}
+#demo .ft-example .ft-bubble{border-radius:13px;padding:10px 12px;margin:9px 0;background:#e9f8fa;font-size:14px}
+#demo .ft-example .ft-bubble.child{background:#fff0f6}
+#demo .ft-sheet .ft-actions{display:flex;gap:10px;margin-top:18px}
+#demo .ft-sheet .ft-actions button{flex:1;min-height:50px;border:2px solid #b6e0e5;border-radius:15px;background:#fff;color:#207b87;font-weight:800;font-size:15px}
+#demo .ft-sheet .ft-actions button.primary{background:#dff8fb;border-color:#28a9b8}
+#demo .ft-guide-toggle{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:#526f7c}
+#demo .ft-guide-toggle input{width:19px;height:19px;accent-color:#24a7b5}
+#demo #ftHelpBtn{position:absolute;right:12px;top:68px;z-index:12;border:1px solid #b9dfe3;border-radius:50%;background:#fff;color:#247c89;font-weight:900;width:32px;height:32px}
+#demo #ftCelebration .ft-sheet{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;max-width:460px;min-height:min(70dvh,550px)}
+#demo #ftResultMascot{width:min(58vw,260px);height:min(58vw,260px);margin:8px auto;display:grid;place-items:center;overflow:visible}
+#demo #ftResultMascot svg{display:block;width:100%;height:100%;overflow:visible}
+#demo #ftResultMascot .bf-talk-mouth{display:none}
+#demo #ftCelebration .ft-actions{width:100%;margin-top:22px}
+#demo #ftCelebration .ft-score{font-size:clamp(28px,6vw,42px)}
+#demo .ft-stars{display:flex;justify-content:center;gap:6px;font-size:36px;margin:16px 0}
+#demo .ft-stars span{color:#d8e4e7}
+#demo .ft-stars span.earned{color:#ecb84e}
+#demo .ft-score{font-weight:900;font-size:36px;color:#1d93a2;text-align:center}
+#demo .ft-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:16px 0}
+#demo .ft-summary>div{background:#f2fafc;border-radius:16px;text-align:center;padding:14px;font-size:13px}
+#demo .ft-summary strong{display:block;font-size:23px;color:#246f7a}
+#demo #ftRewardDetail{font-size:13px;line-height:1.7;color:#5a7a85}
+#demo #ftBootSpinner{z-index:90;background:#f4fcfd}
+#demo .ft-loading-content{text-align:center;color:#287b88;font-weight:700}
+#demo .ft-loading-ring{width:56px;height:56px;margin:0 auto 14px;border:5px solid #d9f0f3;border-top-color:#21a7b5;border-radius:50%;animation:ftSpin .8s linear infinite}
+@keyframes ftSpin{to{transform:rotate(360deg)}}
+</style><style>
+#ftEnginePanel{position:fixed;z-index:1000;right:12px;top:12px;width:min(275px,calc(100vw - 24px));box-sizing:border-box;background:#fff;border:2px solid #63c4d2;border-radius:18px;padding:14px;box-shadow:0 10px 28px #133b4c30;color:#174451;font-family:system-ui,sans-serif}
+#ftEnginePanel[hidden]{display:none!important}
+#ftEnginePanel strong{display:block;font-size:15px;line-height:1.3;margin-bottom:7px}
+#ftEnginePanel label{display:block;font-size:12px;font-weight:800;margin:8px 0 5px}
+#ftEnginePanel select{box-sizing:border-box;width:100%;border:1.5px solid #8cd4de;border-radius:10px;background:white;color:#123a45;padding:10px 8px;font-size:14px}
+#ftEnginePanel p{font-size:11px;color:#51717a;line-height:1.4;margin:9px 0 0}
+#ftEnginePanel .ft-engine-tag{display:inline-block;font-size:10px;font-weight:900;background:#e2f7f9;color:#137587;padding:3px 7px;border-radius:8px;margin-bottom:5px}
+</style></head><body><aside id="ftEnginePanel" aria-label="AI conversation engine selector">
+ <span class="ft-engine-tag">HYBRID EXPERIMENT</span>
+ <strong>Free Talking — Model Lab</strong>
+ <label for="ftEngineSelect">Choose AI conversation engine</label>
+ <select id="ftEngineSelect">
+  <option value="gpt-6-luna" selected>GPT-6 Luna · Fast &amp; economical</option>
+  <option value="gpt-6.1-terra">GPT-6.1 Terra · Quality comparison</option>
+  <option value="gpt-5.4-mini">GPT-5.4 Mini · Alternative</option>
+  <option value="realtime">Original Realtime · Control</option>
+ </select>
+ <p>Choose before starting. Same textbooks, characters, question sequence and voices. Hybrid uses separate transcription; Realtime is the unchanged comparison engine.</p>
+</aside>
+<iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
+<div id="demo" hidden><section id="ftGuide" class="ft-layer" hidden role="dialog" aria-modal="true" aria-label="How to play Free Talking">
+ <div class="ft-sheet">
+  <div id="ftGuideSteps" class="ft-steps" aria-label="Help pages"></div>
+  <h2 id="ftGuideTitle">Let's Talk!</h2>
+  <p id="ftGuideBody"></p>
+  <div id="ftGuideExample" class="ft-example"></div>
+  <label class="ft-guide-toggle"><input id="ftNeverShowGuide" type="checkbox"> 다음부터 보지 않기 · Don't show again</label>
+  <div class="ft-actions"><button id="ftGuideBack" type="button">Back</button><button class="primary" id="ftGuideNext" type="button">Next</button></div>
+ </div>
+</section>
+<section id="ftCelebration" class="ft-layer" hidden role="dialog" aria-modal="true" aria-label="Conversation results">
+ <div class="ft-sheet">
+  <div id="ftResultMascot" aria-hidden="true"></div>
+  <div id="ftResultStars" class="ft-stars" aria-label="Stars earned"></div>
+  <div id="ftResultPoints" class="ft-score">+0 Points</div>
+  <div class="ft-actions"><button class="primary" id="ftFinishClose" type="button">Back to Units</button></div>
+ </div>
+</section>
+<section id="ftBootSpinner" class="ft-layer" hidden role="status" aria-label="Preparing your conversation">
+ <div class="ft-loading-content"><div class="ft-loading-ring" aria-hidden="true"></div><p>친구를 만나고 있어요…</p></div>
+</section>
+<main class="wrap">
+<div class="panel" id="talk">
+ <button id="ftHelpBtn" type="button" aria-label="How to earn points">?</button><div id="topicTicker" class="topic-ticker" aria-label="Question progress">
+  <div id="topicSteps" class="topic-steps" aria-label="Eight textbook questions"></div>
+  <div class="topic-clock">
+   <div class="topic-time-rail" aria-hidden="true"><div id="topicTimeFill"></div></div>
+   <output id="topicTimeValue" aria-label="Seconds remaining">30s</output>
+  </div>
+ </div>
+ <div id="actorStage" class="actor-stage" data-phase="ready"></div>
+ <div class="conversation-text" aria-label="Current conversation">
+  <p id="anchorText" class="anchor-question" aria-live="polite">Your first question will appear here.</p>
+  <div id="log" aria-live="polite"></div>
+ </div>
+ <div id="conversationDiagnostics" aria-live="polite">
+  <h1 id="heading" hidden></h1><p id="lesson" hidden></p>
+  <div id="clock" hidden></div>
+  <p id="status" hidden></p><p id="lessonFocus" hidden></p>
+  <div id="listenCheck" role="status" hidden></div><span id="micLevel" hidden></span>
+  <button id="restart" type="button" hidden disabled>Retry connection</button>
+  <button id="end" type="button" hidden>End conversation</button>
+  <button id="soundFallback" type="button" hidden>Use phone speaker</button>
+  <p id="error" role="alert"></p>
+ </div>
+</div>
+<div class="control-dock" aria-label="Conversation controls">
+ <button id="back" class="dock-icon" type="button" aria-label="Back to character selection" title="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+ <button id="mute" class="dock-icon" type="button" disabled aria-label="Mute microphone" title="Mute microphone" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg><svg class="mic-slash" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16"/></svg></button>
+ <button id="timeBoost" class="dock-icon ft-time-boost" type="button" hidden disabled aria-label="Add ten seconds to this question" title="+10 seconds (once per question)">+10s</button>
+  <button id="pauseResume" class="dock-icon" type="button" aria-label="Pause conversation" title="Pause conversation" aria-pressed="false">
+  <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+  <svg class="resume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>
+ </button>
+ <div class="volume-control">
+  <button id="volumeToggle" class="dock-icon" type="button" aria-label="Adjust AI voice volume" aria-controls="volumeBox" aria-expanded="false" title="Volume"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM16 9a5 5 0 0 1 0 6M19 6a9 9 0 0 1 0 12"/></svg></button>
+  <div id="volumeBox" hidden>
+   <output id="volumeNumber" for="volume">100%</output>
+   <input id="volume" type="range" min="0" max="100" value="100" step="5" aria-label="AI voice volume" orient="vertical">
+  </div>
+ </div>
+</div>
+</main></div>
+<script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
+<script type="module" src="./extension.js?v=20261110-hybrid-lab1"></script></body></html>
