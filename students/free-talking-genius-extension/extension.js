@@ -50,6 +50,33 @@ window.WillenaFreeTalkingUsage={
  getCurrent(){return ftUsage.current?{...ftUsage.current}:null}
 };
 
+
+// Owner diagnostics are hidden from normal students. Open this page with
+// ?usage=1 on the same browser/device to copy the previous session's figures.
+if(new URLSearchParams(location.search).get('usage')==='1'){
+ const button=document.createElement('button');
+ button.type='button';button.textContent='Copy API Usage Report';
+ button.setAttribute('aria-label','Copy Free Talking API token usage report');
+ button.style.cssText='position:fixed;right:12px;bottom:12px;z-index:9999;background:#fff;color:#176878;border:2px solid #22a6b5;border-radius:12px;padding:12px 16px;font:700 14px system-ui,sans-serif;box-shadow:0 3px 12px #0002';
+ document.body.append(button);
+ button.addEventListener('click',async()=>{
+  const report={app:'Free Talking Genius Live',reportCreatedAt:new Date().toISOString(),sessions:window.WillenaFreeTalkingUsage.getSessions(),current:window.WillenaFreeTalkingUsage.getCurrent()};
+  const content=JSON.stringify(report,null,2);
+  try{
+   await navigator.clipboard.writeText(content);
+   button.textContent=report.sessions.length?'Copied '+report.sessions.length+' session(s)':'No saved sessions — copied empty report';
+  }catch{
+   const blob=new Blob([content],{type:'application/json'});
+   const url=URL.createObjectURL(blob);
+   const download=document.createElement('a');download.href=url;download.download='free-talking-api-usage.json';
+   document.body.append(download);download.click();download.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),3000);
+   button.textContent='Report downloaded';
+  }
+  setTimeout(()=>button.textContent='Copy API Usage Report',4000);
+ });
+}
+
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
 function validJwt(token){
