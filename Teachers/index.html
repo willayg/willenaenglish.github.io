@@ -519,9 +519,9 @@ try{
   <audio id="sttPlayback" controls hidden></audio>
   <label class="stt-lab-reference">What did you actually say? <small>Optional: type the expected words to measure word error rate.</small><textarea id="sttReference" class="control" rows="2" placeholder="For example: I walk around Eunhaeng-dong with my friends."></textarea></label>
   <div id="sttResults" class="stt-lab-results">
-    <article class="stt-engine" data-stt-engine="whisper-1"><div class="stt-engine-top"><strong>Whisper 1</strong><span class="stt-engine-status">Not tested</span></div><p class="stt-engine-transcript">—</p><small class="stt-engine-metrics"></small></article>
-    <article class="stt-engine" data-stt-engine="gpt-4o-mini-transcribe"><div class="stt-engine-top"><strong>GPT-4o Mini Transcribe</strong><span class="stt-engine-status">Not tested</span></div><p class="stt-engine-transcript">—</p><small class="stt-engine-metrics"></small></article>
-    <article class="stt-engine" data-stt-engine="gpt-4o-transcribe"><div class="stt-engine-top"><strong>GPT-4o Transcribe</strong><span class="stt-engine-status">Not tested</span></div><p class="stt-engine-transcript">—</p><small class="stt-engine-metrics"></small></article>
+    <article class="stt-engine" data-stt-engine="whisper-v3-turbo"><div class="stt-engine-top"><strong>Whisper Large V3 Turbo</strong><span class="stt-engine-status">Not tested</span></div><p class="stt-engine-transcript">—</p><small class="stt-engine-metrics"></small></article>
+    <article class="stt-engine" data-stt-engine="whisper-standard"><div class="stt-engine-top"><strong>Whisper Standard</strong><span class="stt-engine-status">Not tested</span></div><p class="stt-engine-transcript">—</p><small class="stt-engine-metrics"></small></article>
+    <article class="stt-engine" data-stt-engine="whisper-tiny-en"><div class="stt-engine-top"><strong>Whisper Tiny English</strong><span class="stt-engine-status">Not tested</span></div><p class="stt-engine-transcript">—</p><small class="stt-engine-metrics"></small></article>
     <article class="stt-engine" data-stt-engine="browser"><div class="stt-engine-top"><strong>Chrome Speech Recognition</strong><span class="stt-engine-status">Not tested</span></div><p class="stt-engine-transcript">—</p><small class="stt-engine-metrics"></small></article>
   </div>
   <div class="stt-lab-foot"><p><strong>Fairness:</strong> The three cloud recognizers receive the exact same recording. Chrome recognition listens live, so its timing and audio capture aren't perfectly comparable. Word error rate (WER) is lower when recognition is better; latency does not measure accuracy.</p><button type="button" id="sttCopy" class="control" disabled>Copy results</button></div>
@@ -1667,7 +1667,7 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
  const start=$('#sttStart'),stop=$('#sttStop'),run=$('#sttRun'),clear=$('#sttClear'),copy=$('#sttCopy');
  const message=$('#sttMessage'),playback=$('#sttPlayback'),clock=$('#sttClock'),reference=$('#sttReference');
  let stream=null,recorder=null,chunks=[],audio=null,audioUrl='',startedAt=0,clockTimer=null,limitTimer=null,browserRecognition=null,browserText='',browserStart=0,browserLatency=0,results=null,working=false;
- const names={'whisper-1':'Whisper 1','gpt-4o-mini-transcribe':'GPT-4o Mini Transcribe','gpt-4o-transcribe':'GPT-4o Transcribe',browser:'Chrome Speech Recognition'};
+ const names={'whisper-v3-turbo':'Whisper Large V3 Turbo','whisper-standard':'Whisper Standard','whisper-tiny-en':'Whisper Tiny English',browser:'Chrome Speech Recognition'};
  const formatClock=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
  const status=t=>{message.textContent=t};
  const setEngine=(id,state,transcript,metrics)=>{
@@ -1749,20 +1749,21 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
  run.onclick=async()=>{
   if(!audio||working)return;
   working=true;run.disabled=true;start.disabled=true;stop.disabled=true;
-  const models=['whisper-1','gpt-4o-mini-transcribe','gpt-4o-transcribe'];
+  const models=['whisper-v3-turbo','whisper-standard','whisper-tiny-en'];
   models.forEach(id=>setEngine(id,'loading','Sending identical audio…',''));
-  status('Comparing STT engines. This makes three transcription requests and may incur a small API cost.');
+  status('Comparing STT engines. This compares three Cloudflare-hosted Whisper models using one recording.');
   try{
    if(audio.size>2700000)throw Error('Recording is too large. Please record a shorter clip.');
    const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token');
    if(!token)throw Error('Teacher login is not available. Sign in again.');
    const payload={audio:await toBase64(audio),mime:audio.type||'audio/webm'};
-   const response=await fetch('https://willenaenglish.netlify.app/.netlify/functions/analyze-sentence?mode=stt-lab',{
+   const response=await fetch('/api/analyze-sentence?mode=stt-lab',{
     method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
     body:JSON.stringify(payload),cache:'no-store'
    });
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw Error(data.error||'STT comparison service returned '+response.status);
+   if(!Array.isArray(data.results)||data.results.length!==3)throw Error('STT server returned an incomplete comparison.');
    for(const result of data.results||[])results[result.model]=result;
    refreshMetrics();copy.disabled=false;
    status('Comparison complete. Add or edit the expected transcript to calculate word error rate.');
