@@ -1747,7 +1747,7 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
        setEngine('browser',browserText?'ok':'error',browserText||'No speech was recognized.',
          browserText?'Chrome live result':'Chrome returned no transcript. Retry with Chrome microphone test.');
       }
-      results={...(results||{}),browser:{transcript:browserText,error:browserError?('Chrome: '+browserError):undefined,latency_ms:browserLatency}};
+      results={...(results||{}),browser:{transcript:browserText,error:browserError?('Chrome: '+browserError):!browserText?'No speech was recognized.':undefined,latency_ms:browserLatency}};
       refreshMetrics();if(Object.keys(results).length)copy.disabled=false;
     };
     browserStart=performance.now();
