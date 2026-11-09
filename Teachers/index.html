@@ -159,7 +159,11 @@ try{
 #view-students .roster-workspace-heading p{font-size:12px;margin:0;color:#6f8891}
 #view-students .roster-readonly-note{background:#eff8fa;color:#227c87;border-radius:20px;padding:7px 10px;font-size:11px;font-weight:650;white-space:nowrap}
 #view-students #studentList.student-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));align-items:stretch;gap:13px;border:0;padding:0;max-height:none;overflow:visible}
-#view-students .roster-student-card{background:#fff;border:1px solid #d8e5e9;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:13px;min-height:235px;cursor:pointer;transition:border-color .14s,box-shadow .14s,transform .14s}
+#view-students .roster-student-card{background:#fff;border:1px solid #d8e5e9;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:13px;min-width:0;min-height:235px;cursor:pointer;transition:border-color .14s,box-shadow .14s,transform .14s}
+#view-students .roster-student-card>.roster-book{width:100%;min-width:0}
+#view-students .roster-student-card>.roster-card-actions{width:100%;min-width:0}
+#view-students .roster-book .roster-app-row{min-width:0}
+#view-students .roster-card-actions button{flex:1 1 175px;min-width:0}
 #view-students .roster-student-card:hover{border-color:#6bc6cf;box-shadow:0 6px 20px rgba(20,86,99,.08);transform:translateY(-1px)}
 #view-students .roster-student-card:focus-visible{outline:3px solid #4cbfc9;outline-offset:2px}
 #view-students .roster-student-card.is-complete{background:#FFF8E6;border-color:#E9CD79}
@@ -883,13 +887,13 @@ function renderStudents(){
   const freeWriting=ready?rosterCurriculum.writingEntries.filter(x=>String(x.student_id)===id):[];
   const submitted=freeWriting.reduce((n,x)=>n+Number(x.submitted||0),0),drafts=freeWriting.reduce((n,x)=>n+Number(x.drafts||0),0);
   if(submitted||drafts)extras.push('Writing Genius · '+submitted+' submitted · '+drafts+' drafts');
-  return '<article class="roster-student-card roster-row" data-id="'+esc(id)+'" role="button" tabindex="0" aria-label="View '+esc(name)+' student details">'+
+  return '<article class="roster-student-card" data-id="'+esc(id)+'" role="button" tabindex="0" aria-label="View '+esc(name)+' student details">'+
    '<div class="roster-student-card-head"><div class="roster-student-identity"><div class="roster-student-avatar">'+esc(initials)+'</div><div><div class="roster-student-name">'+esc(name)+'</div><div class="roster-student-ko">'+esc(secondary)+'</div></div></div>'+
    '<span class="roster-student-badge">'+(ready?assigned.length+' books':'Loading')+'</span></div>'+books+
    (extras.length?'<div class="roster-specials">'+extras.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>':'')+
    '<div class="roster-card-actions"><button type="button" data-rs-assignments="'+esc(id)+'">Assignments · Current / History</button><button type="button" data-rs-detail="'+esc(id)+'">Full student details</button></div></article>';
  }).join('');
- $$('.roster-row').forEach(row=>{row.onclick=e=>{if(e.target.closest('button'))return;openStudent(row.dataset.id)};row.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openStudent(row.dataset.id)}}});
+ $('#studentList .roster-student-card').forEach(row=>{row.onclick=e=>{if(e.target.closest('button'))return;openStudent(row.dataset.id)};row.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openStudent(row.dataset.id)}}});
  $$('[data-rs-assignments]').forEach(b=>b.onclick=e=>{e.stopPropagation();rsOpenAssignments(b.dataset.rsAssignments)});
  $$('[data-rs-detail]').forEach(b=>b.onclick=e=>{e.stopPropagation();openStudent(b.dataset.rsDetail)});
 }
