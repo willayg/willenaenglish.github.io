@@ -354,6 +354,7 @@ function editAssignment(id){
  modal.showModal();
 }
 window.addEventListener('ua:grammar-mounted',event=>{
+ if(event.detail?.fromCurriculum)store.path='books';
  store.sub=event.detail?.sub==='create'?'create':'manage';void show();
 });
 })();
