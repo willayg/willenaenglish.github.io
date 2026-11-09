@@ -1736,7 +1736,7 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
    chunks=[];audio=null;results=null;copy.disabled=true;run.disabled=true;stop.disabled=false;start.disabled=true;
    Object.keys(names).forEach(id=>setEngine(id,'idle','',''));
    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
-   recorder.onstop=finishCapture;recorder.onerror=()=>status('Recording failed. Please retry.');
+   recorder.onstop=finishCapture;recorder.onerror=()=>{status('Recording failed. Please retry.');if(recorder.state==='recording')recorder.stop()};
    startedAt=performance.now();recorder.start(250);browserBegin();
    clockTimer=setInterval(()=>{clock.textContent=formatClock(Math.floor((performance.now()-startedAt)/1000))},200);
    limitTimer=setTimeout(()=>{if(recorder?.state==='recording')recorder.stop()},20000);
@@ -1744,7 +1744,7 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
   }catch(e){stream?.getTracks().forEach(t=>t.stop());start.disabled=false;stop.disabled=true;status('Microphone unavailable: '+String(e.message||e))}
  };
  stop.onclick=()=>{if(recorder?.state==='recording')recorder.stop()};
- clear.onclick=()=>{if(working)return;if(recorder?.state==='recording')recorder.stop();audio=null;chunks=[];results=null;run.disabled=true;copy.disabled=true;playback.hidden=true;playback.removeAttribute('src');if(audioUrl)URL.revokeObjectURL(audioUrl);audioUrl='';clock.textContent='00:00';reference.value='';Object.keys(names).forEach(id=>setEngine(id,'idle','',''));status('Cleared. Ready for a new recording.');};
+ clear.onclick=()=>{if(working||recorder?.state==='recording'){status('Stop the recording before clearing.');return}audio=null;chunks=[];results=null;run.disabled=true;copy.disabled=true;playback.hidden=true;playback.removeAttribute('src');if(audioUrl)URL.revokeObjectURL(audioUrl);audioUrl='';clock.textContent='00:00';reference.value='';Object.keys(names).forEach(id=>setEngine(id,'idle','',''));status('Cleared. Ready for a new recording.');};
  const toBase64=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');reader.onerror=()=>reject(Error('Could not read the recording'));reader.readAsDataURL(blob)});
  run.onclick=async()=>{
   if(!audio||working)return;
