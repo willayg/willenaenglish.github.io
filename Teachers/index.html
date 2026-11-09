@@ -1762,12 +1762,22 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
     body:JSON.stringify(payload),cache:'no-store'
    });
    const data=await response.json().catch(()=>({}));
-   if(!response.ok)throw Error(data.error||'STT comparison service returned '+response.status);
+   if(!response.ok){
+    if(response.status===503&&/Workers AI binding/i.test(String(data.error||''))){
+      const e=new Error('Workers AI is not connected to the Teachers Pages project. In Cloudflare: Workers & Pages → this project → Settings → Bindings → Add → Workers AI, name AI, then redeploy.');
+      e.code='AI_BINDING_MISSING';throw e;
+    }
+    throw Error(data.error||'STT comparison service returned '+response.status);
+   }
    if(!Array.isArray(data.results)||data.results.length!==3)throw Error('STT server returned an incomplete comparison.');
    for(const result of data.results||[])results[result.model]=result;
    refreshMetrics();copy.disabled=false;
    status('Comparison complete. Add or edit the expected transcript to calculate word error rate.');
-  }catch(e){models.forEach(id=>setEngine(id,'error',String(e.message||e),'The STT service may not yet be deployed.'));status('STT comparison could not run: '+String(e.message||e))}
+  }catch(e){
+   const setup=e.code==='AI_BINDING_MISSING';
+   models.forEach(id=>setEngine(id,setup?'idle':'error',setup?'Awaiting Workers AI binding':String(e.message||e),setup?'Model not run':'Request failed'));
+   status(setup?String(e.message):'STT comparison could not run: '+String(e.message||e));
+  }
   finally{working=false;run.disabled=false;start.disabled=false}
  };
  reference.addEventListener('input',refreshMetrics);
