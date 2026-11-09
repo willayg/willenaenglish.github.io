@@ -512,7 +512,7 @@ try{
  </div>
  <section class="panel stt-lab" id="sttLab">
   <div class="stt-lab-head"><div><span class="stt-lab-eyebrow">TEACHER UTILITIES · SPEECH TESTING</span><h2>STT Testing Lab</h2>
-  <p>Record once, send the identical audio to three speech recognizers, and compare what they hear. No recordings are saved to Willena.</p></div><span class="stt-lab-pill">Staff only</span></div>
+  <p>Record once, then compare three cloud transcription engines using the same audio. Browser recognition can be tested independently. No recordings are saved to Willena.</p></div><span class="stt-lab-pill">Staff only</span></div>
   <div class="stt-lab-controls"><button type="button" id="sttStart" class="control ua-primary">Start recording</button><button type="button" id="sttStop" class="control" disabled>Stop</button><button type="button" id="sttRun" class="control" disabled>Compare STT</button><button type="button" id="sttClear" class="control">Clear</button><button type="button" id="sttBrowserStart" class="control">Test Chrome microphone</button><button type="button" id="sttBrowserStop" class="control" disabled>Stop Chrome</button>
   <span id="sttClock" class="stt-lab-clock">00:00</span></div>
   <p id="sttMessage" class="stt-lab-message" role="status">Use Chrome on your phone or computer. Allow microphone access when prompted. Maximum 20 seconds per sample.</p>
@@ -1797,7 +1797,7 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
   working=true;run.disabled=true;start.disabled=true;stop.disabled=true;
   const models=['whisper-v3-turbo','whisper-standard','whisper-tiny-en'];
   models.forEach(id=>setEngine(id,'loading','Sending identical audio…',''));
-  status('Comparing STT engines. This compares three Cloudflare-hosted Whisper models using one recording.');
+  status('Comparing three STT engines using one recording. The server will choose an available transcription backend.');
   try{
    if(audio.size>2700000)throw Error('Recording is too large. Please record a shorter clip.');
    const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token');
@@ -1820,9 +1820,17 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
     throw Error(data.error||'STT comparison service returned '+response.status);
    }
    if(!Array.isArray(data.results)||data.results.length!==3)throw Error('STT server returned an incomplete comparison.');
-   for(const result of data.results||[])results[result.model]=result;
+   for(const result of data.results||[]){
+     if(result.engine_name){
+       names[result.model]=String(result.engine_name);
+       const heading=lab.querySelector('[data-stt-engine="'+result.model+'"] .stt-engine-top strong');
+       if(heading)heading.textContent=result.engine_name;
+     }
+     results[result.model]=result;
+   }
    refreshMetrics();copy.disabled=false;
-   status('Comparison complete. Add or edit the expected transcript to calculate word error rate.');
+   const successes=data.results.filter(x=>!x.error&&String(x.transcript||'').trim()).length;
+   status(successes?'Comparison received '+successes+' transcript'+(successes===1?'':'s')+'. Add the expected text to measure accuracy.':'Transcription services responded, but none produced a transcript. Check individual engine errors.');
   }catch(e){
    const setup=e.code==='AI_BINDING_MISSING';
    models.forEach(id=>setEngine(id,setup?'idle':'error',setup?'Awaiting Workers AI binding':String(e.message||e),setup?'Model not run':'Request failed'));
