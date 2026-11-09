@@ -176,6 +176,14 @@ try{
 .cc-student-row.cc-complete{background:#e5fafd;border-color:#abe9ef}
 .cc-student-row.cc-in-progress{background:#fff3f8;border-color:#efcfde}
 .cc-student-row.cc-not-started{background:#fff;border-color:#e2e9eb}
+.cc-skill-list{display:grid;gap:9px;margin:5px 0}
+.cc-skill-item{display:grid;grid-template-columns:minmax(75px,1fr) minmax(85px,1.35fr) 38px;align-items:center;gap:8px}
+.cc-skill-name{font-size:11px;font-weight:650;color:#405c65;line-height:1.2}
+.cc-skill-track{height:9px;background:#e4eef0;border:1px solid #d8e4e7;border-radius:12px;overflow:hidden}
+.cc-skill-track i{display:block;height:100%;background:#29b8c5;border-radius:11px}
+.cc-skill-value{font-size:11px;font-weight:750;color:#2e7580;text-align:right}
+.cc-skill-unknown{font-size:11px;color:#7b8f98}
+.cc-skill-summary{font-size:11px;font-weight:700;color:#4b727e}
 .cc-open,.cc-btn{border:1px solid #a7dbe0;border-radius:10px;background:white;color:#16808c;cursor:pointer;font:inherit;font-size:12px;font-weight:750;padding:10px 13px}
 .cc-open{align-self:flex-start;margin-top:auto}.cc-open:hover,.cc-btn:hover{background:#edfafb}
 .cc-detail-top{justify-content:flex-start;margin:10px 0 23px}.cc-detail-top h2{font-size:25px}.cc-detail-top p,.cc-progress-heading p,.cc-drill-head p{margin:4px 0 0;color:#748895;font-size:13px}
@@ -819,7 +827,7 @@ async function openStudent(id){window.rosterDrawerStudent=String(id);const base=
 /* Class Curriculum — read from staff-scoped operations RPC and shared content catalog. */
 const curriculum={
  data:null, selectedClass:'', selectedBook:'', selectedUnit:'', selectedSkill:'', unitCache:new Map(),
- pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[]
+ pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[], skillDetail:new Map()
 };
 const ccHost=()=>document.getElementById('classGrid');
 const ccOp='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
@@ -977,7 +985,7 @@ function ccRenderDetail(){
  host.querySelector('[data-cc-action="back"]').onclick=()=>{curriculum.selectedClass='';curriculum.selectedBook='';ccRenderOverview()};
  host.querySelector('[data-cc-action="students"]').onclick=()=>openClassFromOverview(c.name,30);
  host.querySelectorAll('[data-cc-book]').forEach(b=>b.onclick=()=>{curriculum.selectedBook=b.dataset.ccBook;curriculum.selectedUnit='';curriculum.selectedSkill='';ccRenderDetail()});
- host.querySelectorAll('[data-cc-unit]').forEach(b=>b.onclick=async()=>{curriculum.selectedUnit=b.dataset.ccUnit;curriculum.selectedSkill=b.dataset.ccSkill;const selectedBook=book,selectedUnit=units.find(u=>u.id===curriculum.selectedUnit);const selectedClass=c.name;ccRenderDetail();host.querySelector('.cc-drilldown')?.scrollIntoView({behavior:'smooth',block:'nearest'});if(curriculum.selectedSkill==='puzzles'&&selectedUnit){try{await ccLoadPuzzleDetail(selectedBook,selectedUnit);if(curriculum.selectedClass===selectedClass&&curriculum.selectedBook===selectedBook.id&&curriculum.selectedUnit===selectedUnit.id&&curriculum.selectedSkill==='puzzles')ccRenderDetail()}catch(e){console.warn('[Class Curriculum] Puzzle detail:',e);}}});
+ host.querySelectorAll('[data-cc-unit]').forEach(b=>b.onclick=async()=>{curriculum.selectedUnit=b.dataset.ccUnit;curriculum.selectedSkill=b.dataset.ccSkill;const selectedBook=book,selectedUnit=units.find(u=>u.id===curriculum.selectedUnit);const selectedClass=c.name;ccRenderDetail();host.querySelector('.cc-drilldown')?.scrollIntoView({behavior:'smooth',block:'nearest'});if(selectedUnit){try{if(curriculum.selectedSkill==='puzzles')await ccLoadPuzzleDetail(selectedBook,selectedUnit);else await ccLoadSkillDetail(selectedBook,selectedUnit);if(curriculum.selectedClass===selectedClass&&curriculum.selectedBook===selectedBook.id&&curriculum.selectedUnit===selectedUnit.id)ccRenderDetail()}catch(e){console.warn('[Class Curriculum] Skill detail:',e);}}});
  const taught=host.querySelector('#ccTaught');
  if(taught){taught.onchange=async()=>{const before=book.current_unit;const val=taught.value||null;taught.disabled=true;
   try{await ccRpc('teacher_curriculum_set_unit_v1',{p_assignment_id:book.id,p_unit:val});book.current_unit=val;ccRenderDetail()}
@@ -999,49 +1007,92 @@ function ccActivityTime(value){
  const d=new Date(value);
  return Number.isFinite(d.getTime())?d.toLocaleString('en-GB',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
 }
+const ccSkillNames={vocabulary:'Vocabulary',spelling_coach:'Spelling Coach',spelling_test:'Spelling Test',speaking:'Speaking',sentence_coach:'Coach',sentence_unscramble:'Unscramble',sentence_speaking:'Speaking',grammar:'Grammar',conversation:'Free Talking',writing:'Writing'};
+const ccSkillConfig={
+ word:['vocabulary','spelling_coach','spelling_test','speaking'],
+ sentence:['sentence_coach','sentence_unscramble','sentence_speaking'],
+ grammar:['grammar'],talking:['conversation'],writing:['writing']
+};
+function ccSkillKey(book,unit){return [curriculum.selectedClass,book.book_id,unit.id].join(':')}
+async function ccLoadSkillDetail(book,unit){
+ const key=ccSkillKey(book,unit);
+ if(curriculum.skillDetail.has(key))return;
+ // Read the same curriculum catalog that supplies the unit labels.
+ // Targets are distinct IDs, never question attempts.
+ const base=ccCatalog;
+ async function list(target,field){
+  const url=base+target+'?select='+field+'&unit_id=eq.'+encodeURIComponent(unit.id)+(target==='unit_vocab_targets'?'&active=eq.true':'')+'&limit=2000';
+  const response=await fetch(url,{headers:{apikey:ccCatalogKey,Authorization:'Bearer '+ccCatalogKey},cache:'no-store'});
+  if(!response.ok)throw Error('Catalog target lookup failed ('+response.status+')');
+  const values=await response.json();
+  return new Set(values.map(v=>v[field]).filter(Boolean)).size;
+ }
+ const [rows,vocabTotal,sentenceTotal]=await Promise.all([
+  ccRpc('teacher_curriculum_skill_progress_v1',{p_class:curriculum.selectedClass,p_book_id:book.book_id,p_unit_id:unit.id}),
+  list('unit_vocab_targets','lexical_entry_id').catch(e=>{console.warn('[Classes] Vocabulary targets',e.message);return null}),
+  list('source_content_occurrences','sentence_id').catch(e=>{console.warn('[Classes] Sentence targets',e.message);return null})
+ ]);
+ curriculum.skillDetail.set(key,{rows:Array.isArray(rows)?rows:[],vocabTotal,sentenceTotal});
+}
+function ccSkillBar(name,passed,total,started){
+ if(!(Number.isInteger(total)&&total>0)){
+  return '<div class="cc-skill-item"><span class="cc-skill-name">'+ccEscape(name)+'</span><span class="cc-skill-unknown">'+(started?'In progress':'Not started')+'</span><span class="cc-skill-value">—</span></div>';
+ }
+ const safe=Math.max(0,Math.min(total,Number(passed)||0));
+ const pct=Math.round(100*safe/total);
+ return '<div class="cc-skill-item"><span class="cc-skill-name">'+ccEscape(name)+'</span><div class="cc-skill-track" role="progressbar" aria-label="'+ccEscape(name)+'" aria-valuenow="'+pct+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pct+'%"></i></div><span class="cc-skill-value">'+pct+'%</span></div>';
+}
 function ccRenderStudentDrilldown(book,unit,group){
  if(!group)return '';
- const d=ccSkillData(book,unit,group);
- const students=ccClassStudents(curriculum.selectedClass);
+ const d=ccSkillData(book,unit,group),students=ccClassStudents(curriculum.selectedClass);
  const puzzleRecords=curriculum.puzzleDetail.get(ccPuzzleCacheKey(book,unit));
  const puzzleByStudent=new Map((puzzleRecords||[]).map(r=>[String(r.student_id),r]));
- return '<section class="cc-drilldown"><div class="cc-drill-head"><div><h3>Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name)+'</h3><p>'+d.touched.size+' of '+students.length+' students have recorded practice · '+(group.key==='puzzles'?'Puzzle completion is based on 5 different game types':'Recorded practice, not a test average')+'</p></div><button type="button" class="cc-btn cc-primary" data-cc-mission="1">Assign mission →</button></div>'+
+ const details=curriculum.skillDetail.get(ccSkillKey(book,unit));
+ const detailMap=new Map((details?.rows||[]).map(r=>[String(r.student_id),r]));
+ return '<section class="cc-drilldown"><div class="cc-drill-head"><div><h3>Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name)+'</h3><p>Unit progress by skill · Correctly completed items, not attempts</p></div><button type="button" class="cc-btn cc-primary" data-cc-mission="1">Assign mission →</button></div>'+
  '<div class="cc-student-grid">'+students.map(student=>{
- const rows=d.rows.filter(r=>String(r.student_id)===String(student.id));
- const hasPractice=rows.some(r=>Number(r.attempts)>0||Number(r.attempted_content_count)>0);
- const name=ccStudentLabel(student,students);
- const base='<div class="cc-student-top"><strong>'+name+'</strong>';
- const subtitle='<div class="cc-unit-subtitle">Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name)+'</div>';
- if(group.key==='puzzles'){
-  const record=puzzleByStudent.get(String(student.id));
-  if(!puzzleRecords)return '<div class="cc-student-row cc-not-started">'+base+'<span class="cc-percent-muted">Loading…</span></div>'+subtitle+'</div>';
-  const modes=Array.isArray(record?.modes)?record.modes.filter(mode=>ccPuzzleModeNames[mode]):[];
-  const done=modes.length,percent=Math.round(100*done/5);
-  const last=ccActivityTime(record?.last_at||rows.map(r=>r.updated_at).sort().at(-1));
-  const details=done?modes.map(m=>ccPuzzleModeNames[m]).join(', '):hasPractice?'Practice recorded, no finished game yet':'No recorded practice';
-  return '<div class="cc-student-row cc-'+(percent>90?'complete':done||hasPractice?'in-progress':'not-started')+'">'+base+'<span class="'+(done?'cc-percent':'cc-percent-muted')+'">'+(done?percent+'% complete':'Not started')+'</span></div>'+subtitle+
-   '<div class="cc-student-progress" role="progressbar" aria-label="Puzzle types completed" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="5"><i style="width:'+percent+'%"></i></div>'+
-   '<div class="cc-student-details">'+ccEscape(done+' of 5 game types · '+Number(record?.sessions||0)+' completed session(s)')+'</div>'+
-   '<div class="cc-student-details">'+ccEscape(details)+(last?' · Last '+ccEscape(last):'')+'</div></div>';
- }
- const count=rows.reduce((sum,r)=>sum+Number(r.attempts||0),0);
- const tried=rows.reduce((sum,r)=>sum+Number(r.attempted_content_count||0),0);
- const mastered=rows.reduce((sum,r)=>sum+Number(r.mastered_content_count||0),0);
- const last=ccActivityTime(rows.map(r=>r.updated_at).filter(Boolean).sort().at(-1));
- const skills=rows.filter(r=>Number(r.attempts)>0).map(r=>r.skill.replaceAll('_',' '));
- return '<div class="cc-student-row cc-'+(count?'in-progress':'not-started')+'">'+base+'<span class="cc-percent-muted">'+(count?'In progress':'Not started')+'</span></div>'+subtitle+
-  '<div class="cc-student-details">'+(count?ccEscape('Unit in progress · '+tried+' items explored'):'Unit not started')+'</div>'+
-  (skills.length?'<div class="cc-student-details">'+ccEscape([...new Set(skills)].join(', '))+'</div>':'')+
-  (last?'<div class="cc-student-details">Last '+ccEscape(last)+'</div>':'')+'</div>';
- }).join('')+'</div>'+
- '<p class="cc-helper">'+(group.key==='puzzles'?'Completion = distinct puzzle game types finished (Word Search, Crossword, Boggle, Mix & Match, Wordle). Repeating the same game does not increase the percentage. ':'')+'Use Assign Mission to open the existing assignment workspace; no mission is created until confirmed.</p></section>';
+  const rows=d.rows.filter(r=>String(r.student_id)===String(student.id));
+  const started=rows.some(r=>Number(r.attempts)>0||Number(r.attempted_content_count)>0);
+  const label=ccStudentLabel(student,students);
+  const subtitle='<div class="cc-unit-subtitle">Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name)+'</div>';
+  const first='<div class="cc-student-top"><strong>'+label+'</strong>';
+  const last=ccActivityTime(rows.map(r=>r.updated_at).filter(Boolean).sort().at(-1));
+  if(group.key==='puzzles'){
+   const p=puzzleByStudent.get(String(student.id));
+   if(!puzzleRecords)return '<div class="cc-student-row cc-not-started">'+first+'<span class="cc-percent-muted">Loading…</span></div>'+subtitle+'</div>';
+   const modes=Array.isArray(p?.modes)?p.modes.filter(m=>ccPuzzleModeNames[m]):[];
+   const percent=Math.round(modes.length/5*100),active=started||modes.length>0;
+   const bars=Object.entries(ccPuzzleModeNames).map(([id,name])=>ccSkillBar(name,modes.includes(id)?1:0,1,false)).join('');
+   return '<div class="cc-student-row cc-'+(percent>90?'complete':active?'in-progress':'not-started')+'">'+first+'<span class="cc-percent-muted">'+(percent>90?'Completed':active?'In progress':'Not started')+'</span></div>'+subtitle+
+   '<div class="cc-skill-summary">'+modes.length+' of 5 puzzle types completed · '+Number(p?.sessions||0)+' sessions</div><div class="cc-skill-list">'+bars+'</div>'+
+   '<div class="cc-student-details">Last '+ccEscape(ccActivityTime(p?.last_at)||last||'—')+'</div></div>';
+  }
+  const spec=ccSkillConfig[group.key]||group.skills;
+  if(!details)return '<div class="cc-student-row cc-not-started">'+first+'<span class="cc-percent-muted">Loading skills…</span></div>'+subtitle+'</div>';
+  const record=detailMap.get(String(student.id))||{};
+  const total=group.key==='word'?details.vocabTotal:group.key==='sentence'?details.sentenceTotal:null;
+  const cells=spec.map(key=>{
+   const passed=group.key==='sentence'?Number(record.sentence?.[key]||0):Number(record[key]||0);
+   const observed=rows.some(r=>r.skill===key&&(Number(r.attempts)>0||Number(r.attempted_content_count)>0));
+   return {key,passed,observed,known:Number.isInteger(total)&&total>0,pct:total>0?Math.round(100*Math.min(passed,total)/total):null};
+  });
+  const hasData=started||cells.some(x=>x.passed>0);
+  const verified=cells.length>0&&cells.every(x=>x.known&&x.pct>90);
+  const complete=cells.filter(x=>x.known&&x.pct>90).length;
+  const bars=cells.map(x=>ccSkillBar(ccSkillNames[x.key]||x.key,x.passed,x.known?total:null,x.observed||x.passed>0)).join('');
+  const status=verified?'Completed':hasData?'In progress':'Not started';
+  const summary=cells.every(x=>x.known)?complete+' of '+cells.length+' skills completed':'Skill progress (some totals unavailable)';
+  return '<div class="cc-student-row cc-'+(verified?'complete':hasData?'in-progress':'not-started')+'">'+first+'<span class="cc-percent-muted">'+status+'</span></div>'+subtitle+
+   '<div class="cc-skill-summary">'+ccEscape(summary)+'</div><div class="cc-skill-list">'+bars+'</div>'+
+   '<div class="cc-student-details">Last '+ccEscape(ccActivityTime(record.last_at)||last||'—')+'</div></div>';
+ }).join('')+'</div><p class="cc-helper">Progress reflects distinct passed unit targets. Spelling Coach and Spelling Test appear separately. A dash means the unit target total is unavailable; no estimated percentage is shown.</p></section>';
 }
 async function loadClassOverview(force=false){
  if(curriculum.pending)return;
  if(curriculum.data&&!force){if(curriculum.selectedClass)ccRenderDetail();else ccRenderOverview();return}
  curriculum.pending=true;ccHost().innerHTML='<div class="empty">Loading active class books and practice records…</div>';
  try{
-  if(force){curriculum.unitCache.clear();curriculum.puzzleDetail.clear();curriculum.puzzleOverview=[];}
+  if(force){curriculum.unitCache.clear();curriculum.puzzleDetail.clear();curriculum.skillDetail.clear();curriculum.puzzleOverview=[];}
   curriculum.data=await ccRpc('teacher_curriculum_overview_v1');
   try{const puzzle=await ccRpc('teacher_curriculum_puzzle_overview_v1');curriculum.puzzleOverview=Array.isArray(puzzle)?puzzle:[]}catch(e){console.warn('[Class Curriculum] Puzzle overview:',e.message);curriculum.puzzleOverview=[];}
   const allIds=[...new Set(curriculum.data.books.map(b=>b.book_id).filter(Boolean))];
