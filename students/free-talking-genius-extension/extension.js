@@ -6,7 +6,7 @@ import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -351,6 +351,25 @@ function ftShowFinish(result){
 $('ftFinishClose').addEventListener('click',()=>{$('ftCelebration').hidden=true;navigateBack()});
 
 const QUESTION_BUDGET_MS=20000;
+const QUESTION_EXTENDED_BUDGET_MS=30000;
+const QUESTION_BOOST_MS=10000;
+const questionBaseMs=()=>state.lessonLevel>3?QUESTION_EXTENDED_BUDGET_MS:QUESTION_BUDGET_MS;
+function updateTimeBoostButton(){
+ const button=$('timeBoost');if(!button)return;
+ const available=state.active&&state.lessonLevel>3&&!state.questionBoostUsed&&!state.questionExpired&&!state.finishingTopic&&['awaitingFirst','awaitingSecond'].includes(state.anchorPhase);
+ button.hidden=state.lessonLevel<=3;
+ button.disabled=!available;
+ button.setAttribute('aria-label',state.questionBoostUsed?'Extra time already used for this question':'Add ten seconds to this question');
+ button.title=state.questionBoostUsed?'Extra time used':'+10 seconds (once per question)';
+ button.setAttribute('aria-pressed',String(state.questionBoostUsed));
+}
+$('timeBoost').addEventListener('click',()=>{
+ if(!state.active||state.lessonLevel<=3||state.questionBoostUsed||state.questionExpired||state.finishingTopic||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
+ state.questionBoostUsed=true;
+ state.questionRemainingMs+=QUESTION_BOOST_MS;
+ state.questionTotalMs+=QUESTION_BOOST_MS;
+ renderTopicTicker();updateTimeBoostButton();
+});
 const isBeginner=()=>state.lessonLevel<=2;
 const isFirstLevel=()=>state.lessonLevel<=1;
 function stripInternalLabels(value){return String(value||'').replace(/\b(?:Textbook|Current textbook question|Current question|Example|Lesson focus|Instructions)\s*:\s*[^.!?]*(?:[.!?]|$)/gi,' ').replace(/\s+/g,' ').trim()}
@@ -369,9 +388,10 @@ function renderTopicTicker(){
   steps.append(cell);
  }
  const left=Math.max(0,state.questionRemainingMs);
- $('topicTimeFill').style.width=Math.min(100,left/QUESTION_BUDGET_MS*100)+'%';
+ $('topicTimeFill').style.width=Math.min(100,left/Math.max(1,state.questionTotalMs)*100)+'%';
  $('topicTimeValue').textContent=Math.ceil(left/1000)+'s';
  document.querySelector('#demo .topic-clock')?.classList.toggle('is-ended',left<=0);
+ updateTimeBoostButton();
 }
 function haltQuestionClock(){
  if(state.questionClock!=null)clearInterval(state.questionClock);
@@ -381,7 +401,9 @@ function haltQuestionClock(){
 }
 function resetQuestionClock(){
  haltQuestionClock();
- state.questionRemainingMs=QUESTION_BUDGET_MS;
+ state.questionRemainingMs=questionBaseMs();
+ state.questionTotalMs=questionBaseMs();
+ state.questionBoostUsed=false;
  state.questionExpired=false;
  state.awaitingSpeechCommit=false;
  state.finishingTopic=false;state.beginnerRescueUsed=false;
@@ -1251,6 +1273,7 @@ async function startConversation(){
   if(session.lesson){
    const l=session.lesson;
    state.lessonLevel=Number.isInteger(l.level)?Math.max(0,Math.min(10,l.level)):2;
+    updateTimeBoostButton();
    $('lesson').textContent=(l.book||state.book.title)+' · Unit '+(l.unit_number||state.unit.unit_number)+' · '+(l.unit||state.unit.title);
    $('lessonFocus').textContent='Lesson focus: '+(l.grammar||l.prompts?.[0]||l.unit||'Current unit');
   }
