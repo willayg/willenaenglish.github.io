@@ -170,15 +170,29 @@ function ftCompletionRead(){try{return ftCompletionKey()?JSON.parse(localStorage
 function ftCompletionSave(result){const key=ftCompletionKey();if(!key)return;try{const old=ftCompletionRead();const completed=Math.max(Number(old?.answered)||0,result.answered);localStorage.setItem(key,JSON.stringify({answered:completed,stars:Math.max(Number(old?.stars)||0,result.stars),updatedAt:Date.now()}))}catch{}}
 function prepareCard(){
  const d=appDocument(),card=d?.getElementById('ftFreeTalkingCard');if(!card)return;
- card.dataset.extension='ready';card.disabled=false;card.removeAttribute('aria-disabled');card.classList.remove('ft-coming-soon-card');
+ const completed=ftCompletionRead(),answered=Math.max(0,Math.min(8,Number(completed?.answered)||0));
+ // The original frame is watched by MutationObserver. Never rewrite the same
+ // card on every mutation or the observer will trigger an infinite render loop.
+ const renderKey=(ftCompletionKey()||'unknown')+':'+answered;
+ if(card.dataset.extension==='ready'&&card.dataset.ftRenderKey===renderKey)return;
+ card.dataset.extension='ready';
+ card.dataset.ftRenderKey=renderKey;
+ if(card.disabled)card.disabled=false;
+ if(card.hasAttribute('aria-disabled'))card.removeAttribute('aria-disabled');
+ card.classList.remove('ft-coming-soon-card');
  card.setAttribute('aria-label','Free Talking · 8 textbook questions');
- card.style.cssText+=';opacity:1!important;filter:none!important;cursor:pointer;pointer-events:auto;';
- const step=card.querySelector('.vocab-skill-step');if(step)step.textContent='STEP 2';
- const completed=ftCompletionRead();const answered=Math.min(8,Number(completed?.answered)||0);
- const detail=card.querySelector('.vocab-card-stars');if(detail)detail.textContent=answered?answered+'/8 completed · 골든 유닛 조건 아님':'8개 질문으로 대화 · 골든 유닛 조건 아님';
- const ring=card.querySelector('.vocab-skill-ring span');if(ring)ring.textContent=answered?Math.round(answered/8*100)+'%':'0%';
- const ringHost=card.querySelector('.vocab-skill-ring');if(ringHost)ringHost.style.setProperty('--progress',String(answered/8*100));
+ card.style.opacity='1';card.style.filter='none';card.style.cursor='pointer';card.style.pointerEvents='auto';
+ const step=card.querySelector('.vocab-skill-step');if(step&&step.textContent!=='STEP 2')step.textContent='STEP 2';
+ const detail=card.querySelector('.vocab-card-stars');
+ const detailText=answered?answered+'/8 completed · 골든 유닛 조건 아님':'8개 질문으로 대화 · 골든 유닛 조건 아님';
+ if(detail&&detail.textContent!==detailText)detail.textContent=detailText;
+ const ring=card.querySelector('.vocab-skill-ring span');
+ const ringText=answered?Math.round(answered/8*100)+'%':'0%';
+ if(ring&&ring.textContent!==ringText)ring.textContent=ringText;
+ const ringHost=card.querySelector('.vocab-skill-ring');
+ if(ringHost)ringHost.style.setProperty('--progress',String(answered/8*100));
 }
+
 function bindOriginalFrame(){
  const d=appDocument();if(!d||d.documentElement.dataset.ftRealtimeExtensionBound==='1')return;
  d.documentElement.dataset.ftRealtimeExtensionBound='1';
