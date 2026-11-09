@@ -19,6 +19,7 @@ const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
   'https://students.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
   'https://willenaenglish.netlify.app',
   'http://localhost:3000',
   'http://localhost:8000'
@@ -27,7 +28,7 @@ const ALLOWED_ORIGINS = [
 function getCorsHeaders(origin) {
   const headers = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Internal-Secret',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Internal-Secret, Authorization',
     'Content-Type': 'application/json'
   };
   
@@ -53,6 +54,12 @@ exports.handler = async (event) => {
       headers: corsHeaders,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
+  }
+
+  // STT lab is staff-only and deliberately bypasses grammar correction.
+  // Keep the original student request path unchanged.
+  if (event.queryStringParameters?.mode === 'stt-lab') {
+    return handleSttLab(event, corsHeaders, origin);
   }
 
   // Validate X-Internal-Secret header
@@ -295,4 +302,57 @@ If no changes needed, set teacher_note to "Perfect! Your sentence is correct!"`;
     console.error('[GPT] JSON parse error:', e, 'Content:', content);
     return { corrected_sentence: transcript, teacher_note: 'Good try!' };
   }
+}
+
+/**
+ * Staff-only speech transcription comparison. Every model receives the
+ * same exact recording; no audio, transcripts or metrics are persisted.
+ * Do not expose API credentials or allow arbitrary model names.
+ */
+async function handleSttLab(event, corsHeaders, origin) {
+  const reply=(statusCode,body)=>({statusCode,headers:{...corsHeaders,'Cache-Control':'no-store'},body:JSON.stringify(body)});
+  if(origin!=='https://teachers.willenaenglish.com'&&origin!=='https://willenaenglish.netlify.app'&&!origin.startsWith('http://localhost:'))return reply(403,{error:'Use Teachers Utilities to run this test.'});
+  const auth=event.headers.authorization||event.headers.Authorization||'';
+  const jwt=/^Bearer (.+)$/.exec(auth)?.[1];
+  if(!jwt)return reply(401,{error:'Teacher login required.'});
+  const url=process.env.SUPABASE_URL||'https://fiieuiktlsivwfgyivai.supabase.co';
+  const key=process.env.SUPABASE_ANON_KEY||'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+  try{
+    const me=await fetch(url+'/auth/v1/user',{headers:{apikey:key,Authorization:'Bearer '+jwt}});
+    if(!me.ok)return reply(401,{error:'Teacher session expired. Sign in again.'});
+    const user=await me.json();
+    if(!user.id)return reply(401,{error:'Teacher authentication failed.'});
+    const check=await fetch(url+'/rest/v1/profiles?id=eq.'+encodeURIComponent(user.id)+'&select=role,approved&limit=1',{headers:{apikey:key,Authorization:'Bearer '+jwt}});
+    if(!check.ok)return reply(403,{error:'Teacher role could not be verified.'});
+    const profile=(await check.json())[0];
+    if(!profile?.approved||!['teacher','admin'].includes(profile.role))return reply(403,{error:'Staff access required.'});
+    if(!OPENAI_API)return reply(503,{error:'STT service is not configured.'});
+    const payload=JSON.parse(event.body||'{}');
+    const raw=String(payload.audio||'');
+    const mime=String(payload.mime||'audio/webm');
+    if(!/^audio\/(webm|mp4|ogg|wav|mpeg|x-m4a)(;.*)?$/.test(mime))return reply(400,{error:'Unsupported audio format.'});
+    if(raw.length>3_700_000)return reply(413,{error:'Recording too long. Keep each test under 20 seconds.'});
+    const audioBuffer=Buffer.from(raw,'base64');
+    if(!audioBuffer.length||audioBuffer.length>2_700_000)return reply(400,{error:'Audio recording missing or oversized.'});
+    const models=['whisper-1','gpt-4o-mini-transcribe','gpt-4o-transcribe'];
+    const ext=mime.includes('mp4')?'mp4':mime.includes('ogg')?'ogg':mime.includes('wav')?'wav':mime.includes('mpeg')?'mp3':'webm';
+    const results=await Promise.all(models.map(async model=>{
+      const t0=Date.now();
+      try{
+        const form=new FormData();
+        form.append('file',audioBuffer,{filename:'sample.'+ext,contentType:mime.split(';')[0]});
+        form.append('model',model);
+        form.append('language','en');
+        form.append('response_format',model==='whisper-1'?'text':'json');
+        const controller=new AbortController();
+        const timeout=setTimeout(()=>controller.abort(),30000);
+        let response;
+        try{response=await fetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{Authorization:'Bearer '+OPENAI_API,...form.getHeaders()},body:form,signal:controller.signal});}finally{clearTimeout(timeout)}
+        if(!response.ok){const error=await response.text();throw Error(response.status===429?'Rate limited':response.status===400?'Model or audio rejected':'Service error '+response.status)}
+        const transcript=model==='whisper-1'?await response.text():(await response.json()).text;
+        return {model,transcript:String(transcript||'').trim(),latency_ms:Date.now()-t0};
+      }catch(e){return {model,error:String(e.message||e).slice(0,130),latency_ms:Date.now()-t0}}
+    }));
+    return reply(200,{results});
+  }catch(error){return reply(500,{error:'STT lab could not complete: '+String(error.message||error).slice(0,100)})}
 }
