@@ -358,7 +358,7 @@ function render(){
  }
  if(active==='grammar'){
    body.innerHTML='<div id="uaGrammarHomework"></div>';
-   window.dispatchEvent(new CustomEvent('ua:grammar-mounted',{detail:{sub}}));
+   window.dispatchEvent(new CustomEvent('ua:grammar-mounted',{detail:{sub,fromCurriculum:curriculumLaunchApp==='grammar'}}));
    return;
  }
  if(active==='writing'){
@@ -380,12 +380,13 @@ async function refresh(){
 }
 // Contextual launcher for Class Curriculum. Never submits a mission: it only
 // selects existing class/book/unit controls in the canonical creation workspace.
-let curriculumLaunchId=0,curriculumLaunchCleanup=null;
+let curriculumLaunchId=0,curriculumLaunchCleanup=null,curriculumLaunchApp=null;
 function openCurriculumCreate(context){
  const map={word:'word',sentence:'sentence',grammar:'grammar',talking:'free-talking',writing:'writing',puzzles:'puzzles'};
  const app=map[context?.skill];
  if(!app||!context?.className||!context?.bookId||!context?.unitId)return false;
  if(curriculumLaunchCleanup)curriculumLaunchCleanup();
+ curriculumLaunchApp=app;
  active=app;subviews[app]='create';remember();render();
  const id=++curriculumLaunchId,scope=root,started=Date.now();
  const target={className:String(context.className),bookId:String(context.bookId),unitId:String(context.unitId),unitNumber:Number(context.unitNumber),bookTitle:String(context.bookTitle||'')};
@@ -407,7 +408,7 @@ function openCurriculumCreate(context){
   el.textContent=message;
  };
  let observer,timer;
- const cleanup=()=>{observer?.disconnect();clearTimeout(timer);if(curriculumLaunchCleanup===cleanup)curriculumLaunchCleanup=null};
+ const cleanup=()=>{observer?.disconnect();clearTimeout(timer);if(curriculumLaunchCleanup===cleanup){curriculumLaunchCleanup=null;curriculumLaunchApp=null}};
  curriculumLaunchCleanup=cleanup;
  const apply=()=>{
   if(finished||id!==curriculumLaunchId)return cleanup();
@@ -420,14 +421,14 @@ function openCurriculumCreate(context){
   if(stage==='class'){
    const el=scope.querySelector(config.class);
    if(!optionReady(el,target.className))return;
-   choose(el,target.className);stage=config.book?'book':'done';
+   choose(el,target.className);stage=config.book?'book':'done';queueMicrotask(apply);
    if(stage==='done'){finished=true;notice('Selected class '+target.className+'. Choose the puzzle game and its content before assigning.');cleanup();}
    return;
   }
   if(stage==='book'){
    const el=scope.querySelector(config.book);
    if(!optionReady(el,target.bookId))return;
-   choose(el,target.bookId);stage='unit';
+   choose(el,target.bookId);stage='unit';queueMicrotask(apply);
    return;
   }
   if(stage==='unit'){
