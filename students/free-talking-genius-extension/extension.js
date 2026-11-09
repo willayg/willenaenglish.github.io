@@ -759,11 +759,6 @@ async function playAnchor(index){
  // context of a short student answer like "Pizza!".
  sendRealtime({type:'conversation.item.create',item:{type:'message',role:'assistant',
   content:[{type:'output_text',text:anchor.text}]}});
- // Refresh the vocabulary hint when the lesson moves to a different question.
- sendRealtime({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{
-  transcription:{model:'gpt-4o-mini-transcribe',language:'en',prompt:'Young Korean ESL children. Current question: '+String(anchor.text||'').slice(0,120)+'. Listen for short hesitant answers, colours and classroom words. Transcribe audible speech only; preserve corrections, never guess from silence.'},
-  turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:false,interrupt_response:false}
- }}}});
  appendLine(NAMES[state.character],anchor.text);
  try{
   const clip=await getAnchorClip(anchor);
@@ -823,6 +818,8 @@ function clearPendingSpeech(){
 }
 function voiceTurnValid(text,pending){
  const transcript=String(text||'').replace(/\s+/g,' ').trim();
+ // Reject hallucinated prompt content, never treat it as a child's answer.
+ if(/(?:transcribe audible speech|listen for short hesitant answers|classroom words|preserve corrections|never guess from silence|current question:|never infer words|only transcribe actually audible|young korean esl children|speaking short hesitant english|from the question or silence)/i.test(transcript))return false;
  // Do not advance an English lesson on misrecognized Korean/Japanese.
  if(/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u.test(transcript))return false;
  if(/^(?:arigatou|arigato|konnichiwa|sayonara|annyeong|gomawo|kamsahamnida)[.!? ]*$/i.test(transcript))return false;
@@ -1295,7 +1292,7 @@ async function startConversation(){
    // session.updated, which can be absent after negotiating a Realtime call.
    state.guidedSessionReady=true;
    channel.send(JSON.stringify({type:'session.update',session:{type:'realtime',output_modalities:['text'],audio:{input:{
-    transcription:{model:'gpt-4o-mini-transcribe',language:'en',prompt:'Young Korean ESL children with accents, speaking short hesitant English. Classroom objects, colours, numbers, and simple vocabulary. Current question: '+String(state.anchors[state.anchorIndex]?.text||'').slice(0,120)+'. Only transcribe actually audible sounds; never infer words from the question or silence. Preserve corrections, for example: No, type, not hype.'},
+    transcription:{model:'gpt-4o-mini-transcribe',language:'en'},
     turn_detection:{type:'semantic_vad',eagerness:'medium',create_response:false,interrupt_response:false}
    }}}}));
    if(state.active&&state.anchorPhase==='ready'&&!restoreAfterPause())void playAnchor(state.anchorIndex);
