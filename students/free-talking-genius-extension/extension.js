@@ -4,7 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
 const $=id=>document.getElementById(id);
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:''};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 // Reuse the EXACT token mechanism of Free Talking Genius (app.js token()).
 // The extension's previous staffAccessToken() path was inappropriate for students.
@@ -265,6 +265,59 @@ async function openDemo({preserveCharacter=false}={}){
   throw e;
  }
 }
+
+
+const FT_GUIDE_KEY='ft-genius-help-20261109-v1';
+const FT_GUIDE=[
+ ['Talk with Bunny, Pigfish or Willi!','8개 질문에 영어로 대답해요. 한 단어만 말해도 괜찮아요!',[['Bunny','What colour is your chair?'],['You','Purple!'],['Bunny','Is it big?']]],
+ ['Every try counts','영어로 대답하면 포인트가 쌓여요. 틀려도 괜찮아요!',[['You','Purple.'],['Tip','말하기 +1 · 뜻이 통하면 +1'],['You','My chair is purple and big!'],['Tip','자세히 말하기 +1']]],
+ ['Asking for help is smart!','모르는 단어는 물어봐요. 도움 요청도 좋은 영어 연습이에요!',[['You','What does purple mean?'],['Bunny','Purple means 보라색.'],['Tip','도움을 요청하면 보너스 기회!']]],
+ ['Earn stars and points','8개 주제에 참여하면 최대 별 5개! 주제마다 최대 3점, 총 24점에 도전하세요.',[['Tip','대답하기 +1'],['Tip','생각 전달 +1'],['Tip','더 말하거나 도움 요청 +1']]]];
+function renderFtGuide(){
+ const info=FT_GUIDE[state.guideIndex];
+ $('ftGuideTitle').textContent=info[0];$('ftGuideBody').textContent=info[1];
+ const steps=$('ftGuideSteps');steps.replaceChildren();
+ FT_GUIDE.forEach((_,i)=>{const el=document.createElement('span');if(i===state.guideIndex)el.className='on';steps.append(el)});
+ const example=$('ftGuideExample');example.replaceChildren();
+ info[2].forEach(([speaker,words])=>{const el=document.createElement('div');el.className='ft-bubble'+(speaker==='You'?' child':'');const b=document.createElement('strong');b.textContent=speaker+': ';el.append(b,document.createTextNode(words));example.append(el)});
+ $('ftGuideBack').disabled=state.guideIndex===0;
+ $('ftGuideNext').textContent=state.guideIndex===FT_GUIDE.length-1?(state.guideLaunch?'Start talking':'Close'):'Next';
+}
+function showFtGuide(launch=false){state.guideIndex=0;state.guideLaunch=launch;$('ftGuide').hidden=false;renderFtGuide()}
+$('ftGuideBack').addEventListener('click',()=>{if(state.guideIndex){state.guideIndex--;renderFtGuide()}});
+$('ftGuideNext').addEventListener('click',()=>{
+ if(state.guideIndex<FT_GUIDE.length-1){state.guideIndex++;renderFtGuide();return}
+ try{if($('ftNeverShowGuide').checked)localStorage.setItem(FT_GUIDE_KEY,'1')}catch{}
+ $('ftGuide').hidden=true;
+ if(state.guideLaunch){state.guideLaunch=false;state.guideAccepted=true;void startConversation().catch(e=>error('Start failed: '+e.message))}
+});
+$('ftHelpBtn').addEventListener('click',()=>{if(state.active)haltQuestionClock();showFtGuide(false)});
+function ftTopicReward(){
+ if(!state.questionRewards.has(state.anchorIndex))state.questionRewards.set(state.anchorIndex,{answers:0,help:false,detail:false});
+ return state.questionRewards.get(state.anchorIndex);
+}
+function ftRewardScore(r){return r?Math.min(3,(r.answers>0?2:0)+(r.help||r.detail?1:0)):0}
+function ftRecordAnswer(speech,isSecond){
+ const r=ftTopicReward();r.answers++;
+ if(isSecond||String(speech).trim().split(/\s+/).length>=5||speech.includes('?'))r.detail=true;
+}
+function ftFinishScores(){
+ const rows=state.anchors.map((q,i)=>({question:q.text,points:ftRewardScore(state.questionRewards.get(i)),answered:(state.questionRewards.get(i)?.answers||0)>0,help:!!state.questionRewards.get(i)?.help}));
+ const answered=rows.filter(x=>x.answered).length,helps=rows.filter(x=>x.help).length,points=rows.reduce((n,x)=>n+x.points,0);
+ return {rows,answered,helps,points,stars:answered>=8?5:answered>=7?4:answered>=5?3:answered>=4?2:answered>=2?1:0};
+}
+function ftShowFinish(result){
+ $('ftGuide').hidden=true;$('ftCelebration').hidden=false;
+ const host=$('ftResultStars');host.replaceChildren();
+ for(let i=0;i<5;i++){const el=document.createElement('span');el.textContent='★';if(i<result.stars)el.className='earned';host.append(el)}
+ host.setAttribute('aria-label',result.stars+' of 5 stars');
+ $('ftResultPoints').textContent='+'+result.points+' Session Points';
+ $('ftResultSummary').innerHTML='<div><strong>'+result.answered+'/8</strong>Questions answered</div><div><strong>'+result.helps+'</strong>Help requests</div>';
+ $('ftRewardDetail').textContent=result.rows.map((r,i)=>'Q'+(i+1)+': '+r.points+'/3').join(' · ');
+ $('ftRewardSync').textContent='연습 결과 미리보기 · 실제 별과 포인트는 아직 계정에 저장되지 않아요.';
+ $('ftRetryReward').hidden=true;
+}
+$('ftFinishClose').addEventListener('click',()=>{$('ftCelebration').hidden=true;navigateBack()});
 
 const QUESTION_BUDGET_MS=20000;
 const isBeginner=()=>state.lessonLevel<=2;
@@ -776,7 +829,7 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
  if(state.questionExpired){state.questionExpired=false;state.questionRemainingMs=Math.max(6000,state.questionRemainingMs)}
   if(state.pendingWordConfirmation&&/^(?:no[, .]+)?(?:i (?:said|mean|meant)[, ]+)?(?:type|hype|plain|plane|play|playing|draw|drawing|tape)[.!? ]*$/i.test(speech)){
    const term=speech.toLowerCase().match(/(?:type|hype|plain|plane|play|playing|draw|drawing|tape)/i)?.[0];
-   if(term){state.pendingWordConfirmation=null;state.asideKind='vocabulary';state.asideTerm=term;sendRealtime({type:'conversation.item.delete',item_id:itemId});requestGuidedAside();return}
+   if(term){state.pendingWordConfirmation=null;ftTopicReward().help=true;state.asideKind='vocabulary';state.asideTerm=term;sendRealtime({type:'conversation.item.delete',item_id:itemId});requestGuidedAside();return}
   }
  const category=classifyStudentTurn(speech);
  if(category.kind==='clarify'){
@@ -792,7 +845,7 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
   if(state.vocabDetours>=6){
    void redirectToLesson('Let’s try the question now. You can ask about more words next time.');
   }else{
-   state.vocabDetours++;
+   state.vocabDetours++;ftTopicReward().help=true;
    state.asideTerm=category.term;
    requestGuidedAside();
   }
@@ -802,7 +855,7 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
   sendRealtime({type:'conversation.item.delete',item_id:itemId});
   if(state.topicDetours>=2)void redirectToLesson('Good question! Let’s try answering this one first.');
   else{
-   state.topicDetours++;
+   state.topicDetours++;ftTopicReward().help=true;
    state.asideKind='topic';state.topicQuestion=speech;
    requestGuidedAside();
   }
@@ -810,7 +863,7 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
   // Prevent an off-topic spoken command from poisoning later lesson turns.
   sendRealtime({type:'conversation.item.delete',item_id:itemId});
   void redirectToLesson(category.message);
- }else requestGuidedReply();
+ }else{ftRecordAnswer(speech,state.anchorPhase==='awaitingSecond');requestGuidedReply();}
 }
 
 // Transcript text is data, NOT authority to change the lesson or the output
@@ -962,12 +1015,13 @@ function requestGuidedReply(){
 async function finishConversation(){
  if(!state.active||state.anchorPhase==='finished'||state.anchorPhase==='goodbye')return;
  const run=state.anchorToken,count=state.anchors.length;
+ const finishScores=ftFinishScores();
  state.anchorPhase='goodbye';haltQuestionClock();state.topicCompleted.add(state.anchorIndex);renderTopicTicker();setMicEnabled(false);
  $('listenCheck').textContent='Conversation complete';message('Finishing your conversation…');
  const goodbye=state.character==='pigfish'?'That was fun! Catch you later!':'That was fun! See you next time!';
  try{await speakEleven(goodbye)}catch(e){console.warn('Guided goodbye',e)}
  if(!state.active||run!==state.anchorToken)return;
- state.anchorPhase='finished';endSession('Conversation complete. See you next time!');
+ state.anchorPhase='finished';endSession('Conversation complete. See you next time!');ftShowFinish(finishScores);
  $('clock').textContent=count+' / '+count+' complete';
  $('anchorText').textContent='Great talking! See you next time!';
  $('listenCheck').textContent='Finished';
@@ -1131,6 +1185,8 @@ async function startConversation(){
  if(state.starting||state.active)return;
  if(!state.unit||!state.book)throw Error('No lesson loaded. Select a book and unit first.');
  const continuing=Boolean(state.resumePhase);
+ if(!continuing&&!state.guideAccepted){let dismissed=false;try{dismissed=localStorage.getItem(FT_GUIDE_KEY)==='1'}catch{}if(!dismissed){showFtGuide(true);return}}
+ state.guideAccepted=false;if(!continuing)state.questionRewards.clear();
  state.starting=true;state.paused=false;setPauseButton(false);
  $('pauseResume').disabled=false;
  error('');state.alreadySpoken=false;state.turnText='';state.pendingText=false;
