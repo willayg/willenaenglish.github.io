@@ -146,7 +146,11 @@ try{
 #view-students .page-head .filters .control{min-height:42px;background:#fff;border:1px solid #bedde4;border-radius:11px;box-shadow:none}
 #view-students .page-head .filters .search{min-width:190px}
 #view-students .roster-workspace{border:1px solid var(--rs-border);border-radius:20px;padding:20px;background:#fff;box-shadow:none}
-#view-students .roster-workspace>.panel-head{border:0;padding:0 0 14px;gap:14px}
+#view-students .roster-workspace>.panel-head{border:0;padding:0 0 14px;gap:14px;align-items:start}
+#view-students .roster-workspace .panel-title{font-size:21px;font-weight:800;color:#204451}
+#view-students .roster-books-simple{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:12px;font-weight:600;color:#5b7782}
+#view-students .roster-workspace .count-pill{white-space:nowrap}
+
 #view-students .roster-dashboard-summary{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px;margin:0 0 18px;border:0}
 #view-students .roster-dashboard-summary>span{background:#f5fafb;border:1px solid #e1edf0;border-radius:13px;padding:14px;display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:1.4;color:#627d86}
 #view-students .roster-dashboard-summary b{font-size:23px;font-weight:800;line-height:1.1;color:#204653}
@@ -233,7 +237,7 @@ try{
 </div>
 <div id="studentTrackingPanel">
 <div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><select class="control" id="rosterAssignmentFilter" aria-label="Filter by assignment progress"><option value="all">All students</option><option value="assigned">Has assignments</option><option value="not_started">Not started</option><option value="in_progress">In progress</option><option value="complete">All assignments complete</option><option value="none">No assignments</option></select><button class="control" id="refreshBtn">Refresh</button></div></div>
-<div class="panel roster-workspace"><div class="panel-head"><div><div class="panel-title" id="panelTitle">Students</div><div class="panel-sub" id="statusText"></div></div><span class="count-pill" id="studentCount">0 students</span></div><div id="rosterSummary" class="roster-summary roster-dashboard-summary"></div><div class="roster-workspace-heading"><div><h2>Textbook progress</h2><p>Each child's current unit and Genius app progress. Assignments are available separately.</p></div><span class="roster-readonly-note">Recorded learning</span></div><div class="student-list" id="studentList"><div class="empty">Loading…</div></div></div>
+<div class="panel roster-workspace"><div class="panel-head"><div><div class="panel-title" id="panelTitle">Class Students</div><div class="panel-sub" id="statusText"></div><div id="rosterSummary" class="roster-books-simple"></div></div><span class="count-pill" id="studentCount">0 students</span></div><div class="student-list" id="studentList"><div class="empty">Loading…</div></div></div>
 </div>
 <div id="studentLivePanel" hidden>
  <iframe id="studentLiveFrame" title="Live Classroom" loading="lazy" style="display:block;width:100%;height:calc(100vh - 225px);min-height:640px;border:1px solid #dce9ec;border-radius:12px;background:#fff"></iframe>
@@ -853,15 +857,14 @@ function renderStudents(){
   const h=homeworkSummary(s.user_id);
   return filter==='assigned'?h.rows.length>0:filter==='none'?h.rows.length===0:filter==='complete'?h.rows.length>0&&!h.unknown&&h.complete===h.rows.length:filter==='not_started'?h.known.some(x=>!x.result.started&&!x.result.complete):h.known.some(x=>x.result.started&&!x.result.complete);
  });
- $('#panelTitle').textContent=state.className+' students';
+ $('#panelTitle').textContent=state.className+' Class Students';
  $('#studentCount').textContent=list.length+' students';
- $('#statusText').textContent='Textbooks and Genius apps · Live learning records';
+ $('#statusText').textContent='';
  const summary=$('#rosterSummary');
  if(summary){
-  const all=rosterCurriculum.className===state.className&&rosterCurriculum.overview;
-  const books=all?rosterCurriculum.books.length:'—';
-  const units=all?rosterCurriculum.books.reduce((n,b)=>n+(rosterCurriculum.units.get(String(b.book_id))||[]).length,0):'—';
-  summary.innerHTML='<span><b>'+state.students.length+'</b> Students in class</span><span><b>'+books+'</b> Assigned textbooks</span><span><b>'+units+'</b> Curriculum units</span><span><b>'+(rosterCurriculum.loading?'…':rosterCurriculum.error?'—':'Live')+'</b> Progress records</span>';
+  const loaded=rosterCurriculum.className===state.className&&rosterCurriculum.overview;
+  const titles=loaded?rosterCurriculum.books.map(b=>String(b.book_title||'').replace(/^Oxford\\s+/i,'').replace(/^Speed\\s+/i,'').trim()).filter(Boolean):[];
+  summary.innerHTML=titles.length?'<span>'+titles.map(esc).join('</span><span>')+'</span>':'';
  }
  if(!list.length){$('#studentList').innerHTML='<div class="empty">No students match these filters.</div>';return}
  const duplicates=new Map();state.students.forEach(s=>{const k=String(s.name||'').trim().toLowerCase();duplicates.set(k,(duplicates.get(k)||0)+1)});
