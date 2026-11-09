@@ -300,6 +300,22 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  #demo .topic-time-rail{height:6px}
 }
 
+/* Goodbye → celebration: fade the old scene, then reveal the same character
+   with a soft rise; award elements follow in a short stagger. */
+#demo #talk{transition:opacity .32s ease,transform .32s ease}
+#demo #talk.is-ending{opacity:0;transform:scale(.985);pointer-events:none}
+#demo #ftCelebration{opacity:0;transition:opacity .35s ease;pointer-events:none}
+#demo #ftCelebration.is-revealed{opacity:1;pointer-events:auto}
+#demo #ftCelebration #ftResultMascot{opacity:0;transform:translateY(28px) scale(.86);transition:opacity .45s ease .08s,transform .65s cubic-bezier(.2,1.2,.3,1) .08s}
+#demo #ftCelebration.is-revealed #ftResultMascot{opacity:1;transform:translateY(0) scale(1)}
+#demo #ftCelebration .ft-stars{opacity:0;transform:translateY(12px) scale(.9);transition:opacity .35s ease .3s,transform .45s cubic-bezier(.2,1.2,.3,1) .3s}
+#demo #ftCelebration.is-revealed .ft-stars{opacity:1;transform:translateY(0) scale(1)}
+#demo #ftCelebration .ft-score,#demo #ftCelebration .ft-actions{opacity:0;transform:translateY(10px);transition:opacity .35s ease .52s,transform .4s ease .52s}
+#demo #ftCelebration.is-revealed .ft-score,#demo #ftCelebration.is-revealed .ft-actions{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){
+ #demo #talk,#demo #ftCelebration,#demo #ftCelebration #ftResultMascot,#demo #ftCelebration .ft-stars,#demo #ftCelebration .ft-score,#demo #ftCelebration .ft-actions{transition:none!important;transform:none!important}
+}
+
 /* Extension-only beginner guide and conversation celebration */
 #demo .ft-layer[hidden]{display:none!important}
 #demo .ft-layer{position:fixed;inset:0;z-index:85;background:#f6fcfd;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:16px}
@@ -402,4 +418,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261109-asr-leak-hotfix06"></script></body></html>
+<script type="module" src="./extension.js?v=20261109-goodbye-transition07"></script></body></html>
