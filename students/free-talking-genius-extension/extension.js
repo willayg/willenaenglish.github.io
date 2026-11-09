@@ -1305,6 +1305,7 @@ async function startConversation(){
   $('listenCheck').textContent='Listen to the question, then answer';$('restart').disabled=true;
  }catch(e){
   if(startId!==activeStartId)return;
+  $('ftBootSpinner').hidden=true;
   console.error('[Free Talking Realtime demo] failed to start',e);
   // Never kick the student out on an error. Keep the session screen and actionable message.
   endSession('Connection failed. Tap play to retry or go back.');
