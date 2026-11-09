@@ -270,6 +270,10 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  content:none!important;display:none!important;border:0!important;outline:0!important;
 }
 
+#demo .control-dock .ft-time-boost{font-size:13px;font-weight:900;letter-spacing:-.04em;color:#167f8c;background:#e8fbfd;border-color:#50bdca;white-space:nowrap;padding:6px;width:52px;height:52px}
+#demo .control-dock .ft-time-boost[hidden]{display:none!important}
+#demo .control-dock .ft-time-boost:disabled{opacity:.42;background:#f5f7f8;color:#8ca4ac;border-color:#dce6e9}
+@media(max-width:470px){#demo .control-dock{gap:5px;justify-content:space-around;padding-left:5px;padding-right:5px}#demo .dock-icon,#demo .control-dock .ft-time-boost{width:46px;height:46px;border-radius:13px}#demo .dock-icon{padding:10px}}
 /* Eight-question ticker and independent soft countdown: experiment only. */
 #demo #talk{position:relative!important}
 #demo .topic-ticker{
@@ -404,7 +408,8 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 <div class="control-dock" aria-label="Conversation controls">
  <button id="back" class="dock-icon" type="button" aria-label="Back to character selection" title="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
  <button id="mute" class="dock-icon" type="button" disabled aria-label="Mute microphone" title="Mute microphone" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg><svg class="mic-slash" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16"/></svg></button>
- <button id="pauseResume" class="dock-icon" type="button" aria-label="Pause conversation" title="Pause conversation" aria-pressed="false">
+ <button id="timeBoost" class="dock-icon ft-time-boost" type="button" hidden disabled aria-label="Add ten seconds to this question" title="+10 seconds (once per question)">+10s</button>
+  <button id="pauseResume" class="dock-icon" type="button" aria-label="Pause conversation" title="Pause conversation" aria-pressed="false">
   <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
   <svg class="resume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>
  </button>
@@ -418,4 +423,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261109-goodbye-transition07"></script></body></html>
+<script type="module" src="./extension.js?v=20261109-level4-timer-boost08"></script></body></html>
