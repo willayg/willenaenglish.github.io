@@ -801,6 +801,7 @@ async function hybridOnRecorded(rec){
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw Error(data.error||'Could not transcribe speech');
   hybrid.secondsTranscribed+=duration/1000;
+  if(ftUsage.current){ftUsage.current.transcribedAudioSeconds=Math.round(hybrid.secondsTranscribed*10)/10;ftUsage.current.transcriptionRequests++}
   if(state.active&&state.anchorToken===at&&state.anchorPhase===phase){
    const transcript=String(data.text||'').trim();
    if(transcript)hybrid.history.push({id:itemId,role:'user',text:transcript});
@@ -839,6 +840,7 @@ function sendHybrid(item){
      ftUsage.current.textInputTokens+=Number(data.usage?.input_tokens)||0;
      ftUsage.current.textOutputTokens+=Number(data.usage?.output_tokens)||0;
      ftUsage.current.cachedInputTokens+=Number(data.usage?.cached_tokens)||0;
+     ftUsage.current.usageReported++;
     }
     handleRealtime({type:'response.done',response:{output:[{content:[{text:data.text}]}]}});
    }catch(e){if(state.active)error('Hybrid text: '+String(e.message||e))}
@@ -1595,7 +1597,9 @@ async function startConversation(){
    state.stream=mic;monitorMicrophone(mic);
    state.micUserMuted=false;state.ttsPlaying=false;
    state.active=true;state.starting=false;state.resumeIndex=0;
-   ftUsage.begin();hybridStart(mic);
+   ftUsage.begin();
+   if(ftUsage.current){ftUsage.current.engine='hybrid';ftUsage.current.model=state.hybridModel;ftUsage.current.transcribedAudioSeconds=0;ftUsage.current.transcriptionRequests=0}
+   hybridStart(mic);
    state.guidedSessionReady=true;
    message('Hybrid · '+state.hybridModel+' · starting textbook question');
    if(!restoreAfterPause())void playAnchor(state.anchorIndex);
@@ -1657,6 +1661,7 @@ async function startConversation(){
   state.micUserMuted=false;state.ttsPlaying=false;
   state.active=true;state.starting=false;state.resumeIndex=0;
   ftUsage.begin();
+  if(ftUsage.current){ftUsage.current.engine='realtime';ftUsage.current.model='gpt-realtime-2.1-mini'}
   message('Connected · starting cached textbook question');actorPhase('ready');
   clearTimeout(state.sessionDeadline);
   state.sessionDeadline=setTimeout(()=>{if(state.active)pauseConversation('Paused after 12 minutes. Tap play to continue.');},12*60*1000);
