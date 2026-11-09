@@ -261,6 +261,7 @@ try{
 #drawerBg .big-rating{font-size:22px;color:#1c6978}
 #drawerBg .close{display:grid;place-items:center;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12)}
 @media(max-width:600px){#drawerBg .drawer-body{padding:12px}#drawerBg .rating-grid{grid-template-columns:1fr}}
+.stt-lab-message{overflow-wrap:anywhere;white-space:normal}
 </style>
 <section class="view active" id="view-students">
 <div class="class-leaders-tabs" id="studentsSubtabs" role="tablist" aria-label="Students views">
@@ -1830,10 +1831,10 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
    }
    refreshMetrics();copy.disabled=false;
    const successes=data.results.filter(x=>!x.error&&String(x.transcript||'').trim()).length;
-   status(successes?'Comparison received '+successes+' transcript'+(successes===1?'':'s')+'. Add the expected text to measure accuracy.':'Transcription services responded, but none produced a transcript. Check individual engine errors.');
+   status((data.provider==='existing-netlify-openai'?'OpenAI via Netlify fallback: ':'Cloudflare Workers AI: ')+(successes?'Received '+successes+' transcript'+(successes===1?'':'s')+'. Add expected text to measure accuracy.':'No transcripts returned. See engine errors.'));
   }catch(e){
    const setup=e.code==='AI_BINDING_MISSING';
-   models.forEach(id=>setEngine(id,setup?'idle':'error',setup?'Awaiting Workers AI binding':String(e.message||e),setup?'Model not run':'Request failed'));
+   models.forEach(id=>setEngine(id,'error',String(e.message||e),setup?'No transcript; backend unavailable':'Request failed'));
    status(setup?String(e.message):'STT comparison could not run: '+String(e.message||e));
   }
   finally{working=false;run.disabled=false;start.disabled=false}
