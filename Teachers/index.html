@@ -1013,6 +1013,14 @@ const ccSkillConfig={
  sentence:['sentence_coach','sentence_unscramble','sentence_speaking'],
  grammar:['grammar'],talking:['conversation'],writing:['writing']
 };
+// For Word Genius, completion requirements depend on the actual assigned
+// book level. The optional spelling path is still shown for visibility.
+function ccRequiredSkills(book,group){
+ if(group.key!=='word')return ccSkillConfig[group.key]||group.skills;
+ const level=Number(book.catalog_level);
+ if(!Number.isFinite(level)||level<=0)return null;
+ return level<3?['vocabulary','spelling_coach','speaking']:['vocabulary','spelling_test','speaking'];
+}
 function ccSkillKey(book,unit){return [curriculum.selectedClass,book.book_id,unit.id].join(':')}
 async function ccLoadSkillDetail(book,unit){
  const key=ccSkillKey(book,unit);
@@ -1077,15 +1085,17 @@ function ccRenderStudentDrilldown(book,unit,group){
    return {key,passed,observed,known:Number.isInteger(total)&&total>0,pct:total>0?Math.round(100*Math.min(passed,total)/total):null};
   });
   const hasData=started||cells.some(x=>x.passed>0);
-  const verified=cells.length>0&&cells.every(x=>x.known&&x.pct>90);
-  const complete=cells.filter(x=>x.known&&x.pct>90).length;
-  const bars=cells.map(x=>ccSkillBar(ccSkillNames[x.key]||x.key,x.passed,x.known?total:null,x.observed||x.passed>0)).join('');
+  const required=ccRequiredSkills(book,group);
+  const requiredCells=required?cells.filter(x=>required.includes(x.key)):[];
+  const verified=requiredCells.length>0&&requiredCells.every(x=>x.known&&x.pct>90);
+  const complete=requiredCells.filter(x=>x.known&&x.pct>90).length;
+  const bars=cells.map(x=>ccSkillBar((ccSkillNames[x.key]||x.key)+(required&&!required.includes(x.key)?' (optional)':''),x.passed,x.known?total:null,x.observed||x.passed>0)).join('');
   const status=verified?'Completed':hasData?'In progress':'Not started';
-  const summary=cells.every(x=>x.known)?complete+' of '+cells.length+' skills completed':'Skill progress (some totals unavailable)';
+  const summary=requiredCells.length&&requiredCells.every(x=>x.known)?complete+' of '+requiredCells.length+' required skills completed':requiredCells.length?'Required skill totals unavailable':'Completion requirements unavailable';
   return '<div class="cc-student-row cc-'+(verified?'complete':hasData?'in-progress':'not-started')+'">'+first+'<span class="cc-percent-muted">'+status+'</span></div>'+subtitle+
    '<div class="cc-skill-summary">'+ccEscape(summary)+'</div><div class="cc-skill-list">'+bars+'</div>'+
    '<div class="cc-student-details">Last '+ccEscape(ccActivityTime(record.last_at)||last||'—')+'</div></div>';
- }).join('')+'</div><p class="cc-helper">Progress reflects distinct passed unit targets. Spelling Coach and Spelling Test appear separately. A dash means the unit target total is unavailable; no estimated percentage is shown.</p></section>';
+ }).join('')+'</div><p class="cc-helper">Progress reflects distinct passed unit targets. Below Level 3, Spelling Coach is required and Spelling Test is optional. At Level 3 and above, Spelling Test is required and Spelling Coach is optional. Only required skills determine unit completion.</p></section>';
 }
 async function loadClassOverview(force=false){
  if(curriculum.pending)return;
