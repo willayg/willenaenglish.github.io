@@ -975,6 +975,33 @@ function classifyStudentTurn(text){
  // Asking what the CURRENT question means is learning help, not off-topic chat.
  // Check before the vocabulary/general-topic classifier to avoid rejecting it.
  if(/^(?:please[, ]*)?(?:(?:i (?:do not|don't|cannot|can't) understand(?: (?:the|this|your) question| what (?:you|that) (?:mean|said))?|i (?:do not|don't) get (?:it|the question)|what are you asking)|(?:what (?:does|do) (?:the|this|your) question mean(?: in korean| in english)?)|(?:what(?:'s| is) (?:this|the|your) question (?:asking|about|mean(?:ing)?))|(?:what (?:does|do) (?:this|that|it) mean)|(?:what (?:this|the|your) question mean(?:s)?)|(?:can|could|would) you (?:please )?(?:explain|translate|say|tell me|help me (?:understand|with)) (?:the|this|your) question(?: in korean| in english)?|(?:can|could) you (?:please )?explain (?:it|that)(?: in korean)?|(?:i (?:need|want) help (?:with|understanding) (?:the|this|your) question))\s*[?!. ]*$/i.test(normal))return {kind:'question_help'};
+ // Korean translation intent takes precedence over ordinary English-only chat.
+ // Young learners often ask non-native phrases such as "What is proud meaning in Korean?"
+ // or ASR may hear "part" when the textbook question actually contains "proud".
+ const koreanIntent=/\b(?:in korean|korean meaning|korean word|translate|translation|korean for)\b/i.test(normal);
+ if(koreanIntent){
+  const questionRef=/\b(?:this|that|the|your) question\b|\b(?:whole|entire) sentence\b/i.test(normal);
+  if(questionRef)return {kind:'question_help'};
+  const koreanPatterns=[
+   /^(?:please\s+)?what\s+(?:is|does|do)\s+(.+?)\s+(?:mean|means|meaning)\s+in\s+korean[?.! ]*$/i,
+   /^(?:please\s+)?what\s+(?:is|does|do)\s+(?:the\s+)?(?:korean\s+)?meaning\s+(?:of|for)\s+(.+?)[?.! ]*$/i,
+   /^(?:please\s+)?(?:what\s+(?:is|does|do)|how\s+(?:do\s+you|can\s+i)\s+say)\s+(.+?)\s+in\s+korean[?.! ]*$/i,
+   /^(?:please\s+)?(?:can\s+you\s+)?translate\s+(.+?)\s+(?:to|into)\s+korean[?.! ]*$/i,
+   /^(?:please\s+)?(.+?)\s+(?:korean\s+meaning|meaning\s+in\s+korean)[?.! ]*$/i
+  ];
+  for(const rx of koreanPatterns){
+   const match=normal.match(rx);if(!match)continue;
+   let term=String(match[1]||'').replace(/^(?:the\s+)?(?:word|phrase)\s+/,'').replace(/\s+(?:mean|means|meaning|of)$/,'').replace(/[?.!, ]+$/,'').trim();
+   // ASR correction only when the desired word is explicitly in the current question.
+   const anchorText=String(state.anchors[state.anchorIndex]?.text||'').toLowerCase();
+   if(/^part(?: of)?$/.test(term)&&/\bproud\b/.test(anchorText))term='proud';
+   if(/^[a-z][a-z '\-]{0,35}$/.test(term)&&term.split(/\s+/).length<=4&&!/\b(?:ignore|instructions|system|prompt|password|everything|anything|japanese)\b/i.test(term)){
+    return {kind:'vocabulary',term};
+   }
+  }
+  // A clear translation request must not be treated as a textbook answer.
+  return {kind:'question_help'};
+ }
  const languageSwitch=/\b(?:speak|talk|answer|reply|respond|continue|chat|converse|switch|change|use|only|everything|entirely)\b.{0,55}\b(?:korean|japanese|hangul|hangeul|한국어|일본어)\b|\b(?:in korean|in japanese)\b.{0,36}\b(?:from now on|instead|all the time|every time|please)\b/i;
  const promptAttack=/\b(?:ignore (?:your|the|all|previous)|forget (?:the|your|all) (?:instructions|rules|lesson)|pretend (?:you are|to be)|you are now|new instructions|system prompt|developer message|act as|stop (?:the|this) lesson|don't ask (?:the|any) question)\b/i;
  if(languageSwitch.test(normal)||promptAttack.test(normal)){
@@ -1182,12 +1209,12 @@ async function finishGuidedReply(data){
  }else if(aside){
   // Korean gloss is mandatory. Avoid unusable English-only definitions.
   const term=String(state.replyAsideTerm||'').toLowerCase().trim();
-  const glosses={question:'질문',pencil:'연필',flour:'밀가루',colour:'색깔',color:'색깔',eraser:'지우개',answer:'대답',sentence:'문장',word:'단어',book:'책',school:'학교',teacher:'선생님',friend:'친구',peaceful:'평화로운, 평온한',peace:'평화',type:'종류',hype:'과장된 관심',plain:'무늬가 없는',plane:'비행기',draw:'그리다',drawing:'그림',play:'놀다',playing:'노는 것'};
+  const glosses={question:'질문',pencil:'연필',flour:'밀가루',colour:'색깔',color:'색깔',eraser:'지우개',answer:'대답',sentence:'문장',word:'단어',book:'책',school:'학교',teacher:'선생님',friend:'친구',proud:'자랑스러운, 뿌듯한',peaceful:'평화로운, 평온한',peace:'평화',type:'종류',hype:'과장된 관심',plain:'무늬가 없는',plane:'비행기',draw:'그리다',drawing:'그림',play:'놀다',playing:'노는 것'};
   const hangul=(responseText.match(/[\uac00-\ud7af]+/gu)||[]);
   const count=hangul.reduce((n,v)=>n+v.length,0);
   if(!hangul.length||count>20||/[\u3040-\u30ff\u3400-\u9fff]/u.test(responseText)){
    if(glosses[term]){
-    responseText=term+' means '+glosses[term]+'. '+(term==='peaceful'?'A peaceful place is quiet and calm.':term==='question'?'I have a question.':term==='flour'?'We use flour to make pancakes.':'Here is an easy example.');
+    responseText=term+' means '+glosses[term]+'. '+(term==='proud'?'I feel proud when I do something well.':term==='peaceful'?'A peaceful place is quiet and calm.':term==='question'?'I have a question.':term==='flour'?'We use flour to make pancakes.':'Here is an easy example.');
    }else if(!state.vocabRetryUsed){
     // One isolated second attempt if the model ignored the Korean-meaning rule.
     // Keep the question timer paused and do not advance the textbook question.
