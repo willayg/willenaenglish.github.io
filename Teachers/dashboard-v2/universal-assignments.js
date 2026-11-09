@@ -378,7 +378,91 @@ function render(){
 async function refresh(){
  if(loading)return;loading=true;try{await window.NaesinV2Data?.loadGroups?.();groups=groupRows()}catch(e){console.warn('Assignments load unavailable',e)}finally{loading=false;if(active==='naesin')render()}
 }
-window.UniversalAssignments={refresh,activate,openTab:id=>{if(apps.some(a=>a.id===id)){active=id;remember();render()}}};
+// Contextual launcher for Class Curriculum. Never submits a mission: it only
+// selects existing class/book/unit controls in the canonical creation workspace.
+let curriculumLaunchId=0,curriculumLaunchCleanup=null;
+function openCurriculumCreate(context){
+ const map={word:'word',sentence:'sentence',grammar:'grammar',talking:'free-talking',writing:'writing',puzzles:'puzzles'};
+ const app=map[context?.skill];
+ if(!app||!context?.className||!context?.bookId||!context?.unitId)return false;
+ if(curriculumLaunchCleanup)curriculumLaunchCleanup();
+ active=app;subviews[app]='create';remember();render();
+ const id=++curriculumLaunchId,scope=root,started=Date.now();
+ const target={className:String(context.className),bookId:String(context.bookId),unitId:String(context.unitId),unitNumber:Number(context.unitNumber),bookTitle:String(context.bookTitle||'')};
+ const forms={
+  word:{class:'#uaClass',book:'#uaBook',unit:'[data-ua-unit]'},
+  sentence:{class:'#sgtClass',book:'#sgtBook',unit:'[data-sg-unit]'},
+  grammar:{class:'#gbHwForm select[name="klass"]',book:'#gbHwForm select[name="book"]',unit:'[data-chapter]'},
+  'free-talking':{class:'#ftTeacherAssignForm select[name="klass"]',book:'#ftTeacherAssignForm select[name="book"]',unit:'[data-ft-unit]'},
+  writing:{class:'#uaNewHomework select[name="class"]',book:'#uaNewHomework select[name="book"]',unit:'#uaNewHomework select[name="unit"]'},
+  puzzles:{class:'#uaNewHomework select[name="class"]',book:null,unit:null}
+ };
+ const config=forms[app];let stage=app==='writing'?'kind':'class',finished=false;
+ const optionReady=(el,value)=>el&&[...el.options].some(o=>o.value===value&&!o.disabled);
+ const choose=(el,value)=>{el.value=value;el.dispatchEvent(new Event('change',{bubbles:true}))};
+ const notice=(message)=>{
+  const host=scope.querySelector('#uaAppBody');if(!host)return;
+  let el=host.querySelector('#uaCurriculumContextNotice');
+  if(!el){el=document.createElement('p');el.id='uaCurriculumContextNotice';el.className='ua-note';el.setAttribute('role','status');host.prepend(el)}
+  el.textContent=message;
+ };
+ let observer,timer;
+ const cleanup=()=>{observer?.disconnect();clearTimeout(timer);if(curriculumLaunchCleanup===cleanup)curriculumLaunchCleanup=null};
+ curriculumLaunchCleanup=cleanup;
+ const apply=()=>{
+  if(finished||id!==curriculumLaunchId)return cleanup();
+  if(stage==='kind'){
+   const kind=scope.querySelector('#uaNewHomework select[name="kind"]');
+   if(!kind)return;
+   if(optionReady(kind,'sentence'))choose(kind,'sentence');
+   stage='class';
+  }
+  if(stage==='class'){
+   const el=scope.querySelector(config.class);
+   if(!optionReady(el,target.className))return;
+   choose(el,target.className);stage='book';
+   if(!config.book){stage='done'}
+   return;
+  }
+  if(stage==='book'){
+   const el=scope.querySelector(config.book);
+   if(!optionReady(el,target.bookId))return;
+   choose(el,target.bookId);stage='unit';
+   return;
+  }
+  if(stage==='unit'){
+   const nodes=[...scope.querySelectorAll(config.unit)];
+   if(!nodes.length)return;
+   if(app==='writing'){
+    const el=nodes[0];
+    if(!optionReady(el,target.unitId))return;
+    choose(el,target.unitId);
+   }else{
+    const el=nodes.find(x=>
+      String(x.value||x.dataset.sgUnit||'')===target.unitId ||
+      (app==='grammar'&&Number(x.dataset.chapter)===target.unitNumber));
+    if(!el)return;
+    el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}));
+   }
+   stage='done';
+  }
+  if(stage==='done'){
+   finished=true;
+   notice('Selected: '+target.className+' · '+(target.bookTitle||'Textbook')+' · Unit '+target.unitNumber+'. Review the options and due date before assigning.');
+   cleanup();
+  }
+ };
+ observer=new MutationObserver(()=>apply());
+ observer.observe(scope,{subtree:true,childList:true});
+ timer=setTimeout(()=>{
+  if(finished||id!==curriculumLaunchId)return;
+  notice('Could not automatically select the '+(stage==='class'?'class':stage==='book'?'textbook':'unit')+'. Please choose it manually; no mission was created.');
+  cleanup();
+ },20000);
+ apply();
+ return true;
+}
+window.UniversalAssignments={refresh,activate,openCreate:openCurriculumCreate,openTab:id=>{if(apps.some(a=>a.id===id)){if(curriculumLaunchCleanup)curriculumLaunchCleanup();active=id;remember();render()}}};
 document.querySelectorAll('[data-view="vocab"]').forEach(el=>el.addEventListener('click',restoreWordPanel));
 groups=groupRows();render();void refresh();
 })();
