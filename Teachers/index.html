@@ -162,7 +162,7 @@ try{
 #view-students .roster-student-card{background:#fff;border:1px solid #d8e5e9;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:13px;min-height:235px;cursor:pointer;transition:border-color .14s,box-shadow .14s,transform .14s}
 #view-students .roster-student-card:hover{border-color:#6bc6cf;box-shadow:0 6px 20px rgba(20,86,99,.08);transform:translateY(-1px)}
 #view-students .roster-student-card:focus-visible{outline:3px solid #4cbfc9;outline-offset:2px}
-#view-students .roster-student-card.is-complete{background:#effbfc;border-color:#b2e4eb}
+#view-students .roster-student-card.is-complete{background:#FFF8E6;border-color:#E9CD79}
 #view-students .roster-student-card.is-in-progress{background:#fff7fa;border-color:#f0d7e2}
 #view-students .roster-student-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 #view-students .roster-student-identity{display:flex;gap:10px;align-items:center;min-width:0}
@@ -170,7 +170,7 @@ try{
 #view-students .roster-student-name{font-size:16px;line-height:1.3;font-weight:800;color:#193e4c}
 #view-students .roster-student-ko{font-size:11px;color:#728995;margin-top:2px}
 #view-students .roster-student-badge{border:1px solid #d8e5e9;border-radius:20px;background:#fff;padding:5px 9px;font-weight:700;font-size:10px;white-space:nowrap;color:#637e87}
-#view-students .roster-student-card.is-complete .roster-student-badge{color:#117889;border-color:#b6e9ee}
+#view-students .roster-student-card.is-complete .roster-student-badge{color:#815B10;border-color:#E9CD79}
 #view-students .roster-student-card.is-in-progress .roster-student-badge{color:#986478;border-color:#edcfdf}
 #view-students .roster-student-card{min-height:0;gap:11px}
 #view-students .roster-book{background:rgba(255,255,255,.86);border:1px solid #e1e9ed;border-radius:12px;padding:12px;display:grid;gap:9px}
@@ -179,7 +179,7 @@ try{
 #view-students .roster-unit-strip{display:flex;gap:4px;margin:2px 0}
 #view-students .roster-unit-strip i{flex:1;min-width:5px;height:10px;border:1px solid #dfe7eb;border-radius:4px;background:#fff}
 #view-students .roster-unit-strip i.rs-progress{background:#f8dce9;border-color:#eec8d8}
-#view-students .roster-unit-strip i.rs-complete{background:#37bdca;border-color:#28b3c1}
+#view-students .roster-unit-strip i.rs-complete{background:#E8BC4A;border-color:#D5A62D}
 #view-students .roster-app-row{display:grid;grid-template-columns:106px minmax(30px,1fr) 38px;align-items:center;gap:8px}
 #view-students .roster-app-label{font-size:10px;color:#355964;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #view-students .roster-app-meter{height:8px;border-radius:10px;background:#e7eef1;overflow:hidden}
@@ -257,15 +257,15 @@ try{
 .cc-book-line strong{font-size:13px;color:#29495a}.cc-book-line small{font-size:11px;color:#607d87}
 .cc-unit-strip{display:flex;gap:3px;margin-top:6px}.cc-unit-strip i{flex:1;height:9px;border-radius:4px;background:#fff;border:1px solid #e1e9ec}
 .cc-unit-strip i.cc-in-progress{background:#f9dce9;border-color:#f0c8db}
-.cc-unit-strip i.cc-complete{background:#32bbc8;border-color:#25aab7}
+.cc-unit-strip i.cc-complete{background:#E8BC4A;border-color:#D5A62D}
 .cc-book-line.cc-not-started{background:#fff;border:1px solid #e6ecef}
 .cc-book-line.cc-in-progress{background:#fff5f9;border:1px solid #f2dbe6}
-.cc-book-line.cc-complete{background:#e5fafd;border:1px solid #aae9ef}
-.cc-class-card.cc-complete{background:#e9fbfd;border-color:#57cbd4}
+.cc-book-line.cc-complete{background:#FFF6D9;border:1px solid #E9CD79}
+.cc-class-card.cc-complete{background:#FFF8E6;border-color:#DDB959}
 .cc-class-card.cc-in-progress{background:#fff9fc;border-color:#eecfdf}
 .cc-class-card.cc-not-started{background:#fff;border-color:#dce7eb}
 .cc-class-card .cc-card-heading .cc-class-status{background:transparent;color:#69848d;font-size:11px;padding:0}
-.cc-student-row.cc-complete{background:#e5fafd;border-color:#abe9ef}
+.cc-student-row.cc-complete{background:#FFF5DA;border-color:#E5C673}
 .cc-student-row.cc-in-progress{background:#fff3f8;border-color:#efcfde}
 .cc-student-row.cc-not-started{background:#fff;border-color:#e2e9eb}
 .cc-writing-summary{background:#fff;border:1px solid #cce5e7;border-radius:17px;margin-top:16px;padding:20px}
@@ -302,7 +302,7 @@ try{
 .cc-matrix-row{padding:4px 0}.cc-unit-name{display:grid;gap:2px;padding:10px;border-radius:9px;background:#f7f9fa;font-size:12px}
 .cc-unit-name small{color:#80919b;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cc-cell{border:1.5px solid transparent;border-radius:10px;cursor:pointer;min-height:52px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px}
-.cc-cell b{font-size:14px}.cc-cell small{font-size:10px}.cc-full{background:#d9f9fc;color:#087c8b;border-color:#9be7ee}.cc-partial{background:#fff0f6;color:#955b77;border-color:#efd1df}
+.cc-cell b{font-size:14px}.cc-cell small{font-size:10px}.cc-full{background:#FFF0BD;color:#815B10;border-color:#E5BD56}.cc-partial{background:#fff0f6;color:#955b77;border-color:#efd1df}
 .cc-empty-cell{background:#fff;color:#8799a0;border-color:#e5ecef}.cc-selected{border-color:#188995;box-shadow:0 0 0 2px #b1e4e9}
 .cc-cell:hover{filter:brightness(.97);border-color:#53b5bf}
 .cc-drilldown{border:1px solid #cce5e7;border-radius:17px;background:#fff;padding:20px;margin-top:18px}
@@ -784,7 +784,7 @@ function rsAppProgress(studentId,book,unit){
 function rsUnitState(studentId,book,unit){
  const all=rsAppProgress(studentId,book,unit),apps=all.filter(x=>x.started);
  if(!apps.length)return 'not-started';
- // A finished optional mode cannot independently turn a textbook unit cyan:
+ // A finished optional mode cannot independently turn a textbook unit gold:
  // required book-backed vocabulary/sentence work must also be complete.
  const required=[];
  if(Number(rosterCurriculum.vocabTotals.get(String(unit.id))||0)>0)required.push('word');
@@ -1247,7 +1247,7 @@ function ccUnitStatus(book,unit,className){
   completedByStudent.set(String(record.student_id),Math.max(modes,completedByStudent.get(String(record.student_id))||0));
  }
  const puzzleComplete=[...completedByStudent.values()].reduce((sum,n)=>sum+Math.min(5,n)/5,0);
- // A unit is cyan only when every relevant app's completion can be verified.
+ // A unit is gold only when every relevant app's completion can be verified.
  // This conservative fallback remains pink while other Genius completion
  // totals aren't available, rather than presenting activity as mastery.
  const pct=Math.round(100*puzzleComplete/roster.length);
@@ -1325,7 +1325,7 @@ function ccRenderDetail(){
  '<div class="cc-book-tabs">'+books.map(b=>'<button type="button" class="'+(b.id===book.id?'active':'')+'" data-cc-book="'+ccEscape(b.id)+'">'+ccEscape(b.book_title||'Textbook')+'</button>').join('')+'</div>'+
  '<div class="cc-progress-heading"><div><h3>'+ccEscape(book.book_title||'Textbook')+'</h3><p>Current classroom unit: <strong>'+ccEscape(book.current_unit||'Not set')+'</strong></p></div>'+
  '<label>Mark unit being taught <select class="control" id="ccTaught"><option value="">Not set</option>'+units.map(u=>'<option value="'+ccEscape(String(u.unit_number))+'" '+(String(book.current_unit||'')===String(u.unit_number)?'selected':'')+'>Unit '+ccEscape(u.unit_number)+'</option>').join('')+'</select></label></div>'+
- '<p class="cc-helper">Cyan: more than 90% verified complete · Light pink: in progress · White: not started. Unverified practice is never marked completed.</p>'+
+ '<p class="cc-helper">Gold: more than 90% verified complete · Light pink: in progress · White: not started. Unverified practice is never marked completed.</p>'+
  (!curriculum.unitCache.has(book.book_id)?'<div class="cc-empty">Loading textbook units…</div>':!units.length?'<div class="cc-empty">No published or review units are available for this book.</div>':
  '<div class="cc-grid-scroll"><div class="cc-matrix"><div class="cc-matrix-head"><span>Unit</span>'+groups.map(g=>'<span>'+ccEscape(g.name)+'</span>').join('')+'</div>'+
  units.map(u=>'<div class="cc-matrix-row"><div class="cc-unit-name"><strong>Unit '+ccEscape(u.unit_number)+'</strong><small>'+ccEscape(u.title||'')+'</small></div>'+
