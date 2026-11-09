@@ -43,6 +43,7 @@ let lessonLoad=null;
 function hasActivityHistory(){return history.state?.[EXT_NAV_KEY]==='activity'}
 function closeActivity(){
  $('ftBootSpinner').hidden=true;
+ $('talk').classList.remove('is-ending');$('ftCelebration').classList.remove('is-revealed');
  activeStartId++;
  try{startAbort?.abort()}catch{}
  startAbort=null;
@@ -330,6 +331,8 @@ function ftFinishScores(){
 }
 function ftShowFinish(result){
  $('ftGuide').hidden=true;$('ftCelebration').hidden=false;
+ $('ftCelebration').classList.remove('is-revealed');
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{$('ftCelebration').classList.add('is-revealed')}));
  const stars=$('ftResultStars');stars.replaceChildren();
  for(let i=0;i<5;i++){const el=document.createElement('span');el.textContent='★';if(i<result.stars)el.className='earned';stars.append(el)}
  stars.setAttribute('aria-label',result.stars+' out of 5 stars');
@@ -342,7 +345,7 @@ function ftShowFinish(result){
   portrait.innerHTML='<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="48" fill="#e9fafc" stroke="#68cbd5" stroke-width="5"/><circle cx="60" cy="60" r="21" fill="none" stroke="#23a5b4" stroke-width="9"/><path d="M38 73a25 25 0 0 0 44 0" fill="none" stroke="#eda4c2" stroke-width="6" stroke-linecap="round"/></svg>';
  }
  ftCompletionSave(result);prepareCard();
- try{preloadStudentSfx();playStudentSfx('complete',{volume:.7})}catch{}
+ try{preloadStudentSfx();setTimeout(()=>{if(!$('ftCelebration').hidden)playStudentSfx('complete',{volume:.7})},420)}catch{}
 }
 
 $('ftFinishClose').addEventListener('click',()=>{$('ftCelebration').hidden=true;navigateBack()});
@@ -1046,7 +1049,14 @@ async function finishConversation(){
  const goodbye=state.character==='pigfish'?'That was fun! Catch you later!':'That was fun! See you next time!';
  try{await speakEleven(goodbye)}catch(e){console.warn('Guided goodbye',e)}
  if(!state.active||run!==state.anchorToken)return;
- state.anchorPhase='finished';endSession('Conversation complete. See you next time!');ftShowFinish(finishScores);
+ state.anchorPhase='finished';
+ // Goodbye audio has fully ended. Fade the conversation away before revealing
+ // the character celebration; never interrupt the final spoken sentence.
+ $('talk').classList.add('is-ending');
+ await new Promise(resolve=>setTimeout(resolve,260));
+ if(!state.active||run!==state.anchorToken)return;
+ endSession('Conversation complete. See you next time!');
+ ftShowFinish(finishScores);
  $('clock').textContent=count+' / '+count+' complete';
  $('anchorText').textContent='Great talking! See you next time!';
  $('listenCheck').textContent='Finished';
@@ -1222,7 +1232,7 @@ async function startConversation(){
  // Add a real top-level history entry AFTER the original app's character
  // screen, so native Back visits character selection before the unit screen.
  if(!hasActivityHistory())history.pushState({...history.state,[EXT_NAV_KEY]:'activity'},'');
- veil.hidden=false;$('talk').classList.add('is-visible');
+ veil.hidden=false;$('talk').classList.remove('is-ending');$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
  if(!continuing)$('log').replaceChildren();message('Connecting…');
  $('mute').disabled=false;$('end').disabled=false;
