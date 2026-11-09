@@ -169,7 +169,10 @@ function render(){
  '<p class="ua-note">Completion counts distinct questions answered correctly, including successful retries. Accuracy records first attempts separately. 오답 remaining must reach zero to pass.</p>';
  attachHomeworkGroupToggles(host);
  host.querySelectorAll('[data-naesin-detail]').forEach(button=>button.onclick=()=>{
-  const body=button.nextElementSibling;body.hidden=!body.hidden;button.setAttribute('aria-expanded',String(!body.hidden));
+  const body=button.closest('.ua-homework-card')?.querySelector('.ua-homework-expanded');
+  if(!body)return;
+  body.hidden=!body.hidden;
+  button.setAttribute('aria-expanded',String(!body.hidden));
  });
  host.querySelectorAll('[data-ua-scope]').forEach(b=>b.onclick=()=>{scope=b.dataset.uaScope;render()});
  host.querySelector('#uaGroupFilter').onchange=e=>{selected=e.target.value;render()};
