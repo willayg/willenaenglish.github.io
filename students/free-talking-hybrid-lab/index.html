@@ -375,7 +375,14 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
   <option value="gpt-5.4-mini">GPT-5.4 Mini · Alternative</option>
   <option value="realtime">Original Realtime · Control</option>
  </select>
- <p>Choose before starting. Same textbooks, characters, question sequence and voices. Hybrid uses separate transcription; Realtime is the unchanged comparison engine.</p>
+ <label for="ftSttSelect">Speech recognition (STT)</label>
+ <select id="ftSttSelect">
+  <option value="openai-mini" selected>OpenAI Mini Transcribe · Original hybrid</option>
+  <option value="eleven-scribe-v2">ElevenLabs Scribe v2 · Recorded audio</option>
+  <option value="eleven-scribe-realtime">ElevenLabs Scribe v2 Realtime · Streaming</option>
+ </select>
+ <p id="ftSttDetails" aria-live="polite">Recorded audio · browser silence detection · OpenAI Mini</p>
+ <p>Choose both engines before starting. Same textbooks, characters, question sequence and voices. Original Realtime uses its own built-in speech recognition.</p>
 </aside>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
 <div id="demo" hidden><section id="ftGuide" class="ft-layer" hidden role="dialog" aria-modal="true" aria-label="How to play Free Talking">
@@ -442,4 +449,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-hybrid-lab2"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-scribe-stt1"></script></body></html>
