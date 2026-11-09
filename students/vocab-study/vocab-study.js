@@ -2045,7 +2045,7 @@ function checkSpeaking(){
     correct,
     matchedBy:match.matchedBy
   });
-  recordVocabAttempt({
+  try{recordVocabAttempt({
     skill:'speaking',
     responseType:'speech',
     lexicalEntryId:word.id,
@@ -2064,15 +2064,17 @@ function checkSpeaking(){
     retryCount,
     attemptNumber:retryCount+1,
     sessionSource:'student'
-  });
+  });}catch(error){console.error('[Vocab Study] speaking attempt recording failed; allowing question navigation',error);}
   if(repeatUntilCorrect(correct))appendRetry(session.words,word);
   playStudentSfx(correct?'correct':'wrong');
-  renderer.setDisabled(true);
-  renderer.showFeedback({
-    correct,
-    correctAnswer:[target],
-    message:correct?'정답입니다!':'다시 확인해 보세요.'
-  });
+  try{
+    renderer.setDisabled(true);
+    renderer.showFeedback({
+      correct,
+      correctAnswer:[target],
+      message:correct?'정답입니다!':'다시 확인해 보세요.'
+    });
+  }catch(error){console.warn('[Vocab Study] speaking feedback rendering failed',error);}
   // Once speaking is accepted, display the textbook's target phrase rather than
   // the speech recognizer's spelling (e.g. "so a button" → "sew a button").
   // The raw transcript is already stored above for tracking/debugging.
@@ -2124,7 +2126,9 @@ async function finishSpeakingSession(){
   const total=session?.initialTotal||0;
   const skipped=(session?.results||[]).filter(result=>result?.skipped).length;
   const retries=wrongAttemptCount((session?.results||[]).filter(result=>!result?.skipped));
-  const reward=await completeRewardSession();
+  // Render completion immediately: server saves and teacher/gold refreshes must never trap a child on the last question.
+  const reward=state.rewardSession;
+  void completeRewardSession().catch(error=>console.warn('[Vocab Study] background completion failed',error));
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   instructionEl.hidden=true;
@@ -2569,7 +2573,9 @@ async function finishSpellingTest(){
   const total=test?.initialTotal||0;
   const retries=wrongAttemptCount(test?.results);
   const assignedWrongWords=state.activeTeacherAssignment?assignedSpellingWrongWords(test):[];
-  const reward=await completeRewardSession();
+  // Render completion immediately: server saves and teacher/gold refreshes must never trap a child on the last question.
+  const reward=state.rewardSession;
+  void completeRewardSession().catch(error=>console.warn('[Vocab Study] background completion failed',error));
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   instructionEl.hidden=true;
@@ -2747,11 +2753,15 @@ async function finishSpellingPractice(){
   const practice=state.spellingPractice;
   const assignedCoach=!!state.activeTeacherAssignment&&!state.optionalTeacherCoach&&arr(state.activeTeacherAssignment?.assignment?.required_modes).includes('spelling_coach');
   if(assignedCoach){
-    try{
-      await Promise.allSettled([...state.pendingTeacherRecords]);
-      await loadTeacherAssignments({showLoader:false});
-      await checkTeacherGoldenUnit(state.activeTeacherAssignment);
-    }catch(error){console.warn('[Vocab Study] assigned Coach completion refresh failed',error);}
+    // Persist/refresh in the background so the Coach finish screen cannot hang on the network.
+    const teacherAssignment=state.activeTeacherAssignment;
+    void (async()=>{
+      try{
+        await Promise.allSettled([...state.pendingTeacherRecords]);
+        await loadTeacherAssignments({showLoader:false});
+        await checkTeacherGoldenUnit(teacherAssignment);
+      }catch(error){console.warn('[Vocab Study] assigned Coach completion refresh failed',error);}
+    })();
   }
   const passedIds=new Set(arr(practice?.results).filter(r=>Number(r.supportLevel||0)===0).map(r=>txt(r.lexicalEntryId||r.word)).filter(Boolean));
   const supported=arr(practice?.results).filter(r=>Number(r.supportLevel||0)>0).length;
@@ -2812,7 +2822,9 @@ function reviewSession(){
 }
 async function finishSession(){
   playStudentSfx('complete');
-  const reward=await completeRewardSession();
+  // Render completion immediately: server saves and teacher/gold refreshes must never trap a child on the last question.
+  const reward=state.rewardSession;
+  void completeRewardSession().catch(error=>console.warn('[Vocab Study] background completion failed',error));
   progressFill.style.width='100%';
   progressEl.textContent='완료';
   bottomEl.hidden=true;
