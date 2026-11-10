@@ -1891,6 +1891,12 @@ async function initStandaloneRelease(){
  if(!source||!host){showError('Character menu could not load. Please refresh.');return}
  host.replaceChildren();
  const menu=source.cloneNode(true);
+ // The original character actor module might not have populated its portraits
+ // at iframe load; only fill a missing portrait with the exact shared SVG art.
+ const bunnyPortrait=menu.querySelector('#ftChooseLili .ft-character-symbol');
+ const pigfishPortrait=menu.querySelector('#ftChoosePigfish .ft-character-symbol');
+ if(bunnyPortrait&&!bunnyPortrait.querySelector('svg'))bunnyPortrait.innerHTML=BUNNY_FOX_ART;
+ if(pigfishPortrait&&!pigfishPortrait.querySelector('svg'))pigfishPortrait.innerHTML=PIGFISH_ART;
  menu.hidden=false;
  menu.removeAttribute('hidden');
  menu.querySelector('#ftCharacterRound')?.remove();
