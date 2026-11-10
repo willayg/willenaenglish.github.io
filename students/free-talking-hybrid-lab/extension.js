@@ -5,6 +5,13 @@ import {createFreeTalkingCharacters} from '/students/free-talking-genius/charact
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261107-pig-original4';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
+function syncTranscriptPreference(){
+ const toggle=$('ftTranscriptToggle'),panel=document.querySelector('#demo .conversation-text');
+ if(!toggle||!panel)return;
+ panel.classList.toggle('ft-transcript-hidden',!toggle.checked);
+}
+document.getElementById('ftTranscriptToggle')?.addEventListener('change',syncTranscriptPreference);
+
 const frame=$('original'),veil=$('demo');
 const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
@@ -514,63 +521,10 @@ async function finishTimedQuestion(){}
 function studentTurnInProgress(){
  return Boolean(state.speechStartedAt||state.awaitingSpeechCommit||state.pendingSpeech.size||state.turnFragments.length||state.turnGraceTimer);
 }
-function startQuestionClock(){
- haltQuestionClock();
- if(!state.active||state.paused||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
- if(state.questionRemainingMs<=0){void finishTimedQuestion();return}
- state.questionTickAt=performance.now();
- state.questionClock=setInterval(()=>{
-  if(!state.active||state.paused){haltQuestionClock();return}
-  const now=performance.now();
-  if(['awaitingFirst','awaitingSecond'].includes(state.anchorPhase)){
-   state.questionRemainingMs=Math.max(0,state.questionRemainingMs-(now-state.questionTickAt));
-   renderTopicTicker();
-   if(state.questionRemainingMs===0){
-    state.questionExpired=true;haltQuestionClock();
-    // A short grace window catches late server VAD speech-start events. A
-    // child who begins a sentence near zero must not be interrupted.
-    const anchor=state.anchorToken;
-    state.questionGrace=setTimeout(()=>{
-     state.questionGrace=null;
-     if(state.active&&anchor===state.anchorToken&&!studentTurnInProgress())void finishTimedQuestion();
-    },850);
-   }
-  }
-  state.questionTickAt=now;
- },100);
-}
-async function moveToNextTopic(){
- if(!state.active)return;
- state.topicCompleted.add(state.anchorIndex);renderTopicTicker();
- if(state.anchorIndex+1>=state.anchors.length)await finishConversation();
- else await playAnchor(state.anchorIndex+1);
-}
-async function finishTimedQuestion(){
- if(!state.active||state.paused||state.finishingTopic||!state.questionExpired)return;
- if(studentTurnInProgress()){state.questionExpired=true;return}
- if(isBeginner()&&!state.beginnerRescueUsed){
-  state.beginnerRescueUsed=true;state.questionExpired=false;state.questionRemainingMs=12000;
-  const prior=state.anchorPhase,token=state.anchorToken;
-  haltQuestionClock();state.anchorPhase='playingReply';setMicEnabled(false);
-  try{await speakEleven(prior==='awaitingSecond'?'Yes or no?':'Try one word. Yes or no?')}catch(e){console.warn('Beginner help',e)}
-  if(state.active&&token===state.anchorToken){
-   state.anchorPhase=prior;setMicEnabled(true);actorPhase('listening');armIdleTimeout();startQuestionClock();
-  }
-  return;
- }
- state.finishingTopic=true;haltQuestionClock();clearTimeout(state.idleTimer);
- const token=state.anchorToken;
- state.anchorPhase='betweenAnchors';setMicEnabled(false);
- const answered=['Got it! Moving on.','Okay, nice! Next one.','Fair enough! Here’s another one.'];
- const silent=['No worries! Let’s try another one.','That’s okay! Next question.','No problem! Moving on.'];
- const spoken=(state.topicHadAnswer?answered:silent)[state.anchorIndex%3];
- try{await speakEleven(spoken)}catch(e){console.warn('[Free Talking] soft timer transition',e)}
- if(state.active&&token===state.anchorToken)await moveToNextTopic();
-}
 function appendLine(who,text){
  if(!String(text||'').trim())return;
  const row=document.createElement('div');row.className='entry'+(who==='You'?' me':'');
- const heading=document.createElement('b');heading.textContent=who;
+ const heading=document.createElement('b');heading.textContent=who==='You'?'What AI heard (may be inaccurate)':who;
  const detail=document.createElement('span');detail.textContent=String(text).trim();
  row.append(heading,detail);$('log').append(row);
  if($('log').children.length>30)$('log').firstElementChild.remove();
@@ -1481,7 +1435,7 @@ async function finishConversation(){
  if(!state.active||run!==state.anchorToken)return;
  endSession('Conversation complete. See you next time!');
  ftShowFinish(finishScores);
- $('clock').textContent=count+' / '+count+' complete';
+ $('clock').textContent=finishScores.answered+' / 12 conversations complete';
  $('anchorText').textContent='Great talking! See you next time!';
  $('listenCheck').textContent='Finished';
 }
@@ -1713,7 +1667,7 @@ async function startConversation(){
  document.getElementById('ftEnginePanel')?.setAttribute('hidden','');
  veil.hidden=false;$('talk').classList.remove('is-ending');$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
- if(!continuing)$('log').replaceChildren();message('Connecting…');
+ if(!continuing)$('log').replaceChildren();syncTranscriptPreference();message('Connecting…');
  $('mute').disabled=false;$('end').disabled=false;
  $('mute').setAttribute('aria-pressed','false');
  $('mute').setAttribute('aria-label','Mute microphone');
