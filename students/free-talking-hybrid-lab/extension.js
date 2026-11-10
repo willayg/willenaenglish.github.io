@@ -7,6 +7,7 @@ import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?
 const $=id=>document.getElementById(id);
 const releaseMode=new URLSearchParams(location.search).get('release')==='1';
 if(releaseMode)document.body.classList.add('ft-release');
+else if(new URLSearchParams(location.search).get('legacy')!=='1')location.replace('/students/free-talking-genius/');
 function syncTranscriptPreference(){
  const toggle=$('ftTranscriptToggle'),panel=document.querySelector('#demo .conversation-text');
  if(!toggle||!panel)return;
@@ -35,52 +36,8 @@ const hybrid={history:[],ctx:null,analyser:null,source:null,raf:null,recorder:nu
 function selectedEngine(){return 'gpt-6-luna'}
 function hybridMode(){return selectedEngine()!=='realtime'}
 
-const FT_TIMING_DEFAULT={silence:1700,grace:2200,unfinished:3400};
-const FT_TIMING_KEY='willena-ft-hybrid-timing-v1';
-const ftTiming={...FT_TIMING_DEFAULT};
-try{
- const saved=JSON.parse(localStorage.getItem(FT_TIMING_KEY)||'{}');
- for(const key of Object.keys(FT_TIMING_DEFAULT)){
-  const n=Number(saved[key]);
-  const limits={silence:[500,2800],grace:[300,3500],unfinished:[600,5000]}[key];
-  if(Number.isFinite(n)&&n>=limits[0]&&n<=limits[1])ftTiming[key]=n;
- }
-}catch{}
-function updateTimingUi(){
- for(const [key,inputId,outputId] of [['silence','ftSilenceRange','ftSilenceValue'],['grace','ftGraceRange','ftGraceValue'],['unfinished','ftUnfinishedRange','ftUnfinishedValue']]){
-  const input=$(inputId),output=$(outputId);
-  if(input)input.value=String(ftTiming[key]);
-  if(output)output.textContent=(ftTiming[key]/1000).toFixed(1)+' s';
- }
- const changed=Object.keys(FT_TIMING_DEFAULT).some(key=>ftTiming[key]!==FT_TIMING_DEFAULT[key]);
- const toggle=$('ftTimingToggle');
- if(toggle)toggle.textContent='Listening timing · '+(changed?'Custom':'Default');
-}
-function setTiming(key,value){
- if(!Object.hasOwn(FT_TIMING_DEFAULT,key))return;
- ftTiming[key]=value;
- try{localStorage.setItem(FT_TIMING_KEY,JSON.stringify(ftTiming))}catch{}
- if(ftUsage.current){ftUsage.current.timingSettingsMs={...ftTiming}}
- updateTimingUi();
- if(key!=='silence'&&state.active&&state.hybrid&&state.turnFragments.length&&!state.speechStartedAt&&!state.pendingSpeech.size)
-  scheduleSpeechGrace();
-}
-for(const [key,inputId] of [['silence','ftSilenceRange'],['grace','ftGraceRange'],['unfinished','ftUnfinishedRange']]){
- $(inputId)?.addEventListener('input',event=>setTiming(key,Number(event.target.value)));
-}
-$('ftTimingReset')?.addEventListener('click',()=>{
- for(const [key,value] of Object.entries(FT_TIMING_DEFAULT))ftTiming[key]=value;
- try{localStorage.setItem(FT_TIMING_KEY,JSON.stringify(ftTiming))}catch{}
- if(ftUsage.current)ftUsage.current.timingSettingsMs={...ftTiming};
- updateTimingUi();
- if(state.active&&state.hybrid&&state.turnFragments.length&&!state.speechStartedAt&&!state.pendingSpeech.size)scheduleSpeechGrace();
-});
-$('ftTimingToggle')?.addEventListener('click',()=>{
- const content=$('ftTimingControls'),button=$('ftTimingToggle');
- content.hidden=!content.hidden;
- button.setAttribute('aria-expanded',String(!content.hidden));
-});
-updateTimingUi();
+// Fixed production silence timings; the legacy on-screen tuning panel is retired.
+const ftTiming={silence:1700,grace:2200,unfinished:3400};
 
 // Read-only cost diagnostics: counts reported by OpenAI, not estimated dollars.
 // Kept locally on the current device; never stores transcripts, names or audio.
@@ -200,7 +157,13 @@ function closeActivity(){
  // Do NOT click its Back button: that would skip character selection.
 }
 function navigateBack(){
- if(releaseMode){closeActivity();location.assign('/students/free-talking-genius/');return}
+ if(releaseMode){
+  // Navigate BEFORE tearing down the conversation overlay. Previously
+  // closeActivity() hid the only visible screen, exposing a blank page while
+  // the browser loaded the book selection screen.
+  location.replace('/students/free-talking-genius/');
+  return;
+ }
  const hadEntry=hasActivityHistory();
  closeActivity();
  if(hadEntry)history.back();
