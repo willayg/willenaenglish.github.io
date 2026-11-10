@@ -1455,7 +1455,7 @@ function requestGuidedReply(){
   'Respond with genuine interest to what the child communicated. The child may follow a tangent or ask something unrelated. Do not insist on the previous question or textbook.',
   'For each normal turn, make a short natural reaction and then ask ONE inviting question to keep the child talking. Never require the child to answer that particular question. If Luna has no interesting natural follow-up, the server will gently introduce an unused ACTUAL published question from this unit.',
   'Occasionally gently recast a clear grammar mistake as part of your reply; never insist on repetition or correct uncertain STT.',
-  remaining<=1?'FINAL CONTRIBUTION: Respond warmly with no new question; the app will say goodbye afterward.':'Occasionally use exact questions from the book inside the conversation when they fit naturally. NEW_TOPIC is only for the app to play another cached book question after the discussion has run out of ideas.',
+  remaining<=1?'FINAL CONTRIBUTION: Respond warmly to the child and give a natural goodbye. Do not ask a new question or invite an answer. The app will show the celebration after your reply.':'Occasionally use exact questions from the book inside the conversation when they fit naturally. NEW_TOPIC is only for the app to play another cached book question after the discussion has run out of ideas.',
   'Speak briefly and naturally, always in English except when the child explicitly requests a Korean vocabulary explanation. Do not write internal labels, markers, or fake laughter. The child is learning English, so avoid Spanish output even if the speech recognizer misheard the child.'
  ].join(' ');
  if(!sendRealtime({type:'response.create',response:{output_modalities:['text'],instructions:directive}})){
@@ -1463,14 +1463,16 @@ function requestGuidedReply(){
  }else{actorPhase('thinking');message('Thinking about your answer…')}
 }
 
-async function finishConversation(){
+async function finishConversation({skipGoodbye=false}={}){
  if(!state.active||state.anchorPhase==='finished'||state.anchorPhase==='goodbye')return;
  const run=state.anchorToken,count=state.anchors.length;
  const finishScores=ftFinishScores();
  state.anchorPhase='goodbye';haltQuestionClock();state.topicCompleted.add(state.anchorIndex);renderTopicTicker();setMicEnabled(false);
  $('listenCheck').textContent='Conversation complete';message('Finishing your conversation…');
- const goodbye=state.character==='pigfish'?'That was fun! Catch you later!':'That was fun! See you next time!';
- try{await speakEleven(goodbye)}catch(e){console.warn('Guided goodbye',e)}
+ if(!skipGoodbye){
+  const goodbye=state.character==='pigfish'?'That was fun! Catch you later!':'That was fun! See you next time!';
+  try{await speakEleven(goodbye)}catch(e){console.warn('Guided goodbye',e)}
+ }
  if(!state.active||run!==state.anchorToken)return;
  if(state.hybrid&&state.transcriptSaveQueue){
   await state.transcriptSaveQueue.catch(()=>{});
@@ -1502,7 +1504,7 @@ async function finishNaturalReply(data){
  if(!state.active||run!==state.anchorToken)return;
  if(contribution)ftRecordAnswer(state.hybridLatestSpeech||'');
  state.hybridLatestSpeech='';
- if((state.contributions||0)>=12){await finishConversation();return}
+ if((state.contributions||0)>=12){await finishConversation({skipGoodbye:true});return}
  if(newTopic&&state.anchors.length>1){state.anchorPhase='betweenAnchors';await moveToNextTopic();return}
  state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');armIdleTimeout();
  message('Your turn. Keep chatting!');$('listenCheck').textContent='Listening';
@@ -1738,6 +1740,17 @@ async function startConversation(){
   showActor();actorPhase('thinking');
   state.hybrid=hybridMode();
   state.hybridModel=selectedEngine();state.sttEngine=selectedStt();
+  if(releaseMode&&!continuing){
+   const saved=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+    action:'progress',book_id:state.book.id,unit_id:state.unit.id
+   },startAbort.signal);
+   if(!saved.ok)throw Error('Could not load Free Talking progress');
+   const savedProgress=await saved.json();
+   const count=Math.max(0,Math.min(12,Number(savedProgress.contributions)||0));
+   // Once gold is reached, further conversations remain available from 0.
+   state.contributions=count===12?0:count;
+   renderTopicTicker();
+  }
   const res=await authorizedDemoFetch(state.hybrid?'/api/free-talking-hybrid-lab':'/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id,guided:true,action:'lesson'},startAbort.signal);
   if(startId!==activeStartId)return;
   const session=await res.json().catch(()=>({}));
@@ -1753,7 +1766,7 @@ async function startConversation(){
   state.anchors=Array.isArray(session.lesson?.anchors)?session.lesson.anchors.filter(x=>x.id&&x.text).slice(0,8):[];
   if(!continuing){state.topicCompleted.clear();resetQuestionClock()}else renderTopicTicker();
   if(!state.anchors.length)throw Error('This unit has no published question anchors');
-  state.anchorIndex=Math.min(Math.max(0,state.resumeIndex||0),Math.max(0,state.anchors.length-1));state.anchorPhase='ready';state.anchorResponding=false;state.anchorResponseText='';state.guidedSessionReady=false;
+  state.anchorIndex=continuing?Math.min(Math.max(0,state.resumeIndex||0),state.anchors.length-1):Math.floor(Math.random()*state.anchors.length);state.anchorPhase='ready';state.anchorResponding=false;state.anchorResponseText='';state.guidedSessionReady=false;
   $('clock').textContent='Question '+(state.anchorIndex+1)+' / '+state.anchors.length;
   $('anchorText').textContent=state.anchors[state.anchorIndex].text;
   if(state.hybrid){
