@@ -592,6 +592,31 @@ function renderUnitStrip(){
   button.addEventListener('click',()=>selectUnit(n));host.append(button);
  }
 }
+// Free Talking has cumulative student/unit progress independently of Speaking.
+function showFreeTalkingPercent(value){
+ const card=$('ftFreeTalkingCard');if(!card)return;
+ const count=Math.max(0,Math.min(12,Number(value)||0));
+ const percent=Math.round(count/12*100);
+ card.querySelector('.vocab-skill-ring').style.setProperty('--progress',String(percent));
+ card.querySelector('.vocab-skill-ring span').textContent=percent+'%';
+ card.classList.toggle('ft-golden-skill',count===12);
+ const detail=card.querySelector('.vocab-card-stars');
+ if(detail){detail.textContent='';detail.hidden=true}
+ card.setAttribute('aria-label','Free Talking '+percent+'%');
+}
+async function refreshFreeTalkingPercent(){
+ const bookId=BOOK(),unitId=groups()[0]?.unit_id;
+ showFreeTalkingPercent(0);
+ if(!state.student?.id||!bookId||!unitId)return;
+ try{
+  const rows=await api('free_talking_conversation_progress',{
+   params:'?select=contributions&student_id=eq.'+encodeURIComponent(state.student.id)+
+    '&book_id=eq.'+encodeURIComponent(bookId)+'&unit_id=eq.'+encodeURIComponent(unitId)+'&limit=1'
+  });
+  if(BOOK()===bookId&&groups()[0]?.unit_id===unitId)
+   showFreeTalkingPercent(rows?.[0]?.contributions||0);
+ }catch(e){console.warn('[Free Talking] Could not load conversation progress',e)}
+}
 function renderBook(){
  renderBookTabs();
  renderUnitStrip();
@@ -602,6 +627,7 @@ function renderBook(){
  card.querySelector('.vocab-skill-ring span').textContent=percent+'%';
  card.querySelector('.vocab-card-stars').textContent=count+'/8'+(count===8?' · Golden Unit':'');
  card.classList.toggle('ft-golden-skill',count===8);
+ void refreshFreeTalkingPercent();
 
 }
 function selectUnit(n){state.unit=n;renderBook();view('ftBook');questionVoice.preload(n);}
