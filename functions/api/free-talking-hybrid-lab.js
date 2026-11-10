@@ -353,13 +353,13 @@ export async function onRequestPost({request,env}){
    if(evaluateAnswer&&finalContribution){
     // Students must never be asked a fresh question seconds before the
     // completion animation. Keep Luna's contextual reaction when possible.
-    textValue=textValue.replace(/(?:[^.!?]*[?？])\\s*$/u,'').trim();
+    textValue=textValue.replace(/(?:[^.!?]*[?？])\s*$/u,'').trim();
     if(!textValue)textValue='That was lovely to hear.';
     if(!/[.!]$/.test(textValue))textValue+='.';
     textValue+=' Well, that is all we have time for today. I enjoyed our chat! See you next time!';
     newTopic=false;
    }
-   if(evaluateAnswer&&!finalContribution&&!/[?？]\\s*$/.test(textValue)){
+   if(evaluateAnswer&&!finalContribution&&!/[?？]\s*$/.test(textValue)){
     const recentText=turns.map(t=>t.content).join(' ').toLowerCase();
     const available=questions.filter(q=>{
      const question=fmt(q.question_en,150).trim();
