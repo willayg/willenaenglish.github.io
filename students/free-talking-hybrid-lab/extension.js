@@ -618,6 +618,11 @@ function appendLine(who,text){
 
 function actorPhase(phase){
  $('actorStage').dataset.phase=phase;
+ const indicator=$('ftConversationState');
+ const label=$('ftConversationStateLabel');
+ const mode=phase==='speaking'?'talking':phase==='listening'?'listening':phase==='thinking'?'thinking':null;
+ if(indicator){indicator.hidden=!mode;if(mode)indicator.dataset.mode=mode}
+ if(label&&mode)label.textContent=mode.charAt(0).toUpperCase()+mode.slice(1);
  const circle=$('ftTurnCircle');
  if(circle){
   circle.dataset.phase=phase==='speaking'?'ai':phase==='listening'?'student':phase==='thinking'?'thinking':'ready';
@@ -1270,6 +1275,7 @@ function scheduleSpeechGrace(){
 function queueSpeechFragment(itemId,text,anchorToken,phase){
  if(!state.active||anchorToken!==state.anchorToken||phase!==state.anchorPhase)return;
  state.turnFragments.push({itemId,text,anchorToken,phase});
+ actorPhase('listening');
  message('Take your time. Listening for more…');
  $('listenCheck').textContent='Thinking time · keep speaking when ready';
  scheduleSpeechGrace();
@@ -1644,7 +1650,7 @@ function handleRealtime(data){
   case 'input_audio_buffer.speech_stopped':
    if(state.ttsPlaying||!state.speechStartedAt)break;
    state.lastSpeechDuration=Math.max(0,performance.now()-state.speechStartedAt);
-   state.speechStartedAt=0;message('Checking your answer…');break;
+   state.speechStartedAt=0;actorPhase('thinking');message('Checking your answer…');break;
   case 'input_audio_buffer.committed':{
    // VAD has committed audio, but that does NOT prove the child spoke.
    // Wait for an item-matched transcript, and reject silence/noise.
@@ -1746,7 +1752,7 @@ async function startConversation(){
  const character=state.character;state.voiceMode='eleven'; // guided text responses use controlled TTS for ALL three voices
 
  try{
-  showActor();
+  showActor();actorPhase('thinking');
   state.hybrid=hybridMode();
   state.hybridModel=selectedEngine();state.sttEngine=selectedStt();
   const res=await authorizedDemoFetch(state.hybrid?'/api/free-talking-hybrid-lab':'/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id,guided:true,action:'lesson'},startAbort.signal);
