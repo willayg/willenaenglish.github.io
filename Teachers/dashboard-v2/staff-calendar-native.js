@@ -18,7 +18,7 @@ async function api(method,path,body,google=false){
  // Same fallback as other Dashboard APIs; server verifies JWT before using it.
  if(backup.split('.').length===3)headers.Authorization='Bearer '+backup;
  const r=await fetch((google?GOOGLE:API)+path,{method,credentials:'include',cache:'no-store',headers,body:body?JSON.stringify(body):undefined});
- const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw Error(j.error||'Calendar request failed ('+r.status+')');return j;
+ const text=await r.text();let j={};try{j=JSON.parse(text)}catch{}if(!r.ok||j.success===false)throw Error(j.error||(r.status===502?'Google integration server returned 502 (check Cloudflare function logs)':'Calendar request failed ('+r.status+')'));return j;
 }
 function googleNotice(text,connected=false){
  const el=$('wcGoogleStatus');if(!el)return;el.textContent=text;el.classList.toggle('connected',connected)
@@ -34,9 +34,9 @@ async function checkGoogle(){
   googleNotice(status.connected?'Google Calendar connected · Events sync in both directions':'Google Calendar not connected · Shared Willena events only',status.connected);
  }catch(e){
   state.googleReady=false;state.source='native';
-  const connect=$('wcConnectGoogle');if(connect)connect.hidden=true;
+  const connect=$('wcConnectGoogle');if(connect){connect.hidden=false;connect.textContent='Connect Google Calendar';connect.disabled=false}
   const share=$('wcShareGoogle');if(share)share.hidden=true;
-  googleNotice('Google sync unavailable: '+e.message);
+  googleNotice('Google connection not verified: '+e.message+'. You can try connecting; existing Willena events remain available.');
  }
 }
 async function connectGoogle(){
