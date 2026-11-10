@@ -521,12 +521,39 @@ async function finishTimedQuestion(){}
 function studentTurnInProgress(){
  return Boolean(state.speechStartedAt||state.awaitingSpeechCommit||state.pendingSpeech.size||state.turnFragments.length||state.turnGraceTimer);
 }
+// Save text only (never the audio recording) for a restricted, expiring teacher review.
+function saveHybridTranscript(who,spoken){
+ if(!state.hybrid||!state.active||!state.transcriptSessionId||!state.book?.id||!state.unit?.id)return;
+ const sessionId=state.transcriptSessionId;
+ const turnNumber=++state.transcriptTurnNumber;
+ if(turnNumber>150)return;
+ const body={action:'transcript',session_id:sessionId,turn_number:turnNumber,
+  speaker:who==='You'?'student':'character',character:state.character,
+  book_id:state.book.id,unit_id:state.unit.id,
+  transcript_text:String(spoken).trim().slice(0,1500)};
+ // Serialize writes to preserve dialogue order and avoid client-side race conditions.
+ const previous=state.transcriptSaveQueue||Promise.resolve();
+ state.transcriptSaveQueue=previous.catch(()=>{}).then(async()=>{
+  let lastError=null;
+  for(let attempt=0;attempt<2;attempt++){
+   try{
+    const response=await authorizedDemoFetch('/api/free-talking-hybrid-lab',body);
+    if(response.ok){state.transcriptSaved=(state.transcriptSaved||0)+1;return}
+    lastError=Error('HTTP '+response.status);
+    if(response.status<500)break;
+   }catch(ex){lastError=ex}
+  }
+  state.transcriptSaveErrors=(state.transcriptSaveErrors||0)+1;
+  console.warn('[Free Talking] transcript not saved',sessionId,turnNumber,String(lastError));
+ });
+}
 function appendLine(who,text){
  if(!String(text||'').trim())return;
  const row=document.createElement('div');row.className='entry'+(who==='You'?' me':'');
  const heading=document.createElement('b');heading.textContent=who==='You'?'What AI heard (may be inaccurate)':who;
  const detail=document.createElement('span');detail.textContent=String(text).trim();
  row.append(heading,detail);$('log').append(row);
+ saveHybridTranscript(who,text);
  if($('log').children.length>30)$('log').firstElementChild.remove();
  $('log').scrollTop=$('log').scrollHeight;
 }
@@ -1662,7 +1689,12 @@ async function startConversation(){
  if(!state.unit||!state.book)throw Error('No lesson loaded. Select a book and unit first.');
  const continuing=Boolean(state.resumePhase);
  if(!continuing&&!state.guideAccepted){let dismissed=false;try{dismissed=localStorage.getItem(FT_GUIDE_KEY)==='1'}catch{}if(!dismissed){showFtGuide(true);return}}
- state.guideAccepted=false;if(!continuing){state.questionRewards.clear();state.contributions=0;}
+ state.guideAccepted=false;if(!continuing){
+  state.questionRewards.clear();state.contributions=0;
+  state.transcriptSessionId=crypto.randomUUID();
+  state.transcriptTurnNumber=0;state.transcriptSaved=0;state.transcriptSaveErrors=0;
+  state.transcriptSaveQueue=Promise.resolve();
+ }
  if(!continuing&&!state.initialLoadingShown){state.initialLoadingShown=true;$('ftBootSpinner').hidden=false;}
  state.starting=true;state.paused=false;setPauseButton(false);
  $('pauseResume').disabled=false;
