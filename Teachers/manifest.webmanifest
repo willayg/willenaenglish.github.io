@@ -1,0 +1,30 @@
+{
+  "id": "/Teachers/",
+  "name": "Willena Teachers",
+  "short_name": "Willena",
+  "description": "Private Willena staff dashboard, calendar, and teaching tools.",
+  "start_url": "/Teachers/?source=pwa",
+  "scope": "/Teachers/",
+  "display": "standalone",
+  "display_override": [
+    "standalone"
+  ],
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#183e4a",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/Teachers/icons/willena-teachers.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/Teachers/icons/willena-teachers-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
