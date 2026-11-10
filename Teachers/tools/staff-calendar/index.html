@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Willena Staff Calendar · Preview</title><meta name="robots" content="noindex">
+<title>Willena Staff Calendar</title><meta name="robots" content="noindex">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{font-family:Poppins,Arial,sans-serif;color:#293744;background:#f5f8fa;--cyan:#6ecdd7;--pink:#e9609b;--line:#e2eaef}
@@ -44,9 +44,9 @@ textarea{min-height:75px;resize:vertical}.modalfoot{display:flex;justify-content
 @media(max-width:900px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr;gap:16px}.upcoming{border:0;padding:0}}
 @media(max-width:570px){main{padding:14px 9px}.controls{padding:12px;gap:5px}.controls h2{font-size:17px;min-width:0;flex:1}.viewbuttons{margin-left:0}.day{min-height:87px;padding:6px 2px}.number{margin-left:1px;width:22px;height:22px}.event{font-size:9px;padding:4px 3px}.event time{display:none}.side{display:block}.fields{grid-template-columns:1fr}.titlebar h1{font-size:23px}}
 </style></head>
-<body><header><img class="logo" src="/Assets/Images/Logo.png" alt="Willena"><div class="identity"><strong>Willena Staff Calendar</strong><small>Teachers &amp; Admin · Standalone prototype</small></div><a href="/Teachers/">Back to Teachers</a></header>
-<main><div class="titlebar"><div><span class="kicker">Staff workspace · Preview</span><h1>Everyone on the same page.</h1><p>Academy events, staff schedules and important dates in one place.</p></div><button class="primary" id="newEvent">+ New Event</button></div>
-<div class="banner" role="status"><strong>Preview mode:</strong> Events are saved in this browser only. They are not yet shared across teachers or synced with Google Calendar. Use this to test the layout and workflow.</div>
+<body><header><img class="logo" src="/Assets/Images/Logo.png" alt="Willena"><div class="identity"><strong>Willena Staff Calendar</strong><small>Teachers &amp; Admin · Google Calendar</small></div><a href="/Teachers/">Back to Teachers</a></header>
+<main><div class="titlebar"><div><span class="kicker">Staff workspace · Shared Google Calendar</span><h1>Everyone on the same page.</h1><p>Academy events, staff schedules and important dates in one place.</p></div><button id="connectGoogle" hidden>Connect Google Calendar</button><button class="primary" id="newEvent" disabled>+ New Event</button></div>
+<div class="banner" id="calendarNotice" role="status">Checking shared Google Calendar connection…</div>
 <div class="layout"><section class="panel"><div class="controls"><h2 id="period"></h2><button id="prev" aria-label="Previous period">‹</button><button id="today">Today</button><button id="next" aria-label="Next period">›</button><div class="viewbuttons"><button id="month" class="active">Month</button><button id="week">Week</button></div></div><div class="weekdays"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div><div class="days" id="days"></div></section>
 <aside class="panel side"><div><h3>Categories</h3><div class="legend" id="legend"></div></div><div class="upcoming"><h3>Coming up</h3><div id="upcoming"></div></div></aside></div></main>
 <dialog id="editor"><form id="eventForm"><div class="modalhead"><h2 id="editorTitle">New event</h2><button type="button" id="close" aria-label="Close">×</button></div><div class="modalbody"><div class="fields">
@@ -59,50 +59,66 @@ textarea{min-height:75px;resize:vertical}.modalfoot{display:flex;justify-content
 <script>
 (()=>{
 "use strict";
-const KEY="willena.staff-calendar.prototype.v1";
+const API="/api/staff-calendar";
 const $=id=>document.getElementById(id);
 const cats={events:"Willena events",staff:"Staff",academic:"Academic",deadline:"Deadlines"};
-const pad=n=>String(n).padStart(2,"0"),dateKey=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const pad=n=>String(n).padStart(2,"0");
+const dateKey=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const parse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
-const today=new Date();let cursor=new Date(today.getFullYear(),today.getMonth(),1),view="month",editId=null;
-let events=[];try{const arr=JSON.parse(localStorage.getItem(KEY)||"[]");if(Array.isArray(arr))events=arr.filter(e=>e&&e.id&&e.date&&e.title)}catch{}
+const today=new Date();
+let cursor=new Date(today.getFullYear(),today.getMonth(),1),view="month",editId=null;
+let events=[],connected=false,busy=false;
 const visible=new Set(Object.keys(cats));
-function save(){localStorage.setItem(KEY,JSON.stringify(events))}
-function dateMatch(ev,d){
- const a=parse(ev.date);if(d<a)return false;
- if(ev.repeat==="weekly")return (Math.round((d-a)/86400000)%7)===0;
- if(ev.repeat==="monthly")return d.getDate()===a.getDate();
- return dateKey(a)===dateKey(d);
+function notice(message,error=false){const n=$("calendarNotice");n.textContent=message;n.style.background=error?"#fff1f3":"#fff9e8";n.style.borderColor=error?"#eab5c2":"#e7d6a3";n.hidden=!message}
+async function request(path,options={}){const r=await fetch(API+path,{credentials:"include",cache:"no-store",...options,headers:{"content-type":"application/json",...(options.headers||{})}});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||"Calendar request failed ("+r.status+")");return j}
+function weekStart(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-x.getDay());return x}
+function range(){const start=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth(),1):weekStart(cursor);if(view==="month")start.setDate(start.getDate()-start.getDay());const end=new Date(start.getFullYear(),start.getMonth(),start.getDate()+(view==="month"?41:6));return {start,end}}
+async function load(){
+ if(!connected)return;
+ notice("Loading Google Calendar…");
+ try{
+ const r=range(),min=new Date(Math.min(r.start.getTime(),new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime()));
+ const max=new Date(Math.max(r.end.getTime(),new Date(today.getFullYear(),today.getMonth(),today.getDate()+90).getTime()));
+ const data=await request("/events?from="+dateKey(min)+"&to="+dateKey(max));
+ events=data.events||[];notice("");paint();
+ }catch(e){notice(e.message,true)}
 }
-function occurrences(d){return events.filter(e=>visible.has(e.category||"events")&&dateMatch(e,d)).sort((a,b)=>(a.time||"99:99").localeCompare(b.time||"99:99"))}
-function eventButton(e,d){const b=document.createElement("button");b.className="event "+e.category;b.title=(e.time?e.time+" ":"")+e.title+(e.notes?" — "+e.notes:"");if(e.time){const t=document.createElement("time");t.textContent=e.time;b.append(t)}b.append(document.createTextNode(e.title));b.onclick=event=>{event.stopPropagation();openEditor(e)};return b}
+function occurrences(d){return events.filter(e=>visible.has(e.category||"events")&&e.date===dateKey(d)).sort((a,b)=>(a.time||"99:99").localeCompare(b.time||"99:99"))}
+function eventButton(ev){const b=document.createElement("button");b.className="event "+ev.category;b.title=(ev.time?ev.time+" ":"")+ev.title+(ev.notes?" — "+ev.notes:"");if(ev.time){const time=document.createElement("time");time.textContent=ev.time;b.append(time)}b.append(document.createTextNode(ev.title));b.onclick=event=>{event.stopPropagation();openEditor(ev)};return b}
 function paint(){
  $("period").textContent=view==="month"?cursor.toLocaleDateString("en-US",{year:"numeric",month:"long"}):weekStart(cursor).toLocaleDateString("en-US",{month:"short",day:"numeric"})+" – "+new Date(weekStart(cursor).getTime()+6*86400000).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
  $("month").classList.toggle("active",view==="month");$("week").classList.toggle("active",view==="week");
- const grid=$("days");grid.replaceChildren();const start=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth(),1):weekStart(cursor);
- start.setDate(start.getDate()- (view==="month"?start.getDay():0));const count=view==="month"?42:7;
- for(let i=0;i<count;i++){const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),day=document.createElement("div");day.className="day"+(view==="month"&&d.getMonth()!==cursor.getMonth()?" outside":"")+(dateKey(d)===dateKey(today)?" today":"");
+ const grid=$("days");grid.replaceChildren();const first=range().start,count=view==="month"?42:7;
+ for(let i=0;i<count;i++){
+ const d=new Date(first.getFullYear(),first.getMonth(),first.getDate()+i),day=document.createElement("div");
+ day.className="day"+(view==="month"&&d.getMonth()!==cursor.getMonth()?" outside":"")+(dateKey(d)===dateKey(today)?" today":"");
  day.setAttribute("role","button");day.setAttribute("tabindex","0");day.setAttribute("aria-label","Add event on "+dateKey(d));
- const num=document.createElement("span");num.className="number";num.textContent=d.getDate();day.append(num);const list=occurrences(d);for(const e of list.slice(0,view==="week"?12:3))day.append(eventButton(e,d));
- if(list.length>(view==="week"?12:3)){const more=document.createElement("div");more.className="more";more.textContent="+"+(list.length-(view==="week"?12:3))+" more";day.append(more)}
- day.onclick=()=>openEditor(null,dateKey(d));day.onkeydown=e=>{if(e.target===day&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openEditor(null,dateKey(d))}};grid.append(day)}
+ const num=document.createElement("span");num.className="number";num.textContent=d.getDate();day.append(num);
+ const list=occurrences(d),max=view==="month"?3:12;
+ for(const e of list.slice(0,max))day.append(eventButton(e));
+ if(list.length>max){const more=document.createElement("div");more.className="more";more.textContent="+"+(list.length-max)+" more";day.append(more)}
+ day.onclick=()=>{if(connected)openEditor(null,dateKey(d))};
+ day.onkeydown=e=>{if(e.target===day&&(e.key==="Enter"||e.key===" ")){e.preventDefault();if(connected)openEditor(null,dateKey(d))}};
+ grid.append(day)}
  paintUpcoming();
 }
-function weekStart(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-x.getDay());return x}
-function paintUpcoming(){const root=$("upcoming");root.replaceChildren();let found=0;const from=new Date(today.getFullYear(),today.getMonth(),today.getDate());
- for(let i=0;i<90&&found<7;i++){const d=new Date(from.getFullYear(),from.getMonth(),from.getDate()+i);for(const ev of occurrences(d)){const btn=document.createElement("button"),small=document.createElement("small"),name=document.createElement("b");small.textContent=d.toLocaleDateString("en-US",{month:"short",day:"numeric",weekday:"short"})+(ev.time?" · "+ev.time:"");name.textContent=ev.title;btn.append(small,name);btn.onclick=()=>openEditor(ev);root.append(btn);if(++found>=7)break}}
- if(!found){const msg=document.createElement("p");msg.className="empty";msg.textContent="No upcoming events yet. Add your first event to test the calendar.";root.append(msg)}
+function paintUpcoming(){const root=$("upcoming");root.replaceChildren();let found=0;const from=new Date(today.getFullYear(),today.getMonth(),today.getDate());for(let i=0;i<90&&found<7;i++){const d=new Date(from.getFullYear(),from.getMonth(),from.getDate()+i);for(const ev of occurrences(d)){const btn=document.createElement("button"),small=document.createElement("small"),name=document.createElement("b");small.textContent=d.toLocaleDateString("en-US",{month:"short",day:"numeric",weekday:"short"})+(ev.time?" · "+ev.time:"");name.textContent=ev.title;btn.append(small,name);btn.onclick=()=>openEditor(ev);root.append(btn);if(++found>=7)break}}
+ if(!found){const p=document.createElement("p");p.className="empty";p.textContent=connected?"No upcoming events. Add an event to the shared calendar.":"Connect a Google Calendar to see events.";root.append(p)}
 }
-function openEditor(ev=null,date=dateKey(today)){editId=ev?.id||null;$("editorTitle").textContent=ev?"Edit event":"New event";$("eventTitle").value=ev?.title||"";$("eventDate").value=ev?.date||date;$("eventTime").value=ev?.time||"";$("eventCategory").value=ev?.category||"events";$("eventRepeat").value=ev?.repeat||"none";$("eventNotes").value=ev?.notes||"";$("deleteEvent").classList.toggle("hidden",!ev);$("editor").showModal();$("eventTitle").focus()}
+function openEditor(ev=null,date=dateKey(today)){if(!connected)return;editId=ev?.id||null;$("editorTitle").textContent=ev?"Edit event":"New event";$("eventTitle").value=ev?.title||"";$("eventDate").value=ev?.date||date;$("eventTime").value=ev?.time||"";$("eventCategory").value=ev?.category||"events";$("eventRepeat").value=ev?.repeat||"none";$("eventNotes").value=ev?.notes||"";$("deleteEvent").classList.toggle("hidden",!ev);$("editor").showModal();$("eventTitle").focus()}
 function close(){$("editor").close()}
 $("newEvent").onclick=()=>openEditor();$("close").onclick=$("cancel").onclick=close;
-$("prev").onclick=()=>{cursor=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth()-1,1):new Date(cursor.getFullYear(),cursor.getMonth(),cursor.getDate()-7);paint()};
-$("next").onclick=()=>{cursor=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth()+1,1):new Date(cursor.getFullYear(),cursor.getMonth(),cursor.getDate()+7);paint()};
-$("today").onclick=()=>{cursor=new Date(today);paint()};
-$("month").onclick=()=>{view="month";paint()};$("week").onclick=()=>{view="week";paint()};
+$("connectGoogle").onclick=()=>{location.href=API+"/connect"};
+$("prev").onclick=()=>{cursor=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth()-1,1):new Date(cursor.getFullYear(),cursor.getMonth(),cursor.getDate()-7);paint();load()};
+$("next").onclick=()=>{cursor=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth()+1,1):new Date(cursor.getFullYear(),cursor.getMonth(),cursor.getDate()+7);paint();load()};
+$("today").onclick=()=>{cursor=new Date(today);paint();load()};
+$("month").onclick=()=>{view="month";paint();load()};$("week").onclick=()=>{view="week";paint();load()};
 $("legend").replaceChildren(...Object.entries(cats).map(([id,name])=>{const btn=document.createElement("button");btn.innerHTML='<span class="dot '+id+'"></span>';btn.append(document.createTextNode(name));btn.onclick=()=>{if(visible.has(id))visible.delete(id);else visible.add(id);btn.classList.toggle("off",!visible.has(id));paint()};return btn}));
-$("eventForm").onsubmit=e=>{e.preventDefault();const ev={id:editId||((window.crypto?.randomUUID?.())||String(Date.now())),title:$("eventTitle").value.trim(),date:$("eventDate").value,time:$("eventTime").value,category:$("eventCategory").value,repeat:$("eventRepeat").value,notes:$("eventNotes").value.trim()};if(!ev.title||!ev.date)return;events=editId?events.map(x=>x.id===editId?ev:x):[...events,ev];save();close();paint()};
-$("deleteEvent").onclick=()=>{if(!editId||!confirm("Delete this event and all of its repeats?"))return;events=events.filter(e=>e.id!==editId);save();close();paint()};
-paint();
+$("eventForm").onsubmit=async e=>{e.preventDefault();if(busy)return;busy=true;const ev={id:editId,title:$("eventTitle").value.trim(),date:$("eventDate").value,time:$("eventTime").value,category:$("eventCategory").value,repeat:$("eventRepeat").value,notes:$("eventNotes").value.trim()};try{await request("/events",{method:editId?"PATCH":"POST",body:JSON.stringify(ev)});close();await load()}catch(err){alert("Could not save event: "+err.message)}finally{busy=false}};
+$("deleteEvent").onclick=async()=>{if(busy||!editId||!confirm("Delete this event?"))return;busy=true;try{await request("/events",{method:"DELETE",body:JSON.stringify({id:editId})});close();await load()}catch(err){alert("Could not delete event: "+err.message)}finally{busy=false}};
+async function boot(){paint();try{const s=await request("/status");connected=s.connected;$("newEvent").disabled=!connected;$("connectGoogle").hidden=connected||!s.admin;if(!connected){notice(s.admin?"Connect Google Calendar once to share this schedule with all Willena teachers.":"The administrator hasn't connected Google Calendar yet.",true);return}
+ if(new URLSearchParams(location.search).has("connected"))history.replaceState(null,"",location.pathname);
+ await load()}catch(e){notice(e.message,true)}}
+boot();
 })();
 </script></body></html>
