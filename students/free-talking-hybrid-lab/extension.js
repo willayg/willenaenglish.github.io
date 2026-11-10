@@ -15,7 +15,7 @@ function syncTranscriptPreference(){
 document.getElementById('ftTranscriptToggle')?.addEventListener('change',syncTranscriptPreference);
 
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,unproductiveStreak:0,recentQualified:[],pendingVerdict:'NEEDS_MORE',pendingProof:null,pendingVerdictAt:null,pendingLowEffort:false};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,unproductiveStreak:0,recentQualified:[],pendingVerdict:'NEEDS_MORE',pendingProof:null,pendingVerdictAt:null,pendingLowEffort:false,askedQuestionTexts:[]};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 const enginePicker=document.getElementById('ftEngineSelect');
 const sttPicker=document.getElementById('ftSttSelect');
@@ -508,10 +508,21 @@ function renderTopicTicker(){
 function haltQuestionClock(){}
 function resetQuestionClock(){state.awaitingSpeechCommit=false;state.questionExpired=false;renderTopicTicker()}
 function startQuestionClock(){}
+function noteAskedQuestion(text){
+ const normal=String(text||'').trim().toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim();
+ if(!normal)return;
+ if(!state.askedQuestionTexts.some(q=>q.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim()===normal))
+  state.askedQuestionTexts.push(String(text).trim());
+}
 async function moveToNextTopic(){
  if(!state.active)return;
  state.topicCompleted.add(state.anchorIndex);
- await playAnchor((state.anchorIndex+1)%Math.max(1,state.anchors.length));
+ const unseen=state.anchors.map((a,i)=>i).filter(i=>!state.topicCompleted.has(i)&&
+  !state.askedQuestionTexts.some(q=>q.trim().toLowerCase()===state.anchors[i].text.trim().toLowerCase()));
+ if(unseen.length){await playAnchor(unseen[0]);return}
+ // All book questions have been used; let the current conversation continue.
+ state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');armIdleTimeout();
+ message('Keep chatting!');$('listenCheck').textContent='Listening';
 }
 async function finishTimedQuestion(){}
 function studentTurnInProgress(){
@@ -925,11 +936,12 @@ function sendHybrid(item){
   const at=state.anchorToken;
   void (async()=>{
    try{
-    const r=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{action:'reply',book_id:state.book.id,unit_id:state.unit.id,character:state.character,model:state.hybridModel,session_id:state.transcriptSessionId,directive,history:snapshot});
+    const r=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{action:'reply',book_id:state.book.id,unit_id:state.unit.id,character:state.character,model:state.hybridModel,session_id:state.transcriptSessionId,directive,history:snapshot,asked_questions:state.askedQuestionTexts.slice(-50)});
     const data=await r.json().catch(()=>({}));
     if(!r.ok)throw Error(data.error||'Hybrid response failed');
     if(!state.active||state.anchorToken!==at)return;
     hybrid.history.push({id:'reply-'+hybrid.sequence++,role:'assistant',text:data.text});
+     for(const question of String(data.text||'').match(/[^.!?]*[?？]/g)||[])noteAskedQuestion(question.trim());
      state.pendingVerdict=['QUALIFIES','NEEDS_MORE','HELP_REQUEST'].includes(data.verdict)?data.verdict:'NEEDS_MORE';
      state.pendingProof=data.verdictProof||null;state.pendingVerdictAt=data.verdictAt||null;state.pendingLowEffort=Boolean(data.lowEffort);
     if(state.hybrid){
@@ -1082,6 +1094,7 @@ async function playAnchor(index){
  state.speechStartedAt=0;state.speechPeak=0;state.lastSpeechDuration=0;clearPendingSpeech();
  $('clock').textContent='Question '+(index+1)+' / '+state.anchors.length;
  $('anchorText').textContent=anchor.text;
+ noteAskedQuestion(anchor.text);
  message('Playing textbook question '+(index+1));
  setMicEnabled(false);
  // OpenAI must see what the cached voice asked, or it can hallucinate the
@@ -1737,7 +1750,7 @@ async function startConversation(){
  if(!continuing&&!state.guideAccepted){let dismissed=false;try{dismissed=localStorage.getItem(FT_GUIDE_KEY)==='1'}catch{}if(!dismissed){showFtGuide(true);return}}
  state.guideAccepted=false;if(!continuing){
   state.questionRewards.clear();state.contributions=0;state.sessionStartContributions=0;
-   state.unproductiveStreak=0;state.pendingVerdict='NEEDS_MORE';
+   state.unproductiveStreak=0;state.pendingVerdict='NEEDS_MORE';state.askedQuestionTexts=[];
    try{state.recentQualified=JSON.parse(localStorage.getItem(ftCompletionKey()+':recentQualified')||'[]').slice(-18)}catch{state.recentQualified=[]}
   state.transcriptSessionId=crypto.randomUUID();
   state.transcriptTurnNumber=0;state.transcriptSaved=0;state.transcriptSaveErrors=0;
