@@ -393,7 +393,7 @@ const FT_GUIDE=[
  ['Just talk!','교재 질문으로 시작하고 자유롭게 대화해요. 어떤 이야기든 괜찮아요!',[['Bunny','What did you do on vacation?'],['You','I went swimming!'],['Bunny','Was the water cold?']]],
  ['Be curious!','버니가 질문해도 꼭 그 질문에만 답할 필요 없어요. 재미있는 이야기를 해 보세요!',[['Bunny','What happened next?'],['You','I saw a big dog!'],['Bunny','Really? Was it friendly?']]],
  ['Help is okay!','단어나 질문이 어려우면 물어보세요. 버니가 도와줄게요!',[['You','What does adventure mean?'],['Bunny','Let me help you!']]],
- ['Twelve conversations','영어로 12번 의미를 전달하면 성공! 틀려도 괜찮아요. 자연스럽게 대화를 마쳐요.',[['Tip','한 단어도 상황에 맞으면 좋아요'],['Tip','내 생각을 말해 보세요'],['Tip','12번 대화를 나눠요']]]
+ ['Eight conversations','8번 자연스럽게 대화해 보세요! 마지막에 AI가 대화 전체를 보고 점수를 줘요.',[['Tip','짧은 답도 괜찮아요'],['Tip','질문에 대답하거나 내 생각을 말해 보세요'],['Tip','답변마다 최대 4점, 총 32점']]]
  ];
  function renderFtGuide(){
  const info=FT_GUIDE[state.guideIndex];
@@ -426,10 +426,12 @@ function ftRecordAnswer(speech){
  renderTopicTicker();
 }
 function ftFinishScores(){
- const answered=Math.min(12,state.contributions||0);
- return {rows:[],answered,helps:0,points:Math.max(0,answered-(state.sessionStartContributions||0))*3,stars:answered>=12?5:answered>=10?4:answered>=8?3:answered>=6?2:answered>=3?1:0};
+ // Actual rewards come from the server's verified per-turn review records.
+ // Never infer points from a raw interaction count.
+ const answered=Math.min(8,state.contributions||0);
+ return {rows:[],answered,helps:0,points:0,stars:0};
 }
-function ftShowFinish(result){
+function ftShowFinish(result,{playSound=true}={}){
  $('ftGuide').hidden=true;$('ftCelebration').hidden=false;
  $('ftCelebration').classList.remove('is-revealed');
  requestAnimationFrame(()=>requestAnimationFrame(()=>{$('ftCelebration').classList.add('is-revealed')}));
@@ -445,7 +447,7 @@ function ftShowFinish(result){
   portrait.innerHTML='<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="48" fill="#e9fafc" stroke="#68cbd5" stroke-width="5"/><circle cx="60" cy="60" r="21" fill="none" stroke="#23a5b4" stroke-width="9"/><path d="M38 73a25 25 0 0 0 44 0" fill="none" stroke="#eda4c2" stroke-width="6" stroke-linecap="round"/></svg>';
  }
  ftCompletionSave(result);prepareCard();
- try{preloadStudentSfx();setTimeout(()=>{if(!$('ftCelebration').hidden)playStudentSfx('complete',{volume:.7})},420)}catch{}
+ if(playSound&&result.stars>0)try{preloadStudentSfx();setTimeout(()=>{if(!$('ftCelebration').hidden)playStudentSfx('complete',{volume:.7})},420)}catch{}
 }
 
 $('ftFinishClose').addEventListener('click',()=>{$('ftCelebration').hidden=true;navigateBack()});
@@ -464,9 +466,9 @@ function removeSpokenLaughter(value){
 
 
 function renderTopicTicker(){
- const progress=$('conversationProgress'),count=Math.min(12,(state.contributions||0)+(state.attemptCount||0));
- if(progress)progress.style.width=(count/12*100)+'%';
- const label=$('conversationProgressLabel');if(label)label.textContent=count+' / 12';
+ const progress=$('conversationProgress'),count=Math.min(8,(state.contributions||0)+(state.attemptCount||0));
+ if(progress)progress.style.width=(count/8*100)+'%';
+ const label=$('conversationProgressLabel');if(label)label.textContent=count+' / 8';
 }
 function haltQuestionClock(){}
 function resetQuestionClock(){state.awaitingSpeechCommit=false;state.questionExpired=false;renderTopicTicker()}
@@ -1486,53 +1488,55 @@ async function reviewConversation(){
  try{
   await state.transcriptSaveQueue?.catch(()=>{});
   if(state.transcriptSaveErrors)throw Error('Some conversation turns could not be saved. Please try again.');
-  const result=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+  const response=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
    action:'review',session_id:state.transcriptSessionId,book_id:state.book.id,unit_id:state.unit.id
   });
-  const review=await result.json().catch(()=>({}));
-  if(!result.ok)throw Error(review.error||'Could not review this conversation');
+  const review=await response.json().catch(()=>({}));
+  if(!response.ok)throw Error(review.error||'Could not review this conversation');
   for(const credit of review.credits||[]){
    const saved=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
     action:'transcript',book_id:state.book.id,unit_id:state.unit.id,session_id:state.transcriptSessionId,
     turn_number:credit.turn_number,original_turn_number:credit.original_turn_number,
     speaker:'student',character:state.character,transcript_text:credit.text,
-    message_source:'review_credit',verdict:'QUALIFIES',verdict_at:credit.stamp,verdict_proof:credit.proof
+    message_source:'review_credit',verdict:'QUALIFIES',verdict_at:credit.stamp,verdict_proof:credit.proof,
+    review_points:credit.points,review_reason:credit.reason
    });
-   if(!saved.ok){const e=await saved.json().catch(()=>({}));throw Error(e.error||'Could not save reviewed progress')}
+   if(!saved.ok){const e=await saved.json().catch(()=>({}));throw Error(e.error||'Could not save reviewed points')}
   }
-  const progressResponse=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
-   action:'progress',book_id:state.book.id,unit_id:state.unit.id
-  });
-  if(!progressResponse.ok)throw Error('Could not verify saved progress');
-  const progress=await progressResponse.json();
-  state.contributions=Math.max(0,Math.min(12,Number(progress.contributions)||0));
+  const [resultResponse,progressResponse]=await Promise.all([
+   authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+    action:'result',session_id:state.transcriptSessionId,book_id:state.book.id,unit_id:state.unit.id
+   }),
+   authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+    action:'progress',book_id:state.book.id,unit_id:state.unit.id
+   })
+  ]);
+  if(!resultResponse.ok||!progressResponse.ok)throw Error('Could not verify saved results');
+  const result=await resultResponse.json(),progress=await progressResponse.json();
+  if(Number(result.reviewed)!==Number(result.attempts))throw Error('Not all conversation turns were reviewed');
+  state.contributions=Math.max(0,Math.min(8,Number(progress.contributions)||0));
   state.attemptCount=0;
   renderTopicTicker();
-  if(state.contributions>=12){
-   $('ftReviewContinue').hidden=true;
-   await finishConversation({skipGoodbye:false});
-   $('ftReviewSummary').hidden=false;
-   $('ftReviewSummary').textContent='12 / 12 meaningful conversations. Great chatting!';
-   return;
-  }
-  const missing=12-state.contributions;
-  $('ftGuide').hidden=true;
+  const points=Math.max(0,Math.min(32,Number(result.points)||0));
+  const stars=Math.max(0,Math.min(5,Number(result.stars)||0));
+  const feedback=removeSpokenLaughter(stripInternalLabels(String(review.feedback||'Thanks for talking with me! I hope we can chat again soon.'))).slice(0,350);
+  $('ftReviewContinue').hidden=true;
   $('ftReviewSummary').hidden=false;
-  $('ftReviewSummary').textContent=state.contributions+' / 12 meaningful contributions. '+missing+
-   ' more natural '+(missing===1?'exchange':'exchanges')+' to finish. '+String(review.encouragement||'');
-  $('ftResultPoints').textContent='Keep chatting!';
-  $('ftResultStars').replaceChildren();
-  $('ftResultMascot').replaceChildren();
-  $('ftReviewContinue').hidden=false;
-  $('ftReviewContinue').textContent='Keep chatting';
-  $('ftCelebration').hidden=false;
-  $('ftCelebration').classList.add('is-revealed');
+  $('ftReviewSummary').textContent=feedback;
+  ftShowFinish({answered:Math.min(8,Number(result.reviewed)||0),points,stars},{playSound:false});
+  $('ftReviewSummary').textContent=feedback;
   $('ftFinishClose').textContent='Back to Units';
+  // Text is visible on the results card before the character starts saying it.
+  // Preserve media-mode mic release: the conversation has already ended.
+  try{await speakEleven(feedback)}catch(e){console.warn('[Free Talking] review voice unavailable',e)}
+  if(state.active){
+   state.anchorPhase='finished';
+   endSession('Conversation review complete.');
+  }
  }catch(ex){
-  // No phantom completion or extra points on a failed review. Allow retry.
   error('Review: '+String(ex.message||ex));
   $('ftReviewSummary').hidden=false;
-  $('ftReviewSummary').textContent='We could not check your conversation yet. You can try again.';
+  $('ftReviewSummary').textContent='We could not check your conversation yet. Please try again.';
   $('ftResultPoints').textContent='Review unavailable';
   $('ftResultStars').replaceChildren();
   $('ftReviewContinue').hidden=false;
@@ -1540,20 +1544,10 @@ async function reviewConversation(){
   $('ftCelebration').hidden=false;
  }finally{state.reviewing=false}
 }
-$('ftReviewContinue').addEventListener('click',async()=>{
- if(!state.active)return;
+$('ftReviewContinue').addEventListener('click',()=>{
+ if(!state.active||state.reviewing)return;
  $('ftCelebration').hidden=true;
- if($('ftReviewContinue').textContent==='Try review again'){
-  $('ftReviewContinue').textContent='Keep chatting';void reviewConversation();return;
- }
- state.anchorPhase='awaitingSecond';actorPhase('thinking');
- message('Getting microphone ready…');
- try{
-  await restoreMicAfterPlayback();
-  if(!state.active||!state.stream?.active)throw Error('Microphone unavailable');
-  setMicEnabled(true);actorPhase('listening');armIdleTimeout();
-  message('Your turn! Keep chatting naturally.');$('listenCheck').textContent='Listening';
- }catch(e){error('Microphone: '+String(e.message||e));$('ftCelebration').hidden=false}
+ void reviewConversation();
 });
 async function finishConversation({skipGoodbye=false}={}){
  if(!state.active||state.anchorPhase==='finished'||state.anchorPhase==='goodbye')return;
@@ -1599,7 +1593,7 @@ async function finishNaturalReply(data){
  state.anchorPhase='playingReply';setMicEnabled(false);
  try{await speakEleven(spoken)}catch(e){error('Voice playback: '+String(e.message||e))}
  if(!state.active||run!==state.anchorToken)return;
- if(contributed&&(state.contributions+state.attemptCount)>=12){
+ if(contributed&&(state.contributions+state.attemptCount)>=8){
   await reviewConversation();return;
  }
  // Never signal "Listening" until Android has actually restored the microphone.
@@ -1847,9 +1841,9 @@ async function startConversation(){
    },startAbort.signal);
    if(!saved.ok)throw Error('Could not load Free Talking progress');
    const savedProgress=await saved.json();
-   const count=Math.max(0,Math.min(12,Number(savedProgress.contributions)||0));
+   const count=Math.max(0,Math.min(8,Number(savedProgress.contributions)||0));
    // Once gold is reached, further conversations remain available from 0.
-   state.contributions=count===12?0:count;
+   state.contributions=count===8?0:count;
    state.sessionStartContributions=count;
    renderTopicTicker();
   }
