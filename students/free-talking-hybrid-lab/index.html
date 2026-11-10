@@ -4,6 +4,7 @@
 <link rel="stylesheet" href="/students/free-talking-genius/styles.css?v=20261108-golden-actions3">
 <link rel="stylesheet" href="/students/free-talking-genius/character-animations.css?v=20261107-layer-fin3">
 <link rel="stylesheet" href="/students/free-talking-genius/live-animal-ui.css?v=20261107-live-animals1">
+<link rel="stylesheet" href="/students/free-talking-genius/guide.css?v=20261107-guide-kids2">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}body{margin:0;background:#fff;font-family:Poppins,Arial,sans-serif;color:#263c50}
@@ -518,6 +519,27 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  #demo #ftCelebration #ftReviewSummary{font-size:12px!important}
 }
 
+/* Use the original Speaking guide design, but inside the standalone chat overlay. */
+#demo #ftGuide{background:rgba(24,57,67,.45);padding:14px;align-items:center;justify-content:center}
+#demo #ftGuide .ft-guide-card{width:min(510px,100%);max-height:calc(100dvh - 28px);overflow-y:auto}
+#demo #ftGuide .ft-guide-card h2{margin:0;font-size:clamp(23px,5vw,32px);color:#326772;text-align:center}
+#demo #ftGuide .ft-guide-description{font:750 clamp(15px,3.8vw,17px)/1.55 Poppins,system-ui,sans-serif;color:#285c66;text-align:center;margin:0}
+#demo #ftGuide .ft-guide-visual{margin:0;min-height:235px;padding:10px;border:2px solid #c8ecef;background:#effbfc;border-radius:22px}
+#demo #ftGuide .ft-guide-mini{margin:auto}
+#demo #ftGuide .ft-guide-navigation{width:100%}
+#demo #ftGuide .ft-guide-navigation button{min-height:46px}
+#demo #ftGuide .ft-guide-never[hidden]{display:none!important}
+#demo #ftGuide #ftGuideSteps{font-weight:900;color:#ae7e9e}
+#demo #ftGuide .ft-guide-mini-avatar .bf-svg{width:100%;height:100%;display:block;overflow:visible}
+#demo #ftGuide .ft-guide-mini-avatar .pf-svg{width:100%;height:100%;display:block;overflow:visible}
+#demo #ftGuide .ft-guide-score{font-size:32px;font-weight:900;color:#219fac}
+#demo #ftGuide .ft-guide-score-note{font-size:12px;color:#62838a}
+@media(max-height:720px){
+ #demo #ftGuide .ft-guide-card{gap:8px;padding:12px 14px}
+ #demo #ftGuide .ft-guide-visual{min-height:160px}
+ #demo #ftGuide .ft-guide-mini{padding:10px}
+}
+
 body.ft-release #original,body.ft-release #ftTimingPanel{display:none!important}
 body.ft-release #demo .ft-transcript-toggle,body.ft-release #demo .ft-transcript-notice{display:none!important}
 body.ft-release #demo .conversation-text #log .entry.me{display:none!important}
@@ -565,14 +587,14 @@ body.ft-release #demo .conversation-text{min-height:80px}
  <p id="ftReleaseError" role="alert" hidden></p>
 </section>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
-<div id="demo" hidden><section id="ftGuide" class="ft-layer" hidden role="dialog" aria-modal="true" aria-label="How to play Free Talking">
- <div class="ft-sheet">
-  <div id="ftGuideSteps" class="ft-steps" aria-label="Help pages"></div>
-  <h2 id="ftGuideTitle">Let's Talk!</h2>
-  <p id="ftGuideBody"></p>
-  <div id="ftGuideExample" class="ft-example"></div>
-  <label class="ft-guide-toggle"><input id="ftNeverShowGuide" type="checkbox"> 다음부터 보지 않기 · Don't show again</label>
-  <div class="ft-actions"><button id="ftGuideBack" type="button">Back</button><button class="primary" id="ftGuideNext" type="button">Next</button></div>
+<div id="demo" hidden><section id="ftGuide" class="ft-layer" hidden role="dialog" aria-modal="true" aria-label="프리토킹 지니어스 이용 안내">
+ <div class="ft-guide-card ft-natural-guide-card">
+  <div class="ft-guide-top"><span id="ftGuideSteps" aria-label="Help page">01 / 04</span><button id="ftGuideClose" class="ft-guide-close" type="button">닫기</button></div>
+  <h2 id="ftGuideTitle">친구를 고르세요</h2>
+  <div id="ftGuideExample" class="ft-guide-visual"></div>
+  <p id="ftGuideBody" class="ft-guide-description"></p>
+  <label id="ftGuideNeverRow" class="ft-guide-never" hidden><input id="ftNeverShowGuide" type="checkbox"> 다음부터 이 안내를 보지 않기</label>
+  <div class="ft-guide-navigation"><button id="ftGuideBack" type="button">이전</button><button id="ftGuideNext" type="button">다음</button></div>
  </div>
 </section>
 <section id="ftCelebration" class="ft-layer" hidden role="dialog" aria-modal="true" aria-label="Conversation results">
@@ -636,4 +658,4 @@ body.ft-release #demo .conversation-text{min-height:80px}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-compact-feedback-finish3"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-illustrated-free-talk-guide1"></script></body></html>
