@@ -325,7 +325,19 @@ export async function onRequestPost({request,env}){
     row.verdict=input.verdict;
    if(speaker==='character'&&['book_anchor','ai_reply'].includes(input.message_source))
     row.message_source=input.message_source;
-   if(speaker==='student'&&input.verdict==='QUALIFIES'){
+   if(speaker==='student'&&input.message_source==='review_credit'){
+    const originalTurn=Number(input.original_turn_number),stamp=Number(input.verdict_at),proof=String(input.verdict_proof||'');
+    if(!Number.isInteger(originalTurn)||originalTurn<1||originalTurn>=75||turnNumber!==150-originalTurn||
+       !Number.isSafeInteger(stamp)||Math.abs(Date.now()-stamp)>300000||!/^[a-f0-9]{64}$/.test(proof))
+     return json(400,{error:'Invalid review credit'});
+    const original=await get(SCORE+'/rest/v1/free_talking_hybrid_transcripts?select=transcript_text,speaker,message_source&student_id=eq.'+user.id+'&session_id=eq.'+sessionId+'&turn_number=eq.'+originalTurn+'&limit=1',scoreHeaders(token),signal);
+    if(original[0]?.speaker!=='student'||original[0]?.message_source==='review_credit'||
+       normalizedStudentText(original[0]?.transcript_text)!==normalizedStudentText(transcriptText))
+     return json(403,{error:'Original conversation turn not found'});
+    const expected=await verdictMac(env,[user.id,sessionId,input.book_id,input.unit_id,normalizedStudentText(transcriptText),'REVIEW',originalTurn,stamp]);
+    if(expected!==proof)return json(403,{error:'Review credit not approved'});
+    row.qualified=true;row.verdict='QUALIFIES';row.verdict_proof=proof;row.message_source='review_credit';
+   }else if(speaker==='student'&&input.verdict==='QUALIFIES'){
     const stamp=Number(input.verdict_at),proof=String(input.verdict_proof||'');
     if(!Number.isSafeInteger(stamp)||Math.abs(Date.now()-stamp)>300000||!/^[a-f0-9]{64}$/.test(proof))
      return json(400,{error:'Invalid qualification proof'});
