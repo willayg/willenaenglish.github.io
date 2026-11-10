@@ -14,11 +14,11 @@ async function encrypt(env,text){const iv=crypto.getRandomValues(new Uint8Array(
 async function decrypt(env,record){const bytes=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(record.refresh_iv)},await key(env),unb64(record.refresh_cipher));return new TextDecoder().decode(bytes)}
 function config(env){return Boolean(env.GOOGLE_CLIENT_ID&&env.GOOGLE_CLIENT_SECRET&&env.SUPABASE_SERVICE_ROLE_KEY)}
 async function sb(env,path,opts={}){const r=await fetch(SUPABASE+path,{...opts,headers:{'apikey':env.SUPABASE_SERVICE_ROLE_KEY,'authorization':'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,'content-type':'application/json','accept':'application/json',...(opts.headers||{})}});const text=await r.text();let data;try{data=JSON.parse(text)}catch{data=text};if(!r.ok)throw Error('Storage request failed ('+r.status+')');return data}
-async function staff(req,env){const jwt=token(req);if(!jwt)return null;
+async function staff(req,env){const jwt=token(req);if(!jwt)return {error:'no_cookie'};
  const r=await fetch(SUPABASE+'/auth/v1/user',{headers:{'apikey':env.SUPABASE_SERVICE_ROLE_KEY,'authorization':'Bearer '+jwt}});
- if(!r.ok)return null;const identity=await r.json().catch(()=>({}));if(!identity.id)return null;
+ if(!r.ok)return {error:'invalid_session'};const identity=await r.json().catch(()=>({}));if(!identity.id)return {error:'invalid_session'};
  const p=await sb(env,'/rest/v1/profiles?select=role,approved&id=eq.'+encodeURIComponent(identity.id)+'&limit=1');const x=p?.[0];
- return x?.approved===true&&['teacher','admin'].includes(String(x.role).toLowerCase())?{id:identity.id,admin:String(x.role).toLowerCase()==='admin'}:null;
+ return x?.approved===true&&['teacher','admin'].includes(String(x.role).toLowerCase())?{id:identity.id,admin:String(x.role).toLowerCase()==='admin'}:{error:'not_approved_staff'};
 }
 async function connection(env){const list=await sb(env,'/rest/v1/'+TABLE+'?select=*&id=eq.1&limit=1');return list?.[0]||null}
 async function writeConnection(env,calendar_id,refresh,uid){const enc=await encrypt(env,refresh);
@@ -44,7 +44,7 @@ async function respond(req,env){
  const url=new URL(req.url),part=url.pathname.replace(/^\/api\/staff-calendar\/?/,'').replace(/\/$/,'');
  if(url.hostname!=='teachers.willenaenglish.com')return fmt({error:'Invalid host'},403);
  if(!config(env)){const missing=['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','SUPABASE_SERVICE_ROLE_KEY'].filter(name=>!env[name]);return fmt({error:'Calendar server configuration incomplete: '+missing.join(', '),missing},503);}
- const user=await staff(req,env);if(!user)return fmt({error:'Approved Willena teacher login required'},401);
+ const user=await staff(req,env);if(user?.error)return fmt({error:user.error==='no_cookie'?'Willena login cookie is not reaching the calendar server':user.error==='invalid_session'?'Willena login session has expired; refresh it and try again':'Your Willena account needs approved teacher or admin access',reason:user.error},user.error==='not_approved_staff'?403:401);
  if(part==='connect'){
    if(req.method!=='GET'||!user.admin)return fmt({error:'Admin access required'},403);
    const nonce=b64(crypto.getRandomValues(new Uint8Array(24)));
