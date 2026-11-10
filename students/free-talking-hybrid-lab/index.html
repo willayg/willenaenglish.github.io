@@ -368,6 +368,8 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #ftTimingPanel{position:fixed;z-index:10001;right:12px;bottom:68px;width:min(285px,calc(100vw - 24px));background:#fff;color:#174451;border:2px solid #63c4d2;border-radius:16px;box-shadow:0 10px 35px #16374735;font-family:system-ui,sans-serif;overflow:hidden}
 #ftTimingPanel[hidden]{display:none!important}
 #ftReviewContinue[hidden],#ftReviewSummary[hidden]{display:none!important}
+#ftReviewSummary{white-space:normal;max-width:430px;padding:0 10px;font-size:clamp(15px,3.8vw,19px)!important;line-height:1.48!important;color:#315b65!important;}
+#ftCelebration .ft-score{font-variant-numeric:tabular-nums;}
 #ftTimingToggle{width:100%;background:#fff;color:#176b7a;border:0;padding:11px 13px;font:800 13px system-ui;text-align:left;cursor:pointer}
 #ftTimingControls{padding:0 13px 12px}
 #ftTimingControls[hidden]{display:none!important}
@@ -499,7 +501,7 @@ body.ft-release #demo .conversation-text{min-height:80px}
 <div class="panel" id="talk">
  <button id="ftHelpBtn" type="button" aria-label="Conversation guide">?</button>
  <div id="topicTicker" class="topic-ticker ft-natural-progress" aria-label="Conversation progress">
-  <span class="ft-progress-title">Let's talk!</span><output id="conversationProgressLabel">0 / 12</output>
+  <span class="ft-progress-title">Let's talk!</span><output id="conversationProgressLabel">0 / 8</output>
   <div class="ft-progress-track" aria-hidden="true"><div id="conversationProgress"></div></div>
  </div>
  <div id="actorStage" class="actor-stage" data-phase="ready"></div>
@@ -542,4 +544,4 @@ body.ft-release #demo .conversation-text{min-height:80px}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-android-media-switch1"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-eight-turn-graded-feedback1"></script></body></html>
