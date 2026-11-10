@@ -1884,13 +1884,21 @@ async function initStandaloneRelease(){
  const params=new URLSearchParams(location.search);
  const bookId=params.get('book'),unitId=params.get('unit');
  const valid=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id||''));
- // Clone the real original app's selector, including its SVGs and native
- // CSS classes. Keep the original iframe's DOM and Speaking handlers untouched.
- const source=appDocument()?.getElementById('ftCharacter');
+ // Reuse the actual Speaking app's menu from its published HTML, instead
+ // of waiting for the hidden iframe's app to navigate to a character screen.
+ // This copies only inert markup; no Speaking event handlers or flow run here.
  const host=$('ftReleaseNativeMenu');
- if(!source||!host){showError('Character menu could not load. Please refresh.');return}
+ if(!host){showError('Character menu container is missing.');return}
+ let menu;
+ try{
+  const response=await fetch('/students/free-talking-genius/index.html',{cache:'no-store'});
+  if(!response.ok)throw Error('Menu source HTTP '+response.status);
+  const doc=new DOMParser().parseFromString(await response.text(),'text/html');
+  const source=doc.getElementById('ftCharacter');
+  if(!source)throw Error('Speaking character menu not found in source');
+  menu=source.cloneNode(true);
+ }catch(ex){console.error('[Free Talking] original character menu',ex);showError('Character menu could not load. Please refresh.');return}
  host.replaceChildren();
- const menu=source.cloneNode(true);
  // The original character actor module might not have populated its portraits
  // at iframe load; only fill a missing portrait with the exact shared SVG art.
  const bunnyPortrait=menu.querySelector('#ftChooseLili .ft-character-symbol');
@@ -1951,9 +1959,7 @@ async function initStandaloneRelease(){
 }
 
 if(releaseMode){
- // The original iframe is retained only as an isolated auth/token bridge;
- // its Speaking state machine and event flow are not used in this release.
- const begin=()=>void initStandaloneRelease();
- if(frame.contentDocument?.readyState==='complete')begin();
- else frame.addEventListener('load',begin,{once:true});
+ // Menu loads independently, even if the hidden Speaking iframe never reaches
+ // its character screen. The iframe remains an authentication-token bridge.
+ void initStandaloneRelease();
 }
