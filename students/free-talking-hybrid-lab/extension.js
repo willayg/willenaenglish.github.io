@@ -1528,7 +1528,7 @@ async function reviewConversation(){
   $('ftFinishClose').textContent='Back to Units';
   // Text is visible on the results card before the character starts saying it.
   // Preserve media-mode mic release: the conversation has already ended.
-  try{await speakEleven(feedback)}catch(e){console.warn('[Free Talking] review voice unavailable',e)}
+  try{await speakEleven(feedback,'evaluation_feedback')}catch(e){console.warn('[Free Talking] review voice unavailable',e)}
   if(state.active){
    state.anchorPhase='finished';
    endSession('Conversation review complete.');
@@ -1757,11 +1757,11 @@ function handleRealtime(data){
   }
  }
 }
-async function speakEleven(text){
+async function speakEleven(text,source='ai_reply'){
  if(!state.active||!text)return;
  stopSpeech(); // abort any previous utterance before starting this reply
  const current=state.generation;
- appendLine(NAMES[state.character],text);
+ appendLine(NAMES[state.character],text,source);
  actorPhase('ready');message(NAMES[state.character]+' is speaking…');
  const control=new AbortController();state.controller=control;
  try{
