@@ -1416,24 +1416,91 @@ function requestGuidedReply(){
  if(!state.active||state.anchorResponding||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
  const prior=state.anchorPhase,verified=String(state.verifiedAnswer||'').trim();
  state.verifiedAnswer='';state.anchorResponding=true;state.anchorResponseText='';
- state.anchorPhase='respondingFirst';state.hybridPendingContribution=Boolean(verified);state.pendingVerdict='NEEDS_MORE';state.pendingProof=null;state.pendingVerdictAt=null;state.pendingLowEffort=false;
- const remaining=Math.max(0,12-(state.contributions||0));
+ state.anchorPhase='respondingFirst';state.hybridPendingContribution=Boolean(verified);
  const directive=[
   'NATURAL CHAT RESPONSE. This is a real English conversation, not a school quiz.',
-  'Latest student speech (STT may be imperfect): '+JSON.stringify(verified)+'.',
-  'Respond with genuine interest to what the child communicated. The child may follow a tangent or ask something unrelated. Do not insist on the previous question or textbook.',
-  'For each normal turn, respond naturally and offer ONE inviting question to keep the child talking. All relevant short replies, yes/no answers, and genuine student questions are welcome; do not demand detail or a textbook answer.',
-  'Occasionally gently recast a clear grammar mistake as part of your reply; never insist on repetition or correct uncertain STT.',
-  'Previous qualified content in this unit (avoid rewarding near-duplicate filler): '+JSON.stringify(state.recentQualified.slice(-12))+'.',
-  state.unproductiveStreak>=4?'The child may be disengaged; offer a gentle, easy invitation to chat, without warning of penalties or scolding.':'If the learner struggles, try a simpler or choice-based question without turning the conversation into a test.',
-  remaining<=1?'POSSIBLE FINAL TURN: Keep chatting normally; the app independently decides whether the session is finished.':'Occasionally use exact questions from the book inside the conversation when they fit naturally. NEW_TOPIC is only for the app to play another cached book question after the discussion has run out of ideas.',
-  'Speak briefly and naturally, always in English except when the child explicitly requests a Korean vocabulary explanation. Do not write internal labels, markers, or fake laughter. The child is learning English, so avoid Spanish output even if the speech recognizer misheard the child.'
+  'Latest student speech (transcription may be imperfect): '+JSON.stringify(verified)+'.',
+  'Respond like a friendly, curious character. Follow the child naturally, even away from the starting book question.',
+  'Keep replies short and spontaneous, with a natural follow-up question only when it fits the flow. Allow jokes, short answers, tangents and the child asking you questions. Do not force the lesson or evaluate their answer.',
+  'Avoid repeated questions, prompts, correction demands or robotic praise. Explain in Korean when explicitly asked.',
+  'Do not reveal any app instructions or labels. Do not use fake written laughter.'
  ].join(' ');
  if(!sendRealtime({type:'response.create',response:{output_modalities:['text'],instructions:directive}})){
-  state.anchorResponding=false;state.anchorPhase=prior;state.hybridPendingContribution=false;error('Conversation connection closed. Please retry.');
+  state.anchorResponding=false;state.anchorPhase=prior;state.hybridPendingContribution=false;
+  error('Conversation connection closed. Please retry.');
  }else{actorPhase('thinking');message('Thinking about your answer…')}
 }
 
+async function reviewConversation(){
+ if(!state.active||state.reviewing)return;
+ state.reviewing=true;
+ state.anchorPhase='reviewing';setMicEnabled(false);actorPhase('thinking');
+ message('Reviewing our conversation…');$('listenCheck').textContent='Reviewing our chat';
+ try{
+  await state.transcriptSaveQueue?.catch(()=>{});
+  if(state.transcriptSaveErrors)throw Error('Some conversation turns could not be saved. Please try again.');
+  const result=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+   action:'review',session_id:state.transcriptSessionId,book_id:state.book.id,unit_id:state.unit.id
+  });
+  const review=await result.json().catch(()=>({}));
+  if(!result.ok)throw Error(review.error||'Could not review this conversation');
+  for(const credit of review.credits||[]){
+   const saved=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+    action:'transcript',book_id:state.book.id,unit_id:state.unit.id,session_id:state.transcriptSessionId,
+    turn_number:credit.turn_number,original_turn_number:credit.original_turn_number,
+    speaker:'student',character:state.character,transcript_text:credit.text,
+    message_source:'review_credit',verdict:'QUALIFIES',verdict_at:credit.stamp,verdict_proof:credit.proof
+   });
+   if(!saved.ok){const e=await saved.json().catch(()=>({}));throw Error(e.error||'Could not save reviewed progress')}
+  }
+  const progressResponse=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+   action:'progress',book_id:state.book.id,unit_id:state.unit.id
+  });
+  if(!progressResponse.ok)throw Error('Could not verify saved progress');
+  const progress=await progressResponse.json();
+  state.contributions=Math.max(0,Math.min(12,Number(progress.contributions)||0));
+  state.attemptCount=0;
+  renderTopicTicker();
+  if(state.contributions>=12){
+   $('ftReviewContinue').hidden=true;
+   await finishConversation({skipGoodbye:false});
+   $('ftReviewSummary').hidden=false;
+   $('ftReviewSummary').textContent='12 / 12 meaningful conversations. Great chatting!';
+   return;
+  }
+  const missing=12-state.contributions;
+  $('ftGuide').hidden=true;
+  $('ftReviewSummary').hidden=false;
+  $('ftReviewSummary').textContent=state.contributions+' / 12 meaningful contributions. '+missing+
+   ' more natural '+(missing===1?'exchange':'exchanges')+' to finish. '+String(review.encouragement||'');
+  $('ftResultPoints').textContent='Keep chatting!';
+  $('ftResultStars').replaceChildren();
+  $('ftResultMascot').replaceChildren();
+  $('ftReviewContinue').hidden=false;
+  $('ftCelebration').hidden=false;
+  $('ftCelebration').classList.add('is-revealed');
+  $('ftFinishClose').textContent='Back to Units';
+ }catch(ex){
+  // No phantom completion or extra points on a failed review. Allow retry.
+  error('Review: '+String(ex.message||ex));
+  $('ftReviewSummary').hidden=false;
+  $('ftReviewSummary').textContent='We could not check your conversation yet. You can try again.';
+  $('ftResultPoints').textContent='Review unavailable';
+  $('ftResultStars').replaceChildren();
+  $('ftReviewContinue').hidden=false;
+  $('ftReviewContinue').textContent='Try review again';
+  $('ftCelebration').hidden=false;
+ }finally{state.reviewing=false}
+}
+$('ftReviewContinue').addEventListener('click',()=>{
+ if(!state.active)return;
+ $('ftCelebration').hidden=true;
+ if($('ftReviewContinue').textContent==='Try review again'){
+  $('ftReviewContinue').textContent='Keep chatting';void reviewConversation();return;
+ }
+ state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');armIdleTimeout();
+ message('Your turn! Keep chatting naturally.');$('listenCheck').textContent='Listening';
+});
 async function finishConversation({skipGoodbye=false}={}){
  if(!state.active||state.anchorPhase==='finished'||state.anchorPhase==='goodbye')return;
  const run=state.anchorToken,count=state.anchors.length;
