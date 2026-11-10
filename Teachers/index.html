@@ -4,7 +4,14 @@
 <base href="/Teachers/dashboard-v2/">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Teacher Dashboard V2</title>
+<title>Willena Teachers</title>
+<link rel="manifest" href="/Teachers/manifest.webmanifest">
+<meta name="theme-color" content="#183e4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Willena Teachers">
+<link rel="apple-touch-icon" href="/Teachers/icons/willena-teachers.svg">
+<script src="/Teachers/willena-pwa.js?v=20261110-pwa1" defer></script>
 <script src="/js/api-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./dashboard-v2.css?v=20260929-leaderboard2">
@@ -169,7 +176,7 @@ try{
 <aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="leaderboard"><span class="nav-icon">★</span><span>Leaderboard</span></button><button class="nav" data-view="assignments"><span class="nav-icon">☑</span><span>Assignments</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Word Genius</span></button><button class="nav" data-view="sentence-genius"><span class="nav-icon">S</span><span>Sentence Genius</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="utilities"><span class="nav-icon">⚙</span><span>Utilities</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><button class="nav" data-view="achievement-tests"><span class="nav-icon">▤</span><span>Achievement Tests</span></button><button class="nav" data-view="english-arcade"><span class="nav-icon">EA</span><span>English Arcade</span></button><div class="rail-spacer"></div><button type="button" class="nav staff-calendar-link" data-view="staff-calendar" title="Willena Staff Calendar"><span class="nav-icon" aria-hidden="true">▦</span><span>Staff Calendar</span></button></aside>
 <main class="workspace">
 <section class="view" id="view-staff-calendar">
-<div class="wc-head"><div><h1>Staff Calendar</h1><p>Shared academy events, meetings and important dates · All approved teachers and admin can edit</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="wc-button" id="wcRefresh">Refresh</button><button type="button" class="wc-button wc-primary" id="wcNew">+ New Event</button></div></div>
+<div class="wc-head"><div><h1>Staff Calendar</h1><p>Shared academy events, meetings and important dates · All approved teachers and admin can edit</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="wc-button" id="wcInstallApp">Install app</button><button type="button" class="wc-button" id="wcRefresh">Refresh</button><button type="button" class="wc-button wc-primary" id="wcNew">+ New Event</button></div></div>
 <div class="wc-notice" id="wcNotice" hidden></div>
 <div class="wc-board">
 <div class="wc-card"><div class="wc-toolbar"><strong class="wc-period" id="wcPeriod">Calendar</strong><button type="button" class="wc-button" id="wcPrev" aria-label="Previous period">‹</button><button type="button" class="wc-button" id="wcToday">Today</button><button type="button" class="wc-button" id="wcNext" aria-label="Next period">›</button><div class="wc-mode"><button type="button" class="wc-button active" id="wcMonth">Month</button><button type="button" class="wc-button" id="wcWeek">Week</button></div></div>
