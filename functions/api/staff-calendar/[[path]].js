@@ -121,6 +121,25 @@ export async function onRequest({request,env}){
   if(part==='status')return respond({connected:!!linked,admin:user.admin,calendarId:linked&&user.admin?linked.calendar_id:undefined});
   if(!linked)return respond({error:'Google Calendar not connected',code:'NOT_CONNECTED'},409);
   const token=await access(env,linked),base='/calendars/'+encodeURIComponent(linked.calendar_id)+'/events';
+  if(part==='share-staff'){
+   if(request.method!=='POST'||!user.admin)return respond({error:'Admin access required'},403);
+   const profiles=await db(env,'profiles?select=email,role,approved&approved=eq.true&limit=250');
+   const emails=[...new Set(profiles.filter(p=>['teacher','admin'].includes(String(p.role||'').toLowerCase())&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email||'')).map(p=>p.email.toLowerCase()))].slice(0,80);
+   const acl='/calendars/'+encodeURIComponent(linked.calendar_id)+'/acl';
+   let next='',existing=[];
+   do{const result=await google(token,acl+'?'+new URLSearchParams({maxResults:'250',...(next?{pageToken:next}:{})}));existing.push(...(result.items||[]));next=result.nextPageToken||''}while(next&&existing.length<500);
+   let invited=0,updated=0,skipped=0,failed=0;
+   for(const email of emails){
+    const prev=existing.find(r=>r.scope?.type==='user'&&String(r.scope.value||'').toLowerCase()===email);
+    if(prev&&['owner','writer'].includes(prev.role)){skipped++;continue}
+    try{
+     if(prev)await google(token,acl+'/'+encodeURIComponent(prev.id)+'?sendNotifications=true','PATCH',{role:'writer'});
+     else await google(token,acl+'?sendNotifications=true','POST',{role:'writer',scope:{type:'user',value:email}});
+     if(prev)updated++;else invited++;
+    }catch(e){failed++;console.error('staff calendar share invite failed',e.message)}
+   }
+   return respond({success:true,invited,updated,skipped,failed,total:emails.length});
+  }
   if(part==='events'){
    if(request.method==='GET'){
     const from=url.searchParams.get('from')||'',to=url.searchParams.get('to')||'';
