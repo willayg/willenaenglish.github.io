@@ -66,9 +66,3 @@
 @media(max-width:1050px){#view-staff-calendar .wc-board{grid-template-columns:1fr}#view-staff-calendar .wc-side{display:grid;grid-template-columns:1fr 1fr;gap:15px}#view-staff-calendar .wc-upcoming{border:0;padding:0}}
 @media(max-width:600px){#view-staff-calendar .wc-head h1{font-size:23px}#view-staff-calendar .wc-toolbar{padding:10px;gap:5px}#view-staff-calendar .wc-period{font-size:16px;min-width:100%;margin-bottom:2px}#view-staff-calendar .wc-day{min-height:86px;padding:4px 2px}#view-staff-calendar .wc-day-number{width:22px;height:22px;font-size:10px}#view-staff-calendar .wc-event{font-size:9px;padding:4px 3px}#view-staff-calendar .wc-event .wc-time{display:none}#view-staff-calendar .wc-side{display:block}.wc-dialog .wc-formgrid{grid-template-columns:1fr}}
 
-#view-staff-calendar .wc-google-status{display:flex;align-items:center;gap:8px;margin:0 0 12px;color:#9d6b32;font-size:12px;font-weight:600}
-#view-staff-calendar .wc-google-status::before{content:'';display:block;width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#dca650}
-#view-staff-calendar .wc-google-status.connected{color:#18828b}
-#view-staff-calendar .wc-google-status.connected::before{background:#24b0bb}
-#view-staff-calendar #wcConnectGoogle{border-color:#90cfda;color:#287d89;background:#eaf9fb}
-#view-staff-calendar #wcConnectGoogle:disabled{opacity:.5}
