@@ -25,6 +25,54 @@ sttPicker?.addEventListener('change',updateSttPicker);updateSttPicker();
 const hybrid={history:[],ctx:null,analyser:null,source:null,raf:null,recorder:null,chunks:[],voiceAt:0,lastLoud:0,peak:0,transcribing:false,responding:false,sequence:0,secondsTranscribed:0,scribeSocket:null,scribeProcessor:null,scribeGain:null,scribeAudioSeconds:0,scribeSpeechStarted:0,scribeReady:false};
 function selectedEngine(){return enginePicker?.value||'gpt-6-luna'}
 function hybridMode(){return selectedEngine()!=='realtime'}
+
+const FT_TIMING_DEFAULT={silence:1700,grace:2200,unfinished:3400};
+const FT_TIMING_KEY='willena-ft-hybrid-timing-v1';
+const ftTiming={...FT_TIMING_DEFAULT};
+try{
+ const saved=JSON.parse(localStorage.getItem(FT_TIMING_KEY)||'{}');
+ for(const key of Object.keys(FT_TIMING_DEFAULT)){
+  const n=Number(saved[key]);
+  const limits={silence:[500,2800],grace:[300,3500],unfinished:[600,5000]}[key];
+  if(Number.isFinite(n)&&n>=limits[0]&&n<=limits[1])ftTiming[key]=n;
+ }
+}catch{}
+function updateTimingUi(){
+ for(const [key,inputId,outputId] of [['silence','ftSilenceRange','ftSilenceValue'],['grace','ftGraceRange','ftGraceValue'],['unfinished','ftUnfinishedRange','ftUnfinishedValue']]){
+  const input=$(inputId),output=$(outputId);
+  if(input)input.value=String(ftTiming[key]);
+  if(output)output.textContent=(ftTiming[key]/1000).toFixed(1)+' s';
+ }
+ const changed=Object.keys(FT_TIMING_DEFAULT).some(key=>ftTiming[key]!==FT_TIMING_DEFAULT[key]);
+ const toggle=$('ftTimingToggle');
+ if(toggle)toggle.textContent='Listening timing · '+(changed?'Custom':'Default');
+}
+function setTiming(key,value){
+ if(!Object.hasOwn(FT_TIMING_DEFAULT,key))return;
+ ftTiming[key]=value;
+ try{localStorage.setItem(FT_TIMING_KEY,JSON.stringify(ftTiming))}catch{}
+ if(ftUsage.current){ftUsage.current.timingSettingsMs={...ftTiming}}
+ updateTimingUi();
+ if(key!=='silence'&&state.active&&state.hybrid&&state.turnFragments.length&&!state.speechStartedAt&&!state.pendingSpeech.size)
+  scheduleSpeechGrace();
+}
+for(const [key,inputId] of [['silence','ftSilenceRange'],['grace','ftGraceRange'],['unfinished','ftUnfinishedRange']]){
+ $(inputId)?.addEventListener('input',event=>setTiming(key,Number(event.target.value)));
+}
+$('ftTimingReset')?.addEventListener('click',()=>{
+ for(const [key,value] of Object.entries(FT_TIMING_DEFAULT))ftTiming[key]=value;
+ try{localStorage.setItem(FT_TIMING_KEY,JSON.stringify(ftTiming))}catch{}
+ if(ftUsage.current)ftUsage.current.timingSettingsMs={...ftTiming};
+ updateTimingUi();
+ if(state.active&&state.hybrid&&state.turnFragments.length&&!state.speechStartedAt&&!state.pendingSpeech.size)scheduleSpeechGrace();
+});
+$('ftTimingToggle')?.addEventListener('click',()=>{
+ const content=$('ftTimingControls'),button=$('ftTimingToggle');
+ content.hidden=!content.hidden;
+ button.setAttribute('aria-expanded',String(!content.hidden));
+});
+updateTimingUi();
+
 // Read-only cost diagnostics: counts reported by OpenAI, not estimated dollars.
 // Kept locally on the current device; never stores transcripts, names or audio.
 const ftUsage={
@@ -880,7 +928,7 @@ function hybridStart(stream){
    }
   }
   if(hybrid.recorder&&hybrid.recorder.state==='recording'){
-   if(now-hybrid.lastLoud>1700||now-hybrid.voiceAt>22000){
+   if(now-hybrid.lastLoud>ftTiming.silence||now-hybrid.voiceAt>22000){
     handleRealtime({type:'input_audio_buffer.speech_stopped'});
     try{hybrid.recorder.stop()}catch{}
    }
@@ -1188,7 +1236,7 @@ function scheduleSpeechGrace(){
  clearTimeout(state.turnGraceTimer);
  if(!state.turnFragments.length)return;
  const joined=state.turnFragments.map(x=>x.text).join(' ');
- const delay=unfinishedSpeech(joined)?3400:2200;
+ const delay=unfinishedSpeech(joined)?ftTiming.unfinished:ftTiming.grace;
  const token=++state.turnGraceToken;
  state.turnGraceTimer=setTimeout(()=>{
   if(token!==state.turnGraceToken)return;
@@ -1702,7 +1750,7 @@ async function startConversation(){
    state.micUserMuted=false;state.ttsPlaying=false;
    state.active=true;state.starting=false;state.resumeIndex=0;
    ftUsage.begin();
-   if(ftUsage.current){ftUsage.current.engine='hybrid';ftUsage.current.model=state.hybridModel;ftUsage.current.sttModel=state.sttEngine;ftUsage.current.transcribedAudioSeconds=0;ftUsage.current.transcriptionRequests=0}
+   if(ftUsage.current){ftUsage.current.engine='hybrid';ftUsage.current.model=state.hybridModel;ftUsage.current.sttModel=state.sttEngine;ftUsage.current.transcribedAudioSeconds=0;ftUsage.current.transcriptionRequests=0;ftUsage.current.timingSettingsMs={...ftTiming}}
    if(state.sttEngine==='eleven-scribe-realtime')await scribeStart(mic);
    else hybridStart(mic);
    state.guidedSessionReady=true;
