@@ -147,5 +147,6 @@ function init(){
   console.warn('Willena PWA service worker registration failed',error);
  });
 }
+window.WillenaPush={refresh:refreshPush};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
