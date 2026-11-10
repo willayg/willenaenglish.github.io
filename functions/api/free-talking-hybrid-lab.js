@@ -235,7 +235,7 @@ export async function onRequestPost({request,env}){
  if(token.length<40)return json(401,{error:'Sign in to Willena first'});
  let input;try{input=await request.json()}catch{return json(400,{error:'Invalid request'})}
  if(!input||!UUID.test(String(input.book_id||''))||!UUID.test(String(input.unit_id||'')))return json(400,{error:'Select a real assigned book and unit'});
- if(input.action!=='transcript'&&!env.OPENAI_API_KEY&&!env.OPENAI_API&&!env.OPENAI_KEY)return json(503,{error:'OpenAI key is not configured on this preview'});
+ if(!['transcript','quota','start'].includes(input.action)&&!env.OPENAI_API_KEY&&!env.OPENAI_API&&!env.OPENAI_KEY)return json(503,{error:'OpenAI key is not configured on this preview'});
  try{
   const signal=AbortSignal.timeout(14000);
   const user=await get(SCORE+'/auth/v1/user',{...scoreHeaders(token)},signal);
@@ -250,7 +250,38 @@ export async function onRequestPost({request,env}){
    const list=Array.isArray(assigned.assignments)&&assigned.assignments.length?assigned.assignments:(assigned.assignment?[assigned.assignment]:[]);
    if(!list.some(a=>a?.book_id===input.book_id))return json(403,{error:'That book is not assigned to your class'});
   }
+  // Daily access is enforced by a unique (student, Korea-local date) row,
+  // not a browser flag. Staff may run unlimited QA sessions.
+  if(input.action==='quota'||input.action==='start'){
+   const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+   if(profile.role!=='student')return json(200,{allowed:true,staff:true,day});
+   const dailyUrl=SCORE+'/rest/v1/free_talking_daily_sessions?select=id,book_id,unit_id,character,completed_at&student_id=eq.'+encodeURIComponent(user.id)+'&local_day=eq.'+day+'&limit=1';
+   const existing=await get(dailyUrl,scoreHeaders(token),signal);
+   if(input.action==='quota')return json(200,{allowed:existing.length===0,used:existing.length>0,day});
+   const requestedSession=String(input.session_id||'');
+   const character=String(input.character||'');
+   if(!UUID.test(requestedSession)||!['bunny','pigfish','willi'].includes(character))return json(400,{error:'Invalid session'});
+   if(existing.length){
+    if(existing[0].id===requestedSession&&!existing[0].completed_at&&existing[0].book_id===input.book_id&&existing[0].unit_id===input.unit_id){
+     return json(200,{allowed:true,resume:true,session_id:requestedSession,day});
+    }
+    return json(429,{error:'오늘의 Free Talking은 이미 사용했어요. 내일 다시 만나요!',used:true,day});
+   }
+   const response=await fetch(SCORE+'/rest/v1/free_talking_daily_sessions',{
+    method:'POST',headers:{...scoreHeaders(token),'Content-Type':'application/json',Prefer:'return=representation'},
+    body:JSON.stringify({id:requestedSession,student_id:user.id,local_day:day,book_id:input.book_id,unit_id:input.unit_id,character}),signal
+   });
+   if(response.status===409)return json(429,{error:'오늘의 Free Talking은 이미 사용했어요.',used:true,day});
+   if(!response.ok)return json(502,{error:'Cannot register today’s Free Talking session ('+response.status+')'});
+   return json(200,{allowed:true,session_id:requestedSession,day});
+  }
   if(input.action==='transcript'){
+   // For real students, reject transcripts that do not belong to a registered
+   // daily session. Do not require privileged service keys in the browser.
+   if(profile.role==='student'){
+    const registered=await get(SCORE+'/rest/v1/free_talking_daily_sessions?select=id,book_id,unit_id&student_id=eq.'+user.id+'&id=eq.'+encodeURIComponent(String(input.session_id||''))+'&limit=1',scoreHeaders(token),signal);
+    if(!registered.length||registered[0].book_id!==input.book_id||registered[0].unit_id!==input.unit_id)return json(403,{error:'Unregistered conversation session'});
+   }
    const sessionId=String(input.session_id||''),speaker=String(input.speaker||''),character=String(input.character||'');
    const turnNumber=Number(input.turn_number),transcriptText=String(input.transcript_text||'').trim();
    if(!UUID.test(sessionId)||!['student','character'].includes(speaker)||
@@ -266,6 +297,13 @@ export async function onRequestPost({request,env}){
    if(!saved.ok){console.warn('[Free Talking] transcript write rejected',saved.status);
      return json(502,{error:'Could not save transcript ('+saved.status+')'});}
    return json(200,{saved:true});
+  }
+  if(profile.role==='student'&&input.action==='reply'){
+   const sessionId=String(input.session_id||'');
+   if(!UUID.test(sessionId))return json(403,{error:'Start a Free Talking session first'});
+   const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+   const records=await get(SCORE+'/rest/v1/free_talking_daily_sessions?select=id,book_id,unit_id,completed_at&student_id=eq.'+user.id+'&id=eq.'+sessionId+'&local_day=eq.'+day+'&limit=1',scoreHeaders(token),signal);
+   if(!records.length||records[0].completed_at||records[0].book_id!==input.book_id||records[0].unit_id!==input.unit_id)return json(403,{error:'Free Talking session unavailable'});
   }
   const guided=true;
   const action=input.action==='reply'?'reply':'lesson';
