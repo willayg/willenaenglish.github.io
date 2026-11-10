@@ -13,7 +13,7 @@ export async function onRequestPost({request,env}){
  const key=requested==='eleven-scribe-v2'
   ?(env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY||env.ELEVENLABS_API||env.ELEVENLABS_KEY)
   :(env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY);
- if(!key)return reply(503,{error:requested==='eleven-scribe-v2'?'ElevenLabs key missing on this deployment':'OpenAI key missing on this deployment'});
+ if(!key&&requested==='openai-mini')return reply(503,{error:'OpenAI key missing on this deployment'});
  try{
   const auth=await fetch(ROOT+'/auth/v1/user',{headers:{apikey:PUB,Authorization:'Bearer '+bearer},signal:AbortSignal.timeout(8000)});
   if(!auth.ok)return reply(401,{error:'Session expired'});
@@ -24,11 +24,21 @@ export async function onRequestPost({request,env}){
   const form=await request.formData();
   const audio=form.get('audio');
   if(!(audio instanceof File)||audio.size<350||audio.size>1500000)return reply(400,{error:'Invalid recording size'});
-  const outgoing=new FormData();
   const eleven=requested==='eleven-scribe-v2';
+  if(eleven&&!key){
+   const bytes=new Uint8Array(await audio.arrayBuffer());
+   let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+   const fallback=await fetch('https://willenaenglish.netlify.app/.netlify/functions/willena_scribe_fallback',{
+    method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+bearer},
+    body:JSON.stringify({action:'transcribe',audio_base64:btoa(binary)}),signal:AbortSignal.timeout(29000)});
+   const result=await fallback.json().catch(()=>({}));
+   if(!fallback.ok)return reply(502,{error:'Netlify Scribe failed ('+fallback.status+'): '+String(result.error||'').slice(0,130)});
+   return reply(200,{text:String(result.text||'').slice(0,500),model:'scribe_v2',provider:'netlify'});
+  }
+  const outgoing=new FormData();
   if(eleven){
    outgoing.set('model_id','scribe_v2');
-   outgoing.set('language_code','en');
+   outgoing.set('language_code','eng');
    outgoing.set('tag_audio_events','false');
    outgoing.set('diarize','false');
    outgoing.set('file',audio,'answer.webm');
@@ -43,6 +53,6 @@ export async function onRequestPost({request,env}){
    body:outgoing,signal:AbortSignal.timeout(25000)});
   const data=await r.json().catch(()=>null);
   if(!r.ok)return reply(502,{error:(eleven?'ElevenLabs':'OpenAI')+' STT failed ('+r.status+'): '+String(data?.detail?.message||data?.error?.message||'').slice(0,130)});
-  return reply(200,{text:String(data?.text||'').slice(0,500),model:eleven?'scribe_v2':'gpt-4o-mini-transcribe'});
+  return reply(200,{text:String(data?.text||'').slice(0,500),model:eleven?'scribe_v2':'gpt-4o-mini-transcribe',provider:eleven?'cloudflare':'openai'});
  }catch(e){console.warn('hybrid transcription',String(e));return reply(502,{error:'Transcription unavailable'})}
 }
