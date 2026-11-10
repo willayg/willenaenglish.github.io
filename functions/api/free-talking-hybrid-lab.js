@@ -282,7 +282,7 @@ export async function onRequestPost({request,env}){
    const sessionId=String(input.session_id||'');
    if(!UUID.test(sessionId))return json(400,{error:'Invalid conversation'});
    const entries=await get(SCORE+'/rest/v1/free_talking_hybrid_transcripts?select=turn_number,speaker,transcript_text,message_source,review_points,review_reason&student_id=eq.'+user.id+'&session_id=eq.'+sessionId+'&book_id=eq.'+input.book_id+'&unit_id=eq.'+input.unit_id+'&order=turn_number.asc&limit=150',scoreHeaders(token),signal);
-   const original=entries.filter(x=>x.message_source!=='review_credit');
+   const original=entries.filter(x=>x.message_source!=='review_credit'&&x.message_source!=='evaluation_feedback');
    const students=original.filter(x=>x.speaker==='student'&&Number(x.turn_number)>0&&Number(x.turn_number)<75).slice(0,8);
    const credited=entries.filter(x=>x.message_source==='review_credit'&&x.review_points!==null&&x.review_points!==undefined);
    const points=credited.reduce((sum,x)=>sum+Math.max(0,Math.min(4,Number(x.review_points)||0)),0);
@@ -294,7 +294,8 @@ export async function onRequestPost({request,env}){
    if(!students.length)return json(400,{error:'No reviewable student attempts'});
    if(credited.length>=students.length)return json(200,{reviewed:students.length,
     credits:[],scores:credited.map(x=>({turn:150-Number(x.turn_number),points:Number(x.review_points)})),
-    feedback:'Thanks for chatting with me! I enjoyed our conversation.'});
+    feedback:fmt(entries.findLast(x=>x.message_source==='evaluation_feedback')?.transcript_text||
+     'Thanks for chatting with me! I hope we can talk again soon.',350)});
    const level=await get(CONTENT+'/rest/v1/content_books?select=public_level&id=eq.'+input.book_id+'&limit=1',contentHeaders,signal);
    const transcript=original.slice(-110).map(x=>({n:x.turn_number,speaker:x.speaker,text:fmt(x.transcript_text,350)}));
    const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
@@ -358,7 +359,7 @@ export async function onRequestPost({request,env}){
    // questions for authorised teacher debugging; existing expiry is unchanged.
    if(speaker==='student'&&['QUALIFIES','NEEDS_MORE','HELP_REQUEST'].includes(input.verdict))
     row.verdict=input.verdict;
-   if(speaker==='character'&&['book_anchor','ai_reply'].includes(input.message_source))
+   if(speaker==='character'&&['book_anchor','ai_reply','evaluation_feedback'].includes(input.message_source))
     row.message_source=input.message_source;
    if(speaker==='student'&&input.message_source==='review_credit'){
     const originalTurn=Number(input.original_turn_number),stamp=Number(input.verdict_at),proof=String(input.verdict_proof||''),
