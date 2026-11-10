@@ -365,6 +365,15 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #ftEnginePanel select{box-sizing:border-box;width:100%;border:1.5px solid #8cd4de;border-radius:10px;background:white;color:#123a45;padding:10px 8px;font-size:14px}
 #ftEnginePanel p{font-size:11px;color:#51717a;line-height:1.4;margin:9px 0 0}
 #ftEnginePanel .ft-engine-tag{display:inline-block;font-size:10px;font-weight:900;background:#e2f7f9;color:#137587;padding:3px 7px;border-radius:8px;margin-bottom:5px}
+#ftTimingPanel{position:fixed;z-index:10001;right:12px;bottom:68px;width:min(285px,calc(100vw - 24px));background:#fff;color:#174451;border:2px solid #63c4d2;border-radius:16px;box-shadow:0 10px 35px #16374735;font-family:system-ui,sans-serif;overflow:hidden}
+#ftTimingPanel[hidden]{display:none!important}
+#ftTimingToggle{width:100%;background:#fff;color:#176b7a;border:0;padding:11px 13px;font:800 13px system-ui;text-align:left;cursor:pointer}
+#ftTimingControls{padding:0 13px 12px}
+#ftTimingControls[hidden]{display:none!important}
+#ftTimingPanel label{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;margin:11px 0 5px}
+#ftTimingPanel input[type=range]{width:100%;accent-color:#119cba;display:block}
+#ftTimingPanel p{font-size:11px;line-height:1.4;color:#51717a;margin:9px 0}
+#ftTimingReset{background:#fff;border:1.5px solid #79c4d0;border-radius:10px;padding:8px 12px;color:#176b7a;font:800 12px system-ui;cursor:pointer}
 </style></head><body><aside id="ftEnginePanel" aria-label="AI conversation engine selector">
  <span class="ft-engine-tag">HYBRID EXPERIMENT</span>
  <strong>Free Talking — Model Lab</strong>
@@ -384,6 +393,19 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  <p id="ftSttDetails" aria-live="polite">Recorded audio · browser silence detection · OpenAI Mini</p>
  <p>Choose both engines before starting. Same textbooks, characters, question sequence and voices. Original Realtime uses its own built-in speech recognition.</p>
 </aside>
+<section id="ftTimingPanel" aria-label="Hybrid speech timing controls">
+ <button id="ftTimingToggle" type="button" aria-expanded="false">Listening timing · Default</button>
+ <div id="ftTimingControls" hidden>
+  <label for="ftSilenceRange"><span>Silence before transcription</span><output id="ftSilenceValue">1.7 s</output></label>
+  <input id="ftSilenceRange" type="range" min="500" max="2800" step="100" value="1700">
+  <label for="ftGraceRange"><span>Wait after complete phrase</span><output id="ftGraceValue">2.2 s</output></label>
+  <input id="ftGraceRange" type="range" min="300" max="3500" step="100" value="2200">
+  <label for="ftUnfinishedRange"><span>Wait after unfinished phrase</span><output id="ftUnfinishedValue">3.4 s</output></label>
+  <input id="ftUnfinishedRange" type="range" min="600" max="5000" step="100" value="3400">
+  <p>Changes apply immediately to subsequent pauses and phrases. Only affects Hybrid with recorded-audio STT; not Original Realtime or Scribe Realtime.</p>
+  <button id="ftTimingReset" type="button">Restore defaults</button>
+ </div>
+</section>
 <iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
 <div id="demo" hidden><section id="ftGuide" class="ft-layer" hidden role="dialog" aria-modal="true" aria-label="How to play Free Talking">
  <div class="ft-sheet">
@@ -449,4 +471,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-scribe-stt1"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-hybrid-timing1"></script></body></html>
