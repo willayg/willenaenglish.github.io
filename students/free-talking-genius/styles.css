@@ -1559,6 +1559,21 @@
 .free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftListenAgain{display:none!important}
 
 
+/* Both completed steps use the same genuine gold ring, not theme purple/cyan. */
+.free-talking-genius #ftSpeakingCard.ft-golden-skill .vocab-skill-ring,
+.free-talking-genius #ftFreeTalkingCard.ft-golden-skill .vocab-skill-ring{
+ --skill-color:#d9ab3c!important;
+ background:conic-gradient(#d9ab3c calc(var(--progress,0)*1%),#f8e8b9 0)!important;
+}
+.free-talking-genius #ftSpeakingCard.ft-golden-skill .vocab-skill-ring::before,
+.free-talking-genius #ftFreeTalkingCard.ft-golden-skill .vocab-skill-ring::before{
+ background:#fffaf0!important;
+}
+.free-talking-genius #ftSpeakingCard.ft-golden-skill .vocab-skill-ring span,
+.free-talking-genius #ftFreeTalkingCard.ft-golden-skill .vocab-skill-ring span{
+ color:#976e1b!important;
+}
+
 /* Completed Free Talking is Step 2 of the unit's Golden Unit progression.
    Keep the normal theme ring until all eight meaningful turns are completed. */
 .free-talking-genius #ftFreeTalkingCard.ft-golden-skill{
