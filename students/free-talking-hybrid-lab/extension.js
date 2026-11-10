@@ -16,7 +16,7 @@ function syncTranscriptPreference(){
 document.getElementById('ftTranscriptToggle')?.addEventListener('change',syncTranscriptPreference);
 
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,unproductiveStreak:0,recentQualified:[],pendingVerdict:'NEEDS_MORE',pendingProof:null,pendingVerdictAt:null,pendingLowEffort:false,askedQuestionTexts:[],attemptCount:0,reviewing:false};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,askedQuestionTexts:[],attemptCount:0,reviewing:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 const enginePicker=document.getElementById('ftEngineSelect');
 const sttPicker=document.getElementById('ftSttSelect');
@@ -158,9 +158,13 @@ function closeActivity(){
 }
 function navigateBack(){
  if(releaseMode){
-  // Navigate BEFORE tearing down the conversation overlay. Previously
-  // closeActivity() hid the only visible screen, exposing a blank page while
-  // the browser loaded the book selection screen.
+  // Preserve partial progress: leaving an active conversation counts as its
+  // ending, so review the recorded turns before returning to the book menu.
+  // Back on an already-open result screen exits immediately.
+  if(state.active&&!state.reviewing&&(state.attemptCount||0)>0&&$('ftCelebration').hidden){
+   void reviewConversation();return;
+  }
+  if(state.reviewing)return;
   location.replace('/students/free-talking-genius/');
   return;
  }
@@ -902,8 +906,6 @@ function sendHybrid(item){
     if(!state.active||state.anchorToken!==at)return;
     hybrid.history.push({id:'reply-'+hybrid.sequence++,role:'assistant',text:data.text});
      for(const question of String(data.text||'').match(/[^.!?]*[?？]/g)||[])noteAskedQuestion(question.trim());
-     state.pendingVerdict=['QUALIFIES','NEEDS_MORE','HELP_REQUEST'].includes(data.verdict)?data.verdict:'NEEDS_MORE';
-     state.pendingProof=data.verdictProof||null;state.pendingVerdictAt=data.verdictAt||null;state.pendingLowEffort=Boolean(data.lowEffort);
     if(state.hybrid){
      state.hybridNewTopic=Boolean(data.newTopic);state.hybridAdvance=false;
      state.hybridDecisionReported=Boolean(data.decisionReported);
@@ -1477,6 +1479,7 @@ async function reviewConversation(){
   $('ftResultStars').replaceChildren();
   $('ftResultMascot').replaceChildren();
   $('ftReviewContinue').hidden=false;
+  $('ftReviewContinue').textContent='Keep chatting';
   $('ftCelebration').hidden=false;
   $('ftCelebration').classList.add('is-revealed');
   $('ftFinishClose').textContent='Back to Units';
@@ -1527,15 +1530,6 @@ async function finishConversation({skipGoodbye=false}={}){
  $('clock').textContent=finishScores.answered+' / 12 conversations complete';
  $('anchorText').textContent='Great talking! See you next time!';
  $('listenCheck').textContent='Finished';
-}
-async function finishUnproductiveConversation(){
- if(!state.active)return;
- await state.transcriptSaveQueue?.catch(()=>{});
- const count=state.contributions||0;
- endSession('We can talk again later.');
- $('ftCelebration').hidden=true;
- // Return to the character selector rather than leaving an empty overlay.
- navigateBack();
 }
 async function finishNaturalReply(data){
  const run=state.anchorToken;
@@ -1761,7 +1755,7 @@ async function startConversation(){
  if(!continuing&&!state.guideAccepted){let dismissed=false;try{dismissed=localStorage.getItem(FT_GUIDE_KEY)==='1'}catch{}if(!dismissed){showFtGuide(true);return}}
  state.guideAccepted=false;if(!continuing){
   state.questionRewards.clear();state.contributions=0;state.sessionStartContributions=0;
-   state.unproductiveStreak=0;state.pendingVerdict='NEEDS_MORE';state.askedQuestionTexts=[];state.attemptCount=0;state.reviewing=false;
+   state.askedQuestionTexts=[];state.attemptCount=0;state.reviewing=false;
    try{state.recentQualified=JSON.parse(localStorage.getItem(ftCompletionKey()+':recentQualified')||'[]').slice(-18)}catch{state.recentQualified=[]}
   state.transcriptSessionId=crypto.randomUUID();
   state.transcriptTurnNumber=0;state.transcriptSaved=0;state.transcriptSaveErrors=0;
