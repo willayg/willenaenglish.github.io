@@ -20,17 +20,32 @@ async function signingKey(env){return crypto.subtle.importKey('raw',utf8.encode(
 async function makeState(env,uid){const data=b64(utf8.encode(JSON.stringify({uid,nonce:b64(crypto.getRandomValues(new Uint8Array(24))),exp:Date.now()+600000})));const sig=b64(await crypto.subtle.sign('HMAC',await signingKey(env),utf8.encode(data)));return data+'.'+sig}
 async function readState(env,raw){const parts=String(raw||'').split('.');if(parts.length!==2||parts[0].length>1000)return null;let ok=false;try{ok=await crypto.subtle.verify('HMAC',await signingKey(env),unb64(parts[1]),utf8.encode(parts[0]))}catch{}if(!ok)return null;try{const p=JSON.parse(new TextDecoder().decode(unb64(parts[0])));return p.uid&&p.nonce&&p.exp>Date.now()?p:null}catch{return null}}
 function cookie(raw,age){return 'willena_calendar_state='+raw+'; Path=/api/staff-calendar; Secure; HttpOnly; SameSite=Lax; Max-Age='+age}
-function config(env){return ['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','SUPABASE_SERVICE_ROLE_KEY'].filter(n=>!env[n])}
-async function db(env,route,method='GET',body,prefer='return=representation'){
- const secret=String(env.SUPABASE_SERVICE_ROLE_KEY||'').trim();
- const headers={apikey:secret,'content-type':'application/json',Prefer:prefer};
- // Supabase's new sb_secret_* API keys are not JWTs and MUST NOT be sent
- // as Authorization: Bearer. Legacy service_role JWTs still use that header.
- if(!secret.startsWith('sb_secret_'))headers.Authorization='Bearer '+secret;
+function config(env){return ['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET'].filter(n=>!env[n])}
+async function db(token,route,method='GET',body){
+ const headers={apikey:PUBKEY,Authorization:'Bearer '+token,'content-type':'application/json',Prefer:'return=representation'};
  const r=await fetch(SUPABASE+'/rest/v1/'+route,{method,headers,body:body?JSON.stringify(body):undefined,cache:'no-store'});
  const data=await r.json().catch(()=>null);
- if(!r.ok){console.error('google calendar storage',r.status,data?.code||'',secret.startsWith('sb_secret_')?'secret-key':'legacy-key');throw Error('Google calendar storage request failed ('+r.status+')')}return data
+ if(!r.ok){
+  console.error('google calendar database RPC',r.status,data?.code||'');
+  throw Object.assign(new Error('Google calendar database request failed ('+r.status+')'),{status:r.status===401||r.status===403?r.status:502});
+ }
+ return data;
 }
+async function rpc(token,name,body={}){return db(token,'rpc/'+name,'POST',body)}
+async function sealedState(env,payload){
+ const iv=crypto.getRandomValues(new Uint8Array(12));
+ const content=await crypto.subtle.encrypt({name:'AES-GCM',iv},await secretKey(env),utf8.encode(JSON.stringify(payload)));
+ return b64(iv)+'.'+b64(content);
+}
+async function openedState(env,value){
+ const [a,b]=String(value||'').split('.');if(!a||!b)return null;
+ try{
+  const data=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(a)},await secretKey(env),unb64(b));
+  const p=JSON.parse(new TextDecoder().decode(data));
+  return p.exp>Date.now()&&p.uid&&p.token&&p.nonce?p:null;
+ }catch{return null}
+}
+
 async function approvedStaff(req,env){
  const candidates=[],m=(req.headers.get('cookie')||'').match(/(?:^|;\s*)sb_access=([^;]+)/);
  if(m)try{candidates.push(decodeURIComponent(m[1]))}catch{}
@@ -46,12 +61,12 @@ async function approvedStaff(req,env){
   const role=await status.json().catch(()=>({}));
   if(status.status===401||status.status===403)return {error:'Approved teacher or admin access required',status:403};
   if(!status.ok)throw Object.assign(new Error('Google staff permission check failed ('+status.status+')'),{status:502});
-  return {id:identity.id,admin:role.admin===true,connected:role.connected===true};
+  return {id:identity.id,token,admin:role.admin===true,connected:role.connected===true};
  }
  return {error:'Dashboard session could not be verified. Refresh the Teachers Dashboard.',status:401};
 }
-async function connection(env){const rows=await db(env,TABLE+'?select=*&id=eq.1&limit=1');return rows[0]||null}
-async function saveConnection(env,calendarId,refreshToken,uid){const encrypted=await encrypt(env,refreshToken);await db(env,TABLE+'?on_conflict=id','POST',{id:1,calendar_id:calendarId,...encrypted,connected_by:uid,updated_at:new Date().toISOString()},'resolution=merge-duplicates,return=representation')}
+async function connection(token){return rpc(token,'willena_google_calendar_connection_get')}
+async function saveConnection(env,token,calendarId,refreshToken){const encrypted=await encrypt(env,refreshToken);return rpc(token,'willena_google_calendar_connection_save',{p_calendar_id:calendarId,p_cipher:encrypted.refresh_cipher,p_iv:encrypted.refresh_iv})}
 async function google(token,route,method='GET',body){
  const response=await fetch(GOOGLE+route,{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'});
  if(response.status===204)return {ok:true};
@@ -81,9 +96,9 @@ function validEvent(body){
  const reminder=time?[{method:'popup',minutes:10},{method:'popup',minutes:60}]:[{method:'popup',minutes:1440}];
  return {summary:title,description:notes,start,end,extendedProperties:{private:{willena_category:category}},reminders:{useDefault:false,overrides:reminder},...(repeat!=='none'?{recurrence:['RRULE:FREQ='+repeat.toUpperCase()]}:{})};
 }
-async function migrateNative(env,auth,calendarId){
+async function migrateNative(staffToken,auth,calendarId){
  // Existing native events are imported once, tracked by their original UUID.
- const records=await db(env,'willena_staff_events?select=id,title,event_date,event_time,category,repeat_rule,notes,google_event_id&google_event_id=is.null&limit=500');
+ const records=await db(staffToken,'willena_staff_events?select=id,title,event_date,event_time,category,repeat_rule,notes,google_event_id&google_event_id=is.null&limit=500');
  const base='/calendars/'+encodeURIComponent(calendarId)+'/events';
  let imported=0;
  for(const e of records){
@@ -91,7 +106,7 @@ async function migrateNative(env,auth,calendarId){
    const data=validEvent({title:e.title,date:e.event_date,time:e.event_time?.slice(0,5)||'',category:e.category,repeat:e.repeat_rule,notes:e.notes});
    data.extendedProperties.private.willena_native_id=e.id;
    const created=await google(auth,base,'POST',data);
-   await db(env,'willena_staff_events?id=eq.'+encodeURIComponent(e.id)+'&google_event_id=is.null','PATCH',{google_event_id:created.id});
+   await db(staffToken,'willena_staff_events?id=eq.'+encodeURIComponent(e.id)+'&google_event_id=is.null','PATCH',{google_event_id:created.id});
    imported++;
   }catch(err){console.error('native calendar import failed',e.id,err.message)}
  }
@@ -105,17 +120,22 @@ export async function onRequest({request,env}){
   const missing=config(env);if(missing.length)return respond({error:'Google integration configuration incomplete: '+missing.join(', ')},503);
   if(part==='callback'){
    const raw=(request.headers.get('cookie')||'').match(/(?:^|;\s*)willena_calendar_state=([^;]+)/)?.[1]||'';
-   const state=await readState(env,raw);
+   const state=await openedState(env,raw);
    if(!state||url.searchParams.get('state')!==state.nonce||url.searchParams.get('error'))return respond({error:'Google authorization cancelled or expired; restart from Staff Calendar.'},400,{'set-cookie':cookie('',0)});
+   // Recheck the actual Dashboard JWT before allowing the OAuth callback to
+   // modify any shared Google connection. JWT never appears in an OAuth URL.
+   const verified=await fetch(SUPABASE+'/rest/v1/rpc/willena_staff_calendar_google_status',{method:'POST',headers:{apikey:PUBKEY,Authorization:'Bearer '+state.token,'content-type':'application/json'},body:'{}',cache:'no-store'});
+   const privileges=await verified.json().catch(()=>({}));
+   if(!verified.ok||privileges.admin!==true)return respond({error:'Admin session expired during authorization; return to Dashboard and reconnect.'},401,{'set-cookie':cookie('',0)});
    const code=url.searchParams.get('code');if(!code)return respond({error:'Authorization code missing'},400);
    const form=new URLSearchParams({client_id:env.GOOGLE_CLIENT_ID,client_secret:env.GOOGLE_CLIENT_SECRET,redirect_uri:CALLBACK,grant_type:'authorization_code',code});
    const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:form});
    const result=await r.json().catch(()=>({}));if(!r.ok||!result.access_token||!result.refresh_token)throw Error('Google did not grant offline Calendar access; reconnect and approve permissions.');
-   const old=await connection(env);let calendarId=old?.calendar_id||'';
+   const old=await connection(state.token);let calendarId=old?.calendar_id||'';
    if(calendarId){try{await google(result.access_token,'/calendars/'+encodeURIComponent(calendarId))}catch{calendarId=''}}
    if(!calendarId){const newCal=await google(result.access_token,'/calendars','POST',{summary:'Willena Staff Calendar',timeZone:'Asia/Seoul',description:'Shared Willena staff schedule and event reminders'});calendarId=newCal.id}
-   await saveConnection(env,calendarId,result.refresh_token,state.uid);
-   const migrated=await migrateNative(env,result.access_token,calendarId);
+   await saveConnection(env,state.token,calendarId,result.refresh_token);
+   const migrated=await migrateNative(state.token,result.access_token,calendarId);
    const destination=ORIGIN+'/Teachers/?calendar='+ (migrated.remaining?'import-warning':'connected');
    return new Response(null,{status:302,headers:{location:destination,'set-cookie':cookie('',0),'cache-control':'no-store'}});
   }
@@ -123,18 +143,18 @@ export async function onRequest({request,env}){
   const user=await approvedStaff(request,env);if(user.error)return respond({error:user.error},user.status);
   if(part==='connect'){
    if(request.method!=='POST'||!user.admin)return respond({error:'Admin access required'},403);
-   const signed=await makeState(env,user.id),state=await readState(env,signed);
-   const q=new URLSearchParams({client_id:env.GOOGLE_CLIENT_ID,redirect_uri:CALLBACK,response_type:'code',scope:'https://www.googleapis.com/auth/calendar',access_type:'offline',prompt:'consent',include_granted_scopes:'true',state:state.nonce});
+   const nonce=b64(crypto.getRandomValues(new Uint8Array(24)));
+   const signed=await sealedState(env,{uid:user.id,token:user.token,nonce,exp:Date.now()+600000});
+   const q=new URLSearchParams({client_id:env.GOOGLE_CLIENT_ID,redirect_uri:CALLBACK,response_type:'code',scope:'https://www.googleapis.com/auth/calendar',access_type:'offline',prompt:'consent',include_granted_scopes:'true',state:nonce});
    return respond({authorization_url:'https://accounts.google.com/o/oauth2/v2/auth?'+q},200,{'set-cookie':cookie(signed,600)});
   }
   if(part==='status')return respond({connected:user.connected,admin:user.admin});
-  const linked=await connection(env);
+  const linked=await connection(user.token);
   if(!linked)return respond({error:'Google Calendar not connected',code:'NOT_CONNECTED'},409);
   const token=await access(env,linked),base='/calendars/'+encodeURIComponent(linked.calendar_id)+'/events';
   if(part==='share-staff'){
    if(request.method!=='POST'||!user.admin)return respond({error:'Admin access required'},403);
-   const profiles=await db(env,'profiles?select=email,role,approved&approved=eq.true&limit=250');
-   const emails=[...new Set(profiles.filter(p=>['teacher','admin'].includes(String(p.role||'').toLowerCase())&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email||'')).map(p=>p.email.toLowerCase()))].slice(0,80);
+   const emails=(await rpc(user.token,'willena_google_calendar_staff_emails')).slice(0,80);
    const acl='/calendars/'+encodeURIComponent(linked.calendar_id)+'/acl';
    let next='',existing=[];
    do{const result=await google(token,acl+'?'+new URLSearchParams({maxResults:'250',...(next?{pageToken:next}:{})}));existing.push(...(result.items||[]));next=result.nextPageToken||''}while(next&&existing.length<500);
