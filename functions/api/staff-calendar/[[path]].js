@@ -21,8 +21,8 @@ async function makeState(env,uid){const data=b64(utf8.encode(JSON.stringify({uid
 async function readState(env,raw){const parts=String(raw||'').split('.');if(parts.length!==2||parts[0].length>1000)return null;let ok=false;try{ok=await crypto.subtle.verify('HMAC',await signingKey(env),unb64(parts[1]),utf8.encode(parts[0]))}catch{}if(!ok)return null;try{const p=JSON.parse(new TextDecoder().decode(unb64(parts[0])));return p.uid&&p.nonce&&p.exp>Date.now()?p:null}catch{return null}}
 function cookie(raw,age){return 'willena_calendar_state='+raw+'; Path=/api/staff-calendar; Secure; HttpOnly; SameSite=Lax; Max-Age='+age}
 function config(env){return ['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','SUPABASE_SERVICE_ROLE_KEY'].filter(n=>!env[n])}
-async function db(env,route,method='GET',body){
- const r=await fetch(SUPABASE+'/rest/v1/'+route,{method,headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,'content-type':'application/json',Prefer:'return=representation'},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+async function db(env,route,method='GET',body,prefer='return=representation'){
+ const r=await fetch(SUPABASE+'/rest/v1/'+route,{method,headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,'content-type':'application/json',Prefer:prefer},body:body?JSON.stringify(body):undefined,cache:'no-store'});
  const data=await r.json().catch(()=>null);
  if(!r.ok){console.error('google calendar storage',r.status,data?.code||'');throw Error('Google calendar storage request failed ('+r.status+')')}return data
 }
@@ -41,7 +41,7 @@ async function approvedStaff(req,env){
  return {error:'Dashboard session could not be verified. Refresh the Teachers Dashboard.',status:401};
 }
 async function connection(env){const rows=await db(env,TABLE+'?select=*&id=eq.1&limit=1');return rows[0]||null}
-async function saveConnection(env,calendarId,refreshToken,uid){const encrypted=await encrypt(env,refreshToken);await db(env,TABLE+'?on_conflict=id','POST',{id:1,calendar_id:calendarId,...encrypted,connected_by:uid,updated_at:new Date().toISOString()})}
+async function saveConnection(env,calendarId,refreshToken,uid){const encrypted=await encrypt(env,refreshToken);await db(env,TABLE+'?on_conflict=id','POST',{id:1,calendar_id:calendarId,...encrypted,connected_by:uid,updated_at:new Date().toISOString()},'resolution=merge-duplicates,return=representation')}
 async function google(token,route,method='GET',body){
  const response=await fetch(GOOGLE+route,{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'});
  if(response.status===204)return {ok:true};
