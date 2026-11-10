@@ -1884,12 +1884,45 @@ async function initStandaloneRelease(){
  const params=new URLSearchParams(location.search);
  const bookId=params.get('book'),unitId=params.get('unit');
  const valid=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id||''));
- const buttons=[...intro.querySelectorAll('[data-release-character]')];
- const bunny=buttons.find(x=>x.dataset.releaseCharacter==='bunny')?.querySelector('.ft-release-avatar');
- const pigfish=buttons.find(x=>x.dataset.releaseCharacter==='pigfish')?.querySelector('.ft-release-avatar');
- if(bunny)bunny.innerHTML=BUNNY_FOX_ART;
- if(pigfish)pigfish.innerHTML=PIGFISH_ART;
- buttons.forEach(button=>button.disabled=true);
+ // Clone the real original app's selector, including its SVGs and native
+ // CSS classes. Keep the original iframe's DOM and Speaking handlers untouched.
+ const source=appDocument()?.getElementById('ftCharacter');
+ const host=$('ftReleaseNativeMenu');
+ if(!source||!host){showError('Character menu could not load. Please refresh.');return}
+ host.replaceChildren();
+ const menu=source.cloneNode(true);
+ menu.hidden=false;
+ menu.removeAttribute('hidden');
+ menu.querySelector('#ftCharacterRound')?.remove();
+ const back=menu.querySelector('#ftCharacterBack');
+ if(back){back.hidden=false;back.textContent='← 교재로 돌아가기'}
+ host.append(menu);
+ const choices=[
+  ['ftChooseLili','bunny'],['ftChooseWilli','willi'],['ftChoosePigfish','pigfish']
+ ];
+ const buttons=choices.map(([id])=>menu.querySelector('#'+id)).filter(Boolean);
+ const startButton=menu.querySelector('#ftCharacterContinue');
+ if(startButton)startButton.disabled=true;
+ let selected=null,ready=false,starting=false;
+ const choose=character=>{
+  if(!ready||starting)return;
+  const repeated=selected===character;selected=character;
+  for(const [id,name] of choices)menu.querySelector('#'+id)?.setAttribute('aria-pressed',String(name===character));
+  if(startButton)startButton.disabled=false;
+  if(repeated)void begin();
+ };
+ async function begin(){
+  if(!ready||!selected||starting)return;
+  starting=true;buttons.forEach(b=>b.disabled=true);
+  if(startButton)startButton.disabled=true;
+  message.hidden=true;
+  state.character=selected;state.guideAccepted=true;intro.hidden=true;
+  try{await startConversation()}
+  catch(e){intro.hidden=false;showError(e.message||'Could not start.');starting=false;buttons.forEach(b=>b.disabled=false);if(startButton)startButton.disabled=false}
+ }
+ for(const [id,name] of choices)menu.querySelector('#'+id)?.addEventListener('click',()=>choose(name));
+ startButton?.addEventListener('click',()=>void begin());
+ back?.addEventListener('click',()=>location.assign('/students/free-talking-genius/'));
  if(!valid(bookId)||!valid(unitId)){showError('Please choose a book and unit first.');return}
  try{
   const [books,units]=await Promise.all([
@@ -1906,19 +1939,11 @@ async function initStandaloneRelease(){
   const quota=await quotaResponse.json().catch(()=>({}));
   if(!quotaResponse.ok)throw Error(quota.error||'Unable to check your daily session.');
   if(!quota.allowed){showError('오늘의 Free Talking을 이미 했어요. 내일 다시 만나요!');return}
+  ready=true;
   buttons.forEach(button=>button.disabled=false);
-  for(const button of buttons)button.addEventListener('click',async()=>{
-   if(button.disabled)return;
-   buttons.forEach(item=>item.disabled=true);
-   message.hidden=true;
-   state.character=button.dataset.releaseCharacter;
-   state.guideAccepted=true;
-   intro.hidden=true;
-   try{await startConversation()}
-   catch(e){intro.hidden=false;showError(e.message||'Could not start.');buttons.forEach(item=>item.disabled=false)}
-  });
  }catch(e){showError(e.message||'Could not prepare Free Talking.')}
 }
+
 if(releaseMode){
  // The original iframe is retained only as an isolated auth/token bridge;
  // its Speaking state machine and event flow are not used in this release.
