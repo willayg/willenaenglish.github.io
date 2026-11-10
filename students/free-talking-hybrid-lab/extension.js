@@ -1852,3 +1852,51 @@ async function startConversation(){
   $('listenCheck').textContent='Connection failed · retry available';
  }
 }
+
+
+async function initStandaloneRelease(){
+ if(!releaseMode)return;
+ const intro=$('ftReleaseIntro'),message=$('ftReleaseError');
+ intro.hidden=false;
+ const showError=s=>{message.hidden=false;message.textContent=String(s)};
+ const params=new URLSearchParams(location.search);
+ const bookId=params.get('book'),unitId=params.get('unit');
+ const valid=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id||''));
+ const buttons=[...intro.querySelectorAll('[data-release-character]')];
+ buttons.forEach(button=>button.disabled=true);
+ if(!valid(bookId)||!valid(unitId)){showError('Please choose a book and unit first.');return}
+ try{
+  const [books,units]=await Promise.all([
+   contentDbGet('/rest/v1/content_books?select=id,title&id=eq.'+bookId+'&limit=1'),
+   contentDbGet('/rest/v1/content_units?select=id,title,unit_number,book_id&id=eq.'+unitId+'&book_id=eq.'+bookId+'&limit=1')
+  ]);
+  if(!books[0]||!units[0])throw Error('The selected textbook unit could not be loaded.');
+  state.book=books[0];state.unit=units[0];
+  intro.querySelector('.ft-release-sub').textContent=books[0].title+' · Unit '+units[0].unit_number+
+   ' — Talk with a friend in English. 12 meaningful turns, once each day.';
+  const quotaResponse=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+   action:'quota',book_id:bookId,unit_id:unitId
+  });
+  const quota=await quotaResponse.json().catch(()=>({}));
+  if(!quotaResponse.ok)throw Error(quota.error||'Unable to check your daily session.');
+  if(!quota.allowed){showError('오늘의 Free Talking을 이미 했어요. 내일 다시 만나요!');return}
+  buttons.forEach(button=>button.disabled=false);
+  for(const button of buttons)button.addEventListener('click',async()=>{
+   if(button.disabled)return;
+   buttons.forEach(item=>item.disabled=true);
+   message.hidden=true;
+   state.character=button.dataset.releaseCharacter;
+   state.guideAccepted=true;
+   intro.hidden=true;
+   try{await startConversation()}
+   catch(e){intro.hidden=false;showError(e.message||'Could not start.');buttons.forEach(item=>item.disabled=false)}
+  });
+ }catch(e){showError(e.message||'Could not prepare Free Talking.')}
+}
+if(releaseMode){
+ // The original iframe is retained only as an isolated auth/token bridge;
+ // its Speaking state machine and event flow are not used in this release.
+ const begin=()=>void initStandaloneRelease();
+ if(frame.contentDocument?.readyState==='complete')begin();
+ else frame.addEventListener('load',begin,{once:true});
+}
