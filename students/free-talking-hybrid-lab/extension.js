@@ -15,7 +15,7 @@ function syncTranscriptPreference(){
 document.getElementById('ftTranscriptToggle')?.addEventListener('change',syncTranscriptPreference);
 
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,unproductiveStreak:0,recentQualified:[],pendingVerdict:'NEEDS_MORE',pendingProof:null,pendingVerdictAt:null};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,unproductiveStreak:0,recentQualified:[],pendingVerdict:'NEEDS_MORE',pendingProof:null,pendingVerdictAt:null,pendingLowEffort:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 const enginePicker=document.getElementById('ftEngineSelect');
 const sttPicker=document.getElementById('ftSttSelect');
@@ -944,7 +944,7 @@ function sendHybrid(item){
     if(!state.active||state.anchorToken!==at)return;
     hybrid.history.push({id:'reply-'+hybrid.sequence++,role:'assistant',text:data.text});
      state.pendingVerdict=['QUALIFIES','NEEDS_MORE','HELP_REQUEST'].includes(data.verdict)?data.verdict:'NEEDS_MORE';
-     state.pendingProof=data.verdictProof||null;state.pendingVerdictAt=data.verdictAt||null;
+     state.pendingProof=data.verdictProof||null;state.pendingVerdictAt=data.verdictAt||null;state.pendingLowEffort=Boolean(data.lowEffort);
     if(state.hybrid){
      state.hybridNewTopic=Boolean(data.newTopic);state.hybridAdvance=false;
      state.hybridDecisionReported=Boolean(data.decisionReported);
@@ -1456,7 +1456,7 @@ function requestGuidedReply(){
  if(!state.active||state.anchorResponding||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
  const prior=state.anchorPhase,verified=String(state.verifiedAnswer||'').trim();
  state.verifiedAnswer='';state.anchorResponding=true;state.anchorResponseText='';
- state.anchorPhase='respondingFirst';state.hybridPendingContribution=Boolean(verified);state.pendingVerdict='NEEDS_MORE';state.pendingProof=null;state.pendingVerdictAt=null;
+ state.anchorPhase='respondingFirst';state.hybridPendingContribution=Boolean(verified);state.pendingVerdict='NEEDS_MORE';state.pendingProof=null;state.pendingVerdictAt=null;state.pendingLowEffort=false;
  const remaining=Math.max(0,12-(state.contributions||0));
  const directive=[
   'NATURAL CHAT RESPONSE. This is a real English conversation, not a school quiz.',
@@ -1518,6 +1518,7 @@ async function finishNaturalReply(data){
  const contribution=Boolean(state.hybridPendingContribution);
  state.hybridPendingContribution=false;
  const verdict=contribution?state.pendingVerdict:'NEEDS_MORE';
+ const lowEffort=Boolean(state.pendingLowEffort);
  const speech=state.hybridLatestSpeech||'';
  const qualified=verdict==='QUALIFIES'&&Boolean(state.pendingProof);
  const newTopic=Boolean(state.hybridNewTopic);
@@ -1528,7 +1529,8 @@ async function finishNaturalReply(data){
   qualified?state.pendingProof:null,qualified?state.pendingVerdictAt:null);
  state.pendingProof=null;state.pendingVerdictAt=null;
  if(qualified)ftRecordAnswer(speech);
- else if(contribution&&verdict!=='HELP_REQUEST')state.unproductiveStreak++;
+ else if(contribution&&verdict!=='HELP_REQUEST'&&lowEffort)state.unproductiveStreak++;
+ else if(contribution&&verdict!=='HELP_REQUEST')state.unproductiveStreak=0;
  state.hybridLatestSpeech='';
  const exitNow=state.unproductiveStreak>=6;
  state.anchorPhase='playingReply';setMicEnabled(false);
