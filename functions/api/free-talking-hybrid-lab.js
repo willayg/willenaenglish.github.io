@@ -235,7 +235,7 @@ export async function onRequestPost({request,env}){
  if(token.length<40)return json(401,{error:'Sign in to Willena first'});
  let input;try{input=await request.json()}catch{return json(400,{error:'Invalid request'})}
  if(!input||!UUID.test(String(input.book_id||''))||!UUID.test(String(input.unit_id||'')))return json(400,{error:'Select a real assigned book and unit'});
- if(!['transcript','quota','start','complete'].includes(input.action)&&!env.OPENAI_API_KEY&&!env.OPENAI_API&&!env.OPENAI_KEY)return json(503,{error:'OpenAI key is not configured on this preview'});
+ if(!['transcript','quota','start','complete','progress'].includes(input.action)&&!env.OPENAI_API_KEY&&!env.OPENAI_API&&!env.OPENAI_KEY)return json(503,{error:'OpenAI key is not configured on this preview'});
  try{
   const signal=AbortSignal.timeout(14000);
   const user=await get(SCORE+'/auth/v1/user',{...scoreHeaders(token)},signal);
@@ -252,6 +252,11 @@ export async function onRequestPost({request,env}){
   }
   // Free Talking is unrestricted during this release. Keep session IDs and
   // student-owned, expiring transcript storage for teacher analysis.
+  if(input.action==='progress'){
+   const records=await get(SCORE+'/rest/v1/free_talking_conversation_progress?select=contributions,completed_at&student_id=eq.'+encodeURIComponent(user.id)+'&book_id=eq.'+input.book_id+'&unit_id=eq.'+input.unit_id+'&limit=1',scoreHeaders(token),signal);
+   const contributions=Math.min(12,Math.max(0,Number(records[0]?.contributions)||0));
+   return json(200,{contributions,percent:Math.round(contributions/12*100),completed:contributions===12});
+  }
   if(input.action==='quota')return json(200,{allowed:true});
   if(input.action==='start'){
    const sessionId=String(input.session_id||'');
@@ -307,6 +312,7 @@ export async function onRequestPost({request,env}){
  'In EVERY ordinary conversation turn, react briefly to what the child said and then offer exactly ONE inviting question. It is an invitation, never a test: if the child changes direction, follow them rather than demanding an answer. Do not leave the child with an unsupported statement and silence. Only the final turn before goodbye may end with a statement.',
  'Gently recast obvious mistakes without demanding a correction. Do not assume errors caused by speech recognition are real.',
  'Speak short age- and level-appropriate English for level '+bookConversationLevel(book)+'.',
+ 'Use English only except when a child specifically asks for a Korean vocabulary explanation. The final response of a completed session must be a warm, contextual farewell, with NO question to the child.',
  'IMPORTANT CURRICULUM INGREDIENTS: unit grammar/patterns: '+fmt(unit.metadata?.grammar||unit.metadata?.main_grammar_points||unit.metadata?.curriculum||'natural English',450)+'. Useful unit vocabulary: '+words.map(x=>fmt(x.source_text,60)).filter(Boolean).slice(0,20).join(', ')+'. Natural sample phrases: '+examples.map(x=>fmt(x.source_text,100)).filter(Boolean).slice(0,6).join(' | ')+'. Sprinkle these into your OWN replies and questions when relevant; never recite them as a list or test the child on them.',
  'ACTUAL PUBLISHED BOOK QUESTIONS (use these exact questions, one at a time, when relevant): '+questions.slice().sort((a,b)=>a.question_number-b.question_number).slice(0,12).map(q=>String(q.question_number)+'. '+fmt(q.question_en,150)).join(' | '),
  guidedRules
@@ -344,7 +350,16 @@ export async function onRequestPost({request,env}){
    let newTopic=evaluateAnswer?(explicitNewTopic&&!explicitContinue):false;
    // If the model stops at a statement, keep the exchange alive with one real,
    // unused question from the selected published unit. Never invent a question.
-   if(evaluateAnswer&&!finalContribution&&!/[?？]\s*$/.test(textValue)){
+   if(evaluateAnswer&&finalContribution){
+    // Students must never be asked a fresh question seconds before the
+    // completion animation. Keep Luna's contextual reaction when possible.
+    textValue=textValue.replace(/(?:[^.!?]*[?？])\\s*$/u,'').trim();
+    if(!textValue)textValue='That was lovely to hear.';
+    if(!/[.!]$/.test(textValue))textValue+='.';
+    textValue+=' Well, that is all we have time for today. I enjoyed our chat! See you next time!';
+    newTopic=false;
+   }
+   if(evaluateAnswer&&!finalContribution&&!/[?？]\\s*$/.test(textValue)){
     const recentText=turns.map(t=>t.content).join(' ').toLowerCase();
     const available=questions.filter(q=>{
      const question=fmt(q.question_en,150).trim();
