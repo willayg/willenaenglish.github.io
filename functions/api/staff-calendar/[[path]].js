@@ -22,9 +22,14 @@ async function readState(env,raw){const parts=String(raw||'').split('.');if(part
 function cookie(raw,age){return 'willena_calendar_state='+raw+'; Path=/api/staff-calendar; Secure; HttpOnly; SameSite=Lax; Max-Age='+age}
 function config(env){return ['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','SUPABASE_SERVICE_ROLE_KEY'].filter(n=>!env[n])}
 async function db(env,route,method='GET',body,prefer='return=representation'){
- const r=await fetch(SUPABASE+'/rest/v1/'+route,{method,headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,'content-type':'application/json',Prefer:prefer},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+ const secret=String(env.SUPABASE_SERVICE_ROLE_KEY||'').trim();
+ const headers={apikey:secret,'content-type':'application/json',Prefer:prefer};
+ // Supabase's new sb_secret_* API keys are not JWTs and MUST NOT be sent
+ // as Authorization: Bearer. Legacy service_role JWTs still use that header.
+ if(!secret.startsWith('sb_secret_'))headers.Authorization='Bearer '+secret;
+ const r=await fetch(SUPABASE+'/rest/v1/'+route,{method,headers,body:body?JSON.stringify(body):undefined,cache:'no-store'});
  const data=await r.json().catch(()=>null);
- if(!r.ok){console.error('google calendar storage',r.status,data?.code||'');throw Error('Google calendar storage request failed ('+r.status+')')}return data
+ if(!r.ok){console.error('google calendar storage',r.status,data?.code||'',secret.startsWith('sb_secret_')?'secret-key':'legacy-key');throw Error('Google calendar storage request failed ('+r.status+')')}return data
 }
 async function approvedStaff(req,env){
  const candidates=[],m=(req.headers.get('cookie')||'').match(/(?:^|;\s*)sb_access=([^;]+)/);
