@@ -383,7 +383,7 @@ export async function onRequestPost({request,env}){
   const gradingData=gradingResponse?.ok?await gradingResponse.json().catch(()=>null):null;
   const gradingText=String(gradingData?.output_text||gradingData?.output?.flatMap(x=>x.content||[]).map(x=>x.text||'').join('')||'').trim();
   let judgement=null;
-  try{judgement=JSON.parse(gradingText.replace(/^\\x60\\x60\\x60(?:json)?\\s*|\\s*\\x60\\x60\\x60$/gi,''))}catch{}
+  try{judgement=JSON.parse(gradingText.replace(/^```(?:json)?\s*|\s*```$/gi,''))}catch{}
   if(evaluateAnswer&&(!gradingResponse?.ok||!['QUALIFIES','NEEDS_MORE','HELP_REQUEST'].includes(judgement?.decision)||typeof judgement.disengaged!=='boolean'))
    return json(502,{error:'Conversation evaluation temporarily unavailable. Please try your answer again.'});
   if(!response.ok)return json(502,{error:'Text generation failed ('+response.status+'): '+String(data?.error?.message||'').slice(0,150)});
