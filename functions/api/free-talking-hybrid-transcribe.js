@@ -45,6 +45,7 @@ export async function onRequestPost({request,env}){
   }else{
    outgoing.set('model','gpt-4o-mini-transcribe');
    outgoing.set('language','en');
+   outgoing.set('prompt','Korean students are speaking English to an English-learning character. Transcribe only words actually spoken in English, using English spelling. Never translate into Spanish or another language. Preserve imperfect but intelligible English. Avoid guessing from silence or inventing textbook answers.');
    outgoing.set('file',audio,'answer.webm');
   }
   const r=await fetch(eleven?'https://api.elevenlabs.io/v1/speech-to-text':'https://api.openai.com/v1/audio/transcriptions',{
