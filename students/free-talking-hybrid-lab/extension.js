@@ -1129,7 +1129,12 @@ async function playAnchor(index){
   }catch(ex){error('Question audio: '+ex.message)}
  }
  if(!state.active||run!==state.anchorToken)return;
- state.ttsPlaying=false;setMicEnabled(true);state.playing=null;
+ state.ttsPlaying=false;state.playing=null;
+ if(state.hybrid&&!state.stream?.active){
+  actorPhase('thinking');error('Microphone did not reconnect. Pause and resume to retry.');
+  message('Microphone unavailable');return;
+ }
+ setMicEnabled(true);
  state.anchorPhase='awaitingFirst';actorPhase('listening');
  armIdleTimeout();startQuestionClock();
  message('Your turn. Answer the question!');
@@ -1597,7 +1602,11 @@ async function finishNaturalReply(data){
  if(contributed&&(state.contributions+state.attemptCount)>=12){
   await reviewConversation();return;
  }
- // Never auto-advance textbook questions during an interesting free conversation.
+ // Never signal "Listening" until Android has actually restored the microphone.
+ if(state.hybrid&&!state.stream?.active){
+  actorPhase('thinking');error('Microphone did not reconnect. Pause and resume to retry.');
+  message('Microphone unavailable');return;
+ }
  state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');armIdleTimeout();
  message('Your turn. Keep chatting!');$('listenCheck').textContent='Listening';
 }
@@ -1785,7 +1794,7 @@ async function speakEleven(text){
    audio.onended=resolve;audio.onerror=resolve;
    control.signal.addEventListener('abort',resolve,{once:true});
   });
-  if(state.active&&current===state.generation){actorPhase('listening');message('Your turn.');state.playing=null}
+  if(state.active&&current===state.generation){state.playing=null}
  }catch(e){if(e.name!=='AbortError'&&state.active){error('ElevenLabs audio: '+e.message);message('Voice playback failed — see the error below')}}
  finally{
   if(current===state.generation){
