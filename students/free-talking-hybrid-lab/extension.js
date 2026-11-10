@@ -1475,15 +1475,6 @@ async function finishConversation(){
  if(state.hybrid&&state.transcriptSaveQueue){
   await state.transcriptSaveQueue.catch(()=>{});
   if(state.transcriptSaveErrors)console.warn('[Free Talking] transcript turns not saved:',state.transcriptSaveErrors);
-  if(state.transcriptSessionId){
-   try{
-    const completed=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
-     action:'complete',book_id:state.book.id,unit_id:state.unit.id,
-     session_id:state.transcriptSessionId
-    });
-    if(!completed.ok)console.warn('[Free Talking] could not mark daily session complete',completed.status);
-   }catch(ex){console.warn('[Free Talking] daily completion update failed',ex)}
-  }
  }
  state.anchorPhase='finished';
  // Goodbye audio has fully ended. Fade the conversation away before revealing
@@ -1771,14 +1762,7 @@ async function startConversation(){
    const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
    if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
    state.stream=mic;
-   const claim=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
-    action:'start',book_id:state.book.id,unit_id:state.unit.id,
-    character:state.character,session_id:state.transcriptSessionId
-   },startAbort.signal);
-   const claimData=await claim.json().catch(()=>({}));
-   if(!claim.ok||!claimData.allowed)throw Error(claimData.error||'Free Talking is unavailable today.');
-   if(claimData.session_id)state.transcriptSessionId=claimData.session_id;
-   if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
+   // No daily-use gate: the student can start another conversation any time.
    monitorMicrophone(mic);
    state.micUserMuted=false;state.ttsPlaying=false;
    state.active=true;state.starting=false;state.resumeIndex=0;
@@ -1947,23 +1931,8 @@ async function initStandaloneRelease(){
   if(!books[0]||!units[0])throw Error('The selected textbook unit could not be loaded.');
   state.book=books[0];state.unit=units[0];
 
-  const quotaResponse=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
-   action:'quota',book_id:bookId,unit_id:unitId
-  });
-  const quota=await quotaResponse.json().catch(()=>({}));
-  if(!quotaResponse.ok)throw Error(quota.error||'Unable to check your daily session.');
-  if(!quota.allowed){showError('오늘의 Free Talking을 이미 했어요. 내일 다시 만나요!');return}
   ready=true;
-  // If only the opening question was previously saved, let the student
-  // retry with that same character and retain the original session ID.
-  if(quota.resumable&&quota.previousCharacter){
-   buttons.forEach(button=>button.disabled=button.id!==
-    (quota.previousCharacter==='bunny'?'ftChooseLili':quota.previousCharacter==='pigfish'?'ftChoosePigfish':'ftChooseWilli'));
-   const nickname=quota.previousCharacter==='bunny'?'Bunny Fox':quota.previousCharacter==='pigfish'?'Pigfish':'AI Willi';
-   // Show only actionable information when a previous opening can be retried.
-   const status=$('ftReleaseError');
-   if(status){status.hidden=false;status.textContent=nickname+'와 다시 시작할 수 있어요.';}
-  }else buttons.forEach(button=>button.disabled=false);
+  buttons.forEach(button=>button.disabled=false);
  }catch(e){showError(e.message||'Could not prepare Free Talking.')}
 }
 
