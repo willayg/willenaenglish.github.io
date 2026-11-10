@@ -235,7 +235,7 @@ export async function onRequestPost({request,env}){
  if(token.length<40)return json(401,{error:'Sign in to Willena first'});
  let input;try{input=await request.json()}catch{return json(400,{error:'Invalid request'})}
  if(!input||!UUID.test(String(input.book_id||''))||!UUID.test(String(input.unit_id||'')))return json(400,{error:'Select a real assigned book and unit'});
- if(!['transcript','quota','start'].includes(input.action)&&!env.OPENAI_API_KEY&&!env.OPENAI_API&&!env.OPENAI_KEY)return json(503,{error:'OpenAI key is not configured on this preview'});
+ if(!['transcript','quota','start','complete'].includes(input.action)&&!env.OPENAI_API_KEY&&!env.OPENAI_API&&!env.OPENAI_KEY)return json(503,{error:'OpenAI key is not configured on this preview'});
  try{
   const signal=AbortSignal.timeout(14000);
   const user=await get(SCORE+'/auth/v1/user',{...scoreHeaders(token)},signal);
@@ -274,6 +274,16 @@ export async function onRequestPost({request,env}){
    if(response.status===409)return json(429,{error:'오늘의 Free Talking은 이미 사용했어요.',used:true,day});
    if(!response.ok)return json(502,{error:'Cannot register today’s Free Talking session ('+response.status+')'});
    return json(200,{allowed:true,session_id:requestedSession,day});
+  }
+  if(input.action==='complete'){
+   if(profile.role!=='student')return json(200,{completed:true,staff:true});
+   const sessionId=String(input.session_id||'');
+   if(!UUID.test(sessionId))return json(400,{error:'Invalid daily session'});
+   const response=await fetch(SCORE+'/rest/v1/free_talking_daily_sessions?id=eq.'+sessionId+'&student_id=eq.'+user.id,{
+    method:'PATCH',headers:{...scoreHeaders(token),'Content-Type':'application/json',Prefer:'return=minimal'},
+    body:JSON.stringify({completed_at:new Date().toISOString()}),signal
+   });
+   return response.ok?json(200,{completed:true}):json(502,{error:'Could not finish daily session'});
   }
   if(input.action==='transcript'){
    // For real students, reject transcripts that do not belong to a registered
