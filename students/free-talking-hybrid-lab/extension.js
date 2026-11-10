@@ -425,7 +425,7 @@ $('ftGuideClose').addEventListener('click',()=>{
  if(state.guideLaunch){state.guideLaunch=false;state.guideAccepted=true;void startConversation().catch(e=>error('Start failed: '+e.message))}
  else if(state.active)startQuestionClock();
 });
-function showFtGuide(launch=false){state.guideIndex=0;state.guideLaunch=launch;veil.hidden=false;$('ftGuide').hidden=false;renderFtGuide()}
+function showFtGuide(launch=false){state.guideIndex=0;state.guideLaunch=launch;veil.hidden=false;$('ftGuide').hidden=false;renderFtGuide();$('ftGuideNext').focus({preventScroll:true})}
 $('ftGuideBack').addEventListener('click',()=>{if(state.guideIndex){state.guideIndex--;renderFtGuide()}});
 $('ftGuideNext').addEventListener('click',()=>{
  if(state.guideIndex<FT_GUIDE.length-1){state.guideIndex++;renderFtGuide();return}
@@ -2085,7 +2085,9 @@ async function initStandaloneRelease(){
   starting=true;buttons.forEach(b=>b.disabled=true);
   if(startButton)startButton.disabled=true;
   message.hidden=true;
-  state.character=selected;state.guideAccepted=true;intro.hidden=true;
+  state.character=selected;intro.hidden=true;
+  // Do not mark the guide accepted here: it must open BEFORE mic / audio startup.
+  // startConversation handles the current guide's never-show preference.
   try{await startConversation()}
   catch(e){intro.hidden=false;showError(e.message||'Could not start.');starting=false;buttons.forEach(b=>b.disabled=false);if(startButton)startButton.disabled=false}
  }
