@@ -14,7 +14,7 @@ self.addEventListener('push',event=>{
  try{url=new URL(target,self.location.origin)}catch{url=new URL('/Teachers/',self.location.origin)}
  if(url.origin!==self.location.origin||!url.pathname.startsWith('/Teachers/'))url=new URL('/Teachers/',self.location.origin);
  event.waitUntil(self.registration.showNotification(title,{
-  body,icon:'/Teachers/icons/willena-w.svg',badge:'/Teachers/icons/willena-w.svg',
+  body,icon:'/Teachers/icons/192.png?v=willena-w',badge:'/Teachers/icons/192.png?v=willena-w',
   tag:String(data.tag||'willena-push').slice(0,100),
   data:{url:url.pathname+url.search},
   renotify:false
