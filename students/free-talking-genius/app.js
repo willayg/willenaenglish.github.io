@@ -604,19 +604,39 @@ function showFreeTalkingPercent(value){
  if(detail){detail.textContent='';detail.hidden=true}
  card.setAttribute('aria-label','Free Talking '+percent+'%');
 }
+const ftProgressCache=new Map();
+let ftProgressRequest=0;
 async function refreshFreeTalkingPercent(){
- const bookId=BOOK(),unitId=groups()[0]?.unit_id;
- showFreeTalkingPercent(0);
- if(!state.student?.id||!bookId||!unitId)return;
+ const bookId=BOOK(),unitId=groups()[0]?.unit_id,studentId=state.student?.id;
+ if(!bookId||!unitId||!studentId){showFreeTalkingPercent(0);return}
+ const key=studentId+':'+bookId+':'+unitId,requestId=++ftProgressRequest;
+ if(ftProgressCache.has(key))showFreeTalkingPercent(ftProgressCache.get(key));
+ else showFreeTalkingPercent(0);
  try{
-  const rows=await api('free_talking_conversation_progress',{
-   params:'?select=contributions&student_id=eq.'+encodeURIComponent(state.student.id)+
-    '&book_id=eq.'+encodeURIComponent(bookId)+'&unit_id=eq.'+encodeURIComponent(unitId)+'&limit=1'
+  // Use the same authoritative authenticated endpoint as the conversation,
+  // rather than a separate card-only database reading path.
+  const response=await fetch('/api/free-talking-hybrid-lab',{
+   method:'POST',cache:'no-store',credentials:'same-origin',
+   headers:{Authorization:'Bearer '+await token(),'Content-Type':'application/json'},
+   body:JSON.stringify({action:'progress',book_id:bookId,unit_id:unitId})
   });
-  if(BOOK()===bookId&&groups()[0]?.unit_id===unitId)
-   showFreeTalkingPercent(rows?.[0]?.contributions||0);
- }catch(e){console.warn('[Free Talking] Could not load conversation progress',e)}
+  if(!response.ok)throw Error('Progress request failed ('+response.status+')');
+  const result=await response.json();
+  const count=Math.max(0,Math.min(12,Number(result?.contributions)||0));
+  ftProgressCache.set(key,count);
+  if(requestId===ftProgressRequest&&BOOK()===bookId&&groups()[0]?.unit_id===unitId)
+   showFreeTalkingPercent(count);
+ }catch(e){
+  console.warn('[Free Talking] Could not refresh cumulative ring',e);
+  // Retain the last confirmed percentage instead of showing a false zero.
+ }
 }
+window.addEventListener('pageshow',()=>{if(state.student?.id&&BOOK())void refreshFreeTalkingPercent()});
+window.addEventListener('focus',()=>{if(state.student?.id&&BOOK())void refreshFreeTalkingPercent()});
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden&&state.student?.id&&BOOK())void refreshFreeTalkingPercent()
+});
+
 function renderBook(){
  renderBookTabs();
  renderUnitStrip();
