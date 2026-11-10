@@ -489,6 +489,35 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  #demo #ftCelebration #ftReviewSummary{font-size:13px!important}
 }
 
+/* Final review: compact enough for a Samsung phone, with visible pink framing. */
+#demo #ftCelebration{align-items:center;justify-content:center;padding:10px}
+#demo #ftCelebration .ft-sheet{
+ width:min(100%,420px);max-height:calc(100dvh - 20px);min-height:0;
+ padding:clamp(12px,2.5dvh,19px) clamp(14px,3vw,22px);
+ gap:clamp(5px,1.3dvh,11px);justify-content:flex-start;
+ border:3px solid #ed8dbd;border-radius:23px;overflow-y:auto;
+}
+#demo #ftCelebration #ftResultMascot{
+ width:clamp(104px,19dvh,156px);height:clamp(104px,19dvh,156px);margin:0 auto
+}
+#demo #ftCelebration .ft-stars{font-size:clamp(23px,3.6dvh,29px);margin:0;line-height:1}
+#demo #ftCelebration .ft-score{
+ padding:9px 0;margin:0;border-top:2px solid #ed94c1;
+ border-bottom:2px solid #ed94c1;font-size:clamp(25px,5.5vw,34px)
+}
+#demo #ftCelebration #ftReviewSummary{
+ font:600 clamp(12.5px,3.2vw,15px)/1.43 Poppins,system-ui,sans-serif!important;
+ max-width:375px;margin:3px auto!important;overflow-wrap:anywhere
+}
+#demo #ftCelebration .ft-actions{margin:3px 0 0}
+#demo #ftCelebration .ft-actions button{min-height:43px}
+#demo #ftCelebration .ft-language-toggle{font-size:12px;min-height:34px}
+@media(max-height:650px){
+ #demo #ftCelebration .ft-sheet{padding:10px 14px;gap:5px}
+ #demo #ftCelebration #ftResultMascot{width:98px;height:98px}
+ #demo #ftCelebration #ftReviewSummary{font-size:12px!important}
+}
+
 body.ft-release #original,body.ft-release #ftTimingPanel{display:none!important}
 body.ft-release #demo .ft-transcript-toggle,body.ft-release #demo .ft-transcript-notice{display:none!important}
 body.ft-release #demo .conversation-text #log .entry.me{display:none!important}
@@ -607,4 +636,4 @@ body.ft-release #demo .conversation-text{min-height:80px}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-compact-feedback-ko2"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-compact-feedback-finish3"></script></body></html>
