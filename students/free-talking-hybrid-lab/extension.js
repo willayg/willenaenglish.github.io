@@ -1244,6 +1244,7 @@ function unfinishedSpeech(text){
  if(/\b(?:because|and|but|so|or|if|when|while|that|than|with|to|for|of|the|a|an|then|very|really|quite|more|most|too|just|about|some|any|my|your|his|her|our|their|not|also|as|at|in|on|by|from)$/i.test(v))return true;
  if(/\b(?:i|you|we|they|he|she|it)\s+(?:think|feel|felt|want|need|would|could|should|can|might|was|were|am|is|are|will|have|has|had|like|love|don't|didn't|can't|won't|went|got|see|saw|know|knew)(?:\s+(?:very|really|so|a|an|the|to|that|about|like))?$/i.test(v))return true;
  if(/\b(?:i (?:feel|felt|think|guess|mean|believe|wish|hope|want|need)(?:\s+(?:very|really|so))?|it (?:makes|made) me|when i|because i|i am (?:very|really|so))$/i.test(v))return true;
+ if(/\b(?:is|are|was|were|am|be|been|being|has|have|had|does|do|did)$/i.test(v)&&v.split(/\s+/).length>=2)return true;
  return false;
 }
 function scheduleSpeechGrace(){
