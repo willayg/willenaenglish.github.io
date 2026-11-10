@@ -1,0 +1,26 @@
+{
+  "id": "/students/",
+  "name": "Willena Students",
+  "short_name": "Willena",
+  "description": "Willena English student dashboard and learning apps",
+  "start_url": "/students/dashboard",
+  "scope": "/students/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/students/pwa/willena-app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/Logo.png",
+      "sizes": "2000x1448",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
