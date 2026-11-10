@@ -375,8 +375,12 @@ export async function onRequestPost({request,env}){
    const lastStudent=[...turns].reverse().find(t=>t.role==='user')?.content||'';
    const normalized=normalizedStudentText(lastStudent);
    const priorStudents=turns.filter(t=>t.role==='user').slice(0,-1).map(t=>normalizedStudentText(t.content));
-   const duplicate=Boolean(normalized)&&priorStudents.some(t=>t===normalized);
-   const generic=/^(?:how are you|hello|hi|okay|ok|yes|yeah|no|nope|i don t know|i dont know)$/.test(normalized);
+   const qualifiedHistoryMatch=directive.match(/Previous qualified content in this unit \(avoid rewarding near-duplicate filler\): (\[[^\n]*\])/);
+   let qualifiedHistory=[];
+   try{qualifiedHistory=JSON.parse(qualifiedHistoryMatch?.[1]||'[]')}catch{}
+   const duplicate=Boolean(normalized)&&(priorStudents.some(t=>t===normalized)||qualifiedHistory.includes(normalized));
+   const generic=/^(?:how are you|hello|hi|okay|ok|yes|yeah|no|nope|i don t know|i dont know|yes it is|no it isn t|no i don t|yes i do|i don t|i dont)$/.test(normalized);
+   const lowEffort=duplicate||generic;
    let verdict=/\[\[QUALIFIES\]\]/i.test(rawText)?'QUALIFIES':
       /\\[\\[HELP_REQUEST\\]\\]/i.test(rawText)?'HELP_REQUEST':'NEEDS_MORE';
    if(evaluateAnswer&&(duplicate||generic))verdict='NEEDS_MORE';
@@ -420,7 +424,7 @@ export async function onRequestPost({request,env}){
    const proof=evaluateAnswer&&verdict==='QUALIFIES'?
      await verdictMac(env,[user.id,String(input.session_id||''),input.book_id,input.unit_id,normalized,'QUALIFIES',stamp]):null;
    return json(200,{text:textValue,newTopic,bookQuestionFallback:fallbackBookQuestion,
-     verdict:evaluateAnswer?verdict:null,verdictAt:proof?stamp:null,verdictProof:proof,
+     verdict:evaluateAnswer?verdict:null,lowEffort:evaluateAnswer?lowEffort:false,verdictAt:proof?stamp:null,verdictProof:proof,
     decisionReported:evaluateAnswer&&(explicitNewTopic||explicitContinue),model,
     usage:{input_tokens:data?.usage?.input_tokens||0,output_tokens:data?.usage?.output_tokens||0,cached_tokens:data?.usage?.input_tokens_details?.cached_tokens||0}});
  }catch(err){console.error('hybrid text',String(err));return json(502,{error:'Text model unavailable'})}
