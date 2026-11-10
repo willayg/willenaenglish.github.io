@@ -27,16 +27,21 @@ async function db(env,route,method='GET',body,prefer='return=representation'){
  if(!r.ok){console.error('google calendar storage',r.status,data?.code||'');throw Error('Google calendar storage request failed ('+r.status+')')}return data
 }
 async function approvedStaff(req,env){
- const candidates=[],m=(req.headers.get('cookie')||'').match(/(?:^|;\s*)sb_access=([^;]+)/);
+ const candidates=[],m=(req.headers.get('cookie')||'').match(/(?:^|;\\s*)sb_access=([^;]+)/);
  if(m)try{candidates.push(decodeURIComponent(m[1]))}catch{}
- const bearer=(req.headers.get('authorization')||'').match(/^Bearer\s+(\S+)$/i);
+ const bearer=(req.headers.get('authorization')||'').match(/^Bearer\\s+(\\S+)$/i);
  if(bearer&&!candidates.includes(bearer[1]))candidates.push(bearer[1]);
  for(const token of candidates){
   const r=await fetch(SUPABASE+'/auth/v1/user',{headers:{apikey:PUBKEY,Authorization:'Bearer '+token},cache:'no-store'});
-  if(!r.ok)continue;const identity=await r.json().catch(()=>({}));if(!identity.id)continue;
-  const role=await db(env,'profiles?select=role,approved&id=eq.'+encodeURIComponent(identity.id)+'&limit=1');
-  const p=role?.[0];if(p?.approved===true&&['admin','teacher'].includes(String(p.role||'').toLowerCase()))return {id:identity.id,admin:String(p.role).toLowerCase()==='admin'};
-  return {error:'Approved teacher or admin access required',status:403};
+  if(!r.ok)continue;
+  const identity=await r.json().catch(()=>({}));if(!identity.id)continue;
+  // The Dashboard's staff permission is checked by a scoped RLS-safe function.
+  // Do not use the service-role secret merely to verify a teacher login.
+  const status=await fetch(SUPABASE+'/rest/v1/rpc/willena_staff_calendar_google_status',{method:'POST',headers:{apikey:PUBKEY,Authorization:'Bearer '+token,'content-type':'application/json'},body:'{}',cache:'no-store'});
+  const role=await status.json().catch(()=>({}));
+  if(status.status===401||status.status===403)return {error:'Approved teacher or admin access required',status:403};
+  if(!status.ok)throw Object.assign(new Error('Google staff permission check failed ('+status.status+')'),{status:502});
+  return {id:identity.id,admin:role.admin===true,connected:role.connected===true};
  }
  return {error:'Dashboard session could not be verified. Refresh the Teachers Dashboard.',status:401};
 }
@@ -117,8 +122,8 @@ export async function onRequest({request,env}){
    const q=new URLSearchParams({client_id:env.GOOGLE_CLIENT_ID,redirect_uri:CALLBACK,response_type:'code',scope:'https://www.googleapis.com/auth/calendar',access_type:'offline',prompt:'consent',include_granted_scopes:'true',state:state.nonce});
    return respond({authorization_url:'https://accounts.google.com/o/oauth2/v2/auth?'+q},200,{'set-cookie':cookie(signed,600)});
   }
+  if(part==='status')return respond({connected:user.connected,admin:user.admin});
   const linked=await connection(env);
-  if(part==='status')return respond({connected:!!linked,admin:user.admin,calendarId:linked&&user.admin?linked.calendar_id:undefined});
   if(!linked)return respond({error:'Google Calendar not connected',code:'NOT_CONNECTED'},409);
   const token=await access(env,linked),base='/calendars/'+encodeURIComponent(linked.calendar_id)+'/events';
   if(part==='share-staff'){
