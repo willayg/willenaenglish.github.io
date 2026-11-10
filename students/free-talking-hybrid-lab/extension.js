@@ -977,7 +977,7 @@ function restoreMicAfterPlayback(){
  return cycleMic(async()=>{
   if(!state.active||state.paused||!state.micReleased||state.reviewing)return;
   // No need to re-open an input device for the final transcript review.
-  if((state.contributions||0)+(state.attemptCount||0)>=12)return;
+  if((state.contributions||0)+(state.attemptCount||0)>=8)return;
   const token=state.anchorToken;
   const stream=await navigator.mediaDevices.getUserMedia({
    audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}
@@ -1572,7 +1572,7 @@ async function finishConversation({skipGoodbye=false}={}){
  if(!state.active||run!==state.anchorToken)return;
  endSession('Conversation complete. See you next time!');
  ftShowFinish(finishScores);
- $('clock').textContent=finishScores.answered+' / 12 conversations complete';
+ $('clock').textContent=finishScores.answered+' / 8 conversations complete';
  $('anchorText').textContent='Great talking! See you next time!';
  $('listenCheck').textContent='Finished';
 }
@@ -1591,11 +1591,13 @@ async function finishNaturalReply(data){
   ftRecordAnswer(speech);
  }
  state.anchorPhase='playingReply';setMicEnabled(false);
- try{await speakEleven(spoken)}catch(e){error('Voice playback: '+String(e.message||e))}
- if(!state.active||run!==state.anchorToken)return;
+ // After the eighth attempt, go straight to the one end evaluation.
+ // Don't spend time generating an ordinary reply only to speak feedback next.
  if(contributed&&(state.contributions+state.attemptCount)>=8){
   await reviewConversation();return;
  }
+ try{await speakEleven(spoken)}catch(e){error('Voice playback: '+String(e.message||e))}
+ if(!state.active||run!==state.anchorToken)return;
  // Never signal "Listening" until Android has actually restored the microphone.
  if(state.hybrid&&!state.stream?.active){
   actorPhase('thinking');error('Microphone did not reconnect. Pause and resume to retry.');
