@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Willena Teachers">
+<rect width="512" height="512" rx="118" fill="#183e4a"/>
+<rect x="37" y="37" width="438" height="438" rx="94" fill="none" stroke="#68cad5" stroke-width="14"/>
+<path d="M103 159l65 205h56l32-105 32 105h56l65-205h-62l-32 118-34-112h-50l-34 112-32-118z" fill="#ffffff"/>
+<circle cx="407" cy="111" r="32" fill="#ed75a9"/>
+</svg>
