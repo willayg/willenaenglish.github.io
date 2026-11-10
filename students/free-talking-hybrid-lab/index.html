@@ -376,7 +376,16 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #ftTimingReset{background:#fff;border:1.5px solid #79c4d0;border-radius:10px;padding:8px 12px;color:#176b7a;font:800 12px system-ui;cursor:pointer}
 
 /* The child's STT remains in the internal dialogue but is never shown to students. */
-#demo .conversation-text #log .entry.me{display:none!important}
+#demo .conversation-text.ft-transcript-hidden #log .entry.me{display:none!important}
+#demo .ft-transcript-toggle{display:flex;align-items:center;justify-content:center;gap:7px;font:650 11px/1.2 system-ui,sans-serif;color:#487983;cursor:pointer}
+#demo .ft-transcript-toggle small{font-weight:400;color:#819ba3}
+#demo .ft-transcript-toggle input{accent-color:#219eae}
+#demo .ft-natural-progress{display:grid!important;grid-template-columns:1fr auto!important;gap:7px!important;width:100%;padding:10px 14px!important;align-items:center!important;flex:0 0 auto}
+#demo .ft-natural-progress .ft-progress-title{font:750 13px/1.2 system-ui,sans-serif;color:#287a85}
+#demo .ft-natural-progress #conversationProgressLabel{font:700 13px/1.2 system-ui,sans-serif;color:#287a85}
+#demo .ft-progress-track{grid-column:1/-1;background:#d5edef;height:7px;border-radius:12px;overflow:hidden}
+#demo #conversationProgress{height:100%;width:0;background:#22a9b7;border-radius:12px;transition:width .35s ease}
+#demo .conversation-text #log .entry.me b{font-size:10px;color:#a15a75}
 #demo #ftConversationState{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:58px;padding:9px 12px;background:#fff;color:#278a98;border-top:1px solid #e1eff1}
 #demo #ftConversationState[hidden]{display:flex!important}
 #demo #ftConversationState .ft-state-bars{display:flex;gap:4px;align-items:center;justify-content:center;height:26px;width:40px}
@@ -398,26 +407,7 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 @keyframes ftBars{from{transform:scaleY(.4);opacity:.5}to{transform:scaleY(1.1);opacity:1}}
 @keyframes ftDots{0%,65%,100%{transform:translateY(0);opacity:.4}33%{transform:translateY(-5px);opacity:1}}
 @media(prefers-reduced-motion:reduce){#demo #ftConversationState .ft-state-bars i,#demo #ftConversationState .ft-state-spinner{animation:none!important}}
-</style></head><body><aside id="ftEnginePanel" aria-label="AI conversation engine selector">
- <span class="ft-engine-tag">HYBRID EXPERIMENT</span>
- <strong>Free Talking — Model Lab</strong>
- <label for="ftEngineSelect">Choose AI conversation engine</label>
- <select id="ftEngineSelect">
-  <option value="gpt-6-luna" selected>GPT-6 Luna · Fast &amp; economical</option>
-  <option value="gpt-6.1-terra">GPT-6.1 Terra · Quality comparison</option>
-  <option value="gpt-5.4-mini">GPT-5.4 Mini · Alternative</option>
-  <option value="realtime">Original Realtime · Control</option>
- </select>
- <label for="ftSttSelect">Speech recognition (STT)</label>
- <select id="ftSttSelect">
-  <option value="openai-mini" selected>OpenAI Mini Transcribe · Original hybrid</option>
-  <option value="eleven-scribe-v2">ElevenLabs Scribe v2 · Recorded audio</option>
-  <option value="eleven-scribe-realtime">ElevenLabs Scribe v2 Realtime · Streaming</option>
- </select>
- <p id="ftSttDetails" aria-live="polite">Recorded audio · browser silence detection · OpenAI Mini</p>
- <p>Choose both engines before starting. Same textbooks, characters, question sequence and voices. Original Realtime uses its own built-in speech recognition.</p>
-</aside>
-<section id="ftTimingPanel" aria-label="Hybrid speech timing controls">
+</style></head><body><section id="ftTimingPanel" aria-label="Hybrid speech timing controls">
  <button id="ftTimingToggle" type="button" aria-expanded="false">Listening timing · Default</button>
  <div id="ftTimingControls" hidden>
   <label for="ftSilenceRange"><span>Silence before transcription</span><output id="ftSilenceValue">1.7 s</output></label>
@@ -454,12 +444,10 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </section>
 <main class="wrap">
 <div class="panel" id="talk">
- <button id="ftHelpBtn" type="button" aria-label="How to earn points">?</button><div id="topicTicker" class="topic-ticker" aria-label="Question progress">
-  <div id="topicSteps" class="topic-steps" aria-label="Eight textbook questions"></div>
-  <div class="topic-clock">
-   <div class="topic-time-rail" aria-hidden="true"><div id="topicTimeFill"></div></div>
-   <output id="topicTimeValue" aria-label="Seconds remaining">30s</output>
-  </div>
+ <button id="ftHelpBtn" type="button" aria-label="Conversation guide">?</button>
+ <div id="topicTicker" class="topic-ticker ft-natural-progress" aria-label="Conversation progress">
+  <span class="ft-progress-title">Let's talk!</span><output id="conversationProgressLabel">0 / 12</output>
+  <div class="ft-progress-track" aria-hidden="true"><div id="conversationProgress"></div></div>
  </div>
  <div id="actorStage" class="actor-stage" data-phase="ready"></div>
   <div id="ftConversationState" data-mode="thinking" role="status" aria-live="polite" aria-atomic="true">
@@ -468,6 +456,7 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
   </div>
  <div class="conversation-text" aria-label="Current conversation">
   <p id="anchorText" class="anchor-question" aria-live="polite">Your first question will appear here.</p>
+   <label class="ft-transcript-toggle"><input id="ftTranscriptToggle" type="checkbox" checked> Show what AI heard <small>(may be inaccurate)</small></label>
   <div id="log" aria-live="polite"></div>
  </div>
  <div id="conversationDiagnostics" aria-live="polite">
@@ -484,7 +473,7 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 <div class="control-dock" aria-label="Conversation controls">
  <button id="back" class="dock-icon" type="button" aria-label="Back to character selection" title="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
  <button id="mute" class="dock-icon" type="button" disabled aria-label="Mute microphone" title="Mute microphone" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg><svg class="mic-slash" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16"/></svg></button>
- <button id="timeBoost" class="dock-icon ft-time-boost" type="button" hidden disabled aria-label="Add ten seconds to this question" title="+10 seconds (once per question)">+10s</button>
+ 
   <button id="pauseResume" class="dock-icon" type="button" aria-label="Pause conversation" title="Pause conversation" aria-pressed="false">
   <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
   <svg class="resume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>
@@ -499,4 +488,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-followups-status2"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-natural-twelve1"></script></body></html>
