@@ -132,5 +132,5 @@ function init(){
  render();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('view-staff-calendar')?.classList.contains('active'))load()});
 }
-window.WillenaStaffCalendar={open(){init();load()}};
+window.WillenaStaffCalendar={open(){init();load();window.WillenaPush?.refresh?.()}};
 })();
