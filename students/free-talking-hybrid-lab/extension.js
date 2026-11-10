@@ -1541,39 +1541,23 @@ async function finishNaturalReply(data){
  const run=state.anchorToken;
  const raw=String(data.response?.output?.flatMap(x=>x.content||[]).map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';state.anchorResponding=false;
- const spoken=removeSpokenLaughter(stripInternalLabels(raw)).replace(/\\[\\[(?:NEW_TOPIC|CONTINUE|ADVANCE)\\]\\]/gi,'').trim()||'Could you say that again?';
- const contribution=Boolean(state.hybridPendingContribution);
+ const spoken=removeSpokenLaughter(stripInternalLabels(raw)).replace(/\[\[(?:NEW_TOPIC|CONTINUE|ADVANCE)\]\]/gi,'').trim()||'What would you like to talk about?';
+ const contributed=Boolean(state.hybridPendingContribution);
  state.hybridPendingContribution=false;
- const verdict=contribution?state.pendingVerdict:'NEEDS_MORE';
- const lowEffort=Boolean(state.pendingLowEffort);
  const speech=state.hybridLatestSpeech||'';
- const qualified=verdict==='QUALIFIES'&&Boolean(state.pendingProof);
- const newTopic=Boolean(state.hybridNewTopic);
- state.hybridNewTopic=false;
- // Transcript is submitted only after model evaluation; the database counts
- // a student turn exclusively when its signed verdict is valid.
- if(contribution)saveHybridTranscript('You',speech,qualified?'QUALIFIES':verdict,
-  qualified?state.pendingProof:null,qualified?state.pendingVerdictAt:null);
- state.pendingProof=null;state.pendingVerdictAt=null;
- if(qualified)ftRecordAnswer(speech);
- else if(contribution&&verdict!=='HELP_REQUEST'&&lowEffort)state.unproductiveStreak++;
- else if(contribution&&verdict!=='HELP_REQUEST')state.unproductiveStreak=0;
  state.hybridLatestSpeech='';
- const exitNow=state.unproductiveStreak>=6;
- state.anchorPhase='playingReply';setMicEnabled(false);
- const toSpeak=exitNow?
-  'I think we are having a little trouble chatting today. That is okay! Let us try again later when you feel ready to tell me more. See you soon!':
-  spoken;
- try{await speakEleven(toSpeak)}catch(e){error('Voice playback: '+String(e.message||e))}
- if(!state.active||run!==state.anchorToken)return;
- if(exitNow){await finishUnproductiveConversation();return}
- if((state.contributions||0)>=12){
-  // Save acknowledgement before showing completion: do not celebrate lost progress.
-  await state.transcriptSaveQueue?.catch(()=>{});
-  if(state.transcriptSaveErrors){error('Could not save your progress. Please retry.');return}
-  await finishConversation({skipGoodbye:true});return
+ if(contributed&&speech.trim()){
+  // Record the actual student's attempt. Do NOT evaluate or award points here.
+  saveHybridTranscript('You',speech);
+  ftRecordAnswer(speech);
  }
- if(newTopic&&qualified&&state.anchors.length>1){state.anchorPhase='betweenAnchors';await moveToNextTopic();return}
+ state.anchorPhase='playingReply';setMicEnabled(false);
+ try{await speakEleven(spoken)}catch(e){error('Voice playback: '+String(e.message||e))}
+ if(!state.active||run!==state.anchorToken)return;
+ if(contributed&&(state.contributions+state.attemptCount)>=12){
+  await reviewConversation();return;
+ }
+ // Never auto-advance textbook questions during an interesting free conversation.
  state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');armIdleTimeout();
  message('Your turn. Keep chatting!');$('listenCheck').textContent='Listening';
 }
