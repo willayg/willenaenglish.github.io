@@ -356,7 +356,8 @@ export async function onRequestPost({request,env}){
     textValue=textValue.replace(/(?:[^.!?]*[?？])\s*$/u,'').trim();
     if(!textValue)textValue='That was lovely to hear.';
     if(!/[.!]$/.test(textValue))textValue+='.';
-    textValue+=' Well, that is all we have time for today. I enjoyed our chat! See you next time!';
+    if(!/(?:see you|goodbye|talk again|until next time|next time)/i.test(textValue))
+     textValue+=' Well, that is all we have time for today. I enjoyed our chat! See you next time!';
     newTopic=false;
    }
    if(evaluateAnswer&&!finalContribution&&!/[?？]\s*$/.test(textValue)){
