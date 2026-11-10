@@ -250,55 +250,16 @@ export async function onRequestPost({request,env}){
    const list=Array.isArray(assigned.assignments)&&assigned.assignments.length?assigned.assignments:(assigned.assignment?[assigned.assignment]:[]);
    if(!list.some(a=>a?.book_id===input.book_id))return json(403,{error:'That book is not assigned to your class'});
   }
-  // Daily access is enforced by a unique (student, Korea-local date) row,
-  // not a browser flag. Staff may run unlimited QA sessions.
-  if(input.action==='quota'||input.action==='start'){
-   const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-   if(profile.role!=='student')return json(200,{allowed:true,staff:true,day});
-   const dailyUrl=SCORE+'/rest/v1/free_talking_daily_sessions?select=id,book_id,unit_id,character,completed_at,first_student_turn_at&student_id=eq.'+encodeURIComponent(user.id)+'&local_day=eq.'+day+'&limit=1';
-   const existing=await get(dailyUrl,scoreHeaders(token),signal);
-   if(input.action==='quota'){
-    const pending=existing[0]&&!existing[0].completed_at&&!existing[0].first_student_turn_at;
-    const sameUnit=pending&&existing[0].book_id===input.book_id&&existing[0].unit_id===input.unit_id;
-    return json(200,{allowed:!existing.length||Boolean(sameUnit),used:!!existing.length&&!sameUnit,day,
-     resumable:!!sameUnit,previousCharacter:sameUnit?existing[0].character:null});
-   }
-   const requestedSession=String(input.session_id||'');
-   const character=String(input.character||'');
-   if(!UUID.test(requestedSession)||!['bunny','pigfish','willi'].includes(character))return json(400,{error:'Invalid session'});
-   if(existing.length){
-    const unfinished=!existing[0].completed_at&&!existing[0].first_student_turn_at;
-    const sameUnit=existing[0].book_id===input.book_id&&existing[0].unit_id===input.unit_id;
-    const sameCharacter=existing[0].character===character;
-    if(unfinished&&sameUnit&&sameCharacter)
-     return json(200,{allowed:true,resume:true,session_id:existing[0].id,character,day});
-    return json(429,{error:unfinished&&sameUnit?'이미 시작한 캐릭터를 다시 선택해 주세요.':'오늘의 Free Talking은 이미 사용했어요. 내일 다시 만나요!',used:!unfinished,day});
-   }
-   const response=await fetch(SCORE+'/rest/v1/free_talking_daily_sessions',{
-    method:'POST',headers:{...scoreHeaders(token),'Content-Type':'application/json',Prefer:'return=representation'},
-    body:JSON.stringify({id:requestedSession,student_id:user.id,local_day:day,book_id:input.book_id,unit_id:input.unit_id,character}),signal
-   });
-   if(response.status===409)return json(429,{error:'오늘의 Free Talking은 이미 사용했어요.',used:true,day});
-   if(!response.ok)return json(502,{error:'Cannot register today’s Free Talking session ('+response.status+')'});
-   return json(200,{allowed:true,session_id:requestedSession,day});
-  }
-  if(input.action==='complete'){
-   if(profile.role!=='student')return json(200,{completed:true,staff:true});
+  // Free Talking is unrestricted during this release. Keep session IDs and
+  // student-owned, expiring transcript storage for teacher analysis.
+  if(input.action==='quota')return json(200,{allowed:true});
+  if(input.action==='start'){
    const sessionId=String(input.session_id||'');
-   if(!UUID.test(sessionId))return json(400,{error:'Invalid daily session'});
-   const response=await fetch(SCORE+'/rest/v1/free_talking_daily_sessions?id=eq.'+sessionId+'&student_id=eq.'+user.id,{
-    method:'PATCH',headers:{...scoreHeaders(token),'Content-Type':'application/json',Prefer:'return=minimal'},
-    body:JSON.stringify({completed_at:new Date().toISOString()}),signal
-   });
-   return response.ok?json(200,{completed:true}):json(502,{error:'Could not finish daily session'});
+   if(!UUID.test(sessionId))return json(400,{error:'Invalid session'});
+   return json(200,{allowed:true,session_id:sessionId});
   }
+  if(input.action==='complete')return json(200,{completed:true});
   if(input.action==='transcript'){
-   // For real students, reject transcripts that do not belong to a registered
-   // daily session. Do not require privileged service keys in the browser.
-   if(profile.role==='student'){
-    const registered=await get(SCORE+'/rest/v1/free_talking_daily_sessions?select=id,book_id,unit_id&student_id=eq.'+user.id+'&id=eq.'+encodeURIComponent(String(input.session_id||''))+'&limit=1',scoreHeaders(token),signal);
-    if(!registered.length||registered[0].book_id!==input.book_id||registered[0].unit_id!==input.unit_id)return json(403,{error:'Unregistered conversation session'});
-   }
    const sessionId=String(input.session_id||''),speaker=String(input.speaker||''),character=String(input.character||'');
    const turnNumber=Number(input.turn_number),transcriptText=String(input.transcript_text||'').trim();
    if(!UUID.test(sessionId)||!['student','character'].includes(speaker)||
@@ -317,22 +278,7 @@ export async function onRequestPost({request,env}){
     console.warn('[Free Talking] transcript write rejected',saved.status);
     return json(502,{error:'Could not save transcript ('+saved.status+')'});
    }
-   if(profile.role==='student'&&speaker==='student'){
-    const stamp=await fetch(SCORE+'/rest/v1/free_talking_daily_sessions?id=eq.'+sessionId+'&student_id=eq.'+user.id+'&first_student_turn_at=is.null',{
-     method:'PATCH',headers:{...scoreHeaders(token),'Content-Type':'application/json',Prefer:'return=minimal'},
-     body:JSON.stringify({first_student_turn_at:new Date().toISOString()}),signal
-    });
-    if(!stamp.ok){console.warn('[Free Talking] participation stamp failed',stamp.status);
-     return json(502,{error:'Could not record daily participation'});}
-   }
    return json(200,{saved:true});
-  }
-  if(profile.role==='student'&&input.action==='reply'){
-   const sessionId=String(input.session_id||'');
-   if(!UUID.test(sessionId))return json(403,{error:'Start a Free Talking session first'});
-   const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-   const records=await get(SCORE+'/rest/v1/free_talking_daily_sessions?select=id,book_id,unit_id,completed_at&student_id=eq.'+user.id+'&id=eq.'+sessionId+'&local_day=eq.'+day+'&limit=1',scoreHeaders(token),signal);
-   if(!records.length||records[0].completed_at||records[0].book_id!==input.book_id||records[0].unit_id!==input.unit_id)return json(403,{error:'Free Talking session unavailable'});
   }
   const guided=true;
   const action=input.action==='reply'?'reply':'lesson';
