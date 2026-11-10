@@ -12,7 +12,11 @@ const state={cursor:new Date(today.getFullYear(),today.getMonth(),1),mode:'month
 function node(tag,className,text){const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=text;return n}
 function notice(s,error=false){const el=$('wcNotice');if(!el)return;el.textContent=s;el.hidden=!s;el.classList.toggle('error',error)}
 async function api(method,path,body){
- const r=await fetch(API+path,{method,credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+ const headers={'Content-Type':'application/json'};
+ const backup=window.WillenaAPI?.getLocalAccessToken?.()||'';
+ // Same fallback as other Dashboard APIs; server verifies JWT before using it.
+ if(backup.split('.').length===3)headers.Authorization='Bearer '+backup;
+ const r=await fetch(API+path,{method,credentials:'include',cache:'no-store',headers,body:body?JSON.stringify(body):undefined});
  const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw Error(j.error||'Calendar request failed ('+r.status+')');return j;
 }
 function weekStart(d){const r=new Date(d.getFullYear(),d.getMonth(),d.getDate());r.setDate(r.getDate()-r.getDay());return r}
