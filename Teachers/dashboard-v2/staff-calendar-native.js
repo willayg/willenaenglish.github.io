@@ -29,7 +29,7 @@ async function checkGoogle(){
   state.googleReady=!!status.connected;state.admin=!!status.admin;
   state.source=status.connected?'google':'native';
   const connect=$('wcConnectGoogle');
-  if(connect)connect.hidden=status.connected||!status.admin;
+  if(connect){connect.hidden=!status.admin;connect.textContent=status.connected?'Reconnect Google':'Connect Google Calendar';}
   googleNotice(status.connected?'Google Calendar connected · Events sync in both directions':'Google Calendar not connected · Shared Willena events only',status.connected);
  }catch(e){
   state.googleReady=false;state.source='native';
