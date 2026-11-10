@@ -11,7 +11,7 @@ const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 const enginePicker=document.getElementById('ftEngineSelect');
 const sttPicker=document.getElementById('ftSttSelect');
 const sttDetails=document.getElementById('ftSttDetails');
-function selectedStt(){return sttPicker?.value||'openai-mini'}
+function selectedStt(){return 'openai-mini'}
 function updateSttPicker(){
  if(sttPicker)sttPicker.disabled=enginePicker?.value==='realtime';
  if(sttDetails)sttDetails.textContent=enginePicker?.value==='realtime'?'Original Realtime uses its own audio engine.':{
@@ -23,7 +23,7 @@ function updateSttPicker(){
 enginePicker?.addEventListener('change',updateSttPicker);
 sttPicker?.addEventListener('change',updateSttPicker);updateSttPicker();
 const hybrid={history:[],ctx:null,analyser:null,source:null,raf:null,recorder:null,chunks:[],voiceAt:0,lastLoud:0,peak:0,transcribing:false,responding:false,sequence:0,secondsTranscribed:0,scribeSocket:null,scribeProcessor:null,scribeGain:null,scribeAudioSeconds:0,scribeSpeechStarted:0,scribeReady:false};
-function selectedEngine(){return enginePicker?.value||'gpt-6-luna'}
+function selectedEngine(){return 'gpt-6-luna'}
 function hybridMode(){return selectedEngine()!=='realtime'}
 
 const FT_TIMING_DEFAULT={silence:1700,grace:2200,unfinished:3400};
@@ -181,7 +181,7 @@ function closeActivity(){
  activeStartId++;
  try{startAbort?.abort()}catch{}
  startAbort=null;
- state.paused=false;state.resumeIndex=0;state.resumePhase=null;state.resumeLog=null;state.lastChoice=null;state.topicCompleted.clear();resetQuestionClock();
+ state.paused=false;state.resumeIndex=0;state.resumePhase=null;state.resumeLog=null;state.lastChoice=null;state.topicCompleted.clear();state.contributions=0;resetQuestionClock();
  endSession('Conversation ended.');
  veil.hidden=true;
  document.getElementById('ftEnginePanel')?.removeAttribute('hidden');
@@ -301,12 +301,12 @@ function buttonState(c){
  const go=doc?.getElementById('ftCharacterContinue');if(go)go.disabled=false;
 }
 function appDocument(){try{return frame.contentDocument}catch{return null}}
-function ftCompletionKey(){return state.book&&state.unit?'willena-free-talking-completion-v1:'+state.book.id+':'+state.unit.id:null}
+function ftCompletionKey(){return state.book&&state.unit?'willena-free-talking-natural-v2:'+state.book.id+':'+state.unit.id:null}
 function ftCompletionRead(){try{return ftCompletionKey()?JSON.parse(localStorage.getItem(ftCompletionKey())||'null'):null}catch{return null}}
 function ftCompletionSave(result){const key=ftCompletionKey();if(!key)return;try{const old=ftCompletionRead();const completed=Math.max(Number(old?.answered)||0,result.answered);localStorage.setItem(key,JSON.stringify({answered:completed,stars:Math.max(Number(old?.stars)||0,result.stars),updatedAt:Date.now()}))}catch{}}
 function prepareCard(){
  const d=appDocument(),card=d?.getElementById('ftFreeTalkingCard');if(!card)return;
- const completed=ftCompletionRead(),answered=Math.max(0,Math.min(8,Number(completed?.answered)||0));
+ const completed=ftCompletionRead(),answered=Math.max(0,Math.min(12,Number(completed?.answered)||0));
  // The original frame is watched by MutationObserver. Never rewrite the same
  // card on every mutation or the observer will trigger an infinite render loop.
  const renderKey=(ftCompletionKey()||'unknown')+':'+answered;
@@ -316,17 +316,17 @@ function prepareCard(){
  if(card.disabled)card.disabled=false;
  if(card.hasAttribute('aria-disabled'))card.removeAttribute('aria-disabled');
  card.classList.remove('ft-coming-soon-card');
- card.setAttribute('aria-label','Free Talking · 8 textbook questions');
+ card.setAttribute('aria-label','Free Talking · 12 conversation turns');
  card.style.opacity='1';card.style.filter='none';card.style.cursor='pointer';card.style.pointerEvents='auto';
  const step=card.querySelector('.vocab-skill-step');if(step&&step.textContent!=='STEP 2')step.textContent='STEP 2';
  const detail=card.querySelector('.vocab-card-stars');
- const detailText=answered?answered+'/8 completed · 골든 유닛 조건 아님':'8개 질문으로 대화 · 골든 유닛 조건 아님';
+ const detailText=answered?answered+'/12 대화 완료 · 골든 유닛 조건 아님':'12번 대화하기 · 골든 유닛 조건 아님';
  if(detail&&detail.textContent!==detailText)detail.textContent=detailText;
  const ring=card.querySelector('.vocab-skill-ring span');
- const ringText=answered?Math.round(answered/8*100)+'%':'0%';
+ const ringText=answered?Math.round(answered/12*100)+'%':'0%';
  if(ring&&ring.textContent!==ringText)ring.textContent=ringText;
  const ringHost=card.querySelector('.vocab-skill-ring');
- if(ringHost)ringHost.style.setProperty('--progress',String(answered/8*100));
+ if(ringHost)ringHost.style.setProperty('--progress',String(answered/12*100));
 }
 
 function bindOriginalFrame(){
@@ -424,13 +424,14 @@ async function openDemo({preserveCharacter=false}={}){
 }
 
 
-const FT_GUIDE_KEY='ft-genius-help-20261109-v1';
+const FT_GUIDE_KEY='ft-genius-help-20261110-natural-v2';
 const FT_GUIDE=[
- ['Talk with Bunny, Pigfish or Willi!','8개 질문에 영어로 대답해요. 한 단어만 말해도 괜찮아요!',[['Bunny','What colour is your chair?'],['You','Purple!'],['Bunny','Is it big?']]],
- ['Every try counts','영어로 대답하면 포인트가 쌓여요. 틀려도 괜찮아요!',[['You','Purple.'],['Tip','말하기 +1 · 뜻이 통하면 +1'],['You','My chair is purple and big!'],['Tip','자세히 말하기 +1']]],
- ['Asking for help is smart!','단어나 질문을 이해하지 못하면 물어봐요. 한국어와 쉬운 영어로 도와줄게요!',[['You','What does this question mean?'],['Bunny','한국어로 설명해 줄게요! I can help you.'],['Tip','도움을 요청하면 보너스 기회!']]],
- ['Earn stars and points','8개 주제에 참여하면 최대 별 5개! 주제마다 최대 3점, 총 24점에 도전하세요.',[['Tip','대답하기 +1'],['Tip','생각 전달 +1'],['Tip','더 말하거나 도움 요청 +1']]]];
-function renderFtGuide(){
+ ['Just talk!','교재 질문으로 시작하고 자유롭게 대화해요. 어떤 이야기든 괜찮아요!',[['Bunny','What did you do on vacation?'],['You','I went swimming!'],['Bunny','Was the water cold?']]],
+ ['Be curious!','버니가 질문해도 꼭 그 질문에만 답할 필요 없어요. 재미있는 이야기를 해 보세요!',[['Bunny','What happened next?'],['You','I saw a big dog!'],['Bunny','Really? Was it friendly?']]],
+ ['Help is okay!','단어나 질문이 어려우면 물어보세요. 버니가 도와줄게요!',[['You','What does adventure mean?'],['Bunny','Let me help you!']]],
+ ['Twelve conversations','영어로 12번 의미를 전달하면 성공! 틀려도 괜찮아요. 자연스럽게 대화를 마쳐요.',[['Tip','한 단어도 상황에 맞으면 좋아요'],['Tip','내 생각을 말해 보세요'],['Tip','12번 대화를 나눠요']]]
+ ];
+ function renderFtGuide(){
  const info=FT_GUIDE[state.guideIndex];
  $('ftGuideTitle').textContent=info[0];$('ftGuideBody').textContent=info[1];
  const steps=$('ftGuideSteps');steps.replaceChildren();
@@ -454,15 +455,13 @@ function ftTopicReward(){
  if(!state.questionRewards.has(state.anchorIndex))state.questionRewards.set(state.anchorIndex,{answers:0,help:false,detail:false});
  return state.questionRewards.get(state.anchorIndex);
 }
-function ftRewardScore(r){return r?Math.min(3,(r.answers>0?2:0)+(r.help||r.detail?1:0)):0}
-function ftRecordAnswer(speech,isSecond){
- const r=ftTopicReward();r.answers++;
- if(isSecond||String(speech).trim().split(/\s+/).length>=5||speech.includes('?'))r.detail=true;
+function ftRecordAnswer(speech){
+ state.contributions=Math.min(12,(state.contributions||0)+1);
+ renderTopicTicker();
 }
 function ftFinishScores(){
- const rows=state.anchors.map((q,i)=>({question:q.text,points:ftRewardScore(state.questionRewards.get(i)),answered:(state.questionRewards.get(i)?.answers||0)>0,help:!!state.questionRewards.get(i)?.help}));
- const answered=rows.filter(x=>x.answered).length,helps=rows.filter(x=>x.help).length,points=rows.reduce((n,x)=>n+x.points,0);
- return {rows,answered,helps,points,stars:answered>=8?5:answered>=7?4:answered>=5?3:answered>=4?2:answered>=2?1:0};
+ const answered=Math.min(12,state.contributions||0);
+ return {rows:[],answered,helps:0,points:answered*3,stars:answered>=12?5:answered>=10?4:answered>=8?3:answered>=6?2:answered>=3?1:0};
 }
 function ftShowFinish(result){
  $('ftGuide').hidden=true;$('ftCelebration').hidden=false;
@@ -485,25 +484,7 @@ function ftShowFinish(result){
 
 $('ftFinishClose').addEventListener('click',()=>{$('ftCelebration').hidden=true;navigateBack()});
 
-const QUESTION_BUDGET_MS=20000;
-const QUESTION_BOOST_MS=10000;
-const questionBaseMs=()=>QUESTION_BUDGET_MS;
-function updateTimeBoostButton(){
- const button=$('timeBoost');if(!button)return;
- const available=state.active&&!state.questionBoostUsed&&!state.questionExpired&&!state.finishingTopic&&['awaitingFirst','awaitingSecond'].includes(state.anchorPhase);
- button.hidden=false;
- button.disabled=!available;
- button.setAttribute('aria-label',state.questionBoostUsed?'Extra time already used for this question':'Add ten seconds to this question');
- button.title=state.questionBoostUsed?'Extra time used':'+10 seconds (once per question)';
- button.setAttribute('aria-pressed',String(state.questionBoostUsed));
-}
-$('timeBoost').addEventListener('click',()=>{
- if(!state.active||state.questionBoostUsed||state.questionExpired||state.finishingTopic||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
- state.questionBoostUsed=true;
- state.questionRemainingMs+=QUESTION_BOOST_MS;
- state.questionTotalMs+=QUESTION_BOOST_MS;
- renderTopicTicker();updateTimeBoostButton();
-});
+function updateTimeBoostButton(){}
 const isBeginner=()=>state.lessonLevel<=2;
 const isFirstLevel=()=>state.lessonLevel<=1;
 function stripInternalLabels(value){return String(value||'').replace(/\b(?:Textbook|Current textbook question|Current question|Example|Lesson focus|Instructions)\s*:\s*[^.!?]*(?:[.!?]|$)/gi,' ').replace(/\s+/g,' ').trim()}
@@ -517,39 +498,19 @@ function removeSpokenLaughter(value){
 
 
 function renderTopicTicker(){
- const steps=$('topicSteps');if(!steps)return;
- const count=Math.min(8,state.anchors.length||8);
- steps.replaceChildren();
- for(let i=0;i<count;i++){
-  const cell=document.createElement('span');
-  const done=state.topicCompleted.has(i);
-  cell.className='topic-step'+(done?' is-done':i===state.anchorIndex?' is-active':'');
-  cell.setAttribute('aria-label','Question '+(i+1)+(done?', completed':i===state.anchorIndex?', current':''));
-  // Progress is colour only: white waiting pip, cyan completed pip.
-  steps.append(cell);
- }
- const left=Math.max(0,state.questionRemainingMs);
- $('topicTimeFill').style.width=Math.min(100,left/Math.max(1,state.questionTotalMs)*100)+'%';
- $('topicTimeValue').textContent=Math.ceil(left/1000)+'s';
- document.querySelector('#demo .topic-clock')?.classList.toggle('is-ended',left<=0);
- updateTimeBoostButton();
+ const progress=$('conversationProgress'),count=Math.min(12,state.contributions||0);
+ if(progress)progress.style.width=(count/12*100)+'%';
+ const label=$('conversationProgressLabel');if(label)label.textContent=count+' / 12';
 }
-function haltQuestionClock(){
- if(state.questionClock!=null)clearInterval(state.questionClock);
- if(state.questionGrace!=null)clearTimeout(state.questionGrace);
- state.questionGrace=null;
- state.questionClock=null;state.questionTickAt=0;
+function haltQuestionClock(){}
+function resetQuestionClock(){state.awaitingSpeechCommit=false;state.questionExpired=false;renderTopicTicker()}
+function startQuestionClock(){}
+async function moveToNextTopic(){
+ if(!state.active)return;
+ state.topicCompleted.add(state.anchorIndex);
+ await playAnchor((state.anchorIndex+1)%Math.max(1,state.anchors.length));
 }
-function resetQuestionClock(){
- haltQuestionClock();
- state.questionRemainingMs=questionBaseMs();
- state.questionTotalMs=questionBaseMs();
- state.questionBoostUsed=false;
- state.questionExpired=false;
- state.awaitingSpeechCommit=false;
- state.finishingTopic=false;state.beginnerRescueUsed=false;
- renderTopicTicker();
-}
+async function finishTimedQuestion(){}
 function studentTurnInProgress(){
  return Boolean(state.speechStartedAt||state.awaitingSpeechCommit||state.pendingSpeech.size||state.turnFragments.length||state.turnGraceTimer);
 }
@@ -992,11 +953,11 @@ function sendHybrid(item){
     if(!state.active||state.anchorToken!==at)return;
     hybrid.history.push({id:'reply-'+hybrid.sequence++,role:'assistant',text:data.text});
     if(state.hybrid){
-     state.hybridAdvance=Boolean(data.advance);
+     state.hybridNewTopic=Boolean(data.newTopic);state.hybridAdvance=false;
      state.hybridDecisionReported=Boolean(data.decisionReported);
      if(ftUsage.current){
       ftUsage.current.answerDecisions=(ftUsage.current.answerDecisions||0)+(data.decisionReported?1:0);
-      ftUsage.current.lessonAdvances=(ftUsage.current.lessonAdvances||0)+(data.advance?1:0);
+      ftUsage.current.lessonAdvances=(ftUsage.current.lessonAdvances||0)+(data.newTopic?1:0);
      }
     }
     if(ftUsage.current){
@@ -1294,7 +1255,7 @@ function processVerifiedSpeech(itemIds,speech){
    const term=speech.toLowerCase().match(/(?:type|hype|plain|plane|play|playing|draw|drawing|tape)/i)?.[0];
    if(term){state.pendingWordConfirmation=null;ftTopicReward().help=true;state.asideKind='vocabulary';state.asideTerm=term;deleteSpeech();requestGuidedAside();return}
   }
- const category=classifyStudentTurn(speech);
+ const category=state.hybrid?classifyNaturalTurn(speech):classifyStudentTurn(speech);
  if(category.kind==='question_help'){
    // The question itself needs a bilingual explanation. No answer credit yet.
    deleteSpeech();
@@ -1337,6 +1298,12 @@ function processVerifiedSpeech(itemIds,speech){
 // Transcript text is data, NOT authority to change the lesson or the output
 // language. Only a short, concrete English vocabulary query can interrupt
 // the two-answer textbook rhythm.
+function classifyNaturalTurn(text){
+ const s=String(text||'').trim();
+ if(/^(?:i (?:don't|do not) understand (?:the|this|your) question|what does (?:this|that) question mean|can you explain (?:the|this|your) question)[?.! ]*$/i.test(s))return {kind:'question_help'};
+ if(/\\b(?:ignore (?:all|previous|your) instructions|system prompt|developer message)\\b/i.test(s))return {kind:'redirect',message:'Let us keep talking in English!'};
+ return {kind:'answer'};
+}
 function classifyStudentTurn(text){
  const speech=String(text||'').replace(/\s+/g,' ').trim();
  const normal=speech.replace(/[‘’]/g,"'").toLowerCase();
@@ -1735,7 +1702,7 @@ async function startConversation(){
  if(!state.unit||!state.book)throw Error('No lesson loaded. Select a book and unit first.');
  const continuing=Boolean(state.resumePhase);
  if(!continuing&&!state.guideAccepted){let dismissed=false;try{dismissed=localStorage.getItem(FT_GUIDE_KEY)==='1'}catch{}if(!dismissed){showFtGuide(true);return}}
- state.guideAccepted=false;if(!continuing)state.questionRewards.clear();
+ state.guideAccepted=false;if(!continuing){state.questionRewards.clear();state.contributions=0;}
  if(!continuing&&!state.initialLoadingShown){state.initialLoadingShown=true;$('ftBootSpinner').hidden=false;}
  state.starting=true;state.paused=false;setPauseButton(false);
  $('pauseResume').disabled=false;
