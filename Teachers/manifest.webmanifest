@@ -2,7 +2,7 @@
   "id": "/Teachers/",
   "name": "Willena Teachers",
   "short_name": "Willena",
-  "description": "Private Willena staff dashboard, calendar, and teaching tools.",
+  "description": "Private Willena English Academy staff dashboard and calendar with phone notifications.",
   "start_url": "/Teachers/?source=pwa",
   "scope": "/Teachers/",
   "display": "standalone",
@@ -27,10 +27,16 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/Teachers/icons/willena-teachers.svg",
+      "src": "/Teachers/icons/willena-w.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/Teachers/icons/willena-w-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }
