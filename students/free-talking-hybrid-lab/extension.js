@@ -1462,11 +1462,11 @@ function requestGuidedReply(){
   'NATURAL CHAT RESPONSE. This is a real English conversation, not a school quiz.',
   'Latest student speech (STT may be imperfect): '+JSON.stringify(verified)+'.',
   'Respond with genuine interest to what the child communicated. The child may follow a tangent or ask something unrelated. Do not insist on the previous question or textbook.',
-  'For each normal turn, make a short natural reaction and then ask ONE inviting question to keep the child talking. Never require the child to answer that particular question. If Luna has no interesting natural follow-up, the server will gently introduce an unused ACTUAL published question from this unit.',
+  'For each normal turn, respond naturally and offer ONE inviting question to keep the child talking. All relevant short replies, yes/no answers, and genuine student questions are welcome; do not demand detail or a textbook answer.',
   'Occasionally gently recast a clear grammar mistake as part of your reply; never insist on repetition or correct uncertain STT.',
   'Previous qualified content in this unit (avoid rewarding near-duplicate filler): '+JSON.stringify(state.recentQualified.slice(-12))+'.',
-  state.unproductiveStreak>=4?'The child has had several unproductive replies; give a gentle friendly invitation to share something genuine, with an easier question. Do not scold.':'Help the learner share a real idea without demanding perfect grammar.',
-  remaining<=1?'POSSIBLE FINAL TURN: If and ONLY if this student reply QUALIFIES, respond warmly with a contextual goodbye and no question. If it does not qualify, keep coaching with a question.':'Occasionally use exact questions from the book inside the conversation when they fit naturally. NEW_TOPIC is only for the app to play another cached book question after the discussion has run out of ideas.',
+  state.unproductiveStreak>=4?'The child may be disengaged; offer a gentle, easy invitation to chat, without warning of penalties or scolding.':'If the learner struggles, try a simpler or choice-based question without turning the conversation into a test.',
+  remaining<=1?'POSSIBLE FINAL TURN: Keep chatting normally; the app independently decides whether the session is finished.':'Occasionally use exact questions from the book inside the conversation when they fit naturally. NEW_TOPIC is only for the app to play another cached book question after the discussion has run out of ideas.',
   'Speak briefly and naturally, always in English except when the child explicitly requests a Korean vocabulary explanation. Do not write internal labels, markers, or fake laughter. The child is learning English, so avoid Spanish output even if the speech recognizer misheard the child.'
  ].join(' ');
  if(!sendRealtime({type:'response.create',response:{output_modalities:['text'],instructions:directive}})){
