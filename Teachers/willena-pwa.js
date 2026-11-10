@@ -40,6 +40,7 @@ async function install(){
 
 // Willena Web Push preferences. Permission is requested ONLY after a user tap.
 const PUSH='/api/staff-push';
+let pushStatus=null;
 function toBytes(value){
  const padded=value.replace(/-/g,'+').replace(/_/g,'/');
  return Uint8Array.from(atob(padded.padEnd(Math.ceil(padded.length/4)*4,'=')),ch=>ch.charCodeAt(0));
@@ -80,12 +81,15 @@ async function refreshPush(){
  }
  try{
   const status=await pushAPI('GET','/status');
+  pushStatus=status;
   const current=await currentSubscription();
   pushButtons(!!current,status.admin);
   if(!status.configured){
+   const button=document.getElementById('wcEnablePush');if(button)button.disabled=true;
    pushNotice('Push sending needs one Cloudflare secret before it can be enabled.',true);
    return;
   }
+  const button=document.getElementById('wcEnablePush');if(button)button.disabled=false;
   pushNotice(current?'This device is subscribed to Willena notifications.':'Notifications are not enabled on this device.');
  }catch(e){pushNotice(e.message,true)}
 }
@@ -93,11 +97,12 @@ async function enablePush(){
  const btn=document.getElementById('wcEnablePush');if(btn)btn.disabled=true;
  try{
   if(!window.isSecureContext||!('PushManager' in window)||!('Notification' in window))throw Error('Push is unavailable in this browser.');
-  const status=await pushAPI('GET','/status');
-  if(!status.configured)throw Error('Administrator must configure the Web Push secret in Cloudflare.');
+  if(!pushStatus?.configured)throw Error('Administrator must configure the Web Push secret in Cloudflare.');
+  // Request permission within the original button gesture (required by iOS).
   let permission=Notification.permission;
   if(permission==='default')permission=await Notification.requestPermission();
   if(permission!=='granted')throw Error('Phone notifications are blocked. Enable them in your device settings.');
+  const status=pushStatus;
   const reg=await navigator.serviceWorker.ready;
   const current=await reg.pushManager.getSubscription();
   const sub=current||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:toBytes(status.publicKey)});
