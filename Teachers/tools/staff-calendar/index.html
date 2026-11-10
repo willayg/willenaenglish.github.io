@@ -73,7 +73,7 @@ let cursor=new Date(today.getFullYear(),today.getMonth(),1),view="month",editId=
 let events=[],connected=false,busy=false;
 const visible=new Set(Object.keys(cats));
 function notice(message,error=false){const n=$("calendarNotice");n.textContent=message;n.style.background=error?"#fff1f3":"#fff9e8";n.style.borderColor=error?"#eab5c2":"#e7d6a3";n.hidden=!message}
-async function request(path,options={}){const r=await fetch(API+path,{credentials:"include",cache:"no-store",...options,headers:{"content-type":"application/json",...(options.headers||{})}});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||"Calendar request failed ("+r.status+")");return j}
+async function request(path,options={}){const saved=window.WillenaAPI?.getLocalAccessToken?.()||"";const headers={"content-type":"application/json",...(options.headers||{})};if(saved&&saved.split(".").length===3)headers.Authorization="Bearer "+saved;const r=await fetch(API+path,{credentials:"include",cache:"no-store",...options,headers});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||"Calendar request failed ("+r.status+")");return j}
 function weekStart(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-x.getDay());return x}
 function range(){const start=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth(),1):weekStart(cursor);if(view==="month")start.setDate(start.getDate()-start.getDay());const end=new Date(start.getFullYear(),start.getMonth(),start.getDate()+(view==="month"?41:6));return {start,end}}
 async function load(){
@@ -111,7 +111,7 @@ function paintUpcoming(){const root=$("upcoming");root.replaceChildren();let fou
 function openEditor(ev=null,date=dateKey(today)){if(!connected)return;editId=ev?.id||null;$("editorTitle").textContent=ev?"Edit event":"New event";$("eventTitle").value=ev?.title||"";$("eventDate").value=ev?.date||date;$("eventTime").value=ev?.time||"";$("eventCategory").value=ev?.category||"events";$("eventRepeat").value=ev?.repeat||"none";$("eventNotes").value=ev?.notes||"";$("deleteEvent").classList.toggle("hidden",!ev);$("editor").showModal();$("eventTitle").focus()}
 function close(){$("editor").close()}
 $("newEvent").onclick=()=>openEditor();$("close").onclick=$("cancel").onclick=close;
-$("connectGoogle").onclick=()=>{location.href=API+"/connect"};
+$("connectGoogle").onclick=async()=>{try{const data=await request("/connect",{method:"POST",body:"{}"});if(!data.authorization_url)throw Error("Google authorization URL missing");location.assign(data.authorization_url)}catch(e){notice(e.message,true)}};
 $("prev").onclick=()=>{cursor=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth()-1,1):new Date(cursor.getFullYear(),cursor.getMonth(),cursor.getDate()-7);paint();load()};
 $("next").onclick=()=>{cursor=view==="month"?new Date(cursor.getFullYear(),cursor.getMonth()+1,1):new Date(cursor.getFullYear(),cursor.getMonth(),cursor.getDate()+7);paint();load()};
 $("today").onclick=()=>{cursor=new Date(today);paint();load()};
