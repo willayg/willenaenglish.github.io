@@ -534,7 +534,7 @@ function actorPhase(phase){
  $('actorStage').dataset.phase=phase;
  const indicator=$('ftConversationState');
  const label=$('ftConversationStateLabel');
- const mode=phase==='speaking'?'talking':phase==='listening'?'listening':'thinking';
+ const mode=phase==='speaking'?'speaking':phase==='listening'?'listening':'thinking';
  if(indicator){indicator.hidden=false;indicator.dataset.mode=mode}
  if(label)label.textContent=mode.charAt(0).toUpperCase()+mode.slice(1);
  const circle=$('ftTurnCircle');
@@ -818,7 +818,7 @@ async function scribeStart(stream){
 }
 
 function hybridStart(stream){
- hybridStop();
+ stopHybridInput();
  const AudioCtx=window.AudioContext||window.webkitAudioContext;
  if(!AudioCtx)throw Error('Audio monitoring unavailable in this browser');
  hybrid.ctx=new AudioCtx();
@@ -946,14 +946,48 @@ function cycleMic(work){
  state.micCyclePromise=job.catch(()=>{});
  return job;
 }
+// On Android, even a disabled microphone track can keep Bluetooth in narrow-band
+// hands-free call mode. Stop the capture hardware before TTS or network waits.
+// The conversational text history is preserved while capture is restarted.
+function stopHybridInput(){
+ cancelAnimationFrame(hybrid.raf);hybrid.raf=null;
+ if(hybrid.recorder?.state==='recording'){try{hybrid.recorder.stop()}catch{}}
+ hybrid.recorder=null;hybrid.chunks=[];hybrid.peak=0;
+ try{hybrid.source?.disconnect()}catch{}
+ const ctx=hybrid.ctx;hybrid.ctx=null;hybrid.source=null;hybrid.analyser=null;
+ if(ctx)void ctx.close().catch(()=>{});
+}
 function releaseMicForPlayback(){
- // Keep capture hardware stable while AI speaks, avoiding Android audio route changes.
- setMicEnabled(false);
- return Promise.resolve();
+ if(!state.hybrid){setMicEnabled(false);return Promise.resolve()}
+ return cycleMic(async()=>{
+  stopHybridInput();
+  stopMicMonitor();
+  const stream=state.stream;
+  state.stream=null;
+  stream?.getTracks().forEach(track=>{try{track.stop()}catch{}});
+  state.micReleased=true;
+  // Give Android the complete track stop as early as possible; the AI network
+  // request and ElevenLabs generation provide the switching time.
+ });
 }
 function restoreMicAfterPlayback(){
- if(state.active)setMicEnabled(true);
- return Promise.resolve();
+ if(!state.hybrid){if(state.active)setMicEnabled(true);return Promise.resolve()}
+ return cycleMic(async()=>{
+  if(!state.active||state.paused||!state.micReleased||state.reviewing)return;
+  // No need to re-open an input device for the final transcript review.
+  if((state.contributions||0)+(state.attemptCount||0)>=12)return;
+  const token=state.anchorToken;
+  const stream=await navigator.mediaDevices.getUserMedia({
+   audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}
+  });
+  if(!state.active||state.paused||state.anchorToken!==token){
+   stream.getTracks().forEach(track=>track.stop());return;
+  }
+  state.stream=stream;state.micReleased=false;
+  hybridStart(stream);
+  monitorMicrophone(stream);
+  setMicEnabled(true);
+ });
 }
 async function getAnchorClip(anchor){
  const key=guidedCharacterVoice()+':'+anchor.id;
@@ -1214,7 +1248,12 @@ function processVerifiedSpeech(itemIds,speech){
  clearTimeout(state.idleTimer);state.idleTimer=null;
  state.serverHeard=true;
  haltQuestionClock();
- if(state.hybrid)state.hybridPendingContribution=true;
+ if(state.hybrid){
+  state.hybridPendingContribution=true;
+  // Releasing the capture here overlaps Android's audio-route switch with
+  // the conversation API request; avoid waiting for TTS to arrive.
+  void releaseMicForPlayback().catch(e=>console.warn('[Free Talking] Mic release',e));
+ }
  appendLine('You',speech);
  if(state.hybrid)$('anchorText').textContent='';
  state.verifiedAnswer=speech;
