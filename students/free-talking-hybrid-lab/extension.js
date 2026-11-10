@@ -388,23 +388,43 @@ async function openDemo({preserveCharacter=false}={}){
 }
 
 
-const FT_GUIDE_KEY='ft-genius-help-20261110-natural-v2';
+const FT_GUIDE_KEY='ft-genius-help-20261110-illustrated-eight-v3';
+// First page intentionally reuses the Speaking guide's exact character-choice
+// illustration. Other pages explain the separate natural conversation scoring.
 const FT_GUIDE=[
- ['Just talk!','교재 질문으로 시작하고 자유롭게 대화해요. 어떤 이야기든 괜찮아요!',[['Bunny','What did you do on vacation?'],['You','I went swimming!'],['Bunny','Was the water cold?']]],
- ['Be curious!','버니가 질문해도 꼭 그 질문에만 답할 필요 없어요. 재미있는 이야기를 해 보세요!',[['Bunny','What happened next?'],['You','I saw a big dog!'],['Bunny','Really? Was it friendly?']]],
- ['Help is okay!','단어나 질문이 어려우면 물어보세요. 버니가 도와줄게요!',[['You','What does adventure mean?'],['Bunny','Let me help you!']]],
- ['Eight conversations','8번 자연스럽게 대화해 보세요! 마지막에 AI가 대화 전체를 보고 점수를 줘요.',[['Tip','짧은 답도 괜찮아요'],['Tip','질문에 대답하거나 내 생각을 말해 보세요'],['Tip','답변마다 최대 4점, 총 32점']]]
- ];
- function renderFtGuide(){
- const info=FT_GUIDE[state.guideIndex];
- $('ftGuideTitle').textContent=info[0];$('ftGuideBody').textContent=info[1];
- const steps=$('ftGuideSteps');steps.replaceChildren();
- FT_GUIDE.forEach((_,i)=>{const el=document.createElement('span');if(i===state.guideIndex)el.className='on';steps.append(el)});
- const example=$('ftGuideExample');example.replaceChildren();
- info[2].forEach(([speaker,words])=>{const el=document.createElement('div');el.className='ft-bubble'+(speaker==='You'?' child':'');const b=document.createElement('strong');b.textContent=speaker+': ';el.append(b,document.createTextNode(words));example.append(el)});
- $('ftGuideBack').disabled=state.guideIndex===0;
- $('ftGuideNext').textContent=state.guideIndex===FT_GUIDE.length-1?(state.guideLaunch?'Start talking':'Close'):'Next';
+ {tag:'01 / 04',title:'친구를 고르세요',desc:'친구를 한 번 눌러 선택하고, 한 번 더 누르면 시작해요.',type:'choice'},
+ {tag:'02 / 04',title:'자유롭게 이야기해요!',desc:'질문에 답해도 되고, 친구에게 질문하거나 새로운 이야기를 해도 돼요. 짧은 대답도 괜찮아요!',type:'free'},
+ {tag:'03 / 04',title:'내 생각을 더 말해 봐요',desc:'질문에 맞게 대답하고, 느낌이나 이유를 더해 보세요. 많이 말하고 잘 소통할수록 점수가 높아져요. 문법이 완벽하지 않아도 괜찮아요!',type:'example'},
+ {tag:'04 / 04',title:'8번 대화하고 점수를 받아요',desc:'8번 말한 뒤 AI가 대화 전체를 보고 점수를 줘요. 한 번에 0~4점, 최고 32점! 말이 잘 통하면 더 높은 점수와 별을 받아요.',type:'points'}
+];
+function guidePortrait(){
+ return '<div class="ft-guide-mini ft-guide-choice"><div class="ft-guide-mini-title">친구를 골라요!</div><div class="ft-guide-mini-avatar">'+BUNNY_FOX_ART+'</div><span class="ft-guide-mini-label">Bunny Fox</span><span class="ft-guide-mini-select">시작하기</span></div>';
 }
+function renderFtGuide(){
+ const page=FT_GUIDE[state.guideIndex];
+ $('ftGuideTitle').textContent=page.title;
+ $('ftGuideBody').textContent=page.desc;
+ $('ftGuideSteps').textContent=page.tag;
+ const visual=$('ftGuideExample');
+ visual.replaceChildren();
+ if(page.type==='choice'){
+  visual.innerHTML=guidePortrait();
+ }else if(page.type==='free'){
+  visual.innerHTML='<div class="ft-guide-mini ft-guide-talk"><div class="ft-guide-mini-avatar">'+BUNNY_FOX_ART+'</div><div class="ft-guide-example good"><small>Bunny Fox</small><b>What do you like doing?</b></div><div class="ft-guide-example"><small>You</small><b>I love swimming! What about you?</b></div></div>';
+ }else if(page.type==='example'){
+  visual.innerHTML='<div class="ft-guide-mini ft-guide-sentence"><div class="ft-guide-example simple"><small>좋아요! · Good</small><b>Yes!</b></div><div class="ft-guide-example better"><small>더 좋아요! · Better</small><b>Yes, I like dogs.</b></div><div class="ft-guide-example best"><small>정말 좋아요! · Even better</small><b>Yes, because they are funny!</b></div></div>';
+ }else{
+  visual.innerHTML='<div class="ft-guide-mini ft-guide-points"><strong>8 turns</strong><span>Up to 32 points</span><div class="ft-guide-mini-bonuses"><b>한 번에 최대 4점</b><b>별 0~5개</b></div><p>짧은 대답도 좋아요. 질문에 맞게 이야기하면 더 좋아요!</p></div>';
+ }
+ $('ftGuideNeverRow').hidden=state.guideIndex!==FT_GUIDE.length-1;
+ $('ftGuideBack').disabled=state.guideIndex===0;
+ $('ftGuideNext').textContent=state.guideIndex===FT_GUIDE.length-1?(state.guideLaunch?'시작하기':'닫기'):'다음';
+}
+$('ftGuideClose').addEventListener('click',()=>{
+ $('ftGuide').hidden=true;
+ if(state.guideLaunch){state.guideLaunch=false;state.guideAccepted=true;void startConversation().catch(e=>error('Start failed: '+e.message))}
+ else if(state.active)startQuestionClock();
+});
 function showFtGuide(launch=false){state.guideIndex=0;state.guideLaunch=launch;veil.hidden=false;$('ftGuide').hidden=false;renderFtGuide()}
 $('ftGuideBack').addEventListener('click',()=>{if(state.guideIndex){state.guideIndex--;renderFtGuide()}});
 $('ftGuideNext').addEventListener('click',()=>{
