@@ -1767,16 +1767,18 @@ async function startConversation(){
   $('anchorText').textContent=state.anchors[state.anchorIndex].text;
   if(state.hybrid){
    if(state.sttEngine!=='eleven-scribe-realtime'&&!window.MediaRecorder)throw Error('This browser does not support recording for Hybrid mode');
+   // Permission is requested before consuming today's one session.
+   const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+   if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
+   state.stream=mic;
    const claim=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
     action:'start',book_id:state.book.id,unit_id:state.unit.id,
     character:state.character,session_id:state.transcriptSessionId
    },startAbort.signal);
    const claimData=await claim.json().catch(()=>({}));
    if(!claim.ok||!claimData.allowed)throw Error(claimData.error||'Free Talking is unavailable today.');
-   if(startId!==activeStartId)return;
-   const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
    if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
-   state.stream=mic;monitorMicrophone(mic);
+   monitorMicrophone(mic);
    state.micUserMuted=false;state.ttsPlaying=false;
    state.active=true;state.starting=false;state.resumeIndex=0;
    ftUsage.begin();
