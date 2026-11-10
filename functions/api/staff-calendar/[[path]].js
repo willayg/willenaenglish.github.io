@@ -43,7 +43,7 @@ const oauthCookie=(val,maxAge)=>'willena_calendar_state='+val+'; Path=/api/staff
 async function respond(req,env){
  const url=new URL(req.url),part=url.pathname.replace(/^\/api\/staff-calendar\/?/,'').replace(/\/$/,'');
  if(url.hostname!=='teachers.willenaenglish.com')return fmt({error:'Invalid host'},403);
- if(!config(env))return fmt({error:'Calendar server configuration incomplete. GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and SUPABASE_SERVICE_ROLE_KEY are required.'},503);
+ if(!config(env)){const missing=['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','SUPABASE_SERVICE_ROLE_KEY'].filter(name=>!env[name]);return fmt({error:'Calendar server configuration incomplete: '+missing.join(', '),missing},503);}
  const user=await staff(req,env);if(!user)return fmt({error:'Approved Willena teacher login required'},401);
  if(part==='connect'){
    if(req.method!=='GET'||!user.admin)return fmt({error:'Admin access required'},403);
