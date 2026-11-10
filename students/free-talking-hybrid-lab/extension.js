@@ -439,7 +439,7 @@ function ftShowFinish(result,{playSound=true}={}){
  for(let i=0;i<5;i++){const el=document.createElement('span');el.textContent='★';if(i<result.stars)el.className='earned';stars.append(el)}
  stars.setAttribute('aria-label',result.stars+' out of 5 stars');
  $('ftResultPoints').textContent='+'+result.points+' Points';
- const portrait=$('ftResultMascot');portrait.replaceChildren();
+ const portrait=$('ftResultMascot');portrait.replaceChildren();portrait.classList.remove('is-speaking');
  if(state.character==='bunny')portrait.innerHTML=BUNNY_FOX_ART;
  else if(state.character==='pigfish'){
   portrait.innerHTML=PIGFISH_ART.replaceAll('id="pigBody"','id="pigBody-finish"').replaceAll('id="pigBelly"','id="pigBelly-finish"').replaceAll('url(#pigBody)','url(#pigBody-finish)').replaceAll('url(#pigBelly)','url(#pigBelly-finish)');
@@ -451,6 +451,34 @@ function ftShowFinish(result,{playSound=true}={}){
 }
 
 $('ftFinishClose').addEventListener('click',()=>{$('ftCelebration').hidden=true;navigateBack()});
+$('ftReviewKoreanToggle').addEventListener('click',async()=>{
+ const button=$('ftReviewKoreanToggle'),paragraph=$('ftReviewKorean');
+ if(!paragraph.hidden){paragraph.hidden=true;button.textContent='한국어로 보기 · Korean';button.setAttribute('aria-expanded','false');return}
+ if(state.reviewKoreanText){
+  paragraph.textContent=state.reviewKoreanText;paragraph.hidden=false;
+  button.textContent='한국어 숨기기 · Hide Korean';button.setAttribute('aria-expanded','true');return;
+ }
+ if(!state.transcriptSessionId||!state.book?.id||!state.unit?.id)return;
+ button.disabled=true;button.textContent='번역 중…';
+ try{
+  // The API translates only the authenticated student's saved final feedback.
+  const response=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+   action:'feedback_ko',session_id:state.transcriptSessionId,
+   book_id:state.book.id,unit_id:state.unit.id
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw Error(result.error||'Korean feedback unavailable');
+  state.reviewKoreanText=String(result.korean||'');
+  if(!state.reviewKoreanText)throw Error('Korean feedback unavailable');
+  paragraph.textContent=state.reviewKoreanText;paragraph.hidden=false;
+  button.textContent='한국어 숨기기 · Hide Korean';button.setAttribute('aria-expanded','true');
+ }catch(e){
+  paragraph.textContent='한국어 번역을 불러오지 못했어요. 다시 눌러 주세요.';
+  paragraph.hidden=false;button.textContent='다시 번역하기 · Retry';
+  button.setAttribute('aria-expanded','true');
+ }finally{button.disabled=false}
+});
+
 
 function updateTimeBoostButton(){}
 const isBeginner=()=>state.lessonLevel<=2;
@@ -1525,6 +1553,13 @@ async function reviewConversation(){
   $('ftReviewSummary').textContent=feedback;
   ftShowFinish({answered:Math.min(8,Number(result.reviewed)||0),points,stars},{playSound:false});
   $('ftReviewSummary').textContent=feedback;
+  state.reviewKoreanText=null;
+  $('ftReviewKorean').textContent='';
+  $('ftReviewKorean').hidden=true;
+  $('ftReviewKoreanToggle').hidden=false;
+  $('ftReviewKoreanToggle').disabled=false;
+  $('ftReviewKoreanToggle').textContent='한국어로 보기 · Korean';
+  $('ftReviewKoreanToggle').setAttribute('aria-expanded','false');
   $('ftFinishClose').textContent='Back to Units';
   // Text is visible on the results card before the character starts saying it.
   // Preserve media-mode mic release: the conversation has already ended.
@@ -1538,6 +1573,7 @@ async function reviewConversation(){
   $('ftReviewSummary').hidden=false;
   $('ftReviewSummary').textContent='We could not check your conversation yet. Please try again.';
   $('ftResultPoints').textContent='Review unavailable';
+  $('ftReviewKoreanToggle').hidden=true;$('ftReviewKorean').hidden=true;
   $('ftResultStars').replaceChildren();
   $('ftReviewContinue').hidden=false;
   $('ftReviewContinue').textContent='Try review again';
@@ -1785,6 +1821,7 @@ async function speakEleven(text,source='ai_reply'){
   await releaseMicForPlayback();
   if(!state.active||current!==state.generation)return;
   await audio.play();
+  if(source==='evaluation_feedback')$('ftResultMascot').classList.add('is-speaking');
   await new Promise(resolve=>{
    if(audio.ended){resolve();return}
    audio.onended=resolve;audio.onerror=resolve;
@@ -1794,6 +1831,7 @@ async function speakEleven(text,source='ai_reply'){
  }catch(e){if(e.name!=='AbortError'&&state.active){error('ElevenLabs audio: '+e.message);message('Voice playback failed — see the error below')}}
  finally{
   if(current===state.generation){
+   $('ftResultMascot').classList.remove('is-speaking');
    state.ttsPlaying=false;
    if(state.active)await restoreMicAfterPlayback().catch(e=>console.warn('[Free Talking] mic reacquisition failed',e));
   }
