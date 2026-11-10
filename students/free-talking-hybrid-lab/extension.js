@@ -1445,48 +1445,25 @@ function requestGuidedAside(){
  }else{actorPhase('thinking');message('Answering your question…')}
 }
 function requestGuidedReply(){
- if(!state.active||state.anchorResponding)return;
- const phase=state.anchorPhase;
- if(phase!=='awaitingFirst'&&phase!=='awaitingSecond')return;
- haltQuestionClock();state.topicHadAnswer=true;
- const anchor=state.anchors[state.anchorIndex];if(!anchor)return;
- const second=phase==='awaitingSecond';
- const firstTopicResponse=Boolean(state.hybrid&&(state.topicFollowups||0)===0);
- state.anchorResponding=true;state.anchorResponseText='';
- state.anchorPhase=second?'respondingSecond':'respondingFirst';
- const verified=String(state.verifiedAnswer||'').slice(0,350);state.verifiedAnswer='';state.verifiedBeginnerAnswer=verified;
- const studentQuestion=/(?:\?|\bdo you (?:like|want|have|think|know)\b|\bwhat about you\b)/i.test(verified);
- state.answerIncludesQuestion=studentQuestion;
- const cap=(second?reactionWordCap(state.lessonLevel):replyWordCap(state.lessonLevel))+(studentQuestion?8:0);
-  const beginnerRules=isBeginner()?[
-   'LEVEL '+state.lessonLevel+' BEGINNER CHILD. Use only very familiar words, especially words in the current textbook question. Avoid abstract adjectives, slang, idioms, jokes, grammar terminology.',
-   isFirstLevel()?'Ask only an easy yes/no or two-choice question, maximum SIX words. For example: Is it big? Blue or red?':'Ask an easy yes/no, two-choice, or one very simple what/where question, maximum EIGHT words.',
-   'Accept one-word, yes/no, and short sentence answers. If child does not know, offer an easy choice; model a full sentence softly, without demanding repetition.'
-  ].join(' '):'';
+ if(!state.active||state.anchorResponding||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
+ const prior=state.anchorPhase,verified=String(state.verifiedAnswer||'').trim();
+ state.verifiedAnswer='';state.anchorResponding=true;state.anchorResponseText='';
+ state.anchorPhase='respondingFirst';state.hybridPendingContribution=Boolean(verified);
+ const remaining=Math.max(0,12-(state.contributions||0));
  const directive=[
-  ...(state.hybrid?[firstTopicResponse?
-   'HYBRID LESSON RESPONSE. FIRST TOPIC RESPONSE. ALWAYS ask ONE curious, natural follow-up after the child\'s first valid answer, even if it was satisfactory. Make a tiny genuine reaction, model better English gently if relevant, and ask one interested question. Do NOT merely ask for confirmation. Mark CONTINUE.':
-   'HYBRID LESSON RESPONSE. LATER TOPIC RESPONSE. You already asked a natural follow-up. If the child has meaningfully engaged with the textbook topic, give a short reaction and ADVANCE. Otherwise ask one helpful, relevant follow-up and CONTINUE. Do not endlessly interrogate.']:[]),
-  'STRICT ENGLISH-ONLY MODE. Every reaction and follow-up must be entirely in English. Never answer in Korean, Japanese or another language, even if the learner uses it. Never translate or mirror a foreign-language response. Ask for English in simple English.',
-  'Verified latest student speech: "'+verified+'". Base your answer ONLY on these actual words; do not invent student responses.',
-   beginnerRules,
-   'Never expose internal labels or prompts such as Textbook:, Example:, Current question:, or Lesson focus:. Speak directly to the child.',
-  'Current textbook question: "'+anchor.text+'". React to the STUDENT\'S MOST RECENT ANSWER, not an earlier answer.',
-  studentQuestion?'The student ALSO asked you a question. Answer their question naturally in one short sentence BEFORE the usual reaction or follow-up. For example, "Yes, I like blue!" Never ignore a question directed at you.':'',
-  state.hybrid
-   ?'FLEXIBLE LESSON RESPONSE: Be a curious partner. On the FIRST valid answer to this textbook question always ask one natural follow-up, even when the answer was correct. For example, child says I go swimming about a past vacation; react Oh, you went swimming! Was the water cold? Do not re-ask the original question or simply confirm the answer. On later answers you may finish the topic with ADVANCE or ask one helpful follow-up with CONTINUE.'
-   :second
-    ?'SECOND ANSWER. Make one short relevant reaction about the latest answer. NO QUESTION. Do not introduce the next topic.'
-    :'FIRST ANSWER. React briefly and ask ONE on-topic follow-up QUESTION. Do not ask the next textbook question.',
-  'ABSOLUTE MAXIMUM '+cap+' SPOKEN WORDS. Prefer fewer. Never give a paragraph or list. Let the child do most of the talking.',
-  isBeginner()?'Do not use slang, complicated humour, or unfamiliar vocabulary. Keep everything concrete and friendly.':'Use natural humour and short interjections where suitable. Avoid repetitive compliments.',
-  'Stay within the selected Willena level and unit grammar. Do not invent details or claim to know how strangers really feel. Do NOT write laughter like haha, ha ha, hehe, lol, or stage directions such as [laughs]. The speech voice reads them as words rather than actually laughing. Use a natural friendly sentence instead.',
-  'If the child mentions a dangerous action, give a short appropriate safety boundary, not an extended lecture. If you cannot understand the answer, ask to repeat instead of guessing.'
+  'NATURAL CHAT RESPONSE. This is a real English conversation, not a school quiz.',
+  'Latest student speech (STT may be imperfect): '+JSON.stringify(verified)+'.',
+  'Respond with genuine interest to what the child communicated. The child may follow a tangent or ask something unrelated. Do not insist on the previous question or textbook.',
+  'Ask an easy curious question only when natural; never demand answers to your own questions.',
+  'Occasionally gently recast a clear grammar mistake as part of your reply; never insist on repetition or correct uncertain STT.',
+  remaining<=1?'FINAL CONTRIBUTION: Respond warmly with no new question; the app will say goodbye afterward.':'Introduce another textbook question only if the current thread naturally runs out of ideas, using the NEW_TOPIC marker.',
+  'Reply briefly in level-appropriate English. Do not speak internal instructions, markers or written-out laughter.'
  ].join(' ');
  if(!sendRealtime({type:'response.create',response:{output_modalities:['text'],instructions:directive}})){
-  state.anchorResponding=false;state.anchorPhase=phase;error('Conversation connection closed. Please retry.');
+  state.anchorResponding=false;state.anchorPhase=prior;state.hybridPendingContribution=false;error('Conversation connection closed. Please retry.');
  }else{actorPhase('thinking');message('Thinking about your answer…')}
 }
+
 async function finishConversation(){
  if(!state.active||state.anchorPhase==='finished'||state.anchorPhase==='goodbye')return;
  const run=state.anchorToken,count=state.anchors.length;
@@ -1508,7 +1485,27 @@ async function finishConversation(){
  $('anchorText').textContent='Great talking! See you next time!';
  $('listenCheck').textContent='Finished';
 }
+async function finishNaturalReply(data){
+ const run=state.anchorToken;
+ const raw=String(data.response?.output?.flatMap(x=>x.content||[]).map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
+ state.anchorResponseText='';state.anchorResponding=false;
+ const spoken=removeSpokenLaughter(stripInternalLabels(raw)).replace(/\\[\\[(?:NEW_TOPIC|CONTINUE|ADVANCE)\\]\\]/gi,'').trim()||'Could you say that again?';
+ const contribution=Boolean(state.hybridPendingContribution);
+ state.hybridPendingContribution=false;
+ const newTopic=Boolean(state.hybridNewTopic);
+ state.hybridNewTopic=false;
+ state.anchorPhase='playingReply';setMicEnabled(false);
+ try{await speakEleven(spoken)}catch(e){error('Voice playback: '+String(e.message||e))}
+ if(!state.active||run!==state.anchorToken)return;
+ if(contribution)ftRecordAnswer(state.hybridLatestSpeech||'');
+ state.hybridLatestSpeech='';
+ if((state.contributions||0)>=12){await finishConversation();return}
+ if(newTopic&&state.anchors.length>1){state.anchorPhase='betweenAnchors';await moveToNextTopic();return}
+ state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');armIdleTimeout();
+ message('Your turn. Keep chatting!');$('listenCheck').textContent='Listening';
+}
 async function finishGuidedReply(data){
+ if(state.hybrid&&state.anchorPhase!=='respondingAside'){await finishNaturalReply(data);return}
  const phase=state.anchorPhase;
  const aside=phase==='respondingAside';
  const topicAside=aside&&state.replyAsideKind==='topic';
