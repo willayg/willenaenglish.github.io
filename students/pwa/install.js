@@ -2,13 +2,14 @@
 (() => {
   let installPrompt = null;
   const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const samsung = () => /SamsungBrowser/i.test(navigator.userAgent);
   const ios = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const update = () => {
     const section = document.getElementById('installAppSettings');
     const button = document.getElementById('installWillenaApp');
     if (!section || !button) return;
     section.hidden = installed();
-    button.textContent = installPrompt ? 'Install App' : ios() ? 'How to Install' : 'Install App';
+    button.textContent = samsung() ? 'Install with Chrome' : installPrompt ? 'Install App' : ios() ? 'How to Install' : 'Install App';
   };
   window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
@@ -19,6 +20,10 @@
   document.addEventListener('DOMContentLoaded', () => {
     update();
     document.getElementById('installWillenaApp')?.addEventListener('click', async () => {
+      if (samsung()) {
+        alert('Samsung Internet currently has an Android installation issue.\n1. Open Willena Students in Google Chrome.\n2. Open Settings and tap Install App.\n3. Confirm installation in Chrome.\nDo not bypass a Google Play Protect warning.');
+        return;
+      }
       if (installPrompt) {
         const prompt = installPrompt;
         installPrompt = null;

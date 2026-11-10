@@ -11,16 +11,16 @@
   "lang": "en",
   "icons": [
     {
-      "src": "/students/pwa/willena-app-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "src": "/students/pwa/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/Logo.png",
-      "sizes": "2000x1448",
+      "src": "/students/pwa/icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }
