@@ -595,11 +595,11 @@ function renderUnitStrip(){
 // Free Talking has cumulative student/unit progress independently of Speaking.
 function showFreeTalkingPercent(value){
  const card=$('ftFreeTalkingCard');if(!card)return;
- const count=Math.max(0,Math.min(12,Number(value)||0));
- const percent=Math.round(count/12*100);
+ const count=Math.max(0,Math.min(8,Number(value)||0));
+ const percent=Math.round(count/8*100);
  card.querySelector('.vocab-skill-ring').style.setProperty('--progress',String(percent));
  card.querySelector('.vocab-skill-ring span').textContent=percent+'%';
- card.classList.toggle('ft-golden-skill',count===12);
+ card.classList.toggle('ft-golden-skill',count===8);
  const detail=card.querySelector('.vocab-card-stars');
  if(detail){detail.textContent='';detail.hidden=true}
  card.setAttribute('aria-label','Free Talking '+percent+'%');
@@ -622,7 +622,7 @@ async function refreshFreeTalkingPercent(){
   });
   if(!response.ok)throw Error('Progress request failed ('+response.status+')');
   const result=await response.json();
-  const count=Math.max(0,Math.min(12,Number(result?.contributions)||0));
+  const count=Math.max(0,Math.min(8,Number(result?.contributions)||0));
   ftProgressCache.set(key,count);
   if(requestId===ftProgressRequest&&BOOK()===bookId&&groups()[0]?.unit_id===unitId)
    showFreeTalkingPercent(count);
