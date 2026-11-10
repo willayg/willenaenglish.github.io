@@ -35,7 +35,7 @@ function normalized(body){
  const category=String(body.category||'events'),repeat=String(body.repeat||'none'),notes=String(body.notes||'');
  if(title.length<1||title.length>120||!allowedDate(date)||time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)||endTime&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(endTime)||!['events','staff','academic','deadline'].includes(category)||!['none','weekly','monthly'].includes(repeat)||notes.length>1200)throw Error('Invalid event details');
  let start,end;if(time){start={dateTime:date+'T'+time+':00+09:00',timeZone:'Asia/Seoul'};const to=endTime||String((Number(time.slice(0,2))+1)%24).padStart(2,'0')+time.slice(2);
- const next=to<=time?new Date(Date.parse(date+'T00:00:00+09:00')+86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Seoul'}):date;
+ const nextDay=new Date(date+'T12:00:00Z');nextDay.setUTCDate(nextDay.getUTCDate()+1);const next=to<=time?nextDay.toISOString().slice(0,10):date;
  end={dateTime:next+'T'+to+':00+09:00',timeZone:'Asia/Seoul'}}else{start={date};const x=new Date(date+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+1);end={date:x.toISOString().slice(0,10)}}
  return {summary:title,description:notes,start,end,extendedProperties:{private:{willena_category:category}},...(repeat!=='none'?{recurrence:['RRULE:FREQ='+repeat.toUpperCase()]}:{})};
 }
