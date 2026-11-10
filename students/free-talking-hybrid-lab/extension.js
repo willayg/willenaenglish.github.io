@@ -620,9 +620,9 @@ function actorPhase(phase){
  $('actorStage').dataset.phase=phase;
  const indicator=$('ftConversationState');
  const label=$('ftConversationStateLabel');
- const mode=phase==='speaking'?'talking':phase==='listening'?'listening':phase==='thinking'?'thinking':null;
- if(indicator){indicator.hidden=!mode;if(mode)indicator.dataset.mode=mode}
- if(label&&mode)label.textContent=mode.charAt(0).toUpperCase()+mode.slice(1);
+ const mode=phase==='speaking'?'talking':phase==='listening'?'listening':'thinking';
+ if(indicator){indicator.hidden=false;indicator.dataset.mode=mode}
+ if(label)label.textContent=mode.charAt(0).toUpperCase()+mode.slice(1);
  const circle=$('ftTurnCircle');
  if(circle){
   circle.dataset.phase=phase==='speaking'?'ai':phase==='listening'?'student':phase==='thinking'?'thinking':'ready';
@@ -1136,7 +1136,7 @@ async function playAnchor(index){
  clearTimeout(state.idleTimer);state.idleTimer=null;
  if(!$('ftBootSpinner').hidden)$('ftBootSpinner').hidden=true;
  state.anchorIndex=index;state.anchorPhase='playingAnchor';state.anchorResponding=false;
- resetQuestionClock();state.topicHadAnswer=false;
+ resetQuestionClock();state.topicHadAnswer=false;state.topicFollowups=0;
  state.vocabDetours=0;state.topicDetours=0;state.pendingWordConfirmation=null;state.asideTerm='';state.topicQuestion='';state.asideKind=null;
  state.speechStartedAt=0;state.speechPeak=0;state.lastSpeechDuration=0;clearPendingSpeech();
  $('clock').textContent='Question '+(index+1)+' / '+state.anchors.length;
@@ -1484,6 +1484,7 @@ function requestGuidedReply(){
  haltQuestionClock();state.topicHadAnswer=true;
  const anchor=state.anchors[state.anchorIndex];if(!anchor)return;
  const second=phase==='awaitingSecond';
+ const firstTopicResponse=Boolean(state.hybrid&&(state.topicFollowups||0)===0);
  state.anchorResponding=true;state.anchorResponseText='';
  state.anchorPhase=second?'respondingSecond':'respondingFirst';
  const verified=String(state.verifiedAnswer||'').slice(0,350);state.verifiedAnswer='';state.verifiedBeginnerAnswer=verified;
@@ -1496,7 +1497,9 @@ function requestGuidedReply(){
    'Accept one-word, yes/no, and short sentence answers. If child does not know, offer an easy choice; model a full sentence softly, without demanding repetition.'
   ].join(' '):'';
  const directive=[
-  ...(state.hybrid?['HYBRID LESSON RESPONSE. Decide whether the child has meaningfully answered the CURRENT textbook question; never use a fixed turn count. If the latest speech meaningfully answers the textbook question, react briefly without a new question and choose ADVANCE. If not, ask ONE easy on-topic question, rephrase or give a choice and choose CONTINUE. A short meaningful answer is sufficient; never insist on perfect grammar. If the learner clearly cannot answer after reasonable guidance, acknowledge it gently and allow ADVANCE. Do not confuse a response to your own follow-up with answering the original textbook question.']:[]),
+  ...(state.hybrid?[firstTopicResponse?
+   'HYBRID LESSON RESPONSE. FIRST TOPIC RESPONSE. ALWAYS ask ONE curious, natural follow-up after the child\'s first valid answer, even if it was satisfactory. Make a tiny genuine reaction, model better English gently if relevant, and ask one interested question. Do NOT merely ask for confirmation. Mark CONTINUE.':
+   'HYBRID LESSON RESPONSE. LATER TOPIC RESPONSE. You already asked a natural follow-up. If the child has meaningfully engaged with the textbook topic, give a short reaction and ADVANCE. Otherwise ask one helpful, relevant follow-up and CONTINUE. Do not endlessly interrogate.']:[]),
   'STRICT ENGLISH-ONLY MODE. Every reaction and follow-up must be entirely in English. Never answer in Korean, Japanese or another language, even if the learner uses it. Never translate or mirror a foreign-language response. Ask for English in simple English.',
   'Verified latest student speech: "'+verified+'". Base your answer ONLY on these actual words; do not invent student responses.',
    beginnerRules,
@@ -1504,7 +1507,7 @@ function requestGuidedReply(){
   'Current textbook question: "'+anchor.text+'". React to the STUDENT\'S MOST RECENT ANSWER, not an earlier answer.',
   studentQuestion?'The student ALSO asked you a question. Answer their question naturally in one short sentence BEFORE the usual reaction or follow-up. For example, "Yes, I like blue!" Never ignore a question directed at you.':'',
   state.hybrid
-   ?'FLEXIBLE LESSON RESPONSE: Be curious, not an examiner. If the child makes a clear grammar error, sometimes echo the naturally corrected form as part of a real reaction, without making the child repeat or explaining grammar. Example: Child says I go swimming about a past vacation; say Oh, you went swimming! Cool. Was the water cold? Do NOT assume a recognition error is a grammar mistake. Do not simply confirm information already communicated. If the topic has a meaningful answer, briefly react and mark ADVANCE, or ask ONE genuinely interesting follow-up and mark CONTINUE when worthwhile. If their meaning remains unclear, gently rephrase or offer a choice and mark CONTINUE. The app plays the next textbook question after ADVANCE.'
+   ?'FLEXIBLE LESSON RESPONSE: Be a curious partner. On the FIRST valid answer to this textbook question always ask one natural follow-up, even when the answer was correct. For example, child says I go swimming about a past vacation; react Oh, you went swimming! Was the water cold? Do not re-ask the original question or simply confirm the answer. On later answers you may finish the topic with ADVANCE or ask one helpful follow-up with CONTINUE.'
    :second
     ?'SECOND ANSWER. Make one short relevant reaction about the latest answer. NO QUESTION. Do not introduce the next topic.'
     :'FIRST ANSWER. React briefly and ask ONE on-topic follow-up QUESTION. Do not ask the next textbook question.',
@@ -1545,7 +1548,8 @@ async function finishGuidedReply(data){
  const questionHelpAside=aside&&state.replyAsideKind==='question_help';
  if(!aside&&phase!=='respondingFirst'&&phase!=='respondingSecond')return;
  const second=phase==='respondingSecond';
- const advance=state.hybrid&&!aside?Boolean(state.hybridAdvance):second;
+ const forceFollowup=Boolean(state.hybrid&&!aside&&(state.topicFollowups||0)===0);
+ const advance=state.hybrid&&!aside?(Boolean(state.hybridAdvance)&&!forceFollowup):second;
  if(state.hybrid&&!aside&&advance&&state.hybridLatestSpeech)ftRecordAnswer(state.hybridLatestSpeech,second);
  if(state.hybrid&&!aside&&ftUsage.current&&!state.hybridDecisionReported)ftUsage.current.unmarkedDecisions=(ftUsage.current.unmarkedDecisions||0)+1;
  state.hybridAdvance=false;state.hybridDecisionReported=false;state.hybridLatestSpeech='';
@@ -1563,6 +1567,7 @@ async function finishGuidedReply(data){
     responseText=/\b(?:yes|no)\b/i.test(state.verifiedBeginnerAnswer)?'Nice! Is it big?':'Good! Do you like it?';
    }
   }
+ if(!aside&&forceFollowup&&!responseText.includes('?'))responseText=(responseText.replace(/[.!,;:\s]+$/,'').trim()||'That sounds fun')+'. What was it like?';
  state.answerIncludesQuestion=false;
  // Vocabulary detours may contain Hangul, but never Japanese or Chinese.
  if(questionHelpAside){
@@ -1628,6 +1633,7 @@ async function finishGuidedReply(data){
   state.anchorPhase='betweenAnchors';
   void moveToNextTopic();
  }else{
+  if(state.hybrid)state.topicFollowups=(state.topicFollowups||0)+1;
   state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');
   armIdleTimeout();startQuestionClock();
   message('Your turn. Answer the follow-up question!');
