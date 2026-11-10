@@ -418,6 +418,24 @@ body.ft-release #demo .conversation-text{min-height:80px}
 #ftReleaseIntro #ftCharacter{min-height:0;padding:0;width:100%}
 #ftReleaseIntro #ftCharacter .ft-character-panel{width:min(620px,100%);padding:clamp(18px,4vw,30px)}
 #ftReleaseIntro #ftCharacter .ft-character-back{cursor:pointer}
+/* Same original Speaking menu elements, fitted to a phone without a long scroll. */
+@media(max-width:600px){
+ #ftReleaseIntro{min-height:100dvh;justify-content:flex-start;gap:10px;padding:14px 12px 26px}
+ #ftReleaseIntro h1{font-size:25px}
+ #ftReleaseIntro .ft-release-sub{font-size:12px;line-height:1.45}
+ #ftReleaseIntro #ftCharacter{min-height:0;padding:0}
+ #ftReleaseIntro #ftCharacter .ft-character-panel{padding:14px 12px;gap:9px;border-radius:22px}
+ #ftReleaseIntro #ftCharacter h2{font-size:20px}
+ #ftReleaseIntro #ftCharacter .ft-character-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:4px 0}
+ #ftReleaseIntro #ftCharacter .ft-character-option{min-height:132px;padding:8px 5px;gap:5px;border-width:2px;border-radius:16px}
+ #ftReleaseIntro #ftCharacter .ft-character-option strong{font-size:14px}
+ #ftReleaseIntro #ftCharacter .ft-character-symbol{width:86px;height:86px;max-width:100%}
+ #ftReleaseIntro #ftCharacter .ft-character-symbol svg{max-height:86px}
+ #ftReleaseIntro #ftCharacter .ft-character-start-container{padding:7px}
+ #ftReleaseIntro #ftCharacter .ft-character-continue{min-height:46px}
+ #ftReleaseIntro .ft-release-notice{font-size:10px}
+}
+
 #ftReleaseIntro .ft-character-symbol svg{max-width:100%;max-height:100%}
 
 #ftReleaseIntro{min-height:100dvh;background:radial-gradient(circle at 50% 0,#e3fafb,#fff 60%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 16px;gap:22px;text-align:center}
@@ -522,4 +540,4 @@ body.ft-release #demo .conversation-text{min-height:80px}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-native-menu-source2"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-daily-retry-layout1"></script></body></html>
