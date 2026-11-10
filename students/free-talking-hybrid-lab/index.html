@@ -471,7 +471,8 @@ body.ft-release #demo .conversation-text{min-height:80px}
   <div id="ftResultMascot" aria-hidden="true"></div>
   <div id="ftResultStars" class="ft-stars" aria-label="Stars earned"></div>
   <div id="ftResultPoints" class="ft-score">+0 Points</div>
-  <div class="ft-actions"><button class="primary" id="ftFinishClose" type="button">Back to Units</button></div>
+  <p id="ftReviewSummary" role="status" style="font:700 15px/1.5 Poppins,system-ui,sans-serif;text-align:center;color:#315b65;margin:9px auto;max-width:400px" hidden></p>
+  <div class="ft-actions"><button class="primary" id="ftReviewContinue" type="button" hidden>Keep chatting</button><button id="ftFinishClose" type="button">Back to Units</button></div>
  </div>
 </section>
 <section id="ftBootSpinner" class="ft-layer" hidden role="status" aria-label="Preparing your conversation">
@@ -524,4 +525,4 @@ body.ft-release #demo .conversation-text{min-height:80px}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-exit-legacy-retired2"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-end-review-v1"></script></body></html>
