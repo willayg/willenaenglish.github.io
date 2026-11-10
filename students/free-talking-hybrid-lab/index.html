@@ -379,6 +379,7 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #demo .conversation-text.ft-transcript-hidden #log .entry.me{display:none!important}
 #demo .ft-transcript-toggle{display:flex;align-items:center;justify-content:center;gap:7px;font:650 11px/1.2 system-ui,sans-serif;color:#487983;cursor:pointer}
 #demo .ft-transcript-toggle small{font-weight:400;color:#819ba3}
+#demo .ft-transcript-notice{margin:0;text-align:center;font:400 10px/1.35 system-ui,sans-serif;color:#6d8e96}
 #demo .ft-transcript-toggle input{accent-color:#219eae}
 #demo .ft-natural-progress{display:grid!important;grid-template-columns:1fr auto!important;gap:7px!important;width:100%;padding:10px 14px!important;align-items:center!important;flex:0 0 auto}
 #demo .ft-natural-progress .ft-progress-title{font:750 13px/1.2 system-ui,sans-serif;color:#287a85}
@@ -457,6 +458,7 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  <div class="conversation-text" aria-label="Current conversation">
   <p id="anchorText" class="anchor-question" aria-live="polite">Your first question will appear here.</p>
    <label class="ft-transcript-toggle"><input id="ftTranscriptToggle" type="checkbox" checked> Show what AI heard <small>(may be inaccurate)</small></label>
+   <p class="ft-transcript-notice">Conversation text is saved for teacher review for up to 30 days. Audio is not saved.</p>
   <div id="log" aria-live="polite"></div>
  </div>
  <div id="conversationDiagnostics" aria-live="polite">
@@ -488,4 +490,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-character-bookquestions1"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-transcripts1"></script></body></html>
