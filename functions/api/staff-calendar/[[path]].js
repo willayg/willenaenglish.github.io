@@ -27,9 +27,9 @@ async function db(env,route,method='GET',body,prefer='return=representation'){
  if(!r.ok){console.error('google calendar storage',r.status,data?.code||'');throw Error('Google calendar storage request failed ('+r.status+')')}return data
 }
 async function approvedStaff(req,env){
- const candidates=[],m=(req.headers.get('cookie')||'').match(/(?:^|;\\s*)sb_access=([^;]+)/);
+ const candidates=[],m=(req.headers.get('cookie')||'').match(/(?:^|;\s*)sb_access=([^;]+)/);
  if(m)try{candidates.push(decodeURIComponent(m[1]))}catch{}
- const bearer=(req.headers.get('authorization')||'').match(/^Bearer\\s+(\\S+)$/i);
+ const bearer=(req.headers.get('authorization')||'').match(/^Bearer\s+(\S+)$/i);
  if(bearer&&!candidates.includes(bearer[1]))candidates.push(bearer[1]);
  for(const token of candidates){
   const r=await fetch(SUPABASE+'/auth/v1/user',{headers:{apikey:PUBKEY,Authorization:'Bearer '+token},cache:'no-store'});
