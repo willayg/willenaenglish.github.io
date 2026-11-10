@@ -378,7 +378,7 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 /* The child's STT remains in the internal dialogue but is never shown to students. */
 #demo .conversation-text #log .entry.me{display:none!important}
 #demo #ftConversationState{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:58px;padding:9px 12px;background:#fff;color:#278a98;border-top:1px solid #e1eff1}
-#demo #ftConversationState[hidden]{display:none!important}
+#demo #ftConversationState[hidden]{display:flex!important}
 #demo #ftConversationState .ft-state-bars{display:flex;gap:4px;align-items:center;justify-content:center;height:26px;width:40px}
 #demo #ftConversationState .ft-state-bars i{width:4px;height:13px;background:#25a8b8;border-radius:5px;animation:ftBars .8s ease-in-out infinite alternate}
 #demo #ftConversationState .ft-state-bars i:nth-child(2){height:19px;animation-delay:-.3s}
@@ -390,11 +390,14 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #demo #ftConversationState[data-mode=thinking] .ft-state-bars i:nth-child(3){animation-delay:.24s}
 #demo #ftConversationState[data-mode=thinking] .ft-state-bars i:nth-child(4){animation-delay:.36s}
 #demo #ftConversationState[data-mode=thinking] .ft-state-bars i:nth-child(5){animation-delay:.48s}
-#demo #ftConversationState[data-mode=talking] .ft-state-bars i{background:#438daa}
+#demo #ftConversationState[data-mode=talking] .ft-state-bars{display:none}
+#demo #ftConversationState .ft-state-spinner{display:none;width:26px;height:26px;border:3px solid #c8ebef;border-top-color:#238fa2;border-right-color:#238fa2;border-radius:50%;animation:ftStateSpin .8s linear infinite;margin:0 7px}
+#demo #ftConversationState[data-mode=talking] .ft-state-spinner{display:block}
+@keyframes ftStateSpin{to{transform:rotate(360deg)}}
 #demo #ftConversationState .ft-state-label{font:800 15px/1.3 Poppins,Arial,sans-serif}
 @keyframes ftBars{from{transform:scaleY(.4);opacity:.5}to{transform:scaleY(1.1);opacity:1}}
 @keyframes ftDots{0%,65%,100%{transform:translateY(0);opacity:.4}33%{transform:translateY(-5px);opacity:1}}
-@media(prefers-reduced-motion:reduce){#demo #ftConversationState .ft-state-bars i{animation:none!important}}
+@media(prefers-reduced-motion:reduce){#demo #ftConversationState .ft-state-bars i,#demo #ftConversationState .ft-state-spinner{animation:none!important}}
 </style></head><body><aside id="ftEnginePanel" aria-label="AI conversation engine selector">
  <span class="ft-engine-tag">HYBRID EXPERIMENT</span>
  <strong>Free Talking — Model Lab</strong>
@@ -459,9 +462,9 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
   </div>
  </div>
  <div id="actorStage" class="actor-stage" data-phase="ready"></div>
-  <div id="ftConversationState" data-mode="thinking" role="status" aria-live="polite" aria-atomic="true" hidden>
+  <div id="ftConversationState" data-mode="thinking" role="status" aria-live="polite" aria-atomic="true">
    <span class="ft-state-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-   <span id="ftConversationStateLabel" class="ft-state-label">Thinking</span>
+   <span class="ft-state-spinner" aria-hidden="true"></span><span id="ftConversationStateLabel" class="ft-state-label">Thinking</span>
   </div>
  <div class="conversation-text" aria-label="Current conversation">
   <p id="anchorText" class="anchor-question" aria-live="polite">Your first question will appear here.</p>
@@ -496,4 +499,4 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-voice-status1"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-followups-status2"></script></body></html>
