@@ -296,9 +296,9 @@ export async function onRequestPost({request,env}){
    if(!review.ok)return json(502,{error:'Conversation review unavailable'});
    const data=await review.json();
    const raw=String(data?.output_text||data?.output?.flatMap(x=>x.content||[]).map(x=>x.text||'').join('')||'');
-   let verdict;try{verdict=JSON.parse(raw)}catch{return json(502,{error:'Review response unreadable'})}
+   let verdict;try{verdict=JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/gi,''))}catch{return json(502,{error:'Review response unreadable'})}
    if(!Array.isArray(verdict?.accepted))return json(502,{error:'Review response incomplete'});
-   const accepted=new Set(verdict.accepted.filter(Number.isInteger));
+   const accepted=new Set(verdict.accepted.map(Number).filter(Number.isInteger));
    const existing=new Set(entries.filter(x=>x.message_source==='review_credit').map(x=>150-x.turn_number));
    const stamp=Date.now(),credits=[];
    for(const row of students){
