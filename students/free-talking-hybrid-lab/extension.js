@@ -923,7 +923,7 @@ function sendHybrid(item){
      ftUsage.current.usageReported++;
     }
     handleRealtime({type:'response.done',response:{output:[{content:[{text:data.text}]}]}});
-   }catch(e){if(state.active)error('Hybrid text: '+String(e.message||e))}
+   }catch(e){if(state.active){error('Hybrid text: '+String(e.message||e));state.anchorResponding=false;state.hybridPendingContribution=false;state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');armIdleTimeout()}}
    finally{hybrid.responding=false}
   })();
   return true;
@@ -1203,6 +1203,7 @@ function processVerifiedSpeech(itemIds,speech){
  state.serverHeard=true;
  haltQuestionClock();
  appendLine('You',speech);
+ if(state.hybrid)$('anchorText').textContent='';
  state.verifiedAnswer=speech;
  if(state.questionExpired){state.questionExpired=false;state.questionRemainingMs=Math.max(6000,state.questionRemainingMs)}
   if(state.pendingWordConfirmation&&/^(?:no[, .]+)?(?:i (?:said|mean|meant)[, ]+)?(?:type|hype|plain|plane|play|playing|draw|drawing|tape)[.!? ]*$/i.test(speech)){
