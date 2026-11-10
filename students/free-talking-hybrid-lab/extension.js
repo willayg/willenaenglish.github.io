@@ -529,7 +529,7 @@ function studentTurnInProgress(){
  return Boolean(state.speechStartedAt||state.awaitingSpeechCommit||state.pendingSpeech.size||state.turnFragments.length||state.turnGraceTimer);
 }
 // Save text only (never the audio recording) for a restricted, expiring teacher review.
-function saveHybridTranscript(who,spoken,verdict='NEEDS_MORE',proof=null,stamp=null){
+function saveHybridTranscript(who,spoken,verdict='NEEDS_MORE',proof=null,stamp=null,source='ai_reply'){
  if(!state.hybrid||!state.active||!state.transcriptSessionId||!state.book?.id||!state.unit?.id)return;
  const sessionId=state.transcriptSessionId;
  const turnNumber=++state.transcriptTurnNumber;
@@ -538,7 +538,8 @@ function saveHybridTranscript(who,spoken,verdict='NEEDS_MORE',proof=null,stamp=n
    speaker:who==='You'?'student':'character',character:state.character,
   book_id:state.book.id,unit_id:state.unit.id,
   transcript_text:String(spoken).trim().slice(0,1500),
-  ...(who==='You'&&verdict==='QUALIFIES'&&proof?{verdict:'QUALIFIES',verdict_proof:proof,verdict_at:stamp}:{})};
+  ...(who==='You'?{verdict}: {message_source:source}),
+  ...(who==='You'&&verdict==='QUALIFIES'&&proof?{verdict_proof:proof,verdict_at:stamp}:{})};
  // Serialize writes to preserve dialogue order and avoid client-side race conditions.
  const previous=state.transcriptSaveQueue||Promise.resolve();
  state.transcriptSaveQueue=previous.catch(()=>{}).then(async()=>{
@@ -555,13 +556,13 @@ function saveHybridTranscript(who,spoken,verdict='NEEDS_MORE',proof=null,stamp=n
   console.warn('[Free Talking] transcript not saved',sessionId,turnNumber,String(lastError));
  });
 }
-function appendLine(who,text){
+function appendLine(who,text,source='ai_reply'){
  if(!String(text||'').trim())return;
  const row=document.createElement('div');row.className='entry'+(who==='You'?' me':'');
  const heading=document.createElement('b');heading.textContent=who==='You'?'What AI heard (may be inaccurate)':who;
  const detail=document.createElement('span');detail.textContent=String(text).trim();
  row.append(heading,detail);$('log').append(row);
- if(who!=='You'||!state.hybrid)saveHybridTranscript(who,text);
+ if(who!=='You'||!state.hybrid)saveHybridTranscript(who,text,'NEEDS_MORE',null,null,source);
  if($('log').children.length>30)$('log').firstElementChild.remove();
  $('log').scrollTop=$('log').scrollHeight;
 }
@@ -1101,7 +1102,7 @@ async function playAnchor(index){
  // context of a short student answer like "Pizza!".
  sendRealtime({type:'conversation.item.create',item:{type:'message',role:'assistant',
   content:[{type:'output_text',text:anchor.text}]}});
- appendLine(NAMES[state.character],anchor.text);
+ appendLine(NAMES[state.character],anchor.text,'book_anchor');
  if(state.hybrid&&releaseMode){
   // A production conversation must confirm that the opening turn is durable.
   await state.transcriptSaveQueue;
