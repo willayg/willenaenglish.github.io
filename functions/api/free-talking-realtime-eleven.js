@@ -39,27 +39,45 @@ export async function onRequestPost({request,env}){
   }
   const voiceId=VOICES[character];
   const voiceSettings={stability:0.5,similarity_boost:0.8,use_speaker_boost:false};
+  let directError='not-configured';
   if(key){
-   const upstream=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId)+'/stream?output_format=mp3_44100_128',{
-    method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
-    body:JSON.stringify({text:sentence,model_id:selectedModel.id,voice_settings:voiceSettings}),
-    signal:AbortSignal.timeout(24000)
-   });
-   if(!upstream.ok||!upstream.body){console.warn('ElevenLabs TTS',selectedModel.id,upstream.status);return reply(502,'ElevenLabs '+selectedModel.id+' HTTP '+upstream.status)}
-   return new Response(upstream.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Willena-TTS':selectedModel.id,'X-Willena-TTS-Route':'direct'}});
+   try{
+    const upstream=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId)+'/stream?output_format=mp3_44100_128',{
+     method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
+     body:JSON.stringify({text:sentence,model_id:selectedModel.id,voice_settings:voiceSettings}),
+     signal:AbortSignal.timeout(24000)
+    });
+    if(upstream.ok&&upstream.body)
+     return new Response(upstream.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Willena-TTS':selectedModel.id,'X-Willena-TTS-Route':'direct'}});
+    directError='HTTP '+upstream.status;
+    const detail=await upstream.json().catch(()=>null);
+    const code=String(detail?.detail?.status||detail?.error?.code||'').slice(0,64);
+    console.warn('[Free Talking TTS] direct ElevenLabs failed',upstream.status,code);
+   }catch(ex){
+    directError=ex?.name==='TimeoutError'?'timeout':'connection-error';
+    console.warn('[Free Talking TTS] direct ElevenLabs connection failed',directError);
+   }
   }
-  // Preview deployments often lack the Cloudflare ElevenLabs key. Reuse the
-  // EXACT previous proxy service already used in functions/api/free-talking-audio.js.
-  const fallback=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
-   method:'POST',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({text:sentence,voice_id:voiceId,model_id:selectedModel.id,voice_settings:voiceSettings}),
-   signal:AbortSignal.timeout(30000)
-  });
-  if(!fallback.ok){console.warn('ElevenLabs proxy',fallback.status);return reply(502,'ElevenLabs fallback HTTP '+fallback.status)}
-  const payload=await fallback.json().catch(()=>null);
-  if(typeof payload?.audio!=='string')return reply(502,'ElevenLabs fallback did not return audio');
-  const bytes=Uint8Array.from(atob(payload.audio),c=>c.charCodeAt(0));
-  if(bytes.length<500||bytes.length>1200000)return reply(502,'Invalid ElevenLabs audio');
-  return new Response(bytes,{status:200,headers:{'Content-Type':'audio/mpeg','Content-Length':String(bytes.length),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Willena-TTS':selectedModel.id,'X-Willena-TTS-Route':'netlify-fallback'}});
+  // Do not leave the conversation silent after a Cloudflare direct-request
+  // failure. The existing Netlify proxy uses independently configured secrets.
+  try{
+   const fallback=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:sentence,voice_id:voiceId,model_id:selectedModel.id,voice_settings:voiceSettings}),
+    signal:AbortSignal.timeout(30000)
+   });
+   if(!fallback.ok){
+    console.warn('[Free Talking TTS] both paths failed',{direct:directError,fallbackStatus:fallback.status});
+    return reply(502,'Voice unavailable (direct '+directError+', backup HTTP '+fallback.status+')');
+   }
+   const payload=await fallback.json().catch(()=>null);
+   if(typeof payload?.audio!=='string')return reply(502,'Voice backup returned no audio (direct '+directError+')');
+   const bytes=Uint8Array.from(atob(payload.audio),c=>c.charCodeAt(0));
+   if(bytes.length<500||bytes.length>1200000)return reply(502,'Voice backup returned invalid audio');
+   return new Response(bytes,{status:200,headers:{'Content-Type':'audio/mpeg','Content-Length':String(bytes.length),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Willena-TTS':selectedModel.id,'X-Willena-TTS-Route':'netlify-fallback'}});
+  }catch(ex){
+   console.warn('[Free Talking TTS] backup connection failed',{direct:directError,backup:String(ex?.name||'error')});
+   return reply(502,'Voice unavailable (direct '+directError+', backup connection failed)');
+  }
  }catch(error){console.warn('ElevenLabs realtime demo error',String(error));return reply(502,'Speech connection failed')}
 }
