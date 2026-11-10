@@ -471,7 +471,7 @@ function ftRecordAnswer(speech){
 }
 function ftFinishScores(){
  const answered=Math.min(12,state.contributions||0);
- return {rows:[],answered,helps:0,points:answered*3,stars:answered>=12?5:answered>=10?4:answered>=8?3:answered>=6?2:answered>=3?1:0};
+ return {rows:[],answered,helps:0,points:Math.max(0,answered-(state.sessionStartContributions||0))*3,stars:answered>=12?5:answered>=10?4:answered>=8?3:answered>=6?2:answered>=3?1:0};
 }
 function ftShowFinish(result){
  $('ftGuide').hidden=true;$('ftCelebration').hidden=false;
@@ -1710,7 +1710,7 @@ async function startConversation(){
  const continuing=Boolean(state.resumePhase);
  if(!continuing&&!state.guideAccepted){let dismissed=false;try{dismissed=localStorage.getItem(FT_GUIDE_KEY)==='1'}catch{}if(!dismissed){showFtGuide(true);return}}
  state.guideAccepted=false;if(!continuing){
-  state.questionRewards.clear();state.contributions=0;
+  state.questionRewards.clear();state.contributions=0;state.sessionStartContributions=0;
   state.transcriptSessionId=crypto.randomUUID();
   state.transcriptTurnNumber=0;state.transcriptSaved=0;state.transcriptSaveErrors=0;
   state.transcriptSaveQueue=Promise.resolve();
@@ -1749,6 +1749,7 @@ async function startConversation(){
    const count=Math.max(0,Math.min(12,Number(savedProgress.contributions)||0));
    // Once gold is reached, further conversations remain available from 0.
    state.contributions=count===12?0:count;
+   state.sessionStartContributions=state.contributions;
    renderTopicTicker();
   }
   const res=await authorizedDemoFetch(state.hybrid?'/api/free-talking-hybrid-lab':'/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id,guided:true,action:'lesson'},startAbort.signal);
