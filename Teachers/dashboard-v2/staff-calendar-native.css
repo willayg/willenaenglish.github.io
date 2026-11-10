@@ -1,0 +1,67 @@
+/* Native Willena teachers calendar — scoped to Dashboard view. */
+#view-staff-calendar{--wc-ink:#274352;--wc-muted:#6a7f88;--wc-line:#dce9ed;--wc-pink:#eb65a0;--wc-cyan:#64c8d4;color:var(--wc-ink)}
+#view-staff-calendar .wc-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+#view-staff-calendar .wc-head h1{font-size:27px;margin:2px 0 5px}
+#view-staff-calendar .wc-head p{font-size:12px;margin:0;color:var(--wc-muted)}
+#view-staff-calendar button,#view-staff-calendar select,#view-staff-calendar input,#view-staff-calendar textarea{font:inherit}
+#view-staff-calendar button{cursor:pointer}
+#view-staff-calendar .wc-button{border:1px solid #cfe3e8;border-radius:10px;padding:9px 13px;background:#fff;color:#287785;font-size:12px;font-weight:700;min-height:38px}
+#view-staff-calendar .wc-button:hover{background:#effbfc}
+#view-staff-calendar .wc-primary{background:var(--wc-pink);border-color:var(--wc-pink);color:#fff}
+#view-staff-calendar .wc-primary:hover{background:#d9538e}
+#view-staff-calendar .wc-button:disabled{opacity:.5;cursor:not-allowed}
+#view-staff-calendar .wc-notice{background:#f2fafb;border:1px solid #cfe7ed;border-radius:12px;padding:12px 15px;color:#356372;font-size:12px;margin:0 0 16px}
+#view-staff-calendar .wc-notice.error{background:#fff3f6;border-color:#f0c3d1;color:#a44164}
+#view-staff-calendar .wc-board{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:17px}
+#view-staff-calendar .wc-card{background:#fff;border:1px solid var(--wc-line);border-radius:20px;box-shadow:0 5px 22px #183b4510;overflow:hidden}
+#view-staff-calendar .wc-toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:15px;border-bottom:1px solid var(--wc-line)}
+#view-staff-calendar .wc-period{font-size:20px;font-weight:750;margin-right:auto}
+#view-staff-calendar .wc-mode{display:flex;gap:3px;padding:3px;background:#f4f9fa;border:1px solid var(--wc-line);border-radius:12px}
+#view-staff-calendar .wc-mode .wc-button{padding:6px 9px;border:0;background:transparent}
+#view-staff-calendar .wc-mode .wc-button.active{background:#e0f4f6}
+#view-staff-calendar .wc-weekdays,#view-staff-calendar .wc-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+#view-staff-calendar .wc-weekdays{background:#f7fafb;border-bottom:1px solid var(--wc-line)}
+#view-staff-calendar .wc-weekdays span{text-align:center;font-weight:650;font-size:11px;color:#77919a;padding:12px 0}
+#view-staff-calendar .wc-day{background:#fff;min-width:0;min-height:115px;padding:7px 5px;border-right:1px solid #e9eff2;border-bottom:1px solid #e9eff2;cursor:pointer}
+#view-staff-calendar .wc-day:nth-child(7n){border-right:0}
+#view-staff-calendar .wc-day.other{background:#fafcfd;color:#a2b0b8}
+#view-staff-calendar .wc-day:hover{background:#f6fcfd}
+#view-staff-calendar .wc-day:focus-visible,#view-staff-calendar button:focus-visible{outline:3px solid #7cd6e0;outline-offset:0}
+#view-staff-calendar .wc-day-number{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:750;margin-bottom:5px}
+#view-staff-calendar .wc-day.today .wc-day-number{background:var(--wc-pink);color:#fff}
+#view-staff-calendar .wc-event{display:block;width:100%;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:0;border-left:3px solid #54b7c5;background:#e7f8fb;color:#256774;padding:5px 6px;margin:3px 0;border-radius:5px;font-size:10px;font-weight:650;line-height:1.4}
+#view-staff-calendar .wc-event.staff{border-color:#df70a8;background:#fff0f7;color:#923e6b}
+#view-staff-calendar .wc-event.academic{border-color:#9182d4;background:#f1efff;color:#60529a}
+#view-staff-calendar .wc-event.deadline{border-color:#d9a34d;background:#fff4e6;color:#90611d}
+#view-staff-calendar .wc-more{font-size:10px;color:#728b95;padding:3px}
+#view-staff-calendar .wc-side{padding:18px}
+#view-staff-calendar .wc-side h3{font-size:14px;margin:0 0 10px}
+#view-staff-calendar .wc-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+#view-staff-calendar .wc-filter{font-size:10px;border:1px solid #e0e9ed;background:#fff;border-radius:8px;padding:6px 8px;color:#54717a;cursor:pointer}
+#view-staff-calendar .wc-filter.off{opacity:.4;text-decoration:line-through}
+#view-staff-calendar .wc-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;background:#55b7c7}
+#view-staff-calendar .wc-dot.staff{background:#df70a8}
+#view-staff-calendar .wc-dot.academic{background:#9182d4}
+#view-staff-calendar .wc-dot.deadline{background:#d9a34d}
+#view-staff-calendar .wc-upcoming{border-top:1px solid var(--wc-line);padding-top:16px}
+#view-staff-calendar .wc-upcoming button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #eef2f4;padding:11px 2px;background:white}
+#view-staff-calendar .wc-upcoming small{display:block;font-size:10px;color:#82939d}
+#view-staff-calendar .wc-upcoming strong{font-size:12px;color:#254451}
+#view-staff-calendar .wc-empty{color:#82939d;font-size:12px;line-height:1.7}
+.wc-dialog{border:1px solid #cbe2e8;border-radius:18px;box-shadow:0 25px 85px #182c3e56;padding:0;width:min(470px,calc(100vw - 26px));font-family:Poppins,Arial,sans-serif;color:#28424e}
+.wc-dialog::backdrop{background:#172c3db0}
+.wc-dialog .wc-dialog-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2ebef;padding:17px 20px}
+.wc-dialog h2{font-size:19px;margin:0}
+.wc-dialog .wc-dialog-body{padding:17px 20px}
+.wc-dialog .wc-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.wc-dialog label{font-size:11px;font-weight:700;color:#51717d}
+.wc-dialog input,.wc-dialog textarea,.wc-dialog select{border:1px solid #d2e2e7;border-radius:9px;background:white;padding:10px 11px;font-size:13px;color:#28424e;width:100%}
+.wc-dialog textarea{min-height:77px;resize:vertical}
+.wc-dialog .wc-formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.wc-dialog .wc-dialog-actions{display:flex;gap:8px;justify-content:flex-end;padding:0 20px 18px}
+.wc-dialog .wc-button{padding:9px 12px;border:1px solid #cfe3e8;border-radius:10px;background:#fff;color:#277483;cursor:pointer;font-size:12px;font-weight:700}
+.wc-dialog .wc-primary{background:#eb65a0;border-color:#eb65a0;color:white}
+.wc-dialog .wc-delete{margin-right:auto;color:#b14264;border-color:#f0c4d1}
+.wc-dialog .wc-error{color:#aa3658;font-size:12px}
+@media(max-width:1050px){#view-staff-calendar .wc-board{grid-template-columns:1fr}#view-staff-calendar .wc-side{display:grid;grid-template-columns:1fr 1fr;gap:15px}#view-staff-calendar .wc-upcoming{border:0;padding:0}}
+@media(max-width:600px){#view-staff-calendar .wc-head h1{font-size:23px}#view-staff-calendar .wc-toolbar{padding:10px;gap:5px}#view-staff-calendar .wc-period{font-size:16px;min-width:100%;margin-bottom:2px}#view-staff-calendar .wc-day{min-height:86px;padding:4px 2px}#view-staff-calendar .wc-day-number{width:22px;height:22px;font-size:10px}#view-staff-calendar .wc-event{font-size:9px;padding:4px 3px}#view-staff-calendar .wc-event .wc-time{display:none}#view-staff-calendar .wc-side{display:block}.wc-dialog .wc-formgrid{grid-template-columns:1fr}}
