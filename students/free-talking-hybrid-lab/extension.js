@@ -316,29 +316,16 @@ function ftCompletionRead(){try{return ftCompletionKey()?JSON.parse(localStorage
 function ftCompletionSave(result){const key=ftCompletionKey();if(!key)return;try{const old=ftCompletionRead();const completed=Math.max(Number(old?.answered)||0,result.answered);localStorage.setItem(key,JSON.stringify({answered:completed,stars:Math.max(Number(old?.stars)||0,result.stars),updatedAt:Date.now()}))}catch{}}
 function prepareCard(){
  const d=appDocument(),card=d?.getElementById('ftFreeTalkingCard');if(!card)return;
- const completed=ftCompletionRead(),answered=Math.max(0,Math.min(12,Number(completed?.answered)||0));
- // The original frame is watched by MutationObserver. Never rewrite the same
- // card on every mutation or the observer will trigger an infinite render loop.
- const renderKey=(ftCompletionKey()||'unknown')+':'+answered;
- if(card.dataset.extension==='ready'&&card.dataset.ftRenderKey===renderKey)return;
+ // This overlay only unlocks navigation. The original Free Talking app owns
+ // the ring and reads the authoritative cumulative progress from Supabase.
+ // Never overwrite its percentage using session-local completion storage.
+ if(card.dataset.extension==='ready')return;
  card.dataset.extension='ready';
- card.dataset.ftRenderKey=renderKey;
  if(card.disabled)card.disabled=false;
- if(card.hasAttribute('aria-disabled'))card.removeAttribute('aria-disabled');
+ card.removeAttribute('aria-disabled');
  card.classList.remove('ft-coming-soon-card');
- card.setAttribute('aria-label','Free Talking · 12 conversation turns');
  card.style.opacity='1';card.style.filter='none';card.style.cursor='pointer';card.style.pointerEvents='auto';
- const step=card.querySelector('.vocab-skill-step');if(step&&step.textContent!=='STEP 2')step.textContent='STEP 2';
- const detail=card.querySelector('.vocab-card-stars');
- const detailText=answered?answered+'/12 대화 완료 · 골든 유닛 조건 아님':'12번 대화하기 · 골든 유닛 조건 아님';
- if(detail&&detail.textContent!==detailText)detail.textContent=detailText;
- const ring=card.querySelector('.vocab-skill-ring span');
- const ringText=answered?Math.round(answered/12*100)+'%':'0%';
- if(ring&&ring.textContent!==ringText)ring.textContent=ringText;
- const ringHost=card.querySelector('.vocab-skill-ring');
- if(ringHost)ringHost.style.setProperty('--progress',String(answered/12*100));
 }
-
 function bindOriginalFrame(){
  const d=appDocument();if(!d||d.documentElement.dataset.ftRealtimeExtensionBound==='1')return;
  d.documentElement.dataset.ftRealtimeExtensionBound='1';
