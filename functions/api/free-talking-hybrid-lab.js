@@ -382,6 +382,7 @@ export async function onRequestPost({request,env}){
   const data=await response.json().catch(()=>null);
   const gradingData=gradingResponse?.ok?await gradingResponse.json().catch(()=>null):null;
   const gradingText=String(gradingData?.output_text||gradingData?.output?.flatMap(x=>x.content||[]).map(x=>x.text||'').join('')||'').trim().toUpperCase();
+  if(evaluateAnswer&&(!gradingResponse?.ok||!/(?:QUALIFIES|NEEDS_MORE|HELP_REQUEST)/.test(gradingText)))return json(502,{error:'Conversation evaluation temporarily unavailable. Please try your answer again.'});
   if(!response.ok)return json(502,{error:'Text generation failed ('+response.status+'): '+String(data?.error?.message||'').slice(0,150)});
   const rawText=String(data?.output_text||data?.output?.flatMap(o=>o.content||[]).map(x=>x.text||'').join('')||'').trim();
   const explicitNewTopic=/\[\[NEW_TOPIC\]\]/i.test(rawText);
