@@ -2,22 +2,49 @@
 (()=>{
 'use strict';
 const API='/api/native-staff-calendar';
+const GOOGLE='/api/staff-calendar';
 const CATS={events:'Willena events',staff:'Staff',academic:'Academic',deadline:'Deadlines'};
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 const dayKey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const parse=s=>{const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d)};
 const today=new Date();
-const state={cursor:new Date(today.getFullYear(),today.getMonth(),1),mode:'month',events:[],visible:new Set(Object.keys(CATS)),loaded:false,loading:false,open:false,edit:null,saving:false};
+const state={cursor:new Date(today.getFullYear(),today.getMonth(),1),mode:'month',events:[],visible:new Set(Object.keys(CATS)),loaded:false,loading:false,open:false,edit:null,saving:false,source:'native',googleReady:false,admin:false};
 function node(tag,className,text){const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=text;return n}
 function notice(s,error=false){const el=$('wcNotice');if(!el)return;el.textContent=s;el.hidden=!s;el.classList.toggle('error',error)}
-async function api(method,path,body){
+async function api(method,path,body,google=false){
  const headers={'Content-Type':'application/json'};
  const backup=window.WillenaAPI?.getLocalAccessToken?.()||'';
  // Same fallback as other Dashboard APIs; server verifies JWT before using it.
  if(backup.split('.').length===3)headers.Authorization='Bearer '+backup;
- const r=await fetch(API+path,{method,credentials:'include',cache:'no-store',headers,body:body?JSON.stringify(body):undefined});
+ const r=await fetch((google?GOOGLE:API)+path,{method,credentials:'include',cache:'no-store',headers,body:body?JSON.stringify(body):undefined});
  const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw Error(j.error||'Calendar request failed ('+r.status+')');return j;
+}
+function googleNotice(text,connected=false){
+ const el=$('wcGoogleStatus');if(!el)return;el.textContent=text;el.classList.toggle('connected',connected)
+}
+async function checkGoogle(){
+ try{
+  const status=await api('GET','/status',null,true);
+  state.googleReady=!!status.connected;state.admin=!!status.admin;
+  state.source=status.connected?'google':'native';
+  const connect=$('wcConnectGoogle');
+  if(connect)connect.hidden=status.connected||!status.admin;
+  googleNotice(status.connected?'Google Calendar connected · Events sync in both directions':'Google Calendar not connected · Shared Willena events only',status.connected);
+ }catch(e){
+  state.googleReady=false;state.source='native';
+  const connect=$('wcConnectGoogle');if(connect)connect.hidden=true;
+  googleNotice('Google sync unavailable: '+e.message);
+ }
+}
+async function connectGoogle(){
+ const btn=$('wcConnectGoogle');if(!btn)return;
+ btn.disabled=true;
+ try{
+  const result=await api('POST','/connect',{},true);
+  if(!result.authorization_url||!result.authorization_url.startsWith('https://accounts.google.com/'))throw Error('Authorization URL unavailable');
+  window.location.assign(result.authorization_url)
+ }catch(e){googleNotice('Could not connect Google: '+e.message);btn.disabled=false}
 }
 function weekStart(d){const r=new Date(d.getFullYear(),d.getMonth(),d.getDate());r.setDate(r.getDate()-r.getDay());return r}
 function occurrence(e,d){
@@ -74,9 +101,11 @@ function upcoming(){
 async function load(){
  if(state.loading)return;
  state.loading=true;notice('Loading shared staff calendar…');
- try{const start=new Date(today.getFullYear()-1,today.getMonth(),1),end=new Date(Math.max(today.getFullYear(),state.cursor.getFullYear())+2,11,31);
-  const r=await api('GET','?from='+dayKey(start)+'&to='+dayKey(end));
-  state.events=r.events||[];state.loaded=true;notice('');render()
+ try{
+  const start=state.source==='google'?new Date(state.cursor.getFullYear(),state.cursor.getMonth()-1,1):new Date(today.getFullYear()-1,today.getMonth(),1);
+  const end=state.source==='google'?new Date(state.cursor.getFullYear(),state.cursor.getMonth()+9,0):new Date(Math.max(today.getFullYear(),state.cursor.getFullYear())+2,11,31);
+  const data=state.source==='google'?await api('GET','/events?from='+dayKey(start)+'&to='+dayKey(end),null,true):await api('GET','?from='+dayKey(start)+'&to='+dayKey(end));
+  state.events=data.events||[];state.loaded=true;notice('');render()
  }catch(e){notice(e.message,true)}
  finally{state.loading=false}
 }
@@ -89,34 +118,37 @@ function edit(ev=null,date=dayKey(today)){
  $('wcTime').value=ev?.event_time?.slice(0,5)||'';
  $('wcCategory').value=ev?.category||'events';
  $('wcRepeat').value=ev?.repeat_rule||'none';
+ $('wcRepeat').disabled=state.source==='google'&&!!ev?.recurring_event_id;
  $('wcNotes').value=ev?.notes||'';
  $('wcDelete').hidden=!ev;$('wcFormError').textContent='';
  dialog.showModal();$('wcTitle').focus();
 }
 async function save(e){
  e.preventDefault();if(state.saving)return;state.saving=true;
- const item={id:state.edit,title:$('wcTitle').value.trim(),date:$('wcDate').value,time:$('wcTime').value,category:$('wcCategory').value,repeat:$('wcRepeat').value,notes:$('wcNotes').value.trim()};
+ const selected=state.events.find(e=>e.id===state.edit);
+ const item={id:state.edit,title:$('wcTitle').value.trim(),date:$('wcDate').value,time:$('wcTime').value,category:$('wcCategory').value,repeat:$('wcRepeat').value,notes:$('wcNotes').value.trim(),recurring_event_id:selected?.recurring_event_id||null};
  const submit=$('wcSave');submit.disabled=true;
- try{await api(state.edit?'PATCH':'POST','',item);$('wcDialog').close();await load()}
+ try{await api(state.edit?'PATCH':'POST',state.source==='google'?'/events':'',item,state.source==='google');$('wcDialog').close();await load()}
  catch(e){$('wcFormError').textContent=e.message}
  finally{state.saving=false;submit.disabled=false}
 }
 async function remove(){
  if(state.saving||!state.edit||!confirm('Delete this event and all repeats?'))return;
  state.saving=true;
- try{await api('DELETE','',{id:state.edit});$('wcDialog').close();await load()}
+ try{await api('DELETE',state.source==='google'?'/events':'',{id:state.edit},state.source==='google');$('wcDialog').close();await load()}
  catch(e){$('wcFormError').textContent=e.message}
  finally{state.saving=false}
 }
 function init(){
  if(state.open)return;state.open=true;
  $('wcNew').onclick=()=>edit();
- $('wcPrev').onclick=()=>{state.cursor=state.mode==='month'?new Date(state.cursor.getFullYear(),state.cursor.getMonth()-1,1):new Date(state.cursor.getFullYear(),state.cursor.getMonth(),state.cursor.getDate()-7);render()};
- $('wcNext').onclick=()=>{state.cursor=state.mode==='month'?new Date(state.cursor.getFullYear(),state.cursor.getMonth()+1,1):new Date(state.cursor.getFullYear(),state.cursor.getMonth(),state.cursor.getDate()+7);render()};
- $('wcToday').onclick=()=>{state.cursor=new Date(today);render()};
+ $('wcConnectGoogle').onclick=connectGoogle;
+ $('wcPrev').onclick=()=>{state.cursor=state.mode==='month'?new Date(state.cursor.getFullYear(),state.cursor.getMonth()-1,1):new Date(state.cursor.getFullYear(),state.cursor.getMonth(),state.cursor.getDate()-7);render();if(state.source==='google')load()};
+ $('wcNext').onclick=()=>{state.cursor=state.mode==='month'?new Date(state.cursor.getFullYear(),state.cursor.getMonth()+1,1):new Date(state.cursor.getFullYear(),state.cursor.getMonth(),state.cursor.getDate()+7);render();if(state.source==='google')load()};
+ $('wcToday').onclick=()=>{state.cursor=new Date(today);render();if(state.source==='google')load()};
  $('wcMonth').onclick=()=>{state.mode='month';render()};
  $('wcWeek').onclick=()=>{state.mode='week';render()};
- $('wcRefresh').onclick=load;
+ $('wcRefresh').onclick=async()=>{await checkGoogle();load()};
  $('wcForm').addEventListener('submit',save);
  $('wcCancel').onclick=$('wcClose').onclick=()=>$('wcDialog').close();
  $('wcDelete').onclick=remove;
@@ -127,5 +159,5 @@ function init(){
  render();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('view-staff-calendar')?.classList.contains('active'))load()});
 }
-window.WillenaStaffCalendar={open(){init();load()}};
+window.WillenaStaffCalendar={open(){init();checkGoogle().then(load)}};
 })();
