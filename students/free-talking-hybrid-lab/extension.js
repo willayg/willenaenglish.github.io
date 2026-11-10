@@ -1498,7 +1498,7 @@ function requestGuidedReply(){
   'Current textbook question: "'+anchor.text+'". React to the STUDENT\'S MOST RECENT ANSWER, not an earlier answer.',
   studentQuestion?'The student ALSO asked you a question. Answer their question naturally in one short sentence BEFORE the usual reaction or follow-up. For example, "Yes, I like blue!" Never ignore a question directed at you.':'',
   state.hybrid
-   ?'FLEXIBLE LESSON RESPONSE: decide whether the current textbook question has been meaningfully answered. If it has, give one short reaction without a question and mark ADVANCE. Otherwise ask ONE simple question or offer a choice related to the original textbook question and mark CONTINUE. The app will play the next textbook question after ADVANCE.'
+   ?'FLEXIBLE LESSON RESPONSE: Be curious, not an examiner. If the child makes a clear grammar error, sometimes echo the naturally corrected form as part of a real reaction, without making the child repeat or explaining grammar. Example: Child says I go swimming about a past vacation; say Oh, you went swimming! Cool. Was the water cold? Do NOT assume a recognition error is a grammar mistake. Do not simply confirm information already communicated. If the topic has a meaningful answer, briefly react and mark ADVANCE, or ask ONE genuinely interesting follow-up and mark CONTINUE when worthwhile. If their meaning remains unclear, gently rephrase or offer a choice and mark CONTINUE. The app plays the next textbook question after ADVANCE.'
    :second
     ?'SECOND ANSWER. Make one short relevant reaction about the latest answer. NO QUESTION. Do not introduce the next topic.'
     :'FIRST ANSWER. React briefly and ask ONE on-topic follow-up QUESTION. Do not ask the next textbook question.',
