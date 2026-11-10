@@ -1219,7 +1219,7 @@ function processVerifiedSpeech(itemIds,speech){
  if(state.hybrid)$('anchorText').textContent='';
  state.verifiedAnswer=speech;
  if(state.questionExpired){state.questionExpired=false;state.questionRemainingMs=Math.max(6000,state.questionRemainingMs)}
-  if(state.pendingWordConfirmation&&/^(?:no[, .]+)?(?:i (?:said|mean|meant)[, ]+)?(?:type|hype|plain|plane|play|playing|draw|drawing|tape)[.!? ]*$/i.test(speech)){
+  if(!state.hybrid&&state.pendingWordConfirmation&&/^(?:no[, .]+)?(?:i (?:said|mean|meant)[, ]+)?(?:type|hype|plain|plane|play|playing|draw|drawing|tape)[.!? ]*$/i.test(speech)){
    const term=speech.toLowerCase().match(/(?:type|hype|plain|plane|play|playing|draw|drawing|tape)/i)?.[0];
    if(term){state.pendingWordConfirmation=null;ftTopicReward().help=true;state.asideKind='vocabulary';state.asideTerm=term;deleteSpeech();requestGuidedAside();return}
   }
@@ -1267,11 +1267,9 @@ function processVerifiedSpeech(itemIds,speech){
 // language. Only a short, concrete English vocabulary query can interrupt
 // the two-answer textbook rhythm.
 function classifyNaturalTurn(text){
- // Retain explicit vocabulary translation and question-explanation help,
- // but never redirect a genuine conversational tangent back to the unit.
- const speech=String(text||'').trim();
- const recognizedHelp=classifyStudentTurn(speech);
- if(['question_help','vocabulary','clarify'].includes(recognizedHelp.kind))return recognizedHelp;
+ // Free Talking never diverts a spoken contribution into the scripted
+ // textbook-help flow. The conversational character handles vocabulary,
+ // Korean explanations, curiosity and tangents in its own natural reply.
  return {kind:'answer'};
 }
 function classifyStudentTurn(text){
