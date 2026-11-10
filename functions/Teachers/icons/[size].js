@@ -41,10 +41,13 @@ function icon(size){
  const indexed=[];
  for(let j=0;j<size;j++){
   indexed.push(0);
+  const y=(j+.5)*512/size;
+  // Prune distant strokes before iterating pixels; works within Workers CPU budgets.
+  const row=lines.filter(([a,b,c,d])=>y>=Math.min(b,d)-9&&y<=Math.max(b,d)+9);
   for(let i=0;i<size;i++){
-   const x=(i+.5)*512/size,y=(j+.5)*512/size;
+   const x=(i+.5)*512/size;
    let index=0;
-   if(lines.some(([a,b,c,d])=>d2(x,y,a,b,c,d)<(9*9)))index=2;
+   if(row.some(([a,b,c,d])=>x>=Math.min(a,c)-9&&x<=Math.max(a,c)+9&&d2(x,y,a,b,c,d)<81))index=2;
    indexed.push(index)
   }
  }
