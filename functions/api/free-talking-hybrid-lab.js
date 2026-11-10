@@ -188,7 +188,7 @@ function responseGuide(book,unit){
   'Match this level in EVERY reaction, follow-up, clarification and transition. Prefer direct familiar questions. Never use difficult structures just to sound natural.',
   'For Levels Starter–5 do not use hypothetical would/could questions unless this exact unit teaches them. Prefer do you want to, do you like to, can you, are you going to, and simple present/past as actually taught.',
   'Choose reactions that fit what the student really said. If meaning is unclear, say you did not understand and ask for repetition. Never guess events, feelings or experiences.',
-  'Response examples are illustrations only, not randomly chosen sound bites. Ask only a follow-up about the current anchor when the client requests one.'
+  'Response examples are illustrations only, not randomly chosen sound bites. Ask a follow-up only when the textbook question needs more clarification or the client requests one.'
  ].join('\\n');
 }
 
