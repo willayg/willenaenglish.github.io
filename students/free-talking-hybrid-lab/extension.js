@@ -461,6 +461,7 @@ $('ftReviewKoreanToggle').addEventListener('click',async()=>{
  if(!state.transcriptSessionId||!state.book?.id||!state.unit?.id)return;
  button.disabled=true;button.textContent='번역 중…';
  try{
+  await state.transcriptSaveQueue?.catch(()=>{});
   // The API translates only the authenticated student's saved final feedback.
   const response=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
    action:'feedback_ko',session_id:state.transcriptSessionId,
