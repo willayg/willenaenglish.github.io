@@ -1777,6 +1777,7 @@ async function startConversation(){
    },startAbort.signal);
    const claimData=await claim.json().catch(()=>({}));
    if(!claim.ok||!claimData.allowed)throw Error(claimData.error||'Free Talking is unavailable today.');
+   if(claimData.session_id)state.transcriptSessionId=claimData.session_id;
    if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
    monitorMicrophone(mic);
    state.micUserMuted=false;state.ttsPlaying=false;
@@ -1954,7 +1955,14 @@ async function initStandaloneRelease(){
   if(!quotaResponse.ok)throw Error(quota.error||'Unable to check your daily session.');
   if(!quota.allowed){showError('오늘의 Free Talking을 이미 했어요. 내일 다시 만나요!');return}
   ready=true;
-  buttons.forEach(button=>button.disabled=false);
+  // If only the opening question was previously saved, let the student
+  // retry with that same character and retain the original session ID.
+  if(quota.resumable&&quota.previousCharacter){
+   buttons.forEach(button=>button.disabled=button.id!==
+    (quota.previousCharacter==='bunny'?'ftChooseLili':quota.previousCharacter==='pigfish'?'ftChoosePigfish':'ftChooseWilli'));
+   const nickname=quota.previousCharacter==='bunny'?'Bunny Fox':quota.previousCharacter==='pigfish'?'Pigfish':'AI Willi';
+   intro.querySelector('.ft-release-sub').textContent='지난 대화가 시작되지 않았어요. '+nickname+'와 다시 시작할 수 있어요.';
+  }else buttons.forEach(button=>button.disabled=false);
  }catch(e){showError(e.message||'Could not prepare Free Talking.')}
 }
 
