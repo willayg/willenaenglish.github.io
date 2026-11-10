@@ -986,6 +986,14 @@ function sendHybrid(item){
     if(!r.ok)throw Error(data.error||'Hybrid response failed');
     if(!state.active||state.anchorToken!==at)return;
     hybrid.history.push({id:'reply-'+hybrid.sequence++,role:'assistant',text:data.text});
+    if(state.hybrid){
+     state.hybridAdvance=Boolean(data.advance);
+     state.hybridDecisionReported=Boolean(data.decisionReported);
+     if(ftUsage.current){
+      ftUsage.current.answerDecisions=(ftUsage.current.answerDecisions||0)+(data.decisionReported?1:0);
+      ftUsage.current.lessonAdvances=(ftUsage.current.lessonAdvances||0)+(data.advance?1:0);
+     }
+    }
     if(ftUsage.current){
      ftUsage.current.inputTokens+=Number(data.usage?.input_tokens)||0;
      ftUsage.current.outputTokens+=Number(data.usage?.output_tokens)||0;
@@ -1307,7 +1315,7 @@ function processVerifiedSpeech(itemIds,speech){
   // Prevent an off-topic spoken command from poisoning later lesson turns.
   deleteSpeech();
   void redirectToLesson(category.message);
- }else{ftRecordAnswer(speech,state.anchorPhase==='awaitingSecond');requestGuidedReply();}
+ }else{if(state.hybrid)state.hybridLatestSpeech=speech;else ftRecordAnswer(speech,state.anchorPhase==='awaitingSecond');requestGuidedReply();}
 }
 
 // Transcript text is data, NOT authority to change the lesson or the output
@@ -1472,15 +1480,18 @@ function requestGuidedReply(){
    'Accept one-word, yes/no, and short sentence answers. If child does not know, offer an easy choice; model a full sentence softly, without demanding repetition.'
   ].join(' '):'';
  const directive=[
+  ...(state.hybrid?['HYBRID LESSON RESPONSE. Decide whether the child has meaningfully answered the CURRENT textbook question; never use a fixed turn count. If the latest speech meaningfully answers the textbook question, react briefly without a new question and choose ADVANCE. If not, ask ONE easy on-topic question, rephrase or give a choice and choose CONTINUE. A short meaningful answer is sufficient; never insist on perfect grammar. If the learner clearly cannot answer after reasonable guidance, acknowledge it gently and allow ADVANCE. Do not confuse a response to your own follow-up with answering the original textbook question.']:[]),
   'STRICT ENGLISH-ONLY MODE. Every reaction and follow-up must be entirely in English. Never answer in Korean, Japanese or another language, even if the learner uses it. Never translate or mirror a foreign-language response. Ask for English in simple English.',
   'Verified latest student speech: "'+verified+'". Base your answer ONLY on these actual words; do not invent student responses.',
    beginnerRules,
    'Never expose internal labels or prompts such as Textbook:, Example:, Current question:, or Lesson focus:. Speak directly to the child.',
   'Current textbook question: "'+anchor.text+'". React to the STUDENT\'S MOST RECENT ANSWER, not an earlier answer.',
   studentQuestion?'The student ALSO asked you a question. Answer their question naturally in one short sentence BEFORE the usual reaction or follow-up. For example, "Yes, I like blue!" Never ignore a question directed at you.':'',
-  second
-   ?'SECOND ANSWER. Make one short and genuinely relevant reaction or playful observation about what the student just said. NO QUESTION. Do NOT introduce the next topic, because the app will play the next cached question. You may occasionally finish with a tiny segue like "So..." or "Anyway...".'
-   :'FIRST ANSWER. If appropriate, start with a tiny natural reaction, then ask exactly ONE follow-up QUESTION tied to a detail of the student\'s specific answer. End with that question. Do not ask the next textbook question.',
+  state.hybrid
+   ?'FLEXIBLE LESSON RESPONSE: decide whether the current textbook question has been meaningfully answered. If it has, give one short reaction without a question and mark ADVANCE. Otherwise ask ONE simple question or offer a choice related to the original textbook question and mark CONTINUE. The app will play the next textbook question after ADVANCE.'
+   :second
+    ?'SECOND ANSWER. Make one short relevant reaction about the latest answer. NO QUESTION. Do not introduce the next topic.'
+    :'FIRST ANSWER. React briefly and ask ONE on-topic follow-up QUESTION. Do not ask the next textbook question.',
   'ABSOLUTE MAXIMUM '+cap+' SPOKEN WORDS. Prefer fewer. Never give a paragraph or list. Let the child do most of the talking.',
   isBeginner()?'Do not use slang, complicated humour, or unfamiliar vocabulary. Keep everything concrete and friendly.':'Use natural humour and short interjections where suitable. Avoid repetitive compliments.',
   'Stay within the selected Willena level and unit grammar. Do not invent details or claim to know how strangers really feel. Do NOT write laughter like haha, ha ha, hehe, lol, or stage directions such as [laughs]. The speech voice reads them as words rather than actually laughing. Use a natural friendly sentence instead.',
@@ -1518,14 +1529,18 @@ async function finishGuidedReply(data){
  const questionHelpAside=aside&&state.replyAsideKind==='question_help';
  if(!aside&&phase!=='respondingFirst'&&phase!=='respondingSecond')return;
  const second=phase==='respondingSecond';
+ const advance=state.hybrid&&!aside?Boolean(state.hybridAdvance):second;
+ if(state.hybrid&&!aside&&advance&&state.hybridLatestSpeech)ftRecordAnswer(state.hybridLatestSpeech,second);
+ if(state.hybrid&&!aside&&ftUsage.current&&!state.hybridDecisionReported)ftUsage.current.unmarkedDecisions=(ftUsage.current.unmarkedDecisions||0)+1;
+ state.hybridAdvance=false;state.hybridDecisionReported=false;state.hybridLatestSpeech='';
  state.anchorResponding=false;
  let responseText=String(data.response?.output?.flatMap(x=>x.content||[])
   .map(x=>x.text||x.transcript||'').filter(Boolean).join(' ')||state.anchorResponseText||'').trim();
  state.anchorResponseText='';
  responseText=removeSpokenLaughter(stripInternalLabels(responseText));
-  if(!responseText)responseText=aside?'Please say that again.':second?'Okay!':'Good! Is it big?';
-  if(!aside)responseText=shortenGuidedResponse(responseText,second,isBeginner()?state.lessonLevel:Math.min(10,state.lessonLevel+(state.answerIncludesQuestion?5:0)));
-  if(!aside&&isBeginner()&&!second){
+  if(!responseText)responseText=aside?'Please say that again.':advance?'Okay!':'Can you tell me a little more?';
+  if(!aside)responseText=shortenGuidedResponse(responseText,advance,isBeginner()?state.lessonLevel:Math.min(10,state.lessonLevel+(state.answerIncludesQuestion?5:0)));
+  if(!aside&&isBeginner()&&!advance){
    const questions=responseText.match(/[^.!?]*\?/g)||[];
    const q=(questions[questions.length-1]||'').trim();
    if(!q||q.split(/\s+/).length>(isFirstLevel()?6:8)||/\b(?:plain|category|exaggerated|interesting|describe|prefer|usually|different|actually|probably)\b/i.test(q)){
@@ -1579,11 +1594,11 @@ async function finishGuidedReply(data){
  }
  if(!aside&&/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u.test(responseText)){
   console.warn('[Free Talking] Refused non-English model reply');
-  responseText=second?'Okay, moving on!':'Can you tell me more?';
+  responseText=advance?'Okay!':'Can you tell me more?';
  }
- const run=state.anchorToken;state.replyWasSecond=second;state.anchorPhase='playingReply';setMicEnabled(false);
+ const run=state.anchorToken;state.replyWasSecond=advance;state.anchorPhase='playingReply';setMicEnabled(false);
  if(responseText)await speakEleven(responseText);
- else if(!second)error('No follow-up returned. Please try again.');
+ else if(!advance)error('No follow-up returned. Please try again.');
  if(!state.active||run!==state.anchorToken)return;
  if(aside){
   state.replyAsideKind=null;state.replyAsideTerm='';
@@ -1592,8 +1607,8 @@ async function finishGuidedReply(data){
   setMicEnabled(true);actorPhase('listening');armIdleTimeout();startQuestionClock();
   message('Your turn. Continue answering the textbook question.');
   $('listenCheck').textContent='Listening for your answer';
- }else if(second){
-  // Play next cached anchor only after the short reaction finishes speaking.
+ }else if(advance){
+  // Hybrid advances only when Luna confirms a meaningful answer; original Realtime keeps fixed two turns.
   state.anchorPhase='betweenAnchors';
   void moveToNextTopic();
  }else{
