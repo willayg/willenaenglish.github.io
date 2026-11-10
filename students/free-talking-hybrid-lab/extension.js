@@ -16,7 +16,7 @@ function syncTranscriptPreference(){
 document.getElementById('ftTranscriptToggle')?.addEventListener('change',syncTranscriptPreference);
 
 const frame=$('original'),veil=$('demo');
-const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,unproductiveStreak:0,recentQualified:[],pendingVerdict:'NEEDS_MORE',pendingProof:null,pendingVerdictAt:null,pendingLowEffort:false,askedQuestionTexts:[]};
+const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,unproductiveStreak:0,recentQualified:[],pendingVerdict:'NEEDS_MORE',pendingProof:null,pendingVerdictAt:null,pendingLowEffort:false,askedQuestionTexts:[],attemptCount:0,reviewing:false};
 const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
 const enginePicker=document.getElementById('ftEngineSelect');
 const sttPicker=document.getElementById('ftSttSelect');
@@ -416,13 +416,9 @@ function ftTopicReward(){
  return state.questionRewards.get(state.anchorIndex);
 }
 function ftRecordAnswer(speech){
- state.contributions=Math.min(12,(state.contributions||0)+1);
- state.unproductiveStreak=0;
- const normalized=String(speech||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
- if(normalized){
-  state.recentQualified=([...state.recentQualified,normalized]).slice(-18);
-  try{localStorage.setItem(ftCompletionKey()+':recentQualified',JSON.stringify(state.recentQualified))}catch{}
- }
+ if(!String(speech||'').trim())return;
+ // This is only an attempt counter. Progress is awarded after full transcript review.
+ state.attemptCount=(state.attemptCount||0)+1;
  renderTopicTicker();
 }
 function ftFinishScores(){
@@ -464,7 +460,7 @@ function removeSpokenLaughter(value){
 
 
 function renderTopicTicker(){
- const progress=$('conversationProgress'),count=Math.min(12,state.contributions||0);
+ const progress=$('conversationProgress'),count=Math.min(12,(state.contributions||0)+(state.attemptCount||0));
  if(progress)progress.style.width=(count/12*100)+'%';
  const label=$('conversationProgressLabel');if(label)label.textContent=count+' / 12';
 }
@@ -492,7 +488,7 @@ function studentTurnInProgress(){
  return Boolean(state.speechStartedAt||state.awaitingSpeechCommit||state.pendingSpeech.size||state.turnFragments.length||state.turnGraceTimer);
 }
 // Save text only (never the audio recording) for a restricted, expiring teacher review.
-function saveHybridTranscript(who,spoken,verdict='NEEDS_MORE',proof=null,stamp=null,source='ai_reply'){
+function saveHybridTranscript(who,spoken,verdict=null,proof=null,stamp=null,source='ai_reply'){
  if(!state.hybrid||!state.active||!state.transcriptSessionId||!state.book?.id||!state.unit?.id)return;
  const sessionId=state.transcriptSessionId;
  const turnNumber=++state.transcriptTurnNumber;
@@ -501,7 +497,7 @@ function saveHybridTranscript(who,spoken,verdict='NEEDS_MORE',proof=null,stamp=n
    speaker:who==='You'?'student':'character',character:state.character,
   book_id:state.book.id,unit_id:state.unit.id,
   transcript_text:String(spoken).trim().slice(0,1500),
-  ...(who==='You'?{verdict}: {message_source:source}),
+  ...(who==='You'?(verdict?{verdict}:{}):{message_source:source}),
   ...(who==='You'&&verdict==='QUALIFIES'&&proof?{verdict_proof:proof,verdict_at:stamp}:{})};
  // Serialize writes to preserve dialogue order and avoid client-side race conditions.
  const previous=state.transcriptSaveQueue||Promise.resolve();
@@ -1714,7 +1710,7 @@ async function startConversation(){
  if(!continuing&&!state.guideAccepted){let dismissed=false;try{dismissed=localStorage.getItem(FT_GUIDE_KEY)==='1'}catch{}if(!dismissed){showFtGuide(true);return}}
  state.guideAccepted=false;if(!continuing){
   state.questionRewards.clear();state.contributions=0;state.sessionStartContributions=0;
-   state.unproductiveStreak=0;state.pendingVerdict='NEEDS_MORE';state.askedQuestionTexts=[];
+   state.unproductiveStreak=0;state.pendingVerdict='NEEDS_MORE';state.askedQuestionTexts=[];state.attemptCount=0;state.reviewing=false;
    try{state.recentQualified=JSON.parse(localStorage.getItem(ftCompletionKey()+':recentQualified')||'[]').slice(-18)}catch{state.recentQualified=[]}
   state.transcriptSessionId=crypto.randomUUID();
   state.transcriptTurnNumber=0;state.transcriptSaved=0;state.transcriptSaveErrors=0;
@@ -1754,7 +1750,7 @@ async function startConversation(){
    const count=Math.max(0,Math.min(12,Number(savedProgress.contributions)||0));
    // Once gold is reached, further conversations remain available from 0.
    state.contributions=count===12?0:count;
-   state.sessionStartContributions=state.contributions;
+   state.sessionStartContributions=count;
    renderTopicTicker();
   }
   const res=await authorizedDemoFetch(state.hybrid?'/api/free-talking-hybrid-lab':'/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id,guided:true,action:'lesson'},startAbort.signal);
