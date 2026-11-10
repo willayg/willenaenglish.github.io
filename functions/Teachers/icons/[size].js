@@ -14,6 +14,7 @@ function d2(x,y,x1,y1,x2,y2){
  const ex=x-(x1+t*dx),ey=y-(y1+t*dy);return ex*ex+ey*ey
 }
 function icon(size){
+ const ihdr=[...u32(size),...u32(size),8,3,0,0,0];
  const lines=[[126,174,185,346],[185,346,222,346],[222,346,256,251],[256,251,290,346],[290,346,326,346],[326,346,384,174]];
  // Use one palette byte per pixel (index 0-3) to keep encoding predictable.
  const indexed=[];
