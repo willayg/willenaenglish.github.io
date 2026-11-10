@@ -235,7 +235,7 @@ export async function onRequestPost({request,env}){
  if(token.length<40)return json(401,{error:'Sign in to Willena first'});
  let input;try{input=await request.json()}catch{return json(400,{error:'Invalid request'})}
  if(!input||!UUID.test(String(input.book_id||''))||!UUID.test(String(input.unit_id||'')))return json(400,{error:'Select a real assigned book and unit'});
- if(!env.OPENAI_API_KEY&&!env.OPENAI_API&&!env.OPENAI_KEY)return json(503,{error:'OpenAI key is not configured on this preview'});
+ if(input.action!=='transcript'&&!env.OPENAI_API_KEY&&!env.OPENAI_API&&!env.OPENAI_KEY)return json(503,{error:'OpenAI key is not configured on this preview'});
  try{
   const signal=AbortSignal.timeout(14000);
   const user=await get(SCORE+'/auth/v1/user',{...scoreHeaders(token)},signal);
@@ -249,6 +249,23 @@ export async function onRequestPost({request,env}){
    const assigned=await r.json();
    const list=Array.isArray(assigned.assignments)&&assigned.assignments.length?assigned.assignments:(assigned.assignment?[assigned.assignment]:[]);
    if(!list.some(a=>a?.book_id===input.book_id))return json(403,{error:'That book is not assigned to your class'});
+  }
+  if(input.action==='transcript'){
+   const sessionId=String(input.session_id||''),speaker=String(input.speaker||''),character=String(input.character||'');
+   const turnNumber=Number(input.turn_number),transcriptText=String(input.transcript_text||'').trim();
+   if(!UUID.test(sessionId)||!['student','character'].includes(speaker)||
+     !['bunny','pigfish','willi'].includes(character)||
+     !Number.isInteger(turnNumber)||turnNumber<1||turnNumber>150||
+     !transcriptText||transcriptText.length>1500)return json(400,{error:'Invalid transcript entry'});
+   const row={session_id:sessionId,student_id:user.id,book_id:input.book_id,
+     unit_id:input.unit_id,character,turn_number:turnNumber,speaker,transcript_text:transcriptText};
+   const saved=await fetch(SCORE+'/rest/v1/free_talking_hybrid_transcripts',{
+     method:'POST',headers:{...scoreHeaders(token),'Content-Type':'application/json',Prefer:'return=minimal'},
+     body:JSON.stringify(row),signal
+   });
+   if(!saved.ok){console.warn('[Free Talking] transcript write rejected',saved.status);
+     return json(502,{error:'Could not save transcript ('+saved.status+')'});}
+   return json(200,{saved:true});
   }
   const guided=true;
   const action=input.action==='reply'?'reply':'lesson';
