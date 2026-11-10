@@ -6,7 +6,7 @@ const CALLBACK = 'https://teachers.willenaenglish.com/api/staff-calendar/callbac
 const ORIGIN = 'https://teachers.willenaenglish.com';
 const GOOGLE = 'https://www.googleapis.com/calendar/v3';
 const fmt = (data,status=200,headers={})=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store',...headers}});
-function token(req){const bearer=(req.headers.get('authorization')||'').match(/^Bearer\s+([^\s]+)$/i);if(bearer)return bearer[1];const m=(req.headers.get('cookie')||'').match(/(?:^|;\s*)sb_access=([^;]+)/);if(!m)return '';try{return decodeURIComponent(m[1])}catch{return ''}}
+function tokens(req){const values=[];const match=(req.headers.get('cookie')||'').match(/(?:^|;\s*)sb_access=([^;]+)/);if(match){try{values.push(decodeURIComponent(match[1]))}catch{}}const bearer=(req.headers.get('authorization')||'').match(/^Bearer\s+([^\s]+)$/i);if(bearer&&!values.includes(bearer[1]))values.push(bearer[1]);return values}
 function b64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function unb64(str){const s=str.replace(/-/g,'+').replace(/_/g,'/');return Uint8Array.from(atob(s.padEnd(Math.ceil(s.length/4)*4,'=')),c=>c.charCodeAt(0))}
 async function key(env){const raw=new TextEncoder().encode(env.GOOGLE_CLIENT_SECRET);const hashed=await crypto.subtle.digest('SHA-256',raw);return crypto.subtle.importKey('raw',hashed,{name:'AES-GCM'},false,['encrypt','decrypt'])}
@@ -14,11 +14,22 @@ async function encrypt(env,text){const iv=crypto.getRandomValues(new Uint8Array(
 async function decrypt(env,record){const bytes=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(record.refresh_iv)},await key(env),unb64(record.refresh_cipher));return new TextDecoder().decode(bytes)}
 function config(env){return Boolean(env.GOOGLE_CLIENT_ID&&env.GOOGLE_CLIENT_SECRET&&env.SUPABASE_SERVICE_ROLE_KEY)}
 async function sb(env,path,opts={}){const r=await fetch(SUPABASE+path,{...opts,headers:{'apikey':env.SUPABASE_SERVICE_ROLE_KEY,'authorization':'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,'content-type':'application/json','accept':'application/json',...(opts.headers||{})}});const text=await r.text();let data;try{data=JSON.parse(text)}catch{data=text};if(!r.ok)throw Error('Storage request failed ('+r.status+')');return data}
-async function staff(req,env){const jwt=token(req);if(!jwt)return {error:'no_cookie'};
- const r=await fetch(SUPABASE+'/auth/v1/user',{headers:{'apikey':env.SUPABASE_SERVICE_ROLE_KEY,'authorization':'Bearer '+jwt}});
- if(!r.ok)return {error:'invalid_session'};const identity=await r.json().catch(()=>({}));if(!identity.id)return {error:'invalid_session'};
- const p=await sb(env,'/rest/v1/profiles?select=role,approved&id=eq.'+encodeURIComponent(identity.id)+'&limit=1');const x=p?.[0];
- return x?.approved===true&&['teacher','admin'].includes(String(x.role).toLowerCase())?{id:identity.id,admin:String(x.role).toLowerCase()==='admin'}:{error:'not_approved_staff'};
+async function staff(req,env){
+ const candidates=tokens(req);
+ if(!candidates.length)return {error:'no_token'};
+ let identity=null;
+ // Match Dashboard's primary cookie auth. Stored tokens can lag after refresh.
+ for(const jwt of candidates){
+  const response=await fetch(SUPABASE+'/auth/v1/user',{headers:{'apikey':env.SUPABASE_SERVICE_ROLE_KEY,'authorization':'Bearer '+jwt},cache:'no-store'});
+  if(!response.ok)continue;
+  const user=await response.json().catch(()=>({}));
+  if(user.id){identity=user;break}
+ }
+ if(!identity)return {error:'invalid_session'};
+ const profile=await sb(env,'/rest/v1/profiles?select=role,approved&id=eq.'+encodeURIComponent(identity.id)+'&limit=1');
+ const saved=profile?.[0];
+ if(saved?.approved!==true||!['teacher','admin'].includes(String(saved.role||'').toLowerCase()))return {error:'not_approved_staff'};
+ return {id:identity.id,admin:String(saved.role).toLowerCase()==='admin'};
 }
 async function connection(env){const list=await sb(env,'/rest/v1/'+TABLE+'?select=*&id=eq.1&limit=1');return list?.[0]||null}
 async function writeConnection(env,calendar_id,refresh,uid){const enc=await encrypt(env,refresh);
@@ -65,7 +76,7 @@ async function respond(req,env){
  if(!['GET','POST','PATCH','DELETE'].includes(req.method))return fmt({error:'Method not allowed'},405);
  if(req.method!=='GET'&&req.headers.get('origin')!==ORIGIN)return fmt({error:'Invalid request origin'},403);
  const user=await staff(req,env);
- if(user?.error)return fmt({error:user.error==='no_cookie'?'Willena authentication token missing':user.error==='invalid_session'?'Willena session token expired':'Approved teacher or admin access required',reason:user.error},user.error==='not_approved_staff'?403:401);
+ if(user?.error)return fmt({error:user.error==='no_token'?'Willena authentication token missing':user.error==='invalid_session'?'Willena session token expired':'Approved teacher or admin access required',reason:user.error},user.error==='not_approved_staff'?403:401);
  if(part==='connect'){
    if(req.method!=='POST'||!user.admin)return fmt({error:'Admin access required'},403);
    const state=await makeState(env,user.id),nonce=(await validateState(env,state)).nonce;
