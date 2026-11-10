@@ -1202,6 +1202,7 @@ function processVerifiedSpeech(itemIds,speech){
  clearTimeout(state.idleTimer);state.idleTimer=null;
  state.serverHeard=true;
  haltQuestionClock();
+ if(state.hybrid)state.hybridPendingContribution=true;
  appendLine('You',speech);
  if(state.hybrid)$('anchorText').textContent='';
  state.verifiedAnswer=speech;
@@ -1254,9 +1255,11 @@ function processVerifiedSpeech(itemIds,speech){
 // language. Only a short, concrete English vocabulary query can interrupt
 // the two-answer textbook rhythm.
 function classifyNaturalTurn(text){
- const s=String(text||'').trim();
- if(/^(?:i (?:don't|do not) understand (?:the|this|your) question|what does (?:this|that) question mean|can you explain (?:the|this|your) question)[?.! ]*$/i.test(s))return {kind:'question_help'};
- if(/\\b(?:ignore (?:all|previous|your) instructions|system prompt|developer message)\\b/i.test(s))return {kind:'redirect',message:'Let us keep talking in English!'};
+ // Retain explicit vocabulary translation and question-explanation help,
+ // but never redirect a genuine conversational tangent back to the unit.
+ const speech=String(text||'').trim();
+ const recognizedHelp=classifyStudentTurn(speech);
+ if(['question_help','vocabulary','clarify'].includes(recognizedHelp.kind))return recognizedHelp;
  return {kind:'answer'};
 }
 function classifyStudentTurn(text){
@@ -1541,6 +1544,11 @@ async function finishGuidedReply(data){
  else if(!advance)error('No follow-up returned. Please try again.');
  if(!state.active||run!==state.anchorToken)return;
  if(aside){
+  if(state.hybrid&&state.hybridPendingContribution){
+   ftRecordAnswer(state.verifiedBeginnerAnswer||'');
+   state.hybridPendingContribution=false;
+   if((state.contributions||0)>=12){await finishConversation();return}
+  }
   state.replyAsideKind=null;state.replyAsideTerm='';
   state.anchorPhase=state.asideReturnPhase||'awaitingFirst';
   state.asideReturnPhase=null;
