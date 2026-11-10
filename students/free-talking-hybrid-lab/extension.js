@@ -1946,8 +1946,7 @@ async function initStandaloneRelease(){
   ]);
   if(!books[0]||!units[0])throw Error('The selected textbook unit could not be loaded.');
   state.book=books[0];state.unit=units[0];
-  intro.querySelector('.ft-release-sub').textContent=books[0].title+' · Unit '+units[0].unit_number+
-   ' — Talk with a friend in English. 12 meaningful turns, once each day.';
+
   const quotaResponse=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
    action:'quota',book_id:bookId,unit_id:unitId
   });
@@ -1961,7 +1960,9 @@ async function initStandaloneRelease(){
    buttons.forEach(button=>button.disabled=button.id!==
     (quota.previousCharacter==='bunny'?'ftChooseLili':quota.previousCharacter==='pigfish'?'ftChoosePigfish':'ftChooseWilli'));
    const nickname=quota.previousCharacter==='bunny'?'Bunny Fox':quota.previousCharacter==='pigfish'?'Pigfish':'AI Willi';
-   intro.querySelector('.ft-release-sub').textContent='지난 대화가 시작되지 않았어요. '+nickname+'와 다시 시작할 수 있어요.';
+   // Show only actionable information when a previous opening can be retried.
+   const status=$('ftReleaseError');
+   if(status){status.hidden=false;status.textContent=nickname+'와 다시 시작할 수 있어요.';}
   }else buttons.forEach(button=>button.disabled=false);
  }catch(e){showError(e.message||'Could not prepare Free Talking.')}
 }
