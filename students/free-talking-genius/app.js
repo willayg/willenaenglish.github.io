@@ -1107,6 +1107,16 @@ $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pend
 $('ftCharacterBack').addEventListener('click',()=>view('ftBook'));
 
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
+ // Separate Free Talking experience; no Speaking state machine is modified.
+ $('ftFreeTalkingCard').addEventListener('click',()=>{
+  const unitId=groups()[0]?.unit_id;
+  if(!BOOK()||!unitId){showError('이 단원의 자유 대화를 사용할 수 없어요.');return}
+  const url=new URL('/students/free-talking-hybrid-lab/',location.origin);
+  url.searchParams.set('release','1');
+  url.searchParams.set('book',BOOK());
+  url.searchParams.set('unit',unitId);
+  location.assign(url.pathname+url.search);
+ });
 // Free Talking is a disabled coming-soon card; Writing is no longer offered here.
 $('ftTranscriptEdit').addEventListener('input',()=>{
  $('ftHeardText').textContent=$('ftTranscriptEdit').value.trim();
