@@ -8,7 +8,7 @@ export async function onRequestPost({request,env}){
  const bearer=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
  if(bearer.length<40)return reply(401,{error:'Sign in to Willena first'});
  const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY||env.ELEVENLABS_API||env.ELEVENLABS_KEY;
- if(!key)return reply(503,{error:'ElevenLabs key is missing on this deployment'});
+
  try{
   const auth=await fetch(ROOT+'/auth/v1/user',{headers:{apikey:PUB,Authorization:'Bearer '+bearer},signal:AbortSignal.timeout(8000)});
   if(!auth.ok)return reply(401,{error:'Login expired'});
@@ -17,10 +17,19 @@ export async function onRequestPost({request,env}){
    headers:{apikey:PUB,Authorization:'Bearer '+bearer},signal:AbortSignal.timeout(8000)});
   const profile=p.ok?(await p.json())[0]:null;
   if(!profile||profile.approved!==true||!['student','teacher','admin','owner'].includes(profile.role))return reply(403,{error:'Not authorized'});
-  const result=await fetch('https://api.elevenlabs.io/v1/single-use-token/realtime_scribe',{
-   method:'POST',headers:{'xi-api-key':key},signal:AbortSignal.timeout(11000)});
-  const data=await result.json().catch(()=>null);
-  if(!result.ok||typeof data?.token!=='string')return reply(502,{error:'ElevenLabs Scribe token failed ('+result.status+'): '+String(data?.detail?.message||data?.detail||'').slice(0,120)});
-  return reply(200,{token:data.token,model:'scribe_v2_realtime'});
+  if(key){
+   const result=await fetch('https://api.elevenlabs.io/v1/single-use-token/realtime_scribe',{
+    method:'POST',headers:{'xi-api-key':key},signal:AbortSignal.timeout(11000)});
+   const data=await result.json().catch(()=>null);
+   if(result.ok&&typeof data?.token==='string')return reply(200,{token:data.token,model:'scribe_v2_realtime',provider:'cloudflare'});
+   // Only fallback on missing credentials/permissions, not transient quota or API errors.
+   if(![401,403].includes(result.status))return reply(502,{error:'ElevenLabs Scribe token failed ('+result.status+'): '+String(data?.detail?.message||data?.detail||'').slice(0,120)});
+  }
+  const fallback=await fetch('https://willenaenglish.netlify.app/.netlify/functions/willena_scribe_fallback',{
+   method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+bearer},
+   body:JSON.stringify({action:'token'}),signal:AbortSignal.timeout(16000)});
+  const response=await fallback.json().catch(()=>({}));
+  if(!fallback.ok||typeof response?.token!=='string')return reply(502,{error:'Netlify Scribe token unavailable ('+fallback.status+'): '+String(response.error||'').slice(0,140)});
+  return reply(200,{token:response.token,model:'scribe_v2_realtime',provider:'netlify'});
  }catch(e){console.warn('ElevenLabs Scribe token',String(e));return reply(502,{error:'Could not start ElevenLabs Scribe'})}
 }
