@@ -419,32 +419,9 @@ export async function onRequestPost({request,env}){
    if(!textValue)return json(502,{error:'No conversational reply returned'});
    let fallbackBookQuestion=false;
    let newTopic=evaluateAnswer?(explicitNewTopic&&!explicitContinue):false;
-   const normalizeQuestion=x=>String(x||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
-   const askedQuestions=Array.isArray(input.asked_questions)?input.asked_questions.filter(x=>typeof x==='string').slice(-50):[];
-   const spokenQuestion=(textValue.match(/[^.!?]*[?？]/g)||[]).at(-1)?.trim();
-   if(evaluateAnswer&&spokenQuestion&&askedQuestions.some(q=>normalizeQuestion(q)===normalizeQuestion(spokenQuestion)))
-    textValue=textValue.replace(/[^.!?]*[?？]\s*$/u,'').trim();
-   if(evaluateAnswer&&!/[?？]\s*$/.test(textValue)){
-    const recentText=turns.map(t=>t.content).join(' ').toLowerCase();
-    const available=questions.filter(q=>{
-     const question=fmt(q.question_en,150).trim();
-     return question.endsWith('?')&&!askedQuestions.some(asked=>normalizeQuestion(asked)===normalizeQuestion(question))&&!recentText.includes(question.toLowerCase())&&
-      !textValue.toLowerCase().includes(question.toLowerCase());
-    });
-    const pool=available; // Do not repeat the whole bank when recent options are exhausted.
-    if(pool.length){
-     const selected=pool[Math.floor(Math.random()*pool.length)];
-     const bookQuestion=fmt(selected.question_en,150).trim();
-     // Remove a dangling unfinished fragment before the question.
-     textValue=textValue.replace(/[,;:\s]+$/,'').trim();
-     textValue+=(/[.!?]$/.test(textValue)?' ':'! ')+'So... '+bookQuestion;
-     fallbackBookQuestion=true;
-     newTopic=false; // The appended book question is already spoken by Luna.
-    }else{
-     textValue+=(/[.!?]$/.test(textValue)?' ':'! ')+'What else would you like to tell me?';
-     newTopic=false;
-    }
-   }
+   // No forced textbook question or topic jumps. Let the character's own
+   // reaction flow naturally, even when it ends with a statement.
+   newTopic=false;
    return json(200,{text:textValue,newTopic,bookQuestionFallback:fallbackBookQuestion,model,
  usage:{input_tokens:data?.usage?.input_tokens||0,output_tokens:data?.usage?.output_tokens||0,
  cached_tokens:data?.usage?.input_tokens_details?.cached_tokens||0}});
