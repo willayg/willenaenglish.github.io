@@ -1632,11 +1632,9 @@ async function finishGuidedReply(data){
  else if(!advance)error('No follow-up returned. Please try again.');
  if(!state.active||run!==state.anchorToken)return;
  if(aside){
-  if(state.hybrid&&state.hybridPendingContribution){
-   ftRecordAnswer(state.verifiedBeginnerAnswer||'');
-   state.hybridPendingContribution=false;
-   if((state.contributions||0)>=12){await finishConversation();return}
-  }
+  // Help and vocabulary detours are valuable, but they do not automatically
+  // constitute a verified contribution or advance cumulative homework.
+  state.hybridPendingContribution=false;
   state.replyAsideKind=null;state.replyAsideTerm='';
   state.anchorPhase=state.asideReturnPhase||'awaitingFirst';
   state.asideReturnPhase=null;
