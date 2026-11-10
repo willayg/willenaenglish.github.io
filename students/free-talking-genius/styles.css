@@ -1557,3 +1557,26 @@
 .free-talking-genius #ftSpeakingCard.ft-golden-skill{border-color:#dfbd56!important;background:#fffdf3!important}
 .free-talking-genius #ftSpeakingCard.ft-golden-skill .vocab-card-stars{color:#b78a22!important}
 .free-talking-genius #ftSession #ftQuestionStage[data-step="score"] #ftListenAgain{display:none!important}
+
+
+/* Completed Free Talking is Step 2 of the unit's Golden Unit progression.
+   Keep the normal theme ring until all eight meaningful turns are completed. */
+.free-talking-genius #ftFreeTalkingCard.ft-golden-skill{
+ border-color:#dfbd56!important;
+ background:#fff8e0!important;
+ box-shadow:0 7px 24px rgba(181,131,30,.16),inset 0 0 0 1px #f2d47a!important;
+}
+.free-talking-genius #ftFreeTalkingCard.ft-golden-skill .vocab-skill-ring{
+ --skill-color:#d7a12d!important;
+ background:conic-gradient(#d9ab3c calc(var(--progress,0)*1%),#f8e8b9 0)!important;
+}
+.free-talking-genius #ftFreeTalkingCard.ft-golden-skill .vocab-skill-ring::before{background:#fffaf0!important}
+.free-talking-genius #ftFreeTalkingCard.ft-golden-skill .vocab-skill-ring span{
+ color:#976e1b!important;
+}
+.free-talking-genius #ftFreeTalkingCard.ft-golden-skill .vocab-skill-step{
+ color:#b58a24!important;
+}
+.free-talking-genius #ftFreeTalkingCard.ft-golden-skill .vocab-card-stars{
+ color:#a77b18!important;
+}
