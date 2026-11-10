@@ -1093,6 +1093,17 @@ async function playAnchor(index){
  sendRealtime({type:'conversation.item.create',item:{type:'message',role:'assistant',
   content:[{type:'output_text',text:anchor.text}]}});
  appendLine(NAMES[state.character],anchor.text);
+ if(state.hybrid&&releaseMode){
+  // A production conversation must confirm that the opening turn is durable.
+  await state.transcriptSaveQueue;
+  if(state.transcriptSaveErrors){
+   error('Could not save the conversation transcript. Please contact your teacher.');
+   endSession('Transcript saving unavailable.');
+   $('ftReleaseIntro').hidden=false;veil.hidden=true;
+   const note=$('ftReleaseError');note.hidden=false;note.textContent='Transcript saving is unavailable. Please tell your teacher.';
+   return;
+  }
+ }
  try{
   const clip=await getAnchorClip(anchor);
   if(!state.active||run!==state.anchorToken)return;
@@ -1464,6 +1475,15 @@ async function finishConversation(){
  if(state.hybrid&&state.transcriptSaveQueue){
   await state.transcriptSaveQueue.catch(()=>{});
   if(state.transcriptSaveErrors)console.warn('[Free Talking] transcript turns not saved:',state.transcriptSaveErrors);
+  if(state.transcriptSessionId){
+   try{
+    const completed=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+     action:'complete',book_id:state.book.id,unit_id:state.unit.id,
+     session_id:state.transcriptSessionId
+    });
+    if(!completed.ok)console.warn('[Free Talking] could not mark daily session complete',completed.status);
+   }catch(ex){console.warn('[Free Talking] daily completion update failed',ex)}
+  }
  }
  state.anchorPhase='finished';
  // Goodbye audio has fully ended. Fade the conversation away before revealing
@@ -1863,6 +1883,10 @@ async function initStandaloneRelease(){
  const bookId=params.get('book'),unitId=params.get('unit');
  const valid=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id||''));
  const buttons=[...intro.querySelectorAll('[data-release-character]')];
+ const bunny=buttons.find(x=>x.dataset.releaseCharacter==='bunny')?.querySelector('.ft-release-avatar');
+ const pigfish=buttons.find(x=>x.dataset.releaseCharacter==='pigfish')?.querySelector('.ft-release-avatar');
+ if(bunny)bunny.innerHTML=BUNNY_FOX_ART;
+ if(pigfish)pigfish.innerHTML=PIGFISH_ART;
  buttons.forEach(button=>button.disabled=true);
  if(!valid(bookId)||!valid(unitId)){showError('Please choose a book and unit first.');return}
  try{
