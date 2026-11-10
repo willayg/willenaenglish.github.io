@@ -286,6 +286,12 @@ export async function onRequestPost({request,env}){
      !transcriptText||transcriptText.length>1500)return json(400,{error:'Invalid transcript entry'});
    const row={session_id:sessionId,student_id:user.id,book_id:input.book_id,
      unit_id:input.unit_id,character,turn_number:turnNumber,speaker,transcript_text:transcriptText};
+   // Retain the exact spoken text, qualification decision and origin of
+   // questions for authorised teacher debugging; existing expiry is unchanged.
+   if(speaker==='student'&&['QUALIFIES','NEEDS_MORE','HELP_REQUEST'].includes(input.verdict))
+    row.verdict=input.verdict;
+   if(speaker==='character'&&['book_anchor','ai_reply'].includes(input.message_source))
+    row.message_source=input.message_source;
    if(speaker==='student'&&input.verdict==='QUALIFIES'){
     const stamp=Number(input.verdict_at),proof=String(input.verdict_proof||'');
     if(!Number.isSafeInteger(stamp)||Math.abs(Date.now()-stamp)>300000||!/^[a-f0-9]{64}$/.test(proof))
