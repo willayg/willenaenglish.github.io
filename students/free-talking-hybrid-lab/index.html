@@ -428,6 +428,67 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  display:block;border-color:#f5cadd;border-top-color:#cf4a8d;border-right-color:#cf4a8d
 }
 
+/* Compact final-review card with pink score dividers and clear language help. */
+#demo #ftCelebration{padding:12px;overscroll-behavior:contain}
+#demo #ftCelebration .ft-sheet{
+ width:min(100%,440px);min-height:0;max-height:calc(100dvh - 24px);
+ padding:clamp(14px,3vw,22px);gap:clamp(8px,1.8dvh,14px);
+ border:2.5px solid #e985b6;border-radius:25px;
+ box-shadow:0 14px 36px #b7498021;overflow-y:auto;
+ justify-content:flex-start;scrollbar-width:thin;
+}
+#demo #ftCelebration #ftResultMascot{
+ width:clamp(118px,26dvh,205px);height:clamp(118px,26dvh,205px);
+ margin:0 auto;flex:none;
+}
+#demo #ftCelebration .ft-stars{font-size:clamp(23px,4.5dvh,33px);gap:5px;margin:0}
+#demo #ftCelebration .ft-score{
+ width:100%;padding:9px 6px;margin:0;
+ border-top:2px solid #f3afd1;border-bottom:2px solid #f3afd1;
+ font-size:clamp(24px,5.6vw,35px);line-height:1.15;
+}
+#demo #ftCelebration #ftReviewSummary{
+ width:100%;max-width:370px;margin:0 auto;padding:0 2px;
+ font:700 clamp(13px,3.3vw,16px)/1.43 Poppins,system-ui,sans-serif!important;
+ text-align:center;color:#315b65!important;overflow-wrap:break-word;
+}
+#demo #ftCelebration .ft-language-toggle{
+ align-self:center;min-height:36px;padding:7px 16px;
+ border:1.5px solid #df83b3;border-radius:999px;
+ background:#fff5fa;color:#b53d79;
+ font:800 12px/1.35 Poppins,system-ui,sans-serif;cursor:pointer;
+}
+#demo #ftCelebration .ft-language-toggle:focus-visible{outline:3px solid #ed9dc4;outline-offset:2px}
+#demo #ftCelebration #ftReviewKorean{
+ margin:0;padding:9px 12px;width:100%;max-width:370px;
+ background:#fff5fa;border-radius:12px;
+ color:#485761;font:600 13px/1.55 system-ui,sans-serif;text-align:center;
+}
+#demo #ftCelebration .ft-actions{width:100%;margin:2px 0 0}
+#demo #ftCelebration .ft-actions button{width:100%;min-height:43px}
+#demo #ftCelebration #ftReviewKoreanToggle[hidden],
+#demo #ftCelebration #ftReviewKorean[hidden]{display:none!important}
+#demo #ftResultMascot .bf-talk-mouth,#demo #ftResultMascot .pf-talk-mouth{opacity:0}
+#demo #ftResultMascot .bf-rest-mouth,#demo #ftResultMascot .pf-rest-mouth{opacity:1}
+#demo #ftResultMascot.is-speaking .bf-talk-mouth,
+#demo #ftResultMascot.is-speaking .pf-talk-mouth{opacity:1;animation:ftReviewMouth .24s steps(2,end) infinite alternate}
+#demo #ftResultMascot.is-speaking .bf-rest-mouth,
+#demo #ftResultMascot.is-speaking .pf-rest-mouth{opacity:0}
+#demo #ftResultMascot.is-speaking svg{animation:ftReviewVoiceBounce .35s ease-in-out infinite alternate}
+@keyframes ftReviewMouth{from{opacity:.7}to{opacity:1}}
+@keyframes ftReviewVoiceBounce{from{transform:translateY(0)}to{transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){
+ #demo #ftResultMascot.is-speaking svg,
+ #demo #ftResultMascot.is-speaking .bf-talk-mouth,
+ #demo #ftResultMascot.is-speaking .pf-talk-mouth{animation:none!important}
+}
+@media(max-height:680px){
+ #demo #ftCelebration .ft-sheet{gap:6px;padding:11px 15px}
+ #demo #ftCelebration #ftResultMascot{width:112px;height:112px}
+ #demo #ftCelebration .ft-stars{font-size:23px}
+ #demo #ftCelebration #ftReviewSummary{font-size:13px!important}
+}
+
 body.ft-release #original,body.ft-release #ftTimingPanel{display:none!important}
 body.ft-release #demo .ft-transcript-toggle,body.ft-release #demo .ft-transcript-notice{display:none!important}
 body.ft-release #demo .conversation-text #log .entry.me{display:none!important}
@@ -490,7 +551,9 @@ body.ft-release #demo .conversation-text{min-height:80px}
   <div id="ftResultMascot" aria-hidden="true"></div>
   <div id="ftResultStars" class="ft-stars" aria-label="Stars earned"></div>
   <div id="ftResultPoints" class="ft-score">+0 Points</div>
-  <p id="ftReviewSummary" role="status" style="font:700 15px/1.5 Poppins,system-ui,sans-serif;text-align:center;color:#315b65;margin:9px auto;max-width:400px" hidden></p>
+  <p id="ftReviewSummary" role="status" hidden></p>
+  <button id="ftReviewKoreanToggle" class="ft-language-toggle" type="button" aria-expanded="false" hidden>한국어로 보기 · Korean</button>
+  <p id="ftReviewKorean" lang="ko" role="status" hidden></p>
   <div class="ft-actions"><button class="primary" id="ftReviewContinue" type="button" hidden>Keep chatting</button><button id="ftFinishClose" type="button">Back to Units</button></div>
  </div>
 </section>
@@ -544,4 +607,4 @@ body.ft-release #demo .conversation-text{min-height:80px}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-eight-turn-graded-feedback2"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-compact-feedback-ko1"></script></body></html>
