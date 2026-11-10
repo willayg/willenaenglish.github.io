@@ -469,19 +469,36 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 #demo #ftCelebration .ft-actions button{width:100%;min-height:43px}
 #demo #ftCelebration #ftReviewKoreanToggle[hidden],
 #demo #ftCelebration #ftReviewKorean[hidden]{display:none!important}
-#demo #ftCelebration #ftResultMascot .bf-talk-mouth,#demo #ftCelebration #ftResultMascot .pf-talk-mouth{display:inline!important;opacity:0}
-#demo #ftResultMascot .bf-rest-mouth,#demo #ftResultMascot .pf-rest-mouth{opacity:1}
-#demo #ftResultMascot.is-speaking .bf-talk-mouth,
-#demo #ftResultMascot.is-speaking .pf-talk-mouth{opacity:1;animation:ftReviewMouth .24s steps(2,end) infinite alternate}
-#demo #ftResultMascot.is-speaking .bf-rest-mouth,
-#demo #ftResultMascot.is-speaking .pf-rest-mouth{opacity:0}
+/* The SVG contains separate open and closed mouths. Alternate them as
+   mutually exclusive frames; never leave the open ellipse over the smile. */
+#demo #ftCelebration #ftResultMascot .bf-talk-mouth,
+#demo #ftCelebration #ftResultMascot .pf-talk-mouth{
+ display:inline!important;opacity:0;
+}
+#demo #ftCelebration #ftResultMascot .bf-rest-mouth,
+#demo #ftCelebration #ftResultMascot .pf-rest-mouth{opacity:1}
+#demo #ftCelebration #ftResultMascot.is-speaking .bf-talk-mouth,
+#demo #ftCelebration #ftResultMascot.is-speaking .pf-talk-mouth{
+ animation:ftReviewOpenMouth .34s linear infinite!important;
+}
+#demo #ftCelebration #ftResultMascot.is-speaking .bf-rest-mouth,
+#demo #ftCelebration #ftResultMascot.is-speaking .pf-rest-mouth{
+ animation:ftReviewClosedMouth .34s linear infinite!important;
+}
 #demo #ftResultMascot.is-speaking svg{animation:ftReviewVoiceBounce .35s ease-in-out infinite alternate}
-@keyframes ftReviewMouth{from{opacity:.7}to{opacity:1}}
+@keyframes ftReviewOpenMouth{0%,46%{opacity:0}50%,96%{opacity:1}100%{opacity:0}}
+@keyframes ftReviewClosedMouth{0%,46%{opacity:1}50%,96%{opacity:0}100%{opacity:1}}
 @keyframes ftReviewVoiceBounce{from{transform:translateY(0)}to{transform:translateY(-2px)}}
 @media(prefers-reduced-motion:reduce){
  #demo #ftResultMascot.is-speaking svg,
- #demo #ftResultMascot.is-speaking .bf-talk-mouth,
- #demo #ftResultMascot.is-speaking .pf-talk-mouth{animation:none!important}
+ #demo #ftCelebration #ftResultMascot.is-speaking .bf-talk-mouth,
+ #demo #ftCelebration #ftResultMascot.is-speaking .pf-talk-mouth,
+ #demo #ftCelebration #ftResultMascot.is-speaking .bf-rest-mouth,
+ #demo #ftCelebration #ftResultMascot.is-speaking .pf-rest-mouth{animation:none!important}
+ #demo #ftCelebration #ftResultMascot.is-speaking .bf-talk-mouth,
+ #demo #ftCelebration #ftResultMascot.is-speaking .pf-talk-mouth{opacity:0}
+ #demo #ftCelebration #ftResultMascot.is-speaking .bf-rest-mouth,
+ #demo #ftCelebration #ftResultMascot.is-speaking .pf-rest-mouth{opacity:1}
 }
 @media(max-height:680px){
  #demo #ftCelebration .ft-sheet{gap:6px;padding:11px 15px}
