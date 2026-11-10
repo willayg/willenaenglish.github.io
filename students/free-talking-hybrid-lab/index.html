@@ -415,6 +415,11 @@ body.ft-release #demo .conversation-text #log .entry.me{display:none!important}
 body.ft-release #demo #conversationDiagnostics>:not(#error){display:none!important}
 body.ft-release #demo .conversation-text{min-height:80px}
 #ftReleaseIntro[hidden]{display:none!important}
+#ftReleaseIntro #ftCharacter{min-height:0;padding:0;width:100%}
+#ftReleaseIntro #ftCharacter .ft-character-panel{width:min(620px,100%);padding:clamp(18px,4vw,30px)}
+#ftReleaseIntro #ftCharacter .ft-character-back{cursor:pointer}
+#ftReleaseIntro .ft-character-symbol svg{max-width:100%;max-height:100%}
+
 #ftReleaseIntro{min-height:100dvh;background:radial-gradient(circle at 50% 0,#e3fafb,#fff 60%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 16px;gap:22px;text-align:center}
 #ftReleaseIntro h1{color:#235e69;font-size:clamp(28px,6vw,40px);margin:0}
 #ftReleaseIntro .ft-release-sub{max-width:410px;font-size:15px;color:#567480;line-height:1.55;margin:0}
@@ -428,15 +433,11 @@ body.ft-release #demo .conversation-text{min-height:80px}
 #ftReleaseIntro .ft-release-back{color:#457b87;text-decoration:none;font-weight:650}
 #ftReleaseIntro .ft-release-notice{font:400 11px/1.5 Poppins,Arial;color:#68818b;max-width:440px}
 #ftReleaseError{font:700 13px/1.5 Poppins,Arial;color:#9e3454;max-width:460px}
-</style></head><body><section id="ftReleaseIntro" hidden aria-label="Choose your Free Talking character">
+</style></head><body><section id="ftReleaseIntro" class="free-talking-genius" hidden aria-label="Choose your Free Talking character">
  <a class="ft-release-back" href="/students/free-talking-genius/">← Back to textbooks</a>
  <h1>Free Talking</h1>
  <p class="ft-release-sub">Talk about anything! Choose a friend, then enjoy 12 English conversation turns. One conversation each day.</p>
- <div class="ft-release-options">
-  <button class="ft-release-character" data-release-character="bunny" type="button"><span class="ft-release-avatar" aria-hidden="true">◇</span>Bunny Fox</button>
-  <button class="ft-release-character" data-release-character="pigfish" type="button"><span class="ft-release-avatar" aria-hidden="true">◉</span>Pigfish</button>
-  <button class="ft-release-character" data-release-character="willi" type="button"><span class="ft-release-avatar" aria-hidden="true">◎</span>AI Willi</button>
- </div>
+ <div id="ftReleaseNativeMenu" aria-label="Character selection"></div>
  <p id="ftReleaseError" role="alert" hidden></p>
  <p class="ft-release-notice">AI may misunderstand speech. Conversation text (not audio) is saved privately for teacher review and removed after 30 days.</p>
 </section><section id="ftTimingPanel" aria-label="Hybrid speech timing controls">
@@ -521,4 +522,4 @@ body.ft-release #demo .conversation-text{min-height:80px}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261110-production-release2"></script></body></html>
+<script type="module" src="./extension.js?v=20261110-native-character-menu1"></script></body></html>
