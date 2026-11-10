@@ -57,9 +57,11 @@ textarea{min-height:75px;resize:vertical}.modalfoot{display:flex;justify-content
 <div class="field"><label for="eventCategory">Category</label><select id="eventCategory"><option value="events">Willena events</option><option value="staff">Staff</option><option value="academic">Academic</option><option value="deadline">Deadlines</option></select></div>
 <div class="field"><label for="eventRepeat">Repeat</label><select id="eventRepeat"><option value="none">Doesn't repeat</option><option value="weekly">Every week</option><option value="monthly">Every month</option></select></div>
 <div class="field full"><label for="eventNotes">Notes</label><textarea id="eventNotes" maxlength="1200" placeholder="Details for other staff"></textarea></div></div></div><div class="modalfoot"><button type="button" id="deleteEvent" class="hidden">Delete</button><button type="button" id="cancel">Cancel</button><button class="primary" type="submit">Save event</button></div></form></dialog>
-<script>
-(()=>{
+<script src="/js/api-config.js"></script>
+<script type="module">
+
 "use strict";
+import { ensureTeacherSession } from "/Teachers/auth-refresh.js";
 const API="/api/staff-calendar";
 const $=id=>document.getElementById(id);
 const cats={events:"Willena events",staff:"Staff",academic:"Academic",deadline:"Deadlines"};
@@ -117,9 +119,8 @@ $("month").onclick=()=>{view="month";paint();load()};$("week").onclick=()=>{view
 $("legend").replaceChildren(...Object.entries(cats).map(([id,name])=>{const btn=document.createElement("button");btn.innerHTML='<span class="dot '+id+'"></span>';btn.append(document.createTextNode(name));btn.onclick=()=>{if(visible.has(id))visible.delete(id);else visible.add(id);btn.classList.toggle("off",!visible.has(id));paint()};return btn}));
 $("eventForm").onsubmit=async e=>{e.preventDefault();if(busy)return;busy=true;const ev={id:editId,title:$("eventTitle").value.trim(),date:$("eventDate").value,time:$("eventTime").value,category:$("eventCategory").value,repeat:$("eventRepeat").value,notes:$("eventNotes").value.trim()};try{await request("/events",{method:editId?"PATCH":"POST",body:JSON.stringify(ev)});close();await load()}catch(err){alert("Could not save event: "+err.message)}finally{busy=false}};
 $("deleteEvent").onclick=async()=>{if(busy||!editId||!confirm("Delete this event?"))return;busy=true;try{await request("/events",{method:"DELETE",body:JSON.stringify({id:editId})});close();await load()}catch(err){alert("Could not delete event: "+err.message)}finally{busy=false}};
-async function boot(){paint();try{const s=await request("/status");connected=s.connected;$("newEvent").disabled=!connected;$("connectGoogle").hidden=connected||!s.admin;if(!connected){notice(s.admin?"Connect Google Calendar once to share this schedule with all Willena teachers.":"The administrator hasn't connected Google Calendar yet.",true);return}
+async function boot(){paint();try{const session=await ensureTeacherSession();if(!session?.success){notice(session?.temporary?"Teacher authentication is temporarily unavailable. Try again shortly.":"Your teacher session needs renewing. Open the Teachers Dashboard and sign in again.",true);return}const s=await request("/status");connected=s.connected;$("newEvent").disabled=!connected;$("connectGoogle").hidden=connected||!s.admin;if(!connected){notice(s.admin?"Connect Google Calendar once to share this schedule with all Willena teachers.":"The administrator hasn't connected Google Calendar yet.",true);return}
  if(new URLSearchParams(location.search).has("connected"))history.replaceState(null,"",location.pathname);
  await load()}catch(e){notice(e.message,true)}}
 boot();
-})();
 </script></body></html>
