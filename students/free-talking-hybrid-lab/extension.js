@@ -5,6 +5,8 @@ import {createFreeTalkingCharacters} from '/students/free-talking-genius/charact
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261107-pig-original4';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
+const releaseMode=new URLSearchParams(location.search).get('release')==='1';
+if(releaseMode)document.body.classList.add('ft-release');
 function syncTranscriptPreference(){
  const toggle=$('ftTranscriptToggle'),panel=document.querySelector('#demo .conversation-text');
  if(!toggle||!panel)return;
@@ -198,6 +200,7 @@ function closeActivity(){
  // Do NOT click its Back button: that would skip character selection.
 }
 function navigateBack(){
+ if(releaseMode){closeActivity();location.assign('/students/free-talking-genius/');return}
  const hadEntry=hasActivityHistory();
  closeActivity();
  if(hadEntry)history.back();
@@ -349,7 +352,7 @@ function bindOriginalFrame(){
  observer.observe(d.body,{childList:true,subtree:true});
  d.addEventListener('click',event=>{
   const card=event.target.closest('#ftFreeTalkingCard');
-  if(card){
+  if(card&&!releaseMode){
    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
    // Let the ORIGINAL application open its existing character selector.
    d.getElementById('ftSpeakingCard')?.click();
@@ -928,7 +931,7 @@ function sendHybrid(item){
   const at=state.anchorToken;
   void (async()=>{
    try{
-    const r=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{action:'reply',book_id:state.book.id,unit_id:state.unit.id,character:state.character,model:state.hybridModel,directive,history:snapshot});
+    const r=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{action:'reply',book_id:state.book.id,unit_id:state.unit.id,character:state.character,model:state.hybridModel,session_id:state.transcriptSessionId,directive,history:snapshot});
     const data=await r.json().catch(()=>({}));
     if(!r.ok)throw Error(data.error||'Hybrid response failed');
     if(!state.active||state.anchorToken!==at)return;
@@ -1458,6 +1461,10 @@ async function finishConversation(){
  const goodbye=state.character==='pigfish'?'That was fun! Catch you later!':'That was fun! See you next time!';
  try{await speakEleven(goodbye)}catch(e){console.warn('Guided goodbye',e)}
  if(!state.active||run!==state.anchorToken)return;
+ if(state.hybrid&&state.transcriptSaveQueue){
+  await state.transcriptSaveQueue.catch(()=>{});
+  if(state.transcriptSaveErrors)console.warn('[Free Talking] transcript turns not saved:',state.transcriptSaveErrors);
+ }
  state.anchorPhase='finished';
  // Goodbye audio has fully ended. Fade the conversation away before revealing
  // the character celebration; never interrupt the final spoken sentence.
@@ -1740,6 +1747,13 @@ async function startConversation(){
   $('anchorText').textContent=state.anchors[state.anchorIndex].text;
   if(state.hybrid){
    if(state.sttEngine!=='eleven-scribe-realtime'&&!window.MediaRecorder)throw Error('This browser does not support recording for Hybrid mode');
+   const claim=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+    action:'start',book_id:state.book.id,unit_id:state.unit.id,
+    character:state.character,session_id:state.transcriptSessionId
+   },startAbort.signal);
+   const claimData=await claim.json().catch(()=>({}));
+   if(!claim.ok||!claimData.allowed)throw Error(claimData.error||'Free Talking is unavailable today.');
+   if(startId!==activeStartId)return;
    const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
    if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
    state.stream=mic;monitorMicrophone(mic);
@@ -1822,7 +1836,14 @@ async function startConversation(){
  }catch(e){
   if(startId!==activeStartId)return;
   $('ftBootSpinner').hidden=true;
-  console.error('[Free Talking Realtime demo] failed to start',e);
+  console.error('[Free Talking] failed to start',e);
+  if(releaseMode){
+   endSession('Could not start Free Talking.');
+   $('ftReleaseIntro').hidden=false;veil.hidden=true;
+   const status=$('ftReleaseError');status.hidden=false;
+   status.textContent=String(e?.message||'Could not start. Please try again.');
+   return;
+  }
   // Never kick the student out on an error. Keep the session screen and actionable message.
   endSession('Connection failed. Tap play to retry or go back.');
   state.paused=true;setPauseButton(true);
