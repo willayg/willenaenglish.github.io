@@ -255,17 +255,24 @@ export async function onRequestPost({request,env}){
   if(input.action==='quota'||input.action==='start'){
    const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
    if(profile.role!=='student')return json(200,{allowed:true,staff:true,day});
-   const dailyUrl=SCORE+'/rest/v1/free_talking_daily_sessions?select=id,book_id,unit_id,character,completed_at&student_id=eq.'+encodeURIComponent(user.id)+'&local_day=eq.'+day+'&limit=1';
+   const dailyUrl=SCORE+'/rest/v1/free_talking_daily_sessions?select=id,book_id,unit_id,character,completed_at,first_student_turn_at&student_id=eq.'+encodeURIComponent(user.id)+'&local_day=eq.'+day+'&limit=1';
    const existing=await get(dailyUrl,scoreHeaders(token),signal);
-   if(input.action==='quota')return json(200,{allowed:existing.length===0,used:existing.length>0,day});
+   if(input.action==='quota'){
+    const pending=existing[0]&&!existing[0].completed_at&&!existing[0].first_student_turn_at;
+    const sameUnit=pending&&existing[0].book_id===input.book_id&&existing[0].unit_id===input.unit_id;
+    return json(200,{allowed:!existing.length||Boolean(sameUnit),used:!!existing.length&&!sameUnit,day,
+     resumable:!!sameUnit,previousCharacter:sameUnit?existing[0].character:null});
+   }
    const requestedSession=String(input.session_id||'');
    const character=String(input.character||'');
    if(!UUID.test(requestedSession)||!['bunny','pigfish','willi'].includes(character))return json(400,{error:'Invalid session'});
    if(existing.length){
-    if(existing[0].id===requestedSession&&!existing[0].completed_at&&existing[0].book_id===input.book_id&&existing[0].unit_id===input.unit_id){
-     return json(200,{allowed:true,resume:true,session_id:requestedSession,day});
-    }
-    return json(429,{error:'오늘의 Free Talking은 이미 사용했어요. 내일 다시 만나요!',used:true,day});
+    const unfinished=!existing[0].completed_at&&!existing[0].first_student_turn_at;
+    const sameUnit=existing[0].book_id===input.book_id&&existing[0].unit_id===input.unit_id;
+    const sameCharacter=existing[0].character===character;
+    if(unfinished&&sameUnit&&sameCharacter)
+     return json(200,{allowed:true,resume:true,session_id:existing[0].id,character,day});
+    return json(429,{error:unfinished&&sameUnit?'이미 시작한 캐릭터를 다시 선택해 주세요.':'오늘의 Free Talking은 이미 사용했어요. 내일 다시 만나요!',used:!unfinished,day});
    }
    const response=await fetch(SCORE+'/rest/v1/free_talking_daily_sessions',{
     method:'POST',headers:{...scoreHeaders(token),'Content-Type':'application/json',Prefer:'return=representation'},
@@ -304,8 +311,20 @@ export async function onRequestPost({request,env}){
      method:'POST',headers:{...scoreHeaders(token),'Content-Type':'application/json',Prefer:'return=minimal'},
      body:JSON.stringify(row),signal
    });
-   if(!saved.ok){console.warn('[Free Talking] transcript write rejected',saved.status);
-     return json(502,{error:'Could not save transcript ('+saved.status+')'});}
+   if(!saved.ok){
+    if(saved.status===409&&speaker==='character'&&turnNumber===1&&profile.role==='student')
+     return json(200,{saved:true,previouslySaved:true});
+    console.warn('[Free Talking] transcript write rejected',saved.status);
+    return json(502,{error:'Could not save transcript ('+saved.status+')'});
+   }
+   if(profile.role==='student'&&speaker==='student'){
+    const stamp=await fetch(SCORE+'/rest/v1/free_talking_daily_sessions?id=eq.'+sessionId+'&student_id=eq.'+user.id+'&first_student_turn_at=is.null',{
+     method:'PATCH',headers:{...scoreHeaders(token),'Content-Type':'application/json',Prefer:'return=minimal'},
+     body:JSON.stringify({first_student_turn_at:new Date().toISOString()}),signal
+    });
+    if(!stamp.ok){console.warn('[Free Talking] participation stamp failed',stamp.status);
+     return json(502,{error:'Could not record daily participation'});}
+   }
    return json(200,{saved:true});
   }
   if(profile.role==='student'&&input.action==='reply'){
