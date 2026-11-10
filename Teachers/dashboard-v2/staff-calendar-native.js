@@ -30,10 +30,12 @@ async function checkGoogle(){
   state.source=status.connected?'google':'native';
   const connect=$('wcConnectGoogle');
   if(connect){connect.hidden=!status.admin;connect.textContent=status.connected?'Reconnect Google':'Connect Google Calendar';}
+  const share=$('wcShareGoogle');if(share)share.hidden=!(status.admin&&status.connected);
   googleNotice(status.connected?'Google Calendar connected · Events sync in both directions':'Google Calendar not connected · Shared Willena events only',status.connected);
  }catch(e){
   state.googleReady=false;state.source='native';
   const connect=$('wcConnectGoogle');if(connect)connect.hidden=true;
+  const share=$('wcShareGoogle');if(share)share.hidden=true;
   googleNotice('Google sync unavailable: '+e.message);
  }
 }
@@ -45,6 +47,15 @@ async function connectGoogle(){
   if(!result.authorization_url||!result.authorization_url.startsWith('https://accounts.google.com/'))throw Error('Authorization URL unavailable');
   window.location.assign(result.authorization_url)
  }catch(e){googleNotice('Could not connect Google: '+e.message);btn.disabled=false}
+}
+async function shareGoogle(){
+ if(!confirm('Invite all approved Willena teachers and admins to edit the Google Calendar? Google may send sharing emails. Staff may need to accept and enable notifications on their phones.'))return;
+ const btn=$('wcShareGoogle');btn.disabled=true;
+ try{
+  const r=await api('POST','/share-staff',{},true);
+  googleNotice('Google shared: '+r.invited+' invitations, '+r.updated+' updated, '+r.skipped+' already shared'+(r.failed?', '+r.failed+' failed':''),true);
+ }catch(e){googleNotice('Could not invite staff: '+e.message)}
+ finally{btn.disabled=false}
 }
 function weekStart(d){const r=new Date(d.getFullYear(),d.getMonth(),d.getDate());r.setDate(r.getDate()-r.getDay());return r}
 function occurrence(e,d){
@@ -143,6 +154,7 @@ function init(){
  if(state.open)return;state.open=true;
  $('wcNew').onclick=()=>edit();
  $('wcConnectGoogle').onclick=connectGoogle;
+ $('wcShareGoogle').onclick=shareGoogle;
  $('wcPrev').onclick=()=>{state.cursor=state.mode==='month'?new Date(state.cursor.getFullYear(),state.cursor.getMonth()-1,1):new Date(state.cursor.getFullYear(),state.cursor.getMonth(),state.cursor.getDate()-7);render();if(state.source==='google')load()};
  $('wcNext').onclick=()=>{state.cursor=state.mode==='month'?new Date(state.cursor.getFullYear(),state.cursor.getMonth()+1,1):new Date(state.cursor.getFullYear(),state.cursor.getMonth(),state.cursor.getDate()+7);render();if(state.source==='google')load()};
  $('wcToday').onclick=()=>{state.cursor=new Date(today);render();if(state.source==='google')load()};
