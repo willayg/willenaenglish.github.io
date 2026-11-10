@@ -468,7 +468,7 @@ function ftTopicReward(){
 function ftRecordAnswer(speech){
  state.contributions=Math.min(12,(state.contributions||0)+1);
  state.unproductiveStreak=0;
- const normalized=String(speech||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim();
+ const normalized=String(speech||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
  if(normalized){
   state.recentQualified=([...state.recentQualified,normalized]).slice(-18);
   try{localStorage.setItem(ftCompletionKey()+':recentQualified',JSON.stringify(state.recentQualified))}catch{}
@@ -1506,13 +1506,9 @@ async function finishUnproductiveConversation(){
  await state.transcriptSaveQueue?.catch(()=>{});
  const count=state.contributions||0;
  endSession('We can talk again later.');
- $('talk').classList.remove('is-visible');
- $('talk').classList.remove('is-ending');
  $('ftCelebration').hidden=true;
- $('clock').textContent=count+' / 12 meaningful conversations';
- $('anchorText').textContent='Good try! You can come back later.';
- $('listenCheck').textContent='Conversation ended · saved progress stays';
- // No stars, points or full-completion reward on an early exit.
+ // Return to the character selector rather than leaving an empty overlay.
+ navigateBack();
 }
 async function finishNaturalReply(data){
  const run=state.anchorToken;
