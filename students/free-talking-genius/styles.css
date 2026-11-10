@@ -1531,9 +1531,7 @@
  box-shadow:none!important;
  pointer-events:none!important;
 }
-.free-talking-genius #ftFreeTalkingCard .vocab-skill-ring{
- --progress:0!important;
-}
+/* Free Talking ring now uses the real cumulative --progress value from the app. */
 .free-talking-genius #ftFreeTalkingCard .vocab-card-stars{
  color:#7d8f96!important;
  font-size:clamp(11px,2vw,14px)!important;
