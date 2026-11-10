@@ -1110,6 +1110,8 @@ async function playAnchor(index){
   }
  }
  try{
+  // Begin switching to media playback while the cached question audio loads.
+  if(state.hybrid)await releaseMicForPlayback();
   const clip=await getAnchorClip(anchor);
   if(!state.active||run!==state.anchorToken)return;
   await playLocalClip(clip.url,clip.direct===true);
@@ -1474,6 +1476,7 @@ async function reviewConversation(){
  if(!state.active||state.reviewing)return;
  state.reviewing=true;
  state.anchorPhase='reviewing';setMicEnabled(false);actorPhase('thinking');
+ await releaseMicForPlayback();
  message('Reviewing our conversation…');$('listenCheck').textContent='Reviewing our chat';
  try{
   await state.transcriptSaveQueue?.catch(()=>{});
@@ -1532,14 +1535,20 @@ async function reviewConversation(){
   $('ftCelebration').hidden=false;
  }finally{state.reviewing=false}
 }
-$('ftReviewContinue').addEventListener('click',()=>{
+$('ftReviewContinue').addEventListener('click',async()=>{
  if(!state.active)return;
  $('ftCelebration').hidden=true;
  if($('ftReviewContinue').textContent==='Try review again'){
   $('ftReviewContinue').textContent='Keep chatting';void reviewConversation();return;
  }
- state.anchorPhase='awaitingSecond';setMicEnabled(true);actorPhase('listening');armIdleTimeout();
- message('Your turn! Keep chatting naturally.');$('listenCheck').textContent='Listening';
+ state.anchorPhase='awaitingSecond';actorPhase('thinking');
+ message('Getting microphone ready…');
+ try{
+  await restoreMicAfterPlayback();
+  if(!state.active||!state.stream?.active)throw Error('Microphone unavailable');
+  setMicEnabled(true);actorPhase('listening');armIdleTimeout();
+  message('Your turn! Keep chatting naturally.');$('listenCheck').textContent='Listening';
+ }catch(e){error('Microphone: '+String(e.message||e));$('ftCelebration').hidden=false}
 });
 async function finishConversation({skipGoodbye=false}={}){
  if(!state.active||state.anchorPhase==='finished'||state.anchorPhase==='goodbye')return;
