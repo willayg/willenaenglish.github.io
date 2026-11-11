@@ -29,7 +29,7 @@ export function rewardSession(book,unit,mode){
       record.completed=true;
       record.percent=mode==='unscramble'?(record.firstTotal?Math.round(100*record.firstCorrect/record.firstTotal):0):100;
       // Coach is now required for Golden Unit and awards the same star scale.
-      const qualityPercent=record.firstTotal?Math.round(100*[...acceptedGrades.values()].reduce((sum,v)=>sum+v,0)/(4*record.firstTotal)):0;
+      const qualityPercent=record.firstTotal?Math.round(1000*[...acceptedGrades.values()].reduce((sum,v)=>sum+v,0)/(4*record.firstTotal))/10:0;
       record.stars=mode==='unscramble'?starsForPercent(record.percent):speakingStars(qualityPercent);
       const payload={
         reward_only:true,session_id:sessionId,client_attempt_id:id(),
