@@ -6,6 +6,7 @@ import {createSpeakingAudioCache} from './vocab-listening-cache.js?v=20261024-au
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
 import {getSpellingTarget,matchesSpellingTarget} from './spelling-targets.js?v=20261028-apostrophes1';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261104-sentence-match1';
+import {gradeSpeaking,speakingStars} from '/students/shared/speaking-smart-grade.js?v=20261111-1';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-startup2';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260927-startup2';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260927-startup2';
@@ -214,6 +215,7 @@ function setStatus(message){if(statusEl)statusEl.textContent=message}
 
 function vocabPointValue(skill,responseType,{correct=true,hintsUsed=0,metadata={}}={}){
   if(!correct)return 0;
+  if(skill==='speaking'&&Number.isFinite(metadata?.speaking_grade_points))return Math.max(0,Math.min(4,Number(metadata.speaking_grade_points)));
   const mode=txt(metadata?.vocab_mode);
   if(mode==='spelling_coach'){
     const hints=Math.max(0,Number(hintsUsed)||0);
@@ -250,6 +252,7 @@ function startRewardSession(mode){
     mode:txt(mode),
     firstTotal:0,
     firstCorrect:0,
+    firstQualityPoints:0,
     points:0,
     completed:false,
     rewardSessionId,
@@ -264,6 +267,7 @@ function noteRewardAttempt(correct,retryCount,points){
   if(Math.max(0,Number(retryCount)||0)===0){
     reward.firstTotal+=1;
     if(correct)reward.firstCorrect+=1;
+    if(reward.mode==='speaking')reward.firstQualityPoints+=Math.max(0,Math.min(4,Number(points)||0));
   }
 }
 function rewardPercent(reward=state.rewardSession){
@@ -277,7 +281,8 @@ async function completeRewardSession(){
   const teacherContext=state.activeTeacherAssignment;
   const reviewOnly=!!teacherContext?._reviewOnly;
   const teacher=reviewOnly?null:teacherContext;
-  reward.stars=reviewOnly?0:(teacher?wordTestStarsForPercent(reward.percent):starsForPercent(reward.percent));
+  const qualityPercent=reward.mode==='speaking'&&reward.firstTotal?Math.round(100*reward.firstQualityPoints/(reward.firstTotal*4)):reward.percent;
+  reward.stars=reviewOnly?0:(reward.mode==='speaking'?speakingStars(qualityPercent):teacher?wordTestStarsForPercent(reward.percent):starsForPercent(reward.percent));
   if(reviewOnly)return reward;
   const listName=reward.listName||(
     teacher
@@ -303,6 +308,7 @@ async function completeRewardSession(){
         completed:true,
         stars:reward.stars,
         accuracy:reward.firstTotal?reward.firstCorrect/reward.firstTotal:0,
+        speaking_quality_percent:reward.mode==='speaking'?qualityPercent:null,
         percent:reward.percent,
         score:reward.firstCorrect,
         total:reward.firstTotal,
@@ -342,7 +348,9 @@ function rewardSummaryHtml(reward=state.rewardSession,{pointsOnly=false}={}){
   const starMax=state.activeTeacherAssignment?10:5;
   const stars=Math.max(0,Math.min(starMax,Number(reward.stars)||0));
   const points=Math.max(0,Number(reward.points)||0);
-  return '<student-reward-celebration '+(pointsOnly?'points-only ':'')+'percent="'+rewardPercent(reward)+'" stars="'+stars+'" star-max="'+starMax+'" points="'+points+'" label="'+(state.optionalTeacherCoach?'OPTIONAL PRACTICE':state.activeTeacherAssignment?'WORD TEST STUDY':'SESSION REWARD')+'"></student-reward-celebration>';
+  const quality=reward.mode==='speaking'&&reward.firstTotal?Math.round(100*reward.firstQualityPoints/(4*reward.firstTotal)):rewardPercent(reward);
+  const starsShown=reward.mode==='speaking'?speakingStars(quality):stars;
+  return '<student-reward-celebration '+(pointsOnly?'points-only ':'')+'percent="'+rewardPercent(reward)+'" stars="'+starsShown+'" star-max="'+starMax+'" points="'+points+'" label="'+(state.optionalTeacherCoach?'OPTIONAL PRACTICE':state.activeTeacherAssignment?'WORD TEST STUDY':'SESSION REWARD')+'"></student-reward-celebration>';
 }
 
 function perfNow(){return window.performance?.now?.()||Date.now()}
@@ -1912,7 +1920,9 @@ function renderSpeakingQuestion(){
         if(!has){delete preview.dataset.accepted;return;}
         const candidates=state.renderer?.getSpeechAlternatives?.()||[];
         const heard=candidates.length?candidates:[response];
-        preview.dataset.accepted=matchSpeakingTarget(word.speakingTarget||word.word,heard).correct?'true':'false';
+        const grade=gradeSpeaking(word.speakingTarget||word.word,heard,{mode:'word',exactMatcher:matchSpeakingTarget});
+        preview.dataset.accepted=grade.level==='green'?'true':grade.level;
+        preview.style.color=({green:'#168345',lime:'#719D19',yellow:'#A87C07',red:'#cf304c'})[grade.level];
       }
     }
   });
@@ -1998,16 +2008,17 @@ function renderSpeakingQuestion(){
     const transcriptEl=host.querySelector('[data-speaking-transcript]');
     const updateSpeakingPreview=alternatives=>{
       if(session.checked||state.renderer!==renderer)return;
-      const accepted=matchSpeakingTarget(expected,alternatives).correct;
+      const grade=gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
       if(transcriptEl){
-        transcriptEl.style.color=accepted?'#168345':'#cf304c';
-        transcriptEl.style.borderColor=accepted?'#77c99a':'#efa4ae';
-        transcriptEl.setAttribute('data-accepted',accepted?'true':'false');
+        transcriptEl.style.color=({green:'#168345',lime:'#719D19',yellow:'#A87C07',red:'#cf304c'})[grade.level];
+        transcriptEl.style.borderColor=({green:'#77c99a',lime:'#B5DB70',yellow:'#F1D079',red:'#efa4ae'})[grade.level];
+        transcriptEl.setAttribute('data-accepted',grade.level==='green'?'true':grade.level);
       }
     };
     renderer.onSpeechResult=alternatives=>{
       updateSpeakingPreview(alternatives);
-      state.aiSpeechUi?.observe(alternatives);
+      // Keep optional AI fallback for microphone failures only; local grades never require it.
+      if(gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget}).points===0)state.aiSpeechUi?.observe(alternatives);
     };
     host.querySelector('[data-speaking-mic]')?.addEventListener('click',()=>{
       transcriptEl?.removeAttribute('data-accepted');
@@ -2032,9 +2043,9 @@ function checkSpeaking(){
   const response=txt(renderer.getResponse());if(!response)return;
   const target=word.speakingTarget||word.word;
   const alternatives=renderer.getSpeechAlternatives?.()||[response];
-  const match=matchSpeakingTarget(target,alternatives);
+  const match=gradeSpeaking(target,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
   const aiFallback=!!session.aiAcceptedTranscript&&session.aiAcceptedTranscript===response;
-  const correct=!!match.correct&&(!aiFallback||['exact','spacing','homophone','in_sentence','in_sentence_homophone'].includes(match.matchedBy));
+  const correct=match.points>=2;
   const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0);
   session.results.push({
     lexicalEntryId:word.id||null,
@@ -2043,6 +2054,8 @@ function checkSpeaking(){
     response,
     alternatives,
     correct,
+    gradePoints:match.points,
+    gradeLevel:match.level,
     matchedBy:match.matchedBy
   });
   try{recordVocabAttempt({
@@ -2057,6 +2070,8 @@ function checkSpeaking(){
     metadata:{
       stt_alternatives:alternatives,
       stt_match:match.matchedBy||null,
+      speaking_grade_points:match.points,
+      speaking_grade_level:match.level,
       stt_source:aiFallback?'openai_ai_fallback':'browser',
       vocab_mode:'speaking',
       recorded_from:'vocab-study-speaking'
@@ -2072,7 +2087,7 @@ function checkSpeaking(){
     renderer.showFeedback({
       correct,
       correctAnswer:[target],
-      message:correct?'정답입니다!':'다시 확인해 보세요.'
+      message:match.points===4?'정답입니다! +4':match.points===3?'좋아요! 거의 맞았어요. +3':match.points===2?'잘했어요! 조금 더 연습해요. +2':'다시 확인해 보세요.'
     });
   }catch(error){console.warn('[Vocab Study] speaking feedback rendering failed',error);}
   // Once speaking is accepted, display the textbook's target phrase rather than
@@ -2126,6 +2141,11 @@ async function finishSpeakingSession(){
   const total=session?.initialTotal||0;
   const skipped=(session?.results||[]).filter(result=>result?.skipped).length;
   const retries=wrongAttemptCount((session?.results||[]).filter(result=>!result?.skipped));
+  const firstGrades=new Map();
+  for(const row of session?.results||[]){if(row.skipped)continue;const key=String(row.lexicalEntryId||row.word);if(!firstGrades.has(key))firstGrades.set(key,Number(row.gradePoints)||0)}
+  const qualityTotal=[...firstGrades.values()].reduce((a,b)=>a+b,0);
+  const qualityPct=firstGrades.size?Math.round(qualityTotal/(4*firstGrades.size)*100):0;
+  const partialCount=[...firstGrades.values()].filter(p=>p===2||p===3).length;
   // Render completion immediately: server saves and teacher/gold refreshes must never trap a child on the last question.
   const reward=state.rewardSession;
   void completeRewardSession().catch(error=>console.warn('[Vocab Study] background completion failed',error));
@@ -2138,11 +2158,13 @@ async function finishSpeakingSession(){
     '<section class="vocab-finish">'+
       '<span class="eyebrow">SPEAKING COMPLETE</span>'+
       '<h2>'+passed+' / '+total+'</h2>'+
-      '<p>틀린 단어는 맞힐 때까지 다시 말해 봤어요.</p>'+
+      '<p>Green, lime and yellow all count as completed.</p>'+
       '<div class="vocab-finish-stats">'+
         '<div><strong>'+passed+' / '+total+'</strong><span>PASSED</span></div>'+
         '<div><strong>'+retries+'</strong><span>RETRIES</span></div>'+
-        '<div><strong>'+skipped+'</strong><span>SKIPPED</span></div>'+
+        '<div><strong>'+skipped+'</strong><span>SKIPPED</span></div>'+ 
+        '<div><strong>'+qualityPct+'%</strong><span>SPEAKING SCORE</span></div>'+ 
+        '<div><strong>'+partialCount+'</strong><span>LIME / YELLOW</span></div>'+
       '</div>'+
       rewardSummaryHtml(reward)+
       goldenAwardHtml()+
