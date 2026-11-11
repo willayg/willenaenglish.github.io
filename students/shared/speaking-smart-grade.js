@@ -34,6 +34,23 @@ function orderedCoverage(target,heard){
  for(const w of target){let prior=0;for(let j=1;j<=heard.length;j++){const old=dp[j];dp[j]=compatible(w,heard[j-1])?prior+1:Math.max(dp[j],dp[j-1]);prior=old;}}
  return dp[heard.length];
 }
+// A long target word may be split by browser STT into short fragments:
+// "creative" -> "create TV". Grant low-confidence partial credit when
+// a substantial prefix survives, never for a tiny arbitrary substring.
+function commonPrefixLength(a,b){
+ let n=0;while(n<a.length&&n<b.length&&a[n]===b[n])n++;return n;
+}
+function fragmentedWordGrade(expected,heard){
+ if(expected.length!==1||heard.length<1||heard.length>3)return 0;
+ const target=expected[0];
+ if(target.length<6||!heard.every(w=>/^[a-z]+$/.test(w)))return 0;
+ const first=heard[0];
+ const prefix=commonPrefixLength(target,first);
+ if(prefix<Math.max(4,Math.ceil(target.length*0.55)))return 0;
+ if(heard.length===1)return Math.abs(target.length-first.length)<=3?2:1;
+ if(heard.slice(1).some(w=>w.length>4))return 0;
+ return 1;
+}
 const result=(points,transcript,reason)=>({points,correct:points>=1,level:points===4?'green':points===3?'lime':points===2?'yellow':points===1?'orange':'red',transcript,matchedBy:reason});
 export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null}={}){
  const expected=tokens(target);
@@ -104,6 +121,10 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
      }
     }
    }
+  }
+  if(mode==='word'&&score===0){
+    const partial=fragmentedWordGrade(expected,heard);
+    if(partial){score=partial;reason=partial===2?'recognizable_word_stem':'fragmented_word_sound';}
   }
   // Low-credit pass: strictly more than half the expected words detected
   // in their original order. Guard negation, directions and numeric changes.
