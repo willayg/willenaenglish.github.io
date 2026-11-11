@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+<title id="title">Sentence Genius — sentence path</title>
+<rect width="120" height="120" rx="23" fill="#fff"/>
+<g stroke-linecap="round" stroke-linejoin="round">
+<rect x="12" y="29" width="32" height="31" rx="8" fill="#42D3DB" stroke="#0F4D63" stroke-width="4"/>
+<rect x="72" y="29" width="36" height="31" rx="8" fill="#FFC62E" stroke="#0F4D63" stroke-width="4"/>
+<rect x="39" y="74" width="43" height="31" rx="8" fill="#FF4FA0" stroke="#0F4D63" stroke-width="4"/>
+<path d="M21 44h14M81 44h18M49 89h23" stroke="#0F4D63" stroke-width="4.5"/>
+<path d="M48 44h17m-6-6 6 6-6 6M90 64v12m-6-6 6 6 6-6M35 89H24V67m-6 6 6-6 6 6" fill="none" stroke="#0F4D63" stroke-width="4"/>
+<path d="M56 19l4-9 4 9 9 4-9 4-4 8-4-8-9-4Z" fill="#FFC62E"/>
+</g>
+</svg>
