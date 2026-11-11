@@ -28,6 +28,12 @@ function aligned(target,heard){
  }
  return {matched,exact,changed,used,matchedTargets};
 }
+// Ordered token overlap, rather than unordered bag-of-words matching.
+function orderedCoverage(target,heard){
+ const dp=new Array(heard.length+1).fill(0);
+ for(const w of target){let prior=0;for(let j=1;j<=heard.length;j++){const old=dp[j];dp[j]=compatible(w,heard[j-1])?prior+1:Math.max(dp[j],dp[j-1]);prior=old;}}
+ return dp[heard.length];
+}
 const result=(points,transcript,reason)=>({points,correct:points>=2,level:points===4?'green':points===3?'lime':points===2?'yellow':'red',transcript,matchedBy:reason});
 export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null}={}){
  const expected=tokens(target);
@@ -77,10 +83,22 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
        if(found>=0)next=found+1;else if(!LIGHT.has(w))return false;
       }return true;
      })();
-     if(preservedOrder&&missing===0&&extra===0&&a.changed===1){score=2;reason='minor_grammar_form';}
-     else if(preservedOrder&&missing<=1&&extra<=2&&meaningful===1){
-      score=missing===0&&extra===1&&heard.some(w=>ARTICLES.has(w))?3:2;
-      reason='minor_sentence_difference';
+     const coverage=orderedCoverage(expected,heard);
+     const ratio=coverage/expected.length;
+     const missed=expected.length-coverage;
+     const additions=heard.length-coverage;
+     const missedContent=required.filter(w=>!heard.some(h=>compatible(w,h))).length;
+     const oppositePairs=[['left','right'],['up','down'],['before','after'],['first','last'],['yes','no']];
+     const contradictory=oppositePairs.some(([a,b])=>
+       (expected.includes(a)&&heard.includes(b)&&!expected.includes(b))||
+       (expected.includes(b)&&heard.includes(a)&&!expected.includes(a)));
+     if(!contradictory&&ratio>=0.9&&missed<=1&&additions<=1&&missedContent===0){
+       score=3;reason='high_sentence_coverage';
+     }else if(!contradictory&&ratio>=0.75&&missed<=Math.max(2,Math.ceil(expected.length*0.25))&&
+       additions<=Math.max(2,Math.ceil(heard.length*0.25))&&missedContent<=1){
+       score=2;reason='recognizable_sentence_coverage';
+     }else if(!contradictory&&preservedOrder&&missing<=1&&extra<=2&&meaningful===1){
+       score=2;reason='minor_sentence_difference';
      }
     }
    }
