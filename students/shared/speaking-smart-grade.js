@@ -1,5 +1,5 @@
 // Deterministic speaking-only evaluator. Never use for typed spelling or grammar.
-// Grade the STT transcript, not acoustic pronunciation; 4/3/2 are confidence tiers.
+// Grade the STT transcript, not acoustic pronunciation; 4/3/2/1 are confidence tiers.
 // A missing or unrelated transcript is a retry (0).
 const CONTRACTIONS={"i'm":"i am","you're":"you are","we're":"we are","they're":"they are","he's":"he is","she's":"she is","it's":"it is","don't":"do not","doesn't":"does not","didn't":"did not","can't":"cannot","won't":"will not","isn't":"is not","aren't":"are not","wasn't":"was not","weren't":"were not","i've":"i have","we've":"we have","they've":"they have","i'll":"i will","you'll":"you will","we'll":"we will","they'll":"they will"};
 const ARTICLES=new Set(['a','an','the']);
@@ -34,7 +34,7 @@ function orderedCoverage(target,heard){
  for(const w of target){let prior=0;for(let j=1;j<=heard.length;j++){const old=dp[j];dp[j]=compatible(w,heard[j-1])?prior+1:Math.max(dp[j],dp[j-1]);prior=old;}}
  return dp[heard.length];
 }
-const result=(points,transcript,reason)=>({points,correct:points>=2,level:points===4?'green':points===3?'lime':points===2?'yellow':'red',transcript,matchedBy:reason});
+const result=(points,transcript,reason)=>({points,correct:points>=1,level:points===4?'green':points===3?'lime':points===2?'yellow':points===1?'orange':'red',transcript,matchedBy:reason});
 export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null}={}){
  const expected=tokens(target);
  const heardList=(Array.isArray(alternatives)?alternatives:[alternatives]).map(String).map(s=>s.trim()).filter(Boolean).slice(0,5);
@@ -104,6 +104,25 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
      }
     }
    }
+  }
+  // Low-credit pass: strictly more than half the expected words detected
+  // in their original order. Guard negation, directions and numeric changes.
+  // Word Genius keeps its independent vocabulary rules.
+  if(mode==='sentence'&&score===0&&expected.length>=5){
+    const coverage=orderedCoverage(expected,heard);
+    const oppositePairs=[['left','right'],['up','down'],['before','after'],['first','last'],['yes','no']];
+    const contradictory=oppositePairs.some(([a,b])=>
+      (expected.includes(a)&&heard.includes(b)&&!expected.includes(b))||
+      (expected.includes(b)&&heard.includes(a)&&!expected.includes(a)));
+    const protectedWords=[...new Set([...expected,...heard])].filter(w=>CRITICAL.has(w)&&w!=='first'&&w!=='last');
+    const changedProtected=protectedWords.some(w=>expected.filter(x=>x===w).length!==heard.filter(x=>x===w).length);
+    const important=expected.filter(w=>!LIGHT.has(w));
+    const importantMatches=important.filter(w=>heard.some(h=>compatible(w,h))).length;
+    // Require at least three meaningful matched tokens for long sentences.
+    if(coverage/expected.length>0.5&&importantMatches>=Math.min(3,important.length)&&
+       !contradictory&&!changedProtected){
+      score=1;reason='partial_sentence_coverage';
+    }
   }
   if(score>best.points)best=result(score,raw,reason);
   if(score===4)break;
