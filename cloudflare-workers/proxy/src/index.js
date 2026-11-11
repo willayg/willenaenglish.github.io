@@ -89,6 +89,16 @@ async function routeToNetlify(request, url) {
   }));
 }
 
+async function routeWebsiteEnquiries(request, url, origin) {
+ const cookies=parseCookies(request.headers.get('Cookie'));
+ const token=cookies.sb_access||'';
+ if(!token)return new Response(JSON.stringify({success:false,error:'Admin login required'}),{status:401,headers:{'content-type':'application/json',...corsHeaders(origin)}});
+ const upstream=new URL('https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/website-enquiries-admin');
+ upstream.search=url.search;
+ const response=await fetch(upstream,{method:request.method,headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:request.method==='GET'||request.method==='HEAD'?undefined:request.body});
+ return rewriteResponse(response,origin);
+}
+
 async function routeLevelTestAdmin(request, url, origin) {
   const cookies = parseCookies(request.headers.get('Cookie'));
   const accessToken = cookies.sb_access || '';
@@ -152,6 +162,7 @@ async function handleRequest(request, env) {
   }
 
   try {
+    if (url.pathname === '/website-enquiries' || url.pathname === '/website-enquiries/') return routeWebsiteEnquiries(request,url,origin);
     if (url.pathname === '/level-test-admin' || url.pathname.startsWith('/level-test-admin/')) {
       return routeLevelTestAdmin(request, url, origin);
     }
