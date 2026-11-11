@@ -391,12 +391,31 @@ function rewriteResponse(response, origin) {
 }
 
 
+// Native Admin V2 enquiries: forward the HttpOnly teacher token to the dedicated admin Edge Function.
+async function routeWebsiteEnquiries(request, url, origin) {
+  const token = accessTokenFromCookie(request.headers.get('Cookie'));
+  if (!token) return rewriteResponse(new Response(JSON.stringify({success:false,error:'Admin login required'}), {
+    status:401,headers:{'Content-Type':'application/json'}
+  }),origin);
+  const upstream = new URL('https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/website-enquiries-admin');
+  upstream.search = url.search;
+  const response = await fetch(upstream.toString(), {
+    method:request.method,
+    headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+    body:request.method==='GET'||request.method==='HEAD'?undefined:request.body
+  });
+  return rewriteResponse(response,origin);
+}
+
 async function handleRequest(request, env) {
   const url = new URL(request.url);
   const origin = request.headers.get('Origin') || '';
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(origin) });
 
   try {
+    if (url.pathname === '/website-enquiries' || url.pathname === '/website-enquiries/') {
+      return routeWebsiteEnquiries(request,url,origin);
+    }
 
     // Live Classroom: authenticated API forwarded through a private service binding.
     if (url.pathname === '/api/live-presence' || url.pathname === '/api/live-presence/') {
