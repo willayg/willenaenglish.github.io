@@ -218,13 +218,48 @@ body .frame.v1{--accent:#19aabb;--accent2:#ce5aa0;--surface:linear-gradient(115d
  .frame.v1 .hero-visual .carousel-layer .apps img{max-width:92px}
  .frame.v1 .hero-copy h1{font-size:36px}
 }
+
+/* Shared carousel pagination and CTA order across all viewport sizes. */
+.frame.v1 .hero-copy .social{margin-top:0;margin-bottom:18px}
+.frame.v1 .hero-copy>.herobutton{margin-top:0}
+.frame.v1 .slidecontrols .arrow{display:none!important}
+.frame.v1 .slidecontrols .dots{display:flex;gap:5px;align-items:center;justify-content:center}
+.frame.v1 .slidecontrols .dots button{
+ display:grid;place-items:center;width:36px;height:30px;
+ padding:0;border:0;background:transparent;border-radius:0;cursor:pointer;
+ transition:none;
+}
+.frame.v1 .slidecontrols .dots button:before{
+ content:"";display:block;width:30px;height:6px;border-radius:2px;
+ clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);
+ background:#d7d2de;transition:background .2s,width .2s;
+}
+.frame.v1 .slidecontrols .dots button.active:before{background:#d65598;width:34px}
+@media(min-width:701px){
+ .frame.v1 .hero{
+   grid-template-rows:370px 30px;
+   row-gap:10px;column-gap:35px;
+   align-content:center;
+ }
+ .frame.v1 .hero-copy{grid-column:1;grid-row:1 / span 2;align-self:center}
+ .frame.v1 .hero-visual{grid-column:2;grid-row:1}
+ .frame.v1 .slidecontrols{
+   position:static;inset:auto;grid-column:2;grid-row:2;
+   width:100%;height:30px;display:flex;justify-content:center;align-items:center;
+   margin:0;
+ }
+}
+@media(max-width:700px){
+ .frame.v1 .hero-copy .social{margin-top:0;margin-bottom:17px}
+ .frame.v1 .hero-copy>.herobutton{margin-top:0}
+}
 </style></head>
 <body>
 
 <div class="frame v1" id="frame">
 <header class="sitehead"><a href="https://www.willenaenglish.com/"><img class="logo" src="/Assets/Images/color-logo.png" alt="Willena"></a><nav class="nav"><a href="#about">About Willena</a><a class="student" href="https://students.willenaenglish.com/students/dashboard">Student Login ↗</a><a class="teacher" href="/Teachers/signin.html">Teacher Login ↗</a></nav></header>
-<section class="hero" aria-label="Four slide image carousel"><div class="hero-copy"><div class="eyebrow" id="heroLabel">WILLENA ENGLISH · APP SHOWCASE</div><h1 id="headline">Learning that<br><em>goes further.</em></h1><p id="heroText">단어부터 문장, 말하기까지. 윌레나 Genius 학습 앱을 만나보세요.</p><a href="#journey" class="herobutton">Our Learning Journey ↗</a>
-<div class="social"><a href="https://blog.naver.com/willena_english" title="Naver Blog" aria-label="Naver Blog" target="_blank" rel="noopener">N</a><a href="https://www.youtube.com/@WillayG" title="YouTube" aria-label="YouTube" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4"></rect><path d="m10 9 5 3-5 3z" fill="currentColor" stroke="none"></path></svg></a><a href="https://www.instagram.com/willena_academy" title="Instagram" aria-label="Instagram" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle></svg></a><a href="https://pf.kakao.com/_xbTxnen?from=qr" title="Kakao Channel" aria-label="Kakao Channel" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 3C6.3 3 2 6.5 2 11c0 2.8 1.8 5.3 4.7 6.7L6 21l4.5-2.4c.5.1 1.1.1 1.5.1 5.6 0 10-3.5 10-7.7C22 6.5 17.6 3 12 3z" stroke="none" fill="currentColor"></path></svg></a></div>
+<section class="hero" aria-label="Four slide image carousel"><div class="hero-copy"><div class="eyebrow" id="heroLabel">WILLENA ENGLISH · APP SHOWCASE</div><h1 id="headline">Learning that<br><em>goes further.</em></h1><p id="heroText">단어부터 문장, 말하기까지. 윌레나 Genius 학습 앱을 만나보세요.</p><div class="social"><a href="https://blog.naver.com/willena_english" title="Naver Blog" aria-label="Naver Blog" target="_blank" rel="noopener">N</a><a href="https://www.youtube.com/@WillayG" title="YouTube" aria-label="YouTube" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4"></rect><path d="m10 9 5 3-5 3z" fill="currentColor" stroke="none"></path></svg></a><a href="https://www.instagram.com/willena_academy" title="Instagram" aria-label="Instagram" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle></svg></a><a href="https://pf.kakao.com/_xbTxnen?from=qr" title="Kakao Channel" aria-label="Kakao Channel" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 3C6.3 3 2 6.5 2 11c0 2.8 1.8 5.3 4.7 6.7L6 21l4.5-2.4c.5.1 1.1.1 1.5.1 5.6 0 10-3.5 10-7.7C22 6.5 17.6 3 12 3z" stroke="none" fill="currentColor"></path></svg></a></div>
+<a href="#journey" class="herobutton">Our Learning Journey ↗</a>
 </div><div class="hero-visual" id="swipeArea"><div class="apps" id="visual"></div></div><div class="slidecontrols"><button class="arrow" id="prev" aria-label="Previous slide">‹</button><div class="dots" id="dots"></div><button class="arrow" id="next" aria-label="Next slide">›</button></div></section>
 <main>
 <section class="section" id="about"><div class="eyebrow">WELCOME TO WILLENA</div><h2 id="aboutTitle">English for real life.</h2><p class="lead">윌레나에서는 영어를 외우는 것에서 끝나지 않습니다. 책을 읽고, 친구와 이야기하고, 직접 표현하는 수업을 통해 영어를 자연스럽게 사용할 수 있도록 돕습니다.</p>
