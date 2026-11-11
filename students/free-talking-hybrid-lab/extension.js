@@ -249,6 +249,8 @@ function monitorMicrophone(stream){
   state.micSource=source;state.micAnalyzer=analyser;
   void context.resume().catch(()=>{});
   const sample=new Uint8Array(analyser.fftSize);let tick=0;
+  const voiceBars=Array.from($('ftConversationState')?.querySelectorAll('.ft-state-bars i')||[]);
+  let smoothedVoice=0;
   const frame=()=>{
    if(!state.stream||state.stream!==stream)return;
    state.micRaf=requestAnimationFrame(frame);
@@ -257,6 +259,15 @@ function monitorMicrophone(stream){
    let sum=0;for(let i=0;i<sample.length;i++){const d=(sample[i]-128)/128;sum+=d*d}
    const rms=Math.sqrt(sum/sample.length);
    const level=Math.min(100,Math.round(rms*550));
+   // Use the existing analyser; never open another microphone or alter capture.
+   const childTurn=state.active&&!state.ttsPlaying&&!state.micUserMuted&&
+     $('ftConversationState')?.dataset.mode==='listening'&&track.readyState==='live'&&track.enabled;
+   const target=childTurn?Math.max(0,Math.min(1,(rms-.008)*17)):0;
+   smoothedVoice=smoothedVoice*.45+target*.55;
+   for(let i=0;i<voiceBars.length;i++){
+    const shaped=Math.max(0,Math.min(1,smoothedVoice*(.68+.32*Math.sin((i+1)*1.7+tick*.21))));
+    voiceBars[i].style.setProperty('--voice-height',(7+shaped*18).toFixed(1)+'px');
+   }
    if(state.speechStartedAt&&state.active&&
       (state.anchorPhase==='awaitingFirst'||state.anchorPhase==='awaitingSecond'))
      state.speechPeak=Math.max(state.speechPeak,level);
@@ -388,14 +399,15 @@ async function openDemo({preserveCharacter=false}={}){
 }
 
 
-const FT_GUIDE_KEY='ft-genius-help-20261110-illustrated-eight-v3';
+const FT_GUIDE_KEY='ft-genius-help-20261111-voice-states-v4';
 // First page intentionally reuses the Speaking guide's exact character-choice
 // illustration. Other pages explain the separate natural conversation scoring.
 const FT_GUIDE=[
- {tag:'01 / 04',title:'친구를 고르세요',desc:'친구를 한 번 눌러 선택하고, 한 번 더 누르면 시작해요.',type:'choice'},
- {tag:'02 / 04',title:'자유롭게 이야기해요!',desc:'질문에 답해도 되고, 친구에게 질문하거나 새로운 이야기를 해도 돼요. 짧은 대답도 괜찮아요!',type:'free'},
- {tag:'03 / 04',title:'내 생각을 더 말해 봐요',desc:'질문에 맞게 대답하고, 느낌이나 이유를 더해 보세요. 많이 말하고 잘 소통할수록 점수가 높아져요. 문법이 완벽하지 않아도 괜찮아요!',type:'example'},
- {tag:'04 / 04',title:'8번 대화하고 점수를 받아요',desc:'8번 말한 뒤 AI가 대화 전체를 보고 점수를 줘요. 한 번에 0~4점, 최고 32점! 말이 잘 통하면 더 높은 점수와 별을 받아요.',type:'points'}
+ {tag:'01 / 05',title:'친구를 고르세요',desc:'친구를 한 번 눌러 선택하고, 한 번 더 누르면 시작해요.',type:'choice'},
+ {tag:'02 / 05',title:'색깔을 보고 말해요',desc:'초록색 Listening은 내 차례! 지금 말하세요. 분홍색 Speaking은 친구가 말하는 중이니 기다려요. 분홍색 Thinking은 친구가 생각하는 중이에요. 초록색이 되면 말해요!',type:'states'},
+ {tag:'03 / 05',title:'자유롭게 이야기해요!',desc:'질문에 답해도 되고, 친구에게 질문하거나 새로운 이야기를 해도 돼요. 짧은 대답도 괜찮아요!',type:'free'},
+ {tag:'04 / 05',title:'내 생각을 더 말해 봐요',desc:'질문에 맞게 대답하고, 느낌이나 이유를 더해 보세요. 많이 말하고 잘 소통할수록 점수가 높아져요. 문법이 완벽하지 않아도 괜찮아요!',type:'example'},
+ {tag:'05 / 05',title:'8번 대화하고 점수를 받아요',desc:'8번 말한 뒤 AI가 대화 전체를 보고 점수를 줘요. 한 번에 0~4점, 최고 32점! 쉬운 레벨에서는 짧고 알맞은 대답도 높은 점수를 받을 수 있어요.',type:'points'}
 ];
 function guidePortrait(){
  return '<div class="ft-guide-mini ft-guide-choice"><div class="ft-guide-mini-title">친구를 골라요!</div><div class="ft-guide-mini-avatar">'+BUNNY_FOX_ART+'</div><span class="ft-guide-mini-label">Bunny Fox</span><span class="ft-guide-mini-select">시작하기</span></div>';
@@ -409,6 +421,12 @@ function renderFtGuide(){
  visual.replaceChildren();
  if(page.type==='choice'){
   visual.innerHTML=guidePortrait();
+ }else if(page.type==='states'){
+  visual.innerHTML='<div class="ft-guide-mini ft-guide-voice-states">'+
+   '<div class="ft-guide-state green"><span class="ft-guide-state-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><div><strong>Listening · 내 차례</strong><small>초록색이면 지금 말하세요!</small></div></div>'+
+   '<div class="ft-guide-state pink"><span class="ft-guide-state-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><div><strong>Speaking · 친구 차례</strong><small>분홍색이면 기다려요.</small></div></div>'+
+   '<div class="ft-guide-state pink"><span class="ft-guide-state-think" aria-hidden="true"></span><div><strong>Thinking · 생각 중</strong><small>친구가 생각하는 동안 기다려요.</small></div></div>'+
+   '</div>';
  }else if(page.type==='free'){
   visual.innerHTML='<div class="ft-guide-mini ft-guide-talk"><div class="ft-guide-mini-avatar">'+BUNNY_FOX_ART+'</div><div class="ft-guide-example good"><small>Bunny Fox</small><b>What do you like doing?</b></div><div class="ft-guide-example"><small>You</small><b>I love swimming! What about you?</b></div></div>';
  }else if(page.type==='example'){
