@@ -1580,16 +1580,32 @@ async function reviewConversation(){
  try{
   await state.transcriptSaveQueue?.catch(()=>{});
   if(state.transcriptSaveErrors)throw Error('Some conversation turns could not be saved. Please try again.');
-  const response=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
-   action:'review',session_id:state.transcriptSessionId,book_id:state.book.id,unit_id:state.unit.id
-  });
-  const reviewBody=await response.text().catch(()=>''),contentType=response.headers.get('content-type')||'';
-  let review={};try{review=JSON.parse(reviewBody)}catch{}
-  if(!response.ok){
-   const bodyHint=contentType.includes('application/json')?'':(reviewBody.trim().slice(0,80).replace(/<[^>]*>/g,'').replace(/\s+/g,' ')||'empty response');
-   throw Error(review.error||('Review HTTP '+response.status+' ('+(contentType||'no content type')+'): '+bodyHint));
+  // Each retry is its OWN request, never a second model call inside one
+  // Cloudflare worker invocation. This avoids upstream 502 gateway timeouts.
+  let review=null,lastReviewError=null;
+  for(let reviewTry=0;reviewTry<2;reviewTry++){
+   try{
+    const response=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
+     action:'review',session_id:state.transcriptSessionId,book_id:state.book.id,unit_id:state.unit.id
+    });
+    const reviewBody=await response.text().catch(()=>''),contentType=response.headers.get('content-type')||'';
+    let parsed={};try{parsed=JSON.parse(reviewBody)}catch{}
+    if(!response.ok){
+     const bodyHint=contentType.includes('application/json')?'':(reviewBody.trim().slice(0,80).replace(/<[^>]*>/g,'').replace(/\s+/g,' ')||'empty response');
+     const e=Error(parsed.error||('Review HTTP '+response.status+' ('+(contentType||'no content type')+'): '+bodyHint));
+     e.status=response.status;throw e;
+    }
+    if(!reviewBody||typeof parsed!=='object'||parsed===null||!Array.isArray(parsed.credits))
+     throw Error('Review returned invalid results');
+    review=parsed;break;
+   }catch(e){
+    lastReviewError=e;
+    if(reviewTry===1||e.status&&e.status<500)break;
+    message('Review connection interrupted · retrying safely…');
+    await new Promise(resolve=>setTimeout(resolve,700));
+   }
   }
-  if(!reviewBody||typeof review!=='object'||review===null)throw Error('Review returned an empty or non-JSON response (HTTP '+response.status+')');
+  if(!review)throw lastReviewError||Error('Evaluation unavailable');
   for(const credit of review.credits||[]){
    const saved=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
     action:'transcript',book_id:state.book.id,unit_id:state.unit.id,session_id:state.transcriptSessionId,
