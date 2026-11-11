@@ -890,6 +890,15 @@ body.willena-kb-open .vocab-session-main{
   border-color:#efa4ae!important;
   background:#fff0f2!important;
 }
+.speaking-card [data-speaking-transcript][data-accepted="lime"]{
+  color:#537c0c!important;border-color:#a5d648!important;background:#f0fbd7!important;
+}
+.speaking-card [data-speaking-transcript][data-accepted="yellow"]{
+  color:#89630b!important;border-color:#f3c94b!important;background:#fff8da!important;
+}
+.speaking-card [data-speaking-transcript][data-accepted="red"]{
+  color:#cf304c!important;border-color:#efa4ae!important;background:#fff0f2!important;
+}
 /* Speaking assist: initially hidden until two actual microphone attempts. */
 .vocab-speaking-listen[hidden],.vocab-speaking-ai-voice-notice[hidden]{display:none!important}
 
