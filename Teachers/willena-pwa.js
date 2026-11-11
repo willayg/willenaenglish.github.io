@@ -27,26 +27,34 @@ function updateButton(){
 }
 async function diagnoseInstall(){
  const issues=[];
- if(!window.isSecureContext)issues.push('This page is not using a secure HTTPS connection.');
- if(!('serviceWorker' in navigator))issues.push('This browser does not support service workers.');
+ if(!window.isSecureContext)issues.push('HTTPS is unavailable.');
+ if(!('serviceWorker' in navigator))issues.push('Service workers are not supported.');
  try{
-  const m=await fetch('/Teachers/manifest.webmanifest',{cache:'no-store'});
-  if(!m.ok)issues.push('App manifest returned HTTP '+m.status+'.');
-  else{
-   const data=await m.json();
-   if(!data.start_url||!data.icons?.some(x=>x.type==='image/png'))issues.push('The app manifest has missing installation information.');
-   const icon=data.icons?.find(x=>x.type==='image/png'&&x.sizes==='192x192');
-   if(icon){
-    const res=await fetch(icon.src,{cache:'no-store'});
-    if(!res.ok)issues.push('App icon returned HTTP '+res.status+'.');
-    else if(!(res.headers.get('content-type')||'').includes('image/png'))issues.push('The app icon is not being served as PNG.');
+  const response=await fetch('/Teachers/manifest.webmanifest?v=20261111-install-3',{cache:'no-store'});
+  if(!response.ok)issues.push('Manifest HTTP '+response.status);
+  else {
+   const m=await response.json();
+   if(m.display!=='standalone'||!m.start_url||!m.scope)issues.push('Manifest configuration is incomplete.');
+   for(const size of [192,512]){
+    const info=m.icons?.find(x=>x.sizes===size+'x'+size&&x.type==='image/png');
+    if(!info){issues.push('Missing '+size+'px PNG icon.');continue}
+    try{
+     const r=await fetch(info.src,{cache:'no-store'});
+     if(!r.ok){issues.push(size+'px icon HTTP '+r.status);continue}
+     if(!/image\/png/i.test(r.headers.get('content-type')||'')){issues.push(size+'px icon has wrong content type.');continue}
+     const blob=await r.blob();
+     const bitmap=await createImageBitmap(blob);
+     const matches=bitmap.width===size&&bitmap.height===size;
+     bitmap.close();
+     if(!matches)issues.push(size+'px icon dimensions are invalid.');
+    }catch(e){issues.push(size+'px icon cannot be decoded: '+e.message)}
    }
   }
- }catch(err){issues.push('Could not check installation files: '+(err.message||String(err)))}
+ }catch(e){issues.push('Manifest unavailable: '+e.message)}
  try{
   const reg=await navigator.serviceWorker?.getRegistration(ROOT);
-  if(!reg?.active)issues.push('The Willena service worker has not activated yet.');
- }catch(err){issues.push('Service worker check failed.')}
+  if(!reg?.active)issues.push('The Willena service worker is not active.');
+ }catch(e){issues.push('Service worker check failed: '+e.message)}
  return issues;
 }
 function installGuide(){
