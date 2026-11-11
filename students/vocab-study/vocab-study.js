@@ -6,7 +6,7 @@ import {createSpeakingAudioCache} from './vocab-listening-cache.js?v=20261024-au
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
 import {getSpellingTarget,matchesSpellingTarget} from './spelling-targets.js?v=20261028-apostrophes1';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261104-sentence-match1';
-import {gradeSpeaking,speakingStars} from '/students/shared/speaking-smart-grade.js?v=20261111-2';
+import {gradeSpeaking,speakingStars} from '/students/shared/speaking-smart-grade.js?v=20261111-word-fragments3';
 import {summarizeSpeakingSession} from './speaking-finish-summary.js?v=20261111-simple-average4';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-startup2';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260927-startup2';
@@ -1930,7 +1930,7 @@ function renderSpeakingQuestion(){
         const heard=candidates.length?candidates:[response];
         const grade=gradeSpeaking(word.speakingTarget||word.word,heard,{mode:'word',exactMatcher:matchSpeakingTarget});
         preview.dataset.accepted=grade.level==='green'?'true':grade.level;
-        preview.style.color=({green:'#168345',lime:'#719D19',yellow:'#A87C07',red:'#cf304c'})[grade.level];
+        preview.style.color=({green:'#168345',lime:'#719D19',yellow:'#A87C07',orange:'#B9631A',red:'#cf304c'})[grade.level];
       }
     }
   });
@@ -2018,8 +2018,8 @@ function renderSpeakingQuestion(){
       if(session.checked||state.renderer!==renderer)return;
       const grade=gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
       if(transcriptEl){
-        transcriptEl.style.color=({green:'#168345',lime:'#719D19',yellow:'#A87C07',red:'#cf304c'})[grade.level];
-        transcriptEl.style.borderColor=({green:'#77c99a',lime:'#B5DB70',yellow:'#F1D079',red:'#efa4ae'})[grade.level];
+        transcriptEl.style.color=({green:'#168345',lime:'#719D19',yellow:'#A87C07',orange:'#B9631A',red:'#cf304c'})[grade.level];
+        transcriptEl.style.borderColor=({green:'#77c99a',lime:'#B5DB70',yellow:'#F1D079',orange:'#F3B477',red:'#efa4ae'})[grade.level];
         transcriptEl.setAttribute('data-accepted',grade.level==='green'?'true':grade.level);
       }
     };
@@ -2053,7 +2053,7 @@ function checkSpeaking(){
   const alternatives=renderer.getSpeechAlternatives?.()||[response];
   const match=gradeSpeaking(target,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
   const aiFallback=!!session.aiAcceptedTranscript&&session.aiAcceptedTranscript===response;
-  const correct=match.points>=2;
+  const correct=match.points>=1;
   const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0);
   session.results.push({
     lexicalEntryId:word.id||null,
