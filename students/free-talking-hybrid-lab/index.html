@@ -507,6 +507,35 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  #demo #ftCelebration #ftReviewSummary{font-size:13px!important}
 }
 
+/* Green bars are a voice rhythm visual, never a numeric volume meter.
+   Only listening mode uses the existing microphone analyser. */
+#demo #ftConversationState[data-mode=listening] .ft-state-bars i{
+ animation:none!important;
+ transform:none!important;
+ opacity:1!important;
+ height:var(--voice-height,7px)!important;
+ transition:height .085s ease-out;
+}
+#demo #ftConversationState[data-mode=thinking] .ft-state-bars i{height:7px}
+#demo #ftGuide .ft-guide-voice-states{width:min(355px,100%);gap:9px;padding:12px}
+#demo #ftGuide .ft-guide-state{
+ width:100%;min-height:70px;display:flex;align-items:center;text-align:left;
+ gap:12px;padding:10px 12px;background:#fff;border:2px solid;border-radius:15px;
+}
+#demo #ftGuide .ft-guide-state.green{border-color:#72cca4;background:#f0fbf4;color:#228660}
+#demo #ftGuide .ft-guide-state.pink{border-color:#eaa9c8;background:#fff1f7;color:#b5437d}
+#demo #ftGuide .ft-guide-state strong{display:block;font-size:14px;line-height:1.4}
+#demo #ftGuide .ft-guide-state small{display:block;font-size:12px;line-height:1.4;margin-top:2px}
+#demo #ftGuide .ft-guide-state-bars{flex:0 0 35px;display:flex;align-items:center;justify-content:center;gap:3px;height:27px}
+#demo #ftGuide .ft-guide-state-bars i{display:block;width:4px;height:12px;border-radius:4px;background:currentColor}
+#demo #ftGuide .ft-guide-state-bars i:nth-child(2){height:22px}
+#demo #ftGuide .ft-guide-state-bars i:nth-child(3){height:17px}
+#demo #ftGuide .ft-guide-state-bars i:nth-child(4){height:24px}
+#demo #ftGuide .ft-guide-state-think{
+ flex:0 0 26px;width:26px;height:26px;margin:0 4px;
+ border:3px solid #f2c4da;border-top-color:#b5437d;border-radius:50%;
+}
+
 /* Final review: compact enough for a Samsung phone, with visible pink framing. */
 #demo #ftCelebration{align-items:center;justify-content:center;padding:10px}
 #demo #ftCelebration .ft-sheet{
@@ -675,4 +704,4 @@ body.ft-release #demo .conversation-text{min-height:80px}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261111-guide-before-mic1"></script></body></html>
+<script type="module" src="./extension.js?v=20261111-voice-guide-bars-v4"></script></body></html>
