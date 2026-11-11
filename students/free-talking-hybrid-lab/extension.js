@@ -1338,7 +1338,16 @@ function resolveCommittedSpeech(itemId,transcript,failed=false){
   else if(!state.speechStartedAt&&!state.pendingSpeech.size)startQuestionClock();
   return;
  }
- // Semantic VAD can commit a phrase while a child is still thinking.
+ // One recorded answer per question in hybrid classroom mode. The old
+ // grace window kept the mic live for another 2.2–3.4 seconds after a
+ // successful STT result, allowing nearby voices to become a second answer.
+ // Finalize the single verified clip immediately; playback will release the
+ // microphone and the next question will reopen it normally.
+ if(state.hybrid){
+  processVerifiedSpeech([itemId],String(transcript||'').trim());
+  return;
+ }
+ // Preserve multi-fragment behaviour for the separate legacy realtime path.
  queueSpeechFragment(itemId,String(transcript||'').trim(),pending.anchorToken,pending.phase);
 }
 function unfinishedSpeech(text){
