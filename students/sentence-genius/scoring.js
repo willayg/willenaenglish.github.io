@@ -3,6 +3,7 @@
 // sent to the existing authenticated study recorder (tracking.js).
 import {snapshotPercent,snapshotStars} from '/students/vocab-study/vocab-progress-snapshot.js';
 import {repeatUntilCorrect} from '/students/vocab-study/vocab-pass-flow.js';
+import {speakingStars} from '/students/shared/speaking-smart-grade.js?v=20261111-1';
 export const MODES=Object.freeze({coach:'coach',unscramble:'unscramble',speaking:'speaking'});
 export const REQUIRED=['coach','unscramble','speaking'];
 const pref=(user,unit)=>'willena-sentence-genius-v1:'+user+':'+unit;
@@ -19,36 +20,31 @@ export function openUnit(user,unit,{preview=false}={}){
         if(!states[row.mode]||!row.id)continue;
         const before=states[row.mode][row.id]||{attempts:0,passed:false,firstCorrect:null};
         states[row.mode][row.id]={...before,attempts:Math.max(before.attempts||0,row.attempts||0),
-          passed:!!(before.passed||row.passed)};
+          passed:!!(before.passed||row.passed),qualityPoints:before.qualityPoints??(row.passed?4:0)};
       }
       write();
     },
-    attempt(mode,id,{correct,hintsUsed=0,assisted=false,almostRight=false}={}){
+    attempt(mode,id,{correct,hintsUsed=0,assisted=false,almostRight=false,gradePoints=null}={}){
       if(!states[mode])throw Error('Unknown skill');
       const previous=states[mode][id]||{attempts:0,passed:false,firstCorrect:null};
-      // Listening does not consume mastery. A correct assisted answer earns
-      // two points EVERY time; the next independent correct answer earns four.
-      // Almost Right is separate: award two once, then the remaining two
-      // when the sentence is independently corrected.
       const listened=mode==='speaking'&&!!assisted;
-      const mastered=!!correct&&!listened;
-      const nearMiss=!correct&&!!almostRight&&!listened;
-      const partialAwarded=!!previous.partialAwarded;
-      let points=0;
-      if(!previous.passed){
-        if(listened)points=correct?2:0;
-        else if(nearMiss)points=partialAwarded?0:2;
-        else if(mastered)points=mode==='coach'?
-          Math.max(1,3-Math.min(2,Number(hintsUsed)||0)):
-          partialAwarded?2:4;
-      }
+      const grade=(mode==='unscramble')?(correct?4:0):
+        Math.max(0,Math.min(4,Number(gradePoints??(correct?4:almostRight?2:0))||0));
+      const mastered=!!correct&&grade>=2;
+      // A lime/yellow answer is a real pass. Listening may cap its points,
+      // but it never forces a successful child to repeat an entire question.
+      const first=Number(previous.attempts||0)===0;
+      const points=previous.passed?0:mastered?
+        (listened?Math.min(2,grade):mode==='coach'?Math.max(1,grade-Math.min(2,Number(hintsUsed)||0)):grade):0;
       const firstCorrect=previous.firstCorrect==null?mastered:previous.firstCorrect;
       const updated={attempts:(Number(previous.attempts)||0)+1,
         passed:previous.passed||mastered,firstCorrect,
-        partialAwarded:partialAwarded||(nearMiss&&points>0)};
+        qualityPoints:first?(mastered?grade:0):(previous.qualityPoints??0),
+        lastGradePoints:grade,lastGradeLevel:grade===4?'green':grade===3?'lime':grade===2?'yellow':'red'};
       states[mode][id]=updated;write();
-      return {retryCount:Number(previous.attempts)||0,firstCorrect:previous.firstCorrect==null,
-        previouslyPassed:!!previous.passed,mastered,assisted:listened,almostRight:nearMiss,
+      return {retryCount:Number(previous.attempts)||0,firstCorrect:first,
+        previouslyPassed:!!previous.passed,mastered,assisted:listened,
+        almostRight:grade===2||grade===3,gradePoints:grade,gradeLevel:updated.lastGradeLevel,
         points,repeat:repeatUntilCorrect(mastered)};
     },
     passed(mode,id){return !!states[mode]?.[id]?.passed},
@@ -58,7 +54,9 @@ export function openUnit(user,unit,{preview=false}={}){
     },
     stars(mode,items){
       const count=items.filter(i=>states[mode]?.[i.id]?.passed).length;
-      return snapshotStars({[mode]:{passed_count:count}},mode,items.map(i=>i.id));
+      if(mode==='unscramble')return snapshotStars({[mode]:{passed_count:count}},mode,items.map(i=>i.id));
+      const total=items.reduce((sum,i)=>sum+Math.max(0,Math.min(4,Number(states[mode]?.[i.id]?.qualityPoints??(states[mode]?.[i.id]?.passed?4:0))||0)),0);
+      return speakingStars(items.length?100*total/(4*items.length):0);
     },
     gold(items){return items.length>0&&REQUIRED.every(mode=>items.every(i=>states[mode]?.[i.id]?.passed))},
     pending(mode,items){return items.filter(item=>!states[mode]?.[item.id]?.passed)}
