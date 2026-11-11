@@ -916,7 +916,7 @@ function hybridStart(stream){
    }
   }
   if(hybrid.recorder&&hybrid.recorder.state==='recording'){
-   if(now-hybrid.lastLoud>ftTiming.silence||now-hybrid.voiceAt>22000){
+   if(now-hybrid.lastLoud>ftTiming.silence||now-hybrid.voiceAt>45000){
     handleRealtime({type:'input_audio_buffer.speech_stopped'});
     try{hybrid.recorder.stop()}catch{}
    }
@@ -937,9 +937,25 @@ async function hybridOnRecorded(rec){
  try{
   const form=new FormData();form.append('audio',audio,'student-answer.webm');
   const bearer=await originalStudentToken();
-  const response=await fetch('/api/free-talking-hybrid-transcribe',{method:'POST',headers:{Authorization:'Bearer '+bearer,'X-Willena-STT':state.sttEngine||'openai-mini'},body:form,signal:AbortSignal.timeout(28000)});
+  // Retry network transport failures once with the SAME audio blob.
+  // The recording is not re-captured, and resolveCommittedSpeech runs only once.
+  let response=null;
+  for(let sendAttempt=0;sendAttempt<2;sendAttempt++){
+   try{
+    response=await fetch('/api/free-talking-hybrid-transcribe',{
+     method:'POST',
+     headers:{Authorization:'Bearer '+bearer,'X-Willena-STT':state.sttEngine||'openai-mini'},
+     body:form,signal:AbortSignal.timeout(35000)
+    });
+    break;
+   }catch(ex){
+    if(sendAttempt===1||ex?.name==='AbortError'||!state.active)throw ex;
+    console.warn('[Free Talking] STT network retry',String(ex));
+    await new Promise(resolve=>setTimeout(resolve,450));
+   }
+  }
   const data=await response.json().catch(()=>({}));
-  if(!response.ok)throw Error(data.error||'Could not transcribe speech');
+  if(!response.ok)throw Error(data.error||'Could not transcribe speech (HTTP '+response.status+')');
   hybrid.secondsTranscribed+=duration/1000;
   if(ftUsage.current){ftUsage.current.transcribedAudioSeconds=Math.round(hybrid.secondsTranscribed*10)/10;ftUsage.current.transcriptionRequests++;ftUsage.current.sttModel=data.model||state.sttEngine}
   if(state.active&&state.anchorToken===at&&state.anchorPhase===phase){
