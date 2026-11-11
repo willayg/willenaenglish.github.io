@@ -202,7 +202,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       sessionId:sessionRunId,correct:verdict.mastered}):
      recordSentenceAttempt({
       book:ctx.book,unit:ctx.unit,item,mode,response,correct:verdict.mastered,
-      assisted,almostRight,retryCount:item.retry,points:verdict.points,
+      assisted,almostRight,gradePoints:mode==='unscramble'?null:result.points,retryCount:item.retry,points:verdict.points,
       matchedBy:result.matchedBy||'unmatched',
       source:'browser',
       elapsedMs:Date.now()-since
