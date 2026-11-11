@@ -2166,7 +2166,6 @@ async function finishSpeakingSession(){
         '<div class="vocab-pronunciation-energy" role="progressbar" aria-label="Pronunciation energy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+summary.score+'">'+
           '<div class="vocab-pronunciation-energy-fill" style="width:'+summary.score+'%"></div>'+
         '</div>'+
-        '<p class="vocab-pronunciation-note">Speaking practice score · based on recognized words and retries</p>'+
         (hardest?
           '<div class="vocab-pronunciation-hardest">'+
             '<div class="vocab-pronunciation-hardest-copy"><span>LET\'S PRACTICE AGAIN</span>'+
