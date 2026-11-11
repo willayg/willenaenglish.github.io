@@ -533,7 +533,7 @@ function removeSpokenLaughter(value){
 
 
 function renderTopicTicker(){
- const progress=$('conversationProgress'),count=Math.min(8,(state.contributions||0)+(state.attemptCount||0));
+ const progress=$('conversationProgress'),count=Math.min(8,state.attemptCount||0);
  if(progress)progress.style.width=(count/8*100)+'%';
  const label=$('conversationProgressLabel');if(label)label.textContent=count+' / 8';
 }
@@ -1044,7 +1044,7 @@ function restoreMicAfterPlayback(){
  return cycleMic(async()=>{
   if(!state.active||state.paused||!state.micReleased||state.reviewing)return;
   // No need to re-open an input device for the final transcript review.
-  if((state.contributions||0)+(state.attemptCount||0)>=8)return;
+  if((state.attemptCount||0)>=8)return;
   const token=state.anchorToken;
   const stream=await navigator.mediaDevices.getUserMedia({
    audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}
@@ -1559,7 +1559,7 @@ async function reviewConversation(){
    action:'review',session_id:state.transcriptSessionId,book_id:state.book.id,unit_id:state.unit.id
   });
   const review=await response.json().catch(()=>({}));
-  if(!response.ok)throw Error(review.error||'Could not review this conversation');
+  if(!response.ok)throw Error(review.error||('Review endpoint returned HTTP '+response.status+'. Please retry.'));
   for(const credit of review.credits||[]){
    const saved=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
     action:'transcript',book_id:state.book.id,unit_id:state.unit.id,session_id:state.transcriptSessionId,
@@ -1582,7 +1582,8 @@ async function reviewConversation(){
   const result=await resultResponse.json(),progress=await progressResponse.json();
   if(Number(result.reviewed)!==Number(result.attempts))throw Error('Not all conversation turns were reviewed');
   state.contributions=Math.max(0,Math.min(8,Number(progress.contributions)||0));
-  state.attemptCount=0;
+  // Preserve the current conversation's 8/8 on the result screen; cumulative
+  // unit completion is tracked separately for the card and Golden Unit.
   renderTopicTicker();
   const points=Math.max(0,Math.min(32,Number(result.points)||0));
   const stars=Math.max(0,Math.min(5,Number(result.stars)||0));
@@ -1668,7 +1669,7 @@ async function finishNaturalReply(data){
  state.anchorPhase='playingReply';setMicEnabled(false);
  // After the eighth attempt, go straight to the one end evaluation.
  // Don't spend time generating an ordinary reply only to speak feedback next.
- if(contributed&&(state.contributions+state.attemptCount)>=8){
+ if(contributed&&state.attemptCount>=8){
   await reviewConversation();return;
  }
  try{await speakEleven(spoken)}catch(e){error('Voice playback: '+String(e.message||e))}
