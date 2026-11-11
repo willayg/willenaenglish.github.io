@@ -7,6 +7,7 @@ import {capturePointOrigin,showPointAward} from '/students/components/student-po
 import {getSpellingTarget,matchesSpellingTarget} from './spelling-targets.js?v=20261028-apostrophes1';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261104-sentence-match1';
 import {gradeSpeaking,speakingStars} from '/students/shared/speaking-smart-grade.js?v=20261111-2';
+import {summarizeSpeakingSession} from './speaking-finish-summary.js?v=20261111-1';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-startup2';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260927-startup2';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260927-startup2';
@@ -285,7 +286,8 @@ async function completeRewardSession(){
   const teacherContext=state.activeTeacherAssignment;
   const reviewOnly=!!teacherContext?._reviewOnly;
   const teacher=reviewOnly?null:teacherContext;
-  const qualityPercent=reward.mode==='speaking'&&reward.firstTotal?Math.round(100*reward.firstQualityPoints/(reward.firstTotal*4)):reward.percent;
+  const speechSummary=reward.mode==='speaking'?summarizeSpeakingSession(state.speakingSession):null;
+  const qualityPercent=speechSummary?speechSummary.score:reward.percent;
   reward.stars=reviewOnly?0:(reward.mode==='speaking'?speakingStars(qualityPercent):teacher?wordTestStarsForPercent(reward.percent):starsForPercent(reward.percent));
   if(reviewOnly)return reward;
   const listName=reward.listName||(
@@ -313,6 +315,8 @@ async function completeRewardSession(){
         stars:reward.stars,
         accuracy:reward.firstTotal?reward.firstCorrect/reward.firstTotal:0,
         speaking_quality_percent:reward.mode==='speaking'?qualityPercent:null,
+        speaking_retry_count:speechSummary?.retryCount??null,
+        speaking_hardest_word:speechSummary?.hardestWord??null,
         percent:reward.percent,
         score:reward.firstCorrect,
         total:reward.firstTotal,
@@ -323,7 +327,7 @@ async function completeRewardSession(){
         session_source:teacher?'teacher':'student',
         vocab_mode:reward.mode,
         reward_scheme:teacher?'word-test-study-v1':'vocab-study-v1',
-        star_cap:teacher?10:5
+        star_cap:reward.mode==='speaking'?5:teacher?10:5
       }
     };
     payload.assignment_id=teacher?.assignment?.id||null;
@@ -352,7 +356,7 @@ function rewardSummaryHtml(reward=state.rewardSession,{pointsOnly=false}={}){
   const starMax=reward.mode==='speaking'?5:state.activeTeacherAssignment?10:5;
   const stars=Math.max(0,Math.min(starMax,Number(reward.stars)||0));
   const points=Math.max(0,Number(reward.points)||0);
-  const quality=reward.mode==='speaking'&&reward.firstTotal?Math.round(100*reward.firstQualityPoints/(4*reward.firstTotal)):rewardPercent(reward);
+  const quality=reward.mode==='speaking'?summarizeSpeakingSession(state.speakingSession).score:rewardPercent(reward);
   const starsShown=reward.mode==='speaking'?speakingStars(quality):stars;
   return '<student-reward-celebration '+(pointsOnly?'points-only ':'')+'percent="'+rewardPercent(reward)+'" stars="'+starsShown+'" star-max="'+starMax+'" points="'+points+'" label="'+(state.optionalTeacherCoach?'OPTIONAL PRACTICE':state.activeTeacherAssignment?'WORD TEST STUDY':'SESSION REWARD')+'"></student-reward-celebration>';
 }
@@ -2141,16 +2145,9 @@ async function finishSpeakingSession(){
   playStudentSfx('complete');
   if(speakingSkipBtn)speakingSkipBtn.hidden=true;
   const session=state.speakingSession;
-  const passed=uniquePassedCount(session?.results);
-  const total=session?.initialTotal||0;
-  const skipped=(session?.results||[]).filter(result=>result?.skipped).length;
-  const retries=wrongAttemptCount((session?.results||[]).filter(result=>!result?.skipped));
-  const firstGrades=new Map();
-  for(const row of session?.results||[]){if(row.skipped)continue;const key=String(row.lexicalEntryId||row.word);if(!firstGrades.has(key))firstGrades.set(key,Number(row.gradePoints)||0)}
-  const qualityTotal=[...firstGrades.values()].reduce((a,b)=>a+b,0);
-  const qualityPct=firstGrades.size?Math.round(qualityTotal/(4*firstGrades.size)*100):0;
-  const partialCount=[...firstGrades.values()].filter(p=>p===2||p===3).length;
-  // Render completion immediately: server saves and teacher/gold refreshes must never trap a child on the last question.
+  const summary=summarizeSpeakingSession(session);
+  // Completion and pronunciation energy are separate. Only this session's
+  // accepted grades and retries contribute to the student-facing energy bar.
   const reward=state.rewardSession;
   void completeRewardSession().catch(error=>console.warn('[Vocab Study] background completion failed',error));
   progressEl.textContent='완료';
@@ -2158,22 +2155,39 @@ async function finishSpeakingSession(){
   instructionEl.hidden=true;
   answerNote.hidden=true;
   bottomEl.hidden=true;
+  const hardest=summary.hardestWord;
   root.innerHTML=
-    '<section class="vocab-finish">'+
+    '<section class="vocab-finish vocab-speaking-finish">'+
       '<span class="eyebrow">SPEAKING COMPLETE</span>'+
-      '<h2>'+passed+' / '+total+'</h2>'+
-      '<p>Green, lime and yellow all count as completed.</p>'+
-      '<div class="vocab-finish-stats">'+
-        '<div><strong>'+passed+' / '+total+'</strong><span>PASSED</span></div>'+
-        '<div><strong>'+retries+'</strong><span>RETRIES</span></div>'+
-        '<div><strong>'+skipped+'</strong><span>SKIPPED</span></div>'+ 
-        '<div><strong>'+qualityPct+'%</strong><span>SPEAKING SCORE</span></div>'+ 
-        '<div><strong>'+partialCount+'</strong><span>LIME / YELLOW</span></div>'+
+      '<h2>Great speaking!</h2>'+
+      '<div class="vocab-pronunciation-panel" aria-label="Pronunciation practice score">'+
+        '<div class="vocab-pronunciation-heading"><span>PRONUNCIATION ENERGY</span>'+
+          '<strong>'+summary.score+'%</strong></div>'+
+        '<div class="vocab-pronunciation-energy" role="progressbar" aria-label="Pronunciation energy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+summary.score+'">'+
+          '<div class="vocab-pronunciation-energy-fill" style="width:'+summary.score+'%"></div>'+
+        '</div>'+
+        '<p class="vocab-pronunciation-note">Speaking practice score · based on recognized words and retries</p>'+
+        (hardest?
+          '<div class="vocab-pronunciation-hardest">'+
+            '<div class="vocab-pronunciation-hardest-copy"><span>LET\'S PRACTICE AGAIN</span>'+
+              '<strong>'+escapeHtml(hardest)+'</strong></div>'+
+            '<button type="button" id="vocabHardestWordListen" class="vocab-pronunciation-listen" aria-label="Listen to '+escapeHtml(hardest)+'">'+
+              '<span aria-hidden="true">▶</span> Listen</button>'+
+          '</div>':
+          '<div class="vocab-pronunciation-perfect">Wonderful! No tricky words this time.</div>')+
       '</div>'+
       rewardSummaryHtml(reward)+
       goldenAwardHtml()+
       '<div class="vocab-finish-actions"><button id="vocabSpeakingDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
+  const listen=el('vocabHardestWordListen');
+  listen?.addEventListener('click',async()=>{
+    if(listen.disabled)return;
+    listen.disabled=true;listen.setAttribute('aria-busy','true');
+    try{await playSpeakingModelAudio(hardest)}
+    catch(error){console.warn('[Vocab Study] hardest word playback failed',error)}
+    finally{if(listen.isConnected){listen.disabled=false;listen.removeAttribute('aria-busy')}}
+  });
   el('vocabSpeakingDone')?.addEventListener('click',closeSession);
   sessionMain.scrollTop=0;
 }
