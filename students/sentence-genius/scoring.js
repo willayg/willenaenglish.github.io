@@ -39,7 +39,7 @@ export function openUnit(user,unit,{preview=false}={}){
       const firstCorrect=previous.firstCorrect==null?mastered:previous.firstCorrect;
       const updated={attempts:(Number(previous.attempts)||0)+1,
         passed:previous.passed||mastered,firstCorrect,
-        qualityPoints:first?(mastered?grade:0):(previous.qualityPoints??0),
+        qualityPoints:mastered&&!previous.passed?grade:(previous.qualityPoints??0),
         lastGradePoints:grade,lastGradeLevel:grade===4?'green':grade===3?'lime':grade===2?'yellow':grade===1?'orange':'red'};
       states[mode][id]=updated;write();
       return {retryCount:Number(previous.attempts)||0,firstCorrect:first,
