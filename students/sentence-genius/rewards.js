@@ -1,3 +1,4 @@
+import {speakingStars} from '/students/shared/speaking-smart-grade.js?v=20261111-1';
 // Same reward-only route and first-attempt star thresholds used by Word Genius.
 // Does not grant a second set of points; correct attempts are already saved by
 // the canonical study recorder (tracking.js).
@@ -8,20 +9,21 @@ const id=()=>window.crypto?.randomUUID?.()||'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxx
 });
 export function rewardSession(book,unit,mode){
   const startedAt=now(),sessionId=id();
-  const record={mode,firstTotal:0,firstCorrect:0,points:0,completed:false,stars:0,percent:0};
+  const record={mode,firstTotal:0,firstCorrect:0,firstQualityPoints:0,points:0,completed:false,stars:0,percent:0};
   return {
     get summary(){return {...record}},
-    note(correct,retryCount,points){
+    note(correct,retryCount,points,gradePoints=correct?4:0){
       if(record.completed)return;
       record.points+=Math.max(0,Number(points)||0);
-      if(!retryCount){record.firstTotal++;if(correct)record.firstCorrect++}
+      if(!retryCount){record.firstTotal++;if(correct)record.firstCorrect++;record.firstQualityPoints+=Math.max(0,Math.min(4,Number(gradePoints)||0))}
     },
     async finish(){
       if(record.completed)return {...record};
       record.completed=true;
       record.percent=record.firstTotal?Math.round(100*record.firstCorrect/record.firstTotal):0;
       // Coach is now required for Golden Unit and awards the same star scale.
-      record.stars=starsForPercent(record.percent);
+      const qualityPercent=record.firstTotal?Math.round(100*record.firstQualityPoints/(4*record.firstTotal)):0;
+      record.stars=mode==='unscramble'?starsForPercent(record.percent):speakingStars(qualityPercent);
       const payload={
         reward_only:true,session_id:sessionId,client_attempt_id:id(),
         book_id:book.id,unit_id:unit.id,
@@ -32,6 +34,7 @@ export function rewardSession(book,unit,mode){
         reward_list_size:record.firstTotal,reward_started_at:startedAt,
         reward_summary:{
           completed:true,stars:record.stars,percent:record.percent,
+          speaking_quality_percent:mode==='unscramble'?null:qualityPercent,
           accuracy:record.firstTotal?record.firstCorrect/record.firstTotal:0,
           score:record.firstCorrect,total:record.firstTotal,
           points_earned:record.points,book_id:book.id,unit_id:unit.id,
