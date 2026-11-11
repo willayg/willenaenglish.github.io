@@ -26,7 +26,7 @@ export function summarizeSpeakingSession(session){
   const retryCount=records.reduce((n,x)=>n+x.retries,0);
   const partialCount=records.filter(x=>x.passed&&x.points<4).length;
   const scorePoints=records.reduce((n,x)=>n+(x.passed?x.points:0),0);
-  const score=total?Math.max(0,Math.min(100,Math.round(scorePoints*100/(4*total)))):0;
+  const score=total?Math.max(0,Math.min(100,Math.round(scorePoints*1000/(4*total))/10)):0;
   // Prefer words with repeated failures, then lower passing grade.
   const tricky=records.filter(x=>x.word&&(x.retries>0||x.points<4||x.skipped))
     .sort((a,b)=>(a.points-0.5*a.retries)-(b.points-0.5*b.retries)||b.retries-a.retries);
