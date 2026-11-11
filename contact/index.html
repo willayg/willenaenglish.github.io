@@ -4,7 +4,7 @@
 const form=document.getElementById('contact'),status=document.getElementById('status'),button=form.querySelector('.send');
 form.addEventListener('submit',async e=>{e.preventDefault();if(!form.reportValidity())return;status.textContent='';status.className='status';button.disabled=true;button.textContent='전송 중…';
 const data=Object.fromEntries(new FormData(form));data.privacy_consent=Boolean(form.elements.privacy_consent.checked);
-try{const res=await fetch('https://api.willenaenglish.com/.netlify/functions/website_enquiries?action=submit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const json=await res.json();if(!res.ok||!json.success)throw Error(json.error||'전송 실패');form.reset();status.className='status ok';status.textContent='문의가 접수되었습니다. 확인 후 연락드리겠습니다. 감사합니다!';}
+try{const res=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/website-enquiry-submit',{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const json=await res.json();if(!res.ok||!json.success)throw Error(json.error||'전송 실패');form.reset();status.className='status ok';status.textContent='문의가 접수되었습니다. 확인 후 연락드리겠습니다. 감사합니다!';}
 catch(err){status.className='status error';status.textContent='문의 전송에 실패했습니다. 잠시 후 다시 시도하시거나 031-8042-2203으로 전화해 주세요.';}
 finally{button.disabled=false;button.textContent='문의 보내기 →';}});
 </script></body></html>
