@@ -17,7 +17,7 @@ export function summarizeSpeakingSession(session){
     if(row.skipped){item.skipped=true;continue}
     if(row.correct){
       item.passed=true;
-      item.points=Math.max(item.points,Math.max(2,Math.min(4,Number(row.gradePoints)||4)));
+      item.points=Math.max(item.points,Math.max(1,Math.min(4,Number(row.gradePoints)||4)));
     }else item.retries++;
   }
   const total=original||items.size;
