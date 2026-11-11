@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+<title id="title">Writing Genius notebook and pencil</title>
+<rect width="120" height="120" rx="23" fill="#fff"/>
+<g stroke="#0F4D63" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+<rect x="17" y="19" width="77" height="86" rx="13" fill="#F1FDFE"/>
+<path d="M32 19v86" stroke="#42D3DB" stroke-width="6"/>
+<path d="M43 41h33M43 54h27M43 67h20" fill="none" stroke="#42D3DB" stroke-width="5"/>
+<path d="M47 85h18" stroke="#FFC62E" stroke-width="5"/>
+<g transform="rotate(34 87 77)">
+<rect x="79" y="44" width="16" height="43" rx="4" fill="#FFC62E"/>
+<path d="M79 82h16l-8 14Z" fill="#FF4FA0"/>
+<path d="M79 55h16" fill="none"/>
+</g>
+<path d="m94 18 3 7 7 3-7 3-3 7-3-7-7-3 7-3Z" fill="#FF4FA0" stroke="#FF4FA0" stroke-width="2"/>
+</g></svg>
