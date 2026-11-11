@@ -7,7 +7,7 @@ import {capturePointOrigin,showPointAward} from '/students/components/student-po
 import {getSpellingTarget,matchesSpellingTarget} from './spelling-targets.js?v=20261028-apostrophes1';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261104-sentence-match1';
 import {gradeSpeaking,speakingStars} from '/students/shared/speaking-smart-grade.js?v=20261111-2';
-import {summarizeSpeakingSession} from './speaking-finish-summary.js?v=20261111-1';
+import {summarizeSpeakingSession} from './speaking-finish-summary.js?v=20261111-simple-average2';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-startup2';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260927-startup2';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260927-startup2';
