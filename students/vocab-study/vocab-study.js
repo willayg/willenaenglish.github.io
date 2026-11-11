@@ -271,6 +271,10 @@ function noteRewardAttempt(correct,retryCount,points){
   }
 }
 function rewardPercent(reward=state.rewardSession){
+  // Speaking completion is independent of first-attempt pronunciation quality.
+  if(reward?.mode==='speaking'&&state.speakingSession?.initialTotal){
+    return Math.round(100*uniquePassedCount(state.speakingSession.results)/state.speakingSession.initialTotal);
+  }
   return reward?.firstTotal?Math.round(reward.firstCorrect*100/reward.firstTotal):0;
 }
 async function completeRewardSession(){
@@ -345,7 +349,7 @@ async function completeRewardSession(){
 }
 function rewardSummaryHtml(reward=state.rewardSession,{pointsOnly=false}={}){
   if(!reward||state.activeTeacherAssignment?._reviewOnly)return'';
-  const starMax=state.activeTeacherAssignment?10:5;
+  const starMax=reward.mode==='speaking'?5:state.activeTeacherAssignment?10:5;
   const stars=Math.max(0,Math.min(starMax,Number(reward.stars)||0));
   const points=Math.max(0,Number(reward.points)||0);
   const quality=reward.mode==='speaking'&&reward.firstTotal?Math.round(100*reward.firstQualityPoints/(4*reward.firstTotal)):rewardPercent(reward);
