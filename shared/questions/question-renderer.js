@@ -368,6 +368,22 @@ export class QuestionRenderer{
         min-width:min(100%,360px);padding:12px 16px;border:1px solid #ddd8f5;border-radius:14px;background:#faf9ff;
         color:#443b72;font:800 1rem Poppins,system-ui,sans-serif;text-align:center
       }
+      /* Shared live STT preview: colour the recognized text AND its chip.
+         Grading remains in the app; this only displays its verdict. */
+      .speaking-transcript[data-accepted="true"],
+      .speaking-transcript[data-accepted="green"]{
+        color:#168345!important;background:#ebfff2!important;border-color:#77c99a!important;
+      }
+      .speaking-transcript[data-accepted="lime"]{
+        color:#537c0c!important;background:#f0fbd7!important;border-color:#a5d648!important;
+      }
+      .speaking-transcript[data-accepted="yellow"]{
+        color:#89630b!important;background:#fff8da!important;border-color:#f3c94b!important;
+      }
+      .speaking-transcript[data-accepted="red"],
+      .speaking-transcript[data-accepted="false"]{
+        color:#cf304c!important;background:#fff0f2!important;border-color:#efa4ae!important;
+      }
       .speaking-transcript[hidden]{display:none}
       @media(max-width:560px){.speaking-mic{width:88px;height:88px}}
     `;
