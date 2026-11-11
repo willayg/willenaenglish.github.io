@@ -507,6 +507,21 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
  #demo #ftCelebration #ftReviewSummary{font-size:13px!important}
 }
 
+/* Recording-time halo. Drains from full to empty over the existing 22s
+   microphone recording window; never changes STT or the SVG artwork. */
+#demo #actorStage #ftSpeechTimeRing{
+ position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+ width:min(67vw,42dvh,340px);height:min(67vw,42dvh,340px);
+ max-width:calc(100% - 20px);max-height:calc(100% - 16px);
+ box-sizing:border-box;aspect-ratio:1;border-radius:50%;
+ pointer-events:none;z-index:12;
+ background:conic-gradient(#23b18d calc(var(--ft-record-remaining,1) * 1turn),#dae8e9 0);
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 5px));
+ mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 5px));
+}
+#demo #actorStage #ftSpeechTimeRing[hidden]{display:none!important}
+@media(max-width:440px){#demo #actorStage #ftSpeechTimeRing{width:min(67vw,42dvh,340px);height:min(67vw,42dvh,340px)}}
+
 /* Green bars are a voice rhythm visual, never a numeric volume meter.
    Only listening mode uses the existing microphone analyser. */
 #demo #ftConversationState[data-mode=listening] .ft-state-bars i{
@@ -704,4 +719,4 @@ body.ft-release #demo .conversation-text{min-height:80px}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261111-voice-guide-bars-v4"></script></body></html>
+<script type="module" src="./extension.js?v=20261111-draining-22s-halo1"></script></body></html>
