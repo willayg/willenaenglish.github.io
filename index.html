@@ -113,6 +113,49 @@ body .frame.v1{--accent:#19aabb;--accent2:#ce5aa0;--surface:linear-gradient(115d
  .hero-visual .carousel-layer{transition:none}
  .hero-copy .carousel-copy-enter{animation:none}
 }
+
+/* Carousel visuals: circular backdrop, staggered icon pop and deterministic exit. */
+.frame .hero-visual:before{display:none}
+.frame .hero-visual .carousel-layer{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;opacity:0;pointer-events:none;z-index:1;transition:opacity 560ms ease}
+.frame .hero-visual .carousel-layer.is-visible{opacity:1;z-index:2}
+.frame .hero-visual .carousel-layer.is-leaving{opacity:0;z-index:1}
+.frame .hero-visual .carousel-layer.apps-layer{transition:none}
+.frame .hero-visual .carousel-layer .apps{position:relative;isolation:isolate;width:100%;max-width:800px;display:flex;justify-content:center;align-items:center;gap:clamp(5px,1vw,14px);height:100%}
+.frame .hero-visual .carousel-layer .apps:before{content:"";position:absolute;z-index:-1;left:50%;top:50%;transform:translate(-50%,-50%);width:min(330px,75%);aspect-ratio:1;background:#dff3fd;border-radius:50%}
+.frame .hero-visual .carousel-layer .apps img{
+  display:block;position:relative;flex:0 1 145px;min-width:0;width:19%;max-width:145px;height:auto;aspect-ratio:1;
+  object-fit:contain;padding:clamp(4px,.65vw,9px);border-radius:clamp(14px,2vw,25px);
+  background:#fff;border:1px solid #e9e8ed;box-shadow:0 12px 24px #2d284020;
+  opacity:0;--zig:0px;--tilt:0deg;
+  transform:translateY(calc(var(--zig) + 12px)) rotate(var(--tilt)) scale(.76);
+  transition:opacity 260ms ease,transform 510ms cubic-bezier(.18,1.45,.35,1);
+  transition-delay:calc(var(--i) * 100ms);
+}
+.frame .hero-visual .carousel-layer.apps-layer.is-visible .apps img{
+  opacity:1;transform:translateY(var(--zig)) rotate(var(--tilt)) scale(1)
+}
+.frame .hero-visual .carousel-layer.apps-layer.is-leaving .apps img{
+  opacity:0;transform:translateY(calc(var(--zig) - 8px)) rotate(var(--tilt)) scale(.85);
+  transition-duration:220ms,330ms;transition-delay:calc(var(--i) * 75ms)
+}
+.frame .hero-visual .carousel-layer .apps img:nth-child(1){--i:0;--zig:18px;--tilt:-5deg}
+.frame .hero-visual .carousel-layer .apps img:nth-child(2){--i:1;--zig:-25px;--tilt:5deg}
+.frame .hero-visual .carousel-layer .apps img:nth-child(3){--i:2;--zig:13px;--tilt:-3deg}
+.frame .hero-visual .carousel-layer .apps img:nth-child(4){--i:3;--zig:-21px;--tilt:4deg}
+.frame .hero-visual .carousel-layer .apps img:nth-child(5){--i:4;--zig:17px;--tilt:-4deg}
+@media(max-width:700px){
+ .frame .hero-visual .carousel-layer .apps{gap:clamp(3px,.8vw,7px)}
+ .frame .hero-visual .carousel-layer .apps:before{width:min(205px,72%)}
+ .frame .hero-visual .carousel-layer .apps img{width:19%;max-width:110px;padding:3px;border-radius:clamp(10px,2vw,17px)}
+ .frame .hero-visual .carousel-layer .apps img:nth-child(1){--zig:12px}
+ .frame .hero-visual .carousel-layer .apps img:nth-child(2){--zig:-19px}
+ .frame .hero-visual .carousel-layer .apps img:nth-child(3){--zig:10px}
+ .frame .hero-visual .carousel-layer .apps img:nth-child(4){--zig:-17px}
+ .frame .hero-visual .carousel-layer .apps img:nth-child(5){--zig:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ .frame .hero-visual .carousel-layer,.frame .hero-visual .carousel-layer .apps img{transition:none!important}
+}
 </style></head>
 <body>
 
@@ -175,6 +218,7 @@ const carouselPreloads=slides.filter(s=>s.kind==="image").map(s=>{
 });
 const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
 let transitionCleanup=null;
+let frameToken=0;
 function renderSlide(){
  const d=slides[slide], area=el("swipeArea");
  const label=el("heroLabel"), headline=el("headline"), description=el("heroText");
@@ -186,34 +230,39 @@ function renderSlide(){
    void node.offsetWidth;
    node.classList.add("carousel-copy-enter");
  }
+ // Rapid taps must not retain any earlier layers or pending animations.
+ const token=++frameToken;
+ if(transitionCleanup){clearTimeout(transitionCleanup);transitionCleanup=null;}
+ const previous=[...area.querySelectorAll(".carousel-layer")].at(-1);
+ area.querySelectorAll(".carousel-layer").forEach(n=>{if(n!==previous)n.remove()});
+ area.querySelectorAll(":scope > :not(.carousel-layer)").forEach(n=>n.remove());
  const next=document.createElement("div");
- next.className="carousel-layer";
+ next.className="carousel-layer"+(d.kind==="apps"?" apps-layer":"");
  if(d.kind==="apps"){
    const strip=document.createElement("div");strip.className="apps";
    icons.forEach((file,i)=>{
-     const img=document.createElement("img");img.src=assets+file;img.alt=apps[i];strip.append(img);
+     const img=document.createElement("img");
+     img.src=assets+file;img.alt=apps[i];strip.append(img);
    });
    next.append(strip);
  }else{
-   const img=document.createElement("img");img.src=d.image;img.alt=d.tag;img.decoding="async";
+   const img=document.createElement("img");
+   img.src=d.image;img.alt=d.tag;img.decoding="async";
    next.append(img);
  }
- // Keep the current frame visible underneath while the next frame fades in.
- if(transitionCleanup){clearTimeout(transitionCleanup);transitionCleanup=null;}
- const older=[...area.querySelectorAll(".carousel-layer")];
- area.querySelectorAll(":scope > :not(.carousel-layer)").forEach(node=>node.remove());
- older.slice(0,-1).forEach(node=>node.remove());
- const previous=older.at(-1);
  area.append(next);
  if(reduceMotion.matches || !previous){
    next.classList.add("is-visible");
    if(previous)previous.remove();
  }else{
-   requestAnimationFrame(()=>requestAnimationFrame(()=>next.classList.add("is-visible")));
+   previous.classList.remove("is-visible");
+   previous.classList.add("is-leaving");
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{
+     if(token===frameToken)next.classList.add("is-visible");
+   }));
    transitionCleanup=setTimeout(()=>{
-     previous.remove();
-     transitionCleanup=null;
-   },720);
+     if(token===frameToken){previous.remove();transitionCleanup=null;}
+   },750);
  }
  const dots=el("dots");dots.replaceChildren();
  slides.forEach((_,i)=>{
