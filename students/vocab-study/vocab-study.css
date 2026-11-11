@@ -923,6 +923,9 @@ body.willena-kb-open .vocab-session-main{
 .speaking-card [data-speaking-transcript][data-accepted="yellow"]{
   color:#89630b!important;border-color:#f3c94b!important;background:#fff8da!important;
 }
+.speaking-card [data-speaking-transcript][data-accepted="orange"]{
+  color:#B9631A!important;border-color:#F3B477!important;background:#FFF0DF!important;
+}
 .speaking-card [data-speaking-transcript][data-accepted="red"]{
   color:#cf304c!important;border-color:#efa4ae!important;background:#fff0f2!important;
 }
