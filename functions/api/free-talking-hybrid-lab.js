@@ -365,7 +365,9 @@ export async function onRequestPost({request,env}){
       headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
       body:JSON.stringify({
        model:'gpt-6-luna',reasoning:{effort:'none'},max_output_tokens:1600,store:false,
-       text:{format:{type:'json_schema',name:'willena_eight_turn_review',strict:true,schema:reviewSchema}},
+       text:{format:reviewAttempt===0
+        ?{type:'json_schema',name:'willena_eight_turn_review',strict:true,schema:reviewSchema}
+        :{type:'json_object'}},
        instructions,input:[{role:'user',content:JSON.stringify({level:reviewLevel,transcript})}]
       }),
       signal:AbortSignal.timeout(45000)
