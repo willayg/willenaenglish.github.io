@@ -2,12 +2,12 @@
 // attempt calculations belong here: those are owned by dedicated modules.
 import {studentIdentity,signedInProfile,assignedBooks,loadUnits,loadSentences,
   loadTeacherClasses,loadTeacherBookCatalog,loadTeacherClassHomework} from './content.js?v=sg-no-approval-v4.1';
-import {openUnit} from './scoring.js?v=20261111-orange8';
+import {openUnit} from './scoring.js?v=20261111-simple-average2';
 import {geniusSessionContext,geniusHomeworkFromUrl} from '/students/components/genius-session-context.js?v=20261104-a';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
 import {createScreens} from './screens.js?v=20261105-unit-hide3';
-import {createSession} from './session.js?v=20261111-orange8';
+import {createSession} from './session.js?v=20261111-simple-average3';
 import {loadSentenceHomework} from './homework.js?v=20261104-separated-homework1';
 
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
