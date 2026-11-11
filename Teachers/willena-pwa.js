@@ -3,39 +3,96 @@
 'use strict';
 const ROOT='/Teachers/';
 const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const isIOS=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isAndroid=()=>/Android/i.test(navigator.userAgent);
+const isChrome=()=>/Chrome|CriOS/i.test(navigator.userAgent)&&!/Edg|OPR|SamsungBrowser|DuckDuckGo/i.test(navigator.userAgent);
 let installPrompt=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});
-window.addEventListener('appinstalled',()=>{installPrompt=null;updateButton();});
+let promptAttempted=false;
+window.addEventListener('beforeinstallprompt',event=>{
+ event.preventDefault();
+ installPrompt=event;
+ promptAttempted=false;
+ updateButton();
+});
+window.addEventListener('appinstalled',()=>{
+ installPrompt=null;
+ updateButton();
+});
 function updateButton(){
  const button=document.getElementById('wcInstallApp');
- if(button)button.hidden=standalone();
+ if(!button)return;
+ button.hidden=standalone();
+ button.textContent=installPrompt?'Install app':'Install app';
+ button.title=installPrompt?'Install Willena Teachers':'Open the browser installation options for Willena Teachers';
 }
-function guide(){
+async function diagnoseInstall(){
+ const issues=[];
+ if(!window.isSecureContext)issues.push('This page is not using a secure HTTPS connection.');
+ if(!('serviceWorker' in navigator))issues.push('This browser does not support service workers.');
+ try{
+  const m=await fetch('/Teachers/manifest.webmanifest',{cache:'no-store'});
+  if(!m.ok)issues.push('App manifest returned HTTP '+m.status+'.');
+  else{
+   const data=await m.json();
+   if(!data.start_url||!data.icons?.some(x=>x.type==='image/png'))issues.push('The app manifest has missing installation information.');
+   const icon=data.icons?.find(x=>x.type==='image/png'&&x.sizes==='192x192');
+   if(icon){
+    const res=await fetch(icon.src,{cache:'no-store'});
+    if(!res.ok)issues.push('App icon returned HTTP '+res.status+'.');
+    else if(!(res.headers.get('content-type')||'').includes('image/png'))issues.push('The app icon is not being served as PNG.');
+   }
+  }
+ }catch(err){issues.push('Could not check installation files: '+(err.message||String(err)))}
+ try{
+  const reg=await navigator.serviceWorker?.getRegistration(ROOT);
+  if(!reg?.active)issues.push('The Willena service worker has not activated yet.');
+ }catch(err){issues.push('Service worker check failed.')}
+ return issues;
+}
+function installGuide(){
+ // Browser rules prevent websites from invoking the system installer
+ // without a beforeinstallprompt event; this is only the fallback.
+ document.getElementById('willenaPwaGuide')?.remove();
  const shade=document.createElement('div');
  shade.id='willenaPwaGuide';
- shade.setAttribute('role','presentation');
  shade.style.cssText='position:fixed;inset:0;z-index:100050;background:#152d3b94;display:grid;place-items:center;padding:16px';
  const card=document.createElement('section');
  card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-label','Install Willena Teachers');
  card.style.cssText='background:#fff;border:1px solid #d6e5ea;border-radius:20px;max-width:460px;width:100%;padding:24px;font:14px/1.6 system-ui,sans-serif;box-shadow:0 18px 80px #152d3b55;color:#254451';
  const h=document.createElement('h2');h.textContent='Install Willena Teachers';h.style.cssText='font-size:21px;margin:0 0 12px';
- const p=document.createElement('p');p.style.cssText='margin:0 0 12px';p.textContent=/iPad|iPhone|iPod/.test(navigator.userAgent)
-  ?'On iPhone: open this page in Safari, tap Share, then Add to Home Screen. Open the new Willena icon.'
-  :'On Android: open this page in Chrome, tap the three-dot menu, then choose Install app or Add to Home screen.';
- const note=document.createElement('p');note.textContent='Log in with your normal Willena staff account. No app-store account is needed. Phone notifications are available in Staff Calendar after your administrator configures Web Push.';note.style.cssText='color:#617d88;font-size:12px;margin:0 0 18px';
- const close=document.createElement('button');close.type='button';close.textContent='Got it';close.style.cssText='padding:10px 20px;background:#eaf9fb;border:1px solid #92d0d9;border-radius:10px;color:#235c68;font-weight:700;cursor:pointer';
+ const p=document.createElement('p');p.style.cssText='margin:0 0 12px';
+ if(isIOS())p.textContent='Open this page in Safari, tap Share, then Add to Home Screen. The install prompt cannot be opened directly on iPhone.';
+ else if(isAndroid())p.textContent=isChrome()
+  ?'Chrome has not made its install prompt available. Open Chrome’s ⋮ menu and choose Install app or Add to Home screen. If Willena is already listed in Android Settings → Apps, remove that old installation first.'
+  :'Open this page in Chrome (not an in-app browser), then use Chrome’s ⋮ menu → Install app or Add to Home screen.';
+ else p.textContent=isChrome()
+  ?'Chrome has not offered the site installation prompt yet. Use Chrome’s ⋮ menu → Cast, save and share → Install page as app (or the Install icon in the address bar).'
+  :'Use your browser menu to install this site as an app. On Windows, Chrome or Edge is recommended.';
+ const detail=document.createElement('p');detail.textContent='Checking installation requirements…';detail.style.cssText='color:#617d88;font-size:12px;margin:0 0 18px';
+ const close=document.createElement('button');close.type='button';close.textContent='Close';close.style.cssText='padding:10px 20px;background:#eaf9fb;border:1px solid #92d0d9;border-radius:10px;color:#235c68;font-weight:700;cursor:pointer';
  const dismiss=()=>{shade.remove();document.removeEventListener('keydown',escape)};
  const escape=e=>{if(e.key==='Escape')dismiss()};
  close.addEventListener('click',dismiss);shade.addEventListener('click',e=>{if(e.target===shade)dismiss()});
- card.append(h,p,note,close);shade.append(card);document.body.append(shade);document.addEventListener('keydown',escape);close.focus();
+ card.append(h,p,detail,close);shade.append(card);document.body.append(shade);document.addEventListener('keydown',escape);close.focus();
+ diagnoseInstall().then(issues=>{
+  if(!detail.isConnected)return;
+  detail.textContent=issues.length?'Installation check: '+issues.join(' '):'The manifest, icon, and service worker are present. The browser must still offer installation; a website cannot bypass that permission.';
+ }).catch(()=>{detail.textContent='Unable to run installation checks.'});
 }
 async function install(){
  if(standalone())return;
  if(installPrompt){
-  const pending=installPrompt;installPrompt=null;
-  try{await pending.prompt();await pending.userChoice}catch(err){console.warn('PWA install prompt unavailable',err)}
+  const pending=installPrompt;
+  installPrompt=null;
+  promptAttempted=true;
+  try{
+   await pending.prompt();
+   const result=await pending.userChoice;
+   if(result?.outcome==='accepted')return;
+  }catch(error){console.warn('Willena native install prompt failed',error)}
   updateButton();
- }else guide();
+ }
+ installGuide();
 }
 
 // Willena Web Push preferences. Permission is requested ONLY after a user tap.
