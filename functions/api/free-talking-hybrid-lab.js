@@ -328,7 +328,15 @@ export async function onRequestPost({request,env}){
     const value=Number(levelRows[0]?.public_level);
     if(Number.isInteger(value)&&value>=0&&value<=10)reviewLevel=value;
    }catch(ex){console.warn('[Free Talking] review textbook level unavailable, using 2',sessionId,String(ex))}
-   const transcript=original.slice(-110).map(x=>({n:x.turn_number,speaker:x.speaker,text:fmt(x.transcript_text,350)}));
+   // The database interleaves character and student turns (2,4,...16).
+   // Give the evaluator one unambiguous student sequence (1..8), then
+   // translate scored positions back to the original database turn IDs.
+   const studentOrdinalByTurn=new Map(students.map((row,i)=>[Number(row.turn_number),i+1]));
+   const turnByStudentOrdinal=new Map(students.map((row,i)=>[i+1,Number(row.turn_number)]));
+   const transcript=original.slice(-110).map(x=>({
+    n:x.speaker==='student'?studentOrdinalByTurn.get(Number(x.turn_number))??null:null,
+    speaker:x.speaker,text:fmt(x.transcript_text,350)
+   }));
    const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
    const beginnerReview=Number.isFinite(reviewLevel)&&reviewLevel<=2;
    const instructions=[
@@ -339,6 +347,7 @@ export async function onRequestPost({request,env}){
       'Speech-to-text may substitute plausible phrases. If a transcript is phonetically or semantically ambiguous in context, give the child the benefit of the doubt. A possible transcription mismatch is NOT evidence of deliberate evasion. Do not inflate obviously unrelated nonsense.'
     ]:[]),
     'You are the final evaluator of an eight-turn English conversation with a child. Grade each STUDENT turn only after reading the ENTIRE transcript in context. You are not teaching or judging perfect grammar.',
+    'Student turns in the transcript have consecutive n identifiers 1 through '+students.length+'. Grade each n exactly once. Character turns have n=null and must never receive scores.',
     'Return exactly one score per numbered STUDENT turn, from 0 to 4. Evaluate whether the child actually engaged with the PRECEDING question or deliberately introduced a comprehensible new conversation, rather than whether the character managed to make a reply out of the words.',
     '4 = strong genuine communication at the learner\'s level: a clearly relevant, understandable reply or genuine question. Higher levels can show detail, reasoning or curiosity; beginners need only a fitting short answer. Grammar errors do not matter.',
     '3 = understandable and relevant but somewhat incomplete communication, judged relative to book level. For beginners, a directly relevant one-word or yes/no answer can be 4, not automatically capped at 3.',
@@ -398,17 +407,24 @@ export async function onRequestPost({request,env}){
      if(!Array.isArray(parsed?.scores)||typeof parsed.feedback!=='string'){
       lastReviewProblem='Evaluation was missing scores or feedback';continue;
      }
-     const candidates=new Map();let invalid=false;
-     for(const answer of parsed.scores){
-      const n=Number(answer?.turn),value=Number(answer?.points);
-      if(!validTurns.has(n)||candidates.has(n)||!Number.isInteger(value)||value<0||value>4){
-       invalid=true;break;
-      }
-      candidates.set(n,{points:value,reason:fmt(answer.reason,140)});
+     // Accept either explicitly numbered student positions (1..8) or the
+     // old database turn IDs. Require a COMPLETE matching set to avoid
+     // ambiguous partial credit or scoring the wrong student response.
+     const nums=parsed.scores.map(x=>Number(x?.turn));
+     const isFullSet=set=>nums.length===set.size&&nums.every(n=>Number.isInteger(n)&&set.has(n))&&new Set(nums).size===set.size;
+     const ordinalSet=new Set(turnByStudentOrdinal.keys());
+     const mode=isFullSet(ordinalSet)?'ordinal':isFullSet(validTurns)?'database':null;
+     const candidates=new Map();let invalid=!mode;
+     if(mode)for(const answer of parsed.scores){
+      const ordinalOrId=Number(answer.turn),value=Number(answer.points);
+      const databaseTurn=mode==='ordinal'?turnByStudentOrdinal.get(ordinalOrId):ordinalOrId;
+      if(!Number.isInteger(value)||value<0||value>4){invalid=true;break}
+      candidates.set(databaseTurn,{points:value,reason:fmt(answer.reason,140)});
      }
      if(invalid||candidates.size!==validTurns.size){
       lastReviewProblem='Evaluation returned incomplete or mismatched turn scores';
-      console.warn('[Free Talking] review score coverage failed',sessionId,parsed.scores.length,validTurns.size);
+      console.warn('[Free Talking] review score coverage failed',sessionId,
+       {returned:nums,expectedStudentPositions:[...ordinalSet],expectedDbTurns:[...validTurns]});
       continue;
      }
      verdict=parsed;all=candidates;break;
