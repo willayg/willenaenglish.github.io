@@ -6,6 +6,7 @@ const ADMIN='/.netlify/functions/teacher_admin';
 const state={students:[],filtered:[],selected:null};
 let classesModulePromise=null;
 let levelTestsPromise=null;
+let enquiriesModulePromise=null;
 
 function loginUrl(){return `/Teachers/login.html?redirect=${encodeURIComponent(location.pathname+location.search)}`}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -51,6 +52,11 @@ async function ensureLevelTests(){
 }
 function activateView(view){
   setView(view);
+  if(view==='enquiries'){
+    if(!enquiriesModulePromise)enquiriesModulePromise=import('./admin-v2-enquiries.js?v=20261112-native1').then(m=>m.mountEnquiries());
+    else enquiriesModulePromise=enquiriesModulePromise.then(()=>import('./admin-v2-enquiries.js?v=20261112-native1').then(m=>m.refreshEnquiries())).catch(()=>{enquiriesModulePromise=null;return import('./admin-v2-enquiries.js?v=20261112-native1').then(m=>m.mountEnquiries())});
+    enquiriesModulePromise.catch(error=>{const target=$('#enqMessage');if(target)target.textContent=error.message});
+  }
   if(view==='classes')ensureClasses().catch(error=>{$('#classGridV2').innerHTML=`<div class="empty">${esc(error.message)}</div>`});
   if(view==='level-tests')ensureLevelTests().catch(error=>{$('#levelTestRows').innerHTML=`<tr><td colspan="5" class="empty">${esc(error.message)}</td></tr>`});
 }
@@ -136,5 +142,5 @@ function bindStudents(){
   $('#studentSearch').addEventListener('input',applyFilters);$('#classFilter').addEventListener('change',applyFilters);$('#gradeFilter').addEventListener('change',applyFilters);$('#studentRefresh').addEventListener('click',()=>loadStudents(true));$('#addStudent').addEventListener('click',openAdd);$('#closeStudentDrawer').addEventListener('click',closeStudent);$('#studentDrawerBg').addEventListener('click',e=>{if(e.target===$('#studentDrawerBg'))closeStudent()});$('#closeAddStudentDrawer').addEventListener('click',closeAdd);$('#cancelAddStudent').addEventListener('click',closeAdd);$('#addStudentDrawerBg').addEventListener('click',e=>{if(e.target===$('#addStudentDrawerBg'))closeAdd()});$('#addStudentForm').addEventListener('submit',createStudentFromDrawer);document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeStudent();closeAdd()}})
 }
 window.addEventListener('willena-student-enrolled',()=>loadStudents(true));
-function boot(){bindNavigation();bindStudents();bindLevelTestModes();$('#adminV2Boot')?.classList.add('hidden');loadStudents(false)}
+function boot(){bindNavigation();bindStudents();bindLevelTestModes();$('#adminV2Boot')?.classList.add('hidden');loadStudents(false);if(new URLSearchParams(location.search).get('view')==='enquiries')activateView('enquiries')}
 boot();
