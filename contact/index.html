@@ -1,10 +1,45 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>상담 문의 | Willena English</title><link rel="icon" href="/favicon.svg"><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Poppins:wght@500;700;800&display=swap" rel="stylesheet"><style>
 *{box-sizing:border-box}body{margin:0;font-family:Poppins,"Noto Sans KR",sans-serif;color:#302b41;background:linear-gradient(130deg,#f1fcfc,#fff4f9)}header{display:flex;align-items:center;justify-content:space-between;gap:15px;background:#fff;padding:14px max(20px,calc((100vw - 1030px)/2))}header img{height:55px;max-width:150px;object-fit:contain}header a{text-decoration:none;color:#302b41;font-weight:800}main{max-width:760px;margin:45px auto 65px;padding:0 18px}.card{background:white;padding:clamp(23px,5vw,45px);border-radius:28px;box-shadow:0 15px 50px #2f294017}small.kicker{color:#d65598;font-size:12px;font-weight:900;letter-spacing:.1em}h1{font-size:clamp(29px,5vw,46px);margin:9px 0 10px;line-height:1.2}p{color:#6e6c7a;line-height:1.8;font-size:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}label{display:flex;flex-direction:column;gap:7px;font-size:14px;font-weight:700;margin-top:18px}input,select,textarea{width:100%;border:1px solid #dcdbe5;border-radius:12px;padding:13px 14px;font:inherit;font-size:16px;background:#fff;color:#302b41;min-height:48px}textarea{min-height:135px;resize:vertical}input:focus,textarea:focus,select:focus{outline:3px solid #bbebef;border-color:#18aabc}.consent{display:flex;flex-direction:row;align-items:flex-start;gap:10px;font-size:13px;line-height:1.65;font-weight:500}.consent input{width:21px;height:21px;min-height:0;flex-shrink:0;margin:2px 0}.send{background:#18aabc;color:white;border:0;border-radius:14px;padding:15px 20px;font:inherit;font-weight:800;font-size:16px;cursor:pointer;width:100%;margin-top:23px}.send:disabled{opacity:.55;cursor:wait}.status{min-height:28px;margin-top:12px;font-size:14px;font-weight:700}.status.error{color:#b62452}.status.ok{color:#16816d}.honeypot{position:absolute;left:-9999px;opacity:0}footer{text-align:center;font-size:13px;color:#625b70;padding:0 12px 30px}footer a{color:#148e9e;font-weight:800}@media(max-width:570px){.grid{grid-template-columns:1fr}main{margin:22px auto 40px}.card{border-radius:19px}.grid label{margin-top:13px}}
+
+/* Confirmation experience shown only after a successful submission. */
+.card.success-card{min-height:490px;display:grid;place-items:center;overflow:hidden;text-align:center;position:relative}
+.thanks{width:100%;max-width:510px;padding:25px 0 12px;animation:thanks-appear .65s cubic-bezier(.2,.8,.2,1) both}
+.thanks-mark{width:118px;height:118px;margin:0 auto 24px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(140deg,#e5fcf9,#d5f4fc);position:relative}
+.thanks-mark:before,.thanks-mark:after{content:"";position:absolute;border-radius:50%;inset:-12px;border:2px dashed #b6e4ee;opacity:.85;animation:thanks-ring .9s .15s both}
+.thanks-mark:after{inset:-24px;border:2px dotted #eec7e0;animation-delay:.3s}
+.thanks-mark svg{width:72px;height:72px;overflow:visible}
+.thanks-mark circle{fill:#18aabc}
+.thanks-mark path{fill:none;stroke:white;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:55;stroke-dashoffset:55;animation:thanks-check .55s .38s ease forwards}
+.thanks h1{font-size:clamp(34px,6vw,51px);letter-spacing:-.05em;margin:8px 0 14px}
+.thanks p{font-size:16px;line-height:1.9;margin:0 auto 24px;max-width:430px;word-break:keep-all}
+.thanks .confirmation{background:#f3fbfb;border-radius:18px;padding:20px;margin:24px 0;color:#53636a;font-size:14px;line-height:1.85}
+.thanks .home-link{display:inline-flex;justify-content:center;align-items:center;width:100%;min-height:54px;border-radius:15px;background:#18aabc;color:white;font-size:16px;font-weight:800;text-decoration:none}
+.thanks .home-link:hover{background:#1599aa}
+.thanks .contact-again{display:inline-block;margin-top:19px;color:#66737a;font-size:13px}
+.thanks .contact-again a{color:#168b9a;font-weight:800}
+@keyframes thanks-appear{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes thanks-ring{from{opacity:0;transform:scale(.72)}to{opacity:.9;transform:scale(1)}}
+@keyframes thanks-check{to{stroke-dashoffset:0}}
+@media(max-width:570px){.card.success-card{min-height:480px}.thanks{padding:15px 0}.thanks-mark{width:103px;height:103px}.thanks p{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.thanks,.thanks-mark:before,.thanks-mark:after,.thanks-mark path{animation:none!important}.thanks-mark path{stroke-dashoffset:0}}
 </style></head><body><header><a href="/"><img src="/Assets/Images/color-logo.png" alt="Willena English"></a><a href="/">← 홈페이지</a></header><main><div class="card"><small class="kicker">WILLENA ENGLISH · CONTACT</small><h1>상담 문의하기</h1><p>윌레나 영어학원에 궁금한 점이 있으신가요? 문의를 남겨주시면 확인 후 연락드리겠습니다.</p><form id="contact"><div class="grid"><label>학부모 성함 *<input name="parent_name" maxlength="80" minlength="2" autocomplete="name" required placeholder="성함을 입력해 주세요"></label><label>학생 학년 *<select name="student_grade" required><option value="">학년 선택</option><option>미취학</option><option>초등 1학년</option><option>초등 2학년</option><option>초등 3학년</option><option>초등 4학년</option><option>초등 5학년</option><option>초등 6학년</option><option>중등 1학년</option><option>중등 2학년</option><option>중등 3학년</option><option>고등학생</option><option>기타</option></select></label></div><div class="grid"><label>연락처 *<input name="phone" type="tel" required inputmode="tel" maxlength="25" placeholder="010-0000-0000" autocomplete="tel"></label><label>문의 유형 *<select name="enquiry_type" required><option value="">선택해 주세요</option><option value="level_test">레벨 테스트 / 상담</option><option value="tuition">수강료</option><option value="classes">수업 / 시간표</option><option value="other">기타 문의</option></select></label></div><label>문의 내용 *<textarea name="message" minlength="5" maxlength="2000" required placeholder="궁금한 내용을 자유롭게 적어 주세요."></textarea></label><label class="honeypot" aria-hidden="true">Website<input name="website" autocomplete="off" tabindex="-1"></label><label class="consent"><input name="privacy_consent" type="checkbox" required><span>개인정보 수집 및 이용에 동의합니다. (필수)<br>수집 항목: 학부모 성함, 학생 학년, 연락처, 문의 내용 · 이용 목적: 상담 및 문의 응대 · 보유 기간: 문의 처리 후 최대 1년 (삭제 요청 시 조기 삭제 가능). 동의하지 않을 권리가 있으나, 동의하지 않으면 문의 접수가 어렵습니다.</span></label><button class="send" type="submit">문의 보내기 →</button><div class="status" id="status" role="status" aria-live="polite"></div></form><p>전화 상담: <a href="tel:03180422203">031-8042-2203</a></p></div></main><footer>윌레나 원어민 영어학원 · Willena English Academy</footer><script>
 const form=document.getElementById('contact'),status=document.getElementById('status'),button=form.querySelector('.send');
 form.addEventListener('submit',async e=>{e.preventDefault();if(!form.reportValidity())return;status.textContent='';status.className='status';button.disabled=true;button.textContent='전송 중…';
 const data=Object.fromEntries(new FormData(form));data.privacy_consent=Boolean(form.elements.privacy_consent.checked);
-try{const res=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/website-enquiry-submit',{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const json=await res.json();if(!res.ok||!json.success)throw Error(json.error||'전송 실패');form.reset();status.className='status ok';status.textContent='문의가 접수되었습니다. 확인 후 연락드리겠습니다. 감사합니다!';}
+try{const res=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/website-enquiry-submit',{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const json=await res.json();if(!res.ok||!json.success)throw Error(json.error||'전송 실패');form.reset();
+const card=document.querySelector('.card');
+card.classList.add('success-card');
+card.innerHTML=`<div class="thanks" role="status" aria-live="polite" tabindex="-1">
+<div class="thanks-mark" aria-hidden="true"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="31"/><path d="M24 40 35 51 57 29"/></svg></div>
+<small class="kicker">THANK YOU · WILLENA ENGLISH</small>
+<h1>문의가 접수되었어요!</h1>
+<p>윌레나에 관심을 가져주셔서 감사합니다.<br>문의 내용을 확인한 후 연락드리겠습니다.</p>
+<div class="confirmation">✓ 상담 문의가 정상적으로 접수되었습니다.<br>담당자가 내용을 확인하고 연락드릴게요.</div>
+<a class="home-link" href="/">홈페이지로 돌아가기 →</a>
+<span class="contact-again">급한 문의는 <a href="tel:03180422203">031-8042-2203</a>으로 전화해 주세요.</span>
+</div>`;
+window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+card.querySelector('.thanks').focus({preventScroll:true});}
 catch(err){status.className='status error';status.textContent='문의 전송에 실패했습니다. 잠시 후 다시 시도하시거나 031-8042-2203으로 전화해 주세요.';}
 finally{button.disabled=false;button.textContent='문의 보내기 →';}});
 </script></body></html>
