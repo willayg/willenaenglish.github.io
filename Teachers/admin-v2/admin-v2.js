@@ -53,8 +53,8 @@ async function ensureLevelTests(){
 function activateView(view){
   setView(view);
   if(view==='enquiries'){
-    if(!enquiriesModulePromise)enquiriesModulePromise=import('./admin-v2-enquiries.js?v=20261112-native1').then(m=>m.mountEnquiries());
-    else enquiriesModulePromise=enquiriesModulePromise.then(()=>import('./admin-v2-enquiries.js?v=20261112-native1').then(m=>m.refreshEnquiries())).catch(()=>{enquiriesModulePromise=null;return import('./admin-v2-enquiries.js?v=20261112-native1').then(m=>m.mountEnquiries())});
+    if(!enquiriesModulePromise)enquiriesModulePromise=import('./admin-v2-enquiries.js?v=20261112-native2').then(m=>m.mountEnquiries());
+    else enquiriesModulePromise=enquiriesModulePromise.then(()=>import('./admin-v2-enquiries.js?v=20261112-native2').then(m=>m.refreshEnquiries())).catch(()=>{enquiriesModulePromise=null;return import('./admin-v2-enquiries.js?v=20261112-native2').then(m=>m.mountEnquiries())});
     enquiriesModulePromise.catch(error=>{const target=$('#enqMessage');if(target)target.textContent=error.message});
   }
   if(view==='classes')ensureClasses().catch(error=>{$('#classGridV2').innerHTML=`<div class="empty">${esc(error.message)}</div>`});
