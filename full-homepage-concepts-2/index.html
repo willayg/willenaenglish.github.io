@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Willena — Five More Homepage Concepts</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#302b41;--muted:#6d7082;--cyan:#1aa8b9;--pink:#d85ba1;--lav:#a190d7;--bg:#fff;--wash:#f5fafb;--line:#e7e8ec;--r:26px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#edeaf1;color:var(--ink);font-family:Poppins,"Noto Sans KR",sans-serif}button,a{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible{outline:3px solid #20adc5;outline-offset:3px}
+.lab{position:sticky;top:0;z-index:100;background:#2e2a3d;color:white;box-shadow:0 4px 20px #17122029}
+.lab-inner{max-width:1500px;margin:auto;padding:11px 22px;display:flex;gap:15px;align-items:center;justify-content:space-between}
+.lab-title{font-weight:800;font-size:13px;letter-spacing:.03em}.lab-title span{font-weight:400;color:#c4c0d1}.lab-select{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.lab-select button{border:1px solid #585167;background:#484154;color:white;border-radius:20px;padding:8px 13px;font-size:12px;white-space:nowrap}
+.lab-select button.active{background:white;color:#302b41}
+.frame{background:white;max-width:1600px;margin:auto;overflow:hidden;--ink:#302b41;--accent:#1aa8b9;--accent2:#d85ba1;--surface:#f5fafb;--radius:25px}
+.site-header{height:91px;display:flex;align-items:center;justify-content:space-between;padding:12px clamp(20px,5vw,90px);background:#fff;gap:16px;border-bottom:1px solid #efedf1}
+.logo{height:62px;max-width:150px;object-fit:contain}.nav{display:flex;gap:11px;align-items:center}.nav a{padding:11px 17px;border-radius:35px;font-size:13px;font-weight:700;white-space:nowrap}.nav a:nth-last-child(2){background:#302b41;color:white}.nav a:last-child{background:#eee9fb}
+.hero{display:grid;grid-template-columns:1fr 1.04fr;min-height:580px;gap:38px;align-items:center;padding:70px clamp(24px,7vw,110px) 48px;background:var(--surface);position:relative}
+.hero-copy{z-index:2}.eyebrow{font-size:12px;font-weight:850;letter-spacing:.13em;color:var(--accent2);text-transform:uppercase}
+.hero h1{font-size:clamp(42px,5.3vw,79px);letter-spacing:-.065em;line-height:1.11;margin:19px 0 20px;font-weight:850;word-break:keep-all}
+.hero h1 em{font-style:normal;color:var(--accent)}.hero p{font-size:17px;line-height:1.9;color:#69707f;word-break:keep-all;margin:0 0 27px}
+.button-row{display:flex;gap:11px;flex-wrap:wrap;align-items:center}.main-btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 22px;min-height:48px;background:var(--accent);border-radius:26px;color:white;font-size:13px;font-weight:800;border:0}
+.minor-btn{padding:13px 20px;border:1px solid #dcdde4;border-radius:26px;background:white;font-weight:700;font-size:13px}
+.hero-visual{position:relative;min-width:0;min-height:360px;display:flex;align-items:center;justify-content:center}.hero-visual:before{content:"";position:absolute;inset:0 5%;border-radius:48% 52% 40% 60%;background:linear-gradient(130deg,#daeffb,#f9dff1);transform:rotate(-9deg)}
+.hero-visual img{position:relative;z-index:1;width:100%;height:380px;border-radius:30px;object-fit:cover;box-shadow:0 18px 45px #24203722}
+.hero-controls{position:absolute;bottom:16px;right:7%;display:flex;align-items:center;gap:10px;z-index:4}
+.hero-controls button{border:1px solid #e4e5ea;background:#fff;border-radius:40px;width:38px;height:38px;font-size:23px;line-height:1}
+.dots{display:flex;gap:5px}.dots button{width:9px;height:9px;background:#cbd1dd;border:0;padding:0;border-radius:20px}.dots button.selected{width:25px;background:var(--accent2)}
+.section{padding:85px clamp(24px,7vw,110px);max-width:1600px;margin:auto}.section-intro{max-width:810px;margin-bottom:34px}.section h2{font-size:clamp(31px,4vw,55px);line-height:1.17;letter-spacing:-.055em;margin:12px 0 17px}.section-intro p,.section-lead{font-size:16px;color:var(--muted);line-height:1.85;word-break:keep-all}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}.tile{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:white}.tile img{display:block;width:100%;height:238px;object-fit:cover}.tile div{padding:25px}.tile h3{margin:0 0 8px;font-size:22px;letter-spacing:-.045em}.tile p{color:var(--muted);font-size:13px;line-height:1.85;margin:0;word-break:keep-all}
+.journey-section{background:linear-gradient(140deg,#f8fcfd,#f9f5fd)}.journey-container{position:relative}.journey{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:22px 12px;max-width:1250px;position:relative;margin:auto}
+.journey:before{content:"";position:absolute;top:52px;left:8%;right:8%;height:4px;background:linear-gradient(90deg,#f7b8cb,#f5cb72,#8adfbe,#83c3f4,#b490f1);border-radius:8px;opacity:.5}
+.level{border:0;background:transparent;padding:0;display:flex;flex-direction:column;align-items:center;gap:9px;min-width:0;position:relative}.bubble{width:108px;height:108px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;background:var(--lev);color:#25283a;box-shadow:0 6px 17px #28203619;border:5px solid white;transition:transform .18s,box-shadow .18s}.bubble strong{font-size:19px}.bubble small{font-size:10px;font-weight:800}.level[aria-pressed=true] .bubble{outline:3px solid #363049;outline-offset:3px;transform:scale(1.06);box-shadow:0 10px 25px #25203824}.levtext{text-align:center;line-height:1.35}.levtext b{font-size:14px}.levtext small{display:block;color:#697184;font-size:11px;margin-top:4px}
+.level-detail{margin:35px auto 0;max-width:960px;background:white;border:1px solid #e9e5ef;box-shadow:0 10px 34px #2420390c;border-radius:25px;padding:27px 32px;display:grid;grid-template-columns:1.25fr 1fr;gap:20px}.level-detail strong{font-size:23px}.level-detail p{font-size:14px;line-height:1.8;color:var(--muted);margin:9px 0 0}.detail-meta{border-left:1px solid #eee9f0;padding-left:24px;display:flex;flex-direction:column;justify-content:center;gap:6px;color:#625e72;font-size:13px}.detail-meta b{color:#302b41}
+.journey-caption{text-align:center;font-size:12px;color:#777287;margin:18px auto 0}
+.feature{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}.feature img{width:100%;height:390px;object-fit:cover;border-radius:var(--radius)}.feature h2{font-size:clamp(30px,3.5vw,47px)}.feature p{line-height:1.95;color:var(--muted);font-size:15px;word-break:keep-all}
+.app-section{background:#f8f7fb}.app-showcase{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:13px}.app-card{background:white;border-radius:22px;border:1px solid #eee9f2;padding:24px 8px;text-align:center}.app-card img{width:75px;height:75px;object-fit:contain}.app-card h3{font-size:13px;line-height:1.4;margin:11px 0 0}
+.cta-section{background:#302b41;color:white;text-align:center}.cta-section h2{font-size:clamp(32px,5vw,55px)}.cta-section p{color:#ddd6ed;line-height:1.9}.cta-section .button-row{justify-content:center}.cta-section .minor-btn{background:#49445f;color:white;border:1px solid #726985}
+footer{background:#211e2e;color:#d5d0e0;padding:33px clamp(20px,7vw,110px);font-size:12px;display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.concept-2{--accent:#bc549c;--accent2:#1c9ea8;--surface:#fff9fc;--radius:6px}.concept-2 .hero{grid-template-columns:1fr 1fr;background:#fff}.concept-2 .hero h1{font-family:Georgia,"Noto Sans KR",serif;font-weight:650}.concept-2 .hero-visual img,.concept-2 .tile img{border-radius:5px}.concept-2 .hero-visual:before{background:#f1e7ee;transform:rotate(6deg)}.concept-2 .tile{border:0;box-shadow:0 10px 32px #2221}.concept-2 .journey-section{background:#faf5f9}.concept-2 .bubble{border-radius:30%;transform:rotate(-6deg)}.concept-2 .level[aria-pressed=true] .bubble{transform:rotate(0) scale(1.06)}
+.concept-3{--accent:#1784af;--accent2:#db7e39;--surface:#ecf8ff;--radius:16px}.concept-3 .hero{grid-template-columns:1.05fr 1fr;min-height:630px;background:linear-gradient(135deg,#eaf9ff,#f4f6ff)}.concept-3 .hero h1{font-weight:900}.concept-3 .hero-visual img{border-radius:120px 20px 120px 20px}.concept-3 .hero-visual:before{background:#d6edff}.concept-3 .journey-section{background:#edf7ff}.concept-3 .journey{grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}.concept-3 .journey:before{top:42px}.concept-3 .bubble{width:84px;height:84px}.concept-3 .bubble strong{font-size:15px}.concept-3 .levtext b{font-size:11px}.concept-3 .levtext small{font-size:10px}.concept-3 .app-section{background:#eaf6fd}
+.concept-4{--accent:#ef6590;--accent2:#745ed1;--surface:#fff9f2;--radius:35px}.concept-4 .hero{background:linear-gradient(135deg,#fff8ed,#ffe6f0);min-height:630px}.concept-4 .hero h1{font-size:clamp(43px,6vw,91px);font-weight:900}.concept-4 .hero-visual:before{background:#ffe2a1;border-radius:37% 63% 49% 51%}.concept-4 .hero-visual img{border-radius:35px 85px 35px 85px;transform:rotate(2deg)}.concept-4 .tile{background:#fffdf9}.concept-4 .journey-section{background:#fff5eb}.concept-4 .bubble{border-radius:45% 55% 60% 40%;transform:rotate(-7deg);border:5px solid white}.concept-4 .level[aria-pressed=true] .bubble{transform:rotate(0deg) scale(1.08)}.concept-4 .app-section{background:#fff2f7}
+.concept-5{--accent:#7c68b8;--accent2:#2aa2a2;--surface:#f5f1ff;--radius:17px}.concept-5 .hero{background:#302b41;color:white;min-height:670px}.concept-5 .hero h1{color:white}.concept-5 .hero p{color:#d9d6e5}.concept-5 .hero-visual:before{background:#65559c}.concept-5 .hero-visual img{border-radius:18px;box-shadow:22px 22px 0 #504968}.concept-5 .hero .minor-btn{background:#504969;color:white;border:1px solid #716689}.concept-5 .journey-section{background:#342f49;color:white}.concept-5 .journey-section .section-intro p,.concept-5 .journey-caption{color:#d7d0e3}.concept-5 .levtext small{color:#c8c2d4}.concept-5 .level-detail{background:#443b59;border-color:#685b7c;color:white}.concept-5 .level-detail p,.concept-5 .detail-meta{color:#d3cce0}.concept-5 .detail-meta b{color:white}.concept-5 .feature img{border-radius:0}.concept-5 .app-section{background:#f5f1ff}
+@media(max-width:1050px){.concept-3 .journey{grid-template-columns:repeat(5,minmax(0,1fr))}.concept-3 .bubble{width:100px;height:100px}.concept-3 .journey:before{display:none}.hero{gap:25px}.hero-visual img{height:340px}.app-card img{width:58px;height:58px}}
+@media(max-width:760px){.lab-inner{flex-wrap:wrap;gap:8px}.lab-select{width:100%}.lab-select button{padding:8px 11px}.site-header{height:75px;padding:10px 15px}.logo{height:46px;max-width:104px}.nav{gap:5px}.nav a{font-size:10px;padding:9px 8px}.nav a:first-child{display:none}
+.hero,.concept-2 .hero,.concept-3 .hero,.concept-4 .hero,.concept-5 .hero{display:flex;flex-direction:column-reverse;gap:13px;min-height:0;padding:23px 20px 70px;align-items:stretch}.hero-visual{min-height:215px}.hero-visual img{height:235px;width:100%;max-width:520px}.hero-visual:before{inset:4% 13%}.hero h1,.concept-4 .hero h1{font-size:clamp(39px,9vw,54px);margin:12px 0}.hero p{font-size:14px;margin-bottom:19px}.hero-controls{right:20px;bottom:15px}
+.section{padding:57px 22px}.section h2{font-size:35px}.section-intro p{font-size:14px}.three{grid-template-columns:1fr;gap:17px}.tile img{height:205px}.tile div{padding:21px}
+.journey,.concept-3 .journey{grid-template-columns:repeat(2,minmax(0,1fr));gap:17px 4px}.journey:before{display:none}.bubble,.concept-3 .bubble{width:103px;height:103px}.levtext b,.concept-3 .levtext b{font-size:13px}.level-detail{grid-template-columns:1fr;padding:23px 20px}.detail-meta{border-left:0;border-top:1px solid #eee9f0;padding:16px 0 0}.feature{grid-template-columns:1fr;gap:21px}.feature img{height:250px}.app-showcase{grid-template-columns:repeat(2,minmax(0,1fr))}.app-card:last-child{grid-column:1/-1}.cta-section{text-align:center}footer{padding:26px 20px}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
+
+/* Second gallery: five calmer photo-circle designs, including one expressive wave concept */
+.frame{--accent:#19a7b7;--accent2:#c65a9d;--surface:#fff;--radius:22px}
+.hero-visual{isolation:isolate}
+.hero-visual:before{width:76%;height:88%;inset:auto;left:12%;top:6%;border-radius:50%;transform:none}
+.hero-visual img{width:min(87%,450px);height:390px;aspect-ratio:1/1;border-radius:50%;object-fit:cover;border:12px solid white;box-shadow:0 22px 55px #32284020}
+.hero-visual:after{content:"";position:absolute;z-index:0;right:0;bottom:11%;width:90px;height:90px;background:#f4ceec;border-radius:50%;border:8px solid white;box-shadow:0 10px 22px #382d4420}
+.hero{background:#fff}
+.hero-copy .socials{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:24px}
+.socials a{display:flex;align-items:center;justify-content:center;width:47px;height:47px;border-radius:14px;color:white;font-size:20px;font-weight:900;box-shadow:0 8px 18px #2b234022;transition:transform .15s}
+.socials a:hover{transform:translateY(-3px)}
+.socials .naver{background:#03c75a}.socials .youtube{background:#ff0033}.socials .insta{background:linear-gradient(40deg,#ffb944,#e94e54,#bd35a5,#5a4cc7)}.socials .kakao{background:#fee500;color:#27201b}
+.socials svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+.photo-circles{display:grid;grid-template-columns:1.1fr .9fr;gap:30px;align-items:center;margin-top:30px}
+.photo-circle-main{height:360px;width:360px;max-width:100%;border-radius:50%;object-fit:cover}
+.photo-circle-small{height:215px;width:215px;max-width:100%;border-radius:50%;object-fit:cover;border:12px solid #f2e8f6}
+.concept-6{--accent:#20a6b5;--accent2:#ce619c;--surface:#fff}
+.concept-6 .hero{background:linear-gradient(120deg,#fff 50%,#f2fbfc 100%)}
+.concept-6 .hero-visual:before{background:#e3f5ff}
+.concept-6 .journey-section{background:#f6f8ff}.concept-6 .bubble{border:6px solid white}
+.concept-7{--accent:#a36fb0;--accent2:#289d9f;--surface:#fffafc}
+.concept-7 .hero{background:#fffafc}
+.concept-7 .hero h1{font-family:Georgia,"Noto Sans KR",serif;letter-spacing:-.06em;font-weight:700}
+.concept-7 .hero-visual img{width:360px;height:360px;max-width:80%;border:12px solid white;box-shadow:25px 24px 0 #f5dcea}
+.concept-7 .hero-visual:before{background:#fde9f0;width:85%;height:90%;top:4%}
+.concept-7 .hero-visual:after{background:#cfeced;bottom:5%;right:7%}
+.concept-7 .tile{border:0;box-shadow:0 10px 30px #251f3612}.concept-7 .tile img{height:265px}
+.concept-7 .journey-section{background:#fff5fa}.concept-7 .bubble{box-shadow:0 9px 22px #943c6d18}
+.concept-8{--accent:#2d9ea8;--accent2:#9584cf;--surface:#edf8f8}
+.concept-8 .hero{background:#eff8f8}
+.concept-8 .hero-visual:before{background:#d2f0f2;border-radius:35% 65% 56% 44%}
+.concept-8 .hero-visual img{border-radius:50% 50% 22% 50%}
+.concept-8 .hero-visual:after{background:#e9dcff}
+.concept-8 .journey{grid-template-columns:repeat(5,minmax(0,1fr))}
+.concept-8 .journey-section{background:#f1fafa}
+.concept-8 .feature{direction:rtl}.concept-8 .feature>*{direction:ltr}
+.concept-9{--accent:#c36c92;--accent2:#1c9eab;--surface:#fffbf7}
+.concept-9 .hero{background:linear-gradient(135deg,#fffaf5,#fdf6fc)}
+.concept-9 .hero-visual img{width:380px;height:380px;max-width:86%;border-radius:50%;box-shadow:15px 24px 0 #e8d8f7}
+.concept-9 .hero-visual:before{background:#ffebd7;top:0}
+.concept-9 .hero-visual:after{background:#c8f3e8}
+.concept-9 .tile{background:#fffaf6;border:0}.concept-9 .tile img{border-radius:42px 42px 0 0}
+.concept-9 .journey-section{background:#fff5ef}.concept-9 .bubble{box-shadow:0 9px 24px #34213814;border:5px solid white}
+.concept-10{--accent:#11b5c8;--accent2:#e955ae;--surface:#fff}
+.concept-10 .hero{background:radial-gradient(ellipse at 97% 17%,#ddf8ff 0%,transparent 30%),radial-gradient(ellipse at 8% 90%,#ffeafa 0%,transparent 25%),#fff;min-height:710px}
+.concept-10 .hero h1{font-weight:900;letter-spacing:-.07em}
+.concept-10 .hero-visual:before{background:linear-gradient(140deg,#aaf6fc,#d2c6ff 55%,#f8b4e3);width:94%;height:100%;top:-3%;left:3%;filter:blur(2px)}
+.concept-10 .hero-visual img{width:min(83%,415px);height:405px;object-fit:cover;border:12px solid #ffffffd9;box-shadow:0 28px 70px #493d7524}
+.concept-10 .hero-visual:after{background:#f49bda}
+.concept-10 .hero-wave{display:block;position:absolute;left:0;bottom:-1px;width:100%;height:135px;pointer-events:none;opacity:.75}
+.concept-10 .hero-copy,.concept-10 .hero-visual,.concept-10 .hero-controls{z-index:2}
+.concept-10 .tile{border:1px solid #e5edfc;background:#fff;box-shadow:0 15px 35px #3892bf10}
+.concept-10 .journey-section{background:linear-gradient(135deg,#e5faff,#f9efff)}
+.concept-10 .app-section{background:linear-gradient(90deg,#eafdff,#fef0fb)}
+.concept-10 .bubble{border:6px solid white;box-shadow:0 9px 25px #382b5119}
+.float-apps{display:none;position:absolute;bottom:-6px;left:-6%;right:-7%;z-index:3;justify-content:space-around;align-items:center;pointer-events:none}
+.float-apps img{width:67px;height:67px;padding:10px;border-radius:20px;background:#fffffff0;box-shadow:0 9px 22px #382b511d;object-fit:contain;border:1px solid #ebe9f2}
+.concept-10 .float-apps{display:flex}
+.gallery-links{display:flex;align-items:center;gap:8px}.gallery-links a{font-size:12px;color:#ddd0ee;border:1px solid #72647d;padding:7px 11px;border-radius:30px;white-space:nowrap}
+@media(max-width:1050px){.hero-visual img{height:315px;width:315px}.concept-10 .hero-visual img{height:340px;width:315px}.float-apps img{width:48px;height:48px}}
+@media(max-width:760px){
+ .lab-title{font-size:11px}.gallery-links{margin-left:auto}.gallery-links a{font-size:11px}
+ .hero-visual{min-height:235px}.hero-visual img,.concept-7 .hero-visual img,.concept-9 .hero-visual img,.concept-10 .hero-visual img{height:225px;width:225px;max-width:73%;border-width:7px}
+ .hero-visual:before,.concept-7 .hero-visual:before,.concept-10 .hero-visual:before{left:15%;width:70%;height:95%;top:0}
+ .hero-visual:after{height:55px;width:55px;border-width:5px;right:6%}
+ .hero-copy .socials{margin-top:17px}.socials a{width:43px;height:43px}
+ .concept-10 .hero{min-height:0;padding-bottom:82px}
+ .concept-10 .hero-wave{height:75px}.concept-10 .float-apps{bottom:-15px;left:0;right:0}.float-apps img{height:44px;width:44px;padding:7px;border-radius:13px}
+ .photo-circles{grid-template-columns:1fr 1fr;gap:8px}.photo-circle-main{width:180px;height:180px}.photo-circle-small{width:135px;height:135px}
+}
+</style></head><body>
+<div class="lab"><div class="lab-inner"><div class="lab-title">WILLENA / FIVE CONCEPTS <span> · 5 more full-page previews · not production</span></div><div class="gallery-links"><a href="/full-homepage-concepts/">Original five ↗</a></div><div class="lab-select" id="conceptNav" aria-label="Choose homepage concept"></div></div></div>
+<div class="frame concept-1" id="frame">
+<header class="site-header">
+<a href="https://willenaenglish.com" aria-label="Willena home"><img class="logo" src="/Assets/Images/color-logo.png" alt="Willena English Academy"></a>
+<nav class="nav"><a href="#about">About Willena</a><a href="https://students.willenaenglish.com/students/dashboard">Student Login ↗</a><a href="/Teachers/signin.html">Teacher Login ↗</a></nav>
+</header>
+<section class="hero" aria-label="Willena hero slideshow">
+<div class="hero-copy"><div class="eyebrow" id="heroLabel">WILLENA ENGLISH · OUR ACADEMY</div><h1 id="heroTitle">English comes <em>alive.</em></h1><p id="heroText">아이들의 자신감과 가능성을 키워가는 즐거운 영어 수업.</p><div class="button-row"><a class="main-btn" href="#journey">10단계 영어 성장 과정 ↗</a><a class="minor-btn" href="#about">윌레나 알아보기</a></div>
+<div class="socials" aria-label="윌레나 공식 채널">
+<a href="https://blog.naver.com/willena_english" class="naver" title="네이버 블로그" aria-label="Naver Blog" target="_blank" rel="noopener noreferrer">N</a>
+<a href="https://www.youtube.com/@WillayG" class="youtube" title="유튜브" aria-label="YouTube" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4"></rect><path d="m10 9 5 3-5 3z" fill="currentColor" stroke="none"></path></svg></a>
+<a href="https://www.instagram.com/willena_academy" class="insta" title="인스타그램" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle></svg></a>
+<a href="https://pf.kakao.com/_xbTxnen?from=qr" class="kakao" title="카카오톡 채널" aria-label="Kakao Channel" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.3 3 2 6.5 2 10.9c0 2.8 1.8 5.3 4.7 6.7L5.8 21l4.5-2.4c.5 0 1.1.1 1.7.1 5.6 0 10-3.5 10-7.8C22 6.5 17.6 3 12 3z" fill="currentColor" stroke="none"></path></svg></a>
+</div></div>
+<div class="hero-visual" id="heroTouch"><img id="heroImg" src="/Assets/Images/willena-guided-learning.webp" alt="Willena classroom photograph"><div class="float-apps" aria-hidden="true"><img src="/students/assets/icons/word-genius.svg"><img src="/students/assets/icons/sentence-genius.svg"><img src="/students/assets/icons/free-talking-bunny-fox.svg"><img src="/students/assets/icons/puzzles.svg"><img src="/students/assets/icons/writing-genius.svg"></div></div>
+<div class="hero-controls"><button id="prevSlide" aria-label="Previous slide">‹</button><div class="dots" id="heroDots"></div><button id="nextSlide" aria-label="Next slide">›</button><svg class="hero-wave" style="display:none" viewBox="0 0 1440 160" preserveAspectRatio="none" aria-hidden="true"><path d="M0 90C180 160 350 25 570 75S900 150 1080 90 1350 20 1440 80V160H0Z" fill="#b3f5fc"/><path d="M0 128C250 50 390 160 620 118S1050 35 1440 113V160H0Z" fill="#e6b7f6" opacity=".75"/></svg>
+</div>
+</section>
+<section class="section" id="about">
+<div class="section-intro"><div class="eyebrow">WELCOME TO WILLENA</div><h2 id="introHeading">English for real life.</h2><p>윌레나 원어민 영어학원은 아이들이 영어로 자신 있게 읽고, 말하고, 쓰는 힘을 키우는 곳입니다. 즐거운 수업과 꾸준한 연습을 함께합니다.</p></div>
+<div class="three">
+<article class="tile"><img src="/Assets/Images/willena-one-to-one-tutoring.webp" loading="lazy" alt="Teacher helping a student"><div><h3>Real Communication</h3><p>정답만 찾는 영어에서 벗어나, 자신의 생각을 말하고 질문하는 활동을 중요하게 생각합니다.</p></div></article>
+<article class="tile"><img src="/Assets/Images/willena-children-reading.webp" loading="lazy" alt="Children reading together"><div><h3>Reading & Discovery</h3><p>다양한 책과 이야기를 통해 영어 실력뿐 아니라 상상력과 호기심을 함께 키웁니다.</p></div></article>
+<article class="tile"><img src="/Assets/Images/willena-student-presentations.webp" loading="lazy" alt="Students presenting in class"><div><h3>Confidence to Grow</h3><p>발표와 프로젝트, 자유로운 소통으로 배운 표현을 실제로 사용하는 자신감을 길러갑니다.</p></div></article>
+</div>
+</section>
+<section class="section journey-section" id="journey">
+<div class="section-intro"><div class="eyebrow">OUR 10-STEP LEVEL JOURNEY · CEFR</div><h2 id="journeyHeading">Every step counts.<br>10단계 영어 성장 여정</h2><p>왕기초부터 고급까지, 아이의 현재 수준과 성장 속도에 맞춰 체계적으로 이어지는 학습 과정입니다. 원을 눌러 각 단계의 CEFR 연계와 교재를 살펴보세요.</p></div>
+<div class="journey-container"><div class="journey" id="levels"></div><div class="level-detail" id="levelDetail" aria-live="polite"></div></div>
+<p class="journey-caption">CEFR 표기는 커리큘럼의 안내용 연계 수준입니다. 공식 CEFR 인증 또는 개별 학생의 공인 성적을 의미하지 않습니다.</p>
+</section>
+<section class="section" id="teaching"><div class="feature"><img src="/Assets/Images/willena-library-classroom.webp" loading="lazy" alt="Willena classroom library and students reading"><div><div class="eyebrow">OUR LEARNING SPACE</div><h2>Read. Discuss. Discover.</h2><p>영어책을 읽고 서로 이야기하는 시간은 학습의 중심입니다. 다양한 읽기 자료, 수업 활동, 선생님의 지도와 함께 아이들이 자연스럽게 영어를 사용할 기회를 만듭니다.</p><a href="#apps" class="main-btn">수업과 학습 앱 살펴보기 ↗</a></div></div></section>
+<section class="section app-section" id="apps"><div class="section-intro"><div class="eyebrow">WILLENA GENIUS APPS</div><h2>Learning goes further.</h2><p>교실에서 배운 내용을 수업 밖에서도 연습할 수 있도록 윌레나에서 직접 만든 학습 도구들입니다.</p></div><div class="app-showcase"><div class="app-card"><img src="/students/assets/icons/word-genius.svg" alt=""><h3>Word Genius</h3></div><div class="app-card"><img src="/students/assets/icons/sentence-genius.svg" alt=""><h3>Sentence Genius</h3></div><div class="app-card"><img src="/students/assets/icons/free-talking-bunny-fox.svg" alt=""><h3>Free Talking Genius</h3></div><div class="app-card"><img src="/students/assets/icons/puzzles.svg" alt=""><h3>Puzzles</h3></div><div class="app-card"><img src="/students/assets/icons/writing-genius.svg" alt=""><h3>Writing Genius</h3></div></div></section>
+<section class="section cta-section"><div class="eyebrow">WILLENA ENGLISH ACADEMY</div><h2>Start your English journey.</h2><p>영어를 배우는 즐거움, 윌레나에서 함께 시작하세요.</p><div class="button-row"><a class="main-btn" href="https://students.willenaenglish.com/students/dashboard">Student Login ↗</a><a class="minor-btn" href="/Teachers/signin.html">Teacher Login ↗</a></div></section>
+<footer><span>Willena English Academy · 윌레나 원어민 영어학원</span><span>Second gallery · Real photos from Willena assets · Production homepage unchanged</span></footer>
+</div>
+<script>
+const concepts=[
+{name:"06 · Clean Circles",id:6,tag:"Closest to the current homepage",title:"English comes <em>alive.</em>",intro:"English for real life.",journey:"Every step counts.<br>10단계 영어 성장 여정",hero:"/Assets/Images/willena-guided-learning.webp"},
+{name:"07 · Photo Editorial",id:7,tag:"Elegant photography and soft pink",title:"Little moments.<br><em>Big progress.</em>",intro:"A place where curiosity grows.",journey:"A journey worth taking.<br>한 걸음씩 자라는 영어",hero:"/Assets/Images/willena-teacher-library.webp"},
+{name:"08 · Calm Cyan",id:8,tag:"Quiet, modern and spacious",title:"Read. Speak.<br><em>Grow.</em>",intro:"Confidence through communication.",journey:"From first words to fluency.<br>10단계 학습 여정",hero:"/Assets/Images/willena-group-learning.webp"},
+{name:"09 · Warm Family",id:9,tag:"Rounded portraits and welcoming layout",title:"Every child<br><em>can shine.</em>",intro:"Growing together at Willena.",journey:"Your English adventure.<br>10개의 성장 원",hero:"/Assets/Images/willena-children-reading.webp"},
+{name:"10 · Flowing Genius",id:10,tag:"Flashy cyan-pink waves and apps",title:"Learning that<br><em>goes further.</em>",intro:"Learn · Practice · Grow.",journey:"Small steps, big discoveries.<br>10단계 영어 성장 과정",hero:"/Assets/Images/willena-library-reading.webp"}
+];
+const photos=[
+{img:"/Assets/Images/willena-guided-learning.webp",text:"아이들의 자신감과 가능성을 키워가는 즐거운 영어 수업.",label:"WILLENA ENGLISH · OUR ACADEMY"},
+{img:"/Assets/Images/willena-library-reading.webp",text:"책을 읽고 생각을 나누며 영어를 자연스럽게 익혀갑니다.",label:"WILLENA ENGLISH · READING"},
+{img:"/Assets/Images/willena-group-learning.webp",text:"친구들과 배우며 함께 성장하는 윌레나 교실.",label:"WILLENA ENGLISH · LEARNING TOGETHER"},
+{img:"/Assets/Images/willena-student-presentations.webp",text:"영어로 자신의 생각을 표현하는 용기를 기릅니다.",label:"WILLENA ENGLISH · SPEAKING"}
+];
+const levels=[
+["왕기초","Pre-A0","파닉스 & 코스북","영어 소리와 기본 표현에 처음으로 친숙해지는 단계","#ffc0cc"],
+["기초 1","A1","Oxford Discover 1","친숙한 어휘와 짧은 문장으로 기초를 만드는 단계","#ffcca3"],
+["초급 1","A1+","Oxford Discover 1","간단한 대화와 문장 표현을 넓혀가는 단계","#ffe17d"],
+["초급 2","A2","Oxford Discover 2","읽기와 말하기를 연결하고 생각을 표현하는 단계","#b7e98a"],
+["중급 1","A2","Oxford Discover 3","설명과 이야기 속에서 표현을 확장하는 단계","#96eab8"],
+["중급 2","A2+","Oxford Discover 4","다양한 주제에 대해 더 풍부하게 대화하는 단계","#8edff0"],
+["심화 1","B1","Oxford Discover 5","의견을 정리하고 긴 글을 이해하는 단계","#86c4f3"],
+["심화 2","B1+","Oxford Discover 5","논리적 발표와 자세한 설명을 연습하는 단계","#88a9ed"],
+["고급 1","B2","Oxford Discover 6","복합적인 주제에 대해 유연하게 표현하는 단계","#bd95ec"],
+["고급 2","B2+","Oxford Discover 6","읽기와 의사소통 능력을 더욱 심화하는 단계","#df8aee"]
+];
+const frame=document.getElementById("frame"),nav=document.getElementById("conceptNav"),levelsEl=document.getElementById("levels");
+let concept=0,slide=0,activeLevel=0,auto=null;
+function showLevel(i){activeLevel=i;document.querySelectorAll(".level").forEach((b,j)=>b.setAttribute("aria-pressed",String(i===j)));const x=levels[i];document.getElementById("levelDetail").innerHTML='<div><strong>'+(i+1)+'단계 · '+x[0]+'</strong><p>'+x[3]+'</p></div><div class="detail-meta"><span>CEFR 연계 · <b>'+x[1]+'</b></span><span>사용 교재 안내 · <b>'+x[2]+'</b></span></div>'}
+levels.forEach((x,i)=>{let b=document.createElement("button");b.className="level";b.type="button";b.setAttribute("aria-label",(i+1)+"단계 "+x[0]);b.style.setProperty("--lev",x[4]);b.innerHTML='<span class="bubble"><small>LEVEL '+(i+1)+'</small><strong>'+x[1]+'</strong></span><span class="levtext"><b>'+x[0]+'</b><small>'+x[2]+'</small></span>';b.onclick=()=>showLevel(i);levelsEl.append(b)});
+showLevel(0);
+function renderSlide(){const c=concepts[concept],s=photos[(slide+concept)%photos.length];document.getElementById("heroImg").src=slide===0?c.hero:s.img;document.getElementById("heroImg").alt="Willena academy classroom";document.getElementById("heroTitle").innerHTML=slide===0?c.title:(slide===1?"Read. Think. <em>Discover.</em>":slide===2?"Learning <em>together.</em>":"Speak with <em>confidence.</em>");document.getElementById("heroText").textContent=s.text;document.getElementById("heroLabel").textContent=s.label;const dots=document.getElementById("heroDots");dots.replaceChildren();photos.forEach((_,i)=>{const b=document.createElement("button");b.type="button";b.className=i===slide?"selected":"";b.setAttribute("aria-label","Slide "+(i+1));b.setAttribute("aria-current",String(i===slide));b.onclick=()=>go(i);dots.append(b)})}
+function go(i){slide=(i+photos.length)%photos.length;renderSlide();restart()}
+function restart(){clearInterval(auto);if(!window.matchMedia("(prefers-reduced-motion: reduce)").matches)auto=setInterval(()=>{slide=(slide+1)%photos.length;renderSlide()},6500)}
+function choose(i){concept=i;slide=0;const c=concepts[i];frame.className="frame concept-"+c.id;document.querySelector(".hero-wave").style.display=c.id===10?"block":"none";document.getElementById("introHeading").textContent=c.intro;document.getElementById("journeyHeading").innerHTML=c.journey;Array.from(nav.children).forEach((b,j)=>{b.classList.toggle("active",i===j);b.setAttribute("aria-pressed",String(i===j))});renderSlide();restart();const u=new URL(location.href);u.searchParams.set("concept",String(i+6));history.replaceState(null,"",u)}
+concepts.forEach((c,i)=>{let b=document.createElement("button");b.textContent=c.name;b.title=c.tag;b.onclick=()=>choose(i);nav.append(b)});
+document.getElementById("prevSlide").onclick=()=>go(slide-1);document.getElementById("nextSlide").onclick=()=>go(slide+1);
+let touch=null;document.getElementById("heroTouch").addEventListener("touchstart",e=>{touch=e.touches[0].clientX},{passive:true});document.getElementById("heroTouch").addEventListener("touchend",e=>{if(touch!==null){let dx=e.changedTouches[0].clientX-touch;if(Math.abs(dx)>50)go(slide+(dx<0?1:-1));touch=null}},{passive:true});
+document.addEventListener("visibilitychange",()=>{if(document.hidden)clearInterval(auto);else restart()});document.querySelector(".hero").addEventListener("mouseenter",()=>clearInterval(auto));document.querySelector(".hero").addEventListener("mouseleave",restart);
+const q=Number(new URLSearchParams(location.search).get("concept"));choose(q>=6&&q<=10?q-6:0);
+</script></body></html>
