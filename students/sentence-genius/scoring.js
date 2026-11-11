@@ -58,6 +58,14 @@ export function openUnit(user,unit,{preview=false}={}){
       const total=items.reduce((sum,i)=>sum+Math.max(0,Math.min(4,Number(states[mode]?.[i.id]?.qualityPoints??(states[mode]?.[i.id]?.passed?4:0))||0)),0);
       return speakingStars(items.length?100*total/(4*items.length):0);
     },
+    speakingQuality(mode,items){
+      if(!items.length||mode==='unscramble')return {percent:0,lime:0,yellow:0};
+      const scores=items.map(i=>states[mode]?.[i.id]);
+      const total=scores.reduce((sum,row)=>sum+Math.max(0,Math.min(4,Number(row?.qualityPoints??(row?.passed?4:0))||0)),0);
+      return {percent:Math.round(total/(4*items.length)*100),
+        lime:scores.filter(row=>row?.lastGradePoints===3).length,
+        yellow:scores.filter(row=>row?.lastGradePoints===2).length};
+    },
     gold(items){return items.length>0&&REQUIRED.every(mode=>items.every(i=>states[mode]?.[i.id]?.passed))},
     pending(mode,items){return items.filter(item=>!states[mode]?.[item.id]?.passed)}
   };
