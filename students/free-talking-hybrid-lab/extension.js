@@ -952,7 +952,9 @@ function hybridStart(stream){
     rec.onstop=()=>void hybridOnRecorded(rec);
     handleRealtime({type:'input_audio_buffer.speech_started'});
     rec.start();
-    startLiveSpeechPreview();
+    // Temporarily disable parallel browser SpeechRecognition: Android may
+    // retain communication/call audio routing and silence media playback.
+    // Existing MediaRecorder + server STT remain untouched.
    }
   }
   if(hybrid.recorder&&hybrid.recorder.state==='recording'){
