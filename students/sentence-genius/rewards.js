@@ -20,7 +20,7 @@ export function rewardSession(book,unit,mode){
     async finish(){
       if(record.completed)return {...record};
       record.completed=true;
-      record.percent=record.firstTotal?Math.round(100*record.firstCorrect/record.firstTotal):0;
+      record.percent=mode==='unscramble'?(record.firstTotal?Math.round(100*record.firstCorrect/record.firstTotal):0):100;
       // Coach is now required for Golden Unit and awards the same star scale.
       const qualityPercent=record.firstTotal?Math.round(100*record.firstQualityPoints/(4*record.firstTotal)):0;
       record.stars=mode==='unscramble'?starsForPercent(record.percent):speakingStars(qualityPercent);
