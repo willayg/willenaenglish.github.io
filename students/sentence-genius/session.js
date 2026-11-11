@@ -4,7 +4,7 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026111
 import {recordSentenceAttempt} from './tracking.js?v=20261111-orange5';
 import {recordSentenceHomeworkAnswer} from './homework.js?v=20261104-isolated2';
 import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=20261104-determiner2';
-import {rewardSession} from './rewards.js?v=sg-coach-gold-v3';
+import {rewardSession} from './rewards.js?v=20261111-simple-average1';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
 import {renderStudentSessionFinish} from '/students/components/student-session-finish.js?v=1';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
@@ -174,7 +174,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     const assisted=mode==='speaking'&&listenUsed;
     const almostRight=correct&&result.points<4;
     const verdict=ctx.store.attempt(mode,item.id,{correct,assisted,almostRight,gradePoints:mode==='unscramble'?(correct?4:0):result.points});
-    reward?.note(verdict.mastered,item.retry,verdict.points,mode==='unscramble'?(correct?4:0):result.points);
+    reward?.note(verdict.mastered,item.retry,verdict.points,mode==='unscramble'?(correct?4:0):result.points,item.id);
     if(verdict.repeat)queueRetry(item);
     answered=true;
     const rec=renderer;
