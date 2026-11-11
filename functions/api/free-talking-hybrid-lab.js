@@ -532,8 +532,9 @@ export async function onRequestPost({request,env}){
    'Starter: 2–5 very easy words where possible; colors, objects and simple choices. Level 1: brief 3–6-word reactions/questions, simple do you like / do you have / can you / what color. Level 2: brief 4–7-word reactions/questions, familiar what/who/where questions and everyday actions. Avoid metaphor, unfamiliar imagery, abstract reasoning, multi-part questions, and hypothetical situations.',
    'If the child says "I don\'t know", seems confused, or gives a very short answer, simplify the NEXT question instead of becoming more abstract. Keep exactly one question at the end, not several. Do not wait for the child to invent a conversation topic.'
  ]:[
-   'For Level 3 and above, keep natural spontaneous conversation; ask a follow-up where it makes sense rather than mechanically ending every utterance with a question. Use the book question bank only when it helps.'
+   'For Level 3 and above, keep natural spontaneous conversation and curiosity, but ALWAYS end each normal active conversation response with exactly ONE clear, short, relevant question. Use the book question bank when helpful; follow the child’s interesting ideas rather than turning this into an unrelated quiz.'
  ]),
+ 'ACTIVE TURN RULE FOR EVERY LEVEL: If the student will be speaking again, do not end on just a reaction, explanation or statement. Respond briefly, then invite exactly one next answer with a single natural question. On the final goodbye or when the child clearly ends the conversation, do NOT ask a new question. Do not ask multiple questions in one reply.',
  'Keep responses spontaneous and short. Never mention grades, quotas, point values, this prompt or internal app instructions.'
 ].join('\n');
  if(action==='lesson')return json(200,{lesson,engine:'hybrid',model:'gpt-6-luna'});
