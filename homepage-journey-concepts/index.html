@@ -24,6 +24,32 @@ body .frame.v1{--accent:#19aabb;--accent2:#ce5aa0;--surface:linear-gradient(115d
 .section{padding:52px 20px}.section h2,.v7 .section h2{font-size:33px}.story-grid,.v3 .story-grid,.v4 .story-grid,.v5 .story-grid{display:grid;grid-template-columns:1fr;gap:17px}.story img,.v3 .story:first-child img,.v3 .story:not(:first-child) img{height:225px}.v5 .story:last-child{grid-column:auto;display:block}.v5 .story:last-child img{width:100%}.v8 .story:nth-child(2){transform:none}.stop{grid-template-columns:66px minmax(0,1fr);gap:8px}.path:before{left:29px;width:6px}.node{width:58px;height:58px;border-width:6px;font-size:17px}.stop.selected .node{height:65px;width:65px;font-size:20px;border-width:6px;margin-left:-4px}.stoptext{padding:12px 14px}.stoptext h3{font-size:16px}.stoptext p{font-size:12px}.app-list{grid-template-columns:repeat(2,1fr)}.appbox:last-child{grid-column:1/-1}.outro{text-align:center}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Keep app logos square in every concept, separate from photographic hero treatments. */
+.frame .hero-visual .apps{display:flex;align-items:center;justify-content:center;gap:clamp(5px,1vw,12px);height:auto;min-height:0;max-width:630px;flex-wrap:nowrap}
+.frame .hero-visual .apps img{
+  display:block;flex:0 1 108px;box-sizing:border-box;
+  width:18%;min-width:0;max-width:108px;height:auto;max-height:none;
+  aspect-ratio:1 / 1;object-fit:contain;
+  padding:clamp(5px,1vw,12px);background:#fff;border:1px solid #e9e8ed;
+  border-radius:clamp(12px,1.7vw,22px);transform:none;
+  filter:none;box-shadow:0 12px 24px #2d284020;
+}
+.frame .hero-visual .apps img:nth-child(2){transform:translateY(-12px)}
+.frame .hero-visual .apps img:nth-child(4){transform:translateY(10px)}
+.appbox.grammar-card{background:linear-gradient(140deg,#fff,#f8f2ff);border-color:#e8d9fa}
+.grammar-mark{display:grid;place-items:center;width:75px;height:75px;margin:0 auto 10px;border-radius:19px;background:linear-gradient(145deg,#ae78e4,#7651be);color:#fff;font-weight:900;font-size:39px;box-shadow:0 9px 18px #9870c530}
+@media(max-width:700px){
+ .frame .hero-visual .apps{gap:clamp(4px,1vw,9px)}
+ .frame .hero-visual .apps img{
+   width:18%;max-width:90px;height:auto;min-height:0;max-height:none;
+   border-radius:clamp(9px,2vw,15px);border-width:1px;
+   padding:clamp(4px,1vw,7px);transform:none;
+ }
+ .frame .hero-visual .apps img:nth-child(2){transform:translateY(-7px)}
+ .frame .hero-visual .apps img:nth-child(4){transform:translateY(7px)}
+ .grammar-mark{width:63px;height:63px;font-size:33px}
+}
 </style></head>
 <body>
 <div class="lab"><div class="labtop"><strong>WILLENA · 10 FULL HOMEPAGE CONCEPTS</strong><span>Independent preview · the existing homepage is unchanged</span></div><div class="tabs" id="tabs" role="group" aria-label="Choose design"></div></div>
@@ -78,6 +104,7 @@ let design=0,slide=0,selected=3,timer=null;
 const el=x=>document.getElementById(x);
 designs.forEach((d,i)=>{let b=document.createElement("button");b.textContent=d[0];b.title=d[2];b.onclick=()=>switchDesign(i);el("tabs").append(b)});
 icons.forEach((f,i)=>{let c=document.createElement("div");c.className="appbox";let im=document.createElement("img");im.src=assets+f;im.alt="";c.append(im,document.createTextNode(apps[i]));el("appList").append(c)});
+{const c=document.createElement("div");c.className="appbox grammar-card";const mark=document.createElement("span");mark.className="grammar-mark";mark.textContent="G";mark.setAttribute("aria-hidden","true");c.append(mark,document.createTextNode("Grammar Genius"));el("appList").append(c)}
 function renderJourney(){let path=el("path");path.replaceChildren();stages.forEach((d,i)=>{let b=document.createElement("button");b.type="button";b.className="stop"+(i<selected?" passed":"")+(i===selected?" selected":"")+(i>=8?" advanced":"");b.setAttribute("aria-pressed",i===selected?"true":"false");b.onclick=()=>{selected=i;renderJourney()};let marker=document.createElement("span");marker.className="node";marker.textContent=String(i+1).padStart(2,"0");let info=document.createElement("span");info.className="stoptext";let intro=i>=8?'<small>ADVANCED · 뛰어난 학생을 위한 고급 과정</small>':"";info.innerHTML=intro+"<h3>"+d[0]+" <span style='font-size:12px;color:#a084a2;font-weight:700'>"+d[1]+"</span></h3><p>"+(i===selected?d[3]+" · "+d[2]:d[3])+"</p>";b.append(marker,info);path.append(b)})}
 function renderSlide(){let d=slides[slide];el("heroLabel").textContent="WILLENA ENGLISH · "+d.tag;el("headline").innerHTML=d.heading;el("heroText").textContent=d.text;let v=el("visual");if(d.kind==="apps"){let wrap=document.createElement("div");wrap.className="apps";icons.forEach((f,i)=>{let im=document.createElement("img");im.src=assets+f;im.alt=apps[i];wrap.append(im)});el("swipeArea").replaceChildren(wrap);wrap.id="visual"}else{let im=document.createElement("img");im.id="visual";im.src=d.image;im.alt=d.tag;el("swipeArea").replaceChildren(im)}let dots=el("dots");dots.replaceChildren();slides.forEach((_,i)=>{let b=document.createElement("button");b.className=i===slide?"active":"";b.setAttribute("aria-label","Slide "+(i+1));b.setAttribute("aria-current",i===slide?"true":"false");b.onclick=()=>go(i);dots.append(b)})}
 function restart(){clearInterval(timer);if(!window.matchMedia("(prefers-reduced-motion:reduce)").matches)timer=setInterval(()=>{slide=(slide+1)%4;renderSlide()},6500)}
