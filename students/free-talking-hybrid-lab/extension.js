@@ -1583,8 +1583,13 @@ async function reviewConversation(){
   const response=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
    action:'review',session_id:state.transcriptSessionId,book_id:state.book.id,unit_id:state.unit.id
   });
-  const review=await response.json().catch(()=>({}));
-  if(!response.ok)throw Error(review.error||('Review endpoint returned HTTP '+response.status+'. Please retry.'));
+  const reviewBody=await response.text().catch(()=>''),contentType=response.headers.get('content-type')||'';
+  let review={};try{review=JSON.parse(reviewBody)}catch{}
+  if(!response.ok){
+   const bodyHint=contentType.includes('application/json')?'':(reviewBody.trim().slice(0,80).replace(/<[^>]*>/g,'').replace(/\s+/g,' ')||'empty response');
+   throw Error(review.error||('Review HTTP '+response.status+' ('+(contentType||'no content type')+'): '+bodyHint));
+  }
+  if(!reviewBody||typeof review!=='object'||review===null)throw Error('Review returned an empty or non-JSON response (HTTP '+response.status+')');
   for(const credit of review.credits||[]){
    const saved=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
     action:'transcript',book_id:state.book.id,unit_id:state.unit.id,session_id:state.transcriptSessionId,
