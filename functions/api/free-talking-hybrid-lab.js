@@ -319,10 +319,17 @@ export async function onRequestPost({request,env}){
     credits:[],scores:credited.map(x=>({turn:150-Number(x.turn_number),points:Number(x.review_points)})),
     feedback:fmt(entries.findLast(x=>x.message_source==='evaluation_feedback')?.transcript_text||
      'Thanks for chatting with me! I hope we can talk again soon.',350)});
-   const level=await get(CONTENT+'/rest/v1/content_books?select=public_level&id=eq.'+input.book_id+'&limit=1',contentHeaders,signal);
+   // The conversation and review are already authenticated and saved.
+   // Do not discard an entire review if the separate content-level lookup
+   // temporarily times out. Level 2 is a safe, generous fallback.
+   let reviewLevel=2;
+   try{
+    const levelRows=await get(CONTENT+'/rest/v1/content_books?select=public_level&id=eq.'+input.book_id+'&limit=1',contentHeaders,AbortSignal.timeout(6500));
+    const value=Number(levelRows[0]?.public_level);
+    if(Number.isInteger(value)&&value>=0&&value<=10)reviewLevel=value;
+   }catch(ex){console.warn('[Free Talking] review textbook level unavailable, using 2',sessionId,String(ex))}
    const transcript=original.slice(-110).map(x=>({n:x.turn_number,speaker:x.speaker,text:fmt(x.transcript_text,350)}));
    const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
-   const reviewLevel=Number(level[0]?.public_level??2);
    const beginnerReview=Number.isFinite(reviewLevel)&&reviewLevel<=2;
    const instructions=[
     'Evaluate fairly for the actual textbook level ('+reviewLevel+'). For Starter and Levels 1–2, the bar for FOUR OUT OF FOUR must be deliberately LOW: successful understandable communication is an achievement, even without detail.',
