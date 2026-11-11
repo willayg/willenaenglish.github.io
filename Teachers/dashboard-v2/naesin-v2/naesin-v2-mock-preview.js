@@ -25,12 +25,12 @@ function scopeRows(group){
 async function loadUnit(row){
   const lesson=row.lesson,unitId=row.unit_id,sections=new Set(row.sections||[]);
   const jobs=[];
-  const stored=async section=>contentRows('test_prep_questions?select='+encodeURIComponent('id,section,question_type,answer_mode,prompt_text,context,choices,correct_answer,metadata,student_source_label')+'&unit_id=eq.'+encodeURIComponent(unitId)+'&section=eq.'+section+'&student_usable=eq.true&replacement_needed=eq.false');
+  const stored=async section=>contentRows('test_prep_questions?select='+encodeURIComponent('id,section,question_type,answer_mode,prompt_text,context,choices,correct_answer,metadata,student_source_label,replacement_needed')+'&unit_id=eq.'+encodeURIComponent(unitId)+'&section=eq.'+section+'&student_usable=eq.true');
   for(const bucket of ['communication','grammar','reading']){
-    if(sections.has(bucket))jobs.push(stored(bucket).then(list=>list.filter(q=>Array.isArray(q.choices)&&q.choices.length>1).map(q=>fitQ(q,bucket,lesson,unitId))));
+    if(sections.has(bucket))jobs.push(stored(bucket).then(list=>list.filter(q=>q.replacement_needed!==true&&Array.isArray(q.choices)&&q.choices.length>1).map(q=>fitQ(q,bucket,lesson,unitId))));
   }
   if(sections.has('constructed_response')){
-    jobs.push(contentRows('test_prep_questions?select='+encodeURIComponent('id,section,question_type,answer_mode,prompt_text,context,choices,correct_answer,metadata,student_source_label')+'&unit_id=eq.'+encodeURIComponent(unitId)+'&answer_mode=eq.text&student_usable=eq.true&replacement_needed=eq.false').then(list=>list.filter(q=>['grammar','reading','communication','constructed_response'].includes(q.section)).map(q=>fitQ(q,'constructed_response',lesson,unitId))));
+    jobs.push(contentRows('test_prep_questions?select='+encodeURIComponent('id,section,question_type,answer_mode,prompt_text,context,choices,correct_answer,metadata,student_source_label,replacement_needed')+'&unit_id=eq.'+encodeURIComponent(unitId)+'&answer_mode=eq.text&student_usable=eq.true').then(list=>list.filter(q=>q.replacement_needed!==true&&['grammar','reading','communication','constructed_response'].includes(q.section)).map(q=>fitQ(q,'constructed_response',lesson,unitId))));
   }
   if(sections.has('vocabulary')||sections.has('vocab_test')){
     jobs.push((async()=>{
