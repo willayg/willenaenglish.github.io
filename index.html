@@ -156,6 +156,68 @@ body .frame.v1{--accent:#19aabb;--accent2:#ce5aa0;--surface:linear-gradient(115d
 @media(prefers-reduced-motion:reduce){
  .frame .hero-visual .carousel-layer,.frame .hero-visual .carousel-layer .apps img{transition:none!important}
 }
+
+/* Mobile carousel composition: two-row Genius mosaic and fixed copy/controls order. */
+@media(max-width:700px){
+ .frame.v1 .hero{
+   display:grid;grid-template-columns:minmax(0,1fr);
+   grid-template-areas:"visual" "pagination" "copy";
+   grid-template-rows:265px 30px auto;
+   gap:10px;text-align:left;padding:18px 19px 32px;
+   align-items:start;
+ }
+ .frame.v1 .hero-visual{grid-area:visual;height:265px;width:100%;min-width:0}
+ .frame.v1 .hero-copy{grid-area:copy;min-width:0;align-self:start}
+ .frame.v1 .hero-copy .eyebrow{min-height:19px}
+ .frame.v1 .hero-copy h1{
+   font-size:clamp(38px,9vw,55px);line-height:1.08;
+   min-height:2.2em;margin:10px 0 13px;overflow-wrap:normal;
+ }
+ .frame.v1 .hero-copy p{min-height:3.5em;font-size:14px;line-height:1.75;margin:0 0 16px}
+ .frame.v1 .hero-copy .herobutton{margin-top:0}
+ .frame.v1 .hero-copy .social{margin-top:17px}
+ .frame.v1 .slidecontrols{
+   grid-area:pagination;position:static;inset:auto;
+   justify-content:center;align-items:center;
+   width:100%;height:30px;margin:0;z-index:5;
+ }
+ .frame.v1 .slidecontrols .arrow{display:none}
+ .frame.v1 .dots{gap:5px;align-items:center;justify-content:center}
+ .frame.v1 .dots button{
+   display:grid;place-items:center;width:36px;height:30px;
+   padding:0;border:0;background:transparent;border-radius:0;
+   cursor:pointer;transition:none;
+ }
+ .frame.v1 .dots button:before{
+   content:"";display:block;width:30px;height:6px;
+   border-radius:2px;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);
+   background:#d7d2de;transition:background .2s,width .2s;
+ }
+ .frame.v1 .dots button.active:before{background:#d65598;width:34px}
+ .frame.v1 .hero-visual .carousel-layer>img{height:250px;max-width:420px}
+ .frame.v1 .hero-visual .carousel-layer .apps{
+   display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));
+   grid-template-rows:repeat(2,105px);
+   column-gap:7px;row-gap:13px;align-content:center;align-items:center;
+   justify-items:center;width:min(100%,355px);max-width:355px;height:100%;
+ }
+ .frame.v1 .hero-visual .carousel-layer .apps:before{width:245px;max-width:80%}
+ .frame.v1 .hero-visual .carousel-layer .apps img{
+   box-sizing:border-box;width:100%;max-width:105px;height:auto;
+   padding:5px;grid-column:span 2;
+   --zig:0px;--tilt:0deg;
+ }
+ .frame.v1 .hero-visual .carousel-layer .apps img:nth-child(1){grid-column:1 / span 2;--zig:9px;--tilt:-8deg}
+ .frame.v1 .hero-visual .carousel-layer .apps img:nth-child(2){grid-column:3 / span 2;--zig:-7px;--tilt:5deg}
+ .frame.v1 .hero-visual .carousel-layer .apps img:nth-child(3){grid-column:5 / span 2;--zig:9px;--tilt:8deg}
+ .frame.v1 .hero-visual .carousel-layer .apps img:nth-child(4){grid-column:2 / span 2;--zig:-4px;--tilt:-7deg}
+ .frame.v1 .hero-visual .carousel-layer .apps img:nth-child(5){grid-column:4 / span 2;--zig:-5px;--tilt:7deg}
+}
+@media(max-width:355px){
+ .frame.v1 .hero-visual .carousel-layer .apps{width:min(100%,305px);grid-template-rows:repeat(2,93px);gap:8px 6px}
+ .frame.v1 .hero-visual .carousel-layer .apps img{max-width:92px}
+ .frame.v1 .hero-copy h1{font-size:36px}
+}
 </style></head>
 <body>
 
