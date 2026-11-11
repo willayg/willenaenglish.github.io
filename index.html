@@ -91,6 +91,28 @@ body .frame.v1{--accent:#19aabb;--accent2:#ce5aa0;--surface:linear-gradient(115d
   .appbox img,.appbox .grammar-mark,.grammar-mark{width:94px;height:94px;margin-bottom:12px}
   .grammar-mark{font-size:42px}
 }
+
+/* Smooth, layered crossfade without interrupting swipe or carousel controls. */
+.hero-visual{overflow:visible}
+.hero-visual .carousel-layer{
+ position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+ opacity:0;transition:opacity 650ms ease-in-out;pointer-events:none;
+}
+.hero-visual .carousel-layer.is-visible{opacity:1}
+.hero-visual .carousel-layer>img{
+ width:100%;height:360px;object-fit:cover;border-radius:32px;
+ box-shadow:0 20px 42px #302a431f;
+}
+.hero-copy .carousel-copy-enter{animation:willena-copy-fade 650ms ease both}
+@keyframes willena-copy-fade{from{opacity:.25;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:960px){.hero-visual .carousel-layer>img{height:280px}}
+@media(max-width:700px){
+ .hero-visual .carousel-layer>img{height:215px;width:100%;max-width:420px;border-radius:22px}
+}
+@media(prefers-reduced-motion:reduce){
+ .hero-visual .carousel-layer{transition:none}
+ .hero-copy .carousel-copy-enter{animation:none}
+}
 </style></head>
 <body>
 
@@ -147,7 +169,60 @@ const el=x=>document.getElementById(x);
 icons.forEach((f,i)=>{let c=document.createElement("div");c.className="appbox";let im=document.createElement("img");im.src=assets+f;im.alt="";c.append(im,document.createTextNode(apps[i]));el("appList").append(c)});
 {const c=document.createElement("div");c.className="appbox grammar-card";const mark=document.createElement("span");mark.className="grammar-mark";mark.textContent="G";mark.setAttribute("aria-hidden","true");c.append(mark,document.createTextNode("Grammar Genius"));el("appList").append(c)}
 function renderJourney(){let path=el("path");path.replaceChildren();stages.forEach((d,i)=>{let b=document.createElement("button");b.type="button";b.className="stop"+(i<selected?" passed":"")+(i===selected?" selected":"")+(i>=8?" advanced":"");b.setAttribute("aria-pressed",i===selected?"true":"false");b.onclick=()=>{selected=i;renderJourney()};let marker=document.createElement("span");marker.className="node";marker.textContent=String(i+1).padStart(2,"0");let info=document.createElement("span");info.className="stoptext";let intro=i>=8?'<small>ADVANCED · 뛰어난 학생을 위한 고급 과정</small>':"";info.innerHTML=intro+"<h3>"+d[0]+" <span style='font-size:12px;color:#a084a2;font-weight:700'>"+d[1]+"</span></h3><p>"+(i===selected?d[3]+" · "+d[2]:d[3])+"</p>";b.append(marker,info);path.append(b)})}
-function renderSlide(){let d=slides[slide];el("heroLabel").textContent="WILLENA ENGLISH · "+d.tag;el("headline").innerHTML=d.heading;el("heroText").textContent=d.text;let v=el("visual");if(d.kind==="apps"){let wrap=document.createElement("div");wrap.className="apps";icons.forEach((f,i)=>{let im=document.createElement("img");im.src=assets+f;im.alt=apps[i];wrap.append(im)});el("swipeArea").replaceChildren(wrap);wrap.id="visual"}else{let im=document.createElement("img");im.id="visual";im.src=d.image;im.alt=d.tag;el("swipeArea").replaceChildren(im)}let dots=el("dots");dots.replaceChildren();slides.forEach((_,i)=>{let b=document.createElement("button");b.className=i===slide?"active":"";b.setAttribute("aria-label","Slide "+(i+1));b.setAttribute("aria-current",i===slide?"true":"false");b.onclick=()=>go(i);dots.append(b)})}
+// Fetch the next three photographs up front, while the first (SVG) slide is visible.
+const carouselPreloads=slides.filter(s=>s.kind==="image").map(s=>{
+ const image=new Image();image.decoding="async";image.src=s.image;return image;
+});
+const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
+let transitionCleanup=null;
+function renderSlide(){
+ const d=slides[slide], area=el("swipeArea");
+ const label=el("heroLabel"), headline=el("headline"), description=el("heroText");
+ label.textContent="WILLENA ENGLISH · "+d.tag;
+ headline.innerHTML=d.heading;
+ description.textContent=d.text;
+ for(const node of [label,headline,description]){
+   node.classList.remove("carousel-copy-enter");
+   void node.offsetWidth;
+   node.classList.add("carousel-copy-enter");
+ }
+ const next=document.createElement("div");
+ next.className="carousel-layer";
+ if(d.kind==="apps"){
+   const strip=document.createElement("div");strip.className="apps";
+   icons.forEach((file,i)=>{
+     const img=document.createElement("img");img.src=assets+file;img.alt=apps[i];strip.append(img);
+   });
+   next.append(strip);
+ }else{
+   const img=document.createElement("img");img.src=d.image;img.alt=d.tag;img.decoding="async";
+   next.append(img);
+ }
+ // Keep the current frame visible underneath while the next frame fades in.
+ if(transitionCleanup){clearTimeout(transitionCleanup);transitionCleanup=null;}
+ const older=[...area.querySelectorAll(".carousel-layer")];
+ area.querySelectorAll(":scope > :not(.carousel-layer)").forEach(node=>node.remove());
+ older.slice(0,-1).forEach(node=>node.remove());
+ const previous=older.at(-1);
+ area.append(next);
+ if(reduceMotion.matches || !previous){
+   next.classList.add("is-visible");
+   if(previous)previous.remove();
+ }else{
+   requestAnimationFrame(()=>requestAnimationFrame(()=>next.classList.add("is-visible")));
+   transitionCleanup=setTimeout(()=>{
+     previous.remove();
+     transitionCleanup=null;
+   },720);
+ }
+ const dots=el("dots");dots.replaceChildren();
+ slides.forEach((_,i)=>{
+   const b=document.createElement("button");b.className=i===slide?"active":"";
+   b.setAttribute("aria-label","Slide "+(i+1));
+   b.setAttribute("aria-current",i===slide?"true":"false");
+   b.onclick=()=>go(i);dots.append(b);
+ });
+}
 function restart(){clearInterval(timer);if(!window.matchMedia("(prefers-reduced-motion:reduce)").matches)timer=setInterval(()=>{slide=(slide+1)%4;renderSlide()},6500)}
 function go(i){slide=(i+4)%4;renderSlide();restart()}
 
