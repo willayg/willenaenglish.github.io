@@ -643,6 +643,8 @@ function showActor(){
  const speechRing=document.createElement('div');speechRing.id='ftSpeechTimeRing';
  speechRing.setAttribute('aria-hidden','true');speechRing.hidden=true;
  speechRing.style.setProperty('--ft-record-remaining','1');host.append(speechRing);
+ const preview=document.createElement('div');preview.id='ftLiveSpeechPreview';
+ preview.setAttribute('aria-hidden','true');host.append(preview);
  state.actor=createFreeTalkingCharacters({circle,session,voiceHost:voice,choices:{}});
  state.actor.select(state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':'marin');
  actorPhase('ready');
@@ -890,6 +892,38 @@ async function scribeStart(stream){
  };
 }
 
+// Optional *visual-only* browser dictation. Never changes the saved transcript,
+ // audio recorder, existing OpenAI STT, points or review. Browsers without
+ // SpeechRecognition simply omit the temporary text.
+let liveSpeechPreview=null;
+function clearLiveSpeechPreview(){
+ const active=liveSpeechPreview;liveSpeechPreview=null;
+ if(active){active.onresult=null;active.onerror=null;active.onend=null;try{active.abort()}catch{}}
+ const text=$('ftLiveSpeechPreview');
+ if(text){text.classList.remove('is-visible');text.textContent='';}
+}
+function startLiveSpeechPreview(){
+ clearLiveSpeechPreview();
+ const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!Speech||!state.active||state.paused)return;
+ const display=$('ftLiveSpeechPreview');if(!display)return;
+ let recognition;
+ try{
+  recognition=new Speech();liveSpeechPreview=recognition;
+  recognition.lang='en-US';recognition.interimResults=true;recognition.continuous=true;
+  recognition.maxAlternatives=1;
+  recognition.onresult=event=>{
+   if(liveSpeechPreview!==recognition||!hybrid.recorder||hybrid.recorder.state!=='recording')return;
+   const parts=[];
+   for(let i=0;i<event.results.length;i++)parts.push(String(event.results[i]?.[0]?.transcript||''));
+   const words=parts.join(' ').replace(/\\s+/g,' ').trim().slice(-280);
+   display.textContent=words;display.classList.toggle('is-visible',Boolean(words));
+  };
+  recognition.onerror=()=>{if(liveSpeechPreview===recognition)clearLiveSpeechPreview()};
+  recognition.onend=()=>{if(liveSpeechPreview===recognition)clearLiveSpeechPreview()};
+  recognition.start();
+ }catch{clearLiveSpeechPreview()}
+}
 function hybridStart(stream){
  stopHybridInput();
  const AudioCtx=window.AudioContext||window.webkitAudioContext;
@@ -918,6 +952,7 @@ function hybridStart(stream){
     rec.onstop=()=>void hybridOnRecorded(rec);
     handleRealtime({type:'input_audio_buffer.speech_started'});
     rec.start();
+    startLiveSpeechPreview();
    }
   }
   if(hybrid.recorder&&hybrid.recorder.state==='recording'){
@@ -933,6 +968,7 @@ function hybridStart(stream){
 }
 async function hybridOnRecorded(rec){
  if(hybrid.recorder!==rec)return;
+ clearLiveSpeechPreview();
  const ring=$('ftSpeechTimeRing');if(ring){ring.hidden=true;ring.style.setProperty('--ft-record-remaining','1');}
  const audio=new Blob(hybrid.chunks,{type:rec.mimeType||'audio/webm'});
  const duration=Math.max(0,performance.now()-hybrid.voiceAt);
@@ -1043,6 +1079,7 @@ function cycleMic(work){
 // hands-free call mode. Stop the capture hardware before TTS or network waits.
 // The conversational text history is preserved while capture is restarted.
 function stopHybridInput(){
+ clearLiveSpeechPreview();
  cancelAnimationFrame(hybrid.raf);hybrid.raf=null;
  const ring=$('ftSpeechTimeRing');if(ring){ring.hidden=true;ring.style.setProperty('--ft-record-remaining','1');}
  if(hybrid.recorder?.state==='recording'){try{hybrid.recorder.stop()}catch{}}
