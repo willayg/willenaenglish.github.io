@@ -1,6 +1,6 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Willena | Homepage Slider Concepts</title><meta name="robots" content="noindex,nofollow">
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Willena | 슬라이더 디자인 10가지</title><meta name="robots" content="noindex,nofollow">
 <style>
 :root{font-family:Inter,"Segoe UI",Arial,sans-serif;color:#302d41;background:#f0eef4}*{box-sizing:border-box}body{margin:0}button,a{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #05bdd4;outline-offset:3px}
 .top{position:sticky;top:0;z-index:20;background:#262338;color:white;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px max(18px,calc((100vw - 1340px)/2));box-shadow:0 5px 24px #1112}.top strong{letter-spacing:.03em}.top small{color:#c6c3d2}.switch{display:flex;gap:5px;padding:4px;background:#48435b;border-radius:24px}.switch button{background:none;color:#ddd;border:0;border-radius:20px;padding:7px 12px}.switch button.active{background:white;color:#252137}
@@ -24,32 +24,138 @@
 .stage.mobile .site-header,.stage.tablet .site-header{height:65px}.stage.mobile .brand img,.stage.tablet .brand img{height:48px}.stage.mobile .nav a:not(.login),.stage.tablet .nav a:not(.login){display:none}.stage.mobile .nav .login{padding:10px}.stage.mobile .hero{display:flex;flex-direction:column-reverse;min-height:unset;padding:24px 22px 34px;gap:8px}.stage.mobile .visual{width:100%;height:225px}.stage.mobile .visual .art{max-height:210px}.stage.mobile .copy h2{font-size:40px}.stage.mobile .copy p{font-size:14px}.stage.mobile .eyebrow{font-size:10px}.stage.mobile .cta{margin-top:10px;padding:12px 17px}.stage.mobile .gallery .copy{padding:20px}.stage.mobile .under{padding:24px}.stage.mobile .bubble.circle1{width:200px;height:200px}.stage.mobile .bubble.circle2{width:75px;height:75px}.stage.mobile .appcluster img{height:65px;width:65px}.stage.mobile .polaroid .visual{width:76%}.stage.mobile .comic .visual{width:83%}.stage.tablet .hero{padding:35px}.stage.tablet .copy h2{font-size:51px}
 @media(max-width:700px){.top{flex-wrap:wrap}.top small{display:none}.switch button{padding:6px 9px;font-size:12px}.intro{align-items:start}.stage.desktop .hero{display:flex;flex-direction:column-reverse;padding:25px;gap:12px}.stage.desktop .visual{height:230px;width:100%}.stage.desktop .copy h2{font-size:43px}.stage.desktop .nav a:not(.login){display:none}.stage.desktop .gallery .copy{padding:20px}.stage.desktop .appcluster img{width:70px;height:70px}.controls{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;animation:none!important}}
+</style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap');
+body{font-family:"Noto Sans KR",Inter,"Segoe UI",sans-serif}
+.slider-arrows{position:absolute;bottom:15px;right:clamp(18px,5%,72px);display:flex;gap:8px;z-index:5}
+.slider-arrows button{border:1px solid #dad6df;background:#fffffff0;border-radius:50%;width:42px;height:42px;font-size:28px;line-height:1;color:#42394f;box-shadow:0 3px 12px #3332}
+.hero .copy h2{word-break:keep-all}.hero .copy p{word-break:keep-all;line-height:1.8}
+.hero .eyebrow{letter-spacing:.03em;text-transform:none}
+.hero .copy{transition:opacity .22s,transform .22s}
+.visual img{transition:opacity .22s}
+.stage.mobile .slider-arrows{right:18px;bottom:12px}.stage.mobile .slider-arrows button{width:36px;height:36px;font-size:23px}
+.stage.mobile .hero{padding-bottom:63px}.stage.mobile .hero.gallery{display:flex;flex-direction:column-reverse}.stage.mobile .hero.gallery .visual{height:230px}.stage.mobile .hero.gallery .copy{padding:12px}
+.stage.tablet .hero{min-height:410px}.stage.mobile .hero .copy h2{font-size:clamp(33px,9vw,41px)}.stage.mobile .hero .copy p{font-size:13px}
+.stage.mobile .hero.comic .copy h2{font-size:37px}
+.stage.mobile .hero.bold .copy h2{font-size:46px}
+.stage.mobile .hero.gallery .copy h2{font-size:39px}
+.stage.mobile .hero .visual .photos{object-fit:cover;max-height:100%}
+.stage.mobile .hero .visual{overflow:visible}
+.stage.mobile .hero .visual .appcluster img{height:60px;width:60px}
+@media(max-width:700px){.slider-arrows{right:18px}.top{position:relative}.hero{padding-bottom:65px!important}.hero.gallery .visual{width:100%}.hero.gallery .copy{padding:18px}}
 </style></head><body>
 <div class="top"><div><strong>WILLENA / DESIGN LAB</strong> <small> · Standalone homepage hero concepts · not live</small></div><div class="switch" role="group" aria-label="Preview width"><button data-size="desktop" class="active">PC</button><button data-size="tablet">Tablet</button><button data-size="mobile">Mobile</button></div></div>
-<div class="intro"><div><h1>10 different directions.</h1><p>Choose a concept below. Switch device sizes, navigate slides, and compare designs.</p></div><div class="counter" id="number">01 / 10</div></div>
+<div class="intro"><div><h1>10가지 홈페이지 슬라이더 시안</h1><p>각 디자인마다 실제로 움직이는 3장의 슬라이드가 있습니다. PC · 태블릿 · 모바일에서 확인하세요.</p></div><div class="counter" id="number">01 / 10</div></div>
 <div class="rail" id="rail" aria-label="Concept choices"></div>
-<div class="stage-wrap"><div class="stage desktop" id="stage"><header class="site-header"><div class="brand"><img src="/Assets/Images/Logo.png" onerror="this.src='/Logo.png'" alt="Willena existing logo"></div><nav class="nav"><a href="https://willenaenglish.com" target="_blank" rel="noopener">Home</a><a href="https://willenaenglish.com" target="_blank" rel="noopener">About Willena</a><a href="https://students.willenaenglish.com" target="_blank" rel="noopener" class="login">Student Login ↗</a></nav></header><main class="hero editorial" id="hero"><div class="copy"><div class="eyebrow" id="eyebrow">Welcome to Willena</div><h2 id="headline"></h2><p id="subhead"></p><a class="cta" href="https://willenaenglish.com" target="_blank" rel="noopener">Explore Willena ↗</a></div><div class="visual" id="visual"></div></main><section class="under"><strong>Existing homepage content stays unchanged.</strong><br><span>This isolated preview only replaces the proposed top slider area.</span><div class="dots" id="dots"></div></section></div></div>
-<div class="controls"><button id="prev">← Previous concept</button><button id="next">Next concept →</button><button id="autoplay">▶ Auto preview</button></div><p class="info" id="description"></p>
+<div class="stage-wrap"><div class="stage desktop" id="stage"><header class="site-header"><div class="brand"><img src="/Assets/Images/Logo.png" onerror="this.src='/Logo.png'" alt="Willena existing logo"></div><nav class="nav"><a href="https://willenaenglish.com" target="_blank" rel="noopener">Home</a><a href="https://willenaenglish.com" target="_blank" rel="noopener">학원 소개</a><a href="https://students.willenaenglish.com" target="_blank" rel="noopener" class="login">학생 로그인 ↗</a></nav></header><main class="hero editorial" id="hero"><div class="copy"><div class="eyebrow" id="eyebrow">Welcome to Willena</div><h2 id="headline"></h2><p id="subhead"></p><a class="cta" id="heroCta" href="https://willenaenglish.com" target="_blank" rel="noopener">윌레나 알아보기 ↗</a></div><div class="visual" id="visual"></div><div class="slider-arrows"><button id="slidePrev" aria-label="Previous slide">‹</button><button id="slideNext" aria-label="Next slide">›</button></div></main><section class="under"><strong>기존 홈페이지 아래 내용은 변경하지 않습니다.</strong><br><span id="slideStatus">슬라이드 1 / 3 · 화살표나 점을 눌러 이동하세요.</span><div class="dots" id="dots"></div></section></div></div>
+<div class="controls"><button id="prev">← 이전 디자인</button><button id="next">다음 디자인 →</button><button id="autoplay">Ⅱ 자동 넘김 중지</button></div><p class="info" id="description"></p><p class="info">사진은 교체 가능한 데모 이미지입니다. 실제 배포 시 원본 학원 사진으로 바꾸면 됩니다. 이 페이지는 시안 전용이며 실제 홈페이지 하단은 수정하지 않았습니다.</p>
 <script>
-const concepts=[["01","Editorial","A calm, premium academy introduction","editorial","English grows here.","Every child deserves the confidence to speak.","photo"],["02","Bunny Fox","Character-led and playful","bunny","Say hello to confidence.","Meet Bunny Fox and our world of English.","bunny"],["03","App showcase","Show the technology we've built","apps","Learning that goes further.","Meet the Willena Genius learning family.","apps"],["04","Bold typography","Big, direct, high-impact messaging","bold","Speak. Explore. Grow.","English for curious young minds.","bunny"],["05","Polaroid memories","Warm scrapbook, classroom-led","polaroid","Little moments. Big progress.","Every lesson is a new story.","photo"],["06","Cyan minimal","Sleek, bright and technology-forward","cyan","Make every word count.","An engaging place to learn and practise.","apps"],["07","Immersive gallery","Photography takes centre stage","gallery","A brighter way to learn.","Real conversations. Real growth.","photo"],["08","Comic pop","Playful illustrated graphics","comic","English is an adventure!","Your next great story starts here.","bunny"],["09","Magazine grid","Multiple visual stories at once","magazine","More than lessons.","A classroom, a community, and a world of discovery.","mixed"],["10","Soft pastel","Friendly, gentle, confident","pastel","Find your voice.","English learning with personality.","bunny"]];
-const icons=["https://raw.githubusercontent.com/willayg/willenaenglish.github.io/students/students/assets/icons/word-genius.svg","https://raw.githubusercontent.com/willayg/willenaenglish.github.io/students/students/assets/icons/sentence-genius.svg","https://raw.githubusercontent.com/willayg/willenaenglish.github.io/students/students/assets/icons/free-talking-bunny-fox.svg","https://raw.githubusercontent.com/willayg/willenaenglish.github.io/students/students/assets/icons/puzzles.svg","https://raw.githubusercontent.com/willayg/willenaenglish.github.io/students/students/assets/icons/writing-genius.svg"];
-const bunny="https://raw.githubusercontent.com/willayg/willenaenglish.github.io/students/students/assets/icons/free-talking-bunny-fox.svg";
-const photos=["/Assets/Images/Girls.jpg","/Assets/Images/LibraryInner.jpg","/Assets/Images/Play.jpg","/Assets/Images/Program.jpg"];
-let current=0,auto=null;
-const el=id=>document.getElementById(id);
-const rail=el("rail");
-concepts.forEach((c,i)=>{let b=document.createElement("button");b.className="pick";b.innerHTML="<b>"+c[0]+". "+c[1]+"</b><span>"+c[2]+"</span>";b.onclick=()=>show(i);rail.append(b)});
-function drawVisual(c){
-const v=el("visual");v.replaceChildren();
-if(c[6]==="bunny"||c[6]==="mixed"){v.innerHTML='<div class="bubble circle1"></div><div class="bubble circle2"></div><img class="art" src="'+bunny+'" alt="Original Bunny Fox artwork from Willena Free Talking Genius">'; if(c[6]==="mixed"){v.innerHTML+='<div style="position:absolute;right:1%;bottom:2%;display:flex;gap:4px;background:white;padding:8px;border-radius:12px;box-shadow:0 3px 15px #3332">'+icons.slice(0,3).map(i=>'<img width="49" height="49" src="'+i+'" alt="Willena app icon">').join('')+'</div>'}return}
-if(c[6]==="apps"){v.innerHTML='<div class="bubble circle1"></div><div class="appcluster">'+icons.map((i,j)=>'<img src="'+i+'" alt="Willena app icon '+(j+1)+'">').join('')+'</div>';return}
-v.innerHTML='<img class="photos" src="'+photos[current%photos.length]+'" alt="Image from the existing Willena website assets">';
+/* IMAGE REPLACEMENT GUIDE:
+   Replace these URL strings with Willena classroom photos whenever ready.
+   Photo keys: class, speak, reading, create, friends, space, library, tech.
+   No homepage production files are changed by this gallery.
+*/
+const PHOTO_LIBRARY={
+class:"https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1100&q=82",
+speak:"https://images.unsplash.com/photo-1577896851231-70ef18881754?w=1100&q=82",
+reading:"https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=1100&q=82",
+create:"https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1100&q=82",
+friends:"https://images.unsplash.com/photo-1544717305-2782549b5136?w=1100&q=82",
+space:"https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1100&q=82",
+library:"/Assets/Images/LibraryInner.jpg",
+tech:"/Assets/Images/Program.jpg"
+};
+const ASSET_BASE="https://raw.githubusercontent.com/willayg/willenaenglish.github.io/students/students/assets/icons/";
+const BUNNY_FOX=ASSET_BASE+"free-talking-bunny-fox.svg";
+const APP_ICONS=["word-genius.svg","sentence-genius.svg","free-talking-bunny-fox.svg","puzzles.svg","writing-genius.svg"].map(x=>ASSET_BASE+x);
+const concepts=[
+{id:"01",name:"Editorial",summary:"잡지처럼 차분한 사진 중심 스타일",style:"editorial",slides:[
+["English grows here.","아이의 자신감이 자라는 영어 공간입니다.","class","학원 소개"],
+["Speak with confidence.","자연스러운 대화를 통해 영어의 즐거움을 배웁니다.","speak","수업 살펴보기"],
+["Every child has a story.","작은 표현이 쌓여 큰 성장으로 이어집니다.","reading","윌레나 만나기"]]},
+{id:"02",name:"Bunny Fox",summary:"캐릭터는 이 한 컨셉에서만 중심적으로",style:"bunny",slides:[
+["Hello, Willena!","재미있게 말하고, 자연스럽게 성장해요.","bunny","Free Talking"],
+["Let's talk together.","아이들 눈높이에 맞춘 영어 말하기 경험.","class","학습 앱 소개"],
+["Big ideas start small.","매일 조금씩, 영어 자신감을 키웁니다.","apps","학습하기"]]},
+{id:"03",name:"App Showcase",summary:"실제 Genius 앱 아이콘과 사진 혼합",style:"apps",slides:[
+["Learning beyond class.","수업 밖에서도 이어지는 즐거운 영어 학습.","apps","앱 살펴보기"],
+["Practice makes progress.","단어부터 문장, 자유로운 말하기까지.","tech","학습 시스템"],
+["A smarter way to learn.","아이들의 작은 성취를 꾸준히 이어갑니다.","class","윌레나 소개"]]},
+{id:"04",name:"Big & Bold",summary:"큰 영문 헤드라인 + 한국어 설명",style:"bold",slides:[
+["SPEAK MORE.","영어는 직접 사용하면서 자랍니다.","speak","자세히 보기"],
+["THINK BIG.","자신의 생각을 영어로 표현하는 힘.","create","수업 살펴보기"],
+["GROW DAILY.","하루하루 쌓이는 작은 성공 경험.","class","윌레나 소개"]]},
+{id:"05",name:"Photo Album",summary:"학원 활동 사진을 쉽게 교체할 수 있는 감성형",style:"polaroid",slides:[
+["Our happy moments.","교실에서 함께 만든 즐거운 순간들.","friends","학원 이야기"],
+["Discover together.","함께 읽고, 질문하고, 생각하는 시간.","reading","교육 이야기"],
+["Every day is different.","매일 새로운 이야기로 채워지는 윌레나.","class","수업 살펴보기"]]},
+{id:"06",name:"Cyan Studio",summary:"화이트 + 시안으로 구성한 디지털형",style:"cyan",slides:[
+["Words become ideas.","단어에서 문장으로, 문장에서 대화로.","apps","Genius 앱"],
+["English, every day.","쉽고 꾸준하게 이어지는 영어 학습.","tech","학습 프로그램"],
+["Learn your way.","각자의 속도로 자신 있게 성장해요.","create","학원 소개"]]},
+{id:"07",name:"Full Photo",summary:"사진을 크게 보여주는 와이드 배너",style:"gallery",slides:[
+["Welcome to Willena.","아이들의 가능성을 발견하는 영어 학원.","class","수업 알아보기"],
+["Real conversations.","말하기 중심의 다양한 수업 활동을 만나보세요.","speak","학원 소개"],
+["A place to belong.","함께 배우며 한 걸음씩 성장합니다.","space","윌레나 이야기"]]},
+{id:"08",name:"Comic Pop",summary:"경쾌한 색과 사진을 활용한 팝 스타일",style:"comic",slides:[
+["LET'S LEARN!","신나는 영어 이야기, 윌레나에서 시작해요.","create","시작하기"],
+["SAY IT LOUD!","틀려도 괜찮아요. 자신 있게 말해보세요.","speak","말하기 수업"],
+["NEW ADVENTURES!","매일 새롭고 재미있는 영어 도전.","class","학습 프로그램"]]},
+{id:"09",name:"Magazine Grid",summary:"이미지와 앱을 한 화면에 섞는 편집형",style:"magazine",slides:[
+["More than lessons.","교실과 디지털 학습이 연결되는 공간.","mixed","윌레나 소개"],
+["Discover. Practise. Grow.","자신감 있게 영어를 사용하는 아이들.","class","학원 이야기"],
+["Made for learners.","우리 아이들을 위해 직접 만든 학습 도구.","apps","Genius 앱 소개"]]},
+{id:"10",name:"Soft Pastel",summary:"따뜻하고 부드러운 부모 친화형",style:"pastel",slides:[
+["Find your voice.","아이의 마음과 가능성을 함께 키워갑니다.","friends","학원 소개"],
+["Learn with joy.","영어를 좋아하는 마음에서 시작합니다.","reading","커리큘럼"],
+["Shine every day.","성취의 기쁨을 매일 느껴보세요.","class","윌레나 만나기"]]}
+];
+let current=0,slide=0,timer=null,autoplay=true;
+const el=id=>document.getElementById(id),rail=el("rail");
+concepts.forEach((c,i)=>{const b=document.createElement("button");b.type="button";b.className="pick";b.innerHTML="<b>"+c.id+". "+c.name+"</b><span>"+c.summary+"</span>";b.onclick=()=>showConcept(i);rail.append(b)});
+function picture(src,alt,cls){
+const img=document.createElement("img");img.className=cls;img.src=src;img.alt=alt;img.loading="eager";
+img.onerror=()=>{if(!img.dataset.fallback){img.dataset.fallback="1";img.src="/Assets/Images/Girls.jpg"}};
+return img;
 }
-function show(i){current=(i+concepts.length)%concepts.length;const c=concepts[current];el("hero").className="hero "+c[3];el("eyebrow").textContent="WILLENA ENGLISH · "+c[1];el("headline").textContent=c[4];el("subhead").textContent=c[5];drawVisual(c);el("number").textContent=c[0]+" / 10";el("description").textContent=c[2]+" — a working responsive homepage-slider concept using the Willena asset library. Photos are sourced from existing site assets.";[...rail.children].forEach((b,j)=>{b.classList.toggle("active",j===current);b.setAttribute("aria-pressed",j===current)});rail.children[current].scrollIntoView({block:"nearest",inline:"nearest",behavior:"smooth"});el("dots").innerHTML=concepts.map((x,j)=>'<button aria-label="Go to concept '+(j+1)+'" class="dot '+(j===current?'active':'')+'" data-i="'+j+'"></button>').join('');el("dots").querySelectorAll("button").forEach(b=>b.onclick=()=>show(+b.dataset.i))}
-el("prev").onclick=()=>show(current-1);el("next").onclick=()=>show(current+1);
+function renderVisual(kind){
+const v=el("visual");v.replaceChildren();
+if(kind==="bunny"){
+const one=document.createElement("div");one.className="bubble circle1";v.append(one);
+const two=document.createElement("div");two.className="bubble circle2";v.append(two);
+v.append(picture(BUNNY_FOX,"Willena Free Talking Genius Bunny Fox original SVG","art"));return;
+}
+if(kind==="apps"||kind==="mixed"){
+if(kind==="mixed"){v.append(picture(PHOTO_LIBRARY.class,"Replaceable classroom photo","photos"));const cluster=document.createElement("div");cluster.className="appcluster";cluster.style.cssText="position:absolute;bottom:3px;right:2px;background:#ffffffe8;padding:10px;border-radius:16px";APP_ICONS.slice(0,3).forEach((src,i)=>cluster.append(picture(src,"Willena app "+(i+1),"app-icon")));v.append(cluster);return}
+const one=document.createElement("div");one.className="bubble circle1";v.append(one);
+const cluster=document.createElement("div");cluster.className="appcluster";APP_ICONS.forEach((src,i)=>cluster.append(picture(src,"Willena Genius app icon "+(i+1),"app-icon")));v.append(cluster);return;
+}
+v.append(picture(PHOTO_LIBRARY[kind]||PHOTO_LIBRARY.class,"교체 가능한 샘플 이미지: "+kind,"photos"));
+}
+function render(){
+const c=concepts[current],s=c.slides[slide];
+el("hero").className="hero "+c.style;
+el("eyebrow").textContent="WILLENA ENGLISH · "+c.name;
+el("headline").textContent=s[0];el("subhead").textContent=s[1];
+el("heroCta").textContent=s[3]+" ↗";renderVisual(s[2]);
+el("slideStatus").textContent="슬라이드 "+(slide+1)+" / "+c.slides.length+" · 손가락으로 밀거나 화살표를 누르세요.";
+el("number").textContent=c.id+" / 10";
+el("description").textContent=c.summary+" · 이 디자인 안에서 3장의 슬라이드가 순환합니다. 샘플 사진은 추후 교체할 수 있습니다.";
+[...rail.children].forEach((b,j)=>{b.classList.toggle("active",j===current);b.setAttribute("aria-pressed",j===current)});
+el("dots").replaceChildren();
+c.slides.forEach((_,i)=>{const b=document.createElement("button");b.className="dot"+(i===slide?" active":"");b.type="button";b.setAttribute("aria-label","슬라이드 "+(i+1));b.setAttribute("aria-pressed",String(i===slide));b.onclick=()=>{slide=i;render();restartTimer()};el("dots").append(b)});
+}
+function showConcept(i){current=(i+concepts.length)%concepts.length;slide=0;render();rail.children[current].scrollIntoView({block:"nearest",inline:"nearest",behavior:"smooth"});restartTimer()}
+function showSlide(dir){slide=(slide+dir+concepts[current].slides.length)%concepts[current].slides.length;render();restartTimer()}
+function restartTimer(){clearInterval(timer);if(autoplay&&!window.matchMedia("(prefers-reduced-motion: reduce)").matches)timer=setInterval(()=>{slide=(slide+1)%concepts[current].slides.length;render()},6000)}
+el("prev").onclick=()=>showConcept(current-1);el("next").onclick=()=>showConcept(current+1);
+el("slidePrev").onclick=()=>showSlide(-1);el("slideNext").onclick=()=>showSlide(1);
 document.querySelectorAll("[data-size]").forEach(b=>b.onclick=()=>{el("stage").className="stage "+b.dataset.size;document.querySelectorAll("[data-size]").forEach(x=>x.classList.toggle("active",x===b))});
-el("autoplay").onclick=()=>{if(auto){clearInterval(auto);auto=null;el("autoplay").textContent="▶ Auto preview"}else{auto=setInterval(()=>show(current+1),5000);el("autoplay").textContent="Ⅱ Pause auto preview"}};
-let x0=null;el("stage").addEventListener("touchstart",e=>{x0=e.touches[0].clientX},{passive:true});el("stage").addEventListener("touchend",e=>{if(x0!==null){let d=e.changedTouches[0].clientX-x0;if(Math.abs(d)>55)show(current+(d<0?1:-1));x0=null}},{passive:true});
-document.addEventListener("keydown",e=>{if(e.key==="ArrowRight")show(current+1);if(e.key==="ArrowLeft")show(current-1)});
-show(0);
+el("autoplay").onclick=()=>{autoplay=!autoplay;el("autoplay").textContent=autoplay?"Ⅱ 자동 넘김 중지":"▶ 자동 넘김 시작";restartTimer()};
+let startX=null;el("stage").addEventListener("touchstart",e=>{startX=e.touches[0].clientX},{passive:true});el("stage").addEventListener("touchend",e=>{if(startX!==null){const d=e.changedTouches[0].clientX-startX;if(Math.abs(d)>55)showSlide(d<0?1:-1);startX=null}},{passive:true});
+document.addEventListener("keydown",e=>{if(e.target.matches("input,textarea"))return;if(e.key==="ArrowRight")showSlide(1);if(e.key==="ArrowLeft")showSlide(-1)});
+el("stage").addEventListener("mouseenter",()=>clearInterval(timer));el("stage").addEventListener("mouseleave",restartTimer);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)clearInterval(timer);else restartTimer()});
+render();restartTimer();
 </script></body></html>
