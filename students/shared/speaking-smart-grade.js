@@ -39,6 +39,15 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
   if(!heard.length)continue;
   let score=0,reason='unrecognized';
   if(expected.join(' ')===heard.join(' ')){score=4;reason='exact';}
+  // Vocabulary phrases: an inserted definite article can be a natural,
+  // fully correct utterance (watch birds -> watch the birds).
+  // Require every original target token in order and exactly one extra "the".
+  // Do not apply this shortcut to sentence-pattern practice.
+  else if(mode==='word'&&expected.length>=2&&heard.length===expected.length+1&&
+    heard.some((word,index)=>word==='the'&&
+      [...heard.slice(0,index),...heard.slice(index+1)].every((v,i)=>v===expected[i]))){
+    score=4;reason='optional_definite_article';
+  }
   else if(mode==='word'&&typeof exactMatcher==='function'){
    const legacy=exactMatcher(target,[raw]);
    if(legacy?.correct&&['homophone','spacing','exact','in_sentence','in_sentence_homophone'].includes(legacy.matchedBy)){score=4;reason=legacy.matchedBy;}
