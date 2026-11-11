@@ -639,6 +639,10 @@ function showActor(){
    '<span class="ft-circle-mic" aria-hidden="true"><svg viewBox="0 0 48 48" width="72" height="72"><rect x="17" y="5" width="14" height="26" rx="7" fill="currentColor"/><path d="M11 22a13 13 0 0 0 26 0M24 35v8M16 43h16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>';
  }
  voice.append(circle);session.append(voice);shell.append(session);host.append(shell);
+ // Pure visual overlay: no changes to the existing character SVG or mic.
+ const speechRing=document.createElement('div');speechRing.id='ftSpeechTimeRing';
+ speechRing.setAttribute('aria-hidden','true');speechRing.hidden=true;
+ speechRing.style.setProperty('--ft-record-remaining','1');host.append(speechRing);
  state.actor=createFreeTalkingCharacters({circle,session,voiceHost:voice,choices:{}});
  state.actor.select(state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':'marin');
  actorPhase('ready');
@@ -909,6 +913,7 @@ function hybridStart(stream){
     const mime=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':'';
     const rec=new MediaRecorder(stream,mime?{mimeType:mime}:{});
     hybrid.recorder=rec;hybrid.chunks=[];hybrid.voiceAt=now;
+    const ring=$('ftSpeechTimeRing');if(ring){ring.hidden=false;ring.style.setProperty('--ft-record-remaining','1');}
     rec.ondataavailable=e=>{if(e.data?.size)hybrid.chunks.push(e.data)};
     rec.onstop=()=>void hybridOnRecorded(rec);
     handleRealtime({type:'input_audio_buffer.speech_started'});
@@ -916,7 +921,9 @@ function hybridStart(stream){
    }
   }
   if(hybrid.recorder&&hybrid.recorder.state==='recording'){
-   if(now-hybrid.lastLoud>ftTiming.silence||now-hybrid.voiceAt>45000){
+   const ring=$('ftSpeechTimeRing');
+   if(ring)ring.style.setProperty('--ft-record-remaining',String(Math.max(0,1-(now-hybrid.voiceAt)/22000)));
+   if(now-hybrid.lastLoud>ftTiming.silence||now-hybrid.voiceAt>22000){
     handleRealtime({type:'input_audio_buffer.speech_stopped'});
     try{hybrid.recorder.stop()}catch{}
    }
@@ -926,6 +933,7 @@ function hybridStart(stream){
 }
 async function hybridOnRecorded(rec){
  if(hybrid.recorder!==rec)return;
+ const ring=$('ftSpeechTimeRing');if(ring){ring.hidden=true;ring.style.setProperty('--ft-record-remaining','1');}
  const audio=new Blob(hybrid.chunks,{type:rec.mimeType||'audio/webm'});
  const duration=Math.max(0,performance.now()-hybrid.voiceAt);
  const peak=hybrid.peak;
@@ -1036,6 +1044,7 @@ function cycleMic(work){
 // The conversational text history is preserved while capture is restarted.
 function stopHybridInput(){
  cancelAnimationFrame(hybrid.raf);hybrid.raf=null;
+ const ring=$('ftSpeechTimeRing');if(ring){ring.hidden=true;ring.style.setProperty('--ft-record-remaining','1');}
  if(hybrid.recorder?.state==='recording'){try{hybrid.recorder.stop()}catch{}}
  hybrid.recorder=null;hybrid.chunks=[];hybrid.peak=0;
  try{hybrid.source?.disconnect()}catch{}
