@@ -243,23 +243,26 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     $('questionRoot').innerHTML=renderStudentSessionFinish({
       title:ctx.homework?'Homework complete!':'Session complete!',
       description:ctx.preview?'Teacher preview · No scores or rewards were saved.':'다음 단계도 도전해 보세요.',
-      stats:ctx.homework?[
-        {label:'Homework progress',value:ctx.store.percent(mode,ctx.items)+'%'},
-        {label:'Speaking score',value:mode==='unscramble'?'—':ctx.store.speakingQuality(mode,ctx.items).percent+'%'},
-        {label:'Stars',value:mode==='unscramble'?'—':ctx.store.stars(mode,ctx.items)+'/5'},
-        {label:'Lime / Yellow',value:mode==='unscramble'?'—':ctx.store.speakingQuality(mode,ctx.items).lime+' / '+ctx.store.speakingQuality(mode,ctx.items).yellow},
-        {label:'Mode',value:titles[mode]}
-      ]:[
-        {label:'Unit mastery',value:ctx.store.percent(mode,ctx.items)+'%'},
-        {label:'Stars',value:ctx.store.stars(mode,ctx.items)+'/5'},
-        {label:'Speaking score',value:mode==='unscramble'?'—':ctx.store.speakingQuality(mode,ctx.items).percent+'%'},
-        {label:'Lime / Yellow',value:mode==='unscramble'?'—':ctx.store.speakingQuality(mode,ctx.items).lime+' / '+ctx.store.speakingQuality(mode,ctx.items).yellow},
-        {label:'Golden Unit',value:ctx.store.gold(ctx.items)?'Gold':'—'}
-      ],
+      stats:[],
       rewardHtml:'<div id="sentenceFinishCelebration" aria-live="polite"></div>',
       actionsHtml:'<button id="sentenceFinishBack" class="vocab-done-btn" type="button">Back to unit</button>'+
         '<button id="sentenceFinishAgain" class="vocab-review-btn" type="button">Practice again</button>'
     });
+    const finishRoot=$('questionRoot');
+    const emptyStats=finishRoot.querySelector('.vocab-finish-stats');
+    const completion=mode==='unscramble'
+      ?ctx.store.percent(mode,ctx.items)
+      :ctx.store.speakingQuality(mode,ctx.items).percent;
+    const accuracy=Math.max(0,Math.min(100,Number(completion)||0));
+    const accuracyPanel=document.createElement('div');
+    accuracyPanel.className='sg-finish-accuracy';
+    accuracyPanel.innerHTML=
+      '<div class="sg-finish-accuracy-heading"><strong>정확도</strong><span>'+accuracy+'%</span></div>'+
+      '<div class="sg-finish-accuracy-track" role="progressbar" aria-label="정확도" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+accuracy+'">'+
+        '<div class="sg-finish-accuracy-fill" style="width:'+accuracy+'%"></div>'+
+      '</div>';
+    // Place exactly one compact accuracy bar above the existing reward card.
+    emptyStats?.replaceWith(accuracyPanel);
     const celebration=$('sentenceFinishCelebration');
     $('sentenceFinishBack').addEventListener('click',onBack);
     $('sentenceFinishAgain').addEventListener('click',()=>{changeMode(mode,ctx);$('sessionFooter').hidden=false});
