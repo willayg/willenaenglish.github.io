@@ -1,6 +1,99 @@
-// Read-only teacher preview of the SAME canonical paper generator used by the student app.
-// Never calls student session, attempt, or score APIs.
-import {buildMockTestPaper} from '/students/test-prep-v2/mock-test-source.js?v=1.3.0';
+// Read-only teacher mock preview. Mirrors the student paper's section quota
+// against currently published unit banks, without student sessions or writes.
+const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
+const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
+const BLUEPRINT={vocabulary:4,communication:6,grammar:6,reading:6,constructed_response:3};
+const KEY_ORDER=Object.keys(BLUEPRINT);
+function rank(seed,id){let h=2166136261;for(const c of seed+'|'+id)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0}
+async function contentRows(path){
+  const out=[];
+  for(let offset=0;offset<10000;offset+=1000){
+    const r=await fetch(CONTENT_URL+'/rest/v1/'+path,{headers:{apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY,Range:offset+'-'+(offset+999)},cache:'no-store'});
+    if(!r.ok)throw Error('콘텐츠 DB 조회 실패 ('+r.status+')');
+    const rows=await r.json();out.push(...rows);if(rows.length<1000)break;
+  }
+  return out;
+}
+function fitQ(row,bucket,lesson,unitId){
+  const choices=Array.isArray(row.choices)?row.choices:[],answers=Array.isArray(row.correct_answer)?row.correct_answer:[row.correct_answer];
+  return {bucket,lesson,unitId,question:{id:row.id,prompt:row.prompt_text,context:row.context||{},choices,answer:answers.filter(x=>x!=null),source:{label:row.student_source_label||'Willena'},metadata:row.metadata||{}}};
+}
+function scopeRows(group){
+  const scope=group.scope||{};
+  return [...(scope.lessons||[]),...(scope.external_passages||[]).map(x=>({...x,lesson:x.lesson||x.label||x.unit_label}))].filter(x=>x.unit_id&&x.lesson);
+}
+async function loadUnit(row){
+  const lesson=row.lesson,unitId=row.unit_id,sections=new Set(row.sections||[]);
+  const jobs=[];
+  const stored=async section=>contentRows('test_prep_questions?select='+encodeURIComponent('id,section,question_type,answer_mode,prompt_text,context,choices,correct_answer,metadata,student_source_label')+'&unit_id=eq.'+encodeURIComponent(unitId)+'&section=eq.'+section+'&student_usable=eq.true&replacement_needed=eq.false');
+  for(const bucket of ['communication','grammar','reading']){
+    if(sections.has(bucket))jobs.push(stored(bucket).then(list=>list.filter(q=>Array.isArray(q.choices)&&q.choices.length>1).map(q=>fitQ(q,bucket,lesson,unitId))));
+  }
+  if(sections.has('constructed_response')){
+    jobs.push(contentRows('test_prep_questions?select='+encodeURIComponent('id,section,question_type,answer_mode,prompt_text,context,choices,correct_answer,metadata,student_source_label')+'&unit_id=eq.'+encodeURIComponent(unitId)+'&answer_mode=eq.text&student_usable=eq.true&replacement_needed=eq.false').then(list=>list.filter(q=>['grammar','reading','communication','constructed_response'].includes(q.section)).map(q=>fitQ(q,'constructed_response',lesson,unitId))));
+  }
+  if(sections.has('vocabulary')||sections.has('vocab_test')){
+    jobs.push((async()=>{
+      const occurrences=await contentRows('source_content_occurrences?select=lexical_entry_id&unit_id=eq.'+encodeURIComponent(unitId)+'&occurrence_type=eq.lexical_entry&skill=eq.vocabulary');
+      const ids=[...new Set(occurrences.map(x=>x.lexical_entry_id).filter(Boolean))],words=[];
+      for(let i=0;i<ids.length;i+=100){
+        const part=await contentRows('lexical_entries?select=id,canonical_text,translation_ko,definition_en&id=in.'+encodeURIComponent('('+ids.slice(i,i+100).join(',')+')'));
+        words.push(...part);
+      }
+      const ready=words.filter(w=>w.canonical_text&&w.definition_en);
+      return ready.map((w,i)=>{
+        const distractors=[...ready].filter(x=>x.id!==w.id).sort((a,b)=>rank(w.id,a.id)-rank(w.id,b.id)).slice(0,3);
+        if(distractors.length<3)return null;
+        const choices=[w,...distractors].sort((a,b)=>rank('choice|'+w.id,a.id)-rank('choice|'+w.id,b.id));
+        return {bucket:'vocabulary',lesson,unitId,question:{id:'vocab:'+w.id,prompt:'다음 영어 정의에 해당하는 단어를 고르시오.',context:{definition:w.definition_en},choices:choices.map(x=>x.canonical_text),answer:[String(choices.findIndex(x=>x.id===w.id)+1)],source:{label:'Lesson vocabulary'},metadata:{translation_ko:w.translation_ko,canonical_text:w.canonical_text}}};
+      }).filter(Boolean);
+    })());
+  }
+  const settled=await Promise.allSettled(jobs),entries=[],errors=[];
+  for(const x of settled){if(x.status==='fulfilled')entries.push(...x.value);else errors.push({lesson,message:String(x.reason?.message||x.reason)})}
+  return {entries,errors};
+}
+async function buildMockTestPaper({plan,seed}){
+  const rows=scopeRows(plan.group);
+  if(!rows.length)throw Error('선택된 시험 범위가 없습니다.');
+  const results=await Promise.all(rows.map(loadUnit)),all=results.flatMap(x=>x.entries),loadErrors=results.flatMap(x=>x.errors);
+  const pools=Object.fromEntries(KEY_ORDER.map(k=>[k,all.filter(x=>x.bucket===k)]));
+  const selected=[],used=new Set(),shortages={};
+  for(const bucket of KEY_ORDER){
+    const pool=[...pools[bucket]].sort((a,b)=>rank(seed+'|'+bucket,a.question.id)-rank(seed+'|'+bucket,b.question.id));
+    // Distribute across lessons first, then reuse remaining candidates.
+    const groups=new Map();
+    for(const e of pool){if(!groups.has(e.unitId))groups.set(e.unitId,[]);groups.get(e.unitId).push(e)}
+    const units=[...groups.keys()].sort((a,b)=>rank(seed+'|unit',a)-rank(seed+'|unit',b));
+    let n=0,progress=true;
+    while(n<BLUEPRINT[bucket]&&progress){
+      progress=false;
+      for(const unit of units){
+        const list=groups.get(unit);
+        while(list.length&&used.has(list[0].question.id))list.shift();
+        if(!list.length)continue;
+        const e=list.shift();selected.push(e);used.add(e.question.id);n++;progress=true;
+        if(n===BLUEPRINT[bucket])break;
+      }
+    }
+    if(n<BLUEPRINT[bucket])shortages[bucket]=BLUEPRINT[bucket]-n;
+  }
+  // Student mock-test behavior: replace missing written slots with other sections.
+  const missingWritten=shortages.constructed_response||0;
+  let fallback=0;
+  if(missingWritten){
+    for(const e of all.sort((a,b)=>rank(seed+'|fallback',a.question.id)-rank(seed+'|fallback',b.question.id))){
+      if(fallback>=missingWritten)break;
+      if(e.bucket==='constructed_response'||used.has(e.question.id))continue;
+      selected.push({...e,bucket:'constructed_response_fallback'});used.add(e.question.id);fallback++;
+    }
+    if(fallback===missingWritten)delete shortages.constructed_response;
+    else shortages.constructed_response=missingWritten-fallback;
+  }
+  const questions=[...selected].sort((a,b)=>KEY_ORDER.indexOf(a.bucket)-KEY_ORDER.indexOf(b.bucket)||rank(seed+'|order',a.question.id)-rank(seed+'|order',b.question.id));
+  const selectedCounts=Object.fromEntries(KEY_ORDER.map(k=>[k,selected.filter(e=>e.bucket===k||(k==='constructed_response'&&e.bucket==='constructed_response_fallback')).length]));
+  return {ready:questions.length===25&&Object.keys(shortages).length===0,total:questions.length,questions,blueprint:BLUEPRINT,selectedCounts,shortages,loadErrors};
+}
 
 const h=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const labels={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형',constructed_response_fallback:'서술형 대체'};
