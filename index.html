@@ -64,6 +64,33 @@ body .frame.v1{--accent:#19aabb;--accent2:#ce5aa0;--surface:linear-gradient(115d
  .frame .hero-visual .apps img:nth-child(4){transform:translateY(-14px) rotate(4deg)}
  .frame .hero-visual .apps img:nth-child(5){transform:translateY(12px) rotate(-4deg)}
 }
+
+/* Bigger Genius icons in the homepage hero and app showcase. */
+.frame .hero-visual .apps{max-width:800px;gap:clamp(7px,1.2vw,16px)}
+.frame .hero-visual .apps img{
+  flex:0 1 145px;width:19%;max-width:145px;
+  padding:clamp(4px,.65vw,9px);
+  border-radius:clamp(15px,2vw,26px);
+}
+.app-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
+.appbox{padding:23px 12px;font-size:15px}
+.appbox img,.appbox .grammar-mark,.grammar-mark{
+  width:112px;height:112px;
+  max-width:100%;
+  margin-bottom:15px;
+}
+.grammar-mark{font-size:49px}
+@media(max-width:700px){
+  .frame .hero-visual .apps{gap:clamp(3px,.75vw,7px)}
+  .frame .hero-visual .apps img{
+    width:19%;max-width:110px;padding:3px;
+    border-radius:clamp(10px,2vw,17px);
+  }
+  .app-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .appbox{padding:20px 8px;font-size:13px}
+  .appbox img,.appbox .grammar-mark,.grammar-mark{width:94px;height:94px;margin-bottom:12px}
+  .grammar-mark{font-size:42px}
+}
 </style></head>
 <body>
 
