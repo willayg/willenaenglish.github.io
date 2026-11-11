@@ -41,7 +41,7 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
   if(expected.join(' ')===heard.join(' ')){score=4;reason='exact';}
   else if(mode==='word'&&typeof exactMatcher==='function'){
    const legacy=exactMatcher(target,[raw]);
-   if(legacy?.correct&&['homophone','spacing','exact'].includes(legacy.matchedBy)){score=4;reason=legacy.matchedBy;}
+   if(legacy?.correct&&['homophone','spacing','exact','in_sentence','in_sentence_homophone'].includes(legacy.matchedBy)){score=4;reason=legacy.matchedBy;}
   }
   if(!score){
    const a=aligned(expected,heard);
@@ -50,10 +50,11 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
    const criticalSafe=[...new Set([...expected,...heard])].every(w=>!CRITICAL.has(w)||expected.filter(x=>x===w).length===heard.filter(x=>x===w).length);
    const meaningful=required.length?recognized/required.length:0;
    const missing=expected.length-a.matched,extra=heard.length-a.matched;
+   const inOrder=(()=>{let next=0;for(const token of expected){let found=-1;for(let j=next;j<heard.length;j++)if(compatible(token,heard[j])){found=j;break}if(found<0)return false;next=found+1;}return true})();
    if(criticalSafe&&meaningful>=0.75&&a.matched>=Math.max(1,expected.length-1)){
     if(mode==='word'){
      // Never pass a two-word phrase on just one of its content words.
-     if(expected.length>1&&recognized<required.length){score=0;}
+     if(expected.length>1&&(!inOrder||recognized<required.length)){score=0;}
      else if(extra===0&&missing===0&&a.changed<=1){score=3;reason='minor_form';}
      else if(extra<=3&&missing<=1){score=2;reason='recognizable_phrase';}
      else if(extra===0&&missing===1&&expected.length>=3){score=2;reason='one_word_missing';}
@@ -66,7 +67,7 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
        if(found>=0)next=found+1;else if(!LIGHT.has(w))return false;
       }return true;
      })();
-     if(preservedOrder&&missing===0&&extra===0&&a.changed===1){score=3;reason='minor_form';}
+     if(preservedOrder&&missing===0&&extra===0&&a.changed===1){score=2;reason='minor_grammar_form';}
      else if(preservedOrder&&missing<=1&&extra<=2&&meaningful===1){
       score=missing===0&&extra===1&&heard.some(w=>ARTICLES.has(w))?3:2;
       reason='minor_sentence_difference';
@@ -81,5 +82,5 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
 }
 export function speakingStars(qualityPercent){
  const p=Number(qualityPercent)||0;
- return p>=95?5:p>=85?4:p>=70?3:p>=55?2:p>=40?1:0;
+ return p>=100?5:p>=85?4:p>=70?3:p>=55?2:p>=40?1:0;
 }
