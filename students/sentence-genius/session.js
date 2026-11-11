@@ -4,7 +4,7 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026111
 import {recordSentenceAttempt} from './tracking.js?v=20261111-orange5';
 import {recordSentenceHomeworkAnswer} from './homework.js?v=20261104-isolated2';
 import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=20261104-determiner2';
-import {rewardSession} from './rewards.js?v=20261111-simple-average1';
+import {rewardSession} from './rewards.js?v=20261111-simple-average2';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
 import {renderStudentSessionFinish} from '/students/components/student-session-finish.js?v=1';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
