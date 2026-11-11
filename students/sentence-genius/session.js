@@ -10,7 +10,8 @@ import {renderStudentSessionFinish} from '/students/components/student-session-f
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {checkOrder} from './scoring.js?v=sg-coach-gold-v3';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
-import {gradeUnfamiliarSentence,usableAlternatives,resetAiSessionBudget} from './ai-grading.js?v=sg-phase3b';
+import {usableAlternatives} from './ai-grading.js?v=sg-phase3b';
+import {gradeSpeaking} from '/students/shared/speaking-smart-grade.js?v=20261111-1';
 
 const $=id=>document.getElementById(id);
 const titles={coach:'코치',unscramble:'문장 배열',speaking:'말하기'};
@@ -56,7 +57,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     if(homework&&!homework.required_modes?.includes(next))return false;
     sessionRunId=window.crypto?.randomUUID?.()||null;
     if(homework&&!sessionRunId)throw Error('Secure homework session ID unavailable');
-    mode=next;index=0;answered=false;resetAiSessionBudget();
+    mode=next;index=0;answered=false;
     const pending=store.pending(mode,items);
     const isReview=!pending.length;
     queue=shuffle((isReview?items:pending).map(row=>({...row,retry:0})));
@@ -86,7 +87,13 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     root.innerHTML='<div class="question-card" id="sentenceQuestionHost"></div>';
     const host=$('sentenceQuestionHost');
     renderer=new QuestionRenderer(host).render(questionFor(mode,item),{
-      onChange:(_answer,has)=>{if(!answered&&!grading&&token===epoch)$('action').disabled=!has}
+      onChange:(_answer,has)=>{
+        if(!answered&&!grading&&token===epoch)$('action').disabled=!has;
+        if(mode!=='unscramble'&&has&&token===epoch&&renderer){
+          const candidates=renderer.getSpeechAlternatives?.()||[];
+          updateSpeakingPreview(candidates.length?candidates:[_answer]);
+        }
+      }
     });
     if(mode==='speaking'){
       const grammarClue=grammarClueFor(item);
@@ -108,6 +115,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     }
     if(mode!=='unscramble'){
       const instance=renderer;
+      instance.onSpeechResult=alternatives=>updateSpeakingPreview(alternatives);
       speech=connectSpeechSupport({
         host,renderer:instance,item,
         isCurrent:()=>token===epoch&&renderer===instance&&!answered,
@@ -117,6 +125,15 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       prefetchAudio(queue.slice(index,index+3));
     }
     $('sessionMain').scrollTop=0;
+  }
+  function updateSpeakingPreview(alternatives){
+    const item=current();if(!item||answered||mode==='unscramble')return;
+    const grade=gradeSpeaking(item.en,alternatives,{mode:'sentence'});
+    const node=renderer?.host?.querySelector('[data-speaking-transcript]');
+    if(!node)return;
+    const palette={green:['#168345','#77c99a'],lime:['#719D19','#B5DB70'],yellow:['#A87C07','#F1D079'],red:['#cf304c','#efa4ae']};
+    const [color,border]=palette[grade.level];node.style.color=color;node.style.borderColor=border;
+    node.dataset.accepted=grade.level==='green'?'true':grade.level;
   }
   function queueRetry(row){
     const retry={...row,retry:row.retry+1};
@@ -139,46 +156,17 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       renderer.emit();
       return;
     }
-    let result=mode==='unscramble'
-      ?{correct:checkOrder(response,item.en),matchedBy:'order'}
-      :matchSentence(item.en,usable,item.gradingContext);
-    // Exact and known alternatives are free. AI Willi only handles unknown,
-    // plausible full speaking responses; Coach stays target-repetition practice.
-    if(mode==='speaking'&&!result.correct&&!result.almostRight){
-      const token=epoch;
-      grading=true;
-      $('action').disabled=true;
-      $('action').textContent='AI Willi 확인 중…';
-      try{
-        let opinion;
-        try{
-          opinion=await gradeUnfamiliarSentence(item,usable[0],{
-            subjectClue:grammarClueFor(item)
-          });
-        }catch(error){
-          console.warn('[Sentence Genius] AI check failed',error);
-          opinion={unavailable:true,reasonCode:'ai_service_unavailable'};
-        }
-        if(token!==epoch||answered)return;
-        if(opinion.unavailable){
-          onMessage(opinion.reasonCode==='ai_budget_exhausted'?
-            'AI 확인 횟수에 도달했어요. 다른 문장을 연습하거나 나중에 다시 시도하세요.':
-            'AI 확인이 지금 어려워요. 답을 다시 시도해 주세요.');
-          return;
-        }
-        result=opinion;
-      }finally{
-        if(token===epoch&&!answered){
-          grading=false;$('action').disabled=false;
-          $('action').textContent='Check Answer';
-        }
-      }
-    }
+    const previous=mode==='unscramble'?{correct:checkOrder(response,item.en),matchedBy:'order'}:
+      matchSentence(item.en,usable,item.gradingContext);
+    const evaluation=mode==='unscramble'?null:gradeSpeaking(item.en,usable,{mode:'sentence'});
+    // Preserve previously approved equivalent phrases, but never make an AI request.
+    if(evaluation&&previous.correct){evaluation.points=4;evaluation.correct=true;evaluation.level='green';evaluation.matchedBy=previous.matchedBy||'approved_equivalent';}
+    const result=mode==='unscramble'?previous:evaluation;
     const correct=!!result.correct;
     const assisted=mode==='speaking'&&listenUsed;
-    const almostRight=!correct&&!!result.almostRight&&!assisted;
-    const verdict=ctx.store.attempt(mode,item.id,{correct,assisted,almostRight});
-    reward?.note(verdict.mastered,item.retry,verdict.points);
+    const almostRight=correct&&result.points<4;
+    const verdict=ctx.store.attempt(mode,item.id,{correct,assisted,almostRight,gradePoints:mode==='unscramble'?(correct?4:0):result.points});
+    reward?.note(verdict.mastered,item.retry,verdict.points,mode==='unscramble'?(correct?4:0):result.points);
     if(verdict.repeat)queueRetry(item);
     answered=true;
     const rec=renderer;
@@ -190,15 +178,15 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     ].includes(result.matchedBy);
     rec.showFeedback({
       correct,correctAnswer:[item.en],
-      message:correct&&assisted?'잘했어요! 듣기 사용 +2점 · 나중에 다시 연습해요.':
-        almostRight?'거의 맞았어요! +2점 · 다시 연습해요.':
+      message:correct&&assisted?'잘했어요! 듣기 사용 · +'+verdict.points+'점':
+        result.points===3?'좋아요! 거의 맞았어요. +3점':
+        result.points===2?'잘했어요! 조금 더 연습해요. +2점':
         acceptedAlternative?'다른 표현도 정답이에요!':
-        correct?'잘했어요!':
-        result.explanationKo||'다음에 한 번 더 연습해요.'
+        correct?'잘했어요!':'다음에 한 번 더 연습해요.'
     });
     $('answerNote').textContent=correct&&assisted?
       'Listen used · +2 points. Try again independently for 4 points.':
-      almostRight?'Almost right · +2 points. Model: '+item.en:
+      almostRight?'Speaking '+result.level+' · +'+verdict.points+' points. Model: '+item.en:
       acceptedAlternative?'Another correct way: '+item.en:
       correct?'Good job!':'Correct sentence: '+item.en;
     $('answerNote').hidden=false;
@@ -216,7 +204,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       book:ctx.book,unit:ctx.unit,item,mode,response,correct:verdict.mastered,
       assisted,almostRight,retryCount:item.retry,points:verdict.points,
       matchedBy:result.matchedBy||'unmatched',
-      source:['ai','ai_cached'].includes(result.matchedBy)?'ai':'browser',
+      source:'browser',
       elapsedMs:Date.now()-since
      })).catch(e=>{console.warn('[Sentence Genius] progress queued or unavailable',e);onMessage('Progress could not be confirmed online.')});
     saving.add(recorded);recorded.finally(()=>saving.delete(recorded));
@@ -242,7 +230,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       description:ctx.preview?'Teacher preview · No scores or rewards were saved.':'다음 단계도 도전해 보세요.',
       stats:ctx.homework?[
         {label:'Homework progress',value:ctx.store.percent(mode,ctx.items)+'%'},
-        {label:'Questions',value:ctx.items.filter(item=>ctx.store.passed(mode,item.id)).length+'/'+ctx.items.length},
+        {label:'Speaking stars',value:mode==='unscramble'?'—':ctx.store.stars(mode,ctx.items)+'/5'},
         {label:'Mode',value:titles[mode]}
       ]:[
         {label:'Unit mastery',value:ctx.store.percent(mode,ctx.items)+'%'},
