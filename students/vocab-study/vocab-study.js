@@ -2095,7 +2095,7 @@ function checkSpeaking(){
     renderer.showFeedback({
       correct,
       correctAnswer:[target],
-      message:match.points===4?'정답입니다! +4':match.points===3?'좋아요! 거의 맞았어요. +3':match.points===2?'잘했어요! 조금 더 연습해요. +2':'다시 확인해 보세요.'
+      message:match.points===4?'정답입니다! +4':match.points===3?'좋아요! 거의 맞았어요. +3':match.points===2?'잘했어요! 조금 더 연습해요. +2':match.points===1?'좋아요! 조금 알아들었어요. +1':'다시 확인해 보세요.'
     });
   }catch(error){console.warn('[Vocab Study] speaking feedback rendering failed',error);}
   // Once speaking is accepted, display the textbook's target phrase rather than
