@@ -30,7 +30,7 @@ export function openUnit(user,unit,{preview=false}={}){
       const listened=mode==='speaking'&&!!assisted;
       const grade=(mode==='unscramble')?(correct?4:0):
         Math.max(0,Math.min(4,Number(gradePoints??(correct?4:almostRight?2:0))||0));
-      const mastered=!!correct&&grade>=2;
+      const mastered=!!correct&&grade>=1;
       // A lime/yellow answer is a real pass. Listening may cap its points,
       // but it never forces a successful child to repeat an entire question.
       const first=Number(previous.attempts||0)===0;
@@ -40,11 +40,11 @@ export function openUnit(user,unit,{preview=false}={}){
       const updated={attempts:(Number(previous.attempts)||0)+1,
         passed:previous.passed||mastered,firstCorrect,
         qualityPoints:first?(mastered?grade:0):(previous.qualityPoints??0),
-        lastGradePoints:grade,lastGradeLevel:grade===4?'green':grade===3?'lime':grade===2?'yellow':'red'};
+        lastGradePoints:grade,lastGradeLevel:grade===4?'green':grade===3?'lime':grade===2?'yellow':grade===1?'orange':'red'};
       states[mode][id]=updated;write();
       return {retryCount:Number(previous.attempts)||0,firstCorrect:first,
         previouslyPassed:!!previous.passed,mastered,assisted:listened,
-        almostRight:grade===2||grade===3,gradePoints:grade,gradeLevel:updated.lastGradeLevel,
+        almostRight:grade>=1&&grade<4,gradePoints:grade,gradeLevel:updated.lastGradeLevel,
         points,repeat:repeatUntilCorrect(mastered)};
     },
     passed(mode,id){return !!states[mode]?.[id]?.passed},
