@@ -230,11 +230,15 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       description:ctx.preview?'Teacher preview · No scores or rewards were saved.':'다음 단계도 도전해 보세요.',
       stats:ctx.homework?[
         {label:'Homework progress',value:ctx.store.percent(mode,ctx.items)+'%'},
-        {label:'Speaking stars',value:mode==='unscramble'?'—':ctx.store.stars(mode,ctx.items)+'/5'},
+        {label:'Speaking score',value:mode==='unscramble'?'—':ctx.store.speakingQuality(mode,ctx.items).percent+'%'},
+        {label:'Stars',value:mode==='unscramble'?'—':ctx.store.stars(mode,ctx.items)+'/5'},
+        {label:'Lime / Yellow',value:mode==='unscramble'?'—':ctx.store.speakingQuality(mode,ctx.items).lime+' / '+ctx.store.speakingQuality(mode,ctx.items).yellow},
         {label:'Mode',value:titles[mode]}
       ]:[
         {label:'Unit mastery',value:ctx.store.percent(mode,ctx.items)+'%'},
         {label:'Stars',value:ctx.store.stars(mode,ctx.items)+'/5'},
+        {label:'Speaking score',value:mode==='unscramble'?'—':ctx.store.speakingQuality(mode,ctx.items).percent+'%'},
+        {label:'Lime / Yellow',value:mode==='unscramble'?'—':ctx.store.speakingQuality(mode,ctx.items).lime+' / '+ctx.store.speakingQuality(mode,ctx.items).yellow},
         {label:'Golden Unit',value:ctx.store.gold(ctx.items)?'Gold':'—'}
       ],
       rewardHtml:'<div id="sentenceFinishCelebration" aria-live="polite"></div>',
