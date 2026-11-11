@@ -16,7 +16,7 @@ export async function getSentenceMastery(bookId,unitId){
     .map(item=>({mode:Object.keys(SKILL_NAMES).find(mode=>SKILL_NAMES[mode]===item.skill),
       id:String(item.content_id),passed:Number(item.accuracy)>0,attempts:Number(item.attempts)||0}));
 }
-export function recordSentenceAttempt({book,unit,item,mode,response,correct,retryCount,points,assisted=false,almostRight=false,matchedBy='unmatched',source='browser',elapsedMs=0}){
+export function recordSentenceAttempt({book,unit,item,mode,response,correct,retryCount,points,assisted=false,almostRight=false,gradePoints=null,matchedBy='unmatched',source='browser',elapsedMs=0}){
   const recorder=window.WillenaStudyProgress;
   if(typeof recorder?.record!=='function')throw Error('Canonical study recorder did not load');
   const activity={
@@ -33,8 +33,9 @@ export function recordSentenceAttempt({book,unit,item,mode,response,correct,retr
       occurrence_id:item.occurrenceId,
       mastery_content_type:'sentence',mastery_content_id:item.id,
       points_override:points,
-      sentence_genius_verdict:assisted?'assisted_correct':
-        almostRight?'almost_right':correct?'mastered':'incorrect',
+      sentence_genius_verdict:correct?(gradePoints===3?'lime_pass':gradePoints===2?'yellow_pass':'mastered'):'incorrect',
+      speaking_grade_points:mode==='unscramble'?null:gradePoints,
+      speaking_grade_level:mode==='unscramble'?null:gradePoints===4?'green':gradePoints===3?'lime':gradePoints===2?'yellow':'red',
       listen_used:!!assisted,
       almost_right:!!almostRight,
       grading_match_method:String(matchedBy||'unmatched').slice(0,80),
