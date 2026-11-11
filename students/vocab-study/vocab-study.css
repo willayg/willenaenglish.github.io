@@ -319,6 +319,33 @@ body.vocab-session-open{overflow:hidden}
 .vocab-finish .eyebrow{color:var(--pink)}
 .vocab-finish h2{margin:8px 0 6px;font-size:clamp(2rem,7vw,3.3rem);color:#315e64;letter-spacing:-.04em}
 .vocab-finish p{margin:0;color:var(--muted);font-weight:700}
+/* Speaking finish: one useful quality measure rather than five stat tiles. */
+.vocab-speaking-finish{width:min(650px,100%)}
+.vocab-speaking-finish h2{font-size:clamp(1.8rem,6vw,2.65rem);margin:12px 0 22px}
+.vocab-pronunciation-panel{
+  text-align:left;border:1.5px solid #d2eef0;background:linear-gradient(145deg,#f7fdfd,#f1fbf5);
+  border-radius:23px;padding:clamp(18px,4vw,28px);margin:0 0 22px;
+}
+.vocab-pronunciation-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.vocab-pronunciation-heading span{color:#54757b;font:850 .75rem Poppins,system-ui,sans-serif;letter-spacing:.09em}
+.vocab-pronunciation-heading strong{color:#258f92;font:900 clamp(1.9rem,6vw,2.6rem) Poppins,system-ui,sans-serif}
+.vocab-pronunciation-energy{height:19px;border-radius:999px;overflow:hidden;background:#dcebea;border:1px solid #c7e3e2;margin-top:12px}
+.vocab-pronunciation-energy-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#67d4d8 0%,#65c79c 52%,#a7d750 100%);transition:width .55s ease}
+.vocab-speaking-finish .vocab-pronunciation-note{text-align:left;font-size:.73rem;line-height:1.45;margin-top:9px;color:#688388;font-weight:650}
+.vocab-pronunciation-hardest{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #dbecee;margin-top:22px;padding-top:19px}
+.vocab-pronunciation-hardest-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.vocab-pronunciation-hardest-copy span{font:850 .72rem Poppins,system-ui,sans-serif;letter-spacing:.08em;color:#778e93}
+.vocab-pronunciation-hardest-copy strong{font:900 clamp(1.13rem,4vw,1.65rem) Poppins,system-ui,sans-serif;color:#244f56;overflow-wrap:anywhere}
+.vocab-pronunciation-listen{display:inline-flex;align-items:center;justify-content:center;gap:9px;flex-shrink:0;border:2px solid #8ad6da;border-radius:15px;background:white;color:#275d64;font:850 .93rem Poppins,system-ui,sans-serif;padding:12px 17px;min-height:48px;cursor:pointer}
+.vocab-pronunciation-listen:disabled{opacity:.55;cursor:wait}
+.vocab-pronunciation-listen:focus-visible{outline:3px solid #f9a4cf;outline-offset:3px}
+.vocab-pronunciation-perfect{text-align:center;padding-top:18px;font-size:.9rem;font-weight:800;color:#497d69}
+@media(max-width:430px){
+ .vocab-pronunciation-panel{padding:17px}
+ .vocab-pronunciation-hardest{gap:8px}
+ .vocab-pronunciation-listen{padding:10px 12px}
+}
+
 .vocab-finish-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:22px}
 .vocab-finish-stats div{padding:14px 8px;border-radius:16px;background:#f7fbfc}
 .vocab-finish-stats strong{display:block;color:var(--cyan-strong);font-size:1.45rem}
