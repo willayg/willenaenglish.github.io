@@ -62,7 +62,7 @@ export function openUnit(user,unit,{preview=false}={}){
       if(!items.length||mode==='unscramble')return {percent:0,lime:0,yellow:0};
       const scores=items.map(i=>states[mode]?.[i.id]);
       const total=scores.reduce((sum,row)=>sum+Math.max(0,Math.min(4,Number(row?.qualityPoints??(row?.passed?4:0))||0)),0);
-      return {percent:Math.round(total/(4*items.length)*100),
+      return {percent:Math.round(total/(4*items.length)*1000)/10,
         lime:scores.filter(row=>row?.lastGradePoints===3).length,
         yellow:scores.filter(row=>row?.lastGradePoints===2).length};
     },
