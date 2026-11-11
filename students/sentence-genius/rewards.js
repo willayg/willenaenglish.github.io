@@ -9,20 +9,27 @@ const id=()=>window.crypto?.randomUUID?.()||'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxx
 });
 export function rewardSession(book,unit,mode){
   const startedAt=now(),sessionId=id();
-  const record={mode,firstTotal:0,firstCorrect:0,firstQualityPoints:0,points:0,completed:false,stars:0,percent:0};
+  const acceptedGrades=new Map();
+  const record={mode,firstTotal:0,firstCorrect:0,points:0,completed:false,stars:0,percent:0};
   return {
     get summary(){return {...record}},
-    note(correct,retryCount,points,gradePoints=correct?4:0){
+    note(correct,retryCount,points,gradePoints=correct?4:0,itemId=null){
       if(record.completed)return;
       record.points+=Math.max(0,Number(points)||0);
-      if(!retryCount){record.firstTotal++;if(correct)record.firstCorrect++;record.firstQualityPoints+=Math.max(0,Math.min(4,Number(gradePoints)||0))}
+      if(!retryCount){record.firstTotal++;if(correct)record.firstCorrect++;}
+      // Only the final accepted grade counts toward speaking accuracy.
+      // Repeated attempts do not incur a separate penalty.
+      if(mode!=='unscramble'&&correct&&itemId!=null){
+        const key=String(itemId);
+        if(!acceptedGrades.has(key))acceptedGrades.set(key,Math.max(1,Math.min(4,Number(gradePoints)||1)));
+      }
     },
     async finish(){
       if(record.completed)return {...record};
       record.completed=true;
       record.percent=mode==='unscramble'?(record.firstTotal?Math.round(100*record.firstCorrect/record.firstTotal):0):100;
       // Coach is now required for Golden Unit and awards the same star scale.
-      const qualityPercent=record.firstTotal?Math.round(100*record.firstQualityPoints/(4*record.firstTotal)):0;
+      const qualityPercent=record.firstTotal?Math.round(100*[...acceptedGrades.values()].reduce((sum,v)=>sum+v,0)/(4*record.firstTotal)):0;
       record.stars=mode==='unscramble'?starsForPercent(record.percent):speakingStars(qualityPercent);
       const payload={
         reward_only:true,session_id:sessionId,client_attempt_id:id(),
