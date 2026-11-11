@@ -184,20 +184,27 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       'approved_alternative','equivalent_quantifier','equivalent_possession_question',
       'equivalent_permission','equivalent_request','ai','ai_cached'
     ].includes(result.matchedBy);
-    rec.showFeedback({
-      correct,correctAnswer:[item.en],
-      message:correct&&assisted?'잘했어요! 듣기 사용 · +'+verdict.points+'점':
-        result.points===3?'좋아요! 거의 맞았어요. +3점':
-        result.points===2?'잘했어요! 조금 더 연습해요. +2점':
-        acceptedAlternative?'다른 표현도 정답이에요!':
-        correct?'잘했어요!':'다음에 한 번 더 연습해요.'
-    });
-    $('answerNote').textContent=correct&&assisted?
-      'Listen used · +2 points. Try again independently for 4 points.':
-      almostRight?'Speaking '+result.level+' · +'+verdict.points+' points. Model: '+item.en:
-      acceptedAlternative?'Another correct way: '+item.en:
-      correct?'Good job!':'Correct sentence: '+item.en;
-    $('answerNote').hidden=false;
+    if(mode==='unscramble'){
+      rec.showFeedback({
+        correct,correctAnswer:[item.en],
+        message:correct?'잘했어요!':'다음에 한 번 더 연습해요.'
+      });
+      $('answerNote').hidden=true;
+    }else{
+      // Coach and Speaking: a single clean answer box. Keep the recorded
+      // 4/3/2/0 score and pass status, but don't print scoring commentary.
+      rec.showFeedback({correct,correctAnswer:[item.en]});
+      const feedback=rec.host?.querySelector('[data-feedback]');
+      if(feedback){
+        const label=document.createElement('strong');
+        label.textContent='정답: ';
+        const answer=document.createElement('span');
+        answer.textContent=item.en;
+        feedback.replaceChildren(label,answer);
+      }
+      $('answerNote').textContent='';
+      $('answerNote').hidden=true;
+    }
     $('action').textContent='Next →';$('action').disabled=false;$('action').classList.add('is-next');
     playStudentSfx(correct||almostRight?'correct':'wrong');
     if(verdict.points>0&&!ctx.preview&&!ctx.homework){
