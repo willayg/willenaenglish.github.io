@@ -11,7 +11,7 @@ import {capturePointOrigin,showPointAward} from '/students/components/student-po
 import {checkOrder} from './scoring.js?v=sg-coach-gold-v3';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
 import {usableAlternatives} from './ai-grading.js?v=sg-phase3b';
-import {gradeSpeaking} from '/students/shared/speaking-smart-grade.js?v=20261111-2';
+import {gradeSpeaking} from '/students/shared/speaking-smart-grade.js?v=20261111-3';
 
 const $=id=>document.getElementById(id);
 const titles={coach:'코치',unscramble:'문장 배열',speaking:'말하기'};
@@ -128,11 +128,19 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
   }
   function updateSpeakingPreview(alternatives){
     const item=current();if(!item||answered||mode==='unscramble')return;
-    const grade=gradeSpeaking(item.en,alternatives,{mode:'sentence'});
+    // Coach and Speaking show the same preview verdict as Check Answer.
+    const candidates=usableAlternatives(alternatives,item.en);
+    const grade=gradeSpeaking(item.en,candidates,{mode:'sentence'});
+    if(candidates.length&&matchSentence(item.en,candidates,item.gradingContext).correct){
+      grade.points=4;grade.level='green';grade.correct=true;
+    }
     const node=renderer?.host?.querySelector('[data-speaking-transcript]');
     if(!node)return;
     const palette={green:['#168345','#77c99a'],lime:['#719D19','#B5DB70'],yellow:['#A87C07','#F1D079'],red:['#cf304c','#efa4ae']};
-    const [color,border]=palette[grade.level];node.style.color=color;node.style.borderColor=border;
+    const [color,border]=palette[grade.level];
+    node.style.setProperty('color',color,'important');
+    node.style.setProperty('border-color',border,'important');
+    node.style.setProperty('background-color',({green:'#ebfff2',lime:'#f0fbd7',yellow:'#fff8da',red:'#fff0f2'})[grade.level],'important');
     node.dataset.accepted=grade.level==='green'?'true':grade.level;
   }
   function queueRetry(row){
