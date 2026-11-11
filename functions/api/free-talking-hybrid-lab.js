@@ -365,19 +365,20 @@ export async function onRequestPost({request,env}){
    };
    const validTurns=new Set(students.map(x=>Number(x.turn_number)));
    let verdict=null,all=null,lastReviewProblem='Review service unavailable';
-   for(let reviewAttempt=0;reviewAttempt<2;reviewAttempt++){
+   // ONE upstream evaluation attempt per Cloudflare request.
+   // The browser owns retries in separate HTTP requests so a slow model
+   // cannot exhaust the gateway's response lifetime.
+   for(let reviewAttempt=0;reviewAttempt<1;reviewAttempt++){
     try{
      const review=await fetch('https://api.openai.com/v1/responses',{
       method:'POST',
       headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
       body:JSON.stringify({
        model:'gpt-6-luna',reasoning:{effort:'none'},max_output_tokens:1600,store:false,
-       text:{format:reviewAttempt===0
-        ?{type:'json_schema',name:'willena_eight_turn_review',strict:true,schema:reviewSchema}
-        :{type:'json_object'}},
+       text:{format:{type:'json_schema',name:'willena_eight_turn_review',strict:true,schema:reviewSchema}},
        instructions,input:[{role:'user',content:JSON.stringify({level:reviewLevel,transcript})}]
       }),
-      signal:AbortSignal.timeout(reviewAttempt===0?23000:20000)
+      signal:AbortSignal.timeout(20000)
      });
      if(!review.ok){
       const failure=await review.json().catch(()=>null);
