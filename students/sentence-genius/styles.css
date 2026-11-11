@@ -119,3 +119,28 @@ button.sg-sim-entry:disabled{cursor:default;opacity:.65}
 .sg-assigned-bar i{display:block;height:100%;background:#34a5b1;border-radius:30px;transition:width .18s ease}
 .sg-assigned-card.is-complete{border-color:#99dabb;background:#f6fff9}
 .sg-assigned-card.is-complete .sg-assigned-progress-label{color:#218055}
+
+/* Compact Korean accuracy bar above the standard session reward. */
+.sg-finish-accuracy{
+  margin:24px auto 22px;
+  padding:20px 22px;
+  max-width:580px;
+  border:1.5px solid #d2eef0;
+  border-radius:20px;
+  background:#f6fcfc;
+  text-align:left;
+}
+.sg-finish-accuracy-heading{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  color:#285f67;font:850 1.1rem Poppins,system-ui,sans-serif;
+}
+.sg-finish-accuracy-heading span{color:#269fa5;font-size:1.5rem;font-weight:900}
+.sg-finish-accuracy-track{
+  height:19px;background:#dcebed;border-radius:999px;
+  margin-top:13px;overflow:hidden;
+}
+.sg-finish-accuracy-fill{
+  height:100%;border-radius:inherit;
+  background:linear-gradient(90deg,#69d4d9 0%,#68cba7 54%,#abd85b 100%);
+  transition:width .45s ease;
+}
