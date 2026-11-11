@@ -63,7 +63,9 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
    const a=aligned(expected,heard);
    const required=expected.filter(w=>!LIGHT.has(w));
    const recognized=required.filter(w=>heard.some(h=>compatible(w,h))).length;
-   const criticalSafe=[...new Set([...expected,...heard])].every(w=>!CRITICAL.has(w)||expected.filter(x=>x===w).length===heard.filter(x=>x===w).length);
+   // A dropped sequence marker can earn yellow when the other words are clear;
+   // an opposite marker (first -> last) remains protected below.
+   const criticalSafe=[...new Set([...expected,...heard])].every(w=>['first','last'].includes(w)||!CRITICAL.has(w)||expected.filter(x=>x===w).length===heard.filter(x=>x===w).length);
    const meaningful=required.length?recognized/required.length:0;
    const missing=expected.length-a.matched,extra=heard.length-a.matched;
    const inOrder=(()=>{let next=0;for(const token of expected){let found=-1;for(let j=next;j<heard.length;j++)if(compatible(token,heard[j])){found=j;break}if(found<0)return false;next=found+1;}return true})();
