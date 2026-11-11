@@ -265,11 +265,22 @@ body .frame.v1{--accent:#19aabb;--accent2:#ce5aa0;--surface:linear-gradient(115d
  .appbox.grammar-card .grammar-brain-icon{width:94px;height:94px;margin-bottom:12px}
  .footer{align-items:center}
 }
+
+/* Consultation links, matching Willena pink/cyan UI. */
+.frame.v1 .nav .contact-link{background:#d65598;color:#fff}
+.frame.v1 .nav .contact-link:hover{background:#be4488}
+.frame.v1 .outro .herobutton{background:#18aabc}
+@media(max-width:700px){
+ .frame.v1 .sitehead{flex-wrap:nowrap}
+ .frame.v1 .sitehead .nav{gap:4px}
+ .frame.v1 .sitehead .nav a{font-size:10px;padding:9px 7px}
+ .frame.v1 .sitehead .nav .contact-link{background:#d65598;color:white}
+}
 </style></head>
 <body>
 
 <div class="frame v1" id="frame">
-<header class="sitehead"><a href="https://www.willenaenglish.com/"><img class="logo" src="/Assets/Images/color-logo.png" alt="Willena"></a><nav class="nav"><a href="#about">About Willena</a><a class="student" href="https://students.willenaenglish.com/students/dashboard">Student Login ↗</a><a class="teacher" href="/Teachers/signin.html">Teacher Login ↗</a></nav></header>
+<header class="sitehead"><a href="https://www.willenaenglish.com/"><img class="logo" src="/Assets/Images/color-logo.png" alt="Willena"></a><nav class="nav"><a href="#about">About Willena</a><a class="student" href="https://students.willenaenglish.com/students/dashboard">Student Login ↗</a><a class="contact-link" href="/contact/">문의하기 ↗</a><a class="teacher" href="/Teachers/signin.html">Teacher Login ↗</a></nav></header>
 <section class="hero" aria-label="Four slide image carousel"><div class="hero-copy"><div class="eyebrow" id="heroLabel">WILLENA ENGLISH · APP SHOWCASE</div><h1 id="headline">Learning that<br><em>goes further.</em></h1><p id="heroText">단어부터 문장, 말하기까지. 윌레나 Genius 학습 앱을 만나보세요.</p><div class="social"><a href="https://blog.naver.com/willena_english" title="Naver Blog" aria-label="Naver Blog" target="_blank" rel="noopener">N</a><a href="https://www.youtube.com/@WillayG" title="YouTube" aria-label="YouTube" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4"></rect><path d="m10 9 5 3-5 3z" fill="currentColor" stroke="none"></path></svg></a><a href="https://www.instagram.com/willena_academy" title="Instagram" aria-label="Instagram" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle></svg></a><a href="https://pf.kakao.com/_xbTxnen?from=qr" title="Kakao Channel" aria-label="Kakao Channel" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 3C6.3 3 2 6.5 2 11c0 2.8 1.8 5.3 4.7 6.7L6 21l4.5-2.4c.5.1 1.1.1 1.5.1 5.6 0 10-3.5 10-7.7C22 6.5 17.6 3 12 3z" stroke="none" fill="currentColor"></path></svg></a></div>
 <a href="#journey" class="herobutton">Our Learning Journey ↗</a>
 </div><div class="hero-visual" id="swipeArea"><div class="apps" id="visual"></div></div><div class="slidecontrols"><button class="arrow" id="prev" aria-label="Previous slide">‹</button><div class="dots" id="dots"></div><button class="arrow" id="next" aria-label="Next slide">›</button></div></section>
@@ -278,7 +289,7 @@ body .frame.v1{--accent:#19aabb;--accent2:#ce5aa0;--surface:linear-gradient(115d
 <div class="story-grid"><article class="story"><img src="/Assets/Images/willena-one-to-one-tutoring.webp" alt="One-to-one guidance" loading="lazy"><div><h3>Real Conversation</h3><p>원어민 선생님과 함께 자신 있게 말하고 질문하는 수업입니다.</p></div></article><article class="story"><img src="/Assets/Images/willena-library-classroom.webp" alt="Willena library class" loading="lazy"><div><h3>Reading & Discovery</h3><p>다양한 영어책을 통해 읽기, 사고력과 표현력을 함께 키웁니다.</p></div></article><article class="story"><img src="/Assets/Images/willena-student-presentations.webp" alt="Student presentation" loading="lazy"><div><h3>Creative Expression</h3><p>프로젝트와 발표 활동으로 자신의 이야기를 영어로 표현합니다.</p></div></article></div></section>
 <section class="section journey" id="journey"><div class="eyebrow">WILLENA · 10-STEP CEFR LINKED CURRICULUM</div><h2 id="journeyTitle">Every step counts.<br>영어 성장 여정</h2><p class="lead">레벨 테스트의 진행 경로처럼 연결된 10개의 단계입니다. 원을 누르면 과정별 내용을 볼 수 있습니다. 마지막 두 단계는 매우 높은 수준의 학생을 위한 심화 과정입니다.</p><div class="path" id="path"></div><p class="levelnote">CEFR 표기는 교재와 수업 난이도의 안내용 연계 수준이며, 공식 CEFR 인증이나 학생별 공인 성적을 뜻하지 않습니다.</p></section>
 <section class="section apps-section" id="apps"><div class="eyebrow">WILLENA GENIUS APPS</div><h2>Learn · Practice · Grow</h2><p class="lead">교실 안에서 배운 내용을 집에서도 연습할 수 있도록 만든 윌레나의 자체 학습 앱입니다.</p><div class="app-list" id="appList"></div></section>
-<section class="section outro"><div class="eyebrow">A NEW CHAPTER IN ENGLISH</div><h2>Find your voice at Willena.</h2><p>아이의 첫 영어부터 자신감 있는 표현까지 함께합니다.</p><a class="herobutton" href="#about">윌레나 알아보기 ↗</a></section>
+<section class="section outro"><div class="eyebrow">A NEW CHAPTER IN ENGLISH</div><h2>Find your voice at Willena.</h2><p>아이의 첫 영어부터 자신감 있는 표현까지 함께합니다.</p><a class="herobutton" href="/contact/">상담 문의하기 ↗</a></section>
 </main><footer class="footer"><span>윌레나 원어민 영어학원 · Willena English Academy</span><span>문의 전화: <a href="tel:03180422203" aria-label="윌레나 영어학원 전화 031-8042-2203">031-8042-2203</a></span><span>Listening · Speaking · Reading · Writing</span></footer>
 </div>
 <script>
