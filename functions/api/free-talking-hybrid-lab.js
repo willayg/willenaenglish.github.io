@@ -377,7 +377,7 @@ export async function onRequestPost({request,env}){
         :{type:'json_object'}},
        instructions,input:[{role:'user',content:JSON.stringify({level:reviewLevel,transcript})}]
       }),
-      signal:AbortSignal.timeout(45000)
+      signal:AbortSignal.timeout(reviewAttempt===0?23000:20000)
      });
      if(!review.ok){
       const failure=await review.json().catch(()=>null);
@@ -416,7 +416,10 @@ export async function onRequestPost({request,env}){
      console.warn('[Free Talking] review request failed',sessionId,String(err));
     }
    }
-   if(!verdict||!all)return json(502,{error:lastReviewProblem+'. Tap Try review again; your transcript is still saved.'});
+   if(!verdict||!all){
+    console.error('[Free Talking] review unsuccessful',sessionId,lastReviewProblem);
+    return json(502,{error:lastReviewProblem+'. Tap Try review again; your transcript is still saved.'});
+   }
    const already=new Set(credited.map(x=>150-Number(x.turn_number)));
    const stamp=Date.now(),credits=[];
    for(const row of students){
