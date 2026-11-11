@@ -1,0 +1,26 @@
+/* Native Admin V2 enquiries view */
+#view-enquiries .enq-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 15px}
+#view-enquiries .enq-toolbar input{flex:1;min-width:175px}
+#view-enquiries .enq-toolbar select{min-width:135px}
+#view-enquiries .enq-columns{display:grid;grid-template-columns:minmax(250px,.85fr) minmax(290px,1.15fr);gap:15px}
+#view-enquiries .enq-panel{background:#fff;border:1px solid #dfe8eb;border-radius:15px;min-width:0;padding:12px;min-height:365px}
+#view-enquiries .enq-list{max-height:650px;overflow:auto}
+#view-enquiries .enq-row{width:100%;display:block;text-align:left;border:1px solid transparent;border-bottom-color:#edf0f3;border-radius:9px;background:white;padding:13px;color:#302b41;cursor:pointer}
+#view-enquiries .enq-row:hover,#view-enquiries .enq-row.active{background:#eaf8fa;border-color:#c4eced}
+#view-enquiries .enq-row strong{font-size:15px}
+#view-enquiries .enq-row small{display:block;font-size:12px;color:#727b84;margin:4px 0}
+#view-enquiries .enq-row .preview{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;color:#777}
+#view-enquiries .enq-badge{display:inline-block;margin-left:8px;border-radius:14px;padding:4px 9px;background:#e5f2f3;color:#227b84;font-size:11px;font-weight:800}
+#view-enquiries .enq-badge.new{background:#fce1ef;color:#b22e75}
+#view-enquiries .enq-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+#view-enquiries .enq-meta div{padding:11px;border-radius:10px;background:#f5f9fa;overflow-wrap:anywhere}
+#view-enquiries .enq-meta small{display:block;color:#75818d;font-size:11px;margin-bottom:4px}
+#view-enquiries .enq-detail-message{padding:15px;border-radius:10px;background:#f6fafb;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75;margin:15px 0}
+#view-enquiries .enq-detail label{display:block;font-size:13px;font-weight:700;margin:15px 0 6px}
+#view-enquiries .enq-detail select,#view-enquiries .enq-detail textarea{display:block;width:100%;padding:12px;border:1px solid #dbe4e7;border-radius:10px;font:inherit;min-height:45px}
+#view-enquiries .enq-detail textarea{min-height:125px;resize:vertical}
+#view-enquiries .enq-detail a{color:#168a98;font-weight:800}
+#view-enquiries .enq-empty{text-align:center;padding:45px 16px;color:#697984}
+#view-enquiries .enq-count{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:23px;border-radius:50%;background:#fce1ef;color:#a6286a;font-size:11px;font-weight:800;margin-left:5px}
+#view-enquiries .enq-feedback{color:#b52d65;font-size:13px;min-height:22px}
+@media(max-width:720px){#view-enquiries .enq-columns{grid-template-columns:1fr}#view-enquiries .enq-list{max-height:330px}#view-enquiries .enq-meta{grid-template-columns:1fr}#view-enquiries .enq-toolbar select{max-width:100%;flex:1}}
