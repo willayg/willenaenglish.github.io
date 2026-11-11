@@ -10,383 +10,119 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
   <script src="students/language.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:'Poppins','Gowun Dodum',sans-serif;background:#fff;color:#302b41;overflow-x:hidden}
+    .willena-header{min-height:82px;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:10px clamp(18px,5vw,78px);background:#fff;border-bottom:1px solid #eeeef2}
+    .willena-logo{height:59px;max-width:165px;object-fit:contain;display:block}
+    .willena-nav{display:flex;gap:12px;align-items:center}
+    .willena-nav a{text-decoration:none;color:#332e42;font-weight:700;font-size:14px;display:inline-flex;align-items:center;justify-content:center;min-height:43px;padding:10px 18px;border-radius:28px;white-space:nowrap}
+    .willena-nav a.about-link:hover{background:#f7f4fa}
+    .willena-nav a.student-link{background:#2e2b3f;color:#fff}
+    .willena-nav a.teacher-link{background:#eeeafa;color:#302b41}
+    .willena-nav a:focus-visible,.hero-nav button:focus-visible,.hero-dots button:focus-visible{outline:3px solid #11aec1;outline-offset:3px}
+    .willena-hero{background:linear-gradient(115deg,#fff 0%,#f5fbfc 72%,#eff9fa 100%);padding:clamp(35px,6vw,88px) clamp(22px,7vw,110px) 35px}
+    .hero-layout{max-width:1450px;margin:auto;display:grid;grid-template-columns:1fr 1.08fr;gap:clamp(20px,4vw,70px);align-items:center;min-height:430px}
+    .hero-overline{font-size:12px;letter-spacing:.14em;color:#cc4b92;font-weight:800;margin-bottom:22px}
+    .hero-content h1{font-size:clamp(42px,5.2vw,83px);line-height:1.08;letter-spacing:-.055em;font-weight:800;max-width:720px;margin:0 0 22px;color:#2f2b40}
+    .hero-content p{font-size:clamp(15px,1.6vw,19px);line-height:1.75;color:#787381;min-height:2em;margin:0 0 28px;word-break:keep-all}
+    .hero-cta{background:#1ba9bc;text-decoration:none;color:white;display:inline-flex;align-items:center;min-height:53px;padding:13px 25px;border-radius:30px;font-weight:700;box-shadow:0 7px 15px #1ba9bc18}
+    .hero-cta:hover{background:#118b9c}
+    .hero-art{height:370px;position:relative;display:flex;align-items:center;justify-content:center;min-width:0;touch-action:pan-y;isolation:isolate}
+    .hero-art:before{content:"";position:absolute;background:#e2f4ff;border-radius:50%;width:min(71%,355px);aspect-ratio:1;z-index:-1}
+    .hero-visual{width:100%;height:100%;display:flex;align-items:center;justify-content:center;gap:12px;transition:opacity .25s}
+    .app-icon-strip{display:flex;gap:clamp(7px,1vw,16px);align-items:center;justify-content:center;width:100%}
+    .app-icon-strip img{width:clamp(57px,7.3vw,110px);height:clamp(57px,7.3vw,110px);border-radius:25%;background:white;border:1px solid #e8eaee;padding:13px;object-fit:contain;box-shadow:0 12px 28px #18112a0f}
+    .app-icon-strip img:nth-child(2){transform:translateY(-18px)}
+    .app-icon-strip img:nth-child(4){transform:translateY(16px)}
+    .hero-photo{width:min(100%,525px);height:335px;border-radius:34px;object-fit:cover;box-shadow:0 15px 30px #1a26301d;background:#f5eff7}
+    .hero-picture-caption{position:absolute;left:10%;bottom:7px;font-weight:700;font-size:12px;padding:9px 16px;background:#fffdf8;border-radius:25px;box-shadow:0 5px 15px #302a3714}
+    .hero-slider-controls{max-width:1450px;margin:4px auto 0;display:flex;justify-content:flex-end;align-items:center;gap:14px}
+    .hero-nav{display:flex;gap:7px}.hero-nav button{border:1px solid #dce4eb;border-radius:50%;height:39px;width:39px;background:#fff;color:#302b41;font-size:24px;cursor:pointer;line-height:1}
+    .hero-dots{display:flex;gap:8px;align-items:center}
+    .hero-dots button{height:9px;width:9px;border:0;background:#cbd9e0;border-radius:9px;cursor:pointer;padding:0;transition:width .2s ease}
+    .hero-dots button[aria-current="true"]{width:28px;background:#d35e9e}
+    .hero-footer-note{color:#817a89;font-size:12px;margin-right:auto}
+    .program-stages-section{display:flex;flex-direction:column;align-items:center;padding:0}
+    .program-image-section,.stages-image-section{text-align:center;padding:0}
+    .program-image-section img,.stages-image-section img{max-width:100%;height:auto}
+    @media(min-width:1025px){
+      .program-stages-section{flex-direction:row;justify-content:center;gap:50px}
+      .program-image-section img,.stages-image-section img{max-width:300px;height:auto}
     }
-
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #2e2b3f;
-      color: white;
-      min-height: 100vh;
-      position: relative;
-      overflow-y: auto; /* Ensures vertical scrolling is enabled */
+    @media(max-width:900px){
+      .willena-header{padding:10px 24px}
+      .hero-layout{min-height:390px;gap:12px}
+      .hero-art{height:295px}
+      .hero-photo{height:265px}
+      .hero-content h1{font-size:clamp(39px,6vw,61px)}
+      .app-icon-strip img{padding:8px;border-radius:20px}
     }
-
-    .header-bar {
-      background-color: #2e2b3f;
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid #4a4763;
-      position: relative;
-      height: 70px; 
+    @media(max-width:650px){
+      .willena-header{padding:9px 15px;gap:8px;min-height:69px}
+      .willena-logo{height:45px;max-width:105px}
+      .willena-nav{gap:5px}
+      .willena-nav a{font-size:11px;min-height:38px;padding:8px 9px}
+      .willena-nav a.about-link{display:none}
+      .willena-hero{padding:25px 20px 24px}
+      .hero-layout{display:flex;flex-direction:column-reverse;align-items:stretch;min-height:0;gap:13px}
+      .hero-art{height:227px}
+      .hero-art:before{width:218px}
+      .hero-photo{height:215px;width:100%;max-width:350px;border-radius:23px}
+      .app-icon-strip{gap:7px}
+      .app-icon-strip img{width:clamp(49px,15vw,76px);height:clamp(49px,15vw,76px);padding:8px;border-radius:18px}
+      .hero-overline{font-size:10px;margin-bottom:10px}
+      .hero-content h1{font-size:clamp(39px,10.5vw,53px);margin-bottom:12px}
+      .hero-content p{font-size:14px;margin-bottom:17px;line-height:1.65}
+      .hero-cta{font-size:13px;min-height:44px;padding:10px 19px}
+      .hero-slider-controls{margin-top:18px}
+      .hero-footer-note{display:none}
+      .hero-picture-caption{left:4%;bottom:0}
     }
-
-    .header-bar img {
-      height: 80px; /* 70% bigger than original 40px */
+    @media(max-width:355px){
+      .willena-logo{max-width:83px}
+      .willena-nav a{font-size:10px;padding:7px 6px}
+      .app-icon-strip img{width:46px;height:46px}
     }
-
-    .burger-menu {
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .burger-line {
-      width: 25px;
-      height: 3px;
-      background-color: white;
-      transition: 0.3s;
-    }
-
-    .menu-dropdown {
-      position: absolute;
-      top: 100%;
-      right: 20px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      min-width: 180px;
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(-10px);
-      transition: all 0.3s ease;
-      z-index: 1000;
-    }
-
-    .menu-dropdown.show {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
-    }
-
-    .menu-item {
-      display: block;
-      padding: 12px 16px;
-      color: #2e2b3f;
-      text-decoration: none;
-      font-weight: 600;
-      transition: background-color 0.2s;
-    }
-
-    .menu-item:hover {
-      background-color: #f0f0f0;
-    }
-
-    .menu-item:first-child {
-      border-radius: 8px 8px 0 0;
-    }
-
-    .menu-item:last-child {
-      border-radius: 0 0 8px 8px;
-    }
-
-    .hero-section {
-      height: 45vh;
-      background-image: url('Assets/Images/Moon.jpg');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      position: relative; /* Added to position sparkles within the hero section */
-    }
-
-    /* Desktop: Use Girls.jpg */
-    @media (min-width: 1025px) {
-      .hero-section {
-        background-color: white;
-        height: 75vh; /* Set height to 75% for desktop */
-        background-image: url('Assets/Images/Girls.jpg');
-        background-size: contain;
-        background-position: center;
-        background-repeat: no-repeat;
-      }
-
-      .desktop-buttons {
-        display: flex !important; /* Ensure buttons are displayed */
-        opacity: 1 !important; /* Make buttons fully visible */
-        transform: none !important; /* Reset any transform applied by AOS */
-        justify-content: center; /* Center the buttons horizontally */
-        gap: 20px; /* Add spacing between buttons */
-        margin-top: 20px; /* Add some margin above the buttons */
-      }
-
-      .desktop-button {
-        padding: 15px 30px; /* Add padding for button size */
-        font-size: 1.5rem; /* Adjust font size */
-        font-weight: bold; /* Make text bold */
-        color: white; /* Button text color */
-        background-color: #4a4763; /* Button background color */
-        border: none; /* Remove border */
-        border-radius: 8px; /* Add rounded corners */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Add shadow for depth */
-        cursor: pointer; /* Change cursor to pointer */
-        transition: background-color 0.3s ease;
-        width: 170px; /* Set all buttons to a fixed width of 170px */
-      }
-
-      .desktop-button:hover {
-        background-color: #6b5b95; /* Change background color on hover */
-
-      }
-
-      .desktop-buttons [data-aos] {
-        animation: none !important; /* Disable animations */
-        opacity: 1 !important; /* Ensure buttons are visible */
-        transform: none !important; /* Reset any transform applied by AOS */
-      }
-
-      .program-image-section img,
-      .stages-image-section img {
-        max-width: 80% !important; /* Ensure desktop styles take precedence */
-        height: auto;
-      }
-    }
-
-    .grid-section {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: 4px;
-      margin-bottom: 10px;
-      margin-top: 10px;
-      height: 45vh; /* Define the height of the button section */
-    }
-
-    .grid-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-size: clamp(1.2rem, 5vw, 2.5rem);
-      font-weight: 700;
-      text-decoration: none;
-      color: rgba(0, 0, 0, 0.7); /* Slightly darker version of button color */
-      text-shadow: 0 0 16px rgba(255, 255, 255, 1); /* Make glow more dramatic */
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      background-color: #2e2b3f;
-      border: 3px solid #2e2b3f;
-      padding: 10px;
-    }
-
-    .grid-item:hover {
-      transform: scale(1.02);
-      filter: brightness(1.1);
-      border-color: #4a4763;
-    }
-
-    .play-section {
-      background: linear-gradient(135deg, #6b5b95, #8e7cc3);
-      grid-row: 1 / 3;
-      font-size: clamp(2.5rem, 15vw, 12rem);
-      text-shadow: 0 0 24px rgba(255, 255, 255, 1); /* Stronger glow for Play button */
-    }
-
-    .about-section {
-      background: linear-gradient(135deg, #d291bc, #e6a8d0);
-      color: rgba(0, 0, 0, 0.7); /* Slightly darker version of button color */
-      text-shadow: 0 0 16px rgba(255, 255, 255, 1); /* Dramatic glow for About Willena */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-
-    .teachers-section {
-      background: linear-gradient(135deg, #88d8c0, #7fcdcd);
-      color: rgba(0, 0, 0, 0.7); /* Slightly darker version of button color */
-      text-shadow: 0 0 16px rgba(255, 255, 255, 1); /* Dramatic glow for Teachers */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    @media (max-width: 768px) {
-      .grid-item {
-        font-size: clamp(1.1rem, 4vw, 1.8rem);
-        text-shadow: 0 0 16px rgba(255, 255, 255, 1); /* Make text glow more dramatic */
-        padding: 8px;
-        text-align: center;
-      }
-
-      .play-section {
-        font-size: clamp(2rem, 12vw, 3rem);
-        text-shadow: 0 0 24px rgba(255, 255, 255, 1); /* Stronger glow for Play button */
-      }
-
-      .about-section {
-        display: flex;
-        align-items: center;
-        justify-content: center; /* Vertically center About Willena */
-      }
-
-      .program-image-section img,
-      .stages-image-section img {
-        width: 100vw; /* Make images fit the screen width */
-        height: auto; /* Maintain aspect ratio */
-        object-fit: contain; /* Ensure the entire image is visible */
-      }
-    }
-
-    @media (max-width: 480px) {
-      .logo-circle {
-        width: 120px;
-        height: 120px;
-      }
-
-      .logo-circle img {
-        width: 80px;
-      }
-
-      .grid-item {
-        font-size: clamp(0.9rem, 3vw, 1.4rem);
-        padding: 6px;
-        text-align: center;
-      }
-
-      .play-section {
-        font-size: clamp(1.5rem, 10vw, 2.5rem);
-      }
-    }
-
-    @keyframes sparkle {
-      0% {
-        transform: scale(0.5);
-        opacity: 0;
-      }
-      50% {
-        transform: scale(1);
-        opacity: 1;
-      }
-      100% {
-        transform: scale(0.5);
-        opacity: 0;
-      }
-    }
-
-    .sparkle {
-      position: absolute;
-      width: 5px;
-      height: 5px;
-      background-color: white;
-      border-radius: 50%;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-      animation: sparkle 2s infinite ease-in-out;
-    }
-
-    .hero-section .sparkle {
-      /* Restrict sparkles to the top 45% of the hero section */
-      top: calc(45% * var(--random-y));
-      left: calc(100% * var(--random-x));
-    }
-
-    @media (min-width: 1025px) {
-      .sparkle {
-        display: none; /* Remove stars on desktop */
-      }
-
-      .grid-section {
-        display: none; /* Hide existing buttons on desktop */
-      }
-
-      .desktop-buttons {
-        display: flex !important; /* Ensure buttons are displayed */
-        opacity: 1 !important; /* Make buttons fully visible */
-        transform: none !important; /* Reset any transform applied by AOS */
-        justify-content: center; /* Center the buttons horizontally */
-        gap: 20px; /* Add spacing between buttons */
-        margin-top: 20px; /* Add some margin above the buttons */
-      }
-
-      .desktop-button {
-        padding: 15px 30px; /* Add padding for button size */
-        font-size: 1.5rem; /* Adjust font size */
-        font-weight: bold; /* Make text bold */
-        color: white; /* Button text color */
-        background-color: #4a4763; /* Button background color */
-        border: none; /* Remove border */
-        border-radius: 8px; /* Add rounded corners */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Add shadow for depth */
-        cursor: pointer; /* Change cursor to pointer */
-        transition: background-color 0.3s ease;
-        width: 240px; /* Set all buttons to a fixed width of 170px */
-      }
-
-      .desktop-button:hover {
-        background-color: #6b5b95; /* Change background color on hover */
-      }
-
-      .program-stages-section {
-        flex-direction: row;
-        justify-content: center;
-        gap: 50px;
-      }
-
-      .program-image-section img,
-      .stages-image-section img {
-        max-width: 300px; /* Reduced from 40% to 32% */
-        height: auto;
-      }
-    }
-
-    @media (max-width: 1024px) {
-      .desktop-buttons {
-        display: none; /* Hide desktop buttons on mobile */
-      }
-    }
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.hero-visual,.hero-dots button{transition:none}}
   </style>
 </head>
 <body>
-  <div class="header-bar">
-    <img src="Assets/Images/Logo.png" alt="Willena Logo">
-    <div class="burger-menu" onclick="toggleMenu()">
-      <div class="burger-line"></div>
-      <div class="burger-line"></div>
-      <div class="burger-line"></div>
+  <!-- New Willena header and hero; content below Picasso quote intentionally preserved -->
+  <header class="willena-header">
+    <a href="/" aria-label="Willena English Academy"><img class="willena-logo" src="Assets/Images/color-logo.png" alt="Willena English Academy" onerror="this.src='Assets/Images/Logo.png'"></a>
+    <nav class="willena-nav" aria-label="Main navigation">
+      <a class="about-link" href="#aboutWillenaSection">About Willena</a>
+      <a class="student-link" href="https://students.willenaenglish.com/students/dashboard">Student Login ↗</a>
+      <a class="teacher-link" href="Teachers/signin.html">Teacher Login ↗</a>
+    </nav>
+  </header>
+  <section class="willena-hero" aria-label="Willena homepage highlights">
+    <div class="hero-layout">
+      <div class="hero-content" aria-live="polite">
+        <div class="hero-overline" id="heroOverline">WILLENA ENGLISH · APP SHOWCASE</div>
+        <h1 id="heroHeadline">Learning that<br>goes further.</h1>
+        <p id="heroDescription">단어부터 문장, 말하기까지. 윌레나의 Genius 학습 앱을 만나보세요.</p>
+        <a class="hero-cta" id="heroCta" href="#aboutWillenaSection">Explore Willena ↗</a>
+      </div>
+      <div class="hero-art" id="heroSwipeZone">
+        <div class="hero-visual" id="heroVisual" aria-label="Willena Genius learning apps">
+          <div class="app-icon-strip">
+            <img src="students/assets/icons/word-genius.svg" alt="Word Genius">
+            <img src="students/assets/icons/sentence-genius.svg" alt="Sentence Genius">
+            <img src="students/assets/icons/free-talking-bunny-fox.svg" alt="Free Talking Genius">
+            <img src="students/assets/icons/puzzles.svg" alt="Puzzles">
+            <img src="students/assets/icons/writing-genius.svg" alt="Writing Genius">
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="menu-dropdown" id="menuDropdown">
-      <a href="students/signin.html" class="menu-item">로그인</a>
-      <a href="Teachers/signup.html" class="menu-item">선생님 회원가입</a>
-      <a href="Teachers/signin.html" class="menu-item">선생님 로그인</a>
+    <div class="hero-slider-controls">
+      <span class="hero-footer-note">Listening · Speaking · Reading · Writing</span>
+      <div class="hero-dots" id="heroDots" aria-label="Choose a slide"></div>
+      <div class="hero-nav"><button id="heroPrev" aria-label="Previous image">‹</button><button id="heroNext" aria-label="Next image">›</button></div>
     </div>
-  </div>
-
-  <div class="hero-section" data-aos="fade" data-aos-delay="200">
-  </div>
-
-  <div class="grid-section" data-aos="fade" data-aos-delay="400">
-    <a href="https://students.willenaenglish.com/students/dashboard" class="grid-item play-section" data-aos="fade" data-aos-delay="600" data-i18n="Students">
-      Students
-    </a>
-    <a href="#aboutWillenaSection" class="grid-item about-section" data-aos="fade" data-aos-delay="800">
-      About<br>Willena
-    </a>
-    <a href="Teachers/signin.html" class="grid-item teachers-section" data-aos="fade" data-aos-delay="1000">
-      Teacher Login
-    </a>
-  </div>
-
-  <div class="desktop-buttons" data-aos="fade" data-aos-delay="1200">
-    <button class="desktop-button" onclick="location.href='https://students.willenaenglish.com/students/dashboard'" data-aos="fade" data-aos-delay="1400" data-i18n="Students">Students</button>
-    <button class="desktop-button" onclick="location.href='#aboutWillenaSection'" data-aos="fade" data-aos-delay="1600">About Willena</button>
-    <button class="desktop-button" onclick="location.href='Teachers/signin.html'" data-aos="fade" data-aos-delay="1800">Teacher Login</button>
-  </div>
+  </section>
 
   <!-- Picasso Quote Section -->
   <div class="quote-section" style="background: rgb(253, 253, 247); color: #2e2b3f; padding: 140px 20px; text-align: center; height: 200%;" data-aos="fade-up">
@@ -435,44 +171,56 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      AOS.init({
-        duration: 800, // Animation duration in milliseconds
-        easing: 'ease-in-out', // Easing function
-        once: false, // Allow animations to trigger on both scroll down and up
-      });
-    });
-
-    function toggleMenu() {
-      const dropdown = document.getElementById('menuDropdown');
-      dropdown.classList.toggle('show');
-    }
-
-    // Close menu when clicking outside
-    document.addEventListener('click', function(event) {
-      const burgerMenu = document.querySelector('.burger-menu');
-      const dropdown = document.getElementById('menuDropdown');
-      
-      if (!burgerMenu.contains(event.target) && !dropdown.contains(event.target)) {
-        dropdown.classList.remove('show');
+  document.addEventListener('DOMContentLoaded', function () {
+    if(window.AOS) AOS.init({duration:700,easing:'ease-in-out',once:true});
+    const slides = [
+      {kind:'apps',overline:'WILLENA ENGLISH · APP SHOWCASE',headline:'Learning that<br>goes further.',text:'단어부터 문장, 말하기까지. 윌레나의 Genius 학습 앱을 만나보세요.',button:'Explore Willena ↗',href:'#aboutWillenaSection'},
+      {kind:'photo',image:'Assets/Images/Girls.jpg',alt:'Willena English academy students',overline:'WILLENA ENGLISH · OUR ACADEMY',headline:'English comes<br>alive.',text:'아이들의 자신감과 가능성을 키워가는 즐거운 영어 수업.',button:'About Willena ↗',href:'#aboutWillenaSection'},
+      {kind:'photo',image:'Assets/Images/LibraryInner.jpg',alt:'Willena library',overline:'WILLENA ENGLISH · DISCOVER',headline:'Read. Speak.<br>Grow.',text:'읽고, 듣고, 말하고, 쓰는 활동을 통해 영어를 자연스럽게 배웁니다.',button:'Our Program ↗',href:'#aboutWillenaSection'},
+      {kind:'photo',image:'Assets/Images/Play.jpg',alt:'Willena learning activities',overline:'WILLENA ENGLISH · LEARNING TOGETHER',headline:'A place to<br>find your voice.',text:'친구들과 함께 배우며 영어로 자신의 생각을 표현해요.',button:'Learn More ↗',href:'#aboutWillenaSection'}
+    ];
+    let active=0, timer=null, startX=null;
+    const visual=document.getElementById('heroVisual');
+    const dots=document.getElementById('heroDots');
+    const overline=document.getElementById('heroOverline');
+    const heading=document.getElementById('heroHeadline');
+    const desc=document.getElementById('heroDescription');
+    const cta=document.getElementById('heroCta');
+    const iconPaths=[
+      ['students/assets/icons/word-genius.svg','Word Genius'],
+      ['students/assets/icons/sentence-genius.svg','Sentence Genius'],
+      ['students/assets/icons/free-talking-bunny-fox.svg','Free Talking Genius'],
+      ['students/assets/icons/puzzles.svg','Puzzles'],
+      ['students/assets/icons/writing-genius.svg','Writing Genius']
+    ];
+    function render(){
+      const s=slides[active];overline.textContent=s.overline;heading.innerHTML=s.headline;desc.textContent=s.text;
+      cta.textContent=s.button;cta.href=s.href;visual.replaceChildren();
+      if(s.kind==='apps'){
+        const strip=document.createElement('div');strip.className='app-icon-strip';
+        iconPaths.forEach(([src,alt])=>{const img=document.createElement('img');img.src=src;img.alt=alt;strip.appendChild(img)});
+        visual.appendChild(strip);
+      }else{
+        const img=document.createElement('img');img.className='hero-photo';img.src=s.image;img.alt=s.alt;
+        img.onerror=()=>{img.onerror=null;img.src='Assets/Images/Girls.jpg'};
+        visual.appendChild(img);
       }
-    });
-
-    function createSparkles() {
-      const sparkleCount = 50;
-      const body = document.body;
-
-      for (let i = 0; i < sparkleCount; i++) {
-        const sparkle = document.createElement('div');
-        sparkle.className = 'sparkle';
-        sparkle.style.top = `${Math.random() * window.innerHeight}px`;
-        sparkle.style.left = `${Math.random() * window.innerWidth}px`;
-        sparkle.style.animationDelay = `${Math.random() * 2}s`;
-        body.appendChild(sparkle);
-      }
+      dots.replaceChildren();
+      slides.forEach((_,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-label','Slide '+(i+1));
+        b.setAttribute('aria-current',String(active===i));b.onclick=()=>go(i);dots.appendChild(b)});
     }
-
-    createSparkles();
+    function go(i){active=(i+slides.length)%slides.length;render();restart()}
+    function restart(){clearInterval(timer);if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)timer=setInterval(()=>{active=(active+1)%slides.length;render()},6000)}
+    document.getElementById('heroPrev').addEventListener('click',()=>go(active-1));
+    document.getElementById('heroNext').addEventListener('click',()=>go(active+1));
+    const swipe=document.getElementById('heroSwipeZone');
+    swipe.addEventListener('touchstart',e=>{startX=e.touches[0].clientX},{passive:true});
+    swipe.addEventListener('touchend',e=>{if(startX!==null){const dx=e.changedTouches[0].clientX-startX;if(Math.abs(dx)>45)go(active+(dx<0?1:-1));startX=null}},{passive:true});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)clearInterval(timer);else restart()});
+    document.querySelector('.willena-hero').addEventListener('mouseenter',()=>clearInterval(timer));
+    document.querySelector('.willena-hero').addEventListener('mouseleave',restart);
+    render();restart();
+  });
   </script>
 </body>
 </html>
