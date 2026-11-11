@@ -42,6 +42,7 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
   else if(mode==='word'&&typeof exactMatcher==='function'){
    const legacy=exactMatcher(target,[raw]);
    if(legacy?.correct&&['homophone','spacing','exact','in_sentence','in_sentence_homophone'].includes(legacy.matchedBy)){score=4;reason=legacy.matchedBy;}
+   else if(legacy?.correct&&['phonetic','singular_plural','final_m_n'].includes(legacy.matchedBy)){score=3;reason='legacy_'+legacy.matchedBy;}
   }
   if(!score){
    const a=aligned(expected,heard);
