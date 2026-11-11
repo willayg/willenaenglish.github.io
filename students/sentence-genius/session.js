@@ -11,7 +11,7 @@ import {capturePointOrigin,showPointAward} from '/students/components/student-po
 import {checkOrder} from './scoring.js?v=sg-coach-gold-v3';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
 import {usableAlternatives} from './ai-grading.js?v=sg-phase3b';
-import {gradeSpeaking} from '/students/shared/speaking-smart-grade.js?v=20261111-3';
+import {gradeSpeaking} from '/students/shared/speaking-smart-grade.js?v=20261111-coverage4';
 
 const $=id=>document.getElementById(id);
 const titles={coach:'코치',unscramble:'문장 배열',speaking:'말하기'};
