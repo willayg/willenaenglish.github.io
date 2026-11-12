@@ -2080,7 +2080,7 @@ async function startConversation(){
   }
   if(!res.ok||(!state.hybrid&&!session.token))throw Error(session.error||'Conversation connection failed');
   state.anchors=Array.isArray(session.lesson?.anchors)?session.lesson.anchors.filter(x=>x.id&&x.text).slice(0,8):[];
-  if(state.hybrid&&!continuing)prepareReviewOutro();
+
   if(!continuing){state.topicCompleted.clear();resetQuestionClock()}else renderTopicTicker();
   if(!state.anchors.length)throw Error('This unit has no published question anchors');
   state.anchorIndex=continuing?Math.min(Math.max(0,state.resumeIndex||0),state.anchors.length-1):Math.floor(Math.random()*state.anchors.length);state.anchorPhase='ready';state.anchorResponding=false;state.anchorResponseText='';state.guidedSessionReady=false;
