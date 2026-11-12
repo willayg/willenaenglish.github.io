@@ -95,12 +95,7 @@ async function standardHomework(){
       }catch(error){entry.detail='진행 상황 확인 중';console.warn('[mission basket] Creative homework evidence unavailable',a.id,error)}
     }
   }
-  if(app==='Free Talking Genius'&&(a.list_meta?.mission_mode==='conversation'||String(a.list_key||'').startsWith('free_talking_conversation:'))){
-   // Conversation uses separately reviewed hybrid contributions, not
-   // structured Speaking attempts. Do not show false 0/8 speaking progress.
-   entry.detail='AI 대화 · Free Talking';
-  }
-  if(app==='Free Talking Genius'&&!(a.list_meta?.mission_mode==='conversation'||String(a.list_key||'').startsWith('free_talking_conversation:'))){
+  if(app==='Free Talking Genius'){
    // Use the real scored speaking attempts only for structured Speaking.
    try{
     const bookId=String(a.list_meta?.book_id||''),unitId=String(a.list_meta?.unit_id||'');
