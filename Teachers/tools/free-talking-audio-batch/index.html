@@ -52,6 +52,7 @@ progress{width:100%;height:14px;accent-color:#40bdcb}
   <button id="run" class="primary" type="button" disabled>Generate Selected Missing MP3s</button>
   <button id="stop" class="danger" type="button" disabled>Stop after current file</button>
  </div>
+ <div class="note" id="failureBanner" role="alert" hidden style="border-color:#e7b3c5;background:#fff3f6;color:#a53660;margin:12px 0"></div>
  <div class="stats">
   <div class="stat"><strong id="total">0</strong><small>Questions</small></div>
   <div class="stat"><strong id="cached">0</strong><small>Already in R2</small></div>
@@ -152,7 +153,7 @@ async function run(){
  // Confirm before potentially spending paid provider credits across all books.
  if(!confirm('Generate '+remaining.length+' missing MP3 recordings with '+[...new Set(remaining.map(j=>labels[j.voice]))].join(', ')+' across '+
   new Set(remaining.map(j=>j.book_id)).size+' book(s)? Existing R2 files will be skipped.'))return;
- busy=true;stopping=false;controls();let successes=0,errors=0;
+ busy=true;stopping=false;controls();let successes=0,errors=0,consecutiveFailures=0;$('failureBanner').hidden=true;
  for(const job of remaining){
   if(stopping)break;
   job.status='generating';render();
@@ -160,10 +161,13 @@ async function run(){
   try{
    const result=await call({action:'generate',question_id:job.id,voice:job.voice});
    if(result.file!==job.file)throw Error('Returned file does not match inventory');
-   job.exists=true;job.selected=false;job.status=result.status;successes++;
+   job.exists=true;job.selected=false;job.status=result.status;successes++;consecutiveFailures=0;
   }catch(e){
-   job.status='failed';job.error=e.message;errors++;
+   job.status='failed';job.error=e.message;errors++;consecutiveFailures++;
+   const banner=$('failureBanner');banner.hidden=false;
+   banner.textContent='Last failure: '+e.message+(consecutiveFailures>=2?' — Batch stopped automatically after 2 consecutive failures. Resolve this error before retrying.':'');
    console.warn('[FT audio batch]',job.id,job.voice,e.message);
+   if(consecutiveFailures>=2){stopping=true;status('Stopped automatically after two consecutive failures: '+e.message)}
   }
   render();
   // One request at a time, wait for R2 verification, then gently pace the next.
@@ -171,7 +175,7 @@ async function run(){
  }
  busy=false;controls();
  status((stopping?'Stopped. ':'Complete. ')+successes+' saved or already cached; '+errors+
-  ' failed. Failed rows remain selected for retry.');
+  ' failed. Failed rows remain selected for retry. See the error box above the counters.');
 }
 $('book').addEventListener('change',setUnits);
 $('unit').addEventListener('change',select);
