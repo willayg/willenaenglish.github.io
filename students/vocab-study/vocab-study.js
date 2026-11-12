@@ -15,6 +15,7 @@ import {createVocabHistoryNavigation} from './navigation-history.js?v=20261024-h
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=20260927-startup2';
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 import {createSpeakingGradesGuide} from '/students/shared/speaking-grades-guide.js?v=20261112-energy4';
+import {createSpeakingBestProgress} from '/students/shared/speaking-best-progress.js?v=20261112-1';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -1902,6 +1903,7 @@ function speakingQuestion(word,index){
 }
 function renderSpeakingQuestion(){
   state.aiSpeechUi?.dispose?.();state.aiSpeechUi=null;
+  state.bestSpeakingProgress?.dispose?.();state.bestSpeakingProgress=null;
   const session=state.speakingSession;
   if(!session||session.index>=session.words.length)return finishSpeakingSession();
   if(speakingSkipBtn)speakingSkipBtn.hidden=false;
@@ -1931,12 +1933,13 @@ function renderSpeakingQuestion(){
         if(!has){delete preview.dataset.accepted;return;}
         const candidates=state.renderer?.getSpeechAlternatives?.()||[];
         const heard=candidates.length?candidates:[response];
-        const grade=gradeSpeaking(word.speakingTarget||word.word,heard,{mode:'word',exactMatcher:matchSpeakingTarget});
+        const grade=state.bestSpeakingProgress?.observe(gradeSpeaking(word.speakingTarget||word.word,heard,{mode:'word',exactMatcher:matchSpeakingTarget}),heard)||gradeSpeaking(word.speakingTarget||word.word,heard,{mode:'word',exactMatcher:matchSpeakingTarget});
         preview.dataset.accepted=grade.level==='green'?'true':grade.level;
         preview.style.color=({green:'#168345',lime:'#719D19',yellow:'#A87C07',orange:'#B9631A',red:'#cf304c'})[grade.level];
       }
     }
   });
+  state.bestSpeakingProgress=createSpeakingBestProgress(host);
   // Let students hear the target as often as they need without changing
   // scores, speech transcripts, or their unlimited microphone retries.
   const speakingControl=host.querySelector('.speaking-control');
@@ -2019,7 +2022,7 @@ function renderSpeakingQuestion(){
     const transcriptEl=host.querySelector('[data-speaking-transcript]');
     const updateSpeakingPreview=alternatives=>{
       if(session.checked||state.renderer!==renderer)return;
-      const grade=gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
+      const grade=state.bestSpeakingProgress?.observe(gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget}),alternatives)||gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
       if(transcriptEl){
         transcriptEl.style.color=({green:'#168345',lime:'#719D19',yellow:'#A87C07',orange:'#B9631A',red:'#cf304c'})[grade.level];
         transcriptEl.style.borderColor=({green:'#77c99a',lime:'#B5DB70',yellow:'#F1D079',orange:'#F3B477',red:'#efa4ae'})[grade.level];
@@ -2032,8 +2035,8 @@ function renderSpeakingQuestion(){
       if(gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget}).points===0)state.aiSpeechUi?.observe(alternatives);
     };
     host.querySelector('[data-speaking-mic]')?.addEventListener('click',()=>{
-      transcriptEl?.removeAttribute('data-accepted');
-      if(transcriptEl){transcriptEl.style.color='';transcriptEl.style.borderColor='';}
+      // The next recording may be worse; keep the best grade and progress visible.
+      state.bestSpeakingProgress?.render();
     });
   }
   // Prepare a small window in the background while students try the normal mic.
@@ -2054,16 +2057,18 @@ function checkSpeaking(){
   const response=txt(renderer.getResponse());if(!response)return;
   const target=word.speakingTarget||word.word;
   const alternatives=renderer.getSpeechAlternatives?.()||[response];
-  const match=gradeSpeaking(target,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
+  const match=state.bestSpeakingProgress?.observe(gradeSpeaking(target,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget}),alternatives)||gradeSpeaking(target,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
   const aiFallback=!!session.aiAcceptedTranscript&&session.aiAcceptedTranscript===response;
   const correct=match.points>=1;
+  const savedAlternatives=state.bestSpeakingProgress?.best?.alternatives?.length?state.bestSpeakingProgress.best.alternatives:alternatives;
+  const savedResponse=correct?(match.transcript||response):response;
   const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0);
   session.results.push({
     lexicalEntryId:word.id||null,
     word:target,
     ko:word.ko,
-    response,
-    alternatives,
+    response:savedResponse,
+    alternatives:savedAlternatives,
     correct,
     gradePoints:match.points,
     gradeLevel:match.level,
@@ -2075,11 +2080,11 @@ function checkSpeaking(){
     lexicalEntryId:word.id,
     activityId:'vocab-speaking-'+word.id,
     prompt:word.ko,
-    studentAnswer:response,
+    studentAnswer:savedResponse,
     correctAnswer:target,
     correct,
     metadata:{
-      stt_alternatives:alternatives,
+      stt_alternatives:savedAlternatives,
       stt_match:match.matchedBy||null,
       speaking_grade_points:match.points,
       speaking_grade_level:match.level,
