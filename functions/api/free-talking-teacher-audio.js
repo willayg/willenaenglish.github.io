@@ -66,7 +66,12 @@ async function createMp3(env,text,voice){
      method:'POST',headers:{'xi-api-key':secret,'Content-Type':'application/json','Accept':'audio/mpeg'},
      body:JSON.stringify({text,model_id:'eleven_v3',voice_settings:settings}),
      signal:AbortSignal.timeout(18000)});
-    if(!direct.ok)throw Error('ELEVENLABS_HTTP_'+direct.status);
+    if(!direct.ok){
+     const info=await direct.json().catch(()=>null);
+     const detail=info?.detail;
+     const reason=typeof detail==='string'?detail:(detail?.message||detail?.status||info?.message||'');
+     throw Error('ELEVENLABS_DIRECT_'+direct.status+(reason?': '+String(reason).slice(0,130):''));
+    }
     const bytes=await direct.arrayBuffer();
     if(bytes.byteLength<500||bytes.byteLength>1250000)throw Error('ELEVENLABS_INVALID_MP3_SIZE');
     const data=new Uint8Array(bytes);
@@ -74,7 +79,11 @@ async function createMp3(env,text,voice){
      throw Error('ELEVENLABS_INVALID_MP3_FORMAT');
     return bytes;
    }catch(error){
-    console.warn('[Teacher batch] Direct ElevenLabs unavailable; using Netlify proxy',String(error?.message||error).slice(0,100));
+    const message=String(error?.message||error);
+    // For the new cloned voice, never mask a direct provider error with a proxy retry.
+    // A 401/403/404 commonly means the configured API key cannot use this voice ID.
+    if(voice==='willi_clone')throw Error(message);
+    console.warn('[Teacher batch] Direct ElevenLabs unavailable; using Netlify proxy',message.slice(0,100));
    }
   }
   // Netlify fallback is used both for missing Cloudflare secrets and direct TTS errors/timeouts.
@@ -83,7 +92,13 @@ async function createMp3(env,text,voice){
    method:'POST',headers:{'Content-Type':'application/json'},
    body:JSON.stringify({text,voice_id:cfg.voice,model_id:'eleven_v3',voice_settings:settings}),
    signal:AbortSignal.timeout(35000)});
-  if(!proxy.ok)throw Error('ELEVENLABS_PROXY_HTTP_'+proxy.status);
+  if(!proxy.ok){
+   const info=await proxy.json().catch(()=>null);
+   let detail=String(info?.details||info?.error||'').slice(0,180);
+   // Netlify may return the provider error as JSON embedded in the details string.
+   if(detail.startsWith('{')){try{const parsed=JSON.parse(detail);detail=String(parsed?.detail?.message||parsed?.detail?.status||detail)}catch{}}
+   throw Error('ELEVENLABS_PROXY_'+proxy.status+(detail?': '+detail.slice(0,130):''));
+  }
   const payload=await proxy.json().catch(()=>null);
   if(typeof payload?.audio!=='string')throw Error('ELEVENLABS_PROXY_INVALID_RESPONSE');
   const binary=atob(payload.audio);
@@ -173,6 +188,6 @@ export async function onRequestPost({request,env}){
  }catch(error){
   const reason=String(error?.message||error);
   console.error('[Free Talking teacher audio batch]',reason.slice(0,180));
-  return json(/INVALID|UNKNOWN|CHOOSE/i.test(reason)?400:503,{success:false,error:reason.slice(0,140)});
+  return json(/INVALID|UNKNOWN|CHOOSE/i.test(reason)?400:503,{success:false,error:reason.slice(0,230)});
  }
 }
