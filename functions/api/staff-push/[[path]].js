@@ -89,7 +89,7 @@ export async function onRequest({request,env}){
   const u=new URL(request.url);if(u.hostname!=='teachers.willenaenglish.com')return respond({error:'Host not permitted'},403);
   const part=u.pathname.replace(/^\/api\/staff-push\/?/,'').replace(/\/$/,'');
   if(!['GET','POST','DELETE'].includes(request.method))return respond({error:'Method not allowed'},405);
-  if(request.method!=='GET'&&request.headers.get('origin')!==ORIGIN)return respond({error:'Invalid request origin'},403);
+  if(request.method!=='GET'&&part!=='enquiry-event'&&request.headers.get('origin')!==ORIGIN)return respond({error:'Invalid request origin'},403);
   // New website enquiry: one-time short-lived database claim. No public caller
   // can enumerate devices or send arbitrary messages without the random token.
   if(part==='enquiry-event'&&request.method==='POST'){
