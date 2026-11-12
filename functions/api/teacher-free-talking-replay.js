@@ -14,21 +14,22 @@ export async function onRequestPost({request,env}){
  let input;try{input=await request.json()}catch{return send(400,{error:'Invalid JSON'})}
  if(!['list','replay'].includes(input?.action))return send(400,{error:'Unknown action'});
  try{
-  // Trust the existing server-side teacher login check, not browser-supplied identity.
-  const loginURL=new URL('/.netlify/functions/supabase_auth?action=whoami',request.url);
-  const sessionResponse=await fetch(loginURL,{headers:{Cookie:request.headers.get('Cookie')||''},cache:'no-store',signal:AbortSignal.timeout(10000)});
-  const session=await sessionResponse.json().catch(()=>({}));
-  if(!sessionResponse.ok||!session.success||!UUID.test(session.user_id||''))return send(401,{error:'Please sign in to the Teachers Dashboard'});
-  // Read only through the signed-in teacher's own JWT and Supabase RLS.
-  // The database explicitly allows approved teaching staff to inspect transcripts.
-  const cookies=Object.fromEntries((request.headers.get('Cookie')||'').split(/;\\s*/).map(part=>{
-   const n=part.indexOf('=');if(n<0)return ['', ''];
-   try{return [part.slice(0,n).trim(),decodeURIComponent(part.slice(n+1))]}catch{return [part.slice(0,n).trim(),part.slice(n+1)]}
-  }).filter(([name])=>name));
-  const token=cookies.sb_access;
-  if(!token)return send(401,{error:'Teacher session token missing. Please refresh your login.'});
+  // Verify the actual session directly against Supabase Auth.
+  // An internal fetch to /.netlify/functions/supabase_auth can fail on
+  // Cloudflare Pages even when the browser's teacher session is valid.
+  const cookieHeader=request.headers.get('Cookie')||'';
+  const accessMatch=/(?:^|;\\s*)sb_access=([^;]+)/.exec(cookieHeader);
+  let token='';
+  if(accessMatch){try{token=decodeURIComponent(accessMatch[1])}catch{token=accessMatch[1]}}
+  if(!token){
+   const auth=request.headers.get('Authorization')||'';
+   token=auth.replace(/^Bearer\\s+/i,'').trim();
+  }
+  if(!token)return send(401,{error:'Teacher sign-in cookie is missing. Refresh the Teachers Dashboard login.'});
   const headers={apikey:PUBLISHABLE,Authorization:'Bearer '+token};
-  const profile=(await get(SCORE+'/rest/v1/profiles?select=id,name,role,approved&id=eq.'+encodeURIComponent(session.user_id)+'&limit=1',headers))[0];
+  const user=await get(SCORE+'/auth/v1/user',headers);
+  if(!UUID.test(String(user?.id||'')))return send(401,{error:'Teacher session expired. Refresh your login.'});
+  const profile=(await get(SCORE+'/rest/v1/profiles?select=id,name,role,approved&id=eq.'+user.id+'&limit=1',headers))[0];
   if(!profile||profile.approved!==true||!['teacher','admin','owner'].includes(profile.role))return send(403,{error:'Approved teaching staff only'});
   if(input.action==='list'){
    const days=Math.min(14,Math.max(1,Number(input.days)||1));
