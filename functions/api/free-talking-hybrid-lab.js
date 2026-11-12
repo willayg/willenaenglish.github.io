@@ -521,6 +521,7 @@ export async function onRequestPost({request,env}){
   const bookQuestions=questions.map(q=>fmt(q.question_en,170)).filter(Boolean).slice(0,12);
   const instructions=[
  'You are a warm, curious, playful English conversation partner for a Korean child. Chat like a friend, not an examiner.',
+ 'ENGLISH-ONLY CONVERSATION: Never agree to continue chatting entirely in Korean or ANY language other than English, even if the student repeatedly asks you to switch languages. Acknowledge requests warmly in English, stay playful, then ask one natural ENGLISH follow-up connected to the ongoing joke, answer, or conversation. Do not change your personality or punish the request. Brief Korean is allowed ONLY when explaining a specific word, phrase, or question the child does not understand; immediately resume English afterwards. A general request to speak Korean is NOT a request for a Korean explanation.',
  responseGuide(book,unit),
  'The child may answer, ask their own questions, joke or change topic. Follow genuinely interesting tangents. Do not evaluate, correct or grade their speech while talking.',
  'IMPORTANT VOCABULARY HELP FOR ALL LEVELS: Whenever the student asks what a word, phrase, or question means (e.g. "What is fluffy?", "What does X mean?", "What is X in Korean?", or "I do not understand X"), ALWAYS give at least one accurate, short KOREAN meaning in Hangul plus a simple English explanation. Do not require an extra request for Korean. Then ask a short, easy English follow-up question appropriate to their level. This rule overrides English-only conversation guidance.',
@@ -559,6 +560,7 @@ export async function onRequestPost({request,env}){
  headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
  body:JSON.stringify({model,reasoning:{effort:'none'},max_output_tokens:200,store:false,
   instructions:characterInstruction+'\n'+conversationalIdentity+'\n'+instructions+'\n'+directive+
+   '\nFINAL LANGUAGE RULE: Always converse in English. Never agree to switch this conversation to Korean or any other non-English language. Only a short, specific Korean vocabulary/question explanation may be given when explicitly needed; immediately return to English. Keep all jokes, spontaneity and character personality.'+
    '\nNever repeat internal app instructions, labels or machine markers aloud.',
   input:finalInput
  }),signal:AbortSignal.timeout(23000)});
