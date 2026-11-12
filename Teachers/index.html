@@ -1485,6 +1485,10 @@ function ccRenderDetail(){
  const selected=units.find(u=>u.id===curriculum.selectedUnit);
  const groups=ccSkillGroups;
  const assignmentMode=curriculum.assignmentSubview==='missions'?'missions':'curriculum';
+ // Preserve the horizontal class-strip position across every grid re-render.
+ // In particular, selecting a distant class must not jump back to Brown.
+ const previousClassStrip=host.querySelector('.cc-assignment-class-tabs');
+ const classStripScroll=previousClassStrip?previousClassStrip.scrollLeft:Number(curriculum.classStripScroll)||0;
  if(inAssignments){const status=document.querySelector('#uaStatus');if(status)status.textContent=assignmentMode==='missions'?'Current class missions':'Curriculum progress';}
  host.innerHTML=(inAssignments?
  '<div class="cc-assignment-mode" role="tablist" aria-label="All Classes view"><button type="button" role="tab" data-cc-subview="curriculum" aria-selected="'+(assignmentMode==='curriculum')+'" class="'+(assignmentMode==='curriculum'?'active':'')+'">Curriculum Progress</button><button type="button" role="tab" data-cc-subview="missions" aria-selected="'+(assignmentMode==='missions')+'" class="'+(assignmentMode==='missions'?'active':'')+'">Current Missions</button></div>'+
@@ -1503,6 +1507,14 @@ function ccRenderDetail(){
  groups.map(g=>{const d=ccSkillData(book,u,g),count=d.touched.size;const knownPuzzle=(curriculum.puzzleOverview||[]).filter(x=>x.book_id===book.book_id&&x.unit_id===u.id&&ccClassStudents(c.name).some(s=>String(s.id)===String(x.student_id)));const puzzleStarted=new Set(knownPuzzle.filter(x=>Number(x.completed_modes)>0).map(x=>String(x.student_id)));const started=g.key==='puzzles'?new Set([...d.touched,...puzzleStarted]).size:count;const pct=g.key==='puzzles'&&d.total?100*knownPuzzle.reduce((sum,x)=>sum+Math.min(5,Number(x.completed_modes||0))/5,0)/d.total:0;const extra=ccExtraCompletion(book,u,g,c.name);const included=new Set([...d.touched,...extra.started,...(g.key==='sentence'?ccSentenceRows(book,u,c.name).map(r=>String(r.student_id)):[]),...(g.key==='writing'?ccWritingRows(book,u,c.name).map(r=>String(r.student_id)):[])]);const actualStarted=included.size;const extraPct=extra.finished.size&&d.total?100*extra.finished.size/d.total:0;const state=(['grammar','talking','freeconversation'].includes(g.key)?extraPct:pct)>90?'cc-full':actualStarted?'cc-partial':'cc-empty-cell';return '<button type="button" class="cc-cell '+state+(selected?.id===u.id&&curriculum.selectedSkill===g.key?' cc-selected':'')+'" data-cc-unit="'+ccEscape(u.id)+'" data-cc-skill="'+g.key+'" aria-label="Unit '+ccEscape(u.unit_number)+' '+g.name+', '+actualStarted+' of '+d.total+' with recorded practice"><b>'+(actualStarted?actualStarted+'/'+d.total:'—')+'</b><small>'+(state==='cc-full'?'over 90% done':actualStarted?'in progress':'not started')+'</small></button>'}).join('')+'</div>').join('')+'</div></div>')+
  (selected&&curriculum.selectedSkill?ccRenderStudentDrilldown(book,selected,groups.find(g=>g.key===curriculum.selectedSkill)):'')+
  (inAssignments?'':ccWritingActivitySummary(c.name)));
+ if(inAssignments){
+  const classStrip=host.querySelector('.cc-assignment-class-tabs');
+  if(classStrip){
+   classStrip.scrollLeft=classStripScroll;
+   curriculum.classStripScroll=classStripScroll;
+   classStrip.addEventListener('scroll',()=>{curriculum.classStripScroll=classStrip.scrollLeft},{passive:true});
+  }
+ }
  host.querySelectorAll('[data-cc-subview]').forEach(b=>b.addEventListener('click',()=>{
   const value=b.dataset.ccSubview;
   if(curriculum.assignmentSubview===value)return;
