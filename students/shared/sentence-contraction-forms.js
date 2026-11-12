@@ -15,6 +15,10 @@ const SIMPLE={
  "should've":"should have","might've":"might have","must've":"must have",
  "may've":"may have","who've":"who have","what've":"what have",
  "where've":"where have","let's":"let us","y'all":"you all",
+ "what're":"what are","who're":"who are","where're":"where are","how're":"how are",
+ "there're":"there are","that's":"that is",
+ "couldn't've":"could not have","wouldn't've":"would not have","shouldn't've":"should not have",
+ "mightn't've":"might not have","mustn't've":"must not have",
  "gonna":"going to","wanna":"want to"
 };
 const PAST=new Set(['been','gone','done','had','got','gotten','seen','known',
