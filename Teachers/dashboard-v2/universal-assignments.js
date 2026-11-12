@@ -18,7 +18,7 @@ function renderNotifications(){
   nav.style.position='relative';
   let dot=nav.querySelector('.ua-notification-dot');
   if(!dot){dot=document.createElement('span');dot.className='ua-notification-dot';dot.style.cssText='position:absolute;top:5px;right:5px;background:#d93646;color:white;border:2px solid white;border-radius:999px;min-width:18px;height:18px;padding:0 3px;font:bold 10px/14px system-ui;display:grid;place-items:center;';nav.append(dot)}
-  dot.textContent=count>99?'99+':String(count);dot.hidden=count===0;
+  dot.textContent=count>99?'99+':String(count);dot.hidden=count===0;dot.style.display=count?'grid':'none';
  }
  const heading=root.querySelector('.ua-section-heading');
  if(!heading)return;
@@ -442,7 +442,7 @@ async function refresh(){
 // selects existing class/book/unit controls in the canonical creation workspace.
 let curriculumLaunchId=0,curriculumLaunchCleanup=null,curriculumLaunchApp=null;
 function openCurriculumCreate(context){
- const map={word:'word',sentence:'sentence',grammar:'grammar',speaking:'free-talking',talking:'free-talking',writing:'writing',puzzles:'puzzles'};
+ const map={word:'word',sentence:'sentence',grammar:'grammar',speaking:'free-talking',talking:'free-talking',freeconversation:'free-talking',writing:'writing',puzzles:'puzzles'};
  const app=map[context?.skill];
  if(!app||!context?.className||!context?.bookId||!context?.unitId)return false;
  if(curriculumLaunchCleanup)curriculumLaunchCleanup();
@@ -459,6 +459,7 @@ function openCurriculumCreate(context){
   puzzles:{class:'#uaNewHomework select[name="class"]',book:null,unit:null}
  };
  const config=forms[app];let stage=app==='writing'?'kind':'class',finished=false;
+ const desiredTalkMode=context.skill==='freeconversation'?'conversation':context.skill==='talking'||context.skill==='speaking'?'speaking':null;
  const optionReady=(el,value)=>el&&[...el.options].some(o=>o.value===value&&!o.disabled);
  const choose=(el,value)=>{el.value=value;el.dispatchEvent(new Event('change',{bubbles:true}))};
  const notice=(message)=>{
@@ -479,6 +480,7 @@ function openCurriculumCreate(context){
    stage='class';
   }
   if(stage==='class'){
+   if(desiredTalkMode){const modeSelect=scope.querySelector('#ftTeacherAssignForm select[name="mission_mode"]');if(modeSelect&&modeSelect.value!==desiredTalkMode)choose(modeSelect,desiredTalkMode)}
    const el=scope.querySelector(config.class);
    if(!optionReady(el,target.className))return;
    choose(el,target.className);stage=config.book?'book':'done';queueMicrotask(apply);
