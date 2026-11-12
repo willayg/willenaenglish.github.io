@@ -984,9 +984,10 @@ async function pollNotifications(){
  if(notificationPollInFlight)return;
  notificationPollInFlight=true;
  try{
-  const [assignments,progress]=await Promise.all([
+  const [assignments,progress,tests]=await Promise.all([
    get('homework_assignments?select=id,title,class,list_meta&list_meta->>mission_mode=eq.conversation&order=created_at.desc&limit=300'),
-   get('rpc/teacher_free_talking_conversation_mission_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_id:null})})
+   get('rpc/teacher_free_talking_conversation_mission_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_id:null})}),
+   get('teacher_homework_notification_tests?select=id,student_id,assignment_id,class_name,app_name,assignment_title,created_at&order=created_at.desc&limit=100').catch(error=>{console.warn('[Homework Notifications] Test events unavailable:',error.message);return []})
   ]);
   const byId=new Map((assignments||[]).map(a=>[id(a.id),a]));
   const completions=[];
@@ -999,6 +1000,13 @@ async function pollNotifications(){
      className:a.class||assignment.class||'',assignment:a.title||'AI Conversation',app:'Free Talking Genius',
      completedAt:student.last_activity||null,source:'Free Talking conversation progress'});
    }
+  }
+  // Synthetic staff-only test events never change student learning data.
+  for(const test of tests||[]){
+   completions.push({key:'TEST|'+id(test.id),studentId:id(test.student_id),assignmentId:id(test.assignment_id),
+    studentName:({'12e65702-6875-461a-a0f9-d7e4ac655a8b':'B','cc315db1-e98a-4e9c-85f9-408b4dca4ef9':'H'})[id(test.student_id)]||'Test student',
+    className:test.class_name,assignment:test.assignment_title,app:'TEST · '+test.app_name,
+    completedAt:test.created_at,source:'Staff notification test'});
   }
   window.dispatchEvent(new CustomEvent('willena:homework-completion-snapshot',{detail:{completions}}));
  }catch(error){console.warn('[Homework Notifications] Read unavailable:',error.message)}
