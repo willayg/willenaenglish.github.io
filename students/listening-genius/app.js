@@ -1,5 +1,5 @@
-import {studentIdentity,assignedBooks} from '/students/sentence-genius/content.js?v=sg-no-approval-v4.1';
-const status=document.getElementById('status'),books=document.getElementById('books'),notice=document.getElementById('browserNotice');
+import {studentIdentity,assignedBooks,loadUnits} from '/students/sentence-genius/content.js?v=sg-no-approval-v4.1';
+const status=document.getElementById('status'),books=document.getElementById('books'),notice=document.getElementById('browserNotice'),unitPanel=document.getElementById('unitPanel'),unitGrid=document.getElementById('unitGrid'),unitHeading=document.getElementById('unitHeading'),back=document.getElementById('backToBooks');
 const ua=navigator.userAgent||'';
 const android=/Android/i.test(ua);
 const ios=/iPhone|iPad|iPod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
@@ -22,29 +22,46 @@ function oxford(book){
  if(match){const level=match[1].toLowerCase();return {label:'Everybody Up '+(level==='starter'?'Starter':level),url:'https://elt.oup.com/student/everybodyup/'+(level==='starter'?'':'level'+level+'/')+'?cc=kr&selLanguage=ko'};}
  return null;
 }
+function addChromeAndCopy(container,url,label){
+ if(android&&!chrome){
+  const open=document.createElement('a');open.className='chrome-link';open.href=intentUrl(url);open.textContent='Chrome에서 열기';
+  open.setAttribute('aria-label',label+' Chrome에서 열기');container.append(open);
+ }
+ if((android&&!chrome)||(ios&&!safari)){
+  const copy=document.createElement('button');copy.className='copy-link';copy.type='button';copy.textContent='링크 복사';
+  copy.onclick=async()=>{try{await navigator.clipboard.writeText(url);copy.textContent='복사됨';}catch{copy.textContent='복사할 수 없습니다';}};
+  container.append(copy);
+ }
+}
+async function showUnits(entry){
+ books.hidden=true;unitPanel.hidden=false;unitHeading.textContent=entry.label;unitGrid.replaceChildren();
+ let numbered=[];
+ try{
+  const loaded=await loadUnits(entry.id);
+  numbered=[...new Set(loaded.map(u=>Number(u.unit_number)).filter(n=>Number.isInteger(n)&&n>0&&n<=30))].sort((a,b)=>a-b);
+ }catch(error){console.warn('[listening-genius] assigned unit metadata unavailable',error);}
+ if(!numbered.length)numbered=Array.from({length:8},(_,i)=>i+1);
+ for(const n of numbered){
+  const card=document.createElement('div');card.className='unit-card';
+  const link=document.createElement('a');link.className='unit-link';link.href=entry.url;link.referrerPolicy='no-referrer';link.rel='noreferrer';link.textContent='Unit '+n;
+  link.title='Oxford 교재 페이지 열기 — Oxford에서 Unit '+n+' 선택';
+  card.append(link);addChromeAndCopy(card,entry.url,entry.label+' Unit '+n);unitGrid.append(card);
+ }
+}
+back.onclick=()=>{unitPanel.hidden=true;books.hidden=false;};
 async function run(){
  try{
   const identity=await studentIdentity();
   if(!identity.className)throw Error('학급 정보를 찾을 수 없습니다. 선생님께 문의하세요.');
   const assigned=await assignedBooks(identity.className);
-  const options=assigned.map(oxford).filter(Boolean);
+  const options=assigned.map(book=>{const match=oxford(book);return match?{...match,id:book.id}:null;}).filter(Boolean);
   if(!options.length){status.textContent='현재 학급에 연결된 Buzz 또는 Everybody Up 교재가 없습니다.';return;}
   status.hidden=true;
   for(const entry of options){
-   const card=document.createElement('div');card.className='book-card';
-   const link=document.createElement('a');link.className='book';link.href=entry.url;link.referrerPolicy='no-referrer';link.rel='noreferrer';link.textContent=entry.label;
-   card.append(link);
-   if(android&&!chrome){
-     const open=document.createElement('a');open.className='chrome-link';open.href=intentUrl(entry.url);open.textContent='Chrome에서 열기';
-     open.setAttribute('aria-label',entry.label+' Chrome에서 열기');card.append(open);
-   }
-   if((android&&!chrome)||(ios&&!safari)){
-     const copy=document.createElement('button');copy.className='copy-link';copy.type='button';copy.textContent='링크 복사';
-     copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(entry.url);copy.textContent='복사됨';}catch(error){copy.textContent='복사할 수 없습니다';}});
-     card.append(copy);
-   }
-   books.append(card);
+   const card=document.createElement('button');card.className='book-card book-choice';card.type='button';card.textContent=entry.label;
+   card.onclick=()=>showUnits(entry);books.append(card);
   }
+  if(options.length===1)books.firstChild.click();
  }catch(error){status.classList.add('error');status.textContent=error.message||'교재를 불러오지 못했습니다. 다시 로그인해 주세요.';}
 }
 run();
