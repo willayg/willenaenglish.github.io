@@ -60,6 +60,9 @@
  refresh.addEventListener('click',load);run.addEventListener('click',replay);filter.addEventListener('input',renderList);
  dateOptions.addEventListener('change',load);
  window.WillenaEvaluatorReplay={activate:()=>{if(!sessions.length&&!busy)void load()}};
+ // The Utilities tab script runs inline before this deferred file. Start after this module is ready.
+ if(document.getElementById('view-utilities')?.classList.contains('active')&&!root.closest('[data-ut-panel]')?.hidden){void load()}
+ else if(!root.closest('[data-ut-panel]')?.hidden){void load()}
  // Run on first open even if the dashboard restored Utilities before this defer script loaded.
  if(document.getElementById('view-utilities')?.classList.contains('active')&&!root.closest('[data-ut-panel]')?.hidden)void load();
 })();
