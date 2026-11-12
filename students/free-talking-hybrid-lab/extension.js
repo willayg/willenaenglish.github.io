@@ -156,15 +156,16 @@ function closeActivity(){
  // Preserve the original app's character selector and its own history entry.
  // Do NOT click its Back button: that would skip character selection.
 }
-function navigateBack(){
+function navigateBack({fromResults=false}={}){
  if(releaseMode){
   // Preserve partial progress: leaving an active conversation counts as its
   // ending, so review the recorded turns before returning to the book menu.
   // Back on an already-open result screen exits immediately.
-  if(state.active&&!state.reviewing&&(state.attemptCount||0)>0&&$('ftCelebration').hidden){
+  if(!fromResults&&state.active&&!state.reviewing&&(state.attemptCount||0)>0&&$('ftCelebration').hidden){
    void reviewConversation();return;
   }
-  if(state.reviewing)return;
+  if(state.reviewing&&!fromResults)return;
+  if(fromResults&&state.active)endSession('Leaving finished conversation.');
   // Return to the exact book and unit selected before the conversation.
   const back=new URL('/students/free-talking-genius/',location.origin);
   const params=new URLSearchParams(location.search);
@@ -493,7 +494,7 @@ function ftShowFinish(result,{playSound=true}={}){
  if(playSound&&result.stars>0)try{preloadStudentSfx();setTimeout(()=>{if(!$('ftCelebration').hidden)playStudentSfx('complete',{volume:.7})},420)}catch{}
 }
 
-$('ftFinishClose').addEventListener('click',()=>{$('ftCelebration').hidden=true;navigateBack()});
+$('ftFinishClose').addEventListener('click',()=>{$('ftCelebration').hidden=true;navigateBack({fromResults:true})});
 $('ftReviewKoreanToggle').addEventListener('click',async()=>{
  const button=$('ftReviewKoreanToggle'),paragraph=$('ftReviewKorean');
  if(!paragraph.hidden){paragraph.hidden=true;button.textContent='한국어로 보기 · Korean';button.setAttribute('aria-expanded','false');return}
