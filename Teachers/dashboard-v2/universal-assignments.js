@@ -9,7 +9,7 @@ const apps=[{id:'classes',label:'All Classes',sub:'Curriculum homework planner',
 const notificationKey='willena:teacher-homework-notices:v1';
 let notificationState={baseline:false,known:[],unread:[],items:[]};
 try{notificationState={...notificationState,...JSON.parse(localStorage.getItem(notificationKey)||'{}')}}catch{}
-let notificationPanelOpen=false;
+
 function persistNotifications(){try{localStorage.setItem(notificationKey,JSON.stringify(notificationState))}catch{}}
 function renderNotifications(){
  const count=notificationState.unread.length;
@@ -20,27 +20,10 @@ function renderNotifications(){
   if(!dot){dot=document.createElement('span');dot.className='ua-notification-dot';dot.style.cssText='position:absolute;top:5px;right:5px;background:#d93646;color:white;border:2px solid white;border-radius:999px;min-width:18px;height:18px;padding:0 3px;font:bold 10px/14px system-ui;display:grid;place-items:center;';nav.insertBefore(dot,nav.lastElementChild)}
   dot.textContent=count>99?'99+':String(count);dot.hidden=count===0;dot.style.display=count?'grid':'none';
  }
- const heading=root.querySelector('.ua-section-heading');
- if(!heading)return;
- let button=heading.querySelector('#uaNotificationsButton');
- if(!button){
-  button=document.createElement('button');button.type='button';button.id='uaNotificationsButton';button.className='control';
-  button.style.cssText='position:relative;display:inline-flex;align-items:center;gap:8px;border-radius:15px;margin-left:auto';
-  button.onclick=()=>{
-   notificationPanelOpen=!notificationPanelOpen;
-   if(notificationPanelOpen){notificationState.unread=[];persistNotifications()}
-   renderNotifications();
-  };
-  heading.append(button);
- }
- button.innerHTML='Notifications '+(count?'<span style="background:#d93646;color:#fff;padding:2px 7px;border-radius:20px;font-weight:750">'+count+'</span>':'');
- button.setAttribute('aria-expanded',String(notificationPanelOpen));
- let panel=root.querySelector('#uaNotificationsPanel');
- if(!notificationPanelOpen){panel?.remove();return}
- if(!panel){panel=document.createElement('section');panel.id='uaNotificationsPanel';panel.setAttribute('aria-label','Recent homework completions');panel.style.cssText='padding:16px;margin:12px 0;border:1px solid #dce9eb;border-radius:16px;background:#fff';heading.after(panel)}
- const items=(notificationState.items||[]).slice(-25).reverse();
- panel.innerHTML='<strong>Recent completed homework</strong><p style="color:#71848b;margin:6px 0 12px">New completions are marked read when opened.</p>'+
- (items.length?items.map(item=>'<div style="padding:9px 0;border-top:1px solid #edf1f3"><b>'+esc(item.app||'Homework')+'</b> · '+esc(item.className||'Class')+'<div>'+esc(item.studentName||item.studentId||'Student')+' · '+esc(item.assignment||'Mission')+'</div></div>').join(''):'<p>No newly recorded completions yet.</p>');
+ // The experimental recent-homework panel has been retired. Retain only
+ // the small unread marker and underlying completion event tracking.
+ root.querySelector('#uaNotificationsButton')?.remove();
+ root.querySelector('#uaNotificationsPanel')?.remove();
 }
 window.addEventListener('willena:homework-completion-snapshot',event=>{
  const entries=event.detail?.completions||[];
