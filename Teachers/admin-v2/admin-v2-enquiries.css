@@ -74,3 +74,12 @@ body.enq-drawer-open{overflow:hidden}
 /* Unread is independent of consultation workflow status. */
 #view-enquiries .enq-row.enq-unread-row{background:#f4fcfc;border-color:#bfebef}
 #view-enquiries .enq-unread-dot{width:9px;height:9px;flex-shrink:0;background:#e2324b;border-radius:50%}
+
+
+/* Push opt-in controls, using the same Admin V2 control language. */
+#view-enquiries .enq-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+#view-enquiries .enq-head-actions button{white-space:nowrap}
+#view-enquiries .enq-head-actions button[hidden]{display:none!important}
+#view-enquiries .enq-notification-status{margin:6px 0 14px;font-size:13px;line-height:1.6}
+#view-enquiries .enq-notification-status[hidden]{display:none!important}
+@media(max-width:700px){#view-enquiries .enq-head-actions{justify-content:flex-start}}
