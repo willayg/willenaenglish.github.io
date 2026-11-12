@@ -58,9 +58,13 @@ function base64(buffer){
 }
 async function createMp3(env,text,voice){
  if(voice==='lili'||voice==='pigfish'||voice==='willi_clone'){
-  const cfg=VOICES[voice],secret=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
+  const cfg=VOICES[voice],secret=String(env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY||'').trim();
   const settings={stability:0.5};
-  if(secret){
+  // Cloudflare may have an ElevenLabs API key *ID* rather than a secret key.
+  // IDs cannot authorize synthesis. Try the pre-existing Netlify provider proxy instead.
+  const directKeyUsable=secret.startsWith('sk_');
+  let directFailure=!directKeyUsable?'Cloudflare ElevenLabs API secret is missing or contains a key ID (not sk_).':'';
+  if(directKeyUsable){
    try{
     const direct=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+cfg.voice+'?output_format=mp3_44100_128',{
      method:'POST',headers:{'xi-api-key':secret,'Content-Type':'application/json','Accept':'audio/mpeg'},
@@ -80,10 +84,8 @@ async function createMp3(env,text,voice){
     return bytes;
    }catch(error){
     const message=String(error?.message||error);
-    // For the new cloned voice, never mask a direct provider error with a proxy retry.
-    // A 401/403/404 commonly means the configured API key cannot use this voice ID.
-    if(voice==='willi_clone')throw Error(message);
-    console.warn('[Teacher batch] Direct ElevenLabs unavailable; using Netlify proxy',message.slice(0,100));
+    directFailure=message;
+    console.warn('[Teacher batch] Direct ElevenLabs unavailable; trying existing provider proxy',message.slice(0,100));
    }
   }
   // Netlify fallback is used both for missing Cloudflare secrets and direct TTS errors/timeouts.
@@ -97,7 +99,7 @@ async function createMp3(env,text,voice){
    let detail=String(info?.details||info?.error||'').slice(0,180);
    // Netlify may return the provider error as JSON embedded in the details string.
    if(detail.startsWith('{')){try{const parsed=JSON.parse(detail);detail=String(parsed?.detail?.message||parsed?.detail?.status||detail)}catch{}}
-   throw Error('ELEVENLABS_PROXY_'+proxy.status+(detail?': '+detail.slice(0,130):''));
+   throw Error('ELEVENLABS_PROXY_'+proxy.status+(detail?': '+detail.slice(0,130):'')+(directFailure?' | Direct: '+directFailure.slice(0,110):''));
   }
   const payload=await proxy.json().catch(()=>null);
   if(typeof payload?.audio!=='string')throw Error('ELEVENLABS_PROXY_INVALID_RESPONSE');
