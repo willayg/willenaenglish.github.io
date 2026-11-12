@@ -165,7 +165,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     const alternatives=renderer.getSpeechAlternatives?.();
     const candidates=alternatives?.length?alternatives:(bestProgress?.best?.alternatives?.length?bestProgress.best.alternatives:[response]);
     const usable=mode==='unscramble'?candidates:usableAlternatives(candidates,item.en);
-    if(mode!=='unscramble'&&!usable.length){
+    if(mode!=='unscramble'&&!usable.length&&!bestProgress?.best?.correct){
       onMessage('음성을 잘 인식하지 못했어요. 다시 말해 보세요.');
       renderer.state.speakingTranscript='';
       renderer.state.speakingAlternatives=[];
