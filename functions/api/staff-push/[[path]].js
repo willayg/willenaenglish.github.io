@@ -149,3 +149,24 @@ export async function onRequest({request,env}){
   return respond({error:'Not found'},404);
  }catch(err){console.error('Willena push',err.message);return respond({error:err.message||'Push unavailable'},err.status||502)}
 }
+
+
+// Invoked only by the authenticated native calendar API after a successful
+// event save. The database claim makes one dispatch per saved revision.
+export async function queueCalendarEventPush(env,token,event){
+ if(!env.WILLENA_PUSH_VAPID_PRIVATE_KEY)throw new Error('Staff push is not configured');
+ const devices=await db(token,'rpc/willena_claim_calendar_push','POST',{p_event_id:event.id});
+ const list=Array.isArray(devices)?devices.filter(x=>allowedEndpoint(x.endpoint)):[];
+ const date=String(event.event_date||'').slice(0,10);
+ const time=event.event_time?String(event.event_time).slice(0,5):'';
+ const payload={
+  title:'Willena Calendar · '+String(event.title||'Event').slice(0,100),
+  body:'New calendar event: '+date+(time?' at '+time:'')+(event.notes?' · '+String(event.notes).slice(0,90):''),
+  url:'/Teachers/?view=staff-calendar',
+  tag:'willena-calendar-'+event.id+'-'+String(event.updated_at||Date.now())
+ };
+ return {queued:list.length>0,devices:list.length,completion:Promise.allSettled(list.map(sub=>deliver(env,sub,payload))).then(results=>{
+  const sent=results.filter(x=>x.status==='fulfilled'&&x.value.success).length;
+  console.log('Willena calendar push result',event.id,'sent',sent,'of',list.length);
+ })};
+}
