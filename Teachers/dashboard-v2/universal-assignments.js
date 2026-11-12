@@ -4,46 +4,11 @@ const root=document.getElementById('universalAssignments');if(!root)return;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const apps=[{id:'classes',label:'All Classes',sub:'Curriculum homework planner',icon:'▦'},{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'All',sub:'All homework',icon:'▦'},{id:'calendar',label:'Calendar',sub:'Assignment dates',icon:'▦'},{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'free-talking',label:'Free Talking Genius',sub:'Speaking missions',icon:'FT'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'writing',label:'Writing Genius',sub:'Diaries & topic writing',icon:'✎'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
 
-// In-app completion inbox: deduplicated by assignment and immutable student ID.
-// A first snapshot establishes a baseline so old homework does not flood alerts.
-const notificationKey='willena:teacher-homework-notices:v1';
-let notificationState={baseline:false,known:[],unread:[],items:[]};
-try{notificationState={...notificationState,...JSON.parse(localStorage.getItem(notificationKey)||'{}')}}catch{}
-
-function persistNotifications(){try{localStorage.setItem(notificationKey,JSON.stringify(notificationState))}catch{}}
-function renderNotifications(){
- const count=notificationState.unread.length;
- const nav=document.querySelector('.rail [data-view="assignments"]');
- if(nav){
-  nav.style.position='relative';
-  let dot=nav.querySelector('.ua-notification-dot');
-  if(!dot){dot=document.createElement('span');dot.className='ua-notification-dot';dot.style.cssText='position:absolute;top:5px;right:5px;background:#d93646;color:white;border:2px solid white;border-radius:999px;min-width:18px;height:18px;padding:0 3px;font:bold 10px/14px system-ui;display:grid;place-items:center;';nav.insertBefore(dot,nav.lastElementChild)}
-  dot.textContent=count>99?'99+':String(count);dot.hidden=count===0;dot.style.display=count?'grid':'none';
- }
- // The experimental recent-homework panel has been retired. Retain only
- // the small unread marker and underlying completion event tracking.
- root.querySelector('#uaNotificationsButton')?.remove();
- root.querySelector('#uaNotificationsPanel')?.remove();
-}
-window.addEventListener('willena:homework-completion-snapshot',event=>{
- const entries=event.detail?.completions||[];
- const known=new Set(notificationState.known||[]);
- if(!notificationState.baseline){
-  // On first use, suppress historical completions but surface a fresh test or
-  // genuine newly completed mission recorded in the last 30 minutes.
-  const recent=entries.filter(item=>item.completedAt&&Date.now()-new Date(item.completedAt).getTime()>=0&&Date.now()-new Date(item.completedAt).getTime()<30*60*1000);
-  notificationState.known=[...new Set(entries.map(item=>item.key))];
-  notificationState.unread=[...new Set([...(notificationState.unread||[]),...recent.map(item=>item.key)])];
-  notificationState.items=[...(notificationState.items||[]),...recent].slice(-100);
-  notificationState.baseline=true;
- }else{
-  const fresh=entries.filter(item=>item.key&&!known.has(item.key));
-  notificationState.unread=[...new Set([...(notificationState.unread||[]),...fresh.map(item=>item.key)])];
-  notificationState.items=[...(notificationState.items||[]),...fresh].slice(-100);
-  notificationState.known=[...new Set([...known,...entries.map(item=>item.key)])].slice(-30000);
- }
- persistNotifications();renderNotifications();
-});
+// Retire the old homework completion counter. It measured historical completions,
+// not actionable homework, and had no remaining acknowledgement interface.
+// Reset the obsolete local unread count on every load (including existing phones).
+try{localStorage.removeItem('willena:teacher-homework-notices:v1')}catch{}
+document.querySelectorAll('.rail [data-view="assignments"] .ua-notification-dot').forEach(dot=>dot.remove());
 
 const stateKey='willena.teachers.assignments.v2';
 let saved={};try{saved=JSON.parse(sessionStorage.getItem(stateKey)||'{}')||{}}catch{}
@@ -342,7 +307,7 @@ function activate(){
  // The workspace is built while its dashboard view is hidden on initial load.
  // Start the My/All fetch on first visibility, without waiting for a second tab click.
  if(!root.closest('.view')?.classList.contains('active'))return;
- if(active==='classes'){window.dispatchEvent(new CustomEvent('willena:curriculum-mount',{detail:{target:'assignments'}}));window.UniversalAssignmentTracker?.pollNotifications?.();return;}
+ if(active==='classes'){window.dispatchEvent(new CustomEvent('willena:curriculum-mount',{detail:{target:'assignments'}}));return;}
  if(active!=='my'&&active!=='all')return;
  const host=root.querySelector('#uaOverview');
  if(!host||overviewMountedHosts.has(host))return;
@@ -375,12 +340,11 @@ function render(){
  const nextStrip=root.querySelector('.ua-app-tabs');if(nextStrip){nextStrip.scrollLeft=previousScroll;nextStrip.addEventListener('scroll',()=>{try{const value=JSON.parse(sessionStorage.getItem(stateKey)||'{}');value.scrollLeft=nextStrip.scrollLeft;sessionStorage.setItem(stateKey,JSON.stringify(value))}catch{}},{passive:true})}
  root.querySelectorAll('[data-ua-tab]').forEach(b=>b.addEventListener('click',()=>{const next=b.dataset.uaTab;if(!['my','all','calendar','classes'].includes(next))subviews[next]=subviews[active];active=next;remember();render()}));
  root.querySelectorAll('[data-ua-sub]').forEach(b=>b.addEventListener('click',()=>{subviews[active]=b.dataset.uaSub;remember();render()}));
- renderNotifications();
  const body=root.querySelector('#uaAppBody');
  if(active==='classes'){
   body.innerHTML='<div id="assignmentClassGrid" class="curriculum-root"><div class="empty">Loading class curriculum…</div></div>';
   window.dispatchEvent(new CustomEvent('willena:curriculum-mount',{detail:{target:'assignments'}}));
-  window.UniversalAssignmentTracker?.pollNotifications?.();
+  
   return;
  }
  if(active==='calendar'){body.innerHTML='<div id="uaCalendar">Loading calendar…</div>';window.UniversalAssignmentTracker?.loadCalendar?.();return}
@@ -517,7 +481,5 @@ function openCurriculumCreate(context){
 }
 window.UniversalAssignments={refresh,activate,openCreate:openCurriculumCreate,openTab:id=>{if(apps.some(a=>a.id===id)){if(curriculumLaunchCleanup)curriculumLaunchCleanup();active=id;remember();render()}}};
 document.querySelectorAll('[data-view="vocab"]').forEach(el=>el.addEventListener('click',restoreWordPanel));
-groups=groupRows();render();void refresh();renderNotifications();
-// Refresh completion badges while the dashboard is open; no student work is changed.
-setInterval(()=>{if(document.visibilityState==='visible')window.UniversalAssignmentTracker?.pollNotifications?.()},60000);
+groups=groupRows();render();void refresh();
 })();
