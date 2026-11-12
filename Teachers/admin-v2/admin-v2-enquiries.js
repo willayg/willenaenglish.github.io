@@ -2,7 +2,7 @@ const root=document.getElementById('view-enquiries');
 const api='/api/enquiries';
 const $=selector=>root.querySelector(selector)||document.querySelector(selector);
 const STATUS={new:'신규',contacted:'연락 완료',consultation:'상담 예약',enrolled:'등록 완료',closed:'종료'};
-const TYPES={level_test:'레벨 테스트',tuition:'수강료',classes:'수업 / 시간표',other:'기타'};
+const TYPES={consultation:'상담 문의',level_test:'레벨 테스트',tuition:'수강료',classes:'수업 / 시간표',other:'기타'};
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[char]));
 let rows=[],selected=null,lastFetch=0,busy=false,started=false,drawerReturnFocus=null;
 async function request(action,body){
