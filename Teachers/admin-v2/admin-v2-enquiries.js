@@ -23,11 +23,11 @@ function filtered(){
  return rows.filter(x=>(!state||x.status===state)&&(!q||[x.parent_name,x.phone,x.student_grade,x.message].some(v=>String(v||'').toLowerCase().includes(q))));
 }
 function unreadBadge(){
- const n=rows.filter(x=>x.status==='new').length;
+ const n=rows.filter(x=>!x.read_at).length;
  const counter=$('#enqNewCount');if(counter){counter.textContent=String(n);counter.hidden=n===0}
  for(const id of ['adminEnquiryCount','mobileEnquiryCount']){
   const badge=document.getElementById(id);
-  if(badge){badge.textContent=n>99?'99+':String(n);badge.hidden=n===0;badge.setAttribute('aria-label',n+' new enquiries')}
+  if(badge){badge.textContent=n>99?'99+':String(n);badge.hidden=n===0;badge.setAttribute('aria-label',n+' unread enquiries')}
  }
 }
 function render(){
@@ -37,7 +37,7 @@ function render(){
  list.replaceChildren();
  if(!display.length)list.innerHTML='<div class="enq-empty">표시할 문의가 없습니다.</div>';
  display.forEach(x=>{
-  const button=document.createElement('button');button.type='button';button.className='enq-row';
+  const button=document.createElement('button');button.type='button';button.className='enq-row'+(!x.read_at?' enq-unread-row':'');
   button.innerHTML='<span class="enq-row-top"><strong>'+esc(x.parent_name)+'</strong><span class="enq-badge '+esc(x.status)+'">'+esc(STATUS[x.status]||x.status)+'</span><span class="enq-row-arrow" aria-hidden="true">›</span></span><small>'+esc(x.student_grade)+' · '+esc(TYPES[x.enquiry_type]||x.enquiry_type)+' · '+new Date(x.created_at).toLocaleString('ko-KR')+'</small><span class="preview">'+esc(x.message)+'</span>';
   button.onclick=()=>openDetail(x.id,button);
   list.append(button);
@@ -64,6 +64,19 @@ function openDetail(id,trigger){
  document.getElementById('enqDrawerMeta').textContent=(TYPES[x.enquiry_type]||'상담 문의')+' · '+new Date(x.created_at).toLocaleString('ko-KR');
  detail();
  document.getElementById('enqClose').focus({preventScroll:true});
+ if(!x.read_at){
+  request('mark_read',{id:x.id}).then(()=>{
+   x.read_at=new Date().toISOString();
+   unreadBadge();
+   // Keep consultation status (신규, 연락 완료 etc.) unchanged.
+   // Do not redraw the list, so opening the drawer feels stable.
+   const row=trigger;
+   if(row?.isConnected){row.classList.remove('enq-unread-row');row.querySelector('.enq-unread-dot')?.remove()}
+  }).catch(error=>{
+   console.error('[Enquiries] Could not mark as read',error);
+   const message=$('#enqMessage');if(message)message.textContent='읽음 처리에 실패했습니다. 새로고침 후 다시 확인해 주세요.';
+  });
+ }
 }
 function detail(){
  const x=rows.find(r=>r.id===selected),pane=$('#enqDetail');if(!x)return;
