@@ -1659,8 +1659,8 @@ async function reviewConversation(){
     action:'transcript',book_id:state.book.id,unit_id:state.unit.id,session_id:state.transcriptSessionId,
     turn_number:credit.turn_number,original_turn_number:credit.original_turn_number,
     speaker:'student',character:state.character,transcript_text:credit.text,
-    message_source:'review_credit',verdict:'QUALIFIES',verdict_at:credit.stamp,verdict_proof:credit.proof,
-    review_points:credit.points,review_reason:credit.reason
+    message_source:'review_credit',verdict:credit.qualifies?'QUALIFIES':'NEEDS_MORE',verdict_at:credit.stamp,verdict_proof:credit.proof,
+    review_points:credit.points,review_qualifies:credit.qualifies,review_reason:credit.reason
    });
    if(!saved.ok){const e=await saved.json().catch(()=>({}));throw Error(e.error||'Could not save reviewed points')}
   }
