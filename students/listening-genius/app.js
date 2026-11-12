@@ -17,8 +17,8 @@ async function run(){
   if(!options.length){status.textContent='현재 학급에 연결된 Buzz 또는 Everybody Up 교재가 없습니다.';return;}
   status.hidden=true;
   for(const entry of options){
-   const link=document.createElement('a');link.className='book';link.href=entry.url;link.textContent=entry.label;
-   // A normal same-tab hyperlink follows the verified Oxford book landing page.
+   const link=document.createElement('a');link.className='book';link.href=entry.url;link.referrerPolicy='no-referrer';link.rel='noreferrer';link.textContent=entry.label;
+   // Avoid sending the Willena origin as Referer to Oxford; the same URLs work when opened directly.
    // Don't synthesize unverified audio or unit deep links.
    books.append(link);
   }
