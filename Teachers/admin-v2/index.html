@@ -7,6 +7,7 @@
 <title>Willena Admin V2</title>
 <script src="/students/api-gateway.js?v=20261104-enroll2"></script>
 <script src="/js/api-config.js?v=20260917-adminv2-120"></script>
+<script defer src="/Teachers/willena-pwa.js?v=20261112-enquiry-alerts1"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2.css?v=20260919-r14-14">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2-polish.css?v=20260917-r14-07">
@@ -17,7 +18,7 @@
 <link rel="stylesheet" href="./admin-v2-level-tests.css?v=1.32">
 <link rel="stylesheet" href="./visitor-enrollment.css?v=1">
 <link rel="stylesheet" href="./biweekly-report.css?v=20261101-v1">
-<link rel="stylesheet" href="./admin-v2-enquiries.css?v=20261112-read1">
+<link rel="stylesheet" href="./admin-v2-enquiries.css?v=20261112-push1">
 </head>
 <body>
 <div id="teacher-header"></div>
@@ -37,7 +38,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
   </aside>
   <main class="workspace">
 <section class="view" id="view-enquiries" aria-label="Website enquiry management">
- <div class="page-head"><div><h1>문의 관리 <span id="enqNewCount" class="enq-count">0</span></h1><div class="panel-sub">Website Enquiries · 상담 문의</div></div><button id="enqRefresh" type="button" class="control admin-primary">새로고침 ↻</button></div>
+ <div class="page-head"><div><h1>문의 관리 <span id="enqNewCount" class="enq-count">0</span></h1><div class="panel-sub">Website Enquiries · 상담 문의</div></div><div class="enq-head-actions"><button id="wcEnablePush" type="button" class="control">🔔 알림 켜기</button><button id="wcDisablePush" type="button" class="control" hidden>알림 끄기</button><button id="wcTestPush" type="button" class="control" hidden>알림 테스트</button><button id="enqRefresh" type="button" class="control admin-primary">새로고침 ↻</button></div></div><p id="wcPushStatus" hidden role="status" class="enq-notification-status"></p>
  <div class="enq-toolbar"><select class="control" id="enqFilter" aria-label="Enquiry status"><option value="">전체 상태</option><option value="new">신규</option><option value="contacted">연락 완료</option><option value="consultation">상담 예약</option><option value="enrolled">등록 완료</option><option value="closed">종료</option></select><input class="control" type="search" id="enqSearch" placeholder="이름 · 전화번호 검색" aria-label="Search enquiries"><span id="enqCount" class="panel-sub"></span></div>
  <p class="enq-feedback" role="status" id="enqMessage"></p>
  <div class="enq-panel enq-list" id="enqList"><div class="enq-empty">문의 관리 탭을 열면 내역을 불러옵니다.</div></div>
