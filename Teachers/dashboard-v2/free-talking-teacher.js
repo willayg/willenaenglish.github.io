@@ -1,4 +1,4 @@
-/* Free Talking Genius: shared Teachers Dashboard mission workspace. Speaking only. */
+/* Free Talking Genius: shared Teachers Dashboard mission workspace. Structured Speaking and live AI Conversation missions. */
 (()=>{'use strict';
 const OP='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const OPKEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -58,7 +58,10 @@ async function units(book){
  const supported=(unitRows||[]).map(u=>({...u,count:counts.get(String(u.id))||0})).filter(u=>u.count>=8);
  state.unitCache.set(book,supported);return supported;
 }
-const unitUrl=a=>'https://students.willenaenglish.com/students/free-talking-genius/?book='+encodeURIComponent(a.list_meta?.book_id||'')+'&unit='+encodeURIComponent(a.list_meta?.unit_number||'')+'&homework='+encodeURIComponent(a.id);
+const isConversation=a=>a.list_meta?.mission_mode==='conversation';
+const unitUrl=a=>isConversation(a)
+ ?'https://students.willenaenglish.com/students/free-talking-hybrid-lab/?release=1&book='+encodeURIComponent(a.list_meta?.book_id||'')+'&unit='+encodeURIComponent(a.list_meta?.unit_id||'')+'&homework='+encodeURIComponent(a.id)
+ :'https://students.willenaenglish.com/students/free-talking-genius/?book='+encodeURIComponent(a.list_meta?.book_id||'')+'&unit='+encodeURIComponent(a.list_meta?.unit_number||'')+'&homework='+encodeURIComponent(a.id);
 const fmtDate=s=>{if(!s)return '';const d=new Date(s);return Number.isNaN(+d)?'':d.toLocaleDateString('en-CA',{timeZone:'Asia/Seoul'})};
 const isCurrent=a=>a.active!==false&&a.status!=='ended'&&!a.ended_at&&(!a.due_at||new Date(a.due_at)>=new Date());
 function stats(a){
@@ -70,8 +73,11 @@ function stats(a){
 async function loadAssignments(){
  const d=await homework('list_assignments');
  state.assignments=(d.assignments||[]).filter(isFT);
- const data=await db('rpc/teacher_free_talking_mission_progress_v1',{p_assignment_id:null});
- state.progress=new Map((Array.isArray(data)?data:[]).map(x=>[String(x.assignment_id),x]));
+ const [structured,live]=await Promise.all([
+  db('rpc/teacher_free_talking_mission_progress_v1',{p_assignment_id:null}),
+  db('rpc/teacher_free_talking_conversation_mission_progress_v1',{p_assignment_id:null})
+ ]);
+ state.progress=new Map([...(Array.isArray(structured)?structured:[]),...(Array.isArray(live)?live:[])].map(x=>[String(x.assignment_id),x]));
 }
 function renderManage(host){
  if(!host)return;
@@ -86,12 +92,12 @@ function renderManage(host){
   '<select class="control" id="ftTeacherClassFilter"><option value="all">All classes</option>'+classes.map(c=>'<option value="'+esc(c)+'"'+(state.classFilter===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select>'+
   '<button type="button" class="control" data-ft-refresh>Refresh</button></div>'+
   '<div class="ua-genius-manage-list">'+(rows.length?cards.groupByDate(rows,a=>{
-   const p=stats(a),body=cards.progressPanel({students:p.students,average:p.avg,completed:p.completed,notStarted:p.notStarted,label:'Speaking · 8 questions'});
+   const p=stats(a),body=cards.progressPanel({students:p.students,average:p.avg,completed:p.completed,notStarted:p.notStarted,label:isConversation(a)?'AI conversation · 8 contributions':'Speaking · 8 questions'});
    const actions='<div class="ua-actions">'+(state.history
     ?'<button class="control ua-primary" type="button" data-ft-restore="'+esc(a.id)+'">Restore to Current</button>'
     :'<button class="control" type="button" data-ft-end="'+esc(a.id)+'">End mission</button>')+'</div>';
    return cards.card({id:a.id,className:a.class,task:a.title,createdBy:a.created_by,teacher:a.teacher_name||'Teacher',dueAt:a.due_at,progressLabel:'Student progress',progressPercent:p.avg,body,action:actions,qrUrl:unitUrl(a)});
-  }):'<div class="ua-empty">No '+(state.history?'previous':'current')+' Free Talking speaking missions.</div>')+'</div>';
+  }):'<div class="ua-empty">No '+(state.history?'previous':'current')+' Free Talking missions.</div>')+'</div>';
  for(const a of rows){const p=stats(a);cards.updateRing(a.id,p.avg,host)}
  $$('[data-ft-period]',host).forEach(b=>b.onclick=()=>{state.history=b.dataset.ftPeriod==='history';renderManage(host)});
  $('#ftTeacherClassFilter',host).onchange=e=>{state.classFilter=e.target.value;renderManage(host)};
@@ -134,15 +140,15 @@ async function showCreate(host){
  try{await loadBase()}catch(e){host.innerHTML='<div class="ua-empty">'+esc(e.message)+'</div>';return}
  if(!host.isConnected)return;
  host.innerHTML='<form id="ftTeacherAssignForm" class="ua-feature ua-genius-assign gb-form">'+
- '<h3>Assign Free Talking Genius Mission</h3>'+
+ '<h3>Assign Free Talking Genius Mission</h3>'+ '<label>Mission type <select class="control" name="mission_mode"><option value="speaking">Structured Speaking · 8 questions</option><option value="conversation">Free Talking · AI conversation</option></select></label>'+ '<p class="ua-note" id="ftTeacherModeDescription">Students complete the eight textbook Speaking questions.</p>'+ 
  '<label>Class <select class="control" name="klass" required><option value="">Choose class</option>'+state.classes.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('')+'</select></label>'+
  '<label>Textbook <select class="control" name="book" required><option value="">Choose class first</option></select></label>'+
  '<p class="ua-note" id="ftTeacherBookNotice">Choose a class to see assigned textbooks.</p>'+
- '<div class="gb-select-head"><strong>Speaking units (8 published questions required)</strong><label><input type="checkbox" id="ftTeacherAllUnits"> All</label></div>'+
+ '<div class="gb-select-head"><strong id="ftTeacherUnitLabel">Speaking units (8 published questions required)</strong><label><input type="checkbox" id="ftTeacherAllUnits"> All</label></div>'+
  '<div class="gb-chapter-list" id="ftTeacherUnits">Choose a textbook.</div>'+
  '<div class="gf-hw-form-grid"><label>Available from <input class="control" type="date" name="start" required></label>'+
  '<label>Due date <input class="control" type="date" name="due" required></label></div>'+
- '<label class="ua-fresh-session"><input type="checkbox" name="fresh"><span><strong>Fresh Session</strong><small>Default off: free practice and assigned missions share the same progress.</small></span></label>'+
+ '<label class="ua-fresh-session" id="ftTeacherFreshWrap"><input type="checkbox" name="fresh"><span><strong>Fresh Session</strong><small>Default off: free practice and assigned missions share the same progress.</small></span></label>'+
  '<div class="gf-hw-pre-assignment"><div id="ftTeacherPrevious" aria-live="polite">Choose class, book and units to preview progress.</div></div>'+
  '<div class="gf-hw-footer"><button class="control ua-primary" type="submit" id="ftTeacherSubmit" disabled>Assign Mission</button><span id="ftTeacherNotice" role="status"></span></div></form>';
  const form=$('form',host),klass=form.elements.klass,book=form.elements.book,notice=$('#ftTeacherNotice',host),unitList=$('#ftTeacherUnits',host);
@@ -150,14 +156,17 @@ async function showCreate(host){
  const localDate=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
  form.elements.start.value=localDate(now);form.elements.due.value=localDate(next);
  let bookEpoch=0,unitsEpoch=0,previewEpoch=0;
+ const mode=()=>form.elements.mission_mode.value;
+ const updateMode=()=>{const live=mode()==='conversation';$('#ftTeacherModeDescription',host).textContent=live?'Students have a natural AI conversation. Eight verified contributions complete the unit; partial progress is saved.':'Students complete the eight structured textbook Speaking questions.';$('#ftTeacherUnitLabel',host).textContent=live?'Conversation units (8 published anchor questions required)':'Speaking units (8 published questions required)';$('#ftTeacherFreshWrap',host).hidden=live;if(live)form.elements.fresh.checked=false;void preview()};
+ form.elements.mission_mode.addEventListener('change',updateMode);
  const checked=()=>$$('[data-ft-unit]:checked',unitList).map(x=>x.value);
  const status=()=>{$('#ftTeacherSubmit',host).disabled=!klass.value||!book.value||!checked().length||new Date(form.elements.due.value)<new Date(form.elements.start.value)};
  const preview=async()=>{
   const stamp=++previewEpoch,selected=checked(),box=$('#ftTeacherPrevious',host);
   status();if(!selected.length||!klass.value||!book.value){box.textContent='Select a class, book and units.';return}
-  box.textContent='Checking existing speaking mastery…';
+  box.textContent=mode()==='conversation'?'Checking previous conversation progress…':'Checking existing speaking mastery…';
   try{
-   const data=await db('rpc/teacher_free_talking_mission_progress_v1',{p_assignment_id:null});
+   const data=await db(mode()==='conversation'?'rpc/teacher_free_talking_conversation_mission_progress_v1':'rpc/teacher_free_talking_mission_progress_v1',{p_assignment_id:null});
    if(stamp!==previewEpoch)return;
    const matched=(Array.isArray(data)?data:[]).filter(x=>x.class===klass.value&&x.book_id===book.value&&selected.includes(x.unit_id));
    box.innerHTML=matched.length?'<strong>Previous missions for these units</strong>'+matched.map(x=>{
@@ -215,19 +224,19 @@ async function showCreate(host){
   if(chosen.length!==selected.length||chosen.some(u=>u.count<8)){notice.textContent='One or more units are not ready.';return}
   state.loading=true;const submit=$('#ftTeacherSubmit',host);submit.disabled=true;let done=0;
   try{
-   const groupId='ft-'+Date.now().toString(36);
+   const groupId='ft-'+Date.now().toString(36),live=mode()==='conversation';
    for(const u of chosen){
-    const title=(state.books.find(x=>x.id===book.value)?.title||'Free Talking')+' · Unit '+u.unit_number;
-    const payload={class:klass.value,title,list_title:title,description:'Free Talking Genius · Speaking (8 questions)',list_key:'free_talking:'+book.value+':'+u.id,list_meta:{
+    const title=(state.books.find(x=>x.id===book.value)?.title||'Free Talking')+' · Unit '+u.unit_number+(live?' · AI Conversation':'');
+    const payload={class:klass.value,title,list_title:title,description:live?'Free Talking Genius · AI Conversation (8 contributions)':'Free Talking Genius · Speaking (8 questions)',list_key:(live?'free_talking_conversation:':'free_talking:')+book.value+':'+u.id,list_meta:{
       source_app:'free_talking_genius',source_type:'wordlist',app:'free_talking_genius',
-      book_id:book.value,unit_id:u.id,unit_number:u.unit_number,required_modes:['speaking'],
-      question_count:8,pass_score:8,fresh_session:form.elements.fresh.checked,
+      book_id:book.value,unit_id:u.id,unit_number:u.unit_number,mission_mode:live?'conversation':'speaking',required_modes:[live?'conversation':'speaking'],
+      question_count:8,pass_score:8,fresh_session:!live&&form.elements.fresh.checked,
       assignment_group_id:groupId,assignment_group_title:title
      },start_at:starts.toISOString(),due_at:due.toISOString(),goal_type:'completions',goal_value:8};
     await homework('create_assignment',payload);done++;
    }
-   notice.textContent='Assigned '+done+' speaking unit'+(done===1?'':'s')+' to '+klass.value+'.';
-   window.dispatchEvent(new CustomEvent('willena:assignment-created',{detail:{message:done+' Free Talking speaking missions · '+klass.value}}));
+   notice.textContent='Assigned '+done+(live?' AI conversation':' structured Speaking')+' unit'+(done===1?'':'s')+' to '+klass.value+'.';
+   window.dispatchEvent(new CustomEvent('willena:assignment-created',{detail:{message:done+' Free Talking '+(live?'conversation':'speaking')+' missions · '+klass.value}}));
    window.WillenaAssignmentsV1?.reload?.();
    await loadAssignments();
   }catch(e){notice.textContent='Saved '+done+' of '+chosen.length+' units. '+e.message}
