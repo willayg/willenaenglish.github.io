@@ -6,7 +6,7 @@ export function createSpeakingBestProgress(host){
  const meter=document.createElement('div');meter.className='speaking-best-meter';
  meter.setAttribute('role','progressbar');meter.setAttribute('aria-label','최고 말하기 점수');
  meter.setAttribute('aria-valuemin','0');meter.setAttribute('aria-valuemax','4');meter.setAttribute('aria-valuenow','0');
- meter.innerHTML='<div class="speaking-best-track"><div class="speaking-best-fill"></div></div><span class="speaking-best-caption">최고 점수 · 0/4</span>';
+ meter.innerHTML='<div class="speaking-best-track"><div class="speaking-best-fill"></div></div>';
  if(mic)mic.insertAdjacentElement('afterend',meter);
  let best={points:0,level:'red',transcript:'',alternatives:[],matchedBy:null,correct:false};
  const palette={green:['#168345','#ebfff2','#77c99a'],lime:['#719D19','#f0fbd7','#B5DB70'],
@@ -14,7 +14,6 @@ export function createSpeakingBestProgress(host){
  const render=()=>{
   const [fg,bg,border]=palette[best.level]||palette.red;
   meter.style.setProperty('--best-color',fg);meter.querySelector('.speaking-best-fill').style.width=best.points*25+'%';
-  meter.querySelector('.speaking-best-caption').textContent='최고 점수 · '+best.points+'/4';
   meter.setAttribute('aria-valuenow',String(best.points));
   const preview=host?.querySelector('[data-speaking-transcript]');
   if(preview&&best.points>0){
