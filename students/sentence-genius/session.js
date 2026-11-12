@@ -11,7 +11,7 @@ import {capturePointOrigin,showPointAward} from '/students/components/student-po
 import {checkOrder} from './scoring.js?v=sg-coach-gold-v3';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
 import {usableAlternatives} from './ai-grading.js?v=sg-phase3b';
-import {gradeSpeaking} from '/students/shared/speaking-smart-grade.js?v=20261112-sentence-equivalence6';
+import {gradeSpeaking} from '/students/shared/speaking-smart-grade.js?v=20261112-progressive7';
 import {createSpeakingBestProgress} from '/students/shared/speaking-best-progress.js?v=20261112-visual-only2';
 import {createSpeakingGradesGuide} from '/students/shared/speaking-grades-guide.js?v=20261112-energy4';
 
