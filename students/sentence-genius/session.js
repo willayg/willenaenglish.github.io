@@ -12,7 +12,7 @@ import {checkOrder} from './scoring.js?v=sg-coach-gold-v3';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
 import {usableAlternatives} from './ai-grading.js?v=sg-phase3b';
 import {gradeSpeaking} from '/students/shared/speaking-smart-grade.js?v=20261111-orange5';
-import {createSpeakingGradesGuide} from '/students/shared/speaking-grades-guide.js?v=20261112-simple3';
+import {createSpeakingGradesGuide} from '/students/shared/speaking-grades-guide.js?v=20261112-energy4';
 
 const $=id=>document.getElementById(id);
 const titles={coach:'코치',unscramble:'문장 배열',speaking:'말하기'};
