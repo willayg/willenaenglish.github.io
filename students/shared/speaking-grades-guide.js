@@ -19,7 +19,7 @@ export function createSpeakingGradesGuide({app='word',host=null}={}){
  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','말하기 색깔 안내');
  const card=document.createElement('section');card.className='sgg-card';
  overlay.appendChild(card);document.body.appendChild(overlay);
- const help=document.createElement('button');help.type='button';help.className='sgg-help';help.textContent='? 말하기 도움말';help.setAttribute('aria-label','말하기 색깔 도움말 다시 보기');
+ const help=document.createElement('button');help.type='button';help.className='sgg-help';if(!host)help.classList.add('sgg-help-float');help.hidden=true;help.textContent='? 말하기 도움말';help.setAttribute('aria-label','말하기 색깔 도움말 다시 보기');
  (host||document.body).appendChild(help);
  function visual(type){
   if(type==='colors')return '<div class="sgg-color-list">'+colors.map(([fg,bg,name,points,desc])=>
@@ -60,7 +60,7 @@ export function createSpeakingGradesGuide({app='word',host=null}={}){
  overlay.addEventListener('click',e=>{if(e.target===overlay)hide()});
  document.addEventListener('keydown',e=>{if(open&&e.key==='Escape'){e.preventDefault();hide()}});
  return {show,showOnSessionStart(id){
-  const session=String(id||'unknown');if(shown.has(session))return;shown.add(session);
+  const session=String(id||'unknown');help.hidden=false;if(shown.has(session))return;shown.add(session);
   try{if(localStorage.getItem(key)==='1')return}catch{}
   show();
  }};
