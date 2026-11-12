@@ -304,6 +304,29 @@ try{
 .cc-assignment-class-tabs{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:5px 2px 13px;margin-bottom:12px}
 .cc-assignment-class-tabs button{flex:none;border:1px solid #cbdfe2;background:white;color:#4e6973;padding:11px 17px;border-radius:12px;cursor:pointer;font:inherit;font-size:13px;font-weight:750;white-space:nowrap}
 .cc-assignment-class-tabs button.active{background:#dff5f6;border-color:#44aeb9;color:#127f89;box-shadow:0 0 0 1px #44aeb9}
+.cc-mission-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:4px 0 15px;flex-wrap:wrap}
+.cc-mission-toolbar>div{display:grid;gap:3px}.cc-mission-toolbar strong{font-size:17px;color:#264753}
+.cc-mission-toolbar small{font-size:12px;color:#7a8d95}
+.cc-mission-cards{display:grid;gap:12px}
+.cc-mission-card{border:1.5px solid #d9e9ea;background:#fff;border-radius:16px;overflow:hidden}
+.cc-mission-card[open]{border-color:#a8d5d8;box-shadow:0 3px 12px rgba(32,93,101,.06)}
+.cc-mission-card>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:17px;cursor:pointer}
+.cc-mission-card>summary::-webkit-details-marker{display:none}
+.cc-mission-title{display:grid;gap:5px;flex:1;min-width:0}
+.cc-mission-title small{font-size:11px;font-weight:800;color:#287e87}
+.cc-mission-title strong{font-size:14px;color:#274350;line-height:1.4;overflow-wrap:anywhere}
+.cc-mission-title>span{color:#708691;font-size:11px}
+.cc-mission-count{color:#387783;font-size:12px;font-weight:800;white-space:nowrap;text-align:right}
+.cc-mission-chevron{color:#58848b;font-size:20px;transition:transform .15s}
+.cc-mission-card[open] .cc-mission-chevron{transform:rotate(180deg)}
+.cc-mission-body{border-top:1px solid #e7eff1;padding:11px 17px 18px}
+.cc-mission-student{display:grid;grid-template-columns:minmax(90px,1.1fr) minmax(90px,2fr) 43px;gap:12px;align-items:center;padding:9px 2px;color:#3e5963;font-size:12px}
+.cc-mission-student>span{min-width:0;overflow-wrap:anywhere}
+.cc-mission-student>small{grid-column:span 2;color:#81929b;font-size:11px}
+.cc-mission-student>strong{text-align:right;color:#377e87;font-size:12px}
+.cc-mission-track{height:9px;background:#e7eff0;border-radius:12px;overflow:hidden}
+.cc-mission-track i{display:block;height:100%;background:#299ea7;border-radius:12px}
+@media(max-width:650px){.cc-mission-card>summary{padding:13px;gap:7px}.cc-mission-count{font-size:11px;white-space:normal;max-width:90px}.cc-mission-body{padding:10px 12px}.cc-mission-student{gap:7px;grid-template-columns:minmax(65px,1fr) minmax(75px,1.5fr) 36px}}
 .cc-assignment-bookline{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px}
 .cc-assignment-bookline .cc-book-tabs{margin:0}
 .cc-assignment-bookline .cc-book-tabs button{padding:8px 12px}
