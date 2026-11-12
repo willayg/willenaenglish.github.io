@@ -42,7 +42,9 @@ export async function onRequestPost({request,env}){
   if(!key)return json(503,{success:false,error:'OPENAI_API_KEY not configured on this deployment'});
   const isMini=model.startsWith('gpt-4o-mini-tts');
   const payload={model,voice,input:PHRASE,response_format:'mp3'};
-  if(isMini)payload.instructions="Speak clearly in friendly, playful American English, with a cheerful and slightly mischievous character. Natural rhythm, warm and upbeat, not overly high-pitched. Say exactly the provided words.";
+  if(isMini)payload.instructions=voice==='fable'
+   ? "Speak in a natural, warm British English accent with a calm, clever, slightly playful male-sounding character. Subtle confidence, crisp consonants, unhurried pace. Avoid theatrical delivery or exaggerated robotic effects. Say exactly the provided words."
+   : "Speak clearly in friendly English, with a cheerful and slightly mischievous character. Natural rhythm, warm and upbeat, not overly high-pitched. Say exactly the provided words.";
   const res=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(40000)});
   if(!res.ok){const detail=await res.json().catch(()=>null);return json(res.status===429?429:502,{success:false,error:'OPENAI_SPEECH_'+res.status+': '+String(detail?.error?.message||'Speech generation failed').slice(0,180)})}
   const buffer=await res.arrayBuffer();if(buffer.byteLength<500||buffer.byteLength>1500000)throw Error('Invalid speech size');
