@@ -44,18 +44,18 @@ function clean(body){
  if(!title||title.length>120||!dateOk(date)||(time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))||!['events','staff','academic','deadline'].includes(category)||!['none','weekly','monthly'].includes(repeat)||notes.length>1200)throw Object.assign(new Error('Invalid event details'),{status:400});
  return {title,event_date:date,event_time:time||null,category,repeat_rule:repeat,notes,updated_at:new Date().toISOString()};
 }
-async function pushAfterSave(body,env,context,staff,event){
+async function pushAfterSave(body,env,waitUntil,staff,event){
  if(body.notify_staff!==true)return {};
  try{
   const queued=await queueCalendarEventPush(env,staff.token,event);
-  if(queued.completion)context.waitUntil(queued.completion);
+  if(queued.completion)waitUntil(queued.completion);
   return {notification_queued:queued.queued,notification_devices:queued.devices};
  }catch(e){
   console.error('Willena Calendar event push was not queued',e.message);
   return {notification_queued:false};
  }
 }
-export async function onRequest({request,env,context}){
+export async function onRequest({request,env,waitUntil}){
  try{
   const url=new URL(request.url);
   if(url.hostname!=='teachers.willenaenglish.com')return respond({error:'Host not permitted'},403);
@@ -73,7 +73,7 @@ export async function onRequest({request,env,context}){
   const body=await request.json().catch(()=>({}));
   if(request.method==='POST'){
    const rows=await db(staff.token,TABLE,'POST',{...clean(body),created_by:staff.id});
-   const push=await pushAfterSave(body,env,context,staff,rows[0]);
+   const push=await pushAfterSave(body,env,waitUntil,staff,rows[0]);
    return respond({success:true,event:rows[0],...push},201);
   }
   const id=String(body.id||'');
@@ -84,7 +84,7 @@ export async function onRequest({request,env,context}){
   }
   const rows=await db(staff.token,TABLE+'?id=eq.'+encodeURIComponent(id),'PATCH',clean(body));
   if(!rows.length)return respond({error:'Event not found; refresh the calendar'},404);
-  const push=await pushAfterSave(body,env,context,staff,rows[0]);
+  const push=await pushAfterSave(body,env,waitUntil,staff,rows[0]);
   return respond({success:true,event:rows[0],...push});
  }catch(err){console.error('native calendar',err.message);return respond({error:err.message||'Calendar service unavailable'},err.status||502)}
 }
