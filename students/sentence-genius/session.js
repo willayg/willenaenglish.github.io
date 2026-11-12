@@ -94,7 +94,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     const host=$('sentenceQuestionHost');
     renderer=new QuestionRenderer(host).render(questionFor(mode,item),{
       onChange:(_answer,has)=>{
-        if(!answered&&!grading&&token===epoch)$('action').disabled=!has;
+        if(!answered&&!grading&&token===epoch)$('action').disabled=!has&&!bestProgress?.best?.correct;
         if(mode!=='unscramble'&&has&&token===epoch&&renderer){
           const candidates=renderer.getSpeechAlternatives?.()||[];
           updateSpeakingPreview(candidates.length?candidates:[_answer]);
@@ -160,10 +160,10 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     const item=current();
     if(!item||!renderer||grading)return;
     if(answered){index++;render();return}
-    const response=renderer.getResponse();
+    const response=renderer.getResponse()||(mode!=='unscramble'?bestProgress?.best?.transcript:'')||'';
     if(!String(response??'').trim())return;
     const alternatives=renderer.getSpeechAlternatives?.();
-    const candidates=alternatives?.length?alternatives:[response];
+    const candidates=alternatives?.length?alternatives:(bestProgress?.best?.alternatives?.length?bestProgress.best.alternatives:[response]);
     const usable=mode==='unscramble'?candidates:usableAlternatives(candidates,item.en);
     if(mode!=='unscramble'&&!usable.length){
       onMessage('음성을 잘 인식하지 못했어요. 다시 말해 보세요.');
