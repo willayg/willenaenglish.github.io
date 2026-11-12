@@ -79,14 +79,29 @@ export async function onRequestPost({request,env}){
    if(!response.ok)return reply(502,{error:'Willi goodbye audio unavailable'});
    audio=await response.arrayBuffer();
   }else{
+   // Same voice IDs and same Netlify fallback as the existing working
+   // Free Talking ElevenLabs route (preview envs can omit provider keys).
    const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY||env.ELEVENLABS_API||env.ELEVENLABS_KEY;
-   if(!key)return reply(503,{error:'Character voice not configured'});
-   const response=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voice)+'?output_format=mp3_44100_128',
-    {method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
-     body:JSON.stringify({text,model_id:model,voice_settings:{stability:0.5,similarity_boost:0.8,use_speaker_boost:false}}),
-     signal:AbortSignal.timeout(25000)});
-   if(!response.ok)return reply(502,{error:'Character goodbye audio unavailable'});
-   audio=await response.arrayBuffer();
+   const settings={stability:0.5,similarity_boost:0.8,use_speaker_boost:false};
+   if(key){
+    try{
+     const direct=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voice)+'?output_format=mp3_44100_128',{
+      method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
+      body:JSON.stringify({text,model_id:model,voice_settings:settings}),signal:AbortSignal.timeout(24000)});
+     if(direct.ok)audio=await direct.arrayBuffer();
+    }catch(e){console.warn('[FT outro] direct voice error',String(e).slice(0,80))}
+   }
+   if(!audio){
+    const fallback=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
+     method:'POST',headers:{'Content-Type':'application/json'},
+     body:JSON.stringify({text,voice_id:voice,model_id:model,voice_settings:settings}),signal:AbortSignal.timeout(30000)});
+    if(!fallback.ok)return reply(502,{error:'Character goodbye voice unavailable'});
+    const payload=await fallback.json().catch(()=>({}));
+    if(typeof payload.audio!=='string')return reply(502,{error:'Character goodbye voice returned no recording'});
+    const binary=atob(payload.audio),bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+    audio=bytes.buffer;
+   }
   }
   if(audio.byteLength<500||audio.byteLength>1200000)return reply(502,{error:'Invalid goodbye recording'});
   const encoded=b64(audio);
