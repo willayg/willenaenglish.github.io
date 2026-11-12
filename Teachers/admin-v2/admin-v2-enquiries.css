@@ -62,3 +62,11 @@ body.enq-drawer-open{overflow:hidden}
  #enqDrawerBg .enq-meta{grid-template-columns:1fr}
  #enqDrawerBg .enq-drawer-body{padding:16px}
 }
+
+/* Badge sits on the envelope rather than displacing sidebar labels. */
+.rail .nav[data-view="enquiries"] .enq-nav-icon{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.rail .nav[data-view="enquiries"] .enq-nav-icon>.enq-unread{
+ position:absolute;top:-9px;right:-12px;margin:0;z-index:4;
+}
+.rail .nav[data-view="enquiries"]>span:last-child{white-space:nowrap}
+.rail .nav[data-view="enquiries"] svg{width:23px;height:23px}
