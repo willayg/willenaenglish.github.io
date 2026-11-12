@@ -122,6 +122,16 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
     }
    }
   }
+  // Two-word vocabulary targets: recognizing one substantial target word
+  // is worth orange, even if the browser mishears the other word.
+  // Do not count articles, short function words, or unrelated speech.
+  if(mode==='word'&&score===0&&expected.length===2){
+    const substantive=expected.filter(w=>!LIGHT.has(w)&&w.length>=3);
+    const matched=substantive.filter(w=>heard.some(h=>compatible(w,h)));
+    if(matched.length===1&&heard.length<=4){
+      score=1;reason='one_content_word_of_two';
+    }
+  }
   if(mode==='word'&&score===0){
     const partial=fragmentedWordGrade(expected,heard);
     if(partial){score=partial;reason=partial===2?'recognizable_word_stem':'fragmented_word_sound';}
