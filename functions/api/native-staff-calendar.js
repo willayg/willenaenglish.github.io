@@ -40,9 +40,9 @@ async function db(token,path,method='GET',body){
  return result;
 }
 function clean(body){
- const title=String(body.title||'').trim(),date=String(body.date||''),time=String(body.time||''),category=String(body.category||'events'),repeat=String(body.repeat||'none'),notes=String(body.notes||'').trim();
- if(!title||title.length>120||!dateOk(date)||(time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))||!['events','staff','academic','deadline'].includes(category)||!['none','weekly','monthly'].includes(repeat)||notes.length>1200)throw Object.assign(new Error('Invalid event details'),{status:400});
- return {title,event_date:date,event_time:time||null,category,repeat_rule:repeat,notes,updated_at:new Date().toISOString()};
+ const title=String(body.title||'').trim(),date=String(body.date||''),time=String(body.time||''),category=String(body.category||'events'),repeat=String(body.repeat||'none'),notes=String(body.notes||'').trim(),reminder=Number(body.reminder_minutes??5);
+ if(!title||title.length>120||!dateOk(date)||(time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))||!['events','staff','academic','deadline'].includes(category)||!['none','weekly','monthly'].includes(repeat)||notes.length>1200||![0,5,10,15,30].includes(reminder))throw Object.assign(new Error('Invalid event details'),{status:400});
+ return {title,event_date:date,event_time:time||null,category,repeat_rule:repeat,notes,reminder_minutes:reminder,updated_at:new Date().toISOString()};
 }
 async function pushAfterSave(body,env,waitUntil,staff,event){
  if(body.notify_staff!==true)return {};
@@ -64,7 +64,7 @@ export async function onRequest({request,env,waitUntil}){
   if(request.method==='GET'){
    const from=url.searchParams.get('from')||'',to=url.searchParams.get('to')||'';
    if(!dateOk(from)||!dateOk(to)||from>to)return respond({error:'Invalid date range'},400);
-   const params=new URLSearchParams({select:'id,title,event_date,event_time,category,repeat_rule,notes,created_by,updated_at',event_date:'lte.'+to,order:'event_date.asc',limit:'2000'});
+   const params=new URLSearchParams({select:'id,title,event_date,event_time,category,repeat_rule,notes,reminder_minutes,created_by,updated_at',event_date:'lte.'+to,order:'event_date.asc',limit:'2000'});
    const rows=await db(staff.token,TABLE+'?'+params);
    const events=rows.filter(e=>e.repeat_rule!=='none'||e.event_date>=from);
    return respond({success:true,events});
