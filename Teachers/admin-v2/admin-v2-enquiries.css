@@ -70,3 +70,7 @@ body.enq-drawer-open{overflow:hidden}
 }
 .rail .nav[data-view="enquiries"]>span:last-child{white-space:nowrap}
 .rail .nav[data-view="enquiries"] svg{width:23px;height:23px}
+
+/* Unread is independent of consultation workflow status. */
+#view-enquiries .enq-row.enq-unread-row{background:#f4fcfc;border-color:#bfebef}
+#view-enquiries .enq-unread-dot{width:9px;height:9px;flex-shrink:0;background:#e2324b;border-radius:50%}
