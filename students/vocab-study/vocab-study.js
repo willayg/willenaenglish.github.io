@@ -15,7 +15,7 @@ import {createVocabHistoryNavigation} from './navigation-history.js?v=20261024-h
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=20260927-startup2';
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 import {createSpeakingGradesGuide} from '/students/shared/speaking-grades-guide.js?v=20261112-energy4';
-import {createSpeakingBestProgress} from '/students/shared/speaking-best-progress.js?v=20261112-1';
+import {createSpeakingBestProgress} from '/students/shared/speaking-best-progress.js?v=20261112-visual-only2';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
