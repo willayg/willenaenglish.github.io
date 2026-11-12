@@ -129,6 +129,21 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
     }
    }
   }
+  // A single ordinary word substitution in an otherwise correctly ordered
+  // sentence earns lime. Keep age, negation and direction changes on the
+  // existing lower-credit path.
+  if(mode==='sentence'&&score<3&&expected.length>=5&&expected.length===heard.length){
+    const differences=expected.map((w,i)=>compatible(w,heard[i])?null:i).filter(i=>i!==null);
+    if(differences.length===1){
+      const i=differences[0],from=expected[i],to=heard[i];
+      const protectedWord=w=>CRITICAL.has(w)||/^[0-9]+$/.test(w);
+      const opposites=[['left','right'],['up','down'],['before','after'],['first','last'],['yes','no'],['mother','father']];
+      const reversed=opposites.some(([a,b])=>(from===a&&to===b)||(from===b&&to===a));
+      if(!protectedWord(from)&&!protectedWord(to)&&!reversed){
+        score=3;reason='one_word_substitution';
+      }
+    }
+  }
   // Sentence practice is progressive: ordered recognition earns partial
   // credit even when an age, detail, or the last phrase is absent/wrong.
   // Use both recall and precision so random long speech cannot pass.
