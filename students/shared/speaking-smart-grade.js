@@ -1,3 +1,4 @@
+import {sentenceContractionForms} from '/students/shared/sentence-contraction-forms.js?v=20261112-context1';
 // Deterministic speaking-only evaluator. Never use for typed spelling or grammar.
 // Grade the STT transcript, not acoustic pronunciation; 4/3/2/1 are confidence tiers.
 // A missing or unrelated transcript is a retry (0).
@@ -60,12 +61,13 @@ function fragmentedWordGrade(expected,heard){
 }
 const result=(points,transcript,reason)=>({points,correct:points>=1,level:points===4?'green':points===3?'lime':points===2?'yellow':points===1?'orange':'red',transcript,matchedBy:reason});
 export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null}={}){
- const expected=tokens(target,mode);
+ const expectedForms=(mode==='sentence'?sentenceContractionForms(target):[target]).map(v=>tokens(v,mode));
  const heardList=(Array.isArray(alternatives)?alternatives:[alternatives]).map(String).map(s=>s.trim()).filter(Boolean).slice(0,5);
- if(!expected.length||!heardList.length)return result(0,heardList[0]||'','no_speech');
+ if(!expectedForms[0]?.length||!heardList.length)return result(0,heardList[0]||'','no_speech');
  let best=result(0,heardList[0],'unrecognized');
  for(const raw of heardList){
-  const heard=tokens(raw,mode);
+  const heardForms=(mode==='sentence'?sentenceContractionForms(raw):[raw]).map(v=>tokens(v,mode));
+  for(const expected of expectedForms)for(const heard of heardForms){
   if(!heard.length)continue;
   let score=0,reason='unrecognized';
   if(expected.join(' ')===heard.join(' ')){score=4;reason='exact';}
@@ -200,7 +202,8 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
     }
   }
   if(score>best.points)best=result(score,raw,reason);
-  if(score===4)break;
+  if(score===4)return best;
+  }
  }
  return best;
 }
