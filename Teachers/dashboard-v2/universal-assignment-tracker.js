@@ -451,7 +451,7 @@ async function loadOverview(scopeName='my',force=false){
      const isVerified=st.complete===true||st.completed===true||status==='complete'||status==='completed';
      if(!isVerified)continue;
      completionEvents.push({key:task.app+'|'+assignmentId+'|'+studentId,studentId,assignmentId,app:task.app,
-      className:String(task.class||task.class_name||record.class||''),assignment:String(task.label||task.title||'Homework'),source});
+      className:String(task.class||task.class_name||record.class||''),assignment:String(task.label||task.title||'Homework'),source,completedAt:st.completed_at||st.last_activity||st.updated_at||null});
     }
    }
   }
@@ -977,5 +977,32 @@ async function loadCalendar(){
  }
  renderCalendar();
 }
-window.UniversalAssignmentTracker={load,loadOverview,loadCalendar};
+// Lightweight notification check while the teacher is using the new All Classes planner.
+// Reuses the existing verified conversation mission RPC; this does not alter homework.
+let notificationPollInFlight=false;
+async function pollNotifications(){
+ if(notificationPollInFlight)return;
+ notificationPollInFlight=true;
+ try{
+  const [assignments,progress]=await Promise.all([
+   get('homework_assignments?select=id,title,class,list_meta&list_meta->>mission_mode=eq.conversation&order=created_at.desc&limit=300'),
+   get('rpc/teacher_free_talking_conversation_mission_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_id:null})})
+  ]);
+  const byId=new Map((assignments||[]).map(a=>[id(a.id),a]));
+  const completions=[];
+  for(const assignment of (Array.isArray(progress)?progress:[])){
+   const a=byId.get(id(assignment.assignment_id));if(!a)continue;
+   for(const student of assignment.students||[]){
+    if(student.complete!==true)continue;
+    const studentId=id(student.student_id);if(!studentId)continue;
+    completions.push({key:'Free Talking Genius|'+id(a.id)+'|'+studentId,studentId,assignmentId:id(a.id),studentName:student.name,
+     className:a.class||assignment.class||'',assignment:a.title||'AI Conversation',app:'Free Talking Genius',
+     completedAt:student.last_activity||null,source:'Free Talking conversation progress'});
+   }
+  }
+  window.dispatchEvent(new CustomEvent('willena:homework-completion-snapshot',{detail:{completions}}));
+ }catch(error){console.warn('[Homework Notifications] Read unavailable:',error.message)}
+ finally{notificationPollInFlight=false}
+}
+window.UniversalAssignmentTracker={load,loadOverview,loadCalendar,pollNotifications};
 })();
