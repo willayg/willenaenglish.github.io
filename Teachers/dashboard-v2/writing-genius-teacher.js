@@ -7,6 +7,40 @@ const $=(sel,root=document)=>root.querySelector(sel);
 const $$=(sel,root=document)=>[...root.querySelectorAll(sel)];
 const kindName={sentence:'Free sentences',diary:'Daily diary',topic:'Topic writing'};
 const state={rows:[],sessions:[],classes:[],activeId:null,activeSessionId:null,tab:'submissions',writingFilter:'submitted',reviewFilter:'needs',loaded:false,loading:false};
+
+// This count is independent of the current filters and includes all active classes.
+// A diary/topic remains pending until written teacher feedback is actually saved.
+let badgeLoading=false;
+function pendingFeedbackCount(entries){
+ return (Array.isArray(entries)?entries:[]).filter(e=>e.status==='submitted'&&
+  (e.kind==='diary'||e.kind==='topic')&&e.has_teacher_feedback!==true).length;
+}
+function updateFeedbackBadge(entries){
+ const total=pendingFeedbackCount(entries);
+ for(const nav of document.querySelectorAll('[data-view="writing-genius"]')){
+  nav.style.position='relative';
+  let badge=nav.querySelector('.wg-feedback-count');
+  if(!badge){
+   badge=make('span','wg-feedback-count');
+   badge.setAttribute('aria-label','Writing submissions awaiting feedback');
+   badge.style.cssText='position:absolute;top:3px;right:4px;z-index:3;box-sizing:border-box;min-width:19px;height:19px;flex:none;padding:0 4px;border:2px solid white;border-radius:999px;background:#d93646;color:#fff;font:700 11px/15px system-ui;text-align:center;white-space:nowrap;pointer-events:none;';
+   const label=nav.querySelector('span:last-child');
+   if(label)nav.insertBefore(badge,label);else nav.append(badge);
+  }
+  badge.textContent=total>99?'99+':String(total);
+  badge.hidden=total===0;
+  badge.style.display=total?'block':'none';
+ }
+}
+async function refreshFeedbackBadge(){
+ if(badgeLoading)return;
+ badgeLoading=true;
+ try{
+  const data=await api(null);
+  updateFeedbackBadge(data.entries);
+ }catch(e){console.warn('[Writing Genius] Pending feedback count:',e.message)}
+ finally{badgeLoading=false}
+}
 const formatDate=s=>s?new Date(s).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
 function make(tag,className,text){
  const node=document.createElement(tag);if(className)node.className=className;
@@ -94,6 +128,7 @@ async function load(){
   const [data,practice]=await Promise.all([api(cls),api(cls,'https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/writing_genius_teacher_sentence_sessions_v1')]);
   state.sessions=Array.isArray(practice.entries)?practice.entries:[];
   state.rows=Array.isArray(data.entries)?data.entries:[];
+  if(!cls)updateFeedbackBadge(state.rows);else void refreshFeedbackBadge();
   state.classes=Array.isArray(data.classes)?data.classes:[];
   state.loaded=true;
   const select=$('#wgTeacherClass'),selected=select.value;
@@ -187,7 +222,7 @@ function detail(entry){
  const save=make('button','wg-t-save-feedback','Send feedback & award points');save.type='button';
  label.append(input);form.append(textarea,label,save,note);host.append(form);
  feedbackApi(entry.id).then(result=>{textarea.value=result.feedback||'';input.value=result.bonus_points||0;note.textContent=result.feedback?.trim()?'Feedback already sent'+(entry.feedback_sent_at?' · '+new Date(entry.feedback_sent_at).toLocaleString('en-US',{timeZone:'Asia/Seoul'}):'')+(result.bonus_points?' · '+result.bonus_points+' points':''):'No teacher feedback yet.'}).catch(e=>note.textContent=e.message);
- save.onclick=async()=>{const bonus=Number(input.value);if(!Number.isInteger(bonus)||bonus<0||bonus>50){note.textContent='Choose 0–50 points.';return}save.disabled=true;note.textContent='Saving…';try{const data=await feedbackApi(entry.id,textarea.value,bonus);note.textContent='Feedback sent!';entry.has_teacher_feedback=Boolean(String(data.feedback||'').trim());entry.feedback_sent_at=new Date().toISOString();render();const splash=make('div','wg-t-sent-splash');splash.setAttribute('role','status');splash.innerHTML='<span class="wg-t-sent-check" aria-hidden="true">✓</span><strong>Feedback sent!</strong><span>학생에게 전달했어요.</span>';const dialog=$('.wg-t-modal-dialog');dialog?.append(splash);setTimeout(()=>{splash.remove();closeDiaryModal()},1200)}catch(e){note.textContent=e.message}finally{save.disabled=false}};
+ save.onclick=async()=>{const bonus=Number(input.value);if(!Number.isInteger(bonus)||bonus<0||bonus>50){note.textContent='Choose 0–50 points.';return}save.disabled=true;note.textContent='Saving…';try{const data=await feedbackApi(entry.id,textarea.value,bonus);note.textContent='Feedback sent!';entry.has_teacher_feedback=Boolean(String(data.feedback||'').trim());entry.feedback_sent_at=new Date().toISOString();render();void refreshFeedbackBadge();const splash=make('div','wg-t-sent-splash');splash.setAttribute('role','status');splash.innerHTML='<span class="wg-t-sent-check" aria-hidden="true">✓</span><strong>Feedback sent!</strong><span>학생에게 전달했어요.</span>';const dialog=$('.wg-t-modal-dialog');dialog?.append(splash);setTimeout(()=>{splash.remove();closeDiaryModal()},1200)}catch(e){note.textContent=e.message}finally{save.disabled=false}};
 }
 function renderPractice(){
  const container=$('#wgTeacherList'),count=$('#wgTeacherCount');if(!container)return;
@@ -235,11 +270,14 @@ function detailPractice(entry){
   host.append(card);
  });
 }
-function openView(){try{localStorage.setItem('willena.teachers.activeView.v1','writing-genius')}catch{};show();if(!state.loaded)void load()}
+function openView(){try{localStorage.setItem('willena.teachers.activeView.v1','writing-genius')}catch{};show();if(!state.loaded)void load();else void refreshFeedbackBadge()}
 function boot(){
  const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261107-feedback-status1';
- document.head.append(css);addNav();mount();
+ document.head.append(css);addNav();mount();void refreshFeedbackBadge();
 }
-window.WritingGeniusTeacher={openView,refresh:load};
+window.WritingGeniusTeacher={openView,refresh:load,refreshFeedbackBadge};
+window.addEventListener('focus',()=>void refreshFeedbackBadge());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshFeedbackBadge()});
+setInterval(()=>{if(!document.hidden)void refreshFeedbackBadge()},60000);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
