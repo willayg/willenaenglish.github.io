@@ -624,6 +624,7 @@ async function loadOverview(scopeName='my',force=false,options={}){
     (current.length?'<div class="cc-mission-cards">'+current.map(r=>{
      const p=progressFor(r);
      const teacher=authors.get(id(r.created_by))||'Teacher unavailable';
+     const appName=r.app==='Free Talking Genius'?(r.list_meta?.mission_mode==='conversation'?'Free Talking Genius · AI Conversation':'Free Talking Genius · Speaking'):r.app;
      const due=r.due_at?dday(r.due_at):'No due date';
      const count=p.list.length?p.done+'/'+p.list.length+' complete':'Progress unavailable';
      const rows=p.list.map(st=>bar(st.name,st.pct,st.done?'Completed':'Progress unavailable')).join('');
