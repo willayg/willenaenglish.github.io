@@ -89,7 +89,7 @@ export async function onRequest({request,env}){
   const u=new URL(request.url);if(u.hostname!=='teachers.willenaenglish.com')return respond({error:'Host not permitted'},403);
   const part=u.pathname.replace(/^\/api\/staff-push\/?/,'').replace(/\/$/,'');
   if(!['GET','POST','DELETE'].includes(request.method))return respond({error:'Method not allowed'},405);
-  if(request.method!=='GET'&&part!=='enquiry-event'&&request.headers.get('origin')!==ORIGIN)return respond({error:'Invalid request origin'},403);
+  if(request.method!=='GET'&&part!=='enquiry-event'&&part!=='reminder-event'&&request.headers.get('origin')!==ORIGIN)return respond({error:'Invalid request origin'},403);
   // New website enquiry: one-time short-lived database claim. No public caller
   // can enumerate devices or send arbitrary messages without the random token.
   if(part==='enquiry-event'&&request.method==='POST'){
@@ -108,6 +108,31 @@ export async function onRequest({request,env}){
    const results=await Promise.allSettled(devices.filter(x=>allowedEndpoint(x.endpoint)).map(sub=>deliver(env,sub,payload)));
    const successful=results.filter(x=>x.status==='fulfilled'&&x.value.success).length;
    return respond({success:true,subscribed_devices:devices.length,delivered:successful});
+  }
+  if(part==='reminder-event'&&request.method==='POST'){
+   if(!env.WILLENA_PUSH_VAPID_PRIVATE_KEY)return respond({error:'Push signing not configured'},503);
+   const data=await request.json().catch(()=>({}));
+   if(!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(String(data.id||''))||
+      !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(String(data.token||'')))return respond({error:'Invalid reminder'},400);
+   // A random one-time secret, issued by the scheduled database job, is
+   // consumed atomically. Public callers cannot choose recipients or content.
+   const claim=await fetch(SUPABASE+'/rest/v1/rpc/willena_claim_calendar_reminder',{
+    method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({p_id:data.id,p_token:data.token}),cache:'no-store'
+   });
+   if(!claim.ok){console.error('Calendar reminder claim',claim.status);return respond({error:'Reminder claim unavailable'},503)}
+   const claimed=await claim.json().catch(()=>({}));
+   if(claimed.ok!==true)return respond({error:'Reminder unavailable or already sent'},409);
+   const recipients=Array.isArray(claimed.devices)?claimed.devices.filter(x=>allowedEndpoint(x.endpoint)):[];
+   const payload={
+    title:'Willena Calendar · '+String(claimed.title||'Event').slice(0,100),
+    body:'Starts in '+Number(claimed.minutes||5)+' minutes · '+String(claimed.event_time||'')+' · '+String(claimed.event_date||''),
+    url:'/Teachers/?view=staff-calendar',tag:'willena-reminder-'+String(data.id)
+   };
+   const results=await Promise.allSettled(recipients.map(sub=>deliver(env,sub,payload)));
+   const accepted=results.filter(x=>x.status==='fulfilled'&&x.value.success).length;
+   console.log('Willena reminder',data.id,'accepted',accepted,'of',recipients.length);
+   return respond({success:true,devices:recipients.length,accepted});
   }
   const staff=await identity(request);if(staff.error)return respond({error:staff.error},staff.status);
   if(part==='status'&&request.method==='GET'){
