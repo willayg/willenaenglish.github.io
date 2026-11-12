@@ -9,9 +9,9 @@
 <blockquote style="margin:15px 0;padding:15px;border-left:4px solid #e92192;background:#fff6fa;border-radius:10px;font-size:17px;font-weight:750">Hello, my name is AI Willi. I'm here to help you learn English!</blockquote>
 <div class="controls">
 <div class="control"><label for="model">OpenAI speech model</label><select id="model" style="width:100%;padding:12px;border-radius:10px;border:1px solid #b6dbdd;margin-top:8px;font-size:14px"><option value="gpt-4o-mini-tts">GPT-4o Mini TTS · expressive</option><option value="gpt-4o-mini-tts-2025-12-15">GPT-4o Mini TTS · Dec 2025</option><option value="tts-1">TTS-1 · faster legacy</option><option value="tts-1-hd">TTS-1 HD · legacy HD</option></select></div>
-<div class="control"><label for="voice">OpenAI voice</label><select id="voice" style="width:100%;padding:12px;border-radius:10px;border:1px solid #b6dbdd;margin-top:8px;font-size:14px"><option value="cedar">Cedar</option><option value="onyx">Onyx</option><option value="echo">Echo</option><option value="ash">Ash</option><option value="alloy">Alloy</option><option value="ballad">Ballad</option><option value="verse">Verse</option><option value="fable">Fable</option><option value="sage">Sage</option><option value="coral">Coral</option><option value="nova">Nova</option><option value="shimmer">Shimmer</option><option value="marin">Marin</option></select></div>
+<div class="control"><label for="voice">OpenAI voice</label><select id="voice" style="width:100%;padding:12px;border-radius:10px;border:1px solid #b6dbdd;margin-top:8px;font-size:14px"><option value="cedar">Cedar</option><option value="onyx">Onyx</option><option value="echo">Echo</option><option value="ash">Ash</option><option value="alloy">Alloy</option><option value="ballad">Ballad</option><option value="verse">Verse</option><option value="fable" selected>Fable · British-leaning</option><option value="sage">Sage</option><option value="coral">Coral</option><option value="nova">Nova</option><option value="shimmer">Shimmer</option><option value="marin">Marin</option></select></div>
 </div>
-<p style="font-size:12px">Try Cedar, Onyx, Echo and Ash first for a male-sounding mascot. Actual available voices depend on the selected model; unsupported combinations show their API error. All previews are AI-generated.</p>
+<p style="font-size:12px">Fable is selected as a British-leaning starting point. Try Cedar, Onyx, Echo or Ash for different character voices. Actual available voices depend on the selected model; unsupported combinations show their API error. All previews are AI-generated.</p>
 <div class="toolbar"><span id="counter" class="tag">Fixed-phrase OpenAI preview</span></div>
 <h2>Sound controls</h2>
 <div class="controls">
@@ -20,18 +20,20 @@
 <div class="control"><label>Formant colour <output id="formantValue">Neutral</output></label><input id="formant" type="range" min="-100" max="100" value="0" step="5"></div>
 <div class="control"><label>Robot texture <output id="robotValue">0%</output></label><input id="robot" type="range" min="0" max="80" value="0" step="5"></div>
 <div class="control"><label>Brightness <output id="brightValue">0</output></label><input id="bright" type="range" min="-12" max="12" value="0" step="1"></div>
-<div class="control"><label>Echo <output id="echoValue">0%</output></label><input id="echo" type="range" min="0" max="35" value="0" step="5"></div>
+<div class="control"><label>Echo <output id="echoValue">0%</output></label><input id="echo" type="range" min="0" max="10" value="0" step=".5"><small style="display:block;color:#6d8b91;margin-top:7px;font-weight:500">Fine control: try 1–2% instead of 5%.</small></div>
+<div class="control"><label>Voice body · warmth <output id="bodyValue">0 dB</output></label><input id="body" type="range" min="-3" max="6" value="0" step=".5"><small style="display:block;color:#6d8b91;margin-top:7px;font-weight:500">Adds richness in the lower voice range without lowering pitch.</small></div>
+<div class="control"><label>Soft space · reverb <output id="spaceValue">0%</output></label><input id="space" type="range" min="0" max="30" value="0" step="1"><small style="display:block;color:#6d8b91;margin-top:7px;font-weight:500">Smooth, dark reverb tail rather than distinct repeats.</small></div>
 <div class="control"><label>Metal Room · subtle reverb <output id="metalValue">0%</output></label><input id="metal" type="range" min="0" max="30" value="0" step="1"><small style="display:block;color:#6d8b91;margin-top:7px;font-weight:500">Short filtered reflections for a clean, enclosed robot voice. Start at 8–12%.</small></div>
 </div>
-<h2>Quick presets</h2><div class="presets"><button data-preset="normal">Original voice</button><button data-preset="metal">Metal Room · subtle</button><button data-preset="cute">Playful Willi</button><button data-preset="robot">Little Robot</button><button data-preset="deep">Robot Sidekick</button></div>
+<h2>Quick presets</h2><div class="presets"><button data-preset="normal">Original voice</button><button data-preset="metal">Metal Room · subtle</button><button data-preset="fable">Fable · warm British robot</button><button data-preset="cute">Playful Willi</button><button data-preset="robot">Little Robot</button><button data-preset="deep">Robot Sidekick</button></div>
 <div class="toolbar"><button id="play" class="primary">▶ Generate / Play phrase</button><button id="stop">■ Stop</button><button id="reset">Reset effects</button></div>
 <div class="hint"><strong>Important:</strong> Pitch is achieved with playback-rate processing in this first tester, so raising pitch also speeds speech up. The speed slider adds to that rate. “Formant colour” is a resonant EQ approximation, not independent formant shifting. Try the presets first; this is a safe preview rather than a production voice pipeline.</div>
 <div id="status" role="status">Checking cached R2 recordings…</div>
 </main><script>
 const $=id=>document.getElementById(id),API='/api/ai-willi-voice-preview';
-const keys=['pitch','speed','formant','robot','bright','echo','metal'],defaults={pitch:0,speed:1,formant:0,robot:0,bright:0,echo:0,metal:0};
-const presets={normal:defaults,metal:{...defaults,metal:11,bright:-1},cute:{pitch:2,speed:.9,formant:25,robot:10,bright:3,echo:0,metal:8},robot:{pitch:3,speed:.9,formant:35,robot:45,bright:2,echo:5,metal:12},deep:{pitch:-3,speed:1.05,formant:-40,robot:25,bright:-3,echo:5,metal:10}};
-let ctx,source,low,high,form,robotGain,dryGain,modOsc,modDepth,delay,feedback,echoGain,metalTaps=[];
+const keys=['pitch','speed','formant','robot','bright','echo','metal','body','space'],defaults={pitch:0,speed:1,formant:0,robot:0,bright:0,echo:0,metal:0,body:0,space:0};
+const presets={normal:defaults,fable:{...defaults,body:2.5,metal:11,space:13,echo:1.5,bright:-1},metal:{...defaults,metal:11,bright:-1},cute:{pitch:2,speed:.9,formant:25,robot:10,bright:3,echo:0,metal:8},robot:{pitch:3,speed:.9,formant:35,robot:45,bright:2,echo:5,metal:12},deep:{pitch:-3,speed:1.05,formant:-40,robot:25,bright:-3,echo:5,metal:10}};
+let ctx,source,low,high,form,bodyFilter,robotGain,dryGain,modOsc,modDepth,delay,feedback,echoGain,spaceGain,spaceConvolver,metalTaps=[];
 const audioCache=new Map();let busy=false;
 function status(s){$('status').textContent=s}
 function token(){const t=window.WillenaAPI?.getLocalAccessToken?.();if(t)return t;try{const local=localStorage.getItem('sb_access_token');if(local)return local;return decodeURIComponent(document.cookie.split('; ').find(x=>x.startsWith('sb_access='))?.slice(10)||'')}catch{return ''}}
@@ -39,16 +41,18 @@ async function call(body){const t=token();if(!t)throw Error('Sign in to the Teac
 function values(){return Object.fromEntries(keys.map(k=>[k,Number($(k).value)]))}
 function setValues(v){keys.forEach(k=>{$(k).value=v[k]??defaults[k]});update()}
 function update(){
- const v=values();$('pitchValue').textContent=(v.pitch>0?'+':'')+v.pitch+' semitones';$('speedValue').textContent=v.speed.toFixed(2)+'×';$('formantValue').textContent=v.formant===0?'Neutral':(v.formant>0?'Smaller / brighter':'Larger / darker');$('robotValue').textContent=v.robot+'%';$('brightValue').textContent=(v.bright>0?'+':'')+v.bright;$('echoValue').textContent=v.echo+'%';$('metalValue').textContent=v.metal+'%';
+ const v=values();$('pitchValue').textContent=(v.pitch>0?'+':'')+v.pitch+' semitones';$('speedValue').textContent=v.speed.toFixed(2)+'×';$('formantValue').textContent=v.formant===0?'Neutral':(v.formant>0?'Smaller / brighter':'Larger / darker');$('robotValue').textContent=v.robot+'%';$('brightValue').textContent=(v.bright>0?'+':'')+v.bright;$('echoValue').textContent=v.echo+'%';$('metalValue').textContent=v.metal+'%';$('bodyValue').textContent=(v.body>0?'+':'')+v.body.toFixed(1)+' dB';$('spaceValue').textContent=v.space+'%';
  if(source)source.playbackRate.value=v.speed*Math.pow(2,v.pitch/12);
  if(form){form.frequency.value=1000*Math.pow(2,v.formant/125);form.Q.value=1.15;form.gain.value=Math.abs(v.formant)*.10}
  if(high)high.gain.value=v.bright;
+ if(bodyFilter)bodyFilter.gain.value=v.body;
  if(modDepth)modDepth.gain.value=v.robot/100*.62;
  if(dryGain)dryGain.gain.value=1-v.robot/100*.2;
  if(echoGain)echoGain.gain.value=v.echo/100;
+ if(spaceGain)spaceGain.gain.value=v.space/100*.48;
  for(const tap of metalTaps)tap.gain.gain.value=(v.metal/100)*tap.weight;
 }
-function stop(){try{source?.stop()}catch(e){}try{modOsc?.stop()}catch(e){}source=null;modOsc=null;metalTaps=[]}
+function stop(){try{source?.stop()}catch(e){}try{modOsc?.stop()}catch(e){}source=null;modOsc=null;metalTaps=[];spaceGain=null;spaceConvolver=null}
 async function play(){
  if(busy)return;stop();busy=true;$('play').disabled=true;const choice=$('model').value+'|'+$('voice').value;status(audioCache.has(choice)?'Loading previously generated preview…':'Generating one short phrase with OpenAI. New samples incur a small API charge…');
  try{
@@ -59,10 +63,11 @@ async function play(){
   source=ctx.createBufferSource();source.buffer=buffer;
   low=ctx.createBiquadFilter();low.type='highpass';low.frequency.value=110;
   form=ctx.createBiquadFilter();form.type='peaking';
+  bodyFilter=ctx.createBiquadFilter();bodyFilter.type='peaking';bodyFilter.frequency.value=230;bodyFilter.Q.value=.65;
   high=ctx.createBiquadFilter();high.type='highshelf';high.frequency.value=2700;
   dryGain=ctx.createGain();robotGain=ctx.createGain();modDepth=ctx.createGain();
   delay=ctx.createDelay(.5);delay.delayTime.value=.16;feedback=ctx.createGain();feedback.gain.value=.22;echoGain=ctx.createGain();
-  source.connect(low);low.connect(form);form.connect(high);
+  source.connect(low);low.connect(form);form.connect(bodyFilter);bodyFilter.connect(high);
   high.connect(dryGain);dryGain.connect(ctx.destination);
   modOsc=ctx.createOscillator();modOsc.type='sine';modOsc.frequency.value=28;modOsc.connect(modDepth);modDepth.connect(robotGain.gain);
   robotGain.gain.value=0;high.connect(robotGain);robotGain.connect(ctx.destination);
@@ -78,8 +83,25 @@ async function play(){
    high.connect(tap);tap.connect(hp);hp.connect(lp);lp.connect(gain);gain.connect(ctx.destination);
    metalTaps.push({gain,weight});
   }
+  // Soft synthetic reverb: a short, decaying, gently filtered impulse response.
+  // Built locally; never sends audio to a third party or changes saved MP3s.
+  const duration=.55,sr=ctx.sampleRate,frames=Math.floor(sr*duration);
+  const impulse=ctx.createBuffer(2,frames,sr);
+  for(let ch=0;ch<2;ch++){
+   const out=impulse.getChannelData(ch);let seed=0x31579+(ch*7919);
+   for(let i=0;i<frames;i++){
+    seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+    const t=i/sr,attack=Math.min(1,t/.012),decay=Math.exp(-t*12);
+    out[i]=(((seed/4294967296)*2-1)*attack*decay*.46);
+   }
+  }
+  spaceConvolver=ctx.createConvolver();spaceConvolver.normalize=true;spaceConvolver.buffer=impulse;
+  const spaceHP=ctx.createBiquadFilter();spaceHP.type='highpass';spaceHP.frequency.value=350;
+  const spaceLP=ctx.createBiquadFilter();spaceLP.type='lowpass';spaceLP.frequency.value=2300;
+  spaceGain=ctx.createGain();spaceGain.gain.value=0;
+  high.connect(spaceHP);spaceHP.connect(spaceConvolver);spaceConvolver.connect(spaceLP);spaceLP.connect(spaceGain);spaceGain.connect(ctx.destination);
   update();source.onended=()=>{source=null;status('Finished. Adjust effects and press Play again; this combination is cached in this tab.');$('play').disabled=false};modOsc.start();source.start();status('Playing '+$('voice').value+' / '+$('model').value+' with preview effects.');$('play').disabled=false;busy=false;
  }catch(e){stop();$('play').disabled=false;status('Preview failed: '+e.message)}finally{busy=false;$('play').disabled=false}
 }
-keys.forEach(k=>$(k).addEventListener('input',update));document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>setValues(presets[b.dataset.preset]));$('model').onchange=()=>status('Model selected. Press Play to generate or reuse its sample.');$('voice').onchange=()=>status('Voice selected. Press Play to generate or reuse its sample.');$('play').onclick=play;$('stop').onclick=()=>{stop();status('Stopped')};$('reset').onclick=()=>setValues(defaults);update();status('Choose a voice and press Play. Start with Cedar or Onyx.');
+keys.forEach(k=>$(k).addEventListener('input',update));document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>{if(b.dataset.preset==='fable')$('voice').value='fable';setValues(presets[b.dataset.preset]);status('Preset applied. Press Play to compare.');});$('model').onchange=()=>status('Model selected. Press Play to generate or reuse its sample.');$('voice').onchange=()=>status('Voice selected. Press Play to generate or reuse its sample.');$('play').onclick=play;$('stop').onclick=()=>{stop();status('Stopped')};$('reset').onclick=()=>setValues(defaults);update();status('Choose a voice and press Play. Start with Fable and the warm British robot preset.');
 </script></body></html>
