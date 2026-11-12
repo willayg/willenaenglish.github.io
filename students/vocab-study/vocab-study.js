@@ -14,12 +14,14 @@ import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttem
 import {createVocabHistoryNavigation} from './navigation-history.js?v=20261024-home-depth1';
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=20260927-startup2';
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
+import {createSpeakingGradesGuide} from '/students/shared/speaking-grades-guide.js?v=20261112-onboarding2';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const OP_URL='https://fiieuiktlsivwfgyivai.supabase.co';
 const OP_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const ACTIVE_BOOK_KEY='willena-study-v2-active-book';
+const speakingGradesGuide=createSpeakingGradesGuide({app:'word'});
 
 const el=id=>document.getElementById(id);
 const statusEl=el('vocabStudyStatus');
@@ -1885,6 +1887,7 @@ async function openSpeakingSession({teacherWords=null,historyMode='push'}={}){
   document.body.classList.add('vocab-session-open');
   writeActivityNavigation('speaking',historyMode);
   renderSpeakingQuestion();
+  if(!state.adminMode)speakingGradesGuide.showOnSessionStart(state.rewardSession?.rewardSessionId||String(Date.now()));
 }
 function speakingQuestion(word,index){
   return{
