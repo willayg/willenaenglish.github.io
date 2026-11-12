@@ -2096,6 +2096,7 @@ async function startConversation(){
    monitorMicrophone(mic);
    state.micUserMuted=false;state.ttsPlaying=false;
    state.active=true;state.starting=false;state.resumeIndex=0;
+   if(!continuing)prepareReviewOutro();
    ftUsage.begin();
    if(ftUsage.current){ftUsage.current.engine='hybrid';ftUsage.current.model=state.hybridModel;ftUsage.current.sttModel=state.sttEngine;ftUsage.current.transcribedAudioSeconds=0;ftUsage.current.transcriptionRequests=0;ftUsage.current.timingSettingsMs={...ftTiming}}
    if(state.sttEngine==='eleven-scribe-realtime')await scribeStart(mic);
