@@ -6,10 +6,17 @@ const ARTICLES=new Set(['a','an','the']);
 const LIGHT=new Set(['a','an','the','is','are','am','to','of','in','on','at','for','and']);
 const CRITICAL=new Set(['not','never','no','cannot','can','will','would','should','must','before','after','more','less','first','last','one','two','three','four','five','six','seven','eight','nine','ten']);
 const PAIRS=[['to','too','two'],['there','their',"they're"],['by','buy','bye'],['see','sea'],['right','write'],['flower','flour'],['one','won'],['four','for'],['night','knight'],['wear','where'],['hear','here']];
-function tokens(value){
+function tokens(value,mode='word'){
  let s=String(value||'').toLowerCase().normalize('NFKC').replace(/[’‘]/g,"'").replace(/[—–-]/g,' ');
- s=s.replace(/\b(?:i'm|you're|we're|they're|he's|she's|it's|don't|doesn't|didn't|can't|won't|isn't|aren't|wasn't|weren't|i've|we've|they've|i'll|you'll|we'll|they'll)\b/g,w=>CONTRACTIONS[w]||w);
- return s.replace(/[^a-z0-9' ]/g,' ').trim().split(/\s+/).filter(Boolean);
+ s=s.replace(/\b(?:i'm|you're|we're|they're|he's|she's|it's|don't|doesn't|didn't|can't|won't|isn't|aren't|wasn't|weren't|i've|we've|they'll|i'll|you'll|we'll|they'll)\b/g,w=>CONTRACTIONS[w]||w);
+ s=s.replace(/[^a-z0-9' ]/g,' ').trim().replace(/\s+/g,' ');
+ if(mode==='sentence'){
+  const numbers={zero:'0',one:'1',two:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9',ten:'10',eleven:'11',twelve:'12',thirteen:'13',fourteen:'14',fifteen:'15',sixteen:'16',seventeen:'17',eighteen:'18',nineteen:'19',twenty:'20'};
+  s=s.split(' ').map(w=>numbers[w]||w).join(' ');
+  s=s.replace(/\bmom\b/g,'mother').replace(/\bdad\b/g,'father');
+  s=s.replace(/\b([0-9]{1,3})\s+years?\s+old\b/g,'$1');
+ }
+ return s.split(/\s+/).filter(Boolean);
 }
 const stem=w=>w.length>4&&w.endsWith('ies')?w.slice(0,-3)+'y':
  w.length>4&&w.endsWith('ed')?w.slice(0,-2):
@@ -53,12 +60,12 @@ function fragmentedWordGrade(expected,heard){
 }
 const result=(points,transcript,reason)=>({points,correct:points>=1,level:points===4?'green':points===3?'lime':points===2?'yellow':points===1?'orange':'red',transcript,matchedBy:reason});
 export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null}={}){
- const expected=tokens(target);
+ const expected=tokens(target,mode);
  const heardList=(Array.isArray(alternatives)?alternatives:[alternatives]).map(String).map(s=>s.trim()).filter(Boolean).slice(0,5);
  if(!expected.length||!heardList.length)return result(0,heardList[0]||'','no_speech');
  let best=result(0,heardList[0],'unrecognized');
  for(const raw of heardList){
-  const heard=tokens(raw);
+  const heard=tokens(raw,mode);
   if(!heard.length)continue;
   let score=0,reason='unrecognized';
   if(expected.join(' ')===heard.join(' ')){score=4;reason='exact';}
@@ -82,7 +89,7 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
    const recognized=required.filter(w=>heard.some(h=>compatible(w,h))).length;
    // A dropped sequence marker can earn yellow when the other words are clear;
    // an opposite marker (first -> last) remains protected below.
-   const criticalSafe=[...new Set([...expected,...heard])].every(w=>['first','last'].includes(w)||!CRITICAL.has(w)||expected.filter(x=>x===w).length===heard.filter(x=>x===w).length);
+   const criticalSafe=[...new Set([...expected,...heard])].every(w=>['first','last'].includes(w)||(!CRITICAL.has(w)&&!/^\d+$/.test(w))||expected.filter(x=>x===w).length===heard.filter(x=>x===w).length);
    const meaningful=required.length?recognized/required.length:0;
    const missing=expected.length-a.matched,extra=heard.length-a.matched;
    const inOrder=(()=>{let next=0;for(const token of expected){let found=-1;for(let j=next;j<heard.length;j++)if(compatible(token,heard[j])){found=j;break}if(found<0)return false;next=found+1;}return true})();
@@ -107,7 +114,7 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
      const missed=expected.length-coverage;
      const additions=heard.length-coverage;
      const missedContent=required.filter(w=>!heard.some(h=>compatible(w,h))).length;
-     const oppositePairs=[['left','right'],['up','down'],['before','after'],['first','last'],['yes','no']];
+     const oppositePairs=[['left','right'],['up','down'],['before','after'],['first','last'],['yes','no'],['mother','father']];
      const contradictory=oppositePairs.some(([a,b])=>
        (expected.includes(a)&&heard.includes(b)&&!expected.includes(b))||
        (expected.includes(b)&&heard.includes(a)&&!expected.includes(a)));
@@ -141,11 +148,11 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
   // Word Genius keeps its independent vocabulary rules.
   if(mode==='sentence'&&score===0&&expected.length>=5){
     const coverage=orderedCoverage(expected,heard);
-    const oppositePairs=[['left','right'],['up','down'],['before','after'],['first','last'],['yes','no']];
+    const oppositePairs=[['left','right'],['up','down'],['before','after'],['first','last'],['yes','no'],['mother','father']];
     const contradictory=oppositePairs.some(([a,b])=>
       (expected.includes(a)&&heard.includes(b)&&!expected.includes(b))||
       (expected.includes(b)&&heard.includes(a)&&!expected.includes(a)));
-    const protectedWords=[...new Set([...expected,...heard])].filter(w=>CRITICAL.has(w)&&w!=='first'&&w!=='last');
+    const protectedWords=[...new Set([...expected,...heard])].filter(w=>(CRITICAL.has(w)||/^\d+$/.test(w))&&w!=='first'&&w!=='last');
     const changedProtected=protectedWords.some(w=>expected.filter(x=>x===w).length!==heard.filter(x=>x===w).length);
     const important=expected.filter(w=>!LIGHT.has(w));
     const importantMatches=important.filter(w=>heard.some(h=>compatible(w,h))).length;
