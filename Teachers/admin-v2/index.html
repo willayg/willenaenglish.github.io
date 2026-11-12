@@ -33,7 +33,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
     <button class="nav" data-view="classes"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v16M16 4v16M4 9h16M4 15h16"/></svg></span><span>Classes</span></button>
     <button class="nav" data-view="level-tests" data-page="levelTests"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Level Tests</span></button>
     <button class="nav" data-view="biweekly"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Biweekly Reports</span></button>
-    <button class="nav" type="button" data-view="enquiries" title="Website enquiries"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/><path d="M8 3h8"/></svg></span><span>문의 관리</span><span id="adminEnquiryCount" class="enq-unread" hidden aria-label="Unread enquiries">0</span></button><div class="rail-spacer"></div>
+    <button class="nav" type="button" data-view="enquiries" title="Website enquiries"><span class="nav-icon enq-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/><path d="M8 3h8"/></svg><span id="adminEnquiryCount" class="enq-unread" hidden>0</span></span><span>문의 관리</span></button><div class="rail-spacer"></div>
   </aside>
   <main class="workspace">
 <section class="view" id="view-enquiries" aria-label="Website enquiry management">
@@ -128,7 +128,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
   });
 })();
 </script>
-<script type="module" src="./admin-v2.js?v=20261112-native-enquiries2"></script>
+<script type="module" src="./admin-v2.js?v=20261112-enquiry-drawer3"></script>
 <script type="module" src="./biweekly-report.js?v=20261101-v1"></script>
 <script>
 (function(){
