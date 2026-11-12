@@ -57,8 +57,14 @@ export async function onRequestPost({request,env}){
   const questionRes=await fetch(CONTENT+'/rest/v1/free_talking_questions?select=id&id=eq.'+questionId+'&is_published=eq.true&limit=1',
    {headers:{apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY},signal:AbortSignal.timeout(9000)});
   if(!questionRes.ok||!(await questionRes.json())[0])return reply(404,{error:'Published unit question unavailable'});
-  const key='ft_outro_v1_'+character+'_'+index, text=LINES[character][index];
+  const text=LINES[character][index];
   const voice=VOICES[character],model=character==='willi'?'gpt-4o-mini-tts':'eleven_v3';
+  // Use the same key family and variant types already accepted by the shared
+  // R2 audio worker; unique salted digest keeps outros separate from questions.
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('review-outro-v1|'+character+'|'+index+'|'+text+'|'+model+'|'+voice));
+  const hex=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  const key=(character==='willi'?'ft_fallback_v1_':'ft_eleven_v1_')+hex.slice(0,32);
+  const storageVariant=character==='willi'?'fallback':'elevenlabs';
   try{
    const cached=await store(token,{action:'get',key,format:'mp3'});
    if(cached.found&&cached.audio)return reply(200,{success:true,character,index,text,audio:cached.audio,source:'r2',stored:true});
@@ -86,7 +92,7 @@ export async function onRequestPost({request,env}){
   const encoded=b64(audio);
   let stored=false,storage_error=null;
   try{
-   const saved=await store(token,{action:'put',key,audio:encoded,format:'mp3',question_id:questionId,model,voice,variant:'closing'});
+   const saved=await store(token,{action:'put',key,audio:encoded,format:'mp3',question_id:questionId,model,voice,variant:storageVariant});
    stored=!!saved.stored;
   }catch(e){storage_error=String(e.message||e).slice(0,110);console.warn('[FT outro] R2 write',storage_error)}
   return reply(200,{success:true,character,index,text,audio:encoded,source:stored?'generated_r2':'generated_not_cached',stored,storage_error});
