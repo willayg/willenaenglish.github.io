@@ -2,12 +2,12 @@
 (()=>{'use strict';
 const root=document.getElementById('universalAssignments');if(!root)return;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const apps=[{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'All',sub:'All homework',icon:'▦'},{id:'calendar',label:'Calendar',sub:'Assignment dates',icon:'▦'},{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'free-talking',label:'Free Talking Genius',sub:'Speaking missions',icon:'FT'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'writing',label:'Writing Genius',sub:'Diaries & topic writing',icon:'✎'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
+const apps=[{id:'classes',label:'All Classes',sub:'Curriculum homework planner',icon:'▦'},{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'All',sub:'All homework',icon:'▦'},{id:'calendar',label:'Calendar',sub:'Assignment dates',icon:'▦'},{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'free-talking',label:'Free Talking Genius',sub:'Speaking missions',icon:'FT'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'writing',label:'Writing Genius',sub:'Diaries & topic writing',icon:'✎'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
 const stateKey='willena.teachers.assignments.v2';
 let saved={};try{saved=JSON.parse(sessionStorage.getItem(stateKey)||'{}')||{}}catch{}
-let active=apps.some(a=>a.id===saved.active)?saved.active:'my',loading=false,groups=[];
+let active=apps.some(a=>a.id===saved.active)?saved.active:'classes',loading=false,groups=[];
 const remember=()=>{try{sessionStorage.setItem(stateKey,JSON.stringify({active,subviews,scrollLeft:(root.querySelector('.ua-app-tabs')?.scrollLeft??Number(saved.scrollLeft)??0)}))}catch{}};
-const subviews={my:'manage',all:'manage',calendar:'manage',naesin:'manage',word:'manage',grammar:'manage','free-talking':'manage',sentence:'manage',puzzles:'manage',writing:'manage'};
+const subviews={classes:'manage',my:'manage',all:'manage',calendar:'manage',naesin:'manage',word:'manage',grammar:'manage','free-talking':'manage',sentence:'manage',puzzles:'manage',writing:'manage'};
 Object.keys(subviews).forEach(k=>{if(saved.subviews?.[k]==='create'||saved.subviews?.[k]==='manage')subviews[k]=saved.subviews[k]});
 let wordPanel=null,wordHome=null;
 function restoreWordPanel(){if(wordPanel&&wordHome&&wordPanel.parentElement!==wordHome)wordHome.appendChild(wordPanel)}
@@ -300,6 +300,7 @@ function activate(){
  // The workspace is built while its dashboard view is hidden on initial load.
  // Start the My/All fetch on first visibility, without waiting for a second tab click.
  if(!root.closest('.view')?.classList.contains('active'))return;
+ if(active==='classes'){window.dispatchEvent(new CustomEvent('willena:curriculum-mount',{detail:{target:'assignments'}}));return;}
  if(active!=='my'&&active!=='all')return;
  const host=root.querySelector('#uaOverview');
  if(!host||overviewMountedHosts.has(host))return;
@@ -333,6 +334,11 @@ function render(){
  root.querySelectorAll('[data-ua-tab]').forEach(b=>b.addEventListener('click',()=>{const next=b.dataset.uaTab;if(!['my','all','calendar'].includes(next))subviews[next]=subviews[active];active=next;remember();render()}));
  root.querySelectorAll('[data-ua-sub]').forEach(b=>b.addEventListener('click',()=>{subviews[active]=b.dataset.uaSub;remember();render()}));
  const body=root.querySelector('#uaAppBody');
+ if(active==='classes'){
+  body.innerHTML='<div id="assignmentClassGrid" class="curriculum-root"><div class="empty">Loading class curriculum…</div></div>';
+  window.dispatchEvent(new CustomEvent('willena:curriculum-mount',{detail:{target:'assignments'}}));
+  return;
+ }
  if(active==='calendar'){body.innerHTML='<div id="uaCalendar">Loading calendar…</div>';window.UniversalAssignmentTracker?.loadCalendar?.();return}
  if(active==='my'||active==='all'){
    body.innerHTML='<div id="uaOverview" aria-live="polite">Loading cross-app homework…</div>';
@@ -382,7 +388,7 @@ async function refresh(){
 // selects existing class/book/unit controls in the canonical creation workspace.
 let curriculumLaunchId=0,curriculumLaunchCleanup=null,curriculumLaunchApp=null;
 function openCurriculumCreate(context){
- const map={word:'word',sentence:'sentence',grammar:'grammar',talking:'free-talking',writing:'writing',puzzles:'puzzles'};
+ const map={word:'word',sentence:'sentence',grammar:'grammar',speaking:'free-talking',talking:'free-talking',writing:'writing',puzzles:'puzzles'};
  const app=map[context?.skill];
  if(!app||!context?.className||!context?.bookId||!context?.unitId)return false;
  if(curriculumLaunchCleanup)curriculumLaunchCleanup();
