@@ -52,11 +52,11 @@ async function ensureLevelTests(){
 }
 function activateView(view){
   setView(view);
-  if(view!=='enquiries')import('./admin-v2-enquiries.js?v=20261112-read1').then(m=>m.closeEnquiriesDrawer()).catch(()=>{});
+  if(view!=='enquiries')import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.closeEnquiriesDrawer()).catch(()=>{});
 
   if(view==='enquiries'){
-    if(!enquiriesModulePromise)enquiriesModulePromise=import('./admin-v2-enquiries.js?v=20261112-read1').then(m=>m.mountEnquiries());
-    else enquiriesModulePromise=enquiriesModulePromise.then(()=>import('./admin-v2-enquiries.js?v=20261112-read1').then(m=>m.refreshEnquiries())).catch(()=>{enquiriesModulePromise=null;return import('./admin-v2-enquiries.js?v=20261112-read1').then(m=>m.mountEnquiries())});
+    if(!enquiriesModulePromise)enquiriesModulePromise=import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.mountEnquiries());
+    else enquiriesModulePromise=enquiriesModulePromise.then(()=>import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiries())).catch(()=>{enquiriesModulePromise=null;return import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.mountEnquiries())});
     enquiriesModulePromise.catch(error=>{const target=$('#enqMessage');if(target)target.textContent=error.message});
   }
   if(view==='classes')ensureClasses().catch(error=>{$('#classGridV2').innerHTML=`<div class="empty">${esc(error.message)}</div>`});
@@ -148,8 +148,8 @@ function boot(){
  bindNavigation();bindStudents();bindLevelTestModes();$('#adminV2Boot')?.classList.add('hidden');
  loadStudents(false);
  // The red unread badge must appear even when Admin V2 opens on Students.
- import('./admin-v2-enquiries.js?v=20261112-read1').then(m=>m.refreshEnquiryBadge()).catch(e=>console.debug('[Enquiries] Badge unavailable',e));
- setInterval(()=>{if(!document.hidden)import('./admin-v2-enquiries.js?v=20261112-read1').then(m=>m.refreshEnquiryBadge()).catch(()=>{})},60000);
+ import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiryBadge()).catch(e=>console.debug('[Enquiries] Badge unavailable',e));
+ setInterval(()=>{if(!document.hidden)import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiryBadge()).catch(()=>{})},60000);
  if(new URLSearchParams(location.search).get('view')==='enquiries')activateView('enquiries');
 }
 boot();
