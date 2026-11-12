@@ -276,13 +276,28 @@ body .frame.v1{--accent:#19aabb;--accent2:#ce5aa0;--surface:linear-gradient(115d
  .frame.v1 .sitehead .nav a{font-size:10px;padding:9px 7px}
  .frame.v1 .sitehead .nav .contact-link{background:#d65598;color:white}
 }
+
+/* Keep the enquiry call-to-action next to Learning Journey, not in the site header. */
+.frame.v1 .hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.frame.v1 .hero-actions .herobutton{margin:0}
+.frame.v1 .hero-actions .hero-contact{
+ display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;
+ background:#d65598;color:#fff;text-decoration:none;
+ padding:11px 15px;border-radius:20px;font-weight:800;font-size:12px;
+ min-height:40px;transition:background .2s;
+}
+.frame.v1 .hero-actions .hero-contact:hover{background:#bd4488}
+@media(max-width:700px){
+ .frame.v1 .hero-actions{gap:8px;flex-wrap:wrap}
+ .frame.v1 .hero-actions .hero-contact{font-size:12px;padding:10px 13px}
+}
 </style></head>
 <body>
 
 <div class="frame v1" id="frame">
-<header class="sitehead"><a href="https://www.willenaenglish.com/"><img class="logo" src="/Assets/Images/color-logo.png" alt="Willena"></a><nav class="nav"><a href="#about">About Willena</a><a class="student" href="https://students.willenaenglish.com/students/dashboard">Student Login ↗</a><a class="contact-link" href="/contact/">문의하기 ↗</a><a class="teacher" href="/Teachers/signin.html">Teacher Login ↗</a></nav></header>
+<header class="sitehead"><a href="https://www.willenaenglish.com/"><img class="logo" src="/Assets/Images/color-logo.png" alt="Willena"></a><nav class="nav"><a href="#about">About Willena</a><a class="student" href="https://students.willenaenglish.com/students/dashboard">Student Login ↗</a><a class="teacher" href="/Teachers/signin.html">Teacher Login ↗</a></nav></header>
 <section class="hero" aria-label="Four slide image carousel"><div class="hero-copy"><div class="eyebrow" id="heroLabel">WILLENA ENGLISH · APP SHOWCASE</div><h1 id="headline">Learning that<br><em>goes further.</em></h1><p id="heroText">단어부터 문장, 말하기까지. 윌레나 Genius 학습 앱을 만나보세요.</p><div class="social"><a href="https://blog.naver.com/willena_english" title="Naver Blog" aria-label="Naver Blog" target="_blank" rel="noopener">N</a><a href="https://www.youtube.com/@WillayG" title="YouTube" aria-label="YouTube" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4"></rect><path d="m10 9 5 3-5 3z" fill="currentColor" stroke="none"></path></svg></a><a href="https://www.instagram.com/willena_academy" title="Instagram" aria-label="Instagram" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle></svg></a><a href="https://pf.kakao.com/_xbTxnen?from=qr" title="Kakao Channel" aria-label="Kakao Channel" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 3C6.3 3 2 6.5 2 11c0 2.8 1.8 5.3 4.7 6.7L6 21l4.5-2.4c.5.1 1.1.1 1.5.1 5.6 0 10-3.5 10-7.7C22 6.5 17.6 3 12 3z" stroke="none" fill="currentColor"></path></svg></a></div>
-<a href="#journey" class="herobutton">Our Learning Journey ↗</a>
+<div class="hero-actions"><a href="#journey" class="herobutton">Our Learning Journey ↗</a><a href="/contact/" class="hero-contact">문의하기 ↗</a></div>
 </div><div class="hero-visual" id="swipeArea"><div class="apps" id="visual"></div></div><div class="slidecontrols"><button class="arrow" id="prev" aria-label="Previous slide">‹</button><div class="dots" id="dots"></div><button class="arrow" id="next" aria-label="Next slide">›</button></div></section>
 <main>
 <section class="section" id="about"><div class="eyebrow">WELCOME TO WILLENA</div><h2 id="aboutTitle">English for real life.</h2><p class="lead">윌레나에서는 영어를 외우는 것에서 끝나지 않습니다. 책을 읽고, 친구와 이야기하고, 직접 표현하는 수업을 통해 영어를 자연스럽게 사용할 수 있도록 돕습니다.</p>
