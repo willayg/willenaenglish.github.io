@@ -46,7 +46,13 @@ window.addEventListener('willena:homework-completion-snapshot',event=>{
  const entries=event.detail?.completions||[];
  const known=new Set(notificationState.known||[]);
  if(!notificationState.baseline){
-  notificationState.known=[...new Set(entries.map(item=>item.key))];notificationState.baseline=true;
+  // On first use, suppress historical completions but surface a fresh test or
+  // genuine newly completed mission recorded in the last 30 minutes.
+  const recent=entries.filter(item=>item.completedAt&&Date.now()-new Date(item.completedAt).getTime()>=0&&Date.now()-new Date(item.completedAt).getTime()<30*60*1000);
+  notificationState.known=[...new Set(entries.map(item=>item.key))];
+  notificationState.unread=[...new Set([...(notificationState.unread||[]),...recent.map(item=>item.key)])];
+  notificationState.items=[...(notificationState.items||[]),...recent].slice(-100);
+  notificationState.baseline=true;
  }else{
   const fresh=entries.filter(item=>item.key&&!known.has(item.key));
   notificationState.unread=[...new Set([...(notificationState.unread||[]),...fresh.map(item=>item.key)])];
@@ -353,7 +359,7 @@ function activate(){
  // The workspace is built while its dashboard view is hidden on initial load.
  // Start the My/All fetch on first visibility, without waiting for a second tab click.
  if(!root.closest('.view')?.classList.contains('active'))return;
- if(active==='classes'){window.dispatchEvent(new CustomEvent('willena:curriculum-mount',{detail:{target:'assignments'}}));return;}
+ if(active==='classes'){window.dispatchEvent(new CustomEvent('willena:curriculum-mount',{detail:{target:'assignments'}}));window.UniversalAssignmentTracker?.pollNotifications?.();return;}
  if(active!=='my'&&active!=='all')return;
  const host=root.querySelector('#uaOverview');
  if(!host||overviewMountedHosts.has(host))return;
@@ -391,6 +397,7 @@ function render(){
  if(active==='classes'){
   body.innerHTML='<div id="assignmentClassGrid" class="curriculum-root"><div class="empty">Loading class curriculum…</div></div>';
   window.dispatchEvent(new CustomEvent('willena:curriculum-mount',{detail:{target:'assignments'}}));
+  window.UniversalAssignmentTracker?.pollNotifications?.();
   return;
  }
  if(active==='calendar'){body.innerHTML='<div id="uaCalendar">Loading calendar…</div>';window.UniversalAssignmentTracker?.loadCalendar?.();return}
@@ -528,4 +535,6 @@ function openCurriculumCreate(context){
 window.UniversalAssignments={refresh,activate,openCreate:openCurriculumCreate,openTab:id=>{if(apps.some(a=>a.id===id)){if(curriculumLaunchCleanup)curriculumLaunchCleanup();active=id;remember();render()}}};
 document.querySelectorAll('[data-view="vocab"]').forEach(el=>el.addEventListener('click',restoreWordPanel));
 groups=groupRows();render();void refresh();renderNotifications();
+// Refresh completion badges while the dashboard is open; no student work is changed.
+setInterval(()=>{if(document.visibilityState==='visible')window.UniversalAssignmentTracker?.pollNotifications?.()},60000);
 })();
