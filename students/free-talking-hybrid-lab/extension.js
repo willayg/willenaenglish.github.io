@@ -672,6 +672,8 @@ function endSession(reason='Conversation finished.'){
  clearPendingSpeech();
  state.speechStartedAt=0;state.speechPeak=0;state.lastSpeechDuration=0;state.verifiedAnswer='';
  for(const entry of state.anchorClipCache.values())if(entry?.owned)URL.revokeObjectURL(entry.url);
+ if(state.reviewOutro?.url)URL.revokeObjectURL(state.reviewOutro.url);
+ state.reviewOutro=null;state.reviewOutroPromise=null;
  state.anchorClipCache.clear();state.anchorClipPromises.clear();state.anchors=[];state.anchorPhase='idle';state.anchorResponding=false;state.guidedSessionReady=false;
  stopMicMonitor();
  state.actor?.setSpeaking(false);state.actor=null;
@@ -1624,7 +1626,42 @@ function requestGuidedReply(){
  }else{actorPhase('thinking');message('Thinking about your answer…')}
 }
 
-async function reviewConversation(){
+// Play one of five preselected per-character review handoffs. Clip audio is
+// warmed at conversation start, normally served from Willena R2 storage.
+function prepareReviewOutro(){
+ state.reviewOutro=null;state.reviewOutroPromise=null;
+ const question=state.anchors?.find(a=>a.id);
+ if(!state.hybrid||!question)return;
+ const character=state.character,index=Math.floor(Math.random()*5);
+ state.reviewOutroPromise=(async()=>{
+  const response=await authorizedDemoFetch('/api/free-talking-review-outro',{character,index,question_id:question.id},AbortSignal.timeout(35000));
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.success||!data.audio)throw Error(data.error||'Outro audio unavailable');
+  const binary=atob(data.audio),bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  const url=URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'}));
+  if(!state.active||state.character!==character){URL.revokeObjectURL(url);return null}
+  return state.reviewOutro={url,text:data.text,character,index,stored:data.stored};
+ })().catch(e=>{console.warn('[Free Talking] Outro preload failed',e);return null});
+}
+async function playReviewOutro(){
+ const clip=state.reviewOutro||await state.reviewOutroPromise?.catch(()=>null);
+ if(!state.active)return;
+ if(!clip){$('anchorText').textContent='That’s all for today! Let’s see how you did.';message('Checking your conversation…');return}
+ $('anchorText').textContent=clip.text;
+ message(NAMES[state.character]+' is wrapping up our chat…');
+ const audio=new Audio(clip.url);state.speaker=audio;state.playing=audio;
+ routeAudio(audio);state.ttsPlaying=true;
+ try{
+  await releaseMicForPlayback();
+  if(!state.active)return;
+  actorPhase('speaking');await audio.play();
+  await new Promise(resolve=>{if(audio.ended){resolve();return}audio.onended=resolve;audio.onerror=resolve;});
+ }catch(e){console.warn('[Free Talking] Outro voice unavailable',e)}
+ finally{if(state.playing===audio)state.playing=null;state.ttsPlaying=false;if(state.active)actorPhase('thinking')}
+}
+
+async function reviewConversation({outroPromise=null}={}){
  if(!state.active||state.reviewing)return;
  state.reviewing=true;
  state.anchorPhase='reviewing';setMicEnabled(false);actorPhase('thinking');
@@ -1687,6 +1724,8 @@ async function reviewConversation(){
   const points=Math.max(0,Math.min(32,Number(result.points)||0));
   const stars=Math.max(0,Math.min(5,Number(result.stars)||0));
   const feedback=removeSpokenLaughter(stripInternalLabels(String(review.feedback||'Thanks for talking with me! I hope we can chat again soon.'))).slice(0,350);
+  // Avoid overlapping the pre-recorded goodbye with the final AI feedback.
+  if(outroPromise)await outroPromise.catch(()=>{});
   $('ftReviewContinue').hidden=true;
   $('ftReviewSummary').hidden=false;
   $('ftReviewSummary').textContent=feedback;
@@ -1769,7 +1808,9 @@ async function finishNaturalReply(data){
  // After the eighth attempt, go straight to the one end evaluation.
  // Don't spend time generating an ordinary reply only to speak feedback next.
  if(contributed&&state.attemptCount>=8){
-  await reviewConversation();return;
+  // Final evaluation and preloaded goodbye run at the same time.
+  const outroPromise=playReviewOutro();
+  await reviewConversation({outroPromise});return;
  }
  try{await speakEleven(spoken)}catch(e){error('Voice playback: '+String(e.message||e))}
  if(!state.active||run!==state.anchorToken)return;
@@ -2039,6 +2080,7 @@ async function startConversation(){
   }
   if(!res.ok||(!state.hybrid&&!session.token))throw Error(session.error||'Conversation connection failed');
   state.anchors=Array.isArray(session.lesson?.anchors)?session.lesson.anchors.filter(x=>x.id&&x.text).slice(0,8):[];
+  if(state.hybrid&&!continuing)prepareReviewOutro();
   if(!continuing){state.topicCompleted.clear();resetQuestionClock()}else renderTopicTicker();
   if(!state.anchors.length)throw Error('This unit has no published question anchors');
   state.anchorIndex=continuing?Math.min(Math.max(0,state.resumeIndex||0),state.anchors.length-1):Math.floor(Math.random()*state.anchors.length);state.anchorPhase='ready';state.anchorResponding=false;state.anchorResponseText='';state.guidedSessionReady=false;
