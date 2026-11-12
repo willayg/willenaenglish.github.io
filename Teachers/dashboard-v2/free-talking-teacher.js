@@ -183,17 +183,10 @@ async function showCreate(host){
    if(stamp!==bookEpoch)return;
    const assigned=new Set((Array.isArray(ids)?ids:[]).map(x=>String(x.id)));
    book.replaceChildren(new Option('Choose textbook',''));
-   const ready=state.books.filter(b=>b.id);
-   const primary=ready.filter(b=>assigned.has(String(b.id)));
-   const others=ready.filter(b=>!assigned.has(String(b.id)));
-   const first=document.createElement('optgroup');first.label='Assigned to '+klass.value;
-   for(const b of primary)first.appendChild(new Option(b.title,b.id));
-   if(primary.length)book.appendChild(first);
-   const second=document.createElement('optgroup');second.label='Other textbooks · select to check speaking units';
-   for(const b of others)second.appendChild(new Option(b.title,b.id));
-   if(others.length)book.appendChild(second);
+   const primary=state.books.filter(b=>b.id&&assigned.has(String(b.id)));
+   for(const b of primary)book.appendChild(new Option(b.title,b.id));
    book.dataset.assignedIds=JSON.stringify([...assigned]);
-   $('#ftTeacherBookNotice',host).textContent='All textbooks are shown. Books assigned to this class appear first. Other textbooks may need class assignment before students can open them.';
+   $('#ftTeacherBookNotice',host).textContent=primary.length?'Showing only textbooks assigned to '+klass.value+'.':'No assigned textbooks for '+klass.value+'. Add a textbook to the class first.';
   }catch(e){if(stamp===bookEpoch)$('#ftTeacherBookNotice',host).textContent=e.message}
  });
  book.addEventListener('change',async()=>{
