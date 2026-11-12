@@ -47,9 +47,8 @@ function clean(body){
 async function pushAfterSave(body,env,waitUntil,staff,event){
  if(body.notify_staff!==true)return {};
  try{
-  const queued=await queueCalendarEventPush(env,staff.token,event);
-  if(queued.completion)waitUntil(queued.completion);
-  return {notification_queued:queued.queued,notification_devices:queued.devices};
+  const result=await queueCalendarEventPush(env,staff.token,event);
+  return {notification_queued:result.accepted>0,notification_devices:result.devices,notification_accepted:result.accepted,notification_errors:result.errors};
  }catch(e){
   console.error('Willena Calendar event push was not queued',e.message);
   return {notification_queued:false};
