@@ -455,7 +455,6 @@ async function loadOverview(scopeName='my',force=false){
     }
    }
   }
-  window.dispatchEvent(new CustomEvent('willena:homework-completion-snapshot',{detail:{completions:completionEvents}}));
   const resultStudentIds=[...new Set([...outputs.values()].flatMap(records=>records.flatMap(record=>[...(Array.isArray(record.student_rows)?record.student_rows:[]),...(Array.isArray(record.students)?record.students:[])].map(s=>id(s.student_id||s.id)))).filter(Boolean))];
   const missingIds=resultStudentIds.filter(studentId=>!students.has(studentId));
   if(missingIds.length){
@@ -469,6 +468,10 @@ async function loadOverview(scopeName='my',force=false){
   // Disambiguate duplicate English names within a class, not across classes.
   // Use stable profile IDs for lookup; never infer identity from a display name.
   const studentNames=students;
+  // Resolve the visible student label after the roster lookup finishes.
+  window.dispatchEvent(new CustomEvent('willena:homework-completion-snapshot',{
+   detail:{completions:completionEvents.map(item=>({...item,studentName:students.get(id(item.studentId))?.name||students.get(id(item.studentId))?.username||item.studentId}))}
+  }));
   const duplicateNameCounts=new Map();
   for(const profile of studentNames.values()){
     const name=String(profile?.name||profile?.username||'').trim().toLocaleLowerCase();
