@@ -103,7 +103,7 @@ async function save(e){
  e.preventDefault();if(state.saving)return;state.saving=true;
  const item={id:state.edit,title:$('wcTitle').value.trim(),date:$('wcDate').value,time:$('wcTime').value,category:$('wcCategory').value,repeat:$('wcRepeat').value,notes:$('wcNotes').value.trim(),notify_staff:$('wcNotifyStaff').checked};
  const submit=$('wcSave');submit.disabled=true;
- try{const result=await api(state.edit?'PATCH':'POST','',item);$('wcDialog').close();await load();if(item.notify_staff)notice(result.notification_queued?'Event saved. Staff notification queued.':'Event saved, but staff notification could not be queued.',!result.notification_queued)}
+ try{const result=await api(state.edit?'PATCH':'POST','',item);$('wcDialog').close();await load();if(item.notify_staff){const accepted=Number(result.notification_accepted||0),devices=Number(result.notification_devices||0);const detail=(result.notification_errors||[]).join('; ');notice('Event saved. Push provider accepted '+accepted+' of '+devices+' device notification'+(devices===1?'':'s')+'.'+(detail?' '+detail:''),accepted===0||!!detail)}}
  catch(e){$('wcFormError').textContent=e.message}
  finally{state.saving=false;submit.disabled=false}
 }
