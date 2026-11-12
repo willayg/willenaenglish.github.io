@@ -23,7 +23,7 @@ export async function onRequestPost({request,env}){
   if(accessMatch){try{token=decodeURIComponent(accessMatch[1])}catch{token=accessMatch[1]}}
   if(!token){
    const auth=request.headers.get('Authorization')||'';
-   token=auth.replace(/^Bearer\\s+/i,'').trim();
+   token=auth.replace(/^Bearer\s+/i,'').trim();
   }
   if(!token)return send(401,{error:'Teacher sign-in cookie is missing. Refresh the Teachers Dashboard login.'});
   const headers={apikey:PUBLISHABLE,Authorization:'Bearer '+token};
