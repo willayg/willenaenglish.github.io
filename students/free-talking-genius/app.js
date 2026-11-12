@@ -1127,7 +1127,18 @@ async function startup(){
   if(missionId){
    if(state.missionError)throw Error('Could not verify this mission: '+state.missionError);
    const assignment=state.missionAssignments.find(a=>String(a.id)===missionId);
-   if(!assignment)throw Error('This speaking mission is not active for your class or account.');
+   if(!assignment)throw Error('This Free Talking mission is not active for your class or account.');
+   // Older student mission links may point at the structured speaking page.
+   // Honor the actual teacher-selected mode rather than silently launching Speaking.
+   if(assignment.list_meta?.mission_mode==='conversation'||String(assignment.list_key||'').startsWith('free_talking_conversation:')){
+    const url=new URL('/students/free-talking-hybrid-lab/',location.origin);
+    url.searchParams.set('release','1');
+    url.searchParams.set('book',String(assignment.list_meta?.book_id||''));
+    url.searchParams.set('unit',String(assignment.list_meta?.unit_id||''));
+    url.searchParams.set('homework',String(assignment.id));
+    location.replace(url.pathname+url.search);
+    return;
+   }
    const book=String(assignment.list_meta?.book_id||''),unit=Number(assignment.list_meta?.unit_number);
    const unitId=String(assignment.list_meta?.unit_id||'');
    const ready=state.books.some(b=>b.id===book&&b.ready)&&
