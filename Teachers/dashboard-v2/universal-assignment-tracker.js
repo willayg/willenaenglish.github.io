@@ -416,6 +416,7 @@ async function loadOverview(scopeName='my',force=false){
    {name:'Grammar book progress',enabled:rows.some(row=>row.source_type==='grammar_books'),path:'rpc/teacher_grammar_book_homework_progress_v1',body:'{}'},
    {name:'Word class activity',enabled:hasApp('Word Genius'),path:'rpc/teacher_word_homework_class_progress_v1',body:'{}'},
    {name:'Free Talking speaking progress',enabled:hasApp('Free Talking Genius'),path:'rpc/teacher_free_talking_mission_progress_v1',body:JSON.stringify({p_assignment_id:null})},
+   {name:'Free Talking conversation progress',enabled:rows.some(row=>row.app==='Free Talking Genius'&&row.list_meta?.mission_mode==='conversation'),path:'rpc/teacher_free_talking_conversation_mission_progress_v1',body:JSON.stringify({p_assignment_id:null})},
    {name:'Writing progress',enabled:rows.some(row=>row.app==='Writing Genius'&&row.list_key!=='writing_genius:sentence'),path:'rpc/teacher_creative_writing_progress_v1',body:'{}'},
    {name:'Sentence writing progress',enabled:hasWritingSentence,path:'rpc/teacher_writing_sentence_homework_progress_v1',body:'{}'},
    {name:'Puzzle progress',enabled:hasApp('Puzzles'),path:'rpc/teacher_puzzle_homework_progress_v1',body:'{}'},
@@ -449,6 +450,7 @@ async function loadOverview(scopeName='my',force=false){
   const grammarBookProgress=asMap('Grammar book progress');
   const wordClassProgress=asMap('Word class activity');
   const freeTalkingProgress=asMap('Free Talking speaking progress','assignment_id');
+  for(const [assignmentId,progress] of asMap('Free Talking conversation progress','assignment_id'))freeTalkingProgress.set(assignmentId,progress);
   const writingProgress=asMap('Writing progress');
   const writingSentenceProgress=asMap('Sentence writing progress');
   const puzzleProgress=asMap('Puzzle progress');
