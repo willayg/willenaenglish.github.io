@@ -567,15 +567,31 @@ try{
  </section>
 </div>
 <div class="ut-section" data-ut-panel="audio" role="tabpanel" hidden>
- <div class="panel" style="padding:12px;border-radius:18px;margin-bottom:14px">
-  <h2 style="margin:4px 8px 8px">AI Willi · Voice Lab</h2>
-  <p style="margin:4px 8px 12px">Compare OpenAI voice models using one AI Willi phrase, then adjust pitch, formant colour, robot texture, speed, brightness and echo. Student audio stays unchanged.</p>
-  <iframe title="AI Willi voice lab" loading="lazy" src="/Teachers/tools/ai-willi-voice-lab/?v=20261112-fable-depth4" style="display:block;width:100%;min-height:1160px;border:0;border-radius:15px;background:#f3fbfc"></iframe>
+ <style>
+  .audio-tool-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:6px;border:1px solid #cde6e9;background:#f2fafb;border-radius:16px;margin-bottom:13px}
+  .audio-tool-switch button{min-width:0;min-height:47px;border:0;border-radius:11px;background:transparent;color:#55757c;padding:9px 5px;font:700 13px Poppins,sans-serif;cursor:pointer;white-space:normal}
+  .audio-tool-switch button[aria-selected="true"]{background:#fff;color:#147e8b;box-shadow:0 2px 9px #104b551a}
+  .audio-tool-switch button:focus-visible{outline:2px solid #ea228d;outline-offset:2px}
+  .audio-tool-pane[hidden]{display:none!important}
+  .audio-tool-pane .panel{padding:clamp(8px,2vw,14px)!important;border-radius:17px}
+  .audio-tool-pane iframe{width:100%;border:0;border-radius:13px;background:#f3fbfc}
+  @media(max-width:480px){.audio-tool-switch button{font-size:12px}.audio-tool-pane .panel{padding:7px!important}}
+ </style>
+ <nav class="audio-tool-switch" role="tablist" aria-label="Audio Tools">
+  <button type="button" role="tab" id="audioToolVoiceTab" aria-selected="true" aria-controls="audioToolVoicePane" data-audio-tool-tab="voice">🎛 Voice Lab</button>
+  <button type="button" role="tab" id="audioToolBatchTab" aria-selected="false" aria-controls="audioToolBatchPane" data-audio-tool-tab="batch" tabindex="-1">♫ MP3 Batch</button>
+ </nav>
+ <div class="audio-tool-pane" id="audioToolVoicePane" role="tabpanel" aria-labelledby="audioToolVoiceTab" data-audio-tool-panel="voice">
+  <div class="panel">
+   <iframe title="AI Willi voice lab" loading="lazy" src="/Teachers/tools/ai-willi-voice-lab/?v=20261112-fable-depth4" style="display:block;min-height:1160px"></iframe>
+  </div>
  </div>
- <div class="panel" style="padding:12px;border-radius:18px">
- <h2 style="margin:4px 8px 14px">Free Talking MP3 Batch</h2>
- <iframe id="freeTalkingAudioBatchFrame" title="Free Talking audio batch preparation" loading="lazy" data-src="/Teachers/tools/free-talking-audio-batch/?v=20261113-error-stop1" style="display:block;width:100%;min-height:780px;border:0;border-radius:15px;background:#f3fbfc"></iframe>
- </div></div>
+ <div class="audio-tool-pane" id="audioToolBatchPane" role="tabpanel" aria-labelledby="audioToolBatchTab" data-audio-tool-panel="batch" hidden>
+  <div class="panel">
+   <iframe id="freeTalkingAudioBatchFrame" title="Free Talking audio batch preparation" loading="lazy" data-src="/Teachers/tools/free-talking-audio-batch/?v=20261113-error-stop1" style="display:block;min-height:780px"></iframe>
+  </div>
+ </div>
+</div>
 <div class="ut-section" data-ut-panel="tools" role="tabpanel" hidden> <div class="app-grid" style="margin-bottom:18px">
  <a class="app-card" href="/Teachers/tools/live-classroom/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">CLASSROOM</span><h3>Live Classroom Game</h3><p>Run team quizzes and live competitions.</p></a>
  <a class="app-card" href="/Teachers/tools/assessment_grid/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">ASSESSMENTS</span><h3>Achievement Tests</h3><p>Assessment grid, scores and historical results.</p></a>
@@ -2022,11 +2038,44 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
 
 </script>
 <script>
+(()=>{
+ const holder=document.querySelector('[data-ut-panel="audio"]');
+ if(!holder)return;
+ const tabs=[...holder.querySelectorAll('[data-audio-tool-tab]')];
+ const panes=[...holder.querySelectorAll('[data-audio-tool-panel]')];
+ let active='voice';
+ try{const saved=sessionStorage.getItem('willena.utilities.audioToolTab');if(saved==='batch')active='batch'}catch{}
+ function choose(tab){
+  if(!['voice','batch'].includes(tab))return;
+  active=tab;
+  tabs.forEach(b=>{const selected=b.dataset.audioToolTab===tab;b.setAttribute('aria-selected',String(selected));b.tabIndex=selected?0:-1});
+  panes.forEach(p=>p.hidden=p.dataset.audioToolPanel!==tab);
+  try{sessionStorage.setItem('willena.utilities.audioToolTab',tab)}catch{}
+  if(tab==='batch'){
+   const frame=document.getElementById('freeTalkingAudioBatchFrame');
+   if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src;
+  }
+ }
+ tabs.forEach((b,i)=>{
+  b.addEventListener('click',()=>choose(b.dataset.audioToolTab));
+  b.addEventListener('keydown',e=>{
+   if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+    e.preventDefault();
+    const next=tabs[(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length];
+    choose(next.dataset.audioToolTab);next.focus();
+   }
+  });
+ });
+ window.WillenaAudioToolTabs={activate:()=>choose(active),select:choose};
+ choose(active);
+})();
+</script>
+<script>
 (()=>{const holder=document.getElementById('view-utilities');if(!holder)return;
  const buttons=[...holder.querySelectorAll('[data-ut-tab]')],panels=[...holder.querySelectorAll('[data-ut-panel]')];
  const choose=tab=>{buttons.forEach(b=>{const yes=b.dataset.utTab===tab;b.classList.toggle('active',yes);b.setAttribute('aria-selected',String(yes))});panels.forEach(p=>p.hidden=p.dataset.utPanel!==tab);
   try{sessionStorage.setItem('willena.utilities.activeTab',tab)}catch{}
-  if(tab==='audio'){const frame=document.getElementById('freeTalkingAudioBatchFrame');if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src}
+  if(tab==='audio')window.WillenaAudioToolTabs?.activate?.();
   if(tab==='replay')window.WillenaEvaluatorReplay?.activate?.();
  };
  buttons.forEach(b=>b.addEventListener('click',()=>choose(b.dataset.utTab)));
