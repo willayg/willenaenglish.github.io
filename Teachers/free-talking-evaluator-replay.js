@@ -10,7 +10,10 @@
  const when=s=>s?new Date(s).toLocaleString('en-GB',{timeZone:'Asia/Seoul',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
  const say=(s,isError=false)=>{status.textContent=s;status.dataset.error=isError?'yes':'no'};
  async function call(body){
-  const r=await fetch('/api/teacher-free-talking-replay',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const bearer=window.WillenaAPI?.getLocalAccessToken?.();
+  const headers={'Content-Type':'application/json'};
+  if(bearer)headers.Authorization='Bearer '+bearer;
+  const r=await fetch('/api/teacher-free-talking-replay',{method:'POST',credentials:'include',cache:'no-store',headers,body:JSON.stringify(body)});
   let data;try{data=await r.json()}catch{throw Error(r.status===404?'Replay API route not deployed on Teachers yet (404).':r.status===405?'Replay API method unavailable (405).':'Replay API returned a non-JSON response ('+r.status+').')}
   if(!r.ok)throw Error(data.error||'Replay request failed ('+r.status+')');return data;
  }
@@ -60,9 +63,7 @@
  refresh.addEventListener('click',load);run.addEventListener('click',replay);filter.addEventListener('input',renderList);
  dateOptions.addEventListener('change',load);
  window.WillenaEvaluatorReplay={activate:()=>{if(!sessions.length&&!busy)void load()}};
- // The Utilities tab script runs inline before this deferred file. Start after this module is ready.
- if(document.getElementById('view-utilities')?.classList.contains('active')&&!root.closest('[data-ut-panel]')?.hidden){void load()}
- else if(!root.closest('[data-ut-panel]')?.hidden){void load()}
- // Run on first open even if the dashboard restored Utilities before this defer script loaded.
+
+ // Startup is explicit from Utilities tab activation; run once if already showing.
  if(document.getElementById('view-utilities')?.classList.contains('active')&&!root.closest('[data-ut-panel]')?.hidden)void load();
 })();
