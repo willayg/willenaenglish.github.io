@@ -358,8 +358,10 @@ function overviewGet(path,options={}){
 }
 window.addEventListener('ua:assignments-changed',()=>invalidateOverviewCache(true));
 window.addEventListener('willena:assignment-created',()=>invalidateOverviewCache(true));
-async function loadOverview(scopeName='my',force=false){
- const host=document.querySelector('#uaOverview');if(!host)return;
+async function loadOverview(scopeName='my',force=false,options={}){
+ const classMission=String(options.className||'').trim();
+ const host=classMission?document.querySelector('#uaClassMissions'):document.querySelector('#uaOverview');
+ if(!host)return;
  const loadStarted=performance.now();
  overviewPerf.loads++;
  if(force)invalidateOverviewCache();
@@ -562,6 +564,74 @@ async function loadOverview(scopeName='my',force=false){
        '<strong class="ghc-student-pct">'+(percentage===null?'—':percentage+'%')+'</strong></div>';
     }).join('');
     return '<div class="ghc-student-list">'+rows+'</div>';
+  }
+  // All Classes > Current Missions consumes the same sources and progress maps
+  // as My / All, while presenting each mission in a simple expandable card.
+  function renderClassMissions(){
+   if(generation!==overviewGeneration||!host.isConnected)return;
+   const now=Date.now();
+   const className=classMission.toLowerCase();
+   const rowClass=r=>String(r.class||r.class_name||students.get(id(r.student_id))?.class||'').trim().toLowerCase();
+   const current=rows.filter(r=>r.isActive&&(!r.due_at||Date.parse(r.due_at)>=now)&&rowClass(r)===className)
+    .sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+   const nameFor=st=>displayStudentName(st.student_id||st.id,st.name||'Student');
+   const round=n=>Math.max(0,Math.min(100,Math.round(Number(n)||0)));
+   const bar=(name,pct,note='')=>'<div class="cc-mission-student"><span>'+esc(name)+'</span>'+
+    (pct===null?'<small>'+esc(note||'Progress unavailable')+'</small>':
+    '<div class="cc-mission-track"><i style="width:'+round(pct)+'%"></i></div><strong>'+round(pct)+'%</strong>')+'</div>';
+   const unique=list=>[...new Map(list.filter(x=>x.student_id).map(x=>[id(x.student_id),x])).values()];
+   function progressFor(r){
+    const assignId=id(r.id);
+    let list=[],note='';
+    if(r.app==='Free Talking Genius'){
+     const p=freeTalkingProgress.get(assignId);
+     if(p?.students?.length)list=p.students.map(st=>({student_id:st.student_id,name:nameFor(st),pct:round(st.percent),done:st.complete===true}));
+     else note='Speaking or conversation progress has not been reported';
+    }else if(r.app==='Grammar Genius'){
+     const p=(r.source_type==='grammar_books'?grammarBookProgress:classProgress).get(assignId);
+     if(p?.student_rows?.length)list=p.student_rows.map(st=>({student_id:st.student_id,name:nameFor(st),pct:Number(st.total)>0?round(100*Number(st.done||0)/Number(st.total)):st.passed===true?100:0,done:st.passed===true||(Number(st.total)>0&&Number(st.done)>=Number(st.total))}));
+     else note='Verified grammar progress unavailable';
+    }else if(r.app==='Word Genius'){
+     const p=wordCompletionCache.get(assignId);
+     if(p?.students?.length)list=p.students.map(st=>{
+      const pct=wordStudentPercent(st,{...p.assignment,list_meta:r.list_meta||{}});
+      return {student_id:st.student_id,name:nameFor(st),pct,done:st.status==='complete'||pct===100};
+     });
+     else note=p?.error?'Word Genius progress unavailable':'Loading Word Genius progress…';
+    }else if(r.app==='Writing Genius'){
+     const p=(r.list_key==='writing_genius:sentence'?writingSentenceProgress:writingProgress).get(assignId);
+     if(p?.student_rows?.length)list=p.student_rows.map(st=>{
+      const pct=r.list_key==='writing_genius:sentence'?(Number(st.total)>0?round(100*Number(st.checked||0)/Number(st.total)):null):(st.completed===true?100:st.stage==='not_started'?0:null);
+      return {student_id:st.student_id,name:nameFor(st),pct,done:st.completed===true};
+     });
+     else note='Writing submission progress unavailable';
+    }else if(r.app==='Puzzles'){
+     const p=puzzleProgress.get(assignId);
+     if(p?.student_rows?.length)list=p.student_rows.map(st=>({student_id:st.student_id,name:nameFor(st),pct:st.completed===true?100:0,done:st.completed===true}));
+     else note='Puzzle completion progress unavailable';
+    }else if(r.app==='내신'){
+     const p=progress.get(assignId);
+     if(p&&r.student_id)list=[{student_id:r.student_id,name:displayStudentName(r.student_id),pct:Number(r.target_count)>0?round(100*Number(p.done||0)/Number(r.target_count)):null,done:Number(r.target_count)>0&&Number(p.done)>=Number(r.target_count)&&!Number(p.unresolved||0)}];
+     else note='Exam progress unavailable';
+    }else note='Verified progress for this app is not available here';
+    list=unique(list);
+    const done=list.filter(st=>st.done).length;
+    const started=list.filter(st=>Number(st.pct)>0).length;
+    return {list,done,started,note};
+   }
+   host.innerHTML='<div class="cc-mission-toolbar"><div><strong>Current missions</strong><small>All teachers · '+esc(classMission)+' · Active assignments</small></div><button type="button" class="cc-btn" id="ccMissionRefresh">Refresh</button></div>'+
+    (errors.length?'<p class="cc-helper">Some progress sources unavailable: '+esc(errors.join('; '))+'</p>':'')+
+    (current.length?'<div class="cc-mission-cards">'+current.map(r=>{
+     const p=progressFor(r);
+     const teacher=authors.get(id(r.created_by))||'Teacher unavailable';
+     const due=r.due_at?dday(r.due_at):'No due date';
+     const count=p.list.length?p.done+'/'+p.list.length+' complete':'Progress unavailable';
+     const rows=p.list.map(st=>bar(st.name,st.pct,st.done?'Completed':'Progress unavailable')).join('');
+     return '<details class="cc-mission-card" data-mission-id="'+esc(id(r.id))+'"><summary><span class="cc-mission-title"><small>'+esc(r.app)+'</small><strong>'+esc(r.label||'Mission')+'</strong><span>'+esc(teacher)+' · Due '+esc(due)+'</span></span><span class="cc-mission-count">'+esc(count)+'</span><span class="cc-mission-chevron">⌄</span></summary>'+
+      '<div class="cc-mission-body">'+(p.list.length?'<p class="cc-helper">'+p.started+' started · '+p.done+' completed</p>'+rows:
+       '<p class="cc-helper">'+esc(p.note||'No verified student progress available yet.')+'</p>')+'</div></details>';
+    }).join('')+'</div>':'<div class="cc-empty">No current missions for this class. Closed and past-due assignments remain available in My and All history.</div>');
+   host.querySelector('#ccMissionRefresh')?.addEventListener('click',()=>loadOverview('all',true,{className:classMission}));
   }
   function renderOverview(){
    const now=Date.now();
@@ -900,7 +970,22 @@ async function loadOverview(scopeName='my',force=false){
    const bulk=host.querySelector('#uaCompleteSelected');
    if(bulk)bulk.onclick=()=>completeRows(selectable.filter(row=>overviewSelections.has(homeworkKey(row))));
   }
-  renderOverview();
+  if(classMission){
+   // Fetch exact Word Genius homework mastery for just this class, rather
+   // than estimating progress from raw attempts or scanning every assignment.
+   const target=rows.filter(r=>r.app==='Word Genius'&&r.isActive&&String(r.class||r.class_name||'').toLowerCase()===classMission.toLowerCase()&&!wordCompletionCache.has(id(r.id)));
+   let cursor=0;
+   await Promise.all(Array.from({length:Math.min(3,target.length)},async()=>{
+    while(cursor<target.length){
+     const row=target[cursor++];
+     try{
+      const data=await get('rpc/teacher_vocab_assignment_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_id:id(row.id)})});
+      wordCompletionCache.set(id(row.id),{assignment:{...(data?.assignment||{}),list_meta:row.list_meta||{}},students:Array.isArray(data?.students)?data.students:[],error:data?.success?null:'Progress unavailable'});
+     }catch(error){wordCompletionCache.set(id(row.id),{assignment:{},students:[],error:String(error.message||error)})}
+    }
+   }));
+   renderClassMissions();
+  }else renderOverview();
   overviewPerf.lastLoadMs=Math.round(performance.now()-loadStarted);
   overviewPerf.lastCompletedAt=new Date().toISOString();
  }catch(e){if(generation===overviewGeneration&&host.isConnected)host.innerHTML='<p class="ua-empty">Could not load homework: '+esc(e.message)+'</p>'}
@@ -1015,5 +1100,5 @@ async function pollNotifications(){
  }catch(error){console.warn('[Homework Notifications] Read unavailable:',error.message)}
  finally{notificationPollInFlight=false}
 }
-window.UniversalAssignmentTracker={load,loadOverview,loadCalendar,pollNotifications};
+window.UniversalAssignmentTracker={load,loadOverview,loadCalendar,pollNotifications,loadClassMissions:className=>loadOverview('all',false,{className})};
 })();
