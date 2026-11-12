@@ -169,9 +169,9 @@ async function run(){
    console.warn('[FT audio batch]',job.id,job.voice,e.message);
    // Do not abort after an arbitrary number of failures.
    // A credential/configuration error is global and cannot be fixed by retrying 544 items.
-   if(/API key ID used as API key|only valid API keys|invalid_api_key|unauthorized|ELEVENLABS_PROXY_401|ELEVENLABS_PROXY_403|ELEVENLABS_DIRECT_401|ELEVENLABS_DIRECT_403/i.test(e.message)){
+   if(/API key ID used as API key|only valid API keys|invalid_api_key|unauthorized|ELEVENLABS_PROXY_401|ELEVENLABS_PROXY_403|ELEVENLABS_DIRECT_401|ELEVENLABS_DIRECT_403|AUDIO_KEY_NOT_AUTHORIZED/i.test(e.message)){
      stopping=true;
-     banner.textContent+=' · Authentication requires a valid ElevenLabs secret key on the active server. No further paid requests attempted.';
+     banner.textContent+=' · Authorization or cache-key configuration must be corrected before uploads can succeed. No further paid requests attempted.';
    }
   }
   render();
