@@ -298,6 +298,9 @@ try{
 <style>
 /* Curriculum Class View */
 .curriculum-root{font-family:inherit;color:#233d4c}
+.cc-assignment-mode{display:flex;gap:7px;margin:3px 0 17px;padding:5px;background:#eef4f5;border:1px solid #dce7eb;border-radius:14px;max-width:440px}
+.cc-assignment-mode button{flex:1;min-width:0;border:0;border-radius:10px;background:transparent;color:#59717a;font:inherit;font-size:13px;font-weight:750;padding:12px 8px;cursor:pointer}
+.cc-assignment-mode button.active{background:#fff;color:#16818a;box-shadow:0 2px 9px rgba(28,67,80,.09)}
 .cc-assignment-class-tabs{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:5px 2px 13px;margin-bottom:12px}
 .cc-assignment-class-tabs button{flex:none;border:1px solid #cbdfe2;background:white;color:#4e6973;padding:11px 17px;border-radius:12px;cursor:pointer;font:inherit;font-size:13px;font-weight:750;white-space:nowrap}
 .cc-assignment-class-tabs button.active{background:#dff5f6;border-color:#44aeb9;color:#127f89;box-shadow:0 0 0 1px #44aeb9}
@@ -1245,13 +1248,14 @@ async function openStudent(id){window.rosterDrawerStudent=String(id);const base=
 
 /* Class Curriculum — read from staff-scoped operations RPC and shared content catalog. */
 const curriculum={
- data:null, selectedClass:'', selectedBook:'', selectedUnit:'', selectedSkill:'', unitCache:new Map(),
+ data:null, selectedClass:'', selectedBook:'', selectedUnit:'', selectedSkill:'', assignmentSubview:'curriculum', unitCache:new Map(),
  pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[], skillDetail:new Map(), extraActivity:[], sentenceEvidence:[], writingUnits:[], writingEntries:[],conversationEvidence:[]
 };
 // Both screens use this ONE curriculum renderer and the same state/cache.
 const ccHost=()=>document.querySelector('#view-assignments.active #assignmentClassGrid')||document.getElementById('classGrid');
 window.addEventListener('willena:curriculum-mount',()=>{
  if(!document.querySelector('#view-assignments.active #assignmentClassGrid'))return;
+ try{curriculum.assignmentSubview=sessionStorage.getItem('willena:assignments:all-classes-view')==='missions'?'missions':'curriculum'}catch{}
  loadClassOverview();
 });
 const ccOp='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
@@ -1457,11 +1461,14 @@ function ccRenderDetail(){
  const students=ccClassStudents(c.name),units=book&&curriculum.unitCache.has(book.book_id)?(book._units||[]):[];
  const selected=units.find(u=>u.id===curriculum.selectedUnit);
  const groups=ccSkillGroups;
+ const assignmentMode=curriculum.assignmentSubview==='missions'?'missions':'curriculum';
  host.innerHTML=(inAssignments?
+ '<div class="cc-assignment-mode" role="tablist" aria-label="All Classes view"><button type="button" role="tab" data-cc-subview="curriculum" aria-selected="'+(assignmentMode==='curriculum')+'" class="'+(assignmentMode==='curriculum'?'active':'')+'">Curriculum Progress</button><button type="button" role="tab" data-cc-subview="missions" aria-selected="'+(assignmentMode==='missions')+'" class="'+(assignmentMode==='missions'?'active':'')+'">Current Missions</button></div>'+
  '<div class="cc-assignment-class-tabs" role="tablist" aria-label="Active classes">'+classes.map(item=>'<button type="button" role="tab" data-cc-switch-class="'+ccEscape(item.name)+'" aria-selected="'+(item.name===c.name)+'" class="'+(item.name===c.name?'active':'')+'">'+ccEscape(item.display_name||item.name)+'</button>').join('')+'</div>':
  '<div class="cc-detail-top">'+ccButton('← All classes','back','cc-back')+
  '<div><h2>'+ccEscape(c.name)+'</h2><p>'+students.length+' students · Curriculum coverage</p></div>'+ccButton('Open students','students')+'</div>')+
- (!books.length?'<div class="cc-empty">No textbooks are assigned to this class. Assign a book from class management first.</div>':
+ (inAssignments&&assignmentMode==='missions'?'<div id="uaClassMissions" class="cc-class-missions" aria-live="polite"><div class="cc-empty">Loading current missions…</div></div>':
+ !books.length?'<div class="cc-empty">No textbooks are assigned to this class. Assign a book from class management first.</div>':
  (inAssignments?'<div class="cc-assignment-bookline"><div class="cc-book-tabs">':'<div class="cc-book-tabs">')+
  books.map(b=>'<button type="button" class="'+(b.id===book.id?'active':'')+'" data-cc-book="'+ccEscape(b.id)+'">'+ccEscape(b.book_title||'Textbook')+'</button>').join('')+
  (inAssignments?'</div><small>'+students.length+' students · Unit progress</small></div>':'</div><div class="cc-progress-heading"><div><h3>'+ccEscape(book.book_title||'Textbook')+'</h3><p>Current classroom unit: <strong>'+ccEscape(book.current_unit||'Not set')+'</strong></p></div><label>Mark unit being taught <select class="control" id="ccTaught"><option value="">Not set</option>'+units.map(u=>'<option value="'+ccEscape(String(u.unit_number))+'" '+(String(book.current_unit||'')===String(u.unit_number)?'selected':'')+'>Unit '+ccEscape(u.unit_number)+'</option>').join('')+'</select></label></div>')+
@@ -1472,6 +1479,20 @@ function ccRenderDetail(){
  groups.map(g=>{const d=ccSkillData(book,u,g),count=d.touched.size;const knownPuzzle=(curriculum.puzzleOverview||[]).filter(x=>x.book_id===book.book_id&&x.unit_id===u.id&&ccClassStudents(c.name).some(s=>String(s.id)===String(x.student_id)));const puzzleStarted=new Set(knownPuzzle.filter(x=>Number(x.completed_modes)>0).map(x=>String(x.student_id)));const started=g.key==='puzzles'?new Set([...d.touched,...puzzleStarted]).size:count;const pct=g.key==='puzzles'&&d.total?100*knownPuzzle.reduce((sum,x)=>sum+Math.min(5,Number(x.completed_modes||0))/5,0)/d.total:0;const extra=ccExtraCompletion(book,u,g,c.name);const included=new Set([...d.touched,...extra.started,...(g.key==='sentence'?ccSentenceRows(book,u,c.name).map(r=>String(r.student_id)):[]),...(g.key==='writing'?ccWritingRows(book,u,c.name).map(r=>String(r.student_id)):[])]);const actualStarted=included.size;const extraPct=extra.finished.size&&d.total?100*extra.finished.size/d.total:0;const state=(['grammar','talking','freeconversation'].includes(g.key)?extraPct:pct)>90?'cc-full':actualStarted?'cc-partial':'cc-empty-cell';return '<button type="button" class="cc-cell '+state+(selected?.id===u.id&&curriculum.selectedSkill===g.key?' cc-selected':'')+'" data-cc-unit="'+ccEscape(u.id)+'" data-cc-skill="'+g.key+'" aria-label="Unit '+ccEscape(u.unit_number)+' '+g.name+', '+actualStarted+' of '+d.total+' with recorded practice"><b>'+(actualStarted?actualStarted+'/'+d.total:'—')+'</b><small>'+(state==='cc-full'?'over 90% done':actualStarted?'in progress':'not started')+'</small></button>'}).join('')+'</div>').join('')+'</div></div>')+
  (selected&&curriculum.selectedSkill?ccRenderStudentDrilldown(book,selected,groups.find(g=>g.key===curriculum.selectedSkill)):'')+
  (inAssignments?'':ccWritingActivitySummary(c.name)));
+ host.querySelectorAll('[data-cc-subview]').forEach(b=>b.addEventListener('click',()=>{
+  const value=b.dataset.ccSubview;
+  if(curriculum.assignmentSubview===value)return;
+  curriculum.assignmentSubview=value;
+  try{sessionStorage.setItem('willena:assignments:all-classes-view',value)}catch{}
+  ccRenderDetail();
+ }));
+ if(inAssignments&&assignmentMode==='missions'){
+  const load=window.UniversalAssignmentTracker?.loadClassMissions;
+  if(load)void load(c.name);else{
+   const slot=host.querySelector('#uaClassMissions');
+   if(slot)slot.innerHTML='<div class="cc-empty">Assignment tracker unavailable. Refresh the dashboard.</div>';
+  }
+ }
  host.querySelector('[data-cc-action="back"]')?.addEventListener('click',()=>{curriculum.selectedClass='';curriculum.selectedBook='';ccRenderOverview()});
  host.querySelector('[data-cc-action="students"]')?.addEventListener('click',()=>openClassFromOverview(c.name,30));
  host.querySelectorAll('[data-cc-switch-class]').forEach(b=>b.onclick=()=>{
