@@ -8,7 +8,7 @@ const CRITICAL=new Set(['not','never','no','cannot','can','will','would','should
 const PAIRS=[['to','too','two'],['there','their',"they're"],['by','buy','bye'],['see','sea'],['right','write'],['flower','flour'],['one','won'],['four','for'],['night','knight'],['wear','where'],['hear','here']];
 function tokens(value,mode='word'){
  let s=String(value||'').toLowerCase().normalize('NFKC').replace(/[’‘]/g,"'").replace(/[—–-]/g,' ');
- s=s.replace(/\b(?:i'm|you're|we're|they're|he's|she's|it's|don't|doesn't|didn't|can't|won't|isn't|aren't|wasn't|weren't|i've|we've|they'll|i'll|you'll|we'll|they'll)\b/g,w=>CONTRACTIONS[w]||w);
+ s=s.replace(/\b(?:i'm|you're|we're|they're|he's|she's|it's|don't|doesn't|didn't|can't|won't|isn't|aren't|wasn't|weren't|i've|we've|they've|i'll|you'll|we'll|they'll)\b/g,w=>CONTRACTIONS[w]||w);
  s=s.replace(/[^a-z0-9' ]/g,' ').trim().replace(/\s+/g,' ');
  if(mode==='sentence'){
   const numbers={zero:'0',one:'1',two:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9',ten:'10',eleven:'11',twelve:'12',thirteen:'13',fourteen:'14',fifteen:'15',sixteen:'16',seventeen:'17',eighteen:'18',nineteen:'19',twenty:'20'};
