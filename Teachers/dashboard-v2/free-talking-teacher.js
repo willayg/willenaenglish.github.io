@@ -129,7 +129,7 @@ function renderManage(host){
 }
 async function showManage(host,refresh=false){
  if(!host)return;
- host.innerHTML='<div class="ua-empty">Loading Free Talking speaking missions…</div>';
+ host.innerHTML='<div class="ua-empty">Loading Free Talking missions…</div>';
  try{if(refresh||!state.assignments.length)await loadAssignments();if(host.isConnected)renderManage(host)}
  catch(e){if(host.isConnected)host.innerHTML='<div class="ua-empty">Could not load missions: '+esc(e.message)+' <button class="control" data-retry-ft>Retry</button></div>';
   $('[data-retry-ft]',host)?.addEventListener('click',()=>void showManage(host,true))}
@@ -263,7 +263,7 @@ function mountDashboard(){
  install(rail,'rail');install(mobile,'mobile');
  if(!$('#view-free-talking-genius')){
   const view=document.createElement('section');view.id='view-free-talking-genius';view.className='view';
-  view.innerHTML='<div class="page-head"><div><h1>Free Talking Genius</h1><div class="panel-sub">Speaking progress · 8-question missions</div></div></div>'+
+  view.innerHTML='<div class="page-head"><div><h1>Free Talking Genius</h1><div class="panel-sub">Speaking and AI conversation progress · 8-step missions</div></div></div>'+
    '<div class="vocab-hub-tabs"><button type="button" class="vocab-hub-tab active" data-ft-view="progress">General Progress</button><button type="button" class="vocab-hub-tab" data-ft-view="assignments">Assignments</button></div>'+
    '<div class="panel" id="ftTeacherPanel"></div>';
   main.appendChild(view);
@@ -324,7 +324,7 @@ async function renderDashboard(){
  const view=$('#view-free-talking-genius'),host=$('#ftTeacherPanel');if(!view||!host)return;
  $$('[data-ft-view]',view).forEach(b=>b.classList.toggle('active',b.dataset.ftView===state.view));
  if(state.view==='progress'){
-  host.innerHTML='<div class="panel-title">General Speaking Progress</div><div class="panel-sub">Student mastery from the main Free Talking app, including free practice.</div><div id="ftTeacherProgressContent"></div>';
+  host.innerHTML='<div class="panel-title">General Free Talking Progress</div><div class="panel-sub">Student mastery from the main Free Talking app, including free practice.</div><div id="ftTeacherProgressContent"></div>';
   const panel=$('#ftTeacherProgressContent',host);
   await showGeneralProgress(panel);
  }else{
