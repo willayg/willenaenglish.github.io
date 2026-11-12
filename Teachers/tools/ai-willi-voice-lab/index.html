@@ -5,9 +5,14 @@
 :root{font:14px system-ui,sans-serif;color:#214a55;background:#f4fbfc}*{box-sizing:border-box}body{margin:0;padding:14px}.panel{max-width:1040px;margin:auto;background:white;border:1px solid #cdebee;border-radius:20px;padding:clamp(16px,3vw,28px)}h1{margin:0 0 7px;font-size:25px}h2{font-size:16px}p{line-height:1.55;color:#627e85}.tag{display:inline-block;border-radius:20px;background:#e8f8f7;color:#237b86;font-size:11px;padding:5px 9px;font-weight:750}.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.control{background:#f5fbfb;border:1px solid #d7edef;border-radius:14px;padding:12px}label{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700;gap:8px}input[type=range]{display:block;width:100%;margin-top:9px;accent-color:#168b9a}button{cursor:pointer;border:1px solid #bbdfe3;border-radius:12px;padding:10px 14px;background:white;color:#246c79;font:700 13px system-ui;min-height:42px}button.primary{color:white;background:#e92192;border-color:#e92192}button:disabled{opacity:.45;cursor:default}.phrases{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}.phrase{display:flex;align-items:center;gap:9px;border:1px solid #d8edef;border-radius:12px;padding:10px;text-align:left;min-width:0}.phrase.active{border-color:#e92192;background:#fff4fa}.phrase span{min-width:0;flex:1;line-height:1.4}.phrase small{font-size:11px;color:#81969a}.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;align-items:center}.hint{background:#fff9ef;border-radius:12px;padding:12px;color:#8b713c;font-size:12px}#status{font-weight:700;color:#267c87;min-height:20px;margin:12px 0}.presets{display:flex;gap:8px;flex-wrap:wrap}audio{display:none}@media(max-width:650px){.phrases,.controls{grid-template-columns:1fr}} 
 </style></head><body><main class="panel">
 <span class="tag">TEACHER UTILITIES · READ ONLY</span><h1>AI Willi · Voice Lab</h1>
-<p>Experiment with 10 <strong>already recorded</strong> OpenAI Marin phrases from Free Talking Genius, retrieved from R2. No new AI speech is generated, no clips are overwritten, and students hear no changes.</p>
-<div class="toolbar"><button id="reload">Find cached phrases</button><span id="counter" class="tag">Looking for existing audio…</span></div>
-<div id="phrases" class="phrases"></div>
+<p>Compare OpenAI text-to-speech models and voices with one fixed phrase. Each new combination requests one short AI-generated sample. Effects are preview-only; student voices and stored R2 recordings are untouched.</p>
+<blockquote style="margin:15px 0;padding:15px;border-left:4px solid #e92192;background:#fff6fa;border-radius:10px;font-size:17px;font-weight:750">Hello, my name is AI Willi. I'm here to help you learn English!</blockquote>
+<div class="controls">
+<div class="control"><label for="model">OpenAI speech model</label><select id="model" style="width:100%;padding:12px;border-radius:10px;border:1px solid #b6dbdd;margin-top:8px;font-size:14px"><option value="gpt-4o-mini-tts">GPT-4o Mini TTS · expressive</option><option value="gpt-4o-mini-tts-2025-12-15">GPT-4o Mini TTS · Dec 2025</option><option value="tts-1">TTS-1 · faster legacy</option><option value="tts-1-hd">TTS-1 HD · legacy HD</option></select></div>
+<div class="control"><label for="voice">OpenAI voice</label><select id="voice" style="width:100%;padding:12px;border-radius:10px;border:1px solid #b6dbdd;margin-top:8px;font-size:14px"><option value="cedar">Cedar</option><option value="onyx">Onyx</option><option value="echo">Echo</option><option value="ash">Ash</option><option value="alloy">Alloy</option><option value="ballad">Ballad</option><option value="verse">Verse</option><option value="fable">Fable</option><option value="sage">Sage</option><option value="coral">Coral</option><option value="nova">Nova</option><option value="shimmer">Shimmer</option><option value="marin">Marin</option></select></div>
+</div>
+<p style="font-size:12px">Try Cedar, Onyx, Echo and Ash first for a male-sounding mascot. Actual available voices depend on the selected model; unsupported combinations show their API error. All previews are AI-generated.</p>
+<div class="toolbar"><span id="counter" class="tag">Fixed-phrase OpenAI preview</span></div>
 <h2>Sound controls</h2>
 <div class="controls">
 <div class="control"><label>Pitch <output id="pitchValue">0 semitones</output></label><input id="pitch" type="range" min="-6" max="9" value="0" step=".5"></div>
@@ -18,35 +23,18 @@
 <div class="control"><label>Echo <output id="echoValue">0%</output></label><input id="echo" type="range" min="0" max="35" value="0" step="5"></div>
 </div>
 <h2>Quick presets</h2><div class="presets"><button data-preset="normal">Original Marin</button><button data-preset="cute">Playful Willi</button><button data-preset="robot">Little Robot</button><button data-preset="deep">Robot Sidekick</button></div>
-<div class="toolbar"><button id="play" class="primary" disabled>▶ Play selected phrase</button><button id="stop">■ Stop</button><button id="reset">Reset effects</button></div>
+<div class="toolbar"><button id="play" class="primary">▶ Generate / Play phrase</button><button id="stop">■ Stop</button><button id="reset">Reset effects</button></div>
 <div class="hint"><strong>Important:</strong> Pitch is achieved with playback-rate processing in this first tester, so raising pitch also speeds speech up. The speed slider adds to that rate. “Formant colour” is a resonant EQ approximation, not independent formant shifting. Try the presets first; this is a safe preview rather than a production voice pipeline.</div>
 <div id="status" role="status">Checking cached R2 recordings…</div>
 </main><script>
-const $=id=>document.getElementById(id), API='/api/free-talking-teacher-audio', worker='https://get-audio-urls.willena.workers.dev/audio/';
+const $=id=>document.getElementById(id),API='/api/ai-willi-voice-preview';
 const keys=['pitch','speed','formant','robot','bright','echo'],defaults={pitch:0,speed:1,formant:0,robot:0,bright:0,echo:0};
 const presets={normal:defaults,cute:{pitch:2,speed:.9,formant:25,robot:10,bright:3,echo:0},robot:{pitch:3,speed:.9,formant:35,robot:45,bright:2,echo:5},deep:{pitch:-3,speed:1.05,formant:-40,robot:25,bright:-3,echo:5}};
-let clips=[],selected=0,ctx,source,low,high,form,robotGain,dryGain,modOsc,modDepth,delay,feedback,echoGain,currentBuffer;
+let ctx,source,low,high,form,robotGain,dryGain,modOsc,modDepth,delay,feedback,echoGain;
+const audioCache=new Map();let busy=false;
 function status(s){$('status').textContent=s}
 function token(){const t=window.WillenaAPI?.getLocalAccessToken?.();if(t)return t;try{const local=localStorage.getItem('sb_access_token');if(local)return local;return decodeURIComponent(document.cookie.split('; ').find(x=>x.startsWith('sb_access='))?.slice(10)||'')}catch{return ''}}
-async function call(body){const t=token();if(!t)throw Error('Sign in to the Teachers Dashboard first.');const r=await fetch(API,{method:'POST',credentials:'include',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok||!d.success)throw Error(d.error||'R2 inventory failed');return d}
-function render(){const box=$('phrases');box.replaceChildren();clips.forEach((c,i)=>{const b=document.createElement('button');b.className='phrase'+(selected===i?' active':'');const n=document.createElement('small');n.textContent=String(i+1).padStart(2,'0');const t=document.createElement('span');t.textContent=c.text;b.append(n,t);b.onclick=()=>{selected=i;render();play()};box.append(b)});$('play').disabled=!clips.length;$('counter').textContent=clips.length+' existing recordings'}
-async function load(){
- stop();clips=[];render();$('reload').disabled=true;status('Reading published question catalog and checking existing R2 files…');
- try{
-  const data=await call({action:'catalog'});const questions=data.questions||[];
-  // Check candidate question IDs in small batches; inventory is read-only and never synthesizes audio.
-  const max=Math.min(questions.length,600);
-  for(let i=0;i<max&&clips.length<10;i+=120){
-   const batch=questions.slice(i,i+120);const inv=await call({action:'inventory',voice:'willi_mp3',question_ids:batch.map(q=>q.id)});
-   const byId=new Map(batch.map(q=>[q.id,q]));for(const f of inv.files||[]){
-    if(!f.exists||clips.length>=10)continue;const q=byId.get(f.id);
-    if(q&&f.file&&/^ft_fallback_v1_[a-f0-9]{32}\.mp3$/.test(f.file))clips.push({text:q.text,file:f.file});
-   }
-   status('Checked '+Math.min(i+batch.length,max)+' existing entries · found '+clips.length+' recordings…');
-  }
-  render();status(clips.length?'Select a phrase or press Play. Effects apply only here.':'No existing OpenAI Marin MP3 clips found among the checked questions. Nothing was generated.');
- }catch(e){status('Could not load existing clips: '+e.message)}finally{$('reload').disabled=false}
-}
+async function call(body){const t=token();if(!t)throw Error('Sign in to the Teachers Dashboard first.');const r=await fetch(API,{method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(46000)});const d=await r.json().catch(()=>({}));if(!r.ok||!d.success)throw Error(d.error||'OpenAI speech preview failed');return d}
 function values(){return Object.fromEntries(keys.map(k=>[k,Number($(k).value)]))}
 function setValues(v){keys.forEach(k=>{$(k).value=v[k]??defaults[k]});update()}
 function update(){
@@ -60,12 +48,12 @@ function update(){
 }
 function stop(){try{source?.stop()}catch(e){}try{modOsc?.stop()}catch(e){}source=null;modOsc=null}
 async function play(){
- if(!clips[selected])return;stop();$('play').disabled=true;status('Loading existing audio from R2…');
+ if(busy)return;stop();busy=true;$('play').disabled=true;const choice=$('model').value+'|'+$('voice').value;status(audioCache.has(choice)?'Loading previously generated preview…':'Generating one short phrase with OpenAI. New samples incur a small API charge…');
  try{
   ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();await ctx.resume();
-  const url=worker+encodeURIComponent(clips[selected].file),r=await fetch(url,{cache:'force-cache'});
-  if(!r.ok)throw Error('R2 audio unavailable ('+r.status+')');
-  const buffer=await ctx.decodeAudioData(await r.arrayBuffer());
+  let raw=audioCache.get(choice);
+  if(!raw){const d=await call({model:$('model').value,voice:$('voice').value});const binary=atob(d.audio);raw=new Uint8Array(binary.length);for(let n=0;n<binary.length;n++)raw[n]=binary.charCodeAt(n);audioCache.set(choice,raw)}
+  const buffer=await ctx.decodeAudioData(raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.byteLength));
   source=ctx.createBufferSource();source.buffer=buffer;
   low=ctx.createBiquadFilter();low.type='highpass';low.frequency.value=110;
   form=ctx.createBiquadFilter();form.type='peaking';
@@ -77,8 +65,8 @@ async function play(){
   modOsc=ctx.createOscillator();modOsc.type='sine';modOsc.frequency.value=28;modOsc.connect(modDepth);modDepth.connect(robotGain.gain);
   robotGain.gain.value=0;high.connect(robotGain);robotGain.connect(ctx.destination);
   high.connect(delay);delay.connect(feedback);feedback.connect(delay);delay.connect(echoGain);echoGain.connect(ctx.destination);
-  update();source.onended=()=>{source=null;status('Finished. Choose another phrase or change settings.');$('play').disabled=false};modOsc.start();source.start();status('Playing original R2 clip with preview effects.');$('play').disabled=false;
- }catch(e){stop();$('play').disabled=false;status('Playback failed: '+e.message)}
+  update();source.onended=()=>{source=null;status('Finished. Adjust effects and press Play again; this combination is cached in this tab.');$('play').disabled=false};modOsc.start();source.start();status('Playing '+$('voice').value+' / '+$('model').value+' with preview effects.');$('play').disabled=false;busy=false;
+ }catch(e){stop();$('play').disabled=false;status('Preview failed: '+e.message)}finally{busy=false;$('play').disabled=false}
 }
-keys.forEach(k=>$(k).addEventListener('input',update));document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>setValues(presets[b.dataset.preset]));$('reload').onclick=load;$('play').onclick=play;$('stop').onclick=()=>{stop();status('Stopped')};$('reset').onclick=()=>setValues(defaults);update();load();
+keys.forEach(k=>$(k).addEventListener('input',update));document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>setValues(presets[b.dataset.preset]));$('model').onchange=()=>status('Model selected. Press Play to generate or reuse its sample.');$('voice').onchange=()=>status('Voice selected. Press Play to generate or reuse its sample.');$('play').onclick=play;$('stop').onclick=()=>{stop();status('Stopped')};$('reset').onclick=()=>setValues(defaults);update();status('Choose a voice and press Play. Start with Cedar or Onyx.');
 </script></body></html>
