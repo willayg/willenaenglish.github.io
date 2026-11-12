@@ -53,7 +53,10 @@ async function standardHomework(){
   }
   else if(source==='free_talking_genius'){
     app='Free Talking Genius';
-    url='/students/free-talking-genius/?book='+encodeURIComponent(a.list_meta?.book_id||'')+'&unit='+encodeURIComponent(a.list_meta?.unit_number||'')+'&homework='+encodeURIComponent(a.id);
+    const conversation=a.list_meta?.mission_mode==='conversation'||String(a.list_key||'').startsWith('free_talking_conversation:');
+    url=conversation
+      ?'/students/free-talking-hybrid-lab/?release=1&book='+encodeURIComponent(a.list_meta?.book_id||'')+'&unit='+encodeURIComponent(a.list_meta?.unit_id||'')+'&homework='+encodeURIComponent(a.id)
+      :'/students/free-talking-genius/?book='+encodeURIComponent(a.list_meta?.book_id||'')+'&unit='+encodeURIComponent(a.list_meta?.unit_number||'')+'&homework='+encodeURIComponent(a.id);
   }
   else if(source==='vocab_study'){app='Word Genius';url='/students/vocab-study/?open=wordtest&assignment_id='+encodeURIComponent(a.id)}
   else if(['wordlist','english_arcade','arcade','saved_game','grammar','phonics'].includes(source)){
