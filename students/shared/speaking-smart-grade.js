@@ -168,6 +168,23 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
       else if(recall>0.50){score=Math.max(score,1);reason='ordered_coverage_orange';}
     }
   }
+  // Four-word sentences can earn orange from a half-length ordered match.
+  // Do not mistake an invalid is/has contraction for a valid partial answer.
+  if(mode==='sentence'&&score===0&&expected.length===4&&heard.length===4){
+    const positional=expected.reduce((count,w,i)=>count+(compatible(w,heard[i])?1:0),0);
+    const negation=['not','never','no','cannot'];
+    const changedNegation=negation.some(w=>expected.includes(w)!==heard.includes(w));
+    const opposites=[['left','right'],['up','down'],['before','after'],['first','last'],['yes','no'],['mother','father']];
+    const reversed=opposites.some(([a,b])=>
+      (expected.includes(a)&&heard.includes(b)&&!expected.includes(b))||
+      (expected.includes(b)&&heard.includes(a)&&!expected.includes(a)));
+    const changedAux=expected.some((w,i)=>
+      (['has','have','had'].includes(w)&&['is','are','am'].includes(heard[i]))||
+      (['is','are','am'].includes(w)&&['has','have','had'].includes(heard[i])));
+    if(positional>=2&&!changedNegation&&!reversed&&!changedAux){
+      score=1;reason='short_sentence_half_match';
+    }
+  }
   // Two-word vocabulary targets: recognizing one substantial target word
   // is worth orange, even if the browser mishears the other word.
   // Do not count articles, short function words, or unrelated speech.
