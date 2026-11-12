@@ -29,3 +29,47 @@
 .sgg-help:focus-visible{outline:3px solid #ff8ac1;outline-offset:2px}
 .sgg-help-float{position:fixed;right:14px;bottom:calc(90px + env(safe-area-inset-bottom,0px));z-index:550}
 @media(max-width:520px){.sgg-card{padding:14px;gap:9px}.sgg-color-row{padding:8px 10px}}
+
+/* Small-screen safety: the student dashboard header and mobile browser
+   chrome must never cover the tutorial. Keep all five grades on one line. */
+.sgg-color-row{
+ grid-template-columns:12px 34px 40px minmax(0,1fr);
+ column-gap:7px;row-gap:0;min-height:38px;
+ padding:6px 9px;
+}
+.sgg-color-row small{grid-column:4;grid-row:1;align-self:center;font-size:11px;line-height:1.25}
+.sgg-points{font-size:13px}
+.sgg-visual{padding:8px}
+.sgg-color-list{gap:5px}
+.sgg-card{gap:8px}
+.sgg-card .sgg-sub{font-size:13px;line-height:1.4}
+@media(max-width:520px){
+ .sgg-overlay{
+   inset:95px 0 66px;
+   padding:5px 12px;
+   overflow:auto;
+   align-items:center;
+ }
+ .sgg-card{
+   max-height:100%;
+   width:min(440px,100%);
+   padding:10px 13px 12px;
+   gap:7px;
+   border-width:2px;
+   border-radius:20px;
+ }
+ .sgg-card h2{font-size:22px;line-height:1.15}
+ .sgg-color-row{min-height:34px;padding:5px 8px}
+ .sgg-color-row small{font-size:10.5px}
+ .sgg-never{font-size:12px}
+ .sgg-nav button{padding:8px 12px;min-height:42px;border-width:2px}
+ .sgg-close{padding:4px 11px}
+}
+@media(max-width:520px) and (max-height:680px){
+ .sgg-overlay{inset:85px 0 55px}
+ .sgg-card{gap:5px;padding:7px 11px}
+ .sgg-card h2{font-size:20px}
+ .sgg-color-row{min-height:30px;padding:3px 7px}
+ .sgg-color-list{gap:3px}
+ .sgg-card .sgg-sub{font-size:12px}
+}
