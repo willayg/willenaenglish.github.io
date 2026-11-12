@@ -521,16 +521,28 @@ try{
   </div>
 </section>
 <section class="view" id="view-assignments"><div class="page-head"><div><h1>Assignments</h1><div class="panel-sub">Assign and manage homework across student apps</div></div></div><div class="panel" id="universalAssignments"><div class="empty">Loading…</div></div></section>
-<section class="view" id="view-utilities"><div class="page-head"><div><h1>Utilities</h1><div class="panel-sub">Existing teacher tools and audio preparation</div></div></div>
- <div class="app-grid" style="margin-bottom:18px">
- <a class="app-card" href="/Teachers/tools/live-classroom/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">CLASSROOM</span><h3>Live Classroom Game</h3><p>Run team quizzes and live competitions.</p></a>
- <a class="app-card" href="/Teachers/tools/assessment_grid/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">ASSESSMENTS</span><h3>Achievement Tests</h3><p>Assessment grid, scores and historical results.</p></a>
- <a class="app-card" href="/Teachers/tools/game-builder/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">CONTENT</span><h3>Game Builder</h3><p>Build and edit educational games.</p></a>
- <a class="app-card" href="/Teachers/tools/shimmer-monosyllable-batch/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">AUDIO</span><h3>Shimmer Audio Batch</h3><p>Existing batch pronunciation tool.</p></a>
- <a class="app-card" href="/Teachers/admin-v2/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">ADMIN</span><h3>Admin &amp; Level Tests</h3><p>Student administration and visitor assessments.</p></a>
- <a class="app-card" href="/Teachers/tools/free-talking-audio-batch/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">FREE TALKING</span><h3>Free Talking MP3 Batch</h3><p>Generate and verify missing Free Talking recordings.</p></a>
+<section class="view" id="view-utilities">
+<div class="page-head"><div><h1>Utilities</h1><div class="panel-sub">Testing, audio preparation and teacher tools</div></div></div>
+<style id="utilitiesTabsStyles">
+.ut-nav{display:flex;gap:8px;overflow-x:auto;padding:4px 0 16px;scrollbar-width:thin}.ut-tab{flex:0 0 auto;cursor:pointer;border:1px solid #d9e7e9;background:white;color:#45616c;border-radius:13px;padding:11px 16px;font:600 13px inherit;font-family:inherit;font-weight:650;white-space:nowrap}.ut-tab.active{background:#e6f9f9;color:#187d89;border-color:#77cdd3;box-shadow:inset 0 0 0 1px #77cdd3}.ut-section[hidden]{display:none!important}.ut-section{min-width:0}.ftr-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}.ftr-head h2{font-size:21px;margin:2px 0 7px}.ftr-head p{color:#617780;font-size:13px;max-width:700px;margin:0}.ftr-readonly{border:1px solid #a5ddd7;background:#e8fbf5;border-radius:999px;padding:7px 10px;font-size:11px;color:#27796b;font-weight:750}.ftr-fields{display:grid;grid-template-columns:minmax(130px,0.5fr) minmax(160px,1fr) minmax(230px,2.3fr);gap:10px;margin:0 0 12px}.ftr-field{display:grid;gap:5px;font-size:12px;color:#617780;font-weight:650}.ftr-field select,.ftr-field input{width:100%;max-width:100%;min-width:0;border:1px solid #cddfe4;background:white;border-radius:10px;padding:10px;color:#1c414a;font:inherit;font-size:13px}.ftr-controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:15px}.ftr-controls button{border:1px solid #c8dee3;padding:10px 15px;border-radius:11px;background:#fff;color:#286775;font-weight:700;cursor:pointer}.ftr-controls button.primary{background:#168c98;color:white;border-color:#168c98}.ftr-controls button:disabled{opacity:.45;cursor:not-allowed}.ftr-status{font-size:12px;color:#5b727b;min-height:22px}.ftr-status[data-error=yes]{color:#b83c3c}.ftr-summary{border:1px solid #dcebed;border-radius:15px;background:#f8fcfd;padding:14px;margin-bottom:13px}.ftr-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.ftr-summary-grid>div{display:grid;gap:4px}.ftr-summary-grid small{color:#69828b}.ftr-summary-grid strong{font-size:18px;color:#244d5a}.ftr-feedback{margin:14px 0 8px;font-size:13px}.ftr-warning{font-size:12px;color:#637780;margin:6px 0 0}.ftr-turn-list{display:grid;gap:9px}.ftr-turn{border:1px solid #deebed;border-radius:12px;padding:12px;background:white}.ftr-turn-top{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;font-size:12px;color:#68808a;font-weight:650}.ftr-yes{color:#188c63}.ftr-no{color:#bc5b56}.ftr-quote{margin:9px 0;font-weight:650;color:#244b56}.ftr-reason{font-size:12px;color:#667983;margin:0}@media(max-width:700px){.ftr-fields{grid-template-columns:1fr 1fr}.ftr-field:last-child{grid-column:1/-1}.ftr-summary-grid{grid-template-columns:1fr 1fr}.ut-tab{padding:10px 12px}}
+</style>
+<nav class="ut-nav" role="tablist" aria-label="Utilities tools">
+ <button type="button" class="ut-tab active" role="tab" aria-selected="true" data-ut-tab="replay">Evaluator Replay</button>
+ <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="speech">Speech Testing</button>
+ <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="audio">Audio Tools</button>
+ <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="tools">Other Tools</button>
+</nav>
+<div class="ut-section" data-ut-panel="replay" role="tabpanel"><section class="panel" id="ftReplay" style="padding:20px;border-radius:18px">
+ <div class="ftr-head"><div><h2>Free Talking · Evaluator Replay</h2><p>Review recorded conversations using the end-of-session AI evaluator. Compare new participation decisions and points with historical scores. Nothing is saved to student records.</p></div><span class="ftr-readonly">READ-ONLY TEST</span></div>
+ <div class="ftr-fields">
+  <label class="ftr-field">Session range<select id="ftrDays"><option value="1">Last 24 hours</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option><option value="14">Last 14 days</option></select></label>
+  <label class="ftr-field">Filter by student / class<input id="ftrFilter" type="search" placeholder="Student name, class or character"></label>
+  <label class="ftr-field">Recorded session<select id="ftrSessions" aria-label="Select a recorded Free Talking conversation"></select></label>
  </div>
- <section class="panel stt-lab" id="sttLab">
+ <div class="ftr-controls"><button type="button" id="ftrRefresh">Refresh sessions</button><button type="button" id="ftrRun" class="primary" disabled>Run read-only evaluation</button><span id="ftrStatus" class="ftr-status" role="status">Open this tab to load recent sessions.</span></div>
+ <div id="ftrSummary" class="ftr-summary" hidden></div><div id="ftrDetail"></div>
+</section></div>
+<div class="ut-section" data-ut-panel="speech" role="tabpanel" hidden> <section class="panel stt-lab" id="sttLab">
   <div class="stt-lab-head"><div><span class="stt-lab-eyebrow">TEACHER UTILITIES · SPEECH TESTING</span><h2>STT Testing Lab</h2>
   <p>Record once, then compare three cloud transcription engines using the same audio. Browser recognition can be tested independently. No recordings are saved to Willena.</p></div><span class="stt-lab-pill">Staff only</span></div>
   <div class="stt-lab-controls"><button type="button" id="sttStart" class="control ua-primary">Start recording</button><button type="button" id="sttStop" class="control" disabled>Stop</button><button type="button" id="sttRun" class="control" disabled>Compare STT</button><button type="button" id="sttClear" class="control">Clear</button><button type="button" id="sttBrowserStart" class="control">Test Chrome microphone</button><button type="button" id="sttBrowserStop" class="control" disabled>Stop Chrome</button>
@@ -546,11 +558,21 @@ try{
   </div>
   <div class="stt-lab-foot"><p><strong>Fairness:</strong> The three cloud recognizers receive the exact same recording. Chrome recognition listens live, so its timing and audio capture aren't perfectly comparable. Word error rate (WER) is lower when recognition is better; latency does not measure accuracy.</p><button type="button" id="sttCopy" class="control" disabled>Copy results</button></div>
  </section>
- <div class="panel" style="padding:12px;border-radius:18px">
+</div>
+<div class="ut-section" data-ut-panel="audio" role="tabpanel" hidden> <div class="panel" style="padding:12px;border-radius:18px">
  <h2 style="margin:4px 8px 14px">Free Talking MP3 Batch</h2>
  <iframe id="freeTalkingAudioBatchFrame" title="Free Talking audio batch preparation" loading="lazy" data-src="/Teachers/tools/free-talking-audio-batch/?v=20261106-all-books-v1" style="display:block;width:100%;min-height:780px;border:0;border-radius:15px;background:#f3fbfc"></iframe>
- </div></section>
-<section class="view" id="view-apps"><div class="page-head"><div><h1>Teacher apps</h1></div></div><div class="app-grid"><div class="app-card"><span class="chip">LIVE</span><h3>Student tracking</h3><p>Study habits, learning evidence, mistakes, skill performance and proof of work.</p></div><div class="app-card"><span class="chip">LIVE</span><h3>Class overview</h3><p>Class-level learning and study-habit signals that link directly back to students.</p></div><div class="app-card"><span class="chip">READY</span><h3>More teacher tools</h3><p>Homework, assessments and classroom tools can be added here.</p></div><div style="margin-top:14px;font-size:12px;opacity:.68"><a href="/Teachers/dashboard-v1-archived/" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Dashboard V1 (ARCHIVED)</a></div></div></section>
+ </div></div>
+<div class="ut-section" data-ut-panel="tools" role="tabpanel" hidden> <div class="app-grid" style="margin-bottom:18px">
+ <a class="app-card" href="/Teachers/tools/live-classroom/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">CLASSROOM</span><h3>Live Classroom Game</h3><p>Run team quizzes and live competitions.</p></a>
+ <a class="app-card" href="/Teachers/tools/assessment_grid/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">ASSESSMENTS</span><h3>Achievement Tests</h3><p>Assessment grid, scores and historical results.</p></a>
+ <a class="app-card" href="/Teachers/tools/game-builder/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">CONTENT</span><h3>Game Builder</h3><p>Build and edit educational games.</p></a>
+ <a class="app-card" href="/Teachers/tools/shimmer-monosyllable-batch/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">AUDIO</span><h3>Shimmer Audio Batch</h3><p>Existing batch pronunciation tool.</p></a>
+ <a class="app-card" href="/Teachers/admin-v2/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">ADMIN</span><h3>Admin &amp; Level Tests</h3><p>Student administration and visitor assessments.</p></a>
+ <a class="app-card" href="/Teachers/tools/free-talking-audio-batch/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="chip">FREE TALKING</span><h3>Free Talking MP3 Batch</h3><p>Generate and verify missing Free Talking recordings.</p></a>
+ </div>
+</div>
+</section><section class="view" id="view-apps"><div class="page-head"><div><h1>Teacher apps</h1></div></div><div class="app-grid"><div class="app-card"><span class="chip">LIVE</span><h3>Student tracking</h3><p>Study habits, learning evidence, mistakes, skill performance and proof of work.</p></div><div class="app-card"><span class="chip">LIVE</span><h3>Class overview</h3><p>Class-level learning and study-habit signals that link directly back to students.</p></div><div class="app-card"><span class="chip">READY</span><h3>More teacher tools</h3><p>Homework, assessments and classroom tools can be added here.</p></div><div style="margin-top:14px;font-size:12px;opacity:.68"><a href="/Teachers/dashboard-v1-archived/" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Dashboard V1 (ARCHIVED)</a></div></div></section>
 </main></div>
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="leaderboard"><b>★</b>Board</button><button class="mobile-tab" data-view="assignments"><b>☑</b>Work</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Word Genius</button><button class="mobile-tab" data-view="sentence-genius"><b>S</b>Sentences</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button><button class="mobile-tab" data-view="utilities"><b>⚙</b>Utilities</button><button class="mobile-tab" data-view="puzzles"><b>◇</b>Puzzles</button><button class="mobile-tab" data-view="english-arcade"><b>EA</b>Arcade</button><button type="button" class="mobile-tab staff-calendar-mobile" data-view="staff-calendar" aria-label="Open Staff Calendar"><b>▦</b>Calendar</button></nav>
 <dialog id="wcDialog" class="wc-dialog"><form id="wcForm"><div class="wc-dialog-header"><h2 id="wcDialogTitle">New event</h2><button type="button" class="wc-button" id="wcClose" aria-label="Close">×</button></div>
@@ -1621,7 +1643,7 @@ function openStudentsSubtab(tab){
 document.querySelectorAll('[data-students-tab]').forEach(btn=>btn.addEventListener('click',()=>openStudentsSubtab(btn.dataset.studentsTab)));
 try{openStudentsSubtab(sessionStorage.getItem(teacherStudentsTabKey)||'tracking')}catch{openStudentsSubtab('tracking')}
 const teacherViewKey='willena.teachers.activeView.v1';
-function switchView(v){if(v==='free-talking-genius'&&window.FreeTalkingGeniusTeacher?.openView){window.FreeTalkingGeniusTeacher.openView();return}try{localStorage.setItem(teacherViewKey,v)}catch{};if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='utilities'){const frame=$('#freeTalkingAudioBatchFrame');if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src;}if(v==='assignments'){window.UniversalAssignments?.activate?.();window.UniversalAssignments?.refresh?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='staff-calendar')window.WillenaStaffCalendar?.open?.();if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='class-leaders')loadClassLeaders();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
+function switchView(v){if(v==='free-talking-genius'&&window.FreeTalkingGeniusTeacher?.openView){window.FreeTalkingGeniusTeacher.openView();return}try{localStorage.setItem(teacherViewKey,v)}catch{};if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='utilities'){window.WillenaUtilitiesTabs?.activate?.();}if(v==='assignments'){window.UniversalAssignments?.activate?.();window.UniversalAssignments?.refresh?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='staff-calendar')window.WillenaStaffCalendar?.open?.();if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='class-leaders')loadClassLeaders();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
 $('#rosterAssignmentsClose').onclick=rsCloseAssignments;
 $('#rosterAssignmentsOverlay').onclick=e=>{if(e.target.id==='rosterAssignmentsOverlay')rsCloseAssignments()};
 document.querySelectorAll('[data-rs-assign-tab]').forEach(b=>b.onclick=()=>{if(window.rsAssignmentStudent)rsAssignmentsPanelRender(window.rsAssignmentStudent,b.dataset.rsAssignTab)});
@@ -1875,6 +1897,22 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
   for(const [id,r] of Object.entries(results))lines.push(names[id]+': '+(r.error||r.transcript||'No speech')+' | '+(r.latency_ms||0)+'ms'+(reference.value.trim()?' | WER '+wer(reference.value,r.transcript||'')+'%':''));
   navigator.clipboard?.writeText(lines.join('\n')).then(()=>status('Results copied.')).catch(()=>status('Clipboard permission unavailable.'));
  };
+})();
+</script>
+<script src="./free-talking-evaluator-replay.js?v=20261112-replay1" defer></script>
+<script>
+(()=>{const holder=document.getElementById('view-utilities');if(!holder)return;
+ const buttons=[...holder.querySelectorAll('[data-ut-tab]')],panels=[...holder.querySelectorAll('[data-ut-panel]')];
+ const choose=tab=>{buttons.forEach(b=>{const yes=b.dataset.utTab===tab;b.classList.toggle('active',yes);b.setAttribute('aria-selected',String(yes))});panels.forEach(p=>p.hidden=p.dataset.utPanel!==tab);
+  try{sessionStorage.setItem('willena.utilities.activeTab',tab)}catch{}
+  if(tab==='audio'){const frame=document.getElementById('freeTalkingAudioBatchFrame');if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src}
+  if(tab==='replay')window.WillenaEvaluatorReplay?.activate?.();
+ };
+ buttons.forEach(b=>b.addEventListener('click',()=>choose(b.dataset.utTab)));
+ let initial='replay';try{initial=sessionStorage.getItem('willena.utilities.activeTab')||'replay'}catch{}
+ if(!buttons.some(b=>b.dataset.utTab===initial))initial='replay';
+ window.WillenaUtilitiesTabs={activate:()=>choose(initial),select:tab=>{initial=tab;choose(tab)}};
+ choose(initial);
 })();
 </script>
 </body>
