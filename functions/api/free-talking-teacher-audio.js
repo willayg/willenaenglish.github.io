@@ -10,8 +10,8 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 const VOICES={
  lili:{model:'eleven_v3',voice:'M7zl2TS7ORAIGUejDfoy',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
  pigfish:{model:'eleven_v3',voice:'W7UbuMY4ypluqgZS2UzT',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
- // Dedicated cloned voice hash tag with the established R2 key prefix; never overwrites existing characters or the OpenAI fallback.
- willi_clone:{model:'eleven_v3',voice:'0yhUIig4twaXoIhuQoCQ',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_willi_clone_question_mp3_v1'},
+ // Use the exact existing ElevenLabs storage-key format. The cloned voice ID itself gives a distinct hash and prevents collisions.
+ willi_clone:{model:'eleven_v3',voice:'0yhUIig4twaXoIhuQoCQ',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
  willi_mp3:{model:'gpt-4o-mini-tts',voice:'marin',variant:'fallback',prefix:'ft_fallback_v1_',tag:'free_talking_legacy_fallback_mp3_v1'}
 };
 const json=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
