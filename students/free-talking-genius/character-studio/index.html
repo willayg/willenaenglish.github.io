@@ -15,7 +15,7 @@ h1{font-size:clamp(22px,3.5vw,33px);letter-spacing:-.06em;margin:0}header p,.mut
 .stage{height:min(67vh,670px);min-height:420px;display:flex;align-items:center;justify-content:center;padding:26px;overflow:hidden;transition:background .2s}
 .stage.checker{background-color:#fff;background-image:linear-gradient(45deg,#e4ecef 25%,transparent 25%),linear-gradient(-45deg,#e4ecef 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e4ecef 75%),linear-gradient(-45deg,transparent 75%,#e4ecef 75%);background-size:26px 26px;background-position:0 0,0 13px,13px -13px,-13px 0}
 .stage.navy{background:#172c42}.stage.white{background:#fff}
-.stage svg{max-width:100%;max-height:100%;width:min(100%,580px);height:100%;overflow:visible;filter:drop-shadow(0 12px 6px #102a3320)}
+.stage svg{display:block;max-width:100%;max-height:100%;width:100%;height:100%;overflow:hidden;object-fit:contain;filter:drop-shadow(0 7px 5px #102a3320)}
 .stagedesc{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:15px 22px;background:#f8fcfc;border-top:1px solid #e2eef0;color:#718b95;font-size:12px;font-weight:700}
 .controls{padding:20px 22px;max-height:760px;overflow:auto}.controls h3{font-size:16px;margin:2px 0 18px}.control{margin:0 0 19px}.control .lab{display:flex;justify-content:space-between;gap:5px;font-size:13px;font-weight:800;margin-bottom:8px;color:#446370}
 .control output{font-variant-numeric:tabular-nums;color:#14879b}input[type=range]{accent-color:#00aab5;width:100%;cursor:pointer}select{font:inherit;border:1px solid #d2e3e7;border-radius:10px;padding:9px 11px;width:100%;background:#f9fcfd;color:#34505d}
@@ -24,7 +24,19 @@ details{border-top:1px solid #e6f0f2;padding:15px 0}details summary{font-size:14
 .actions{display:flex;flex-wrap:wrap;gap:8px;padding:15px 22px;border-top:1px solid #dfecef;background:#f7fcfc}.btn{appearance:none;border:1px solid #c8dfe3;background:#fff;border-radius:13px;padding:11px 16px;cursor:pointer;color:#305b68;font-size:13px;font-weight:850}.btn.primary{background:#09a6b4;border-color:#09a6b4;color:white}.btn:hover{filter:brightness(.97)}
 .notice{font-size:12px;line-height:1.6;color:#63838d;background:#f2fafb;border-radius:14px;padding:13px}.hide{display:none!important}
 .code{width:100%;min-height:155px;max-height:250px;resize:vertical;background:#122834;color:#d3f5f3;border:0;border-radius:12px;padding:12px;font-family:ui-monospace,monospace;font-size:11px}
-@media(max-width:850px){.layout{grid-template-columns:1fr}.controls{max-height:none}.stage{height:52vh;min-height:350px}.shell{padding:17px 12px 34px}.tab{flex:1 1 42%;padding:11px}.panel{border-radius:20px}}
+@media(max-width:850px){
+.layout{grid-template-columns:1fr;gap:12px;align-items:start}
+.layout>section.panel{position:sticky;top:0;z-index:15;box-shadow:0 8px 23px #163f5340;border-radius:0 0 19px 19px}
+.controls{max-height:none}
+.stage{height:clamp(195px,31dvh,320px);min-height:0;padding:5px}
+.viewhead{padding:8px 13px;gap:4px}.viewhead h2{font-size:15px}.viewhead small{font-size:10px}
+.viewhead .toggle{font-size:10px;gap:3px}.viewhead select{font-size:11px;padding:5px;width:auto}
+.stagedesc{display:none}
+.actions{padding:7px 9px;gap:5px}.actions .btn{padding:8px 10px;font-size:11px;flex:1 0 auto}
+#sourceArea{position:absolute;z-index:20;background:white;max-height:25dvh;overflow:auto;left:0;right:0}
+#sourceArea .code{min-height:105px}
+.shell{padding:17px 12px 34px}.tab{flex:1 1 42%;padding:11px}.panel{border-radius:20px}
+}
 </style></head><body>
 <div class="shell"><header><div class="brand"><span class="brandmark">W</span><div><h1>Character SVG Studio</h1><p>Willena · Free Talking Genius · isolated design playground</p></div></div><span class="pill">Design only · student app unchanged</span></header>
 <nav class="tabs" role="tablist" aria-label="Characters"><button class="tab" role="tab" data-character="willi" aria-selected="true">🤖 AI Willi · edit</button><button class="tab" role="tab" data-character="bunny" aria-selected="false">Bunny Fox</button><button class="tab" role="tab" data-character="pigfish" aria-selected="false">Pigfish</button><button class="tab" role="tab" data-character="willo" aria-selected="false">Willo · original</button></nav>
@@ -69,14 +81,14 @@ function williSVG(){
  const down='<g transform="rotate(27 252 463) scale('+R+')"><rect x="196" y="421" width="68" height="132" rx="32" fill="'+w+'" stroke="'+o+'" stroke-width="11"/><rect x="197" y="523" width="67" height="29" rx="13" fill="'+n+'"/><circle cx="230" cy="551" r="30" fill="'+w+'" stroke="'+o+'" stroke-width="10"/></g>';
  const right='<g transform="rotate(-25 476 475)"><rect x="458" y="438" width="67" height="118" rx="31" fill="'+w+'" stroke="'+o+'" stroke-width="11"/><rect x="459" y="527" width="65" height="28" rx="12" fill="'+n+'"/><circle cx="492" cy="551" r="31" fill="'+w+'" stroke="'+o+'" stroke-width="10"/></g>';
  const tablet=c.tablet==='yes'?'<g transform="translate(484 444) rotate(9) scale('+T+')"><rect x="0" y="0" width="175" height="197" rx="23" fill="'+n+'" stroke="'+o+'" stroke-width="12"/><rect x="13" y="13" width="147" height="168" rx="12" fill="#263953"/><text x="87" y="120" text-anchor="middle" font-size="73" font-weight="900" font-family="sans-serif" fill="'+w+'">W</text><circle cx="169" cy="165" r="31" fill="'+w+'" stroke="'+o+'" stroke-width="10"/></g>':right;
- return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="AI Willi robot mascot"><defs><linearGradient id="williShell" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="'+w+'"/></linearGradient><linearGradient id="williFace" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#24395a"/><stop offset="1" stop-color="'+f+'"/></linearGradient></defs>'
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 -105 1000 1040" width="800" height="800" preserveAspectRatio="xMidYMid meet" role="img" aria-label="AI Willi robot mascot"><defs><linearGradient id="williShell" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="'+w+'"/></linearGradient><linearGradient id="williFace" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#24395a"/><stop offset="1" stop-color="'+f+'"/></linearGradient></defs>'
  +'<ellipse cx="392" cy="744" rx="180" ry="17" fill="#294674" opacity=".12"/>'
  +'<g id="legs" transform="translate(0 '+(bodyY-450)+')"><g transform="translate(0 0) scale(1 '+L+')"><path d="M317 615 L305 700 Q304 712 329 717 L361 717 Q385 709 380 693 L384 615Z" fill="url(#williShell)" stroke="'+o+'" stroke-width="11"/><path d="M423 615 L422 701 Q423 717 457 718 L485 718 Q501 709 489 690 L484 615Z" fill="url(#williShell)" stroke="'+o+'" stroke-width="11"/></g><path d="M300 '+(696*L+615*(1-L))+' Q285 '+(719*L+615*(1-L))+' 306 '+(734*L+615*(1-L))+' H374 Q391 '+(724*L+615*(1-L))+' 373 '+(696*L+615*(1-L))+'Z" fill="'+n+'"/><path d="M425 '+(696*L+615*(1-L))+' Q415 '+(722*L+615*(1-L))+' 447 '+(735*L+615*(1-L))+' H509 Q522 '+(713*L+615*(1-L))+' 492 '+(696*L+615*(1-L))+'Z" fill="'+n+'"/></g>'
  +'<g id="body" transform="translate(400 '+bodyY+') scale('+B+') translate(-400 -455)">'+(c.pose==='down'?down:wave)
  +'<rect x="280" y="420" width="240" height="226" rx="95" fill="url(#williShell)" stroke="'+o+'" stroke-width="12"/><path d="M283 589 Q398 637 516 589 L517 625 Q397 687 283 625Z" fill="'+n+'"/><path d="M343 491 L357 551 Q363 565 376 548 L397 513 L422 550 Q439 566 445 548 L461 492" fill="none" stroke="'+o+'" stroke-width="27" stroke-linecap="round" stroke-linejoin="round"/><path d="M343 491 L357 551 Q363 565 376 548 L397 513 L422 550 Q439 566 445 548 L461 492" fill="none" stroke="'+y+'" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>'
  +tablet+'</g>'
  +'<g id="head" transform="translate(400 '+hy+') scale('+H+') translate(-400 -205)">'
- +'<rect x="387" y="'+(116-56*A)+'" width="27" height="'+(93*A)+'" rx="13" fill="'+n+'" stroke="'+o+'" stroke-width="7"/><circle cx="401" cy="'+(118-56*A)+'" r="27" fill="'+y+'" stroke="#eb9b05" stroke-width="6"/>'
+ +'<rect x="387" y="'+(205-92*A)+'" width="27" height="'+(92*A+30)+'" rx="13" fill="'+n+'" stroke="'+o+'" stroke-width="7"/><circle cx="401" cy="'+(205-92*A)+'" r="27" fill="'+y+'" stroke="#eb9b05" stroke-width="6"/>'
  +'<ellipse cx="237" cy="340" rx="29" ry="54" fill="'+y+'" stroke="'+n+'" stroke-width="15"/><ellipse cx="562" cy="340" rx="29" ry="54" fill="'+y+'" stroke="'+n+'" stroke-width="15"/>'
  +'<rect x="235" y="205" width="330" height="253" rx="115" fill="url(#williShell)" stroke="'+o+'" stroke-width="12"/>'
  +'<rect x="279" y="254" width="242" height="154" rx="69" fill="url(#williFace)" stroke="'+n+'" stroke-width="9"/>'
