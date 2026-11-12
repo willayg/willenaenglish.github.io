@@ -45,6 +45,14 @@ function sourceType(a){
 }
 function destinationFor(a){
  const source=sourceType(a);
+ if(a?.list_meta?.source_app==='free_talking_genius'||String(a?.list_key||'').startsWith('free_talking:')||String(a?.list_key||'').startsWith('free_talking_conversation:')){
+  const meta=a.list_meta||{},live=meta.mission_mode==='conversation',q=new URLSearchParams();
+  q.set('book',String(meta.book_id||''));
+  q.set('unit',String(live?meta.unit_id:meta.unit_number||''));
+  q.set('homework',String(a.id));
+  if(live)q.set('release','1');
+  return {app:live?'Free Talking · AI Conversation':'Free Talking · Speaking',href:(live?'/students/free-talking-hybrid-lab/':'/students/free-talking-genius/')+'?'+q,buttonLabel:live?'AI 자유 대화 숙제 시작하기':'말하기 숙제 시작하기'};
+ }
  if(source==='writing_genius')return {app:'Writing Genius',href:'/students/writing-genius/?homework='+encodeURIComponent(a.id),buttonLabel:'Writing Genius에서 숙제 시작하기'};
  if(source==='puzzles')return {app:'Puzzles',href:'/students/wordsearch/?homework='+encodeURIComponent(a.id)+'&mode='+encodeURIComponent(a.list_meta?.kind||'boggle'),buttonLabel:'Puzzles에서 숙제 시작하기'};
  if(source==='sentence_genius'){
@@ -117,6 +125,18 @@ async function currentStudentId() {
 }
 
 async function assignmentIsComplete(assignment, uid) {
+ if(assignment?.list_meta?.source_app==='free_talking_genius'&&assignment.list_meta?.mission_mode==='conversation'){
+  try{
+   const jwt=window.WillenaAPI?.getLocalAccessToken?.();
+   if(!jwt||!uid)return false;
+   const m=assignment.list_meta;
+   const query=new URLSearchParams({select:'contributions',student_id:'eq.'+uid,book_id:'eq.'+m.book_id,unit_id:'eq.'+m.unit_id,limit:'1'});
+   const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/free_talking_conversation_progress?'+query,{headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+jwt},cache:'no-store'});
+   if(!response.ok)return false;
+   const rows=await response.json();
+   return Array.isArray(rows)&&Number(rows[0]?.contributions||0)>=8;
+  }catch{return false}
+ }
   if(['writing_genius','puzzles'].includes(sourceType(assignment))){
    try{
     const jwt=window.WillenaAPI?.getLocalAccessToken?.();
