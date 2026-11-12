@@ -7,7 +7,7 @@ import {geniusSessionContext,geniusHomeworkFromUrl} from '/students/components/g
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
 import {createScreens} from './screens.js?v=20261105-unit-hide3';
-import {createSession} from './session.js?v=20261112-contractions9';
+import {createSession} from './session.js?v=20261112-short-orange10';
 import {loadSentenceHomework} from './homework.js?v=20261104-separated-homework1';
 
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
