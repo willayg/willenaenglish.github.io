@@ -18,7 +18,7 @@ export async function onRequestPost({request,env}){
   // An internal fetch to /.netlify/functions/supabase_auth can fail on
   // Cloudflare Pages even when the browser's teacher session is valid.
   const cookieHeader=request.headers.get('Cookie')||'';
-  const accessMatch=/(?:^|;\\s*)sb_access=([^;]+)/.exec(cookieHeader);
+  const accessMatch=/(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
   let token='';
   if(accessMatch){try{token=decodeURIComponent(accessMatch[1])}catch{token=accessMatch[1]}}
   if(!token){
