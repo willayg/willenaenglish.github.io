@@ -1,4 +1,4 @@
-// Native Willena Staff Calendar: lives inside Teachers Dashboard, no separate login.
+// Native Willena Calendar: lives inside Teachers Dashboard, no separate login.
 (()=>{
 'use strict';
 const API='/api/native-staff-calendar';
@@ -71,11 +71,11 @@ function upcoming(){
    list.append(b);if(++count===8)break;
   }
  }
- if(!count)list.append(node('p','wc-empty','No upcoming staff events.'));
+ if(!count)list.append(node('p','wc-empty','No upcoming events.'));
 }
 async function load(){
  if(state.loading)return;
- state.loading=true;notice('Loading shared staff calendar…');
+ state.loading=true;notice('Loading Willena Calendar…');
  try{
   const start=new Date(today.getFullYear()-1,today.getMonth(),1);
   const end=new Date(Math.max(today.getFullYear(),state.cursor.getFullYear())+2,11,31);
@@ -95,14 +95,15 @@ function edit(ev=null,date=dayKey(today)){
  $('wcRepeat').value=ev?.repeat_rule||'none';
  $('wcRepeat').disabled=false;
  $('wcNotes').value=ev?.notes||'';
+ $('wcNotifyStaff').checked=false;
  $('wcDelete').hidden=!ev;$('wcFormError').textContent='';
  dialog.showModal();$('wcTitle').focus();
 }
 async function save(e){
  e.preventDefault();if(state.saving)return;state.saving=true;
- const item={id:state.edit,title:$('wcTitle').value.trim(),date:$('wcDate').value,time:$('wcTime').value,category:$('wcCategory').value,repeat:$('wcRepeat').value,notes:$('wcNotes').value.trim()};
+ const item={id:state.edit,title:$('wcTitle').value.trim(),date:$('wcDate').value,time:$('wcTime').value,category:$('wcCategory').value,repeat:$('wcRepeat').value,notes:$('wcNotes').value.trim(),notify_staff:$('wcNotifyStaff').checked};
  const submit=$('wcSave');submit.disabled=true;
- try{await api(state.edit?'PATCH':'POST','',item);$('wcDialog').close();await load()}
+ try{const result=await api(state.edit?'PATCH':'POST','',item);$('wcDialog').close();await load();if(item.notify_staff)notice(result.notification_queued?'Event saved. Staff notification queued.':'Event saved, but staff notification could not be queued.',!result.notification_queued)}
  catch(e){$('wcFormError').textContent=e.message}
  finally{state.saving=false;submit.disabled=false}
 }
