@@ -95,13 +95,14 @@ function edit(ev=null,date=dayKey(today)){
  $('wcRepeat').value=ev?.repeat_rule||'none';
  $('wcRepeat').disabled=false;
  $('wcNotes').value=ev?.notes||'';
+ $('wcReminder').value=String(ev?.reminder_minutes??5);
  $('wcNotifyStaff').checked=false;
  $('wcDelete').hidden=!ev;$('wcFormError').textContent='';
  dialog.showModal();$('wcTitle').focus();
 }
 async function save(e){
  e.preventDefault();if(state.saving)return;state.saving=true;
- const item={id:state.edit,title:$('wcTitle').value.trim(),date:$('wcDate').value,time:$('wcTime').value,category:$('wcCategory').value,repeat:$('wcRepeat').value,notes:$('wcNotes').value.trim(),notify_staff:$('wcNotifyStaff').checked};
+ const item={id:state.edit,title:$('wcTitle').value.trim(),date:$('wcDate').value,time:$('wcTime').value,category:$('wcCategory').value,repeat:$('wcRepeat').value,notes:$('wcNotes').value.trim(),reminder_minutes:Number($('wcReminder').value),notify_staff:$('wcNotifyStaff').checked};
  const submit=$('wcSave');submit.disabled=true;
  try{const result=await api(state.edit?'PATCH':'POST','',item);$('wcDialog').close();await load();if(item.notify_staff){const accepted=Number(result.notification_accepted||0),devices=Number(result.notification_devices||0);const detail=(result.notification_errors||[]).join('; ');notice('Event saved. Push provider accepted '+accepted+' of '+devices+' device notification'+(devices===1?'':'s')+'.'+(detail?' '+detail:''),accepted===0||!!detail)}}
  catch(e){$('wcFormError').textContent=e.message}
