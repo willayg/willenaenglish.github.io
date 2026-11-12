@@ -16,11 +16,20 @@ async function run(){
   const options=assigned.map(oxford).filter(Boolean);
   if(!options.length){status.textContent='현재 학급에 연결된 Buzz 또는 Everybody Up 교재가 없습니다.';return;}
   status.hidden=true;
+  const android=/Android/i.test(navigator.userAgent);
   for(const entry of options){
+   const card=document.createElement('div');card.className='book-card';
    const link=document.createElement('a');link.className='book';link.href=entry.url;link.referrerPolicy='no-referrer';link.rel='noreferrer';link.textContent=entry.label;
-   // Avoid sending the Willena origin as Referer to Oxford; the same URLs work when opened directly.
-   // Don't synthesize unverified audio or unit deep links.
-   books.append(link);
+   card.append(link);
+   if(android){
+     // A user-initiated Android intent can request Chrome explicitly.
+     // Naver and other embedded browsers may still decline to handle intents.
+     const uri=new URL(entry.url);
+     const intent='intent://'+uri.host+uri.pathname+uri.search+'#Intent;scheme=https;package=com.android.chrome;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;end';
+     const chrome=document.createElement('a');chrome.className='chrome-link';chrome.href=intent;chrome.textContent='Chrome에서 열기';chrome.setAttribute('aria-label',entry.label+' Chrome에서 열기');
+     card.append(chrome);
+   }
+   books.append(card);
   }
  }catch(error){status.classList.add('error');status.textContent=error.message||'교재를 불러오지 못했습니다. 다시 로그인해 주세요.';}
 }
