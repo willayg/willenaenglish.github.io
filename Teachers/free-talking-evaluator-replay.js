@@ -52,7 +52,9 @@
       '<p class="ftr-quote">'+esc(s.student_text)+'</p><p class="ftr-reason">'+esc(s.reason)+'</p>';
     table.append(row)
    }
-   detail.replaceChildren(table);say('Replay finished · '+esc(d.model)+' · read-only.');
+   const transcriptBox=document.createElement('details');transcriptBox.className='ftr-summary';transcriptBox.style.marginTop='14px';const transcriptLabel=document.createElement('summary');transcriptLabel.textContent='View original conversation ('+d.transcript.length+' messages)';transcriptLabel.style.cursor='pointer';transcriptLabel.style.fontWeight='700';transcriptBox.append(transcriptLabel);
+   const transcriptList=document.createElement('div');transcriptList.style.marginTop='12px';for(const line of d.transcript){const p=document.createElement('p');p.style.margin='6px 0';p.style.fontSize='13px';const label=document.createElement('strong');label.textContent=line.speaker==='student'?'Student: ':'Character: ';p.append(label,document.createTextNode(line.text));transcriptList.append(p)}transcriptBox.append(transcriptList);
+   detail.replaceChildren(table,transcriptBox);say('Replay finished · '+esc(d.model)+' · read-only.');
   }catch(e){say(e.message,true)}finally{busy=false;run.disabled=!select.value;refresh.disabled=false}
  }
  refresh.addEventListener('click',load);run.addEventListener('click',replay);filter.addEventListener('input',renderList);
