@@ -1412,6 +1412,16 @@ function processVerifiedSpeech(itemIds,speech){
  }
  appendLine('You',speech);
  if(state.hybrid)$('anchorText').textContent='';
+ // Eighth answer: don't waste time and tokens on another ordinary LLM reply.
+ // Save the real transcript first, then play the preloaded goodbye while the
+ // single existing end-of-session evaluation runs independently.
+ if(state.hybrid&&state.attemptCount>=7&&speech.trim()){
+  state.hybridPendingContribution=false;state.hybridLatestSpeech='';
+  saveHybridTranscript('You',speech);ftRecordAnswer(speech);
+  const outroPromise=playReviewOutro();
+  void reviewConversation({outroPromise});
+  return;
+ }
  state.verifiedAnswer=speech;
  if(state.questionExpired){state.questionExpired=false;state.questionRemainingMs=Math.max(6000,state.questionRemainingMs)}
   if(!state.hybrid&&state.pendingWordConfirmation&&/^(?:no[, .]+)?(?:i (?:said|mean|meant)[, ]+)?(?:type|hype|plain|plane|play|playing|draw|drawing|tape)[.!? ]*$/i.test(speech)){
