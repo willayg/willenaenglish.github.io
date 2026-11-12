@@ -1924,7 +1924,7 @@ function renderSpeakingQuestion(){
   state.renderer=new QuestionRenderer(host).render(speakingQuestion(word,session.index),{
     onChange:(response,has)=>{
       if(session.checked)return;
-      actionBtn.disabled=!has;
+      actionBtn.disabled=!has&&!state.bestSpeakingProgress?.best?.correct;
       // Renderer.emit() runs whenever a browser speech result is displayed.
       // Colour from the actual response, rather than relying on a secondary
       // recognition callback that some browsers do not deliver.
@@ -2054,7 +2054,7 @@ function checkSpeaking(){
     return;
   }
   const word=session.words[session.index];
-  const response=txt(renderer.getResponse());if(!response)return;
+  const response=txt(renderer.getResponse())||state.bestSpeakingProgress?.best?.transcript||'';if(!response)return;
   const target=word.speakingTarget||word.word;
   const alternatives=renderer.getSpeechAlternatives?.()||[response];
   const match=state.bestSpeakingProgress?.observe(gradeSpeaking(target,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget}),alternatives)||gradeSpeaking(target,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
