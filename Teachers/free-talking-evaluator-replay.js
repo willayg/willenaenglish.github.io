@@ -11,7 +11,7 @@
  const say=(s,isError=false)=>{status.textContent=s;status.dataset.error=isError?'yes':'no'};
  async function call(body){
   const r=await fetch('/api/teacher-free-talking-replay',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  let data;try{data=await r.json()}catch{throw Error('Replay service returned an invalid response ('+r.status+')')}
+  let data;try{data=await r.json()}catch{throw Error(r.status===404?'Replay API route not deployed on Teachers yet (404).':r.status===405?'Replay API method unavailable (405).':'Replay API returned a non-JSON response ('+r.status+').')}
   if(!r.ok)throw Error(data.error||'Replay request failed ('+r.status+')');return data;
  }
  function renderList(){
@@ -60,4 +60,6 @@
  refresh.addEventListener('click',load);run.addEventListener('click',replay);filter.addEventListener('input',renderList);
  dateOptions.addEventListener('change',load);
  window.WillenaEvaluatorReplay={activate:()=>{if(!sessions.length&&!busy)void load()}};
+ // Run on first open even if the dashboard restored Utilities before this defer script loaded.
+ if(document.getElementById('view-utilities')?.classList.contains('active')&&!root.closest('[data-ut-panel]')?.hidden)void load();
 })();
