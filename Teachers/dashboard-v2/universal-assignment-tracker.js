@@ -444,7 +444,27 @@ async function loadOverview(scopeName='my',force=false){
       }catch(error){errors.push('Student display names: '+error.message);break}
     }
   }
+  // Disambiguate duplicate English names within a class, not across classes.
+  // Use stable profile IDs for lookup; never infer identity from a display name.
   const studentNames=students;
+  const duplicateNameCounts=new Map();
+  for(const profile of studentNames.values()){
+    const name=String(profile?.name||profile?.username||'').trim().toLocaleLowerCase();
+    const cls=String(profile?.class||profile?.class_name||'').trim().toLocaleLowerCase();
+    if(!name)continue;
+    const key=cls+'|'+name;
+    duplicateNameCounts.set(key,(duplicateNameCounts.get(key)||0)+1);
+  }
+  const displayStudentName=(studentId,fallback='Student')=>{
+    const profile=studentNames.get(id(studentId));
+    const name=String(profile?.name||profile?.username||fallback||'Student').trim();
+    if(!profile)return name;
+    const cls=String(profile.class||profile.class_name||'').trim().toLocaleLowerCase();
+    if((duplicateNameCounts.get(cls+'|'+name.toLocaleLowerCase())||0)<2)return name;
+    const secondary=[profile.korean_name,profile.username].map(v=>String(v||'').trim())
+      .find(v=>v&&v.toLocaleLowerCase()!==name.toLocaleLowerCase());
+    return name+' ('+(secondary||id(studentId).slice(0,6))+')';
+  };
   const asMap=(name,key='id')=>new Map((outputs.get(name)||[]).map(item=>[id(item[key]),item]));
   const classProgress=asMap('Class progress');
   const grammarBookProgress=asMap('Grammar book progress');
@@ -480,7 +500,7 @@ async function loadOverview(scopeName='my',force=false){
     if(!Array.isArray(records)||!records.length)return '';
     const rows=records.map(st=>{
       const person=studentNames.get(id(st.student_id));
-      const name=esc(person?.name||person?.username||st.name||person?.korean_name||'Student');
+      const name=esc(displayStudentName(st.student_id,st.name||person?.korean_name||'Student'));
       let percentage=null,note='';
       if(kind==='grammar'){
         const done=Number(st.done),total=Number(st.total);
@@ -605,7 +625,7 @@ async function loadOverview(scopeName='my',force=false){
       if(data?.students?.length){
         const items=data.students.map(st=>{
           const pct=wordStudentPercent(st,{...data.assignment,list_meta:row.list_meta||{}});
-          return {name:students.get(id(st.student_id))?.name||st.name||st.korean_name||'Student',percent:pct,status:st.status};
+          return {name:displayStudentName(st.student_id,st.name||st.korean_name||'Student'),percent:pct,status:st.status};
         });
         const completed=items.filter(x=>x.status==='complete').length;
         const notStarted=items.filter(x=>x.status==='not_started').length;
@@ -616,7 +636,7 @@ async function loadOverview(scopeName='my',force=false){
       const p=freeTalkingProgress.get(id(g.items[0].id)),items=p?.students||[];
       if(items.length){
        const avg=Math.round(items.reduce((sum,st)=>sum+Number(st.percent||0),0)/items.length);
-       return shell+window.WillenaGeniusHomeworkCard.progressPanel({students:items.map(st=>({name:st.name,percent:st.percent})),average:avg,completed:items.filter(st=>st.complete).length,notStarted:items.filter(st=>!st.passed).length,label:'Speaking · 8 questions'});
+       return shell+window.WillenaGeniusHomeworkCard.progressPanel({students:items.map(st=>({name:displayStudentName(st.student_id,st.name),percent:st.percent})),average:avg,completed:items.filter(st=>st.complete).length,notStarted:items.filter(st=>!st.passed).length,label:'Speaking · 8 questions'});
       }
      }
     if(g.items.length===1&&g.items[0].app==='Writing Genius'&&g.items[0].list_key!=='writing_genius:sentence'){
@@ -679,7 +699,7 @@ async function loadOverview(scopeName='my',force=false){
       return prefix+'<article class="ua-homework-card'+(isSingle?' ua-single-assignment-detail':'')+'" data-ua-card="'+i+'">'+detailTrigger+
         '<div class="ua-homework-expanded ghc-overview-expanded" id="uaExpanded'+i+'" hidden><p class="ghc-overview-detail">'+esc(detail)+'</p>'+
         (grammarResult?.student_rows?overviewStudentProgress(grammarResult.student_rows,{kind:'grammar'}):'')+
-        (freeTalkingResult?.students&&!(isSingle&&row.app==='Free Talking Genius')?window.WillenaGeniusHomeworkCard.progressPanel({students:freeTalkingResult.students.map(st=>({name:st.name,percent:st.percent})),average:ftStudents.length?Math.round(ftStudents.reduce((sum,st)=>sum+Number(st.percent||0),0)/ftStudents.length):null,completed:ftStudents.filter(st=>st.complete).length,notStarted:ftStudents.filter(st=>!st.passed).length,label:'Speaking · 8 questions'}):'')+
+        (freeTalkingResult?.students&&!(isSingle&&row.app==='Free Talking Genius')?window.WillenaGeniusHomeworkCard.progressPanel({students:freeTalkingResult.students.map(st=>({name:displayStudentName(st.student_id,st.name),percent:st.percent})),average:ftStudents.length?Math.round(ftStudents.reduce((sum,st)=>sum+Number(st.percent||0),0)/ftStudents.length):null,completed:ftStudents.filter(st=>st.complete).length,notStarted:ftStudents.filter(st=>!st.passed).length,label:'Speaking · 8 questions'}):'')+
         // A single Word Genius assignment already has the shared student bars
         // above. Keep the nested chart only for multi-assignment groups.
         ((groupByKey.get(thisGroup.key)?.items.length===1&&row.app==='Word Genius')?'':(wordResult?.student_rows
