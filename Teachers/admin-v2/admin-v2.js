@@ -149,6 +149,7 @@ function boot(){
  loadStudents(false);
  // The red unread badge must appear even when Admin V2 opens on Students.
  import('./admin-v2-enquiries.js?v=20261112-drawer2').then(m=>m.refreshEnquiryBadge()).catch(e=>console.debug('[Enquiries] Badge unavailable',e));
+ setInterval(()=>{if(!document.hidden)import('./admin-v2-enquiries.js?v=20261112-drawer2').then(m=>m.refreshEnquiryBadge()).catch(()=>{})},60000);
  if(new URLSearchParams(location.search).get('view')==='enquiries')activateView('enquiries');
 }
 boot();
