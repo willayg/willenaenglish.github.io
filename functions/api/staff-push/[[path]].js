@@ -154,9 +154,10 @@ export async function onRequest({request,env}){
 // Invoked only by the authenticated native calendar API after a successful
 // event save. The database claim makes one dispatch per saved revision.
 export async function queueCalendarEventPush(env,token,event){
- if(!env.WILLENA_PUSH_VAPID_PRIVATE_KEY)throw new Error('Staff push is not configured');
+ if(!env.WILLENA_PUSH_VAPID_PRIVATE_KEY)throw new Error('Cloudflare push signing secret is not configured');
  const devices=await db(token,'rpc/willena_claim_calendar_push','POST',{p_event_id:event.id});
  const list=Array.isArray(devices)?devices.filter(x=>allowedEndpoint(x.endpoint)):[];
+ if(!list.length)return {devices:0,accepted:0,errors:['No registered staff devices found (or this event revision was already notified).']};
  const date=String(event.event_date||'').slice(0,10);
  const time=event.event_time?String(event.event_time).slice(0,5):'';
  const payload={
@@ -165,8 +166,12 @@ export async function queueCalendarEventPush(env,token,event){
   url:'/Teachers/?view=staff-calendar',
   tag:'willena-calendar-'+event.id+'-'+String(event.updated_at||Date.now())
  };
- return {queued:list.length>0,devices:list.length,completion:Promise.allSettled(list.map(sub=>deliver(env,sub,payload))).then(results=>{
-  const sent=results.filter(x=>x.status==='fulfilled'&&x.value.success).length;
-  console.log('Willena calendar push result',event.id,'sent',sent,'of',list.length);
- })};
+ // Wait for provider acknowledgements, so the event form does not falsely say
+ // notification queued when all endpoints rejected the message.
+ const results=await Promise.allSettled(list.map(sub=>deliver(env,sub,payload)));
+ const accepted=results.filter(x=>x.status==='fulfilled'&&x.value.success).length;
+ const errors=results.filter(x=>x.status==='rejected').map(x=>String(x.reason?.message||x.reason).slice(0,140))
+  .concat(results.filter(x=>x.status==='fulfilled'&&!x.value.success).map(x=>'Push provider HTTP '+x.value.status));
+ console.log('Willena Calendar push',event.id,'accepted',accepted,'of',list.length,errors.slice(0,4).join('; '));
+ return {devices:list.length,accepted,errors:errors.slice(0,3)};
 }
