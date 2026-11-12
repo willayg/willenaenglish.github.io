@@ -29,7 +29,7 @@
  }
  async function load(){
   if(busy)return;busy=true;refresh.disabled=true;run.disabled=true;say('Loading recorded conversations…');
-  try{const data=await call({action:'list',days:Number(dateOptions.value)});sessions=data.sessions||[];renderList();say(sessions.length+' sessions loaded. Select one to replay. No student records will change.')}catch(e){say(e.message,true);sessions=[];renderList()}finally{busy=false;refresh.disabled=false;run.disabled=!select.value}
+  try{const data=await call({action:'list',days:Number(dateOptions.value)});sessions=data.sessions||[];renderList();say(sessions.length+' sessions loaded. Select one to replay. No student records will change.')}catch(e){sessions=[];renderList();say('Could not load recorded sessions: '+e.message,true)}finally{busy=false;refresh.disabled=false;run.disabled=!select.value}
  }
  async function replay(){
   const sessionId=select.value;if(!sessionId||busy)return;
