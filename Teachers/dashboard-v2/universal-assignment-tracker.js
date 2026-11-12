@@ -434,6 +434,28 @@ async function loadOverview(scopeName='my',force=false){
     }catch(error){errors.push(job.name+': '+error.message)}
    }
   }));
+  // Emit verified student completion events for the shared Assignments unread dot.
+  // This is deliberately keyed by assignment + student ID, never a display name.
+  const assignmentById=new Map(rows.map(row=>[id(row.id),row]));
+  const completionEvents=[];
+  for(const [source,records] of outputs){
+   for(const record of records){
+    const assignmentId=id(record.assignment_id||record.task_id||record.id);
+    const task=assignmentById.get(assignmentId);
+    if(!assignmentId||!task)continue;
+    const students=[...(Array.isArray(record.student_rows)?record.student_rows:[]),...(Array.isArray(record.students)?record.students:[])];
+    for(const st of students){
+     const studentId=id(st.student_id||st.id);
+     if(!studentId)continue;
+     const status=String(st.status||'').toLowerCase();
+     const isVerified=st.complete===true||st.completed===true||status==='complete'||status==='completed';
+     if(!isVerified)continue;
+     completionEvents.push({key:task.app+'|'+assignmentId+'|'+studentId,studentId,assignmentId,app:task.app,
+      className:String(task.class||task.class_name||record.class||''),assignment:String(task.label||task.title||'Homework'),source});
+    }
+   }
+  }
+  window.dispatchEvent(new CustomEvent('willena:homework-completion-snapshot',{detail:{completions:completionEvents}}));
   const resultStudentIds=[...new Set([...outputs.values()].flatMap(records=>records.flatMap(record=>[...(Array.isArray(record.student_rows)?record.student_rows:[]),...(Array.isArray(record.students)?record.students:[])].map(s=>id(s.student_id||s.id)))).filter(Boolean))];
   const missingIds=resultStudentIds.filter(studentId=>!students.has(studentId));
   if(missingIds.length){
