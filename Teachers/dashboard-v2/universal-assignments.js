@@ -3,6 +3,59 @@
 const root=document.getElementById('universalAssignments');if(!root)return;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const apps=[{id:'classes',label:'All Classes',sub:'Curriculum homework planner',icon:'▦'},{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'All',sub:'All homework',icon:'▦'},{id:'calendar',label:'Calendar',sub:'Assignment dates',icon:'▦'},{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'free-talking',label:'Free Talking Genius',sub:'Speaking missions',icon:'FT'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'writing',label:'Writing Genius',sub:'Diaries & topic writing',icon:'✎'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
+
+// In-app completion inbox: deduplicated by assignment and immutable student ID.
+// A first snapshot establishes a baseline so old homework does not flood alerts.
+const notificationKey='willena:teacher-homework-notices:v1';
+let notificationState={baseline:false,known:[],unread:[],items:[]};
+try{notificationState={...notificationState,...JSON.parse(localStorage.getItem(notificationKey)||'{}')}}catch{}
+let notificationPanelOpen=false;
+function persistNotifications(){try{localStorage.setItem(notificationKey,JSON.stringify(notificationState))}catch{}}
+function renderNotifications(){
+ const count=notificationState.unread.length;
+ const nav=document.querySelector('.rail [data-view="assignments"]');
+ if(nav){
+  nav.style.position='relative';
+  let dot=nav.querySelector('.ua-notification-dot');
+  if(!dot){dot=document.createElement('span');dot.className='ua-notification-dot';dot.style.cssText='position:absolute;top:5px;right:5px;background:#d93646;color:white;border:2px solid white;border-radius:999px;min-width:18px;height:18px;padding:0 3px;font:bold 10px/14px system-ui;display:grid;place-items:center;';nav.append(dot)}
+  dot.textContent=count>99?'99+':String(count);dot.hidden=count===0;
+ }
+ const heading=root.querySelector('.ua-section-heading');
+ if(!heading)return;
+ let button=heading.querySelector('#uaNotificationsButton');
+ if(!button){
+  button=document.createElement('button');button.type='button';button.id='uaNotificationsButton';button.className='control';
+  button.style.cssText='position:relative;display:inline-flex;align-items:center;gap:8px;border-radius:15px;margin-left:auto';
+  button.onclick=()=>{
+   notificationPanelOpen=!notificationPanelOpen;
+   if(notificationPanelOpen){notificationState.unread=[];persistNotifications()}
+   renderNotifications();
+  };
+  heading.append(button);
+ }
+ button.innerHTML='Notifications '+(count?'<span style="background:#d93646;color:#fff;padding:2px 7px;border-radius:20px;font-weight:750">'+count+'</span>':'');
+ button.setAttribute('aria-expanded',String(notificationPanelOpen));
+ let panel=root.querySelector('#uaNotificationsPanel');
+ if(!notificationPanelOpen){panel?.remove();return}
+ if(!panel){panel=document.createElement('section');panel.id='uaNotificationsPanel';panel.setAttribute('aria-label','Recent homework completions');panel.style.cssText='padding:16px;margin:12px 0;border:1px solid #dce9eb;border-radius:16px;background:#fff';heading.after(panel)}
+ const items=(notificationState.items||[]).slice(-25).reverse();
+ panel.innerHTML='<strong>Recent completed homework</strong><p style="color:#71848b;margin:6px 0 12px">New completions are marked read when opened.</p>'+
+ (items.length?items.map(item=>'<div style="padding:9px 0;border-top:1px solid #edf1f3"><b>'+esc(item.app||'Homework')+'</b> · '+esc(item.className||'Class')+'<div>'+esc(item.studentName||item.studentId||'Student')+' · '+esc(item.assignment||'Mission')+'</div></div>').join(''):'<p>No newly recorded completions yet.</p>');
+}
+window.addEventListener('willena:homework-completion-snapshot',event=>{
+ const entries=event.detail?.completions||[];
+ const known=new Set(notificationState.known||[]);
+ if(!notificationState.baseline){
+  notificationState.known=[...new Set(entries.map(item=>item.key))];notificationState.baseline=true;
+ }else{
+  const fresh=entries.filter(item=>item.key&&!known.has(item.key));
+  notificationState.unread=[...new Set([...(notificationState.unread||[]),...fresh.map(item=>item.key)])];
+  notificationState.items=[...(notificationState.items||[]),...fresh].slice(-100);
+  notificationState.known=[...new Set([...known,...entries.map(item=>item.key)])].slice(-30000);
+ }
+ persistNotifications();renderNotifications();
+});
+
 const stateKey='willena.teachers.assignments.v2';
 let saved={};try{saved=JSON.parse(sessionStorage.getItem(stateKey)||'{}')||{}}catch{}
 let active=apps.some(a=>a.id===saved.active)?saved.active:'classes',loading=false,groups=[];
@@ -333,6 +386,7 @@ function render(){
  const nextStrip=root.querySelector('.ua-app-tabs');if(nextStrip){nextStrip.scrollLeft=previousScroll;nextStrip.addEventListener('scroll',()=>{try{const value=JSON.parse(sessionStorage.getItem(stateKey)||'{}');value.scrollLeft=nextStrip.scrollLeft;sessionStorage.setItem(stateKey,JSON.stringify(value))}catch{}},{passive:true})}
  root.querySelectorAll('[data-ua-tab]').forEach(b=>b.addEventListener('click',()=>{const next=b.dataset.uaTab;if(!['my','all','calendar'].includes(next))subviews[next]=subviews[active];active=next;remember();render()}));
  root.querySelectorAll('[data-ua-sub]').forEach(b=>b.addEventListener('click',()=>{subviews[active]=b.dataset.uaSub;remember();render()}));
+ renderNotifications();
  const body=root.querySelector('#uaAppBody');
  if(active==='classes'){
   body.innerHTML='<div id="assignmentClassGrid" class="curriculum-root"><div class="empty">Loading class curriculum…</div></div>';
@@ -471,5 +525,5 @@ function openCurriculumCreate(context){
 }
 window.UniversalAssignments={refresh,activate,openCreate:openCurriculumCreate,openTab:id=>{if(apps.some(a=>a.id===id)){if(curriculumLaunchCleanup)curriculumLaunchCleanup();active=id;remember();render()}}};
 document.querySelectorAll('[data-view="vocab"]').forEach(el=>el.addEventListener('click',restoreWordPanel));
-groups=groupRows();render();void refresh();
+groups=groupRows();render();void refresh();renderNotifications();
 })();
