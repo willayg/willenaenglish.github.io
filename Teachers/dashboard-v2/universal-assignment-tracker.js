@@ -434,7 +434,7 @@ async function loadOverview(scopeName='my',force=false){
     }catch(error){errors.push(job.name+': '+error.message)}
    }
   }));
-  const resultStudentIds=[...new Set([...outputs.values()].flatMap(records=>records.flatMap(record=>Array.isArray(record.student_rows)?record.student_rows.map(s=>id(s.student_id)):[])).filter(Boolean))];
+  const resultStudentIds=[...new Set([...outputs.values()].flatMap(records=>records.flatMap(record=>[...(Array.isArray(record.student_rows)?record.student_rows:[]),...(Array.isArray(record.students)?record.students:[])].map(s=>id(s.student_id||s.id)))).filter(Boolean))];
   const missingIds=resultStudentIds.filter(studentId=>!students.has(studentId));
   if(missingIds.length){
     for(let i=0;i<missingIds.length;i+=150){
