@@ -153,7 +153,7 @@ async function run(){
  // Confirm before potentially spending paid provider credits across all books.
  if(!confirm('Generate '+remaining.length+' missing MP3 recordings with '+[...new Set(remaining.map(j=>labels[j.voice]))].join(', ')+' across '+
   new Set(remaining.map(j=>j.book_id)).size+' book(s)? Existing R2 files will be skipped.'))return;
- busy=true;stopping=false;controls();let successes=0,errors=0,consecutiveFailures=0;$('failureBanner').hidden=true;
+ busy=true;stopping=false;controls();let successes=0,errors=0;$('failureBanner').hidden=true;
  for(const job of remaining){
   if(stopping)break;
   job.status='generating';render();
@@ -161,13 +161,18 @@ async function run(){
   try{
    const result=await call({action:'generate',question_id:job.id,voice:job.voice});
    if(result.file!==job.file)throw Error('Returned file does not match inventory');
-   job.exists=true;job.selected=false;job.status=result.status;successes++;consecutiveFailures=0;
+   job.exists=true;job.selected=false;job.status=result.status;successes++;
   }catch(e){
-   job.status='failed';job.error=e.message;errors++;consecutiveFailures++;
+   job.status='failed';job.error=e.message;errors++;
    const banner=$('failureBanner');banner.hidden=false;
-   banner.textContent='Last failure: '+e.message+(consecutiveFailures>=2?' — Batch stopped automatically after 2 consecutive failures. Resolve this error before retrying.':'');
+   banner.textContent='Last failure: '+e.message;
    console.warn('[FT audio batch]',job.id,job.voice,e.message);
-   if(consecutiveFailures>=2){stopping=true;status('Stopped automatically after two consecutive failures: '+e.message)}
+   // Do not abort after an arbitrary number of failures.
+   // A credential/configuration error is global and cannot be fixed by retrying 544 items.
+   if(/API key ID used as API key|only valid API keys|invalid_api_key|unauthorized|ELEVENLABS_PROXY_401|ELEVENLABS_PROXY_403|ELEVENLABS_DIRECT_401|ELEVENLABS_DIRECT_403/i.test(e.message)){
+     stopping=true;
+     banner.textContent+=' · Authentication requires a valid ElevenLabs secret key on the active server. No further paid requests attempted.';
+   }
   }
   render();
   // One request at a time, wait for R2 verification, then gently pace the next.
