@@ -129,6 +129,28 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
     }
    }
   }
+  // Sentence practice is progressive: ordered recognition earns partial
+  // credit even when an age, detail, or the last phrase is absent/wrong.
+  // Use both recall and precision so random long speech cannot pass.
+  // Never promote a meaning-changing response to lime/green here.
+  if(mode==='sentence'&&expected.length>=5&&score<3){
+    const matched=orderedCoverage(expected,heard);
+    const recall=matched/expected.length;
+    const precision=matched/heard.length;
+    const opposites=[['left','right'],['up','down'],['before','after'],['first','last'],['yes','no'],['mother','father']];
+    const reversed=opposites.some(([a,b])=>
+      (expected.includes(a)&&heard.includes(b)&&!expected.includes(b))||
+      (expected.includes(b)&&heard.includes(a)&&!expected.includes(a)));
+    const negation=['not','never','no','cannot'];
+    const negationChanged=negation.some(w=>expected.includes(w)!==heard.includes(w));
+    const numerals=w=>/^\\d+$/.test(w)||['one','two','three','four','five','six','seven','eight','nine','ten'].includes(w);
+    const expectedNums=expected.filter(numerals),heardNums=heard.filter(numerals);
+    const wrongNumber=(expectedNums.length||heardNums.length)&&expectedNums.join('|')!==heardNums.join('|');
+    if(!reversed&&!negationChanged&&precision>=0.7){
+      if(recall>=0.70) {score=Math.max(score,2);reason=wrongNumber?'ordered_coverage_wrong_detail':'ordered_coverage_yellow';}
+      else if(recall>0.50){score=Math.max(score,1);reason='ordered_coverage_orange';}
+    }
+  }
   // Two-word vocabulary targets: recognizing one substantial target word
   // is worth orange, even if the browser mishears the other word.
   // Do not count articles, short function words, or unrelated speech.
