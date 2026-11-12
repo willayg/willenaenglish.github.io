@@ -1485,6 +1485,7 @@ function ccRenderDetail(){
  const selected=units.find(u=>u.id===curriculum.selectedUnit);
  const groups=ccSkillGroups;
  const assignmentMode=curriculum.assignmentSubview==='missions'?'missions':'curriculum';
+ if(inAssignments){const status=document.querySelector('#uaStatus');if(status)status.textContent=assignmentMode==='missions'?'Current class missions':'Curriculum progress';}
  host.innerHTML=(inAssignments?
  '<div class="cc-assignment-mode" role="tablist" aria-label="All Classes view"><button type="button" role="tab" data-cc-subview="curriculum" aria-selected="'+(assignmentMode==='curriculum')+'" class="'+(assignmentMode==='curriculum'?'active':'')+'">Curriculum Progress</button><button type="button" role="tab" data-cc-subview="missions" aria-selected="'+(assignmentMode==='missions')+'" class="'+(assignmentMode==='missions'?'active':'')+'">Current Missions</button></div>'+
  '<div class="cc-assignment-class-tabs" role="tablist" aria-label="Active classes">'+classes.map(item=>'<button type="button" role="tab" data-cc-switch-class="'+ccEscape(item.name)+'" aria-selected="'+(item.name===c.name)+'" class="'+(item.name===c.name?'active':'')+'">'+ccEscape(item.display_name||item.name)+'</button>').join('')+'</div>':
