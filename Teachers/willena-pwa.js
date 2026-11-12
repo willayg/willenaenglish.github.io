@@ -148,14 +148,24 @@ async function refreshPush(){
   const status=await pushAPI('GET','/status');
   pushStatus=status;
   const current=await currentSubscription();
-  pushButtons(!!current,status.admin);
+  const registered=!!current?.endpoint&&Array.isArray(status.devices)&&status.devices.some(device=>device.endpoint===current.endpoint);
+  pushButtons(registered,status.admin);
   if(!status.configured){
    const button=document.getElementById('wcEnablePush');if(button)button.disabled=true;
-   pushNotice('Push sending needs one Cloudflare secret before it can be enabled.',true);
+   pushNotice('Cloudflare push signing is not configured. Check WILLENA_PUSH_VAPID_PRIVATE_KEY.',true);
    return;
   }
-  const button=document.getElementById('wcEnablePush');if(button)button.disabled=false;
-  pushNotice(current?'This device is subscribed to Willena notifications.':'Notifications are not enabled on this device.');
+  const button=document.getElementById('wcEnablePush');
+  if(button){button.disabled=Notification.permission==='denied';button.hidden=registered;}
+  if(Notification.permission==='denied'){
+   pushNotice('Notifications are blocked in this browser. Allow them for teachers.willenaenglish.com in site settings.',true);
+  }else if(registered){
+   pushNotice('This device is registered with Willena. Click Send test to check actual delivery.');
+  }else if(current){
+   pushNotice('This browser has a subscription but Willena does not recognise this device. Click Enable notifications to register it.',true);
+  }else{
+   pushNotice('Notifications are not enabled on this device. Click Enable notifications to subscribe.');
+  }
  }catch(e){pushNotice(e.message,true)}
 }
 async function enablePush(){
@@ -174,7 +184,8 @@ async function enablePush(){
   const data=sub.toJSON();
   await pushAPI('POST','/subscribe',{endpoint:data.endpoint,keys:data.keys,device_label:navigator.userAgent.slice(0,150)});
   pushButtons(true,status.admin);
-  pushNotice('Notifications enabled on this device. You can send a test notification.');
+  pushNotice('Device registration saved. Use Send test to verify that notifications arrive.');
+  await refreshPush();
  }catch(err){pushNotice(err.message,true)}
  finally{if(btn)btn.disabled=false}
 }
@@ -187,6 +198,7 @@ async function disablePush(){
    await sub.unsubscribe();
   }
   pushButtons(false,false);pushNotice('Notifications disabled on this device.');
+  await refreshPush();
  }catch(e){pushNotice(e.message,true)}
  finally{if(btn)btn.disabled=false}
 }
