@@ -10,6 +10,8 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 const VOICES={
  lili:{model:'eleven_v3',voice:'M7zl2TS7ORAIGUejDfoy',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
  pigfish:{model:'eleven_v3',voice:'W7UbuMY4ypluqgZS2UzT',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
+ // Dedicated cloned voice namespace; never overwrites existing characters or the OpenAI fallback.
+ willi_clone:{model:'eleven_v3',voice:'0yhUIig4twaXoIhuQoCQ',variant:'elevenlabs',prefix:'ft_willi_clone_v1_',tag:'free_talking_willi_clone_question_mp3_v1'},
  willi_mp3:{model:'gpt-4o-mini-tts',voice:'marin',variant:'fallback',prefix:'ft_fallback_v1_',tag:'free_talking_legacy_fallback_mp3_v1'}
 };
 const json=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
@@ -55,7 +57,7 @@ function base64(buffer){
  return btoa(str);
 }
 async function createMp3(env,text,voice){
- if(voice==='lili'||voice==='pigfish'){
+ if(voice==='lili'||voice==='pigfish'||voice==='willi_clone'){
   const cfg=VOICES[voice],secret=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
   const settings={stability:0.5};
   if(secret){
@@ -76,6 +78,7 @@ async function createMp3(env,text,voice){
    }
   }
   // Netlify fallback is used both for missing Cloudflare secrets and direct TTS errors/timeouts.
+  // Voice ID stays server-side in the trusted configuration. Never substitute a different voice after failure.
   const proxy=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
    method:'POST',headers:{'Content-Type':'application/json'},
    body:JSON.stringify({text,voice_id:cfg.voice,model_id:'eleven_v3',voice_settings:settings}),
@@ -135,7 +138,7 @@ export async function onRequestPost({request,env}){
   const body=await request.json().catch(()=>null);
   if(!body||typeof body!=='object')return json(400,{success:false,error:'Invalid request'});
   if(body.action==='catalog')return json(200,{success:true,...await catalog(),
-   formats:{lili:'ElevenLabs Bunny v3 · MP3',pigfish:'ElevenLabs Pigfish v3 · MP3',willi_mp3:'OpenAI Marin fallback · MP3'}});
+   formats:{lili:'ElevenLabs Bunny v3 · MP3',pigfish:'ElevenLabs Pigfish v3 · MP3',willi_clone:'AI Willi cloned voice · ElevenLabs v3 · MP3',willi_mp3:'OpenAI Marin fallback · MP3'}});
   const voice=String(body.voice||'');
   const config=VOICES[voice];
   if(!config)return json(400,{success:false,error:'Choose an available MP3 voice'});
