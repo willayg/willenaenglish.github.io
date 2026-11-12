@@ -17,7 +17,7 @@ function renderNotifications(){
  if(nav){
   nav.style.position='relative';
   let dot=nav.querySelector('.ua-notification-dot');
-  if(!dot){dot=document.createElement('span');dot.className='ua-notification-dot';dot.style.cssText='position:absolute;top:5px;right:5px;background:#d93646;color:white;border:2px solid white;border-radius:999px;min-width:18px;height:18px;padding:0 3px;font:bold 10px/14px system-ui;display:grid;place-items:center;';nav.append(dot)}
+  if(!dot){dot=document.createElement('span');dot.className='ua-notification-dot';dot.style.cssText='position:absolute;top:5px;right:5px;background:#d93646;color:white;border:2px solid white;border-radius:999px;min-width:18px;height:18px;padding:0 3px;font:bold 10px/14px system-ui;display:grid;place-items:center;';nav.insertBefore(dot,nav.lastElementChild)}
   dot.textContent=count>99?'99+':String(count);dot.hidden=count===0;dot.style.display=count?'grid':'none';
  }
  const heading=root.querySelector('.ua-section-heading');
