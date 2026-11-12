@@ -90,6 +90,25 @@ export async function onRequest({request,env}){
   const part=u.pathname.replace(/^\/api\/staff-push\/?/,'').replace(/\/$/,'');
   if(!['GET','POST','DELETE'].includes(request.method))return respond({error:'Method not allowed'},405);
   if(request.method!=='GET'&&request.headers.get('origin')!==ORIGIN)return respond({error:'Invalid request origin'},403);
+  // New website enquiry: one-time short-lived database claim. No public caller
+  // can enumerate devices or send arbitrary messages without the random token.
+  if(part==='enquiry-event'&&request.method==='POST'){
+   if(!env.WILLENA_PUSH_VAPID_PRIVATE_KEY)return respond({error:'Push signing not configured'},503);
+   const data=await request.json().catch(()=>({}));
+   if(!/^[a-f0-9-]{36}$/i.test(String(data.id||''))||!/^[a-f0-9-]{36}$/i.test(String(data.token||'')))return respond({error:'Invalid event'},400);
+   const claim=await fetch(SUPABASE+'/rest/v1/rpc/willena_claim_enquiry_push',{
+    method:'POST',headers:{apikey:KEY,'content-type':'application/json'},
+    body:JSON.stringify({p_id:data.id,p_token:data.token}),cache:'no-store'
+   });
+   if(!claim.ok){console.error('Website enquiries push claim',claim.status);return respond({error:'Claim unavailable'},503)}
+   const claimed=await claim.json().catch(()=>({}));
+   if(!claimed.ok)return respond({error:'Event already processed or invalid'},409);
+   const devices=Array.isArray(claimed.devices)?claimed.devices:[];
+   const payload={title:'Willena · 새 상담 문의',body:'새로운 상담 문의가 접수되었습니다. 문의 관리에서 확인하세요.',url:'/Teachers/admin-v2/?view=enquiries',tag:'willena-new-enquiry-'+String(data.id)};
+   const results=await Promise.allSettled(devices.filter(x=>allowedEndpoint(x.endpoint)).map(sub=>deliver(env,sub,payload)));
+   const successful=results.filter(x=>x.status==='fulfilled'&&x.value.success).length;
+   return respond({success:true,subscribed_devices:devices.length,delivered:successful});
+  }
   const staff=await identity(request);if(staff.error)return respond({error:staff.error},staff.status);
   if(part==='status'&&request.method==='GET'){
    const devices=await db(staff.token,'willena_push_subscriptions?select=endpoint,device_label,created_at,updated_at&order=updated_at.desc&limit=30');
