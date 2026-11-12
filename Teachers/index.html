@@ -298,6 +298,13 @@ try{
 <style>
 /* Curriculum Class View */
 .curriculum-root{font-family:inherit;color:#233d4c}
+.cc-assignment-class-tabs{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:5px 2px 13px;margin-bottom:12px}
+.cc-assignment-class-tabs button{flex:none;border:1px solid #cbdfe2;background:white;color:#4e6973;padding:11px 17px;border-radius:12px;cursor:pointer;font:inherit;font-size:13px;font-weight:750;white-space:nowrap}
+.cc-assignment-class-tabs button.active{background:#dff5f6;border-color:#44aeb9;color:#127f89;box-shadow:0 0 0 1px #44aeb9}
+.cc-assignment-bookline{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px}
+.cc-assignment-bookline .cc-book-tabs{margin:0}
+.cc-assignment-bookline .cc-book-tabs button{padding:8px 12px}
+.cc-assignment-bookline>small{color:#6c8490}
 .cc-toolbar{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:16px 0 22px;flex-wrap:wrap}
 .cc-toolbar label{font-weight:700;font-size:13px;display:grid;gap:7px}.cc-toolbar input{min-width:250px}
 .cc-note,.cc-muted,.cc-helper{color:#6c8490;font-size:12px;line-height:1.6}
@@ -1417,29 +1424,39 @@ async function ccOpenClass(name){
 }
 function ccCurrentBook(){return curriculum.data?.books.find(b=>b.id===curriculum.selectedBook)}
 function ccRenderDetail(){
- const host=ccHost();if(!host)return;const c=curriculum.data?.classes.find(x=>x.name===curriculum.selectedClass);
- if(!c){ccRenderOverview();return}
+ const host=ccHost();if(!host)return;
+ const inAssignments=host.id==='assignmentClassGrid';
+ const classes=curriculum.data?.classes||[];
+ if(inAssignments&&!classes.some(x=>x.name===curriculum.selectedClass))curriculum.selectedClass=classes[0]?.name||'';
+ const c=classes.find(x=>x.name===curriculum.selectedClass);
+ if(!c){if(inAssignments){host.innerHTML='<div class="cc-empty">No active classes available.</div>';return;}ccRenderOverview();return}
  const books=ccBooks(c),book=ccCurrentBook()||books[0];
  if(book)curriculum.selectedBook=book.id;
  const students=ccClassStudents(c.name),units=book&&curriculum.unitCache.has(book.book_id)?(book._units||[]):[];
  const selected=units.find(u=>u.id===curriculum.selectedUnit);
  const groups=ccSkillGroups;
- host.innerHTML='<div class="cc-detail-top">'+ccButton('← All classes','back','cc-back')+
- '<div><h2>'+ccEscape(c.name)+'</h2><p>'+students.length+' students · Curriculum coverage</p></div>'+
- ccButton('Open students','students')+'</div>'+
- (!books.length?'<div class="cc-empty">No textbooks are assigned to this class. Assign a book from the class management tools first.</div>':
- '<div class="cc-book-tabs">'+books.map(b=>'<button type="button" class="'+(b.id===book.id?'active':'')+'" data-cc-book="'+ccEscape(b.id)+'">'+ccEscape(b.book_title||'Textbook')+'</button>').join('')+'</div>'+
- '<div class="cc-progress-heading"><div><h3>'+ccEscape(book.book_title||'Textbook')+'</h3><p>Current classroom unit: <strong>'+ccEscape(book.current_unit||'Not set')+'</strong></p></div>'+
- '<label>Mark unit being taught <select class="control" id="ccTaught"><option value="">Not set</option>'+units.map(u=>'<option value="'+ccEscape(String(u.unit_number))+'" '+(String(book.current_unit||'')===String(u.unit_number)?'selected':'')+'>Unit '+ccEscape(u.unit_number)+'</option>').join('')+'</select></label></div>'+
+ host.innerHTML=(inAssignments?
+ '<div class="cc-assignment-class-tabs" role="tablist" aria-label="Active classes">'+classes.map(item=>'<button type="button" role="tab" data-cc-switch-class="'+ccEscape(item.name)+'" aria-selected="'+(item.name===c.name)+'" class="'+(item.name===c.name?'active':'')+'">'+ccEscape(item.display_name||item.name)+'</button>').join('')+'</div>':
+ '<div class="cc-detail-top">'+ccButton('← All classes','back','cc-back')+
+ '<div><h2>'+ccEscape(c.name)+'</h2><p>'+students.length+' students · Curriculum coverage</p></div>'+ccButton('Open students','students')+'</div>')+
+ (!books.length?'<div class="cc-empty">No textbooks are assigned to this class. Assign a book from class management first.</div>':
+ (inAssignments?'<div class="cc-assignment-bookline"><div class="cc-book-tabs">':'<div class="cc-book-tabs">')+
+ books.map(b=>'<button type="button" class="'+(b.id===book.id?'active':'')+'" data-cc-book="'+ccEscape(b.id)+'">'+ccEscape(b.book_title||'Textbook')+'</button>').join('')+
+ (inAssignments?'</div><small>'+students.length+' students · Unit progress</small></div>':'</div><div class="cc-progress-heading"><div><h3>'+ccEscape(book.book_title||'Textbook')+'</h3><p>Current classroom unit: <strong>'+ccEscape(book.current_unit||'Not set')+'</strong></p></div><label>Mark unit being taught <select class="control" id="ccTaught"><option value="">Not set</option>'+units.map(u=>'<option value="'+ccEscape(String(u.unit_number))+'" '+(String(book.current_unit||'')===String(u.unit_number)?'selected':'')+'>Unit '+ccEscape(u.unit_number)+'</option>').join('')+'</select></label></div>')+
  '<p class="cc-helper">Gold: more than 90% verified complete · Light pink: in progress · White: not started. Unverified practice is never marked completed.</p>'+
  (!curriculum.unitCache.has(book.book_id)?'<div class="cc-empty">Loading textbook units…</div>':!units.length?'<div class="cc-empty">No published or review units are available for this book.</div>':
  '<div class="cc-grid-scroll"><div class="cc-matrix"><div class="cc-matrix-head"><span>Unit</span>'+groups.map(g=>'<span>'+ccEscape(g.name)+'</span>').join('')+'</div>'+
  units.map(u=>'<div class="cc-matrix-row"><div class="cc-unit-name"><strong>Unit '+ccEscape(u.unit_number)+'</strong><small>'+ccEscape(u.title||'')+'</small></div>'+
  groups.map(g=>{const d=ccSkillData(book,u,g),count=d.touched.size;const knownPuzzle=(curriculum.puzzleOverview||[]).filter(x=>x.book_id===book.book_id&&x.unit_id===u.id&&ccClassStudents(c.name).some(s=>String(s.id)===String(x.student_id)));const puzzleStarted=new Set(knownPuzzle.filter(x=>Number(x.completed_modes)>0).map(x=>String(x.student_id)));const started=g.key==='puzzles'?new Set([...d.touched,...puzzleStarted]).size:count;const pct=g.key==='puzzles'&&d.total?100*knownPuzzle.reduce((sum,x)=>sum+Math.min(5,Number(x.completed_modes||0))/5,0)/d.total:0;const extra=ccExtraCompletion(book,u,g,c.name);const included=new Set([...d.touched,...extra.started,...(g.key==='sentence'?ccSentenceRows(book,u,c.name).map(r=>String(r.student_id)):[]),...(g.key==='writing'?ccWritingRows(book,u,c.name).map(r=>String(r.student_id)):[])]);const actualStarted=included.size;const extraPct=extra.finished.size&&d.total?100*extra.finished.size/d.total:0;const state=(['grammar','talking','freeconversation'].includes(g.key)?extraPct:pct)>90?'cc-full':actualStarted?'cc-partial':'cc-empty-cell';return '<button type="button" class="cc-cell '+state+(selected?.id===u.id&&curriculum.selectedSkill===g.key?' cc-selected':'')+'" data-cc-unit="'+ccEscape(u.id)+'" data-cc-skill="'+g.key+'" aria-label="Unit '+ccEscape(u.unit_number)+' '+g.name+', '+actualStarted+' of '+d.total+' with recorded practice"><b>'+(actualStarted?actualStarted+'/'+d.total:'—')+'</b><small>'+(state==='cc-full'?'over 90% done':actualStarted?'in progress':'not started')+'</small></button>'}).join('')+'</div>').join('')+'</div></div>')+
  (selected&&curriculum.selectedSkill?ccRenderStudentDrilldown(book,selected,groups.find(g=>g.key===curriculum.selectedSkill)):'')+
- ccWritingActivitySummary(c.name));
- host.querySelector('[data-cc-action="back"]').onclick=()=>{curriculum.selectedClass='';curriculum.selectedBook='';ccRenderOverview()};
- host.querySelector('[data-cc-action="students"]').onclick=()=>openClassFromOverview(c.name,30);
+ (inAssignments?'':ccWritingActivitySummary(c.name)));
+ host.querySelector('[data-cc-action="back"]')?.addEventListener('click',()=>{curriculum.selectedClass='';curriculum.selectedBook='';ccRenderOverview()});
+ host.querySelector('[data-cc-action="students"]')?.addEventListener('click',()=>openClassFromOverview(c.name,30));
+ host.querySelectorAll('[data-cc-switch-class]').forEach(b=>b.onclick=()=>{
+  curriculum.selectedClass=b.dataset.ccSwitchClass;curriculum.selectedBook='';curriculum.selectedUnit='';curriculum.selectedSkill='';
+  try{sessionStorage.setItem('willena:assignments:curriculum-class',curriculum.selectedClass)}catch{}
+  ccRenderDetail();
+ });
  host.querySelectorAll('[data-cc-book]').forEach(b=>b.onclick=()=>{curriculum.selectedBook=b.dataset.ccBook;curriculum.selectedUnit='';curriculum.selectedSkill='';ccRenderDetail()});
  host.querySelectorAll('[data-cc-unit]').forEach(b=>b.onclick=async()=>{curriculum.selectedUnit=b.dataset.ccUnit;curriculum.selectedSkill=b.dataset.ccSkill;const selectedBook=book,selectedUnit=units.find(u=>u.id===curriculum.selectedUnit);const selectedClass=c.name;ccRenderDetail();host.querySelector('.cc-drilldown')?.scrollIntoView({behavior:'smooth',block:'nearest'});if(selectedUnit){try{if(curriculum.selectedSkill==='puzzles')await ccLoadPuzzleDetail(selectedBook,selectedUnit);else await ccLoadSkillDetail(selectedBook,selectedUnit);if(curriculum.selectedClass===selectedClass&&curriculum.selectedBook===selectedBook.id&&curriculum.selectedUnit===selectedUnit.id)ccRenderDetail()}catch(e){console.warn('[Class Curriculum] Skill detail:',e);}}});
  const taught=host.querySelector('#ccTaught');
@@ -1607,7 +1624,11 @@ function ccRenderStudentDrilldown(book,unit,group){
 }
 async function loadClassOverview(force=false){
  if(curriculum.pending)return;
- if(curriculum.data&&!force){if(curriculum.selectedClass)ccRenderDetail();else ccRenderOverview();return}
+ if(curriculum.data&&!force){
+  if(ccHost()?.id==='assignmentClassGrid'){if(!curriculum.selectedClass){try{curriculum.selectedClass=sessionStorage.getItem('willena:assignments:curriculum-class')||''}catch{}}ccRenderDetail();}
+  else if(curriculum.selectedClass)ccRenderDetail();else ccRenderOverview();
+  return
+ }
  curriculum.pending=true;ccHost().innerHTML='<div class="empty">Loading active class books and practice records…</div>';
  try{
   if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.puzzleDetail.clear();curriculum.skillDetail.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];}
@@ -1635,7 +1656,11 @@ async function loadClassOverview(force=false){
   const byId=new Map();
   await Promise.all(allIds.map(async id=>{try{byId.set(id,await ccUnits(id))}catch(e){console.warn('[Class Curriculum] Catalog:',e.message)}}));
   curriculum.data.books.forEach(b=>{b._units=byId.get(b.book_id)||[];b._className=curriculum.data.classes.find(c=>c.id===b.class_id)?.name||''});
-  if(curriculum.selectedClass)ccRenderDetail();else ccRenderOverview();
+  if(ccHost()?.id==='assignmentClassGrid'){
+   if(!curriculum.selectedClass){try{curriculum.selectedClass=sessionStorage.getItem('willena:assignments:curriculum-class')||''}catch{}}
+   if(!curriculum.data.classes.some(c=>c.name===curriculum.selectedClass)){curriculum.selectedClass=curriculum.data.classes[0]?.name||'';curriculum.selectedBook='';}
+   ccRenderDetail();
+  }else if(curriculum.selectedClass)ccRenderDetail();else ccRenderOverview();
  }catch(e){curriculum.error=e.message;ccHost().innerHTML='<div class="cc-empty">Could not load class curriculum: '+ccEscape(e.message)+' <button class="cc-btn" id="ccRetry">Retry</button></div>';ccHost().querySelector('#ccRetry').onclick=()=>loadClassOverview(true)}
  finally{curriculum.pending=false}
 }
