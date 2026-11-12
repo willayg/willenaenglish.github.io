@@ -12,6 +12,7 @@ import {checkOrder} from './scoring.js?v=sg-coach-gold-v3';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
 import {usableAlternatives} from './ai-grading.js?v=sg-phase3b';
 import {gradeSpeaking} from '/students/shared/speaking-smart-grade.js?v=20261111-orange5';
+import {createSpeakingBestProgress} from '/students/shared/speaking-best-progress.js?v=20261112-1';
 import {createSpeakingGradesGuide} from '/students/shared/speaking-grades-guide.js?v=20261112-energy4';
 
 const $=id=>document.getElementById(id);
@@ -44,11 +45,12 @@ function questionFor(mode,item){
 export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
   const speakingGradesGuide=createSpeakingGradesGuide({app:'sentence'});
   let ctx=null,queue=[],index=0,renderer=null,speech=null,answered=false,
-    since=0,epoch=0,mode='coach',reward=null,saving=new Set(),listenUsed=false,grading=false,sessionRunId=null;
+    since=0,epoch=0,mode='coach',reward=null,saving=new Set(),listenUsed=false,grading=false,sessionRunId=null,bestProgress=null;
   function dispose(){
     ++epoch;
     speech?.dispose();speech=null;
     try{renderer?.speechRecognition?.stop()}catch{}
+    bestProgress?.dispose();bestProgress=null;
     renderer=null;stopAudio();
   }
   function current(){return queue[index]||null}
@@ -99,6 +101,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
         }
       }
     });
+    if(mode!=='unscramble')bestProgress=createSpeakingBestProgress(host);
     if(mode==='speaking'){
       const grammarClue=grammarClueFor(item);
       if(grammarClue){
@@ -134,10 +137,11 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     const item=current();if(!item||answered||mode==='unscramble')return;
     // Coach and Speaking show the same preview verdict as Check Answer.
     const candidates=usableAlternatives(alternatives,item.en);
-    const grade=gradeSpeaking(item.en,candidates,{mode:'sentence'});
+    let grade=gradeSpeaking(item.en,candidates,{mode:'sentence'});
     if(candidates.length&&matchSentence(item.en,candidates,item.gradingContext).correct){
       grade.points=4;grade.level='green';grade.correct=true;
     }
+    grade=bestProgress?.observe(grade,candidates)||grade;
     const node=renderer?.host?.querySelector('[data-speaking-transcript]');
     if(!node)return;
     const palette={green:['#168345','#77c99a'],lime:['#719D19','#B5DB70'],yellow:['#A87C07','#F1D079'],orange:['#B9631A','#F3B477'],red:['#cf304c','#efa4ae']};
@@ -173,7 +177,8 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     const evaluation=mode==='unscramble'?null:gradeSpeaking(item.en,usable,{mode:'sentence'});
     // Preserve previously approved equivalent phrases, but never make an AI request.
     if(evaluation&&previous.correct){evaluation.points=4;evaluation.correct=true;evaluation.level='green';evaluation.matchedBy=previous.matchedBy||'approved_equivalent';}
-    const result=mode==='unscramble'?previous:evaluation;
+    const result=mode==='unscramble'?previous:(bestProgress?.observe(evaluation,usable)||evaluation);
+    const finalResponse=mode==='unscramble'?response:(result.correct?(result.transcript||response):response);
     const correct=!!result.correct;
     const assisted=mode==='speaking'&&listenUsed;
     const almostRight=correct&&result.points<4;
@@ -220,7 +225,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
      recordSentenceHomeworkAnswer({assignmentId:ctx.homework.id,sentenceId:item.id,mode,
       sessionId:sessionRunId,correct:verdict.mastered}):
      recordSentenceAttempt({
-      book:ctx.book,unit:ctx.unit,item,mode,response,correct:verdict.mastered,
+      book:ctx.book,unit:ctx.unit,item,mode,response:finalResponse,correct:verdict.mastered,
       assisted,almostRight,gradePoints:mode==='unscramble'?null:result.points,retryCount:item.retry,points:verdict.points,
       matchedBy:result.matchedBy||'unmatched',
       source:'browser',
