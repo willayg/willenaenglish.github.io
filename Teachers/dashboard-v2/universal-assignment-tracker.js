@@ -1002,9 +1002,12 @@ async function pollNotifications(){
    }
   }
   // Synthetic staff-only test events never change student learning data.
+  const testIds=[...new Set((tests||[]).map(t=>id(t.student_id)).filter(Boolean))];
+  const testProfiles=testIds.length?await get('profiles?select=id,name,username&id=in.('+testIds.join(',')+')').catch(()=>[]):[];
+  const testNames=new Map(testProfiles.map(p=>[id(p.id),p.name||p.username||'Test student']));
   for(const test of tests||[]){
    completions.push({key:'TEST|'+id(test.id),studentId:id(test.student_id),assignmentId:id(test.assignment_id),
-    studentName:({'12e65702-6875-461a-a0f9-d7e4ac655a8b':'B','cc315db1-e98a-4e9c-85f9-408b4dca4ef9':'H'})[id(test.student_id)]||'Test student',
+    studentName:testNames.get(id(test.student_id))||'Test student',
     className:test.class_name,assignment:test.assignment_title,app:'TEST · '+test.app_name,
     completedAt:test.created_at,source:'Staff notification test'});
   }
