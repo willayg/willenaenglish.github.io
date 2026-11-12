@@ -1149,6 +1149,17 @@ async function startup(){
    selectUnit(unit);
    openMode('speaking');
   }
+  // A finished natural conversation returns to the exact textbook unit card.
+  if(!missionId&&missionParams.get('return')==='1'){
+   const requestedBook=missionParams.get('book'),requestedUnit=missionParams.get('unit');
+   const question=state.questions.find(q=>q.book_id===requestedBook&&String(q.unit_id)===requestedUnit);
+   if(question&&state.books.some(b=>b.id===requestedBook&&b.ready)){
+    await chooseBook(requestedBook);
+    selectUnit(Number(question.unit_number));
+   }
+   // Consume the launch parameters, preserving normal back navigation.
+   history.replaceState(history.state,'',location.pathname);
+  }
   // Only show an empty-state message when there are genuinely no assigned books.
   $('ftLoading').hidden=state.books.length>0;
   $('ftLoading').textContent=state.books.length?'':'아직 배정된 교재가 없어요.';
