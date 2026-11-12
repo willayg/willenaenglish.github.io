@@ -19,9 +19,15 @@ export async function onRequestPost({request,env}){
   const sessionResponse=await fetch(loginURL,{headers:{Cookie:request.headers.get('Cookie')||''},cache:'no-store',signal:AbortSignal.timeout(10000)});
   const session=await sessionResponse.json().catch(()=>({}));
   if(!sessionResponse.ok||!session.success||!UUID.test(session.user_id||''))return send(401,{error:'Please sign in to the Teachers Dashboard'});
-  const key=env.SUPABASE_SERVICE_ROLE_KEY||env.SUPABASE_SERVICE_ROLE||env.SUPABASE_SECRET_KEY||env.SUPABASE_SERVICE_KEY;
-  if(!key)return send(503,{error:'Replay database access is not configured for this deployment'});
-  const headers={apikey:key,Authorization:'Bearer '+key};
+  // Read only through the signed-in teacher's own JWT and Supabase RLS.
+  // The database explicitly allows approved teaching staff to inspect transcripts.
+  const cookies=Object.fromEntries((request.headers.get('Cookie')||'').split(/;\\s*/).map(part=>{
+   const n=part.indexOf('=');if(n<0)return ['', ''];
+   try{return [part.slice(0,n).trim(),decodeURIComponent(part.slice(n+1))]}catch{return [part.slice(0,n).trim(),part.slice(n+1)]}
+  }).filter(([name])=>name));
+  const token=cookies.sb_access;
+  if(!token)return send(401,{error:'Teacher session token missing. Please refresh your login.'});
+  const headers={apikey:PUBLISHABLE,Authorization:'Bearer '+token};
   const profile=(await get(SCORE+'/rest/v1/profiles?select=id,name,role,approved&id=eq.'+encodeURIComponent(session.user_id)+'&limit=1',headers))[0];
   if(!profile||profile.approved!==true||!['teacher','admin','owner'].includes(profile.role))return send(403,{error:'Approved teaching staff only'});
   if(input.action==='list'){
