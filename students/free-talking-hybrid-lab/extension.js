@@ -165,7 +165,12 @@ function navigateBack(){
    void reviewConversation();return;
   }
   if(state.reviewing)return;
-  location.replace('/students/free-talking-genius/');
+  // Return to the exact book and unit selected before the conversation.
+  const back=new URL('/students/free-talking-genius/',location.origin);
+  const params=new URLSearchParams(location.search);
+  const book=state.book?.id||params.get('book'),unit=state.unit?.id||params.get('unit');
+  if(book&&unit){back.searchParams.set('book',book);back.searchParams.set('unit',unit);back.searchParams.set('return','1')}
+  location.replace(back.pathname+back.search);
   return;
  }
  const hadEntry=hasActivityHistory();
