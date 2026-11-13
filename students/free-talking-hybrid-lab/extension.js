@@ -586,6 +586,7 @@ function studentTurnInProgress(){
  return Boolean(state.speechStartedAt||state.awaitingSpeechCommit||state.pendingSpeech.size||state.turnFragments.length||state.turnGraceTimer);
 }
 // Save text only (never the audio recording) for a restricted, expiring teacher review.
+function isTranscriptionPromptEcho(value){return /korean students are speaking english|transcribe only words actually spoken|never translate into spanish|preserve imperfect but intelligible english|avoid guessing from silence|inventing textbook answers/i.test(String(value||''))}
 function saveHybridTranscript(who,spoken,verdict=null,proof=null,stamp=null,source='ai_reply'){
  if(!state.hybrid||!state.active||!state.transcriptSessionId||!state.book?.id||!state.unit?.id)return;
  const sessionId=state.transcriptSessionId;
@@ -609,9 +610,26 @@ function saveHybridTranscript(who,spoken,verdict=null,proof=null,stamp=null,sour
     if(response.status<500)break;
    }catch(ex){lastError=ex}
   }
-  state.transcriptSaveErrors=(state.transcriptSaveErrors||0)+1;
+  (state.transcriptFailedWrites||(state.transcriptFailedWrites=[])).push(body);
+  state.transcriptSaveErrors=state.transcriptFailedWrites.length;
   console.warn('[Free Talking] transcript not saved',sessionId,turnNumber,String(lastError));
  });
+}
+async function retryUnsentTranscripts(){
+ await state.transcriptSaveQueue?.catch(()=>{});
+ const stillFailed=[];
+ for(const body of state.transcriptFailedWrites||[]){
+  let succeeded=false;
+  for(let attempt=0;attempt<3&&!succeeded;attempt++){
+   try{
+    const r=await authorizedDemoFetch('/api/free-talking-hybrid-lab',body);
+    succeeded=r.ok;
+    if(!succeeded&&r.status<500)break;
+   }catch(e){console.warn('[Free Talking] transcript retry',body.turn_number,String(e?.message||e))}
+  }
+  if(!succeeded)stillFailed.push(body);
+ }
+ state.transcriptFailedWrites=stillFailed;state.transcriptSaveErrors=stillFailed.length;
 }
 function appendLine(who,text,source='ai_reply'){
  if(!String(text||'').trim())return;
@@ -1000,8 +1018,13 @@ async function hybridOnRecorded(rec){
   if(ftUsage.current){ftUsage.current.transcribedAudioSeconds=Math.round(hybrid.secondsTranscribed*10)/10;ftUsage.current.transcriptionRequests++;ftUsage.current.sttModel=data.model||state.sttEngine}
   if(state.active&&state.anchorToken===at&&state.anchorPhase===phase){
    const transcript=String(data.text||'').trim();
-   if(transcript)hybrid.history.push({id:itemId,role:'user',text:transcript});
-   resolveCommittedSpeech(itemId,transcript);
+   if(isTranscriptionPromptEcho(transcript)){
+    console.warn('[Free Talking] Blocked transcription prompt echo');
+    resolveCommittedSpeech(itemId,'',true);
+   }else{
+    if(transcript)hybrid.history.push({id:itemId,role:'user',text:transcript});
+    resolveCommittedSpeech(itemId,transcript);
+   }
   }
  }catch(e){
   if(state.active){error('Hybrid STT: '+String(e.message||e));resolveCommittedSpeech(itemId,'',true)}
@@ -1386,6 +1409,7 @@ function queueSpeechFragment(itemId,text,anchorToken,phase){
 }
 function processVerifiedSpeech(itemIds,speech){
  if(!state.active||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
+ if(isTranscriptionPromptEcho(speech)){console.warn('[Free Talking] Ignored prompt echo');return}
  const itemId=itemIds[itemIds.length-1];
  const deleteSpeech=()=>{for(const id of itemIds)sendRealtime({type:'conversation.item.delete',item_id:id})};
  clearTimeout(state.idleTimer);state.idleTimer=null;
@@ -1665,7 +1689,7 @@ async function reviewConversation({outroPromise=null}={}){
  await releaseMicForPlayback();
  message('Reviewing our conversation…');$('listenCheck').textContent='Reviewing our chat';
  try{
-  await state.transcriptSaveQueue?.catch(()=>{});
+  await retryUnsentTranscripts();
   if(state.transcriptSaveErrors)throw Error('Some conversation turns could not be saved. Please try again.');
   // Each retry is its OWN request, never a second model call inside one
   // Cloudflare worker invocation. This avoids upstream 502 gateway timeouts.
@@ -2025,6 +2049,7 @@ async function startConversation(){
    try{state.recentQualified=JSON.parse(localStorage.getItem(ftCompletionKey()+':recentQualified')||'[]').slice(-18)}catch{state.recentQualified=[]}
   state.transcriptSessionId=crypto.randomUUID();
   state.transcriptTurnNumber=0;state.transcriptSaved=0;state.transcriptSaveErrors=0;
+  state.transcriptFailedWrites=[];
   state.transcriptSaveQueue=Promise.resolve();
  }
  if(!continuing&&!state.initialLoadingShown){state.initialLoadingShown=true;$('ftBootSpinner').hidden=false;}
