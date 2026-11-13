@@ -154,6 +154,50 @@ export async function onRequestPost({request,env}){
   if(!auth)return json(403,{success:false,error:'Teacher or admin sign-in required'});
   const body=await request.json().catch(()=>null);
   if(!body||typeof body!=='object')return json(400,{success:false,error:'Invalid request'});
+  // Cached voice audition: never calls a TTS service or writes R2.
+  // Select up to five phrases already present in the shared audio store.
+  if(body.action==='lab_catalog'){
+   const rows=await contentRows('free_talking_questions?select=id,book_id,unit_number,question_en&is_published=eq.true&order=id.asc&limit=350');
+   const candidates=rows.filter(q=>UUID.test(String(q.id))&&String(q.question_en||'').trim().length>=12).slice(0,260);
+   const files=[],records=[];
+   const options=['lili','willi_clone','pigfish','willi_mp3'];
+   for(const q of candidates){
+    const keys={};
+    for(const voice of options){
+     const cfg=VOICES[voice],key=await hashKey(q.question_en,cfg);
+     keys[voice]=key;files.push(key+'.mp3');
+    }
+    records.push({id:q.id,text:q.question_en,keys});
+   }
+   const exists={};
+   for(let i=0;i<files.length;i+=180){
+    const result=await store(auth.token,{action:'inventory',files:files.slice(i,i+180)});
+    Object.assign(exists,result.exists||{});
+   }
+   const ranked=records.map(q=>({...q,available:Object.fromEntries(options.map(v=>[v,exists[q.keys[v]+'.mp3']===true]))}))
+    .map(q=>({...q,count:options.filter(v=>q.available[v]).length}))
+    .filter(q=>q.count>0)
+    .sort((a,b)=>b.count-a.count);
+   const selected=[];const words=new Set();
+   for(const q of ranked){
+    const start=String(q.text).trim().split(/\\s+/).slice(0,4).join(' ').toLowerCase();
+    if(words.has(start))continue;
+    words.add(start);selected.push(q);
+    if(selected.length===5)break;
+   }
+   return json(200,{success:true,phrases:selected.map(q=>({id:q.id,text:q.text,available:q.available})),
+    voices:options,scanned:candidates.length});
+  }
+  if(body.action==='lab_clip'){
+   const voice=String(body.voice||''),questionId=String(body.question_id||'');
+   if(!VOICES[voice]||!UUID.test(questionId))return json(400,{success:false,error:'Invalid voice or phrase'});
+   const rows=await contentRows('free_talking_questions?select=id,question_en&is_published=eq.true&id=eq.'+questionId+'&limit=1');
+   if(!rows.length)return json(404,{success:false,error:'Phrase not found'});
+   const key=await hashKey(String(rows[0].question_en),VOICES[voice]);
+   const result=await store(auth.token,{action:'get',key,format:'mp3'});
+   if(!result.found||typeof result.audio!=='string')return json(404,{success:false,error:'This exact recording is not cached in R2'});
+   return json(200,{success:true,audio:result.audio,text:rows[0].question_en,voice});
+  }
   if(body.action==='catalog')return json(200,{success:true,...await catalog(),
    formats:{lili:'ElevenLabs Bunny v3 · MP3',pigfish:'ElevenLabs Pigfish v3 · MP3',willi_clone:'AI Willi cloned voice · ElevenLabs v3 · MP3',willi_mp3:'OpenAI Marin fallback · MP3'}});
   const voice=String(body.voice||'');
