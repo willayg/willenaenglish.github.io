@@ -8,7 +8,7 @@
 <div class="actions"><button class="preset" data-text="Hi! I'm AI Willy, your friendly robot. What did you do after school yesterday?">Friendly question</button><button class="preset" data-text="[excited] That's fantastic! Tell me a little more about it!">Excited</button><button class="preset" data-text="[whispers] Here's a little secret. I love learning new words.">Whisper</button><button class="preset" data-text="Could you say that again, a little more slowly?">Classroom</button></div></section>
 <section class="panel"><h2>ElevenLabs generation settings</h2><div class="cols">
 <div class="control"><label for="stability">Stability <output class="value" id="stabilityV">Natural · 0.5</output></label><select id="stability"><option value="0">Creative · 0</option><option value="0.5" selected>Natural · 0.5 (current)</option><option value="1">Robust · 1</option></select></div>
-<div class="control"><label for="similarity">Similarity to cloned voice <output id="similarityV" class="value">0.75</output></label><input type="range" id="similarity" min="0" max="1" step=".05" value=".75"></div>
+<div class="control"><label for="similarity">Similarity to cloned voice <output id="similarityV" class="value">0.80</output></label><input type="range" id="similarity" min="0" max="1" step=".05" value=".8"></div>
 <div class="control"><label for="style">Style exaggeration <output id="styleV" class="value">0.00</output></label><input type="range" id="style" min="0" max="1" step=".05" value="0"></div>
 <div class="control"><label class="switch"><input type="checkbox" id="boost"> Speaker boost</label><p class="small">Off matches the natural Free Talking voice route; experiment with stronger clarity.</p></div>
 <div class="control"><label for="format">Requested output format</label><select id="format"><option value="mp3_44100_128">MP3 · 44.1 kHz · 128 kbps (current)</option><option value="mp3_44100_192">MP3 · 44.1 kHz · 192 kbps</option></select><p class="small">The backup provider proxy may return 128 kbps regardless of this selection.</p></div>
@@ -43,6 +43,6 @@ async function generate(){
  finally{busy=false;$('generate').disabled=false}
 }
 $('generate').onclick=generate;$('replay').onclick=()=>{if(!latest)return;p.currentTime=0;update();p.play().catch(e=>status('Playback blocked: '+e.message))};
-$('reset').onclick=()=>{$('stability').value='0.5';$('similarity').value='.75';$('style').value='0';$('boost').checked=false;$('format').value='mp3_44100_128';$('pitch').value='0';$('tempo').value='1';update();status('Current v3 baseline restored.');};
+$('reset').onclick=()=>{$('stability').value='0.5';$('similarity').value='.8';$('style').value='0';$('boost').checked=false;$('format').value='mp3_44100_128';$('pitch').value='0';$('tempo').value='1';update();status('Current v3 baseline restored.');};
 update();
 </script></body></html>
