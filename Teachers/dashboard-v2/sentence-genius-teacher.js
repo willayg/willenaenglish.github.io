@@ -47,7 +47,10 @@ async function units(bookId){
 }
 async function sentences(bookId,unitId){
  if(!bookId||!unitId)return[];
- const occ=await catalog('source_content_occurrences?select=id,sentence_id,page_number&status=in.(review,published)&sentence_id=not.is.null&book_id=eq.'+encodeURIComponent(bookId)+'&unit_id=eq.'+encodeURIComponent(unitId)+'&order=page_number.asc&limit=900');
+ const allOccurrences=await catalog('source_content_occurrences?select=id,sentence_id,page_number,source_key,status&status=in.(review,published)&sentence_id=not.is.null&book_id=eq.'+encodeURIComponent(bookId)+'&unit_id=eq.'+encodeURIComponent(unitId)+'&order=page_number.asc&limit=900');
+ // Match the student app: exclude Everybody Up p4 writing prompts and old drafts.
+ const isEverybodyUp=allOccurrences.some(row=>/^eu3e\d+:/.test(String(row.source_key||'')));
+ const occ=isEverybodyUp?allOccurrences.filter(row=>row.status==='published'&&/^eu3e\d+:(?:aligned-sentence:unit:|sentence-occurrence:)/.test(String(row.source_key||''))):allOccurrences;
  const ids=[...new Set(occ.map(x=>x.sentence_id).filter(x=>uuidPattern.test(x)))];
  if(!ids.length)return[];
  const sentences=[];
