@@ -242,40 +242,40 @@
 /* Shared AI Willy mood states. Same SVG, no alternate character drawings.
    Idle face has NO mouth; mouth-wave remains speech-only. */
 .aw-svg .aw-eyes-mood{display:none}
-.bf-actor[data-mood="happy"] .aw-svg .aw-eyes-default,
-.bf-actor[data-mood="surprised"] .aw-svg .aw-eyes-default,
-.bf-actor[data-mood="sad"] .aw-svg .aw-eyes-default,
-.bf-actor[data-mood="angry"] .aw-svg .aw-eyes-default{display:none}
-.bf-actor[data-mood="happy"] .aw-svg .aw-eyes-happy,
-.bf-actor[data-mood="surprised"] .aw-svg .aw-eyes-surprised,
-.bf-actor[data-mood="sad"] .aw-svg .aw-eyes-sad,
-.bf-actor[data-mood="angry"] .aw-svg .aw-eyes-angry{display:inline}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-svg .aw-eyes-default,
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-eyes-default,
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-svg .aw-eyes-default,
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-svg .aw-eyes-default{display:none}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-svg .aw-eyes-happy,
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-eyes-surprised,
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-svg .aw-eyes-sad,
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-svg .aw-eyes-angry{display:inline}
 .aw-svg .aw-ear-left,.aw-svg .aw-ear-right,.aw-svg .aw-antenna{transition:transform .24s ease;transform-box:view-box}
 .aw-svg .aw-ear-left{transform-origin:237px 340px}
 .aw-svg .aw-ear-right{transform-origin:562px 340px}
 .aw-svg .aw-antenna{transform-origin:401px 205px}
-.bf-actor[data-mood="happy"] .aw-ear-left{transform:rotate(-7deg)}
-.bf-actor[data-mood="happy"] .aw-ear-right{transform:rotate(7deg)}
-.bf-actor[data-mood="happy"] .aw-antenna{transform:rotate(3deg)}
-.bf-actor[data-mood="surprised"] .aw-ear-left{transform:rotate(-15deg)}
-.bf-actor[data-mood="surprised"] .aw-ear-right{transform:rotate(15deg)}
-.bf-actor[data-mood="surprised"] .aw-antenna{transform:translateY(-6px)}
-.bf-actor[data-mood="sad"] .aw-ear-left{transform:rotate(9deg)}
-.bf-actor[data-mood="sad"] .aw-ear-right{transform:rotate(-9deg)}
-.bf-actor[data-mood="sad"] .aw-antenna{transform:rotate(-5deg)}
-.bf-actor[data-mood="angry"] .aw-ear-left{transform:rotate(12deg)}
-.bf-actor[data-mood="angry"] .aw-ear-right{transform:rotate(-12deg)}
-.bf-actor[data-mood="angry"] .aw-antenna{transform:rotate(8deg)}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-ear-left{transform:rotate(-7deg)}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-ear-right{transform:rotate(7deg)}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-antenna{transform:rotate(3deg)}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-ear-left{transform:rotate(-15deg)}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-ear-right{transform:rotate(15deg)}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-antenna{transform:translateY(-6px)}
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-ear-left{transform:rotate(9deg)}
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-ear-right{transform:rotate(-9deg)}
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-antenna{transform:rotate(-5deg)}
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-ear-left{transform:rotate(12deg)}
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-ear-right{transform:rotate(-12deg)}
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-antenna{transform:rotate(8deg)}
 @media(prefers-reduced-motion:reduce){.aw-svg .aw-ear-left,.aw-svg .aw-ear-right,.aw-svg .aw-antenna{transition:none}}
 
 /* Living motion for the CANONICAL robot head; no extra SVG copies or mouths.
    Compatible with the shared character actor in both speaking activities. */
-.aw-svg .aw-eyes-default{transform-box:view-box;transform-origin:400px 319px;animation:awWilliBlink 6.4s ease-in-out infinite}
+.bf-actor[data-state="speaking"] .aw-svg .aw-eyes-default{transform-box:view-box;transform-origin:400px 319px;animation:awWilliBlink 6.4s ease-in-out infinite}
 @keyframes awWilliBlink{0%,43%,46%,100%{transform:scaleY(1)}44.5%{transform:scaleY(.10)}}
-.bf-actor[data-mood="happy"] .aw-svg .aw-eyes-happy,
-.bf-actor[data-mood="surprised"] .aw-svg .aw-eyes-surprised,
-.bf-actor[data-mood="sad"] .aw-svg .aw-eyes-sad,
-.bf-actor[data-mood="angry"] .aw-svg .aw-eyes-angry{animation:awWilliReact .28s ease-out both;transform-box:view-box;transform-origin:400px 320px}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-svg .aw-eyes-happy,
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-eyes-surprised,
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-svg .aw-eyes-sad,
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-svg .aw-eyes-angry{animation:awWilliReact .28s ease-out both;transform-box:view-box;transform-origin:400px 320px}
 @keyframes awWilliReact{from{opacity:.4;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
 .bf-actor[data-state="speaking"] .aw-svg .aw-ear-left{animation:awWilliEarLeft .65s ease-in-out infinite alternate}
 .bf-actor[data-state="speaking"] .aw-svg .aw-ear-right{animation:awWilliEarRight .72s ease-in-out infinite alternate}
@@ -283,12 +283,24 @@
 @keyframes awWilliEarLeft{from{transform:rotate(-5deg)}to{transform:rotate(7deg)}}
 @keyframes awWilliEarRight{from{transform:rotate(6deg)}to{transform:rotate(-5deg)}}
 @keyframes awWilliAntenna{from{transform:rotate(-4deg) translateY(0)}to{transform:rotate(5deg) translateY(-4px)}}
-.bf-actor[data-state="idle"] .aw-svg .aw-antenna{animation:awWilliIdleAntenna 4.7s ease-in-out infinite}
-@keyframes awWilliIdleAntenna{0%,65%,100%{transform:rotate(0)}72%{transform:rotate(4deg)}80%{transform:rotate(-4deg)}88%{transform:rotate(0)}}
 @media(prefers-reduced-motion:reduce){
- .aw-svg .aw-eyes-default,.bf-actor[data-mood] .aw-svg .aw-eyes-mood,
+ .bf-actor[data-state="speaking"] .aw-svg .aw-eyes-default,.bf-actor[data-state="speaking"] .aw-svg .aw-eyes-mood,
  .bf-actor[data-state="speaking"] .aw-svg .aw-ear-left,
  .bf-actor[data-state="speaking"] .aw-svg .aw-ear-right,
  .bf-actor[data-state="speaking"] .aw-svg .aw-antenna,
- .bf-actor[data-state="idle"] .aw-svg .aw-antenna{animation:none!important}
 }
+
+/* Static whenever not speaking: no blinking, ear/antenna motion or mood face.
+   Never show a smile in ANY state or character-menu portrait. */
+.aw-svg .aw-idle-mouth{display:none!important}
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-mouth-wave,
+.ft-character-symbol .aw-svg .aw-mouth-wave,
+#ftResultMascot .aw-svg .aw-mouth-wave{display:none!important}
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-ear-left,
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-ear-right,
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-antenna,
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-eyes-default{
+ animation:none!important;transform:none!important;transition:none!important
+}
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-eyes-mood{display:none!important}
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-eyes-default{display:inline!important}
