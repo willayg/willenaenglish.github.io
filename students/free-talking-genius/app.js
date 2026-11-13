@@ -68,8 +68,7 @@ const aiRecorder=createFreeTalkingRecorder({
   if(state.repeatStep&&processing)$('ftRepeatMessage').textContent='확인 중…';
   if(state.repeatStep&&!recording&&!processing&&state.repeatTranscript&&!state.repeatChecking){
    const spoken=state.repeatTranscript;state.repeatTranscript=null;
-   if(state.repeatMode==='new')void submitNewIdea(spoken);
-   else void submitRepetition(spoken);
+   void submitRepetition(spoken);
   }
   const newIdea=$('ftRepeatNewIdea');
   if(newIdea&&state.repeatStep){
@@ -756,27 +755,6 @@ function showRepeatScreen(){
  setTurn('student');
  void aiRecorder.prepare();
 }
-async function submitNewIdea(transcript){
- if(!state.repeatStep||state.repeatChecking||!state.current||!state.session)return;
- state.repeatChecking=true;
- const previous=state.feedback;
- $('ftRepeatMessage').textContent='새 문장을 확인하고 있어요…';
- $('ftTranscriptEdit').value=transcript;
- $('ftHeardText').textContent=transcript;
- $('ftEditTranscript').disabled=false;
- state.repeatStep=false;
- try{
-  await submit();
-  if(state.feedback?.id===previous?.id){
-   state.repeatStep=true;
-   $('ftQuestionStage').dataset.step='repeat';
-   $('ftRepeatMessage').textContent='채점하지 못했어요. 다시 시도해 주세요.';
-  }
- }finally{
-  state.repeatChecking=false;state.repeatMode=null;
-  $('ftRepeatNewIdea').disabled=false;
- }
-}
 async function submitRepetition(transcript){
  if(!state.repeatStep||state.repeatChecking||!state.feedback?.id||!state.session?.id)return;
  state.repeatChecking=true;$('ftTurnCircle').disabled=true;
@@ -826,9 +804,14 @@ function questionIndexAfter(start=0){
 function renderQuestion({retry=false}={}){
  retryVoice.stop();
  aiRecorder.cancel();
- state.repeatStep=false;state.repeatTranscript=null;
+ state.repeatStep=false;state.repeatMode=null;state.repeatTranscript=null;state.repeatChecking=false;
  $('ftWilliVoice').prepend($('ftTurnCircle'));
  delete $('ftQuestionStage').dataset.step;
+ // Returning for a new idea must remove the previous answer and correction UI.
+ $('ftRepeatScreen').hidden=true;
+ $('ftScoreSplash').hidden=true;
+ $('ftOriginalAnswer').textContent='';
+ $('ftCorrection').textContent='';
  const questions=groups();
  if(!state.session||!questions.length)return;
  const sameQuestion=retry&&state.current&&attemptsFor(state.session.id,state.current.id).length<20;
@@ -1289,14 +1272,10 @@ $('ftRepeatFixedAction').addEventListener('click',()=>{
  $('ftTurnCircle').click();
 });
 $('ftRepeatNewIdea').addEventListener('click',()=>{
- if(!state.repeatStep||state.repeatChecking||state.loading||aiRecorder.isProcessing()||!['pigfish','bunny-v3','willy'].includes(questionVoice.getVoice()))return;
- if(aiRecorder.isRecording()){
-  if(state.repeatMode==='new')aiRecorder.stop();
-  return;
- }
- state.repeatMode='new';state.repeatTranscript=null;
- $('ftRepeatMessage').textContent='새로운 문장을 말해 보세요.';
- void aiRecorder.start(state.session.id,state.current.id);
+ if(!state.repeatStep||state.repeatChecking||state.loading||aiRecorder.isProcessing()||aiRecorder.isRecording()||!['pigfish','bunny-v3','willy'].includes(questionVoice.getVoice()))return;
+ // Start a fresh answer to the SAME question in the normal question/recording UI.
+ // Saved attempts are untouched, but the old transcript and correction are cleared.
+ renderQuestion({retry:true});
 });
 $('ftRetry').addEventListener('click',()=>{
  if(state.loading||!state.current||!state.feedback||attemptPassed(state.feedback))return;
