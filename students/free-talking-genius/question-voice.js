@@ -49,7 +49,7 @@ export function createFreeTalkingVoice({host,getToken}){
   button?.classList.toggle('is-playing',playing);
   if(button)button.setAttribute('aria-pressed',String(playing));
  }
- audio.addEventListener('play',()=>{setPlaying(true);status('Willo가 질문을 읽고 있어요…')});
+ audio.addEventListener('play',()=>{setPlaying(true);status((activeVoice()==='willy'?'AI Willy':activeVoice()==='bunny-v3'?'Bunny Fox':activeVoice()==='pigfish'?'Pigfish':'Willo')+'가 질문을 읽고 있어요…')});
  audio.addEventListener('pause',()=>{setPlaying(false);if(!audio.ended)status('다시 듣기를 눌러 주세요.')});
  audio.addEventListener('ended',()=>{setPlaying(false);status('다시 듣기를 누르면 질문을 또 들을 수 있어요.')});
  audio.addEventListener('error',()=>{setPlaying(false);status('음성을 불러오지 못했어요. 질문을 읽고 답해 주세요.')});
@@ -301,7 +301,7 @@ export function createFreeTalkingVoice({host,getToken}){
   selected=String(questionId||'');currentUrl='';loadedVoice='';
   setPlaying(false);
   if(button)button.disabled=true;
-  status('Willo 음성을 불러오는 중…');
+  status((activeVoice()==='willy'?'AI Willy':activeVoice()==='bunny-v3'?'Bunny Fox':activeVoice()==='pigfish'?'Pigfish':'Willo')+' 음성을 불러오는 중…');
   showModel(null);
   if(!selected)return;
   try{
