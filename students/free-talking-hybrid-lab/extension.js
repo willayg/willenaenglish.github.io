@@ -2,7 +2,8 @@
 // Everything here is additive; no production app source is patched.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261113-willy-wave4';
-import {BUNNY_FOX_ART,PIGFISH_ART,WILLY_HEAD_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
+import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
+import {createWillySvg} from '/students/free-talking-genius/willy-svg.js?v=20261113-shared-svg1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
 const releaseMode=new URLSearchParams(location.search).get('release')==='1';
@@ -485,7 +486,7 @@ function ftShowFinish(result,{playSound=true}={}){
  $('ftResultPoints').textContent='+'+result.points+' Points';
  const portrait=$('ftResultMascot');portrait.replaceChildren();portrait.classList.remove('is-speaking');
  if(state.character==='bunny')portrait.innerHTML=BUNNY_FOX_ART;
- else if(state.character==='willy')portrait.innerHTML=WILLY_HEAD_ART;
+ else if(state.character==='willy')portrait.innerHTML=createWillySvg({}, {stage:true});
  else if(state.character==='pigfish'){
   portrait.innerHTML=PIGFISH_ART.replaceAll('id="pigBody"','id="pigBody-finish"').replaceAll('id="pigBelly"','id="pigBelly-finish"').replaceAll('url(#pigBody)','url(#pigBody-finish)').replaceAll('url(#pigBelly)','url(#pigBelly-finish)');
  }else{
