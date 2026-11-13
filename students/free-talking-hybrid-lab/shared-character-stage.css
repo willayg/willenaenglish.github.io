@@ -1,26 +1,53 @@
-/* Isolated Free Talking character presentation; never targets Speaking. */
-#demo #actorStage .ft-hybrid-character-stage{position:relative;display:grid;place-items:center;width:100%;height:100%;min-height:0;pointer-events:none}
-#demo #actorStage .ft-hybrid-character-circle{position:relative;display:grid;place-items:center;isolation:isolate;width:clamp(160px,26dvh,245px);height:clamp(160px,26dvh,245px);aspect-ratio:1;border:0;outline:0;background:transparent;box-shadow:none;border-radius:50%;flex:none}
-#demo #actorStage .ft-hybrid-character-backdrop{position:absolute;inset:0;border-radius:50%;background:#fff;border:0;z-index:0}
-#demo #actorStage .ft-hybrid-character-timer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;transform:none;pointer-events:none;z-index:1;display:block;aspect-ratio:1;flex:none}
-#demo #actorStage .ft-hybrid-character-timer circle{fill:none;stroke-width:8;stroke-linecap:round}
-#demo #actorStage .ft-hybrid-timer-track{stroke:#bcf0f3}
-#demo #actorStage .ft-hybrid-timer-progress{stroke:#53c5d1;stroke-dasharray:100;stroke-dashoffset:0;transition:stroke-dashoffset .12s linear}
-#demo #actorStage .ft-hybrid-character-art{position:absolute;inset:12%;z-index:3;display:grid;place-items:center}
-#demo #actorStage .ft-hybrid-character-art .bf-actor{position:relative;display:block;width:100%;height:100%;transform:none;filter:none;pointer-events:none}
-#demo #actorStage .ft-hybrid-character-art .bf-actor[hidden]{display:none!important}
-#demo #actorStage .ft-hybrid-character-art .bf-svg{display:block;width:100%;height:100%;overflow:visible}
-#demo #actorStage .ft-hybrid-character-art .aw-svg{display:block;width:100%;height:100%;overflow:visible}
-#demo #actorStage .ft-hybrid-character-art .pf-svg{overflow:visible}
-#demo #actorStage #ftSpeechTimeRing{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;z-index:2!important;border-radius:50%!important;pointer-events:none!important;transform:none!important}
-#demo #actorStage #ftSpeechTimeRing[hidden]{display:none!important}
-#demo #actorStage .ft-hybrid-character-stage[data-phase="listening"] .ft-hybrid-timer-progress{stroke:#30b895}
-#demo #actorStage .ft-hybrid-character-stage[data-phase="speaking"] .ft-hybrid-timer-progress{stroke:#e698c3}
-@media(max-width:450px){#demo #actorStage .ft-hybrid-character-circle{width:clamp(150px,27dvh,215px);height:clamp(150px,27dvh,215px)}}
-@media(prefers-reduced-motion:reduce){#demo #actorStage .ft-hybrid-character-timer circle{transition:none}}
-
-/* One visible ring system: the SVG track and progress share the same viewBox,
-   centre and radius. The legacy conic-gradient recording halo sat outside
-   that radius and produced the offset/double-ring effect on Android. */
-#demo #actorStage .ft-hybrid-character-circle #ftSpeechTimeRing{display:none!important}
-#demo #actorStage .ft-hybrid-character-timer{transform:none!important;transform-origin:center center!important}
+/* Shared original Free Talking character ring layout (pre Nov 13 SVG-stage).
+   One fixed 225px stage and one common centre for Bunny Fox, Pigfish, AI Willy.
+   Does not style or mount the structured Speaking controls. */
+#demo #actorStage .ft-original-character-stage{
+ position:relative!important;display:grid!important;place-items:center!important;
+ width:225px!important;height:225px!important;min-width:225px!important;
+ min-height:225px!important;flex:0 0 225px!important;
+ margin:0 auto!important;transform:none!important;aspect-ratio:1;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar{
+ position:relative!important;display:grid!important;place-items:center!important;
+ width:208px!important;height:208px!important;min-width:208px!important;
+ min-height:208px!important;border-radius:50%;z-index:3;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar::before{
+ content:""!important;display:block!important;position:absolute!important;
+ inset:0!important;border:4px solid #d9eff1!important;border-radius:50%!important;
+ background:#fff!important;box-shadow:none!important;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar .bf-actor{
+ position:absolute!important;top:50%!important;left:50%!important;
+ width:81%!important;height:81%!important;display:block!important;
+ transform:translate(-50%,-50%)!important;filter:none!important;
+ pointer-events:none!important;z-index:3!important;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar .bf-actor[hidden]{display:none!important}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar .bf-svg,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar .aw-svg{
+ width:100%!important;height:100%!important;display:block!important;overflow:visible!important;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-timer{
+ position:absolute!important;inset:0!important;display:block!important;
+ width:100%!important;height:100%!important;z-index:1!important;
+ pointer-events:none!important;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-timer svg{
+ display:block!important;width:100%!important;height:100%!important;
+ transform:rotate(-90deg)!important;transform-origin:50% 50%!important;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-timer circle{
+ fill:none!important;stroke-width:18!important;stroke-linecap:round!important;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-track{stroke:#bcf0f3!important}
+#demo #actorStage .ft-original-character-stage .ft-animal-progress{
+ stroke:#53c5d1!important;stroke-dasharray:100!important;stroke-dashoffset:0!important;
+}
+#demo #actorStage .ft-original-character-stage #ftSpeechTimeRing{
+ position:absolute!important;inset:0!important;top:0!important;left:0!important;
+ width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;
+ transform:none!important;margin:0!important;z-index:2!important;aspect-ratio:1!important;
+ border-radius:50%!important;pointer-events:none!important;
+}
+#demo #actorStage .ft-original-character-stage #ftSpeechTimeRing[hidden]{display:none!important}
