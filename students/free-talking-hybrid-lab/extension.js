@@ -1,7 +1,7 @@
 // Demo overlay. The ORIGINAL Free Talking Genius runs unchanged inside the same-origin iframe.
 // Everything here is additive; no production app source is patched.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
-import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261113-face-gradient2';
+import {createHybridCharacterStage} from './shared-character-stage.js?v=20261113-isolated1';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {createWillySvg} from '/students/free-talking-genius/willy-svg.js?v=20261113-head-only1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
@@ -616,62 +616,16 @@ function actorPhase(phase){
  const mode=phase==='speaking'?'speaking':phase==='listening'?'listening':'thinking';
  if(indicator){indicator.hidden=false;indicator.dataset.mode=mode}
  if(label)label.textContent=mode.charAt(0).toUpperCase()+mode.slice(1);
- const circle=$('ftTurnCircle');
- if(circle){
-  circle.dataset.phase=phase==='speaking'?'ai':phase==='listening'?'student':phase==='thinking'?'thinking':'ready';
-  circle.dataset.listening=phase==='listening'?'true':'false';
- }
- const action=$('ftExtensionAction');
- if(action){
-  const pause=Boolean(state.paused),status=pause?'Paused':phase==='speaking'?'Listening to AI':phase==='listening'?'Listening to you':'Thinking…';
-  action.querySelector('.ft-animal-action-label').textContent=status;
-  action.dataset.state=pause?'paused':phase==='speaking'?'playing':phase==='listening'?'recording':'thinking';
-  action.disabled=!state.active;
- }
- state.actor?.setSpeaking(phase==='speaking');
+ state.actor?.setPhase(phase);
 }
 function showActor(){
- const host=$('actorStage');host.replaceChildren();
- // Build the experimental actor locally. Do not clone, mutate or restyle
- // the original Speaking track's controls or transcript interface.
- const shell=document.createElement('div');shell.className='free-talking-genius';shell.id='ftExtensionOriginalShell';
- const session=document.createElement('section');session.id='ftSession';session.className='ft-conversation';session.hidden=false;
- const voice=document.createElement('section');voice.id='ftWilliVoice';voice.className='ft-willi-voice';
- // Reuse Speaking's existing interactive circle markup and shared actor.
- // This overlay is hands-free: its button appearance mirrors Speaking, while
- // conversation mic control remains owned by the existing Realtime session.
- const sourceCircle=appDocument()?.getElementById('ftTurnCircle');
- const circle=sourceCircle?.cloneNode(true)||document.createElement('button');
- circle.id='ftTurnCircle';
- circle.className='ft-extension-shared-circle';
- circle.type='button';
- circle.removeAttribute('disabled');
- circle.setAttribute('aria-label','Conversation character and microphone status');
- circle.replaceChildren();
- voice.append(circle);session.append(voice);shell.append(session);host.append(shell);
- // Pure visual overlay: no changes to the existing character SVG or mic.
- const speechRing=document.createElement('div');speechRing.id='ftSpeechTimeRing';
- speechRing.setAttribute('aria-hidden','true');speechRing.hidden=true;
- speechRing.style.setProperty('--ft-record-remaining','1');
- const preview=document.createElement('div');preview.id='ftLiveSpeechPreview';
- preview.setAttribute('aria-hidden','true');host.append(preview);
- const stage=document.createElement('div');stage.className='ft-animal-stage';
- const anchor=document.createElement('div');anchor.className='ft-animal-avatar';
- const timer=document.createElement('div');timer.className='ft-animal-timer';
- timer.setAttribute('aria-hidden','true');
- timer.innerHTML='<svg viewBox="0 0 240 240"><circle class="ft-animal-track" cx="120" cy="120" r="110" pathLength="100"/><circle class="ft-animal-progress" cx="120" cy="120" r="110" pathLength="100"/></svg>';
- stage.append(anchor,timer,speechRing);
- voice.append(stage);anchor.append(circle);
- const action=document.createElement('button');action.type='button';
- action.className='ft-animal-action ft-extension-action';action.id='ftExtensionAction';
- action.innerHTML='<span class="ft-animal-spinner" aria-hidden="true"><i></i></span><span class="ft-animal-action-label"></span>';
- voice.append(action);
- action.addEventListener('click',()=>{if(!state.active)return;$('pauseResume')?.click()});
- circle.addEventListener('click',()=>{if(!state.active)return;$('pauseResume')?.click()});
- state.actor=createFreeTalkingCharacters({circle,session,voiceHost:voice,choices:{}});
- state.actor.select(state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':state.character==='willy'?'willy':'marin');
+ // Visual-only Free Talking component. Does not clone Speaking's recorder UI.
+ state.actor=createHybridCharacterStage($('actorStage'),
+  state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':
+  state.character==='willy'?'willy':'marin');
  actorPhase('ready');
 }
+
 function stopSpeech(){
  state.generation++;
  try{state.controller?.abort()}catch{}
