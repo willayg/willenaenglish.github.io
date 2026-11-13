@@ -11,6 +11,7 @@ const VOICES={
  lili:{model:'eleven_v3',voice:'M7zl2TS7ORAIGUejDfoy',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
  pigfish:{model:'eleven_v3',voice:'W7UbuMY4ypluqgZS2UzT',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
  // Use the exact existing ElevenLabs storage-key format. The cloned voice ID itself gives a distinct hash and prevents collisions.
+ willi2:{model:'eleven_v3',voice:'GSGMGjgDtwaXe25hDMNI',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
  willi_clone:{model:'eleven_v3',voice:'0yhUIig4twaXoIhuQoCQ',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
  willi_mp3:{model:'gpt-4o-mini-tts',voice:'marin',variant:'fallback',prefix:'ft_fallback_v1_',tag:'free_talking_legacy_fallback_mp3_v1'},
  willi_wav:{model:'gpt-realtime-2.1-mini',voice:'marin',variant:'realtime',prefix:'ft_realtime_v1_',tag:'free_talking_realtime_question_wav_v1'}
@@ -58,7 +59,7 @@ function base64(buffer){
  return btoa(str);
 }
 async function createMp3(env,text,voice){
- if(voice==='lili'||voice==='pigfish'||voice==='willi_clone'){
+ if(voice==='lili'||voice==='pigfish'||voice==='willi_clone'||voice==='willi2'){
   const cfg=VOICES[voice],secret=String(env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY||'').trim();
   const settings={stability:0.5};
   // Cloudflare may have an ElevenLabs API key *ID* rather than a secret key.
@@ -163,7 +164,7 @@ export async function onRequestPost({request,env}){
    const rows=await contentRows('free_talking_questions?select=id,question_en&is_published=eq.true&order=id.asc&limit=800');
    const pool=rows.filter(q=>UUID.test(String(q.id))&&String(q.question_en||'').trim().length>=12);
    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
-   const options=['lili','willi_clone','pigfish','willi_mp3'];
+   const options=['lili','willi2','willi_clone','pigfish','willi_mp3'];
    const samples=[],scanned=[];
    // A few small R2 inventory calls are enough when hundreds of clips are already cached.
    // Cap the work; no 500+ question scan and no minutes-long spinner.
@@ -171,7 +172,7 @@ export async function onRequestPost({request,env}){
     const batch=pool.slice(offset,offset+15),files=[],records=[];
     for(const q of batch){
      const keys={};
-     for(const voice of ['lili','willi_clone','pigfish','willi_mp3','willi_wav']){
+     for(const voice of ['lili','willi2','willi_clone','pigfish','willi_mp3','willi_wav']){
       const key=await hashKey(q.question_en,VOICES[voice]);
       keys[voice]={key,format:voice==='willi_wav'?'wav':'mp3'};
       files.push(key+'.'+keys[voice].format);
@@ -193,7 +194,7 @@ export async function onRequestPost({request,env}){
   }
   if(body.action==='lab_clip'){
    const voice=String(body.voice||''),questionId=String(body.question_id||'');
-   if(!['lili','willi_clone','pigfish','willi_mp3'].includes(voice)||!UUID.test(questionId))return json(400,{success:false,error:'Invalid voice or phrase'});
+   if(!['lili','willi2','willi_clone','pigfish','willi_mp3'].includes(voice)||!UUID.test(questionId))return json(400,{success:false,error:'Invalid voice or phrase'});
    const rows=await contentRows('free_talking_questions?select=id,question_en&is_published=eq.true&id=eq.'+questionId+'&limit=1');
    if(!rows.length)return json(404,{success:false,error:'Phrase not found'});
    const configs=voice==='willi_mp3'?[VOICES.willi_wav,VOICES.willi_mp3]:[VOICES[voice]];
@@ -207,7 +208,7 @@ export async function onRequestPost({request,env}){
    return json(404,{success:false,error:'This exact recording is not cached in R2'});
   }
   if(body.action==='catalog')return json(200,{success:true,...await catalog(),
-   formats:{lili:'ElevenLabs Bunny v3 · MP3',pigfish:'ElevenLabs Pigfish v3 · MP3',willi_clone:'AI Willi cloned voice · ElevenLabs v3 · MP3',willi_mp3:'OpenAI Marin fallback · MP3'}});
+   formats:{lili:'ElevenLabs Bunny v3 · MP3',pigfish:'ElevenLabs Pigfish v3 · MP3',willi2:'AI Willi 2 · ElevenLabs v3 · MP3',willi_clone:'Original clone (reserved) · ElevenLabs v3 · MP3',willi_mp3:'OpenAI Marin fallback · MP3'}});
   const voice=String(body.voice||'');
   const config=VOICES[voice];
   if(!config)return json(400,{success:false,error:'Choose an available MP3 voice'});
