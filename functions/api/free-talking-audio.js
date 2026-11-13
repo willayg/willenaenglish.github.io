@@ -18,9 +18,11 @@ const ELEVEN_VOICES=Object.freeze({
  bunny:'M7zl2TS7ORAIGUejDfoy',
  'bunny-v3':'M7zl2TS7ORAIGUejDfoy',
  pigfish:'W7UbuMY4ypluqgZS2UzT',
- willy:'0yhUIig4twaXoIhuQoCQ',
- // Live Free Talking only; keep original Willy intact for structured Speaking.
- willy2:'GSGMGjgDtwaXe25hDMNI'
+ // Structured Speaking and live Free Talking now share Willi 2's ID and R2 cache.
+ willy:'GSGMGjgDtwaXe25hDMNI',
+ willy2:'GSGMGjgDtwaXe25hDMNI',
+ // Original clone is preserved as a reserved future character (The Prince).
+ prince:'0yhUIig4twaXoIhuQoCQ'
 });
 const ELEVEN_MODEL='eleven_v3';
 // ElevenLabs requires the API key on Cloudflare, not Netlify.
