@@ -213,3 +213,13 @@
 @keyframes awNod{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(2deg) translateY(-4px)}}
 @media(max-width:600px){.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle{width:220px!important;height:220px!important}}
 @media(prefers-reduced-motion:reduce){.free-talking-genius .aw-head{animation:none!important}}
+
+/* AI Willy: cyan equalizer mouth only while AI audio is actually speaking. */
+.aw-mouth-wave{opacity:0;transition:opacity .12s}
+.bf-actor[data-state="speaking"] .aw-mouth-wave{opacity:1}
+.bf-actor[data-state="speaking"] .aw-mouth-wave .aw-bar{transform-origin:center;transform-box:fill-box;animation:awMouth .45s ease-in-out infinite alternate}
+.bf-actor[data-state="speaking"] .aw-bar-2,.bf-actor[data-state="speaking"] .aw-bar-4{animation-delay:-.18s}
+.bf-actor[data-state="speaking"] .aw-bar-3{animation-delay:-.31s}
+.bf-actor[data-state="speaking"] .aw-bar-5{animation-delay:-.08s}
+@keyframes awMouth{0%{transform:scaleY(.3);opacity:.7}55%{transform:scaleY(1.4);opacity:1}100%{transform:scaleY(.65);opacity:.85}}
+@media(prefers-reduced-motion:reduce){.bf-actor[data-state="speaking"] .aw-mouth-wave .aw-bar{animation:none!important}}
