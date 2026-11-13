@@ -683,6 +683,20 @@ body.ft-release #demo .conversation-text{min-height:80px}
 #demo #actorStage .ft-extension-action:disabled{opacity:.65!important;cursor:default!important}
 #demo #actorStage{overflow:visible!important}
 @media(max-width:450px){#demo #actorStage .ft-animal-stage{transform:scale(.85);transform-origin:center;flex:0 0 205px}}
+
+/* Single coordinate system for all Willy rings: timer, recording halo and head. */
+#demo #actorStage #ftSpeechTimeRing{
+ position:absolute!important;inset:0!important;top:0!important;left:0!important;
+ width:100%!important;height:100%!important;
+ min-width:0!important;min-height:0!important;
+ transform:none!important;margin:0!important;z-index:2!important;
+ border-radius:50%!important;
+}
+#demo #actorStage .ft-animal-stage{transform:none!important;flex:0 0 225px!important}
+@media(max-width:450px){
+ #demo #actorStage .ft-animal-stage{transform:none!important;flex:0 0 225px!important}
+}
+#ftReleaseIntro .ft-willy-coming-notice{display:block;color:#a26b8d;font-size:11px;font-weight:800;line-height:1.4}
 </style></head><body><section id="ftReleaseIntro" class="free-talking-genius" hidden aria-label="Choose your Free Talking character">
  <div id="ftReleaseNativeMenu" aria-label="Character selection"></div>
  <p id="ftReleaseError" role="alert" hidden></p>
@@ -759,4 +773,4 @@ body.ft-release #demo .conversation-text{min-height:80px}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261113-speaking-shared-head2"></script></body></html>
+<script type="module" src="./extension.js?v=20261113-pin-concentric1"></script></body></html>
