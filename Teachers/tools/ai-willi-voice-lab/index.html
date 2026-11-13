@@ -18,9 +18,9 @@
 <p style="font-size:12px">Compare the original Willi clone with Willi 2 using ElevenLabs v3. Add optional bracketed delivery cues to each generated message. These cues guide delivery but do not train the voice or guarantee an Irish accent. Each new generation uses credits; no student settings or R2 files change.</p>
 <div class="controls">
 <div class="control"><label for="elevenVoice">ElevenLabs voice</label><select id="elevenVoice" style="width:100%;padding:10px;margin-top:8px;border:1px solid #b6dbdd;border-radius:9px"><option value="original">Original Willi</option><option value="willi2">Willi 2</option></select></div>
-<div class="control"><label for="elevenCue">Delivery cue</label><select id="elevenCue" style="width:100%;padding:10px;margin-top:8px;border:1px solid #b6dbdd;border-radius:9px"><option value="">None</option><option value="[Irish] [Energetic]">Irish · Energetic</option><option value="[Irish] [Bombastic]">Irish · Bombastic</option><option value="[Bombastic]">Bombastic</option><option value="[Irish] [Bombastic]">Irish · Bombastic</option><option value="[Bombastic]">Bombastic</option><option value="[Irish] [Playful]">Irish · Fun / playful</option><option value="[Irish] [Laughing]">Irish · Laughing</option><option value="[Irish] [Cheerful]">Irish · Cheerful</option><option value="[Irish] [Excited]">Irish · Excited</option><option value="custom">Custom bracketed cues</option></select></div>
+<div class="control"><label for="elevenCue">Delivery cue</label><select id="elevenCue" style="width:100%;padding:10px;margin-top:8px;border:1px solid #b6dbdd;border-radius:9px"><option value="">None</option><option value="[Energetic] [Irish]">Energetic · Irish</option><option value="[Bombastic] [Irish]">Bombastic · Irish</option><option value="[Bombastic]">Bombastic</option><option value="[Playful] [Irish]">Playful · Irish</option><option value="[Laughing] [Irish]">Laughing · Irish</option><option value="[Cheerful] [Irish]">Cheerful · Irish</option><option value="[Excited] [Irish]">Excited · Irish</option><option value="custom">Custom bracketed cues</option></select></div>
 </div>
-<div class="control" id="elevenCustomWrap" hidden style="margin-top:10px"><label for="elevenCustomCue">Custom cues (e.g. [Irish] [Warmly])</label><input id="elevenCustomCue" maxlength="90" style="width:100%;padding:10px;margin-top:8px;border:1px solid #b6dbdd;border-radius:9px" placeholder="[Irish] [Warmly]"></div>
+<div class="control" id="elevenCustomWrap" hidden style="margin-top:10px"><label for="elevenCustomCue">Custom cues (e.g. [Warmly] [Irish])</label><input id="elevenCustomCue" maxlength="90" style="width:100%;padding:10px;margin-top:8px;border:1px solid #b6dbdd;border-radius:9px" placeholder="[Warmly] [Irish]"></div>
 <label for="elevenText">Message to speak <output id="elevenCount">0 / 250</output></label>
 <textarea id="elevenText" rows="4" maxlength="250" style="display:block;box-sizing:border-box;width:100%;margin:8px 0 14px;padding:12px;border:1px solid #b6dbdd;border-radius:10px;font:inherit;resize:vertical" placeholder="Write exactly what you want Willi to say…">Hello! I'm AI Willi. Let's learn something new together today!</textarea>
 <div class="controls">
@@ -69,7 +69,7 @@ const audioCache=new Map();let busy=false,lastElevenKey=null;
 const elevenAPI='/api/ai-willy-eleven-preview';
 function deliveryCue(){
  const value=$('elevenCue').value==='custom' ? $('elevenCustomCue').value.trim() : $('elevenCue').value;
- if(value&&!/^(?:\[[^\[\]\r\n]{1,35}\]\s*)+$/.test(value))throw Error('Use bracketed cues, such as [Irish] [Energetic].');
+ if(value&&!/^(?:\[[^\[\]\r\n]{1,35}\]\s*)+$/.test(value))throw Error('Use bracketed cues, such as [Energetic] [Irish].');
  return value;
 }
 function updateElevenLabels(){
