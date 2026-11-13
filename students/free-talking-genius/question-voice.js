@@ -112,12 +112,8 @@ export function createFreeTalkingVoice({host,getToken}){
   if(stored.has(cacheId))return stored.get(cacheId);
   if(inflight.has(cacheId))return inflight.get(cacheId);
   // A foreground playback waits for any ongoing write of the same clip.
-  if(warming.has(questionId+'|'+voice)){
-   // A preloader failure should not conceal an existing R2 recording from playback.
-   try{await warming.get(questionId+'|'+voice)}catch(e){
-    console.warn('[Free Talking] background warm failed, checking playback cache',String(e?.message||e).slice(0,90));
-   }
-  }
+  // Foreground playback must never queue behind bulk/background audio generation.
+  // Earlier versions prewarmed hundreds of missing MP3s, starving live questions.
   const work=fetchVoice(questionId,voice).then(file=>{
    if(destroyed){if(file.owned)URL.revokeObjectURL(file.url);return file}
    stored.set(cacheId,file);
@@ -239,42 +235,12 @@ export function createFreeTalkingVoice({host,getToken}){
     render(' · '+loaded+' saved clips loaded'+(loadFailures?' · '+loadFailures+' load errors':''));
     return;
    }
-   // Stage 2: verify storage, then generate one missing voice clip at a time.
-   // Never re-run a missing clip while a previous TTS request is outstanding.
-   try{await confirmStorageWritable()}
-   catch(e){
-    if(current())render(' · generation paused: storage unavailable ('+String(e?.message||e).slice(0,55)+')');
-    return;
-   }
-   if(!current())return;
-   let generated=0,failed=0,liliUnavailable=false;
-   for(const job of missingJobs){
-    if(!current())return;
-    if(job.voice==='bunny-v3'&&liliUnavailable)continue;
-    try{
-     const outcome=await warm(job.id,job.voice);
-     if(outcome==='hit'||outcome==='generated_saved'){complete[job.voice]++;generated++}
-    }catch(e){
-     failed++;
-     const message=String(e?.message||e);
-     console.warn('[Free Talking] paced missing-clip generation',job.voice,message.slice(0,150));
-     if(job.voice==='bunny-v3'&&/ELEVENLABS_KEY_NOT_CONFIGURED|ELEVENLABS_KEY_NOT_AVAILABLE|ELEVENLABS_PROXY_UNAVAILABLE/i.test(message)){
-      liliUnavailable=true;
-      render(' · AI Lili unavailable; continuing Willo');
-      continue;
-     }
-     if(/R2|INVENTORY|401|403|sign.in|AUTH/i.test(message)){
-      render(' · paused: '+message.slice(0,85));
-      return;
-     }
-    }
-    render(' · generating missing audio '+generated+'/'+missingJobs.length+
-     (failed?' · '+failed+' failed':''));
-    if(!await gap(PRELOAD_GENERATION_GAP_MS))return;
-   }
-   render((failed?' · '+failed+' failed':'')+
-    (liliUnavailable?' · AI Lili unavailable':'')+
-    (loaded?' · '+loaded+' saved clips loaded':''));
+   // Background preload is cache-only. A current question takes priority and
+   // generates its own missing MP3 through fetchVoice -> R2 write. Never launch
+   // hundreds of paid synthesis jobs just by opening a textbook.
+   render(' · '+missingJobs.length+' missing (generated when needed)'+
+    (loadFailures?' · '+loadFailures+' cache load errors':''));
+
   }
   // A new request supersedes the old one, but starts only after its active
   // network operation finishes. Prevents races between textbook/unit changes.
