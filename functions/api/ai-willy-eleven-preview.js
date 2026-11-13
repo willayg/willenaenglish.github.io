@@ -1,7 +1,7 @@
 // Teacher-only AI Willy ElevenLabs v3 audition. No R2, voice configuration or student writes.
 const SUPA='https://fiieuiktlsivwfgyivai.supabase.co';
 const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const ID='0yhUIig4twaXoIhuQoCQ';
+const VOICES={original:'0yhUIig4twaXoIhuQoCQ',willi2:'GSGMGjgDtwaXe25hDMNI'};
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const respond=(code,body)=>new Response(JSON.stringify(body),{status:code,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 async function isTeacher(request){
@@ -23,6 +23,8 @@ export async function onRequestPost({request,env}){
   const data=await request.json().catch(()=>null);
   if(!data||typeof data!=='object')return respond(400,{success:false,error:'Invalid input'});
   const text=String(data.text||'').trim();
+  const voice=String(data.voice||'original');
+  if(!Object.hasOwn(VOICES,voice))return respond(400,{success:false,error:'Unknown Willi voice'});
   if(text.length<2||text.length>250)return respond(400,{success:false,error:'Use between 2 and 250 characters'});
   // Eleven v3 stability is tested at the supported creative / natural / robust presets.
   const stability=Number(data.stability);
@@ -36,7 +38,7 @@ export async function onRequestPost({request,env}){
   const payload={text,model_id:'eleven_v3',voice_settings:settings};
   let buffer=null,provider='';
   if(key.startsWith('sk_')){
-   const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+ID+'?output_format='+format,{
+   const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+VOICES[voice]+'?output_format='+format,{
     method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
     body:JSON.stringify(payload),signal:AbortSignal.timeout(32000)});
    if(r.ok){buffer=await r.arrayBuffer();provider='Cloudflare direct'}
@@ -45,7 +47,7 @@ export async function onRequestPost({request,env}){
    // The established Netlify bridge has the provider secret on preview projects.
    const r=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text,voice_id:ID,model_id:'eleven_v3',voice_settings:settings}),
+    body:JSON.stringify({text,voice_id:VOICES[voice],model_id:'eleven_v3',voice_settings:settings}),
     signal:AbortSignal.timeout(36000)});
    if(!r.ok)return respond(502,{success:false,error:'ElevenLabs proxy HTTP '+r.status});
    const d=await r.json().catch(()=>null);
@@ -54,6 +56,6 @@ export async function onRequestPost({request,env}){
   }
   const b=new Uint8Array(buffer);
   if(b.length<500||b.length>1250000||!((b[0]===73&&b[1]===68&&b[2]===51)||(b[0]===255&&(b[1]&224)===224)))throw Error('Invalid MP3 from provider');
-  return respond(200,{success:true,audio:b64(buffer),mime:'audio/mpeg',provider,settings,format:provider==='Netlify bridge'?'mp3_44100_128':format});
+  return respond(200,{success:true,audio:b64(buffer),mime:'audio/mpeg',provider,voice,settings,format:provider==='Netlify bridge'?'mp3_44100_128':format});
  }catch(e){return respond(503,{success:false,error:String(e?.message||e).slice(0,160)})}
 }
