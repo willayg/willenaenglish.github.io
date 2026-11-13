@@ -1,0 +1,30 @@
+name: Check Free Talking shared character assets
+on:
+  push:
+    branches: [students]
+    paths:
+      - 'students/free-talking-genius/willy-svg.js'
+      - 'students/free-talking-genius/character-actor.js'
+      - 'students/free-talking-genius/character-animations.css'
+      - 'students/free-talking-genius/character-studio/index.html'
+      - 'students/free-talking-hybrid-lab/extension.js'
+      - 'students/free-talking-hybrid-lab/shared-character-stage.js'
+      - 'scripts/check-ai-willy-shared-asset.mjs'
+      - '.github/workflows/check-free-talking-character-assets.yml'
+  pull_request:
+    branches: [students]
+    paths:
+      - 'students/free-talking-genius/**'
+      - 'students/free-talking-hybrid-lab/**'
+      - 'scripts/check-ai-willy-shared-asset.mjs'
+permissions:
+  contents: read
+jobs:
+  asset-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/check-ai-willy-shared-asset.mjs
