@@ -1,10 +1,10 @@
 // Free Talking: preload the fixed quiet-audio encouragement for both characters.
 // Server returns audio only after verifying the clip is saved to shared R2.
 export function createFreeTalkingRetryVoice({getToken,onFinished,onPlaying}){
- const voices=['marin','bunny-v3','pigfish'];
+ const voices=['marin','bunny-v3','pigfish','willy'];
  const files=new Map(),inflight=new Map(),attempted=new Set();
  let sound=null,disposed=false,playVersion=0;
- const status={marin:'not_loaded','bunny-v3':'not_loaded',pigfish:'not_loaded'};
+ const status={marin:'not_loaded','bunny-v3':'not_loaded',pigfish:'not_loaded',willy:'not_loaded'};
  const parseAudio=base64=>{
   const binary=atob(base64),bytes=new Uint8Array(binary.length);
   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
