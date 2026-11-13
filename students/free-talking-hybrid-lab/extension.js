@@ -1231,6 +1231,7 @@ async function playLocalClip(url,direct=false){
 async function playAnchor(index){
  if(!state.active||index>=state.anchors.length)return;
  const anchor=state.anchors[index];
+ state.actor?.setMoodFromText?.(anchor.text);
  const run=++state.anchorToken;
  clearTimeout(state.idleTimer);state.idleTimer=null;
  if(!$('ftBootSpinner').hidden)$('ftBootSpinner').hidden=true;
@@ -1671,6 +1672,7 @@ async function playReviewOutro(){
  if(!clip){$('anchorText').textContent='That’s all for today! Let’s see how you did.';message('Checking your conversation…');return}
  $('anchorText').textContent=clip.text;
  message(NAMES[state.character]+' is wrapping up our chat…');
+ state.actor?.setMood?.('happy');
  const audio=new Audio(clip.url);state.speaker=audio;state.playing=audio;
  routeAudio(audio);state.ttsPlaying=true;
  try{
@@ -1999,6 +2001,7 @@ async function speakEleven(text,source='ai_reply'){
  stopSpeech(); // abort any previous utterance before starting this reply
  const current=state.generation;
  appendLine(NAMES[state.character],visibleSpeechText(text),source);
+ state.actor?.setMoodFromText?.(text);
  actorPhase('ready');message(NAMES[state.character]+' is speaking…');
  const control=new AbortController();state.controller=control;
  try{
