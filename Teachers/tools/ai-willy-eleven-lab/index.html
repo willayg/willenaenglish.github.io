@@ -24,7 +24,7 @@
 <div class="control"><label for="bass">Bass <output class="value" id="bassV">0 dB</output></label><input type="range" id="bass" min="-12" max="12" value="0" step="1"></div>
 <div class="control"><label for="treble">Treble <output class="value" id="trebleV">0 dB</output></label><input type="range" id="treble" min="-12" max="12" value="0" step="1"></div></div></section>
 <section class="panel"><h2>Listen &amp; compare</h2><div class="actions"><button class="btn primary" id="generate">▶ Play cached recording</button><button class="btn" id="replay" disabled>Replay with effects</button><button class="btn" id="reset">Reset effects</button></div>
-<div id="status" class="status" role="status">Loading cached R2 phrases…</div><audio id="player" controls preload="none"></audio>
+<div id="status" class="status" role="status">Finding five R2 phrases…</div><audio id="player" controls preload="none"></audio>
 <div class="note">All recordings are read from R2. Effects are browser-only and do not modify student voices or stored files.</div>
 </section></main>
 <script>
@@ -101,7 +101,7 @@ for(const id of ['pitch','tempo'])$(id).addEventListener('input',update);
 function status(msg){$('status').textContent=msg}
 async function api(body){
  const t=auth();if(!t)throw Error('Sign in to Teachers Dashboard first');
- const response=await fetch('/api/free-talking-teacher-audio',{method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(60000)});
+ const response=await fetch('/api/free-talking-teacher-audio',{method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(35000)});
  const result=await response.json().catch(()=>({}));
  if(!response.ok||!result.success)throw Error(result.error||'Cached audio unavailable ('+response.status+')');
  return result;
@@ -115,8 +115,8 @@ function choosePhrase(){
 }
 async function loadCatalog(){
  try{const d=await api({action:'lab_catalog'});phrases=d.phrases||[];
-  if(!phrases.length){status('No cached R2 recordings found in sampled questions.');return}
-  choosePhrase();status('Ready: '+phrases.length+' existing phrases found. Select a voice and press Play.');
+  if(!phrases.length){$('availability').textContent='No matches in '+(d.scanned||0)+' sampled questions. The page does not generate audio.';status(d.message||'No cached R2 recordings found in sampled questions.');return}
+  choosePhrase();status('Ready: '+phrases.length+' cached phrase samples found after '+d.scanned+' checks. Select a voice and press Play.');
  }catch(e){status('Could not load R2 inventory: '+e.message)}
 }
 async function generate(){
@@ -128,7 +128,7 @@ async function generate(){
   const key=voice+'|'+question_id;let url=audioCache.get(key);
   if(!url){const result=await api({action:'lab_clip',voice,question_id});
    const binary=atob(result.audio),arr=Uint8Array.from(binary,c=>c.charCodeAt(0));
-   url=URL.createObjectURL(new Blob([arr],{type:'audio/mpeg'}));audioCache.set(key,url);}
+   url=URL.createObjectURL(new Blob([arr],{type:result.mime||'audio/mpeg'}));audioCache.set(key,url);}
   latest=url;p.pause();p.src=latest;p.currentTime=0;update();
   $('replay').disabled=false;await playPreview();
   status('Playing existing R2 recording · '+$('voice').selectedOptions[0].text+' · zero generation.');
