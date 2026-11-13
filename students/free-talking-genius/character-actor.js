@@ -1,9 +1,10 @@
 // Visual-only bridge to the exact SVG animation assets from the Bunny Fox demo.
 // No audio interception, app cloning, auth, recording, grading or progress logic.
 import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wave3';
-import {createWillySvg} from './willy-svg.js?v=20261113-shared-svg1';
-const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:createWillySvg({}, {portrait:true}).replace('<g id="legs"','<g id="legs" style="display:none"').replace('<g id="body"','<g id="body" style="display:none"')};
-const PORTRAITS={...ART,willy:createWillySvg({}, {portrait:true})};
+import {createWillySvg} from './willy-svg.js?v=20261113-head-only1';
+const WILLY_TALKING_HEAD=createWillySvg({}, {headOnly:true});
+const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:WILLY_TALKING_HEAD};
+const PORTRAITS={...ART};
 /* Duplicate SVG gradient IDs resolve against the hidden selection portrait on
    some Android browsers, leaving Pigfish's in-game body transparent.
    Scope references per instance; artwork, colours and animations are unchanged. */
