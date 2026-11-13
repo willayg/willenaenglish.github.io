@@ -3,16 +3,11 @@
 :root{font:14px system-ui,-apple-system,sans-serif;color:#244b58;background:#f3fafc}*{box-sizing:border-box}body{margin:0;padding:15px}.wrap{margin:auto;max-width:920px}.heading{background:#fff;border:1px solid #d4e7ec;border-radius:21px;padding:22px;margin-bottom:14px}h1{font-size:clamp(23px,4vw,32px);margin:4px 0 8px;letter-spacing:-.035em}p{line-height:1.6;color:#6e8790;margin:6px 0}.eyebrow{font-size:11px;font-weight:900;letter-spacing:.1em;color:#1594a6}.capsule{display:inline-block;border-radius:100px;background:#e2f7fa;color:#247e89;padding:5px 10px;font-size:11px;font-weight:800}.panel{background:white;border:1px solid #d4e7ec;border-radius:19px;padding:19px;margin-bottom:14px}h2{font-size:17px;margin:0 0 13px}.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.control{border:1px solid #dcecef;border-radius:14px;padding:13px;background:#f9fdfd}label{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:800}.value{font-variant-numeric:tabular-nums;color:#168a9e}input[type=range]{width:100%;accent-color:#12a8b9;margin:12px 0 4px}select,textarea{width:100%;font:inherit;color:#295365;background:white;border:1px solid #bcdde3;border-radius:12px;padding:12px}textarea{resize:vertical;min-height:100px;margin-top:9px;line-height:1.6}.actions{display:flex;flex-wrap:wrap;gap:9px}.btn{cursor:pointer;border:1px solid #badfe4;border-radius:13px;background:#fff;color:#247889;padding:12px 15px;font-weight:800;min-height:44px}.btn.primary{background:#e41b92;color:white;border-color:#e41b92}.btn:disabled{opacity:.45;cursor:wait}.note{padding:12px;border-radius:12px;background:#edf9fb;color:#4d7885;font-size:12px;line-height:1.65}.warn{background:#fff7e9;color:#83673d}.status{font-weight:750;min-height:23px;margin:11px 0;color:#247e8b}.preset{padding:9px 11px;border-radius:11px;background:white;border:1px solid #cbe7e9;cursor:pointer;font-weight:750;color:#396875}audio{width:100%;margin:12px 0 7px}.small{font-size:11px}.switch{display:flex;align-items:center;gap:8px;justify-content:flex-start}.switch input{accent-color:#1597a5}.spacer{height:4px}
 @media(max-width:620px){.cols{grid-template-columns:1fr}.heading,.panel{padding:15px}}
 </style></head><body><main class="wrap">
-<header class="heading"><span class="eyebrow">WILLENA · TEACHER UTILITIES · AUDIO TOOLS</span><h1>AI Willy · ElevenLabs voice studio</h1><p>Tune your cloned robot voice with ElevenLabs v3. Generate small samples and compare pitch, tone, delivery and audio format. This does <strong>not</strong> save to R2 or change student voices.</p><span class="capsule">VOICE · AI Willy clone</span> <span class="capsule">MODEL · eleven_v3</span></header>
-<section class="panel"><h2>Test phrase / delivery</h2><label for="text">Text to speak <span id="count" class="value">0/250</span></label><textarea id="text" maxlength="250" spellcheck="false">Hi! I'm AI Willy, your friendly robot. What did you do after school yesterday?</textarea><p class="small">ElevenLabs gets this text and your cloned voice ID, not a separate description prompt. Try punctuation and v3 audio tags such as [excited] or [whispers] to change delivery.</p>
-<div class="actions"><button class="preset" data-text="Hi! I'm AI Willy, your friendly robot. What did you do after school yesterday?">Friendly question</button><button class="preset" data-text="[excited] That's fantastic! Tell me a little more about it!">Excited</button><button class="preset" data-text="[whispers] Here's a little secret. I love learning new words.">Whisper</button><button class="preset" data-text="Could you say that again, a little more slowly?">Classroom</button></div></section>
-<section class="panel"><h2>ElevenLabs generation settings</h2><div class="cols">
-<div class="control"><label for="stability">Stability <output class="value" id="stabilityV">Natural · 0.5</output></label><select id="stability"><option value="0">Creative · 0</option><option value="0.5" selected>Natural · 0.5 (current)</option><option value="1">Robust · 1</option></select></div>
-<div class="control"><label for="similarity">Similarity to cloned voice <output id="similarityV" class="value">0.80</output></label><input type="range" id="similarity" min="0" max="1" step=".05" value=".8"></div>
-<div class="control"><label for="style">Style exaggeration <output id="styleV" class="value">0.00</output></label><input type="range" id="style" min="0" max="1" step=".05" value="0"></div>
-<div class="control"><label class="switch"><input type="checkbox" id="boost"> Speaker boost</label><p class="small">Off matches the natural Free Talking voice route; experiment with stronger clarity.</p></div>
-<div class="control"><label for="format">Requested output format</label><select id="format"><option value="mp3_44100_128">MP3 · 44.1 kHz · 128 kbps (current)</option><option value="mp3_44100_192">MP3 · 44.1 kHz · 192 kbps</option></select><p class="small">The backup provider proxy may return 128 kbps regardless of this selection.</p></div>
-</div></section>
+<header class="heading"><span class="eyebrow">WILLENA · TEACHER UTILITIES · AUDIO TOOLS</span><h1>Character Voice Lab · Cached R2 Audio</h1><p>Compare four voices using five existing R2 phrases. No regeneration, no synthesis credits. Adjust effects without changing saved recordings.</p><span class="capsule">R2 READ ONLY</span></header>
+<section class="panel"><h2>Choose a voice and recorded phrase</h2><div class="cols">
+<div class="control"><label for="voice">Character voice</label><select id="voice"><option value="lili">Bunny Fox</option><option value="willi_clone">AI Willy · cloned voice</option><option value="pigfish">Pigfish</option><option value="willi_mp3">Willo · OpenAI Marin</option></select></div>
+<div class="control"><label for="phrase">Cached R2 phrase</label><select id="phrase"><option value="">Loading cached phrases…</option></select></div></div>
+<p class="small" id="availability">Checking existing recordings; missing combinations will not be generated.</p></section>
 <section class="panel"><h2>Local playback tuning</h2><p class="small">These controls affect only this browser preview, after speech is generated. Eleven v3 does not provide a native pitch control or adjustable generation speed. Pitch changes are achieved by playback-rate shifting, which also changes tempo.</p>
 <div class="cols"><div class="control"><label for="pitch">Pitch shift <output id="pitchV" class="value">0 semitones</output></label><input type="range" id="pitch" min="-6" max="6" step=".5" value="0"></div>
 <div class="control"><label for="tempo">Playback speed <output id="tempoV" class="value">1.00×</output></label><input type="range" id="tempo" min=".75" max="1.25" step=".05" value="1"></div></div>
@@ -23,9 +18,9 @@
 <div class="control"><label for="metalTone">Metal tone <output id="metalToneV" class="value">2600 Hz</output></label><input type="range" id="metalTone" min="600" max="4600" step="100" value="2600"></div>
 </div><div class="actions" style="margin:12px 0"><button class="preset" data-fx="clean">Clean</button><button class="preset" data-fx="subtle">Subtle metal</button><button class="preset" data-fx="robot">Metal robot</button><button class="preset" data-fx="room">Soft room</button></div>
 <div class="note" style="margin-bottom:12px">These effects change only playback in this browser. Replay the same clip without more ElevenLabs credits. Room length updates on the next playback.</div><div class="note warn" style="margin:12px 0">Pitch and speed share the playback rate; a +2 semitone shift also makes the audio faster. These effects are <strong>not baked into the MP3</strong>.</div></section>
-<section class="panel"><h2>Listen &amp; compare</h2><div class="actions"><button class="btn primary" id="generate">▶ Generate new preview</button><button class="btn" id="replay" disabled>Replay same sample</button><button class="btn" id="reset">Reset settings</button></div>
-<div id="status" class="status" role="status">Ready to test your clone.</div><audio id="player" controls preload="none"></audio>
-<div class="note">Each Generate press can incur an ElevenLabs TTS charge. This page doesn't create R2 files, publish changes, or alter the voice heard by students.</div>
+<section class="panel"><h2>Listen &amp; compare</h2><div class="actions"><button class="btn primary" id="generate">▶ Play cached recording</button><button class="btn" id="replay" disabled>Replay with effects</button><button class="btn" id="reset">Reset effects</button></div>
+<div id="status" class="status" role="status">Loading cached R2 phrases…</div><audio id="player" controls preload="none"></audio>
+<div class="note">All recordings are read from R2. Effects are browser-only and do not modify student voices or stored files.</div>
 </section></main>
 <script>
 const $=id=>document.getElementById(id),p=$('player');let latest=null,busy=false;
@@ -69,31 +64,61 @@ function updateEffects(){
 async function playPreview(){setupEffects();buildImpulse();updateEffects();await audioCtx.resume();await p.play();}
 
 function auth(){const t=window.WillenaAPI?.getLocalAccessToken?.();if(t)return t;try{return localStorage.getItem('sb_access_token')||decodeURIComponent(document.cookie.split('; ').find(x=>x.startsWith('sb_access='))?.slice(10)||'')}catch{return ''}}
-function update(){const v=Number($('stability').value);$('stabilityV').textContent=({0:'Creative',0.5:'Natural',1:'Robust'})[v]+' · '+v;$('similarityV').textContent=Number($('similarity').value).toFixed(2);$('styleV').textContent=Number($('style').value).toFixed(2);$('pitchV').textContent=$('pitch').value+' semitones';$('tempoV').textContent=Number($('tempo').value).toFixed(2)+'×';$('count').textContent=$('text').value.length+'/250';p.preservesPitch=false;p.webkitPreservesPitch=false;p.playbackRate=Number($('tempo').value)*Math.pow(2,Number($('pitch').value)/12)}
-for(const id of ['stability','similarity','style','pitch','tempo','text'])$(id).addEventListener('input',update);
-document.querySelectorAll('[data-text]').forEach(b=>b.onclick=()=>{$('text').value=b.dataset.text;update()});
+const audioCache=new Map();let phrases=[];
+function update(){
+ $('pitchV').textContent=$('pitch').value+' semitones';
+ $('tempoV').textContent=Number($('tempo').value).toFixed(2)+'×';
+ p.preservesPitch=false;p.webkitPreservesPitch=false;
+ p.playbackRate=Number($('tempo').value)*Math.pow(2,Number($('pitch').value)/12);
+}
+for(const id of ['pitch','tempo'])$(id).addEventListener('input',update);
 function status(msg){$('status').textContent=msg}
+async function api(body){
+ const t=auth();if(!t)throw Error('Sign in to Teachers Dashboard first');
+ const response=await fetch('/api/free-talking-teacher-audio',{method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(60000)});
+ const result=await response.json().catch(()=>({}));
+ if(!response.ok||!result.success)throw Error(result.error||'Cached audio unavailable ('+response.status+')');
+ return result;
+}
+function choosePhrase(){
+ const voice=$('voice').value,list=phrases.filter(q=>q.available?.[voice]);
+ $('phrase').replaceChildren();
+ for(const q of list){const o=document.createElement('option');o.value=q.id;o.textContent=q.text.length>95?q.text.slice(0,92)+'…':q.text;$('phrase').appendChild(o)}
+ $('availability').textContent=list.length+' of '+phrases.length+' R2 phrases cached for this voice. Missing clips are never generated.';
+ p.pause();latest=null;$('replay').disabled=true;
+}
+async function loadCatalog(){
+ try{const d=await api({action:'lab_catalog'});phrases=d.phrases||[];
+  if(!phrases.length){status('No cached R2 recordings found in sampled questions.');return}
+  choosePhrase();status('Ready: '+phrases.length+' existing phrases found. Select a voice and press Play.');
+ }catch(e){status('Could not load R2 inventory: '+e.message)}
+}
 async function generate(){
- if(busy)return;const t=auth();if(!t){status('Sign in to the Teachers Dashboard first.');return}busy=true;$('generate').disabled=true;status('Generating with the AI Willy clone. New samples use ElevenLabs credits…');
+ if(busy)return;
+ const voice=$('voice').value,question_id=$('phrase').value;
+ if(!question_id){status('No cached phrase for this voice.');return}
+ busy=true;$('generate').disabled=true;status('Loading existing R2 audio…');
  try{
-  const response=await fetch('/api/ai-willy-eleven-preview',{method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},
-    body:JSON.stringify({text:$('text').value,stability:Number($('stability').value),similarity:Number($('similarity').value),style:Number($('style').value),boost:$('boost').checked,format:$('format').value}),signal:AbortSignal.timeout(45000)});
-  const result=await response.json().catch(()=>null);
-  if(!response.ok||!result?.success)throw Error(result?.error||'Voice preview failed');
-  if(latest)URL.revokeObjectURL(latest);
-  const binary=atob(result.audio),arr=Uint8Array.from(binary,c=>c.charCodeAt(0));latest=URL.createObjectURL(new Blob([arr],{type:'audio/mpeg'}));
-  p.pause();p.src=latest;update();$('replay').disabled=false;await playPreview();
-  status('Playing · '+result.provider+' · '+result.format+' · preview only.');
- }catch(e){status('Preview failed: '+e.message)}
+  const key=voice+'|'+question_id;let url=audioCache.get(key);
+  if(!url){const result=await api({action:'lab_clip',voice,question_id});
+   const binary=atob(result.audio),arr=Uint8Array.from(binary,c=>c.charCodeAt(0));
+   url=URL.createObjectURL(new Blob([arr],{type:'audio/mpeg'}));audioCache.set(key,url);}
+  latest=url;p.pause();p.src=latest;p.currentTime=0;update();
+  $('replay').disabled=false;await playPreview();
+  status('Playing existing R2 recording · '+$('voice').selectedOptions[0].text+' · zero generation.');
+ }catch(e){status('Playback failed: '+e.message)}
  finally{busy=false;$('generate').disabled=false}
 }
-$('generate').onclick=generate;$('replay').onclick=()=>{if(!latest)return;p.currentTime=0;update();playPreview().catch(e=>status('Playback blocked: '+e.message))};
-$('reset').onclick=()=>{$('stability').value='0.5';$('similarity').value='.8';$('style').value='0';$('boost').checked=false;$('format').value='mp3_44100_128';$('pitch').value='0';$('tempo').value='1';$('metal').value='0';$('reverb').value='0';$('room').value='.55';$('metalTone').value='2600';update();updateEffects();status('Current v3 baseline restored.');};
+$('voice').addEventListener('change',choosePhrase);
+$('phrase').addEventListener('change',()=>{p.pause();latest=null;$('replay').disabled=true});
+$('generate').onclick=generate;
+$('replay').onclick=()=>{if(!latest)return;p.currentTime=0;update();playPreview().catch(e=>status('Playback blocked: '+e.message))};
+$('reset').onclick=()=>{$('pitch').value='0';$('tempo').value='1';$('metal').value='0';$('reverb').value='0';$('room').value='.55';$('metalTone').value='2600';update();updateEffects();status('Effects reset. R2 files unchanged.');};
 for(const id of ['metal','reverb','room','metalTone'])$(id).addEventListener('input',updateEffects);
 document.querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>{
  const preset={clean:[0,0,.55,2600],subtle:[12,7,.45,2200],robot:[35,18,.7,3400],room:[0,28,1.2,2100]}[b.dataset.fx];
  [$('metal').value,$('reverb').value,$('room').value,$('metalTone').value]=preset.map(String);
  updateEffects();status('Effect preset applied. Replay the current clip to compare without regenerating.');
 });
-update();updateEffects();
+update();updateEffects();void loadCatalog();
 </script></body></html>
