@@ -14,7 +14,7 @@ export function createFreeTalkingVoice({host,getToken}){
  const PRELOAD_GENERATION_GAP_MS=300;
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
- const VOICES=new Set(['marin','bunny-v3','pigfish']);
+ const VOICES=new Set(['marin','bunny-v3','pigfish','willy']);
  const PREFERENCE_KEY='willena-free-talking-voice-v1';
  try{
   const saved=localStorage.getItem(PREFERENCE_KEY);
@@ -26,7 +26,7 @@ export function createFreeTalkingVoice({host,getToken}){
  const modelLabel=host.querySelector('[data-ft-voice-model]');
  const preloadLabel=host.querySelector('[data-ft-voice-preload]');
  const characterName=host.querySelector('[data-ft-character-name]');
- function updateCharacterName(){if(characterName)characterName.textContent=activeVoice()==='pigfish'?'Pigfish':activeVoice()==='bunny-v3'?'Bunny Fox':'AI Willi'}
+ function updateCharacterName(){if(characterName)characterName.textContent=activeVoice()==='pigfish'?'Pigfish':activeVoice()==='bunny-v3'?'Bunny Fox':activeVoice()==='willy'?'AI Willy':'Willo'}
  updateCharacterName();
  const isElevenVoice=v=>['bunny','jock','sgt-steve','lily'].includes(v);
  function preloadingText(text){if(preloadLabel)preloadLabel.textContent=text||''}
@@ -49,11 +49,11 @@ export function createFreeTalkingVoice({host,getToken}){
   button?.classList.toggle('is-playing',playing);
   if(button)button.setAttribute('aria-pressed',String(playing));
  }
- audio.addEventListener('play',()=>{setPlaying(true);status('AI Willi가 질문을 읽고 있어요…')});
+ audio.addEventListener('play',()=>{setPlaying(true);status('Willo가 질문을 읽고 있어요…')});
  audio.addEventListener('pause',()=>{setPlaying(false);if(!audio.ended)status('다시 듣기를 눌러 주세요.')});
  audio.addEventListener('ended',()=>{setPlaying(false);status('다시 듣기를 누르면 질문을 또 들을 수 있어요.')});
  audio.addEventListener('error',()=>{setPlaying(false);status('음성을 불러오지 못했어요. 질문을 읽고 답해 주세요.')});
- const modelForVoice=voice=>['bunny-v3','pigfish'].includes(voice)?'eleven_v3':null;
+ const modelForVoice=voice=>['bunny-v3','pigfish','willy'].includes(voice)?'eleven_v3':null;
  async function fetchVoice(questionId,voice){
   const expectedModel=modelForVoice(voice);
   // Use the exact Bunny v3 protocol that worked in the comparison test.
@@ -160,7 +160,7 @@ export function createFreeTalkingVoice({host,getToken}){
    (Number(a.unit_number)===preferredUnit?0:1)-(Number(b.unit_number)===preferredUnit?0:1)
    ||Number(a.unit_number)-Number(b.unit_number)||Number(a.question_number)-Number(b.question_number));
   const total=orderedQuestions.length;
-  const complete={'marin':0,'bunny-v3':0,pigfish:0};
+  const complete={'marin':0,'bunny-v3':0,pigfish:0,willy:0};
   const current=()=>epoch===preloadEpoch&&!destroyed;
   // Short sleeps make cancellations responsive: a unit switch never spawns
   // another concurrent batch of R2 downloads or paid TTS requests.
@@ -260,7 +260,7 @@ export function createFreeTalkingVoice({host,getToken}){
      console.warn('[Free Talking] paced missing-clip generation',job.voice,message.slice(0,150));
      if(job.voice==='bunny-v3'&&/ELEVENLABS_KEY_NOT_CONFIGURED|ELEVENLABS_KEY_NOT_AVAILABLE|ELEVENLABS_PROXY_UNAVAILABLE/i.test(message)){
       liliUnavailable=true;
-      render(' · AI Lili unavailable; continuing AI Willi');
+      render(' · AI Lili unavailable; continuing Willo');
       continue;
      }
      if(/R2|INVENTORY|401|403|sign.in|AUTH/i.test(message)){
@@ -301,7 +301,7 @@ export function createFreeTalkingVoice({host,getToken}){
   selected=String(questionId||'');currentUrl='';loadedVoice='';
   setPlaying(false);
   if(button)button.disabled=true;
-  status('AI Willi 음성을 불러오는 중…');
+  status('Willo 음성을 불러오는 중…');
   showModel(null);
   if(!selected)return;
   try{
