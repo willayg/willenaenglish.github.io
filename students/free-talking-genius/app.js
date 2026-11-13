@@ -74,6 +74,10 @@ const aiRecorder=createFreeTalkingRecorder({
   const newIdea=$('ftRepeatNewIdea');
   if(newIdea&&state.repeatStep){
    const fixed=$('ftRepeatFixedAction');
+   // Keep exactly one recording choice visible during an active retry.
+   // The character circle remains an alternative stop control.
+   fixed.hidden=recording&&state.repeatMode==='new';
+   newIdea.hidden=(recording&&state.repeatMode==='fixed')||!['pigfish','bunny-v3','willy'].includes(questionVoice.getVoice());
    fixed.disabled=state.repeatChecking||processing||(recording&&state.repeatMode==='new');
    fixed.classList.toggle('is-recording',recording&&state.repeatMode==='fixed');
    fixed.textContent=recording&&state.repeatMode==='fixed'?'녹음 끝내기':'고친 문장 녹음';
@@ -1285,7 +1289,7 @@ $('ftRepeatFixedAction').addEventListener('click',()=>{
  $('ftTurnCircle').click();
 });
 $('ftRepeatNewIdea').addEventListener('click',()=>{
- if(!state.repeatStep||state.repeatChecking||state.loading||aiRecorder.isProcessing()||!['pigfish','bunny-v3'].includes(questionVoice.getVoice()))return;
+ if(!state.repeatStep||state.repeatChecking||state.loading||aiRecorder.isProcessing()||!['pigfish','bunny-v3','willy'].includes(questionVoice.getVoice()))return;
  if(aiRecorder.isRecording()){
   if(state.repeatMode==='new')aiRecorder.stop();
   return;
