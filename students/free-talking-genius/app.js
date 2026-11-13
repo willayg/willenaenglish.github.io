@@ -741,7 +741,7 @@ function showRepeatScreen(){
  renderCorrectionDiff(state.feedback.answer_text,state.feedback.correction||state.feedback.answer_text||'');
  $('ftRepeatMessage').textContent='원을 눌러 고친 문장으로 다시 말하세요.';
  $('ftRepeatCircleMount').appendChild($('ftTurnCircle'));
- $('ftRepeatNewIdea').hidden=!['pigfish','bunny-v3'].includes(questionVoice.getVoice());
+ $('ftRepeatNewIdea').hidden=!['pigfish','bunny-v3','willy'].includes(questionVoice.getVoice());
  $('ftRepeatNewIdea').disabled=false;
  $('ftRepeatNewIdea').classList.remove('is-recording');
  $('ftRepeatFixedAction').disabled=false;
