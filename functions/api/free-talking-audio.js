@@ -13,11 +13,12 @@ const model=env=>env.FREE_TALKING_REALTIME_MODEL||'gpt-realtime-2.1-mini';
 const voice=env=>env.FREE_TALKING_REALTIME_VOICE||'marin';
 // Only these two voices are selectable. Prize voices remain registered separately
 // but are not reachable through this endpoint until an authenticated unlock system exists.
-const SELECTABLE_VOICES=new Set(['marin','bunny-v3','pigfish']);
+const SELECTABLE_VOICES=new Set(['marin','bunny-v3','pigfish','willy']);
 const ELEVEN_VOICES=Object.freeze({
  bunny:'M7zl2TS7ORAIGUejDfoy',
  'bunny-v3':'M7zl2TS7ORAIGUejDfoy',
- pigfish:'W7UbuMY4ypluqgZS2UzT'
+ pigfish:'W7UbuMY4ypluqgZS2UzT',
+ willy:'0yhUIig4twaXoIhuQoCQ'
 });
 const ELEVEN_MODEL='eleven_v3';
 // ElevenLabs requires the API key on Cloudflare, not Netlify.
@@ -145,16 +146,22 @@ async function audioInventory(bookId,env,request){
    marin:await cacheKey(text,model(env),'marin'),
    lili:await cacheKey(text,ELEVEN_MODEL,ELEVEN_VOICES['bunny-v3'],'elevenlabs'),
    pigfish:await cacheKey(text,ELEVEN_MODEL,ELEVEN_VOICES.pigfish,'elevenlabs'),
+   willy:await cacheKey(text,ELEVEN_MODEL,ELEVEN_VOICES.willy,'elevenlabs'),
    fallback:await cacheKey(text,'gpt-4o-mini-tts','marin','fallback')
   });
  }
- const files=records.flatMap(r=>[r.marin+'.wav',r.lili+'.mp3',r.pigfish+'.mp3',r.fallback+'.mp3']);
- const result=await audioStore(request,{action:'inventory',files});
+ const files=records.flatMap(r=>[r.marin+'.wav',r.lili+'.mp3',r.pigfish+'.mp3',r.willy+'.mp3',r.fallback+'.mp3']);
+ // The storage Worker accepts a maximum of 300 filenames per inventory call.
+ const exists={};
+ for(let offset=0;offset<files.length;offset+=250){
+  const result=await audioStore(request,{action:'inventory',files:files.slice(offset,offset+250)});
+  Object.assign(exists,result.exists||{});
+ }
  const statuses=new Map();
- for(const file of files){const key=file.slice(0,file.lastIndexOf('.'));statuses.set(key,{exists:!!result.exists?.[file],url:null});}
+ for(const file of files){const key=file.slice(0,file.lastIndexOf('.'));statuses.set(key,{exists:!!exists[file],url:null});}
  return {
   success:true,book_id:bookId,questions:records.map(r=>{
-   const willi=statuses.get(r.marin),backup=statuses.get(r.fallback),lili=statuses.get(r.lili),pigfish=statuses.get(r.pigfish);
+   const willi=statuses.get(r.marin),backup=statuses.get(r.fallback),lili=statuses.get(r.lili),pigfish=statuses.get(r.pigfish),willy=statuses.get(r.willy);
    const williResolved=willi?.exists?willi:backup?.exists?backup:{exists:false,url:null};
    return {id:r.id,marin:{cached:!!williResolved.exists,url:williResolved.url,
      model:willi?.exists?model(env):'gpt-4o-mini-tts',voice:'marin',
@@ -163,7 +170,9 @@ async function audioInventory(bookId,env,request){
      model:ELEVEN_MODEL,voice:'bunny',source:lili?.url?'r2_shared':'r2_direct',
      content_type:'audio/mpeg'},
     pigfish:{cached:!!pigfish?.exists,url:pigfish?.url||null,
-     model:ELEVEN_MODEL,voice:'pigfish',source:pigfish?.url?'r2_shared':'r2_direct',content_type:'audio/mpeg'}};
+     model:ELEVEN_MODEL,voice:'pigfish',source:pigfish?.url?'r2_shared':'r2_direct',content_type:'audio/mpeg'},
+    willy:{cached:!!willy?.exists,url:willy?.url||null,
+     model:ELEVEN_MODEL,voice:'willy',source:willy?.url?'r2_shared':'r2_direct',content_type:'audio/mpeg'}};
   })
  };
 }
@@ -211,7 +220,7 @@ export async function onRequestPost({request,env,context}){
    if(!attempt)return json(404,{success:false,error:'Correction not found'});
    const corrected=String(attempt.correction||attempt.answer_text||'').trim().slice(0,550);
    if(!corrected||corrected.length<3)return json(422,{success:false,error:'Correction text unavailable'});
-   const isLili=chosen==='bunny-v3'||chosen==='pigfish';
+   const isLili=chosen==='bunny-v3'||chosen==='pigfish'||chosen==='willy';
    const ttsModel=isLili?ELEVEN_MODEL:'gpt-4o-mini-tts';
    const ttsVoice=isLili?ELEVEN_VOICES[chosen]:'marin';
    const key=await cacheKey(corrected,ttsModel,ttsVoice,isLili?'elevenlabs':'fallback');
