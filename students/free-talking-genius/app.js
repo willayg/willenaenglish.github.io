@@ -9,10 +9,10 @@ import {renderStudentSessionFinish} from '/students/components/student-session-f
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
-import {createFreeTalkingVoice} from './question-voice.js?v=20261107-exact-characters1';
+import {createFreeTalkingVoice} from './question-voice.js?v=20261113-willy-audio1';
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-route8';
-import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261108-quiet-mouth2';
-import {createFreeTalkingCharacters} from './character-actor.js?v=20261108-quiet-mouth2';
+import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261113-willy-retry1';
+import {createFreeTalkingCharacters} from './character-actor.js?v=20261113-willy-head1';
 import {createFreeTalkingGuide} from './guide.js?v=20261107-guide-kids2';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -25,7 +25,7 @@ const state={skippedIds:new Set(),student:null,profile:null,books:[],bookId:null
  current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready',repeatStep:false,repeatMode:null,repeatTranscript:null,repeatChecking:false,seenChallenges:new Set()};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
-const characters=createFreeTalkingCharacters({circle:$('ftTurnCircle'),session:$('ftSession'),voiceHost:$('ftWilliVoice'),choices:{ftChooseLili:'bunny-v3',ftChoosePigfish:'pigfish'}});
+const characters=createFreeTalkingCharacters({circle:$('ftTurnCircle'),session:$('ftSession'),voiceHost:$('ftWilliVoice'),choices:{ftChooseLili:'bunny-v3',ftChoosePigfish:'pigfish',ftChooseWilly:'willy'}});
 const guide=createFreeTalkingGuide();
 const retryVoice=createFreeTalkingRetryVoice({
  getToken:token,
@@ -924,11 +924,11 @@ function renderQuestion({retry=false}={}){
 }
 let roundChoice=null;
 function chooseRoundVoice(voice){
- if(!['marin','bunny-v3','pigfish'].includes(voice))return;
+ if(!['marin','bunny-v3','pigfish','willy'].includes(voice))return;
  if(roundChoice===voice&&!state.loading&&state.pendingMode){void beginRound(state.pendingMode);return}
  roundChoice=voice;
  retryVoice.preloadBoth();
- for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3'],['ftChoosePigfish','pigfish']])
+ for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy']])
   $(id).setAttribute('aria-pressed',String(value===voice));
  $('ftCharacterContinue').disabled=false;
 }
@@ -936,7 +936,7 @@ function openMode(mode){
  if(state.loading||!['speaking','writing'].includes(mode))return;
  state.pendingMode=mode;roundChoice=null;
  $('ftCharacterRound').textContent=bookTitle()+' · Unit '+state.unit+' · '+(mode==='speaking'?'말하기':'쓰기');
- for(const id of ['ftChooseWilli','ftChooseLili','ftChoosePigfish'])$(id).setAttribute('aria-pressed','false');
+ for(const id of ['ftChooseWilli','ftChooseLili','ftChoosePigfish','ftChooseWilly'])$(id).setAttribute('aria-pressed','false');
  $('ftCharacterContinue').disabled=true;
  preloadStudentSfx();
  view('ftCharacter');
@@ -1171,6 +1171,7 @@ $('ftBackHome').addEventListener('click',()=>view('ftHome'));
 $('ftChooseWilli').addEventListener('click',()=>chooseRoundVoice('marin'));
 $('ftChooseLili').addEventListener('click',()=>chooseRoundVoice('bunny-v3'));
 $('ftChoosePigfish').addEventListener('click',()=>chooseRoundVoice('pigfish'));
+$('ftChooseWilly').addEventListener('click',()=>chooseRoundVoice('willy'))
 $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pendingMode));
 $('ftCharacterBack').addEventListener('click',()=>view('ftBook'));
 
