@@ -242,13 +242,14 @@ export async function onRequestPost({request,env}){
   const modelStarted=Date.now();
   const result=acceptNaturalVocatives(enforceAnswerQuality(enforceRelevance(restoreRegisterOnlyPenalty(await judge(apiKey,prompt,answer,session.mode,past)),answer),answer),prompt,answer);
   timing.model_ms=Date.now()-modelStarted;
-  const scoreTotal=Math.max(0,result.rawTotal-hintDeduction);
+  // Never display a passing score for a response blocked by the safety rule.
+  const scoreTotal=Math.min(result.targetedAbuseOrThreat?7:10,Math.max(0,result.rawTotal-hintDeduction));
   const contextPass=result.scores.grammar>=1&&result.scores.context>=1;
   const challengeMet=!String(prompt.grammar_focus||'').startsWith('Challenge:')||result.challengeMet;
   // An 8+/10 score is a pass. Hidden context/challenge flags must not
   // demand another correction after a genuinely high-scoring new idea.
   // Unsafe targeted abuse/threats remain excluded from passing.
-  const passed=scoreTotal>=8&&!result.targetedAbuseOrThreat;
+  const passed=scoreTotal>=8;
   const creativeGift=Boolean(result.creativityGift&&!result.targetedAbuseOrThreat&&result.scores.appropriate===2&&result.creativityReason);
   const row={session_id:sessionId,student_id:auth.id,question_id:questionId,question_number:prompt.question_number,
    attempt_no:nextAttempt,answer_text:answer,
