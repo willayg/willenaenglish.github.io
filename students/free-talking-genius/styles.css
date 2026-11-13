@@ -1595,3 +1595,7 @@
 .free-talking-genius #ftFreeTalkingCard.ft-golden-skill .vocab-card-stars{
  color:#a77b18!important;
 }
+
+/* Four character choices without cramping narrow phone screens. */
+.free-talking-genius #ftCharacter .ft-character-options{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media(max-width:700px){.free-talking-genius #ftCharacter .ft-character-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.free-talking-genius #ftCharacter .ft-character-option{min-height:135px;padding:8px}.free-talking-genius #ftCharacter .ft-character-option strong{font-size:16px}.free-talking-genius #ftCharacter .ft-character-symbol{width:80px;height:80px}}
