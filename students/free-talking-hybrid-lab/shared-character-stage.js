@@ -22,7 +22,10 @@ export function createHybridCharacterStage(host, character='bunny-v3') {
   for(const cl of ['ft-hybrid-timer-track','ft-hybrid-timer-progress']){
     const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
     ring.setAttribute('cx','120');ring.setAttribute('cy','120');ring.setAttribute('r','110');
-    ring.setAttribute('pathLength','100');ring.setAttribute('class',cl);timer.append(ring);
+    ring.setAttribute('pathLength','100');ring.setAttribute('class',cl);
+    // Rotate the stroke's starting position around the explicit SVG centre,
+    // not around a browser-dependent CSS transform origin on Android.
+    ring.setAttribute('transform','rotate(-90 120 120)');timer.append(ring);
   }
   // Keep the recorder's existing ID and CSS variable contract.
   const speechRing=document.createElement('div');
