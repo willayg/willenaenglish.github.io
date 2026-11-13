@@ -1,56 +1,40 @@
-// Free Talking-only SVG character stage. No Speaking UI, buttons, or mic handlers.
-// Add future characters to character-actor.js's ART registry, then call select(key).
+// Free Talking-only shared character presentation.
+// Restores the original ft-animal-stage / ft-animal-avatar / ft-animal-timer
+// layout used before the Nov 13 SVG-stage experiment. No Speaking controls.
 import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261113-face-gradient2';
 
-export function createHybridCharacterStage(host, character='bunny-v3') {
-  host.replaceChildren();
-  const stage=document.createElement('div');
-  stage.className='ft-hybrid-character-stage';
-  stage.setAttribute('aria-label','Conversation character');
-  const circle=document.createElement('div');
-  circle.className='ft-hybrid-character-circle';
-  circle.id='ftHybridCharacter';
-  circle.dataset.phase='ready';
-  circle.dataset.listening='false';
-  const backdrop=document.createElement('div');
-  backdrop.className='ft-hybrid-character-backdrop';
-  backdrop.setAttribute('aria-hidden','true');
-  const timer=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  timer.setAttribute('viewBox','0 0 240 240');
-  timer.setAttribute('class','ft-hybrid-character-timer');
-  timer.setAttribute('aria-hidden','true');
-  for(const cl of ['ft-hybrid-timer-track','ft-hybrid-timer-progress']){
-    const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
-    ring.setAttribute('cx','120');ring.setAttribute('cy','120');ring.setAttribute('r','110');
-    ring.setAttribute('pathLength','100');ring.setAttribute('class',cl);
-    // Rotate the stroke's starting position around the explicit SVG centre,
-    // not around a browser-dependent CSS transform origin on Android.
-    ring.setAttribute('transform','rotate(-90 120 120)');timer.append(ring);
-  }
-  // Keep the recorder's existing ID and CSS variable contract.
-  const speechRing=document.createElement('div');
-  speechRing.id='ftSpeechTimeRing';
-  speechRing.setAttribute('aria-hidden','true');
-  speechRing.hidden=true;
-  speechRing.style.setProperty('--ft-record-remaining','1');
-  const visual=document.createElement('div');
-  visual.className='ft-hybrid-character-art';
-  circle.append(backdrop,timer,speechRing,visual);
-  stage.append(circle);
-  const transcript=document.createElement('div');
-  transcript.id='ftLiveSpeechPreview';
-  transcript.setAttribute('aria-hidden','true');
-  host.append(stage,transcript);
-  // The existing SVG actor is visual only; no Speaking app DOM is mounted.
-  const session=document.createElement('div');
-  session.hidden=false;
-  const actor=createFreeTalkingCharacters({circle:visual,session,voiceHost:stage,choices:{}});
-  actor.select(character);
-  function setPhase(phase){
-    stage.dataset.phase=phase;
-    visual.dataset.phase=phase==='speaking'?'ai':phase==='listening'?'student':phase;
-    visual.dataset.listening=String(phase==='listening');
-    actor.setSpeaking(phase==='speaking');
-  }
-  return {...actor,setPhase,stage,circle};
+export function createHybridCharacterStage(host,character='bunny-v3'){
+ host.replaceChildren();
+ const stage=document.createElement('div');
+ stage.className='ft-animal-stage ft-original-character-stage';
+ stage.dataset.phase='ready';
+ const anchor=document.createElement('div');
+ anchor.className='ft-animal-avatar';
+ anchor.dataset.phase='ready';
+ const timer=document.createElement('div');
+ timer.className='ft-animal-timer';
+ timer.setAttribute('aria-hidden','true');
+ // Original 240x240 / r110 timer, used by all three characters.
+ timer.innerHTML='<svg viewBox="0 0 240 240" aria-hidden="true"><circle class="ft-animal-track" cx="120" cy="120" r="110" pathLength="100"/><circle class="ft-animal-progress" cx="120" cy="120" r="110" pathLength="100"/></svg>';
+ const speechRing=document.createElement('div');
+ speechRing.id='ftSpeechTimeRing';
+ speechRing.hidden=true;
+ speechRing.setAttribute('aria-hidden','true');
+ speechRing.style.setProperty('--ft-record-remaining','1');
+ // Recording halo uses the same fixed stage centre as the original timer.
+ stage.append(anchor,timer,speechRing);
+ const transcript=document.createElement('div');
+ transcript.id='ftLiveSpeechPreview';
+ transcript.setAttribute('aria-hidden','true');
+ host.append(stage,transcript);
+ const session=document.createElement('div');
+ const actor=createFreeTalkingCharacters({circle:anchor,session,voiceHost:stage,choices:{}});
+ actor.select(character);
+ function setPhase(phase){
+  stage.dataset.phase=phase;
+  anchor.dataset.phase=phase==='speaking'?'ai':phase==='listening'?'student':phase;
+  anchor.dataset.listening=String(phase==='listening');
+  actor.setSpeaking(phase==='speaking');
+ }
+ return {...actor,setPhase,stage,circle:anchor};
 }
