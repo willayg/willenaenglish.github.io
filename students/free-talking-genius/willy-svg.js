@@ -41,3 +41,8 @@ export function createWillySvg(config=DEFAULT_WILLY_CONFIG,options={}){
  +'<path d="M333 234 Q432 203 497 250" fill="none" stroke="#ffffff" stroke-opacity=".46" stroke-width="11" stroke-linecap="round"/>'
  +'</g></svg>';
 }
+
+// Canonical idle/talking head for every Free Talking surface.
+// Menus, live conversations and finish screens must import this asset,
+// not generate independent head markup or copy its SVG paths.
+export const AI_WILLY_HEAD_SVG=createWillySvg({}, {headOnly:true});
