@@ -3,7 +3,7 @@
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createHybridCharacterStage} from './shared-character-stage.js?v=20261113-restore-old-shared1';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
-import {createWillySvg} from '/students/free-talking-genius/willy-svg.js?v=20261114-no-idle-mouth1';
+import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-shared-head-v2';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
 const releaseMode=new URLSearchParams(location.search).get('release')==='1';
@@ -500,7 +500,7 @@ function ftShowFinish(result,{playSound=true}={}){
  $('ftResultPoints').textContent='+'+result.points+' Points';
  const portrait=$('ftResultMascot');portrait.replaceChildren();portrait.classList.remove('is-speaking');
  if(state.character==='bunny')portrait.innerHTML=BUNNY_FOX_ART;
- else if(state.character==='willy')portrait.innerHTML=createWillySvg({}, {headOnly:true});
+ else if(state.character==='willy')portrait.innerHTML=AI_WILLY_HEAD_SVG;
  else if(state.character==='pigfish'){
   portrait.innerHTML=PIGFISH_ART.replaceAll('id="pigBody"','id="pigBody-finish"').replaceAll('id="pigBelly"','id="pigBelly-finish"').replaceAll('url(#pigBody)','url(#pigBody-finish)').replaceAll('url(#pigBelly)','url(#pigBelly-finish)');
  }else{
@@ -2252,7 +2252,7 @@ async function initStandaloneRelease(){
  const willyPortrait=menu.querySelector('#ftChooseWilly .ft-character-symbol');
  if(bunnyPortrait&&!bunnyPortrait.querySelector('svg'))bunnyPortrait.innerHTML=BUNNY_FOX_ART;
  if(pigfishPortrait&&!pigfishPortrait.querySelector('svg'))pigfishPortrait.innerHTML=PIGFISH_ART;
- if(willyPortrait&&!willyPortrait.querySelector('svg'))willyPortrait.innerHTML=createWillySvg({}, {headOnly:true});
+ if(willyPortrait&&!willyPortrait.querySelector('svg'))willyPortrait.innerHTML=AI_WILLY_HEAD_SVG;
  menu.hidden=false;
  menu.removeAttribute('hidden');
  menu.querySelector('#ftCharacterRound')?.remove();
