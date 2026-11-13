@@ -337,6 +337,7 @@ function bindOriginalFrame(){
    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
    const type=character.id==='ftChooseLili'?'bunny':character.id==='ftChoosePigfish'?'pigfish':character.id==='ftChooseWilly'?'willy':'willi';
    const secondTap=state.lastChoice===type;
+   if(type==='willy'&&!allowWillyTest())return;
    buttonState(type);state.lastChoice=type;
    if(secondTap)d.getElementById('ftCharacterContinue')?.click();
    return;
@@ -350,6 +351,7 @@ function bindOriginalFrame(){
   const go=event.target.closest('#ftCharacterContinue');
   if(go&&!d.getElementById('ftCharacter').hidden){
    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+   if(state.character==='willy'&&!allowWillyTest())return;
    void (async()=>{
     const goButton=d.getElementById('ftCharacterContinue');
     if(goButton)goButton.disabled=true;
@@ -2218,6 +2220,14 @@ async function startConversation(){
 }
 
 
+// Same temporary test-only PIN gate as the Speaking character picker.
+function allowWillyTest(){
+ try{if(sessionStorage.getItem('willena_willy_testing')==='yes')return true}catch{}
+ const answer=window.prompt('AI 윌리는 곧 만나요!\\n지금은 선생님 테스트 중이에요.\\n테스트 PIN을 입력하세요.');
+ if(answer!=='2282'){if(answer!==null)error('AI 윌리는 곧 만나요! 테스트 PIN이 올바르지 않아요.');return false}
+ try{sessionStorage.setItem('willena_willy_testing','yes')}catch{}
+ return true;
+}
 async function initStandaloneRelease(){
  if(!releaseMode)return;
  const intro=$('ftReleaseIntro'),message=$('ftReleaseError');
@@ -2259,11 +2269,19 @@ async function initStandaloneRelease(){
   ['ftChooseLili','bunny'],['ftChooseWilli','willi'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy']
  ];
  const buttons=choices.map(([id])=>menu.querySelector('#'+id)).filter(Boolean);
+ const willyNotice=menu.querySelector('#ftChooseWilly');
+ if(willyNotice){
+  const notice=document.createElement('small');
+  notice.className='ft-willy-coming-notice';
+  notice.textContent='곧 만나요! · 테스트 중';
+  willyNotice.appendChild(notice);
+ }
  const startButton=menu.querySelector('#ftCharacterContinue');
  if(startButton)startButton.disabled=true;
  let selected=null,ready=false,starting=false;
  const choose=character=>{
   if(!ready||starting)return;
+  if(character==='willy'&&!allowWillyTest())return;
   const repeated=selected===character;selected=character;
   for(const [id,name] of choices)menu.querySelector('#'+id)?.setAttribute('aria-pressed',String(name===character));
   if(startButton)startButton.disabled=false;
@@ -2271,6 +2289,7 @@ async function initStandaloneRelease(){
  };
  async function begin(){
   if(!ready||!selected||starting)return;
+  if(selected==='willy'&&!allowWillyTest())return;
   starting=true;buttons.forEach(b=>b.disabled=true);
   if(startButton)startButton.disabled=true;
   message.hidden=true;
