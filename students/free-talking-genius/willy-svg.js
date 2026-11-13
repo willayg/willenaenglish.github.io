@@ -20,6 +20,19 @@ export function createWillySvg(config=DEFAULT_WILLY_CONFIG,options={}){
  const eyes=c.expression==='open'
  ?'<ellipse cx="'+eyeLeft+'" cy="314" rx="23" ry="27" fill="'+eye+'"/><ellipse cx="'+eyeRight+'" cy="314" rx="23" ry="27" fill="'+eye+'"/><circle cx="'+eyeLeft+'" cy="314" r="12" fill="'+f+'"/><circle cx="'+eyeRight+'" cy="314" r="12" fill="'+f+'"/>'
  :'<path d="M'+(eyeLeft-28)+' 326 Q'+eyeLeft+' 275 '+(eyeLeft+28)+' 326" fill="none" stroke="'+eye+'" stroke-width="14" stroke-linecap="round"/>'+(c.expression==='wink'?'<path d="M'+(eyeRight-24)+' 321 L'+(eyeRight+24)+' 321" stroke="'+eye+'" stroke-width="13" stroke-linecap="round"/>':'<path d="M'+(eyeRight-28)+' 326 Q'+eyeRight+' 275 '+(eyeRight+28)+' 326" fill="none" stroke="'+eye+'" stroke-width="14" stroke-linecap="round"/>');
+ // Alternate eye shapes all live in this ONE SVG; only the shared actor chooses a mood.
+ const emotionEyes='<g class="aw-eyes-mood aw-eyes-happy">'+
+  '<path d="M329 327 Q357 283 385 327 M415 327 Q443 283 471 327" fill="none" stroke="'+eye+'" stroke-width="14" stroke-linecap="round"/>'+
+  '</g><g class="aw-eyes-mood aw-eyes-surprised">'+
+  '<ellipse cx="357" cy="319" rx="19" ry="28" fill="none" stroke="'+eye+'" stroke-width="11"/>'+
+  '<ellipse cx="443" cy="319" rx="19" ry="28" fill="none" stroke="'+eye+'" stroke-width="11"/>'+
+  '</g><g class="aw-eyes-mood aw-eyes-sad">'+
+  '<path d="M330 303 Q357 291 383 313 M417 313 Q443 291 470 303" fill="none" stroke="'+eye+'" stroke-width="12" stroke-linecap="round"/>'+
+  '<path d="M334 348 Q357 330 380 348 M420 348 Q443 330 466 348" fill="none" stroke="'+eye+'" stroke-width="9" stroke-linecap="round"/>'+
+  '</g><g class="aw-eyes-mood aw-eyes-angry">'+
+  '<path d="M329 299 L386 321 M414 321 L471 299" fill="none" stroke="'+eye+'" stroke-width="14" stroke-linecap="round"/>'+
+  '<path d="M337 342 L379 333 M421 333 L463 342" fill="none" stroke="'+eye+'" stroke-width="10" stroke-linecap="round"/>'+
+  '</g>';
  const wave='<g transform="rotate(-39 249 463) scale('+R+')"><rect x="196" y="421" width="68" height="132" rx="32" fill="'+w+'" stroke="'+o+'" stroke-width="11"/><rect x="197" y="523" width="67" height="29" rx="13" fill="'+n+'"/><circle cx="230" cy="414" r="32" fill="'+w+'" stroke="'+o+'" stroke-width="10"/></g>';
  const down='<g transform="rotate(27 252 463) scale('+R+')"><rect x="196" y="421" width="68" height="132" rx="32" fill="'+w+'" stroke="'+o+'" stroke-width="11"/><rect x="197" y="523" width="67" height="29" rx="13" fill="'+n+'"/><circle cx="230" cy="551" r="30" fill="'+w+'" stroke="'+o+'" stroke-width="10"/></g>';
  const right='<g transform="rotate(-25 476 475)"><rect x="458" y="438" width="67" height="118" rx="31" fill="'+w+'" stroke="'+o+'" stroke-width="11"/><rect x="459" y="527" width="65" height="28" rx="12" fill="'+n+'"/><circle cx="492" cy="551" r="31" fill="'+w+'" stroke="'+o+'" stroke-width="10"/></g>';
@@ -31,11 +44,11 @@ export function createWillySvg(config=DEFAULT_WILLY_CONFIG,options={}){
  +'<rect x="280" y="420" width="240" height="226" rx="95" fill="url(#williShell)" stroke="'+o+'" stroke-width="12"/><path d="M283 589 Q398 637 516 589 L517 625 Q397 687 283 625Z" fill="'+n+'"/><path d="M343 491 L357 551 Q363 565 376 548 L397 513 L422 550 Q439 566 445 548 L461 492" fill="none" stroke="'+o+'" stroke-width="27" stroke-linecap="round" stroke-linejoin="round"/><path d="M343 491 L357 551 Q363 565 376 548 L397 513 L422 550 Q439 566 445 548 L461 492" fill="none" stroke="'+y+'" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>'
  +tablet+'</g>'
  +'<g id="head" transform="translate(400 '+hy+') scale('+H+') translate(-400 -205)">'
- +'<rect x="387" y="'+(205-92*A)+'" width="27" height="'+(92*A+30)+'" rx="13" fill="'+n+'" stroke="'+o+'" stroke-width="7"/><circle cx="401" cy="'+(205-92*A)+'" r="27" fill="'+y+'" stroke="#eb9b05" stroke-width="6"/>'
- +'<ellipse cx="237" cy="340" rx="29" ry="54" fill="'+y+'" stroke="'+n+'" stroke-width="15"/><ellipse cx="562" cy="340" rx="29" ry="54" fill="'+y+'" stroke="'+n+'" stroke-width="15"/>'
+ +'<g class="aw-antenna"><rect x="387" y="'+(205-92*A)+'" width="27" height="'+(92*A+30)+'" rx="13" fill="'+n+'" stroke="'+o+'" stroke-width="7"/><circle cx="401" cy="'+(205-92*A)+'" r="27" fill="'+y+'" stroke="#eb9b05" stroke-width="6"/></g>'
+ +'<ellipse class="aw-ear-left" cx="237" cy="340" rx="29" ry="54" fill="'+y+'" stroke="'+n+'" stroke-width="15"/><ellipse class="aw-ear-right" cx="562" cy="340" rx="29" ry="54" fill="'+y+'" stroke="'+n+'" stroke-width="15"/>'
  +'<rect x="235" y="205" width="330" height="253" rx="115" fill="url(#williShell)" stroke="'+o+'" stroke-width="12"/>'
  +'<rect x="279" y="254" width="242" height="154" rx="69" fill="url(#williFace)" stroke="'+n+'" stroke-width="9"/>'
- +'<g transform="translate(42 0)">'+eyes+'</g><circle cx="315" cy="375" r="7" fill="'+y+'"/><circle cx="484" cy="375" r="7" fill="'+y+'"/>'
+ +'<g class="aw-eyes-default" transform="translate(42 0)">'+eyes+'</g>'+emotionEyes+'<circle cx="315" cy="375" r="7" fill="'+y+'"/><circle cx="484" cy="375" r="7" fill="'+y+'"/>'
  // No idle mouth: the cyan equalizer is the only mouth and appears during speech.
  +'<g class="aw-mouth-wave" stroke="#63d6ff" fill="none" stroke-linecap="round" stroke-width="9"><path class="aw-bar aw-bar-1" d="M366 369v-10"/><path class="aw-bar aw-bar-2" d="M383 377v-24"/><path class="aw-bar aw-bar-3" d="M400 381v-32"/><path class="aw-bar aw-bar-4" d="M417 377v-24"/><path class="aw-bar aw-bar-5" d="M434 369v-10"/></g>'
  +'<path d="M333 234 Q432 203 497 250" fill="none" stroke="#ffffff" stroke-opacity=".46" stroke-width="11" stroke-linecap="round"/>'
