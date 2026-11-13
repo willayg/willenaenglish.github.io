@@ -2,7 +2,7 @@
 // The existing Free Talking Genius endpoints and files are untouched.
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co';
 const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const VOICES={willi:'marin',willy:'0yhUIig4twaXoIhuQoCQ',bunny:'M7zl2TS7ORAIGUejDfoy',pigfish:'W7UbuMY4ypluqgZS2UzT'};
+const VOICES={willi:'marin',willy:'GSGMGjgDtwaXe25hDMNI',bunny:'M7zl2TS7ORAIGUejDfoy',pigfish:'W7UbuMY4ypluqgZS2UzT'};
 const reply=(status,message)=>new Response(JSON.stringify({error:message}),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
 export async function onRequestPost({request,env}){
  const origin=request.headers.get('Origin');
@@ -14,10 +14,7 @@ export async function onRequestPost({request,env}){
  const character=String(data?.character||''),sentence=String(data?.text||'').trim();
  // AI Willy uses consistent baseline delivery; keep emotion tags supplied by the conversation model.
  // The baseline tags go ONLY to ElevenLabs, not into the visible conversation transcript.
- const ttsText=character==='willy'
-  ? '[Bombastic] [Irish] '+sentence.replace(/^(?:\s*\[(?:Bombastic|Irish)\]\s*)+/gi,'').trim()
-  : sentence;
- // Match the ElevenLabs model used to cache this character's textbook questions.
+ // Willi 2 requires natural, unprefixed text; keep model-supplied emotion tags.\n const ttsText=sentence;\n // Match the ElevenLabs model used to cache this character's textbook questions.
  // Never substitute an OpenAI voice for Bunny or Pigfish.
  const selectedModel={id:'eleven_v3'};
  if(!Object.hasOwn(VOICES,character)||sentence.length<2||sentence.length>350)return reply(400,'Invalid voice or response length');
