@@ -1,7 +1,7 @@
 // Visual-only bridge to the exact SVG animation assets from the Bunny Fox demo.
 // No audio interception, app cloning, auth, recording, grading or progress logic.
 import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wave3';
-import {AI_WILLY_HEAD_SVG} from './willy-svg.js?v=20261114-mood-head-v2';
+import {AI_WILLY_HEAD_SVG} from './willy-svg.js?v=20261114-electric-cat-v3';
 const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:AI_WILLY_HEAD_SVG};
 const PORTRAITS={...ART};
 /* Duplicate SVG gradient IDs resolve against the hidden selection portrait on
@@ -31,7 +31,8 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   const slot=document.getElementById(id)?.querySelector('.ft-character-symbol');
   if(slot&&PORTRAITS[character])slot.innerHTML=scopedCharacterArt(PORTRAITS[character],'portrait');
  }
- let selected='marin',voiceSpeaking=false,celebrateTimer=null;
+ let selected='marin',voiceSpeaking=false,celebrateTimer=null,moodInterval=null,moodStep=0;
+ function stopMoodCycle(){if(moodInterval!==null){clearInterval(moodInterval);moodInterval=null}}
  function update(){
   if(!ART[selected]||session.hidden)return;
   const recording=circle.dataset.aiRecording==='true'||circle.dataset.listening==='true';
@@ -41,6 +42,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   if(actor.dataset.state!=='celebrating')actor.dataset.state=state;
  }
  function select(character){
+  stopMoodCycle();
   selected=ART[character]?character:'marin';
   session.dataset.character=selected;
   actor.hidden=!ART[selected];
@@ -52,7 +54,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   update();
  }
  function setMood(mood){
-  actor.dataset.mood=selected==='willy'&&['happy','surprised','sad','angry'].includes(mood)?mood:'neutral';
+  actor.dataset.mood=selected==='willy'&&['happy','surprised','sad','angry','cat'].includes(mood)?mood:'neutral';
  }
  function setMoodFromText(text){
   if(selected!=='willy')return;
@@ -64,7 +66,26 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
    /\[(?:laughs|laughing|chuckles|giggles|excited|cheerful)\]|\b(?:great job|well done|awesome|wonderful|haha)\b/.test(t)?'happy':'neutral';
   setMood(mood);
  }
- function setSpeaking(playing){voiceSpeaking=Boolean(playing);if(!voiceSpeaking){actor.dataset.mood='neutral';if(actor.dataset.state==='celebrating')actor.dataset.state='idle'}update()}
+ function setSpeaking(playing){
+  const next=Boolean(playing);
+  if(next===voiceSpeaking){update();return}
+  voiceSpeaking=next;stopMoodCycle();
+  if(!voiceSpeaking){
+   actor.dataset.mood='neutral';moodStep=0;
+   if(actor.dataset.state==='celebrating')actor.dataset.state='idle';
+  }else if(selected==='willy'){
+   // Same SVG: cycle a few expressive faces only DURING speech.
+   const initial=actor.dataset.mood;
+   const sequence=[initial==='neutral'?'happy':initial,'surprised','cat','happy','neutral'];
+   moodStep=0;
+   moodInterval=setInterval(()=>{
+    if(!voiceSpeaking||selected!=='willy'){stopMoodCycle();return}
+    moodStep=(moodStep+1)%sequence.length;
+    setMood(sequence[moodStep]);
+   },1250);
+  }
+  update();
+ }
  function celebrate(){
   if(!ART[selected])return;
   clearTimeout(celebrateTimer);
@@ -74,8 +95,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
  const observer=new MutationObserver(update);
  observer.observe(circle,{attributes:true,attributeFilter:['data-ai-recording','data-listening','data-transcribing','data-phase']});
  voiceHost.addEventListener('ft:voice-playing',event=>{
-  voiceSpeaking=!!event.detail?.playing;
-  update();
+  setSpeaking(!!event.detail?.playing);
  });
  select('marin');
  return {select,celebrate,setSpeaking,setMood,setMoodFromText,actor};
