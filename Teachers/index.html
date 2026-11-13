@@ -844,12 +844,28 @@ function renderHomeworkDetails(id){
 }
 
 const rosterCurriculum={request:0,className:'',loading:false,error:'',books:[],units:new Map(),overview:null,word:[],extra:[],sentences:[],writing:[],writingEntries:[],puzzles:[],special:[],vocabTotals:new Map(),sentenceTotals:new Map()};
+// Keep Teacher progress denominators aligned with the sentences actually loaded
+// by students/sentence-genius/content.js. Other catalog sentence occurrences are
+// not playable Sentence Genius targets (notably Everybody Up page-4 drafts).
+function ccPlayableSentenceOccurrences(rows){
+ const isEverybodyUp=rows.some(row=>/^eu3e\d+:/.test(String(row.source_key||'')));
+ return isEverybodyUp?rows.filter(row=>row.status==='published'&&
+  /^eu3e\d+:(?:aligned-sentence:unit:|sentence-occurrence:)/.test(String(row.source_key||''))):
+  rows.filter(row=>row.status==='published'||row.status==='review');
+}
 async function rsCatalogTotals(bookId,table,field,filter){
- const url=ccCatalog+table+'?select=unit_id,'+field+'&book_id=eq.'+encodeURIComponent(bookId)+(filter||'')+'&limit=4000';
+ const isSentence=table==='source_content_occurrences'&&field==='sentence_id';
+ const fields='unit_id,'+field+(isSentence?',source_key,status':'');
+ const url=ccCatalog+table+'?select='+fields+'&book_id=eq.'+encodeURIComponent(bookId)+(filter||'')+'&limit=4000';
  const response=await fetch(url,{headers:{apikey:ccCatalogKey,Authorization:'Bearer '+ccCatalogKey},cache:'no-store'});
  if(!response.ok)throw Error('Catalog '+table+' unavailable ('+response.status+')');
  const records=await response.json(),byUnit=new Map();
- for(const r of records){if(!r.unit_id||!r[field])continue;const id=String(r.unit_id),ids=byUnit.get(id)||new Set();ids.add(String(r[field]));byUnit.set(id,ids)}
+ const grouped=new Map();
+ for(const r of records){if(!r.unit_id||!r[field])continue;const id=String(r.unit_id),rows=grouped.get(id)||[];rows.push(r);grouped.set(id,rows)}
+ for(const [id,rows] of grouped){
+  const playable=isSentence?ccPlayableSentenceOccurrences(rows):rows;
+  byUnit.set(id,new Set(playable.map(r=>String(r[field]))));
+ }
  return byUnit;
 }
 async function loadRosterCurriculum(className){
@@ -1596,11 +1612,14 @@ async function ccLoadSkillDetail(book,unit){
  // Targets are distinct IDs, never question attempts.
  const base=ccCatalog;
  async function list(target,field){
-  const url=base+target+'?select='+field+'&unit_id=eq.'+encodeURIComponent(unit.id)+(target==='unit_vocab_targets'?'&active=eq.true':'')+'&limit=2000';
+  const isSentence=target==='source_content_occurrences'&&field==='sentence_id';
+  const fields=field+(isSentence?',source_key,status':'');
+  const url=base+target+'?select='+fields+'&unit_id=eq.'+encodeURIComponent(unit.id)+(target==='unit_vocab_targets'?'&active=eq.true':'')+(isSentence?'&sentence_id=not.is.null&status=in.(review,published)':'')+'&limit=2000';
   const response=await fetch(url,{headers:{apikey:ccCatalogKey,Authorization:'Bearer '+ccCatalogKey},cache:'no-store'});
   if(!response.ok)throw Error('Catalog target lookup failed ('+response.status+')');
   const values=await response.json();
-  return new Set(values.map(v=>v[field]).filter(Boolean)).size;
+  const playable=isSentence?ccPlayableSentenceOccurrences(values):values;
+  return new Set(playable.map(v=>v[field]).filter(Boolean)).size;
  }
  const [rows,vocabTotal,sentenceTotal]=await Promise.all([
   ccRpc('teacher_curriculum_skill_progress_v1',{p_class:curriculum.selectedClass,p_book_id:book.book_id,p_unit_id:unit.id}),
