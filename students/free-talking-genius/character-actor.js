@@ -6,8 +6,12 @@ const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:WILLY_HEAD_ART};
    some Android browsers, leaving Pigfish's in-game body transparent.
    Scope references per instance; artwork, colours and animations are unchanged. */
 function scopedCharacterArt(markup,suffix){
- if(!markup.includes('pf-svg'))return markup;
- for(const id of ['pigBody','pigBelly']){
+ // The menu portrait and the talking actor both mount the exact same SVG.
+ // Scope gradient IDs per instance so Android resolves fills against the
+ // visible SVG rather than the hidden character-selection artwork.
+ const ids=markup.includes('pf-svg')?['pigBody','pigBelly']:
+  markup.includes('aw-svg')?['willyShell','willyScreen']:[];
+ for(const id of ids){
   markup=markup.replaceAll('id="'+id+'"','id="'+id+'-'+suffix+'"')
    .replaceAll('url(#'+id+')','url(#'+id+'-'+suffix+')');
  }
