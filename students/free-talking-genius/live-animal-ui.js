@@ -1,4 +1,4 @@
-/* Live Free Talking: Bunny Fox and Pigfish presentation layer.
+/* Live controlled Speaking: Bunny Fox, AI Willy and Pigfish share the exact same presentation layer.
    The original #ftTurnCircle remains the sole source of listen, record and
    rerecord actions. No separate audio, API, grading, progress or voice code. */
 (()=>{
@@ -7,7 +7,7 @@
  const questionStage=$('ftQuestionStage'),repeatMount=$('ftRepeatCircleMount');
  const correction=$('ftRepeatScreen')?.querySelector('.ft-repeat-sentence.is-corrected');
  if(!session||!voice||!circle||!questionStage||!correction)return;
- const animals=['bunny-v3','pigfish'];
+ const animals=['bunny-v3','willy','pigfish'];
  const stage=document.createElement('div');stage.className='ft-animal-stage';
  const anchor=document.createElement('div');anchor.className='ft-animal-avatar';
  const timer=document.createElement('div');timer.className='ft-animal-timer';
@@ -45,7 +45,7 @@
     if(normal&&circle.parentElement!==anchor){
      relocating=true;anchor.appendChild(circle);relocating=false;
     }else if(!animal&&step!=='repeat'&&circle.parentElement===anchor){
-     // AI Willi must keep his original circle outside the hidden animal UI.
+     // Willo keeps its own original circle outside the character UI.
      relocating=true;voice.insertBefore(circle,stage);relocating=false;
     }
    }
