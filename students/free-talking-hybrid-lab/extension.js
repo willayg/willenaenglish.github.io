@@ -3,7 +3,7 @@
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createHybridCharacterStage} from './shared-character-stage.js?v=20261113-restore-old-shared1';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
-import {createWillySvg} from '/students/free-talking-genius/willy-svg.js?v=20261113-head-only1';
+import {createWillySvg} from '/students/free-talking-genius/willy-svg.js?v=20261114-no-idle-mouth1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
 const releaseMode=new URLSearchParams(location.search).get('release')==='1';
