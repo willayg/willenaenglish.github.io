@@ -9,7 +9,7 @@ import {renderStudentSessionFinish} from '/students/components/student-session-f
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
-import {createFreeTalkingVoice} from './question-voice.js?v=20261113-willy-audio1';
+import {createFreeTalkingVoice} from './question-voice.js?v=20261114-priority-question1';
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-route8';
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261113-willy-retry1';
 import {createFreeTalkingCharacters} from './character-actor.js?v=20261114-talking-only-v1';
