@@ -136,9 +136,9 @@ async function loadGrammarHomework(){
  if(!id)return null;
  const rows=await homeworkFetch('homework_assignments?select=id,title,list_meta,active,status,created_at,due_at&source_type=eq.grammar_books&id=eq.'+encodeURIComponent(id)+'&active=eq.true&limit=1');
  const a=rows?.[0];
- if(!a||a.status!=='active'||a.list_meta?.book_key!=='grammar_ten_2')throw Error('This textbook homework is no longer available.');
+ if(!a||a.status!=='active'||(a.list_meta?.book_key!=='grammar_ten_2'&&!Object.values(COURSE_BOOKS).some(book=>book.key===a.list_meta?.book_key))||!((a.list_meta?.book_key==='grammar_ten_2'?TEN_BOOK_ID:Object.keys(COURSE_BOOKS).find(id=>COURSE_BOOKS[id].key===a.list_meta?.book_key))===a.list_meta?.source_book_id))throw Error('This textbook homework is no longer available.');
  const chapter=Number(a.list_meta.chapter);
- if(!Number.isInteger(chapter)||chapter<1||chapter>11)throw Error('Invalid textbook homework chapter');
+ if(!Number.isInteger(chapter)||chapter<1||chapter>(a.list_meta.book_key==='grammar_ten_2'?11:8))throw Error('Invalid textbook homework chapter');
  const modesRequired=(a.list_meta.required_modes||[]).filter(mode=>modes.some(m=>m.id===mode));
  if(!modesRequired.length)throw Error('No assigned Grammar activities');
  const evidence=await homeworkFetch('grammar_book_homework_completions?select=mode,correct_count,mastered_question_ids&assignment_id=eq.'+encodeURIComponent(id));
@@ -162,7 +162,7 @@ function saveHomeworkQuestions(){
   if(activeHomework?.id===assignment){
    const previous=homeworkModeEvidence.get(mode)?.mastered_question_ids||[];
    const merged=[...new Set([...previous,...ids])];
-   homeworkModeEvidence.set(mode,{mastered_question_ids:merged,correct_count:Math.min(8,merged.length)});
+   homeworkModeEvidence.set(mode,{mastered_question_ids:merged,correct_count:Math.min(activeHomework?.list_meta?.book_key==='grammar_ten_2'?8:5,merged.length)});
    if(activeMode===mode&&activeUnit===chapter)renderModeCards();
   }
   await window.WillenaMissionBasket?.refresh?.();
