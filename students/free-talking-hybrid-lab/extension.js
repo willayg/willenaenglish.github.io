@@ -1,7 +1,7 @@
 // Demo overlay. The ORIGINAL Free Talking Genius runs unchanged inside the same-origin iframe.
 // Everything here is additive; no production app source is patched.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
-import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261113-willy-wave4';
+import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261113-willy-shared-svg1';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {createWillySvg} from '/students/free-talking-genius/willy-svg.js?v=20261113-shared-svg1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
@@ -2235,7 +2235,7 @@ async function initStandaloneRelease(){
  const willyPortrait=menu.querySelector('#ftChooseWilly .ft-character-symbol');
  if(bunnyPortrait&&!bunnyPortrait.querySelector('svg'))bunnyPortrait.innerHTML=BUNNY_FOX_ART;
  if(pigfishPortrait&&!pigfishPortrait.querySelector('svg'))pigfishPortrait.innerHTML=PIGFISH_ART;
- if(willyPortrait&&!willyPortrait.querySelector('svg'))willyPortrait.innerHTML=WILLY_HEAD_ART;
+ if(willyPortrait&&!willyPortrait.querySelector('svg'))willyPortrait.innerHTML=createWillySvg({}, {portrait:true});
  menu.hidden=false;
  menu.removeAttribute('hidden');
  menu.querySelector('#ftCharacterRound')?.remove();
