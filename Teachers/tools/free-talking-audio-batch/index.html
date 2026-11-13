@@ -62,7 +62,7 @@ progress{width:100%;height:14px;accent-color:#40bdcb}
  </div>
  <progress id="progress" value="0" max="1"></progress><div class="status" id="status" role="status" aria-live="polite">Checking teacher login…</div>
  <div class="actions"><button id="selectAll" type="button" disabled>Select all</button><button id="selectMissing" type="button" disabled>Select missing only</button><button id="deselectAll" type="button" disabled>Clear selection</button><span id="selectedCount" class="tag">0 selected</span></div>
- <div id="rows" class="list" aria-label="Question audio preparation status"></div><audio id="audition" preload="none" hidden></audio>
+ <div id="rows" class="list" aria-label="Question audio preparation status"></div><audio id="audition" controls preload="none" hidden style="display:block;width:100%;margin-top:12px"></audio>
  <p class="sub" style="margin-top:15px">Files are verified by R2 HEAD checks; this tool never changes Free Talking questions, student scores, or existing audio files.</p>
 </section>
 <script type="module">
@@ -70,7 +70,7 @@ const $=id=>document.getElementById(id);
 let books=[],questions=[],jobs=[],busy=false,stopping=false,checked=false;
 let playingIndex=-1,previewURL=null,previewBusy=false;
 const audition=$('audition');
-function stopAudition(){audition.pause();audition.removeAttribute('src');audition.load();if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;playingIndex=-1;}
+function stopAudition(){audition.pause();audition.removeAttribute('src');audition.load();audition.hidden=true;if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;playingIndex=-1;}
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const voices=()=> $('voice').value==='both'?['willi2','willi_clone','lili','pigfish','willi_mp3']:[$('voice').value];
 const labels={lili:'AI Lili',pigfish:'Pigfish',willi2:'AI Willi 2',willi_clone:'The Prince (original clone)',willi_mp3:'Marin MP3 backup'};
@@ -210,8 +210,9 @@ $('rows').addEventListener('click',async e=>{
   const binary=atob(data.audio),bytes=new Uint8Array(binary.length);
   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
   previewURL=URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'}));
-  playingIndex=index;audition.src=previewURL;render();
-  await audition.play();status('Playing verified R2 MP3 · '+labels[job.voice]+' · '+job.bookTitle);
+  playingIndex=index;audition.src=previewURL;audition.hidden=false;render();
+  try{await audition.play();status('Playing verified R2 MP3 · '+labels[job.voice]+' · '+job.bookTitle)}
+  catch(e){if(e?.name==='NotAllowedError'){status('MP3 loaded. Tap Play in the audio player to listen.')}else throw e}
  }catch(error){stopAudition();render();status('MP3 preview unavailable: '+String(error.message||error))}
  finally{previewBusy=false;controls()}
 });
