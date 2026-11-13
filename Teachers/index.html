@@ -604,13 +604,17 @@ try{
   @media(max-width:480px){.audio-tool-switch button{font-size:12px}.audio-tool-pane .panel{padding:7px!important}}
  </style>
  <nav class="audio-tool-switch" role="tablist" aria-label="Audio Tools">
-  <button type="button" role="tab" id="audioToolVoiceTab" aria-selected="true" aria-controls="audioToolVoicePane" data-audio-tool-tab="voice">🎛 Voice Lab</button>
+  <button type="button" role="tab" id="audioToolVoiceTab" aria-selected="false" aria-controls="audioToolVoicePane" data-audio-tool-tab="voice">🎛 Willo · OpenAI</button>
+  <button type="button" role="tab" id="audioToolWillyTab" aria-selected="true" aria-controls="audioToolWillyPane" data-audio-tool-tab="willy">🤖 AI Willy · ElevenLabs</button>
   <button type="button" role="tab" id="audioToolBatchTab" aria-selected="false" aria-controls="audioToolBatchPane" data-audio-tool-tab="batch" tabindex="-1">♫ MP3 Batch</button>
  </nav>
- <div class="audio-tool-pane" id="audioToolVoicePane" role="tabpanel" aria-labelledby="audioToolVoiceTab" data-audio-tool-panel="voice">
+ <div class="audio-tool-pane" id="audioToolVoicePane" role="tabpanel" aria-labelledby="audioToolVoiceTab" data-audio-tool-panel="voice" hidden>
   <div class="panel">
    <iframe title="AI Willi voice lab" loading="lazy" src="/Teachers/tools/ai-willi-voice-lab/?v=20261112-fable-depth4" style="display:block;min-height:1160px"></iframe>
   </div>
+ </div>
+ <div class="audio-tool-pane" id="audioToolWillyPane" role="tabpanel" aria-labelledby="audioToolWillyTab" data-audio-tool-panel="willy">
+  <div class="panel"><iframe id="aiWillyVoiceLabFrame" title="AI Willy ElevenLabs voice controls" loading="lazy" data-src="/Teachers/tools/ai-willy-eleven-lab/?v=20261113-v1" style="display:block;min-height:1500px"></iframe></div>
  </div>
  <div class="audio-tool-pane" id="audioToolBatchPane" role="tabpanel" aria-labelledby="audioToolBatchTab" data-audio-tool-panel="batch" hidden>
   <div class="panel">
@@ -2100,16 +2104,20 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
  if(!holder)return;
  const tabs=[...holder.querySelectorAll('[data-audio-tool-tab]')];
  const panes=[...holder.querySelectorAll('[data-audio-tool-panel]')];
- let active='voice';
- try{const saved=sessionStorage.getItem('willena.utilities.audioToolTab');if(saved==='batch')active='batch'}catch{}
+ let active='willy';
+ try{const saved=sessionStorage.getItem('willena.utilities.audioToolTab');if(['batch','voice','willy'].includes(saved))active=saved}catch{}
  function choose(tab){
-  if(!['voice','batch'].includes(tab))return;
+  if(!['voice','batch','willy'].includes(tab))return;
   active=tab;
   tabs.forEach(b=>{const selected=b.dataset.audioToolTab===tab;b.setAttribute('aria-selected',String(selected));b.tabIndex=selected?0:-1});
   panes.forEach(p=>p.hidden=p.dataset.audioToolPanel!==tab);
   try{sessionStorage.setItem('willena.utilities.audioToolTab',tab)}catch{}
   if(tab==='batch'){
    const frame=document.getElementById('freeTalkingAudioBatchFrame');
+   if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src;
+  }
+  if(tab==='willy'){
+   const frame=document.getElementById('aiWillyVoiceLabFrame');
    if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src;
   }
  }
