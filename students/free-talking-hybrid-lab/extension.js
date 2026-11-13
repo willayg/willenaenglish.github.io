@@ -652,7 +652,7 @@ function showActor(){
  // Pure visual overlay: no changes to the existing character SVG or mic.
  const speechRing=document.createElement('div');speechRing.id='ftSpeechTimeRing';
  speechRing.setAttribute('aria-hidden','true');speechRing.hidden=true;
- speechRing.style.setProperty('--ft-record-remaining','1');host.append(speechRing);
+ speechRing.style.setProperty('--ft-record-remaining','1');
  const preview=document.createElement('div');preview.id='ftLiveSpeechPreview';
  preview.setAttribute('aria-hidden','true');host.append(preview);
  const stage=document.createElement('div');stage.className='ft-animal-stage';
@@ -660,7 +660,7 @@ function showActor(){
  const timer=document.createElement('div');timer.className='ft-animal-timer';
  timer.setAttribute('aria-hidden','true');
  timer.innerHTML='<svg viewBox="0 0 240 240"><circle class="ft-animal-track" cx="120" cy="120" r="110" pathLength="100"/><circle class="ft-animal-progress" cx="120" cy="120" r="110" pathLength="100"/></svg>';
- stage.append(anchor,timer);
+ stage.append(anchor,timer,speechRing);
  voice.append(stage);anchor.append(circle);
  const action=document.createElement('button');action.type='button';
  action.className='ft-animal-action ft-extension-action';action.id='ftExtensionAction';
@@ -2271,10 +2271,10 @@ async function initStandaloneRelease(){
  const buttons=choices.map(([id])=>menu.querySelector('#'+id)).filter(Boolean);
  const willyNotice=menu.querySelector('#ftChooseWilly');
  if(willyNotice){
-  const notice=document.createElement('small');
-  notice.className='ft-willy-coming-notice';
-  notice.textContent='곧 만나요! · 테스트 중';
-  willyNotice.appendChild(notice);
+  if(!willyNotice.querySelector('.ft-willy-coming-notice')){
+   const notice=document.createElement('small');notice.className='ft-willy-coming-notice';
+   notice.textContent='곧 만나요! · 테스트 중';willyNotice.appendChild(notice);
+  }
  }
  const startButton=menu.querySelector('#ftCharacterContinue');
  if(startButton)startButton.disabled=true;
