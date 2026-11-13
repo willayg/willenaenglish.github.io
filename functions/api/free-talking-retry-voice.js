@@ -5,7 +5,8 @@ const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const TEXT='I couldn’t hear you. Could you speak a little louder?';
 const LILI_ID='M7zl2TS7ORAIGUejDfoy';
 const PIGFISH_ID='W7UbuMY4ypluqgZS2UzT';
-const WILLY_ID='0yhUIig4twaXoIhuQoCQ';
+// Same ElevenLabs character voice as textbook MP3s and live Free Talking.
+const WILLY_ID='GSGMGjgDtwaXe25hDMNI';
 const STORAGE='https://get-audio-urls.willena.workers.dev/free-talking-store';
 const reply=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
 async function student(request){
