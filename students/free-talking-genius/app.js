@@ -913,18 +913,9 @@ function renderQuestion({retry=false}={}){
  void questionVoice.select(state.current.id,{autoplay:false});
 }
 let roundChoice=null;
-// Temporary, deliberately lightweight client-side testing gate.
-// A hardcoded PIN is not a security boundary; it only deters normal student use.
-function allowWillyTest(){
- try{if(sessionStorage.getItem('willena_willy_testing')==='yes')return true}catch{}
- const answer=window.prompt('AI 윌리는 곧 만나요!\\n지금은 선생님 테스트 중이에요.\\n테스트 PIN을 입력하세요.');
- if(answer!=='2282'){if(answer!==null)showError('PIN이 올바르지 않아요. AI 윌리는 곧 만나요!');return false}
- try{sessionStorage.setItem('willena_willy_testing','yes')}catch{}
- return true;
-}
 function chooseRoundVoice(voice){
  if(!['marin','bunny-v3','pigfish','willy'].includes(voice))return;
- if(voice==='willy'&&!allowWillyTest())return;
+
  if(roundChoice===voice&&!state.loading&&state.pendingMode){void beginRound(state.pendingMode);return}
  roundChoice=voice;
  retryVoice.preloadBoth();
@@ -940,10 +931,12 @@ function openMode(mode){
  $('ftCharacterContinue').disabled=true;
  preloadStudentSfx();
  view('ftCharacter');
+ // Willi 2 is the default Speaking character; students may still choose another.
+ if(mode==='speaking')chooseRoundVoice('willy');
 }
 async function beginRound(mode){
  if(state.loading||!['speaking','writing'].includes(mode)||!roundChoice)return;
- if(roundChoice==='willy'&&!allowWillyTest())return;
+
  if(!questionVoice.setVoice(roundChoice)){
   showError('캐릭터 음성을 선택할 수 없어요.');return;
  }
