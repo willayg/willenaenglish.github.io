@@ -287,7 +287,7 @@
  .bf-actor[data-state="speaking"] .aw-svg .aw-eyes-default,.bf-actor[data-state="speaking"] .aw-svg .aw-eyes-mood,
  .bf-actor[data-state="speaking"] .aw-svg .aw-ear-left,
  .bf-actor[data-state="speaking"] .aw-svg .aw-ear-right,
- .bf-actor[data-state="speaking"] .aw-svg .aw-antenna,
+ .bf-actor[data-state="speaking"] .aw-svg .aw-antenna{animation:none!important}
 }
 
 /* Static whenever not speaking: no blinking, ear/antenna motion or mood face.
@@ -304,3 +304,49 @@
 }
 .bf-actor:not([data-state="speaking"]) .aw-svg .aw-eyes-mood{display:none!important}
 .bf-actor:not([data-state="speaking"]) .aw-svg .aw-eyes-default{display:inline!important}
+
+/* AI Willi FX v3: one shared head SVG, one speech state, zero permanent mouths. */
+.aw-svg .aw-cat-details,.aw-svg .aw-electric{display:none}
+.bf-actor[data-state="speaking"] .aw-svg .aw-electric{display:inline}
+.bf-actor[data-state="speaking"][data-mood="cat"] .aw-svg .aw-cat-details,
+.bf-actor[data-state="speaking"][data-mood="cat"] .aw-svg .aw-eyes-cat{display:inline}
+.bf-actor[data-state="speaking"][data-mood="cat"] .aw-svg .aw-eyes-default{display:none}
+.bf-actor[data-state="speaking"] .aw-svg .aw-head-motion{
+ transform-box:view-box;transform-origin:400px 340px;
+ animation:awHeadShiver 1.8s ease-in-out infinite;
+ filter:drop-shadow(0 0 5px #42d5ff88)
+}
+.bf-actor[data-state="speaking"] .aw-svg .aw-antenna{
+ animation:awWilliAntenna .8s ease-in-out infinite alternate,awElectricGlow .45s ease-in-out infinite alternate
+}
+.bf-actor[data-state="speaking"] .aw-svg .aw-electric .aw-spark{
+ animation:awSparkFlash .52s steps(2,end) infinite;
+ filter:drop-shadow(0 0 5px #53edff)
+}
+.bf-actor[data-state="speaking"] .aw-svg .aw-spark-2{animation-delay:-.18s}
+.bf-actor[data-state="speaking"] .aw-svg .aw-spark-3{animation-delay:-.37s}
+.bf-actor[data-state="speaking"] .aw-svg .aw-eyes-cat{
+ animation:awCatBlink 1.6s ease-in-out infinite;
+ transform-box:fill-box;transform-origin:center
+}
+@keyframes awHeadShiver{
+ 0%,100%{transform:translate(0,0) rotate(0deg)}
+ 18%{transform:translate(-2px,-1px) rotate(-1.7deg)}
+ 30%{transform:translate(2px,0) rotate(1.7deg)}
+ 44%,70%{transform:translate(0,-2px) rotate(0deg)}
+ 82%{transform:translate(2px,1px) rotate(1deg)}
+}
+@keyframes awElectricGlow{from{filter:drop-shadow(0 0 0 transparent)}to{filter:drop-shadow(0 0 9px #4bdeff)}}
+@keyframes awSparkFlash{0%,39%,70%,100%{opacity:0}40%,69%{opacity:1}}
+@keyframes awCatBlink{0%,44%,56%,100%{transform:scaleY(1)}49%{transform:scaleY(.12)}}
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-head-motion{
+ animation:none!important;filter:none!important;transform:none!important
+}
+@media(prefers-reduced-motion:reduce){
+ .bf-actor[data-state="speaking"] .aw-svg .aw-head-motion,
+ .bf-actor[data-state="speaking"] .aw-svg .aw-antenna,
+ .bf-actor[data-state="speaking"] .aw-svg .aw-electric .aw-spark,
+ .bf-actor[data-state="speaking"] .aw-svg .aw-eyes-cat{
+  animation:none!important;filter:none!important
+ }
+}
