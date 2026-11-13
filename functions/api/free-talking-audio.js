@@ -13,12 +13,14 @@ const model=env=>env.FREE_TALKING_REALTIME_MODEL||'gpt-realtime-2.1-mini';
 const voice=env=>env.FREE_TALKING_REALTIME_VOICE||'marin';
 // Only these two voices are selectable. Prize voices remain registered separately
 // but are not reachable through this endpoint until an authenticated unlock system exists.
-const SELECTABLE_VOICES=new Set(['marin','bunny-v3','pigfish','willy']);
+const SELECTABLE_VOICES=new Set(['marin','bunny-v3','pigfish','willy','willy2']);
 const ELEVEN_VOICES=Object.freeze({
  bunny:'M7zl2TS7ORAIGUejDfoy',
  'bunny-v3':'M7zl2TS7ORAIGUejDfoy',
  pigfish:'W7UbuMY4ypluqgZS2UzT',
- willy:'0yhUIig4twaXoIhuQoCQ'
+ willy:'0yhUIig4twaXoIhuQoCQ',
+ // Live Free Talking only; keep original Willy intact for structured Speaking.
+ willy2:'GSGMGjgDtwaXe25hDMNI'
 });
 const ELEVEN_MODEL='eleven_v3';
 // ElevenLabs requires the API key on Cloudflare, not Netlify.
@@ -220,7 +222,7 @@ export async function onRequestPost({request,env,context}){
    if(!attempt)return json(404,{success:false,error:'Correction not found'});
    const corrected=String(attempt.correction||attempt.answer_text||'').trim().slice(0,550);
    if(!corrected||corrected.length<3)return json(422,{success:false,error:'Correction text unavailable'});
-   const isLili=chosen==='bunny-v3'||chosen==='pigfish'||chosen==='willy';
+   const isLili=chosen==='bunny-v3'||chosen==='pigfish'||chosen==='willy'||chosen==='willy2';
    const ttsModel=isLili?ELEVEN_MODEL:'gpt-4o-mini-tts';
    const ttsVoice=isLili?ELEVEN_VOICES[chosen]:'marin';
    const key=await cacheKey(corrected,ttsModel,ttsVoice,isLili?'elevenlabs':'fallback');
