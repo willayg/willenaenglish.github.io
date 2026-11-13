@@ -501,8 +501,17 @@ export async function onRequestPost({request,env}){
      body:JSON.stringify(row),signal
    });
    if(!saved.ok){
-    if(saved.status===409&&((speaker==='character'&&turnNumber===1&&profile.role==='student')||(speaker==='student'&&row.qualified===true)))
-     return json(200,{saved:true,previouslySaved:true});
+    if(saved.status===409){
+     // A paused/resumed client may retry a request whose original response was lost.
+     // Accept only an EXACT matching already-saved turn, never a different turn.
+     const previous=await get(SCORE+'/rest/v1/free_talking_hybrid_transcripts?select=student_id,book_id,unit_id,character,speaker,transcript_text,message_source&student_id=eq.'+user.id+'&session_id=eq.'+sessionId+'&turn_number=eq.'+turnNumber+'&limit=1',scoreHeaders(token),signal);
+     const existing=previous?.[0];
+     if(existing?.student_id===user.id&&existing.book_id===input.book_id&&existing.unit_id===input.unit_id&&
+      existing.character===character&&existing.speaker===speaker&&
+      existing.transcript_text===transcriptText&&
+      (speaker!=='character'||String(existing.message_source||'')===String(row.message_source||'')))
+      return json(200,{saved:true,previouslySaved:true});
+    }
     console.warn('[Free Talking] transcript write rejected',saved.status);
     return json(502,{error:'Could not save transcript ('+saved.status+')'});
    }
