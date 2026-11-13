@@ -200,7 +200,7 @@ function setAudioLevels(){
  $('volumeNumber').textContent=Math.round(Number($('volume').value))+'%';
 }
 function createAudioMixer(){
- if(!state.quietMode||state.audioContext)return;
+ if((!state.quietMode&&state.character!=='willy')||state.audioContext)return;
  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
  if(!AudioContextClass){state.quietMode=false;return}
  try{
@@ -215,10 +215,22 @@ function createAudioMixer(){
 }
 function routeAudio(audio){
  if(!audio)return;
- if(state.quietMode&&state.audioContext&&state.audioGain&&state.audioContext.state==='running'){
+ if((state.quietMode||state.character==='willy')&&state.audioContext&&state.audioGain){
   try{
    const source=state.audioContext.createMediaElementSource(audio);
-   source.connect(state.audioGain);
+   if(state.character==='willy'){
+    // Soft 11.5 kHz high-cut removes top-end ElevenLabs hiss.
+    // 3% short metallic reflection gives a barely perceptible robot texture.
+    const highCut=state.audioContext.createBiquadFilter();
+    highCut.type='lowpass';highCut.frequency.value=11500;highCut.Q.value=Math.SQRT1_2;
+    source.connect(highCut);highCut.connect(state.audioGain);
+    const metalDelay=state.audioContext.createDelay(.1);
+    metalDelay.delayTime.value=.028;
+    const metalTone=state.audioContext.createBiquadFilter();
+    metalTone.type='bandpass';metalTone.frequency.value=2300;metalTone.Q.value=.65;
+    const metalMix=state.audioContext.createGain();metalMix.gain.value=.03;
+    highCut.connect(metalDelay);metalDelay.connect(metalTone);metalTone.connect(metalMix);metalMix.connect(state.audioGain);
+   }else source.connect(state.audioGain);
    state.linkedSources.add(audio);
    void state.audioContext.resume().catch(()=>{});
   }catch(e){console.warn('Audio routing failed, reverting to browser playback',e)}
@@ -534,11 +546,14 @@ const isBeginner=()=>state.lessonLevel<=2;
 const isFirstLevel=()=>state.lessonLevel<=1;
 function stripInternalLabels(value){return String(value||'').replace(/\b(?:Textbook|Current textbook question|Current question|Example|Lesson focus|Instructions)\s*:\s*[^.!?]*(?:[.!?]|$)/gi,' ').replace(/\s+/g,' ').trim()}
 function removeSpokenLaughter(value){
- // ElevenLabs reads written laughter literally ("ha ha") instead of laughing.
- // Remove stage directions and leading fake laughter from all AI speech.
- return String(value||'').replace(/[[(](?:laugh(?:ing|s)?|chuckl(?:e|ing)|giggl(?:e|ing))[\])]/gi,'')
+ // Preserve explicit ElevenLabs v3 emotion tags; remove literal fake laughter only.
+ return String(value||'')
   .replace(/(?:^|[.!?]\s+)(?:(?:ha[\s,!-]*){1,}|(?:he[\s,!-]*){2,}|haha+|hehe+|lol|lmao)(?:[!.,\s]+|$)/gi,' ')
   .replace(/\s+/g,' ').trim();
+}
+function visibleSpeechText(value){
+ // Direction tags belong to audio, never the child's visible transcript.
+ return String(value||'').replace(/\[(?:chuckling|laughing|giggles|giggling|surprised|whispering|crying|screaming|bombastic|irish)\]/gi,'').replace(/\s+/g,' ').trim();
 }
 
 
@@ -1959,7 +1974,7 @@ async function speakEleven(text,source='ai_reply'){
  if(!state.active||!text)return;
  stopSpeech(); // abort any previous utterance before starting this reply
  const current=state.generation;
- appendLine(NAMES[state.character],text,source);
+ appendLine(NAMES[state.character],visibleSpeechText(text),source);
  actorPhase('ready');message(NAMES[state.character]+' is speaking…');
  const control=new AbortController();state.controller=control;
  try{
