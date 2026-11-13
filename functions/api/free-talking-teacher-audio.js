@@ -157,36 +157,29 @@ export async function onRequestPost({request,env}){
   // Cached voice audition: never calls a TTS service or writes R2.
   // Select up to five phrases already present in the shared audio store.
   if(body.action==='lab_catalog'){
-   const rows=await contentRows('free_talking_questions?select=id,book_id,unit_number,question_en&is_published=eq.true&order=id.asc&limit=350');
-   const candidates=rows.filter(q=>UUID.test(String(q.id))&&String(q.question_en||'').trim().length>=12).slice(0,260);
-   const files=[],records=[];
+   // Probe small, randomly selected batches, and stop as soon as five
+   // R2-backed phrases are found. Never enumerate the whole catalogue.
    const options=['lili','willi_clone','pigfish','willi_mp3'];
-   for(const q of candidates){
-    const keys={};
-    for(const voice of options){
-     const cfg=VOICES[voice],key=await hashKey(q.question_en,cfg);
-     keys[voice]=key;files.push(key+'.mp3');
+   const candidates=await contentRows('free_talking_questions?select=id,question_en&is_published=eq.true&question_en=not.is.null&order=id.asc&limit=80');
+   const pool=candidates.filter(q=>UUID.test(String(q.id))&&String(q.question_en||'').trim().length>=12);
+   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+   const selected=[];let probed=0;
+   for(let offset=0;offset<Math.min(pool.length,40)&&selected.length<5;offset+=5){
+    const rows=pool.slice(offset,offset+5),files=[],records=[];
+    for(const q of rows){
+     const keys={};
+     for(const voice of options){const key=await hashKey(q.question_en,VOICES[voice]);keys[voice]=key;files.push(key+'.mp3')}
+     records.push({id:q.id,text:q.question_en,keys});
     }
-    records.push({id:q.id,text:q.question_en,keys});
+    const result=await store(auth.token,{action:'inventory',files});
+    probed+=rows.length;
+    for(const q of records){
+     const available=Object.fromEntries(options.map(v=>[v,result.exists?.[q.keys[v]+'.mp3']===true]));
+     if(options.some(v=>available[v]))selected.push({id:q.id,text:q.text,available});
+     if(selected.length===5)break;
+    }
    }
-   const exists={};
-   for(let i=0;i<files.length;i+=180){
-    const result=await store(auth.token,{action:'inventory',files:files.slice(i,i+180)});
-    Object.assign(exists,result.exists||{});
-   }
-   const ranked=records.map(q=>({...q,available:Object.fromEntries(options.map(v=>[v,exists[q.keys[v]+'.mp3']===true]))}))
-    .map(q=>({...q,count:options.filter(v=>q.available[v]).length}))
-    .filter(q=>q.count>0)
-    .sort((a,b)=>b.count-a.count);
-   const selected=[];const words=new Set();
-   for(const q of ranked){
-    const start=String(q.text).trim().split(/\\s+/).slice(0,4).join(' ').toLowerCase();
-    if(words.has(start))continue;
-    words.add(start);selected.push(q);
-    if(selected.length===5)break;
-   }
-   return json(200,{success:true,phrases:selected.map(q=>({id:q.id,text:q.text,available:q.available})),
-    voices:options,scanned:candidates.length});
+   return json(200,{success:true,phrases:selected,voices:options,scanned:probed});
   }
   if(body.action==='lab_clip'){
    const voice=String(body.voice||''),questionId=String(body.question_id||'');
