@@ -12,6 +12,11 @@ export async function onRequestPost({request,env}){
  if(bearer.length<40)return reply(401,'Sign in first');
  let data;try{data=await request.json()}catch{return reply(400,'Invalid request')}
  const character=String(data?.character||''),sentence=String(data?.text||'').trim();
+ // AI Willy uses consistent baseline delivery; keep emotion tags supplied by the conversation model.
+ // The baseline tags go ONLY to ElevenLabs, not into the visible conversation transcript.
+ const ttsText=character==='willy'
+  ? '[Bombastic] [Irish] '+sentence.replace(/^(?:\s*\[(?:Bombastic|Irish)\]\s*)+/gi,'').trim()
+  : sentence;
  // Match the ElevenLabs model used to cache this character's textbook questions.
  // Never substitute an OpenAI voice for Bunny or Pigfish.
  const selectedModel={id:'eleven_v3'};
@@ -44,7 +49,7 @@ export async function onRequestPost({request,env}){
    try{
     const upstream=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId)+'/stream?output_format=mp3_44100_128',{
      method:'POST',headers:{'xi-api-key':key,'Content-Type':'application/json','Accept':'audio/mpeg'},
-     body:JSON.stringify({text:sentence,model_id:selectedModel.id,voice_settings:voiceSettings}),
+     body:JSON.stringify({text:ttsText,model_id:selectedModel.id,voice_settings:voiceSettings}),
      signal:AbortSignal.timeout(24000)
     });
     if(upstream.ok&&upstream.body)
@@ -63,7 +68,7 @@ export async function onRequestPost({request,env}){
   try{
    const fallback=await fetch('https://willenaenglish.netlify.app/.netlify/functions/eleven_labs_proxy',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text:sentence,voice_id:voiceId,model_id:selectedModel.id,voice_settings:voiceSettings}),
+    body:JSON.stringify({text:ttsText,voice_id:voiceId,model_id:selectedModel.id,voice_settings:voiceSettings}),
     signal:AbortSignal.timeout(30000)
    });
    if(!fallback.ok){
