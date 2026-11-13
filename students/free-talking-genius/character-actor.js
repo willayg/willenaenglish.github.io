@@ -1,7 +1,7 @@
 // Visual-only bridge to the exact SVG animation assets from the Bunny Fox demo.
 // No audio interception, app cloning, auth, recording, grading or progress logic.
 import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wave3';
-import {AI_WILLY_HEAD_SVG} from './willy-svg.js?v=20261114-mood-head-v1';
+import {AI_WILLY_HEAD_SVG} from './willy-svg.js?v=20261114-mood-head-v2';
 const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:AI_WILLY_HEAD_SVG};
 const PORTRAITS={...ART};
 /* Duplicate SVG gradient IDs resolve against the hidden selection portrait on
