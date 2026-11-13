@@ -64,7 +64,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
    /\[(?:laughs|laughing|chuckles|giggles|excited|cheerful)\]|\b(?:great job|well done|awesome|wonderful|haha)\b/.test(t)?'happy':'neutral';
   setMood(mood);
  }
- function setSpeaking(playing){voiceSpeaking=Boolean(playing);if(actor.dataset.state==='celebrating'&&!playing)actor.dataset.state='idle';update()}
+ function setSpeaking(playing){voiceSpeaking=Boolean(playing);if(!voiceSpeaking){actor.dataset.mood='neutral';if(actor.dataset.state==='celebrating')actor.dataset.state='idle'}update()}
  function celebrate(){
   if(!ART[selected])return;
   clearTimeout(celebrateTimer);
