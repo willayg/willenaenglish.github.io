@@ -1,7 +1,7 @@
 // Visual-only bridge to the exact SVG animation assets from the Bunny Fox demo.
 // No audio interception, app cloning, auth, recording, grading or progress logic.
 import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wave3';
-import {AI_WILLY_HEAD_SVG} from './willy-svg.js?v=20261114-shared-head-v2';
+import {AI_WILLY_HEAD_SVG} from './willy-svg.js?v=20261114-mood-head-v1';
 const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:AI_WILLY_HEAD_SVG};
 const PORTRAITS={...ART};
 /* Duplicate SVG gradient IDs resolve against the hidden selection portrait on
@@ -24,6 +24,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
  const actor=document.createElement('span');
  actor.className='bf-actor';
  actor.dataset.state='idle';
+ actor.dataset.mood='neutral';
  actor.hidden=true;
  circle.appendChild(actor);
  for(const [id,character] of Object.entries(choices)){
@@ -44,9 +45,14 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   session.dataset.character=selected;
   actor.hidden=!ART[selected];
   actor.innerHTML=ART[selected]?scopedCharacterArt(ART[selected],'stage'):'';
-  actor.dataset.state='idle';
+  // Drop any legacy smile markup if a stale source managed to enter the renderer.
+  actor.querySelectorAll('.aw-idle-mouth').forEach(el=>el.remove());
+  actor.dataset.state='idle';actor.dataset.mood='neutral';
   voiceSpeaking=false;
   update();
+ }
+ function setMood(mood){
+  actor.dataset.mood=selected==='willy'&&['happy','surprised','sad','angry'].includes(mood)?mood:'neutral';
  }
  function setSpeaking(playing){voiceSpeaking=Boolean(playing);if(actor.dataset.state==='celebrating'&&!playing)actor.dataset.state='idle';update()}
  function celebrate(){
@@ -62,5 +68,5 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   update();
  });
  select('marin');
- return {select,celebrate,setSpeaking,actor};
+ return {select,celebrate,setSpeaking,setMood,actor};
 }
