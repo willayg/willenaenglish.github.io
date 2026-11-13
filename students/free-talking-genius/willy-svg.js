@@ -2,6 +2,17 @@
 export const DEFAULT_WILLY_CONFIG=Object.freeze({head:114,body:74,headY:0,eyes:100,legs:72,antenna:88,arms:95,tabletSize:100,expression:'smile',pose:'wave',tablet:'yes',shell:'#f8fbff',navy:'#142b51',yellow:'#ffce12',face:'#101b30',eyesColor:'#9cddff',outline:'#294674'});
 export function createWillySvg(config=DEFAULT_WILLY_CONFIG,options={}){
  const c={...DEFAULT_WILLY_CONFIG,...config};
+ // Crop the approved mascot to a talking head, without redrawing its face.
+ // Both the selection portrait and the live actor import this same SVG.
+ if(options.headOnly){
+  const full=createWillySvg(c,{...options,headOnly:false,portrait:false,stage:false});
+  const defs=full.match(/<defs>[\s\S]*?<\/defs>/)?.[0]||'';
+  const start=full.indexOf('<g id="head"');
+  if(start<0)throw Error('AI Willy head group missing');
+  const head=full.slice(start,full.lastIndexOf('</svg>'));
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="175 55 450 470" class="bf-svg aw-svg aw-talking-head" width="800" height="800" preserveAspectRatio="xMidYMid meet" role="img" aria-label="AI Willy talking head">'+defs+head+'</svg>';
+ }
+
  const H=c.head/100,B=c.body/100,E=c.eyes/100,L=c.legs/100,A=c.antenna/100,R=c.arms/100,T=c.tabletSize/100;
  const n=c.navy,o=c.outline,w=c.shell,y=c.yellow,f=c.face,eye=c.eyesColor;
  const upper=210+c.headY,hy=upper,cy=hy+148*H,bodyY=cy+83;
