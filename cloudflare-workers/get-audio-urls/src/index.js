@@ -465,7 +465,7 @@ async function ftAuthorizedWrite(body){
   if(variant==='retry'){
     // Whitelisted encouragement only, never browser-provided TTS text.
     if(format!=='mp3')return false;
-    const allowed=(body.model==='eleven_v3'&&['M7zl2TS7ORAIGUejDfoy','W7UbuMY4ypluqgZS2UzT','0yhUIig4twaXoIhuQoCQ'].includes(body.voice))||
+    const allowed=(body.model==='eleven_v3'&&['M7zl2TS7ORAIGUejDfoy','W7UbuMY4ypluqgZS2UzT','0yhUIig4twaXoIhuQoCQ','GSGMGjgDtwaXe25hDMNI'].includes(body.voice))||
       (body.model==='gpt-4o-mini-tts'&&body.voice==='marin');
     if(!allowed)return false;
     const phrase='I couldn’t hear you. Could you speak a little louder?';
@@ -478,7 +478,7 @@ async function ftAuthorizedWrite(body){
   if(!['realtime','elevenlabs','fallback'].includes(variant))return false;
   const allowed=variant==='realtime'?format==='wav'&&body.voice==='marin'&&
     /^gpt-realtime-[a-zA-Z0-9.-]{1,40}$/.test(String(body.model||'')):
-    variant==='elevenlabs'?format==='mp3'&&body.model==='eleven_v3'&&['M7zl2TS7ORAIGUejDfoy','W7UbuMY4ypluqgZS2UzT','0yhUIig4twaXoIhuQoCQ'].includes(body.voice):
+    variant==='elevenlabs'?format==='mp3'&&body.model==='eleven_v3'&&['M7zl2TS7ORAIGUejDfoy','W7UbuMY4ypluqgZS2UzT','0yhUIig4twaXoIhuQoCQ','GSGMGjgDtwaXe25hDMNI'].includes(body.voice):
     format==='mp3'&&body.model==='gpt-4o-mini-tts'&&body.voice==='marin';
   if(!allowed)return false;
   const response=await fetch(FT_CONTENT+'/rest/v1/free_talking_questions?select=question_en,book_id,is_published&id=eq.'+
