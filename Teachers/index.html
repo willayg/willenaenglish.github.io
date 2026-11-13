@@ -1298,7 +1298,7 @@ const curriculum={
 const ccHost=()=>document.querySelector('#view-assignments.active #assignmentClassGrid')||document.getElementById('classGrid');
 window.addEventListener('willena:curriculum-mount',()=>{
  if(!document.querySelector('#view-assignments.active #assignmentClassGrid'))return;
- try{curriculum.assignmentSubview=sessionStorage.getItem('willena:assignments:all-classes-view')==='missions'?'missions':'curriculum'}catch{}
+ try{curriculum.assignmentSubview=['curriculum','missions','history'].includes(sessionStorage.getItem('willena:assignments:all-classes-view'))?sessionStorage.getItem('willena:assignments:all-classes-view'):'curriculum'}catch{}
  loadClassOverview();
 });
 const ccOp='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
@@ -1504,7 +1504,7 @@ function ccRenderDetail(){
  const students=ccClassStudents(c.name),units=book&&curriculum.unitCache.has(book.book_id)?(book._units||[]):[];
  const selected=units.find(u=>u.id===curriculum.selectedUnit);
  const groups=ccSkillGroups;
- const assignmentMode=curriculum.assignmentSubview==='missions'?'missions':'curriculum';
+ const assignmentMode=['missions','history'].includes(curriculum.assignmentSubview)?curriculum.assignmentSubview:'curriculum';
  // Preserve the horizontal class-strip position across every grid re-render.
  // In particular, selecting a distant class must not jump back to Brown.
  const previousClassStrip=host.querySelector('.cc-assignment-class-tabs');
@@ -1827,7 +1827,7 @@ window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 <script src="./grammar-books-homework.js?v=20261105-mission-history3"></script>
 <script src="./grammar-homework-students.js?v=20261019-studentcards1"></script>
 <script src="./word-genius-catalog-assignment.js?v=20261105-mission-history3"></script>
-<script src="./universal-assignment-tracker.js?v=20261109-naesin-dropdown-fix1"></script>
+<script src="./universal-assignment-tracker.js?v=20261113-class-history-fix2"></script>
 <script src="./grammar-foundations-teacher.js?v=20261019-grammar-genius1"></script>
 <script src="./grammar-books-teacher.js?v=20261104-grammar-progress2"></script>
 <script src="./writing-genius-teacher.js?v=20261106-drafts-visible2"></script>
