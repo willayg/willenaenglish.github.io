@@ -1,7 +1,9 @@
 // Visual-only bridge to the exact SVG animation assets from the Bunny Fox demo.
 // No audio interception, app cloning, auth, recording, grading or progress logic.
-import {BUNNY_FOX_ART,PIGFISH_ART,WILLY_HEAD_ART} from './character-art.js?v=20261113-willy-wave3';
-const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:WILLY_HEAD_ART};
+import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wave3';
+import {createWillySvg} from './willy-svg.js?v=20261113-shared-svg1';
+const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:createWillySvg({}, {stage:true})};
+const PORTRAITS={...ART,willy:createWillySvg({}, {portrait:true})};
 /* Duplicate SVG gradient IDs resolve against the hidden selection portrait on
    some Android browsers, leaving Pigfish's in-game body transparent.
    Scope references per instance; artwork, colours and animations are unchanged. */
@@ -26,7 +28,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
  circle.appendChild(actor);
  for(const [id,character] of Object.entries(choices)){
   const slot=document.getElementById(id)?.querySelector('.ft-character-symbol');
-  if(slot&&ART[character])slot.innerHTML=scopedCharacterArt(ART[character],'portrait');
+  if(slot&&PORTRAITS[character])slot.innerHTML=scopedCharacterArt(PORTRAITS[character],'portrait');
  }
  let selected='marin',voiceSpeaking=false,celebrateTimer=null;
  function update(){
