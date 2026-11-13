@@ -226,11 +226,15 @@
 
 /* Exact studio robot SVG; animate its five blue equalizer bars only when audio is playing. */
 .free-talking-genius .aw-svg .aw-mouth-wave{opacity:0;transition:opacity .14s;filter:drop-shadow(0 0 5px #45cfff)}
-.free-talking-genius .aw-svg .aw-idle-mouth{opacity:1;transition:opacity .14s}
+
 .free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-mouth-wave{opacity:1}
-.free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-idle-mouth{opacity:0}
+
 .free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar{animation:awMouth .37s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
 .free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar-2,.free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar-4{animation-delay:-.15s}
 .free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar-3{animation-delay:-.24s}
 .free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar-5{animation-delay:-.09s}
 @media(prefers-reduced-motion:reduce){.free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar{animation:none!important}}
+
+/* Canonical robot mouth contract: NEVER render a static idle smile, even if
+   an older SVG was temporarily served by a browser's asset cache. */
+.aw-svg .aw-idle-mouth{display:none!important}
