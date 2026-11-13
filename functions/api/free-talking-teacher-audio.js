@@ -12,7 +12,8 @@ const VOICES={
  pigfish:{model:'eleven_v3',voice:'W7UbuMY4ypluqgZS2UzT',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
  // Use the exact existing ElevenLabs storage-key format. The cloned voice ID itself gives a distinct hash and prevents collisions.
  willi_clone:{model:'eleven_v3',voice:'0yhUIig4twaXoIhuQoCQ',variant:'elevenlabs',prefix:'ft_eleven_v1_',tag:'free_talking_elevenlabs_question_mp3_v1'},
- willi_mp3:{model:'gpt-4o-mini-tts',voice:'marin',variant:'fallback',prefix:'ft_fallback_v1_',tag:'free_talking_legacy_fallback_mp3_v1'}
+ willi_mp3:{model:'gpt-4o-mini-tts',voice:'marin',variant:'fallback',prefix:'ft_fallback_v1_',tag:'free_talking_legacy_fallback_mp3_v1'},
+ willi_wav:{model:'gpt-realtime-2.1-mini',voice:'marin',variant:'realtime',prefix:'ft_realtime_v1_',tag:'free_talking_realtime_question_wav_v1'}
 };
 const json=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 async function teacher(request){
@@ -27,7 +28,7 @@ async function teacher(request){
   headers,cache:'no-store',signal:AbortSignal.timeout(10000)});
  if(!role.ok)return null;
  const profile=(await role.json().catch(()=>[]))?.[0];
- return ['teacher','admin'].includes(String(profile?.role||'').toLowerCase())?{id:info.id,token}:null;
+ return ['teacher','admin','owner'].includes(String(profile?.role||'').toLowerCase())?{id:info.id,token}:null;
 }
 async function contentRows(query){
  const res=await fetch(CONTENT+'/rest/v1/'+query,{
@@ -157,39 +158,53 @@ export async function onRequestPost({request,env}){
   // Cached voice audition: never calls a TTS service or writes R2.
   // Select up to five phrases already present in the shared audio store.
   if(body.action==='lab_catalog'){
-   // Probe small, randomly selected batches, and stop as soon as five
-   // R2-backed phrases are found. Never enumerate the whole catalogue.
-   const options=['lili','willi_clone','pigfish','willi_mp3'];
-   const candidates=await contentRows('free_talking_questions?select=id,question_en&is_published=eq.true&question_en=not.is.null&order=id.asc&limit=80');
-   const pool=candidates.filter(q=>UUID.test(String(q.id))&&String(q.question_en||'').trim().length>=12);
+   // Small read-only sample from the WHOLE catalogue, not just the first
+   // few UUIDs. Stop after five cached questions. No TTS or R2 writes.
+   const rows=await contentRows('free_talking_questions?select=id,question_en&is_published=eq.true&order=id.asc&limit=800');
+   const pool=rows.filter(q=>UUID.test(String(q.id))&&String(q.question_en||'').trim().length>=12);
    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
-   const selected=[];let probed=0;
-   for(let offset=0;offset<Math.min(pool.length,40)&&selected.length<5;offset+=5){
-    const rows=pool.slice(offset,offset+5),files=[],records=[];
-    for(const q of rows){
+   const options=['lili','willi_clone','pigfish','willi_mp3'];
+   const samples=[],scanned=[];
+   // A few small R2 inventory calls are enough when hundreds of clips are already cached.
+   // Cap the work; no 500+ question scan and no minutes-long spinner.
+   for(let offset=0;offset<Math.min(75,pool.length)&&samples.length<5;offset+=15){
+    const batch=pool.slice(offset,offset+15),files=[],records=[];
+    for(const q of batch){
      const keys={};
-     for(const voice of options){const key=await hashKey(q.question_en,VOICES[voice]);keys[voice]=key;files.push(key+'.mp3')}
+     for(const voice of ['lili','willi_clone','pigfish','willi_mp3','willi_wav']){
+      const key=await hashKey(q.question_en,VOICES[voice]);
+      keys[voice]={key,format:voice==='willi_wav'?'wav':'mp3'};
+      files.push(key+'.'+keys[voice].format);
+     }
      records.push({id:q.id,text:q.question_en,keys});
     }
-    const result=await store(auth.token,{action:'inventory',files});
-    probed+=rows.length;
+    const inventory=await store(auth.token,{action:'inventory',files});
+    scanned.push(batch.length);
     for(const q of records){
-     const available=Object.fromEntries(options.map(v=>[v,result.exists?.[q.keys[v]+'.mp3']===true]));
-     if(options.some(v=>available[v]))selected.push({id:q.id,text:q.text,available});
-     if(selected.length===5)break;
+     const available=Object.fromEntries(options.map(voice=>[voice,voice==='willi_mp3'
+       ?(inventory.exists?.[q.keys.willi_wav.key+'.wav']===true||inventory.exists?.[q.keys.willi_mp3.key+'.mp3']===true)
+       :inventory.exists?.[q.keys[voice].key+'.mp3']===true]));
+     if(options.some(v=>available[v]))samples.push({id:q.id,text:q.text,available});
+     if(samples.length>=5)break;
     }
    }
-   return json(200,{success:true,phrases:selected,voices:options,scanned:probed});
+   return json(200,{success:true,phrases:samples,voices:options,scanned:scanned.reduce((a,b)=>a+b,0),
+    message:samples.length?'Cached recordings found':'No matching cached recordings among sampled questions. Check R2 worker permissions and cache key format.'});
   }
   if(body.action==='lab_clip'){
    const voice=String(body.voice||''),questionId=String(body.question_id||'');
-   if(!VOICES[voice]||!UUID.test(questionId))return json(400,{success:false,error:'Invalid voice or phrase'});
+   if(!['lili','willi_clone','pigfish','willi_mp3'].includes(voice)||!UUID.test(questionId))return json(400,{success:false,error:'Invalid voice or phrase'});
    const rows=await contentRows('free_talking_questions?select=id,question_en&is_published=eq.true&id=eq.'+questionId+'&limit=1');
    if(!rows.length)return json(404,{success:false,error:'Phrase not found'});
-   const key=await hashKey(String(rows[0].question_en),VOICES[voice]);
-   const result=await store(auth.token,{action:'get',key,format:'mp3'});
-   if(!result.found||typeof result.audio!=='string')return json(404,{success:false,error:'This exact recording is not cached in R2'});
-   return json(200,{success:true,audio:result.audio,text:rows[0].question_en,voice});
+   const configs=voice==='willi_mp3'?[VOICES.willi_wav,VOICES.willi_mp3]:[VOICES[voice]];
+   for(const cfg of configs){
+    const format=cfg.variant==='realtime'?'wav':'mp3';
+    const key=await hashKey(String(rows[0].question_en),cfg);
+    const result=await store(auth.token,{action:'get',key,format});
+    if(result.found&&typeof result.audio==='string')
+     return json(200,{success:true,audio:result.audio,text:rows[0].question_en,voice,mime:format==='wav'?'audio/wav':'audio/mpeg'});
+   }
+   return json(404,{success:false,error:'This exact recording is not cached in R2'});
   }
   if(body.action==='catalog')return json(200,{success:true,...await catalog(),
    formats:{lili:'ElevenLabs Bunny v3 · MP3',pigfish:'ElevenLabs Pigfish v3 · MP3',willi_clone:'AI Willi cloned voice · ElevenLabs v3 · MP3',willi_mp3:'OpenAI Marin fallback · MP3'}});
