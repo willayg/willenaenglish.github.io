@@ -16,7 +16,8 @@ export function createWillySvg(config=DEFAULT_WILLY_CONFIG,options={}){
  const H=c.head/100,B=c.body/100,E=c.eyes/100,L=c.legs/100,A=c.antenna/100,R=c.arms/100,T=c.tabletSize/100;
  const n=c.navy,o=c.outline,w=c.shell,y=c.yellow,f=c.face,eye=c.eyesColor;
  const upper=210+c.headY,hy=upper,cy=hy+148*H,bodyY=cy+83;
- const eyeLeft=358-(43*E),eyeRight=358+(43*E);
+ // Face center is x=400; keep both eyes exactly symmetrical for every eye-size setting.
+ const eyeLeft=400-(43*E),eyeRight=400+(43*E);
  const eyes=c.expression==='open'
  ?'<ellipse cx="'+eyeLeft+'" cy="314" rx="23" ry="27" fill="'+eye+'"/><ellipse cx="'+eyeRight+'" cy="314" rx="23" ry="27" fill="'+eye+'"/><circle cx="'+eyeLeft+'" cy="314" r="12" fill="'+f+'"/><circle cx="'+eyeRight+'" cy="314" r="12" fill="'+f+'"/>'
  :'<path d="M'+(eyeLeft-28)+' 326 Q'+eyeLeft+' 275 '+(eyeLeft+28)+' 326" fill="none" stroke="'+eye+'" stroke-width="14" stroke-linecap="round"/>'+(c.expression==='wink'?'<path d="M'+(eyeRight-24)+' 321 L'+(eyeRight+24)+' 321" stroke="'+eye+'" stroke-width="13" stroke-linecap="round"/>':'<path d="M'+(eyeRight-28)+' 326 Q'+eyeRight+' 275 '+(eyeRight+28)+' 326" fill="none" stroke="'+eye+'" stroke-width="14" stroke-linecap="round"/>');
@@ -32,6 +33,9 @@ export function createWillySvg(config=DEFAULT_WILLY_CONFIG,options={}){
   '</g><g class="aw-eyes-mood aw-eyes-angry">'+
   '<path d="M329 299 L386 321 M414 321 L471 299" fill="none" stroke="'+eye+'" stroke-width="14" stroke-linecap="round"/>'+
   '<path d="M337 342 L379 333 M421 333 L463 342" fill="none" stroke="'+eye+'" stroke-width="10" stroke-linecap="round"/>'+
+  '</g><g class="aw-eyes-mood aw-eyes-cat">'+
+  '<path d="M328 313 Q358 288 387 312 Q361 339 328 313Z M413 312 Q442 288 472 313 Q439 339 413 312Z" fill="none" stroke="'+eye+'" stroke-width="9" stroke-linejoin="round"/>'+
+  '<path d="M357 306v22 M443 306v22" fill="none" stroke="'+eye+'" stroke-width="5" stroke-linecap="round"/>'+
   '</g>';
  const wave='<g transform="rotate(-39 249 463) scale('+R+')"><rect x="196" y="421" width="68" height="132" rx="32" fill="'+w+'" stroke="'+o+'" stroke-width="11"/><rect x="197" y="523" width="67" height="29" rx="13" fill="'+n+'"/><circle cx="230" cy="414" r="32" fill="'+w+'" stroke="'+o+'" stroke-width="10"/></g>';
  const down='<g transform="rotate(27 252 463) scale('+R+')"><rect x="196" y="421" width="68" height="132" rx="32" fill="'+w+'" stroke="'+o+'" stroke-width="11"/><rect x="197" y="523" width="67" height="29" rx="13" fill="'+n+'"/><circle cx="230" cy="551" r="30" fill="'+w+'" stroke="'+o+'" stroke-width="10"/></g>';
@@ -43,16 +47,28 @@ export function createWillySvg(config=DEFAULT_WILLY_CONFIG,options={}){
  +'<g id="body" transform="translate(400 '+bodyY+') scale('+B+') translate(-400 -455)">'+(c.pose==='down'?down:wave)
  +'<rect x="280" y="420" width="240" height="226" rx="95" fill="url(#williShell)" stroke="'+o+'" stroke-width="12"/><path d="M283 589 Q398 637 516 589 L517 625 Q397 687 283 625Z" fill="'+n+'"/><path d="M343 491 L357 551 Q363 565 376 548 L397 513 L422 550 Q439 566 445 548 L461 492" fill="none" stroke="'+o+'" stroke-width="27" stroke-linecap="round" stroke-linejoin="round"/><path d="M343 491 L357 551 Q363 565 376 548 L397 513 L422 550 Q439 566 445 548 L461 492" fill="none" stroke="'+y+'" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>'
  +tablet+'</g>'
- +'<g id="head" transform="translate(400 '+hy+') scale('+H+') translate(-400 -205)">'
+ +'<g id="head" transform="translate(400 '+hy+') scale('+H+') translate(-400 -205)"><g class="aw-head-motion">'
  +'<g class="aw-antenna"><rect x="387" y="'+(205-92*A)+'" width="27" height="'+(92*A+30)+'" rx="13" fill="'+n+'" stroke="'+o+'" stroke-width="7"/><circle cx="401" cy="'+(205-92*A)+'" r="27" fill="'+y+'" stroke="#eb9b05" stroke-width="6"/></g>'
  +'<ellipse class="aw-ear-left" cx="237" cy="340" rx="29" ry="54" fill="'+y+'" stroke="'+n+'" stroke-width="15"/><ellipse class="aw-ear-right" cx="562" cy="340" rx="29" ry="54" fill="'+y+'" stroke="'+n+'" stroke-width="15"/>'
  +'<rect x="235" y="205" width="330" height="253" rx="115" fill="url(#williShell)" stroke="'+o+'" stroke-width="12"/>'
  +'<rect x="279" y="254" width="242" height="154" rx="69" fill="url(#williFace)" stroke="'+n+'" stroke-width="9"/>'
- +'<g class="aw-eyes-default" transform="translate(42 0)">'+eyes+'</g>'+emotionEyes+'<circle cx="315" cy="375" r="7" fill="'+y+'"/><circle cx="484" cy="375" r="7" fill="'+y+'"/>'
+ +'<g class="aw-eyes-default">'+eyes+'</g>'+emotionEyes+'<circle cx="315" cy="375" r="7" fill="'+y+'"/><circle cx="484" cy="375" r="7" fill="'+y+'"/>'
  // No idle mouth: the cyan equalizer is the only mouth and appears during speech.
  +'<g class="aw-mouth-wave" stroke="#63d6ff" fill="none" stroke-linecap="round" stroke-width="9"><path class="aw-bar aw-bar-1" d="M366 369v-10"/><path class="aw-bar aw-bar-2" d="M383 377v-24"/><path class="aw-bar aw-bar-3" d="M400 381v-32"/><path class="aw-bar aw-bar-4" d="M417 377v-24"/><path class="aw-bar aw-bar-5" d="M434 369v-10"/></g>'
  +'<path d="M333 234 Q432 203 497 250" fill="none" stroke="#ffffff" stroke-opacity=".46" stroke-width="11" stroke-linecap="round"/>'
- +'</g></svg>';
+ // Magical cat mode: ears, eyes and whiskers only — no smile or idle mouth.
+ +'<g class="aw-cat-details" fill="none" stroke="#83e5ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">'+
+ '<path d="M299 229 L326 179 L352 207 M448 207 L474 179 L501 229" />'+
+ '<path d="M343 372 L303 359 M343 384 L302 387 M457 372 L497 359 M457 384 L498 387"/>'+
+ '<path d="M395 361 L400 366 L405 361" stroke-width="5"/>'+
+ '</g>'
+ // Electric sparks sit at the antenna tip. Invisible when he is not talking.
+ +'<g class="aw-electric" fill="none" stroke="#5fe8ff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">'+
+ '<path class="aw-spark aw-spark-1" d="M343 105 L363 86 L357 115 L378 108"/>'+
+ '<path class="aw-spark aw-spark-2" d="M446 92 L425 105 L449 113 L434 130"/>'+
+ '<path class="aw-spark aw-spark-3" d="M399 58 L386 40 L408 44 L399 20"/>'+
+ '</g>'
+ +'</g></g></svg>';
 }
 
 // Canonical idle/talking head for every Free Talking surface.
