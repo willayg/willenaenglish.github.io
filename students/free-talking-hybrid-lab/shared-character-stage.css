@@ -18,3 +18,9 @@
 #demo #actorStage .ft-hybrid-character-stage[data-phase="speaking"] .ft-hybrid-timer-progress{stroke:#e698c3}
 @media(max-width:450px){#demo #actorStage .ft-hybrid-character-circle{width:clamp(150px,27dvh,215px);height:clamp(150px,27dvh,215px)}}
 @media(prefers-reduced-motion:reduce){#demo #actorStage .ft-hybrid-character-timer circle{transition:none}}
+
+/* One visible ring system: the SVG track and progress share the same viewBox,
+   centre and radius. The legacy conic-gradient recording halo sat outside
+   that radius and produced the offset/double-ring effect on Android. */
+#demo #actorStage .ft-hybrid-character-circle #ftSpeechTimeRing{display:none!important}
+#demo #actorStage .ft-hybrid-character-timer{transform:none!important;transform-origin:center center!important}
