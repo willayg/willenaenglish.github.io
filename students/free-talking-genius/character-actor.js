@@ -13,7 +13,7 @@ function scopedCharacterArt(markup,suffix){
  // Scope gradient IDs per instance so Android resolves fills against the
  // visible SVG rather than the hidden character-selection artwork.
  const ids=markup.includes('pf-svg')?['pigBody','pigBelly']:
-  markup.includes('aw-svg')?['willyShell','willyScreen']:[];
+  markup.includes('aw-svg')?['williShell','williFace']:[];
  for(const id of ids){
   markup=markup.replaceAll('id="'+id+'"','id="'+id+'-'+suffix+'"')
    .replaceAll('url(#'+id+')','url(#'+id+'-'+suffix+')');
