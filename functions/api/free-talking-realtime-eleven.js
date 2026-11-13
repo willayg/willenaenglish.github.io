@@ -14,7 +14,9 @@ export async function onRequestPost({request,env}){
  const character=String(data?.character||''),sentence=String(data?.text||'').trim();
  // AI Willy uses consistent baseline delivery; keep emotion tags supplied by the conversation model.
  // The baseline tags go ONLY to ElevenLabs, not into the visible conversation transcript.
- // Willi 2 requires natural, unprefixed text; keep model-supplied emotion tags.\n const ttsText=sentence;\n // Match the ElevenLabs model used to cache this character's textbook questions.
+ // Willi 2 uses natural, unprefixed text; preserve model-supplied emotion tags.
+ const ttsText=sentence;
+ // Match the ElevenLabs model used to cache this character's textbook questions.
  // Never substitute an OpenAI voice for Bunny or Pigfish.
  const selectedModel={id:'eleven_v3'};
  if(!Object.hasOwn(VOICES,character)||sentence.length<2||sentence.length>350)return reply(400,'Invalid voice or response length');
