@@ -1,9 +1,9 @@
 // Demo overlay. The ORIGINAL Free Talking Genius runs unchanged inside the same-origin iframe.
 // Everything here is additive; no production app source is patched.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
-import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261113-willy-shared-svg1';
+import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261113-face-gradient2';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
-import {createWillySvg} from '/students/free-talking-genius/willy-svg.js?v=20261113-shared-svg1';
+import {createWillySvg} from '/students/free-talking-genius/willy-svg.js?v=20261113-head-only1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
 const releaseMode=new URLSearchParams(location.search).get('release')==='1';
@@ -486,7 +486,7 @@ function ftShowFinish(result,{playSound=true}={}){
  $('ftResultPoints').textContent='+'+result.points+' Points';
  const portrait=$('ftResultMascot');portrait.replaceChildren();portrait.classList.remove('is-speaking');
  if(state.character==='bunny')portrait.innerHTML=BUNNY_FOX_ART;
- else if(state.character==='willy')portrait.innerHTML=createWillySvg({}, {stage:true});
+ else if(state.character==='willy')portrait.innerHTML=createWillySvg({}, {headOnly:true});
  else if(state.character==='pigfish'){
   portrait.innerHTML=PIGFISH_ART.replaceAll('id="pigBody"','id="pigBody-finish"').replaceAll('id="pigBelly"','id="pigBelly-finish"').replaceAll('url(#pigBody)','url(#pigBody-finish)').replaceAll('url(#pigBelly)','url(#pigBelly-finish)');
  }else{
@@ -619,6 +619,13 @@ function actorPhase(phase){
   circle.dataset.phase=phase==='speaking'?'ai':phase==='listening'?'student':phase==='thinking'?'thinking':'ready';
   circle.dataset.listening=phase==='listening'?'true':'false';
  }
+ const action=$('ftExtensionAction');
+ if(action){
+  const pause=Boolean(state.paused),status=pause?'Paused':phase==='speaking'?'Listening to AI':phase==='listening'?'Listening to you':'Thinking…';
+  action.querySelector('.ft-animal-action-label').textContent=status;
+  action.dataset.state=pause?'paused':phase==='speaking'?'playing':phase==='listening'?'recording':'thinking';
+  action.disabled=!state.active;
+ }
  state.actor?.setSpeaking(phase==='speaking');
 }
 function showActor(){
@@ -628,24 +635,17 @@ function showActor(){
  const shell=document.createElement('div');shell.className='free-talking-genius';shell.id='ftExtensionOriginalShell';
  const session=document.createElement('section');session.id='ftSession';session.className='ft-conversation';session.hidden=false;
  const voice=document.createElement('section');voice.id='ftWilliVoice';voice.className='ft-willi-voice';
- // Two deliberately different displays: Willi retains the original
- // circular waveform/orbit, while Bunny and Pigfish have ring-free artwork.
- const willi=state.character==='willi';
- const original=willi?appDocument()?.getElementById('ftTurnCircle'):null;
- const circle=original?original.cloneNode(true):document.createElement('div');
+ // Reuse Speaking's existing interactive circle markup and shared actor.
+ // This overlay is hands-free: its button appearance mirrors Speaking, while
+ // conversation mic control remains owned by the existing Realtime session.
+ const sourceCircle=appDocument()?.getElementById('ftTurnCircle');
+ const circle=sourceCircle?.cloneNode(true)||document.createElement('button');
  circle.id='ftTurnCircle';
- if(willi){
-  circle.classList.add('ft-extension-willi-circle');
-  circle.disabled=true;
-  circle.removeAttribute('aria-label');
-  circle.setAttribute('aria-label','AI Willi voice circle');
- }else{
-  circle.className='ft-extension-avatar';
-  circle.setAttribute('role','img');
-  circle.setAttribute('aria-label','Conversation character');
-  circle.innerHTML='<span class="ft-circle-ai" aria-hidden="true"><span class="ft-circle-bars"><i></i><i></i><i></i><i></i><i></i></span></span>'+
-   '<span class="ft-circle-mic" aria-hidden="true"><svg viewBox="0 0 48 48" width="72" height="72"><rect x="17" y="5" width="14" height="26" rx="7" fill="currentColor"/><path d="M11 22a13 13 0 0 0 26 0M24 35v8M16 43h16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>';
- }
+ circle.className='ft-extension-shared-circle';
+ circle.type='button';
+ circle.removeAttribute('disabled');
+ circle.setAttribute('aria-label','Conversation character and microphone status');
+ circle.replaceChildren();
  voice.append(circle);session.append(voice);shell.append(session);host.append(shell);
  // Pure visual overlay: no changes to the existing character SVG or mic.
  const speechRing=document.createElement('div');speechRing.id='ftSpeechTimeRing';
@@ -653,6 +653,19 @@ function showActor(){
  speechRing.style.setProperty('--ft-record-remaining','1');host.append(speechRing);
  const preview=document.createElement('div');preview.id='ftLiveSpeechPreview';
  preview.setAttribute('aria-hidden','true');host.append(preview);
+ const stage=document.createElement('div');stage.className='ft-animal-stage';
+ const anchor=document.createElement('div');anchor.className='ft-animal-avatar';
+ const timer=document.createElement('div');timer.className='ft-animal-timer';
+ timer.setAttribute('aria-hidden','true');
+ timer.innerHTML='<svg viewBox="0 0 240 240"><circle class="ft-animal-track" cx="120" cy="120" r="110" pathLength="100"/><circle class="ft-animal-progress" cx="120" cy="120" r="110" pathLength="100"/></svg>';
+ stage.append(anchor,timer);
+ voice.append(stage);anchor.append(circle);
+ const action=document.createElement('button');action.type='button';
+ action.className='ft-animal-action ft-extension-action';action.id='ftExtensionAction';
+ action.innerHTML='<span class="ft-animal-spinner" aria-hidden="true"><i></i></span><span class="ft-animal-action-label"></span>';
+ voice.append(action);
+ action.addEventListener('click',()=>{if(!state.active)return;$('pauseResume')?.click()});
+ circle.addEventListener('click',()=>{if(!state.active)return;$('pauseResume')?.click()});
  state.actor=createFreeTalkingCharacters({circle,session,voiceHost:voice,choices:{}});
  state.actor.select(state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':state.character==='willy'?'willy':'marin');
  actorPhase('ready');
@@ -2235,7 +2248,7 @@ async function initStandaloneRelease(){
  const willyPortrait=menu.querySelector('#ftChooseWilly .ft-character-symbol');
  if(bunnyPortrait&&!bunnyPortrait.querySelector('svg'))bunnyPortrait.innerHTML=BUNNY_FOX_ART;
  if(pigfishPortrait&&!pigfishPortrait.querySelector('svg'))pigfishPortrait.innerHTML=PIGFISH_ART;
- if(willyPortrait&&!willyPortrait.querySelector('svg'))willyPortrait.innerHTML=createWillySvg({}, {portrait:true});
+ if(willyPortrait&&!willyPortrait.querySelector('svg'))willyPortrait.innerHTML=createWillySvg({}, {headOnly:true});
  menu.hidden=false;
  menu.removeAttribute('hidden');
  menu.querySelector('#ftCharacterRound')?.remove();
