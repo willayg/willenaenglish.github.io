@@ -1,8 +1,8 @@
 // Demo overlay. The ORIGINAL Free Talking Genius runs unchanged inside the same-origin iframe.
 // Everything here is additive; no production app source is patched.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
-import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261108-original-animation1';
-import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261107-pig-original4';
+import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261113-willy-wave3';
+import {BUNNY_FOX_ART,PIGFISH_ART,WILLY_HEAD_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
 const releaseMode=new URLSearchParams(location.search).get('release')==='1';
@@ -17,7 +17,7 @@ document.getElementById('ftTranscriptToggle')?.addEventListener('change',syncTra
 
 const frame=$('original'),veil=$('demo');
 const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,askedQuestionTexts:[],attemptCount:0,reviewing:false};
-const NAMES={willi:'AI Willi',bunny:'Bunny Fox',pigfish:'Pigfish'};
+const NAMES={willi:'Willo',willy:'AI Willy',bunny:'Bunny Fox',pigfish:'Pigfish'};
 const enginePicker=document.getElementById('ftEngineSelect');
 const sttPicker=document.getElementById('ftSttSelect');
 const sttDetails=document.getElementById('ftSttDetails');
@@ -289,7 +289,7 @@ function error(s){$('error').textContent=s==null?'':String(s)}
 function buttonState(c){
  state.character=c;
  const doc=appDocument();
- for(const [id,key] of [['ftChooseWilli','willi'],['ftChooseLili','bunny'],['ftChoosePigfish','pigfish']]){
+ for(const [id,key] of [['ftChooseWilli','willi'],['ftChooseLili','bunny'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy']]){
   doc?.getElementById(id)?.setAttribute('aria-pressed',String(key===c));
  }
  const go=doc?.getElementById('ftCharacterContinue');if(go)go.disabled=false;
@@ -331,10 +331,10 @@ function bindOriginalFrame(){
    void lessonLoad.catch(e=>console.warn('[Guided Free Talking] initial lesson lookup failed',e));
    return;
   }
-  const character=event.target.closest('#ftChooseWilli,#ftChooseLili,#ftChoosePigfish');
+  const character=event.target.closest('#ftChooseWilli,#ftChooseLili,#ftChoosePigfish,#ftChooseWilly');
   if(character&&!d.getElementById('ftCharacter').hidden){
    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
-   const type=character.id==='ftChooseLili'?'bunny':character.id==='ftChoosePigfish'?'pigfish':'willi';
+   const type=character.id==='ftChooseLili'?'bunny':character.id==='ftChoosePigfish'?'pigfish':character.id==='ftChooseWilly'?'willy':'willi';
    const secondTap=state.lastChoice===type;
    buttonState(type);state.lastChoice=type;
    if(secondTap)d.getElementById('ftCharacterContinue')?.click();
@@ -385,7 +385,7 @@ async function openDemo({preserveCharacter=false}={}){
  $('lesson').textContent=title+' · Unit '+unitMatch[1];
  // Stay on the ORIGINAL in-app friend-selection screen, not a duplicate overlay.
  const note=d.getElementById('ftCharacterRound');
- if(note){note.hidden=false;note.textContent='자유 대화 · 교재 질문 8개 · AI Willi / Bunny Fox / Pigfish';}
+ if(note){note.hidden=false;note.textContent='자유 대화 · 교재 질문 8개 · Willo / Bunny Fox / Pigfish / AI Willy';}
  const characterBack=d.getElementById('ftCharacterBack');
  if(characterBack)characterBack.hidden=false;
 
@@ -485,6 +485,7 @@ function ftShowFinish(result,{playSound=true}={}){
  $('ftResultPoints').textContent='+'+result.points+' Points';
  const portrait=$('ftResultMascot');portrait.replaceChildren();portrait.classList.remove('is-speaking');
  if(state.character==='bunny')portrait.innerHTML=BUNNY_FOX_ART;
+ else if(state.character==='willy')portrait.innerHTML=WILLY_HEAD_ART;
  else if(state.character==='pigfish'){
   portrait.innerHTML=PIGFISH_ART.replaceAll('id="pigBody"','id="pigBody-finish"').replaceAll('id="pigBelly"','id="pigBelly-finish"').replaceAll('url(#pigBody)','url(#pigBody-finish)').replaceAll('url(#pigBelly)','url(#pigBelly-finish)');
  }else{
@@ -652,7 +653,7 @@ function showActor(){
  const preview=document.createElement('div');preview.id='ftLiveSpeechPreview';
  preview.setAttribute('aria-hidden','true');host.append(preview);
  state.actor=createFreeTalkingCharacters({circle,session,voiceHost:voice,choices:{}});
- state.actor.select(state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':'marin');
+ state.actor.select(state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':state.character==='willy'?'willy':'marin');
  actorPhase('ready');
 }
 function stopSpeech(){
@@ -797,7 +798,7 @@ function ticking(){
 // The published question IDs are the conversation track. Reactions and
 // follow-ups are the only generated speech; question playback reuses Willena R2.
 function guidedCharacterVoice(){
- return state.character==='bunny'?'bunny':state.character==='pigfish'?'pigfish':'marin';
+ return state.character==='bunny'?'bunny':state.character==='pigfish'?'pigfish':state.character==='willy'?'willy':'marin';
 }
 
 function hybridStop(){
@@ -1147,7 +1148,7 @@ async function getAnchorClip(anchor){
   const file=await r.json().catch(()=>null);
   if(!r.ok||file?.success!==true)throw Error(file?.error||('Question audio unavailable: '+r.status));
   // Selected ElevenLabs characters must never play an OpenAI cached voice.
-  if((state.character==='bunny'||state.character==='pigfish')&&file.provider!=='elevenlabs'){
+  if((state.character==='bunny'||state.character==='pigfish'||state.character==='willy')&&file.provider!=='elevenlabs'){
    throw Error('Wrong cached voice provider; requesting character ElevenLabs fallback');
   }
   let clip;
@@ -2230,8 +2231,10 @@ async function initStandaloneRelease(){
  // at iframe load; only fill a missing portrait with the exact shared SVG art.
  const bunnyPortrait=menu.querySelector('#ftChooseLili .ft-character-symbol');
  const pigfishPortrait=menu.querySelector('#ftChoosePigfish .ft-character-symbol');
+ const willyPortrait=menu.querySelector('#ftChooseWilly .ft-character-symbol');
  if(bunnyPortrait&&!bunnyPortrait.querySelector('svg'))bunnyPortrait.innerHTML=BUNNY_FOX_ART;
  if(pigfishPortrait&&!pigfishPortrait.querySelector('svg'))pigfishPortrait.innerHTML=PIGFISH_ART;
+ if(willyPortrait&&!willyPortrait.querySelector('svg'))willyPortrait.innerHTML=WILLY_HEAD_ART;
  menu.hidden=false;
  menu.removeAttribute('hidden');
  menu.querySelector('#ftCharacterRound')?.remove();
@@ -2239,7 +2242,7 @@ async function initStandaloneRelease(){
  if(back){back.hidden=false;back.textContent='← 교재로 돌아가기'}
  host.append(menu);
  const choices=[
-  ['ftChooseLili','bunny'],['ftChooseWilli','willi'],['ftChoosePigfish','pigfish']
+  ['ftChooseLili','bunny'],['ftChooseWilli','willi'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy']
  ];
  const buttons=choices.map(([id])=>menu.querySelector('#'+id)).filter(Boolean);
  const startButton=menu.querySelector('#ftCharacterContinue');
