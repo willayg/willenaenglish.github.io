@@ -16,13 +16,58 @@
 <section class="panel"><h2>Local playback tuning</h2><p class="small">These controls affect only this browser preview, after speech is generated. Eleven v3 does not provide a native pitch control or adjustable generation speed. Pitch changes are achieved by playback-rate shifting, which also changes tempo.</p>
 <div class="cols"><div class="control"><label for="pitch">Pitch shift <output id="pitchV" class="value">0 semitones</output></label><input type="range" id="pitch" min="-6" max="6" step=".5" value="0"></div>
 <div class="control"><label for="tempo">Playback speed <output id="tempoV" class="value">1.00×</output></label><input type="range" id="tempo" min=".75" max="1.25" step=".05" value="1"></div></div>
-<div class="note warn" style="margin:12px 0">Pitch and speed share the playback rate; a +2 semitone shift also makes the audio faster. These effects are <strong>not baked into the MP3</strong>.</div></section>
+<div class="cols">
+<div class="control"><label for="metal">Metallic reflections <output id="metalV" class="value">0%</output></label><input type="range" id="metal" min="0" max="60" step="1" value="0"><p class="small">Short bright reflections for a metal-room voice.</p></div>
+<div class="control"><label for="reverb">Room reverb <output id="reverbV" class="value">0%</output></label><input type="range" id="reverb" min="0" max="60" step="1" value="0"><p class="small">A smooth, decaying room tail.</p></div>
+<div class="control"><label for="room">Reverb length <output id="roomV" class="value">0.55 s</output></label><input type="range" id="room" min=".2" max="1.8" step=".05" value=".55"></div>
+<div class="control"><label for="metalTone">Metal tone <output id="metalToneV" class="value">2600 Hz</output></label><input type="range" id="metalTone" min="600" max="4600" step="100" value="2600"></div>
+</div><div class="actions" style="margin:12px 0"><button class="preset" data-fx="clean">Clean</button><button class="preset" data-fx="subtle">Subtle metal</button><button class="preset" data-fx="robot">Metal robot</button><button class="preset" data-fx="room">Soft room</button></div>
+<div class="note" style="margin-bottom:12px">These effects change only playback in this browser. Replay the same clip without more ElevenLabs credits. Room length updates on the next playback.</div><div class="note warn" style="margin:12px 0">Pitch and speed share the playback rate; a +2 semitone shift also makes the audio faster. These effects are <strong>not baked into the MP3</strong>.</div></section>
 <section class="panel"><h2>Listen &amp; compare</h2><div class="actions"><button class="btn primary" id="generate">▶ Generate new preview</button><button class="btn" id="replay" disabled>Replay same sample</button><button class="btn" id="reset">Reset settings</button></div>
 <div id="status" class="status" role="status">Ready to test your clone.</div><audio id="player" controls preload="none"></audio>
 <div class="note">Each Generate press can incur an ElevenLabs TTS charge. This page doesn't create R2 files, publish changes, or alter the voice heard by students.</div>
 </section></main>
 <script>
 const $=id=>document.getElementById(id),p=$('player');let latest=null,busy=false;
+let audioCtx,metalFilters=[],reverbGain,metalMix,roomConvolver,roomLength=0;
+function setupEffects(){
+ if(audioCtx)return;
+ audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+ const src=audioCtx.createMediaElementSource(p),dry=audioCtx.createGain();dry.gain.value=1;src.connect(dry);dry.connect(audioCtx.destination);
+ metalMix=audioCtx.createGain();metalMix.gain.value=0;metalMix.connect(audioCtx.destination);
+ for(const [delayTime,weight] of [[.017,.45],[.031,.32],[.047,.23],[.068,.14],[.089,.09]]){
+  const delay=audioCtx.createDelay(.15);delay.delayTime.value=delayTime;
+  const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=300;
+  const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2600;
+  const level=audioCtx.createGain();level.gain.value=weight;
+  src.connect(delay);delay.connect(hp);hp.connect(lp);lp.connect(level);level.connect(metalMix);metalFilters.push(lp);
+ }
+ roomConvolver=audioCtx.createConvolver();reverbGain=audioCtx.createGain();reverbGain.gain.value=0;
+ const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=280;
+ const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2500;
+ src.connect(hp);hp.connect(roomConvolver);roomConvolver.connect(lp);lp.connect(reverbGain);reverbGain.connect(audioCtx.destination);
+ buildImpulse();updateEffects();
+}
+function buildImpulse(){
+ if(!audioCtx||!roomConvolver)return;
+ const duration=Number($('room').value);if(duration===roomLength)return;roomLength=duration;
+ const rate=audioCtx.sampleRate,count=Math.floor(rate*duration),buffer=audioCtx.createBuffer(2,count,rate);
+ for(let ch=0;ch<2;ch++){
+  const data=buffer.getChannelData(ch);let seed=1357911+ch*7193;
+  for(let i=0;i<count;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+   const t=i/rate;data[i]=((seed/4294967296)*2-1)*Math.min(1,t/.01)*Math.exp(-5.5*t/duration)*.35;}
+ }
+ roomConvolver.buffer=buffer;
+}
+function updateEffects(){
+ $('metalV').textContent=$('metal').value+'%';$('reverbV').textContent=$('reverb').value+'%';
+ $('roomV').textContent=Number($('room').value).toFixed(2)+' s';$('metalToneV').textContent=$('metalTone').value+' Hz';
+ if(metalMix)metalMix.gain.setTargetAtTime(Number($('metal').value)/100*.8,audioCtx.currentTime,.015);
+ if(reverbGain)reverbGain.gain.setTargetAtTime(Number($('reverb').value)/100*.7,audioCtx.currentTime,.015);
+ for(let i=0;i<metalFilters.length;i++)metalFilters[i].frequency.value=Math.max(500,Number($('metalTone').value)-i*230);
+}
+async function playPreview(){setupEffects();buildImpulse();updateEffects();await audioCtx.resume();await p.play();}
+
 function auth(){const t=window.WillenaAPI?.getLocalAccessToken?.();if(t)return t;try{return localStorage.getItem('sb_access_token')||decodeURIComponent(document.cookie.split('; ').find(x=>x.startsWith('sb_access='))?.slice(10)||'')}catch{return ''}}
 function update(){const v=Number($('stability').value);$('stabilityV').textContent=({0:'Creative',0.5:'Natural',1:'Robust'})[v]+' · '+v;$('similarityV').textContent=Number($('similarity').value).toFixed(2);$('styleV').textContent=Number($('style').value).toFixed(2);$('pitchV').textContent=$('pitch').value+' semitones';$('tempoV').textContent=Number($('tempo').value).toFixed(2)+'×';$('count').textContent=$('text').value.length+'/250';p.preservesPitch=false;p.webkitPreservesPitch=false;p.playbackRate=Number($('tempo').value)*Math.pow(2,Number($('pitch').value)/12)}
 for(const id of ['stability','similarity','style','pitch','tempo','text'])$(id).addEventListener('input',update);
@@ -37,12 +82,18 @@ async function generate(){
   if(!response.ok||!result?.success)throw Error(result?.error||'Voice preview failed');
   if(latest)URL.revokeObjectURL(latest);
   const binary=atob(result.audio),arr=Uint8Array.from(binary,c=>c.charCodeAt(0));latest=URL.createObjectURL(new Blob([arr],{type:'audio/mpeg'}));
-  p.pause();p.src=latest;update();$('replay').disabled=false;await p.play();
+  p.pause();p.src=latest;update();$('replay').disabled=false;await playPreview();
   status('Playing · '+result.provider+' · '+result.format+' · preview only.');
  }catch(e){status('Preview failed: '+e.message)}
  finally{busy=false;$('generate').disabled=false}
 }
-$('generate').onclick=generate;$('replay').onclick=()=>{if(!latest)return;p.currentTime=0;update();p.play().catch(e=>status('Playback blocked: '+e.message))};
-$('reset').onclick=()=>{$('stability').value='0.5';$('similarity').value='.8';$('style').value='0';$('boost').checked=false;$('format').value='mp3_44100_128';$('pitch').value='0';$('tempo').value='1';update();status('Current v3 baseline restored.');};
-update();
+$('generate').onclick=generate;$('replay').onclick=()=>{if(!latest)return;p.currentTime=0;update();playPreview().catch(e=>status('Playback blocked: '+e.message))};
+$('reset').onclick=()=>{$('stability').value='0.5';$('similarity').value='.8';$('style').value='0';$('boost').checked=false;$('format').value='mp3_44100_128';$('pitch').value='0';$('tempo').value='1';$('metal').value='0';$('reverb').value='0';$('room').value='.55';$('metalTone').value='2600';update();updateEffects();status('Current v3 baseline restored.');};
+for(const id of ['metal','reverb','room','metalTone'])$(id).addEventListener('input',updateEffects);
+document.querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>{
+ const preset={clean:[0,0,.55,2600],subtle:[12,7,.45,2200],robot:[35,18,.7,3400],room:[0,28,1.2,2100]}[b.dataset.fx];
+ [$('metal').value,$('reverb').value,$('room').value,$('metalTone').value]=preset.map(String);
+ updateEffects();status('Effect preset applied. Replay the current clip to compare without regenerating.');
+});
+update();updateEffects();
 </script></body></html>
