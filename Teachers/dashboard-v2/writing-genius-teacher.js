@@ -175,6 +175,7 @@ function render(){
   const stages={started:'Draft opened',writing:'Writing draft',reviewed:'AI review done',speaking_done:'Speaking recorded',completed:'Completed'};
   b.append(make('span','wg-t-item-meta',(kindName[e.kind]||'Writing')+' · '+(stages[e.stage]||(e.status==='draft'?'Draft':'Completed'))));
   b.append(make('strong','wg-t-card-title',e.title||'Untitled'));
+  if(e.status==='draft'&&e.draft_assessment){const tag=make('span','wg-t-feedback-badge is-needed',({half:'Half done',revise:'Needs corrections',good:'Ready for final steps'}[e.draft_assessment]||'Draft assessed')+(e.draft_finish_mission?' · Finish mission':''));b.append(tag)}
   if(e.status==='submitted'){
    const sent=e.has_teacher_feedback===true;
    const badge=make('span','wg-t-feedback-badge '+(sent?'is-sent':'is-needed'),sent?'✓ Feedback sent':'● Needs feedback');
@@ -189,6 +190,50 @@ function render(){
 }
 function closeDiaryModal(){const modal=$('#wgTeacherModal');if(modal)modal.hidden=true;document.body.classList.remove('wg-modal-open')}
 async function feedbackApi(entryId,feedback,bonus){const access=await token();const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/writing_genius_teacher_feedback_v1',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+access,'Content-Type':'application/json'},body:JSON.stringify({p_entry_id:entryId,...(feedback!==undefined?{p_text:feedback}:{}),...(bonus!==undefined?{p_bonus:bonus}:{})})});const result=await response.json();if(!response.ok)throw Error(result.message||result.error||'Could not save feedback');return result}
+async function draftAssessmentApi(entryId,assessment,feedback,finishMission){
+ const access=await token();
+ const payload={p_entry_id:entryId};
+ if(assessment!==undefined)Object.assign(payload,{p_assessment:assessment,p_feedback:feedback||'',p_finish_mission:Boolean(finishMission)});
+ const endpoint='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/writing_genius_draft_assessment_v1';
+ const call=t=>fetch(endpoint,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+ let response=await call(access);
+ if(response.status===401)response=await call(await token(true));
+ const result=await response.json().catch(()=>({}));
+ if(!response.ok||result.success!==true)throw Error(result.message||result.error||'Could not save draft assessment');
+ return result;
+}
+function draftAssessmentForm(entry,host){
+ const form=make('section','wg-t-feedback wg-t-draft-assessment');
+ form.append(make('h3','','Teacher assessment · 초안 평가'));
+ const description=make('p','wg-t-note','This stays a draft. The student can continue editing; no completion points are awarded.');
+ const status=make('select','control wg-t-assessment-status');
+ [['half','Half done · 마무리 필요'],['revise','Needs corrections · 수정 필요'],['good','Good draft · final steps needed']].forEach(([value,label])=>{const o=make('option','',label);o.value=value;status.append(o)});
+ status.setAttribute('aria-label','Draft assessment');
+ const textarea=make('textarea','wg-t-feedback-input');textarea.placeholder='Write feedback for the student…';textarea.maxLength=1500;
+ const missionLabel=make('label','wg-t-mission-label');
+ const checkbox=make('input');checkbox.type='checkbox';checkbox.checked=true;
+ missionLabel.append(checkbox,document.createTextNode(' Send mission to finish this draft'));
+ const save=make('button','wg-t-save-feedback','Save assessment & send mission');save.type='button';
+ const note=make('p','wg-t-feedback-note','Loading assessment…');
+ const updateText=()=>{save.textContent=checkbox.checked?'Save assessment & send mission':'Save assessment'};
+ checkbox.onchange=updateText;
+ form.append(description,status,textarea,missionLabel,save,note);host.append(form);
+ draftAssessmentApi(entry.id).then(result=>{
+   if(result.assessment)status.value=result.assessment;
+   textarea.value=result.feedback||'';
+   checkbox.checked=Boolean(result.finish_mission);
+   updateText();note.textContent=result.updated_at?'Assessment saved · '+formatDate(result.updated_at):'No assessment yet.';
+ }).catch(e=>note.textContent=e.message);
+ save.onclick=async()=>{
+   save.disabled=true;note.textContent='Saving…';
+   try{
+    await draftAssessmentApi(entry.id,status.value,textarea.value,checkbox.checked);
+    note.textContent='Assessment saved. '+(checkbox.checked?'Finish mission flagged for this draft.':'No finish mission requested.');
+    entry.draft_assessment=status.value;entry.draft_finish_mission=checkbox.checked;
+    render();
+   }catch(e){note.textContent=e.message}finally{save.disabled=false}
+ };
+}
 function detail(entry){
  const host=$('#wgTeacherDetail');if(!host)return;host.replaceChildren();
  if(!entry){host.append(make('div','wg-t-empty','Choose student writing to read it.'));return}
@@ -213,7 +258,7 @@ function detail(entry){
   if(!changes.length)host.append(make('p','wg-t-note','AI Willi suggested no corrections.'));
   else host.append(make('p','wg-t-note','AI suggestions shown; the student’s final choices are not yet stored centrally.'));
  }else host.append(make('p','wg-t-note','No saved AI correction is available for this submission.'));
- if(entry.status!=='submitted'){host.append(make('p','wg-t-note','This is a saved draft. Teacher feedback and bonus points become available after the student finishes.'));return}
+ if(entry.status!=='submitted'){draftAssessmentForm(entry,host);return}
  const form=make('section','wg-t-feedback');form.append(make('h3','','Teacher feedback'));
  const textarea=make('textarea','wg-t-feedback-input');textarea.placeholder='Write a message to the student…';textarea.maxLength=1500;
  const label=make('label','wg-t-bonus-label','Extra points (0–50, cumulative)');
