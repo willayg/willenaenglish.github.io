@@ -360,6 +360,7 @@ window.addEventListener('ua:assignments-changed',()=>invalidateOverviewCache(tru
 window.addEventListener('willena:assignment-created',()=>invalidateOverviewCache(true));
 async function loadOverview(scopeName='my',force=false,options={}){
  const classMission=String(options.className||'').trim();
+ const classMissionStage=options.stage==='history'?'history':'active';
  const host=classMission?document.querySelector('#uaClassMissions'):document.querySelector('#uaOverview');
  if(!host)return;
  const loadStarted=performance.now();
@@ -572,7 +573,7 @@ async function loadOverview(scopeName='my',force=false,options={}){
    const now=Date.now();
    const className=classMission.toLowerCase();
    const rowClass=r=>String(r.class||r.class_name||students.get(id(r.student_id))?.class||'').trim().toLowerCase();
-   const current=rows.filter(r=>r.isActive&&(!r.due_at||Date.parse(r.due_at)>=now)&&rowClass(r)===className)
+   const current=rows.filter(r=>rowClass(r)===className&&(classMissionStage==='history'?(!r.isActive||(r.due_at&&Date.parse(r.due_at)<now)):(r.isActive&&(!r.due_at||Date.parse(r.due_at)>=now))))
     .sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
    const nameFor=st=>displayStudentName(st.student_id||st.id,st.name||'Student');
    const round=n=>Math.max(0,Math.min(100,Math.round(Number(n)||0)));
@@ -602,7 +603,7 @@ async function loadOverview(scopeName='my',force=false,options={}){
      const p=(r.list_key==='writing_genius:sentence'?writingSentenceProgress:writingProgress).get(assignId);
      if(p?.student_rows?.length)list=p.student_rows.map(st=>{
       const pct=r.list_key==='writing_genius:sentence'?(Number(st.total)>0?round(100*Number(st.checked||0)/Number(st.total)):null):(st.completed===true?100:st.stage==='not_started'?0:null);
-      return {student_id:st.student_id,name:nameFor(st),pct,done:st.completed===true};
+      return {student_id:st.student_id||st.id,name:nameFor(st),pct,done:st.completed===true};
      });
      else note='Writing submission progress unavailable';
     }else if(r.app==='Puzzles'){
@@ -619,20 +620,33 @@ async function loadOverview(scopeName='my',force=false,options={}){
     const started=list.filter(st=>Number(st.pct)>0).length;
     return {list,done,started,note};
    }
-   host.innerHTML='<div class="cc-mission-toolbar"><div><strong>Current missions</strong><small>All teachers · '+esc(classMission)+' · Active assignments</small></div><button type="button" class="cc-btn" id="ccMissionRefresh">Refresh</button></div>'+
+   const isHistory=classMissionStage==='history';
+   const sectionTitle=isHistory?'Past missions':'Current missions';
+   const sectionNote=isHistory?'Completed, closed and past-due assignments':'Active assignments';
+   const cardApi=window.WillenaGeniusHomeworkCard;
+   host.innerHTML='<div class="cc-mission-toolbar"><div><strong>'+sectionTitle+'</strong><small>All teachers · '+esc(classMission)+' · '+sectionNote+'</small></div><button type="button" class="cc-btn" id="ccMissionRefresh">Refresh</button></div>'+
     (errors.length?'<p class="cc-helper">Some progress sources unavailable: '+esc(errors.join('; '))+'</p>':'')+
     (current.length?'<div class="cc-mission-cards">'+current.map(r=>{
      const p=progressFor(r);
-     const teacher=authors.get(id(r.created_by))||'Teacher unavailable';
+     const teacherName=authors.get(id(r.created_by))||'Teacher unavailable';
      const appName=r.app==='Free Talking Genius'?(r.list_meta?.mission_mode==='conversation'?'Free Talking Genius · AI Conversation':'Free Talking Genius · Speaking'):r.app;
-     const due=r.due_at?dday(r.due_at):'No due date';
-     const count=p.list.length?p.done+'/'+p.list.length+' complete':'Progress unavailable';
-     const rows=p.list.map(st=>bar(st.name,st.pct,st.done?'Completed':'Progress unavailable')).join('');
-     return '<details class="cc-mission-card" data-mission-id="'+esc(id(r.id))+'"><summary><span class="cc-mission-title"><small>'+esc(r.app)+'</small><strong>'+esc(r.label||'Mission')+'</strong><span>'+esc(teacher)+' · Due '+esc(due)+'</span></span><span class="cc-mission-count">'+esc(count)+'</span><span class="cc-mission-chevron">⌄</span></summary>'+
-      '<div class="cc-mission-body">'+(p.list.length?'<p class="cc-helper">'+p.started+' started · '+p.done+' completed</p>'+rows:
-       '<p class="cc-helper">'+esc(p.note||'No verified student progress available yet.')+'</p>')+'</div></details>';
-    }).join('')+'</div>':'<div class="cc-empty">No current missions for this class. Closed and past-due assignments remain available in My and All history.</div>');
-   host.querySelector('#ccMissionRefresh')?.addEventListener('click',()=>loadOverview('all',true,{className:classMission}));
+     const known=p.list.filter(st=>st.pct!==null&&Number.isFinite(Number(st.pct)));
+     const average=known.length?Math.round(known.reduce((sum,st)=>sum+Number(st.pct),0)/known.length):null;
+     const progressRows=p.list.map(st=>({name:st.name,percent:st.pct}));
+     const notStarted=p.list.filter(st=>st.pct===0&&!st.done).length;
+     const body=p.list.length?
+      cardApi.progressPanel({students:progressRows,average,completed:p.done,notStarted,label:appName+' · Student progress'}):
+      '<p class="cc-helper">'+esc(p.note||'No verified student progress available yet.')+'</p>';
+     return cardApi.card({id:'class-mission-'+id(r.id),className:classMission,
+      task:appName+' · '+(r.label||'Mission'),dueAt:r.due_at,teacher:teacherName,
+      createdBy:id(r.created_by),progressLabel:'Student progress',progressPercent:average,body});
+    }).join('')+'</div>':'<div class="cc-empty">'+(isHistory?'No past missions for this class.':'No current missions for this class.')+'</div>');
+   for(const r of current){
+    const p=progressFor(r),known=p.list.filter(st=>st.pct!==null&&Number.isFinite(Number(st.pct)));
+    const average=known.length?Math.round(known.reduce((sum,st)=>sum+Number(st.pct),0)/known.length):null;
+    cardApi?.updateRing?.('class-mission-'+id(r.id),average,host);
+   }
+   host.querySelector('#ccMissionRefresh')?.addEventListener('click',()=>loadOverview('all',true,{className:classMission,stage:classMissionStage}));
   }
   function renderOverview(){
    const now=Date.now();
@@ -1101,5 +1115,5 @@ async function pollNotifications(){
  }catch(error){console.warn('[Homework Notifications] Read unavailable:',error.message)}
  finally{notificationPollInFlight=false}
 }
-window.UniversalAssignmentTracker={load,loadOverview,loadCalendar,pollNotifications,loadClassMissions:className=>loadOverview('all',false,{className})};
+window.UniversalAssignmentTracker={load,loadOverview,loadCalendar,pollNotifications,loadClassMissions:(className,stage='active')=>loadOverview('all',false,{className,stage})};
 })();
