@@ -245,7 +245,10 @@ export async function onRequestPost({request,env}){
   const scoreTotal=Math.max(0,result.rawTotal-hintDeduction);
   const contextPass=result.scores.grammar>=1&&result.scores.context>=1;
   const challengeMet=!String(prompt.grammar_focus||'').startsWith('Challenge:')||result.challengeMet;
-  const passed=scoreTotal>=8&&contextPass&&challengeMet&&!result.targetedAbuseOrThreat;
+  // An 8+/10 score is a pass. Hidden context/challenge flags must not
+  // demand another correction after a genuinely high-scoring new idea.
+  // Unsafe targeted abuse/threats remain excluded from passing.
+  const passed=scoreTotal>=8&&!result.targetedAbuseOrThreat;
   const creativeGift=Boolean(result.creativityGift&&!result.targetedAbuseOrThreat&&result.scores.appropriate===2&&result.creativityReason);
   const row={session_id:sessionId,student_id:auth.id,question_id:questionId,question_number:prompt.question_number,
    attempt_no:nextAttempt,answer_text:answer,
