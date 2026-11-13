@@ -783,7 +783,7 @@ function ticking(){
 // The published question IDs are the conversation track. Reactions and
 // follow-ups are the only generated speech; question playback reuses Willena R2.
 function guidedCharacterVoice(){
- return state.character==='bunny'?'bunny':state.character==='pigfish'?'pigfish':state.character==='willy'?'willy':'marin';
+ return state.character==='bunny'?'bunny':state.character==='pigfish'?'pigfish':state.character==='willy'?'willy2':'marin';
 }
 
 function hybridStop(){
