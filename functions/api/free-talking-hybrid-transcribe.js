@@ -54,6 +54,12 @@ export async function onRequestPost({request,env}){
    body:outgoing,signal:AbortSignal.timeout(25000)});
   const data=await r.json().catch(()=>null);
   if(!r.ok)return reply(502,{error:(eleven?'ElevenLabs':'OpenAI')+' STT failed ('+r.status+'): '+String(data?.detail?.message||data?.error?.message||'').slice(0,130)});
-  return reply(200,{text:String(data?.text||'').slice(0,500),model:eleven?'scribe_v2':'gpt-4o-mini-transcribe',provider:eleven?'cloudflare':'openai'});
+  const transcript=String(data?.text||'').trim().slice(0,500);
+  // A silent/unclear recording can cause STT to hallucinate its own prompt.
+  // Never return instructions as student speech, especially after a pause.
+  const normalized=transcript.toLowerCase().replace(/[^a-z ]+/g,' ').replace(/\s+/g,' ').trim();
+  const promptEcho=/(korean students are speaking english|transcribe only words actually spoken|never translate into spanish|preserve imperfect but intelligible english|avoid guessing from silence|inventing textbook answers)/i.test(normalized);
+  if(promptEcho)return reply(200,{text:'',rejected:'transcription_prompt_echo',model:eleven?'scribe_v2':'gpt-4o-mini-transcribe',provider:eleven?'cloudflare':'openai'});
+  return reply(200,{text:transcript,model:eleven?'scribe_v2':'gpt-4o-mini-transcribe',provider:eleven?'cloudflare':'openai'});
  }catch(e){console.warn('hybrid transcription',String(e));return reply(502,{error:'Transcription unavailable'})}
 }
