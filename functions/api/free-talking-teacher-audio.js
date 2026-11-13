@@ -212,6 +212,18 @@ export async function onRequestPost({request,env}){
   const voice=String(body.voice||'');
   const config=VOICES[voice];
   if(!config)return json(400,{success:false,error:'Choose an available MP3 voice'});
+  // Read-only audition of one published question's EXACT cached MP3.
+  // Derive the key on the server; never accept user-supplied paths or synthesize.
+  if(body.action==='preview'){
+   const id=String(body.question_id||'');
+   if(!UUID.test(id))return json(400,{success:false,error:'Invalid question ID'});
+   const rows=await contentRows('free_talking_questions?select=id,question_en&is_published=eq.true&id=eq.'+id+'&limit=1');
+   if(!rows.length)return json(404,{success:false,error:'Published question not found'});
+   const key=await hashKey(String(rows[0].question_en),config);
+   const cached=await store(auth.token,{action:'get',key,format:'mp3'});
+   if(!cached.found||typeof cached.audio!=='string')return json(404,{success:false,error:'MP3 is not cached in R2. Generate it first.'});
+   return json(200,{success:true,voice,question_id:id,file:key+'.mp3',audio:cached.audio,content_type:'audio/mpeg',source:'r2'});
+  }
   if(body.action==='inventory'){
    const ids=Array.isArray(body.question_ids)?body.question_ids:[];
    if(!ids.length||ids.length>150||ids.some(id=>!UUID.test(String(id))))return json(400,{success:false,error:'Invalid inventory selection'});
