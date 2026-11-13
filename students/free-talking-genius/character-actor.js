@@ -54,6 +54,16 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
  function setMood(mood){
   actor.dataset.mood=selected==='willy'&&['happy','surprised','sad','angry'].includes(mood)?mood:'neutral';
  }
+ function setMoodFromText(text){
+  if(selected!=='willy')return;
+  const t=String(text||'').toLowerCase();
+  // Use model-supplied ElevenLabs cues when present; otherwise classify gently.
+  const mood=/\[(?:angry|frustrated|furious)\]|\b(?:angry|furious)\b/.test(t)?'angry':
+   /\[(?:crying|sadly|sobbing)\]|\b(?:so sorry|that's sad|feel sad)\b/.test(t)?'sad':
+   /\[(?:gasps|surprised|shocked)\]|\b(?:wow|no way|really\?|what\?!)\b/.test(t)?'surprised':
+   /\[(?:laughs|laughing|chuckles|giggles|excited|cheerful)\]|\b(?:great job|well done|awesome|wonderful|haha)\b/.test(t)?'happy':'neutral';
+  setMood(mood);
+ }
  function setSpeaking(playing){voiceSpeaking=Boolean(playing);if(actor.dataset.state==='celebrating'&&!playing)actor.dataset.state='idle';update()}
  function celebrate(){
   if(!ART[selected])return;
@@ -68,5 +78,5 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   update();
  });
  select('marin');
- return {select,celebrate,setSpeaking,setMood,actor};
+ return {select,celebrate,setSpeaking,setMood,setMoodFromText,actor};
 }
