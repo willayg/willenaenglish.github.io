@@ -7,6 +7,16 @@ const EDGE=OP+'/functions/v1/grammar-foundations-teacher-v1';
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co/rest/v1/';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const ACTIVE_BOOK_ID='1e3a2112-07be-45e2-a8fc-ce20011e0e57';
+const COURSE_BOOKS={
+ "8e949813-fa91-4adc-a709-905efc980d8b": "buzz6",
+ "8543cf9b-a5ea-477e-8479-8a32ebcf98cb": "buzz1",
+ "552afb86-40ca-4cfe-8980-956982da1799": "eu2",
+ "23e0ff51-d41c-4a28-bf2f-8d51e320b5d6": "buzz3",
+ "1a591740-46d2-4375-a22e-fb4b5ec6737d": "buzz4",
+ "c437909b-f399-468a-bc31-996147d82fd8": "eu5",
+ "89872c50-a590-4879-aa0c-7273aabcaf8c": "eu6"
+};
+
 const MODES=[['choose','빈칸 선택'],['check','문장 판단'],['hunt','오류 찾기']];
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -48,28 +58,27 @@ async function loadStudents(){
 async function loadBooks(){
  if(store.books)return store.books;
  const headers={apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY};
- const response=await fetch(CONTENT+'content_books?select=id,title,metadata&status=eq.published&metadata->>subject=eq.grammar&order=title.asc&limit=150',{headers,cache:'no-store'});
- if(!response.ok)throw Error('Published grammar book catalog unavailable ('+response.status+')');
- const rows=await response.json();
- const books=[];
+ // The supported Buzz and Everybody Up coursebooks are not subject=grammar.
+ // Discover only books that the student Grammar Books app can actually play.
+ const ids=[ACTIVE_BOOK_ID,...Object.keys(COURSE_BOOKS)];
+ const response=await fetch(CONTENT+'content_books?select=id,title,metadata&status=eq.published&id=in.('+ids.join(',')+')&limit=30',{headers,cache:'no-store'});
+ if(!response.ok)throw Error('Grammar textbook catalog unavailable ('+response.status+')');
+ const rows=await response.json(),books=[];
  for(const row of Array.isArray(rows)?rows:[]){
-  const id=String(row.id),supported=id===ACTIVE_BOOK_ID,units=[];
-  if(supported){
-   const r=await fetch(CONTENT+'content_units?select=unit_number,title,metadata&book_id=eq.'+encodeURIComponent(id)+'&status=eq.published&order=unit_number.asc&limit=200',{headers,cache:'no-store'});
-   if(!r.ok)throw Error('Grammar units unavailable ('+r.status+')');
-   const raw=await r.json(),grouped=new Map();
-   for(const unit of Array.isArray(raw)?raw:[]){
-    const chapter=Number(unit.metadata?.chapter_number);
-    if(!Number.isInteger(chapter)||chapter<1||chapter>11)continue;
-    if(!grouped.has(chapter))grouped.set(chapter,{number:chapter,title:String(unit.metadata?.chapter_title||'Unit '+chapter)});
-   }
-   units.push(...[...grouped.values()].sort((a,b)=>a.number-b.number));
+  const id=String(row.id),isTen=id===ACTIVE_BOOK_ID,key=isTen?'grammar_ten_2':COURSE_BOOKS[id];
+  if(!key)continue;
+  const r=await fetch(CONTENT+'content_units?select=unit_number,title,metadata&book_id=eq.'+encodeURIComponent(id)+'&status=eq.published&order=unit_number.asc&limit=200',{headers,cache:'no-store'});
+  if(!r.ok)throw Error('Grammar units unavailable ('+r.status+')');
+  const raw=await r.json(),grouped=new Map();
+  for(const unit of Array.isArray(raw)?raw:[]){
+   const chapter=isTen?Number(unit.metadata?.chapter_number):Number(unit.unit_number);
+   if(!Number.isInteger(chapter)||chapter<1||chapter>(isTen?11:8))continue;
+   if(!grouped.has(chapter))grouped.set(chapter,{number:chapter,title:String((isTen?unit.metadata?.chapter_title:unit.title)||'Unit '+chapter)});
   }
-  // Other books appear in the picker automatically, but remain disabled
-  // until their student game and completion writer support those units.
-  books.push({id,title:String(row.title||'Grammar book'),bookKey:supported?'grammar_ten_2':'',playable:supported&&units.length===11,units});
+  const units=[...grouped.values()].sort((a,b)=>a.number-b.number);
+  books.push({id,title:String(row.title||'Grammar book'),bookKey:key,playable:units.length===(isTen?11:8),units});
  }
- store.books=books;
+ store.books=books.sort((a,b)=>a.title.localeCompare(b.title));
  return books;
 }
 function selectedBook(){return (store.books||[]).find(b=>b.id===store.bookId)||null}
