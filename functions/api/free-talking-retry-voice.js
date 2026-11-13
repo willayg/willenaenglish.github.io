@@ -5,6 +5,7 @@ const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const TEXT='I couldn’t hear you. Could you speak a little louder?';
 const LILI_ID='M7zl2TS7ORAIGUejDfoy';
 const PIGFISH_ID='W7UbuMY4ypluqgZS2UzT';
+const WILLY_ID='0yhUIig4twaXoIhuQoCQ';
 const STORAGE='https://get-audio-urls.willena.workers.dev/free-talking-store';
 const reply=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
 async function student(request){
@@ -26,7 +27,7 @@ async function storage(request,body){
 }
 async function keyFor(voice){
  const model=voice==='marin'?'gpt-4o-mini-tts':'eleven_v3';
- const voiceId=voice==='marin'?'marin':voice==='pigfish'?PIGFISH_ID:LILI_ID;
+ const voiceId=voice==='marin'?'marin':voice==='pigfish'?PIGFISH_ID:voice==='willy'?WILLY_ID:LILI_ID;
  const source=['free_talking_retry_v1',model,voiceId,TEXT].join('|');
  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(source));
  const key='ft_retry_v1_'+Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('').slice(0,32);
@@ -38,8 +39,8 @@ function b64(bytes){
  return btoa(result);
 }
 async function synthesize(voice,env){
- if(voice==='bunny-v3'||voice==='pigfish'){
-  const elevenId=voice==='pigfish'?PIGFISH_ID:LILI_ID;
+ if(voice==='bunny-v3'||voice==='pigfish'||voice==='willy'){
+  const elevenId=voice==='pigfish'?PIGFISH_ID:voice==='willy'?WILLY_ID:LILI_ID;
   const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
   const settings={stability:0.5};
   if(!key){
@@ -73,7 +74,7 @@ export async function onRequestPost({request,env}){
   if(!await student(request))return reply(401,{success:false,error:'Student login required'});
   const body=await request.json().catch(()=>null);
   const voice=String(body?.voice||'');
-  if(!['marin','bunny-v3','pigfish'].includes(voice))return reply(400,{success:false,error:'Unknown character voice'});
+  if(!['marin','bunny-v3','pigfish','willy'].includes(voice))return reply(400,{success:false,error:'Unknown character voice'});
   const {key,model,voiceId}=await keyFor(voice);
   // Fetch saved R2 clip before making any billable TTS request.
   const cached=await storage(request,{action:'get',key,format:'mp3'});
