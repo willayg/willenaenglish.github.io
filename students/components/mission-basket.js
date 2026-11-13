@@ -26,6 +26,19 @@ async function authed(url,options={}){
 function item(id,app,title,link,created,done=false,detail=''){
  return {id:String(id),app,title:String(title||'과제'),link,created:String(created||''),done:!!done,detail,dueAt:null,teacherId:null,teacherName:''};
 }
+async function writingDraftMissions(){
+ const data=await authed(SUPA+'/rest/v1/rpc/writing_genius_student_draft_missions_v1',{
+   method:'POST',headers:{'Content-Type':'application/json'},body:'{}'
+ });
+ if(data?.success!==true)throw Error('Draft missions unavailable');
+ return (Array.isArray(data.entries)?data.entries:[]).map(d=>{
+  const m=item('writing-draft:'+d.entry_id,'Writing Genius',d.title||'Finish your writing',
+    '/students/writing-genius/?draft='+encodeURIComponent(d.entry_id),d.updated_at,false,
+    ({half:'Half done · 마무리 필요',revise:'Needs corrections · 수정 필요',good:'Finish final steps · 마무리하기'}[d.assessment]||'Finish this draft')+(d.feedback_text?' · 선생님 피드백 있음':''));
+  m.teacherId=d.teacher_id||null;
+  return m;
+ });
+}
 async function standardHomework(){
  const r=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&_='+Date.now());
  if(!r.ok)throw Error('Shared homework unavailable');
@@ -315,7 +328,7 @@ async function mount(host,options={}){
  state.collapsed=true;
  restoreLocalMedals();
  host.innerHTML='<div class="dm-loading">미션을 확인하고 있어요…</div>';
- const results=await Promise.allSettled([standardHomework().then(rows=>state.appFilter?rows.filter(row=>row.app===state.appFilter):rows),state.appFilter&&state.appFilter!=='Grammar Genius Books'?Promise.resolve([]):grammarBookHomework(),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()]);
+ const results=await Promise.allSettled([standardHomework().then(rows=>state.appFilter?rows.filter(row=>row.app===state.appFilter):rows),state.appFilter&&state.appFilter!=='Grammar Genius Books'?Promise.resolve([]):grammarBookHomework(),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin(),state.appFilter&&state.appFilter!=='Writing Genius'?Promise.resolve([]):writingDraftMissions()]);
  for(const result of results){if(result.status==='fulfilled')state.items.push(...result.value);else state.errors.push(String(result.reason))}
  const unique=new Map(state.items.map(x=>[x.id,x]));
  state.items=[...unique.values()].sort((a,b)=>(Date.parse(b.created)||0)-(Date.parse(a.created)||0));
@@ -333,11 +346,11 @@ async function refresh(){
    state.appFilter&&state.appFilter!=='Grammar Genius Books'?Promise.resolve([]):grammarBookHomework(),
    state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),
    state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),
-   state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin()
+   state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin(),state.appFilter&&state.appFilter!=='Writing Genius'?Promise.resolve([]):writingDraftMissions()
   ];
   const results=await Promise.allSettled(tasks);
   const kept=new Map(state.items.map(x=>[x.id,x]));
-  const prefixes=['standard:','standard:','sentence:','grammar:','naesin:'];
+  const prefixes=['standard:','standard:','sentence:','grammar:','naesin:','writing-draft:'];
   results.forEach((result,index)=>{
    if(result.status!=='fulfilled')return;
    if(index===0){
