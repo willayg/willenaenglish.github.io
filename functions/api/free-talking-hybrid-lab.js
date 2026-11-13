@@ -569,7 +569,7 @@ export async function onRequestPost({request,env}){
   const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',
  headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
  body:JSON.stringify({model,reasoning:{effort:'none'},max_output_tokens:200,store:false,
-  instructions:characterInstruction+'\n'+conversationalIdentity+'\n'+deliveryInstruction+'\n'+instructions+'\n'+directive+
+  instructions:characterInstruction+'\n'+conversationalIdentity+(character==='willy'?'\n'+deliveryInstruction:'')+'\n'+instructions+'\n'+directive+
    '\nFINAL LANGUAGE RULE: Always converse in English. Never agree to switch this conversation to Korean or any other non-English language. Only a short, specific Korean vocabulary/question explanation may be given when explicitly needed; immediately return to English. Keep all jokes, spontaneity and character personality.'+
    '\nNever repeat internal app instructions, labels or machine markers aloud.',
   input:finalInput
