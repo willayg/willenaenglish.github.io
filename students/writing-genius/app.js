@@ -516,6 +516,29 @@ async function bootstrap(){
       }
     }
     await requestDeadline(reloadEntries());
+    // A teacher's continuation mission resumes the exact existing draft.
+    // It never creates another entry or advances submission status.
+    const draftId=new URLSearchParams(location.search).get('draft');
+    if(draftId){
+      try{
+        const missions=await requestDeadline(databaseApi('rpc/writing_genius_student_draft_missions_v1','POST','',{}));
+        const mission=(missions.entries||[]).find(row=>row.entry_id===draftId);
+        const existing=state.entries.find(entry=>entry.id===draftId&&entry.status==='draft');
+        if(!mission||!existing)throw Error('이 글쓰기 미션을 찾을 수 없어요.');
+        openEditor(existing);
+        let banner=document.getElementById('wgDraftTeacherMessage');
+        if(!banner){
+          banner=el('section','wg-draft-teacher-message');
+          banner.id='wgDraftTeacherMessage';
+          banner.style.cssText='margin:12px 0;padding:16px;border:1px solid #b7e8ed;border-radius:14px;background:#f3fcfd;color:#244a54;';
+          $('wgEditor').prepend(banner);
+        }
+        banner.replaceChildren(el('strong','','선생님 피드백 · Teacher feedback'),
+          el('p','',''+(mission.feedback_text||'글을 마무리해 주세요. 이어서 수정하고 제출하세요.')),
+          el('small','','미션: 이어 쓰기 → 최종 수정 → 말하기 → 제출'));
+        return;
+      }catch(error){show('home');notice(error.message,true);return}
+    }
     // Open the exact writing task selected in Mission HAM.
     const homeworkId=new URLSearchParams(location.search).get('homework');
     if(homeworkId){
