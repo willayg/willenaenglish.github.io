@@ -1,7 +1,7 @@
 // Demo overlay. The ORIGINAL Free Talking Genius runs unchanged inside the same-origin iframe.
 // Everything here is additive; no production app source is patched.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
-import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261113-willy-wave3';
+import {createFreeTalkingCharacters} from '/students/free-talking-genius/character-actor.js?v=20261113-willy-wave4';
 import {BUNNY_FOX_ART,PIGFISH_ART,WILLY_HEAD_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
