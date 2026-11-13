@@ -175,6 +175,13 @@ function render(){
   const stages={started:'Draft opened',writing:'Writing draft',reviewed:'AI review done',speaking_done:'Speaking recorded',completed:'Completed'};
   b.append(make('span','wg-t-item-meta',(kindName[e.kind]||'Writing')+' · '+(stages[e.stage]||(e.status==='draft'?'Draft':'Completed'))));
   b.append(make('strong','wg-t-card-title',e.title||'Untitled'));
+  const source=make('div','wg-t-attribution');
+  source.style.cssText='display:flex;flex-direction:column;gap:2px;margin:6px 0;color:#607b88;font-size:11px;line-height:1.45;';
+  const teacherLabel=name=>String(name||'').trim();
+  source.append(make('span','','Assigned by: '+(e.assigned_teacher_id?(teacherLabel(e.assigned_teacher_name)||'Unknown teacher'):'Self-started')));
+  if(e.has_teacher_feedback===true)source.append(make('span','','Feedback by: '+(teacherLabel(e.feedback_teacher_name)||'Unknown teacher')));
+  else if(e.status==='draft'&&e.draft_assessment)source.append(make('span','','Draft assessed'));
+  b.append(source);
   if(e.status==='draft'&&e.draft_assessment){const tag=make('span','wg-t-feedback-badge is-needed',({half:'Half done',revise:'Needs corrections',good:'Ready for final steps'}[e.draft_assessment]||'Draft assessed')+(e.draft_finish_mission?' · Finish mission':''));b.append(tag)}
   if(e.status==='submitted'){
    const sent=e.has_teacher_feedback===true;
@@ -242,6 +249,9 @@ function detail(entry){
  head.append(make('span','wg-t-tag',(kindName[entry.kind]||entry.kind)+' · '+(stages[entry.stage]||entry.status)));
  head.append(make('h2','',entry.title||kindName[entry.kind]));
  head.append(make('p','',(entry.korean_name||entry.name||'Student')+' · '+(entry.class_name||'')+' · '+formatDate(entry.activity_at||entry.submitted_at||entry.updated_at)));
+ const attribution=make('p','wg-t-note','Assigned by: '+(entry.assigned_teacher_id?(entry.assigned_teacher_name||'Unknown teacher'):'Self-started')+
+  (entry.has_teacher_feedback===true?' · Feedback by: '+(entry.feedback_teacher_name||'Unknown teacher'):''));
+ head.append(attribution);
  host.append(head);
  if(entry.prompt_text)host.append(make('div','wg-t-prompt',entry.prompt_text));
  const section=(title,body,cls)=>{const wrapper=make('section','wg-t-version');wrapper.append(make('h3','wg-t-version-title',title),make('div','wg-t-paper '+(cls||''),body));host.append(wrapper)};
