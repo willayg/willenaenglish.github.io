@@ -12,7 +12,7 @@ import {geniusSessionContext} from '/students/components/genius-session-context.
 import {createFreeTalkingVoice} from './question-voice.js?v=20261113-willy-audio1';
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-route8';
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261113-willy-retry1';
-import {createFreeTalkingCharacters} from './character-actor.js?v=20261113-willy-wave3';
+import {createFreeTalkingCharacters} from './character-actor.js?v=20261113-willy-wave4';
 import {createFreeTalkingGuide} from './guide.js?v=20261107-guide-kids2';
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
