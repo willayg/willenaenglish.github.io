@@ -3,7 +3,7 @@
 <title>Free Talking Genius · Natural Conversation Lab</title>
 <link rel="stylesheet" href="/students/free-talking-genius/styles.css?v=20261108-golden-actions3">
 <link rel="stylesheet" href="/students/free-talking-genius/character-animations.css?v=20261113-willy-studio-svg2">
-<link rel="stylesheet" href="/students/free-talking-genius/live-animal-ui.css?v=20261107-live-animals1">
+<link rel="stylesheet" href="/students/free-talking-genius/live-animal-ui.css?v=20261113-willy-animal1">
 <link rel="stylesheet" href="/students/free-talking-genius/guide.css?v=20261107-guide-kids2">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -226,7 +226,7 @@ h1{font-size:clamp(23px,5vw,32px);line-height:1.25;margin:6px 0}.sub{color:#6076
 }
 
 /* Remove inherited recorder outlines/background boxes from animal characters.
-   These are wrappers only; the original character SVGs remain unchanged. */
+   These wrappers reuse the shared Speaking actor artwork. */
 #demo #actorStage,
 #demo #actorStage #ftExtensionOriginalShell,
 #demo #actorStage #ftSession,
@@ -659,6 +659,30 @@ body.ft-release #demo .conversation-text{min-height:80px}
 #ftReleaseIntro .ft-release-back{color:#457b87;text-decoration:none;font-weight:650}
 #ftReleaseIntro .ft-release-notice{font:400 11px/1.5 Poppins,Arial;color:#68818b;max-width:440px}
 #ftReleaseError{font:700 13px/1.5 Poppins,Arial;color:#9e3454;max-width:460px}
+
+/* Shared Speaking controls and head — no extension-specific robot drawing. */
+#demo #actorStage #ftExtensionOriginalShell,
+#demo #actorStage #ftSession,
+#demo #actorStage #ftWilliVoice{display:flex!important;position:relative!important;width:100%!important;align-items:center!important;justify-content:center!important;flex-direction:column!important}
+#demo #actorStage #ftWilliVoice{gap:8px!important}
+#demo #actorStage .ft-animal-stage{width:225px!important;height:225px!important;min-width:225px!important;min-height:225px!important;display:grid!important;place-items:center!important;margin:0 auto!important;position:relative!important}
+#demo #actorStage .ft-animal-avatar{position:relative!important;width:208px!important;height:208px!important;display:grid!important;place-items:center!important}
+#demo #actorStage .ft-animal-avatar::before{content:""!important;display:block!important;position:absolute!important;inset:0!important;border-radius:50%!important;border:4px solid #d9eff1!important;background:#fff!important;box-shadow:none!important}
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-shared-circle{position:relative!important;top:auto!important;left:auto!important;transform:none!important;width:207px!important;height:207px!important;min-width:207px!important;min-height:207px!important;padding:0!important;margin:0!important;border:0!important;outline:0!important;border-radius:50%!important;background:transparent!important;box-shadow:none!important;display:grid!important;place-items:center!important;cursor:pointer!important;pointer-events:auto!important;z-index:3!important}
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-shared-circle::before,
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-shared-circle::after{content:none!important;display:none!important}
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-shared-circle>.bf-actor{position:absolute!important;top:50%!important;left:50%!important;width:81%!important;height:81%!important;transform:translate(-50%,-50%)!important;filter:none!important;display:block!important;pointer-events:none!important}
+#demo #actorStage #ftSession #ftTurnCircle.ft-extension-shared-circle .bf-svg{width:100%!important;height:100%!important;overflow:visible!important;display:block!important}
+#demo #actorStage .ft-animal-timer{position:absolute!important;inset:0!important;display:block!important;pointer-events:none!important;z-index:1!important}
+#demo #actorStage .ft-animal-timer svg{width:100%!important;height:100%!important;transform:rotate(-90deg)!important}
+#demo #actorStage .ft-animal-timer circle{fill:none!important;stroke-width:18!important;stroke-linecap:round!important}
+#demo #actorStage .ft-animal-track{stroke:#bcf0f3!important}
+#demo #actorStage .ft-animal-progress{stroke:#53c5d1!important;stroke-dasharray:100!important;stroke-dashoffset:0!important}
+#demo #actorStage .ft-extension-action{display:flex!important;align-items:center!important;justify-content:center!important;width:190px!important;min-height:52px!important;margin:8px auto 0!important;border:5px solid #91dce5!important;border-radius:24px!important;background:#fff!important;color:#697f85!important;font:850 16px/1.25 Poppins,system-ui,sans-serif!important;cursor:pointer!important;pointer-events:auto!important;position:relative!important;z-index:10!important}
+#demo #actorStage .ft-extension-action[data-state="playing"]{border-color:#e9a8c9!important}
+#demo #actorStage .ft-extension-action:disabled{opacity:.65!important;cursor:default!important}
+#demo #actorStage{overflow:visible!important}
+@media(max-width:450px){#demo #actorStage .ft-animal-stage{transform:scale(.85);transform-origin:center;flex:0 0 205px}}
 </style></head><body><section id="ftReleaseIntro" class="free-talking-genius" hidden aria-label="Choose your Free Talking character">
  <div id="ftReleaseNativeMenu" aria-label="Character selection"></div>
  <p id="ftReleaseError" role="alert" hidden></p>
@@ -735,4 +759,4 @@ body.ft-release #demo .conversation-text{min-height:80px}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
-<script type="module" src="./extension.js?v=20261113-willy-free-talking4"></script></body></html>
+<script type="module" src="./extension.js?v=20261113-speaking-shared-head2"></script></body></html>
