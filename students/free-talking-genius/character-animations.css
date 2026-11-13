@@ -238,3 +238,32 @@
 /* Canonical robot mouth contract: NEVER render a static idle smile, even if
    an older SVG was temporarily served by a browser's asset cache. */
 .aw-svg .aw-idle-mouth{display:none!important}
+
+/* Shared AI Willy mood states. Same SVG, no alternate character drawings.
+   Idle face has NO mouth; mouth-wave remains speech-only. */
+.aw-svg .aw-eyes-mood{display:none}
+.bf-actor[data-mood="happy"] .aw-svg .aw-eyes-default,
+.bf-actor[data-mood="surprised"] .aw-svg .aw-eyes-default,
+.bf-actor[data-mood="sad"] .aw-svg .aw-eyes-default,
+.bf-actor[data-mood="angry"] .aw-svg .aw-eyes-default{display:none}
+.bf-actor[data-mood="happy"] .aw-svg .aw-eyes-happy,
+.bf-actor[data-mood="surprised"] .aw-svg .aw-eyes-surprised,
+.bf-actor[data-mood="sad"] .aw-svg .aw-eyes-sad,
+.bf-actor[data-mood="angry"] .aw-svg .aw-eyes-angry{display:inline}
+.aw-svg .aw-ear-left,.aw-svg .aw-ear-right,.aw-svg .aw-antenna{transition:transform .24s ease;transform-box:view-box}
+.aw-svg .aw-ear-left{transform-origin:237px 340px}
+.aw-svg .aw-ear-right{transform-origin:562px 340px}
+.aw-svg .aw-antenna{transform-origin:401px 205px}
+.bf-actor[data-mood="happy"] .aw-ear-left{transform:rotate(-7deg)}
+.bf-actor[data-mood="happy"] .aw-ear-right{transform:rotate(7deg)}
+.bf-actor[data-mood="happy"] .aw-antenna{transform:rotate(3deg)}
+.bf-actor[data-mood="surprised"] .aw-ear-left{transform:rotate(-15deg)}
+.bf-actor[data-mood="surprised"] .aw-ear-right{transform:rotate(15deg)}
+.bf-actor[data-mood="surprised"] .aw-antenna{transform:translateY(-6px)}
+.bf-actor[data-mood="sad"] .aw-ear-left{transform:rotate(9deg)}
+.bf-actor[data-mood="sad"] .aw-ear-right{transform:rotate(-9deg)}
+.bf-actor[data-mood="sad"] .aw-antenna{transform:rotate(-5deg)}
+.bf-actor[data-mood="angry"] .aw-ear-left{transform:rotate(12deg)}
+.bf-actor[data-mood="angry"] .aw-ear-right{transform:rotate(-12deg)}
+.bf-actor[data-mood="angry"] .aw-antenna{transform:rotate(8deg)}
+@media(prefers-reduced-motion:reduce){.aw-svg .aw-ear-left,.aw-svg .aw-ear-right,.aw-svg .aw-antenna{transition:none}}
