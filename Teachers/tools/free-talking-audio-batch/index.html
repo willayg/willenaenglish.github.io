@@ -46,7 +46,7 @@ progress{width:100%;height:14px;accent-color:#40bdcb}
  <div class="controls">
   <label>Textbook<select id="book" disabled><option>Loading books…</option></select></label>
   <label>Unit<select id="unit" disabled><option value="all">All units</option></select></label>
-  <label>Voice / format<select id="voice"><option value="willi2">AI Willi 2 · ElevenLabs v3 · MP3</option><option value="both">All voices · all MP3s</option><option value="willi_clone">Original clone · reserved · MP3</option><option value="pigfish">Pigfish · ElevenLabs v3 · MP3</option><option value="lili">AI Lili · Bunny v3 · MP3</option><option value="willi_mp3">Willo · Marin backup · MP3</option></select></label>
+  <label>Voice / format<select id="voice"><option value="willi2">AI Willi 2 · ElevenLabs v3 · MP3</option><option value="both">All voices · all MP3s</option><option value="willi_clone">The Prince · original clone (reserved) · MP3</option><option value="pigfish">Pigfish · ElevenLabs v3 · MP3</option><option value="lili">AI Lili · Bunny v3 · MP3</option><option value="willi_mp3">Willo · Marin backup · MP3</option></select></label>
  </div>
  <div class="actions">
   <button id="check" type="button" disabled>Check Everything in R2</button>
@@ -73,7 +73,7 @@ const audition=$('audition');
 function stopAudition(){audition.pause();audition.removeAttribute('src');audition.load();if(previewURL)URL.revokeObjectURL(previewURL);previewURL=null;playingIndex=-1;}
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const voices=()=> $('voice').value==='both'?['willi2','willi_clone','lili','pigfish','willi_mp3']:[$('voice').value];
-const labels={lili:'AI Lili',pigfish:'Pigfish',willi2:'AI Willi 2',willi_clone:'Original clone (reserved)',willi_mp3:'Marin MP3 backup'};
+const labels={lili:'AI Lili',pigfish:'Pigfish',willi2:'AI Willi 2',willi_clone:'The Prince (original clone)',willi_mp3:'Marin MP3 backup'};
 function token(){const t=window.WillenaAPI?.getLocalAccessToken?.();if(t)return t;
  try{return localStorage.getItem('sb_access_token')||decodeURIComponent(document.cookie.split('; ').find(x=>x.startsWith('sb_access='))?.slice(10)||'')}catch{return ''}}
 async function call(body){
