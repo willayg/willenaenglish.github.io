@@ -36,7 +36,7 @@ export function createWillySvg(config=DEFAULT_WILLY_CONFIG,options={}){
  +'<rect x="235" y="205" width="330" height="253" rx="115" fill="url(#williShell)" stroke="'+o+'" stroke-width="12"/>'
  +'<rect x="279" y="254" width="242" height="154" rx="69" fill="url(#williFace)" stroke="'+n+'" stroke-width="9"/>'
  +'<g transform="translate(42 0)">'+eyes+'</g><circle cx="315" cy="375" r="7" fill="'+y+'"/><circle cx="484" cy="375" r="7" fill="'+y+'"/>'
- +'<path class="aw-idle-mouth" d="M379 370 Q400 382 421 370" stroke="#68d3ff" stroke-width="7" fill="none" stroke-linecap="round"/>'
+ // No idle mouth: the cyan equalizer is the only mouth and appears during speech.
  +'<g class="aw-mouth-wave" stroke="#63d6ff" fill="none" stroke-linecap="round" stroke-width="9"><path class="aw-bar aw-bar-1" d="M366 369v-10"/><path class="aw-bar aw-bar-2" d="M383 377v-24"/><path class="aw-bar aw-bar-3" d="M400 381v-32"/><path class="aw-bar aw-bar-4" d="M417 377v-24"/><path class="aw-bar aw-bar-5" d="M434 369v-10"/></g>'
  +'<path d="M333 234 Q432 203 497 250" fill="none" stroke="#ffffff" stroke-opacity=".46" stroke-width="11" stroke-linecap="round"/>'
  +'</g></svg>';
