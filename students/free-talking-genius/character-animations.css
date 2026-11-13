@@ -200,3 +200,16 @@
 .free-talking-genius #ftCharacter .ft-character-lili[aria-pressed="true"] .ft-character-symbol:has(.bf-svg){
  box-shadow:0 0 0 5px #e9a8ca88!important;
 }
+
+/* AI Willy robot head: separate from Willo's original voice-circle and the two unchanged animals. */
+.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle{border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;background-image:none!important;overflow:visible!important;animation:none!important;isolation:isolate;width:clamp(205px,35vw,255px)!important;height:clamp(205px,35vw,255px)!important}
+.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle::before,.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle::after{display:none!important;content:none!important}
+.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle :is(.ft-circle-glow,.ft-orbit-visual,.ft-circle-start,.ft-circle-ai,.ft-circle-mic,.ft-circle-thinking,.ft-circle-score,.ft-record-countdown){display:none!important}
+.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle .bf-actor{width:clamp(200px,31vw,245px);height:clamp(200px,31vw,245px)}
+.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol:has(.aw-svg){background:transparent!important;box-shadow:none!important}
+.free-talking-genius .aw-svg{width:100%;height:100%;overflow:visible}
+.free-talking-genius #ftSession[data-character="willy"] .aw-head{transform-origin:250px 430px;animation:awNod 3.8s ease-in-out infinite}
+.free-talking-genius #ftSession[data-character="willy"] .bf-actor[data-state="speaking"] .aw-head{animation:awNod .75s ease-in-out infinite}
+@keyframes awNod{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(2deg) translateY(-4px)}}
+@media(max-width:600px){.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle{width:220px!important;height:220px!important}}
+@media(prefers-reduced-motion:reduce){.free-talking-genius .aw-head{animation:none!important}}
