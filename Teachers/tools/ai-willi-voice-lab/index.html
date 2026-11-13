@@ -13,6 +13,20 @@
 </div>
 <p style="font-size:12px">Fable is selected as a British-leaning starting point. Try Cedar, Onyx, Echo or Ash for different character voices. Actual available voices depend on the selected model; unsupported combinations show their API error. All previews are AI-generated.</p>
 <div class="toolbar"><span id="counter" class="tag">Fixed-phrase OpenAI preview</span></div>
+<section style="background:#f5fbfb;border:1px solid #cdebee;border-radius:16px;padding:16px;margin:18px 0">
+<h2 style="margin-top:0">Original Willi · ElevenLabs API</h2>
+<p style="font-size:12px">Type any short message and generate a new preview using the existing original cloned Willi voice (ElevenLabs v3). This uses ElevenLabs credits. Playback EQ and effects below work on the generated sample; no R2 files or student settings are changed.</p>
+<label for="elevenText">Message to speak <output id="elevenCount">0 / 250</output></label>
+<textarea id="elevenText" rows="4" maxlength="250" style="display:block;box-sizing:border-box;width:100%;margin:8px 0 14px;padding:12px;border:1px solid #b6dbdd;border-radius:10px;font:inherit;resize:vertical" placeholder="Write exactly what you want Willi to say…">Hello! I'm AI Willi. Let's learn something new together today!</textarea>
+<div class="controls">
+<div class="control"><label for="elevenStability">Stability <output id="elevenStabilityValue">Natural (0.5)</output></label><select id="elevenStability" style="width:100%;margin-top:9px;padding:9px;border-radius:9px"><option value="0">Creative (0)</option><option selected value="0.5">Natural (0.5)</option><option value="1">Robust (1)</option></select></div>
+<div class="control"><label for="elevenSimilarity">Similarity <output id="elevenSimilarityValue">0.75</output></label><input id="elevenSimilarity" type="range" min="0" max="1" step="0.05" value="0.75"></div>
+<div class="control"><label for="elevenStyle">Style exaggeration <output id="elevenStyleValue">0.00</output></label><input id="elevenStyle" type="range" min="0" max="1" step="0.05" value="0"></div>
+<div class="control"><label for="elevenBoost">Speaker boost</label><input id="elevenBoost" type="checkbox" style="width:20px;height:20px;margin-top:12px" checked><small style="display:block;color:#627e85">Compare with boost on and off for possible artifacts.</small></div>
+</div>
+<div class="toolbar"><button class="primary" id="elevenGenerate">▶ Generate ElevenLabs message</button><button id="elevenReplay" disabled>▶ Replay last ElevenLabs sample</button></div>
+<div id="elevenStatus" role="status" style="font-size:12px;color:#267c87;font-weight:650">Original cloned Willi voice · ElevenLabs v3 · teacher-only preview.</div>
+</section>
 <h2>Sound controls</h2>
 <div class="controls">
 <div class="control"><label>Pitch <output id="pitchValue">0 semitones</output></label><input id="pitch" type="range" min="-6" max="9" value="0" step=".5"></div>
@@ -46,7 +60,25 @@ const $=id=>document.getElementById(id),API='/api/ai-willi-voice-preview';
 const keys=['pitch','speed','formant','robot','bright','echo','metal','body','space','hp','lp','eqBass','eqLowMid','eqMid','eqPresence','eqTreble'],defaults={pitch:0,speed:1,formant:0,robot:0,bright:0,echo:0,metal:0,body:0,space:0,hp:110,lp:20000,eqBass:0,eqLowMid:0,eqMid:0,eqPresence:0,eqTreble:0};
 const presets={normal:defaults,fable:{...defaults,body:2.5,metal:11,space:13,echo:1.5,bright:-1},metal:{...defaults,metal:11,bright:-1},cute:{pitch:2,speed:.9,formant:25,robot:10,bright:3,echo:0,metal:8},robot:{pitch:3,speed:.9,formant:35,robot:45,bright:2,echo:5,metal:12},deep:{...defaults,pitch:-3,speed:1.05,formant:-40,robot:25,bright:-3,echo:5,metal:10},phone:{...defaults,hp:320,lp:3400,eqBass:-14,eqLowMid:-4,eqMid:4,eqPresence:5,eqTreble:-12},basscut:{...defaults,hp:260,eqBass:-18,eqLowMid:-9,eqPresence:3},radio:{...defaults,hp:240,lp:4300,eqBass:-12,eqMid:5,eqPresence:3,robot:8},cyber:{...defaults,hp:170,lp:7000,eqBass:-8,eqLowMid:-4,eqMid:3,eqPresence:6,robot:50,metal:12,echo:1}};
 let ctx,source,low,high,form,bodyFilter,robotGain,dryGain,modOsc,modDepth,delay,feedback,echoGain,spaceGain,spaceConvolver,metalTaps=[],eqFilters=[],highCut;
-const audioCache=new Map();let busy=false;
+const audioCache=new Map();let busy=false,lastElevenKey=null;
+const elevenAPI='/api/ai-willy-eleven-preview';
+function updateElevenLabels(){
+ $('elevenCount').textContent=$('elevenText').value.length+' / 250';
+ $('elevenStabilityValue').textContent=({0:'Creative (0)',0.5:'Natural (0.5)',1:'Robust (1)'})[$('elevenStability').value];
+ $('elevenSimilarityValue').textContent=Number($('elevenSimilarity').value).toFixed(2);
+ $('elevenStyleValue').textContent=Number($('elevenStyle').value).toFixed(2);
+}
+async function elevenCall(body){
+ const t=token();if(!t)throw Error('Sign in to Teachers Dashboard first.');
+ const r=await fetch(elevenAPI,{method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(44000)});
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok||!d.success)throw Error(d.error||'ElevenLabs generation failed ('+r.status+')');
+ return d;
+}
+function elevenRequest(){
+ return {text:$('elevenText').value.trim(),stability:Number($('elevenStability').value),similarity:Number($('elevenSimilarity').value),style:Number($('elevenStyle').value),boost:$('elevenBoost').checked,format:'mp3_44100_128'};
+}
+
 function status(s){$('status').textContent=s}
 function token(){const t=window.WillenaAPI?.getLocalAccessToken?.();if(t)return t;try{const local=localStorage.getItem('sb_access_token');if(local)return local;return decodeURIComponent(document.cookie.split('; ').find(x=>x.startsWith('sb_access='))?.slice(10)||'')}catch{return ''}}
 async function call(body){const t=token();if(!t)throw Error('Sign in to the Teachers Dashboard first.');const r=await fetch(API,{method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(46000)});const d=await r.json().catch(()=>({}));if(!r.ok||!d.success)throw Error(d.error||'OpenAI speech preview failed');return d}
@@ -69,12 +101,16 @@ function update(){
  for(const tap of metalTaps)tap.gain.gain.value=(v.metal/100)*tap.weight;
 }
 function stop(){try{source?.stop()}catch(e){}try{modOsc?.stop()}catch(e){}source=null;modOsc=null;metalTaps=[];eqFilters=[];highCut=null;spaceGain=null;spaceConvolver=null}
-async function play(){
- if(busy)return;stop();busy=true;$('play').disabled=true;const choice=$('model').value+'|'+$('voice').value;status(audioCache.has(choice)?'Loading previously generated preview…':'Generating one short phrase with OpenAI. New samples incur a small API charge…');
+async function play(provider='openai',replay=false){
+ if(busy)return;stop();busy=true;$('play').disabled=true;const req=provider==='eleven' ? elevenRequest() : null;
+ if(provider==='eleven'&&(req.text.length<2||req.text.length>250)){busy=false;$('play').disabled=false;status('Enter 2–250 characters for ElevenLabs.');return}
+ const choice=provider==='eleven'?'eleven|'+JSON.stringify(req):$('model').value+'|'+$('voice').value;
+ if(provider==='eleven'){$('elevenGenerate').disabled=true;$('elevenStatus').textContent=audioCache.has(choice)?'Reusing generated sample; no new credits…':'Generating with ElevenLabs v3; this uses credits…'}
+ status(audioCache.has(choice)?'Loading previously generated preview…':'Generating new '+(provider==='eleven'?'ElevenLabs':'OpenAI')+' speech sample…');
  try{
   ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();await ctx.resume();
   let raw=audioCache.get(choice);
-  if(!raw){const d=await call({model:$('model').value,voice:$('voice').value});const binary=atob(d.audio);raw=new Uint8Array(binary.length);for(let n=0;n<binary.length;n++)raw[n]=binary.charCodeAt(n);audioCache.set(choice,raw)}
+  if(!raw){const d=provider==='eleven'?await elevenCall(req):await call({model:$('model').value,voice:$('voice').value});const binary=atob(d.audio);raw=new Uint8Array(binary.length);for(let n=0;n<binary.length;n++)raw[n]=binary.charCodeAt(n);audioCache.set(choice,raw)}if(provider==='eleven'){lastElevenKey=choice;$('elevenReplay').disabled=false;}
   const buffer=await ctx.decodeAudioData(raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.byteLength));
   source=ctx.createBufferSource();source.buffer=buffer;
   low=ctx.createBiquadFilter();low.type='highpass';low.frequency.value=110;
@@ -119,8 +155,14 @@ async function play(){
   const spaceLP=ctx.createBiquadFilter();spaceLP.type='lowpass';spaceLP.frequency.value=2300;
   spaceGain=ctx.createGain();spaceGain.gain.value=0;
   highCut.connect(spaceHP);spaceHP.connect(spaceConvolver);spaceConvolver.connect(spaceLP);spaceLP.connect(spaceGain);spaceGain.connect(ctx.destination);
-  update();source.onended=()=>{source=null;status('Finished. Adjust effects and press Play again; this combination is cached in this tab.');$('play').disabled=false};modOsc.start();source.start();status('Playing '+$('voice').value+' / '+$('model').value+' with preview effects.');$('play').disabled=false;busy=false;
- }catch(e){stop();$('play').disabled=false;status('Preview failed: '+e.message)}finally{busy=false;$('play').disabled=false}
+  update();source.onended=()=>{source=null;status('Finished. Adjust effects and press Play again; this combination is cached in this tab.');$('play').disabled=false};modOsc.start();source.start();status('Playing '+(provider==='eleven'?'original Willi / ElevenLabs v3':$('voice').value+' / '+$('model').value)+' with preview effects.');
+ if(provider==='eleven')$('elevenStatus').textContent='Preview ready · original Willi voice · adjust EQ below and replay.';$('play').disabled=false;busy=false;
+ }catch(e){stop();$('play').disabled=false;status('Preview failed: '+e.message);if(provider==='eleven')$('elevenStatus').textContent='ElevenLabs error: '+e.message}finally{busy=false;$('play').disabled=false;$('elevenGenerate').disabled=false}
 }
-keys.forEach(k=>$(k).addEventListener('input',update));document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>{if(b.dataset.preset==='fable')$('voice').value='fable';setValues(presets[b.dataset.preset]);status('Preset applied. Press Play to compare.');});$('model').onchange=()=>status('Model selected. Press Play to generate or reuse its sample.');$('voice').onchange=()=>status('Voice selected. Press Play to generate or reuse its sample.');$('play').onclick=play;$('stop').onclick=()=>{stop();status('Stopped')};$('reset').onclick=()=>setValues(defaults);$('eqReset').onclick=()=>{const v=values();['hp','lp','eqBass','eqLowMid','eqMid','eqPresence','eqTreble'].forEach(k=>v[k]=defaults[k]);setValues(v);status('EQ reset; other effects preserved.');};update();status('Choose a voice and press Play. Start with Fable and the warm British robot preset.');
+keys.forEach(k=>$(k).addEventListener('input',update));document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>{if(b.dataset.preset==='fable')$('voice').value='fable';setValues(presets[b.dataset.preset]);status('Preset applied. Press Play to compare.');});$('model').onchange=()=>status('Model selected. Press Play to generate or reuse its sample.');$('voice').onchange=()=>status('Voice selected. Press Play to generate or reuse its sample.');$('play').onclick=()=>play('openai');$('elevenGenerate').onclick=()=>play('eleven');
+ $('elevenReplay').onclick=()=>{if(lastElevenKey){ // Restore the exact previous settings and text before playing the cached sample.
+  const req=JSON.parse(lastElevenKey.slice(7));$('elevenText').value=req.text;$('elevenStability').value=String(req.stability);$('elevenSimilarity').value=String(req.similarity);$('elevenStyle').value=String(req.style);$('elevenBoost').checked=req.boost;updateElevenLabels();play('eleven',true);
+ }};
+ ['elevenText','elevenSimilarity','elevenStyle','elevenStability','elevenBoost'].forEach(id=>$(id).addEventListener('input',updateElevenLabels));updateElevenLabels();
+ $('stop').onclick=()=>{stop();status('Stopped')};$('reset').onclick=()=>setValues(defaults);$('eqReset').onclick=()=>{const v=values();['hp','lp','eqBass','eqLowMid','eqMid','eqPresence','eqTreble'].forEach(k=>v[k]=defaults[k]);setValues(v);status('EQ reset; other effects preserved.');};update();status('Choose a voice and press Play. Start with Fable and the warm British robot preset.');
 </script></body></html>
