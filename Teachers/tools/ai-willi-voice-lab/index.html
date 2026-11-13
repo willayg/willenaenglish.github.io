@@ -14,8 +14,13 @@
 <p style="font-size:12px">Fable is selected as a British-leaning starting point. Try Cedar, Onyx, Echo or Ash for different character voices. Actual available voices depend on the selected model; unsupported combinations show their API error. All previews are AI-generated.</p>
 <div class="toolbar"><span id="counter" class="tag">Fixed-phrase OpenAI preview</span></div>
 <section style="background:#f5fbfb;border:1px solid #cdebee;border-radius:16px;padding:16px;margin:18px 0">
-<h2 style="margin-top:0">Original Willi · ElevenLabs API</h2>
-<p style="font-size:12px">Type any short message and generate a new preview using the existing original cloned Willi voice (ElevenLabs v3). This uses ElevenLabs credits. Playback EQ and effects below work on the generated sample; no R2 files or student settings are changed.</p>
+<h2 style="margin-top:0">Willi voices · ElevenLabs API</h2>
+<p style="font-size:12px">Compare the original Willi clone with Willi 2 using ElevenLabs v3. Add optional bracketed delivery cues to each generated message. These cues guide delivery but do not train the voice or guarantee an Irish accent. Each new generation uses credits; no student settings or R2 files change.</p>
+<div class="controls">
+<div class="control"><label for="elevenVoice">ElevenLabs voice</label><select id="elevenVoice" style="width:100%;padding:10px;margin-top:8px;border:1px solid #b6dbdd;border-radius:9px"><option value="original">Original Willi</option><option value="willi2">Willi 2</option></select></div>
+<div class="control"><label for="elevenCue">Delivery cue</label><select id="elevenCue" style="width:100%;padding:10px;margin-top:8px;border:1px solid #b6dbdd;border-radius:9px"><option value="">None</option><option value="[Irish] [Energetic]">Irish · Energetic</option><option value="[Irish] [Playful]">Irish · Fun / playful</option><option value="[Irish] [Laughing]">Irish · Laughing</option><option value="[Irish] [Cheerful]">Irish · Cheerful</option><option value="[Irish] [Excited]">Irish · Excited</option><option value="custom">Custom bracketed cues</option></select></div>
+</div>
+<div class="control" id="elevenCustomWrap" hidden style="margin-top:10px"><label for="elevenCustomCue">Custom cues (e.g. [Irish] [Warmly])</label><input id="elevenCustomCue" maxlength="90" style="width:100%;padding:10px;margin-top:8px;border:1px solid #b6dbdd;border-radius:9px" placeholder="[Irish] [Warmly]"></div>
 <label for="elevenText">Message to speak <output id="elevenCount">0 / 250</output></label>
 <textarea id="elevenText" rows="4" maxlength="250" style="display:block;box-sizing:border-box;width:100%;margin:8px 0 14px;padding:12px;border:1px solid #b6dbdd;border-radius:10px;font:inherit;resize:vertical" placeholder="Write exactly what you want Willi to say…">Hello! I'm AI Willi. Let's learn something new together today!</textarea>
 <div class="controls">
@@ -25,7 +30,7 @@
 <div class="control"><label for="elevenBoost">Speaker boost</label><input id="elevenBoost" type="checkbox" style="width:20px;height:20px;margin-top:12px" checked><small style="display:block;color:#627e85">Compare with boost on and off for possible artifacts.</small></div>
 </div>
 <div class="toolbar"><button class="primary" id="elevenGenerate">▶ Generate ElevenLabs message</button><button id="elevenReplay" disabled>▶ Replay last ElevenLabs sample</button></div>
-<div id="elevenStatus" role="status" style="font-size:12px;color:#267c87;font-weight:650">Original cloned Willi voice · ElevenLabs v3 · teacher-only preview.</div>
+<div id="elevenStatus" role="status" style="font-size:12px;color:#267c87;font-weight:650">Original Willi / Willi 2 · ElevenLabs v3 · teacher-only preview.</div>
 </section>
 <h2>Sound controls</h2>
 <div class="controls">
@@ -62,6 +67,11 @@ const presets={normal:defaults,fable:{...defaults,body:2.5,metal:11,space:13,ech
 let ctx,source,low,high,form,bodyFilter,robotGain,dryGain,modOsc,modDepth,delay,feedback,echoGain,spaceGain,spaceConvolver,metalTaps=[],eqFilters=[],highCut;
 const audioCache=new Map();let busy=false,lastElevenKey=null;
 const elevenAPI='/api/ai-willy-eleven-preview';
+function deliveryCue(){
+ const value=$('elevenCue').value==='custom' ? $('elevenCustomCue').value.trim() : $('elevenCue').value;
+ if(value&&!/^(?:\[[^\[\]\r\n]{1,35}\]\s*)+$/.test(value))throw Error('Use bracketed cues, such as [Irish] [Energetic].');
+ return value;
+}
 function updateElevenLabels(){
  $('elevenCount').textContent=$('elevenText').value.length+' / 250';
  $('elevenStabilityValue').textContent=({0:'Creative (0)',0.5:'Natural (0.5)',1:'Robust (1)'})[$('elevenStability').value];
@@ -76,7 +86,8 @@ async function elevenCall(body){
  return d;
 }
 function elevenRequest(){
- return {text:$('elevenText').value.trim(),stability:Number($('elevenStability').value),similarity:Number($('elevenSimilarity').value),style:Number($('elevenStyle').value),boost:$('elevenBoost').checked,format:'mp3_44100_128'};
+ const text=$('elevenText').value.trim(),cue=deliveryCue();
+ return {voice:$('elevenVoice').value,text:cue?cue+'\n'+text:text,rawText:text,cue,stability:Number($('elevenStability').value),similarity:Number($('elevenSimilarity').value),style:Number($('elevenStyle').value),boost:$('elevenBoost').checked,format:'mp3_44100_128'};
 }
 
 function status(s){$('status').textContent=s}
@@ -102,7 +113,10 @@ function update(){
 }
 function stop(){try{source?.stop()}catch(e){}try{modOsc?.stop()}catch(e){}source=null;modOsc=null;metalTaps=[];eqFilters=[];highCut=null;spaceGain=null;spaceConvolver=null}
 async function play(provider='openai',replay=false){
- if(busy)return;stop();busy=true;$('play').disabled=true;const req=provider==='eleven' ? elevenRequest() : null;
+ if(busy)return;
+ let req=null;
+ try{if(provider==='eleven')req=elevenRequest()}catch(e){$('elevenStatus').textContent=e.message;return}
+ stop();busy=true;$('play').disabled=true;
  if(provider==='eleven'&&(req.text.length<2||req.text.length>250)){busy=false;$('play').disabled=false;status('Enter 2–250 characters for ElevenLabs.');return}
  const choice=provider==='eleven'?'eleven|'+JSON.stringify(req):$('model').value+'|'+$('voice').value;
  if(provider==='eleven'){$('elevenGenerate').disabled=true;$('elevenStatus').textContent=audioCache.has(choice)?'Reusing generated sample; no new credits…':'Generating with ElevenLabs v3; this uses credits…'}
@@ -155,14 +169,20 @@ async function play(provider='openai',replay=false){
   const spaceLP=ctx.createBiquadFilter();spaceLP.type='lowpass';spaceLP.frequency.value=2300;
   spaceGain=ctx.createGain();spaceGain.gain.value=0;
   highCut.connect(spaceHP);spaceHP.connect(spaceConvolver);spaceConvolver.connect(spaceLP);spaceLP.connect(spaceGain);spaceGain.connect(ctx.destination);
-  update();source.onended=()=>{source=null;status('Finished. Adjust effects and press Play again; this combination is cached in this tab.');$('play').disabled=false};modOsc.start();source.start();status('Playing '+(provider==='eleven'?'original Willi / ElevenLabs v3':$('voice').value+' / '+$('model').value)+' with preview effects.');
- if(provider==='eleven')$('elevenStatus').textContent='Preview ready · original Willi voice · adjust EQ below and replay.';$('play').disabled=false;busy=false;
+  update();source.onended=()=>{source=null;status('Finished. Adjust effects and press Play again; this combination is cached in this tab.');$('play').disabled=false};modOsc.start();source.start();status('Playing '+(provider==='eleven'?(req.voice==='willi2'?'Willi 2':'Original Willi')+' / ElevenLabs v3':$('voice').value+' / '+$('model').value)+' with preview effects.');
+ if(provider==='eleven')$('elevenStatus').textContent='Preview ready · '+(req.voice==='willi2'?'Willi 2':'Original Willi')+' · adjust EQ below and replay.';$('play').disabled=false;busy=false;
  }catch(e){stop();$('play').disabled=false;status('Preview failed: '+e.message);if(provider==='eleven')$('elevenStatus').textContent='ElevenLabs error: '+e.message}finally{busy=false;$('play').disabled=false;$('elevenGenerate').disabled=false}
 }
 keys.forEach(k=>$(k).addEventListener('input',update));document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>{if(b.dataset.preset==='fable')$('voice').value='fable';setValues(presets[b.dataset.preset]);status('Preset applied. Press Play to compare.');});$('model').onchange=()=>status('Model selected. Press Play to generate or reuse its sample.');$('voice').onchange=()=>status('Voice selected. Press Play to generate or reuse its sample.');$('play').onclick=()=>play('openai');$('elevenGenerate').onclick=()=>play('eleven');
  $('elevenReplay').onclick=()=>{if(lastElevenKey){ // Restore the exact previous settings and text before playing the cached sample.
-  const req=JSON.parse(lastElevenKey.slice(7));$('elevenText').value=req.text;$('elevenStability').value=String(req.stability);$('elevenSimilarity').value=String(req.similarity);$('elevenStyle').value=String(req.style);$('elevenBoost').checked=req.boost;updateElevenLabels();play('eleven',true);
+  const req=JSON.parse(lastElevenKey.slice(7));$('elevenText').value=req.rawText??req.text;$('elevenVoice').value=req.voice||'original';
+  if(req.cue&&![...$('elevenCue').options].some(o=>o.value===req.cue)){$('elevenCue').value='custom';$('elevenCustomCue').value=req.cue}
+  else $('elevenCue').value=req.cue||'';
+  $('elevenCustomWrap').hidden=$('elevenCue').value!=='custom';
+  $('elevenStability').value=String(req.stability);$('elevenSimilarity').value=String(req.similarity);$('elevenStyle').value=String(req.style);$('elevenBoost').checked=req.boost;updateElevenLabels();play('eleven',true);
  }};
- ['elevenText','elevenSimilarity','elevenStyle','elevenStability','elevenBoost'].forEach(id=>$(id).addEventListener('input',updateElevenLabels));updateElevenLabels();
+ ['elevenText','elevenSimilarity','elevenStyle','elevenStability','elevenBoost','elevenVoice','elevenCustomCue'].forEach(id=>$(id).addEventListener('input',updateElevenLabels));
+ $('elevenCue').addEventListener('change',()=>{$('elevenCustomWrap').hidden=$('elevenCue').value!=='custom';updateElevenLabels()});
+ updateElevenLabels();
  $('stop').onclick=()=>{stop();status('Stopped')};$('reset').onclick=()=>setValues(defaults);$('eqReset').onclick=()=>{const v=values();['hp','lp','eqBass','eqLowMid','eqMid','eqPresence','eqTreble'].forEach(k=>v[k]=defaults[k]);setValues(v);status('EQ reset; other effects preserved.');};update();status('Choose a voice and press Play. Start with Fable and the warm British robot preset.');
 </script></body></html>
