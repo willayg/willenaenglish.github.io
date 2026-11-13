@@ -1,7 +1,7 @@
 // Visual-only bridge to the exact SVG animation assets from the Bunny Fox demo.
 // No audio interception, app cloning, auth, recording, grading or progress logic.
 import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wave3';
-import {createWillySvg} from './willy-svg.js?v=20261113-head-only1';
+import {createWillySvg} from './willy-svg.js?v=20261114-no-idle-mouth1';
 const WILLY_TALKING_HEAD=createWillySvg({}, {headOnly:true});
 const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:WILLY_TALKING_HEAD};
 const PORTRAITS={...ART};
