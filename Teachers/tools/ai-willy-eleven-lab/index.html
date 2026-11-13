@@ -8,7 +8,7 @@
 <div class="control"><label for="voice">Character voice</label><select id="voice"><option value="lili">Bunny Fox</option><option value="willi_clone">AI Willy · cloned voice</option><option value="pigfish">Pigfish</option><option value="willi_mp3">Willo · OpenAI Marin</option></select></div>
 <div class="control"><label for="phrase">Cached R2 phrase</label><select id="phrase"><option value="">Loading cached phrases…</option></select></div></div>
 <p class="small" id="availability">Checking existing recordings; missing combinations will not be generated.</p></section>
-<section class="panel"><h2>Local playback tuning</h2><p class="small">These controls affect only this browser preview, after speech is generated. Eleven v3 does not provide a native pitch control or adjustable generation speed. Pitch changes are achieved by playback-rate shifting, which also changes tempo.</p>
+<section class="panel"><h2>Local playback tuning</h2><p class="small">These controls affect only playback of the R2 recording in this browser. Eleven v3 does not provide a native pitch control or adjustable generation speed. Pitch changes are achieved by playback-rate shifting, which also changes tempo.</p>
 <div class="cols"><div class="control"><label for="pitch">Pitch shift <output id="pitchV" class="value">0 semitones</output></label><input type="range" id="pitch" min="-6" max="6" step=".5" value="0"></div>
 <div class="control"><label for="tempo">Playback speed <output id="tempoV" class="value">1.00×</output></label><input type="range" id="tempo" min=".75" max="1.25" step=".05" value="1"></div></div>
 <div class="cols">
@@ -18,6 +18,11 @@
 <div class="control"><label for="metalTone">Metal tone <output id="metalToneV" class="value">2600 Hz</output></label><input type="range" id="metalTone" min="600" max="4600" step="100" value="2600"></div>
 </div><div class="actions" style="margin:12px 0"><button class="preset" data-fx="clean">Clean</button><button class="preset" data-fx="subtle">Subtle metal</button><button class="preset" data-fx="robot">Metal robot</button><button class="preset" data-fx="room">Soft room</button></div>
 <div class="note" style="margin-bottom:12px">These effects change only playback in this browser. Replay the same clip without more ElevenLabs credits. Room length updates on the next playback.</div><div class="note warn" style="margin:12px 0">Pitch and speed share the playback rate; a +2 semitone shift also makes the audio faster. These effects are <strong>not baked into the MP3</strong>.</div></section>
+<section class="panel"><h2>Audio character / format</h2><p class="small">Shape the sound of the existing MP3 in your browser. Format profiles change EQ and filtering, not the stored file format.</p>
+<div class="cols"><div class="control"><label for="profile">Playback profile</label><select id="profile"><option value="natural">Natural / full-range</option><option value="radio">Vintage radio</option><option value="telephone">Telephone / narrow-band</option><option value="warm">Warm / rounded</option><option value="bright">Bright / clear</option></select></div>
+<div class="control"><label for="compression">Dynamic compression <output class="value" id="compressionV">Off</output></label><select id="compression"><option value="off">Off</option><option value="gentle">Gentle</option><option value="strong">Strong</option></select></div>
+<div class="control"><label for="bass">Bass <output class="value" id="bassV">0 dB</output></label><input type="range" id="bass" min="-12" max="12" value="0" step="1"></div>
+<div class="control"><label for="treble">Treble <output class="value" id="trebleV">0 dB</output></label><input type="range" id="treble" min="-12" max="12" value="0" step="1"></div></div></section>
 <section class="panel"><h2>Listen &amp; compare</h2><div class="actions"><button class="btn primary" id="generate">▶ Play cached recording</button><button class="btn" id="replay" disabled>Replay with effects</button><button class="btn" id="reset">Reset effects</button></div>
 <div id="status" class="status" role="status">Loading cached R2 phrases…</div><audio id="player" controls preload="none"></audio>
 <div class="note">All recordings are read from R2. Effects are browser-only and do not modify student voices or stored files.</div>
@@ -25,10 +30,17 @@
 <script>
 const $=id=>document.getElementById(id),p=$('player');let latest=null,busy=false;
 let audioCtx,metalFilters=[],reverbGain,metalMix,roomConvolver,roomLength=0;
+let bassNode,trebleNode,lowCut,highCut,compressor;
 function setupEffects(){
  if(audioCtx)return;
  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
- const src=audioCtx.createMediaElementSource(p),dry=audioCtx.createGain();dry.gain.value=1;src.connect(dry);dry.connect(audioCtx.destination);
+ const src=audioCtx.createMediaElementSource(p),dry=audioCtx.createGain();dry.gain.value=1;
+ lowCut=audioCtx.createBiquadFilter();lowCut.type='highpass';highCut=audioCtx.createBiquadFilter();highCut.type='lowpass';
+ bassNode=audioCtx.createBiquadFilter();bassNode.type='lowshelf';bassNode.frequency.value=220;
+ trebleNode=audioCtx.createBiquadFilter();trebleNode.type='highshelf';trebleNode.frequency.value=2800;
+ compressor=audioCtx.createDynamicsCompressor();
+ src.connect(lowCut);lowCut.connect(highCut);highCut.connect(bassNode);bassNode.connect(trebleNode);
+ trebleNode.connect(compressor);compressor.connect(dry);dry.connect(audioCtx.destination);
  metalMix=audioCtx.createGain();metalMix.gain.value=0;metalMix.connect(audioCtx.destination);
  for(const [delayTime,weight] of [[.017,.45],[.031,.32],[.047,.23],[.068,.14],[.089,.09]]){
   const delay=audioCtx.createDelay(.15);delay.delayTime.value=delayTime;
@@ -41,7 +53,7 @@ function setupEffects(){
  const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=280;
  const lp=audioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2500;
  src.connect(hp);hp.connect(roomConvolver);roomConvolver.connect(lp);lp.connect(reverbGain);reverbGain.connect(audioCtx.destination);
- buildImpulse();updateEffects();
+ buildImpulse();updateEffects();updateFormat();
 }
 function buildImpulse(){
  if(!audioCtx||!roomConvolver)return;
@@ -53,6 +65,20 @@ function buildImpulse(){
    const t=i/rate;data[i]=((seed/4294967296)*2-1)*Math.min(1,t/.01)*Math.exp(-5.5*t/duration)*.35;}
  }
  roomConvolver.buffer=buffer;
+}
+function updateFormat(){
+ const profile=$('profile').value,compression=$('compression').value;
+ $('bassV').textContent=$('bass').value+' dB';$('trebleV').textContent=$('treble').value+' dB';
+ $('compressionV').textContent=compression==='off'?'Off':compression==='gentle'?'Gentle':'Strong';
+ if(!audioCtx)return;
+ const profiles={natural:[50,19500],radio:[200,5200],telephone:[350,3400],warm:[75,10500],bright:[90,17000]};
+ const [low,high]=profiles[profile]||profiles.natural;
+ lowCut.frequency.setTargetAtTime(low,audioCtx.currentTime,.025);
+ highCut.frequency.setTargetAtTime(high,audioCtx.currentTime,.025);
+ bassNode.gain.setTargetAtTime(Number($('bass').value)+(profile==='warm'?3:0),audioCtx.currentTime,.025);
+ trebleNode.gain.setTargetAtTime(Number($('treble').value)+(profile==='bright'?3:0),audioCtx.currentTime,.025);
+ const values={off:[-100,1,0],gentle:[-22,2.5,4],strong:[-32,5,9]}[compression];
+ compressor.threshold.value=values[0];compressor.ratio.value=values[1];compressor.knee.value=values[2];
 }
 function updateEffects(){
  $('metalV').textContent=$('metal').value+'%';$('reverbV').textContent=$('reverb').value+'%';
@@ -113,12 +139,13 @@ $('voice').addEventListener('change',choosePhrase);
 $('phrase').addEventListener('change',()=>{p.pause();latest=null;$('replay').disabled=true});
 $('generate').onclick=generate;
 $('replay').onclick=()=>{if(!latest)return;p.currentTime=0;update();playPreview().catch(e=>status('Playback blocked: '+e.message))};
-$('reset').onclick=()=>{$('pitch').value='0';$('tempo').value='1';$('metal').value='0';$('reverb').value='0';$('room').value='.55';$('metalTone').value='2600';update();updateEffects();status('Effects reset. R2 files unchanged.');};
+$('reset').onclick=()=>{$('pitch').value='0';$('tempo').value='1';$('metal').value='0';$('reverb').value='0';$('room').value='.55';$('metalTone').value='2600';$('profile').value='natural';$('compression').value='off';$('bass').value='0';$('treble').value='0';update();updateEffects();updateFormat();status('Effects reset. R2 files unchanged.');};
 for(const id of ['metal','reverb','room','metalTone'])$(id).addEventListener('input',updateEffects);
 document.querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>{
  const preset={clean:[0,0,.55,2600],subtle:[12,7,.45,2200],robot:[35,18,.7,3400],room:[0,28,1.2,2100]}[b.dataset.fx];
  [$('metal').value,$('reverb').value,$('room').value,$('metalTone').value]=preset.map(String);
  updateEffects();status('Effect preset applied. Replay the current clip to compare without regenerating.');
 });
-update();updateEffects();void loadCatalog();
+for(const id of ['profile','compression','bass','treble'])$(id).addEventListener('input',updateFormat);
+update();updateEffects();updateFormat();void loadCatalog();
 </script></body></html>
