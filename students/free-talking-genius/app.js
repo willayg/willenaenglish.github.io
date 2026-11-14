@@ -306,6 +306,14 @@ function clearError(){$('ftError').hidden=true;$('ftError').textContent=''}
 const FT_NAV_KEY='willenaFreeTalkingNavV1';
 const FT_SCREENS=new Set(['ftHome','ftBook','ftCharacter','ftSession','ftFinish']);
 let visibleScreen='ftHome',navigatingHistory=false;
+const NATIVE_FT_PILOT=new URLSearchParams(location.search).get('nativeFT')==='1';
+window.WillenaFTNativePilot={
+ claim(entry){nativeFreeTalking=entry;},
+ enter(){history.pushState({...history.state,[FT_NAV_KEY]:{...navState('ftBook'),screen:'ftNativeConversation'}},'');},
+ getCurrentBook(){return BOOK()},
+ getCurrentUnit(){return groups()[0]?.unit_id}
+};
+let nativeFreeTalking=null;
 let freeTalkingFrame=null;
 let freeTalkingExiting=false;
 function closeFreeTalkingOverlay({consumeHistory=false}={}){
@@ -406,6 +414,9 @@ function restoreNavigation(nav){
 history.replaceState({...history.state,[FT_NAV_KEY]:navState('ftHome')},'');
 window.addEventListener('popstate',event=>{
  if(freeTalkingFrame)closeFreeTalkingOverlay();
+ if(nativeFreeTalking?.active&&event.state?.[FT_NAV_KEY]?.screen!=='ftNativeConversation'){
+  nativeFreeTalking.close();
+ }
  const snapshot=event.state?.[FT_NAV_KEY];
  if(snapshot)restoreNavigation(snapshot);
 });
@@ -1232,6 +1243,18 @@ $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
   url.searchParams.set('book',BOOK());
   url.searchParams.set('unit',unitId);
   url.searchParams.set('embedded','1');
+  if(NATIVE_FT_PILOT){
+   void import('./native-free-talking.js?v=20261114-native-pilot1')
+    .then(({openNativeFreeTalking})=>openNativeFreeTalking({
+      bookId:BOOK(),unitId,header:document.querySelector('student-header'),
+      onExit:()=>{
+       if(BOOK())void refreshFreeTalkingPercent();
+       if(history.state?.[FT_NAV_KEY]?.screen==='ftNativeConversation')history.back();
+      }
+    }))
+    .catch(error=>showError('Native Free Talking could not open: '+error.message));
+   return;
+  }
   launchFreeTalkingOverlay(url);
  });
 // Free Talking is a disabled coming-soon card; Writing is no longer offered here.
