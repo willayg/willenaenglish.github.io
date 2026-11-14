@@ -146,7 +146,8 @@
       max-width: 450px;
       position: relative;
       animation: modalFadeIn 0.3s ease;
-      overflow: hidden; /* clip pseudo header for crisp rounded corners */
+      max-height: calc(100dvh - 40px);
+      overflow-y: auto; /* keep the shared numpad and confirmation visible on small phones */
       border: 1px solid #e6eaef; /* subtle border to avoid subpixel artifacts */
       background-clip: padding-box; /* ensure background doesn't bleed under border */
       will-change: transform, opacity; /* smoother animation in some browsers */
