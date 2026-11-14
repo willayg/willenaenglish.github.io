@@ -1249,7 +1249,7 @@ $('ftFreeTalkingV2Card').addEventListener('click',async()=>{
  card.disabled=true;
  try{
   if(!freeTalkingV2){
-   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-v2-startfix1');
+   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-v1-native1');
    freeTalkingV2=createFreeTalkingV2({
     host:$('ftFreeTalkingV2'),getToken:()=>token(),
     onBack:()=>{
@@ -1259,9 +1259,15 @@ $('ftFreeTalkingV2Card').addEventListener('click',async()=>{
     onProgress:()=>{void refreshFreeTalkingPercent()}
    });
   }
-  freeTalkingV2.open({bookId,unitId});
+  // Mount the V1-derived conversation before committing the new screen.
+  // A failed module/lesson load leaves the existing unit menu untouched.
+  await freeTalkingV2.open({bookId,unitId});
   view('ftFreeTalkingV2');
- }catch(error){showError('Free Talking V2: '+error.message)}
+ }catch(error){
+  console.error('[Free Talking V2] Native mount failed',error);
+  freeTalkingV2?.close({notify:false});
+  showError('Free Talking: '+(error?.message||'Could not open the activity.'));
+ }
  finally{card.disabled=false}
 });
 
