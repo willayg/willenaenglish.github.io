@@ -195,3 +195,47 @@
   width:min(100%,170px)!important;
  }
 }
+
+/* Locked Dusk: preserve the exact artwork, but obscure it until earned. */
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked .ft-character-symbol{
+  filter:grayscale(1) brightness(.38) contrast(1.2)!important;
+  opacity:.72!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked .ft-character-symbol::after,
+.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked .ft-character-symbol::after{
+  content:'?';position:absolute;inset:0;display:grid;place-items:center;
+  font-size:clamp(27px,5vw,42px);font-weight:800;color:#e8e4f5;
+  text-shadow:0 2px 16px #0b1029,0 0 12px #0b1029;pointer-events:none;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked strong,
+.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked strong{color:#9794a5!important}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked,
+.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked{cursor:pointer!important}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-dusk-lock[hidden],
+.free-talking-genius #ftCharacter .ft-dusk-lock[hidden]{display:none!important}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-dialog[hidden]{display:none!important}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-dialog{
+ position:fixed;inset:0;z-index:2147480000;display:grid;place-items:center;
+ padding:20px;box-sizing:border-box;background:rgba(13,14,32,.78);
+ backdrop-filter:blur(5px);
+}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-panel{
+ box-sizing:border-box;width:min(100%,340px);padding:30px 22px 24px;
+ border:1px solid rgba(205,188,250,.5);border-radius:22px;
+ background:#24223a;color:#fff;text-align:center;
+ box-shadow:0 22px 70px rgba(0,0,0,.5);
+}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-icon{
+ display:block;font-size:38px;color:#c2a6ff;margin-bottom:8px;
+}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-panel h3{
+ margin:0 0 12px;font-size:23px;color:#fff;
+}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-panel p{
+ margin:0 0 22px;line-height:1.6;color:#e4e0ef;font-size:15px;
+}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-close{
+ border:0;border-radius:12px;background:#c3a6ff;color:#201b32;
+ font-size:16px;font-weight:700;min-width:130px;min-height:45px;cursor:pointer;
+}
