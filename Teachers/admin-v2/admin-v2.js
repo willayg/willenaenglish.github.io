@@ -61,7 +61,7 @@ function activateView(view){
     enquiriesModulePromise.catch(error=>{const target=$('#enqMessage');if(target)target.textContent=error.message});
   }
   if(view==='teachers-manager'){
-    if(!teachersModulePromise)teachersModulePromise=import('./admin-v2-teachers.js?v=20261114');
+    if(!teachersModulePromise)teachersModulePromise=import('./admin-v2-teachers.js?v=20261115-archive');
     teachersModulePromise.then(m=>m.open()).catch(e=>{const el=$('#tmMessage');if(el)el.textContent=e.message});
   }
   if(view==='classes')ensureClasses().catch(error=>{$('#classGridV2').innerHTML=`<div class="empty">${esc(error.message)}</div>`});
@@ -151,7 +151,7 @@ function bindStudents(){
 window.addEventListener('willena-student-enrolled',()=>loadStudents(true));
 function boot(){
  bindNavigation();bindStudents();bindLevelTestModes();
- import('./admin-v2-teachers.js?v=20261114').then(m=>m.checkAccess()).catch(e=>console.warn('Teacher Manager access check unavailable',e));$('#adminV2Boot')?.classList.add('hidden');
+ import('./admin-v2-teachers.js?v=20261115-archive').then(m=>m.checkAccess()).catch(e=>console.warn('Teacher Manager access check unavailable',e));$('#adminV2Boot')?.classList.add('hidden');
  loadStudents(false);
  // The red unread badge must appear even when Admin V2 opens on Students.
  import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiryBadge()).catch(e=>console.debug('[Enquiries] Badge unavailable',e));
