@@ -2,7 +2,7 @@
 // No audio interception, app cloning, auth, recording, grading or progress logic.
 import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from './willy-svg.js?v=20261114-electric-cat-v3';
-import {DUSK_ART} from './dusk-character.js?v=20261114-unlock1';
+import {DUSK_ART} from './dusk-character.js?v=20261114-no-legacy-card1';
 // Willo has no animal SVG: his original artwork is the voice-circle stored
 // in the canonical shared character menu. Reuse that exact SVG in the live
 // activity rather than inventing a different icon or leaving an empty ring.
