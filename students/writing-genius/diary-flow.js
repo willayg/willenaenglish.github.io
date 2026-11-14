@@ -1,7 +1,7 @@
 import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
-import {judgeSentenceSpeech} from '/students/shared/sentence-speech-tolerance.js?v=20261104-determiner2';
+import {judgeSentenceSpeech,spokenTokens} from '/students/shared/sentence-speech-tolerance.js?v=20261104-determiner2';
 const $=id=>document.getElementById(id);
 const norm=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim();
 
@@ -121,6 +121,30 @@ function spokenAccuracy(expected,heard){
  const coverage=Math.min(1,b.length/a.length);
  if(coverage<.65)return Math.min(.7,coverage);
  return Math.max(0,1-dp[a.length][b.length]/Math.max(a.length,b.length));
+}
+
+// Writing Genius speech only: accept >=80% of spoken words, with at most two
+// transcription edits. Never relax the typed-copy checks or critical negation.
+function writingSpeechAccepted(target,transcript){
+ const exact=judgeSentenceSpeech(target,transcript);
+ if(exact.correct)return true;
+ const a=spokenTokens(target),b=spokenTokens(transcript);
+ if(!a.length||!b.length)return false;
+ // Short unrelated utterances must not pass, even with an 80% threshold.
+ if(b.length<Math.ceil(a.length*.8)||b.length>Math.floor(a.length*1.2))return false;
+ const protectedWords=new Set(['not','no','never','cannot',"can't","won't"]);
+ for(const word of protectedWords){
+  if(a.filter(w=>w===word).length!==b.filter(w=>w===word).length)return false;
+ }
+ const allowed=Math.min(2,Math.floor(a.length*.2));
+ if(!allowed)return false;
+ const dp=Array.from({length:a.length+1},()=>new Uint16Array(b.length+1));
+ for(let i=0;i<=a.length;i++)dp[i][0]=i;
+ for(let j=0;j<=b.length;j++)dp[0][j]=j;
+ for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){
+  dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+ }
+ return dp[a.length][b.length]<=allowed;
 }
 const diaryTopics=[
  {title:'오늘의 일기',en:'My Day',guide:'What happened today? Who were you with? How did you feel?',example:'Today was a busy day. I went to school in the morning. I studied English with my friends. We ate lunch together. After school I played outside. I felt tired but happy.'},
@@ -643,7 +667,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   button('건너뛰기',()=>{reviewSkipped=true;index++;mode='speaking';question()}).classList.add('df-skip-action');
   button('확인',()=>{
    const answer=String(renderer.getResponse()||'');
-   const matches=mode==='write'?typedComparable(answer)===typedComparable(p.target):norm(answer)===norm(p.target);
+   const matches=mode==='write'?typedComparable(answer)===typedComparable(p.target):writingSpeechAccepted(p.target,answer);
    if(!matches){
     if(mode==='write'){
      const field=stage.querySelector('.df-question-host textarea.answer[data-write]');
@@ -770,8 +794,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const judge=answer=>{
    if(accepted||step!=='speech')return;
    const tolerant=judgeSentenceSpeech(target,answer);
-   const score=tolerant.correct?1:spokenAccuracy(target,answer);
-   if(score<.75){
+   const acceptedSpeech=writingSpeechAccepted(target,answer);
+   if(!acceptedSpeech){
     status('다시 한번 말해 보세요.',true);
     return;
    }
@@ -782,7 +806,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   if(window.SpeechRecognition||window.webkitSpeechRecognition){
    renderer.onSpeechResult=alternatives=>{
     const candidates=Array.isArray(alternatives)?alternatives:[alternatives];
-    const best=candidates.map(answer=>({answer,score:judgeSentenceSpeech(target,answer).correct?1:spokenAccuracy(target,answer)})).sort((a,b)=>b.score-a.score)[0];
+    const best=candidates.map(answer=>({answer,score:writingSpeechAccepted(target,answer)?2:spokenAccuracy(target,answer)})).sort((a,b)=>b.score-a.score)[0];
     if(best)judge(best.answer);
    };
   }else{
