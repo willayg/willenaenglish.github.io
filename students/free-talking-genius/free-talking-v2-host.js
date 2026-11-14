@@ -1,7 +1,7 @@
 // Free Talking V2 native host.
 // The V1 conversation engine runs in a ShadowRoot, inside the original student
 // document: one persistent header, no iframe and no independent page history.
-const ENGINE='/students/free-talking-genius/free-talking-v2-engine.js?v=20261114-retry-in-place2';
+const ENGINE='/students/free-talking-genius/free-talking-v2-engine.js?v=20261114-menu-startfix1';
 const TEMPLATE='/students/free-talking-hybrid-lab/index.html';
 let workspace=null;
 let loading=null;
@@ -41,7 +41,82 @@ async function mount(header){
   '/students/free-talking-genius/guide.css?v=20261107-guide-kids2',
   '/students/free-talking-hybrid-lab/shared-character-stage.css?v=20261114-willo-restored1'
  ])root.append(stylesheet(file));
- root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-dusk-unlock1'),document.importNode(intro,true),document.importNode(demo,true));
+ // Native release-specific responsive rules are injected LAST, after
+ // legacy V1 selectors. A single narrow column avoids the portrait/name
+ // collisions caused by inherited 2-column mobile overrides. Only the
+ // shadow-root menu is affected; Speaking and its layout remain untouched.
+ const nativeMenuStyle=document.createElement('style');
+ nativeMenuStyle.textContent=`
+ #ftReleaseIntro.free-talking-genius #ftCharacter.ft-character-screen{
+   display:block!important;width:100%!important;max-width:100%!important;
+   padding:0!important;min-height:0!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-panel{
+   width:min(620px,100%)!important;max-width:100%!important;
+   padding:18px 14px!important;margin:0 auto!important;gap:13px!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options{
+   display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+   width:100%!important;gap:10px!important;margin:0!important;
+   align-items:stretch!important;justify-items:stretch!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option,
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"]{
+   display:grid!important;grid-template-columns:82px minmax(0,1fr)!important;
+   grid-template-rows:auto auto!important;align-items:center!important;
+   justify-content:stretch!important;column-gap:14px!important;
+   row-gap:2px!important;position:relative!important;inset:auto!important;
+   grid-column:auto!important;grid-row:auto!important;
+   width:100%!important;max-width:100%!important;min-width:0!important;
+   height:auto!important;min-height:94px!important;
+   padding:7px 8px!important;margin:0!important;
+   border:0!important;box-shadow:none!important;background:transparent!important;
+   transform:none!important;text-align:left!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol{
+   display:grid!important;grid-column:1!important;grid-row:1 / span 2!important;
+   width:78px!important;height:78px!important;min-width:0!important;
+   max-width:78px!important;max-height:78px!important;
+   margin:0!important;padding:0!important;position:relative!important;
+   border-radius:50%!important;flex:none!important;transform:none!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option strong{
+   display:block!important;grid-column:2!important;grid-row:1!important;
+   width:100%!important;min-width:0!important;max-width:100%!important;
+   margin:0!important;padding:0!important;position:static!important;
+   font-size:clamp(16px,4.2vw,19px)!important;line-height:1.25!important;
+   white-space:normal!important;overflow-wrap:break-word!important;text-align:left!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option .ft-dusk-lock{
+   display:block!important;grid-column:2!important;grid-row:2!important;
+   min-width:0!important;margin:0!important;padding:0!important;
+   position:static!important;text-align:left!important;font-size:12px!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option .ft-dusk-lock[hidden]{display:none!important}
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option[hidden]{display:none!important}
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-start-container{
+   width:100%!important;margin:0!important;
+ }
+ @media(min-width:650px){
+   #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options{
+     grid-template-columns:repeat(2,minmax(0,1fr))!important;
+   }
+ }
+ @media(min-width:1100px){
+   #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options{
+     grid-template-columns:repeat(4,minmax(0,1fr))!important;
+   }
+   #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option,
+   #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"]{
+     display:flex!important;flex-direction:column!important;justify-content:flex-start!important;
+     min-height:145px!important;text-align:center!important;gap:8px!important;
+   }
+   #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option strong{
+     text-align:center!important;
+   }
+ }
+ `;
+ root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-dusk-unlock1'),nativeMenuStyle,document.importNode(intro,true),document.importNode(demo,true));
  document.body.append(element);
  const state={element,root,header,context:null,active:false,reopen:null,shutdown:null,onExit:null,bodyOverflow:'',headerZIndex:'',exit({notify=true}={}){
   if(!state.active)return;
