@@ -1,4 +1,5 @@
 import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
+import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {judgeSentenceSpeech} from '/students/shared/sentence-speech-tolerance.js?v=20261104-determiner2';
 const $=id=>document.getElementById(id);
@@ -179,27 +180,11 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   screen('review-loading','AI Willi');
   const splash=el('section','df-ai-loading');
   splash.setAttribute('role','status');splash.setAttribute('aria-live','polite');
-  splash.innerHTML=`
-   <div class="df-ai-orbit" aria-hidden="true">
-    <svg viewBox="0 0 180 180" fill="none" role="presentation">
-      <circle cx="90" cy="90" r="73" class="df-ai-ring"/>
-      <circle cx="90" cy="90" r="73" class="df-ai-ring-active"/>
-      <g class="df-ai-robot">
-        <path d="M90 33v13" stroke="#249aa5" stroke-width="5" stroke-linecap="round"/>
-        <circle cx="90" cy="29" r="6" fill="#e75c9d"/>
-        <rect x="49" y="47" width="82" height="83" rx="23" fill="#fff" stroke="#249aa5" stroke-width="5"/>
-        <rect x="61" y="65" width="58" height="42" rx="13" fill="#e8fbfc" stroke="#8adce2" stroke-width="3"/>
-        <g class="df-ai-robot-eyes"><rect x="70" y="79" width="10" height="14" rx="5" fill="#e75c9d"/><rect x="100" y="79" width="10" height="14" rx="5" fill="#e75c9d"/></g>
-        <path d="M84 99q6 6 12 0" stroke="#249aa5" stroke-width="3" stroke-linecap="round"/>
-        <path d="M49 79H39v24h10M131 79h10v24h-10" stroke="#249aa5" stroke-width="5" stroke-linejoin="round"/>
-        <path d="M70 130v10m40-10v10" stroke="#249aa5" stroke-width="5" stroke-linecap="round"/>
-      </g>
-    </svg>
-   </div>
-   <h2>AI Willi</h2>
-   <p>글을 읽고 있어요</p>
-   <div class="df-ai-loading-dots" aria-hidden="true"><i></i><i></i><i></i></div>
-  `;
+  const orbit=el('div','df-ai-orbit');orbit.setAttribute('aria-hidden','true');
+  orbit.innerHTML=AI_WILLY_HEAD_SVG;
+  splash.append(orbit,el('h2','','AI Willi'),el('p','','글을 읽고 있어요'));
+  const dots=el('div','df-ai-loading-dots');dots.setAttribute('aria-hidden','true');
+  dots.append(el('i'),el('i'),el('i'));splash.append(dots);
   stage.append(splash);
  }
  function showTeacherFeedback(){
@@ -591,14 +576,13 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    const line=el('p','df-tele-line '+(offset===0?'df-tele-active':'df-tele-next df-tele-next-'+offset),finalLines[index+offset]);
    flow.append(line);
   }
-  stage.append(flow);
   const target=finalLines[index];
   const switcher=el('div','df-tele-mode-switch');
   switcher.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:12px 0';
   const speakChoice=el('button','wg-button wg-secondary','🎤 말하기');
   const typeChoice=el('button','wg-button wg-secondary','⌨️ 직접 입력');
   for(const choice of [speakChoice,typeChoice])choice.type='button';
-  switcher.append(speakChoice,typeChoice);stage.append(switcher);
+  switcher.append(speakChoice,typeChoice);stage.append(switcher,flow);
   const typingArea=el('div','df-tele-type-area');
   typingArea.style.cssText='display:none;gap:10px;flex-direction:column;margin:12px 0';
   const typingHelp=el('p','df-muted','위의 수정된 문장을 보고 똑같이 입력해 보세요.');
