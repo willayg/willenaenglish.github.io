@@ -7,8 +7,8 @@
 }
 :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter.ft-character-screen[hidden]{display:none!important}
 :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-panel{
- width:min(940px,100%);max-width:100%;padding:clamp(18px,3vw,34px);
- display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.4vw,22px);
+ width:min(620px,100%);max-width:100%;padding:clamp(18px,3vw,30px);
+ display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2vw,18px);
  border-radius:26px;text-align:center;
 }
 :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-panel h2{
@@ -26,7 +26,7 @@
  color:#32636c;transform:none;
 }
 :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-symbol{
- width:clamp(94px,12vw,158px);height:clamp(94px,12vw,158px);
+ width:clamp(82px,10vw,132px);height:clamp(82px,10vw,132px);
  flex:0 0 auto;display:grid;place-items:center;padding:0;
  box-sizing:border-box;border:9px solid #b0e7ec;outline:3px solid #dcf5f6;
  border-radius:50%;background:#fff;color:#56afb9;
@@ -68,7 +68,7 @@
   grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;
  }
  :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-symbol{
-  width:clamp(100px,30vw,152px);height:clamp(100px,30vw,152px);
+  width:clamp(100px,27vw,136px);height:clamp(100px,27vw,136px);
  }
  :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-panel{padding:18px 12px;gap:13px}
  :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-option strong{font-size:clamp(14px,3.8vw,19px)}
@@ -76,4 +76,45 @@
 @media(max-width:370px){
  :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-symbol{width:98px;height:98px}
  :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-panel{padding:14px 8px}
+}
+
+/* The release host must not impose an independent full-screen menu design.
+   Both activities' actual menu, title, portraits and Start button are styled
+   by the exact same rules above. Keep the native host merely as a viewport. */
+#ftReleaseIntro.free-talking-genius{
+ width:100%;margin:0;
+ background:transparent;
+ display:flex;align-items:center;justify-content:flex-start;
+ flex-direction:column;gap:0;
+}
+#ftReleaseIntro.free-talking-genius #ftReleaseNativeMenu{
+ display:block;width:100%;max-width:100%;margin:0 auto;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter{
+ min-height:0;padding:0;width:100%;margin:0;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-panel{
+ width:min(620px,100%);max-width:100%;margin:0 auto;
+ padding:clamp(18px,3vw,30px);gap:clamp(12px,2vw,18px);
+}
+/* Speaking and Free Talking have identical 2-column/4-column rules. */
+@media(max-width:700px){
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-panel{
+  padding:18px 12px;gap:13px;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-symbol{
+  width:clamp(100px,27vw,136px);height:clamp(100px,27vw,136px);
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option{
+  border:0;min-height:0;padding:5px 3px;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter h2{
+  font-size:clamp(22px,3.2vw,30px);
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-continue{
+  min-height:55px;
+ }
 }
