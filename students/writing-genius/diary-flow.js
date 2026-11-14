@@ -566,6 +566,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   toggle.classList.toggle('is-writing',mode==='write');
   toggle.addEventListener('click',()=>{mode=mode==='speaking'?'write':'speaking';question()});
   modes.append(toggle);stage.append(modes);
+  stage.append(el('p','df-task-instruction',mode==='speaking'?'🎤 위의 영어 문장을 보고 마이크를 눌러 소리 내어 읽어 보세요.':'✏️ 위의 영어 문장을 보고 아래 칸에 똑같이 입력하세요.'));
   rendererHost({form:mode==='speaking'?'speaking':'write',prompt:'',context:{},input:{language:'en'},answer:[p.target]});
   button('확인',()=>{
    if(norm(renderer.getResponse())!==norm(p.target)){status('다시 시도해 주세요.',true);return}
@@ -627,13 +628,14 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const speakChoice=el('button','wg-button wg-secondary','🎤 말하기');
   const typeChoice=el('button','wg-button wg-secondary','⌨️ 직접 입력');
   for(const choice of [speakChoice,typeChoice])choice.type='button';
-  switcher.append(speakChoice,typeChoice);stage.append(switcher,flow);
+  switcher.append(speakChoice,typeChoice);stage.append(switcher);
+  const modeInstruction=el('p','df-task-instruction');stage.append(modeInstruction,flow);
   const typingArea=el('div','df-tele-type-area');
   typingArea.style.cssText='display:none;gap:10px;flex-direction:column;margin:12px 0';
-  const typingHelp=el('p','df-muted','위의 수정된 문장을 보고 똑같이 입력해 보세요.');
+  const typingHelp=el('p','df-muted','문장을 입력한 다음 ‘문장 확인’을 누르세요.');
   const typingInput=el('textarea','df-input');
   typingInput.rows=2;typingInput.autocomplete='off';typingInput.spellcheck=false;
-  typingInput.placeholder='영어 문장을 입력하세요';
+  typingInput.placeholder='위 문장을 여기에 입력하세요';
   typingInput.setAttribute('aria-label','수정된 문장 입력');
   const typingCheck=el('button','wg-button wg-primary','문장 확인 · Check');
   typingCheck.type='button';typingArea.append(typingHelp,typingInput,typingCheck);stage.append(typingArea);
@@ -658,6 +660,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   typingInput.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();typingCheck.click()}});
   const setMode=useTyping=>{
    typedMode=useTyping;
+   modeInstruction.textContent=useTyping?'✏️ 분홍색 영어 문장을 보고 아래 칸에 똑같이 입력하세요.':'🎤 분홍색 영어 문장을 보고 마이크를 눌러 소리 내어 읽어 보세요.';
    typingArea.style.display=useTyping?'flex':'none';
    speakChoice.classList.toggle('wg-primary',!useTyping);
    typeChoice.classList.toggle('wg-primary',useTyping);
