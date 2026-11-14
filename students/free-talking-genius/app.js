@@ -306,6 +306,46 @@ function clearError(){$('ftError').hidden=true;$('ftError').textContent=''}
 const FT_NAV_KEY='willenaFreeTalkingNavV1';
 const FT_SCREENS=new Set(['ftHome','ftBook','ftCharacter','ftSession','ftFinish']);
 let visibleScreen='ftHome',navigatingHistory=false;
+let freeTalkingFrame=null;
+let freeTalkingExiting=false;
+function closeFreeTalkingOverlay({consumeHistory=false}={}){
+ if(!freeTalkingFrame||freeTalkingExiting)return;
+ freeTalkingExiting=true;
+ const frame=freeTalkingFrame;
+ freeTalkingFrame=null;
+ frame.remove();
+ document.body.classList.remove('ft-live-active');
+ document.body.style.removeProperty('overflow');
+ freeTalkingExiting=false;
+ if(BOOK())void refreshFreeTalkingPercent();
+ if(consumeHistory&&history.state?.[FT_NAV_KEY]?.screen==='ftLiveConversation'){
+  history.back();
+ }
+}
+function launchFreeTalkingOverlay(url){
+ if(freeTalkingFrame)return;
+ const frame=document.createElement('iframe');
+ frame.title='Free Talking conversation';
+ frame.setAttribute('allow','microphone; autoplay');
+ frame.setAttribute('aria-label','Free Talking live conversation');
+ frame.style.cssText='position:fixed;inset:0;width:100%;height:100dvh;border:0;background:#e9fbfc;z-index:2147483000;';
+ frame.src='about:blank';
+ freeTalkingFrame=frame;
+ document.body.append(frame);
+ document.body.classList.add('ft-live-active');
+ document.body.style.overflow='hidden';
+ // A single top-level history entry; the live frame does not own menu navigation.
+ history.pushState({...history.state,[FT_NAV_KEY]:{...navState('ftBook'),screen:'ftLiveConversation'}},'');
+ // Replace the initial about:blank entry to avoid piling iframe history entries.
+ frame.contentWindow.location.replace(url.pathname+url.search+(url.hash||''));
+}
+window.addEventListener('message',event=>{
+ if(event.origin!==location.origin||!freeTalkingFrame||event.source!==freeTalkingFrame.contentWindow)return;
+ if(event.data?.type==='willena:free-talking:exit'){
+  closeFreeTalkingOverlay({consumeHistory:true});
+ }
+});
+
 function navState(screen){
  return {screen,bookId:state.bookId||null,unit:state.unit,mode:state.mode||null,
   sessionId:state.session?.id||null};
@@ -357,6 +397,7 @@ function restoreNavigation(nav){
 }
 history.replaceState({...history.state,[FT_NAV_KEY]:navState('ftHome')},'');
 window.addEventListener('popstate',event=>{
+ if(freeTalkingFrame)closeFreeTalkingOverlay();
  const snapshot=event.state?.[FT_NAV_KEY];
  if(snapshot)restoreNavigation(snapshot);
 });
@@ -1182,7 +1223,8 @@ $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
   url.searchParams.set('release','1');
   url.searchParams.set('book',BOOK());
   url.searchParams.set('unit',unitId);
-  location.assign(url.pathname+url.search);
+  url.searchParams.set('embedded','1');
+  launchFreeTalkingOverlay(url);
  });
 // Free Talking is a disabled coming-soon card; Writing is no longer offered here.
 $('ftTranscriptEdit').addEventListener('input',()=>{
