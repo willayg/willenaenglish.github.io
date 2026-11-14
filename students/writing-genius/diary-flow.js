@@ -85,7 +85,7 @@ const allTopicIdeas=[...topicWritingIdeas,...extraTopicIdeas.map(item=>({...item
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
 export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedback,claimBonus,onExit}){
  const root=$('wgDiaryFlow'),stage=$('dfStage'),actions=$('dfActions'),message=$('dfMessage'),progress=$('dfProgress');
- let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],reviewSkipped=false,speechSkipped=false,busy=false,autosaveTimer=null,transitionTimer=null,choices={},captureDraft=null;
+ let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],typedUsed=false,reviewSkipped=false,speechSkipped=false,busy=false,autosaveTimer=null,transitionTimer=null,choices={},captureDraft=null;
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
  function status(text='',error=false){message.textContent=text;message.classList.toggle('is-error',error)}
  function screen(name,label){clearTimeout(transitionTimer);captureDraft=null;step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false}
@@ -574,11 +574,11 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   screen('speak-transition','4 · Speak');
   const splash=el('div','df-speak-splash');
   const icon=el('div','df-splash-icon');const iconImg=el('img','df-splash-mic');iconImg.src='/shared/svgs/mic.svg';iconImg.alt='';icon.append(iconImg);
-  splash.append(icon,el('h2','','Review complete!'),el('p','','이제 내 글을 소리 내어 읽어 봐요.'),el('small','','Speak each sentence to continue.'));
+  splash.append(icon,el('h2','','Review complete!'),el('p','','이제 내 글을 말하거나 직접 입력해 봐요.'),el('small','','Speak or type each corrected sentence to continue.'));
   stage.append(splash);
   let started=false;
   const start=()=>{if(started||step!=='speak-transition')return;started=true;index=0;lineSpeech()};
-  button('말하기 시작',start,true);
+  button('문장 연습 시작',start,true);
   transitionTimer=setTimeout(start,2200);
  }
  function lineSpeech(){
@@ -593,8 +593,55 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   }
   stage.append(flow);
   const target=finalLines[index];
+  const switcher=el('div','df-tele-mode-switch');
+  switcher.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:12px 0';
+  const speakChoice=el('button','wg-button wg-secondary','🎤 말하기');
+  const typeChoice=el('button','wg-button wg-secondary','⌨️ 직접 입력');
+  for(const choice of [speakChoice,typeChoice])choice.type='button';
+  switcher.append(speakChoice,typeChoice);stage.append(switcher);
+  const typingArea=el('div','df-tele-type-area');
+  typingArea.style.cssText='display:none;gap:10px;flex-direction:column;margin:12px 0';
+  const typingHelp=el('p','df-muted','위의 수정된 문장을 보고 똑같이 입력해 보세요.');
+  const typingInput=el('textarea','df-input');
+  typingInput.rows=2;typingInput.autocomplete='off';typingInput.spellcheck=false;
+  typingInput.placeholder='영어 문장을 입력하세요';
+  typingInput.setAttribute('aria-label','수정된 문장 입력');
+  const typingCheck=el('button','wg-button wg-primary','문장 확인 · Check');
+  typingCheck.type='button';typingArea.append(typingHelp,typingInput,typingCheck);stage.append(typingArea);
+  const normalizeTyped=value=>String(value||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\\s+/g,' ').trim();
+  let sentenceDone=false;
+  const advance=answer=>{
+   if(sentenceDone||step!=='speech')return;
+   sentenceDone=true;spoken.push(answer);
+   status('✓ 잘했어요!');
+   flow.classList.add('df-tele-advance');
+   setTimeout(()=>{if(step==='speech'){index++;lineSpeech()}},480);
+  };
+  typingCheck.addEventListener('click',()=>{
+   if(sentenceDone)return;
+   const typed=typingInput.value.trim();
+   if(normalizeTyped(typed)!==normalizeTyped(target)){
+    status('문장을 다시 확인해 보세요. 대소문자와 문장 부호는 괜찮아요.',true);
+    return;
+   }
+   typedUsed=true;typingCheck.disabled=true;advance(typed);
+  });
+  typingInput.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();typingCheck.click()}});
+  const setMode=useTyping=>{
+   typingArea.style.display=useTyping?'flex':'none';
+   speakChoice.classList.toggle('wg-primary',!useTyping);
+   typeChoice.classList.toggle('wg-primary',useTyping);
+   const speechControls=stage.querySelector('.df-tele-speech-controls');
+   if(speechControls)speechControls.hidden=useTyping;
+   if(useTyping)typingInput.focus();
+  };
+  speakChoice.addEventListener('click',()=>setMode(false));
+  typeChoice.addEventListener('click',()=>setMode(true));
   // Use the exact shared QuestionRenderer microphone from the review activity.
+  const speechControls=el('div','df-tele-speech-controls');stage.append(speechControls);
   rendererHost({form:'speaking',prompt:'',context:{},input:{language:'en'},answer:[target]});
+  const renderedControls=stage.lastElementChild;
+  if(renderedControls!==speechControls){while(speechControls.nextSibling)speechControls.append(speechControls.nextSibling)}
   const mic=stage.querySelector('[data-speaking-mic]');
   const speechStatus=stage.querySelector('[data-speaking-status]');
   if(current.kind==='topic')button('건너뛰기 · Skip',()=>{speechSkipped=true;index++;lineSpeech()});
@@ -610,11 +657,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     return;
    }
    accepted=true;
-   spoken.push(answer);
    mic.disabled=true;
-   status('✓ 잘했어요!');
-   flow.classList.add('df-tele-advance');
-   setTimeout(()=>{if(step==='speech'){index++;lineSpeech()}},480);
+   advance(answer);
   };
   if(window.SpeechRecognition||window.webkitSpeechRecognition){
    renderer.onSpeechResult=alternatives=>{
@@ -670,8 +714,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   status('보상을 확인하고 있어요…');
   button('메인 메뉴',close,true);
   try{
-   if(!current._speechSaved){if(current.kind==='topic'&&speechSkipped){current._speechSaved=true}else{await speech(current,spoken.join(' '),finalLines);current._speechSaved=true}}
-   const reward=await finish(current,{reviewComplete:!reviewSkipped,speakingComplete:!speechSkipped&&spoken.length===finalLines.length});
+   if(!current._speechSaved){if(typedUsed||(current.kind==='topic'&&speechSkipped)){current._speechSaved=true}else{await speech(current,spoken.join(' '),finalLines);current._speechSaved=true}}
+   const reward=await finish(current,{reviewComplete:!reviewSkipped,speakingComplete:!typedUsed&&!speechSkipped&&spoken.length===finalLines.length});
    rewardCard(reward);
    status('완료했습니다!');
    showTeacherFeedback();
@@ -683,5 +727,5 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    showTeacherFeedback();
   }finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];reviewSkipped=false;speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];typedUsed=false;reviewSkipped=false;speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
 }
