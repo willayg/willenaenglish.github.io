@@ -421,16 +421,19 @@ window.addEventListener('popstate',event=>{
  if(nativeFreeTalking?.active&&event.state?.[FT_NAV_KEY]?.screen!=='ftNativeConversation'){
   nativeFreeTalking.close();
  }
- // Native Free Talking owns its lifecycle until the student explicitly
- // taps an activity exit control. Browser/Android history events must never
- // destroy an active workspace or silently replace it with the unit menu.
+ // Android/browser Back from native Free Talking must consume its history
+ // entry and reveal the existing textbook unit, not push the overlay again.
+ const snapshot=event.state?.[FT_NAV_KEY];
  if(freeTalkingV2?.isOpen()){
-  if(event.state?.[FT_NAV_KEY]?.screen!=='ftFreeTalkingV2'){
-   history.pushState({...history.state,[FT_NAV_KEY]:navState('ftFreeTalkingV2')},'');
+  if(snapshot?.screen==='ftFreeTalkingV2')return;
+  freeTalkingV2.close({notify:false});
+  if(snapshot?.screen==='ftBook')restoreNavigation(snapshot);
+  else {
+   view('ftBook',{record:false});
+   history.replaceState({...history.state,[FT_NAV_KEY]:navState('ftBook')},'');
   }
   return;
  }
- const snapshot=event.state?.[FT_NAV_KEY];
  // Android gesture/system Back: return from character selection to this unit,
  // even when splash navigation leaves an unrecognized history snapshot.
  if(visibleScreen==='ftCharacter'){
