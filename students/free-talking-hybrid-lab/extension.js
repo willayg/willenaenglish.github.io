@@ -1,7 +1,6 @@
 // Demo overlay. The ORIGINAL Free Talking Genius runs unchanged inside the same-origin iframe.
 // Everything here is additive; no production app source is patched.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
-import {mountFreeTalkingCharacterMenu,unitReturnRoute} from '/students/free-talking-genius/shared-menu.js?v=20261114-p2b';
 import {createHybridCharacterStage} from './shared-character-stage.js?v=20261114-electric-cat-v3';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
@@ -172,7 +171,8 @@ function navigateBack({fromResults=false}={}){
   // Return to the exact book and unit selected before the conversation.
   const params=new URLSearchParams(location.search);
   const book=state.book?.id||params.get('book'),unit=state.unit?.id||params.get('unit');
-  const back=unitReturnRoute({bookId:book,unitId:unit});
+  const back=new URL('/students/free-talking-genius/',location.origin);
+  if(book&&unit){back.searchParams.set('book',book);back.searchParams.set('unit',unit);back.searchParams.set('return','1')}
   location.replace(back.pathname+back.search);
   return;
  }
@@ -2237,12 +2237,21 @@ async function initStandaloneRelease(){
  const params=new URLSearchParams(location.search);
  const bookId=params.get('book'),unitId=params.get('unit');
  const valid=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id||''));
- // The same menu template is mounted in the original and live modes.
+ // Reuse the actual Speaking app's menu from its published HTML, instead
+ // of waiting for the hidden iframe's app to navigate to a character screen.
+ // This copies only inert markup; no Speaking event handlers or flow run here.
  const host=$('ftReleaseNativeMenu');
  if(!host){showError('Character menu container is missing.');return}
  let menu;
- try{menu=mountFreeTalkingCharacterMenu(host)}
- catch(ex){console.error('[Free Talking] shared menu',ex);showError('Character menu could not load. Please refresh.');return}
+ try{
+  const response=await fetch('/students/free-talking-genius/index.html',{cache:'no-store'});
+  if(!response.ok)throw Error('Menu source HTTP '+response.status);
+  const doc=new DOMParser().parseFromString(await response.text(),'text/html');
+  const source=doc.getElementById('ftCharacter');
+  if(!source)throw Error('Speaking character menu not found in source');
+  menu=source.cloneNode(true);
+ }catch(ex){console.error('[Free Talking] original character menu',ex);showError('Character menu could not load. Please refresh.');return}
+ host.replaceChildren();
  // The original character actor module might not have populated its portraits
  // at iframe load; only fill a missing portrait with the exact shared SVG art.
  const bunnyPortrait=menu.querySelector('#ftChooseLili .ft-character-symbol');
