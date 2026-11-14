@@ -169,9 +169,9 @@ function navigateBack({fromResults=false}={}){
   if(state.reviewing&&!fromResults)return;
   if(fromResults&&state.active)endSession('Leaving finished conversation.');
   // Return to the exact book and unit selected before the conversation.
+  const back=new URL('/students/free-talking-genius/',location.origin);
   const params=new URLSearchParams(location.search);
   const book=state.book?.id||params.get('book'),unit=state.unit?.id||params.get('unit');
-  const back=new URL('/students/free-talking-genius/',location.origin);
   if(book&&unit){back.searchParams.set('book',book);back.searchParams.set('unit',unit);back.searchParams.set('return','1')}
   location.replace(back.pathname+back.search);
   return;
