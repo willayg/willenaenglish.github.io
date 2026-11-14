@@ -51,3 +51,21 @@
 @keyframes duskNod{50%{transform:rotate(5deg) translateY(9px)}}
 @keyframes duskShake{25%{transform:translateX(-8px) rotate(-2deg)}75%{transform:translateX(8px) rotate(2deg)}}
 @media(prefers-reduced-motion:reduce){.ft-dusk-actor[data-dusk-effect]{animation:none!important}}
+
+/* Dusk's traced SVG is transparent. Remove only the presentation card behind
+   Dusk; do not affect the character selection layout or the other mascots. */
+.free-talking-genius #ftCharacter .ft-character-dusk .ft-character-symbol,
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk .ft-character-symbol{
+ background:transparent!important;background-image:none!important;
+ border:0!important;outline:0!important;box-shadow:none!important;
+ overflow:visible!important;
+}
+/* The original shared Free Talking stage paints an opaque white disk with
+   ::before. For Dusk only, let his silhouette float on the existing stage. */
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg)::before{
+ background:transparent!important;border:0!important;
+ box-shadow:none!important;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg){
+ background:transparent!important;
+}
