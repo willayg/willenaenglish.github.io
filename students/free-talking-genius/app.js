@@ -14,6 +14,9 @@ import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-rout
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261113-willy-retry1';
 import {createFreeTalkingCharacters} from './character-actor.js?v=20261114-context-moods-v4';
 import {createFreeTalkingGuide} from './guide.js?v=20261107-guide-kids2';
+// Keep the inline character menu if the optional shared UI script is unavailable.
+try{window.WillenaFTSharedMenu?.replace(document.getElementById('ftCharacter'))}
+catch(ex){console.warn('[Free Talking] Retaining inline character menu',ex)}
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
@@ -1126,7 +1129,7 @@ async function startup(){
    // Older student mission links may point at the structured speaking page.
    // Honor the actual teacher-selected mode rather than silently launching Speaking.
    if(assignment.list_meta?.mission_mode==='conversation'||String(assignment.list_key||'').startsWith('free_talking_conversation:')){
-    const url=new URL('/students/free-talking-hybrid-lab/',location.origin);
+    const url=new URL(window.WillenaFTSharedMenu?.paths.conversation||'/students/free-talking-hybrid-lab/',location.origin);
     url.searchParams.set('release','1');
     url.searchParams.set('book',String(assignment.list_meta?.book_id||''));
     url.searchParams.set('unit',String(assignment.list_meta?.unit_id||''));
@@ -1175,7 +1178,7 @@ $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
  $('ftFreeTalkingCard').addEventListener('click',()=>{
   const unitId=groups()[0]?.unit_id;
   if(!BOOK()||!unitId){showError('이 단원의 자유 대화를 사용할 수 없어요.');return}
-  const url=new URL('/students/free-talking-hybrid-lab/',location.origin);
+  const url=new URL(window.WillenaFTSharedMenu?.paths.conversation||'/students/free-talking-hybrid-lab/',location.origin);
   url.searchParams.set('release','1');
   url.searchParams.set('book',BOOK());
   url.searchParams.set('unit',unitId);
