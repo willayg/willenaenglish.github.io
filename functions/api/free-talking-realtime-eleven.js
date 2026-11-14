@@ -16,7 +16,7 @@ export async function onRequestPost({request,env}){
  // The baseline tags go ONLY to ElevenLabs, not into the visible conversation transcript.
  // Willi 2 uses natural, unprefixed text; preserve model-supplied emotion tags.
  const ttsText=character==='dusk'
-  ? '[British] '+sentence.replace(/\[(?:chuckling|laughing|giggles|giggling|surprised|whispering|crying|screaming|bombastic|irish|british)\]/gi,'').replace(/\s+/g,' ').trim()
+  ? '[british][dark][low tone] '+sentence.replace(/\[(?:chuckling|laughing|giggles|giggling|surprised|whispering|crying|screaming|bombastic|irish|british)\]/gi,'').replace(/\s+/g,' ').trim()
   : sentence;
  // Match the ElevenLabs model used to cache this character's textbook questions.
  // Never substitute an OpenAI voice for Bunny or Pigfish.
