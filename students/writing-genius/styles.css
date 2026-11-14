@@ -989,3 +989,10 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-final-speak .df-question-host{margin:18px auto}
 .writing-genius #wgDiaryFlow .df-second-review-button{flex:0 0 auto!important;max-width:220px}
 @media(max-width:560px){.writing-genius #wgDiaryFlow .df-review-decision-buttons{gap:7px}.writing-genius #wgDiaryFlow .df-review-decision-buttons .wg-button{padding:9px 6px;font-size:.86rem}}
+
+/* Final teleprompter: current line remains legible, completed lines de-emphasized. */
+.writing-genius #wgDiaryFlow .df-final-teleprompter{scroll-behavior:smooth;text-align:center;padding:16px 18px}
+.writing-genius #wgDiaryFlow .df-final-tele-line{font-size:clamp(1.07rem,4.3vw,1.5rem);line-height:1.8;margin:12px auto;padding:8px 10px;border-radius:12px;opacity:.48;transition:opacity .22s ease,color .22s ease,background .22s ease}
+.writing-genius #wgDiaryFlow .df-final-tele-line.is-current{opacity:1;color:#e75c9d;background:#fff0f7;font-weight:900}
+.writing-genius #wgDiaryFlow .df-final-tele-line.is-complete{opacity:.65;color:#2d8b92}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-final-teleprompter{scroll-behavior:auto}.writing-genius #wgDiaryFlow .df-final-tele-line{transition:none}}
