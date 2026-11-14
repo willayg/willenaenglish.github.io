@@ -112,7 +112,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   try{
    captureDraft?.();
    if(current.status!=='submitted')await persist();
-   const drafts=await listDrafts();
+   const drafts=await listDrafts(current.kind);
    if(!savedDialog.open)return;
    savedList.replaceChildren();
    if(!drafts.length){savedList.append(el('p','df-muted','저장한 글이 없어요.'));return}
