@@ -14,7 +14,7 @@ import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-rout
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261114-clone-transparent3';
 import {createFreeTalkingCharacters} from './character-actor.js?v=20261114-clone-transparent3';
 import {DUSK_UNLOCK_POINTS} from './dusk-character.js?v=20261114-no-legacy-card1';
-import {createFreeTalkingGuide} from './guide.js?v=20261107-guide-kids2';
+import {createFreeTalkingGuide} from './guide.js?v=20261114-quiet-room6';
 // Keep the inline character menu if the optional shared UI script is unavailable.
 try{window.WillenaFTSharedMenu?.replace(document.getElementById('ftCharacter'))}
 catch(ex){console.warn('[Free Talking] Retaining inline character menu',ex)}
