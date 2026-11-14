@@ -94,14 +94,29 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
    const t=String(text||'').toLowerCase();
    const body=actor.querySelector('.ft-dusk-actor');
    if(!body)return;
-   // Rare, context-triggered expressions; no random repetitive effects.
-   const effect=/\b(?:wow|surprise|amazing|no way|unbelievable)\b/.test(t)?'surprised':
-    /\b(?:suspicious|secret|hmm|interesting|strange)\b/.test(t)?'squint':
-    /\b(?:look over there|over there|where is)\b/.test(t)?'glance':'';
+   // Context-driven expressions use the original animation lab's effects.
+   // Keep spectacular effects rare rather than playing them every turn.
+   const effect=/\b(?:surprise|shocked|unbelievable|no way)\b/.test(t)?'surprised':
+    /\b(?:sparkle|magical|magic|shiny)\b/.test(t)?'spark':
+    /\b(?:secret|suspicious|mysterious|hmm)\b/.test(t)?'squint':
+    /\b(?:look over there|over there|where is)\b/.test(t)?'glance':
+    /\b(?:absolutely not|never|no thanks)\b/.test(t)?'shake':
+    /\b(?:exactly|of course|you're right)\b/.test(t)?'nod':
+    /\b(?:amazing|wonderful|brilliant)\b/.test(t)?'aura':'';
+   for(const id of body._duskTimers||[])clearTimeout(id);
+   body._duskTimers=[];
    if(effect){
     body.dataset.duskEffect=effect;
-    clearTimeout(body._effectTimer);
-    body._effectTimer=setTimeout(()=>{if(body.dataset.duskEffect===effect)delete body.dataset.duskEffect},effect==='squint'?1100:750);
+    const clear=()=>{if(body.dataset.duskEffect===effect)delete body.dataset.duskEffect};
+    if(effect==='squint'){
+     const eyes=[body.querySelector('#duskLeftIris'),body.querySelector('#duskRightIris')];
+     for(const [ms,x] of [[110,0],[270,-48],[450,11],[620,-58],[790,9],[970,-63],[1150,0]]){
+      body._duskTimers.push(setTimeout(()=>eyes.forEach(eye=>{if(eye)eye.style.transform='translate('+x+'px,0px)'}),ms));
+     }
+     body._duskTimers.push(setTimeout(()=>{eyes.forEach(eye=>{if(eye)eye.style.transform=''});clear()},1500));
+    }else{
+     body._duskTimers.push(setTimeout(clear,effect==='surprised'?750:1050));
+    }
    }
    return;
   }
