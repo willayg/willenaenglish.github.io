@@ -43,12 +43,15 @@ async function mount(header){
  ])root.append(stylesheet(file));
  root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-dusk-unlock1'),document.importNode(intro,true),document.importNode(demo,true));
  document.body.append(element);
- const state={element,root,header,context:null,active:false,reopen:null,shutdown:null,onExit:null,bodyOverflow:'',exit({notify=true}={}){
+ const state={element,root,header,context:null,active:false,reopen:null,shutdown:null,onExit:null,bodyOverflow:'',headerZIndex:'',exit({notify=true}={}){
   if(!state.active)return;
   state.active=false;
   // Shutdown only this conversation; never replace the parent document.
   try{state.shutdown?.()}catch(error){console.error('[Free Talking V2] shutdown',error)}
   element.hidden=true;
+  // The native overlay and the student header were in the same top-level
+  // stacking order. Restore header layering on exit so other apps are unchanged.
+  if(state.header)state.header.style.zIndex=state.headerZIndex;
   document.body.style.overflow=state.bodyOverflow;
   if(notify)state.onExit?.();
  }};
@@ -72,6 +75,11 @@ export async function openV1NativeConversation({bookId,unitId,header,onExit}){
  }
  if(workspace.active)return;
  workspace.header=header;
+ // Lift the existing student header ABOVE this fixed native workspace.
+ // The account dropdown lives in the header's ShadowRoot, so a z-index on
+ // the dropdown alone cannot escape the header's lower stacking context.
+ workspace.headerZIndex=header?.style.zIndex||'';
+ if(header)header.style.zIndex='2147483200';
  workspace.context={bookId,unitId};
  workspace.onExit=onExit;
  workspace.bodyOverflow=document.body.style.overflow;
