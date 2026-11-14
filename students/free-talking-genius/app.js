@@ -747,7 +747,23 @@ function renderBook(){
  void refreshFreeTalkingPercent();
 
 }
-function selectUnit(n){state.unit=n;renderBook();view('ftBook');questionVoice.preload(n);}
+function selectUnit(n){
+ // Unit tabs change the content in place; they are not screen navigation.
+ // Do not call view('ftBook'), which unconditionally scrolls the page to top.
+ if(n===state.unit)return;
+ const scrollY=window.scrollY;
+ const strip=$('ftUnitStrip'),stripX=strip.scrollLeft;
+ state.unit=n;
+ renderBook();
+ strip.scrollLeft=stripX;
+ // Keep Android Back and refreshed pages aligned with the selected unit,
+ // without adding a browser-history step for every tab tapped.
+ if(visibleScreen==='ftBook'){
+  history.replaceState({...history.state,[FT_NAV_KEY]:navState('ftBook')},'');
+ }
+ window.scrollTo({top:scrollY,behavior:'instant'});
+ questionVoice.preload(n);
+}
 function setBusy(value){
  state.loading=!!value;
  $('ftSubmit').disabled=value||!validAnswer();
