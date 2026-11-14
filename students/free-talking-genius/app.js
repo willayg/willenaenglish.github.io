@@ -1295,7 +1295,43 @@ $('ftCharacterBack').addEventListener('click',()=>{
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
 // New native Free Talking V2 has its own component and session lifecycle.
 // V1 remains separately available until the teacher retires it.
-$('ftFreeTalkingV2Card').addEventListener('click',async()=>{
+const completedDialog=$('ftCompletedConversationDialog');
+let completedDialogReturnFocus=null;
+function closeCompletedDialog(){
+ if(!completedDialog)return;
+ completedDialog.hidden=true;
+ completedDialogReturnFocus?.focus({preventScroll:true});
+ completedDialogReturnFocus=null;
+}
+function openCompletedDialog(){
+ if(!completedDialog)return;
+ completedDialogReturnFocus=document.activeElement;
+ completedDialog.hidden=false;
+ $('ftCompletedReplay').focus({preventScroll:true});
+}
+$('ftCompletedReplay').addEventListener('click',()=>{
+ closeCompletedDialog();
+ void launchFreeTalkingV2();
+});
+$('ftCompletedChooseAnother').addEventListener('click',()=>{
+ closeCompletedDialog();
+ const strip=$('ftUnitStrip');
+ strip.scrollIntoView({behavior:'smooth',block:'center'});
+ const other=[...strip.querySelectorAll('button')].find(button=>!button.classList.contains('is-current'));
+ other?.focus({preventScroll:true});
+});
+completedDialog.addEventListener('click',event=>{
+ if(event.target===completedDialog)closeCompletedDialog();
+});
+completedDialog.addEventListener('keydown',event=>{
+ if(event.key==='Escape'){event.preventDefault();closeCompletedDialog()}
+ if(event.key==='Tab'){
+  const controls=[$('ftCompletedReplay'),$('ftCompletedChooseAnother')];
+  if(event.shiftKey&&document.activeElement===controls[0]){event.preventDefault();controls[1].focus()}
+  else if(!event.shiftKey&&document.activeElement===controls[1]){event.preventDefault();controls[0].focus()}
+ }
+});
+async function launchFreeTalkingV2(){
  const bookId=BOOK(),unitId=groups()[0]?.unit_id;
  if(!bookId||!unitId){showError('이 단원의 자유 대화를 사용할 수 없어요.');return}
  const card=$('ftFreeTalkingV2Card');
@@ -1327,6 +1363,10 @@ $('ftFreeTalkingV2Card').addEventListener('click',async()=>{
   showError('Free Talking: '+(error?.message||'Could not open the activity.'));
  }
  finally{card.disabled=false;if(launchLoader)launchLoader.hidden=true}
+}
+$('ftFreeTalkingV2Card').addEventListener('click',()=>{
+ if($('ftFreeTalkingV2Card').classList.contains('ft-golden-skill'))openCompletedDialog();
+ else void launchFreeTalkingV2();
 });
 
  // Separate Free Talking experience; no Speaking state machine is modified.
