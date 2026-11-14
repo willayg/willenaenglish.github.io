@@ -3,10 +3,46 @@
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
 import {createDiaryFlow} from './diary-flow.js?v=20261114-speech80-1';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
+import {installWillenaKeyboard,hideWillenaKeyboard} from '/students/shared/willena-keyboard.js?v=20261114-writing-genius1';
 import {createSentencePractice} from './sentence-practice.js?v=20261104-unit-tab-label1';
 const API_BASE='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const NAV='willenaWritingGeniusNav';
+
+/* Reuse the same English keyboard as the other Genius apps.
+   Mark dynamically rendered fields before the shared focus/pointer handlers run.
+   Korean clarification remains native so Hangul IMEs still work. */
+const WG_ENGLISH_FIELDS=[
+ '#wgTitle','#wgBody',
+ '#wgDiaryFlow .df-input:not(.df-clarify-input)',
+ '#wgDiaryFlow .df-textarea',
+ '#wgDiaryFlow .df-revision-input',
+ '#wgDiaryFlow textarea.answer[data-write]',
+ '#wgDiaryQuestionHost textarea.answer[data-write]',
+ '#spQuestionHost textarea.answer[data-write]'
+].join(',');
+function prepareWritingKeyboardField(target){
+ const field=target?.closest?.(WG_ENGLISH_FIELDS);
+ if(!field||!field.matches('input,textarea'))return;
+ field.setAttribute('data-willena-text-entry','writing');
+ field.setAttribute('data-input-language','en');
+}
+document.addEventListener('pointerdown',event=>prepareWritingKeyboardField(event.target),true);
+document.addEventListener('focusin',event=>prepareWritingKeyboardField(event.target),true);
+installWillenaKeyboard({
+ root:document,
+ submitSelector:'#wgDiaryFlow .df-confirm-action, #wgDiaryFlow .df-tele-type-area .wg-primary, #spCompareBtn',
+ onSubmit:(button,field)=>{
+  // Never send a confirm to a different writing activity.
+  if(field?.closest('#wgDiaryFlow')){
+   if(!button.closest('#wgDiaryFlow'))return;
+  }else if(field?.closest('#spQuestionHost')){
+   if(button.id!=='spCompareBtn')return;
+  }else return;
+  button.click();
+ }
+});
+
 function requestDeadline(promise,ms=15000){
  return new Promise((resolve,reject)=>{
   const timer=setTimeout(()=>reject(new Error('서버 응답 시간이 너무 길어요. 다시 시도해 주세요.')),ms);
@@ -220,6 +256,7 @@ function notice(message='',error=false){const node=$('wgNotice');node.textConten
 function saveState(message='',error=false){const node=$('wgSaveState');node.textContent=message;node.classList.toggle('is-error',error)}
 function navState(screen,id){return {[NAV]:true,screen,id:id||null,depth:screen==='editor'?1:0}}
 function show(name){
+ hideWillenaKeyboard();
  $('wgHome').hidden=name!=='home';$('wgEditor').hidden=name!=='editor';$('wgPractice').hidden=name!=='practice';
  // Reuse the SAME mounted Mission HAM on the Sentence Writing picker.
  // Moving its node preserves mission state and avoids another API subscription.
