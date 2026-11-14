@@ -728,6 +728,11 @@ function showActor(){
  state.actor=createHybridCharacterStage($('actorStage'),
   state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':
   state.character==='willy'?'willy':state.character==='dusk'?'dusk':'marin');
+ // Keep the original Speaking-style action in the same character stage.
+ // The stage factory replaces its children on every launch, so remount the
+ // persistent control after creating the shared animated portrait.
+ const speakButton=$('ftPushToSpeak');
+ if(speakButton)$('actorStage').append(speakButton);
  actorPhase('ready');
 }
 
