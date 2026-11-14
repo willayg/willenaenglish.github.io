@@ -574,7 +574,8 @@
       modalBody.innerHTML = `
         <div class="field">
           <p style="margin-bottom:12px;">${mt('authCodeHelper')}</p>
-          <input id="authCodeInput" class="field input" placeholder="${mt('authCodePlaceholder')}" style="width:100%;" inputmode="numeric" />
+          <input id="authCodeInput" class="field input" placeholder="${mt('authCodePlaceholder')}" style="width:100%;" inputmode="none" maxlength="4" autocomplete="off" readonly />
+          <div id="authCodeNumpad"></div>
         </div>
       `;
       modalActions.innerHTML = `
@@ -596,7 +597,24 @@
 
       const authInput = document.getElementById('authCodeInput');
       if (authInput) {
-        authInput.focus();
+        // Use the reusable Willena pad instead of the device's native numeric keyboard.
+        // Do not focus until after the shared pad is mounted: Android may otherwise open its IME.
+        void import('/students/shared/willena-numpad.js?v=20261115-1')
+          .then(({mountWillenaNumpad})=>{
+            if(!authInput.isConnected)return;
+            mountWillenaNumpad({
+              input:authInput,
+              container:document.getElementById('authCodeNumpad'),
+              maxLength:4,
+              onConfirm:()=>document.getElementById('verifyBtn')?.click()
+            });
+          })
+          .catch(error=>{
+            console.error('[Willena numpad] unavailable',error);
+            // Preserve the existing login flow if the new shared asset fails to load.
+            authInput.removeAttribute('readonly');
+            authInput.setAttribute('inputmode','numeric');
+          });
         const aHandler = (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('verifyBtn').click(); } };
         authInput.addEventListener('keydown', aHandler);
         const cleanupA = () => { try { authInput.removeEventListener('keydown', aHandler); } catch {} modalOverlay.removeEventListener('transitionend', cleanupA); };
