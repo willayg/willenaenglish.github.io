@@ -122,7 +122,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     const kind=entry.kind==='diary'?'일기':entry.kind==='topic'?'주제 글쓰기':'문장 쓰기';
     const date=entry.updated_at?new Date(entry.updated_at).toLocaleDateString('ko-KR'):'';
     item.append(el('small','',kind+' · '+date));
-    item.append(el('span','df-saved-excerpt',(entry.body||'').trim().replace(/\\s+/g,' ').slice(0,110)||'내용을 이어서 써 보세요.'));
+    item.append(el('span','df-saved-excerpt',(entry.body||'').trim().replace(/\s+/g,' ').slice(0,110)||'내용을 이어서 써 보세요.'));
     if(entry.id===current.id)item.append(el('span','df-saved-current','현재 작성 중'));
     item.addEventListener('click',()=>{
      savedDialog.close();
