@@ -40,7 +40,7 @@ async function mount(header){
   '/students/free-talking-genius/guide.css?v=20261107-guide-kids2',
   '/students/free-talking-hybrid-lab/shared-character-stage.css?v=20261113-restore-old-shared1'
  ])root.append(stylesheet(file));
- root.append(v1style,document.importNode(intro,true),document.importNode(demo,true));
+ root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-unified-menu1'),document.importNode(intro,true),document.importNode(demo,true));
  document.body.append(element);
  const state={element,root,header,context:null,active:false,reopen:null,shutdown:null,onExit:null,bodyOverflow:'',exit({notify=true}={}){
   if(!state.active)return;
@@ -75,7 +75,12 @@ export async function openV1NativeConversation({bookId,unitId,header,onExit}){
  workspace.onExit=onExit;
  workspace.bodyOverflow=document.body.style.overflow;
  // The persistent header lives OUTSIDE this component and remains mounted.
- const bottom=Math.ceil(header?.getBoundingClientRect().bottom||0);
+ // The textbook menu may be scrolled when V2 opens. Restore the original
+ // page's top position so its existing student header stays above V2.
+ window.scrollTo({top:0,behavior:'instant'});
+ await new Promise(resolve=>requestAnimationFrame(resolve));
+ const headerRect=header?.getBoundingClientRect();
+ const bottom=Math.ceil(Math.max(headerRect?.bottom||0,headerRect?.height||0));
  workspace.element.style.top=Math.max(0,bottom)+'px';
  workspace.element.hidden=false;
  document.body.style.overflow='hidden';
