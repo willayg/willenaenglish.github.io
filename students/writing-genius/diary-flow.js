@@ -33,6 +33,44 @@ function renderWritingDiff(host,expected,actual){
  host.append(makeRow('내가 쓴 문장 · 다른 부분',answerParts,'입력한 문장이 없어요.'));
  host.hidden=false;
 }
+
+function markEditableDifferences(input,expected){
+ if(!input||!('value' in input))return;
+ let wrapper=input.closest('.df-edit-highlight-wrap');
+ if(!wrapper){
+  wrapper=document.createElement('div');wrapper.className='df-edit-highlight-wrap';
+  input.parentNode.insertBefore(wrapper,input);wrapper.append(input);
+  const mirror=el('div','df-edit-highlight-mirror');mirror.setAttribute('aria-hidden','true');
+  wrapper.insertBefore(mirror,input);
+  input.addEventListener('scroll',()=>{mirror.scrollTop=input.scrollTop;mirror.scrollLeft=input.scrollLeft});
+  input.addEventListener('input',()=>paint());
+ }
+ const mirror=wrapper.querySelector('.df-edit-highlight-mirror');
+ // Retain the native textarea's selection, keyboard, cursor and accessibility.
+ const paint=()=>{
+  const actual=input.value;const a=[...String(expected||'')],b=[...actual];
+  const same=(x,y)=>String(x).toLowerCase().replace(/[’‘]/g,"'")===String(y).toLowerCase().replace(/[’‘]/g,"'");
+  const n=a.length,m=b.length;
+  if(n>300||m>300){mirror.textContent=actual;return}
+  const dp=Array.from({length:n+1},()=>new Uint16Array(m+1));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=same(a[i],b[j])?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);
+  mirror.replaceChildren();let i=0,j=0;
+  while(i<n||j<m){
+   if(i<n&&j<m&&same(a[i],b[j])){mirror.append(document.createTextNode(b[j]));i++;j++}
+   else if(i<n&&(j===m||dp[i+1][j]>=dp[i][j+1])){
+    const missing=el('span','df-edit-missing','');
+    missing.title='빠진 글자: '+a[i];mirror.append(missing);i++;
+   }else{
+    mirror.append(el('span','df-edit-wrong',b[j]));j++;
+   }
+  }
+  mirror.append(document.createTextNode('\u200b'));
+  mirror.scrollTop=input.scrollTop;mirror.scrollLeft=input.scrollLeft;
+ };
+ const style=getComputedStyle(input);
+ for(const prop of ['font','letterSpacing','lineHeight','padding','textAlign','whiteSpace','tabSize','wordSpacing'])mirror.style[prop]=style[prop];
+ wrapper.classList.add('is-diff-active');paint();input.focus();
+}
 const split=s=>(String(s||'').match(/[^.!?\n]+[.!?]+(?=\s|$)/g)||[]).map(x=>x.trim()).filter(x=>/[a-z]/i.test(x));
 // Speech transcripts write times differently from lesson text (11am vs 11:00 a.m.).
 // Canonicalize common clock readings before word-level edit-distance scoring.
@@ -607,7 +645,12 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    const answer=String(renderer.getResponse()||'');
    const matches=mode==='write'?typedComparable(answer)===typedComparable(p.target):norm(answer)===norm(p.target);
    if(!matches){
-    if(mode==='write'){renderWritingDiff(feedbackDiff,p.target,answer);status('표시된 부분을 고쳐 보세요.',true)}
+    if(mode==='write'){
+     const field=stage.querySelector('.df-question-host textarea.answer[data-write]');
+     if(field)markEditableDifferences(field,p.target);
+     else renderWritingDiff(feedbackDiff,p.target,answer);
+     status('입력한 문장에서 표시된 부분을 고쳐 보세요.',true);
+    }
     else status('문장을 다시 말해 보세요.',true);
     return;
    }
@@ -692,8 +735,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    if(sentenceDone)return;
    const typed=typingInput.value.trim();
    if(typedComparable(typed)!==typedComparable(target)){
-    renderWritingDiff(typingDiff,target,typed);
-    status('표시된 부분을 고쳐 보세요.',true);
+    markEditableDifferences(typingInput,target);
+    status('입력한 문장에서 표시된 부분을 고쳐 보세요.',true);
     return;
    }
    typedUsed=true;typingCheck.disabled=true;advance(typed);
