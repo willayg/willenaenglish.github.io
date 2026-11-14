@@ -46,9 +46,9 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
   <p id="tmMessage" role="status" aria-live="polite"></p>
   <div class="tm-layout">
    <section class="panel tm-panel"><div class="panel-head"><div><div class="panel-title">Teachers & admins</div><div class="panel-sub" id="tmCount">Loading…</div></div></div>
-   <div class="tm-toolbar"><input id="tmSearch" class="control" type="search" placeholder="Search teachers"><select id="tmFilter" class="control"><option value="all">All</option><option value="active">Active</option><option value="retired">Retired</option></select></div>
+   <div class="tm-tabs" role="tablist" aria-label="Teacher account status"><button type="button" class="tm-tab active" data-tm-tab="active" role="tab" aria-selected="true">Active <span id="tmActiveCount">0</span></button><button type="button" class="tm-tab" data-tm-tab="archive" role="tab" aria-selected="false">Archive <span id="tmArchiveCount">0</span></button></div><div class="tm-toolbar"><input id="tmSearch" class="control" type="search" placeholder="Search teachers"></div>
    <div id="tmList" class="tm-list"></div></section>
-   <section class="panel tm-panel"><div class="panel-head"><div class="panel-title">Add teacher</div></div>
+   <section class="panel tm-panel" id="tmAddPanel"><div class="panel-head"><div class="panel-title">Add teacher</div></div>
    <form id="tmCreateForm" class="tm-form"><label>Full name<input id="tmName" required maxlength="120" autocomplete="off"></label><label>Email<input id="tmEmail" type="email" required autocomplete="off"></label><label>Username (optional)<input id="tmUsername" maxlength="80" autocomplete="off"></label><label>Initial password<input id="tmPassword" type="password" required minlength="8" autocomplete="new-password"></label><small>A new teacher account is active immediately. For retirement, the profile and teaching history are preserved.</small><button id="tmCreate" type="submit" class="control admin-primary">+ Add teacher</button></form>
    </section>
   </div>
