@@ -721,6 +721,7 @@ function actorPhase(phase){
  if(indicator){indicator.hidden=false;indicator.dataset.mode=mode}
  if(label)label.textContent=mode.charAt(0).toUpperCase()+mode.slice(1);
  state.actor?.setPhase(phase);
+ updatePushToSpeak();
 }
 function showActor(){
  // Visual-only Free Talking component. Does not clone Speaking's recorder UI.
@@ -1157,6 +1158,47 @@ function sendRealtime(item){
  if(state.channel?.readyState!=='open')return false;
  state.channel.send(JSON.stringify(item));return true;
 }
+const pushToSpeakMode=()=>releaseMode&&state.hybrid;
+let pushMicStarting=false;
+function updatePushToSpeak(){
+ const button=$('ftPushToSpeak');
+ if(!button)return;
+ button.hidden=!pushToSpeakMode();
+ if(!pushToSpeakMode())return;
+ const recording=hybrid.recorder?.state==='recording';
+ const awaiting=['awaitingFirst','awaitingSecond'].includes(state.anchorPhase);
+ button.disabled=pushMicStarting||!state.active||state.paused||hybrid.transcribing||hybrid.responding||
+  (!recording&&(!awaiting||state.ttsPlaying||Boolean(state.stream?.active)));
+ button.setAttribute('aria-pressed',String(recording));
+ button.textContent=recording?'녹음 끝내기':pushMicStarting?'마이크 연결 중…':
+  hybrid.transcribing?'확인 중…':(!awaiting||state.ttsPlaying)?'듣는 중…':'눌러서 말하기';
+}
+async function beginPushToSpeak(){
+ if(!pushToSpeakMode()||!state.active||state.paused)return;
+ if(hybrid.recorder?.state==='recording'){
+  try{hybrid.recorder.stop()}catch(ex){error('Recording stop failed: '+String(ex))}
+  updatePushToSpeak();return;
+ }
+ if(pushMicStarting||hybrid.transcribing||hybrid.responding||state.stream?.active||
+  state.ttsPlaying||!['awaitingFirst','awaitingSecond'].includes(state.anchorPhase))return;
+ pushMicStarting=true;updatePushToSpeak();
+ const anchor=state.anchorToken;
+ try{
+  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  if(!state.active||state.paused||anchor!==state.anchorToken||
+    !['awaitingFirst','awaitingSecond'].includes(state.anchorPhase)){
+   stream.getTracks().forEach(track=>track.stop());return;
+  }
+  state.stream=stream;state.micReleased=false;
+  hybridStart(stream);monitorMicrophone(stream);
+  actorPhase('listening');message('Recording your answer…');
+ }catch(ex){
+  error('Microphone unavailable: '+String(ex?.message||ex));
+  message('Tap the speaking button to try again.');
+  state.stream?.getTracks().forEach(track=>track.stop());state.stream=null;
+ }finally{pushMicStarting=false;updatePushToSpeak()}
+}
+$('ftPushToSpeak')?.addEventListener('click',()=>void beginPushToSpeak());
 function setMicEnabled(enabled){
  const mic=state.stream?.getAudioTracks()[0];
  if(mic)mic.enabled=Boolean(enabled)&&!state.micUserMuted;
@@ -1181,6 +1223,7 @@ function stopHybridInput(){
  if(ctx)void ctx.close().catch(()=>{});
 }
 function releaseMicForPlayback(){
+ if(pushToSpeakMode()&&!state.stream){state.micReleased=true;return Promise.resolve()}
  if(!state.hybrid){setMicEnabled(false);return Promise.resolve()}
  return cycleMic(async()=>{
   stopHybridInput();
@@ -1194,6 +1237,8 @@ function releaseMicForPlayback(){
  });
 }
 function restoreMicAfterPlayback(){
+ // Never reopen a tap-to-speak microphone after character playback.
+ if(pushToSpeakMode())return Promise.resolve();
  if(!state.hybrid){if(state.active)setMicEnabled(true);return Promise.resolve()}
  return cycleMic(async()=>{
   if(!state.active||state.paused||!state.micReleased||state.reviewing)return;
