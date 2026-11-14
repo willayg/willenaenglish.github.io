@@ -1,7 +1,7 @@
 // Teacher-only AI Willy ElevenLabs v3 audition. No R2, voice configuration or student writes.
 const SUPA='https://fiieuiktlsivwfgyivai.supabase.co';
 const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const VOICES={original:'0yhUIig4twaXoIhuQoCQ',willi2:'GSGMGjgDtwaXe25hDMNI',dusk:'0SqKG8YoEv9xwrHlKCfF'};
+const VOICES={original:'0yhUIig4twaXoIhuQoCQ',willi2:'GSGMGjgDtwaXe25hDMNI',dusk:'OBZs1sGUHfHnTlpkyXwC'};
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const respond=(code,body)=>new Response(JSON.stringify(body),{status:code,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 async function isTeacher(request){
