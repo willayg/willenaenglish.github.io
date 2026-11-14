@@ -550,9 +550,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  function question(){
   const p=practice[index];if(!p){index=0;speakingTransition();return}
   screen('question',(index+1)+' / '+practice.length);
-  stage.append(el('p','df-target',p.target));
-   if(p.meaning)stage.append(el('p','df-target-korean',p.meaning));
-  const listen=el('button','wg-button df-listen');listen.append(el('img','df-headphones'));listen.querySelector('img').src='/shared/svgs/headphones.svg';listen.querySelector('img').alt='';listen.setAttribute('aria-label','듣기');listen.title='듣기';listen.type='button';listen.addEventListener('click',()=>void playTarget(p.target,listen));stage.append(listen);
+
   const modes=el('div','df-mode-buttons');
   const toggle=el('button','df-mode-toggle');
   toggle.type='button';
@@ -566,8 +564,14 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   toggle.classList.toggle('is-writing',mode==='write');
   toggle.addEventListener('click',()=>{mode=mode==='speaking'?'write':'speaking';question()});
   modes.append(toggle);stage.append(modes);
-  stage.append(el('p','df-task-instruction',mode==='speaking'?'🎤 위의 영어 문장을 보고 마이크를 눌러 소리 내어 읽어 보세요.':'✏️ 위의 영어 문장을 보고 아래 칸에 똑같이 입력하세요.'));
+  stage.append(el('p','df-task-instruction',mode==='speaking'?'아래 영어 문장을 보고 마이크를 눌러 소리 내어 읽으세요.':'아래 영어 문장을 보고 바로 밑에 똑같이 입력하세요.'));
+  stage.append(el('p','df-target',p.target));
+  if(p.meaning)stage.append(el('p','df-target-korean',p.meaning));
   rendererHost({form:mode==='speaking'?'speaking':'write',prompt:'',context:{},input:{language:'en'},answer:[p.target]});
+  const listen=el('button','wg-button df-listen');
+  listen.append(el('img','df-headphones'));listen.querySelector('img').src='/shared/svgs/headphones.svg';listen.querySelector('img').alt='';
+  listen.setAttribute('aria-label','듣기');listen.title='듣기';listen.type='button';
+  listen.addEventListener('click',()=>void playTarget(p.target,listen));stage.append(listen);
   button('확인',()=>{
    if(norm(renderer.getResponse())!==norm(p.target)){status('다시 시도해 주세요.',true);return}
    index++;mode='speaking';question();
@@ -617,16 +621,16 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   screen('speech','Speak · '+(index+1)+' / '+finalLines.length);
   const flow=el('div','df-teleprompter');
   flow.setAttribute('aria-label','Speaking teleprompter');
-  if(index>0)flow.append(el('p','df-tele-line df-tele-done',finalLines[index-1]));
-  for(let offset=0;offset<5&&index+offset<finalLines.length;offset++){
-   const line=el('p','df-tele-line '+(offset===0?'df-tele-active':'df-tele-next df-tele-next-'+offset),finalLines[index+offset]);
-   flow.append(line);
+  flow.append(el('p','df-tele-line df-tele-active',finalLines[index]));
+  const upcoming=el('div','df-tele-upcoming');
+  for(let offset=1;offset<5&&index+offset<finalLines.length;offset++){
+   upcoming.append(el('p','df-tele-line df-tele-next df-tele-next-'+offset,finalLines[index+offset]));
   }
   const target=finalLines[index];
   const switcher=el('div','df-tele-mode-switch');
   switcher.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:12px 0';
-  const speakChoice=el('button','wg-button wg-secondary','🎤 말하기');
-  const typeChoice=el('button','wg-button wg-secondary','⌨️ 직접 입력');
+  const speakChoice=el('button','wg-button wg-secondary','말하기');
+  const typeChoice=el('button','wg-button wg-secondary','쓰기');
   for(const choice of [speakChoice,typeChoice])choice.type='button';
   switcher.append(speakChoice,typeChoice);stage.append(switcher);
   const modeInstruction=el('p','df-task-instruction');stage.append(modeInstruction,flow);
@@ -660,7 +664,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   typingInput.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();typingCheck.click()}});
   const setMode=useTyping=>{
    typedMode=useTyping;
-   modeInstruction.textContent=useTyping?'✏️ 분홍색 영어 문장을 보고 아래 칸에 똑같이 입력하세요.':'🎤 분홍색 영어 문장을 보고 마이크를 눌러 소리 내어 읽어 보세요.';
+   modeInstruction.textContent=useTyping?'아래 분홍색 영어 문장을 보고 바로 밑에 똑같이 입력하세요.':'아래 분홍색 영어 문장을 보고 마이크를 눌러 소리 내어 읽으세요.';
    typingArea.style.display=useTyping?'flex':'none';
    speakChoice.classList.toggle('wg-primary',!useTyping);
    typeChoice.classList.toggle('wg-primary',useTyping);
@@ -675,6 +679,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   rendererHost({form:'speaking',prompt:'',context:{},input:{language:'en'},answer:[target]});
   const renderedControls=stage.querySelector('.df-question-host');
   if(renderedControls)speechControls.append(renderedControls);
+  stage.append(upcoming);
   setMode(typedMode);
   const mic=stage.querySelector('[data-speaking-mic]');
   const speechStatus=stage.querySelector('[data-speaking-status]');
