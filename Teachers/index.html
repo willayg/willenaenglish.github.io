@@ -89,6 +89,20 @@
 @media(max-width:650px){#sttLab{padding:14px}.stt-lab-results{grid-template-columns:1fr}.stt-lab-head{flex-wrap:wrap}.stt-lab-clock{margin-left:0}.stt-lab-foot{align-items:stretch;flex-direction:column}.stt-lab-foot button{align-self:flex-start}}
 </style>
 <style id="staffCalendarNotificationStyle">.wc-notify-choice{display:flex;align-items:flex-start;gap:12px;margin:14px 0 4px;padding:13px;border:1px solid #d4e7eb;border-radius:11px;background:#f3fbfc;cursor:pointer}.wc-notify-choice input{flex:none;margin-top:3px;accent-color:#1ba9ba;width:18px;height:18px}.wc-notify-choice span{display:flex;flex-direction:column;gap:3px}.wc-notify-choice strong{font-size:13px}.wc-notify-choice small{font-size:11px;color:#657b86;line-height:1.5}</style><style id="staffCalendarSidebarLink">.rail .staff-calendar-link{flex-shrink:0;text-decoration:none;min-height:48px;border:1px solid #cce9ec;background:#fff}.rail .staff-calendar-link:hover{background:#e9f9fb}.rail .staff-calendar-link .nav-icon{color:#268c99}.layout.sidebar-expanded .rail .staff-calendar-link{justify-content:flex-start;padding:10px 11px}@media(max-width:700px){.mobile-tabs .staff-calendar-mobile{color:#fff;text-decoration:none;font-weight:600}.mobile-tabs .staff-calendar-mobile b{font-size:20px;color:#8bdce5}}</style>
+<style>
+/* Embed the ONE Teachers calendar in Admin V2 without duplicating its implementation. */
+html.willena-calendar-embed,html.willena-calendar-embed body{margin:0;min-height:100%;overflow:auto}
+html.willena-calendar-embed #teacher-header,
+html.willena-calendar-embed .rail,
+html.willena-calendar-embed .mobile-tabs,
+html.willena-calendar-embed .ft-footer-version,
+html.willena-calendar-embed #liveNowLaunch{display:none!important}
+html.willena-calendar-embed .layout{display:block!important;min-height:100vh!important}
+html.willena-calendar-embed .workspace{margin:0!important;padding:12px!important;width:100%!important;max-width:none!important;min-width:0!important}
+html.willena-calendar-embed .view:not(#view-staff-calendar){display:none!important}
+html.willena-calendar-embed #view-staff-calendar.active{display:block!important}
+</style>
+<script>if(new URLSearchParams(location.search).get('embed')==='calendar')document.documentElement.classList.add('willena-calendar-embed');</script>
 <link rel="stylesheet" href="./staff-calendar-native.css?v=20261110-native1">
 <script src="./staff-calendar-native.js?v=20261112-reminders1" defer></script>
 </head>
@@ -1794,7 +1808,7 @@ function openStudentsSubtab(tab){
 document.querySelectorAll('[data-students-tab]').forEach(btn=>btn.addEventListener('click',()=>openStudentsSubtab(btn.dataset.studentsTab)));
 try{openStudentsSubtab(sessionStorage.getItem(teacherStudentsTabKey)||'tracking')}catch{openStudentsSubtab('tracking')}
 const teacherViewKey='willena.teachers.activeView.v1';
-function switchView(v){if(v==='free-talking-genius'&&window.FreeTalkingGeniusTeacher?.openView){window.FreeTalkingGeniusTeacher.openView();return}try{localStorage.setItem(teacherViewKey,v)}catch{};if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='utilities'){window.WillenaUtilitiesTabs?.activate?.();}if(v==='assignments'){window.UniversalAssignments?.activate?.();window.UniversalAssignments?.refresh?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='staff-calendar')window.WillenaStaffCalendar?.open?.();if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='class-leaders')loadClassLeaders();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
+function switchView(v){if(v==='free-talking-genius'&&window.FreeTalkingGeniusTeacher?.openView){window.FreeTalkingGeniusTeacher.openView();return}if(!document.documentElement.classList.contains('willena-calendar-embed'))try{localStorage.setItem(teacherViewKey,v)}catch{};if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='utilities'){window.WillenaUtilitiesTabs?.activate?.();}if(v==='assignments'){window.UniversalAssignments?.activate?.();window.UniversalAssignments?.refresh?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='staff-calendar')window.WillenaStaffCalendar?.open?.();if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='class-leaders')loadClassLeaders();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
 $('#rosterAssignmentsClose').onclick=rsCloseAssignments;
 $('#rosterAssignmentsOverlay').onclick=e=>{if(e.target.id==='rosterAssignmentsOverlay')rsCloseAssignments()};
 document.querySelectorAll('[data-rs-assign-tab]').forEach(b=>b.onclick=()=>{if(window.rsAssignmentStudent)rsAssignmentsPanelRender(window.rsAssignmentStudent,b.dataset.rsAssignTab)});
