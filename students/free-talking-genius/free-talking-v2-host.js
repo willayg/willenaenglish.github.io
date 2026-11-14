@@ -26,7 +26,7 @@ async function mount(header){
  const v1style=document.createElement('style');
  // Reuse the actual V1 presentation. ShadowRoot prevents those historical
  // !important overrides from affecting Speaking, student header, or textbooks.
- v1style.textContent=styles.map(s=>s.textContent).join('\n')+'\n'+
+ v1style.textContent=styles.map(s=>s.textContent).join('\n').replace(/body\.ft-release\b/g,':host')+'\n'+
  '#demo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;}'+
  '#demo .wrap{height:100%!important;max-height:100%!important;}'+
  '#demo .control-dock{position:absolute!important;}'+
