@@ -156,7 +156,7 @@ export function createFreeTalkingVoice({host,getToken}){
    (Number(a.unit_number)===preferredUnit?0:1)-(Number(b.unit_number)===preferredUnit?0:1)
    ||Number(a.unit_number)-Number(b.unit_number)||Number(a.question_number)-Number(b.question_number));
   const total=orderedQuestions.length;
-  const complete={'marin':0,'bunny-v3':0,pigfish:0,willy:0};
+  const complete={'marin':0,'bunny-v3':0,pigfish:0,willy:0,prince:0};
   const current=()=>epoch===preloadEpoch&&!destroyed;
   // Short sleeps make cancellations responsive: a unit switch never spawns
   // another concurrent batch of R2 downloads or paid TTS requests.
