@@ -2,7 +2,7 @@
 // The existing Free Talking Genius endpoints and files are untouched.
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co';
 const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const VOICES={willi:'marin',willy:'GSGMGjgDtwaXe25hDMNI',bunny:'M7zl2TS7ORAIGUejDfoy',pigfish:'W7UbuMY4ypluqgZS2UzT',dusk:'0SqKG8YoEv9xwrHlKCfF'};
+const VOICES={willi:'marin',willy:'GSGMGjgDtwaXe25hDMNI',bunny:'M7zl2TS7ORAIGUejDfoy',pigfish:'W7UbuMY4ypluqgZS2UzT',dusk:'OBZs1sGUHfHnTlpkyXwC'};
 const reply=(status,message)=>new Response(JSON.stringify({error:message}),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
 export async function onRequestPost({request,env}){
  const origin=request.headers.get('Origin');
