@@ -99,6 +99,40 @@ export async function onRequestPost({request,env}){
    return json(200,{success:true,better,translation_ko});
   }
 
+
+  // Final polished draft is approved by the student after line-by-line AI review.
+  // Preserve the source version in feedback, then sync the reviewed body with the entry.
+  if(action==='finalize'){
+   const old=await db('writing_genius_diary_reviews?select=original_body,feedback&entry_id=eq.'+id+'&limit=1',auth.token);
+   if(!old.ok||!old.data?.[0]||old.data[0].original_body!==entry.body||old.data[0].feedback?.review_version!==2)
+    return json(409,{error:'먼저 AI 문장 검토를 완료해 주세요.'});
+   const polished=String(input.final_body||'').trim();
+   const count=sentences(polished).length;
+   if(polished.length>12000||count<(entry.kind==='topic'?8:6)||count>30)
+    return json(422,{error:'완성된 글은 '+(entry.kind==='topic'?'8':'6')+'~30문장이어야 해요.'});
+   if(polished===entry.body)return json(200,{success:true,body:polished});
+   const nextFeedback={...old.data[0].feedback,finalized_from_body:old.data[0].feedback.finalized_from_body||entry.body,finalized_at:new Date().toISOString()};
+   const savedReview=await db('writing_genius_diary_reviews?entry_id=eq.'+id,auth.token,'PATCH',{original_body:polished,feedback:nextFeedback,spoken_at:null,spoken_transcript:null,typed_at:null});
+   if(!savedReview.ok)return json(503,{error:'최종 글을 저장하지 못했어요.'});
+   const savedEntry=await db('writing_genius_entries?id=eq.'+id,auth.token,'PATCH',{body:polished});
+   if(!savedEntry.ok){
+    await db('writing_genius_diary_reviews?entry_id=eq.'+id,auth.token,'PATCH',{original_body:entry.body,feedback:old.data[0].feedback});
+    return json(503,{error:'최종 글을 저장하지 못했어요.'});
+   }
+   return json(200,{success:true,body:polished});
+  }
+  if(action==='passage_typing'){
+   const review=await db('writing_genius_diary_reviews?select=original_body,feedback&entry_id=eq.'+id+'&limit=1',auth.token);
+   if(!review.ok||!review.data?.[0]||review.data[0].original_body!==entry.body||review.data[0].feedback?.review_version!==2)
+    return json(409,{error:'먼저 AI 검토와 최종 글 확인을 완료해 주세요.'});
+   const canonical=t=>String(t||'').toLowerCase().replace(/[’‘]/g,"'").replace(/\s+/g,' ').trim();
+   const typed=String(input.typed_passage||'').trim();
+   if(typed.length>15000||canonical(typed)!==canonical(entry.body))
+    return json(422,{error:'최종 글과 입력한 글이 달라요. 다시 확인해 주세요.'});
+   const done=await db('writing_genius_diary_reviews?entry_id=eq.'+id,auth.token,'PATCH',{typed_at:new Date().toISOString()});
+   if(!done.ok)return json(503,{error:'쓰기 연습 기록을 저장하지 못했어요.'});
+   return json(200,{success:true});
+  }
   if(action==='typing'){
    const review=await db('writing_genius_diary_reviews?select=original_body,feedback&entry_id=eq.'+id+'&limit=1',auth.token);
    if(!review.ok||!review.data?.[0]||review.data[0].original_body!==entry.body)
