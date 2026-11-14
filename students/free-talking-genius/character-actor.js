@@ -7,7 +7,7 @@ const PORTRAITS={...ART};
 /* Duplicate SVG gradient IDs resolve against the hidden selection portrait on
    some Android browsers, leaving Pigfish's in-game body transparent.
    Scope references per instance; artwork, colours and animations are unchanged. */
-function scopedCharacterArt(markup,suffix){
+export function scopedCharacterArt(markup,suffix){
  // The menu portrait and the talking actor both mount the exact same SVG.
  // Scope gradient IDs per instance so Android resolves fills against the
  // visible SVG rather than the hidden character-selection artwork.
