@@ -175,9 +175,9 @@ const topicWritingIdeas=[
 const extraTopicIdeas=[{"title":"The Robot in My Backpack","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Secret Under the Playground","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"My Teacher Is an Alien","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"A Message from the Moon","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Day My Shadow Ran Away","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Library That Moved","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"A Dragon at the Bus Stop","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Tiny City in My Garden","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Last Cookie on Earth","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"A Map That Changes","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Invisible Bicycle","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Midnight School Bell","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Cat Who Could Talk","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"A Door Behind the Fridge","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Island of Lost Toys","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"A Cloud in My Bedroom","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Great Pillow Escape","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Time-Traveling Lunchbox","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"My Shoes Took Me Somewhere","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Snowman in Summer","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Day Gravity Stopped","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"A Friendly Ghost in Class","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Mystery of the Blue Key","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Forest That Whispered","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"An Unexpected Superpower","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Train to Tomorrow","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Monster Who Hated Scary Things","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Vanishing Classroom","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"The Secret of the Old Clock","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"When All the Phones Disappeared","guide":"Fiction · Introduce the characters, tell what happened, and finish the story."},{"title":"My Funniest School Day","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"A Time I Was Brave","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"The Best Surprise Ever","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"A Day I Would Repeat","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"A Mistake That Taught Me Something","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"My Perfect Saturday","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"A Time I Helped Someone","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"My Favorite Family Tradition","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"A Food I Will Never Forget","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"My First Big Challenge","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"The Best Gift I Ever Got","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"A Day Without My Phone","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"My Most Embarrassing Moment","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"A Friend Who Helped Me","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"An Adventure with My Family","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"A Time I Felt Proud","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"The Happiest Day This Year","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"Something I Want to Learn","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"My Dream Bedroom","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"A Place I Want to Visit","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"My Favorite Childhood Memory","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"A Difficult Choice I Made","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"An Animal I Will Always Remember","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"One Thing That Makes Me Laugh","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"A Rainy Day Adventure","guide":"Personal · Say what happened, describe details, and explain how you felt."},{"title":"Should Schools Have More Breaks?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Is Homework Helpful?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should Children Choose Their Bedtime?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Are Video Games Good for Kids?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should Every Class Have a Pet?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Is Summer Better Than Winter?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should Lunch Be Longer?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Are Books Better Than Movies?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should Students Wear Uniforms?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Is It Better to Live by the Sea?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should Schools Have Gardens?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Is Learning Music Important?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should Children Do Chores?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Is Teamwork Better Than Working Alone?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should We Have a Four-Day School Week?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should Everyone Learn to Cook?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Are Zoos Good for Animals?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should Robots Help Teachers?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Is Being Kind More Important Than Winning?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should Students Get More Art Classes?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should Phones Be Allowed at School?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Do Pets Make People Happier?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should We Save More Water?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Is Traveling Better Than Staying Home?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"Should Everyone Plant a Tree?","guide":"Opinion · Say what you think, explain why, and finish with your opinion."},{"title":"How to Care for a Puppy","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"Why Bees Matter","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"How to Make a New Friend","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"Why We Need Sleep","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"How to Stay Safe on a Bike","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"Why the Ocean Is Important","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"How to Plan a Picnic","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"What Makes a Good Team","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"How to Reduce Plastic Waste","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"Why People Learn Languages","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"How Plants Grow","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"How to Prepare for a School Trip","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"Why Exercise Helps Our Mood","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"What Makes a Healthy Lunch","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"How to Make a Paper Airplane","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"Why We Should Recycle","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"How to Welcome a New Student","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"What Makes a Good Leader","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"How to Save Money for Something Special","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"Why Kind Words Matter","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"How to Make a Rainy Day Fun","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"Why Animals Need Habitats","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"How to Organize Your Desk","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"What Makes a Great Story","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"Why We Should Protect Forests","guide":"Explanation · Introduce the idea, give details and examples, and finish clearly."},{"title":"If I Could Fly for One Day","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If Animals Ran Our School","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Had a Magic Pencil","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Lived Underwater","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If My House Could Walk","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Were Principal for a Day","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Found a Dinosaur Egg","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Could Shrink to Ant Size","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Could Talk to Trees","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If My Toys Came Alive","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Could Build a Theme Park","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Invented a New Holiday","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Could Visit the Future","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Found a Treasure Chest","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Could Change One School Rule","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Had a Robot Friend","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Could Make a New Planet","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Lived in a Castle","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Were Invisible for One Hour","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Could Swap Places with a Bird","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Opened My Own Restaurant","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Could Stop Time","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Discovered a New Animal","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Could Send a Letter to Space","guide":"Imagination · Set the scene, describe your idea, and end it clearly."},{"title":"If I Woke Up as a Giant","guide":"Imagination · Set the scene, describe your idea, and end it clearly."}];
 const allTopicIdeas=[...topicWritingIdeas,...extraTopicIdeas.map(item=>({...item,example:''}))];
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
-export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedback,claimBonus,onExit,listDrafts,loadDraft,typing}){
+export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedback,claimBonus,onExit,listDrafts,loadDraft,typing,finalizeDraft}){
  const root=$('wgDiaryFlow'),stage=$('dfStage'),actions=$('dfActions'),message=$('dfMessage'),progress=$('dfProgress');
- let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],typedIndexes=new Set(),typedUsed=false,typedMode=false,reviewSkipped=false,speechSkipped=false,busy=false,autosaveTimer=null,transitionTimer=null,choices={},captureDraft=null;
+ let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],typedIndexes=new Set(),typedUsed=false,typedMode=false,reviewSkipped=false,speechSkipped=false,busy=false,autosaveTimer=null,transitionTimer=null,choices={},customLines={},selectedExpressions={},expressionEdits={},finalDraftText='',captureDraft=null;
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
  function status(text='',error=false){message.textContent=text;message.classList.toggle('is-error',error)}
  function screen(name,label){clearTimeout(transitionTimer);captureDraft=null;step=name;stage.replaceChildren();actions.replaceChildren();if(name==='topic')button('저장한 글',()=>void openSavedDrafts()).classList.add('df-saved-writings');status();progress.textContent=label;root.hidden=false}
@@ -362,17 +362,26 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    stage.append(panel);
   }).catch(()=>{});
  }
+
  function choiceKey(){return 'willena-diary-choices:'+current.id+':'+current.body.length+':'+current.body.slice(0,32)}
- function saveChoices(){try{localStorage.setItem(choiceKey(),JSON.stringify(choices))}catch{}}
- function loadChoices(){try{const stored=JSON.parse(localStorage.getItem(choiceKey())||'{}');choices=stored&&typeof stored==='object'&&!Array.isArray(stored)?stored:{}}catch{choices={}}}
+ function saveChoices(){try{localStorage.setItem(choiceKey(),JSON.stringify({choices,customLines,selectedExpressions,expressionEdits}))}catch{}}
+ function loadChoices(){
+  try{
+   const stored=JSON.parse(localStorage.getItem(choiceKey())||'{}');
+   const newer=stored&&stored.choices&&typeof stored.choices==='object';
+   choices=newer?stored.choices:(stored&&typeof stored==='object'?stored:{});
+   customLines=newer&&stored.customLines||{};
+   selectedExpressions=newer&&stored.selectedExpressions||{};
+   expressionEdits=newer&&stored.expressionEdits||{};
+  }catch{choices={};customLines={};selectedExpressions={};expressionEdits={}}
+ }
  function selectedText(change,i){
   const choice=choices[i]||'first';
+  if(choice==='custom'&&String(customLines[i]||'').trim())return customLines[i].trim();
   return choice==='original'?change.original:choice==='last'&&change.clarified_better?change.clarified_better:change.better;
  }
  function construct(){
   const corrections=(feedback?.improvements||[]).filter(x=>x.original&&x.better);
-  const expressions=(feedback?.expressions||[]).filter(x=>x.english);
-  practice=[...corrections.map((x,i)=>({target:selectedText(x,i),meaning:(choices[i]==='last'?x.clarified_translation_ko:x.translation_ko)||'',kind:'Correction',original:x.original})),...expressions.map(x=>({target:x.english,meaning:x.meaning_ko||'',kind:'New Expression'}))];
   const original=split(current.body);
   finalLines=original.map(line=>{
    for(let i=0;i<corrections.length;i++){
@@ -380,6 +389,9 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     if(norm(line)===norm(x.original)||line.toLowerCase().includes(String(x.original).trim().toLowerCase()))return selectedText(x,i);
    }
    return line;
+  });
+  (feedback?.expressions||[]).forEach((x,i)=>{
+   if(selectedExpressions[i]&&String(expressionEdits[i]||x.english||'').trim())finalLines.push(String(expressionEdits[i]||x.english).trim());
   });
  }
  function correctionType(change){
@@ -516,103 +528,139 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     finally{busy=false}
   },true);
  }
- function summary(){
-  construct();screen('review','3 · Review');
-  if(current.kind==='topic'&&feedback?.on_topic===false){
-   const warning=el('aside','df-topic-structure-tip df-offtopic-warning');
-   warning.append(el('strong','','주제 확인 · Topic Check'),el('p','','선택한 주제와 글의 내용이 조금 다른 것 같아요. 계속 쓸 수 있어요! 다만 마지막 평가에서 ‘주제에 맞게 글을 썼어요’의 별 2개와 5점은 받지 못할 수 있어요.'));
-   stage.append(warning);
-  }
-  if(feedback?.praise_ko)stage.append(el('p','df-review-praise',feedback.praise_ko));
-  if(current.kind==='topic'&&feedback?.tip_ko){const tip=el('aside','df-topic-structure-tip');tip.append(el('strong','','Beginning · Middle · Ending'),el('p','',feedback.tip_ko));stage.append(tip)}
-  const improvements=Array.isArray(feedback?.improvements)?feedback.improvements:[];
-  const expressions=Array.isArray(feedback?.expressions)?feedback.expressions:[];
-  const heading=el('div','df-review-top');
-  heading.append(el('h3','','Sentence Review'),el('span','df-review-progress'));
-  stage.append(heading);
-  const progressLabel=heading.querySelector('.df-review-progress');
-  const refreshProgress=()=>{const n=improvements.filter((_,i)=>choices[i]).length;progressLabel.textContent=n+' / '+improvements.length+' reviewed'};
-  if(!improvements.length)stage.append(el('p','df-muted','수정할 문장이 없어요.'));
-  improvements.forEach((change,i)=>{
-   const card=el('article','df-review-item df-review-compact');
-   const header=el('div','df-review-card-head');
-   header.append(el('span','df-review-number',(i+1)+' / '+improvements.length),el('span','df-review-kind',correctionType(change)));
-   card.append(header);
-   if(correctionType(change)!=='Punctuation')card.append(el('p','df-review-original',change.original||''));
-   const suggestion=el('p','df-review-better');changedText(change.original,change.better,suggestion);
-   if(correctionType(change)==='Punctuation')suggestion.append(el('small','df-inline-note',change.better.includes(',')&&!change.original.includes(',')?' · comma':' · punctuation'));
-   card.append(suggestion);
-   if(change.translation_ko)card.append(el('p','df-review-korean',change.translation_ko));
-   if(change.why_ko&&correctionType(change)!=='Punctuation')card.append(el('p','df-review-explanation',change.why_ko));
-   const row=el('div','df-choice-row');
-   const options=[['original','Original'],['first','AI correction'],['last','Revised']];
-   const controls=[];
-   const refresh=()=>{controls.forEach(([key,btn])=>{btn.classList.toggle('is-chosen',(choices[i]||'first')===key);btn.setAttribute('aria-pressed',String((choices[i]||'first')===key))});refreshProgress()};
-   for(const [key,label] of options){
-    if(key==='last'&&!change.clarified_better)continue;
-    const btn=el('button','df-choice-button',label);btn.type='button';
-    btn.addEventListener('click',()=>{choices[i]=key;saveChoices();refresh();construct()});
-    controls.push([key,btn]);row.append(btn);
-   }
-   card.append(row);
-   if(change.clarified_better){
-    const revised=el('p','df-review-revised',change.clarified_better);
-    card.append(revised);
-   }else{
-    const changeBtn=el('button','df-change-button','Change · 뜻 설명하기');changeBtn.type='button';card.append(changeBtn);
-    changeBtn.addEventListener('click',()=>{
-     if(card.querySelector('.df-clarify-box'))return;
-     const box=el('div','df-clarify-box');
-     const input=el('textarea','df-clarify-input');input.placeholder='What did you mean? 영어 또는 한국어';input.maxLength=600;input.setAttribute('aria-label','Clarify your meaning in Korean or English');
-     const send=el('button','wg-button wg-primary','다시 제안받기');send.type='button';
-     box.append(input,send);card.append(box);input.focus();
-     send.addEventListener('click',async()=>{
-      if(input.value.trim().length<2){status('뜻을 설명해 주세요.',true);return}
-      send.disabled=true;send.textContent='확인 중…';
-      try{
-       const result=await clarify(current,i,input.value.trim());
-       change.clarified_better=result.better;change.clarified_translation_ko=result.translation_ko||'';
-       choices[i]='last';saveChoices();construct();
-       // Refresh cards without losing the student's review decisions.
-       const top=window.scrollY;summary();window.scrollTo({top});
-      }catch(e){status(e.message||'다시 시도해 주세요.',true);send.disabled=false;send.textContent='다시 제안받기'}
-     });
-    });
-   }
-   stage.append(card);refresh();
-  });
-  if(expressions.length){
-   const section=el('section','df-review-group');
-   section.append(el('h3','df-review-heading','New Expressions'));
-   expressions.forEach(x=>{
-    const line=el('div','df-expression-line');
-    line.append(el('strong','',x.english||''),el('span','',x.meaning_ko||''));
-    if(current.kind==='diary'){
-     const add=el('button','df-revision-starter','일기에 추가하고 다시 확인');
-     add.type='button';
-     add.onclick=async()=>{
-      const sentence=String(x.english||'').trim();
-      if(!sentence||busy)return;
-      if(split(current.body).length>=30){status('최대 30문장까지 쓸 수 있어요.',true);return}
-      busy=true;add.disabled=true;
-      const before=current.body;
-      try{
-       current.body=before.trim()+(before.trim()?' ':'')+sentence;
-       await persist();
-       reviewLoading();feedback=await review(current);choices={};saveChoices();summary();
-      }catch(e){current.body=before;summary();status(e.message||'다시 확인해 주세요.',true)}
-      finally{busy=false}
-     };
-     line.append(add);
-    }
-    section.append(line)
+
+ function summary(){reviewSentence(0)}
+ function reviewSentence(sentenceIndex){
+  construct();
+  const originals=split(current.body);
+  if(sentenceIndex>=originals.length){expressionPage();return}
+  screen('review','3 · Review · '+(sentenceIndex+1)+' / '+originals.length);
+  const line=originals[sentenceIndex];
+  const corrections=(feedback?.improvements||[]).filter(x=>x.original&&x.better);
+  const correctionIndex=corrections.findIndex(x=>norm(x.original)===norm(line)||line.toLowerCase().includes(String(x.original).trim().toLowerCase()));
+  const change=correctionIndex>=0?corrections[correctionIndex]:null;
+  stage.append(el('h2','df-heading','문장 검토'));
+  stage.append(el('p','df-muted','내 문장과 수정된 문장을 비교한 다음 선택하세요.'));
+  const originalCard=el('section','df-review-item');
+  originalCard.append(el('strong','df-review-label','내가 쓴 문장'),el('p','df-review-original',line));
+  stage.append(originalCard);
+  const revised=el('section','df-review-item');
+  revised.append(el('strong','df-review-label',change?'AI Willi 수정 문장':'수정할 부분이 없어요'));
+  const better=el('p','df-review-better');
+  if(change)changedText(line,selectedText(change,correctionIndex),better);
+  else better.textContent=line;
+  revised.append(better);
+  if(change?.translation_ko)revised.append(el('p','df-review-korean',change.translation_ko));
+  if(change?.why_ko)revised.append(el('p','df-review-explanation',change.why_ko));
+  stage.append(revised);
+  const next=()=>reviewSentence(sentenceIndex+1);
+  if(sentenceIndex>0)button('이전 문장',()=>reviewSentence(sentenceIndex-1)).classList.add('df-skip-action');
+  else button('이전',write).classList.add('df-skip-action');
+  if(!change){button('다음 문장',next,true).classList.add('df-confirm-action');return}
+  const controls=el('div','df-review-decision-buttons');stage.append(controls);
+  const option=(label,fn)=>{
+   const b=el('button','wg-button wg-secondary',label);b.type='button';b.addEventListener('click',fn);controls.append(b);return b;
+  };
+  option('AI 수정 승인',()=>{choices[correctionIndex]='first';saveChoices();next()});
+  option('원래 문장 유지',()=>{choices[correctionIndex]='original';saveChoices();next()});
+  const rewrite=option('직접 수정',()=>{
+   if(revised.querySelector('.df-review-custom'))return;
+   const group=el('div','df-review-custom');
+   const input=el('textarea','df-revision-input');
+   input.dataset.willenaTextEntry='writing';input.dataset.inputLanguage='en';
+   input.value=customLines[correctionIndex]||selectedText(change,correctionIndex);
+   const save=el('button','wg-button wg-primary','수정한 문장 사용');
+   save.type='button';
+   save.addEventListener('click',()=>{
+    const value=input.value.trim();
+    if(!value||!/[a-z]/i.test(value)){status('영어 문장을 입력하세요.',true);return}
+    customLines[correctionIndex]=value;choices[correctionIndex]='custom';saveChoices();next();
    });
-   stage.append(section);
+   group.append(input,save);revised.append(group);input.focus();
+  });
+  if(change.clarified_better)option('다시 제안받은 문장',()=>{choices[correctionIndex]='last';saveChoices();next()});
+  else{
+   option('뜻 설명하기',()=>{
+    if(revised.querySelector('.df-clarify-box'))return;
+    const box=el('div','df-clarify-box');
+    const input=el('textarea','df-clarify-input');input.placeholder='무슨 뜻인지 영어 또는 한국어로 설명하세요.';
+    const send=el('button','wg-button wg-secondary','다시 제안받기');send.type='button';
+    send.onclick=async()=>{
+     if(input.value.trim().length<2){status('뜻을 설명해 주세요.',true);return}
+     send.disabled=true;
+     try{
+      const result=await clarify(current,correctionIndex,input.value.trim());
+      change.clarified_better=result.better;change.clarified_translation_ko=result.translation_ko||'';
+      choices[correctionIndex]='last';saveChoices();reviewSentence(sentenceIndex);
+     }catch(e){send.disabled=false;status(e.message||'다시 확인해 주세요.',true)}
+    };
+    box.append(input,send);revised.append(box);input.focus();
+   });
   }
-  refreshProgress();
-  button('이전',write);
-  if(current.kind==='topic'&&Number(feedback?.review_round||1)<2)button('Draft 2 · 글 고치기',secondDraft,true);
-  else button('Finish Review · 연습 시작',()=>{construct();index=0;mode='speaking';if(practice.length)question();else speakingTransition()},true);
+ }
+ function expressionPage(){
+  construct();screen('expressions','4 · Expressions');
+  stage.append(el('h2','df-heading','유용한 표현'));
+  stage.append(el('p','df-muted','글에 쓰고 싶은 표현만 선택하세요. 사용하지 않아도 괜찮아요.'));
+  const expressions=(feedback?.expressions||[]).filter(x=>x.english);
+  if(!expressions.length)stage.append(el('p','df-muted','추천 표현이 없어요. 바로 최종 글을 확인하세요.'));
+  expressions.forEach((item,i)=>{
+   const card=el('section','df-review-item df-expression-select');
+   card.append(el('strong','',item.english));
+   if(item.meaning_ko)card.append(el('p','df-review-korean',item.meaning_ko));
+   const toggle=el('button','wg-button wg-secondary',selectedExpressions[i]?'선택됨 · 취소하기':'글에 추가하기');
+   toggle.type='button';
+   const field=el('textarea','df-revision-input');
+   field.dataset.willenaTextEntry='writing';field.dataset.inputLanguage='en';
+   field.value=expressionEdits[i]||item.english;
+   field.hidden=!selectedExpressions[i];
+   toggle.addEventListener('click',()=>{
+    selectedExpressions[i]=!selectedExpressions[i];
+    field.hidden=!selectedExpressions[i];
+    toggle.textContent=selectedExpressions[i]?'선택됨 · 취소하기':'글에 추가하기';
+    saveChoices();if(!field.hidden)field.focus();
+   });
+   field.addEventListener('input',()=>{expressionEdits[i]=field.value;saveChoices()});
+   card.append(toggle,field);stage.append(card);
+  });
+  button('이전',()=>reviewSentence(Math.max(0,split(current.body).length-1))).classList.add('df-skip-action');
+  button('다음',finalDraft,true).classList.add('df-confirm-action');
+ }
+ function finalDraft(){
+  construct();screen('final-draft','5 · Final Draft');
+  stage.append(el('h2','df-heading','나의 완성된 글'));
+  if(current.kind==='topic'){
+   if(feedback?.tip_ko)stage.append(el('p','df-topic-structure-tip',feedback.tip_ko));
+   if(feedback?.on_topic===false)stage.append(el('p','df-muted','선택한 주제와 내용이 조금 다를 수 있어요.'));
+  }
+  stage.append(el('p','df-muted','수정한 글을 전체로 확인하고, 필요한 부분은 직접 고치세요.'));
+  const area=el('textarea','df-textarea df-final-passage');
+  area.dataset.willenaTextEntry='writing';area.dataset.inputLanguage='en';
+  const assembled=finalLines.join(' ');
+  area.value=finalDraftText||assembled;
+  area.maxLength=12000;stage.append(area);
+  captureDraft=null;
+  area.addEventListener('input',()=>{finalDraftText=area.value});
+  button('이전',expressionPage).classList.add('df-skip-action');
+  if(current.kind==='topic'&&Number(feedback?.review_round||1)<2){
+   button('두 번째 AI 검토 (선택)',()=>{finalDraftText=area.value;secondDraft()}).classList.add('df-second-review-button');
+  }
+  button('최종 글 확인',async()=>{
+   if(busy)return;
+   const polished=area.value.trim();
+   const n=split(polished).length;
+   if(n<(current.kind==='topic'?8:6)||n>30){status('완성된 문장을 '+(current.kind==='topic'?'8':'6')+'~30개 입력해 주세요.',true);return}
+   busy=true;status('최종 글을 저장하고 있어요…');
+   try{
+    const saved=await finalizeDraft(current,polished);
+    current.body=saved.body||polished;
+    finalDraftText=current.body;finalLines=split(current.body);
+    current._speechSaved=false;
+    spoken=[];typedUsed=false;speechSkipped=false;
+    finalPractice();
+   }catch(e){status(e.message||'최종 글을 저장하지 못했어요.',true)}
+   finally{busy=false}
+  },true).classList.add('df-confirm-action');
  }
  function rendererHost(q){
   const host=el('div','df-question-host sp-shared-question question-card');stage.append(host);renderer=new QuestionRenderer(host);renderer.render(q);
@@ -708,117 +756,87 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   }catch(error){status(error.message||'마이크 오류',true)}
   finally{stream?.getTracks().forEach(t=>t.stop());control.classList.remove('is-recording');if(!control.querySelector('.speaking-mic-icon'))control.textContent='말하기'}
  }
- function speakingTransition(){
-  screen('speak-transition','4 · Speak');
-  const splash=el('div','df-speak-splash');
-  const icon=el('div','df-splash-icon');const iconImg=el('img','df-splash-mic');iconImg.src='/shared/svgs/mic.svg';iconImg.alt='';icon.append(iconImg);
-  splash.append(icon,el('h2','','Review complete!'),el('p','','이제 내 글을 말하거나 직접 입력해 봐요.'),el('small','','Speak or type each corrected sentence to continue.'));
-  stage.append(splash);
-  let started=false;
-  const start=()=>{if(started||step!=='speak-transition')return;started=true;index=0;lineSpeech()};
-  button('문장 연습 시작',start,true);
-  transitionTimer=setTimeout(start,2200);
- }
- function lineSpeech(){
-  if(index>=finalLines.length){complete();return}
-  screen('speech','Speak · '+(index+1)+' / '+finalLines.length);
-  const flow=el('div','df-teleprompter');
-  flow.setAttribute('aria-label','Speaking teleprompter');
-  flow.append(el('p','df-tele-line df-tele-active',finalLines[index]));
-  const upcoming=el('div','df-tele-upcoming');
-  for(let offset=1;offset<5&&index+offset<finalLines.length;offset++){
-   upcoming.append(el('p','df-tele-line df-tele-next df-tele-next-'+offset,finalLines[index+offset]));
-  }
-  const target=finalLines[index];
-  const switcher=el('div','df-tele-mode-switch');
-  switcher.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:12px 0';
-  const speakChoice=el('button','wg-button wg-secondary','말하기');
-  const typeChoice=el('button','wg-button wg-secondary','쓰기');
-  for(const choice of [speakChoice,typeChoice])choice.type='button';
-  switcher.append(speakChoice,typeChoice);stage.append(switcher);
-  const modeInstruction=el('p','df-task-instruction');stage.append(modeInstruction,flow);
-  const typingArea=el('div','df-tele-type-area');
-  typingArea.style.cssText='display:none;gap:10px;flex-direction:column;margin:12px 0';
-  const typingHelp=el('p','df-muted','문장을 입력한 다음 ‘문장 확인’을 누르세요.');
-  const typingInput=el('textarea','df-input');
-  typingInput.rows=2;typingInput.autocomplete='off';typingInput.spellcheck=false;
-  typingInput.placeholder='위 문장을 여기에 입력하세요';
-  typingInput.setAttribute('aria-label','수정된 문장 입력');
-  const typingCheck=el('button','wg-button wg-primary','문장 확인 · Check');
-  typingCheck.type='button';typingArea.append(typingHelp,typingInput,typingCheck);stage.append(typingArea);
-  const typingDiff=el('div','df-writing-diff');typingDiff.hidden=true;typingArea.append(typingDiff);
-  let sentenceDone=false;
-  const advance=answer=>{
-   if(sentenceDone||step!=='speech')return;
-   sentenceDone=true;spoken.push(answer);
-   status('✓ 잘했어요!');
-   flow.classList.add('df-tele-advance');
-   setTimeout(()=>{if(step==='speech'){index++;lineSpeech()}},480);
-  };
-  typingCheck.addEventListener('click',()=>{
-   if(sentenceDone)return;
-   const typed=typingInput.value.trim();
-   if(typedComparable(typed)!==typedComparable(target)){
-    markEditableDifferences(typingInput,target);
-    status('입력한 문장에서 표시된 부분을 고쳐 보세요.',true);
-    return;
-   }
-   typedUsed=true;typedIndexes.add(index);typingCheck.disabled=true;advance(typed);
-  });
-  typingInput.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();typingCheck.click()}});
+
+ function speakingTransition(){finalPractice()}
+ function finalPractice(){
+  screen('final-practice','6 · Final Practice');
+  stage.append(el('h2','df-heading','마지막 연습'));
+  stage.append(el('p','df-muted','글 전체를 말하거나 입력하세요. 둘 중 하나만 완료하면 됩니다.'));
+  const modeBar=el('div','df-tele-mode-switch');
+  const speakBtn=el('button','wg-button wg-secondary','말하기');
+  const typeBtn=el('button','wg-button wg-secondary','쓰기');
+  for(const b of [speakBtn,typeBtn])b.type='button';
+  modeBar.append(speakBtn,typeBtn);stage.append(modeBar);
+  const reference=el('div','df-final-script',current.body);stage.append(reference);
+  const speakArea=el('div','df-final-speak');
+  const typeArea=el('div','df-final-type');
+  const input=el('textarea','df-textarea');
+  input.dataset.willenaTextEntry='writing';input.dataset.inputLanguage='en';
+  input.rows=9;input.placeholder='위의 글 전체를 여기에 입력하세요.';
+  const typingStatus=el('p','df-muted','위의 최종 글을 보고 아래에 입력하세요.');
+  typeArea.append(typingStatus,input);
+  const speakStatus=el('p','df-muted','마이크를 눌러 글 전체를 읽으세요. 길면 여러 번 나누어 읽어도 됩니다.');
+  speakArea.append(speakStatus);
+  stage.append(speakArea,typeArea);
+  let spokenParts=[],confirmed=false;
   const setMode=useTyping=>{
    typedMode=useTyping;
-   modeInstruction.textContent=useTyping?'아래 분홍색 영어 문장을 보고 바로 밑에 똑같이 입력하세요.':'아래 분홍색 영어 문장을 보고 마이크를 눌러 소리 내어 읽으세요.';
-   typingArea.style.display=useTyping?'flex':'none';
-   speakChoice.classList.toggle('wg-primary',!useTyping);
-   typeChoice.classList.toggle('wg-primary',useTyping);
-   const speechControls=stage.querySelector('.df-tele-speech-controls');
-   if(speechControls)speechControls.hidden=useTyping;
-   if(useTyping)typingInput.focus();
+   speakArea.hidden=useTyping;typeArea.hidden=!useTyping;
+   speakBtn.classList.toggle('wg-primary',!useTyping);typeBtn.classList.toggle('wg-primary',useTyping);
+   if(useTyping)input.focus();
   };
-  speakChoice.addEventListener('click',()=>setMode(false));
-  typeChoice.addEventListener('click',()=>setMode(true));
-  // Use the exact shared QuestionRenderer microphone from the review activity.
-  const speechControls=el('div','df-tele-speech-controls');stage.append(speechControls);
-  rendererHost({form:'speaking',prompt:'',context:{},input:{language:'en'},answer:[target]});
-  const renderedControls=stage.querySelector('.df-question-host');
-  if(renderedControls)speechControls.append(renderedControls);
-  stage.append(upcoming);
-  setMode(typedMode);
-  const mic=stage.querySelector('[data-speaking-mic]');
-  const speechStatus=stage.querySelector('[data-speaking-status]');
-  if(current.kind==='topic')button('건너뛰기',()=>{speechSkipped=true;index++;lineSpeech()}).classList.add('df-skip-action');
-  if(!mic)return;
-  mic.classList.add('df-tele-mic');
-  let accepted=false;
-  const judge=answer=>{
-   if(accepted||step!=='speech')return;
-   const tolerant=judgeSentenceSpeech(target,answer);
-   const acceptedSpeech=writingSpeechAccepted(target,answer);
-   if(!acceptedSpeech){
-    status('다시 한번 말해 보세요.',true);
-    return;
+  speakBtn.onclick=()=>setMode(false);typeBtn.onclick=()=>setMode(true);
+  const micHost=el('div','df-question-host sp-shared-question question-card');
+  speakArea.append(micHost);
+  const audioRenderer=new QuestionRenderer(micHost);
+  audioRenderer.render({form:'speaking',prompt:'',context:{},input:{language:'en'},answer:[current.body]});
+  const mic=micHost.querySelector('[data-speaking-mic]');
+  const heard=text=>{
+   if(confirmed)return;
+   const segment=String(text||'').trim();
+   if(!segment)return;
+   spokenParts.push(segment);
+   const joined=spokenParts.join(' ');
+   const accuracy=spokenAccuracy(current.body,joined);
+   const coverage=speechWords(joined).length/Math.max(1,speechWords(current.body).length);
+   if(accuracy>=.8&&coverage>=.78){
+    confirmed=true;spoken=[joined];typedUsed=false;
+    status('말하기 연습을 완료했어요.');
+    if(mic)mic.disabled=true;
+    finishButton.disabled=false;
+   }else{
+    speakStatus.textContent='계속 읽어 주세요. 인식한 단어: '+speechWords(joined).length+' / '+speechWords(current.body).length;
    }
-   accepted=true;
-   mic.disabled=true;
-   advance(answer);
   };
-  if(window.SpeechRecognition||window.webkitSpeechRecognition){
-   renderer.onSpeechResult=alternatives=>{
-    const candidates=Array.isArray(alternatives)?alternatives:[alternatives];
-    const best=candidates.map(answer=>({answer,score:writingSpeechAccepted(target,answer)?2:spokenAccuracy(target,answer)})).sort((a,b)=>b.score-a.score)[0];
-    if(best)judge(best.answer);
-   };
-  }else{
-   mic.disabled=false;
-   if(speechStatus)speechStatus.textContent='마이크를 눌러 말해 보세요.';
-   let processing=false;
+  audioRenderer.onSpeechResult=alternatives=>{
+   const list=Array.isArray(alternatives)?alternatives:[alternatives];
+   const candidate=list.map(x=>String(x||'')).sort((a,b)=>b.length-a.length)[0];
+   heard(candidate);
+  };
+  if(mic&&!window.SpeechRecognition&&!window.webkitSpeechRecognition){
+   let recording=false;
    mic.addEventListener('click',()=>{
-    if(processing||mic.classList.contains('is-recording'))return;
-    processing=true;
-    void fallbackRecord(target,mic,judge).finally(()=>{processing=false});
+    if(recording)return;
+    recording=true;
+    void fallbackRecord(current.body,mic,heard).finally(()=>{recording=false});
    });
   }
+  const finishButton=button('완료하고 제출',async()=>{
+   if(typedMode){
+    const text=input.value.trim();
+    if(typedComparable(text)!==typedComparable(current.body)){
+     markEditableDifferences(input,current.body);
+     status('최종 글과 다른 부분을 수정하세요.',true);return;
+    }
+    spoken=[text];typedUsed=true;
+   }else if(!confirmed){
+    status('글 전체를 읽은 후 제출하세요.',true);return;
+   }
+   await complete();
+  },true);
+  finishButton.classList.add('df-confirm-action');
+  setMode(typedMode);
+  button('이전',finalDraft).classList.add('df-skip-action');
  }
  function rewardCard(reward){
   stage.replaceChildren();
@@ -837,7 +855,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    head.append(header);table.append(head);
    const body=el('tbody','');
    let earnedStars=0,earnedPoints=0;
-   for(const [key,label] of [['topic','주제에 맞게 글을 썼어요'],['structure','시작·가운데·마무리를 사용했어요'],['review','건너뛰지 않고 복습했어요'],['speaking','수정한 글을 끝까지 읽었어요']]){
+   for(const [key,label] of [['topic','주제에 맞게 글을 썼어요'],['structure','시작·가운데·마무리를 사용했어요'],['review','건너뛰지 않고 복습했어요'],['speaking','최종 글 연습을 완료했어요']]){
     const ok=reward.rubric[key]===true;
     const row=el('tr',ok?'is-earned':'is-missed');
     const reason=el('td','',label);
@@ -857,8 +875,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   status('보상을 확인하고 있어요…');
   button('메인 메뉴',close,true);
   try{
-   if(!current._speechSaved){if(typedUsed){await typing(current,finalLines,spoken,[...typedIndexes]);current._speechSaved=true}else if(current.kind==='topic'&&speechSkipped){current._speechSaved=true}else{await speech(current,spoken.join(' '),finalLines);current._speechSaved=true}}
-   const reward=await finish(current,{reviewComplete:!reviewSkipped,speakingComplete:!typedUsed&&!speechSkipped&&spoken.length===finalLines.length});
+   if(!current._speechSaved){if(typedUsed){await typing(current,current.body,spoken.join(' '));current._speechSaved=true}else if(current.kind==='topic'&&speechSkipped){current._speechSaved=true}else{await speech(current,spoken.join(' '),finalLines);current._speechSaved=true}}
+   const reward=await finish(current,{reviewComplete:!reviewSkipped,speakingComplete:!speechSkipped&&spoken.length>0});
    rewardCard(reward);
    status('완료했습니다!');
    showTeacherFeedback();
@@ -870,5 +888,5 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    showTeacherFeedback();
   }finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];typedIndexes=new Set();typedUsed=false;typedMode=false;reviewSkipped=false;speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];typedIndexes=new Set();typedUsed=false;typedMode=false;reviewSkipped=false;finalDraftText='';speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
 }
