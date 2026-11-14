@@ -190,6 +190,8 @@ function navigateBack({fromResults=false}={}){
   // When opened from the textbook app, close the overlay instead of navigating
   // to a second copy of the app. Direct mission links still use the URL fallback.
   if(window.parent!==window&&new URLSearchParams(location.search).get('embedded')==='1'){
+   // The parent preserves the textbook screen; only it may close the live view.
+   // Do not call location.replace() or history.back() inside this iframe.
    window.parent.postMessage({type:'willena:free-talking:exit'},location.origin);
    return;
   }
@@ -206,8 +208,9 @@ function navigateBack({fromResults=false}={}){
  if(hadEntry)history.back();
 }
 window.addEventListener('popstate',()=>{
- // Android/browser Back consumes our top-level activity entry. The underlying
- // iframe owns the preceding character and book history entries.
+ // Embedded release mode is governed entirely by the textbook parent's
+ // history. Never consume its Back action or navigate this child document.
+ if(releaseMode)return;
  if(!hasActivityHistory()&&!veil.hidden)closeActivity();
 });
 
