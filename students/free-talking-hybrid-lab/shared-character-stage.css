@@ -83,3 +83,42 @@
  #demo #actorStage .bf-actor[data-audio-speaking="true"] .pf-svg .pf-talk-mouth,
  #demo #actorStage .bf-actor[data-audio-speaking="true"] .aw-svg .aw-bar{animation:none!important}
 }
+
+/* Willo is the original voice-circle mascot, not an animal SVG. The actor now
+   contains the exact same SVG as the shared character menu. Keep this native
+   visual-only so conversation/audio handling is unchanged. */
+#demo #actorStage .ft-original-character-stage .bf-actor .ft-willo-actor{
+ width:100%;height:100%;display:grid;place-items:center;
+ transform-origin:center;
+}
+#demo #actorStage .ft-original-character-stage .bf-actor .ft-willo-svg{
+ display:block;width:100%;height:100%;overflow:visible;
+}
+#demo #actorStage .bf-actor[data-state="listening"] .ft-willo-actor{
+ animation:ftWilloListening 1.7s ease-in-out infinite;
+}
+#demo #actorStage .bf-actor[data-state="thinking"] .ft-willo-svg{
+ animation:ftWilloThinking 2.3s ease-in-out infinite;
+}
+#demo #actorStage .bf-actor[data-state="speaking"] .ft-willo-actor,
+#demo #actorStage .bf-actor[data-audio-speaking="true"] .ft-willo-actor{
+ animation:ftWilloSpeaking .46s ease-in-out infinite alternate;
+}
+#demo #actorStage .bf-actor[data-state="speaking"] .ft-willo-svg path,
+#demo #actorStage .bf-actor[data-audio-speaking="true"] .ft-willo-svg path{
+ transform-box:fill-box;transform-origin:center;
+ animation:ftWilloVoiceArc .42s ease-in-out infinite alternate;
+}
+#demo #actorStage .bf-actor[data-state="speaking"] .ft-willo-svg path:last-child,
+#demo #actorStage .bf-actor[data-audio-speaking="true"] .ft-willo-svg path:last-child{
+ animation-delay:-.23s;
+}
+@keyframes ftWilloListening{0%,100%{transform:scale(.96);opacity:.86}50%{transform:scale(1.025);opacity:1}}
+@keyframes ftWilloThinking{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}
+@keyframes ftWilloSpeaking{from{transform:scale(.93)}to{transform:scale(1.06)}}
+@keyframes ftWilloVoiceArc{from{opacity:.42;transform:scale(.8)}to{opacity:1;transform:scale(1.2)}}
+@media(prefers-reduced-motion:reduce){
+ #demo #actorStage .bf-actor .ft-willo-actor,
+ #demo #actorStage .bf-actor .ft-willo-svg,
+ #demo #actorStage .bf-actor .ft-willo-svg path{animation:none!important}
+}
