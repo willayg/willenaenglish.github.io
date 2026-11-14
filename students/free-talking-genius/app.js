@@ -991,6 +991,7 @@ function renderQuestion({retry=false}={}){
  void questionVoice.select(state.current.id,{autoplay:false});
 }
 let roundChoice=null,duskAvailablePoints=null;
+const duskUnlockUI=window.WillenaFTSharedMenu?.createDuskUnlockUI($('ftCharacter'),DUSK_UNLOCK_POINTS);
 async function getCurrentDuskPoints(){
  const response=await WillenaAPI.fetch('/.netlify/functions/progress_summary?section=overview&_='+Date.now(),{cache:'no-store'});
  if(!response.ok)throw Error('Could not verify points');
@@ -999,20 +1000,17 @@ async function getCurrentDuskPoints(){
  return Math.max(0,Math.floor(Number(data.points)));
 }
 function showDuskUnlock(points){
- const button=$('ftChooseDusk'),label=button?.querySelector('.ft-dusk-lock');
- if(!button)return;
  duskAvailablePoints=points;
- button.hidden=false;
- const unlocked=points!=null&&points>=DUSK_UNLOCK_POINTS;
- button.setAttribute('aria-disabled',String(!unlocked));
- if(label)label.textContent=unlocked?'★ Unlocked':points==null?'🔒 Checking points…':'🔒 '+(DUSK_UNLOCK_POINTS-points).toLocaleString()+' points to go';
+ duskUnlockUI?.update(points);
 }
 async function verifyDuskAccess(){
  try{
   const points=await getCurrentDuskPoints();showDuskUnlock(points);
   if(points>=DUSK_UNLOCK_POINTS)return true;
-  showError('🔒 5,000 points needed to unlock Dusk.');return false;
- }catch(error){showDuskUnlock(null);showError('Dusk unlock: '+error.message);return false}
+  duskUnlockUI?.open();return false;
+ }catch(error){
+  showDuskUnlock(null);duskUnlockUI?.open();return false;
+ }
 }
 function chooseRoundVoice(voice){
  if(!['marin','bunny-v3','pigfish','willy','prince'].includes(voice))return;
@@ -1031,6 +1029,8 @@ function openMode(mode){
  $('ftCharacterRound').textContent=bookTitle()+' · Unit '+state.unit+' · '+(mode==='speaking'?'말하기':'쓰기');
  for(const id of ['ftChooseWilli','ftChooseLili','ftChoosePigfish','ftChooseWilly','ftChooseDusk'])$(id)?.setAttribute('aria-pressed','false');
  $('ftCharacterContinue').disabled=true;
+ $('ftCharacterBack').hidden=false;
+ $('ftCharacterBack').textContent='← 교재로 돌아가기';
  preloadStudentSfx();
  view('ftCharacter');
  showDuskUnlock(null);
