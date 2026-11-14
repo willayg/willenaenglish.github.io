@@ -431,6 +431,16 @@ window.addEventListener('popstate',event=>{
   return;
  }
  const snapshot=event.state?.[FT_NAV_KEY];
+ // Android gesture/system Back: return from character selection to this unit,
+ // even when splash navigation leaves an unrecognized history snapshot.
+ if(visibleScreen==='ftCharacter'){
+  if(snapshot?.screen==='ftBook')restoreNavigation(snapshot);
+  else {
+   view('ftBook',{record:false});
+   history.replaceState({...history.state,[FT_NAV_KEY]:navState('ftBook')},'');
+  }
+  return;
+ }
  if(snapshot)restoreNavigation(snapshot);
 });
 async function token(refresh=false){
@@ -1274,7 +1284,10 @@ $('ftChoosePigfish').addEventListener('click',()=>chooseRoundVoice('pigfish'));
 $('ftChooseWilly').addEventListener('click',()=>chooseRoundVoice('willy'));
 $('ftChooseDusk')?.addEventListener('click',async()=>{if(await verifyDuskAccess())chooseRoundVoice('prince')})
 $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pendingMode));
-$('ftCharacterBack').addEventListener('click',()=>view('ftBook'));
+$('ftCharacterBack').addEventListener('click',()=>{
+ if(visibleScreen==='ftCharacter'&&history.state?.[FT_NAV_KEY]?.screen==='ftCharacter')history.back();
+ else view('ftBook');
+});
 
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
 // New native Free Talking V2 has its own component and session lifecycle.
