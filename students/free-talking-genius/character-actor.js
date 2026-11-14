@@ -7,8 +7,8 @@ const PORTRAITS={...ART};
 // One animation-state vocabulary for the Speaking and live conversation workspaces.
 // This is visual-only: it never starts recording, audio playback, or grading.
 export function resolveFreeTalkingActorPhase({speaking=false,listening=false,thinking=false,phase='ready'}={}){
- if(speaking)return 'speaking';
- if(listening||phase==='student')return 'listening';
+ if(speaking||phase==='speaking'||phase==='ai')return 'speaking';
+ if(listening||phase==='listening'||phase==='student')return 'listening';
  if(thinking||phase==='thinking')return 'thinking';
  return 'idle';
 }
