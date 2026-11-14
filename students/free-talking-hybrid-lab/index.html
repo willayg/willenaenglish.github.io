@@ -711,7 +711,8 @@ body.ft-release #demo .wrap{min-height:0}
  <div id="ftReleaseNativeMenu" aria-label="Character selection"></div>
  <p id="ftReleaseError" role="alert" hidden></p>
 </section>
-<iframe id="original" title="The original Free Talking Genius application" src="/students/free-talking-genius/"></iframe>
+<iframe id="original" title="The original Free Talking Genius application" src="about:blank"></iframe>
+<script>if(new URLSearchParams(location.search).get('release')!=='1')document.getElementById('original').src='/students/free-talking-genius/';</script>
 <div id="demo" hidden><section id="ftGuide" class="ft-layer" hidden role="dialog" aria-modal="true" aria-label="프리토킹 지니어스 이용 안내">
  <div class="ft-guide-card ft-natural-guide-card">
   <div class="ft-guide-top"><span id="ftGuideSteps" aria-label="Help page">01 / 04</span><button id="ftGuideClose" class="ft-guide-close" type="button">닫기</button></div>
@@ -783,5 +784,6 @@ body.ft-release #demo .wrap{min-height:0}
 </div>
 </main></div>
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
+<script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="/students/free-talking-genius/shared-menu-ui.js?v=20261114-p2-safe1"></script>
 <script type="module" src="./extension.js?v=20261114-shared-finish-evaluator-v1"></script></body></html>
