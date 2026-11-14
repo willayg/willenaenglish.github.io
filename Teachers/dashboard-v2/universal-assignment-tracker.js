@@ -342,7 +342,7 @@ window.WillenaAssignmentPerformance=Object.freeze({getSummary:()=>({...overviewP
 function overviewGet(path,options={}){
  const method=String(options.method||'GET').toUpperCase();
  // Only cache reads. Never cache a new write endpoint that may be added later.
- const isRead=method==='GET'||(method==='POST'&&/^rpc\/(teacher_homework_class_progress_v1|teacher_word_homework_class_progress_v1|teacher_creative_writing_progress_v1|teacher_writing_sentence_homework_progress_v1|teacher_puzzle_homework_progress_v1|test_prep_assignment_results_v1)$/.test(path));
+ const isRead=method==='GET'||(method==='POST'&&/^rpc\/(teacher_homework_class_progress_v1|teacher_word_homework_class_progress_v1|teacher_creative_writing_progress_v1|teacher_writing_sentence_homework_progress_v1|teacher_puzzle_homework_progress_v1|teacher_sentence_genius_homework_progress_v1|test_prep_assignment_results_v1)$/.test(path));
  if(!isRead)return get(path,options);
  const token=access();
  if(!token)return get(path,options);
@@ -423,6 +423,7 @@ async function loadOverview(scopeName='my',force=false,options={}){
    {name:'Writing progress',enabled:rows.some(row=>row.app==='Writing Genius'&&row.list_key!=='writing_genius:sentence'),path:'rpc/teacher_creative_writing_progress_v1',body:'{}'},
    {name:'Sentence writing progress',enabled:hasWritingSentence,path:'rpc/teacher_writing_sentence_homework_progress_v1',body:'{}'},
    {name:'Puzzle progress',enabled:hasApp('Puzzles'),path:'rpc/teacher_puzzle_homework_progress_v1',body:'{}'},
+   {name:'Sentence Genius progress',enabled:hasApp('Sentence Genius'),path:'rpc/teacher_sentence_genius_homework_progress_v1',body:'{}'},
    {name:'내신 progress',enabled:hasApp('내신'),path:'rpc/test_prep_assignment_results_v1',body:JSON.stringify({p_group_id:null})}
   ];
   const outputs=new Map();
@@ -502,6 +503,7 @@ async function loadOverview(scopeName='my',force=false,options={}){
   const writingProgress=asMap('Writing progress');
   const writingSentenceProgress=asMap('Sentence writing progress');
   const puzzleProgress=asMap('Puzzle progress');
+  const sentenceGeniusProgress=asMap('Sentence Genius progress');
   const progress=asMap('내신 progress','task_id');
   if(generation!==overviewGeneration||!host.isConnected)return;
   // Match Word Genius's existing teacher-card calculation, including split workloads.
@@ -608,8 +610,12 @@ async function loadOverview(scopeName='my',force=false,options={}){
      else note='Writing submission progress unavailable';
     }else if(r.app==='Puzzles'){
      const p=puzzleProgress.get(assignId);
-     if(p?.student_rows?.length)list=p.student_rows.map(st=>({student_id:st.student_id,name:nameFor(st),pct:st.completed===true?100:0,done:st.completed===true}));
+     if(p?.student_rows?.length)list=p.student_rows.map(st=>({student_id:st.student_id||st.id,name:nameFor(st),pct:st.completed===true?100:0,done:st.completed===true}));
      else note='Puzzle completion progress unavailable';
+    }else if(r.app==='Sentence Genius'){
+     const p=sentenceGeniusProgress.get(assignId);
+     if(p?.student_rows?.length)list=p.student_rows.map(st=>({student_id:st.student_id||st.id,name:nameFor(st),pct:Number(st.total)>0?round(100*Number(st.done||0)/Number(st.total)):null,done:st.completed===true}));
+     else note='Sentence Genius progress unavailable';
     }else if(r.app==='내신'){
      const p=progress.get(assignId);
      if(p&&r.student_id)list=[{student_id:r.student_id,name:displayStudentName(r.student_id),pct:Number(r.target_count)>0?round(100*Number(p.done||0)/Number(r.target_count)):null,done:Number(r.target_count)>0&&Number(p.done)>=Number(r.target_count)&&!Number(p.unresolved||0)}];
