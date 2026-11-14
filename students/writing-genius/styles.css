@@ -934,3 +934,15 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 /* Explicit Korean instructions for both diary correction practice and final teleprompter. */
 .writing-genius #wgDiaryFlow .df-task-instruction{max-width:570px;margin:14px auto 18px;padding:13px 16px;border-radius:15px;background:#f0fafb;border:2px solid #c5eef1;color:#255861;text-align:center;font-weight:850;font-size:clamp(.91rem,2.7vw,1.06rem);line-height:1.6;overflow-wrap:anywhere}
 .writing-genius #wgDiaryFlow .df-tele-mode-switch+.df-task-instruction{margin-top:10px;margin-bottom:6px}
+
+/* Position writing immediately after the target sentence in both Diary and Topic flows. */
+.writing-genius #wgDiaryFlow .df-target{margin:14px auto 5px}
+.writing-genius #wgDiaryFlow .df-target-korean{margin:0 auto 8px}
+.writing-genius #wgDiaryFlow .df-task-instruction{margin:10px auto 12px}
+.writing-genius #wgDiaryFlow .df-question-host{margin:8px auto 12px;max-width:570px}
+.writing-genius #wgDiaryFlow .df-teleprompter{min-height:0;padding:10px 8px 4px;gap:0}
+.writing-genius #wgDiaryFlow .df-tele-type-area{margin:6px auto 10px!important}
+.writing-genius #wgDiaryFlow .df-tele-type-area textarea{min-height:104px}
+.writing-genius #wgDiaryFlow .df-tele-speech-controls{margin:6px auto 10px}
+.writing-genius #wgDiaryFlow .df-tele-upcoming{display:flex;flex-direction:column;gap:12px;max-width:570px;margin:20px auto 0;text-align:center}
+.writing-genius #wgDiaryFlow .df-tele-upcoming .df-tele-line{margin:0}
