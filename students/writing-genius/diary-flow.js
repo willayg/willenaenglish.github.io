@@ -4,6 +4,35 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026102
 import {judgeSentenceSpeech} from '/students/shared/sentence-speech-tolerance.js?v=20261104-determiner2';
 const $=id=>document.getElementById(id);
 const norm=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim();
+
+// Character-level comparison keeps apostrophes and punctuation visible.
+// Render differences with textContent only, never student-provided HTML.
+const typedComparable=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/\\s+/g,' ').trim();
+function renderWritingDiff(host,expected,actual){
+ const a=[...String(expected||'')],b=[...String(actual||'')];
+ const eq=(x,y)=>typedComparable(x)===typedComparable(y);
+ const n=a.length,m=b.length;
+ if(n>300||m>300){host.replaceChildren();host.append(el('p','','문장의 철자와 문장 부호를 다시 확인하세요.'));return}
+ const dp=Array.from({length:n+1},()=>new Uint16Array(m+1));
+ for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=eq(a[i],b[j])?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);
+ const targetParts=[],answerParts=[];let i=0,j=0;
+ while(i<n||j<m){
+  if(i<n&&j<m&&eq(a[i],b[j])){targetParts.push([a[i],false]);answerParts.push([b[j],false]);i++;j++}
+  else if(i<n&&(j===m||dp[i+1][j]>=dp[i][j+1])){targetParts.push([a[i],true]);i++}
+  else{answerParts.push([b[j],true]);j++}
+ }
+ const makeRow=(heading,parts,empty)=>{
+  const row=el('div','df-diff-row');row.append(el('strong','',heading));
+  const line=el('div','df-diff-line');let group='',changed=null;
+  const flush=()=>{if(!group)return;const span=el('span',changed?'df-diff-mark':'',group);line.append(span);group=''};
+  for(const [ch,bad] of parts){if(changed!==bad)flush();changed=bad;group+=ch}flush();
+  if(!parts.length)line.append(el('span','',empty));row.append(line);return row;
+ };
+ host.replaceChildren(el('p','df-diff-title','다른 부분을 확인하고 다시 입력하세요.'));
+ host.append(makeRow('정답 · 빠진 부분',targetParts,''));
+ host.append(makeRow('내가 쓴 문장 · 다른 부분',answerParts,'입력한 문장이 없어요.'));
+ host.hidden=false;
+}
 const split=s=>(String(s||'').match(/[^.!?\n]+[.!?]+(?=\s|$)/g)||[]).map(x=>x.trim()).filter(x=>/[a-z]/i.test(x));
 // Speech transcripts write times differently from lesson text (11am vs 11:00 a.m.).
 // Canonicalize common clock readings before word-level edit-distance scoring.
@@ -568,15 +597,22 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   stage.append(el('p','df-target',p.target));
   if(p.meaning)stage.append(el('p','df-target-korean',p.meaning));
   rendererHost({form:mode==='speaking'?'speaking':'write',prompt:'',context:{},input:{language:'en'},answer:[p.target]});
+  const feedbackDiff=el('div','df-writing-diff');feedbackDiff.hidden=true;stage.append(feedbackDiff);
   const listen=el('button','wg-button df-listen');
   listen.append(el('img','df-headphones'));listen.querySelector('img').src='/shared/svgs/headphones.svg';listen.querySelector('img').alt='';
   listen.setAttribute('aria-label','듣기');listen.title='듣기';listen.type='button';
-  listen.addEventListener('click',()=>void playTarget(p.target,listen));stage.append(listen);
+  listen.append(el('span','df-listen-label','듣기'));listen.addEventListener('click',()=>void playTarget(p.target,listen));stage.append(listen);
+  button('건너뛰기',()=>{reviewSkipped=true;index++;mode='speaking';question()}).classList.add('df-skip-action');
   button('확인',()=>{
-   if(norm(renderer.getResponse())!==norm(p.target)){status('다시 시도해 주세요.',true);return}
+   const answer=String(renderer.getResponse()||'');
+   const matches=mode==='write'?typedComparable(answer)===typedComparable(p.target):norm(answer)===norm(p.target);
+   if(!matches){
+    if(mode==='write'){renderWritingDiff(feedbackDiff,p.target,answer);status('표시된 부분을 고쳐 보세요.',true)}
+    else status('문장을 다시 말해 보세요.',true);
+    return;
+   }
    index++;mode='speaking';question();
-  },true);
-  button('건너뛰기 · Skip',()=>{reviewSkipped=true;index++;mode='speaking';question()});
+  },true).classList.add('df-confirm-action');
  }
  async function aiSpeechTranscribe(blob){
   const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=reject;reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.readAsDataURL(blob)});
@@ -643,7 +679,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   typingInput.setAttribute('aria-label','수정된 문장 입력');
   const typingCheck=el('button','wg-button wg-primary','문장 확인 · Check');
   typingCheck.type='button';typingArea.append(typingHelp,typingInput,typingCheck);stage.append(typingArea);
-  const normalizeTyped=value=>String(value||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim();
+  const typingDiff=el('div','df-writing-diff');typingDiff.hidden=true;typingArea.append(typingDiff);
   let sentenceDone=false;
   const advance=answer=>{
    if(sentenceDone||step!=='speech')return;
@@ -655,8 +691,9 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   typingCheck.addEventListener('click',()=>{
    if(sentenceDone)return;
    const typed=typingInput.value.trim();
-   if(normalizeTyped(typed)!==normalizeTyped(target)){
-    status('문장을 다시 확인해 보세요. 대소문자와 문장 부호는 괜찮아요.',true);
+   if(typedComparable(typed)!==typedComparable(target)){
+    renderWritingDiff(typingDiff,target,typed);
+    status('표시된 부분을 고쳐 보세요.',true);
     return;
    }
    typedUsed=true;typingCheck.disabled=true;advance(typed);
@@ -683,7 +720,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   setMode(typedMode);
   const mic=stage.querySelector('[data-speaking-mic]');
   const speechStatus=stage.querySelector('[data-speaking-status]');
-  if(current.kind==='topic')button('건너뛰기 · Skip',()=>{speechSkipped=true;index++;lineSpeech()});
+  if(current.kind==='topic')button('건너뛰기',()=>{speechSkipped=true;index++;lineSpeech()}).classList.add('df-skip-action');
   if(!mic)return;
   mic.classList.add('df-tele-mic');
   let accepted=false;
