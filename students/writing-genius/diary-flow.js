@@ -7,7 +7,7 @@ const norm=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-
 
 // Character-level comparison keeps apostrophes and punctuation visible.
 // Render differences with textContent only, never student-provided HTML.
-const typedComparable=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/\\s+/g,' ').trim();
+const typedComparable=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/\s+/g,' ').trim();
 function renderWritingDiff(host,expected,actual){
  const a=[...String(expected||'')],b=[...String(actual||'')];
  const eq=(x,y)=>String(x).toLowerCase().replace(/[’‘]/g,"'")===String(y).toLowerCase().replace(/[’‘]/g,"'");
@@ -561,8 +561,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const option=(label,fn)=>{
    const b=el('button','wg-button wg-secondary',label);b.type='button';b.addEventListener('click',fn);controls.append(b);return b;
   };
-  option('AI 수정 승인',()=>{choices[correctionIndex]='first';saveChoices();next()});
-  option('원래 문장 유지',()=>{choices[correctionIndex]='original';saveChoices();next()});
+  option('AI 수정 승인',()=>{choices[correctionIndex]='first';finalDraftText='';saveChoices();next()});
+  option('원래 문장 유지',()=>{choices[correctionIndex]='original';finalDraftText='';saveChoices();next()});
   const rewrite=option('직접 수정',()=>{
    if(revised.querySelector('.df-review-custom'))return;
    const group=el('div','df-review-custom');
@@ -574,11 +574,11 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    save.addEventListener('click',()=>{
     const value=input.value.trim();
     if(!value||!/[a-z]/i.test(value)){status('영어 문장을 입력하세요.',true);return}
-    customLines[correctionIndex]=value;choices[correctionIndex]='custom';saveChoices();next();
+    customLines[correctionIndex]=value;choices[correctionIndex]='custom';finalDraftText='';saveChoices();next();
    });
    group.append(input,save);revised.append(group);input.focus();
   });
-  if(change.clarified_better)option('다시 제안받은 문장',()=>{choices[correctionIndex]='last';saveChoices();next()});
+  if(change.clarified_better)option('다시 제안받은 문장',()=>{choices[correctionIndex]='last';finalDraftText='';saveChoices();next()});
   else{
    option('뜻 설명하기',()=>{
     if(revised.querySelector('.df-clarify-box'))return;
@@ -591,7 +591,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
      try{
       const result=await clarify(current,correctionIndex,input.value.trim());
       change.clarified_better=result.better;change.clarified_translation_ko=result.translation_ko||'';
-      choices[correctionIndex]='last';saveChoices();reviewSentence(sentenceIndex);
+      choices[correctionIndex]='last';finalDraftText='';saveChoices();reviewSentence(sentenceIndex);
      }catch(e){send.disabled=false;status(e.message||'다시 확인해 주세요.',true)}
     };
     box.append(input,send);revised.append(box);input.focus();
@@ -615,12 +615,12 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    field.value=expressionEdits[i]||item.english;
    field.hidden=!selectedExpressions[i];
    toggle.addEventListener('click',()=>{
-    selectedExpressions[i]=!selectedExpressions[i];
+    selectedExpressions[i]=!selectedExpressions[i];finalDraftText='';
     field.hidden=!selectedExpressions[i];
     toggle.textContent=selectedExpressions[i]?'선택됨 · 취소하기':'글에 추가하기';
     saveChoices();if(!field.hidden)field.focus();
    });
-   field.addEventListener('input',()=>{expressionEdits[i]=field.value;saveChoices()});
+   field.addEventListener('input',()=>{expressionEdits[i]=field.value;finalDraftText='';saveChoices()});
    card.append(toggle,field);stage.append(card);
   });
   button('이전',()=>reviewSentence(Math.max(0,split(current.body).length-1))).classList.add('df-skip-action');
@@ -888,5 +888,5 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    showTeacherFeedback();
   }finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];typedIndexes=new Set();typedUsed=false;typedMode=false;reviewSkipped=false;finalDraftText='';speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];typedIndexes=new Set();typedUsed=false;typedMode=false;reviewSkipped=false;finalDraftText='';speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback?.finalized_from_body){finalLines=split(current.body);finalDraftText=current.body;finalPractice()}else if(feedback)summary();else topic()},close};
 }
