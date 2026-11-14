@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./styles.css?v=20261113-willy-option1">
+<link rel="stylesheet" href="./styles.css?v=20261114-ft-v2-golden-complete7">
 <link rel="stylesheet" href="./character-animations.css?v=20261114-shared-finish-v1">
 <link rel="stylesheet" href="./live-animal-ui.css?v=20261113-willy-animal1">
 <link rel="stylesheet" href="./guide.css?v=20261107-guide-kids2">
@@ -90,7 +90,7 @@
   </button>
   <button type="button" id="ftFreeTalkingV2Card" class="vocab-skill-card" aria-label="Free Talking">
    <span class="vocab-skill-ring" style="--progress:0"><span>0%</span></span>
-   <span class="vocab-skill-copy"><small class="vocab-skill-step">STEP 2</small><strong>Free Talking</strong><span class="vocab-card-stars">8-question conversation</span></span>
+   <span class="vocab-skill-copy"><small class="vocab-skill-step">STEP 2</small><strong>Free Talking</strong><span class="vocab-card-stars">자유 말하기</span></span>
   </button>
   <button type="button" id="ftFreeTalkingCard" class="vocab-skill-card" aria-label="Free Talking V1" hidden style="display:none" tabindex="-1">
    <span class="vocab-skill-ring" style="--progress:0"><span>0%</span></span>
@@ -98,6 +98,17 @@
   </button>
  </div>
 </section>
+<div id="ftCompletedConversationDialog" class="ft-completed-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="ftCompletedConversationTitle" aria-describedby="ftCompletedConversationText">
+ <div class="ft-completed-dialog-panel">
+  <span class="ft-completed-dialog-medal" aria-hidden="true">★</span>
+  <h3 id="ftCompletedConversationTitle">이미 완료한 단원이에요! 🎉</h3>
+  <p id="ftCompletedConversationText">이 단원의 자유 말하기를 이미 완료했어요. 다시 도전할까요, 아니면 다른 단원을 찾아볼까요?</p>
+  <div class="ft-completed-dialog-actions">
+   <button type="button" id="ftCompletedReplay" class="ft-completed-dialog-replay">다시 하기</button>
+   <button type="button" id="ftCompletedChooseAnother">다른 단원 찾기</button>
+  </div>
+ </div>
+</div>
 <div id="ftV2LaunchLoader" class="ft-v2-launch-loader" role="status" aria-live="polite" aria-label="Free Talking is loading" hidden>
  <div class="ft-v2-launch-content">
   <div class="ft-v2-launch-spinner" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -232,7 +243,7 @@
 <div class="ft-footer-version">Free Talking Genius · 10-point conversation · v2.3</div>
 </main></div>
 <script src="/students/free-talking-genius/shared-menu-ui.js?v=20261114-shared-menu-back4"></script>
-<script type="module" src="./app.js?v=20261114-dusk-selection-footer6"></script>
+<script type="module" src="./app.js?v=20261114-ft-v2-golden-complete7"></script>
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
 <script src="/students/components/mission-basket.js?v=20261112-conversation-route4"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
