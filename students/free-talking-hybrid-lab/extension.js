@@ -2357,7 +2357,7 @@ async function initStandaloneRelease(){
  }catch(e){showError(e.message||'Could not prepare Free Talking.')}
 }
 
-if(releaseMode){
+if(releaseMode&&!nativeHost){
  void initStandaloneRelease();
 }
 if(nativeHost){
