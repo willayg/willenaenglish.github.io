@@ -5,8 +5,15 @@ const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const STORE='https://get-audio-urls.willena.workers.dev/free-talking-store';
-const VOICES={willi:'marin',bunny:'M7zl2TS7ORAIGUejDfoy',pigfish:'W7UbuMY4ypluqgZS2UzT'};
+const VOICES={willi:'marin',bunny:'M7zl2TS7ORAIGUejDfoy',pigfish:'W7UbuMY4ypluqgZS2UzT',dusk:'0yhUIig4twaXoIhuQoCQ'};
 const LINES={
+ dusk:[
+  "Our little adventure is finished. Let's see how you did!",
+  "The stars are shining! Let's look at your results.",
+  "That was fun. Shall we see how you did?",
+  "A mysterious conversation indeed! Let's check your results.",
+  "It's time to rest our voices and see your results!"
+ ],
  willi:[
   "That was a great chat! Let's see how you did.",
   "We've reached the end of our chat. I'll check how we did!",
