@@ -307,7 +307,7 @@
 
 /* AI Willi FX v3: one shared head SVG, one speech state, zero permanent mouths. */
 .aw-svg .aw-cat-details,.aw-svg .aw-electric{display:none}
-.bf-actor[data-state="speaking"] .aw-svg .aw-electric{display:inline}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-electric{display:inline}
 .bf-actor[data-state="speaking"][data-mood="cat"] .aw-svg .aw-cat-details,
 .bf-actor[data-state="speaking"][data-mood="cat"] .aw-svg .aw-eyes-cat{display:inline}
 .bf-actor[data-state="speaking"][data-mood="cat"] .aw-svg .aw-eyes-default{display:none}
@@ -316,15 +316,15 @@
  animation:awHeadShiver 1.8s ease-in-out infinite;
  filter:drop-shadow(0 0 5px #42d5ff88)
 }
-.bf-actor[data-state="speaking"] .aw-svg .aw-antenna{
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-antenna{
  animation:awWilliAntenna .8s ease-in-out infinite alternate,awElectricGlow .45s ease-in-out infinite alternate
 }
-.bf-actor[data-state="speaking"] .aw-svg .aw-electric .aw-spark{
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-electric .aw-spark{
  animation:awSparkFlash .52s steps(2,end) infinite;
  filter:drop-shadow(0 0 5px #53edff)
 }
-.bf-actor[data-state="speaking"] .aw-svg .aw-spark-2{animation-delay:-.18s}
-.bf-actor[data-state="speaking"] .aw-svg .aw-spark-3{animation-delay:-.37s}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-spark-2{animation-delay:-.18s}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-spark-3{animation-delay:-.37s}
 .bf-actor[data-state="speaking"] .aw-svg .aw-eyes-cat{
  animation:awCatBlink 1.6s ease-in-out infinite;
  transform-box:fill-box;transform-origin:center
