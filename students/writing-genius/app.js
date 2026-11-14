@@ -1,7 +1,7 @@
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
-import {createDiaryFlow} from './diary-flow.js?v=20261114-final-teleprompter1';
+import {createDiaryFlow} from './diary-flow.js?v=20261115-line-typing1';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {installWillenaKeyboard,hideWillenaKeyboard} from '/students/shared/willena-keyboard.js?v=20261114-writing-genius1';
 import {createSentencePractice} from './sentence-practice.js?v=20261104-unit-tab-label1';
@@ -31,7 +31,7 @@ document.addEventListener('pointerdown',event=>prepareWritingKeyboardField(event
 document.addEventListener('focusin',event=>prepareWritingKeyboardField(event.target),true);
 installWillenaKeyboard({
  root:document,
- submitSelector:'#wgDiaryFlow .df-confirm-action, #wgDiaryFlow .df-tele-type-area .wg-primary, #spCompareBtn',
+ submitSelector:'#wgDiaryFlow .df-typing-line-confirm, #wgDiaryFlow .df-confirm-action, #wgDiaryFlow .df-tele-type-area .wg-primary, #spCompareBtn',
  onSubmit:(button,field)=>{
   // Never send a confirm to a different writing activity.
   if(field?.closest('#wgDiaryFlow')){
@@ -40,6 +40,8 @@ installWillenaKeyboard({
    if(button.id!=='spCompareBtn')return;
   }else return;
   button.click();
+  // Advance to the next line without dismissing the shared keyboard.
+  if(button.classList.contains('df-typing-line-confirm'))return false;
  }
 });
 
