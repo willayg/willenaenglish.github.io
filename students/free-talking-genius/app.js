@@ -313,13 +313,18 @@ function closeFreeTalkingOverlay({consumeHistory=false}={}){
  freeTalkingExiting=true;
  const frame=freeTalkingFrame;
  freeTalkingFrame=null;
+ // Remove the live document BEFORE moving the parent's history. Never allow
+ // an embedded document to navigate back into a blank iframe history entry.
  frame.remove();
  document.body.classList.remove('ft-live-active');
  document.body.style.removeProperty('overflow');
- freeTalkingExiting=false;
+ // The current textbook page is still mounted. No data reload or page navigation.
  if(BOOK())void refreshFreeTalkingPercent();
+ freeTalkingExiting=false;
  if(consumeHistory&&history.state?.[FT_NAV_KEY]?.screen==='ftLiveConversation'){
   history.back();
+ }else if(history.state?.[FT_NAV_KEY]?.screen==='ftLiveConversation'){
+  history.replaceState({...history.state,[FT_NAV_KEY]:navState('ftBook')},'');
  }
 }
 function launchFreeTalkingOverlay(url){
@@ -329,19 +334,22 @@ function launchFreeTalkingOverlay(url){
  frame.setAttribute('allow','microphone; autoplay');
  frame.setAttribute('aria-label','Free Talking live conversation');
  frame.style.cssText='position:fixed;inset:0;width:100%;height:100dvh;border:0;background:#e9fbfc;z-index:2147483000;';
- frame.src='about:blank';
+ // Set the final URL before mounting: no about:blank -> location.replace
+ // transition, which could become an extra mobile browser history entry.
+ frame.src=url.pathname+url.search+(url.hash||'');
  freeTalkingFrame=frame;
- document.body.append(frame);
  document.body.classList.add('ft-live-active');
  document.body.style.overflow='hidden';
- // A single top-level history entry; the live frame does not own menu navigation.
+ // Only the parent page owns one live-activity history state.
  history.pushState({...history.state,[FT_NAV_KEY]:{...navState('ftBook'),screen:'ftLiveConversation'}},'');
- // Replace the initial about:blank entry to avoid piling iframe history entries.
- frame.contentWindow.location.replace(url.pathname+url.search+(url.hash||''));
+ document.body.append(frame);
 }
 window.addEventListener('message',event=>{
  if(event.origin!==location.origin||!freeTalkingFrame||event.source!==freeTalkingFrame.contentWindow)return;
  if(event.data?.type==='willena:free-talking:exit'){
+  // Acknowledge before destroying the iframe, so an unexpected parent-side
+  // failure cannot strand the child on an empty screen.
+  try{event.source.postMessage({type:'willena:free-talking:exit-ack'},event.origin)}catch{}
   closeFreeTalkingOverlay({consumeHistory:true});
  }
 });
