@@ -961,3 +961,13 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-diff-row strong{display:block;font-size:.79rem;margin-bottom:4px;color:#516d73}
 .writing-genius #wgDiaryFlow .df-diff-line{font-size:1.04rem;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;font-weight:700}
 .writing-genius #wgDiaryFlow .df-diff-mark{background:#ffe59a;color:#953c17;border-radius:3px;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+
+/* Editable inline typo highlighting: mirror under a real accessible textarea. */
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap{position:relative;width:100%;min-width:0;isolation:isolate}
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap .df-edit-highlight-mirror{position:absolute;inset:0;box-sizing:border-box;overflow:hidden;pointer-events:none;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;color:var(--ink,#173f46);z-index:1}
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap.is-diff-active textarea{position:relative;z-index:2;color:transparent!important;-webkit-text-fill-color:transparent!important;caret-color:#165861!important;background:transparent!important}
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap .df-edit-wrong{background:#ffe59a;color:#953c17;border-radius:2px;text-decoration:underline;text-decoration-color:#bc5b28;text-underline-offset:3px}
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap .df-edit-missing{display:inline;position:relative;width:0;color:transparent}
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap .df-edit-missing::before{content:'';position:absolute;left:0;top:0;height:1.15em;border-left:3px solid #e75c9d}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-confirm-action{background:#fff!important;color:#e75c9d!important;border:2px solid #55cdd5!important;box-shadow:none}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-confirm-action:hover{background:#fff6fa!important}
