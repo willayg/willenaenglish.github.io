@@ -3,7 +3,7 @@
 // audio, pause, prompt, review and result behaviour without modifying V1.
 // NativeHost is mandatory; standalone V1 remains in extension.js.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
-import {createHybridCharacterStage} from '/students/free-talking-hybrid-lab/shared-character-stage.js?v=20261114-mouth-state-fix1';
+import {createHybridCharacterStage} from '/students/free-talking-hybrid-lab/shared-character-stage.js?v=20261114-willo-restored1';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
 import {scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261114-p4-visual1';
