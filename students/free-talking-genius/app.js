@@ -421,6 +421,22 @@ window.addEventListener('popstate',event=>{
  if(nativeFreeTalking?.active&&event.state?.[FT_NAV_KEY]?.screen!=='ftNativeConversation'){
   nativeFreeTalking.close();
  }
+ // Android browser history can change while the native Free Talking overlay
+ // owns a live conversation. Never silently tear down the audio and return to
+ // the unit menu: require an explicit confirmation before leaving.
+ if(freeTalkingV2?.isOpen()&&event.state?.[FT_NAV_KEY]?.screen!=='ftFreeTalkingV2'){
+  const running=window.__WillenaFTNativeHost?.root?.getElementById('demo')?.hidden===false;
+  if(running&&!window.confirm('대화가 진행 중이에요. 정말 나갈까요?\\nLeave your conversation?')){
+   history.pushState({...history.state,[FT_NAV_KEY]:navState('ftFreeTalkingV2')},'');
+   return;
+  }
+  freeTalkingV2.close({notify:false});
+  if(running){
+   history.replaceState({...history.state,[FT_NAV_KEY]:navState('ftBook')},'');
+   view('ftBook',{record:false});
+   return;
+  }
+ }
  const snapshot=event.state?.[FT_NAV_KEY];
  if(snapshot)restoreNavigation(snapshot);
 });
