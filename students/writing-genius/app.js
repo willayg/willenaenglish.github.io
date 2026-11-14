@@ -763,7 +763,14 @@ const diaryFlow=createDiaryFlow({
   try{localStorage.setItem('stars:refresh',String(Date.now()))}catch{}
   return reward;
  },
- onExit:()=>backHome()
+ onExit:async destination=>{
+  await backHome();
+  if(destination==='drafts'){
+   state.filter='draft';
+   $('wgHistoryFilter').value='draft';
+   togglePortfolio(true);
+  }
+ }
 });
 const examplesRoot=$('wgDiaryExamplesList');
 for(const example of exampleDiaries){
