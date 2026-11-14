@@ -22,7 +22,7 @@ async function mount(header){
  element.style.cssText='position:fixed;inset:0;z-index:2147483000;background:#ebfafb;overflow:hidden;';
  const root=element.attachShadow({mode:'open'});
  const reset=document.createElement('style');
- reset.textContent=':host{display:block;color:#275b66;font:14px Poppins,Arial,sans-serif}*,*::before,*::after{box-sizing:border-box}[hidden]{display:none!important}';
+ reset.textContent=':host{display:block;color:#275b66;font:14px Poppins,Arial,sans-serif}:host([hidden]){display:none!important}*,*::before,*::after{box-sizing:border-box}[hidden]{display:none!important}';
  const v1style=document.createElement('style');
  // Reuse the actual V1 presentation. ShadowRoot prevents those historical
  // !important overrides from affecting Speaking, student header, or textbooks.
