@@ -946,3 +946,18 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-tele-speech-controls{margin:6px auto 10px}
 .writing-genius #wgDiaryFlow .df-tele-upcoming{display:flex;flex-direction:column;gap:12px;max-width:570px;margin:20px auto 0;text-align:center}
 .writing-genius #wgDiaryFlow .df-tele-upcoming .df-tele-line{margin:0}
+
+/* Keep the destructive shortcut away from primary confirmation. */
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-skip-action{order:1;flex:0 0 auto!important;width:auto!important;min-width:0!important;max-width:108px!important;min-height:40px!important;padding:8px 11px!important;font-size:.78rem!important;font-weight:700;background:#fff;color:#607b80;border:2px solid #c5eef1}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-confirm-action{order:2;flex:1 1 180px;max-width:340px;min-height:52px}
+.writing-genius #wgDiaryFlow .df-listen{border:2px solid #55cdd5;background:#fff;color:#e75c9d;font-weight:850}
+.writing-genius #wgDiaryFlow .df-listen-label{color:#e75c9d}
+.writing-genius #wgDiaryFlow .df-listen .df-headphones{filter:invert(48%) sepia(78%) saturate(1712%) hue-rotate(294deg) brightness(95%) contrast(89%)}
+/* Exact character differences: missing punctuation in reference, extra/wrong text in answer. */
+.writing-genius #wgDiaryFlow .df-writing-diff{width:100%;max-width:570px;box-sizing:border-box;margin:10px auto;padding:13px 15px;border:2px solid #f2bdd2;border-radius:14px;background:#fff8fb;color:#284f56}
+.writing-genius #wgDiaryFlow .df-writing-diff[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow .df-diff-title{margin:0 0 10px;font-size:.9rem;font-weight:850;color:#ad4066}
+.writing-genius #wgDiaryFlow .df-diff-row{margin:8px 0}
+.writing-genius #wgDiaryFlow .df-diff-row strong{display:block;font-size:.79rem;margin-bottom:4px;color:#516d73}
+.writing-genius #wgDiaryFlow .df-diff-line{font-size:1.04rem;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;font-weight:700}
+.writing-genius #wgDiaryFlow .df-diff-mark{background:#ffe59a;color:#953c17;border-radius:3px;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
