@@ -6,6 +6,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createHybridCharacterStage} from '/students/free-talking-hybrid-lab/shared-character-stage.js?v=20261114-willo-restored1';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
+import {DUSK_ART,DUSK_UNLOCK_POINTS} from '/students/free-talking-genius/dusk-character.js?v=20261114-unlock1';
 import {scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261114-p4-visual1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 // Native pilot uses the existing document and an isolated ShadowRoot.
@@ -43,7 +44,17 @@ if(releaseMode){
 }
 
 const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,askedQuestionTexts:[],attemptCount:0,reviewing:false};
-const NAMES={willi:'Willo',willy:'AI Willy',bunny:'Bunny Fox',pigfish:'Pigfish'};
+const NAMES={willi:'Willo',willy:'AI Willy',bunny:'Bunny Fox',pigfish:'Pigfish',dusk:'Dusk'};
+const serverCharacter=()=>state.character==='dusk'?'willi':state.character;
+async function authoritativeDuskPoints(){
+ const api=window.WillenaAPI;
+ if(typeof api?.fetch!=='function')throw Error('Could not verify points');
+ const response=await api.fetch('/.netlify/functions/progress_summary?section=overview&_='+Date.now(),{cache:'no-store'});
+ if(!response.ok)throw Error('Could not verify points');
+ const overview=await response.json();
+ if(overview?.points==null||!Number.isFinite(Number(overview.points)))throw Error('Points unavailable');
+ return Math.max(0,Math.floor(Number(overview.points)));
+}
 const enginePicker=$('ftEngineSelect');
 const sttPicker=$('ftSttSelect');
 const sttDetails=$('ftSttDetails');
@@ -544,6 +555,7 @@ function ftShowFinish(result,{playSound=true}={}){
  portrait.classList.toggle('bf-actor',state.character==='willy');
  portrait.dataset.state='idle';portrait.dataset.mood='neutral';
  if(state.character==='bunny')portrait.innerHTML=BUNNY_FOX_ART;
+  else if(state.character==='dusk')portrait.innerHTML='<span class="ft-dusk-actor">'+scopedCharacterArt(DUSK_ART,'dusk-finish')+'</span>';
  else if(state.character==='willy')portrait.innerHTML=scopedCharacterArt(AI_WILLY_HEAD_SVG,'finish');
  else if(state.character==='pigfish'){
   portrait.innerHTML=PIGFISH_ART.replaceAll('id="pigBody"','id="pigBody-finish"').replaceAll('id="pigBelly"','id="pigBelly-finish"').replaceAll('url(#pigBody)','url(#pigBody-finish)').replaceAll('url(#pigBelly)','url(#pigBelly-finish)');
@@ -637,7 +649,7 @@ function saveHybridTranscript(who,spoken,verdict=null,proof=null,stamp=null,sour
  const turnNumber=++state.transcriptTurnNumber;
  if(turnNumber>150)return;
  const body={action:'transcript',session_id:sessionId,turn_number:turnNumber,
-   speaker:who==='You'?'student':'character',character:state.character,
+   speaker:who==='You'?'student':'character',character:serverCharacter(),
   book_id:state.book.id,unit_id:state.unit.id,
   transcript_text:String(spoken).trim().slice(0,1500),
   ...(who==='You'?(verdict?{verdict}:{}):{message_source:source}),
@@ -714,7 +726,7 @@ function showActor(){
  // Visual-only Free Talking component. Does not clone Speaking's recorder UI.
  state.actor=createHybridCharacterStage($('actorStage'),
   state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':
-  state.character==='willy'?'willy':'marin');
+  state.character==='willy'?'willy':state.character==='dusk'?'dusk':'marin');
  actorPhase('ready');
 }
 
@@ -1109,7 +1121,7 @@ function sendHybrid(item){
   const at=state.anchorToken;
   void (async()=>{
    try{
-    const r=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{action:'reply',book_id:state.book.id,unit_id:state.unit.id,character:state.character,model:state.hybridModel,session_id:state.transcriptSessionId,directive,history:snapshot,asked_questions:state.askedQuestionTexts.slice(-50)});
+    const r=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{action:'reply',book_id:state.book.id,unit_id:state.unit.id,character:serverCharacter(),model:state.hybridModel,session_id:state.transcriptSessionId,directive,history:snapshot,asked_questions:state.askedQuestionTexts.slice(-50)});
     const data=await r.json().catch(()=>({}));
     if(!r.ok)throw Error(data.error||'Hybrid response failed');
     if(!state.active||state.anchorToken!==at)return;
@@ -1334,7 +1346,7 @@ async function playAnchor(index){
   message('Using voice fallback for this textbook question');
   try{
    const r=await authorizedDemoFetch('/api/free-talking-realtime-eleven',
-    {character:state.character,text:anchor.text});
+    {character:serverCharacter(),text:anchor.text});
    if(!r.ok)throw Error('Voice fallback failed ('+r.status+')');
    const blob=await r.blob();
    const url=URL.createObjectURL(blob);
@@ -1716,7 +1728,7 @@ function prepareReviewOutro(){
  state.reviewOutro=null;state.reviewOutroPromise=null;
  const question=state.anchors?.find(a=>a.id);
  if(!state.hybrid||!question)return;
- const character=state.character,index=Math.floor(Math.random()*5);
+ const character=serverCharacter(),index=Math.floor(Math.random()*5);
  state.reviewOutroPromise=(async()=>{
   const response=await authorizedDemoFetch('/api/free-talking-review-outro',{character,index,question_id:question.id},AbortSignal.timeout(35000));
   const data=await response.json().catch(()=>({}));
@@ -1724,7 +1736,7 @@ function prepareReviewOutro(){
   const binary=atob(data.audio),bytes=new Uint8Array(binary.length);
   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
   const url=URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'}));
-  if(!state.active||state.character!==character){URL.revokeObjectURL(url);return null}
+  if(!state.active||serverCharacter()!==character){URL.revokeObjectURL(url);return null}
   return state.reviewOutro={url,text:data.text,character,index,stored:data.stored};
  })().catch(e=>{console.warn('[Free Talking] Outro preload failed',e);return null});
 }
@@ -1785,7 +1797,7 @@ async function reviewConversation({outroPromise=null}={}){
    const saved=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
     action:'transcript',book_id:state.book.id,unit_id:state.unit.id,session_id:state.transcriptSessionId,
     turn_number:credit.turn_number,original_turn_number:credit.original_turn_number,
-    speaker:'student',character:state.character,transcript_text:credit.text,
+    speaker:'student',character:serverCharacter(),transcript_text:credit.text,
     message_source:'review_credit',verdict:credit.qualifies?'QUALIFIES':'NEEDS_MORE',verdict_at:credit.stamp,verdict_proof:credit.proof,
     review_points:credit.points,review_qualifies:credit.qualifies,review_reason:credit.reason
    });
@@ -2068,7 +2080,7 @@ async function speakEleven(text,source='ai_reply'){
  const control=new AbortController();state.controller=control;
  try{
   if(!state.active||current!==state.generation)return;
-  const response=await authorizedDemoFetch('/api/free-talking-realtime-eleven',{character:state.character,text},control.signal);
+  const response=await authorizedDemoFetch('/api/free-talking-realtime-eleven',{character:serverCharacter(),text},control.signal);
   if(!response.ok){const e=await response.json().catch(()=>({}));throw Error(e.error||'ElevenLabs unavailable ('+response.status+')')}
   if(current!==state.generation||!state.active)return;
   // Android: avoid MediaSource audio/mpeg support differences. The server
@@ -2313,6 +2325,9 @@ async function initStandaloneRelease(){
  const bunnyPortrait=menu.querySelector('#ftChooseLili .ft-character-symbol');
  const pigfishPortrait=menu.querySelector('#ftChoosePigfish .ft-character-symbol');
  const willyPortrait=menu.querySelector('#ftChooseWilly .ft-character-symbol');
+ const duskOption=menu.querySelector('#ftChooseDusk');
+ const duskPortrait=duskOption?.querySelector('.ft-character-symbol');
+ if(duskOption){duskOption.hidden=false;if(duskPortrait)duskPortrait.innerHTML='<span class="ft-dusk-actor">'+scopedCharacterArt(DUSK_ART,'dusk-menu')+'</span>'}
  if(bunnyPortrait&&!bunnyPortrait.querySelector('svg'))bunnyPortrait.innerHTML=BUNNY_FOX_ART;
  if(pigfishPortrait&&!pigfishPortrait.querySelector('svg'))pigfishPortrait.innerHTML=PIGFISH_ART;
  if(willyPortrait&&!willyPortrait.querySelector('svg'))willyPortrait.innerHTML=AI_WILLY_HEAD_SVG;
@@ -2323,17 +2338,31 @@ async function initStandaloneRelease(){
  if(back){back.hidden=false;back.textContent='← 교재로 돌아가기'}
  host.append(menu);
  const choices=[
-  ['ftChooseLili','bunny'],['ftChooseWilli','willi'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy']
+  ['ftChooseLili','bunny'],['ftChooseWilli','willi'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy'],['ftChooseDusk','dusk']
  ];
  const buttons=choices.map(([id])=>menu.querySelector('#'+id)).filter(Boolean);
  menu.querySelector('#ftChooseWilly .ft-willy-coming-notice')?.remove();
  const startButton=menu.querySelector('#ftCharacterContinue');
  if(startButton)startButton.disabled=true;
- let selected=null,ready=false,starting=false;
+ let selected=null,ready=false,starting=false,duskPoints=null;
+ const duskLabel=duskOption?.querySelector('.ft-dusk-lock');
+ const showDuskPoints=points=>{
+  duskPoints=points;
+  if(!duskOption)return;
+  const unlocked=points!=null&&points>=DUSK_UNLOCK_POINTS;
+  duskOption.setAttribute('aria-disabled',String(!unlocked));
+  if(duskLabel)duskLabel.textContent=unlocked?'★ Unlocked':points==null?'🔒 Checking points…':'🔒 '+(DUSK_UNLOCK_POINTS-points).toLocaleString()+' points to go';
+ };
+ showDuskPoints(null);
+ void authoritativeDuskPoints().then(showDuskPoints).catch(()=>showDuskPoints(null));
  const choose=character=>{
   if(!ready||starting)return;
 
 
+  if(character==='dusk'&&(duskPoints==null||duskPoints<DUSK_UNLOCK_POINTS)){
+   showError(duskPoints==null?'포인트를 확인할 수 없어요. 다시 열어 주세요.':'🔒 5,000 points required to unlock Dusk.');
+   return;
+  }
   const repeated=selected===character;selected=character;
   for(const [id,name] of choices)menu.querySelector('#'+id)?.setAttribute('aria-pressed',String(name===character));
   if(startButton)startButton.disabled=false;
@@ -2341,9 +2370,14 @@ async function initStandaloneRelease(){
  };
  async function begin(){
   if(!ready||!selected||starting)return;
-
-
-  starting=true;buttons.forEach(b=>b.disabled=true);
+  starting=true;
+  if(selected==='dusk'){
+   try{
+    const points=await authoritativeDuskPoints();showDuskPoints(points);
+    if(points<DUSK_UNLOCK_POINTS){showError('🔒 5,000 points required to unlock Dusk.');starting=false;return}
+   }catch(ex){showError('Cannot verify Dusk unlock: '+ex.message);starting=false;return}
+  }
+  buttons.forEach(b=>b.disabled=true);
   if(startButton)startButton.disabled=true;
   message.hidden=true;
   state.character=selected;intro.hidden=true;
