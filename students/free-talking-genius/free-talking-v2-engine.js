@@ -2356,35 +2356,9 @@ async function initStandaloneRelease(){
  const startButton=menu.querySelector('#ftCharacterContinue');
  if(startButton)startButton.disabled=true;
  let selected=null,ready=false,starting=false,duskPoints=null;
- const duskLabel=duskOption?.querySelector('.ft-dusk-lock');
- const duskDialog=document.createElement('div');
- duskDialog.className='ft-dusk-unlock-dialog';
- duskDialog.hidden=true;
- duskDialog.innerHTML='<div class="ft-dusk-unlock-panel" role="dialog" aria-modal="true" aria-labelledby="ftDuskUnlockTitle" aria-describedby="ftDuskUnlockDescription"><span class="ft-dusk-unlock-icon" aria-hidden="true">✦</span><h3 id="ftDuskUnlockTitle">비밀 친구 Dusk</h3><p id="ftDuskUnlockDescription"></p><button type="button" class="ft-dusk-unlock-close">확인</button></div>';
- menu.append(duskDialog);
- const duskDescription=duskDialog.querySelector('#ftDuskUnlockDescription');
- const duskClose=duskDialog.querySelector('.ft-dusk-unlock-close');
- const closeDuskDialog=()=>{duskDialog.hidden=true;duskOption?.focus()};
- duskClose?.addEventListener('click',closeDuskDialog);
- duskDialog.addEventListener('click',event=>{if(event.target===duskDialog)closeDuskDialog()});
- duskDialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();closeDuskDialog()}});
- const openDuskDialog=()=>{
-  const needed=duskPoints==null?null:Math.max(0,DUSK_UNLOCK_POINTS-duskPoints);
-  duskDescription.textContent=needed==null
-   ? 'Dusk는 5,000포인트를 모으면 만날 수 있어요! 포인트를 확인한 뒤 다시 시도해 주세요.'
-   : 'Dusk를 만나려면 총 5,000포인트가 필요해요. 앞으로 '+needed.toLocaleString()+'포인트만 더 모으면 돼요!';
-  duskDialog.hidden=false;duskClose?.focus();
- };
- const showDuskPoints=points=>{
-  duskPoints=points;
-  if(!duskOption)return;
-  const unlocked=points!=null&&points>=DUSK_UNLOCK_POINTS;
-  duskOption.setAttribute('aria-disabled',String(!unlocked));
-  duskOption.classList.toggle('ft-dusk-is-locked',!unlocked);
-  duskOption.classList.toggle('ft-dusk-is-unlocked',unlocked);
-  duskOption.setAttribute('aria-label',unlocked?'Dusk':'Dusk, 비밀 캐릭터, 5,000포인트 필요');
-  if(duskLabel){duskLabel.hidden=true;duskLabel.textContent='';}
- };
+ const duskUnlock=window.WillenaFTSharedMenu?.createDuskUnlockUI(menu,DUSK_UNLOCK_POINTS);
+ const showDuskPoints=points=>{duskPoints=points;duskUnlock?.update(points)};
+ const openDuskDialog=()=>duskUnlock?.open();
  showDuskPoints(null);
  void authoritativeDuskPoints().then(showDuskPoints).catch(()=>showDuskPoints(null));
  const choose=character=>{
