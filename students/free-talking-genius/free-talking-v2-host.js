@@ -47,75 +47,79 @@ async function mount(header){
  // shadow-root menu is affected; Speaking and its layout remain untouched.
  const nativeMenuStyle=document.createElement('style');
  nativeMenuStyle.textContent=`
+ /* Native menu is a strict two-column grid on phones, four on wide tablets.
+    Every child has its own grid cell: no implicit columns or overlapping
+    character names. Keep the shared artwork and circular portraits. */
  #ftReleaseIntro.free-talking-genius #ftCharacter.ft-character-screen{
-   display:block!important;width:100%!important;max-width:100%!important;
-   padding:0!important;min-height:0!important;
+  display:flex!important;width:100%!important;min-height:0!important;
+  max-width:100%!important;padding:0!important;align-items:center!important;
  }
  #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-panel{
-   width:min(620px,100%)!important;max-width:100%!important;
-   padding:18px 14px!important;margin:0 auto!important;gap:13px!important;
+  width:min(640px,100%)!important;min-width:0!important;
+  max-width:100%!important;box-sizing:border-box!important;
+  margin:0 auto!important;padding:clamp(13px,3vw,24px)!important;
+  gap:14px!important;
  }
  #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options{
-   display:grid!important;grid-template-columns:minmax(0,1fr)!important;
-   width:100%!important;gap:10px!important;margin:0!important;
-   align-items:stretch!important;justify-items:stretch!important;
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-auto-columns:minmax(0,1fr)!important;grid-auto-flow:row!important;
+  width:100%!important;max-width:100%!important;margin:0!important;
+  gap:15px 12px!important;justify-items:stretch!important;align-items:start!important;
  }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option,
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"]{
-   display:grid!important;grid-template-columns:82px minmax(0,1fr)!important;
-   grid-template-rows:auto auto!important;align-items:center!important;
-   justify-content:stretch!important;column-gap:14px!important;
-   row-gap:2px!important;position:relative!important;inset:auto!important;
-   grid-column:auto!important;grid-row:auto!important;
-   width:100%!important;max-width:100%!important;min-width:0!important;
-   height:auto!important;min-height:94px!important;
-   padding:7px 8px!important;margin:0!important;
-   border:0!important;box-shadow:none!important;background:transparent!important;
-   transform:none!important;text-align:left!important;
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options>.ft-character-option{
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:flex-start!important;gap:8px!important;
+  grid-column:auto!important;grid-row:auto!important;
+  box-sizing:border-box!important;min-width:0!important;width:100%!important;
+  min-height:0!important;height:auto!important;max-width:100%!important;
+  padding:6px 2px!important;margin:0!important;position:static!important;
+  border:0!important;box-shadow:none!important;background:transparent!important;
+  transform:none!important;text-align:center!important;
  }
  #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol{
-   display:grid!important;grid-column:1!important;grid-row:1 / span 2!important;
-   width:78px!important;height:78px!important;min-width:0!important;
-   max-width:78px!important;max-height:78px!important;
-   margin:0!important;padding:0!important;position:relative!important;
-   border-radius:50%!important;flex:none!important;transform:none!important;
+  display:grid!important;place-items:center!important;
+  box-sizing:border-box!important;position:relative!important;
+  width:clamp(86px,23vw,116px)!important;height:clamp(86px,23vw,116px)!important;
+  max-width:100%!important;max-height:none!important;
+  margin:0 auto!important;padding:0!important;flex:none!important;
+  grid-column:auto!important;grid-row:auto!important;border-radius:50%!important;
  }
  #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option strong{
-   display:block!important;grid-column:2!important;grid-row:1!important;
-   width:100%!important;min-width:0!important;max-width:100%!important;
-   margin:0!important;padding:0!important;position:static!important;
-   font-size:clamp(16px,4.2vw,19px)!important;line-height:1.25!important;
-   white-space:normal!important;overflow-wrap:break-word!important;text-align:left!important;
+  display:block!important;position:static!important;grid-column:auto!important;grid-row:auto!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  padding:0!important;margin:0!important;white-space:normal!important;
+  overflow-wrap:break-word!important;font-size:clamp(14px,3.6vw,17px)!important;
+  line-height:1.28!important;text-align:center!important;
  }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option .ft-dusk-lock{
-   display:block!important;grid-column:2!important;grid-row:2!important;
-   min-width:0!important;margin:0!important;padding:0!important;
-   position:static!important;text-align:left!important;font-size:12px!important;
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk{
+  grid-column:2!important;
  }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option .ft-dusk-lock[hidden]{display:none!important}
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option[hidden]{display:none!important}
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-dusk-lock{
+  position:static!important;grid-column:auto!important;grid-row:auto!important;
+  display:block!important;width:100%!important;white-space:normal!important;
+  text-align:center!important;margin:0!important;padding:0!important;
+  font-size:11px!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option[hidden],
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-dusk-lock[hidden]{
+  display:none!important;
+ }
  #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-start-container{
-   width:100%!important;margin:0!important;
+  width:100%!important;max-width:100%!important;margin:0!important;
+  box-sizing:border-box!important;
  }
- @media(min-width:650px){
-   #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options{
-     grid-template-columns:repeat(2,minmax(0,1fr))!important;
-   }
+ @media(min-width:801px){
+  #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options{
+   grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  }
+  #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk{
+   grid-column:4!important;
+  }
+  #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option strong{
+   font-size:15px!important;
+  }
  }
- @media(min-width:1100px){
-   #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options{
-     grid-template-columns:repeat(4,minmax(0,1fr))!important;
-   }
-   #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option,
-   #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"]{
-     display:flex!important;flex-direction:column!important;justify-content:flex-start!important;
-     min-height:145px!important;text-align:center!important;gap:8px!important;
-   }
-   #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option strong{
-     text-align:center!important;
-   }
- }
- `;
+ `
  root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-phone-grid-fix3'),nativeMenuStyle,document.importNode(intro,true),document.importNode(demo,true));
  document.body.append(element);
  const state={element,root,header,context:null,active:false,reopen:null,shutdown:null,onExit:null,bodyOverflow:'',headerZIndex:'',exit({notify=true}={}){
