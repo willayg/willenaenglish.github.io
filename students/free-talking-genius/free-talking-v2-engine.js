@@ -1407,7 +1407,7 @@ async function playAnchor(index){
  }
  if(!state.active||run!==state.anchorToken)return;
  state.ttsPlaying=false;state.playing=null;
- if(state.hybrid&&!state.stream?.active){
+ if(state.hybrid&&!pushToSpeakMode()&&!state.stream?.active){
   actorPhase('thinking');error('Microphone did not reconnect. Pause and resume to retry.');
   message('Microphone unavailable');return;
  }
@@ -1964,7 +1964,7 @@ async function finishNaturalReply(data){
  try{await speakEleven(spoken)}catch(e){error('Voice playback: '+String(e.message||e))}
  if(!state.active||run!==state.anchorToken)return;
  // Never signal "Listening" until Android has actually restored the microphone.
- if(state.hybrid&&!state.stream?.active){
+ if(state.hybrid&&!pushToSpeakMode()&&!state.stream?.active){
   actorPhase('thinking');error('Microphone did not reconnect. Pause and resume to retry.');
   message('Microphone unavailable');return;
  }
@@ -2240,19 +2240,21 @@ async function startConversation(){
   $('anchorText').textContent=state.anchors[state.anchorIndex].text;
   if(state.hybrid){
    if(state.sttEngine!=='eleven-scribe-realtime'&&!window.MediaRecorder)throw Error('This browser does not support recording for Hybrid mode');
-   // Permission is requested before consuming today's one session.
-   const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
-   if(startId!==activeStartId){mic.getTracks().forEach(t=>t.stop());return}
-   state.stream=mic;
-   // No daily-use gate: the student can start another conversation any time.
-   monitorMicrophone(mic);
+   // In the tap-to-speak native flow, the first microphone request happens only
+   // when the student taps the existing Speaking-style recording control.
+   const mic=pushToSpeakMode()?null:await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+   if(startId!==activeStartId){mic?.getTracks().forEach(t=>t.stop());return}
+   state.stream=mic;state.micReleased=!mic;
+   if(mic)monitorMicrophone(mic);
    state.micUserMuted=false;state.ttsPlaying=false;
    state.active=true;state.starting=false;state.resumeIndex=0;
    if(!continuing)prepareReviewOutro();
    ftUsage.begin();
    if(ftUsage.current){ftUsage.current.engine='hybrid';ftUsage.current.model=state.hybridModel;ftUsage.current.sttModel=state.sttEngine;ftUsage.current.transcribedAudioSeconds=0;ftUsage.current.transcriptionRequests=0;ftUsage.current.timingSettingsMs={...ftTiming}}
-   if(state.sttEngine==='eleven-scribe-realtime')await scribeStart(mic);
-   else hybridStart(mic);
+   if(mic){
+    if(state.sttEngine==='eleven-scribe-realtime')await scribeStart(mic);
+    else hybridStart(mic);
+   }
    state.guidedSessionReady=true;
    message('Hybrid · '+state.hybridModel+' · '+state.sttEngine+' · starting textbook question');
    if(!restoreAfterPause())void playAnchor(state.anchorIndex);
