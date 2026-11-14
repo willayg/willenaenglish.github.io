@@ -1,7 +1,7 @@
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
-import {createDiaryFlow} from './diary-flow.js?v=20261114-typed-submission1';
+import {createDiaryFlow} from './diary-flow.js?v=20261114-seven-stage1';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {installWillenaKeyboard,hideWillenaKeyboard} from '/students/shared/willena-keyboard.js?v=20261114-writing-genius1';
 import {createSentencePractice} from './sentence-practice.js?v=20261104-unit-tab-label1';
@@ -788,15 +788,28 @@ const diaryFlow=createDiaryFlow({
  review:async entry=>{const result=await diaryRequest('review',entry.id);return result.feedback},
  clarify:async(entry,i,clarification)=>{const token=await authToken();const response=await fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({action:'clarify',entry_id:entry.id,correction_index:i,clarification}),signal:AbortSignal.timeout(45000)});const data=await response.json().catch(()=>({}));if(!response.ok||!data.success)throw Error(data.error||'다시 확인하지 못했어요.');return data},
  speech:async(entry,transcript,chosenLines)=>diaryRequest('speech',entry.id,transcript,chosenLines),
- typing:async(entry,chosenLines,answers,typedIndexes)=>{
+ typing:async(entry,passage,answer)=>{
   const call=async token=>fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',
    headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
-   body:JSON.stringify({action:'typing',entry_id:entry.id,chosen_lines:chosenLines,answers,typed_indexes:typedIndexes}),
+   body:JSON.stringify({action:'passage_typing',entry_id:entry.id,typed_passage:answer}),
    signal:AbortSignal.timeout(20000)});
   let response=await call(await authToken());
   if(response.status===401)response=await call(await authToken(true));
   const data=await response.json().catch(()=>({}));
-  if(!response.ok||data.success!==true)throw Error(data.error||'쓰기 연습 완료 기록을 저장하지 못했어요.');
+  if(!response.ok||data.success!==true)throw Error(data.error||'쓰기 연습 기록을 저장하지 못했어요.');
+  return data;
+ },
+ finalizeDraft:async(entry,body)=>{
+  const call=async token=>fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',
+   headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+   body:JSON.stringify({action:'finalize',entry_id:entry.id,final_body:body}),
+   signal:AbortSignal.timeout(20000)});
+  let response=await call(await authToken());
+  if(response.status===401)response=await call(await authToken(true));
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||data.success!==true)throw Error(data.error||'최종 글을 저장하지 못했어요.');
+  $('wgBody').value=data.body;
+  if(state.active){state.active.body=data.body;state.active.dirty=false}
   return data;
  },
  teacherFeedback:async entry=>databaseApi('rpc/writing_genius_student_feedback_v1','POST','',{p_entry_id:entry.id}),
