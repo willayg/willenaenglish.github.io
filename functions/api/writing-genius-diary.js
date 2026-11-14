@@ -63,7 +63,7 @@ export async function onRequestPost({request,env}){
     structure:entry.kind==='topic'?Object.fromEntries(['beginning','middle','ending'].map(k=>[k,{needs_work:feedback.structure?.[k]?.needs_work===true,advice_ko:String(feedback.structure?.[k]?.advice_ko||'').slice(0,250),example_en:feedback.structure?.[k]?.needs_work===true?String(feedback.structure?.[k]?.example_en||'').slice(0,220):''}])):null,
     improvements:(Array.isArray(feedback.improvements)?feedback.improvements:[]).slice(0,30).map(x=>({original:String(x.original||'').slice(0,300),better:String(x.better||'').slice(0,300),translation_ko:String(x.translation_ko||'').slice(0,300),why_ko:String(x.why_ko||'').slice(0,300)})),
     expressions:(Array.isArray(feedback.expressions)?feedback.expressions:[]).slice(0,3).map(x=>({english:String(x.english||'').slice(0,180),meaning_ko:String(x.meaning_ko||'').slice(0,180)}))};
-   const saved=await db(reviewPath,auth.token,'POST',{entry_id:id,student_id:auth.id,original_body:entry.body,feedback,spoken_at:null,spoken_transcript:null});
+   const saved=await db(reviewPath,auth.token,'POST',{entry_id:id,student_id:auth.id,original_body:entry.body,feedback,spoken_at:null,spoken_transcript:null,typed_at:null});
    if(!saved.ok)return json(503,{error:'피드백을 저장하지 못했어요.'});
    return json(200,{success:true,feedback});
   }
@@ -97,6 +97,33 @@ export async function onRequestPost({request,env}){
    const saved=await db('writing_genius_diary_reviews?entry_id=eq.'+id,auth.token,'PATCH',{feedback:{...feedback,improvements:corrections}});
    if(!saved.ok)return json(503,{error:'수정된 문장을 저장하지 못했어요.'});
    return json(200,{success:true,better,translation_ko});
+  }
+
+  if(action==='typing'){
+   const review=await db('writing_genius_diary_reviews?select=original_body,feedback&entry_id=eq.'+id+'&limit=1',auth.token);
+   if(!review.ok||!review.data?.[0]||review.data[0].original_body!==entry.body)
+    return json(409,{error:'먼저 AI Willi 피드백을 확인해 주세요.'});
+   const chosen=input.chosen_lines,answers=input.answers,indexes=input.typed_indexes;
+   if(!Array.isArray(chosen)||!Array.isArray(answers)||!Array.isArray(indexes)||
+      chosen.length!==lines.length||answers.length!==lines.length||!indexes.length||
+      !indexes.every(i=>Number.isInteger(i)&&i>=0&&i<lines.length)||
+      new Set(indexes).size!==indexes.length)
+    return json(422,{error:'문장 연습 기록을 확인해 주세요.'});
+   const canonical=t=>String(t||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9']/g,' ').replace(/\\s+/g,' ').trim();
+   const typedCanonical=t=>String(t||'').toLowerCase().replace(/[’‘]/g,"'").replace(/\\s+/g,' ').trim();
+   const improvements=Array.isArray(review.data[0].feedback?.improvements)?review.data[0].feedback.improvements:[];
+   const approved=lines.every((line,i)=>{
+    const alternatives=[line];
+    for(const x of improvements)if(canonical(x.original)===canonical(line))alternatives.push(x.better,x.clarified_better);
+    return alternatives.some(t=>t&&canonical(t)===canonical(chosen[i]));
+   });
+   if(!approved||!answers.every(a=>typeof a==='string'&&a.trim().length>0))
+    return json(422,{error:'연습한 문장을 다시 확인해 주세요.'});
+   if(!indexes.every(i=>typedCanonical(answers[i])===typedCanonical(chosen[i])))
+    return json(422,{error:'입력한 문장 중 수정이 필요한 문장이 있어요.'});
+   const done=await db('writing_genius_diary_reviews?entry_id=eq.'+id,auth.token,'PATCH',{typed_at:new Date().toISOString()});
+   if(!done.ok)return json(503,{error:'쓰기 연습 완료 기록을 저장하지 못했어요.'});
+   return json(200,{success:true});
   }
   if(action==='speech'){
    const review=await db('writing_genius_diary_reviews?select=original_body,feedback&entry_id=eq.'+id+'&limit=1',auth.token);
