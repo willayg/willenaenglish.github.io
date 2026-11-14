@@ -4,6 +4,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createHybridCharacterStage} from './shared-character-stage.js?v=20261114-electric-cat-v3';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
+import {scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261114-result-shared-v1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 const $=id=>document.getElementById(id);
 const releaseMode=new URLSearchParams(location.search).get('release')==='1';
@@ -499,8 +500,11 @@ function ftShowFinish(result,{playSound=true}={}){
  stars.setAttribute('aria-label',result.stars+' out of 5 stars');
  $('ftResultPoints').textContent='+'+result.points+' Points';
  const portrait=$('ftResultMascot');portrait.replaceChildren();portrait.classList.remove('is-speaking');
+ // The finish card is another instance of the SAME shared SVG actor.
+ portrait.classList.toggle('bf-actor',state.character==='willy');
+ portrait.dataset.state='idle';portrait.dataset.mood='neutral';
  if(state.character==='bunny')portrait.innerHTML=BUNNY_FOX_ART;
- else if(state.character==='willy')portrait.innerHTML=AI_WILLY_HEAD_SVG;
+ else if(state.character==='willy')portrait.innerHTML=scopedCharacterArt(AI_WILLY_HEAD_SVG,'finish');
  else if(state.character==='pigfish'){
   portrait.innerHTML=PIGFISH_ART.replaceAll('id="pigBody"','id="pigBody-finish"').replaceAll('id="pigBelly"','id="pigBelly-finish"').replaceAll('url(#pigBody)','url(#pigBody-finish)').replaceAll('url(#pigBelly)','url(#pigBelly-finish)');
  }else{
@@ -2025,7 +2029,7 @@ async function speakEleven(text,source='ai_reply'){
   await releaseMicForPlayback();
   if(!state.active||current!==state.generation)return;
   await audio.play();
-  if(source==='evaluation_feedback')$('ftResultMascot').classList.add('is-speaking');
+  if(source==='evaluation_feedback'){$('ftResultMascot').classList.add('is-speaking');$('ftResultMascot').dataset.state='speaking';}
   await new Promise(resolve=>{
    if(audio.ended){resolve();return}
    audio.onended=resolve;audio.onerror=resolve;
@@ -2035,7 +2039,7 @@ async function speakEleven(text,source='ai_reply'){
  }catch(e){if(e.name!=='AbortError'&&state.active){error('ElevenLabs audio: '+e.message);message('Voice playback failed — see the error below')}}
  finally{
   if(current===state.generation){
-   $('ftResultMascot').classList.remove('is-speaking');
+   $('ftResultMascot').classList.remove('is-speaking');$('ftResultMascot').dataset.state='idle';
    state.ttsPlaying=false;
    if(state.active)await restoreMicAfterPlayback().catch(e=>console.warn('[Free Talking] mic reacquisition failed',e));
   }
