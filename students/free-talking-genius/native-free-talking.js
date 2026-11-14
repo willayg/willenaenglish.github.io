@@ -45,6 +45,7 @@ async function createWorkspace({header}){
   native.shutdown?.();
   native.active=false;
   element.hidden=true;
+  window.WillenaFTNativePilot?.claim({active:false,close:()=>native.exit()});
   document.body.classList.remove('ft-native-active');
   document.body.style.removeProperty('overflow');
   native.onExit?.();
@@ -70,5 +71,14 @@ export async function openNativeFreeTalking({bookId,unitId,header,onExit}){
  document.body.style.overflow='hidden';
  window.WillenaFTNativePilot?.claim({active:true,close:()=>entry.exit()});
  window.WillenaFTNativePilot?.enter();
- await entry.reopen(entry.context);
+ try{await entry.reopen(entry.context)}
+ catch(error){
+  entry.active=false;
+  entry.element.hidden=true;
+  document.body.classList.remove('ft-native-active');
+  document.body.style.removeProperty('overflow');
+  window.WillenaFTNativePilot?.claim({active:false,close:()=>entry.exit()});
+  if(history.state?.willenaFreeTalkingNavV1?.screen==='ftNativeConversation')history.back();
+  throw error;
+ }
 }
