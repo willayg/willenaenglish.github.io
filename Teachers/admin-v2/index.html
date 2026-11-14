@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="./visitor-enrollment.css?v=1">
 <link rel="stylesheet" href="./biweekly-report.css?v=20261101-v1">
 <link rel="stylesheet" href="./admin-v2-enquiries.css?v=20261112-scroll2">
+<link rel="stylesheet" href="./admin-v2-teachers.css?v=20261114">
 </head>
 <body>
 <div id="teacher-header"></div>
@@ -34,12 +35,24 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
     <button class="nav" data-view="classes"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v16M16 4v16M4 9h16M4 15h16"/></svg></span><span>Classes</span></button>
     <button class="nav" data-view="level-tests" data-page="levelTests"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Level Tests</span></button>
     <button class="nav" data-view="biweekly"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Biweekly Reports</span></button>
-    <button class="nav" type="button" data-view="enquiries" title="Website enquiries"><span class="nav-icon enq-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/><path d="M8 3h8"/></svg><span id="adminEnquiryCount" class="enq-unread" hidden>0</span></span><span>문의 관리</span></button><button type="button" class="nav" data-view="staff-calendar" title="Shared Willena Calendar"><span class="nav-icon" aria-hidden="true">▦</span><span>Willena Calendar</span></button><div class="rail-spacer"></div>
+    <button class="nav" type="button" data-view="enquiries" title="Website enquiries"><span class="nav-icon enq-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/><path d="M8 3h8"/></svg><span id="adminEnquiryCount" class="enq-unread" hidden>0</span></span><span>문의 관리</span></button><button type="button" class="nav" data-view="staff-calendar" title="Shared Willena Calendar"><span class="nav-icon" aria-hidden="true">▦</span><span>Willena Calendar</span></button><button class="nav" type="button" data-view="teachers-manager" hidden style="display:none"><span class="nav-icon" aria-hidden="true">♙</span><span>Teachers Manager</span></button><div class="rail-spacer"></div>
   </aside>
   <main class="workspace">
 <section class="view" id="view-staff-calendar" aria-label="Shared Willena Calendar">
   <iframe id="adminSharedCalendarFrame" title="Willena Calendar — shared with Teachers" data-src="/Teachers/?view=staff-calendar&amp;embed=calendar" style="display:block;width:100%;min-height:75vh;height:calc(100dvh - 125px);border:0;border-radius:12px;background:transparent" loading="lazy"></iframe>
 </section>
+<section class="view" id="view-teachers-manager" aria-label="Teachers Manager">
+  <div class="page-head"><div><h1>Teachers Manager</h1><div class="panel-sub">Account access · available to designated admins only</div></div><button type="button" id="tmRefresh" class="control">Refresh</button></div>
+  <p id="tmMessage" role="status" aria-live="polite"></p>
+  <div class="tm-layout">
+   <section class="panel tm-panel"><div class="panel-head"><div><div class="panel-title">Teachers & admins</div><div class="panel-sub" id="tmCount">Loading…</div></div></div>
+   <div class="tm-toolbar"><input id="tmSearch" class="control" type="search" placeholder="Search teachers"><select id="tmFilter" class="control"><option value="all">All</option><option value="active">Active</option><option value="retired">Retired</option></select></div>
+   <div id="tmList" class="tm-list"></div></section>
+   <section class="panel tm-panel"><div class="panel-head"><div class="panel-title">Add teacher</div></div>
+   <form id="tmCreateForm" class="tm-form"><label>Full name<input id="tmName" required maxlength="120" autocomplete="off"></label><label>Email<input id="tmEmail" type="email" required autocomplete="off"></label><label>Username (optional)<input id="tmUsername" maxlength="80" autocomplete="off"></label><label>Initial password<input id="tmPassword" type="password" required minlength="8" autocomplete="new-password"></label><small>A new teacher account is active immediately. For retirement, the profile and teaching history are preserved.</small><button id="tmCreate" type="submit" class="control admin-primary">+ Add teacher</button></form>
+   </section>
+  </div>
+ </section>
 <section class="view" id="view-enquiries" aria-label="Website enquiry management">
  <div class="page-head"><div><h1>문의 관리 <span id="enqNewCount" class="enq-count">0</span></h1><div class="panel-sub">Website Enquiries · 상담 문의</div></div><div class="enq-head-actions"><button id="wcEnablePush" type="button" class="control">🔔 알림 켜기</button><button id="wcDisablePush" type="button" class="control" hidden>알림 끄기</button><button id="wcTestPush" type="button" class="control" hidden>알림 테스트</button><button id="enqRefresh" type="button" class="control admin-primary">새로고침 ↻</button></div></div><p id="wcPushStatus" hidden role="status" class="enq-notification-status"></p>
  <div class="enq-toolbar"><select class="control" id="enqFilter" aria-label="Enquiry status"><option value="">전체 상태</option><option value="new">신규</option><option value="contacted">연락 완료</option><option value="consultation">상담 예약</option><option value="enrolled">등록 완료</option><option value="closed">종료</option></select><input class="control" type="search" id="enqSearch" placeholder="이름 · 전화번호 검색" aria-label="Search enquiries"><span id="enqCount" class="panel-sub"></span></div>
@@ -139,7 +152,7 @@ document.querySelector('[data-view="staff-calendar"]')?.addEventListener('click'
  if(frame && !frame.getAttribute('src'))frame.setAttribute('src',frame.getAttribute('data-src'));
 });
 </script>
-<script type="module" src="./admin-v2.js?v=20261112-scroll2"></script>
+<script type="module" src="./admin-v2.js?v=20261114-teachers-manager"></script>
 <script type="module" src="./biweekly-report.js?v=20261101-v1"></script>
 <script>
 (function(){
