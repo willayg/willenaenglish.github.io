@@ -12,7 +12,7 @@ import {geniusSessionContext} from '/students/components/genius-session-context.
 import {createFreeTalkingVoice} from './question-voice.js?v=20261114-priority-question1';
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-route8';
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261113-willy-retry1';
-import {createFreeTalkingCharacters} from './character-actor.js?v=20261114-p4-visual1';
+import {createFreeTalkingCharacters} from './character-actor.js?v=20261114-mouth-state-fix1';
 import {createFreeTalkingGuide} from './guide.js?v=20261107-guide-kids2';
 // Keep the inline character menu if the optional shared UI script is unavailable.
 try{window.WillenaFTSharedMenu?.replace(document.getElementById('ftCharacter'))}
