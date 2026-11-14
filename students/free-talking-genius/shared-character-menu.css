@@ -118,3 +118,6 @@
   min-height:55px;
  }
 }
+
+/* Dusk is a Free Talking-only unlockable; never show it in Speaking's picker. */
+.free-talking-genius #ftCharacter .ft-character-dusk[hidden]{display:none!important}
