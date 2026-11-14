@@ -227,7 +227,7 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
    const home=document.createElement('button');home.type='button';home.className='ft2-btn ft2-primary';home.textContent='Back to Units';home.addEventListener('click',()=>close());
    result.append(title,points,feedback,home);
    onProgress?.();
-  }catch(error){scene.hidden=false;uiStatus('Review could not be saved: '+error.message+' — tap Finish to retry.')}
+  }catch(error){state.phase='review-failed';scene.hidden=false;uiStatus('Review could not be saved: '+error.message+' — tap Finish to retry.')}
   finally{state.inFlight=false;finish.disabled=false}
  }
  async function begin(){
