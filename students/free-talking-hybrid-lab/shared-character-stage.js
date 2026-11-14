@@ -1,7 +1,7 @@
 // Free Talking-only shared character presentation.
 // Restores the original ft-animal-stage / ft-animal-avatar / ft-animal-timer
 // layout used before the Nov 13 SVG-stage experiment. No Speaking controls.
-import {createFreeTalkingCharacters,resolveFreeTalkingActorPhase} from '/students/free-talking-genius/character-actor.js?v=20261114-p4-visual1';
+import {createFreeTalkingCharacters,resolveFreeTalkingActorPhase} from '/students/free-talking-genius/character-actor.js?v=20261114-mouth-state-fix1';
 
 export function createHybridCharacterStage(host,character='bunny-v3'){
  host.replaceChildren();
