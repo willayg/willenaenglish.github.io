@@ -1,0 +1,79 @@
+/* One character-menu presentation for Speaking and native Free Talking V2.
+   Markup and Willo SVG are provided by shared-menu-ui.js.
+   Both modes load this exact stylesheet, last in their style cascade. */
+.free-talking-genius #ftCharacter.ft-character-screen{
+ width:100%; min-height:0; padding:0;
+ display:flex;align-items:center;justify-content:center;
+}
+.free-talking-genius #ftCharacter.ft-character-screen[hidden]{display:none!important}
+.free-talking-genius #ftCharacter .ft-character-panel{
+ width:min(940px,100%);max-width:100%;padding:clamp(18px,3vw,34px);
+ display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.4vw,22px);
+ border-radius:26px;text-align:center;
+}
+.free-talking-genius #ftCharacter .ft-character-panel h2{
+ margin:0;color:#285f68;font-size:clamp(22px,3.2vw,30px);line-height:1.25;
+}
+.free-talking-genius #ftCharacter .ft-character-options{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:clamp(12px,2.5vw,23px);width:100%;margin:5px 0 0;justify-items:stretch;align-items:start;
+}
+.free-talking-genius #ftCharacter .ft-character-option,
+.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"]{
+ display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+ gap:10px;min-width:0;width:100%;min-height:0;padding:5px 3px;
+ border:0;border-radius:18px;box-shadow:none;background:transparent;
+ color:#32636c;transform:none;
+}
+.free-talking-genius #ftCharacter .ft-character-symbol{
+ width:clamp(94px,12vw,158px);height:clamp(94px,12vw,158px);
+ flex:0 0 auto;display:grid;place-items:center;padding:0;
+ box-sizing:border-box;border:9px solid #b0e7ec;outline:3px solid #dcf5f6;
+ border-radius:50%;background:#fff;color:#56afb9;
+}
+.free-talking-genius #ftCharacter .ft-character-lili .ft-character-symbol{
+ border-color:#f2c0dc;outline-color:#fceaf4;background:#fff;
+}
+.free-talking-genius #ftCharacter .ft-character-symbol svg{
+ display:block;width:100%;height:100%;max-width:100%;max-height:100%;overflow:visible;
+}
+.free-talking-genius #ftCharacter .ft-character-option strong{
+ font-size:clamp(14px,1.9vw,19px);font-weight:900;line-height:1.3;white-space:normal;
+}
+.free-talking-genius #ftCharacter .ft-character-willi strong{color:#4699a4}
+.free-talking-genius #ftCharacter .ft-character-lili strong{color:#d77eac}
+.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"] .ft-character-symbol{
+ transform:scale(1.045);box-shadow:0 0 0 5px #7fcbd588;
+}
+.free-talking-genius #ftCharacter .ft-character-lili[aria-pressed="true"] .ft-character-symbol{
+ box-shadow:0 0 0 5px #e9a8ca88;
+}
+.free-talking-genius #ftCharacter .ft-character-start-container{
+ width:min(600px,100%);padding:12px;border:2px solid #d3eff1;
+ border-radius:18px;background:#f7fdfd;
+}
+.free-talking-genius #ftCharacter .ft-character-continue{
+ display:block;width:100%;min-height:55px;margin:0;
+ background:#fff;border:3px solid #a6e5eb;border-radius:14px;
+ color:#c74b93;font:900 18px Poppins,Arial,sans-serif;
+}
+.free-talking-genius #ftCharacter .ft-character-continue:disabled{opacity:.42}
+.free-talking-genius #ftCharacter .ft-character-willi .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-lili .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"] .ft-character-symbol{
+ background:#fff;
+}
+@media(max-width:700px){
+ .free-talking-genius #ftCharacter .ft-character-options{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;
+ }
+ .free-talking-genius #ftCharacter .ft-character-symbol{
+  width:clamp(100px,30vw,152px);height:clamp(100px,30vw,152px);
+ }
+ .free-talking-genius #ftCharacter .ft-character-panel{padding:18px 12px;gap:13px}
+ .free-talking-genius #ftCharacter .ft-character-option strong{font-size:clamp(14px,3.8vw,19px)}
+}
+@media(max-width:370px){
+ .free-talking-genius #ftCharacter .ft-character-symbol{width:98px;height:98px}
+ .free-talking-genius #ftCharacter .ft-character-panel{padding:14px 8px}
+}
