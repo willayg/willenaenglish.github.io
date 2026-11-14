@@ -4,6 +4,15 @@ import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wav
 import {AI_WILLY_HEAD_SVG} from './willy-svg.js?v=20261114-electric-cat-v3';
 const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:AI_WILLY_HEAD_SVG};
 const PORTRAITS={...ART};
+// One animation-state vocabulary for the Speaking and live conversation workspaces.
+// This is visual-only: it never starts recording, audio playback, or grading.
+export function resolveFreeTalkingActorPhase({speaking=false,listening=false,thinking=false,phase='ready'}={}){
+ if(speaking)return 'speaking';
+ if(listening||phase==='student')return 'listening';
+ if(thinking||phase==='thinking')return 'thinking';
+ return 'idle';
+}
+
 /* Duplicate SVG gradient IDs resolve against the hidden selection portrait on
    some Android browsers, leaving Pigfish's in-game body transparent.
    Scope references per instance; artwork, colours and animations are unchanged. */
@@ -37,7 +46,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   const recording=circle.dataset.aiRecording==='true'||circle.dataset.listening==='true';
   const thinking=circle.dataset.transcribing==='true'||circle.dataset.phase==='thinking';
   const phase=circle.dataset.phase;
-  const state=voiceSpeaking?'speaking':recording?'listening':thinking?'thinking':phase==='feedback'?'idle':'idle';
+  const state=resolveFreeTalkingActorPhase({speaking:voiceSpeaking,listening:recording,thinking,phase});
   if(actor.dataset.state!=='celebrating')actor.dataset.state=state;
  }
  function select(character){
@@ -66,6 +75,13 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
    /\[(?:excited|cheerful)\]|\b(?:great job|well done|awesome|wonderful)\b/.test(t)?'happy':'neutral';
   setMood(mood);
  }
+ function setPhase(phase){
+  // Set the same visual state used by live Free Talking, without owning audio state.
+  const normalized=resolveFreeTalkingActorPhase({phase});
+  circle.dataset.phase=normalized==='speaking'?'ai':normalized==='listening'?'student':normalized;
+  circle.dataset.listening=String(normalized==='listening');
+  setSpeaking(normalized==='speaking');
+ }
  function setSpeaking(playing){
   voiceSpeaking=Boolean(playing);
   // Keep the mood inferred from THIS spoken line, never cycle through moods.
@@ -88,5 +104,5 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   setSpeaking(!!event.detail?.playing);
  });
  select('marin');
- return {select,celebrate,setSpeaking,setMood,setMoodFromText,actor};
+ return {select,celebrate,setPhase,setSpeaking,setMood,setMoodFromText,actor};
 }
