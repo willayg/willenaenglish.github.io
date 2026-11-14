@@ -304,7 +304,8 @@ function clearError(){$('ftError').hidden=true;$('ftError').textContent=''}
 // Navigation history belongs to this app, not to the student's saved attempts.
 // Store the screen and unit in browser history; never use history to modify scores.
 const FT_NAV_KEY='willenaFreeTalkingNavV1';
-const FT_SCREENS=new Set(['ftHome','ftBook','ftCharacter','ftSession','ftFinish']);
+const FT_SCREENS=new Set(['ftHome','ftBook','ftCharacter','ftSession','ftFinish','ftFreeTalkingV2']);
+let freeTalkingV2=null;
 let visibleScreen='ftHome',navigatingHistory=false;
 const NATIVE_FT_PILOT=new URLSearchParams(location.search).get('nativeFT')==='1';
 window.WillenaFTNativePilot={
@@ -373,6 +374,7 @@ function sameNav(a,b){
 function view(which,{record=true}={}){
  if(!FT_SCREENS.has(which))return;
  if(which!=='ftSession'){retryVoice.stop();aiRecorder.cancel();questionVoice.stop();try{state.renderer?.speechRecognition?.stopExtended?.();state.renderer?.speechRecognition?.stop?.()}catch{}}
+ if(visibleScreen==='ftFreeTalkingV2'&&which!=='ftFreeTalkingV2')freeTalkingV2?.close({notify:false});
  for(const id of FT_SCREENS)$(id).hidden=id!==which;
  visibleScreen=which;clearError();
  if(record&&!navigatingHistory){
@@ -404,6 +406,7 @@ function restoreNavigation(nav){
    // in-memory session; a refresh must start via the normal authenticated flow.
    view('ftBook',{record:false});return;
   }
+  if(nav.screen==='ftFreeTalkingV2'){view('ftBook',{record:false});return;}
   if(nav.screen==='ftCharacter'){view('ftBook',{record:false});return;}
   if(nav.screen==='ftFinish'&&state.session?.id===nav.sessionId&&state.session.status==='completed'){
    view('ftFinish',{record:false});return;
@@ -1234,6 +1237,29 @@ $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pend
 $('ftCharacterBack').addEventListener('click',()=>view('ftBook'));
 
 $('ftSpeakingCard').addEventListener('click',()=>void openMode('speaking'));
+// New native Free Talking V2 has its own component and session lifecycle.
+// V1 remains separately available until the teacher retires it.
+$('ftFreeTalkingV2Card').addEventListener('click',async()=>{
+ const bookId=BOOK(),unitId=groups()[0]?.unit_id;
+ if(!bookId||!unitId){showError('이 단원의 자유 대화를 사용할 수 없어요.');return}
+ const card=$('ftFreeTalkingV2Card');
+ if(card.disabled)return;
+ card.disabled=true;
+ try{
+  if(!freeTalkingV2){
+   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-v2a');
+   freeTalkingV2=createFreeTalkingV2({
+    host:$('ftFreeTalkingV2'),getToken:()=>token(),
+    onBack:()=>view('ftBook'),
+    onProgress:()=>{void refreshFreeTalkingPercent()}
+   });
+  }
+  freeTalkingV2.open({bookId,unitId});
+  view('ftFreeTalkingV2');
+ }catch(error){showError('Free Talking V2: '+error.message)}
+ finally{card.disabled=false}
+});
+
  // Separate Free Talking experience; no Speaking state machine is modified.
  $('ftFreeTalkingCard').addEventListener('click',()=>{
   const unitId=groups()[0]?.unit_id;
