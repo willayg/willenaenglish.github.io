@@ -1,4 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
+// Explicit manager allowlist: Will, 김윤정, 김현정. An admin role alone is not sufficient.
+const MANAGERS = new Set(['abdf7489-55ff-4acd-9a15-1919076064ba','3a84b9ed-fdf2-4f40-b7e9-d37665023792','0811e4bc-232e-42b9-99c8-68d36a3f2ed7']);
 
 const ALLOWED_ORIGINS = new Set([
   'https://teachers.willenaenglish.com',
@@ -39,6 +41,8 @@ function safeText(value, max = 200) {
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers: headers(event), body: '' };
+  const origin = String((event.headers || {}).origin || (event.headers || {}).Origin || '');
+  if (event.httpMethod === 'POST' && !ALLOWED_ORIGINS.has(origin)) return respond(event, 403, {success:false,error:'Origin not allowed'});
 
   const url = process.env.SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -58,8 +62,8 @@ exports.handler = async (event) => {
     .eq('id', actor.id)
     .single();
 
-  if (actorProfileError || !actorProfile || String(actorProfile.role).toLowerCase() !== 'admin' || actorProfile.approved !== true) {
-    return respond(event, 403, { success: false, error: 'Admin access required' });
+  if (actorProfileError || !actorProfile || String(actorProfile.role).toLowerCase() !== 'admin' || actorProfile.approved !== true || !MANAGERS.has(actor.id)) {
+    return respond(event, 403, { success: false, error: 'Teacher management is restricted to designated administrators' });
   }
 
   const qs = event.queryStringParameters || {};
@@ -86,8 +90,8 @@ exports.handler = async (event) => {
       const password = String(body.password || '');
       const name = safeText(body.name, 120);
       const username = safeText(body.username, 80).toLowerCase();
-      const role = String(body.role || 'teacher').toLowerCase();
-      const approved = body.approved !== false;
+      const role = 'teacher';
+      const approved = true;
 
       if (!email || !email.includes('@')) return respond(event, 400, { success: false, error: 'A valid email is required' });
       if (password.length < 8) return respond(event, 400, { success: false, error: 'Password must be at least 8 characters' });
@@ -120,57 +124,22 @@ exports.handler = async (event) => {
 
     if (action === 'update' && event.httpMethod === 'POST') {
       const userId = safeText(body.user_id, 80);
-      if (!userId) return respond(event, 400, { success: false, error: 'Missing user ID' });
-
-      const { data: existing, error: existingError } = await admin
-        .from('profiles')
-        .select('id, role')
-        .eq('id', userId)
-        .single();
-      if (existingError || !existing || !['teacher', 'admin'].includes(String(existing.role).toLowerCase())) {
+      if (!userId || MANAGERS.has(userId)) return respond(event, 403, { success: false, error: 'Protected administrator account' });
+      const { data: existing, error: existingError } = await admin.from('profiles')
+        .select('id, role, approved').eq('id', userId).single();
+      if (existingError || !existing || String(existing.role).toLowerCase() !== 'teacher')
         return respond(event, 404, { success: false, error: 'Teacher account not found' });
-      }
-
-      const update = {};
-      if (body.name !== undefined) update.name = safeText(body.name, 120);
-      if (body.username !== undefined) update.username = safeText(body.username, 80).toLowerCase();
-      if (body.approved !== undefined) update.approved = Boolean(body.approved);
-      if (body.role !== undefined) {
-        const role = String(body.role).toLowerCase();
-        if (!['teacher', 'admin'].includes(role)) return respond(event, 400, { success: false, error: 'Invalid role' });
-        if (userId === actor.id && role !== 'admin') return respond(event, 400, { success: false, error: 'You cannot remove your own admin role' });
-        update.role = role;
-      }
-      if (userId === actor.id && update.approved === false) return respond(event, 400, { success: false, error: 'You cannot disable your own account' });
-      if (!Object.keys(update).length) return respond(event, 400, { success: false, error: 'Nothing to update' });
-
-      const { error } = await admin.from('profiles').update(update).eq('id', userId);
+      // Retire/reactivate teachers without deleting their profile, history or auth identity.
+      // Role changes and elevation are deliberately not available from this manager.
+      if (typeof body.approved !== 'boolean') return respond(event, 400, { success: false, error: 'Specify active or retired status' });
+      const { error } = await admin.from('profiles').update({approved:body.approved}).eq('id',userId).eq('role','teacher');
       if (error) throw error;
-      return respond(event, 200, { success: true });
-    }
-
-    if (action === 'reset_password' && event.httpMethod === 'POST') {
-      const userId = safeText(body.user_id, 80);
-      const password = String(body.password || '');
-      if (!userId) return respond(event, 400, { success: false, error: 'Missing user ID' });
-      if (password.length < 8) return respond(event, 400, { success: false, error: 'Password must be at least 8 characters' });
-      const { data: existing } = await admin.from('profiles').select('role').eq('id', userId).single();
-      if (!existing || !['teacher', 'admin'].includes(String(existing.role).toLowerCase())) return respond(event, 404, { success: false, error: 'Teacher account not found' });
-      const { error } = await admin.auth.admin.updateUserById(userId, { password });
-      if (error) throw error;
-      return respond(event, 200, { success: true });
-    }
-
-    if (action === 'delete' && event.httpMethod === 'POST') {
-      const userId = safeText(body.user_id, 80);
-      if (!userId) return respond(event, 400, { success: false, error: 'Missing user ID' });
-      if (userId === actor.id) return respond(event, 400, { success: false, error: 'You cannot delete your own account' });
-      const { data: existing } = await admin.from('profiles').select('role').eq('id', userId).single();
-      if (!existing || !['teacher', 'admin'].includes(String(existing.role).toLowerCase())) return respond(event, 404, { success: false, error: 'Teacher account not found' });
-      const { error: authDeleteError } = await admin.auth.admin.deleteUser(userId);
-      if (authDeleteError) throw authDeleteError;
-      await admin.from('profiles').delete().eq('id', userId);
-      return respond(event, 200, { success: true });
+      const { error: authUpdateError } = await admin.auth.admin.updateUserById(userId, {ban_duration: body.approved ? 'none' : '876000h'});
+      if (authUpdateError) {
+        await admin.from('profiles').update({approved:existing.approved}).eq('id',userId).eq('role','teacher');
+        throw authUpdateError;
+      }
+      return respond(event, 200, { success:true });
     }
 
     return respond(event, 404, { success: false, error: 'Unknown action' });
