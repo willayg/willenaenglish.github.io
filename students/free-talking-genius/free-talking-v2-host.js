@@ -173,10 +173,34 @@ export async function openV1NativeConversation({bookId,unitId,header,onExit}){
  workspace.element.hidden=false;
  document.body.style.overflow='hidden';
  workspace.active=true;
- try{await workspace.reopen(workspace.context)}
- catch(error){
-  workspace.exit({notify:false});
-  throw error;
+ try{
+  await workspace.reopen(workspace.context);
+  workspace.root.getElementById('ftNativeStartupFailure')?.remove();
+ }catch(error){
+  // A failed lesson/menu fetch must never silently tear down the entire native
+  // activity and dump the student into a non-working textbook screen.
+  console.error('[Free Talking V2] native startup',error);
+  const failure=workspace.root.getElementById('ftNativeStartupFailure')||document.createElement('section');
+  failure.id='ftNativeStartupFailure';
+  failure.setAttribute('role','alert');
+  failure.style.cssText='position:absolute;inset:0;z-index:2147483005;display:flex;align-items:center;justify-content:center;padding:20px;background:#ecfafa;color:#295e66;font:700 16px Poppins,Arial,sans-serif;';
+  const panel=document.createElement('div');
+  panel.style.cssText='width:min(400px,100%);padding:24px;border:2px solid #b4e4e9;border-radius:22px;background:white;text-align:center;display:grid;gap:16px;';
+  const title=document.createElement('strong');
+  title.textContent='Free Talking을 시작하지 못했어요';
+  const detail=document.createElement('p');
+  detail.style.cssText='margin:0;font:500 13px/1.5 Poppins,Arial,sans-serif;overflow-wrap:anywhere;';
+  detail.textContent=String(error?.message||'Connection unavailable');
+  const retry=document.createElement('button');retry.type='button';retry.textContent='다시 시도 · Retry';
+  retry.style.cssText='min-height:48px;border:2px solid #8ed7df;border-radius:13px;background:#fff;color:#20626c;font:800 15px Poppins,Arial,sans-serif;';
+  retry.addEventListener('click',async()=>{
+   retry.disabled=true;retry.textContent='연결 중…';
+   try{await workspace.reopen(workspace.context);failure.remove()}
+   catch(nextError){detail.textContent=String(nextError?.message||'Connection unavailable')}
+   finally{retry.disabled=false;retry.textContent='다시 시도 · Retry'}
+  });
+  panel.append(title,detail,retry);failure.replaceChildren(panel);
+  workspace.root.append(failure);
  }
 }
 export function closeV1NativeConversation({notify=false}={}){
