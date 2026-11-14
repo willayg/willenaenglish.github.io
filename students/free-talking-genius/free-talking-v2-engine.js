@@ -2275,19 +2275,22 @@ async function startConversation(){
   if(startId!==activeStartId)return;
   $('ftBootSpinner').hidden=true;
   console.error('[Free Talking] failed to start',e);
-  if(releaseMode){
-   endSession('Could not start Free Talking.');
-   $('ftReleaseIntro').hidden=false;veil.hidden=true;
-   const status=$('ftReleaseError');status.hidden=false;
-   status.textContent=String(e?.message||'Could not start. Please try again.');
-   return;
-  }
-  // Never kick the student out on an error. Keep the session screen and actionable message.
-  endSession('Connection failed. Tap play to retry or go back.');
+  // Both native and standalone release must retain their conversation screen.
+  // The old release-only fallback sent students to an inert character menu,
+  // because begin() had disabled its buttons before calling startConversation.
+  // Startup failures are recoverable in-place, including Dusk voice failures.
+  endSession('Connection failed. Tap Retry to reconnect or Back to choose a character.');
   state.paused=true;setPauseButton(true);
-  error('Could not start: '+(e?.message||'Connection unavailable'));
+  $('ftReleaseIntro').hidden=true;
+  veil.hidden=false;
+  $('talk').classList.add('is-visible');
+  $('ftEnginePanel')?.setAttribute('hidden','');
+  const detail=String(e?.message||'Connection unavailable');
+  error('Could not start: '+detail);
+  $('listenCheck').textContent='Could not connect · Tap Retry';
   $('restart').disabled=false;
-  $('listenCheck').textContent='Connection failed · retry available';
+  $('pauseResume').disabled=false;
+  $('ftBootSpinner').hidden=true;
  }
 }
 
