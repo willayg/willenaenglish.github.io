@@ -2093,7 +2093,7 @@ async function startConversation(){
  startAbort=new AbortController();
  // Add a real top-level history entry AFTER the original app's character
  // screen, so native Back visits character selection before the unit screen.
- if(new URLSearchParams(location.search).get('embedded')!=='1'&&!hasActivityHistory())history.pushState({...history.state,[EXT_NAV_KEY]:'activity'},'');
+ if(!releaseMode&&!hasActivityHistory())history.pushState({...history.state,[EXT_NAV_KEY]:'activity'},'');
  document.getElementById('ftEnginePanel')?.setAttribute('hidden','');
  veil.hidden=false;$('talk').classList.remove('is-ending');$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
