@@ -697,7 +697,17 @@ body.ft-release #demo .conversation-text{min-height:80px}
  #demo #actorStage .ft-animal-stage{transform:none!important;flex:0 0 225px!important}
 }
 #ftReleaseIntro .ft-willy-coming-notice{display:block;color:#a26b8d;font-size:11px;font-weight:800;line-height:1.4}
-</style><link rel="stylesheet" href="./shared-character-stage.css?v=20261113-restore-old-shared1"></head><body><section id="ftReleaseIntro" class="free-talking-genius" hidden aria-label="Choose your Free Talking character">
+
+/* Phase 3: canonical student header across both Free Talking modes.
+   No changes to Speaking, the iframe, or the live audio engine. */
+body.ft-release #ftLiveStudentHeader{display:block;position:relative;z-index:10002;width:100%;background:#fff}
+body:not(.ft-release) #ftLiveStudentHeader{display:none}
+body.ft-release #ftReleaseIntro{min-height:calc(100dvh - var(--ft-live-header-height,108px));padding-top:20px}
+body.ft-release #demo{top:var(--ft-live-header-height,108px);height:calc(100dvh - var(--ft-live-header-height,108px));padding-top:0}
+body.ft-release #demo .wrap{min-height:0}
+</style><link rel="stylesheet" href="./shared-character-stage.css?v=20261113-restore-old-shared1"><script type="module" src="/students/components/student-header.js?v=20261101-menu-prominent1"></script>
+</head><body><student-header id="ftLiveStudentHeader" title="프리토킹 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+<section id="ftReleaseIntro" class="free-talking-genius" hidden aria-label="Choose your Free Talking character">
  <div id="ftReleaseNativeMenu" aria-label="Character selection"></div>
  <p id="ftReleaseError" role="alert" hidden></p>
 </section>
