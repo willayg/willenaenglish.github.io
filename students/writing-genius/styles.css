@@ -996,3 +996,14 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-final-tele-line.is-current{opacity:1;color:#e75c9d;background:#fff0f7;font-weight:900}
 .writing-genius #wgDiaryFlow .df-final-tele-line.is-complete{opacity:.65;color:#2d8b92}
 @media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-final-teleprompter{scroll-behavior:auto}.writing-genius #wgDiaryFlow .df-final-tele-line{transition:none}}
+
+/* Final typing: compact single-line input directly below the current target. */
+.writing-genius #wgDiaryFlow .df-final-teleprompter.is-writing-mode{max-height:none;overflow:visible;padding:10px 14px}
+.writing-genius #wgDiaryFlow .df-final-teleprompter.is-writing-mode .df-final-tele-line:not(.is-current){display:none}
+.writing-genius #wgDiaryFlow .df-final-teleprompter.is-writing-mode .df-final-tele-line.is-current{margin:4px auto;padding:12px 8px;opacity:1}
+.writing-genius #wgDiaryFlow .df-final-type{margin:8px auto;display:flex;flex-direction:column;gap:9px}
+.writing-genius #wgDiaryFlow .df-final-type .df-writing-progress{margin:0;color:#526c73;font-weight:700}
+.writing-genius #wgDiaryFlow .df-final-type .df-writing-current-line{display:none}
+.writing-genius #wgDiaryFlow .df-final-type .df-writing-line-input{width:100%;height:auto;min-height:64px;max-height:110px;resize:none;box-sizing:border-box;padding:12px 15px;font-size:1.02rem;line-height:1.5}
+.writing-genius #wgDiaryFlow .df-final-type .df-typing-line-confirm{align-self:flex-end;min-height:42px;padding:7px 24px;background:#fff;border:2px solid #55cdd5;color:#e75c9d;font-weight:850}
+.writing-genius #wgDiaryFlow .df-final-type [hidden]{display:none!important}
