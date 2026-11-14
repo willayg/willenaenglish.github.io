@@ -25,6 +25,15 @@ function makeCharacterMenu(root){
  menu.hidden=false;
  menu.querySelector('#ft2-ftCharacterRound')?.remove();
  menu.querySelector('#ft2-ftCharacterBack')?.remove();
+ // The shared menu contains empty portrait placeholders filled by Speaking's
+ // renderer. V2 is independent, so fill them with the exact shared SVG assets.
+ for(const choice of menu.querySelectorAll('.ft-character-option')){
+  const symbol=choice.querySelector('.ft-character-symbol');
+  const character=CHARACTERS[choice.dataset.voice];
+  if(symbol&&character){
+   symbol.innerHTML=scopedCharacterArt(character.art,'v2-choice-'+choice.dataset.voice);
+  }
+ }
  root.append(menu);
  return menu;
 }
@@ -170,6 +179,10 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
     await replyToStudent(text);
     if(!state.closing){setReady(true);uiStatus('Answer the follow-up question.')}
    }else{
+    // Match the natural V1 flow: acknowledge the student's follow-up answer,
+    // then advance to the next textbook question.
+    await replyToStudent(text);
+    if(state.closing)return;
     state.replyCount=0;state.index++;paintProgress();
     if(state.index>=state.anchors.length)await complete();
     else await askAnchor();
@@ -240,7 +253,7 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
    const lesson=await request({action:'lesson',book_id:state.bookId,unit_id:state.unitId,guided:true});
    state.anchors=Array.isArray(lesson.lesson?.anchors)?lesson.lesson.anchors.filter(a=>a.id&&a.text).slice(0,8):[];
    if(!state.anchors.length)throw Error('No published questions for this unit.');
-   state.inFlight=false;await askAnchor();
+   state.inFlight=false;paintCharacter();await askAnchor();
   }catch(error){uiStatus('Could not start: '+error.message);state.inFlight=false;finish.disabled=false;record.disabled=true}
  }
  function close({notify=true}={}){
