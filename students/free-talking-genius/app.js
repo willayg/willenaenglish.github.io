@@ -1249,7 +1249,7 @@ $('ftFreeTalkingV2Card').addEventListener('click',async()=>{
  card.disabled=true;
  try{
   if(!freeTalkingV2){
-   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-dusk-final2');
+   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-transparent1');
    freeTalkingV2=createFreeTalkingV2({
     host:$('ftFreeTalkingV2'),getToken:()=>token(),
     onBack:()=>{
