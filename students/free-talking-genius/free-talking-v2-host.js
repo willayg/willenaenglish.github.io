@@ -116,7 +116,7 @@ async function mount(header){
    }
  }
  `;
- root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-dusk-unlock1'),nativeMenuStyle,document.importNode(intro,true),document.importNode(demo,true));
+ root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-phone-grid-fix3'),nativeMenuStyle,document.importNode(intro,true),document.importNode(demo,true));
  document.body.append(element);
  const state={element,root,header,context:null,active:false,reopen:null,shutdown:null,onExit:null,bodyOverflow:'',headerZIndex:'',exit({notify=true}={}){
   if(!state.active)return;
