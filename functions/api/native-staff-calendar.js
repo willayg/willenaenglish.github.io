@@ -42,7 +42,9 @@ async function db(token,path,method='GET',body){
 function clean(body){
  const title=String(body.title||'').trim(),date=String(body.date||''),time=String(body.time||''),category=String(body.category||'events'),repeat=String(body.repeat||'none'),notes=String(body.notes||'').trim(),reminder=Number(body.reminder_minutes??5);
  if(!title||title.length>120||!dateOk(date)||(time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))||!['events','staff','academic','deadline'].includes(category)||!['none','weekly','monthly'].includes(repeat)||notes.length>1200||![0,5,10,15,30].includes(reminder))throw Object.assign(new Error('Invalid event details'),{status:400});
- return {title,event_date:date,event_time:time||null,category,repeat_rule:repeat,notes,reminder_minutes:reminder,updated_at:new Date().toISOString()};
+ const ids=body.notify_recipient_ids;
+ if(!Array.isArray(ids)||ids.length>100||ids.some(id=>typeof id!=='string'||!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id)))throw Object.assign(new Error('Invalid notification recipients'),{status:400});
+ return {title,event_date:date,event_time:time||null,category,repeat_rule:repeat,notes,reminder_minutes:reminder,notify_recipient_ids:[...new Set(ids)],updated_at:new Date().toISOString()};
 }
 async function pushAfterSave(body,env,waitUntil,staff,event){
  if(body.notify_staff!==true)return {};
@@ -61,10 +63,14 @@ export async function onRequest({request,env,waitUntil}){
   if(!['GET','POST','PATCH','DELETE'].includes(request.method))return respond({error:'Method not allowed'},405);
   if(request.method!=='GET'&&request.headers.get('Origin')!==ORIGIN)return respond({error:'Invalid request origin'},403);
   const staff=await staffToken(request);if(staff.error)return respond(staff,staff.status);
+  if(request.method==='GET'&&url.searchParams.get('staff')==='1'){
+   const staffRows=await db(staff.token,'rpc/willena_calendar_staff_recipients','POST',{});
+   return respond({success:true,self_id:staff.id,staff:(staffRows||[]).map(x=>({id:x.id,name:x.display_name}))});
+  }
   if(request.method==='GET'){
    const from=url.searchParams.get('from')||'',to=url.searchParams.get('to')||'';
    if(!dateOk(from)||!dateOk(to)||from>to)return respond({error:'Invalid date range'},400);
-   const params=new URLSearchParams({select:'id,title,event_date,event_time,category,repeat_rule,notes,reminder_minutes,created_by,updated_at',event_date:'lte.'+to,order:'event_date.asc',limit:'2000'});
+   const params=new URLSearchParams({select:'id,title,event_date,event_time,category,repeat_rule,notes,reminder_minutes,notify_recipient_ids,created_by,updated_at',event_date:'lte.'+to,order:'event_date.asc',limit:'2000'});
    const rows=await db(staff.token,TABLE+'?'+params);
    const events=rows.filter(e=>e.repeat_rule!=='none'||e.event_date>=from);
    return respond({success:true,events});
