@@ -1019,6 +1019,19 @@ function hybridStart(stream){
  hybrid.analyser=hybrid.ctx.createAnalyser();hybrid.analyser.fftSize=1024;
  hybrid.source.connect(hybrid.analyser);
  const samples=new Float32Array(hybrid.analyser.fftSize);
+ function startRecording(now){
+  if(hybrid.recorder||!state.active)return;
+  const mime=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':'';
+  const rec=new MediaRecorder(stream,mime?{mimeType:mime}:{});
+  hybrid.recorder=rec;hybrid.chunks=[];hybrid.voiceAt=now;
+  hybrid.lastLoud=now+(pushToSpeakMode()?1100:0);
+  const ring=$('ftSpeechTimeRing');if(ring){ring.hidden=false;ring.style.setProperty('--ft-record-remaining','1')}
+  rec.ondataavailable=e=>{if(e.data?.size)hybrid.chunks.push(e.data)};
+  rec.onstop=()=>void hybridOnRecorded(rec);
+  handleRealtime({type:'input_audio_buffer.speech_started'});
+  rec.start(250);
+  updatePushToSpeak();
+ }
  const tick=()=>{
   if(!state.active||!state.hybrid||!hybrid.analyser)return;
   hybrid.raf=requestAnimationFrame(tick);
@@ -1029,29 +1042,18 @@ function hybridStart(stream){
   if(rms>0.018){
    hybrid.lastLoud=now;
    hybrid.peak=Math.max(hybrid.peak,Math.round(rms*1000));
-   if(!hybrid.recorder){
-    const mime=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':'';
-    const rec=new MediaRecorder(stream,mime?{mimeType:mime}:{});
-    hybrid.recorder=rec;hybrid.chunks=[];hybrid.voiceAt=now;
-    const ring=$('ftSpeechTimeRing');if(ring){ring.hidden=false;ring.style.setProperty('--ft-record-remaining','1');}
-    rec.ondataavailable=e=>{if(e.data?.size)hybrid.chunks.push(e.data)};
-    rec.onstop=()=>void hybridOnRecorded(rec);
-    handleRealtime({type:'input_audio_buffer.speech_started'});
-    rec.start();
-    // Temporarily disable parallel browser SpeechRecognition: Android may
-    // retain communication/call audio routing and silence media playback.
-    // Existing MediaRecorder + server STT remain untouched.
-   }
+   if(!pushToSpeakMode()&&!hybrid.recorder)startRecording(now);
   }
-  if(hybrid.recorder&&hybrid.recorder.state==='recording'){
+  if(hybrid.recorder?.state==='recording'){
    const ring=$('ftSpeechTimeRing');
    if(ring)ring.style.setProperty('--ft-record-remaining',String(Math.max(0,1-(now-hybrid.voiceAt)/22000)));
-   if(now-hybrid.lastLoud>ftTiming.silence||now-hybrid.voiceAt>22000){
+   if(now-hybrid.lastLoud>(pushToSpeakMode()?2600:ftTiming.silence)||now-hybrid.voiceAt>22000){
     handleRealtime({type:'input_audio_buffer.speech_stopped'});
     try{hybrid.recorder.stop()}catch{}
    }
   }
  };
+ if(pushToSpeakMode())startRecording(performance.now());
  tick();
 }
 async function hybridOnRecorded(rec){
@@ -1062,7 +1064,19 @@ async function hybridOnRecorded(rec){
  const duration=Math.max(0,performance.now()-hybrid.voiceAt);
  const peak=hybrid.peak;
  hybrid.chunks=[];hybrid.recorder=null;hybrid.peak=0;hybrid.transcribing=true;
- if(duration<330||audio.size<400){hybrid.transcribing=false;startQuestionClock();return}
+ // Stop actual capture hardware before STT. A disabled track can keep Android
+ // in hands-free call audio mode, whereas a stopped track releases that route.
+ if(pushToSpeakMode()){
+  cancelAnimationFrame(hybrid.raf);hybrid.raf=null;
+  try{hybrid.source?.disconnect()}catch{}
+  const ctx=hybrid.ctx;hybrid.ctx=null;hybrid.source=null;hybrid.analyser=null;
+  if(ctx)void ctx.close().catch(()=>{});
+  stopMicMonitor();
+  const mic=state.stream;state.stream=null;state.micReleased=true;
+  mic?.getTracks().forEach(track=>{try{track.stop()}catch{}});
+  updatePushToSpeak();
+ }
+ if(duration<330||audio.size<400){hybrid.transcribing=false;startQuestionClock();updatePushToSpeak();return}
  const itemId='hybrid-'+(++hybrid.sequence);
  const at=state.anchorToken,phase=state.anchorPhase;
  state.pendingSpeech.set(itemId,{phase,anchorToken:at,duration,peak,timeout:null});
@@ -1102,7 +1116,7 @@ async function hybridOnRecorded(rec){
   }
  }catch(e){
   if(state.active){error('Hybrid STT: '+String(e.message||e));resolveCommittedSpeech(itemId,'',true)}
- }finally{hybrid.transcribing=false}
+ }finally{hybrid.transcribing=false;updatePushToSpeak()}
 }
 function sendHybrid(item){
  if(!state.active)return false;
@@ -1176,6 +1190,7 @@ function updatePushToSpeak(){
 async function beginPushToSpeak(){
  if(!pushToSpeakMode()||!state.active||state.paused)return;
  if(hybrid.recorder?.state==='recording'){
+  handleRealtime({type:'input_audio_buffer.speech_stopped'});
   try{hybrid.recorder.stop()}catch(ex){error('Recording stop failed: '+String(ex))}
   updatePushToSpeak();return;
  }
