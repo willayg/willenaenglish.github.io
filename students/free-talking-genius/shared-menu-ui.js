@@ -9,6 +9,17 @@
   template.innerHTML=markup;
   const menu=template.content.firstElementChild;
   if(!menu||menu.id!=='ftCharacter')throw Error('Shared character menu invalid');
+  // Free Talking-only unlockable after Willo. Shared markup remains identical;
+  // Speaking keeps this option hidden until its engine supports this character.
+  const choices=menu.querySelector('.ft-character-options');
+  const dusk=document.createElement('button');
+  dusk.id='ftChooseDusk';dusk.type='button';
+  dusk.className='ft-character-option ft-character-dusk';
+  dusk.dataset.voice='dusk';dusk.setAttribute('aria-pressed','false');
+  dusk.setAttribute('aria-disabled','true');
+  dusk.hidden=true;
+  dusk.innerHTML='<span class="ft-character-symbol" aria-hidden="true"></span><strong>Dusk</strong><small class="ft-dusk-lock">🔒 5,000 points</small>';
+  choices?.append(dusk);
   return menu;
  }
  function replace(existing){
