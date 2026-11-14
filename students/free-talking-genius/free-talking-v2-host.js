@@ -1,7 +1,7 @@
 // Free Talking V2 native host.
 // The V1 conversation engine runs in a ShadowRoot, inside the original student
 // document: one persistent header, no iframe and no independent page history.
-const ENGINE='/students/free-talking-genius/free-talking-v2-engine.js?v=20261114-willi-public1';
+const ENGINE='/students/free-talking-genius/free-talking-v2-engine.js?v=20261114-dusk-unlock1';
 const TEMPLATE='/students/free-talking-hybrid-lab/index.html';
 let workspace=null;
 let loading=null;
@@ -36,12 +36,12 @@ async function mount(header){
  for(const file of [
   '/students/free-talking-genius/styles.css?v=20261114-p4-visual1',
   '/students/free-talking-genius/character-animations.css?v=20261114-shared-finish-v1',
-  '/students/free-talking-genius/dusk-character.css?v=20261114-unlock1',
+  '/students/free-talking-genius/dusk-character.css?v=20261114-dusk-unlock1',
   '/students/free-talking-genius/live-animal-ui.css?v=20261113-willy-animal1',
   '/students/free-talking-genius/guide.css?v=20261107-guide-kids2',
   '/students/free-talking-hybrid-lab/shared-character-stage.css?v=20261114-willo-restored1'
  ])root.append(stylesheet(file));
- root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-unified-menu3'),document.importNode(intro,true),document.importNode(demo,true));
+ root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-dusk-unlock1'),document.importNode(intro,true),document.importNode(demo,true));
  document.body.append(element);
  const state={element,root,header,context:null,active:false,reopen:null,shutdown:null,onExit:null,bodyOverflow:'',exit({notify=true}={}){
   if(!state.active)return;
