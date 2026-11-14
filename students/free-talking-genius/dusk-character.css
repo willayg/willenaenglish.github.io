@@ -41,9 +41,11 @@
  .ft-dusk-svg #sparks,.ft-dusk-svg .dusk-moving-eye{animation:none!important;transition:none!important}
 }
 
-/* Put Dusk directly beneath Willo, rather than left-aligning the fifth tile. */
-.free-talking-genius #ftCharacter .ft-character-dusk{grid-column:4}
-@media(max-width:700px){.free-talking-genius #ftCharacter .ft-character-dusk{grid-column:2}}
+/* Dusk follows the same responsive grid as the others.
+   Never force a fourth implicit column on a narrow device: that compressed
+   the grid and piled every portrait and label on top of each other. */
+.free-talking-genius #ftCharacter .ft-character-dusk{grid-column:auto}
+
 .ft-dusk-actor[data-dusk-effect="nod"]{animation:duskNod 1.5s ease-in-out 1}
 .ft-dusk-actor[data-dusk-effect="shake"]{animation:duskShake .35s linear 2}
 .ft-dusk-actor[data-dusk-effect="spark"] #sparks{opacity:1;transform-origin:760px 730px;animation:duskTwinkle 1.2s ease-in-out 1}
