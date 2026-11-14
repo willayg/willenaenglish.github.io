@@ -9,7 +9,27 @@
 @media(prefers-reduced-motion:reduce){#squintLids .squint-upper,#squintLids .squint-lower{transition:none}}
 .dusk-moving-eye{transition:transform 155ms cubic-bezier(.2,.8,.3,1)}
 @media (prefers-reduced-motion:reduce){.dusk-moving-eye{transition:none}}
-</style></head><body><div class="wrap"><main class="stage autoBlink" id="stage" style="--speed:1"><div class="tag">Dusk / animation playground</div><div class="halo"></div><div class="scene"><svg class="character" id="character" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 1536" width="1536" height="1536" role="img" aria-label="Hooded teal and navy character with amber eyes and golden circular clasp">
+
+/* Mobile animation cockpit: character remains visible while controls scroll separately. */
+.control-toggle{display:none}
+@media(max-width:790px){
+ html,body{height:100%;overflow:hidden}
+ .wrap{display:block;height:100dvh;min-height:0;overflow:hidden}
+ .stage{height:100dvh;min-height:0;padding:0 0 38px;transition:height .25s ease,padding .25s ease}
+ .scene{width:min(80vw,53dvh);max-height:57dvh}
+ .control-toggle{display:block;position:fixed;bottom:calc(16px + env(safe-area-inset-bottom));right:16px;z-index:50;border:1px solid #59e5d7;background:#087b79;color:#fff;padding:12px 18px;border-radius:999px;box-shadow:0 6px 28px #0009;font-weight:700;min-height:48px}
+ aside{position:fixed;inset:auto 0 0 0;height:45dvh;max-height:45dvh;border-left:0;border-top:1px solid #52617c;border-radius:20px 20px 0 0;padding:12px 16px calc(24px + env(safe-area-inset-bottom));background:#192132;box-shadow:0 -12px 40px #0008;transform:translateY(103%);transition:transform .25s ease;z-index:40;overscroll-behavior:contain}
+ .controls-open aside{transform:translateY(0)}
+ .controls-open .stage{height:55dvh;padding-bottom:0}
+ .controls-open .scene{width:min(68vw,40dvh)}
+ .controls-open .control-toggle{bottom:calc(45dvh + 10px)}
+ aside h1{font-size:20px}aside .eyebrow,aside>p:not(.foot){display:none}
+ aside h2{margin:14px 0 8px}
+ aside .buttons{gap:7px}
+ aside button{padding:10px}
+}
+@media(prefers-reduced-motion:reduce){.stage,aside,.control-toggle{transition:none!important}}
+</style></head><body><button id="controlToggle" class="control-toggle" aria-controls="controlsPanel" aria-expanded="false" type="button">⚙ Controls</button><div class="wrap"><main class="stage autoBlink" id="stage" style="--speed:1"><div class="tag">Dusk / animation playground</div><div class="halo"></div><div class="scene"><svg class="character" id="character" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 1536" width="1536" height="1536" role="img" aria-label="Hooded teal and navy character with amber eyes and golden circular clasp">
 <defs>
 <linearGradient id="navy" x1="0" y1="0" x2="1" y2="1" objectBoundingBox="true"><stop stop-color="#203d75"/><stop offset=".6" stop-color="#193765"/><stop offset="1" stop-color="#254471"/></linearGradient>
 <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#04a9a8"/><stop offset=".6" stop-color="#069b9b"/><stop offset="1" stop-color="#008a89"/></linearGradient>
@@ -39,8 +59,17 @@
 <g clip-path="url(#squintRightClip)">
 <rect class="squint-upper" x="870" y="540" width="225" height="95" fill="#030303"/>
 <rect class="squint-lower" x="870" y="661" width="225" height="100" fill="#030303"/>
-</g></g></svg></div></main><aside><div class="eyebrow">Isolated concept lab</div><h1>Meet Dusk</h1><p>This is the <b>original traced SVG</b>, not a replacement drawing. Test movement and effects without affecting your student apps.</p><h2>Movement</h2><div class="buttons"><button data-toggle="bob">↕ Float</button><button data-toggle="sway">↔ Sway</button><button data-toggle="nod">↷ Nod</button><button data-toggle="shake">〰 Shake</button></div><h2>Expressions & effects</h2><div class="buttons"><button id="blinkBtn">Blink now</button><button id="squintBtn">Squint</button><button id="shiftySquintBtn" class="wide">Squint + Shifty Eyes</button><button id="surpriseBtn">Surprise!</button><button data-toggle="spark">✦ Sparkles</button><button data-toggle="aura">◉ Glow</button><button data-toggle="talking">◌ Speaking waves</button><button data-toggle="autoBlink" aria-pressed="true">Auto blink</button></div><h2>Stage settings</h2><label for="speed">Animation speed</label><div class="row"><input id="speed" type="range" min=".3" max="2.5" value="1" step=".1"><span id="speedValue">1.0×</span></div><label for="bg">Background</label><select id="bg" style="width:100%"><option value="dark">Midnight</option><option value="light">White</option><option value="green">Teal</option><option value="transparent">Checkerboard</option></select><div class="buttons" style="margin-top:18px"><button class="wide" id="reset">Reset all animations</button></div><p class="foot">Character geometry is untouched. Only presentation classes and separate effect overlays are animated. No API calls, student data, or shared app dependencies.</p></aside></div><script>
-const stage=document.getElementById('stage');for(const btn of document.querySelectorAll('[data-toggle]')){const key=btn.dataset.toggle;btn.setAttribute('aria-pressed',stage.classList.contains(key));btn.addEventListener('click',()=>{stage.classList.toggle(key);btn.setAttribute('aria-pressed',stage.classList.contains(key))})}function once(cls,duration){stage.classList.remove(cls);void stage.offsetWidth;stage.classList.add(cls);setTimeout(()=>stage.classList.remove(cls),duration)}document.getElementById('blinkBtn').onclick=()=>once('blink',280);document.getElementById('squintBtn').onclick=()=>{stage.classList.remove('squint');void stage.offsetWidth;stage.classList.add('squint');setTimeout(()=>stage.classList.remove('squint'),1050)};const leftIris=document.getElementById('duskLeftIris'),rightIris=document.getElementById('duskRightIris');
+</g></g></svg></div></main><aside id="controlsPanel" aria-label="Animation controls"><div class="eyebrow">Isolated concept lab</div><h1>Meet Dusk</h1><p>This is the <b>original traced SVG</b>, not a replacement drawing. Test movement and effects without affecting your student apps.</p><h2>Movement</h2><div class="buttons"><button data-toggle="bob">↕ Float</button><button data-toggle="sway">↔ Sway</button><button data-toggle="nod">↷ Nod</button><button data-toggle="shake">〰 Shake</button></div><h2>Expressions & effects</h2><div class="buttons"><button id="blinkBtn">Blink now</button><button id="squintBtn">Squint</button><button id="shiftySquintBtn" class="wide">Squint + Shifty Eyes</button><button id="surpriseBtn">Surprise!</button><button data-toggle="spark">✦ Sparkles</button><button data-toggle="aura">◉ Glow</button><button data-toggle="talking">◌ Speaking waves</button><button data-toggle="autoBlink" aria-pressed="true">Auto blink</button></div><h2>Stage settings</h2><label for="speed">Animation speed</label><div class="row"><input id="speed" type="range" min=".3" max="2.5" value="1" step=".1"><span id="speedValue">1.0×</span></div><label for="bg">Background</label><select id="bg" style="width:100%"><option value="dark">Midnight</option><option value="light">White</option><option value="green">Teal</option><option value="transparent">Checkerboard</option></select><div class="buttons" style="margin-top:18px"><button class="wide" id="reset">Reset all animations</button></div><p class="foot">Character geometry is untouched. Only presentation classes and separate effect overlays are animated. No API calls, student data, or shared app dependencies.</p></aside></div><script>
+const stage=document.getElementById('stage');
+const controlToggle=document.getElementById('controlToggle');
+function setControlsOpen(open){
+ document.body.classList.toggle('controls-open',open);
+ controlToggle.setAttribute('aria-expanded',String(open));
+ controlToggle.textContent=open?'✕ Close controls':'⚙ Controls';
+}
+controlToggle.addEventListener('click',()=>setControlsOpen(!document.body.classList.contains('controls-open')));
+document.addEventListener('keydown',event=>{if(event.key==='Escape')setControlsOpen(false)});
+for(const btn of document.querySelectorAll('[data-toggle]')){const key=btn.dataset.toggle;btn.setAttribute('aria-pressed',stage.classList.contains(key));btn.addEventListener('click',()=>{stage.classList.toggle(key);btn.setAttribute('aria-pressed',stage.classList.contains(key))})}function once(cls,duration){stage.classList.remove(cls);void stage.offsetWidth;stage.classList.add(cls);setTimeout(()=>stage.classList.remove(cls),duration)}document.getElementById('blinkBtn').onclick=()=>once('blink',280);document.getElementById('squintBtn').onclick=()=>{stage.classList.remove('squint');void stage.offsetWidth;stage.classList.add('squint');setTimeout(()=>stage.classList.remove('squint'),1050)};const leftIris=document.getElementById('duskLeftIris'),rightIris=document.getElementById('duskRightIris');
 let shiftyTimers=[];
 function stopShifty(){shiftyTimers.forEach(clearTimeout);shiftyTimers=[];leftIris.style.transform='';rightIris.style.transform=''}
 function playShiftySquint(){
