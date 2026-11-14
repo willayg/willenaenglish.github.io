@@ -47,7 +47,12 @@ async function mount(header){
  // shadow-root menu is affected; Speaking and its layout remain untouched.
  // The native host uses the same menu stylesheet as Speaking, without a
  // second injected set of character-grid/portrait overrides.
- root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-shared-menu-back4'),document.importNode(intro,true),document.importNode(demo,true));
+ // Hide only the native Free Talking footer; retain all controls and handlers
+ // for easy restoration. Give the recovered vertical space to the activity.
+ const hideNativeFooter=document.createElement('style');
+ hideNativeFooter.textContent='#demo .control-dock{display:none!important;}'+
+  '#demo .wrap{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;}';
+ root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-dusk-selection-footer6'),hideNativeFooter,document.importNode(intro,true),document.importNode(demo,true));
  document.body.append(element);
  const state={element,root,header,context:null,active:false,reopen:null,shutdown:null,onExit:null,bodyOverflow:'',headerZIndex:'',exit({notify=true}={}){
   if(!state.active)return;
