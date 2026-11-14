@@ -901,3 +901,17 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .wg-diary-flow-actions:not(:empty){flex-wrap:wrap;row-gap:8px}
 .writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-saved-writings{order:-1;flex:0 0 100%;max-width:440px;min-height:38px;border:2px solid #bfe8ed;background:#fff;color:#27646b;font-weight:800;font-size:.88rem}
 @media(max-width:560px){.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-saved-writings{min-height:38px;font-size:.85rem}}
+
+/* Keep the diary's final speech/typing choice visible directly above its script. */
+.writing-genius #wgDiaryFlow .df-tele-mode-switch{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px!important;max-width:430px;margin:4px auto 8px!important}
+.writing-genius #wgDiaryFlow .df-tele-mode-switch .wg-button{min-width:0;min-height:48px;font-weight:900;border:2px solid #bfe8ed;border-radius:14px}
+.writing-genius #wgDiaryFlow .df-tele-mode-switch .wg-button.wg-primary{background:#04b6c4;color:white;border-color:#04b6c4}
+.writing-genius #wgDiaryFlow .df-teleprompter{min-height:0;padding:16px 8px 12px}
+.writing-genius #wgDiaryFlow .df-tele-type-area{max-width:520px;margin:16px auto!important}
+.writing-genius #wgDiaryFlow .df-tele-type-area textarea{width:100%;min-height:86px;box-sizing:border-box;font-size:1.05rem}
+.writing-genius #wgDiaryFlow .df-tele-speech-controls[hidden]{display:none!important}
+/* Canonical Free Talking AI Willi vector in Writing Genius review loader. */
+.writing-genius #wgDiaryFlow .df-ai-orbit{width:190px;max-width:78%;animation:df-ai-robot-bob 1.8s ease-in-out infinite}
+.writing-genius #wgDiaryFlow .df-ai-orbit .aw-svg{display:block;width:100%;height:auto}
+.writing-genius #wgDiaryFlow .df-ai-orbit .aw-mouth-wave,.writing-genius #wgDiaryFlow .df-ai-orbit .aw-eyes-mood,.writing-genius #wgDiaryFlow .df-ai-orbit .aw-cat-details,.writing-genius #wgDiaryFlow .df-ai-orbit .aw-electric{display:none}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-ai-orbit{animation:none}}
