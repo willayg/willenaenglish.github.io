@@ -2288,6 +2288,7 @@ async function startConversation(){
   const detail=String(e?.message||'Connection unavailable');
   error('Could not start: '+detail);
   $('listenCheck').textContent='Could not connect · Tap Retry';
+  $('restart').hidden=false;
   $('restart').disabled=false;
   $('pauseResume').disabled=false;
   $('ftBootSpinner').hidden=true;
