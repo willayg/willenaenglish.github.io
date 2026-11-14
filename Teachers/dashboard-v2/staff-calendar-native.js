@@ -8,7 +8,7 @@ const pad=n=>String(n).padStart(2,'0');
 const dayKey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const parse=s=>{const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d)};
 const today=new Date();
-const state={cursor:new Date(today.getFullYear(),today.getMonth(),1),mode:'month',events:[],visible:new Set(Object.keys(CATS)),loaded:false,loading:false,open:false,edit:null,saving:false,source:'native'};
+const state={cursor:new Date(today.getFullYear(),today.getMonth(),1),mode:'month',events:[],visible:new Set(Object.keys(CATS)),loaded:false,loading:false,open:false,edit:null,saving:false,source:'native',staff:[],selfId:null,recipients:new Set(),staffError:''};
 function node(tag,className,text){const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=text;return n}
 function notice(s,error=false){const el=$('wcNotice');if(!el)return;el.textContent=s;el.hidden=!s;el.classList.toggle('error',error)}
 async function api(method,path='',body){
@@ -84,6 +84,26 @@ async function load(){
  }catch(e){notice(e.message,true)}
  finally{state.loading=false}
 }
+async function loadStaff(){
+ try{
+  const data=await api('GET','?staff=1');
+  state.staff=data.staff||[];state.selfId=data.self_id||null;state.staffError='';
+ }catch(e){state.staff=[];state.staffError=e.message;}
+}
+function renderRecipients(){
+ const area=$('wcRecipients');if(!area)return;area.replaceChildren();
+ if(state.staffError){area.append(node('p','wc-recipient-error','Unable to load staff: '+state.staffError));}
+ else if(!state.staff.length){area.append(node('p','wc-recipient-error','No active staff members found.'));}
+ else for(const member of state.staff){
+  const label=node('label','wc-recipient-row');const checkbox=node('input');checkbox.type='checkbox';checkbox.value=member.id;
+  checkbox.checked=state.recipients.has(member.id);checkbox.onchange=()=>{checkbox.checked?state.recipients.add(member.id):state.recipients.delete(member.id);updateRecipientSummary()};
+  label.append(checkbox,node('span','',member.name+(member.id===state.selfId?' (me)':'')));area.append(label);
+ }
+ updateRecipientSummary();
+}
+function updateRecipientSummary(){
+ $('wcRecipientSummary').textContent=state.recipients.size===0?'Nobody will be notified':state.recipients.size+' staff member'+(state.recipients.size===1?'':'s')+' selected';
+}
 function edit(ev=null,date=dayKey(today)){
  const dialog=$('wcDialog');if(!dialog||!state.loaded)return;
  state.edit=ev?.id||null;
@@ -96,14 +116,16 @@ function edit(ev=null,date=dayKey(today)){
  $('wcRepeat').disabled=false;
  $('wcNotes').value=ev?.notes||'';
  $('wcReminder').value=String(ev?.reminder_minutes??5);
- $('wcNotifyStaff').checked=false;
+ state.recipients=new Set(ev?(ev.notify_recipient_ids===null?state.staff.map(x=>x.id):(ev.notify_recipient_ids||[])):(state.selfId?[state.selfId]:[]));renderRecipients();
+ $('wcNotifyStaff').checked=!ev;
  $('wcDelete').hidden=!ev;$('wcFormError').textContent='';
  dialog.showModal();$('wcTitle').focus();
 }
 async function save(e){
  e.preventDefault();if(state.saving)return;state.saving=true;
- const item={id:state.edit,title:$('wcTitle').value.trim(),date:$('wcDate').value,time:$('wcTime').value,category:$('wcCategory').value,repeat:$('wcRepeat').value,notes:$('wcNotes').value.trim(),reminder_minutes:Number($('wcReminder').value),notify_staff:$('wcNotifyStaff').checked};
+ const item={id:state.edit,title:$('wcTitle').value.trim(),date:$('wcDate').value,time:$('wcTime').value,category:$('wcCategory').value,repeat:$('wcRepeat').value,notes:$('wcNotes').value.trim(),reminder_minutes:Number($('wcReminder').value),notify_staff:$('wcNotifyStaff').checked&&state.recipients.size>0,notify_recipient_ids:[...state.recipients]};
  const submit=$('wcSave');submit.disabled=true;
+ if(state.staffError||!state.staff.length){$('wcFormError').textContent='Staff list is unavailable. Please refresh before saving.';state.saving=false;submit.disabled=false;return;}
  try{const result=await api(state.edit?'PATCH':'POST','',item);$('wcDialog').close();await load();if(item.notify_staff){const accepted=Number(result.notification_accepted||0),devices=Number(result.notification_devices||0);const detail=(result.notification_errors||[]).join('; ');notice('Event saved. Push provider accepted '+accepted+' of '+devices+' device notification'+(devices===1?'':'s')+'.'+(detail?' '+detail:''),accepted===0||!!detail)}}
  catch(e){$('wcFormError').textContent=e.message}
  finally{state.saving=false;submit.disabled=false}
@@ -125,6 +147,7 @@ function init(){
  $('wcWeek').onclick=()=>{state.mode='week';render()};
  $('wcRefresh').onclick=()=>load();
  $('wcForm').addEventListener('submit',save);
+ document.querySelectorAll('[data-wc-recipients]').forEach(b=>b.addEventListener('click',()=>{const mode=b.dataset.wcRecipients;state.recipients=new Set(mode==='all'?state.staff.map(x=>x.id):mode==='self'&&state.selfId?[state.selfId]:[]);renderRecipients()}));
  $('wcCancel').onclick=$('wcClose').onclick=()=>$('wcDialog').close();
  $('wcDelete').onclick=remove;
  const filt=$('wcFilters');for(const [id,label]of Object.entries(CATS)){
@@ -134,5 +157,5 @@ function init(){
  render();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('view-staff-calendar')?.classList.contains('active'))load()});
 }
-window.WillenaStaffCalendar={open(){init();load();window.WillenaPush?.refresh?.()}};
+window.WillenaStaffCalendar={open(){init();Promise.all([loadStaff(),load()]).then(()=>{});window.WillenaPush?.refresh?.()}};
 })();
