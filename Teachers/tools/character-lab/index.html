@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Willena Character Lab</title>
+<style>
+:root{font-family:system-ui,"Noto Sans KR",sans-serif;color:#244955;background:#f4f9fa}*{box-sizing:border-box}body{margin:0}
+.lab{max-width:1350px;margin:auto;padding:18px}.heading{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}.heading h1{margin:0;font-size:23px}.heading p{font-size:13px;color:#617c85;margin:5px 0 15px}
+.characters{display:flex;gap:8px;overflow-x:auto;padding:3px 0 14px}
+.characters button,.controls button,.asset-panel button{cursor:pointer;border:1px solid #c5dfe3;border-radius:11px;padding:10px 14px;background:#fff;color:#285461;font-weight:650}
+.characters button[aria-selected="true"],.controls button[aria-pressed="true"]{background:#e0f8f7;border-color:#3dbbc0;color:#126e78}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:16px}
+.stage{min-height:590px;background:radial-gradient(circle at center,#273954,#101726 73%);border-radius:19px;overflow:hidden;display:grid;place-items:center;position:relative}
+.stage.light{background:#f6f6f6}.stage.teal{background:#0d4b52}.stage.checker{background:repeating-conic-gradient(#d0d3d9 0 25%,#f5f6f8 0 50%) 50%/24px 24px}
+#duskFrame{display:block;border:0;width:100%;height:700px;min-height:590px}
+#customStage{width:100%;height:100%;min-height:590px;display:grid;place-items:center;overflow:hidden}
+.character-wrap{width:min(75%,500px);aspect-ratio:1;display:grid;place-items:center;position:relative}
+.character-wrap svg{max-width:100%;max-height:100%;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 15px 17px #0004)}
+.character-wrap.floating{animation:float 3s ease-in-out infinite}.character-wrap.swaying{animation:sway 2.8s ease-in-out infinite}
+.character-wrap.nodding{animation:nod 1.7s ease-in-out infinite}.character-wrap.shaking{animation:shake .4s ease-in-out infinite}
+.character-wrap.glowing svg{filter:drop-shadow(0 0 18px #19d6d6)}.character-wrap.speaking svg{animation:speak 1.6s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-20px)}}@keyframes sway{25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}@keyframes nod{50%{transform:rotate(5deg)}}@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}@keyframes speak{0%,100%{filter:drop-shadow(0 0 0 transparent)}18%,40%,66%{filter:drop-shadow(0 0 22px #28e5e0)}30%,55%,80%{filter:drop-shadow(0 0 5px #28e5e055)}}
+.side{padding:18px;border:1px solid #d8e7e9;background:white;border-radius:18px;min-width:0;max-height:760px;overflow:auto}
+.side h2{font-size:14px;margin:3px 0 12px}.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}.controls button{font-size:12px;padding:9px 6px}
+label{font-size:12px;font-weight:700;display:block;margin:14px 0 6px}select,input[type="url"],textarea{font:inherit;font-size:13px;width:100%;padding:9px;border-radius:9px;border:1px solid #bdd5d9}input[type=file]{max-width:100%;font-size:12px}
+small,.hint{color:#66808b;font-size:12px;line-height:1.5}.asset-panel{padding:14px;border:1px solid #bdd9db;background:#fff;border-radius:13px;margin-top:12px}.asset-panel button{font-size:12px;margin-top:8px}.asset-panel textarea{min-height:90px;margin-top:8px}.asset-panel p{font-size:12px;color:#56707d}
+#message{font-size:12px;min-height:22px;color:#147b82;margin-top:10px}#empty{color:#b5d3d9;text-align:center;padding:20px;max-width:330px}
+#customPanel[hidden],#duskPanel[hidden],#duskFrame[hidden],#customStage[hidden]{display:none}
+@media(max-width:780px){.lab{padding:10px}.workspace{grid-template-columns:1fr}.stage{min-height:62vh}.side{max-height:none}#duskFrame{height:77vh;min-height:530px}#customStage{min-height:62vh}.controls{grid-template-columns:repeat(3,1fr)}}
+@media(prefers-reduced-motion:reduce){.character-wrap,.character-wrap svg{animation:none!important}}
+</style></head><body>
+<div class="lab"><div class="heading"><div><h1>Character Lab</h1><p>Teachers · Utilities · Safe animation playground. Does not modify student character assets.</p></div></div>
+<nav class="characters" role="tablist" aria-label="Characters">
+<button role="tab" aria-selected="true" data-character="dusk">Dusk</button>
+<button role="tab" aria-selected="false" data-character="bunnyfox">Bunny Fox</button>
+<button role="tab" aria-selected="false" data-character="pigfish">Pigfish</button>
+<button role="tab" aria-selected="false" data-character="willo">Willo</button>
+</nav>
+<div class="workspace"><div class="stage" id="stage">
+<iframe id="duskFrame" title="Dusk original animation playground" loading="lazy" src="/character-lab/dusk/?teacherLab=1"></iframe>
+<div id="customStage" hidden><div id="characterWrap" class="character-wrap"><div id="empty">Load the existing character SVG below to preview its real artwork. No substitute mascot will be used.</div></div></div>
+</div><aside class="side">
+<div id="duskPanel"><h2>Dusk — Original SVG</h2><p class="hint">The complete approved Dusk lab is embedded here with all its original controls and effects. Open its floating Controls button to animate.</p><button type="button" id="openDusk">Open full Dusk lab</button></div>
+<div id="customPanel" hidden>
+<h2 id="characterTitle">Character</h2>
+<div class="controls" id="effectsControls">
+<button data-effect="floating" aria-pressed="false">Float</button><button data-effect="swaying" aria-pressed="false">Sway</button><button data-effect="nodding" aria-pressed="false">Nod</button><button data-effect="shaking" aria-pressed="false">Shake</button><button data-effect="glowing" aria-pressed="false">Glow</button><button data-effect="speaking" aria-pressed="false">Speaking glow</button><button id="resetEffects">Reset</button>
+</div>
+<label for="background">Background</label><select id="background"><option value="dark">Midnight</option><option value="light">White</option><option value="teal">Teal</option><option value="checker">Checkerboard</option></select>
+<div class="asset-panel"><h2>Real SVG asset</h2><p>Import the original SVG file, paste revised SVG from ChatGPT, or provide a same-origin SVG URL. This stays in this teacher preview.</p>
+<label for="svgFile">Upload SVG</label><input type="file" id="svgFile" accept=".svg,image/svg+xml">
+<label for="svgUrl">Existing SVG URL</label><input type="url" id="svgUrl" placeholder="/path/to/character.svg">
+<button type="button" id="loadUrl">Load SVG URL</button>
+<label for="svgText">Paste SVG code</label><textarea id="svgText" placeholder="Paste a revised complete SVG here"></textarea><button type="button" id="loadText">Apply SVG preview</button>
+<button type="button" id="downloadSvg">Export current SVG</button><button type="button" id="copyBrief">Copy ChatGPT design brief</button>
+</div></div><div id="message" aria-live="polite"></div>
+</aside></div></div>
+<script>
+(()=>{'use strict';
+const names={dusk:'Dusk',bunnyfox:'Bunny Fox',pigfish:'Pigfish',willo:'Willo'};
+const stage=document.getElementById('stage'),frame=document.getElementById('duskFrame'),customStage=document.getElementById('customStage'),wrap=document.getElementById('characterWrap');
+const message=document.getElementById('message'),characterTitle=document.getElementById('characterTitle'),svgText=document.getElementById('svgText'),svgUrl=document.getElementById('svgUrl');
+const assetMap={};let selected='dusk';
+const say=t=>message.textContent=t;
+function clearEffects(){wrap.className='character-wrap';document.querySelectorAll('[data-effect]').forEach(b=>b.setAttribute('aria-pressed','false'))}
+function sanitize(svg){
+  const doc=new DOMParser().parseFromString(svg,'image/svg+xml');
+  if(doc.querySelector('parsererror')||doc.documentElement.localName!=='svg')throw Error('This is not a valid SVG.');
+  const root=doc.documentElement;
+  root.querySelectorAll('script,foreignObject,iframe,object,embed').forEach(el=>el.remove());
+  root.querySelectorAll('*').forEach(el=>{for(const attr of [...el.attributes]){if(/^on/i.test(attr.name)||/^(href|xlink:href)$/i.test(attr.name)&&!/^(#|data:image\/)/.test(attr.value)||/url\(\s*['"]?https?:/i.test(attr.value))el.removeAttribute(attr.name)}});
+  root.removeAttribute('onload');
+  if(root.querySelector('style'))root.querySelectorAll('style').forEach(e=>e.remove());
+  return new XMLSerializer().serializeToString(root);
+}
+function render(){
+  clearEffects();
+  if(selected==='dusk'){frame.hidden=false;customStage.hidden=true;document.getElementById('duskPanel').hidden=false;document.getElementById('customPanel').hidden=true;say('Dusk original lab');return}
+  frame.hidden=true;customStage.hidden=false;document.getElementById('duskPanel').hidden=true;document.getElementById('customPanel').hidden=false;
+  characterTitle.textContent=names[selected];svgText.value='';svgUrl.value='';
+  const svg=assetMap[selected]||sessionStorage.getItem('willena.characterLab.svg.'+selected);
+  wrap.replaceChildren();
+  if(svg){try{wrap.innerHTML=sanitize(svg);assetMap[selected]=svg;say(names[selected]+' SVG loaded.');}catch(e){say(e.message)}}
+  else{let p=document.createElement('div');p.id='empty';p.textContent='Import the existing '+names[selected]+' SVG to test its animations. The original artwork will not be replaced.';wrap.append(p);say('SVG source not yet connected.')}
+}
+for(const button of document.querySelectorAll('[data-character]'))button.addEventListener('click',()=>{
+ selected=button.dataset.character;document.querySelectorAll('[data-character]').forEach(x=>x.setAttribute('aria-selected',String(x===button)));render();
+});
+function applySvg(text){try{const clean=sanitize(text);assetMap[selected]=clean;try{sessionStorage.setItem('willena.characterLab.svg.'+selected,clean)}catch{}wrap.innerHTML=clean;clearEffects();say(names[selected]+' artwork loaded for preview (student app unchanged).')}catch(e){say(e.message)}}
+document.getElementById('svgFile').addEventListener('change',async e=>{const file=e.target.files?.[0];if(file){if(file.size>2e6){say('Choose an SVG smaller than 2 MB.');return}applySvg(await file.text())}});
+document.getElementById('loadText').onclick=()=>applySvg(svgText.value);
+document.getElementById('loadUrl').onclick=async()=>{try{const url=new URL(svgUrl.value,location.href);if(url.origin!==location.origin)throw Error('Use a same-origin SVG asset URL.');if(!url.pathname.toLowerCase().endsWith('.svg'))throw Error('Choose an .svg file URL.');const r=await fetch(url.href,{credentials:'same-origin'});if(!r.ok)throw Error('SVG not available ('+r.status+').');applySvg(await r.text())}catch(e){say(e.message)}};
+document.querySelectorAll('[data-effect]').forEach(button=>button.onclick=()=>{if(!assetMap[selected]){say('Load a real character SVG first.');return}const name=button.dataset.effect;wrap.classList.toggle(name);button.setAttribute('aria-pressed',String(wrap.classList.contains(name)))});
+document.getElementById('resetEffects').onclick=clearEffects;
+document.getElementById('background').onchange=e=>{stage.classList.remove('light','teal','checker');if(e.target.value!=='dark')stage.classList.add(e.target.value)};
+document.getElementById('downloadSvg').onclick=()=>{const text=assetMap[selected];if(!text)return say('Load an SVG first.');const url=URL.createObjectURL(new Blob([text],{type:'image/svg+xml'}));const a=document.createElement('a');a.href=url;a.download=selected+'-character-lab.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),500)};
+document.getElementById('copyBrief').onclick=async()=>{const desc='Modify the existing Willena '+names[selected]+' SVG character. Preserve its approved proportions, colours, and silhouette. Add or change ONLY this animation: [describe desired motion]. Return a complete editable SVG and explain any separate animation CSS. Do not touch the live student app.';try{await navigator.clipboard.writeText(desc);say('Design brief copied — paste into ChatGPT with the SVG.')}catch{say(desc)}};
+document.getElementById('openDusk').onclick=()=>window.open('/character-lab/dusk/','_blank','noopener,noreferrer');
+render();
+})();
+</script></body></html>
