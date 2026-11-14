@@ -971,3 +971,21 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-edit-highlight-wrap .df-edit-missing::before{content:'';position:absolute;left:0;top:0;height:1.15em;border-left:3px solid #e75c9d}
 .writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-confirm-action{background:#fff!important;color:#e75c9d!important;border:2px solid #55cdd5!important;box-shadow:none}
 .writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-confirm-action:hover{background:#fff6fa!important}
+
+/* Unified sentence-review wizard and full-passage final practice */
+.writing-genius #wgDiaryFlow .df-review-decision-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.writing-genius #wgDiaryFlow .df-review-decision-buttons .wg-button{min-width:0;min-height:50px;border:2px solid #bfe8ed;background:white;color:#df5899;font-weight:850}
+.writing-genius #wgDiaryFlow .df-review-decision-buttons .wg-button:first-child{background:#fff0f7;border-color:#e75c9d}
+.writing-genius #wgDiaryFlow .df-review-custom{margin:14px 0;display:grid;gap:10px}
+.writing-genius #wgDiaryFlow .df-review-custom textarea{width:100%;min-height:110px;box-sizing:border-box}
+.writing-genius #wgDiaryFlow .df-expression-select{display:grid;gap:10px}
+.writing-genius #wgDiaryFlow .df-expression-select .df-revision-input[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow .df-expression-select .df-revision-input{width:100%;min-height:92px;box-sizing:border-box}
+.writing-genius #wgDiaryFlow .df-final-passage{min-height:280px;line-height:1.85}
+.writing-genius #wgDiaryFlow .df-final-script{white-space:pre-wrap;overflow-wrap:anywhere;padding:20px 18px;border:2px solid #bfe8ed;border-radius:20px;color:#26525c;background:white;font-size:clamp(1rem,3.7vw,1.22rem);font-weight:700;line-height:1.9;max-height:45vh;overflow-y:auto}
+.writing-genius #wgDiaryFlow .df-final-type,.writing-genius #wgDiaryFlow .df-final-speak{margin:14px auto;width:100%;max-width:660px}
+.writing-genius #wgDiaryFlow .df-final-type[hidden],.writing-genius #wgDiaryFlow .df-final-speak[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow .df-final-type textarea{width:100%;min-height:180px;max-height:35vh}
+.writing-genius #wgDiaryFlow .df-final-speak .df-question-host{margin:18px auto}
+.writing-genius #wgDiaryFlow .df-second-review-button{flex:0 0 auto!important;max-width:220px}
+@media(max-width:560px){.writing-genius #wgDiaryFlow .df-review-decision-buttons{gap:7px}.writing-genius #wgDiaryFlow .df-review-decision-buttons .wg-button{padding:9px 6px;font-size:.86rem}}
