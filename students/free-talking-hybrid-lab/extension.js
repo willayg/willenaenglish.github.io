@@ -169,7 +169,7 @@ function navigateBack({fromResults=false}={}){
   if(state.reviewing&&!fromResults)return;
   if(fromResults&&state.active)endSession('Leaving finished conversation.');
   // Return to the exact book and unit selected before the conversation.
-  const back=new URL('/students/free-talking-genius/',location.origin);
+  const back=new URL(window.WillenaFTSharedMenu?.paths.units||'/students/free-talking-genius/',location.origin);
   const params=new URLSearchParams(location.search);
   const book=state.book?.id||params.get('book'),unit=state.unit?.id||params.get('unit');
   if(book&&unit){back.searchParams.set('book',book);back.searchParams.set('unit',unit);back.searchParams.set('return','1')}
@@ -2243,7 +2243,10 @@ async function initStandaloneRelease(){
  const host=$('ftReleaseNativeMenu');
  if(!host){showError('Character menu container is missing.');return}
  let menu;
- try{
+ // Prefer the identical shared source; preserve the proven HTML fallback.
+ try{menu=window.WillenaFTSharedMenu?.mount(host)||null}
+ catch(ex){console.warn('[Free Talking] Shared menu fallback',ex)}
+ if(!menu)try{
   const response=await fetch('/students/free-talking-genius/index.html',{cache:'no-store'});
   if(!response.ok)throw Error('Menu source HTTP '+response.status);
   const doc=new DOMParser().parseFromString(await response.text(),'text/html');
@@ -2251,7 +2254,8 @@ async function initStandaloneRelease(){
   if(!source)throw Error('Speaking character menu not found in source');
   menu=source.cloneNode(true);
  }catch(ex){console.error('[Free Talking] original character menu',ex);showError('Character menu could not load. Please refresh.');return}
- host.replaceChildren();
+ if(!menu){showError('Character menu unavailable.');return}
+ if(menu.parentNode!==host)host.replaceChildren(menu);
  // The original character actor module might not have populated its portraits
  // at iframe load; only fill a missing portrait with the exact shared SVG art.
  const bunnyPortrait=menu.querySelector('#ftChooseLili .ft-character-symbol');
