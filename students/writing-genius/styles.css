@@ -930,3 +930,7 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-saved-excerpt{font-size:.86rem;color:#526e75;overflow-wrap:anywhere}
 .writing-genius #wgDiaryFlow .df-saved-current{color:#e75c9d;font-size:.8rem;font-weight:900}
 .writing-genius #wgDiaryFlow .df-saved-error{color:#a83254}
+
+/* Explicit Korean instructions for both diary correction practice and final teleprompter. */
+.writing-genius #wgDiaryFlow .df-task-instruction{max-width:570px;margin:14px auto 18px;padding:13px 16px;border-radius:15px;background:#f0fafb;border:2px solid #c5eef1;color:#255861;text-align:center;font-weight:850;font-size:clamp(.91rem,2.7vw,1.06rem);line-height:1.6;overflow-wrap:anywhere}
+.writing-genius #wgDiaryFlow .df-tele-mode-switch+.df-task-instruction{margin-top:10px;margin-bottom:6px}
