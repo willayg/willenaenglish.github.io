@@ -1,7 +1,7 @@
 // Free Talking V2 native host.
 // The V1 conversation engine runs in a ShadowRoot, inside the original student
 // document: one persistent header, no iframe and no independent page history.
-const ENGINE='/students/free-talking-genius/free-talking-v2-engine.js?v=20261114-retry-in-place1';
+const ENGINE='/students/free-talking-genius/free-talking-v2-engine.js?v=20261114-retry-in-place2';
 const TEMPLATE='/students/free-talking-hybrid-lab/index.html';
 let workspace=null;
 let loading=null;
