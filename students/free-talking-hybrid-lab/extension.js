@@ -1,7 +1,7 @@
 // Demo overlay. The ORIGINAL Free Talking Genius runs unchanged inside the same-origin iframe.
 // Everything here is additive; no production app source is patched.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
-import {mountFreeTalkingCharacterMenu} from '/students/free-talking-genius/shared-menu.js?v=20261114-p2';
+import {mountFreeTalkingCharacterMenu,unitReturnRoute} from '/students/free-talking-genius/shared-menu.js?v=20261114-p2b';
 import {createHybridCharacterStage} from './shared-character-stage.js?v=20261114-electric-cat-v3';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
@@ -170,10 +170,9 @@ function navigateBack({fromResults=false}={}){
   if(state.reviewing&&!fromResults)return;
   if(fromResults&&state.active)endSession('Leaving finished conversation.');
   // Return to the exact book and unit selected before the conversation.
-  const back=new URL('/students/free-talking-genius/',location.origin);
   const params=new URLSearchParams(location.search);
   const book=state.book?.id||params.get('book'),unit=state.unit?.id||params.get('unit');
-  if(book&&unit){back.searchParams.set('book',book);back.searchParams.set('unit',unit);back.searchParams.set('return','1')}
+  const back=unitReturnRoute({bookId:book,unitId:unit});
   location.replace(back.pathname+back.search);
   return;
  }
