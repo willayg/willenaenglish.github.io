@@ -9,10 +9,10 @@ import {renderStudentSessionFinish} from '/students/components/student-session-f
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {geniusSessionContext} from '/students/components/genius-session-context.js?v=20261104-a';
-import {createFreeTalkingVoice} from './question-voice.js?v=20261114-priority-question1';
+import {createFreeTalkingVoice} from './question-voice.js?v=20261114-clone-transparent3';
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-route8';
-import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261113-willy-retry1';
-import {createFreeTalkingCharacters} from './character-actor.js?v=20261114-willo-restored1';
+import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261114-clone-transparent3';
+import {createFreeTalkingCharacters} from './character-actor.js?v=20261114-clone-transparent3';
 import {DUSK_UNLOCK_POINTS} from './dusk-character.js?v=20261114-no-legacy-card1';
 import {createFreeTalkingGuide} from './guide.js?v=20261107-guide-kids2';
 // Keep the inline character menu if the optional shared UI script is unavailable.
@@ -1282,7 +1282,7 @@ $('ftFreeTalkingV2Card').addEventListener('click',async()=>{
  await new Promise(resolve=>requestAnimationFrame(resolve));
  try{
   if(!freeTalkingV2){
-   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-no-card2');
+   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-clone-transparent3');
    freeTalkingV2=createFreeTalkingV2({
     host:$('ftFreeTalkingV2'),getToken:()=>token(),
     onBack:()=>{
