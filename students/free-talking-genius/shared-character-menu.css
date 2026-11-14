@@ -239,3 +239,12 @@
  border:0;border-radius:12px;background:#c3a6ff;color:#201b32;
  font-size:16px;font-weight:700;min-width:130px;min-height:45px;cursor:pointer;
 }
+
+/* Dusk shares the same one-tap selection ring as Bunny Fox, Pigfish and Willo.
+   Its transparent portrait stylesheet previously forced box-shadow:none!important,
+   which suppressed the normal selected-state highlight. */
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-unlocked[aria-pressed="true"] .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-unlocked[aria-pressed="true"] .ft-character-symbol{
+  box-shadow:0 0 0 5px #7fcbd588!important;
+  transform:scale(1.045)!important;
+}
