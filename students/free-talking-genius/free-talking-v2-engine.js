@@ -1327,10 +1327,17 @@ async function playAnchor(index){
   // A production conversation must confirm that the opening turn is durable.
   await state.transcriptSaveQueue;
   if(state.transcriptSaveErrors){
-   error('Could not save the conversation transcript. Please contact your teacher.');
-   endSession('Transcript saving unavailable.');
-   $('ftReleaseIntro').hidden=false;veil.hidden=true;
-   const note=$('ftReleaseError');note.hidden=false;note.textContent='Transcript saving is unavailable. Please tell your teacher.';
+   // Keep the child in the activity with a real recovery path.
+   endSession('Transcript saving interrupted. Retry connection to continue.');
+   state.paused=true;setPauseButton(true);
+   $('ftReleaseIntro').hidden=true;
+   veil.hidden=false;$('talk').classList.add('is-visible');
+   $('ftEnginePanel')?.setAttribute('hidden','');
+   $('ftBootSpinner').hidden=true;
+   $('restart').hidden=false;$('restart').disabled=false;
+   $('pauseResume').disabled=false;
+   $('listenCheck').textContent='Transcript save failed · Tap Retry';
+   error('Could not save the conversation transcript. Please retry or tell your teacher.');
    return;
   }
  }
@@ -2405,6 +2412,15 @@ async function initStandaloneRelease(){
    $('listenCheck').textContent='Could not connect · Tap Retry';
    $('restart').hidden=false;$('restart').disabled=false;
    $('pauseResume').disabled=false;
+  }
+  finally{
+   starting=false;
+   // A guide-deferred start or failed launch must not permanently disable
+   // the selector when the student returns to it.
+   if(!state.active){
+    buttons.forEach(b=>b.disabled=false);
+    if(startButton)startButton.disabled=!selected;
+   }
   }
  }
  for(const [id,name] of choices)menu.querySelector('#'+id)?.addEventListener('click',()=>choose(name));
