@@ -13,7 +13,7 @@ const model=env=>env.FREE_TALKING_REALTIME_MODEL||'gpt-realtime-2.1-mini';
 const voice=env=>env.FREE_TALKING_REALTIME_VOICE||'marin';
 // Only these two voices are selectable. Prize voices remain registered separately
 // but are not reachable through this endpoint until an authenticated unlock system exists.
-const SELECTABLE_VOICES=new Set(['marin','bunny-v3','pigfish','willy','willy2']);
+const SELECTABLE_VOICES=new Set(['marin','bunny-v3','pigfish','willy','willy2','prince']);
 const ELEVEN_VOICES=Object.freeze({
  bunny:'M7zl2TS7ORAIGUejDfoy',
  'bunny-v3':'M7zl2TS7ORAIGUejDfoy',
