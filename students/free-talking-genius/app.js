@@ -13,6 +13,7 @@ import {createFreeTalkingVoice} from './question-voice.js?v=20261114-priority-qu
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-route8';
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261113-willy-retry1';
 import {createFreeTalkingCharacters} from './character-actor.js?v=20261114-willo-restored1';
+import {DUSK_UNLOCK_POINTS} from './dusk-character.js?v=20261114-no-legacy-card1';
 import {createFreeTalkingGuide} from './guide.js?v=20261107-guide-kids2';
 // Keep the inline character menu if the optional shared UI script is unavailable.
 try{window.WillenaFTSharedMenu?.replace(document.getElementById('ftCharacter'))}
@@ -28,7 +29,7 @@ const state={skippedIds:new Set(),student:null,profile:null,books:[],bookId:null
  current:null,cursor:0,feedback:null,loading:false,finishing:false,identity:null,awards:new Set(),hints:new Map(),hintTexts:new Map(),phase:'ready',repeatStep:false,repeatMode:null,repeatTranscript:null,repeatChecking:false,seenChallenges:new Set()};
 const groups=()=>state.questions.filter(x=>x.book_id===state.bookId&&Number(x.unit_number)===state.unit).sort((a,b)=>a.question_number-b.question_number);
 const questionVoice=createFreeTalkingVoice({host:$('ftWilliVoice'),getToken:token});
-const characters=createFreeTalkingCharacters({circle:$('ftTurnCircle'),session:$('ftSession'),voiceHost:$('ftWilliVoice'),choices:{ftChooseLili:'bunny-v3',ftChoosePigfish:'pigfish',ftChooseWilly:'willy'}});
+const characters=createFreeTalkingCharacters({circle:$('ftTurnCircle'),session:$('ftSession'),voiceHost:$('ftWilliVoice'),choices:{ftChooseLili:'bunny-v3',ftChoosePigfish:'pigfish',ftChooseWilly:'willy',ftChooseDusk:'dusk'}});
 const guide=createFreeTalkingGuide();
 const retryVoice=createFreeTalkingRetryVoice({
  getToken:token,
@@ -980,14 +981,38 @@ function renderQuestion({retry=false}={}){
  aiRecorder.releaseIdle();
  void questionVoice.select(state.current.id,{autoplay:false});
 }
-let roundChoice=null;
+let roundChoice=null,duskAvailablePoints=null;
+async function getCurrentDuskPoints(){
+ const response=await WillenaAPI.fetch('/.netlify/functions/progress_summary?section=overview&_='+Date.now(),{cache:'no-store'});
+ if(!response.ok)throw Error('Could not verify points');
+ const data=await response.json();
+ if(data?.points==null||!Number.isFinite(Number(data.points)))throw Error('Points unavailable');
+ return Math.max(0,Math.floor(Number(data.points)));
+}
+function showDuskUnlock(points){
+ const button=$('ftChooseDusk'),label=button?.querySelector('.ft-dusk-lock');
+ if(!button)return;
+ duskAvailablePoints=points;
+ button.hidden=false;
+ const unlocked=points!=null&&points>=DUSK_UNLOCK_POINTS;
+ button.setAttribute('aria-disabled',String(!unlocked));
+ if(label)label.textContent=unlocked?'★ Unlocked':points==null?'🔒 Checking points…':'🔒 '+(DUSK_UNLOCK_POINTS-points).toLocaleString()+' points to go';
+}
+async function verifyDuskAccess(){
+ try{
+  const points=await getCurrentDuskPoints();showDuskUnlock(points);
+  if(points>=DUSK_UNLOCK_POINTS)return true;
+  showError('🔒 5,000 points needed to unlock Dusk.');return false;
+ }catch(error){showDuskUnlock(null);showError('Dusk unlock: '+error.message);return false}
+}
 function chooseRoundVoice(voice){
- if(!['marin','bunny-v3','pigfish','willy'].includes(voice))return;
+ if(!['marin','bunny-v3','pigfish','willy','prince'].includes(voice))return;
 
  if(roundChoice===voice&&!state.loading&&state.pendingMode){void beginRound(state.pendingMode);return}
  roundChoice=voice;
- retryVoice.preloadBoth();
- for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy']])
+ if(voice==='prince')void retryVoice.preloadOne('prince');
+ else retryVoice.preloadBoth();
+ for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy'],['ftChooseDusk','prince']])
   $(id).setAttribute('aria-pressed',String(value===voice));
  $('ftCharacterContinue').disabled=false;
 }
@@ -995,20 +1020,23 @@ function openMode(mode){
  if(state.loading||!['speaking','writing'].includes(mode))return;
  state.pendingMode=mode;roundChoice=null;
  $('ftCharacterRound').textContent=bookTitle()+' · Unit '+state.unit+' · '+(mode==='speaking'?'말하기':'쓰기');
- for(const id of ['ftChooseWilli','ftChooseLili','ftChoosePigfish','ftChooseWilly'])$(id).setAttribute('aria-pressed','false');
+ for(const id of ['ftChooseWilli','ftChooseLili','ftChoosePigfish','ftChooseWilly','ftChooseDusk'])$(id).setAttribute('aria-pressed','false');
  $('ftCharacterContinue').disabled=true;
  preloadStudentSfx();
  view('ftCharacter');
+ showDuskUnlock(null);
+ void getCurrentDuskPoints().then(showDuskUnlock).catch(()=>showDuskUnlock(null));
  // Willi 2 is the default Speaking character; students may still choose another.
  if(mode==='speaking')chooseRoundVoice('willy');
 }
 async function beginRound(mode){
  if(state.loading||!['speaking','writing'].includes(mode)||!roundChoice)return;
+ if(roundChoice==='prince'&&!await verifyDuskAccess())return;
 
  if(!questionVoice.setVoice(roundChoice)){
   showError('캐릭터 음성을 선택할 수 없어요.');return;
  }
- characters.select(roundChoice);
+ characters.select(roundChoice==='prince'?'dusk':roundChoice);
 
  state.mode=mode;state.identity=geniusSessionContext({bookId:BOOK(),unitId:groups()[0]?.unit_id,mode});
  setBusy(true);
@@ -1234,7 +1262,8 @@ $('ftBackHome').addEventListener('click',()=>view('ftHome'));
 $('ftChooseWilli').addEventListener('click',()=>chooseRoundVoice('marin'));
 $('ftChooseLili').addEventListener('click',()=>chooseRoundVoice('bunny-v3'));
 $('ftChoosePigfish').addEventListener('click',()=>chooseRoundVoice('pigfish'));
-$('ftChooseWilly').addEventListener('click',()=>chooseRoundVoice('willy'))
+$('ftChooseWilly').addEventListener('click',()=>chooseRoundVoice('willy'));
+$('ftChooseDusk')?.addEventListener('click',async()=>{if(await verifyDuskAccess())chooseRoundVoice('prince')})
 $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pendingMode));
 $('ftCharacterBack').addEventListener('click',()=>view('ftBook'));
 
@@ -1247,6 +1276,10 @@ $('ftFreeTalkingV2Card').addEventListener('click',async()=>{
  const card=$('ftFreeTalkingV2Card');
  if(card.disabled)return;
  card.disabled=true;
+ const launchLoader=$('ftV2LaunchLoader');
+ if(launchLoader)launchLoader.hidden=false;
+ // Paint a feedback frame before the native workspace's first network load.
+ await new Promise(resolve=>requestAnimationFrame(resolve));
  try{
   if(!freeTalkingV2){
    const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-no-card2');
@@ -1268,7 +1301,7 @@ $('ftFreeTalkingV2Card').addEventListener('click',async()=>{
   freeTalkingV2?.close({notify:false});
   showError('Free Talking: '+(error?.message||'Could not open the activity.'));
  }
- finally{card.disabled=false}
+ finally{card.disabled=false;if(launchLoader)launchLoader.hidden=true}
 });
 
  // Separate Free Talking experience; no Speaking state machine is modified.
