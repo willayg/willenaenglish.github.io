@@ -15,7 +15,9 @@ export async function onRequestPost({request,env}){
  // AI Willy uses consistent baseline delivery; keep emotion tags supplied by the conversation model.
  // The baseline tags go ONLY to ElevenLabs, not into the visible conversation transcript.
  // Willi 2 uses natural, unprefixed text; preserve model-supplied emotion tags.
- const ttsText=sentence;
+ const ttsText=character==='dusk'
+  ? sentence.replace(/\[(?:chuckling|laughing|giggles|giggling|surprised|whispering|crying|screaming|bombastic|irish)\]/gi,'').replace(/\s+/g,' ').trim()
+  : sentence;
  // Match the ElevenLabs model used to cache this character's textbook questions.
  // Never substitute an OpenAI voice for Bunny or Pigfish.
  const selectedModel={id:'eleven_v3'};
@@ -42,7 +44,9 @@ export async function onRequestPost({request,env}){
    return new Response(speech.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Willena-TTS-Route':'openai-marin','X-Content-Type-Options':'nosniff'}});
   }
   const voiceId=VOICES[character];
-  const voiceSettings={stability:0.5,similarity_boost:0.8,use_speaker_boost:false};
+  const voiceSettings=character==='dusk'
+   ? {stability:0.75,similarity_boost:0.9,use_speaker_boost:false}
+   : {stability:0.5,similarity_boost:0.8,use_speaker_boost:false};
   let directError='not-configured';
   if(key){
    try{
