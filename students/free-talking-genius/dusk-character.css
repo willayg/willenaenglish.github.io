@@ -1,0 +1,42 @@
+/* Dusk, exact source art from character-lab/dusk.
+   Effects follow the original animation playground: blink, squint, glances,
+   soft bob/sway, gold sparks and an ambient speech glow. */
+.ft-dusk-actor{width:100%;height:100%;display:grid;place-items:center;position:relative;transform-origin:center 55%;--dusk-speed:1}
+.ft-dusk-svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 7px #080e2233)}
+.ft-dusk-svg .dusk-moving-eye{transition:transform 155ms cubic-bezier(.2,.8,.3,1)}
+.ft-dusk-svg #blinkOverlay{transform-origin:800px 680px;animation:duskAutoBlink 5s ease-in-out infinite}
+.ft-dusk-svg #squintLids .squint-upper{transform:translateY(-105px);transition:transform 330ms cubic-bezier(.25,.7,.25,1)}
+.ft-dusk-svg #squintLids .squint-lower{transform:translateY(105px);transition:transform 330ms cubic-bezier(.25,.7,.25,1)}
+.ft-dusk-actor[data-dusk-effect="squint"] #squintLids .squint-upper,
+.ft-dusk-actor[data-dusk-effect="squint"] #squintLids .squint-lower{transform:translateY(0)}
+.bf-actor[data-state="listening"] .ft-dusk-actor{animation:duskBob 3s ease-in-out infinite}
+.bf-actor[data-state="thinking"] .ft-dusk-actor{animation:duskSway 2.5s ease-in-out infinite}
+.bf-actor[data-state="speaking"] .ft-dusk-svg,
+.bf-actor[data-audio-speaking="true"] .ft-dusk-svg{animation:duskVoiceHalo 1.65s ease-in-out infinite}
+.ft-dusk-actor[data-dusk-effect="surprised"]{animation:duskSurprise .65s ease-out 1}
+.ft-dusk-actor[data-dusk-effect="surprised"] #sparks{opacity:1;transform-origin:760px 730px;animation:duskTwinkle .3s ease-in-out 2}
+.ft-dusk-actor[data-dusk-effect="glance"] .dusk-moving-eye{transform:translateX(-44px)}
+.ft-dusk-actor[data-dusk-effect="squint"] .dusk-moving-eye{transform:translateX(16px)}
+.ft-character-dusk .ft-dusk-svg{width:100%;height:100%;display:block;overflow:visible}
+.ft-character-dusk .ft-character-symbol{background:#142c42!important;border-color:#50c9c6!important;outline-color:#c1f4f1!important}
+.ft-character-dusk .ft-character-symbol .ft-dusk-actor{width:100%;height:100%}
+.ft-character-dusk .ft-character-symbol .ft-dusk-svg{filter:none}
+.ft-character-dusk .ft-dusk-lock{display:block;font-size:12px;font-weight:850;color:#a67822}
+.ft-character-dusk[aria-disabled="true"]{opacity:.78}
+.ft-character-dusk[aria-disabled="true"] .ft-character-symbol{filter:saturate(.63)}
+.ft-character-dusk[aria-disabled="false"] .ft-dusk-lock{color:#177c78}
+.ft-character-dusk .ft-dusk-lock[hidden]{display:none}
+@keyframes duskBob{50%{transform:translateY(-13px)}}
+@keyframes duskSway{25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+@keyframes duskAutoBlink{0%,85%,89%,100%{opacity:0}86%,88%{opacity:1}}
+@keyframes duskSurprise{30%{transform:scale(1.08) translateY(-8px)}60%{transform:scale(.97)}}
+@keyframes duskTwinkle{50%{transform:scale(1.1) rotate(5deg);opacity:.25}}
+@keyframes duskVoiceHalo{
+ 0%,100%{filter:drop-shadow(0 0 0 transparent)}
+ 12%,35%,58%{filter:drop-shadow(0 0 12px rgba(26,228,215,.88)) drop-shadow(0 0 20px rgba(17,193,214,.38))}
+ 23%,46%,75%{filter:drop-shadow(0 0 4px rgba(26,228,215,.24))}
+}
+@media(prefers-reduced-motion:reduce){
+ .ft-dusk-actor,.ft-dusk-svg,.ft-dusk-svg #blinkOverlay,
+ .ft-dusk-svg #sparks,.ft-dusk-svg .dusk-moving-eye{animation:none!important;transition:none!important}
+}
