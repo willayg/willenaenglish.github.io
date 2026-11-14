@@ -22,6 +22,38 @@
   choices?.append(dusk);
   return menu;
  }
+
+ function createDuskUnlockUI(menu,threshold=5000){
+  const button=menu?.querySelector('#ftChooseDusk');if(!button)return null;
+  const label=button.querySelector('.ft-dusk-lock'),dialog=document.createElement('div');
+  dialog.className='ft-dusk-unlock-dialog';dialog.hidden=true;
+  dialog.innerHTML='<div class="ft-dusk-unlock-panel" role="dialog" aria-modal="true" aria-labelledby="ftDuskUnlockTitle" aria-describedby="ftDuskUnlockDescription"><span class="ft-dusk-unlock-icon" aria-hidden="true">✦</span><h3 id="ftDuskUnlockTitle">비밀 친구 Dusk</h3><p id="ftDuskUnlockDescription"></p><button type="button" class="ft-dusk-unlock-close">확인</button></div>';
+  menu.append(dialog);
+  const description=dialog.querySelector('#ftDuskUnlockDescription'),close=dialog.querySelector('.ft-dusk-unlock-close');
+  let points=null;
+  function dismiss(){dialog.hidden=true;button.focus()}
+  function open(){
+   const remaining=points==null?null:Math.max(0,threshold-points);
+   description.textContent=remaining==null
+    ? 'Dusk는 '+threshold.toLocaleString()+'포인트를 모으면 만날 수 있어요! 포인트를 확인한 뒤 다시 시도해 주세요.'
+    : 'Dusk를 만나려면 총 '+threshold.toLocaleString()+'포인트가 필요해요. 앞으로 '+remaining.toLocaleString()+'포인트만 더 모으면 돼요!';
+   dialog.hidden=false;close?.focus();
+  }
+  function update(next){
+   points=Number.isFinite(next)?next:null;
+   const unlocked=points!=null&&points>=threshold;
+   button.hidden=false;button.classList.toggle('ft-dusk-is-locked',!unlocked);
+   button.classList.toggle('ft-dusk-is-unlocked',unlocked);
+   button.setAttribute('aria-disabled',String(!unlocked));
+   button.setAttribute('aria-label',unlocked?'Dusk':'Dusk, 비밀 캐릭터, '+threshold.toLocaleString()+'포인트 필요');
+   if(label){label.hidden=true;label.textContent='';}
+   return unlocked;
+  }
+  close?.addEventListener('click',dismiss);
+  dialog.addEventListener('click',event=>{if(event.target===dialog)dismiss()});
+  dialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
+  update(null);return {update,open,close:dismiss};
+ }
  function replace(existing){
   if(!existing||!existing.parentNode)return null;
   const menu=makeMenu();
@@ -48,5 +80,5 @@
   if(bookId&&unitId){url.searchParams.set('book',String(bookId));url.searchParams.set('unit',String(unitId));url.searchParams.set('return','1')}
   return url;
  }
- global.WillenaFTSharedMenu=Object.freeze({makeMenu,replace,mount,paths,conversationRoute,returnRoute});
+ global.WillenaFTSharedMenu=Object.freeze({makeMenu,replace,mount,createDuskUnlockUI,paths,conversationRoute,returnRoute});
 })(window);
