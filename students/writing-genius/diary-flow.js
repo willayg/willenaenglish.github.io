@@ -10,7 +10,7 @@ const norm=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-
 const typedComparable=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/\\s+/g,' ').trim();
 function renderWritingDiff(host,expected,actual){
  const a=[...String(expected||'')],b=[...String(actual||'')];
- const eq=(x,y)=>typedComparable(x)===typedComparable(y);
+ const eq=(x,y)=>String(x).toLowerCase().replace(/[’‘]/g,"'")===String(y).toLowerCase().replace(/[’‘]/g,"'");
  const n=a.length,m=b.length;
  if(n>300||m>300){host.replaceChildren();host.append(el('p','','문장의 철자와 문장 부호를 다시 확인하세요.'));return}
  const dp=Array.from({length:n+1},()=>new Uint16Array(m+1));
