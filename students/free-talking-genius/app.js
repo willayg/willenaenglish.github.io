@@ -666,15 +666,17 @@ function renderUnitStrip(){
 }
 // Free Talking has cumulative student/unit progress independently of Speaking.
 function showFreeTalkingPercent(value){
- const card=$('ftFreeTalkingCard');if(!card)return;
  const count=Math.max(0,Math.min(8,Number(value)||0));
  const percent=Math.round(count/8*100);
- card.querySelector('.vocab-skill-ring').style.setProperty('--progress',String(percent));
- card.querySelector('.vocab-skill-ring span').textContent=percent+'%';
- card.classList.toggle('ft-golden-skill',count===8);
- const detail=card.querySelector('.vocab-card-stars');
- if(detail){detail.textContent='';detail.hidden=true}
- card.setAttribute('aria-label','Free Talking '+percent+'%');
+ for(const [id,label] of [['ftFreeTalkingCard','Free Talking V1'],['ftFreeTalkingV2Card','Free Talking']]){
+  const card=$(id);if(!card)continue;
+  card.querySelector('.vocab-skill-ring')?.style.setProperty('--progress',String(percent));
+  const ringText=card.querySelector('.vocab-skill-ring span');if(ringText)ringText.textContent=percent+'%';
+  card.classList.toggle('ft-golden-skill',count===8);
+  card.setAttribute('aria-label',label+' '+percent+'%');
+ }
+ const oldDetails=$('ftFreeTalkingCard')?.querySelector('.vocab-card-stars');
+ if(oldDetails){oldDetails.textContent='';oldDetails.hidden=true}
 }
 const ftProgressCache=new Map();
 let ftProgressRequest=0;
