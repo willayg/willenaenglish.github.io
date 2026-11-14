@@ -14,7 +14,7 @@ export function createFreeTalkingVoice({host,getToken}){
  const PRELOAD_GENERATION_GAP_MS=300;
  const button=host.querySelector('[data-ft-listen]');
  const voicePicker=host.querySelector('[data-ft-voice-picker]');
- const VOICES=new Set(['marin','bunny-v3','pigfish','willy']);
+ const VOICES=new Set(['marin','bunny-v3','pigfish','willy','prince']);
  const PREFERENCE_KEY='willena-free-talking-voice-v1';
  try{
   const saved=localStorage.getItem(PREFERENCE_KEY);
@@ -26,7 +26,7 @@ export function createFreeTalkingVoice({host,getToken}){
  const modelLabel=host.querySelector('[data-ft-voice-model]');
  const preloadLabel=host.querySelector('[data-ft-voice-preload]');
  const characterName=host.querySelector('[data-ft-character-name]');
- function updateCharacterName(){if(characterName)characterName.textContent=activeVoice()==='pigfish'?'Pigfish':activeVoice()==='bunny-v3'?'Bunny Fox':activeVoice()==='willy'?'AI Willy':'Willo'}
+ function updateCharacterName(){if(characterName)characterName.textContent=activeVoice()==='pigfish'?'Pigfish':activeVoice()==='bunny-v3'?'Bunny Fox':activeVoice()==='willy'?'AI Willy':activeVoice()==='prince'?'Dusk':'Willo'}
  updateCharacterName();
  const isElevenVoice=v=>['bunny','jock','sgt-steve','lily'].includes(v);
  function preloadingText(text){if(preloadLabel)preloadLabel.textContent=text||''}
@@ -53,7 +53,7 @@ export function createFreeTalkingVoice({host,getToken}){
  audio.addEventListener('pause',()=>{setPlaying(false);if(!audio.ended)status('다시 듣기를 눌러 주세요.')});
  audio.addEventListener('ended',()=>{setPlaying(false);status('다시 듣기를 누르면 질문을 또 들을 수 있어요.')});
  audio.addEventListener('error',()=>{setPlaying(false);status('음성을 불러오지 못했어요. 질문을 읽고 답해 주세요.')});
- const modelForVoice=voice=>['bunny-v3','pigfish','willy'].includes(voice)?'eleven_v3':null;
+ const modelForVoice=voice=>['bunny-v3','pigfish','willy','prince'].includes(voice)?'eleven_v3':null;
  async function fetchVoice(questionId,voice){
   const expectedModel=modelForVoice(voice);
   // Use the exact Bunny v3 protocol that worked in the comparison test.
