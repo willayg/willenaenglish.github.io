@@ -42,7 +42,7 @@ function b64(bytes){
 }
 async function synthesize(voice,env){
  if(voice==='bunny-v3'||voice==='pigfish'||voice==='willy'||voice==='prince'){
-  const elevenId=voice==='pigfish'?PIGFISH_ID:voice==='willy'?WILLY_ID:LILI_ID;
+  const elevenId=voice==='pigfish'?PIGFISH_ID:voice==='willy'?WILLY_ID:voice==='prince'?PRINCE_ID:LILI_ID;
   const key=env.ELEVEN_LABS_API_KEY||env.ELEVENLABS_API_KEY;
   const settings={stability:0.5};
   if(!key){
