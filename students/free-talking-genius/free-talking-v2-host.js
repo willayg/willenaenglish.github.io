@@ -1,7 +1,7 @@
 // Free Talking V2 native host.
 // The V1 conversation engine runs in a ShadowRoot, inside the original student
 // document: one persistent header, no iframe and no independent page history.
-const ENGINE='/students/free-talking-genius/free-talking-v2-engine.js?v=20261114-menu-startfix1';
+const ENGINE='/students/free-talking-genius/free-talking-v2-engine.js?v=20261114-dusk-db-grid3';
 const TEMPLATE='/students/free-talking-hybrid-lab/index.html';
 let workspace=null;
 let loading=null;
@@ -36,7 +36,7 @@ async function mount(header){
  for(const file of [
   '/students/free-talking-genius/styles.css?v=20261114-p4-visual1',
   '/students/free-talking-genius/character-animations.css?v=20261114-shared-finish-v1',
-  '/students/free-talking-genius/dusk-character.css?v=20261114-clone-transparent3',
+  '/students/free-talking-genius/dusk-character.css?v=20261114-dusk-db-grid3',
   '/students/free-talking-genius/live-animal-ui.css?v=20261113-willy-animal1',
   '/students/free-talking-genius/guide.css?v=20261107-guide-kids2',
   '/students/free-talking-hybrid-lab/shared-character-stage.css?v=20261114-willo-restored1'
