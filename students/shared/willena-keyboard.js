@@ -42,9 +42,10 @@ function ensureStyles(){
 #willenaSharedKeyboard .wkb-key.shift.on{border-color:#67d4da;background:#e9fbfc;color:#07888d}
 #willenaSharedKeyboard .wkb-row.third{align-items:stretch}
 #willenaSharedKeyboard .wkb-row.third .backspace{max-width:88px;flex:1.15}
-#willenaSharedKeyboard .wkb-row.bottom{display:grid;grid-template-columns:minmax(0,1fr) 64px 88px;gap:5px;margin-top:5px;position:relative}
-#willenaSharedKeyboard .wkb-row.bottom .space,#willenaSharedKeyboard .wkb-row.bottom .symbols,#willenaSharedKeyboard .wkb-row.bottom .enter{width:100%;max-width:none;min-width:0}
+#willenaSharedKeyboard .wkb-row.bottom{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,38px) 62px 82px;gap:5px;margin-top:5px;position:relative}
+#willenaSharedKeyboard .wkb-row.bottom .space,#willenaSharedKeyboard .wkb-row.bottom .quick-punctuation,#willenaSharedKeyboard .wkb-row.bottom .symbols,#willenaSharedKeyboard .wkb-row.bottom .enter{width:100%;max-width:none;min-width:0}
 #willenaSharedKeyboard .wkb-row.bottom .symbols{font-size:15px}
+#willenaSharedKeyboard .wkb-row.bottom .quick-punctuation{font-size:21px;font-weight:900}
 #willenaSharedKeyboard .wkb-row.bottom .enter{border:2px solid #67d4da;background:#fff;color:#ee5f91;font-size:15px;font-weight:900;box-shadow:0 2px 5px rgba(25,119,126,.10)}
 #willenaSharedKeyboard .wkb-row.bottom .enter[aria-disabled="true"]{opacity:.42}
 #willenaSharedKeyboard .wkb-symbol-panel{position:absolute;right:91px;bottom:49px;width:min(420px,calc(100vw - 26px));display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;padding:7px;border:1px solid #cbd6da;border-radius:12px;background:#fff;box-shadow:0 8px 24px rgba(31,59,66,.18);z-index:3}
@@ -58,7 +59,7 @@ body.willena-kb-open{scroll-padding-bottom:360px}
  #willenaSharedKeyboard .wkb-key.shift{max-width:90px}
  #willenaSharedKeyboard .wkb-row{gap:9px;margin:8px 0}
  #willenaSharedKeyboard .wkb-row.third .backspace{max-width:116px}
- #willenaSharedKeyboard .wkb-row.bottom{grid-template-columns:minmax(0,1fr) 78px 116px;gap:9px}
+ #willenaSharedKeyboard .wkb-row.bottom{grid-template-columns:minmax(0,1fr) repeat(3,62px) 78px 116px;gap:9px}
  #willenaSharedKeyboard .wkb-row.bottom .enter{font-size:18px}
  #willenaSharedKeyboard .wkb-symbol-panel{right:125px;bottom:70px;gap:7px;padding:9px}
  #willenaSharedKeyboard .wkb-symbol-panel button{flex-basis:46px;width:46px;height:44px;font-size:20px}
@@ -164,7 +165,7 @@ function submitOrNext({hide=true}={}){
   const field=active;
   let ok=true;
   if(typeof submitHandler==='function'){
-    try{submitHandler(submit,field)}catch(_){ok=false}
+    try{if(submitHandler(submit,field)===false)ok=false}catch(_){ok=false}
   }else submit.click();
   if(ok&&hide)hideWillenaKeyboard();
   return ok;
@@ -197,7 +198,7 @@ function ensureKeyboard(){
   keyboard.hidden=true;
   const rowHtml=ROWS.map((row,i)=>`<div class="wkb-row ${i===2?'third':''}">${i===2?'<button type="button" class="wkb-key shift" data-key="shift" aria-pressed="false">⇧</button>':''}${row.map(x=>`<button type="button" class="wkb-key letter" data-key="${x}">${x}</button>`).join('')}${i===2?'<button type="button" class="wkb-key backspace" data-key="backspace">⌫</button>':''}</div>`).join('');
   const symbolHtml=SYMBOLS.map(x=>`<button type="button" data-symbol="${x==="'"?'&#39;':x}">${x==="'"?'&#39;':x}</button>`).join('');
-  keyboard.innerHTML=`<button type="button" class="wkb-hide">키보드 숨기기</button>${rowHtml}<div class="wkb-row bottom"><button type="button" class="wkb-key wide space" data-key="space">space</button><button type="button" class="wkb-key wide symbols" data-key="symbols">.,?</button><button type="button" class="wkb-key wide enter" data-key="enter">확인</button><div class="wkb-symbol-panel" hidden>${symbolHtml}</div></div>`;
+  keyboard.innerHTML=`<button type="button" class="wkb-hide">키보드 숨기기</button>${rowHtml}<div class="wkb-row bottom"><button type="button" class="wkb-key wide space" data-key="space">space</button><button type="button" class="wkb-key quick-punctuation" data-key="period" aria-label="마침표">.</button><button type="button" class="wkb-key quick-punctuation" data-key="comma" aria-label="쉼표">,</button><button type="button" class="wkb-key quick-punctuation" data-key="question" aria-label="물음표">?</button><button type="button" class="wkb-key wide symbols" data-key="symbols">.,?</button><button type="button" class="wkb-key wide enter" data-key="enter">확인</button><div class="wkb-symbol-panel" hidden>${symbolHtml}</div></div>`;
   document.body.appendChild(keyboard);renderCaps();
 
   keyboard.addEventListener('pointerdown',e=>{
@@ -212,6 +213,9 @@ function ensureKeyboard(){
     const key=keyBtn.dataset.key;keyBtn.classList.add('is-pressed');haptic(key);keyBtn.dataset.downHandled='1';
     if(key==='backspace')startRepeat();
     else if(key==='space')replaceSelection(' ');
+    else if(key==='period')replaceSelection('.');
+    else if(key==='comma')replaceSelection(',');
+    else if(key==='question')replaceSelection('?');
     else if(key==='shift'){caps=!caps;renderCaps()}
     else if(key==='symbols')setSymbolPanel(q('.wkb-symbol-panel',keyboard)?.hidden!==false);
     else if(key==='enter')keyBtn.dataset.submitOnUp='1';
