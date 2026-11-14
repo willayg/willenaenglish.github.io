@@ -684,6 +684,21 @@ function appendLine(who,text,source='ai_reply'){
  $('log').scrollTop=$('log').scrollHeight;
 }
 
+// Drive the character mouth from actual media playback, not only the
+// conversation's textual "Speaking" state. Audio is created afresh for each
+// cached textbook clip and ElevenLabs reply.
+function bindCharacterMouth(audio){
+ const actor=state.actor;
+ if(!actor||!audio)return;
+ const speaking=()=>{if(state.active){actor.setSpeaking(true);actor.actor?.setAttribute('data-audio-speaking','true')}};
+ const silent=()=>{actor.setSpeaking(false);actor.actor?.removeAttribute('data-audio-speaking')};
+ audio.addEventListener('playing',speaking);
+ audio.addEventListener('pause',silent);
+ audio.addEventListener('ended',silent);
+ audio.addEventListener('error',silent);
+ // Clear the mouth if an outgoing audio object is replaced during navigation.
+ if(state.playing!==audio)silent();
+}
 function actorPhase(phase){
  $('actorStage').dataset.phase=phase;
  const indicator=$('ftConversationState');
@@ -702,6 +717,8 @@ function showActor(){
 }
 
 function stopSpeech(){
+ state.actor?.setSpeaking(false);
+ state.actor?.actor?.removeAttribute('data-audio-speaking');
  state.generation++;
  try{state.controller?.abort()}catch{}
  state.controller=null;
@@ -1251,6 +1268,7 @@ async function playLocalClip(url,direct=false){
  try{
   return await new Promise((resolve,reject)=>{
    const audio=new Audio();state.speaker=audio;state.playing=audio;
+   bindCharacterMouth(audio);
    audio.preload='auto';audio.setAttribute('playsinline','');
    if(direct){audio.volume=Math.min(1,volumeFraction())}else routeAudio(audio);
    audio.src=url;
@@ -2057,6 +2075,7 @@ async function speakEleven(text,source='ai_reply'){
   if(control.signal.aborted||current!==state.generation||!state.active)return;
   if(blob.size<500)throw Error('ElevenLabs returned an empty recording');
   const audio=new Audio();state.speaker=audio;state.playing=audio;
+  bindCharacterMouth(audio);
   routeAudio(audio);actorPhase('speaking');
   state.mediaURL=URL.createObjectURL(blob);
   audio.src=state.mediaURL;
