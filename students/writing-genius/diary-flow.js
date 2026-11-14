@@ -767,7 +767,35 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const typeBtn=el('button','wg-button wg-secondary','쓰기');
   for(const b of [speakBtn,typeBtn])b.type='button';
   modeBar.append(speakBtn,typeBtn);stage.append(modeBar);
-  const reference=el('div','df-final-script',current.body);stage.append(reference);
+  // Retain the original teleprompter presentation for the final full-passage activity.
+  // This is one reading, not a second per-sentence exercise.
+  const reference=el('div','df-final-script df-final-teleprompter');
+  reference.setAttribute('aria-label','최종 글 텔레프롬프터');
+  const scriptLines=split(current.body);
+  const lineNodes=scriptLines.map((line,i)=>{
+   const p=el('p','df-final-tele-line'+(i===0?' is-current':''),line);
+   reference.append(p);return p;
+  });
+  stage.append(reference);
+  const updateTeleprompter=heard=>{
+   if(!lineNodes.length)return;
+   const spoken=speechWords(heard);
+   let consumed=0,activeIndex=0;
+   for(let i=0;i<scriptLines.length;i++){
+    const tokens=speechWords(scriptLines[i]);
+    if(!tokens.length)continue;
+    const segment=spoken.slice(consumed,consumed+tokens.length+2).join(' ');
+    if(segment&&writingSpeechAccepted(scriptLines[i],segment)){
+     consumed+=Math.min(tokens.length,spoken.length-consumed);activeIndex=i+1;
+    }else break;
+   }
+   activeIndex=Math.min(activeIndex,lineNodes.length-1);
+   lineNodes.forEach((node,i)=>{
+    node.classList.toggle('is-complete',i<activeIndex);
+    node.classList.toggle('is-current',i===activeIndex);
+   });
+   if(heard&&activeIndex<lineNodes.length)lineNodes[activeIndex].scrollIntoView({block:'nearest',behavior:'smooth'});
+  };
   const speakArea=el('div','df-final-speak');
   const typeArea=el('div','df-final-type');
   const input=el('textarea','df-textarea');
@@ -797,10 +825,12 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    if(!segment)return;
    spokenParts.push(segment);
    const joined=spokenParts.join(' ');
+   updateTeleprompter(joined);
    const accuracy=spokenAccuracy(current.body,joined);
    const coverage=speechWords(joined).length/Math.max(1,speechWords(current.body).length);
    if(accuracy>=.8&&coverage>=.78){
     confirmed=true;spoken=[joined];typedUsed=false;
+    lineNodes.forEach(node=>{node.classList.add('is-complete');node.classList.remove('is-current')});
     status('말하기 연습을 완료했어요.');
     if(mic)mic.disabled=true;
     finishButton.disabled=false;
