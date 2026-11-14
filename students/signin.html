@@ -509,7 +509,8 @@
       modalTitle.textContent = mt('enterKoreanName');
       modalBody.innerHTML = `
         <div class="field">
-          <input id="koreanNameInput" class="field input" placeholder="${mt('koreanNamePlaceholder')}" style="width:100%;" />
+          <input id="koreanNameInput" class="field input" placeholder="${mt('koreanNamePlaceholder')}" style="width:100%;" inputmode="none" autocomplete="off" readonly />
+          <div id="koreanNameKeyboard"></div>
         </div>
       `;
       modalActions.innerHTML = `
@@ -527,7 +528,18 @@
 
       const koreanInput = document.getElementById('koreanNameInput');
       if (koreanInput) {
-        koreanInput.focus();
+        void import('/students/shared/willena-name-keyboard.js?v=20261115-1')
+          .then(({mountWillenaNameKeyboard})=>{
+            if(!koreanInput.isConnected)return;
+            mountWillenaNameKeyboard({
+              input:koreanInput,container:document.getElementById('koreanNameKeyboard'),
+              language:'ko',onConfirm:()=>document.getElementById('nextBtn')?.click()
+            });
+          })
+          .catch(error=>{
+            console.error('[Willena Korean keyboard] unavailable',error);
+            koreanInput.readOnly=false;koreanInput.setAttribute('inputmode','text');
+          });
         // Submit next on Enter
         const kHandler = (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('nextBtn').click(); } };
         koreanInput.addEventListener('keydown', kHandler);
@@ -543,7 +555,8 @@
       modalTitle.textContent = mt('enterEnglishName');
       modalBody.innerHTML = `
         <div class="field">
-          <input id="englishNameInput" class="field input" placeholder="${mt('englishNamePlaceholder')}" style="width:100%;" />
+          <input id="englishNameInput" class="field input" placeholder="${mt('englishNamePlaceholder')}" style="width:100%;" inputmode="none" autocomplete="off" readonly />
+          <div id="englishNameKeyboard"></div>
         </div>
       `;
       modalActions.innerHTML = `
@@ -561,7 +574,18 @@
 
       const englishInput = document.getElementById('englishNameInput');
       if (englishInput) {
-        englishInput.focus();
+        void import('/students/shared/willena-name-keyboard.js?v=20261115-1')
+          .then(({mountWillenaNameKeyboard})=>{
+            if(!englishInput.isConnected)return;
+            mountWillenaNameKeyboard({
+              input:englishInput,container:document.getElementById('englishNameKeyboard'),
+              language:'en',onConfirm:()=>document.getElementById('nextBtn')?.click()
+            });
+          })
+          .catch(error=>{
+            console.error('[Willena English keyboard] unavailable',error);
+            englishInput.readOnly=false;englishInput.setAttribute('inputmode','text');
+          });
         const eHandler = (e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('nextBtn').click(); } };
         englishInput.addEventListener('keydown', eHandler);
         const cleanupE = () => { try { englishInput.removeEventListener('keydown', eHandler); } catch {} modalOverlay.removeEventListener('transitionend', cleanupE); };
