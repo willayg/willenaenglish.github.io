@@ -69,6 +69,7 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
  const finish=scene.querySelector('[data-action=finish]');
  const progress=scene.querySelector('.ft2-progress');
  const uiStatus=s=>{status.textContent=s;};
+ const setPortraitState=value=>{portrait.dataset.state=value;const actor=portrait.querySelector('.bf-actor');if(actor)actor.dataset.state=value};
  const request=async(body,signal)=>{
   const token=await getToken();
   const response=await fetch('/api/free-talking-hybrid-lab',{method:'POST',credentials:'same-origin',cache:'no-store',
@@ -90,7 +91,7 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
   const c=CHARACTERS[state.character];portrait.replaceChildren();
   const actor=document.createElement('span');actor.className='bf-actor';actor.dataset.state='idle';
   actor.innerHTML=scopedCharacterArt(c.art,'v2-'+state.sessionId?.slice(0,8));
-  portrait.append(actor);portrait.dataset.state='idle';
+  portrait.append(actor);setPortraitState('idle');
  };
  const paintQuestion=(text)=>{
   question.textContent=text;paintProgress();
@@ -99,7 +100,7 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
   const audio=state.audio;state.audio=null;
   if(audio){audio.pause();audio.removeAttribute('src');audio.load()}
   if(state.audioURL){URL.revokeObjectURL(state.audioURL);state.audioURL=null}
-  portrait.dataset.state='idle';
+  setPortraitState('idle');
  };
  const releaseMicMonitor=()=>{
   state.micMonitorToken++;
@@ -138,12 +139,12 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
  const stopMedia=()=>{stopMic();stopAudio();state.controller?.abort();state.controller=null};
  const setReady=(ready)=>{
   record.disabled=!ready;record.textContent='Start speaking';finish.disabled=state.inFlight;
-  portrait.dataset.state=ready?'listening':'idle';state.phase=ready?'ready':'busy';
+  setPortraitState(ready?'listening':'idle');state.phase=ready?'ready':'busy';
  };
  async function speak(text){
   if(!text||state.closing)return;
   stopMic();
-  uiStatus('Your friend is speaking…');portrait.dataset.state='speaking';
+  uiStatus('Your friend is speaking…');setPortraitState('speaking');
   try{
    const token=await getToken();
    const controller=new AbortController();state.controller=controller;
@@ -207,7 +208,7 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
    if(state.replyCount===0){
     state.replyCount=1;
     await replyToStudent(text,{followUp:true});
-    if(!state.closing){setReady(true);uiStatus('Listening for your follow-up answer…');void startRecording(true)}
+    if(!state.closing){setReady(true);uiStatus('Listening for your follow-up answer…')}
    }else{
     // Match the natural V1 flow: acknowledge the student's follow-up answer,
     // then advance to the next textbook question.
@@ -218,7 +219,10 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
     else await askAnchor();
    }
   }catch(error){if(!state.closing){uiStatus('Could not process your answer: '+error.message);setReady(true)}}
-  finally{state.inFlight=false;finish.disabled=false}
+  finally{
+   state.inFlight=false;finish.disabled=false;
+   if(!state.closing&&state.phase==='ready'&&!state.recording)void startRecording(true);
+  }
  };
  async function startRecording(auto=false){
   if(state.inFlight||state.closing||state.recording?.state==='recording')return;
@@ -240,7 +244,7 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
     if(!state.closing&&state.phase!=='review'&&heard&&blob.size>400)void processAudio(blob);
     else if(!state.closing&&state.phase!=='review'){setReady(true);uiStatus('I did not hear enough speech. Tap Start speaking to try again.')}
    };
-   recorder.start();record.textContent='Stop recording';portrait.dataset.state='listening';
+   recorder.start();record.textContent='Stop recording';setPortraitState('listening');
    uiStatus('Listening… speak naturally; recording stops after silence.');
    try{watchVoice(stream,recorder)}catch(error){console.warn('[Free Talking V2] voice monitor',error);uiStatus('Tap Stop when you finish speaking.')}
   }catch(error){if(!state.closing)uiStatus((auto?'Tap Start speaking to use the microphone. ':'')+error.message)}
