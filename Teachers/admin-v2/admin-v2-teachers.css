@@ -1,0 +1,20 @@
+/* Teachers Manager: deliberately scoped to Admin V2 */
+#view-teachers-manager .tm-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(260px,.8fr);gap:16px;align-items:start}
+#view-teachers-manager .tm-panel{min-width:0;padding:16px;border-radius:16px}
+#view-teachers-manager .tm-toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+#view-teachers-manager .tm-toolbar input{flex:1 1 180px;min-width:0}
+#view-teachers-manager .tm-list{display:flex;flex-direction:column;gap:8px}
+#view-teachers-manager .tm-person{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px;border:1px solid #e1e9ed;border-radius:12px;background:#fff}
+#view-teachers-manager .tm-person-details{display:flex;flex:1 1 170px;min-width:0;flex-direction:column;gap:3px}
+#view-teachers-manager .tm-person-details strong{font-weight:700;font-size:13px;color:#294b58}
+#view-teachers-manager .tm-person-details small{font-size:11px;color:#78909a;overflow-wrap:anywhere}
+#view-teachers-manager .tm-state{font-size:10px;font-weight:800;padding:5px 9px;border-radius:30px;background:#fce5ee;color:#a83e65}
+#view-teachers-manager .tm-state.active{background:#e4f7f1;color:#28785d}
+#view-teachers-manager .tm-form{display:flex;flex-direction:column;gap:12px;padding-top:12px}
+#view-teachers-manager .tm-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#466873}
+#view-teachers-manager .tm-form input{min-width:0;max-width:100%;padding:11px;border:1px solid #d4e3e8;border-radius:10px;font:inherit;font-size:13px;background:#fff;color:#243c4a}
+#view-teachers-manager .tm-form small{font-size:11px;line-height:1.5;color:#76909a}
+#view-teachers-manager .tm-form button{align-self:flex-start}
+#view-teachers-manager .tm-denied{padding:18px}
+@media(max-width:850px){#view-teachers-manager .tm-layout{grid-template-columns:1fr}}
+@media(max-width:560px){#view-teachers-manager .tm-panel{padding:12px}#view-teachers-manager .tm-person{padding:10px}#view-teachers-manager .tm-person .control{min-height:38px}}
