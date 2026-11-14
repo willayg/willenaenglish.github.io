@@ -6,7 +6,7 @@ import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
 import {createHybridCharacterStage} from '/students/free-talking-hybrid-lab/shared-character-stage.js?v=20261114-dusk-final2';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
-import {DUSK_ART,DUSK_UNLOCK_POINTS} from '/students/free-talking-genius/dusk-character.js?v=20261114-unlock1';
+import {DUSK_ART,DUSK_UNLOCK_POINTS} from '/students/free-talking-genius/dusk-character.js?v=20261114-no-legacy-card1';
 import {scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261114-p4-visual1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 // Native pilot uses the existing document and an isolated ShadowRoot.
@@ -45,7 +45,7 @@ if(releaseMode){
 
 const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,askedQuestionTexts:[],attemptCount:0,reviewing:false};
 const NAMES={willi:'Willo',willy:'AI Willy',bunny:'Bunny Fox',pigfish:'Pigfish',dusk:'Dusk'};
-const serverCharacter=()=>state.character==='dusk'?'willi':state.character;
+const serverCharacter=()=>state.character;
 async function authoritativeDuskPoints(){
  const api=window.WillenaAPI;
  if(typeof api?.fetch!=='function')throw Error('Could not verify points');
@@ -874,7 +874,7 @@ function ticking(){
 // The published question IDs are the conversation track. Reactions and
 // follow-ups are the only generated speech; question playback reuses Willena R2.
 function guidedCharacterVoice(){
- return state.character==='bunny'?'bunny':state.character==='pigfish'?'pigfish':state.character==='willy'?'willy2':'marin';
+ return state.character==='bunny'?'bunny':state.character==='pigfish'?'pigfish':state.character==='willy'?'willy2':state.character==='dusk'?'prince':'marin';
 }
 
 function hybridStop(){
@@ -1229,7 +1229,7 @@ async function getAnchorClip(anchor){
   const file=await r.json().catch(()=>null);
   if(!r.ok||file?.success!==true)throw Error(file?.error||('Question audio unavailable: '+r.status));
   // Selected ElevenLabs characters must never play an OpenAI cached voice.
-  if((state.character==='bunny'||state.character==='pigfish'||state.character==='willy')&&file.provider!=='elevenlabs'){
+  if((state.character==='bunny'||state.character==='pigfish'||state.character==='willy'||state.character==='dusk')&&file.provider!=='elevenlabs'){
    throw Error('Wrong cached voice provider; requesting character ElevenLabs fallback');
   }
   let clip;
