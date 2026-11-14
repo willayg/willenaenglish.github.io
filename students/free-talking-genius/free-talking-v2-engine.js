@@ -2388,7 +2388,24 @@ async function initStandaloneRelease(){
   // Do not mark the guide accepted here: it must open BEFORE mic / audio startup.
   // startConversation handles the current guide's never-show preference.
   try{await startConversation()}
-  catch(e){intro.hidden=false;showError(e.message||'Could not start.');starting=false;buttons.forEach(b=>b.disabled=false);if(startButton)startButton.disabled=false}
+  catch(e){
+   // Keep the selected activity visible. Restoring the character intro here
+   // used to throw students into an inert menu when an early startup step
+   // (before startConversation's internal try) failed.
+   console.error('[Free Talking V2] startup',e);
+   starting=false;
+   state.starting=false;
+   intro.hidden=true;
+   veil.hidden=false;
+   $('talk').classList.add('is-visible');
+   $('ftBootSpinner').hidden=true;
+   $('ftGuide').hidden=true;
+   const detail=String(e?.message||'Connection unavailable');
+   error('Could not start: '+detail);
+   $('listenCheck').textContent='Could not connect · Tap Retry';
+   $('restart').hidden=false;$('restart').disabled=false;
+   $('pauseResume').disabled=false;
+  }
  }
  for(const [id,name] of choices)menu.querySelector('#'+id)?.addEventListener('click',()=>choose(name));
  startButton?.addEventListener('click',()=>void begin());
