@@ -1,7 +1,7 @@
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
-import {createDiaryFlow} from './diary-flow.js?v=20261114-diary-mode-willi1';
+import {createDiaryFlow} from './diary-flow.js?v=20261114-drafts-modal1';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {createSentencePractice} from './sentence-practice.js?v=20261104-unit-tab-label1';
 const API_BASE='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
@@ -763,14 +763,9 @@ const diaryFlow=createDiaryFlow({
   try{localStorage.setItem('stars:refresh',String(Date.now()))}catch{}
   return reward;
  },
- onExit:async destination=>{
-  await backHome();
-  if(destination==='drafts'){
-   state.filter='draft';
-   $('wgHistoryFilter').value='draft';
-   togglePortfolio(true);
-  }
- }
+ onExit:()=>backHome(),
+ listDrafts:async()=>{await reloadEntries();return state.entries.filter(entry=>entry.status==='draft');},
+ loadDraft:entry=>openEditor(entry)
 });
 const examplesRoot=$('wgDiaryExamplesList');
 for(const example of exampleDiaries){
