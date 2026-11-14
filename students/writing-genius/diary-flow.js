@@ -85,7 +85,7 @@ const allTopicIdeas=[...topicWritingIdeas,...extraTopicIdeas.map(item=>({...item
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
 export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedback,claimBonus,onExit}){
  const root=$('wgDiaryFlow'),stage=$('dfStage'),actions=$('dfActions'),message=$('dfMessage'),progress=$('dfProgress');
- let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],typedUsed=false,reviewSkipped=false,speechSkipped=false,busy=false,autosaveTimer=null,transitionTimer=null,choices={},captureDraft=null;
+ let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],typedUsed=false,typedMode=false,reviewSkipped=false,speechSkipped=false,busy=false,autosaveTimer=null,transitionTimer=null,choices={},captureDraft=null;
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
  function status(text='',error=false){message.textContent=text;message.classList.toggle('is-error',error)}
  function screen(name,label){clearTimeout(transitionTimer);captureDraft=null;step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false}
@@ -608,7 +608,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   typingInput.setAttribute('aria-label','수정된 문장 입력');
   const typingCheck=el('button','wg-button wg-primary','문장 확인 · Check');
   typingCheck.type='button';typingArea.append(typingHelp,typingInput,typingCheck);stage.append(typingArea);
-  const normalizeTyped=value=>String(value||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\\s+/g,' ').trim();
+  const normalizeTyped=value=>String(value||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim();
   let sentenceDone=false;
   const advance=answer=>{
    if(sentenceDone||step!=='speech')return;
@@ -628,6 +628,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   });
   typingInput.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();typingCheck.click()}});
   const setMode=useTyping=>{
+   typedMode=useTyping;
    typingArea.style.display=useTyping?'flex':'none';
    speakChoice.classList.toggle('wg-primary',!useTyping);
    typeChoice.classList.toggle('wg-primary',useTyping);
@@ -640,8 +641,9 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   // Use the exact shared QuestionRenderer microphone from the review activity.
   const speechControls=el('div','df-tele-speech-controls');stage.append(speechControls);
   rendererHost({form:'speaking',prompt:'',context:{},input:{language:'en'},answer:[target]});
-  const renderedControls=stage.lastElementChild;
-  if(renderedControls!==speechControls){while(speechControls.nextSibling)speechControls.append(speechControls.nextSibling)}
+  const renderedControls=stage.querySelector('.df-question-host');
+  if(renderedControls)speechControls.append(renderedControls);
+  setMode(typedMode);
   const mic=stage.querySelector('[data-speaking-mic]');
   const speechStatus=stage.querySelector('[data-speaking-status]');
   if(current.kind==='topic')button('건너뛰기 · Skip',()=>{speechSkipped=true;index++;lineSpeech()});
@@ -727,5 +729,5 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    showTeacherFeedback();
   }finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];typedUsed=false;reviewSkipped=false;speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];typedUsed=false;typedMode=false;reviewSkipped=false;speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback)summary();else topic()},close};
 }
