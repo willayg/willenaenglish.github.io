@@ -1307,7 +1307,7 @@ $('ftFreeTalkingV2Card').addEventListener('click',async()=>{
  await new Promise(resolve=>requestAnimationFrame(resolve));
  try{
   if(!freeTalkingV2){
-   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-tap-to-talk-dusk-trial5');
+   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-dusk-selection-footer6');
    freeTalkingV2=createFreeTalkingV2({
     host:$('ftFreeTalkingV2'),getToken:()=>token(),
     onBack:()=>{
