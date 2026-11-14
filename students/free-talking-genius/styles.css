@@ -1599,3 +1599,49 @@
 /* Four character choices without cramping narrow phone screens. */
 .free-talking-genius #ftCharacter .ft-character-options{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 @media(max-width:700px){.free-talking-genius #ftCharacter .ft-character-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.free-talking-genius #ftCharacter .ft-character-option{min-height:135px;padding:8px}.free-talking-genius #ftCharacter .ft-character-option strong{font-size:16px}.free-talking-genius #ftCharacter .ft-character-symbol{width:80px;height:80px}}
+
+/* The visible Step 2 V2 card uses the same Golden Unit finish treatment. */
+.free-talking-genius #ftFreeTalkingV2Card.ft-golden-skill{
+ border-color:#dfbd56!important;background:#fff8e0!important;
+ box-shadow:0 7px 24px rgba(181,131,30,.16),inset 0 0 0 1px #f2d47a!important;
+}
+.free-talking-genius #ftFreeTalkingV2Card.ft-golden-skill .vocab-skill-ring{
+ --skill-color:#d7a12d!important;
+ background:conic-gradient(#d9ab3c calc(var(--progress,0)*1%),#f8e8b9 0)!important;
+}
+.free-talking-genius #ftFreeTalkingV2Card.ft-golden-skill .vocab-skill-ring::before{
+ background:#fffaf0!important;
+}
+.free-talking-genius #ftFreeTalkingV2Card.ft-golden-skill .vocab-skill-ring span{
+ color:#976e1b!important;
+}
+.free-talking-genius #ftFreeTalkingV2Card.ft-golden-skill .vocab-skill-step,
+.free-talking-genius #ftFreeTalkingV2Card.ft-golden-skill .vocab-card-stars{
+ color:#a77b18!important;
+}
+/* Completion confirmation is local to the unit picker; no student records are reset. */
+.ft-completed-dialog[hidden]{display:none!important}
+.ft-completed-dialog{
+ position:fixed;inset:0;z-index:2147483009;display:grid;place-items:center;
+ padding:18px;background:rgba(21,45,55,.65);backdrop-filter:blur(4px);
+}
+.ft-completed-dialog-panel{
+ box-sizing:border-box;width:min(100%,410px);padding:28px 22px;
+ border:3px solid #e6bf56;border-radius:25px;background:#fffdf5;
+ box-shadow:0 24px 75px #102b3855;text-align:center;
+}
+.ft-completed-dialog-medal{color:#d5a52d;font-size:42px;line-height:1}
+.ft-completed-dialog-panel h3{
+ color:#6b5114;margin:12px 0;font:900 clamp(20px,5vw,25px)/1.4 Poppins,Arial,sans-serif;
+}
+.ft-completed-dialog-panel p{
+ color:#526f76;line-height:1.7;font-size:15px;font-weight:650;margin:0 0 21px;
+}
+.ft-completed-dialog-actions{display:grid;gap:10px}
+.ft-completed-dialog-actions button{
+ min-height:52px;border:2px solid #b9e4e8;border-radius:15px;
+ background:white;color:#286874;font:800 17px Poppins,Arial,sans-serif;cursor:pointer;
+}
+.ft-completed-dialog-actions .ft-completed-dialog-replay{
+ border-color:#d9ad39;background:#ffedb8;color:#795812;
+}
