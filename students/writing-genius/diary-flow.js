@@ -798,11 +798,46 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   };
   const speakArea=el('div','df-final-speak');
   const typeArea=el('div','df-final-type');
-  const input=el('textarea','df-textarea');
+  // Writing keeps one target line visible immediately above a slim input.
+  // Each accepted line is collected into one final passage for server validation.
+  let typingIndex=0;
+  const typedLines=Array(scriptLines.length).fill('');
+  const typingStatus=el('p','df-muted df-writing-progress');
+  const targetLine=el('p','df-writing-current-line');
+  const input=el('textarea','df-input df-writing-line-input');
   input.dataset.willenaTextEntry='writing';input.dataset.inputLanguage='en';
-  input.rows=9;input.placeholder='위의 글 전체를 여기에 입력하세요.';
-  const typingStatus=el('p','df-muted','위의 최종 글을 보고 아래에 입력하세요.');
-  typeArea.append(typingStatus,input);
+  input.rows=2;input.placeholder='위 문장을 입력하세요.';
+  input.autocomplete='off';input.spellcheck=false;
+  const lineCheck=el('button','wg-button wg-secondary df-typing-line-confirm','다음 문장');
+  lineCheck.type='button';
+  const renderTypingLine=()=>{
+   const done=typingIndex>=scriptLines.length;
+   typingStatus.textContent=done?'모든 문장을 입력했어요. 제출할 수 있어요.':(typingIndex+1)+' / '+scriptLines.length+' · 현재 문장을 입력하세요.';
+   targetLine.textContent=done?'모든 문장 입력 완료':scriptLines[typingIndex];
+   input.hidden=done;lineCheck.hidden=done;
+   if(!done){input.value=typedLines[typingIndex]||'';lineCheck.textContent=typingIndex===scriptLines.length-1?'마지막 문장 확인':'다음 문장'}
+   lineNodes.forEach((node,i)=>{
+    node.classList.toggle('is-complete',i<typingIndex);
+    node.classList.toggle('is-current',i===typingIndex&&!done);
+   });
+   if(!done&&typedMode){input.focus({preventScroll:true})}
+  };
+  lineCheck.addEventListener('click',()=>{
+   if(typingIndex>=scriptLines.length)return;
+   const typed=input.value.trim(),target=scriptLines[typingIndex];
+   if(typedComparable(typed)!==typedComparable(target)){
+    markEditableDifferences(input,target);
+    status('현재 문장에서 다른 부분을 수정하세요.',true);return;
+   }
+   typedLines[typingIndex]=typed;typingIndex++;
+   status('');
+   renderTypingLine();
+   if(typingIndex===scriptLines.length)finishButton.disabled=false;
+  });
+  input.addEventListener('keydown',event=>{
+   if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();lineCheck.click()}
+  });
+  typeArea.append(typingStatus,targetLine,input,lineCheck);
   const speakStatus=el('p','df-muted','마이크를 눌러 글 전체를 읽으세요. 길면 여러 번 나누어 읽어도 됩니다.');
   speakArea.append(speakStatus);
   stage.append(speakArea,typeArea);
@@ -810,8 +845,11 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const setMode=useTyping=>{
    typedMode=useTyping;
    speakArea.hidden=useTyping;typeArea.hidden=!useTyping;
+   reference.classList.toggle('is-writing-mode',useTyping);
    speakBtn.classList.toggle('wg-primary',!useTyping);typeBtn.classList.toggle('wg-primary',useTyping);
-   if(useTyping)input.focus();
+   if(useTyping)renderTypingLine();
+   else lineNodes.forEach((node,i)=>{node.classList.toggle('is-complete',confirmed);node.classList.toggle('is-current',!confirmed&&i===0)});
+   if(typeof finishButton!=='undefined')finishButton.disabled=useTyping?typingIndex<scriptLines.length:!confirmed;
   };
   speakBtn.onclick=()=>setMode(false);typeBtn.onclick=()=>setMode(true);
   const micHost=el('div','df-question-host sp-shared-question question-card');
@@ -853,10 +891,10 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   }
   const finishButton=button('완료하고 제출',async()=>{
    if(typedMode){
-    const text=input.value.trim();
-    if(typedComparable(text)!==typedComparable(current.body)){
-     markEditableDifferences(input,current.body);
-     status('최종 글과 다른 부분을 수정하세요.',true);return;
+    if(typingIndex<scriptLines.length){status('모든 문장을 입력한 후 제출하세요.',true);return}
+    const text=typedLines.join(' ');
+    if(typedComparable(text)!==typedComparable(scriptLines.join(' '))){
+     status('입력한 글을 다시 확인하세요.',true);return;
     }
     spoken=[text];typedUsed=true;
    }else if(!confirmed){
@@ -865,6 +903,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    await complete();
   },true);
   finishButton.classList.add('df-confirm-action');
+  finishButton.disabled=true;
   setMode(typedMode);
   button('이전',finalDraft).classList.add('df-skip-action');
  }
