@@ -563,8 +563,13 @@ try{
  <button type="button" class="ut-tab active" role="tab" aria-selected="true" data-ut-tab="replay">Evaluator Replay</button>
  <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="speech">Speech Testing</button>
  <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="audio">Audio Tools</button>
+ <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="characters">Character Lab</button>
  <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="tools">Other Tools</button>
 </nav>
+<div class="ut-section" data-ut-panel="characters" role="tabpanel" hidden>
+<section class="panel" style="padding:12px;border-radius:18px">
+<iframe id="teacherCharacterLabFrame" title="Willena Character Lab — Dusk, Bunny Fox, Pigfish and Willo" loading="lazy" data-src="/Teachers/tools/character-lab/index.html?v=20261114-lab1" style="display:block;width:100%;height:min(84dvh,920px);min-height:580px;border:0;border-radius:12px;background:#f4f9fa"></iframe>
+</section></div>
 <div class="ut-section" data-ut-panel="replay" role="tabpanel"><section class="panel" id="ftReplay" style="padding:20px;border-radius:18px">
  <div class="ftr-head"><div><h2>Free Talking · Evaluator Replay</h2><p>Review recorded conversations using the end-of-session AI evaluator. Compare new participation decisions and points with historical scores. Nothing is saved to student records.</p></div><span class="ftr-readonly">READ-ONLY TEST</span></div>
  <div class="ftr-fields">
@@ -2159,6 +2164,10 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
  const buttons=[...holder.querySelectorAll('[data-ut-tab]')],panels=[...holder.querySelectorAll('[data-ut-panel]')];
  const choose=tab=>{buttons.forEach(b=>{const yes=b.dataset.utTab===tab;b.classList.toggle('active',yes);b.setAttribute('aria-selected',String(yes))});panels.forEach(p=>p.hidden=p.dataset.utPanel!==tab);
   try{sessionStorage.setItem('willena.utilities.activeTab',tab)}catch{}
+  if(tab==='characters'){
+   const frame=document.getElementById('teacherCharacterLabFrame');
+   if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src;
+  }
   if(tab==='audio')window.WillenaAudioToolTabs?.activate?.();
   if(tab==='replay')window.WillenaEvaluatorReplay?.activate?.();
  };
