@@ -18,6 +18,25 @@ function syncTranscriptPreference(){
 document.getElementById('ftTranscriptToggle')?.addEventListener('change',syncTranscriptPreference);
 
 const frame=$('original'),veil=$('demo');
+// Keep the existing shared header aligned above the standalone character menu
+// and the live workspace; read its rendered height rather than assuming a phone size.
+function syncLiveHeaderHeight(){
+ if(!releaseMode)return;
+ const header=document.getElementById('ftLiveStudentHeader');
+ if(!header)return;
+ const px=Math.max(0,Math.ceil(header.getBoundingClientRect().height));
+ if(px)document.documentElement.style.setProperty('--ft-live-header-height',px+'px');
+}
+if(releaseMode){
+ requestAnimationFrame(syncLiveHeaderHeight);
+ window.addEventListener('resize',syncLiveHeaderHeight,{passive:true});
+ customElements.whenDefined('student-header').then(()=>{
+  syncLiveHeaderHeight();
+  const header=document.getElementById('ftLiveStudentHeader');
+  if(header&&typeof ResizeObserver!=='undefined')new ResizeObserver(syncLiveHeaderHeight).observe(header);
+ }).catch(()=>{});
+}
+
 const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,askedQuestionTexts:[],attemptCount:0,reviewing:false};
 const NAMES={willi:'Willo',willy:'AI Willy',bunny:'Bunny Fox',pigfish:'Pigfish'};
 const enginePicker=document.getElementById('ftEngineSelect');
