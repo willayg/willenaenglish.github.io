@@ -58,7 +58,7 @@ small,.hint{color:#66808b;font-size:12px;line-height:1.5}.asset-panel{padding:14
 const names={dusk:'Dusk',bunnyfox:'Bunny Fox',pigfish:'Pigfish',willo:'Willo'};
 const stage=document.getElementById('stage'),frame=document.getElementById('duskFrame'),customStage=document.getElementById('customStage'),wrap=document.getElementById('characterWrap');
 const message=document.getElementById('message'),characterTitle=document.getElementById('characterTitle'),svgText=document.getElementById('svgText'),svgUrl=document.getElementById('svgUrl');
-const assetMap={};let selected='dusk';
+const assetMap={};const defaultAssets={bunnyfox:'/Teachers/tools/character-lab/assets/bunny-fox.svg'};let selected='dusk';
 const say=t=>message.textContent=t;
 function clearEffects(){wrap.className='character-wrap';document.querySelectorAll('[data-effect]').forEach(b=>b.setAttribute('aria-pressed','false'))}
 function sanitize(svg){
@@ -79,7 +79,8 @@ function render(){
   const svg=assetMap[selected]||sessionStorage.getItem('willena.characterLab.svg.'+selected);
   wrap.replaceChildren();
   if(svg){try{wrap.innerHTML=sanitize(svg);assetMap[selected]=svg;say(names[selected]+' SVG loaded.');}catch(e){say(e.message)}}
-  else{let p=document.createElement('div');p.id='empty';p.textContent='Import the existing '+names[selected]+' SVG to test its animations. The original artwork will not be replaced.';wrap.append(p);say('SVG source not yet connected.')}
+  else if(defaultAssets[selected]){say('Loading original '+names[selected]+' SVG…');const requested=selected;fetch(defaultAssets[requested],{credentials:'same-origin'}).then(r=>{if(!r.ok)throw Error('Asset returned '+r.status);return r.text()}).then(svg=>{const clean=sanitize(svg);assetMap[requested]=clean;if(selected===requested){wrap.innerHTML=clean;say(names[requested]+' original SVG loaded.')}}).catch(e=>say('Could not load original SVG: '+e.message))}
+  else{let p=document.createElement('div');p.id='empty';p.textContent='The original '+names[selected]+' SVG is not yet available in this branch. Use the real SVG import below.';wrap.append(p);say('Original SVG source not yet located.')}
 }
 for(const button of document.querySelectorAll('[data-character]'))button.addEventListener('click',()=>{
  selected=button.dataset.character;document.querySelectorAll('[data-character]').forEach(x=>x.setAttribute('aria-selected',String(x===button)));render();
