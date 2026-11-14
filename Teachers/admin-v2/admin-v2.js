@@ -7,6 +7,7 @@ const state={students:[],filtered:[],selected:null};
 let classesModulePromise=null;
 let levelTestsPromise=null;
 let enquiriesModulePromise=null;
+let teachersModulePromise=null;
 
 function loginUrl(){return `/Teachers/login.html?redirect=${encodeURIComponent(location.pathname+location.search)}`}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -58,6 +59,10 @@ function activateView(view){
     if(!enquiriesModulePromise)enquiriesModulePromise=import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.mountEnquiries());
     else enquiriesModulePromise=enquiriesModulePromise.then(()=>import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiries())).catch(()=>{enquiriesModulePromise=null;return import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.mountEnquiries())});
     enquiriesModulePromise.catch(error=>{const target=$('#enqMessage');if(target)target.textContent=error.message});
+  }
+  if(view==='teachers-manager'){
+    if(!teachersModulePromise)teachersModulePromise=import('./admin-v2-teachers.js?v=20261114');
+    teachersModulePromise.then(m=>m.open()).catch(e=>{const el=$('#tmMessage');if(el)el.textContent=e.message});
   }
   if(view==='classes')ensureClasses().catch(error=>{$('#classGridV2').innerHTML=`<div class="empty">${esc(error.message)}</div>`});
   if(view==='level-tests')ensureLevelTests().catch(error=>{$('#levelTestRows').innerHTML=`<tr><td colspan="5" class="empty">${esc(error.message)}</td></tr>`});
@@ -145,7 +150,8 @@ function bindStudents(){
 }
 window.addEventListener('willena-student-enrolled',()=>loadStudents(true));
 function boot(){
- bindNavigation();bindStudents();bindLevelTestModes();$('#adminV2Boot')?.classList.add('hidden');
+ bindNavigation();bindStudents();bindLevelTestModes();
+ import('./admin-v2-teachers.js?v=20261114').then(m=>m.checkAccess()).catch(e=>console.warn('Teacher Manager access check unavailable',e));$('#adminV2Boot')?.classList.add('hidden');
  loadStudents(false);
  // The red unread badge must appear even when Admin V2 opens on Students.
  import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiryBadge()).catch(e=>console.debug('[Enquiries] Badge unavailable',e));
