@@ -35,7 +35,7 @@ small,.hint{color:#66808b;font-size:12px;line-height:1.5}.asset-panel{padding:14
 <button role="tab" aria-selected="false" data-character="willo">Willo</button>
 </nav>
 <div class="workspace"><div class="stage" id="stage">
-<iframe id="duskFrame" title="Dusk original animation playground" loading="lazy" src="/character-lab/dusk/?teacherLab=1"></iframe>
+<iframe id="duskFrame" title="Dusk original animation playground" loading="lazy" src="/Teachers/tools/character-lab/dusk/?teacherLab=1"></iframe>
 <div id="customStage" hidden><div id="characterWrap" class="character-wrap"><div id="empty">Load the existing character SVG below to preview its real artwork. No substitute mascot will be used.</div></div></div>
 </div><aside class="side">
 <div id="duskPanel"><h2>Dusk — Original SVG</h2><p class="hint">The complete approved Dusk lab is embedded here with all its original controls and effects. Open its floating Controls button to animate.</p><button type="button" id="openDusk">Open full Dusk lab</button></div>
@@ -93,7 +93,7 @@ document.getElementById('resetEffects').onclick=clearEffects;
 document.getElementById('background').onchange=e=>{stage.classList.remove('light','teal','checker');if(e.target.value!=='dark')stage.classList.add(e.target.value)};
 document.getElementById('downloadSvg').onclick=()=>{const text=assetMap[selected];if(!text)return say('Load an SVG first.');const url=URL.createObjectURL(new Blob([text],{type:'image/svg+xml'}));const a=document.createElement('a');a.href=url;a.download=selected+'-character-lab.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),500)};
 document.getElementById('copyBrief').onclick=async()=>{const desc='Modify the existing Willena '+names[selected]+' SVG character. Preserve its approved proportions, colours, and silhouette. Add or change ONLY this animation: [describe desired motion]. Return a complete editable SVG and explain any separate animation CSS. Do not touch the live student app.';try{await navigator.clipboard.writeText(desc);say('Design brief copied — paste into ChatGPT with the SVG.')}catch{say(desc)}};
-document.getElementById('openDusk').onclick=()=>window.open('/character-lab/dusk/','_blank','noopener,noreferrer');
+document.getElementById('openDusk').onclick=()=>window.open('/Teachers/tools/character-lab/dusk/','_blank','noopener,noreferrer');
 render();
 })();
 </script></body></html>
