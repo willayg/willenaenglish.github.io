@@ -1,7 +1,7 @@
 // Free Talking V2 is a native mounting component, not a second conversation engine.
 // The V1-derived engine owns prompts, turn decisions, silence, inactivity,
 // pause/resume, Android audio and server-verified review in separate files.
-import {openV1NativeConversation,closeV1NativeConversation,isV1NativeConversationOpen} from './free-talking-v2-host.js?v=20261114-willi-public1';
+import {openV1NativeConversation,closeV1NativeConversation,isV1NativeConversationOpen} from './free-talking-v2-host.js?v=20261114-dusk-unlock1';
 
 export function createFreeTalkingV2({host,onBack,onProgress}){
  let active=false;
