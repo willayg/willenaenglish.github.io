@@ -1013,14 +1013,14 @@ function chooseRoundVoice(voice){
  if(voice==='prince')void retryVoice.preloadOne('prince');
  else retryVoice.preloadBoth();
  for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy'],['ftChooseDusk','prince']])
-  $(id).setAttribute('aria-pressed',String(value===voice));
+  $(id)?.setAttribute('aria-pressed',String(value===voice));
  $('ftCharacterContinue').disabled=false;
 }
 function openMode(mode){
  if(state.loading||!['speaking','writing'].includes(mode))return;
  state.pendingMode=mode;roundChoice=null;
  $('ftCharacterRound').textContent=bookTitle()+' · Unit '+state.unit+' · '+(mode==='speaking'?'말하기':'쓰기');
- for(const id of ['ftChooseWilli','ftChooseLili','ftChoosePigfish','ftChooseWilly','ftChooseDusk'])$(id).setAttribute('aria-pressed','false');
+ for(const id of ['ftChooseWilli','ftChooseLili','ftChoosePigfish','ftChooseWilly','ftChooseDusk'])$(id)?.setAttribute('aria-pressed','false');
  $('ftCharacterContinue').disabled=true;
  preloadStudentSfx();
  view('ftCharacter');
