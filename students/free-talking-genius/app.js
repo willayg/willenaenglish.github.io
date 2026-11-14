@@ -14,6 +14,8 @@ import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-rout
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261113-willy-retry1';
 import {createFreeTalkingCharacters} from './character-actor.js?v=20261114-context-moods-v4';
 import {createFreeTalkingGuide} from './guide.js?v=20261107-guide-kids2';
+import {mountFreeTalkingCharacterMenu} from './shared-menu.js?v=20261114-p2';
+mountFreeTalkingCharacterMenu(document.getElementById('ftCharacterMenuMount'));
 const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 // Book selection is resolved from the current student's class assignments.
