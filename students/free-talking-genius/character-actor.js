@@ -2,7 +2,22 @@
 // No audio interception, app cloning, auth, recording, grading or progress logic.
 import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from './willy-svg.js?v=20261114-electric-cat-v3';
-const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:AI_WILLY_HEAD_SVG};
+// Willo has no animal SVG: his original artwork is the voice-circle stored
+// in the canonical shared character menu. Reuse that exact SVG in the live
+// activity rather than inventing a different icon or leaving an empty ring.
+function originalWilloArt(){
+ const menu=window.WillenaFTSharedMenu?.makeMenu?.();
+ const svg=menu?.querySelector('#ftChooseWilli .ft-willi-portrait svg');
+ if(svg){
+  const clone=svg.cloneNode(true);
+  clone.classList.add('ft-willo-svg');
+  return '<span class="ft-willo-actor">'+clone.outerHTML+'</span>';
+ }
+ // Fallback only if the shared menu script failed to initialize. This is
+ // the same vector geometry/colours as the canonical menu's Willo portrait.
+ return '<span class="ft-willo-actor"><svg class="ft-willo-svg" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke="#69d7df" stroke-width="7"/><circle cx="50" cy="50" r="19" fill="none" stroke="#d6f2f4" stroke-width="8"/><path d="M50 31 A19 19 0 0 1 67 42" fill="none" stroke="#69c1cc" stroke-width="7" stroke-linecap="round"/><path d="M33 57 A19 19 0 0 0 47 69" fill="none" stroke="#efadce" stroke-width="7" stroke-linecap="round"/></svg></span>';
+}
+const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:AI_WILLY_HEAD_SVG,marin:originalWilloArt()};
 const PORTRAITS={...ART};
 // One animation-state vocabulary for the Speaking and live conversation workspaces.
 // This is visual-only: it never starts recording, audio playback, or grading.
