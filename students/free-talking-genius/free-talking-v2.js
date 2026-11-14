@@ -40,7 +40,8 @@ function makeCharacterMenu(root){
 export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
  const state={bookId:null,unitId:null,character:null,sessionId:null,turnNo:0,anchors:[],index:0,
   phase:'menu',inFlight:false,recording:null,stream:null,chunks:[],audio:null,audioURL:null,
-  saving:Promise.resolve(),history:[],turns:0,closing:false,controller:null,started:false,replyCount:0};
+  saving:Promise.resolve(),history:[],turns:0,closing:false,controller:null,started:false,replyCount:0,
+  micContext:null,micRaf:0,micStartedAt:0,micSpeechAt:0,micLastLoud:0,micMonitorToken:0};
  host.classList.add('ft-v2');host.hidden=true;
  const menuSlot=document.createElement('div');menuSlot.className='ft2-character';
  const scene=document.createElement('section');scene.className='ft2-scene';scene.hidden=true;
@@ -100,10 +101,39 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
   if(state.audioURL){URL.revokeObjectURL(state.audioURL);state.audioURL=null}
   portrait.dataset.state='idle';
  };
+ const releaseMicMonitor=()=>{
+  state.micMonitorToken++;
+  if(state.micRaf)cancelAnimationFrame(state.micRaf);
+  state.micRaf=0;
+  const context=state.micContext;state.micContext=null;
+  if(context)void context.close().catch(()=>{});
+ };
  const stopMic=()=>{
+  releaseMicMonitor();
   if(state.recording&&state.recording.state==='recording'){try{state.recording.stop()}catch{}}
   state.recording=null;
   if(state.stream){state.stream.getTracks().forEach(t=>t.stop());state.stream=null}
+ };
+ const watchVoice=(stream,recorder)=>{
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  if(!Ctx)return;
+  const context=new Ctx();state.micContext=context;
+  const source=context.createMediaStreamSource(stream);
+  const analyser=context.createAnalyser();analyser.fftSize=1024;source.connect(analyser);
+  const samples=new Float32Array(analyser.fftSize),token=++state.micMonitorToken;
+  state.micStartedAt=performance.now();state.micSpeechAt=0;state.micLastLoud=0;
+  const tick=()=>{
+   if(token!==state.micMonitorToken||state.recording!==recorder||recorder.state!=='recording'||state.closing)return;
+   analyser.getFloatTimeDomainData(samples);
+   let energy=0;for(const sample of samples)energy+=sample*sample;
+   const rms=Math.sqrt(energy/samples.length),now=performance.now();
+   if(rms>0.018){if(!state.micSpeechAt)state.micSpeechAt=now;state.micLastLoud=now}
+   const talked=state.micSpeechAt>0;
+   if(talked&&(now-state.micLastLoud>1700||now-state.micSpeechAt>22000)){stopRecording();return}
+   if(!talked&&now-state.micStartedAt>30000){stopRecording();return}
+   state.micRaf=requestAnimationFrame(tick);
+  };
+  state.micRaf=requestAnimationFrame(tick);
  };
  const stopMedia=()=>{stopMic();stopAudio();state.controller?.abort();state.controller=null};
  const setReady=(ready)=>{
@@ -147,12 +177,12 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
   state.history.push({role:'assistant',text:anchor.text});
   await persist('character',anchor.text,{message_source:'textbook_question'});
   await speak(anchor.text);
-  if(!state.closing){setReady(true);uiStatus('Your turn. Tap Start speaking, then Stop.')}
+  if(!state.closing){setReady(true);uiStatus('Listening for your answer…');void startRecording(true)}
  }
- async function replyToStudent(text){
+ async function replyToStudent(text,{followUp=true}={}){
   const data=await request({action:'reply',book_id:state.bookId,unit_id:state.unitId,
    character:CHARACTERS[state.character].api,model:'gpt-6-luna',
-   session_id:state.sessionId,directive:'Reply naturally and briefly to the student. Ask a simple relevant follow-up question. Do not award points here.',
+   session_id:state.sessionId,directive:followUp ?'Respond warmly and briefly. Ask one simple relevant follow-up question. Do not award points here.':'React briefly and naturally to the student answer. Do not ask another question: the next textbook question comes next. Do not award points here.',
    history:state.history.slice(-18),asked_questions:state.anchors.map(a=>a.text)});
   const answer=String(data.text||'').trim();
   if(!answer)throw Error('AI did not return a reply');
@@ -176,12 +206,12 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
    state.turns++;
    if(state.replyCount===0){
     state.replyCount=1;
-    await replyToStudent(text);
-    if(!state.closing){setReady(true);uiStatus('Answer the follow-up question.')}
+    await replyToStudent(text,{followUp:true});
+    if(!state.closing){setReady(true);uiStatus('Listening for your follow-up answer…');void startRecording(true)}
    }else{
     // Match the natural V1 flow: acknowledge the student's follow-up answer,
     // then advance to the next textbook question.
-    await replyToStudent(text);
+    await replyToStudent(text,{followUp:false});
     if(state.closing)return;
     state.replyCount=0;state.index++;paintProgress();
     if(state.index>=state.anchors.length)await complete();
@@ -190,8 +220,8 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
   }catch(error){if(!state.closing){uiStatus('Could not process your answer: '+error.message);setReady(true)}}
   finally{state.inFlight=false;finish.disabled=false}
  };
- async function startRecording(){
-  if(state.inFlight||state.closing)return;
+ async function startRecording(auto=false){
+  if(state.inFlight||state.closing||state.recording?.state==='recording')return;
   try{
    if(!window.MediaRecorder)throw Error('This browser does not support recording.');
    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
@@ -202,17 +232,22 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
    state.recording=recorder;
    recorder.ondataavailable=e=>{if(e.data?.size)state.chunks.push(e.data)};
    recorder.onstop=()=>{
+    const heard=state.micSpeechAt>0;
+    releaseMicMonitor();
     const blob=new Blob(state.chunks,{type:recorder.mimeType||'audio/webm'});
-    state.chunks=[];if(state.stream){state.stream.getTracks().forEach(t=>t.stop());state.stream=null}
-    if(!state.closing&&state.phase!=='review'&&blob.size>400)void processAudio(blob);
-    else if(!state.closing&&state.phase!=='review'){setReady(true);uiStatus('Recording was too short. Please try again.')}
+    state.chunks=[];state.recording=null;
+    if(state.stream){state.stream.getTracks().forEach(t=>t.stop());state.stream=null}
+    if(!state.closing&&state.phase!=='review'&&heard&&blob.size>400)void processAudio(blob);
+    else if(!state.closing&&state.phase!=='review'){setReady(true);uiStatus('I did not hear enough speech. Tap Start speaking to try again.')}
    };
-   recorder.start();record.textContent='Stop recording';portrait.dataset.state='listening';uiStatus('Listening… tap Stop when finished');
-  }catch(error){uiStatus('Microphone problem: '+error.message)}
+   recorder.start();record.textContent='Stop recording';portrait.dataset.state='listening';
+   uiStatus('Listening… speak naturally; recording stops after silence.');
+   try{watchVoice(stream,recorder)}catch(error){console.warn('[Free Talking V2] voice monitor',error);uiStatus('Tap Stop when you finish speaking.')}
+  }catch(error){if(!state.closing)uiStatus((auto?'Tap Start speaking to use the microphone. ':'')+error.message)}
  }
  const stopRecording=()=>{
   const recorder=state.recording;
-  if(recorder?.state==='recording'){recorder.stop();state.recording=null;record.disabled=true}
+  if(recorder?.state==='recording'){recorder.stop();record.disabled=true}
  };
  async function complete(){
   if(state.closing||state.phase==='review')return;
