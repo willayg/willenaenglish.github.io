@@ -52,20 +52,41 @@
 @keyframes duskShake{25%{transform:translateX(-8px) rotate(-2deg)}75%{transform:translateX(8px) rotate(2deg)}}
 @media(prefers-reduced-motion:reduce){.ft-dusk-actor[data-dusk-effect]{animation:none!important}}
 
-/* Dusk's traced SVG is transparent. Remove only the presentation card behind
-   Dusk; do not affect the character selection layout or the other mascots. */
+/* Dusk's original SVG is already transparent. The picker should use the
+   same circular portrait treatment as the other characters (not a card). */
 .free-talking-genius #ftCharacter .ft-character-dusk .ft-character-symbol,
 #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk .ft-character-symbol{
  background:transparent!important;background-image:none!important;
- border:0!important;outline:0!important;box-shadow:none!important;
+ border:9px solid #59c9c8!important;outline:3px solid #d7f5f3!important;
+ border-radius:50%!important;box-shadow:none!important;
  overflow:visible!important;
 }
-/* The original shared Free Talking stage paints an opaque white disk with
-   ::before. For Dusk only, let his silhouette float on the existing stage. */
-#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg)::before{
- background:transparent!important;border:0!important;
+/* The V1-derived live stage can paint a card on multiple nested layers.
+   Strip it only for the Dusk SVG, preserving the independent cyan timer ring. */
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg),
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg) .bf-actor,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg) .ft-dusk-actor{
+ background:transparent!important;background-image:none!important;
+ border:0!important;outline:0!important;
+ box-shadow:none!important;
+ border-radius:0!important;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg)::before,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg)::after,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg) .bf-actor::before,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg) .bf-actor::after,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg) .ft-dusk-actor::before,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg) .ft-dusk-actor::after{
+ content:none!important;display:none!important;background:none!important;
+}
+/* Also handle the legacy release template's non-stage character wrapper. */
+#demo #actorStage :is(.ft-animal-avatar,.bf-actor):has(.ft-dusk-svg){
+ background:transparent!important;background-image:none!important;
  box-shadow:none!important;
 }
-#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-dusk-svg){
- background:transparent!important;
+@media(max-width:700px){
+ .free-talking-genius #ftCharacter .ft-character-dusk .ft-character-symbol,
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk .ft-character-symbol{
+  border-width:7px!important;
+ }
 }
