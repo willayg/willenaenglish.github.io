@@ -187,6 +187,12 @@ function navigateBack({fromResults=false}={}){
   }
   if(state.reviewing&&!fromResults)return;
   if(fromResults&&state.active)endSession('Leaving finished conversation.');
+  // When opened from the textbook app, close the overlay instead of navigating
+  // to a second copy of the app. Direct mission links still use the URL fallback.
+  if(window.parent!==window&&new URLSearchParams(location.search).get('embedded')==='1'){
+   window.parent.postMessage({type:'willena:free-talking:exit'},location.origin);
+   return;
+  }
   // Return to the exact book and unit selected before the conversation.
   const back=new URL(window.WillenaFTSharedMenu?.paths.units||'/students/free-talking-genius/',location.origin);
   const params=new URLSearchParams(location.search);
@@ -2087,7 +2093,7 @@ async function startConversation(){
  startAbort=new AbortController();
  // Add a real top-level history entry AFTER the original app's character
  // screen, so native Back visits character selection before the unit screen.
- if(!hasActivityHistory())history.pushState({...history.state,[EXT_NAV_KEY]:'activity'},'');
+ if(new URLSearchParams(location.search).get('embedded')!=='1'&&!hasActivityHistory())history.pushState({...history.state,[EXT_NAV_KEY]:'activity'},'');
  document.getElementById('ftEnginePanel')?.setAttribute('hidden','');
  veil.hidden=false;$('talk').classList.remove('is-ending');$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
@@ -2325,7 +2331,7 @@ async function initStandaloneRelease(){
  }
  for(const [id,name] of choices)menu.querySelector('#'+id)?.addEventListener('click',()=>choose(name));
  startButton?.addEventListener('click',()=>void begin());
- back?.addEventListener('click',()=>location.assign('/students/free-talking-genius/'));
+ back?.addEventListener('click',()=>navigateBack());
  if(!valid(bookId)||!valid(unitId)){showError('Please choose a book and unit first.');return}
  try{
   const [books,units]=await Promise.all([
