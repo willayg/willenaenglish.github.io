@@ -36,7 +36,7 @@ async function mount(header){
  for(const file of [
   '/students/free-talking-genius/styles.css?v=20261114-p4-visual1',
   '/students/free-talking-genius/character-animations.css?v=20261114-shared-finish-v1',
-  '/students/free-talking-genius/dusk-character.css?v=20261114-transparent1',
+  '/students/free-talking-genius/dusk-character.css?v=20261114-no-card2',
   '/students/free-talking-genius/live-animal-ui.css?v=20261113-willy-animal1',
   '/students/free-talking-genius/guide.css?v=20261107-guide-kids2',
   '/students/free-talking-hybrid-lab/shared-character-stage.css?v=20261114-willo-restored1'
