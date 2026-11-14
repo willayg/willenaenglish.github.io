@@ -18,3 +18,12 @@
 #view-teachers-manager .tm-denied{padding:18px}
 @media(max-width:850px){#view-teachers-manager .tm-layout{grid-template-columns:1fr}}
 @media(max-width:560px){#view-teachers-manager .tm-panel{padding:12px}#view-teachers-manager .tm-person{padding:10px}#view-teachers-manager .tm-person .control{min-height:38px}}
+
+/* Retired teachers live in a separate archive tab, not the active roster. */
+#view-teachers-manager .tm-tabs{display:flex;gap:7px;margin:14px 0 10px;border-bottom:1px solid #dce7ec;padding-bottom:8px}
+#view-teachers-manager .tm-tab{display:inline-flex;align-items:center;gap:7px;border:1px solid #d3e2e7;background:#fff;color:#547784;padding:10px 14px;border-radius:10px;font-size:12px;font-weight:750;cursor:pointer}
+#view-teachers-manager .tm-tab.active{background:#eb65a0;border-color:#eb65a0;color:white}
+#view-teachers-manager .tm-tab span{display:inline-grid;place-items:center;min-width:21px;height:21px;padding:0 5px;border-radius:999px;background:#edf3f5;color:#4b6c77;font-size:10px}
+#view-teachers-manager .tm-tab.active span{background:#ffffff33;color:inherit}
+#view-teachers-manager #tmAddPanel[hidden]{display:none!important}
+@media(max-width:560px){#view-teachers-manager .tm-tabs{gap:6px}#view-teachers-manager .tm-tab{flex:1;justify-content:center}}
