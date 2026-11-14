@@ -6,26 +6,29 @@ import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
 import {scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261114-p4-visual1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
-const $=id=>document.getElementById(id);
-const releaseMode=new URLSearchParams(location.search).get('release')==='1';
-if(releaseMode)document.body.classList.add('ft-release');
+// Native pilot uses the existing document and an isolated ShadowRoot.
+// The standalone release remains independently supported.
+const nativeHost=window.__WillenaFTNativeHost||null;
+const $=id=>nativeHost?.root.getElementById(id)||document.getElementById(id);
+const releaseMode=!!nativeHost||new URLSearchParams(location.search).get('release')==='1';
+if(releaseMode&&!nativeHost)document.body.classList.add('ft-release');
 else if(new URLSearchParams(location.search).get('legacy')!=='1')location.replace('/students/free-talking-genius/');
 function syncTranscriptPreference(){
- const toggle=$('ftTranscriptToggle'),panel=document.querySelector('#demo .conversation-text');
+ const toggle=$('ftTranscriptToggle'),panel=nativeHost?.root.querySelector('#demo .conversation-text')||document.querySelector('#demo .conversation-text');
  if(!toggle||!panel)return;
  panel.classList.toggle('ft-transcript-hidden',!toggle.checked);
 }
-document.getElementById('ftTranscriptToggle')?.addEventListener('change',syncTranscriptPreference);
+$('ftTranscriptToggle')?.addEventListener('change',syncTranscriptPreference);
 
-const frame=$('original'),veil=$('demo');
+const frame=nativeHost?{contentWindow:{WillenaAPI:window.WillenaAPI},contentDocument:null,addEventListener(){}}:$('original'),veil=$('demo');
 // Keep the existing shared header aligned above the standalone character menu
 // and the live workspace; read its rendered height rather than assuming a phone size.
 function syncLiveHeaderHeight(){
  if(!releaseMode)return;
- const header=document.getElementById('ftLiveStudentHeader');
+ const header=nativeHost?.header||document.getElementById('ftLiveStudentHeader');
  if(!header)return;
  const px=Math.max(0,Math.ceil(header.getBoundingClientRect().height));
- if(px)document.documentElement.style.setProperty('--ft-live-header-height',px+'px');
+ if(px)(nativeHost?.element||document.documentElement).style.setProperty('--ft-live-header-height',px+'px');
 }
 if(releaseMode){
  requestAnimationFrame(syncLiveHeaderHeight);
@@ -39,9 +42,9 @@ if(releaseMode){
 
 const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,askedQuestionTexts:[],attemptCount:0,reviewing:false};
 const NAMES={willi:'Willo',willy:'AI Willy',bunny:'Bunny Fox',pigfish:'Pigfish'};
-const enginePicker=document.getElementById('ftEngineSelect');
-const sttPicker=document.getElementById('ftSttSelect');
-const sttDetails=document.getElementById('ftSttDetails');
+const enginePicker=$('ftEngineSelect');
+const sttPicker=$('ftSttSelect');
+const sttDetails=$('ftSttDetails');
 function selectedStt(){return 'openai-mini'}
 function updateSttPicker(){
  if(sttPicker)sttPicker.disabled=enginePicker?.value==='realtime';
@@ -171,7 +174,7 @@ function closeActivity(){
  state.paused=false;state.resumeIndex=0;state.resumePhase=null;state.resumeLog=null;state.lastChoice=null;state.topicCompleted.clear();state.contributions=0;resetQuestionClock();
  endSession('Conversation ended.');
  veil.hidden=true;
- document.getElementById('ftEnginePanel')?.removeAttribute('hidden');
+ $('ftEnginePanel')?.removeAttribute('hidden');
  $('talk').classList.remove('is-visible');
  $('volumeBox').hidden=true;$('volumeToggle').setAttribute('aria-expanded','false');
  // Preserve the original app's character selector and its own history entry.
@@ -189,6 +192,11 @@ function navigateBack({fromResults=false}={}){
   if(fromResults&&state.active)endSession('Leaving finished conversation.');
   // When opened from the textbook app, close the overlay instead of navigating
   // to a second copy of the app. Direct mission links still use the URL fallback.
+  if(nativeHost){
+   if(state.active||state.starting)endSession('Leaving Free Talking.');
+   nativeHost.exit();
+   return;
+  }
   if(window.parent!==window&&new URLSearchParams(location.search).get('embedded')==='1'){
    // The parent preserves the textbook screen; only it may close the live view.
    // Do not call location.replace() or history.back() inside this iframe.
@@ -2097,7 +2105,7 @@ async function startConversation(){
  // Add a real top-level history entry AFTER the original app's character
  // screen, so native Back visits character selection before the unit screen.
  if(!releaseMode&&!hasActivityHistory())history.pushState({...history.state,[EXT_NAV_KEY]:'activity'},'');
- document.getElementById('ftEnginePanel')?.setAttribute('hidden','');
+ $('ftEnginePanel')?.setAttribute('hidden','');
  veil.hidden=false;$('talk').classList.remove('is-ending');$('talk').classList.add('is-visible');
  $('heading').textContent='Talk with '+NAMES[state.character];
  if(!continuing)$('log').replaceChildren();syncTranscriptPreference();message('Connecting…');
@@ -2263,7 +2271,7 @@ async function initStandaloneRelease(){
  intro.hidden=false;
  const showError=s=>{message.hidden=false;message.textContent=String(s)};
  const params=new URLSearchParams(location.search);
- const bookId=params.get('book'),unitId=params.get('unit');
+ const bookId=nativeHost?.context?.bookId||params.get('book'),unitId=nativeHost?.context?.unitId||params.get('unit');
  const valid=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id||''));
  // Reuse the actual Speaking app's menu from its published HTML, instead
  // of waiting for the hidden iframe's app to navigate to a character screen.
@@ -2350,7 +2358,20 @@ async function initStandaloneRelease(){
 }
 
 if(releaseMode){
- // Menu loads independently, even if the hidden Speaking iframe never reaches
- // its character screen. The iframe remains an authentication-token bridge.
  void initStandaloneRelease();
+}
+if(nativeHost){
+ nativeHost.reopen=async context=>{
+  if(state.active||state.starting)endSession('Switching Free Talking unit.');
+  $('ftGuide').hidden=true;$('ftCelebration').hidden=true;
+  veil.hidden=true;$('ftReleaseIntro').hidden=false;
+  state.initialLoadingShown=false;state.guideAccepted=false;
+  nativeHost.context=context;
+  await initStandaloneRelease();
+ };
+ nativeHost.shutdown=()=>{
+  if(state.active||state.starting)endSession('Leaving Free Talking.');
+  $('ftGuide').hidden=true;
+  veil.hidden=true;$('ftReleaseIntro').hidden=false;
+ };
 }
