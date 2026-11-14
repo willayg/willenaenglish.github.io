@@ -61,6 +61,11 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
  const menu=makeCharacterMenu(menuSlot);
  const menuButtons=[...menu.querySelectorAll('.ft-character-option')];
  const start=menu.querySelector('#ft2-ftCharacterContinue');
+ if(!start||!menuButtons.length)throw Error('Character menu controls missing');
+ start.type='button';
+ const menuStatus=document.createElement('p');menuStatus.className='ft2-menu-status';
+ menuStatus.setAttribute('role','status');
+ menu.querySelector('.ft-character-start-container')?.after(menuStatus);
  const portrait=scene.querySelector('.ft2-portrait');
  const question=scene.querySelector('.ft2-question');
  const status=scene.querySelector('.ft2-status');
@@ -283,17 +288,31 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
   finally{state.inFlight=false;finish.disabled=false}
  }
  async function begin(){
-  if(!state.character||state.inFlight)return;
-  state.inFlight=true;start.disabled=true;menuSlot.hidden=true;scene.hidden=false;
+  if(state.inFlight)return;
+  if(!state.character){menuStatus.textContent='친구를 먼저 선택해 주세요.';return}
+  state.inFlight=true;start.disabled=true;menuStatus.textContent='';
+  menuSlot.hidden=true;scene.hidden=false;result.hidden=true;
+  state.closing=false;state.started=true;state.phase='starting';
   state.sessionId=crypto.randomUUID();state.turnNo=0;state.index=0;state.turns=0;state.replyCount=0;state.history=[];state.saving=Promise.resolve();
-  state.closing=false;state.started=true;state.phase='starting';log.replaceChildren();
+  log.replaceChildren();scene.querySelector('.ft2-start-retry')?.remove();
+  record.disabled=true;finish.disabled=true;
+  paintCharacter();paintProgress();uiStatus('Preparing your textbook conversation…');
   try{
-   uiStatus('Preparing your textbook conversation…');
    const lesson=await request({action:'lesson',book_id:state.bookId,unit_id:state.unitId,guided:true});
+   if(state.closing)return;
    state.anchors=Array.isArray(lesson.lesson?.anchors)?lesson.lesson.anchors.filter(a=>a.id&&a.text).slice(0,8):[];
    if(!state.anchors.length)throw Error('No published questions for this unit.');
-   state.inFlight=false;paintCharacter();await askAnchor();
-  }catch(error){uiStatus('Could not start: '+error.message);state.inFlight=false;finish.disabled=false;record.disabled=true}
+   state.inFlight=false;await askAnchor();
+  }catch(error){
+   if(state.closing)return;
+   console.error('[Free Talking V2] start',error);
+   state.inFlight=false;state.phase='start-failed';
+   uiStatus('Could not start: '+(error?.message||'Connection unavailable'));
+   const retry=document.createElement('button');retry.type='button';
+   retry.className='ft2-btn ft2-primary ft2-start-retry';retry.textContent='다시 시도 · Retry';
+   retry.addEventListener('click',()=>void begin(),{once:true});scene.append(retry);
+   record.disabled=true;finish.disabled=true;start.disabled=false;
+  }
  }
  function close({notify=true}={}){
   if(state.closing&&host.hidden)return;
@@ -306,15 +325,20 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
   state.bookId=bookId;state.unitId=unitId;state.closing=false;state.character=null;
   state.phase='menu';state.started=false;state.inFlight=false;state.anchors=[];state.history=[];
   menuSlot.hidden=false;scene.hidden=true;result.hidden=true;host.hidden=false;
+  scene.querySelector('.ft2-start-retry')?.remove();
+  menuStatus.textContent='친구를 선택한 다음 시작하기를 누르세요.';
   start.disabled=true;menuButtons.forEach(b=>b.setAttribute('aria-pressed','false'));
  }
- menuButtons.forEach(button=>button.addEventListener('click',()=>{
+ menu.addEventListener('click',event=>{
+  const button=event.target.closest?.('.ft-character-option');
+  if(!button||!menu.contains(button))return;
   const selected=button.dataset.voice;
+  if(!CHARACTERS[selected])return;
   if(selected==='willy'&&!checkTestAccess())return;
   state.character=selected;menuButtons.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
-  start.disabled=false;
- }));
- start.addEventListener('click',()=>void begin());
+  start.disabled=false;menuStatus.textContent=CHARACTERS[selected].name+' 선택됨 · 시작하기를 누르세요.';
+ });
+ start.addEventListener('click',event=>{event.preventDefault();void begin()});
  back.addEventListener('click',()=>{
   if(state.recording){stopRecording();return}
   close();
