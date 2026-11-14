@@ -89,7 +89,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],typedUsed=false,typedMode=false,reviewSkipped=false,speechSkipped=false,busy=false,autosaveTimer=null,transitionTimer=null,choices={},captureDraft=null;
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
  function status(text='',error=false){message.textContent=text;message.classList.toggle('is-error',error)}
- function screen(name,label){clearTimeout(transitionTimer);captureDraft=null;step=name;stage.replaceChildren();actions.replaceChildren();button('저장한 글',()=>void openSavedDrafts()).classList.add('df-saved-writings');status();progress.textContent=label;root.hidden=false}
+ function screen(name,label){clearTimeout(transitionTimer);captureDraft=null;step=name;stage.replaceChildren();actions.replaceChildren();if(name==='topic')button('저장한 글',()=>void openSavedDrafts()).classList.add('df-saved-writings');status();progress.textContent=label;root.hidden=false}
  async function persist(){clearTimeout(autosaveTimer);await draft(current)}
  async function close(destination='home'){if(busy)return;clearTimeout(transitionTimer);clearTimeout(autosaveTimer);if(current?.status!=='submitted'){captureDraft?.();busy=true;status('저장 중…');try{await persist()}catch(e){status('저장 실패: '+(e.message||'다시 시도해 주세요.'),true);busy=false;return}busy=false}root.hidden=true;current=null;await onExit(destination)}
  $('dfExit').addEventListener('click',()=>void close());
