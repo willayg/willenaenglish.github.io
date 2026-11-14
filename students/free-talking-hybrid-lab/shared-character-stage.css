@@ -51,3 +51,35 @@
  border-radius:50%!important;pointer-events:none!important;
 }
 #demo #actorStage .ft-original-character-stage #ftSpeechTimeRing[hidden]{display:none!important}
+
+/* Real playback-driven mouth. The dedicated data-audio-speaking flag is set
+   from HTMLAudioElement.playing and removed on pause/end/error. No session or
+   question logic participates, and idle portraits remain closed. */
+#demo #actorStage .bf-actor[data-audio-speaking="true"] .bf-svg .bf-rest-mouth,
+#demo #actorStage .bf-actor[data-audio-speaking="true"] .pf-svg .pf-rest-mouth{
+ opacity:0!important;
+}
+#demo #actorStage .bf-actor[data-audio-speaking="true"] .bf-svg .bf-talk-mouth,
+#demo #actorStage .bf-actor[data-audio-speaking="true"] .pf-svg .pf-talk-mouth{
+ opacity:1!important;visibility:visible!important;display:inline!important;
+}
+#demo #actorStage .bf-actor[data-audio-speaking="true"] .bf-svg .bf-talk-mouth ellipse{
+ animation:bfTalk .34s ease-in-out infinite!important;
+ transform-box:fill-box;transform-origin:center;
+}
+#demo #actorStage .bf-actor[data-audio-speaking="true"] .pf-svg .pf-talk-mouth{
+ animation:pfTalk .35s ease-in-out infinite!important;
+ transform-origin:175px 649px;
+}
+#demo #actorStage .bf-actor[data-audio-speaking="true"] .aw-svg .aw-mouth-wave{
+ display:inline!important;opacity:1!important;
+}
+#demo #actorStage .bf-actor[data-audio-speaking="true"] .aw-svg .aw-bar{
+ animation:awMouth .37s ease-in-out infinite alternate!important;
+ transform-box:fill-box;transform-origin:center;
+}
+@media(prefers-reduced-motion:reduce){
+ #demo #actorStage .bf-actor[data-audio-speaking="true"] .bf-svg .bf-talk-mouth ellipse,
+ #demo #actorStage .bf-actor[data-audio-speaking="true"] .pf-svg .pf-talk-mouth,
+ #demo #actorStage .bf-actor[data-audio-speaking="true"] .aw-svg .aw-bar{animation:none!important}
+}
