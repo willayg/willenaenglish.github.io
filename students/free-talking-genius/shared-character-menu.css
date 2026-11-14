@@ -121,3 +121,77 @@
 
 /* Dusk is a Free Talking-only unlockable; never show it in Speaking's picker. */
 .free-talking-genius #ftCharacter .ft-character-dusk[hidden]{display:none!important}
+
+/* Single authoritative responsive geometry. Legacy V1 rules use high-specificity
+   selectors and sometimes load after initial paint; lock the menu to a strict
+   grid and stop the portraits/names overflowing into adjacent cells. */
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options,
+.free-talking-genius #ftCharacter .ft-character-options{
+ display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ grid-auto-flow:row!important;
+ justify-items:stretch!important;align-items:start!important;
+ gap:16px!important;width:100%!important;min-width:0!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option,
+.free-talking-genius #ftCharacter .ft-character-option{
+ position:relative!important;inset:auto!important;float:none!important;
+ display:flex!important;flex-direction:column!important;
+ justify-content:flex-start!important;align-items:center!important;
+ flex-wrap:nowrap!important;gap:9px!important;
+ box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+ width:100%!important;height:auto!important;min-height:0!important;
+ padding:6px 3px!important;margin:0!important;
+ border:0!important;background:transparent!important;box-shadow:none!important;
+ transform:none!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol{
+ position:relative!important;inset:auto!important;
+ display:grid!important;place-items:center!important;
+ flex:none!important;box-sizing:border-box!important;
+ width:min(100%,116px)!important;height:auto!important;aspect-ratio:1!important;
+ margin:0 auto!important;transform:none!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option strong,
+.free-talking-genius #ftCharacter .ft-character-option strong{
+ display:block!important;position:static!important;float:none!important;
+ width:100%!important;max-width:100%!important;
+ min-width:0!important;margin:0!important;padding:0!important;
+ text-align:center!important;white-space:normal!important;
+ overflow-wrap:break-word!important;font-size:clamp(14px,2vw,18px)!important;
+ line-height:1.25!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option small,
+.free-talking-genius #ftCharacter .ft-character-option small{
+ position:static!important;display:block!important;
+ max-width:100%!important;text-align:center!important;
+ font-size:11px!important;line-height:1.3!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk[hidden],
+.free-talking-genius #ftCharacter .ft-character-dusk[hidden]{display:none!important}
+@media(max-width:700px){
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-panel,
+ .free-talking-genius #ftCharacter .ft-character-panel{
+  box-sizing:border-box!important;width:100%!important;max-width:620px!important;
+  padding:18px 12px!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options,
+ .free-talking-genius #ftCharacter .ft-character-options{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:18px 10px!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol,
+ .free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol{
+  width:min(100%,112px)!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option strong,
+ .free-talking-genius #ftCharacter .ft-character-option strong{
+  font-size:clamp(14px,3.6vw,17px)!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk:not([hidden]),
+ .free-talking-genius #ftCharacter .ft-character-dusk:not([hidden]){
+  grid-column:1/-1!important;justify-self:center!important;
+  width:min(100%,170px)!important;
+ }
+}
