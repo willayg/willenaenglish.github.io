@@ -56,3 +56,7 @@
  .ft-v2 #ft2-ftCharacter .ft-character-symbol{width:105px;height:105px}
  .ft-v2 #ft2-ftCharacter .ft-character-option strong{font-size:15px}
 }
+
+.ft-v2 .ft2-menu-status{color:#487c85;font-size:14px;font-weight:750;text-align:center;min-height:20px;margin:2px 0}
+.ft-v2 .ft2-start-retry{margin:12px auto}
+.ft-v2 .ft2-scene .ft2-status{white-space:normal;overflow-wrap:anywhere}
