@@ -1249,10 +1249,13 @@ $('ftFreeTalkingV2Card').addEventListener('click',async()=>{
  card.disabled=true;
  try{
   if(!freeTalkingV2){
-   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-v2a');
+   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-v2-flow2');
    freeTalkingV2=createFreeTalkingV2({
     host:$('ftFreeTalkingV2'),getToken:()=>token(),
-    onBack:()=>view('ftBook'),
+    onBack:()=>{
+     if(history.state?.[FT_NAV_KEY]?.screen==='ftFreeTalkingV2')history.back();
+     else view('ftBook',{record:false});
+    },
     onProgress:()=>{void refreshFreeTalkingPercent()}
    });
   }
