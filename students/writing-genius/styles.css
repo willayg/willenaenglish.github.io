@@ -895,3 +895,9 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .wg-portfolio .wg-library-head{align-items:center;flex-wrap:wrap}
 .wg-portfolio .wg-library{max-height:none}
 @media(max-width:680px){.wg-portfolio-button{margin:0 0 18px}}
+
+/* Writing diary: one-tap access to saved drafts above the fixed Next action. */
+.writing-genius #wgDiaryFlow{padding-bottom:calc(158px + env(safe-area-inset-bottom,0px))}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions:not(:empty){flex-wrap:wrap;row-gap:8px}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-saved-writings{order:-1;flex:0 0 100%;max-width:440px;min-height:38px;border:2px solid #bfe8ed;background:#fff;color:#27646b;font-weight:800;font-size:.88rem}
+@media(max-width:560px){.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-saved-writings{min-height:38px;font-size:.85rem}}
