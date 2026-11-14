@@ -815,6 +815,13 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    typingStatus.textContent=done?'모든 문장을 입력했어요. 제출할 수 있어요.':(typingIndex+1)+' / '+scriptLines.length+' · 현재 문장을 입력하세요.';
    targetLine.textContent=done?'모든 문장 입력 완료':scriptLines[typingIndex];
    input.hidden=done;lineCheck.hidden=done;
+   // The previous line may have installed an editable difference mirror.
+   // Restore the native field for each fresh target; do not carry its highlights over.
+   const previousMirror=input.closest('.df-edit-highlight-wrap');
+   if(previousMirror){
+    previousMirror.parentNode.insertBefore(input,previousMirror);
+    previousMirror.remove();
+   }
    if(!done){input.value=typedLines[typingIndex]||'';lineCheck.textContent=typingIndex===scriptLines.length-1?'마지막 문장 확인':'다음 문장'}
    lineNodes.forEach((node,i)=>{
     node.classList.toggle('is-complete',i<typingIndex);
