@@ -1,7 +1,7 @@
 // Free Talking V2 native host.
 // The V1 conversation engine runs in a ShadowRoot, inside the original student
 // document: one persistent header, no iframe and no independent page history.
-const ENGINE='/students/free-talking-genius/free-talking-v2-engine.js?v=20261114-unified-lock-mobileback3';
+const ENGINE='/students/free-talking-genius/free-talking-v2-engine.js?v=20261114-shared-menu-back4';
 const TEMPLATE='/students/free-talking-hybrid-lab/index.html';
 let workspace=null;
 let loading=null;
@@ -45,82 +45,9 @@ async function mount(header){
  // legacy V1 selectors. A single narrow column avoids the portrait/name
  // collisions caused by inherited 2-column mobile overrides. Only the
  // shadow-root menu is affected; Speaking and its layout remain untouched.
- const nativeMenuStyle=document.createElement('style');
- nativeMenuStyle.textContent=`
- /* Native menu is a strict two-column grid on phones, four on wide tablets.
-    Every child has its own grid cell: no implicit columns or overlapping
-    character names. Keep the shared artwork and circular portraits. */
- #ftReleaseIntro.free-talking-genius #ftCharacter.ft-character-screen{
-  display:flex!important;width:100%!important;min-height:0!important;
-  max-width:100%!important;padding:0!important;align-items:center!important;
- }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-panel{
-  width:min(640px,100%)!important;min-width:0!important;
-  max-width:100%!important;box-sizing:border-box!important;
-  margin:0 auto!important;padding:clamp(13px,3vw,24px)!important;
-  gap:14px!important;
- }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options{
-  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  grid-auto-columns:minmax(0,1fr)!important;grid-auto-flow:row!important;
-  width:100%!important;max-width:100%!important;margin:0!important;
-  gap:15px 12px!important;justify-items:stretch!important;align-items:start!important;
- }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options>.ft-character-option{
-  display:flex!important;flex-direction:column!important;align-items:center!important;
-  justify-content:flex-start!important;gap:8px!important;
-  grid-column:auto!important;grid-row:auto!important;
-  box-sizing:border-box!important;min-width:0!important;width:100%!important;
-  min-height:0!important;height:auto!important;max-width:100%!important;
-  padding:6px 2px!important;margin:0!important;position:static!important;
-  border:0!important;box-shadow:none!important;background:transparent!important;
-  transform:none!important;text-align:center!important;
- }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol{
-  display:grid!important;place-items:center!important;
-  box-sizing:border-box!important;position:relative!important;
-  width:clamp(86px,23vw,116px)!important;height:clamp(86px,23vw,116px)!important;
-  max-width:100%!important;max-height:none!important;
-  margin:0 auto!important;padding:0!important;flex:none!important;
-  grid-column:auto!important;grid-row:auto!important;border-radius:50%!important;
- }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option strong{
-  display:block!important;position:static!important;grid-column:auto!important;grid-row:auto!important;
-  width:100%!important;min-width:0!important;max-width:100%!important;
-  padding:0!important;margin:0!important;white-space:normal!important;
-  overflow-wrap:break-word!important;font-size:clamp(14px,3.6vw,17px)!important;
-  line-height:1.28!important;text-align:center!important;
- }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk{
-  grid-column:2!important;
- }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-dusk-lock{
-  position:static!important;grid-column:auto!important;grid-row:auto!important;
-  display:block!important;width:100%!important;white-space:normal!important;
-  text-align:center!important;margin:0!important;padding:0!important;
-  font-size:11px!important;
- }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option[hidden],
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-dusk-lock[hidden]{
-  display:none!important;
- }
- #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-start-container{
-  width:100%!important;max-width:100%!important;margin:0!important;
-  box-sizing:border-box!important;
- }
- @media(min-width:801px){
-  #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options{
-   grid-template-columns:repeat(4,minmax(0,1fr))!important;
-  }
-  #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk{
-   grid-column:4!important;
-  }
-  #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option strong{
-   font-size:15px!important;
-  }
- }
- `
- root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-unified-lock-mobileback3'),nativeMenuStyle,document.importNode(intro,true),document.importNode(demo,true));
+ // The native host uses the same menu stylesheet as Speaking, without a
+ // second injected set of character-grid/portrait overrides.
+ root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261114-shared-menu-back4'),document.importNode(intro,true),document.importNode(demo,true));
  document.body.append(element);
  const state={element,root,header,context:null,active:false,reopen:null,shutdown:null,onExit:null,bodyOverflow:'',headerZIndex:'',exit({notify=true}={}){
   if(!state.active)return;
