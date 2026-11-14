@@ -295,7 +295,7 @@
 .aw-svg .aw-idle-mouth{display:none!important}
 .bf-actor:not([data-state="speaking"]) .aw-svg .aw-mouth-wave,
 .ft-character-symbol .aw-svg .aw-mouth-wave,
-#ftResultMascot .aw-svg .aw-mouth-wave{display:none!important}
+#ftResultMascot:not([data-state="speaking"]) .aw-svg .aw-mouth-wave{display:none!important}
 .bf-actor:not([data-state="speaking"]) .aw-svg .aw-ear-left,
 .bf-actor:not([data-state="speaking"]) .aw-svg .aw-ear-right,
 .bf-actor:not([data-state="speaking"]) .aw-svg .aw-antenna,
@@ -350,3 +350,6 @@
   animation:none!important;filter:none!important
  }
 }
+
+/* Result card is the SAME actor: equalizer only for spoken evaluation feedback. */
+#ftResultMascot.bf-actor[data-state="speaking"] .aw-svg .aw-mouth-wave{display:inline!important}
