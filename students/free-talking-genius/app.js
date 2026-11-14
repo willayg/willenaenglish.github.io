@@ -1282,7 +1282,7 @@ $('ftFreeTalkingV2Card').addEventListener('click',async()=>{
  await new Promise(resolve=>requestAnimationFrame(resolve));
  try{
   if(!freeTalkingV2){
-   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-clone-transparent3');
+   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261114-header-top1');
    freeTalkingV2=createFreeTalkingV2({
     host:$('ftFreeTalkingV2'),getToken:()=>token(),
     onBack:()=>{
