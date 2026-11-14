@@ -191,8 +191,8 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
    recorder.onstop=()=>{
     const blob=new Blob(state.chunks,{type:recorder.mimeType||'audio/webm'});
     state.chunks=[];if(state.stream){state.stream.getTracks().forEach(t=>t.stop());state.stream=null}
-    if(!state.closing&&blob.size>400)void processAudio(blob);
-    else if(!state.closing){setReady(true);uiStatus('Recording was too short. Please try again.')}
+    if(!state.closing&&state.phase!=='review'&&blob.size>400)void processAudio(blob);
+    else if(!state.closing&&state.phase!=='review'){setReady(true);uiStatus('Recording was too short. Please try again.')}
    };
    recorder.start();record.textContent='Stop recording';portrait.dataset.state='listening';uiStatus('Listening… tap Stop when finished');
   }catch(error){uiStatus('Microphone problem: '+error.message)}
@@ -202,8 +202,9 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
   if(recorder?.state==='recording'){recorder.stop();state.recording=null;record.disabled=true}
  };
  async function complete(){
-  if(state.closing||state.inFlight&&state.phase==='review')return;
-  stopMic();state.phase='review';state.inFlight=true;record.disabled=true;finish.disabled=true;
+  if(state.closing||state.phase==='review')return;
+  state.phase='review';state.inFlight=true;record.disabled=true;finish.disabled=true;
+  stopMic();
   uiStatus('Saving and reviewing your conversation…');
   try{
    await state.saving;
@@ -242,10 +243,11 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
    state.inFlight=false;await askAnchor();
   }catch(error){uiStatus('Could not start: '+error.message);state.inFlight=false;finish.disabled=false;record.disabled=true}
  }
- function close(){
+ function close({notify=true}={}){
+  if(state.closing&&host.hidden)return;
   state.closing=true;stopMedia();host.hidden=true;menuSlot.hidden=false;scene.hidden=true;result.hidden=true;
   state.character=null;state.started=false;state.phase='menu';
-  onBack?.();
+  if(notify)onBack?.();
  }
  function open({bookId,unitId}){
   if(!bookId||!unitId)throw Error('Select a unit first');
