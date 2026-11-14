@@ -1,10 +1,10 @@
 // Free Talking: preload the fixed quiet-audio encouragement for both characters.
 // Server returns audio only after verifying the clip is saved to shared R2.
 export function createFreeTalkingRetryVoice({getToken,onFinished,onPlaying}){
- const voices=['marin','bunny-v3','pigfish','willy'];
+ const voices=['marin','bunny-v3','pigfish','willy','prince'];
  const files=new Map(),inflight=new Map(),attempted=new Set();
  let sound=null,disposed=false,playVersion=0;
- const status={marin:'not_loaded','bunny-v3':'not_loaded',pigfish:'not_loaded',willy:'not_loaded'};
+ const status={marin:'not_loaded','bunny-v3':'not_loaded',pigfish:'not_loaded',willy:'not_loaded',prince:'not_loaded'};
  const parseAudio=base64=>{
   const binary=atob(base64),bytes=new Uint8Array(binary.length);
   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
@@ -42,7 +42,7 @@ export function createFreeTalkingRetryVoice({getToken,onFinished,onPlaying}){
   inflight.set(voice,work);
   return work;
  }
- function preloadBoth(){for(const voice of voices)void preload(voice)}
+ function preloadBoth(){for(const voice of voices.filter(v=>v!=='prince'))void preload(voice)}
  async function play(voice){
   if(disposed||!voices.includes(voice))return false;
   stop();
@@ -65,5 +65,5 @@ export function createFreeTalkingRetryVoice({getToken,onFinished,onPlaying}){
   if(sound){try{sound.pause();sound.currentTime=0}catch{}sound=null;onPlaying?.(false)}
  }
  function destroy(){disposed=true;stop();for(const url of files.values())URL.revokeObjectURL(url);files.clear()}
- return {preload,preloadBoth,play,stop,destroy,status};
+ return {preload,preloadBoth,preloadOne:preload,play,stop,destroy,status};
 }
