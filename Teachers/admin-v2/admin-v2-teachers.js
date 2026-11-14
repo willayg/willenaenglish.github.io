@@ -3,7 +3,7 @@ const API='/.netlify/functions/teacher_management';
 const root=document.getElementById('view-teachers-manager');
 const nav=document.querySelector('[data-view="teachers-manager"]');
 const $=(s,r=root)=>r.querySelector(s);
-let people=[],loaded=false;
+let people=[],loaded=false,activeTab='active';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;'}[c]));
 async function request(action,body){
  const fn=window.WillenaAPI?.fetch||window.fetch.bind(window);
@@ -15,8 +15,14 @@ async function request(action,body){
 function message(value,error=false){const el=$('#tmMessage');el.textContent=value;el.style.color=error?'#b83d64':'#53757f';}
 function render(){
  $('#tmCount').textContent=people.filter(x=>x.approved).length+' active · '+people.filter(x=>!x.approved).length+' retired';
- const q=$('#tmSearch').value.trim().toLowerCase(),filter=$('#tmFilter').value;
- const items=people.filter(x=>(filter==='all'||(filter==='active'?x.approved:!x.approved))&&[x.name,x.username,x.email].join(' ').toLowerCase().includes(q));
+ const q=$('#tmSearch').value.trim().toLowerCase();
+ $('#tmActiveCount').textContent=people.filter(x=>x.approved).length;
+ $('#tmArchiveCount').textContent=people.filter(x=>!x.approved).length;
+ root.querySelectorAll('[data-tm-tab]').forEach(button=>{
+  const active=button.dataset.tmTab===activeTab;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));
+ });
+ $('#tmAddPanel').hidden=activeTab==='archive';
+ const items=people.filter(x=>(activeTab==='active'?x.approved:!x.approved)&&[x.name,x.username,x.email].join(' ').toLowerCase().includes(q));
  const list=$('#tmList');list.replaceChildren();
  for(const teacher of items){
   const item=document.createElement('div');item.className='tm-person';
@@ -41,7 +47,7 @@ function render(){
   else{const protectedLabel=document.createElement('small');protectedLabel.textContent='Admin account';item.append(protectedLabel)}
   list.append(item);
  }
- if(!items.length)list.textContent='No matching teachers.';
+ if(!items.length)list.textContent=q?'No matching teachers.':activeTab==='archive'?'No archived accounts.':'No active teachers.';
 }
 async function refresh(){const data=await request('list');people=data.teachers||[];loaded=true;render();}
 export async function checkAccess(){
@@ -54,7 +60,7 @@ export async function open(){
  if(loaded)await refresh().catch(e=>message(e.message,true));
 }
 $('#tmSearch')?.addEventListener('input',render);
-$('#tmFilter')?.addEventListener('change',render);
+root.querySelectorAll('[data-tm-tab]').forEach(button=>button.addEventListener('click',()=>{activeTab=button.dataset.tmTab;render()}));
 $('#tmRefresh')?.addEventListener('click',()=>refresh().catch(e=>message(e.message,true)));
 $('#tmCreateForm')?.addEventListener('submit',async e=>{
  e.preventDefault();const form=e.currentTarget;const button=$('#tmCreate');button.disabled=true;message('Creating teacher…');
