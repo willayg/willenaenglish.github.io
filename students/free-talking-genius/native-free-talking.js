@@ -13,8 +13,8 @@ async function createWorkspace({header}){
  const doc=new DOMParser().parseFromString(await response.text(),'text/html');
  const intro=doc.getElementById('ftReleaseIntro');
  const demo=doc.getElementById('demo');
- const inline=doc.querySelector('style');
- if(!intro||!demo||!inline)throw Error('Live workspace markup is incomplete');
+ const inline=[...doc.querySelectorAll('style')];
+ if(!intro||!demo||!inline.length)throw Error('Live workspace markup is incomplete');
  const element=document.createElement('div');
  element.id='ftNativeWorkspace';
  element.hidden=true;
@@ -25,7 +25,7 @@ async function createWorkspace({header}){
  const style=document.createElement('style');
  // Original workspace styles remain sourced from their own live-page template.
  // Shadow DOM scopes them so they cannot alter Speaking or the student header.
- style.textContent=inline.textContent+'\n'+
+ style.textContent=inline.map(tag=>tag.textContent).join('\n')+'\n'+
  '#demo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;}'+
  '#demo .wrap{height:100%!important;max-height:100%!important;}'+
  '#demo .ft-layer{position:absolute!important;inset:0!important;}'+
