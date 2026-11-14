@@ -31,8 +31,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   const slot=document.getElementById(id)?.querySelector('.ft-character-symbol');
   if(slot&&PORTRAITS[character])slot.innerHTML=scopedCharacterArt(PORTRAITS[character],'portrait');
  }
- let selected='marin',voiceSpeaking=false,celebrateTimer=null,moodInterval=null,moodStep=0;
- function stopMoodCycle(){if(moodInterval!==null){clearInterval(moodInterval);moodInterval=null}}
+ let selected='marin',voiceSpeaking=false,celebrateTimer=null;
  function update(){
   if(!ART[selected]||session.hidden)return;
   const recording=circle.dataset.aiRecording==='true'||circle.dataset.listening==='true';
@@ -42,7 +41,6 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   if(actor.dataset.state!=='celebrating')actor.dataset.state=state;
  }
  function select(character){
-  stopMoodCycle();
   selected=ART[character]?character:'marin';
   session.dataset.character=selected;
   actor.hidden=!ART[selected];
@@ -60,29 +58,21 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   if(selected!=='willy')return;
   const t=String(text||'').toLowerCase();
   // Use model-supplied ElevenLabs cues when present; otherwise classify gently.
-  const mood=/\[(?:angry|frustrated|furious)\]|\b(?:angry|furious)\b/.test(t)?'angry':
+  // Match explicit speech context, not a timer. Rare special effects stay meaningful.
+  const mood=/\[(?:angry|frustrated|furious)\]|\b(?:furious|so angry|really mad)\b/.test(t)?'angry':
    /\[(?:crying|sadly|sobbing)\]|\b(?:so sorry|that's sad|feel sad)\b/.test(t)?'sad':
-   /\[(?:gasps|surprised|shocked)\]|\b(?:wow|no way|really\?|what\?!)\b/.test(t)?'surprised':
-   /\[(?:laughs|laughing|chuckles|giggles|excited|cheerful)\]|\b(?:great job|well done|awesome|wonderful|haha)\b/.test(t)?'happy':'neutral';
+   /\[(?:gasps|surprised|shocked)\]|\b(?:wow|no way|what a surprise|unbelievable|i can't believe it)\b/.test(t)?'surprised':
+   /\[(?:giggles|giggling|chuckles|chuckling|laughing)\]|\b(?:so cute|how cute|adorable|cute little|funny joke|that's hilarious|so funny|meow|kitty|kitten)\b/.test(t)?'cat':
+   /\[(?:excited|cheerful)\]|\b(?:great job|well done|awesome|wonderful)\b/.test(t)?'happy':'neutral';
   setMood(mood);
  }
  function setSpeaking(playing){
-  const next=Boolean(playing);
-  if(next===voiceSpeaking){update();return}
-  voiceSpeaking=next;stopMoodCycle();
+  voiceSpeaking=Boolean(playing);
+  // Keep the mood inferred from THIS spoken line, never cycle through moods.
+  // All expression and spark effects are CSS-gated to the speaking state.
   if(!voiceSpeaking){
-   actor.dataset.mood='neutral';moodStep=0;
+   actor.dataset.mood='neutral';
    if(actor.dataset.state==='celebrating')actor.dataset.state='idle';
-  }else if(selected==='willy'){
-   // Same SVG: cycle a few expressive faces only DURING speech.
-   const initial=actor.dataset.mood;
-   const sequence=[initial==='neutral'?'happy':initial,'surprised','cat','happy','neutral'];
-   moodStep=0;
-   moodInterval=setInterval(()=>{
-    if(!voiceSpeaking||selected!=='willy'){stopMoodCycle();return}
-    moodStep=(moodStep+1)%sequence.length;
-    setMood(sequence[moodStep]);
-   },1250);
   }
   update();
  }
