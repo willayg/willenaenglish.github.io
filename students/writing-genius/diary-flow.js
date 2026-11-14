@@ -307,7 +307,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    const count=split(current.body).length;if(count<(current.kind==='topic'?8:6)||count>30){status(current.kind==='topic'?'완성된 영어 문장을 8–30개 작성해 주세요.':'완성된 영어 문장 6–30개 작성해 주세요.',true);return}
    if(busy)return;busy=true;
    reviewLoading();
-   try{await persist();feedback=await review(current);summary()}
+   try{await persist();feedback=await review(current);finalDraftText='';summary()}
    catch(e){write();status(e.message||'AI Willi 오류가 발생했어요.',true)}
    finally{busy=false}
   },true);
@@ -521,7 +521,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     try{
       current.body=body;await persist();reviewLoading();
       const checked=await review(current);
-      feedback=checked;choices={};saveChoices();
+      feedback=checked;choices={};customLines={};selectedExpressions={};expressionEdits={};finalDraftText='';saveChoices();
       try{localStorage.removeItem(cacheKey)}catch{}
       summary();
     }catch(e){secondDraft();status(e.message||'AI 리뷰 오류',true)}
