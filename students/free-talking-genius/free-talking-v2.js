@@ -142,7 +142,7 @@ export function createFreeTalkingV2({host,getToken,onBack,onProgress}){
  }
  async function replyToStudent(text){
   const data=await request({action:'reply',book_id:state.bookId,unit_id:state.unitId,
-   character:CHARACTERS[state.character].api,model:'gpt-4.1-mini',
+   character:CHARACTERS[state.character].api,model:'gpt-6-luna',
    session_id:state.sessionId,directive:'Reply naturally and briefly to the student. Ask a simple relevant follow-up question. Do not award points here.',
    history:state.history.slice(-18),asked_questions:state.anchors.map(a=>a.text)});
   const answer=String(data.text||'').trim();
