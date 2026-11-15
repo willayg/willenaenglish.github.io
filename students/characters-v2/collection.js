@@ -3,6 +3,7 @@
 import {charactersInMenu} from '/students/characters-v2/character-registry.js?v=20261115-modular-p2-2';
 import {characterThumbnailMarkup} from '/students/characters-v2/character-runtime.js?v=20261115-unique-svg-resources1';
 const root=document.getElementById('characterCollection');
+const celebrationNames={bunny:'BUNNY FOX',pigfish:'PIGFISH',willi:'WILLO',willy:'AI WILLI 2',dusk:'DUSK',steve:'SERGEANT STEVE'};
 const number=n=>Math.max(0,Math.floor(Number(n)||0)).toLocaleString();
 function draw(points){
  if(!root)return;
@@ -13,7 +14,8 @@ function draw(points){
  for(const c of characters){
   const earned=valid&&points>=c.unlockPoints;
   const available=c.unlockPoints===0||c.id==='bunny'||c.id==='pigfish';
-  const card=document.createElement('article');card.className='collection-character';
+  const card=document.createElement('button');card.type='button';card.className='collection-character';card.dataset.character=c.id;
+  card.setAttribute('aria-label','Play '+c.name+' celebration');
   const art=document.createElement('div');art.className='collection-art';
   art.innerHTML=characterThumbnailMarkup(c.id,'collection-'+c.id);
   const title=document.createElement('strong');title.textContent=c.name;
@@ -32,7 +34,9 @@ function draw(points){
   caption.textContent=!valid?'Points unavailable':c.unlockPoints===0?'Ready to use':earned?'Milestone reached':number(points)+' / '+number(c.unlockPoints)+' points';
   if(available)card.dataset.available='true';
   if(earned)card.dataset.earned='true';
-  card.append(art,title,detail,progress,caption);fragment.append(card);
+  card.append(art,title,detail,progress,caption);
+  card.addEventListener('click',()=>playCollectionCelebration(c));
+  fragment.append(card);
  }
  root.append(fragment);
  const status=document.getElementById('characterCollectionStatus');
@@ -42,4 +46,35 @@ document.addEventListener('willena:profile-overview',event=>{
  const p=Number(event.detail?.points);
  draw(event.detail?.points==null?NaN:p);
 });
-draw(NaN);
+function playCollectionCelebration(c){
+ const existing=document.querySelector('.ft-character-unlock-celebration.collection-replay');
+ if(existing)existing.remove();
+ // Replay is cosmetic: no unlock claims, points changes, or authentication calls.
+ const overlay=document.createElement('section');
+ overlay.className='ft-character-unlock-celebration collection-replay'+(c.id==='dusk'?' is-dusk':'');
+ overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+ overlay.setAttribute('aria-label',c.name+' character celebration');
+ const confetti=document.createElement('div');confetti.className='ft-milestone-confetti';confetti.setAttribute('aria-hidden','true');
+ for(let i=0;i<9;i++)confetti.append(document.createElement('i'));
+ const content=document.createElement('div');content.className='ft-milestone-card';
+ const eyebrow=document.createElement('div');eyebrow.className='ft-milestone-eyebrow';eyebrow.textContent='CHARACTER CELEBRATION!';
+ const portrait=document.createElement('div');portrait.className='ft-milestone-art';
+ const artwork=document.createElement('span');artwork.className='ft-milestone-dusk';
+ artwork.innerHTML=characterThumbnailMarkup(c.id,'celebrate-'+c.id+'-'+Date.now());portrait.append(artwork);
+ const heading=document.createElement('h2');heading.textContent=celebrationNames[c.id]||c.name;
+ const subtitle=document.createElement('p');subtitle.className='ft-milestone-points';subtitle.textContent=c.unlockPoints?number(c.unlockPoints)+' POINTS':'FREE CHARACTER';
+ const note=document.createElement('p');note.className='ft-milestone-korean';note.textContent='캐릭터 축하 애니메이션';
+ const actions=document.createElement('div');actions.className='ft-milestone-actions';
+ const close=document.createElement('button');close.type='button';close.className='ft-milestone-continue';close.textContent='닫기 · Close';actions.append(close);
+ content.append(eyebrow,portrait,heading,subtitle,note,actions);overlay.append(confetti,content);
+ document.body.append(overlay);
+ const previousFocus=document.activeElement;
+ const dismiss=()=>{overlay.remove();document.removeEventListener('keydown',onKey);previousFocus?.focus?.({preventScroll:true})};
+ const onKey=e=>{if(e.key==='Escape')dismiss()};
+ document.addEventListener('keydown',onKey);
+ close.addEventListener('click',dismiss);
+ overlay.addEventListener('click',e=>{if(e.target===overlay)dismiss()});
+ close.focus({preventScroll:true});
+}
+if(window.__willenaDashboardOverview)draw(Number(window.__willenaDashboardOverview.points));
+else draw(NaN);
