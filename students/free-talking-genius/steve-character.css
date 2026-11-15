@@ -1,0 +1,33 @@
+/* Sergeant Steve: Free Talking only, shared SVG, fixed facial geometry. */
+.ft-steve-actor{display:grid!important;place-items:center!important;width:100%!important;height:100%!important;background:transparent!important}
+.ft-steve-actor .ft-steve-svg{display:block!important;width:100%!important;height:100%!important;overflow:visible!important;background:transparent!important}
+.free-talking-genius #ftCharacter .ft-character-steve[hidden]{display:none!important}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol::before,
+.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol::before{background:transparent!important}
+.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked .ft-character-symbol{filter:grayscale(1) brightness(.38)!important;opacity:.72!important}
+.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked .ft-character-symbol::after{content:'?';position:absolute;inset:0;display:grid;place-items:center;font-size:38px;color:#eee;pointer-events:none}
+.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-unlocked[aria-pressed="true"] .ft-character-symbol{box-shadow:0 0 0 5px #7fcbd588!important;transform:scale(1.045)!important}
+@media(max-width:700px){.free-talking-genius #ftCharacter .ft-character-steve:not([hidden]){justify-self:center!important}}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg)::before{background:transparent!important}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar .bf-actor:has(.ft-steve-svg){width:95%!important;height:95%!important}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar .ft-steve-svg{width:100%!important;height:100%!important;display:block!important;overflow:visible!important}
+.bf-actor .ft-steve-svg #steve-talk-mouth{visibility:hidden}
+.bf-actor .ft-steve-svg #steve-rest-mouth{visibility:visible}
+.bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-rest-mouth{visibility:hidden!important}
+.bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-talk-mouth{visibility:visible!important}
+.bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-pupil-left,
+.bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-pupil-right{animation:steveLiveGlance 5.4s ease-in-out infinite}
+.bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-brows{animation:steveLiveBrow 3.8s ease-in-out infinite}
+.bf-actor[data-steve-mood="surprised"] .ft-steve-svg #steve-brows{transform:translateY(-12px)}
+.bf-actor[data-steve-mood="surprised"] .ft-steve-svg #steve-eye-left,
+.bf-actor[data-steve-mood="surprised"] .ft-steve-svg #steve-eye-right{transform:scaleY(1.13);transform-box:fill-box;transform-origin:center}
+.bf-actor[data-steve-mood="surprised"] .ft-steve-svg #steve-pupil-left,
+.bf-actor[data-steve-mood="surprised"] .ft-steve-svg #steve-pupil-right{transform:translateY(-4px)}
+.bf-actor[data-state="thinking"] .ft-steve-svg #steve-pupil-left,
+.bf-actor[data-state="thinking"] .ft-steve-svg #steve-pupil-right{transform:translate(-5px,-3px)}
+.bf-actor[data-state="celebrating"] .ft-steve-svg #steve-head{animation:steveProudNod 0.8s ease-in-out 2;transform-origin:440px 350px}
+/* Mouth never transforms. Only the original two paths toggle; the moustache stays above both. */
+@keyframes steveLiveGlance{0%,12%,36%,64%,84%,100%{transform:translate(0,0)}19%,27%{transform:translate(-6px,-2px)}47%,55%{transform:translate(6px,1px)}73%,78%{transform:translate(0,-4px)}}
+@keyframes steveLiveBrow{0%,36%,65%,100%{transform:translateY(0)}45%,52%{transform:translateY(-3px)}}
+@keyframes steveProudNod{50%{transform:rotate(3deg) translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){.ft-steve-svg *{animation:none!important}}
