@@ -1,6 +1,6 @@
 import {CHARACTER_REGISTRY,registryDiagnostics} from './character-registry.js?v=20261115-modular-p2-2';
 import {mountCharacter,characterThumbnailMarkup,validateCharacterAssets} from './character-runtime.js?v=20261115-unique-svg-resources1';
-import {createCharacterCelebration} from './celebration-card.js?v=20261116-p4-1';
+import {createCharacterCelebration} from './celebration-card.js?v=20261116-p4-visible-scenery2';
 import {celebrationFor} from '/shared/character-celebration-config.js?v=20261116-p4-1';
 const $=s=>document.querySelector(s);
 let current=null;
