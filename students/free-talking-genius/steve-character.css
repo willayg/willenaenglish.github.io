@@ -7,10 +7,28 @@
 /* Match Dusk's portrait circle. Keep the artwork visible even when locked. */
 #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol,
 .free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol{background:transparent!important;border:9px solid #59c9c8!important;outline:3px solid #d7f5f3!important;overflow:hidden!important}
+/* A hat-and-face portrait with the same strong circular presence as Dusk. */
 #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve .ft-steve-portrait,
-.free-talking-genius #ftCharacter .ft-character-steve .ft-steve-portrait{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;max-width:100%!important;max-height:100%!important;opacity:1!important}
+.free-talking-genius #ftCharacter .ft-character-steve .ft-steve-portrait{
+ display:block!important;width:100%!important;height:100%!important;
+ max-width:100%!important;max-height:100%!important;object-fit:cover!important;
+ transform:translateY(2%) scale(1.14)!important;
+ opacity:1!important;transition:filter .18s ease,opacity .18s ease!important;
+}
+/* Filter the actual SVG image, NOT the cyan ring. Include aria-disabled as a
+   defensive fallback if an old menu still omits the newer unlock class. */
 #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked .ft-steve-portrait,
-.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked .ft-steve-portrait{filter:grayscale(1) brightness(.7) contrast(1.05)!important}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve[aria-disabled="true"] .ft-steve-portrait,
+.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked .ft-steve-portrait,
+.free-talking-genius #ftCharacter .ft-character-steve[aria-disabled="true"] .ft-steve-portrait{
+ filter:grayscale(1) saturate(0) brightness(.58) contrast(1.08)!important;
+ opacity:.8!important;
+}
+/* No redundant lock badge or overlay: the dimmed portrait is the lock state. */
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol::after,
+.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol::after{
+ content:none!important;display:none!important;
+}
 #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked strong,
 .free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked strong{color:#9794a5!important}
 .free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-unlocked[aria-pressed="true"] .ft-character-symbol{box-shadow:0 0 0 5px #7fcbd588!important;transform:scale(1.045)!important}
