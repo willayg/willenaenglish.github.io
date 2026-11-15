@@ -1,3 +1,5 @@
+import {getCharacter} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
+import {characterThumbnailMarkup} from '/students/characters-v2/character-runtime.js?v=20261115-unique-svg-resources1';
 // Free Talking-only milestone cards. Uses the existing student token and one-time server record.
 // Never interrupts an active conversation, never changes points or student assignments.
 export async function showCharacterUnlockCelebrations({
@@ -12,7 +14,7 @@ export async function showCharacterUnlockCelebrations({
   }catch(error){console.warn('[FT unlock] status',error);return}
   if(!menu.isConnected||!active())return;
   if(Number.isFinite(Number(status?.points)))onPoints(Number(status.points));
-  const queue=(Array.isArray(status?.pending)?status.pending:[]).filter(x=>x==='dusk'||x==='steve');
+  const queue=(Array.isArray(status?.pending)?status.pending:[]).filter(id=>getCharacter(id)?.unlockPoints>0);
   if(!queue.length)return;
   // Prevent a second async menu reopen from displaying duplicate dialogs.
   if(root.querySelector('.ft-character-unlock-celebration'))return;
@@ -21,22 +23,25 @@ export async function showCharacterUnlockCelebrations({
     await showOne(character);
   }
   async function showOne(character){
-    const isSteve=character==='steve';
-    const text=isSteve
-      ? 'WHAT?! EIGHT THOUSAND POINTS?! YOU HAVE EARNED MY RESPECT, RECRUIT!'
-      : 'Well, well... Five thousand points. You found me. Welcome to the shadows!';
-    const portrait=isSteve
-      ? '<img class="ft-milestone-steve" alt="" src="/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-cropfix4">'
-      : '<span class="ft-milestone-dusk">'+scopedCharacterArt(duskArt,'unlock-dusk')+'</span>';
+    const config=getCharacter(character);
+    if(!config)return;
+    const quotes={
+     bunny:'Bunny Fox is ready for your next space adventure!',
+     pigfish:'Splash! Pigfish is here to practise English with you!',
+     dusk:'Well, well... Five thousand points. You found me. Welcome to the shadows!',
+     steve:'WHAT?! EIGHT THOUSAND POINTS?! YOU HAVE EARNED MY RESPECT, RECRUIT!'
+    };
+    const text=quotes[character]||'A new English friend is ready!';
+    const portrait='<span class="ft-milestone-dusk">'+characterThumbnailMarkup(character,'unlock-'+character)+'</span>';
     const dialog=document.createElement('section');
-    dialog.className='ft-character-unlock-celebration'+(isSteve?' is-steve':' is-dusk');
+    dialog.className='ft-character-unlock-celebration is-'+character;
     dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
-    dialog.setAttribute('aria-label',(isSteve?'Sergeant Steve':'Dusk')+' unlocked');
+    dialog.setAttribute('aria-label',config.name+' unlocked');
     dialog.innerHTML='<div class="ft-milestone-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>'+
       '<div class="ft-milestone-card"><div class="ft-milestone-eyebrow">NEW CHARACTER UNLOCKED!</div>'+
       '<div class="ft-milestone-art">'+portrait+'</div>'+
-      '<h2>'+(isSteve?'SERGEANT STEVE':'DUSK')+'</h2>'+
-      '<p class="ft-milestone-points">'+(isSteve?'8,000':'5,000')+' POINTS</p>'+
+      '<h2>'+config.name.toUpperCase()+'</h2>'+
+      '<p class="ft-milestone-points">'+config.unlockPoints.toLocaleString('en-US')+' POINTS</p>'+
       '<p class="ft-milestone-quote">'+text+'</p>'+
       '<p class="ft-milestone-korean">새로운 대화 친구가 열렸어요!</p>'+
       '<div class="ft-milestone-actions"><button type="button" class="ft-milestone-listen">🔊 목소리 듣기</button>'+
