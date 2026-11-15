@@ -1019,7 +1019,7 @@ function renderQuestion({retry=false}={}){
  aiRecorder.releaseIdle();
  void questionVoice.select(state.current.id,{autoplay:false});
 }
-let roundChoice=null,duskAvailablePoints=null,duskChoiceRequest=0;
+let roundChoice=null,duskAvailablePoints=null,duskChoiceVisit=0,duskChoicePromise=null;
 const duskUnlockUI=window.WillenaFTSharedMenu?.createDuskUnlockUI($('ftCharacter'),DUSK_UNLOCK_POINTS);
 async function getCurrentDuskPoints(){
  const response=await WillenaAPI.fetch('/.netlify/functions/progress_summary?section=overview&_='+Date.now(),{cache:'no-store'});
@@ -1031,6 +1031,26 @@ async function getCurrentDuskPoints(){
 function showDuskUnlock(points){
  duskAvailablePoints=points;
  duskUnlockUI?.update(points);
+}
+function clearDeniedDuskSelection(){
+ if(roundChoice!=='prince')return;
+ roundChoice=null;
+ $('ftChooseDusk')?.setAttribute('aria-pressed','false');
+ $('ftCharacterContinue').disabled=true;
+}
+function loadDuskEligibilityForVisit(){
+ const visit=++duskChoiceVisit;
+ showDuskUnlock(null);
+ // A single verified points read is shared by all taps on this screen.
+ duskChoicePromise=getCurrentDuskPoints().then(points=>{
+  if(visit!==duskChoiceVisit)return null;
+  showDuskUnlock(points);
+  if(points<DUSK_UNLOCK_POINTS)clearDeniedDuskSelection();
+  return points;
+ }).catch(()=>{
+  if(visit===duskChoiceVisit){showDuskUnlock(null);clearDeniedDuskSelection()}
+  return null;
+ });
 }
 async function verifyDuskAccess(){
  try{
@@ -1056,7 +1076,7 @@ function chooseRoundVoice(voice){
 
 function openMode(mode){
  if(state.loading||!['speaking','writing'].includes(mode))return;
- state.pendingMode=mode;roundChoice=null;duskChoiceRequest++;
+ state.pendingMode=mode;roundChoice=null;
  $('ftCharacterRound').textContent=bookTitle()+' · Unit '+state.unit+' · '+(mode==='speaking'?'말하기':'쓰기');
  for(const id of ['ftChooseWilli','ftChooseLili','ftChoosePigfish','ftChooseWilly','ftChooseDusk'])$(id)?.setAttribute('aria-pressed','false');
  $('ftCharacterContinue').disabled=true;
@@ -1064,14 +1084,23 @@ function openMode(mode){
  $('ftCharacterBack').textContent='← 교재로 돌아가기';
  preloadStudentSfx();
  view('ftCharacter');
- showDuskUnlock(null);
- void getCurrentDuskPoints().then(showDuskUnlock).catch(()=>showDuskUnlock(null));
+ loadDuskEligibilityForVisit();
  // Willi 2 is the default Speaking character; students may still choose another.
  if(mode==='speaking')chooseRoundVoice('willy');
 }
 async function beginRound(mode){
  if(state.loading||!['speaking','writing'].includes(mode)||!roundChoice)return;
- if(roundChoice==='prince'&&!await verifyDuskAccess())return;
+ if(roundChoice==='prince'){
+  if(duskAvailablePoints==null){
+   await duskChoicePromise;
+   if(duskAvailablePoints==null||duskAvailablePoints<DUSK_UNLOCK_POINTS){
+    duskUnlockUI?.open();return;
+   }
+  }
+  if(duskAvailablePoints<DUSK_UNLOCK_POINTS){duskUnlockUI?.open();return}
+  // Fresh validation only at entry, not on character taps.
+  if(!await verifyDuskAccess())return;
+ }
 
  if(!questionVoice.setVoice(roundChoice)){
   showError('캐릭터 음성을 선택할 수 없어요.');return;
@@ -1304,18 +1333,19 @@ $('ftChooseLili').addEventListener('click',()=>chooseRoundVoice('bunny-v3'));
 $('ftChoosePigfish').addEventListener('click',()=>chooseRoundVoice('pigfish'));
 $('ftChooseWilly').addEventListener('click',()=>chooseRoundVoice('willy'));
 $('ftChooseDusk')?.addEventListener('click',()=>{
- // Optimistic visual selection: do not block the highlight on the points API.
- const request=++duskChoiceRequest;
- const previous=roundChoice;
+ // Selection is synchronous and never issues a new points query.
+ if(duskAvailablePoints!=null&&duskAvailablePoints<DUSK_UNLOCK_POINTS){
+  duskUnlockUI?.open();return;
+ }
  chooseRoundVoice('prince');
- if(duskAvailablePoints!=null&&duskAvailablePoints>=DUSK_UNLOCK_POINTS)return;
- void verifyDuskAccess().then(ok=>{
-  if(request!==duskChoiceRequest||roundChoice!=='prince'||ok)return;
-  roundChoice=previous;
-  for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy'],['ftChooseDusk','prince']])
-   $(id)?.setAttribute('aria-pressed',String(value===previous));
-  $('ftCharacterContinue').disabled=!previous;
- });
+ if(duskAvailablePoints==null){
+  $('ftCharacterContinue').disabled=true;
+  void duskChoicePromise?.then(points=>{
+   if(roundChoice!=='prince')return;
+   if(points==null||points<DUSK_UNLOCK_POINTS){clearDeniedDuskSelection();duskUnlockUI?.open()}
+   else $('ftCharacterContinue').disabled=false;
+  });
+ }
 });
 $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pendingMode));
 $('ftCharacterBack').addEventListener('click',()=>{
