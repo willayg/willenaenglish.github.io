@@ -48,13 +48,32 @@ const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:
 const NAMES={willi:'Willo',willy:'AI Willy',bunny:'Bunny Fox',pigfish:'Pigfish',dusk:'Dusk',steve:'Sergeant Steve'};
 const serverCharacter=()=>state.character;
 async function authoritativeDuskPoints(){
- const api=window.WillenaAPI;
- if(typeof api?.fetch!=='function')throw Error('Could not verify points');
- const response=await api.fetch('/.netlify/functions/progress_summary?section=overview&_='+Date.now(),{cache:'no-store'});
- if(!response.ok)throw Error('Could not verify points');
- const overview=await response.json();
- if(overview?.points==null||!Number.isFinite(Number(overview.points)))throw Error('Points unavailable');
- return Math.max(0,Math.floor(Number(overview.points)));
+ // Use the SAME secured Scores RPC as the shared milestone celebrations and
+ // backend character gate. The old overview endpoint can lag in this iframe.
+ try{
+  const token=await originalStudentToken();
+  const claims=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+  const uid=String(claims.sub||'');
+  if(!/^[0-9a-f-]{36}$/i.test(uid))throw Error('Invalid student identity');
+  const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/sum_points_for_user',{
+   method:'POST',cache:'no-store',
+   headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json'},
+   body:JSON.stringify({uid}),signal:AbortSignal.timeout(12000)
+  });
+  if(!response.ok)throw Error('Points service HTTP '+response.status);
+  const points=Number(await response.json());
+  if(!Number.isFinite(points)||points<0)throw Error('Points unavailable');
+  return Math.floor(points);
+ }catch(err){
+  // Preserve the established legacy overview path if the new RPC is offline.
+  const api=window.WillenaAPI;
+  if(typeof api?.fetch!=='function')throw err;
+  const response=await api.fetch('/.netlify/functions/progress_summary?section=overview&_='+Date.now(),{cache:'no-store'});
+  if(!response.ok)throw err;
+  const overview=await response.json();
+  if(!Number.isFinite(Number(overview?.points)))throw err;
+  return Math.max(0,Math.floor(Number(overview.points)));
+ }
 }
 const enginePicker=$('ftEngineSelect');
 const sttPicker=$('ftSttSelect');
