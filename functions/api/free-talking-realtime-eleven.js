@@ -44,10 +44,13 @@ export async function onRequestPost({request,env}){
    if(!speech.ok||!speech.body)return reply(502,'AI Willi speech unavailable ('+speech.status+')');
    return new Response(speech.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Willena-TTS-Route':'openai-marin','X-Content-Type-Options':'nosniff'}});
   }
-  if(character==='steve'&&profile.role==='student'){
+  const definition=CHARACTER_REGISTRY.find(c=>c.id===character&&c.status==='published');
+  // The speech endpoint is independently callable, so it must enforce the
+  // registry threshold too (not just trust the character picker).
+  if(profile.role==='student'&&definition?.unlockPoints>0){
    const checked=await fetch(ROOT+'/rest/v1/rpc/student_own_total_points',{method:'POST',headers:{apikey:PUB,Authorization:'Bearer '+bearer,'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(10000)});
    const value=checked.ok?Number(await checked.json().catch(()=>NaN)):NaN;
-   if(!Number.isFinite(value)||value<8000)return reply(403,'Sergeant Steve requires 8,000 points');
+   if(!Number.isFinite(value)||value<definition.unlockPoints)return reply(403,'Character requires '+definition.unlockPoints+' points');
   }
   const voiceId=VOICES[character];
   const voiceSettings=character==='dusk'
