@@ -683,7 +683,8 @@ function saveHybridTranscript(who,spoken,verdict=null,proof=null,stamp=null,sour
    try{
     const response=await authorizedDemoFetch('/api/free-talking-hybrid-lab',body);
     if(response.ok){state.transcriptSaved=(state.transcriptSaved||0)+1;return}
-    lastError=Error('HTTP '+response.status);
+    const detail=await response.json().catch(()=>null);
+    lastError=Error('HTTP '+response.status+(detail?.error?' — '+String(detail.error).slice(0,160):''));
     if(response.status<500)break;
    }catch(ex){lastError=ex}
   }
