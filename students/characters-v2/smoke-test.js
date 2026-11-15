@@ -1,0 +1,32 @@
+import {CHARACTER_REGISTRY,CHARACTER_PERSONAS,registryDiagnostics,charactersInMenu} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
+import {characterMarkup,mountCharacter} from './character-runtime.js?v=20261115-modular-p2-1';
+const checks=document.getElementById('checks'),tests=document.getElementById('tests'),summary=document.getElementById('summary');
+function run(){
+ checks.replaceChildren();tests.replaceChildren();
+ let passed=0,failed=0;
+ const check=(name,condition,details='')=>{
+  const div=document.createElement('div');div.className=condition?'pass':'fail';
+  div.textContent=(condition?'✓ ':'✕ ')+name+(details?' — '+details:'');checks.append(div);
+  if(condition)passed++;else failed++;
+ };
+ const issues=registryDiagnostics();
+ check('Catalog validates',issues.length===0,issues.join('; '));
+ check('All six original characters registered',CHARACTER_REGISTRY.length===6);
+ check('Requested character menu ordering',charactersInMenu().map(c=>c.id).join(',')==='bunny,willy,pigfish,willi,dusk,steve');
+ for(const c of charactersInMenu()){
+  const card=document.createElement('div');card.className='test-card';
+  const label=document.createElement('strong');label.textContent=c.name;card.append(label);
+  const avatar=document.createElement('div');avatar.className='avatar';card.append(avatar);
+  let stage=null;
+  try{stage=mountCharacter(avatar,c.id);const svg=avatar.querySelector('svg');
+   check(c.name+' loads SVG',Boolean(svg));check(c.name+' has voice config',Boolean(c.voiceId&&c.voiceProvider));
+   check(c.name+' has personality',typeof CHARACTER_PERSONAS[c.id]==='string'&&CHARACTER_PERSONAS[c.id].length>30);
+   const phases=['idle','listening','thinking','speaking'];const stateOk=phases.every(p=>stage.setPhase(p));check(c.name+' actor phases',stateOk);
+   stage.setPhase('speaking');check(c.name+' speaking state',avatar.querySelector('.bf-actor')?.dataset.state==='speaking');
+  }catch(err){check(c.name+' loads without error',false,String(err.message||err))}
+  const note=document.createElement('small');note.textContent='Speech state simulated · no API request';card.append(note);tests.append(card);
+ }
+ summary.textContent=passed+' passed · '+failed+' failed';summary.className=failed?'fail':'pass';
+}
+document.getElementById('rerun').addEventListener('click',run);
+run();
