@@ -4,6 +4,8 @@
 import {DUSK_ART} from '/students/free-talking-genius/dusk-character.js?v=20261114-no-legacy-card1';
 const ENDPOINT='/api/free-talking-character-unlocks';
 const TTS='/api/free-talking-realtime-eleven';
+const SCORES='https://fiieuiktlsivwfgyivai.supabase.co';
+const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const artSteve='/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-cropfix4';
 let inProgress=false, lastCheck=0;
 const styles='/students/free-talking-genius/character-unlock-celebrations.css?v=20261115-unlock-cards1';
@@ -26,12 +28,50 @@ async function studentToken(force=false){
  api?.setLocalTokens?.(data.access_token,data.refresh_token||'');
  return data.access_token;
 }
+// Read and acknowledge unlocks directly through the existing secured Scores
+// database. This works across all Genius hosts without depending on a
+// Cloudflare /api route that some app domains do not serve.
+async function directUnlockRequest(body,token){
+ const claims=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+ const uid=claims.sub;
+ if(!/^[a-f0-9-]{36}$/i.test(String(uid||'')))throw Error('Missing account identity');
+ const headers={apikey:PUB,Authorization:'Bearer '+token};
+ const base=SCORES+'/rest/v1/free_talking_character_unlocks';
+ if(body.action==='claim'){
+  const response=await fetch(base,{method:'POST',cache:'no-store',
+   headers:{...headers,'Content-Type':'application/json',Prefer:'resolution=ignore-duplicates,return=minimal'},
+   body:JSON.stringify({student_id:uid,character:body.character})});
+  if(!response.ok)throw Error('Saving unlock failed: '+response.status);
+  return {ok:true,json:async()=>({success:true,character:body.character})};
+ }
+ const pointsRes=await fetch(SCORES+'/rest/v1/rpc/sum_points_for_user',{
+  method:'POST',cache:'no-store',headers:{...headers,'Content-Type':'application/json'},
+  body:JSON.stringify({uid})});
+ if(!pointsRes.ok)throw Error('Checking points failed: '+pointsRes.status);
+ const points=Number(await pointsRes.json());
+ if(!Number.isFinite(points))throw Error('Points unavailable');
+ const saved=await fetch(base+'?select=character&student_id=eq.'+encodeURIComponent(uid),{headers,cache:'no-store'});
+ if(!saved.ok)throw Error('Checking past unlocks failed: '+saved.status);
+ const celebrated=(await saved.json()).map(x=>x.character);
+ const pending=[['dusk',5000],['steve',8000]]
+  .filter(([character,min])=>points>=min&&!celebrated.includes(character))
+  .map(([character])=>character);
+ return {ok:true,json:async()=>({points,celebrated,pending})};
+}
 async function request(body){
+ const token=await studentToken();
+ if(body.action!=='tts'){
+  try{return await directUnlockRequest(body,token)}
+  catch(e){
+   console.warn('[Student unlock] Direct Scores API fallback:',String(e));
+   // Keep compatibility with the original authenticated Pages endpoint.
+  }
+ }
  const path=body.action==='tts'?TTS:ENDPOINT;
  const payload=JSON.stringify(body.action==='tts'?{character:body.character,text:body.text}:body);
- const call=token=>fetch(path,{method:'POST',credentials:'same-origin',cache:'no-store',
-  headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:payload});
- let response=await call(await studentToken());
+ const call=jwt=>fetch(path,{method:'POST',credentials:'same-origin',cache:'no-store',
+  headers:{Authorization:'Bearer '+jwt,'Content-Type':'application/json'},body:payload});
+ let response=await call(token);
  if(response.status===401)response=await call(await studentToken(true));
  return response;
 }
