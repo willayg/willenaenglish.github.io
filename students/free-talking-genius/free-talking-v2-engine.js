@@ -2452,8 +2452,30 @@ async function initStandaloneRelease(){
  const steveUnlock=window.WillenaFTSharedMenu?.createSteveUnlockUI(menu,STEVE_UNLOCK_POINTS);
  const showStevePoints=points=>{stevePoints=points;steveUnlock?.update(points)};
  const openSteveDialog=()=>steveUnlock?.open();
- showDuskPoints(null);
- void authoritativeDuskPoints().then(points=>{showDuskPoints(points);showStevePoints(points)}).catch(()=>{showDuskPoints(null);showStevePoints(null)});
+ // Both earned characters use one verified points state. The shared header is
+ // authoritative across apps and is mounted outside the native conversation.
+ const applyEarnedPoints=points=>{
+  if(!Number.isFinite(Number(points)))return;
+  const total=Math.max(0,Math.floor(Number(points)));
+  showDuskPoints(total);showStevePoints(total);
+ };
+ nativeHost._earnedPointsListener?.abort();
+ const earnedListener=new AbortController();
+ nativeHost._earnedPointsListener=earnedListener;
+ window.addEventListener('willena:verified-student-points',event=>{
+  if(!menu.isConnected||!nativeHost.active)return;
+  if(event.detail?.userId&&nativeHost.header?._uid&&event.detail.userId!==nativeHost.header._uid)return;
+  applyEarnedPoints(event.detail?.points);
+ },{signal:earnedListener.signal});
+ showDuskPoints(null);showStevePoints(null);
+ // Refresh the same authoritative shared header source now, rather than
+ // depending on a separate iframe fetch that can be stale or unavailable.
+ if(nativeHost.header?._points!=null&&nativeHost.header?._uid)applyEarnedPoints(nativeHost.header._points);
+ void nativeHost.header?._fetchOverview?.();
+ // Dusk's existing server-verified lookup remains a secondary backstop only.
+ void authoritativeDuskPoints().then(points=>applyEarnedPoints(points)).catch(err=>{
+  console.warn('[Free Talking] Earned character points fallback unavailable',String(err));
+ });
  const choose=character=>{
   if(!ready||starting)return;
 
