@@ -1,3 +1,5 @@
+import {CHARACTER_REGISTRY} from '/shared/free-talking-character-catalog.js?v=20261115-p2-a';
+import {characterMarkup} from '/students/characters-v2/character-runtime.js?v=20261115-p2-a';
 // Visual-only bridge to the exact SVG animation assets from the Bunny Fox demo.
 // No audio interception, app cloning, auth, recording, grading or progress logic.
 import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wave3';
@@ -19,7 +21,8 @@ function originalWilloArt(){
  // the same vector geometry/colours as the canonical menu's Willo portrait.
  return '<span class="ft-willo-actor"><svg class="ft-willo-svg" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke="#69d7df" stroke-width="7"/><circle cx="50" cy="50" r="19" fill="none" stroke="#d6f2f4" stroke-width="8"/><path d="M50 31 A19 19 0 0 1 67 42" fill="none" stroke="#69c1cc" stroke-width="7" stroke-linecap="round"/><path d="M33 57 A19 19 0 0 0 47 69" fill="none" stroke="#efadce" stroke-width="7" stroke-linecap="round"/></svg></span>';
 }
-const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:AI_WILLY_HEAD_SVG,marin:originalWilloArt(),dusk:'<span class="ft-dusk-actor">'+DUSK_ART+'</span>',steve:'<span class="ft-steve-actor">'+STEVE_ART+'</span>'};
+// Registry-driven actor identities; no per-character stage-switching here.
+const ART=Object.fromEntries(CHARACTER_REGISTRY.filter(c=>c.status==='published').map(c=>[c.actorKey,c.id==='willi'?originalWilloArt():characterMarkup(c.id)]));
 const PORTRAITS={...ART};
 // One animation-state vocabulary for the Speaking and live conversation workspaces.
 // This is visual-only: it never starts recording, audio playback, or grading.
