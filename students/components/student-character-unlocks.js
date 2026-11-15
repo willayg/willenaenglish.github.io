@@ -75,25 +75,46 @@ async function request(body){
  if(response.status===401)response=await call(await studentToken(true));
  return response;
 }
-export async function checkStudentCharacterUnlocks(){
+// The shared header's overview is independently fetched from the authenticated
+// points endpoint. Use that verified figure when the milestone endpoint is down.
+function localKey(uid,character){return 'willena-milestone-seen-v3:'+uid+':'+character}
+function hasSeen(uid,character){try{return localStorage.getItem(localKey(uid,character))==='1'}catch{return false}}
+function markSeen(uid,character){try{localStorage.setItem(localKey(uid,character),'1')}catch{}}
+export async function checkStudentCharacterUnlocks(verifiedPoints=null,verifiedUserId=null){
  if(inProgress||!document.body||document.hidden)return;
- // Small throttle stops duplicate calls from simultaneous points/stars events.
  if(Date.now()-lastCheck<1600)return;
  lastCheck=Date.now();inProgress=true;
  try{
-  const res=await request({action:'status'});
-  if(!res.ok)return;
-  const status=await res.json();
-  const pending=Array.isArray(status.pending)?status.pending.filter(c=>c==='dusk'||c==='steve'):[];
+  let uid=verifiedUserId;
+  if(!uid){
+   const token=window.WillenaAPI?.getLocalAccessToken?.();
+   if(validToken(token))uid=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).sub;
+  }
+  if(!/^[a-f0-9-]{36}$/i.test(String(uid||'')))return;
+  let pending=[];
+  try{
+   const res=await request({action:'status'});
+   if(!res.ok)throw Error('Unlock status HTTP '+res.status);
+   const status=await res.json();
+   if(!Array.isArray(status.pending))throw Error('Invalid unlock status');
+   pending=status.pending.filter(c=>c==='dusk'||c==='steve');
+  }catch(e){
+   console.warn('[Student unlock] Using verified-header points fallback:',String(e));
+   const points=Number(verifiedPoints);
+   if(!Number.isFinite(points)||points<5000)return;
+   pending=[['dusk',5000],['steve',8000]]
+     .filter(([c,min])=>points>=min).map(([c])=>c);
+  }
   for(const character of pending){
    if(!document.body||document.hidden)break;
-   const seen=await showOne(character);
+   if(hasSeen(uid,character))continue;
+   const seen=await showOne(character,uid);
    if(!seen)break;
   }
  }catch(e){console.warn('[Student unlock]',e)}
  finally{inProgress=false}
 }
-async function showOne(character){
+async function showOne(character,uid){
  const steve=character==='steve';
  const sentence=steve
   ? '[surprised] WHAT?! EIGHT THOUSAND POINTS?! YOU HAVE EARNED MY RESPECT, RECRUIT!'
@@ -148,11 +169,13 @@ async function showOne(character){
    try{
     const r=await request({action:'claim',character});
     if(!r.ok)throw Error('Claim HTTP '+r.status);
-    done=true;stop();host.remove();resolve(true);
    }catch(e){
-    next.disabled=false;next.textContent='다시 시도';
-    status.textContent='잠금 해제 기록을 저장하지 못했어요. 다시 시도해 주세요.';
+    // The milestone is a display acknowledgement, not an award of points or
+    // character access. Persist locally if the sync service is unavailable.
+    console.warn('[Student unlock] Remote acknowledgement deferred:',String(e));
    }
+   markSeen(uid,character);
+   done=true;stop();host.remove();resolve(true);
   });
   const close=()=>{
    if(done)return;done=true;stop();host.remove();resolve(false);
