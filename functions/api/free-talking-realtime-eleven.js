@@ -46,7 +46,7 @@ export async function onRequestPost({request,env}){
   if(character==='steve'&&profile.role==='student'){
    const checked=await fetch(ROOT+'/rest/v1/rpc/sum_points_for_user',{method:'POST',headers:{apikey:PUB,Authorization:'Bearer '+bearer,'Content-Type':'application/json'},body:JSON.stringify({uid:user.id}),signal:AbortSignal.timeout(10000)});
    const value=checked.ok?Number(await checked.json().catch(()=>NaN)):NaN;
-   if(!Number.isFinite(value)||value<10000)return reply(403,'Sergeant Steve requires 10,000 points');
+   if(!Number.isFinite(value)||value<8000)return reply(403,'Sergeant Steve requires 8,000 points');
   }
   const voiceId=VOICES[character];
   const voiceSettings=character==='dusk'
