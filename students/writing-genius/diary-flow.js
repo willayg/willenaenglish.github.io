@@ -784,9 +784,25 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    for(let i=0;i<scriptLines.length;i++){
     const tokens=speechWords(scriptLines[i]);
     if(!tokens.length)continue;
-    const segment=spoken.slice(consumed,consumed+tokens.length+2).join(' ');
-    if(segment&&writingSpeechAccepted(scriptLines[i],segment)){
-     consumed+=Math.min(tokens.length,spoken.length-consumed);activeIndex=i+1;
+    // Match the line itself, not the line plus two words from the next line.
+    // The old +2 window made short lines such as "Dear Diary." impossible
+    // to complete: 4 recognized words could never match a 2-word target.
+    const remaining=spoken.slice(consumed);
+    let advance=0;
+    for(let offset=0;offset<=Math.min(2,remaining.length-1)&&!advance;offset++){
+     for(let size=Math.max(1,tokens.length-1);size<=tokens.length+1;size++){
+      const candidate=remaining.slice(offset,offset+size);
+      if(candidate.length!==size)continue;
+      const segment=candidate.join(' ');
+      if(writingSpeechAccepted(scriptLines[i],segment)||
+        (tokens.length<=3&&size>=tokens.length&&spokenAccuracy(scriptLines[i],segment)>=.84)){
+       advance=offset+size;
+       break;
+      }
+     }
+    }
+    if(advance){
+     consumed+=advance;activeIndex=i+1;
     }else break;
    }
    activeIndex=Math.min(activeIndex,lineNodes.length-1);
