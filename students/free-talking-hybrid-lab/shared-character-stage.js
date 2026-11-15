@@ -2,7 +2,8 @@
 // Restores the original ft-animal-stage / ft-animal-avatar / ft-animal-timer
 // layout used before the Nov 13 SVG-stage experiment. No Speaking controls.
 import {createFreeTalkingCharacters,resolveFreeTalkingActorPhase,scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261115-steve-sleeve2';
-import {STEVE_ART} from '/students/free-talking-genius/steve-character.js?v=20261115-steve-sleeve2';
+import {CHARACTER_REGISTRY} from '/shared/free-talking-character-catalog.js?v=20261115-p2-a';
+import {characterMarkup} from '/students/characters-v2/character-runtime.js?v=20261115-p2-a';
 
 export function createHybridCharacterStage(host,character='bunny-v3'){
  host.replaceChildren();
@@ -34,22 +35,15 @@ export function createHybridCharacterStage(host,character='bunny-v3'){
  // Character choice is authoritative here, not the actor factory's default
  // Willo selected while the actor component initializes.
  stage.dataset.character=character;
- if(character==='steve'){
-  const live=actor.actor;
-  // Render the exact shared vector directly into the chosen actor. This
-  // avoids a stale Willo fallback surviving the component's initialization.
-  if(live){
-   actor.select('steve');
-   live.innerHTML='<span class="ft-steve-actor">'+scopedCharacterArt(STEVE_ART,'steve-live-stage')+'</span>';
-  }
-  if(live){
-   live.hidden=false;
-   live.style.setProperty('display','block','important');
-   live.style.setProperty('visibility','visible','important');
-   live.style.setProperty('opacity','1','important');
-   live.style.setProperty('z-index','5','important');
-  }
+ // One mounting path for all character art, including future entries.
+ // Rehydrate from the central catalog if a legacy actor fallback populated
+ // something else during asynchronous startup.
+ const selected=CHARACTER_REGISTRY.find(c=>c.actorKey===character||c.id===character);
+ if(selected&&actor.actor){
+  actor.actor.innerHTML=scopedCharacterArt(characterMarkup(selected.id),'ft-live-'+selected.id);
+  actor.actor.hidden=false;
  }
+
  function setPhase(phase){
   const visualPhase=resolveFreeTalkingActorPhase({phase});
   stage.dataset.phase=phase;
