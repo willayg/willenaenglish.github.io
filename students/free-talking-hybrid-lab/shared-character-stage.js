@@ -30,6 +30,24 @@ export function createHybridCharacterStage(host,character='bunny-v3'){
  const session=document.createElement('div');
  const actor=createFreeTalkingCharacters({circle:anchor,session,voiceHost:stage,choices:{}});
  actor.select(character);
+ // Character choice is authoritative here, not the actor factory's default
+ // Willo selected while the actor component initializes.
+ stage.dataset.character=character;
+ if(character==='steve'){
+  const live=actor.actor;
+  const steve=live?.querySelector('.ft-steve-svg');
+  if(!steve){
+   console.error('[Free Talking stage] Steve SVG was not mounted; repairing actor');
+   actor.select('steve');
+  }
+  if(live){
+   live.hidden=false;
+   live.style.setProperty('display','block','important');
+   live.style.setProperty('visibility','visible','important');
+   live.style.setProperty('opacity','1','important');
+   live.style.setProperty('z-index','5','important');
+  }
+ }
  function setPhase(phase){
   const visualPhase=resolveFreeTalkingActorPhase({phase});
   stage.dataset.phase=phase;
