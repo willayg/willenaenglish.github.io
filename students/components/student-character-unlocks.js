@@ -7,14 +7,33 @@ const TTS='/api/free-talking-realtime-eleven';
 const artSteve='/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-cropfix4';
 let inProgress=false, lastCheck=0;
 const styles='/students/free-talking-genius/character-unlock-celebrations.css?v=20261115-unlock-cards1';
-function request(body){
- const token=window.WillenaAPI?.getLocalAccessToken?.();
- if(!token)return Promise.reject(new Error('No student session'));
- return fetch(body.action==='tts'?TTS:ENDPOINT,{
-   method:'POST',credentials:'same-origin',cache:'no-store',
-   headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
-   body:JSON.stringify(body.action==='tts'?{character:body.character,text:body.text}:body)
- });
+function validToken(token){
+ if(!token||token.split('.').length!==3)return false;
+ try{const claims=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+  return Number(claims.exp)*1000>Date.now()+30000;
+ }catch{return false}
+}
+async function studentToken(force=false){
+ const api=window.WillenaAPI;
+ const cached=api?.getLocalAccessToken?.();
+ if(!force&&validToken(cached))return cached;
+ // Some students use cookie login with no usable local token. Reuse the
+ // exact authenticated refresh path the Free Talking engine already uses.
+ const fn=api?.fetch?api.fetch.bind(api):fetch;
+ const res=await fn('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'});
+ const data=await res.json().catch(()=>null);
+ if(!res.ok||!validToken(data?.access_token))throw Error('Student token not available');
+ api?.setLocalTokens?.(data.access_token,data.refresh_token||'');
+ return data.access_token;
+}
+async function request(body){
+ const path=body.action==='tts'?TTS:ENDPOINT;
+ const payload=JSON.stringify(body.action==='tts'?{character:body.character,text:body.text}:body);
+ const call=token=>fetch(path,{method:'POST',credentials:'same-origin',cache:'no-store',
+  headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:payload});
+ let response=await call(await studentToken());
+ if(response.status===401)response=await call(await studentToken(true));
+ return response;
 }
 export async function checkStudentCharacterUnlocks(){
  if(inProgress||!document.body||document.hidden)return;
