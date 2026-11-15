@@ -76,6 +76,8 @@
     button.setAttribute('aria-disabled',String(!unlocked));
     button.setAttribute('aria-label',unlocked?'Sergeant Steve':'Sergeant Steve, '+threshold.toLocaleString()+'포인트 필요');
     // The unlock threshold belongs in the tap dialog, not under the portrait.
+    const portrait=button.querySelector('.ft-steve-portrait');
+    if(portrait){portrait.style.filter=unlocked?'none':'grayscale(1) saturate(0) brightness(.5) contrast(1.1)';portrait.style.opacity=unlocked?'1':'.77';}
     return unlocked}
   close.addEventListener('click',dismiss);dialog.addEventListener('click',e=>{if(e.target===dialog)dismiss()});
   dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();dismiss()}});
