@@ -26,6 +26,9 @@ function scopeIds(markup,suffix){
  for(const [id,scoped]of ids)markup=markup.replaceAll('url(#'+id+')','url(#'+scoped+')');
  return markup;
 }
+export function characterThumbnailMarkup(characterId,suffix='thumbnail'){
+ return scopeIds(characterMarkup(characterId),String(suffix).replace(/[^a-z0-9-]/gi,'-'));
+}
 let instanceSerial=0;
 export function mountCharacter(host,characterId,{thumbnail=false}={}){
  if(!(host instanceof Element))throw Error('Character host element required');
