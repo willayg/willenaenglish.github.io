@@ -8,6 +8,7 @@ import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
 import {DUSK_ART,DUSK_UNLOCK_POINTS} from '/students/free-talking-genius/dusk-character.js?v=20261114-no-legacy-card1';
 import {STEVE_ART,STEVE_UNLOCK_POINTS} from '/students/free-talking-genius/steve-character.js?v=20261115-steve8k1';
+import {showCharacterUnlockCelebrations} from '/students/free-talking-genius/character-unlock-celebrations.js?v=20261115-unlock-cards1';
 import {scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261114-p4-visual1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 // Native pilot uses the existing document and an isolated ShadowRoot.
@@ -2512,6 +2513,14 @@ async function initStandaloneRelease(){
 
   ready=true;
   buttons.forEach(button=>button.disabled=false);
+  // Only after the assigned unit is ready; never overlay an active conversation.
+  // Both qualifying characters are claimed independently, once per student.
+  void showCharacterUnlockCelebrations({
+   root:nativeHost.root,menu,request:authorizedDemoFetch,
+   scopedCharacterArt,duskArt:DUSK_ART,
+   active:()=>nativeHost.active&&!state.active&&!state.starting&&host.contains(menu),
+   onPoints:points=>{showDuskPoints(points);showStevePoints(points)}
+  }).catch(e=>console.warn('[Free Talking] unlock celebration',e));
  }catch(e){showError(e.message||'Could not prepare Free Talking.')}
 }
 
