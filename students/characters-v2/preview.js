@@ -10,7 +10,43 @@ let previewAbort=null;
 const SAMPLES={willi:'Hello! I am Willo. Tell me something interesting about your day!',willy:'[excited] Hello! I am AI Willi. Ready for a brilliant English adventure?',bunny:'[giggles] Hi! Bunny Fox here! Want to fly through space with me?',pigfish:'[laughing] Oink! Splash! I am Pigfish! What is your favourite animal?',dusk:'Good evening. I am Dusk. Tell me, what mysterious thing did you discover today?',steve:'[grumble] GOOD GRIEF, RECRUIT! [shout] ARE YOU READY TO SPEAK ENGLISH?'};
 function stopSample(){previewAbort?.abort();previewAbort=null;previewAudio?.pause();if(previewAudio)previewAudio.src='';previewAudio=null;if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=null;characterStage?.setPhase('idle');const button=$('#playVoice');if(button){button.disabled=false;button.textContent='▶ Play voice sample'}}
 function jwtValid(token){if(!token||token.split('.').length!==3)return false;try{const c=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return Number(c.exp)*1000>Date.now()+30000}catch{return false}}
-async function previewToken(){const gateway=window.WillenaAPI;const cached=gateway?.getLocalAccessToken?.();if(jwtValid(cached))return cached;const fn=gateway?.fetch?gateway.fetch.bind(gateway):fetch;const r=await fn('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'});const data=await r.json().catch(()=>({}));if(!r.ok||!jwtValid(data.access_token))throw Error('Teacher session not available on Students domain. Open this preview directly and sign in to the Students site.');gateway?.setLocalTokens?.(data.access_token,data.refresh_token||'');return data.access_token}
+async function teacherPreviewToken(){
+ if(window.parent===window)return '';
+ const teacherOrigin='https://teachers.willenaenglish.com';
+ let parentOrigin='';
+ try{parentOrigin=new URL(document.referrer).origin}catch{}
+ if(parentOrigin!==teacherOrigin)return '';
+ const nonce=crypto.randomUUID();
+ return await new Promise(resolve=>{
+  let completed=false;
+  const finish=value=>{if(completed)return;completed=true;clearTimeout(timer);window.removeEventListener('message',receive);resolve(value)};
+  const receive=event=>{
+   if(event.origin!==teacherOrigin||event.source!==window.parent)return;
+   if(event.data?.type!=='willena:character-preview-token-response'||event.data.nonce!==nonce)return;
+   const token=String(event.data.token||'');
+   finish(jwtValid(token)?token:'');
+  };
+  const timer=setTimeout(()=>finish(''),4500);
+  window.addEventListener('message',receive);
+  window.parent.postMessage({type:'willena:character-preview-token-request',nonce},teacherOrigin);
+ });
+}
+async function previewToken(){
+ const gateway=window.WillenaAPI;
+ const cached=gateway?.getLocalAccessToken?.();
+ if(jwtValid(cached))return cached;
+ // The Teachers dashboard has a different origin: ask its embedded host
+ // for a one-use bearer, on the Play click only, and never put it in a URL.
+ const teacher=await teacherPreviewToken();
+ if(teacher)return teacher;
+ try{
+  const fn=gateway?.fetch?gateway.fetch.bind(gateway):fetch;
+  const r=await fn('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'});
+  const data=await r.json().catch(()=>({}));
+  if(r.ok&&jwtValid(data.access_token)){gateway?.setLocalTokens?.(data.access_token,data.refresh_token||'');return data.access_token}
+ }catch{}
+ throw Error('No authenticated teacher session available for voice preview. Open the Teachers dashboard and sign in again.');
+}
 async function playSample(){if(!current||!characterStage)return;stopSample();const character=current.id;const text=$('#sampleSentence').value.trim();if(text.length<2||text.length>300){$('#voiceStatus').textContent='Enter 2–300 characters.';return}const b=$('#playVoice');b.disabled=true;b.textContent='Generating voice…';$('#voiceStatus').textContent='Requesting current '+current.name+' voice…';const controller=new AbortController();previewAbort=controller;try{const token=await previewToken();if(controller.signal.aborted)return;const response=await fetch('/api/free-talking-realtime-eleven',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({character,text}),signal:controller.signal,cache:'no-store'});if(!response.ok){let detail=await response.json().catch(()=>({}));throw Error(detail.error||'Voice service HTTP '+response.status)}const blob=await response.blob();if(blob.size<400)throw Error('Voice recording was empty');if(controller.signal.aborted||current.id!==character)return;previewObjectUrl=URL.createObjectURL(blob);const audio=new Audio(previewObjectUrl);previewAudio=audio;const end=()=>{if(previewAudio===audio){characterStage?.setPhase('idle');b.disabled=false;b.textContent='▶ Play voice sample';$('#voiceStatus').textContent='Voice preview finished'}};audio.addEventListener('ended',end,{once:true});audio.addEventListener('error',()=>{$('#voiceStatus').textContent='Audio playback failed';end()},{once:true});characterStage.setPhase('speaking');$('#voiceStatus').textContent='Playing '+current.name+' voice';b.textContent='Playing…';await audio.play()}catch(err){if(!controller.signal.aborted){$('#voiceStatus').textContent=String(err.message||err);b.textContent='▶ Try voice again';b.disabled=false;characterStage?.setPhase('idle')}}}
 
 const portrait=(c,instance)=>characterThumbnailMarkup(c.id,instance);
