@@ -265,9 +265,9 @@ export async function onRequestPost({request,env}){
    if(!list.some(a=>a?.book_id===input.book_id))return json(403,{error:'That book is not assigned to your class'});
   }
   // Canonical character registry is authoritative for all paid-point gates.
-  // Only validate at conversation start; repeated turns do not reread points.
+  // Only validate at conversation lesson/start; repeated turns do not reread points.
   const selectedCharacter=CHARACTER_REGISTRY.find(c=>c.id===String(input.character||'').toLowerCase()&&c.status==='published');
-  if(profile.role==='student'&&input.action==='start'&&selectedCharacter?.unlockPoints>0){
+  if(profile.role==='student'&&['start','lesson'].includes(input.action)&&selectedCharacter?.unlockPoints>0){
    const gate=await fetch(SCORE+'/rest/v1/rpc/student_own_total_points',{method:'POST',headers:{...scoreHeaders(token),'Content-Type':'application/json'},body:'{}',signal});
    const points=gate.ok?Number(await gate.json().catch(()=>NaN)):NaN;
    if(!Number.isFinite(points)||points<selectedCharacter.unlockPoints)
