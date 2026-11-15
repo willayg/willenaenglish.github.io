@@ -105,6 +105,8 @@ export async function checkStudentCharacterUnlocks(verifiedPoints=null,verifiedU
    pending=[['dusk',5000],['steve',8000]]
      .filter(([c,min])=>points>=min).map(([c])=>c);
   }
+  // Celebrate the newest milestone first (Steve at 8k, then Dusk at 5k).
+  pending.sort((a,b)=>(a==='steve'?-1:1)-(b==='steve'?-1:1));
   for(const character of pending){
    if(!document.body||document.hidden)break;
    if(hasSeen(uid,character))continue;
