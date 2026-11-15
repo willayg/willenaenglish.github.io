@@ -8,13 +8,16 @@ let repeatDelay=null;
 let repeatTimer=null;
 let repeatFastTimer=null;
 let detachWatch=0;
+let commaHoldTimer=0;
+let commaHoldOpen=false;
+let enterUpdateFrame=0;
 
 const ROWS=[
   ['q','w','e','r','t','y','u','i','o','p'],
   ['a','s','d','f','g','h','j','k','l'],
   ['z','x','c','v','b','n','m']
 ];
-const SYMBOLS=['1','2','3','4','5','6','7','8','9','0','.',',','?','!',"'",'-','+','/','(',')','~'];
+const SYMBOLS=['!','\'','"',':',';','-','(',')','/','+','1','2','3','4','5','6','7','8','9','0','~'];
 const q=(s,r=document)=>r.querySelector(s);
 const qa=(s,r=document)=>[...r.querySelectorAll(s)];
 
@@ -42,13 +45,17 @@ function ensureStyles(){
 #willenaSharedKeyboard .wkb-key.shift.on{border-color:#67d4da;background:#e9fbfc;color:#07888d}
 #willenaSharedKeyboard .wkb-row.third{align-items:stretch}
 #willenaSharedKeyboard .wkb-row.third .backspace{max-width:88px;flex:1.15}
-#willenaSharedKeyboard .wkb-row.bottom{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,38px) 62px 82px;gap:5px;margin-top:5px;position:relative}
-#willenaSharedKeyboard .wkb-row.bottom .space,#willenaSharedKeyboard .wkb-row.bottom .quick-punctuation,#willenaSharedKeyboard .wkb-row.bottom .symbols,#willenaSharedKeyboard .wkb-row.bottom .enter{width:100%;max-width:none;min-width:0}
-#willenaSharedKeyboard .wkb-row.bottom .symbols{font-size:15px}
+#willenaSharedKeyboard .wkb-row.bottom{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.68fr) minmax(0,2.75fr) minmax(0,.68fr) minmax(0,.82fr) minmax(0,1.25fr);gap:5px;margin-top:5px;position:relative}
+#willenaSharedKeyboard .wkb-row.bottom .space,#willenaSharedKeyboard .wkb-row.bottom .quick-punctuation,#willenaSharedKeyboard .wkb-row.bottom .enter,#willenaSharedKeyboard .wkb-row.bottom .confirm{width:100%;max-width:none;min-width:0}
+#willenaSharedKeyboard .wkb-row.bottom .space{font-size:14px}
+#willenaSharedKeyboard .wkb-row.bottom .confirm{background:#0799a6;color:#fff;border-color:#0799a6;font-size:14px;font-weight:900}
+#willenaSharedKeyboard .wkb-row.bottom .comma{position:relative;border:2px solid #66bac0;background:#f2ffff;touch-action:none}
+#willenaSharedKeyboard .wkb-row.bottom .comma .wkb-more{position:absolute;top:1px;right:4px;color:#077f89;font-size:10px;letter-spacing:-1px;line-height:1}
+#willenaSharedKeyboard .wkb-row.bottom .comma .wkb-chevron{position:absolute;top:1px;left:4px;color:#077f89;font-size:11px;line-height:1}
 #willenaSharedKeyboard .wkb-row.bottom .quick-punctuation{font-size:21px;font-weight:900}
-#willenaSharedKeyboard .wkb-row.bottom .enter{border:2px solid #67d4da;background:#fff;color:#ee5f91;font-size:15px;font-weight:900;box-shadow:0 2px 5px rgba(25,119,126,.10)}
-#willenaSharedKeyboard .wkb-row.bottom .enter[aria-disabled="true"]{opacity:.42}
-#willenaSharedKeyboard .wkb-symbol-panel{position:absolute;right:91px;bottom:49px;width:min(420px,calc(100vw - 26px));display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;padding:7px;border:1px solid #cbd6da;border-radius:12px;background:#fff;box-shadow:0 8px 24px rgba(31,59,66,.18);z-index:3}
+#willenaSharedKeyboard .wkb-row.bottom .enter{border:1px solid #bad7e9;background:#dceef9;color:#255879;font-size:13px;font-weight:900}
+#willenaSharedKeyboard .wkb-row.bottom .confirm[aria-disabled="true"]{opacity:.42}
+#willenaSharedKeyboard .wkb-symbol-panel{position:absolute;right:0;bottom:calc(100% + 9px);width:min(360px,calc(100vw - 24px));display:flex;flex-wrap:wrap;justify-content:center;gap:5px;padding:7px;border:2px solid #66bac0;border-radius:12px;background:#fff;box-shadow:0 8px 24px rgba(31,59,66,.18);z-index:3}
 #willenaSharedKeyboard .wkb-symbol-panel[hidden]{display:none!important}
 #willenaSharedKeyboard .wkb-symbol-panel button{flex:0 0 40px;width:40px;height:38px;border:1px solid #cbd6da;border-radius:9px;background:#f8fbfc;color:#24383f;font-size:18px;font-weight:800}
 body.willena-kb-open .app,body.willena-kb-open .shell{padding-bottom:350px!important}
@@ -59,9 +66,10 @@ body.willena-kb-open{scroll-padding-bottom:360px}
  #willenaSharedKeyboard .wkb-key.shift{max-width:90px}
  #willenaSharedKeyboard .wkb-row{gap:9px;margin:8px 0}
  #willenaSharedKeyboard .wkb-row.third .backspace{max-width:116px}
- #willenaSharedKeyboard .wkb-row.bottom{grid-template-columns:minmax(0,1fr) repeat(3,62px) 78px 116px;gap:9px}
- #willenaSharedKeyboard .wkb-row.bottom .enter{font-size:18px}
- #willenaSharedKeyboard .wkb-symbol-panel{right:125px;bottom:70px;gap:7px;padding:9px}
+ #willenaSharedKeyboard .wkb-row.bottom{grid-template-columns:minmax(0,1.15fr) minmax(0,.68fr) minmax(0,2.75fr) minmax(0,.68fr) minmax(0,.82fr) minmax(0,1.25fr);gap:9px}
+ #willenaSharedKeyboard .wkb-row.bottom .enter{font-size:17px}
+ #willenaSharedKeyboard .wkb-row.bottom .confirm{font-size:18px}
+ #willenaSharedKeyboard .wkb-symbol-panel{right:0;bottom:calc(100% + 9px);gap:7px;padding:9px}
  #willenaSharedKeyboard .wkb-symbol-panel button{flex-basis:46px;width:46px;height:44px;font-size:20px}
  body.willena-kb-open .app,body.willena-kb-open .shell{padding-bottom:410px!important}
  body.willena-kb-open{scroll-padding-bottom:420px}
@@ -132,6 +140,8 @@ function renderCaps(){
   if(shift){shift.classList.toggle('on',caps);shift.setAttribute('aria-pressed',String(caps))}
 }
 function setSymbolPanel(open){const panel=keyboard&&q('.wkb-symbol-panel',keyboard);if(panel)panel.hidden=!open}
+function cancelCommaHold(){if(commaHoldTimer){clearTimeout(commaHoldTimer);commaHoldTimer=0}}
+function scheduleEnterUpdate(){if(enterUpdateFrame)return;enterUpdateFrame=requestAnimationFrame(()=>{enterUpdateFrame=0;if(keyboard&&!keyboard.hidden)updateEnter()})}
 
 function currentSubmitButton(){
   if(!submitSelector)return null;
@@ -139,10 +149,10 @@ function currentSubmitButton(){
 }
 function updateEnter(){
   if(!keyboard)return;
-  const enter=q('[data-key="enter"]',keyboard);if(!enter)return;
+  const confirm=q('[data-key="confirm"]',keyboard);if(!confirm)return;
   const fields=currentFields(),submit=currentSubmitButton(),hasEmpty=fields.some(x=>!String(x.value||'').trim());
-  enter.textContent=submit?'확인':(fields.length>1&&hasEmpty?'다음':'확인');
-  enter.setAttribute('aria-disabled',String(!submit&&!(fields.length>1&&hasEmpty)));
+  confirm.textContent=submit?'확인':(fields.length>1&&hasEmpty?'다음':'확인');
+  confirm.setAttribute('aria-disabled',String(!submit&&!(fields.length>1&&hasEmpty)));
 }
 function focusField(el){
   if(!isVisible(el)||!isAppField(el))return false;
@@ -180,13 +190,12 @@ function keepVisible(){
   });
 }
 function watchDetach(){
-  cancelAnimationFrame(detachWatch);
-  const tick=()=>{
-    if(!keyboard||keyboard.hidden){detachWatch=0;return}
-    if(!active?.isConnected||active.disabled){hideWillenaKeyboard();detachWatch=0;return}
-    detachWatch=requestAnimationFrame(tick);
-  };
-  detachWatch=requestAnimationFrame(tick);
+  // A 60fps DOM connectivity polling loop costs unnecessary work while typing.
+  if(detachWatch)clearInterval(detachWatch);
+  detachWatch=setInterval(()=>{
+    if(!keyboard||keyboard.hidden){clearInterval(detachWatch);detachWatch=0;return}
+    if(!active?.isConnected||active.disabled)hideWillenaKeyboard();
+  },300);
 }
 
 function ensureKeyboard(){
@@ -198,7 +207,7 @@ function ensureKeyboard(){
   keyboard.hidden=true;
   const rowHtml=ROWS.map((row,i)=>`<div class="wkb-row ${i===2?'third':''}">${i===2?'<button type="button" class="wkb-key shift" data-key="shift" aria-pressed="false">⇧</button>':''}${row.map(x=>`<button type="button" class="wkb-key letter" data-key="${x}">${x}</button>`).join('')}${i===2?'<button type="button" class="wkb-key backspace" data-key="backspace">⌫</button>':''}</div>`).join('');
   const symbolHtml=SYMBOLS.map(x=>`<button type="button" data-symbol="${x==="'"?'&#39;':x}">${x==="'"?'&#39;':x}</button>`).join('');
-  keyboard.innerHTML=`<button type="button" class="wkb-hide">키보드 숨기기</button>${rowHtml}<div class="wkb-row bottom"><button type="button" class="wkb-key wide space" data-key="space">space</button><button type="button" class="wkb-key quick-punctuation" data-key="period" aria-label="마침표">.</button><button type="button" class="wkb-key quick-punctuation" data-key="comma" aria-label="쉼표">,</button><button type="button" class="wkb-key quick-punctuation" data-key="question" aria-label="물음표">?</button><button type="button" class="wkb-key wide symbols" data-key="symbols">.,?</button><button type="button" class="wkb-key wide enter" data-key="enter">확인</button><div class="wkb-symbol-panel" hidden>${symbolHtml}</div></div>`;
+  keyboard.innerHTML=`<button type="button" class="wkb-hide">키보드 숨기기</button>${rowHtml}<div class="wkb-row bottom"><button type="button" class="wkb-key wide enter" data-key="enter" aria-label="새 줄">↵ Enter</button><button type="button" class="wkb-key quick-punctuation" data-key="question" aria-label="물음표">?</button><button type="button" class="wkb-key wide space" data-key="space">space</button><button type="button" class="wkb-key quick-punctuation" data-key="period" aria-label="마침표">.</button><button type="button" class="wkb-key quick-punctuation comma" data-key="comma" aria-label="쉼표. 길게 누르면 추가 문장 부호" title="길게 누르면 추가 문장 부호"><span class="wkb-chevron" aria-hidden="true">⌃</span>,<span class="wkb-more" aria-hidden="true">•••</span></button><button type="button" class="wkb-key wide confirm" data-key="confirm">확인</button><div class="wkb-symbol-panel" aria-label="추가 문장 부호" hidden>${symbolHtml}</div></div>`;
   document.body.appendChild(keyboard);renderCaps();
 
   keyboard.addEventListener('pointerdown',e=>{
@@ -211,14 +220,18 @@ function ensureKeyboard(){
       return;
     }
     const key=keyBtn.dataset.key;keyBtn.classList.add('is-pressed');haptic(key);keyBtn.dataset.downHandled='1';
+    if(key==='comma'){
+      cancelCommaHold();commaHoldOpen=false;
+      commaHoldTimer=setTimeout(()=>{commaHoldTimer=0;commaHoldOpen=true;setSymbolPanel(true)},380);
+      return;
+    }
     if(key==='backspace')startRepeat();
     else if(key==='space')replaceSelection(' ');
     else if(key==='period')replaceSelection('.');
-    else if(key==='comma')replaceSelection(',');
+    else if(key==='enter')replaceSelection(active?.tagName==='TEXTAREA'?'\n':' ');
     else if(key==='question')replaceSelection('?');
     else if(key==='shift'){caps=!caps;renderCaps()}
-    else if(key==='symbols')setSymbolPanel(q('.wkb-symbol-panel',keyboard)?.hidden!==false);
-    else if(key==='enter')keyBtn.dataset.submitOnUp='1';
+    else if(key==='confirm')keyBtn.dataset.submitOnUp='1';
     else if(keyBtn.classList.contains('letter'))replaceSelection(caps?key.toUpperCase():key);
   });
 
@@ -226,13 +239,14 @@ function ensureKeyboard(){
     const b=e.target.closest?.('[data-key]');
     if(!b)return;
     e.preventDefault();e.stopImmediatePropagation();stopRepeat();b.classList.remove('is-pressed');
+    if(b.dataset.key==='comma'){cancelCommaHold();if(!commaHoldOpen)replaceSelection(',');return}
     if(b.dataset.submitOnUp==='1'){
       delete b.dataset.submitOnUp;
       if(submitOrNext({hide:false}))b.dataset.hideOnClick='1';
     }
   });
   const cancel=e=>{
-    stopRepeat();
+    stopRepeat();cancelCommaHold();
     const b=e.target.closest?.('[data-key]');
     if(b){b.classList.remove('is-pressed');delete b.dataset.submitOnUp;delete b.dataset.hideOnClick}
     e.stopPropagation();
@@ -289,7 +303,7 @@ function onFocusIn(e){
   const el=e.target;if(!isRendererField(el))return;
   active=el;prepareField(el);if(isAppField(el))showFor(el);else hideWillenaKeyboard();
 }
-function onInput(e){if(!isRendererField(e.target))return;active=e.target;updateEnter()}
+function onInput(e){if(!isRendererField(e.target))return;active=e.target;scheduleEnterUpdate()}
 function onKeyDown(e){
   const el=e.target;if(!isAppField(el))return;active=el;
   if(e.ctrlKey||e.metaKey||e.altKey)return;
@@ -298,7 +312,9 @@ function onKeyDown(e){
 }
 
 export function hideWillenaKeyboard(){
-  stopRepeat();cancelAnimationFrame(detachWatch);detachWatch=0;
+  stopRepeat();cancelCommaHold();commaHoldOpen=false;
+  if(detachWatch)clearInterval(detachWatch);detachWatch=0;
+  if(enterUpdateFrame)cancelAnimationFrame(enterUpdateFrame);enterUpdateFrame=0;
   if(keyboard){keyboard.hidden=true;setSymbolPanel(false)}
   document.body.classList.remove('willena-kb-open');
 }
