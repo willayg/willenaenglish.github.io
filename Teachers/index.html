@@ -578,11 +578,16 @@ try{
  <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="speech">Speech Testing</button>
  <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="audio">Audio Tools</button>
  <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="characters">Character Lab</button>
+ <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="character-manager">Character Manager V2</button>
  <button type="button" class="ut-tab" role="tab" aria-selected="false" data-ut-tab="tools">Other Tools</button>
 </nav>
 <div class="ut-section" data-ut-panel="characters" role="tabpanel" hidden>
 <section class="panel" style="padding:12px;border-radius:18px">
 <iframe id="teacherCharacterLabFrame" title="Willena Character Lab — Dusk, Bunny Fox, Pigfish and Willo" loading="lazy" data-src="/Teachers/tools/character-lab/index.html?v=20261114-lab1" style="display:block;width:100%;height:min(84dvh,920px);min-height:580px;border:0;border-radius:12px;background:#f4f9fa"></iframe>
+</section></div>
+<div class="ut-section" data-ut-panel="character-manager" role="tabpanel" hidden>
+<section class="panel" style="padding:12px;border-radius:18px">
+<iframe id="teacherCharacterManagerV2Frame" title="Free Talking Character Manager V2" loading="lazy" data-src="/Teachers/character-manager-v2/?v=20261115-teacher-manager2" style="display:block;width:100%;height:min(84dvh,920px);min-height:580px;border:0;border-radius:12px;background:#f4f9fa"></iframe>
 </section></div>
 <div class="ut-section" data-ut-panel="replay" role="tabpanel"><section class="panel" id="ftReplay" style="padding:20px;border-radius:18px">
  <div class="ftr-head"><div><h2>Free Talking · Evaluator Replay</h2><p>Review recorded conversations using the end-of-session AI evaluator. Compare new participation decisions and points with historical scores. Nothing is saved to student records.</p></div><span class="ftr-readonly">READ-ONLY TEST</span></div>
@@ -2180,6 +2185,10 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
   try{sessionStorage.setItem('willena.utilities.activeTab',tab)}catch{}
   if(tab==='characters'){
    const frame=document.getElementById('teacherCharacterLabFrame');
+   if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src;
+  }
+  if(tab==='character-manager'){
+   const frame=document.getElementById('teacherCharacterManagerV2Frame');
    if(frame&&!frame.getAttribute('src'))frame.src=frame.dataset.src;
   }
   if(tab==='audio')window.WillenaAudioToolTabs?.activate?.();
