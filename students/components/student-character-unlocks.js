@@ -44,9 +44,9 @@ async function directUnlockRequest(body,token){
   if(!response.ok)throw Error('Saving unlock failed: '+response.status);
   return {ok:true,json:async()=>({success:true,character:body.character})};
  }
- const pointsRes=await fetch(SCORES+'/rest/v1/rpc/sum_points_for_user',{
+ const pointsRes=await fetch(SCORES+'/rest/v1/rpc/student_own_total_points',{
   method:'POST',cache:'no-store',headers:{...headers,'Content-Type':'application/json'},
-  body:JSON.stringify({uid})});
+  body:'{}'});
  if(!pointsRes.ok)throw Error('Checking points failed: '+pointsRes.status);
  const points=Number(await pointsRes.json());
  if(!Number.isFinite(points))throw Error('Points unavailable');
