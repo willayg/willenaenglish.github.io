@@ -145,7 +145,7 @@ async function showOne(character,uid){
  '<p class="ft-milestone-points">'+config.unlockPoints.toLocaleString('en-US')+' POINTS</p>'+
  '<p class="ft-milestone-quote">'+visibleText+'</p>'+
  '<p class="ft-milestone-korean">새로운 대화 친구가 열렸어요!</p>'+
- '<div class="ft-milestone-actions"><button type="button" class="ft-milestone-listen">🔊 목소리 듣기</button>'+
+ '<div class="ft-milestone-actions"><button type="button" class="ft-milestone-listen">목소리 듣기</button>'+
  '<button type="button" class="ft-milestone-continue">친구 만나기</button></div>'+
  '<p class="ft-milestone-status" role="status" aria-live="polite"></p></div>';
  root.append(fallback,link,wrap);document.body.append(host);
@@ -157,7 +157,7 @@ async function showOne(character,uid){
  };
  async function prepareVoice(){
   if(done||busy||voiceUrl)return;
-  busy=true;listen.disabled=true;listen.textContent='🔊 음성 준비 중…';status.textContent='';
+  busy=true;listen.disabled=true;listen.textContent='음성 준비 중…';status.textContent='';
   try{
    const r=await request({action:'tts',character,text:sentence});
    if(!r.ok){
@@ -174,8 +174,8 @@ async function showOne(character,uid){
    audio.preload='auto';
    audio.src=voiceUrl;
    audio.load();
-   audio.onended=()=>{if(!done)listen.textContent='🔊 다시 듣기'};
-   listen.textContent='🔊 목소리 듣기';
+   audio.onended=()=>{if(!done)listen.textContent='다시 듣기'};
+   listen.textContent='목소리 듣기';
   }catch(e){
    voiceFailure=String(e?.message||e);
    console.warn('[Character milestone voice]',character,voiceFailure);
@@ -196,7 +196,7 @@ async function showOne(character,uid){
     if(!done){status.textContent='음성 재생이 차단됐어요. 다시 눌러 주세요.';
      console.warn('[Character milestone playback]',String(e))}
    });
-   listen.textContent='🔊 다시 듣기';status.textContent='';
+   listen.textContent='다시 듣기';status.textContent='';
   }catch(e){status.textContent='음성 재생 오류: '+String(e?.message||e).slice(0,60)}
  }
  listen.addEventListener('click',()=>{
