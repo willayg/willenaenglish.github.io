@@ -23,12 +23,6 @@
       "purpose": "any"
     },
     {
-      "src": "/students/pwa/icon-512.png?v=w2",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
       "src": "/students/pwa/willena-w-logo.svg?v=w2",
       "sizes": "any",
       "type": "image/svg+xml",
