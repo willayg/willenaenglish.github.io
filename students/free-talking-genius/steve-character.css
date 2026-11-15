@@ -25,3 +25,29 @@
 @keyframes steveProudNod{50%{transform:rotate(3deg) translateY(-3px)}}
 @media(prefers-reduced-motion:reduce){.ft-steve-svg *{animation:none!important}}
 
+
+/* Live Free Talking: match Dusk's already-proven transparent stage stacking.
+   Ring remains behind the character; no extra card or Willo-style overlay. */
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg),
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg) .bf-actor,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg) .ft-steve-actor{
+ background:transparent!important;background-image:none!important;
+ border:0!important;outline:0!important;box-shadow:none!important;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg)::before,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg)::after,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg) .bf-actor::before,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg) .bf-actor::after,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg) .ft-steve-actor::before,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg) .ft-steve-actor::after{
+ content:none!important;display:none!important;background:none!important;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg) .bf-actor{
+ display:block!important;visibility:visible!important;opacity:1!important;z-index:5!important;
+}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg) .ft-steve-actor,
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg) .ft-steve-svg{
+ display:block!important;position:relative!important;visibility:visible!important;
+ opacity:1!important;width:100%!important;height:100%!important;
+ overflow:visible!important;z-index:6!important;
+}
