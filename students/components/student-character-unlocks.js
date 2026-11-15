@@ -2,7 +2,7 @@
 // Exactly-once acknowledgement lives in the Scores DB, not in localStorage.
 // Any signed-in student can earn and celebrate while using any Genius app.
 import {charactersInMenu,getCharacter} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
-import {createCharacterCelebration} from '/students/characters-v2/celebration-card.js?v=20261116-p4-1';
+import {createCharacterCelebration} from '/students/characters-v2/celebration-card.js?v=20261116-p4-visible-scenery2';
 const ENDPOINT='/api/free-talking-character-unlocks';
 const TTS='/api/free-talking-realtime-eleven';
 const SCORES='https://fiieuiktlsivwfgyivai.supabase.co';
