@@ -1,7 +1,8 @@
 // Free Talking-only shared character presentation.
 // Restores the original ft-animal-stage / ft-animal-avatar / ft-animal-timer
 // layout used before the Nov 13 SVG-stage experiment. No Speaking controls.
-import {createFreeTalkingCharacters,resolveFreeTalkingActorPhase} from '/students/free-talking-genius/character-actor.js?v=20261115-steve-stage2';
+import {createFreeTalkingCharacters,resolveFreeTalkingActorPhase,scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261115-steve-stage2';
+import {STEVE_ART} from '/students/free-talking-genius/steve-character.js?v=20261115-steve-stage2';
 
 export function createHybridCharacterStage(host,character='bunny-v3'){
  host.replaceChildren();
@@ -35,10 +36,11 @@ export function createHybridCharacterStage(host,character='bunny-v3'){
  stage.dataset.character=character;
  if(character==='steve'){
   const live=actor.actor;
-  const steve=live?.querySelector('.ft-steve-svg');
-  if(!steve){
-   console.error('[Free Talking stage] Steve SVG was not mounted; repairing actor');
+  // Render the exact shared vector directly into the chosen actor. This
+  // avoids a stale Willo fallback surviving the component's initialization.
+  if(live){
    actor.select('steve');
+   live.innerHTML='<span class="ft-steve-actor">'+scopedCharacterArt(STEVE_ART,'steve-live-stage')+'</span>';
   }
   if(live){
    live.hidden=false;
