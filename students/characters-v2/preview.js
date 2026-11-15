@@ -1,5 +1,5 @@
 import {CHARACTER_REGISTRY,registryDiagnostics} from './character-registry.js?v=20261115-modular-p2-2';
-import {mountCharacter,characterThumbnailMarkup,validateCharacterAssets} from './character-runtime.js?v=20261115-modular-p2-2';
+import {mountCharacter,characterThumbnailMarkup,validateCharacterAssets} from './character-runtime.js?v=20261115-unique-svg-resources1';
 const $=s=>document.querySelector(s);
 let current=null;
 let characterStage=null;
