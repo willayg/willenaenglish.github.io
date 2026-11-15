@@ -1,5 +1,5 @@
 import {mountStudentInbox} from './student-inbox.js?v=20261101-menu-prominent1';
-import {checkStudentCharacterUnlocks} from './student-character-unlocks.js?v=20261116-p3-no-listen-emoji1';
+import {checkStudentCharacterUnlocks} from './student-character-unlocks.js?v=20261116-p4-shared-card1';
 // Student session repair bootstrap.
 if (typeof window !== 'undefined' && window.location.hostname === 'students.willenaenglish.com') {
   import('/students/auth-refresh.js?v=20260726a')
