@@ -293,7 +293,9 @@ class StudentHeader extends HTMLElement {
         this.refresh();
         // The first overview request may have completed before whoami
         // supplied the student ID. Re-check once authenticated identity exists.
-        void this._fetchOverview();
+        // A simultaneous first-load fetch may still be running here.
+        // Follow it with a fresh authoritative overview after hydration.
+        setTimeout(()=>{if(this.isConnected)void this._fetchOverview()},800);
       }
     } catch {
       // ignore fetch errors; keep any existing values
