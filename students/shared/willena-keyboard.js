@@ -11,6 +11,7 @@ let detachWatch=0;
 let commaHoldTimer=0;
 let commaHoldOpen=false;
 let enterUpdateFrame=0;
+let activeKeyPointer=null;
 
 const ROWS=[
   ['q','w','e','r','t','y','u','i','o','p'],
@@ -36,10 +37,13 @@ function ensureStyles(){
 [data-willena-keyboard="app"]{caret-color:#19777e!important;cursor:text!important}
 #willenaSharedKeyboard{box-sizing:border-box;background:#eef3f5;border-top:1px solid #d7e0e3;padding:28px 10px 10px;z-index:11900;pointer-events:auto;touch-action:manipulation}
 #willenaSharedKeyboard[hidden]{display:none!important}
+#willenaSharedKeyboard,#willenaSharedKeyboard *,#willenaSharedKeyboard *::before,#willenaSharedKeyboard *::after{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}
+#willenaSharedKeyboard button{touch-action:none;-webkit-tap-highlight-color:transparent;cursor:pointer}
 #willenaSharedKeyboard .wkb-hide{position:absolute;top:7px;right:10px;border:1px solid #c9d8dc;border-radius:999px;background:#fff;color:#4e656d;font-weight:800;padding:5px 10px;font-size:12px;line-height:1.2}
 #willenaSharedKeyboard .wkb-row{display:flex;justify-content:center;gap:5px;margin:5px 0}
-#willenaSharedKeyboard .wkb-key{min-width:0;flex:1;max-width:72px;height:42px;border:1px solid #cbd6da;border-radius:9px;background:#fff;color:#24383f;font-size:18px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.06);transition:transform .035s ease,background-color .035s ease,box-shadow .035s ease,border-color .035s ease;touch-action:manipulation}
-#willenaSharedKeyboard .wkb-key:active,#willenaSharedKeyboard .wkb-key.is-pressed{transform:translateY(1px) scale(.975);background:#d7e6e9;border-color:#a9c1c7;box-shadow:inset 0 1px 3px rgba(0,0,0,.12)}
+#willenaSharedKeyboard .wkb-key{min-width:0;flex:1;max-width:72px;height:42px;border:1px solid #cbd6da;border-radius:9px;background:#fff;color:#24383f;font-size:18px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.06);transition:background-color .035s ease,box-shadow .035s ease,border-color .035s ease;touch-action:none}
+#willenaSharedKeyboard .wkb-key:active,#willenaSharedKeyboard .wkb-key.is-pressed{transform:translateY(1px);background:#bce6e8;border-color:#54afb7;box-shadow:inset 0 2px 5px rgba(0,0,0,.18)}
+#willenaSharedKeyboard .wkb-key.backspace.is-pressed{background:#a4d5dc;border-color:#368b99;box-shadow:inset 0 2px 6px rgba(0,0,0,.2)}
 #willenaSharedKeyboard .wkb-key.wide{max-width:none;font-size:14px}
 #willenaSharedKeyboard .wkb-key.shift{max-width:72px;background:#f7fbfc;color:#526970}
 #willenaSharedKeyboard .wkb-key.shift.on{border-color:#67d4da;background:#e9fbfc;color:#07888d}
@@ -132,7 +136,11 @@ function startRepeat(){
     },600);
   },240);
 }
-function haptic(key){setTimeout(()=>{try{navigator.vibrate?.((key==='enter'||key==='backspace')?7:3)}catch(_){}},0)}
+function haptic(key){
+  // Vibrate in the pointer's user-activation task. Delaying to a timer can
+  // lose transient activation, particularly in Android browsers/PWAs.
+  try{navigator.vibrate?.((key==='backspace'||key==='confirm')?12:8)}catch(_){}
+}
 function renderCaps(){
   if(!keyboard)return;
   qa('[data-key].letter',keyboard).forEach(b=>b.textContent=caps?b.dataset.key.toUpperCase():b.dataset.key.toLowerCase());
@@ -219,7 +227,12 @@ function ensureKeyboard(){
       if(active?.dataset?.willenaTextEntry==='correction-label'&&/^\d$/.test(symbol))focusNextEmpty();else setSymbolPanel(false);
       return;
     }
-    const key=keyBtn.dataset.key;keyBtn.classList.add('is-pressed');haptic(key);keyBtn.dataset.downHandled='1';
+    const key=keyBtn.dataset.key;
+    // Capture the touch so held Backspace keeps deleting even when the finger
+    // drifts slightly outside the key, without the browser selecting its glyph.
+    activeKeyPointer=e.pointerId;
+    try{keyBtn.setPointerCapture(e.pointerId)}catch(_){}
+    keyBtn.classList.add('is-pressed');haptic(key);keyBtn.dataset.downHandled='1';
     if(key==='comma'){
       cancelCommaHold();commaHoldOpen=false;
       commaHoldTimer=setTimeout(()=>{commaHoldTimer=0;commaHoldOpen=true;setSymbolPanel(true)},380);
@@ -238,7 +251,8 @@ function ensureKeyboard(){
   keyboard.addEventListener('pointerup',e=>{
     const b=e.target.closest?.('[data-key]');
     if(!b)return;
-    e.preventDefault();e.stopImmediatePropagation();stopRepeat();b.classList.remove('is-pressed');
+    e.preventDefault();e.stopImmediatePropagation();stopRepeat();activeKeyPointer=null;b.classList.remove('is-pressed');
+    try{if(b.hasPointerCapture(e.pointerId))b.releasePointerCapture(e.pointerId)}catch(_){} 
     if(b.dataset.key==='comma'){cancelCommaHold();if(!commaHoldOpen)replaceSelection(',');return}
     if(b.dataset.submitOnUp==='1'){
       delete b.dataset.submitOnUp;
@@ -246,13 +260,17 @@ function ensureKeyboard(){
     }
   });
   const cancel=e=>{
-    stopRepeat();cancelCommaHold();
+    stopRepeat();cancelCommaHold();activeKeyPointer=null;
     const b=e.target.closest?.('[data-key]');
     if(b){b.classList.remove('is-pressed');delete b.dataset.submitOnUp;delete b.dataset.hideOnClick}
     e.stopPropagation();
   };
   keyboard.addEventListener('pointercancel',cancel);
-  keyboard.addEventListener('pointerleave',cancel,true);
+  // Do not cancel on pointerleave: pointer capture preserves an intentional
+  // held Backspace until pointerup/pointercancel.
+  keyboard.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation()});
+  keyboard.addEventListener('selectstart',e=>{e.preventDefault();e.stopPropagation()});
+  keyboard.addEventListener('dragstart',e=>{e.preventDefault();e.stopPropagation()});
   keyboard.addEventListener('click',e=>{
     const b=e.target.closest('[data-key]');
     if(!b)return;
@@ -312,7 +330,7 @@ function onKeyDown(e){
 }
 
 export function hideWillenaKeyboard(){
-  stopRepeat();cancelCommaHold();commaHoldOpen=false;
+  stopRepeat();cancelCommaHold();commaHoldOpen=false;activeKeyPointer=null;
   if(detachWatch)clearInterval(detachWatch);detachWatch=0;
   if(enterUpdateFrame)cancelAnimationFrame(enterUpdateFrame);enterUpdateFrame=0;
   if(keyboard){keyboard.hidden=true;setSymbolPanel(false)}
