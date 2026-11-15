@@ -2,7 +2,7 @@
  // no additional points queries, mutations, purchases or unlock writes.
 import {charactersInMenu} from '/students/characters-v2/character-registry.js?v=20261115-modular-p2-2';
 import {characterThumbnailMarkup} from '/students/characters-v2/character-runtime.js?v=20261115-unique-svg-resources1';
-import {createCharacterCelebration} from './celebration-card.js?v=20261116-p4-1';
+import {createCharacterCelebration} from './celebration-card.js?v=20261116-p4-visible-scenery2';
 const root=document.getElementById('characterCollection');
 const celebrationNames={bunny:'BUNNY FOX',pigfish:'PIGFISH',willi:'WILLO',willy:'AI WILLI 2',dusk:'DUSK',steve:'SERGEANT STEVE'};
 const number=n=>Math.max(0,Math.floor(Number(n)||0)).toLocaleString();
