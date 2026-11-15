@@ -54,7 +54,7 @@ export function mountCharacter(host,characterId,{thumbnail=false}={}){
  actor.dataset.mood='neutral';
  actor.dataset.steveMood='stern';
  actor.dataset.audioSpeaking='false';
- actor.innerHTML=thumbnail?scopeIds(markup,suffix):markup;
+ // Every mounted copy needs unique gradient/clip IDs, including the large preview.\n actor.innerHTML=scopeIds(markup,suffix);
  host.append(actor);
  host.dataset.character=characterId;
  host.dataset.state='idle';
