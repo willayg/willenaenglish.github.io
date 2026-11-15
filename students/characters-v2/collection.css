@@ -42,3 +42,35 @@ html.leaderboard-only .character-collection{display:none!important}
 .ft-character-unlock-celebration.collection-replay .aw-svg .aw-eyes-default{
  display:inline!important;
 }
+
+/* Locked characters are anonymous, desaturated, and not interactive.
+   Keep milestone/progress numbers visible without revealing the identity. */
+.character-collection button.collection-character[data-locked="true"]{
+ cursor:default!important;
+ opacity:1!important;
+ background:#f3f5f6!important;
+ border-color:#d5dcdf!important;
+ color:#7c898e!important;
+ transform:none!important;
+ box-shadow:none!important;
+}
+.character-collection .collection-character[data-locked="true"] .collection-art{
+ background:#e5e9eb!important;
+ border-color:#bdc8ce!important;
+}
+.character-collection .collection-character[data-locked="true"] .collection-art svg{
+ filter:grayscale(1) brightness(.38) contrast(.82)!important;
+ opacity:.75!important;
+}
+.character-collection .collection-character[data-locked="true"] strong{
+ color:#849096!important;
+ letter-spacing:.12em;
+}
+.character-collection .collection-character[data-locked="true"] .collection-progress>div{
+ background:#a5b2b8!important;
+}
+.character-collection button.collection-character[data-locked="true"]:focus,
+.character-collection button.collection-character[data-locked="true"]:active{
+ outline:none!important;
+ transform:none!important;
+}
