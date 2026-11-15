@@ -4,10 +4,25 @@
 #demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg)::before{background:transparent!important}
 #demo #actorStage .ft-original-character-stage .ft-animal-avatar .bf-actor:has(.ft-steve-svg){width:95%!important;height:95%!important}
 #demo #actorStage .ft-original-character-stage .ft-animal-avatar .ft-steve-svg{width:100%!important;height:100%!important;display:block!important;overflow:visible!important}
-.bf-actor .ft-steve-svg #steve-talk-mouth{visibility:hidden}
-.bf-actor .ft-steve-svg #steve-rest-mouth{visibility:visible}
+/* Steve's jaw is centred below the moustache. Animate its vertical opening,
+   never the entire mouth group or SVG (which caused sideways movement). */
+.bf-actor .ft-steve-svg #steve-talk-mouth,
+.bf-actor .ft-steve-svg #steve-talk-tongue{visibility:hidden!important}
+.bf-actor .ft-steve-svg #steve-rest-mouth{visibility:visible!important}
 .bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-rest-mouth{visibility:hidden!important}
-.bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-talk-mouth{visibility:visible!important}
+.bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-talk-mouth,
+.bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-talk-tongue{
+ visibility:visible!important;
+ transform-box:fill-box!important;
+ transform-origin:50% 0%!important;
+ animation:steveJawTalk .31s ease-in-out infinite!important;
+}
+@keyframes steveJawTalk{
+ 0%,100%{transform:scaleY(.23)}
+ 38%{transform:scaleY(.96)}
+ 67%{transform:scaleY(.4)}
+ 84%{transform:scaleY(.75)}
+}
 .bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-pupil-left,
 .bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-pupil-right{animation:steveLiveGlance 5.4s ease-in-out infinite}
 .bf-actor[data-audio-speaking="true"] .ft-steve-svg #steve-brows{animation:steveLiveBrow 3.8s ease-in-out infinite}
@@ -19,7 +34,7 @@
 .bf-actor[data-state="thinking"] .ft-steve-svg #steve-pupil-left,
 .bf-actor[data-state="thinking"] .ft-steve-svg #steve-pupil-right{transform:translate(-5px,-3px)}
 .bf-actor[data-state="celebrating"] .ft-steve-svg #steve-head{animation:steveProudNod 0.8s ease-in-out 2;transform-origin:440px 350px}
-/* Mouth never transforms. Only the original two paths toggle; the moustache stays above both. */
+/* All other SVG features stay independent of the mouth animation. */
 @keyframes steveLiveGlance{0%,12%,36%,64%,84%,100%{transform:translate(0,0)}19%,27%{transform:translate(-6px,-2px)}47%,55%{transform:translate(6px,1px)}73%,78%{transform:translate(0,-4px)}}
 @keyframes steveLiveBrow{0%,36%,65%,100%{transform:translateY(0)}45%,52%{transform:translateY(-3px)}}
 @keyframes steveProudNod{50%{transform:rotate(3deg) translateY(-3px)}}
