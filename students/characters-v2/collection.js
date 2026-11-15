@@ -6,7 +6,7 @@ const root=document.getElementById('characterCollection');
 const celebrationNames={bunny:'BUNNY FOX',pigfish:'PIGFISH',willi:'WILLO',willy:'AI WILLI 2',dusk:'DUSK',steve:'SERGEANT STEVE'};
 const number=n=>Math.max(0,Math.floor(Number(n)||0)).toLocaleString();
 let verifiedPoints=NaN;
-const isUnlocked=(c,points)=>c.unlockPoints===0||c.id==='bunny'||c.id==='pigfish'||(Number.isFinite(points)&&points>=c.unlockPoints);
+const isUnlocked=(c,points)=>c.unlockPoints===0||(Number.isFinite(points)&&points>=c.unlockPoints);
 function draw(points){
  if(!root)return;
  root.replaceChildren();
@@ -27,8 +27,8 @@ function draw(points){
   const detail=document.createElement('span');
   if(!valid&&!unlocked)detail.textContent='Checking points…';
   else if(c.unlockPoints===0)detail.textContent='Available';
-  else if(c.id==='bunny'||c.id==='pigfish')detail.textContent=number(c.unlockPoints)+' point milestone';
-  else detail.textContent=earned?'Unlocked':'Unlock at '+number(c.unlockPoints)+' points';
+  else if(c.unlockPoints>0&&!earned)detail.textContent='Unlock at '+number(c.unlockPoints)+' points';
+  else detail.textContent='Unlocked';
   const progress=document.createElement('div');progress.className='collection-progress';
   const bar=document.createElement('div');bar.style.width=valid?(c.unlockPoints===0?'100%':Math.min(100,points/c.unlockPoints*100)+'%'):'0%';
   progress.append(bar);
