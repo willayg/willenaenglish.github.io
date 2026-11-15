@@ -54,7 +54,7 @@ async function mount(header){
  const hideNativeFooter=document.createElement('style');
  hideNativeFooter.textContent='#demo .control-dock{display:none!important;}'+
   '#demo .wrap{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;}';
- root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261115-steve-overlayfix3'),hideNativeFooter,document.importNode(intro,true),document.importNode(demo,true));
+ root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261115-steve-dusklock4'),hideNativeFooter,document.importNode(intro,true),document.importNode(demo,true));
  document.body.append(element);
  const state={element,root,header,context:null,active:false,reopen:null,shutdown:null,onExit:null,bodyOverflow:'',headerZIndex:'',exit({notify=true}={}){
   if(!state.active)return;
