@@ -26,7 +26,7 @@ export async function showCharacterUnlockCelebrations({
       ? 'WHAT?! EIGHT THOUSAND POINTS?! YOU HAVE EARNED MY RESPECT, RECRUIT!'
       : 'Well, well... Five thousand points. You found me. Welcome to the shadows!';
     const portrait=isSteve
-      ? '<img class="ft-milestone-steve" alt="" src="/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-portrait1">'
+      ? '<img class="ft-milestone-steve" alt="" src="/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-cropfix4">'
       : '<span class="ft-milestone-dusk">'+scopedCharacterArt(duskArt,'unlock-dusk')+'</span>';
     const dialog=document.createElement('section');
     dialog.className='ft-character-unlock-celebration'+(isSteve?' is-steve':' is-dusk');
