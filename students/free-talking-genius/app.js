@@ -12,7 +12,7 @@ import {geniusSessionContext} from '/students/components/genius-session-context.
 import {createFreeTalkingVoice} from './question-voice.js?v=20261114-clone-transparent3';
 import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-route8';
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261114-clone-transparent3';
-import {createFreeTalkingCharacters} from './character-actor.js?v=20261115-modular-p2-1';
+import {createFreeTalkingCharacters} from './character-actor.js?v=20261115-modular-p2-2';
 import {DUSK_UNLOCK_POINTS} from './dusk-character.js?v=20261114-no-legacy-card1';
 import {createFreeTalkingGuide} from './guide.js?v=20261114-quiet-room6';
 // Keep the inline character menu if the optional shared UI script is unavailable.
@@ -1359,7 +1359,7 @@ async function launchFreeTalkingV2(){
  await new Promise(resolve=>requestAnimationFrame(resolve));
  try{
   if(!freeTalkingV2){
-   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261115-modular-p2-1');
+   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261115-modular-p2-2');
    freeTalkingV2=createFreeTalkingV2({
     host:$('ftFreeTalkingV2'),getToken:()=>token(),
     onBack:()=>{
