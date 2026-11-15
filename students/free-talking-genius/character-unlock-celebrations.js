@@ -80,7 +80,7 @@ export async function showCharacterUnlockCelebrations({
           if(!disposed){message.textContent='잠금 해제 기록을 저장하지 못했어요. 다시 시도해 주세요.';next.disabled=false;next.textContent='다시 시도';closing=false}
           return;
         }
-        disposed=true;stop();dialog.remove();resolve();
+        disposed=true;stop();dialog.remove();observer.disconnect();resolve();
       });
       // A removed parent menu or exited workspace must never leave a modal
       // attached; the next visit will retry because nothing was claimed.
@@ -88,7 +88,6 @@ export async function showCharacterUnlockCelebrations({
         if(!menu.isConnected||!active()){disposed=true;stop();dialog.remove();observer.disconnect();resolve()}
       });
       observer.observe(root,{childList:true,subtree:true});
-      next.addEventListener('click',()=>{if(disposed)observer.disconnect()});
     });
   }
 }
