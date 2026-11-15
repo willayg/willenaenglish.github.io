@@ -1,7 +1,7 @@
 // Free Talking Characters V2 — shared stage adapter.
 // No conversation, voice, database or scoring side effects.
 // Future characters require only a registry entry + one asset registration.
-import {getCharacter} from './character-registry.js?v=20261115-modular-p2-1';
+import {getCharacter} from './character-registry.js?v=20261115-modular-p2-2';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
 import {DUSK_ART} from '/students/free-talking-genius/dusk-character.js?v=20261114-no-legacy-card1';
