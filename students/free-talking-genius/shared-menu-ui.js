@@ -25,7 +25,7 @@
   steve.className='ft-character-option ft-character-steve';steve.dataset.voice='steve';
   steve.setAttribute('aria-pressed','false');steve.setAttribute('aria-disabled','true');
   steve.hidden=true;
-  steve.innerHTML='<span class="ft-character-symbol" aria-hidden="true"><img class="ft-steve-portrait" src="/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-portrait1" alt="" draggable="false"></span><strong>Sergeant Steve</strong>';
+  steve.innerHTML='<span class="ft-character-symbol" aria-hidden="true"><img class="ft-steve-portrait" src="/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-cropfix4" alt="" draggable="false"></span><strong>Sergeant Steve</strong>';
   choices?.append(steve);
   return menu;
  }
