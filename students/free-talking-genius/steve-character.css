@@ -56,3 +56,32 @@
 @keyframes steveLiveBrow{0%,36%,65%,100%{transform:translateY(0)}45%,52%{transform:translateY(-3px)}}
 @keyframes steveProudNod{50%{transform:rotate(3deg) translateY(-3px)}}
 @media(prefers-reduced-motion:reduce){.ft-steve-svg *{animation:none!important}}
+
+/* Authoritative selector: until JS confirms unlock, Steve is LOCKED.
+   This also protects the first paint and devices using older menu markup. */
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve:not(.ft-steve-is-unlocked) .ft-steve-portrait,
+.free-talking-genius #ftCharacter .ft-character-steve:not(.ft-steve-is-unlocked) .ft-steve-portrait{
+ filter:grayscale(1) saturate(0) brightness(.5) contrast(1.1)!important;
+ opacity:.77!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-unlocked .ft-steve-portrait,
+.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-unlocked .ft-steve-portrait{
+ filter:none!important;opacity:1!important;
+}
+/* The inherited portrait ::before circle was painting over Steve's face.
+   Remove those generated overlays completely, retaining the actual cyan border. */
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol{
+ isolation:isolate!important;position:relative!important;
+ background-image:none!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol::before,
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol::after,
+.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol::before,
+.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol::after{
+ content:none!important;display:none!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve .ft-steve-portrait,
+.free-talking-genius #ftCharacter .ft-character-steve .ft-steve-portrait{
+ position:relative!important;z-index:2!important;pointer-events:none!important;
+}
