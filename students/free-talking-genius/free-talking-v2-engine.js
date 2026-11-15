@@ -2527,7 +2527,7 @@ async function initStandaloneRelease(){
  let headerPointsVerified=false;
  const applyEarnedPoints=(points,source='fallback')=>{
   if(points==null||!Number.isFinite(Number(points)))return;
-  if(source!=='header'&&headerPointsVerified)return;
+  if(source==='fallback'&&headerPointsVerified)return;
   const total=Math.max(0,Math.floor(Number(points)));
   if(source==='header')headerPointsVerified=true;
   showDuskPoints(total);showStevePoints(total);
@@ -2555,7 +2555,7 @@ async function initStandaloneRelease(){
   const info=getCharacter(character);
   // All six characters use the same registry thresholds and one verified
   // screen-level points value. Never query the database on character taps.
-  const availablePoints=headerPointsVerified?nativeHost.header?._points:duskPoints;
+  const availablePoints=duskPoints;
   const required=info?.unlockPoints??Infinity;
   if(required>0&&(availablePoints==null||!Number.isFinite(Number(availablePoints))||Number(availablePoints)<required)){
    if(character==='dusk')openDuskDialog();
@@ -2645,7 +2645,7 @@ async function initStandaloneRelease(){
    root:nativeHost.root,menu,
    request:(path,body)=>authorizedDemoFetch(path,body),
    active:()=>menu.isConnected&&!state.active&&!intro.hidden,
-   onPoints:points=>{milestonePointsReceived=true;applyEarnedPoints(points,'fallback')}
+   onPoints:points=>{milestonePointsReceived=true;applyEarnedPoints(points,'milestone')}
   }).then(()=>{
    if(milestonePointsReceived||headerPointsVerified||!menu.isConnected)return;
    void authoritativeDuskPoints().then(p=>applyEarnedPoints(p)).catch(e=>console.warn('[FT] Points fallback unavailable',String(e)));
