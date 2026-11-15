@@ -1,10 +1,11 @@
+import {CHARACTER_REGISTRY} from '../../shared/free-talking-character-catalog.js';
 // One-time Free Talking character unlock celebrations.
 // All point checks are server-side, tied to the authenticated student token.
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const headers=token=>({apikey:KEY,Authorization:'Bearer '+token});
 const json=(status,data)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
-const thresholds={dusk:5000,steve:8000};
+const thresholds=Object.fromEntries(CHARACTER_REGISTRY.filter(c=>c.status==='published'&&c.unlockPoints>0).map(c=>[c.id,c.unlockPoints]));
 export async function onRequestPost({request}){
  if(request.headers.get('content-type')?.split(';')[0]!=='application/json')return json(415,{error:'JSON required'});
  const origin=request.headers.get('Origin');if(origin&&origin!==new URL(request.url).origin)return json(403,{error:'Invalid origin'});
