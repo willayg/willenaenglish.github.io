@@ -11,6 +11,7 @@ import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20
 import {DUSK_ART,DUSK_UNLOCK_POINTS} from '/students/free-talking-genius/dusk-character.js?v=20261114-no-legacy-card1';
 import {STEVE_ART,STEVE_UNLOCK_POINTS} from '/students/free-talking-genius/steve-character.js?v=20261115-steve-sleeve2';
 import {scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261115-modular-p2-2';
+import {showCharacterUnlockCelebrations} from '/students/free-talking-genius/character-unlock-celebrations.js?v=20261116-p3-four-unlocks2';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 // Native pilot uses the existing document and an isolated ShadowRoot.
 // The standalone release remains independently supported.
@@ -2545,9 +2546,8 @@ async function initStandaloneRelease(){
  if(nativeHost.header?._points!=null&&nativeHost.header?._uid)applyEarnedPoints(nativeHost.header._points,'header');
  void nativeHost.header?._fetchOverview?.();
  // Dusk's existing server-verified lookup remains a secondary backstop only.
- void authoritativeDuskPoints().then(points=>applyEarnedPoints(points)).catch(err=>{
-  console.warn('[Free Talking] Earned character points fallback unavailable',String(err));
- });
+ // The existing one-time milestone status supplies fallback verified points,
+ // so we do not issue a second independent points RPC on every menu visit.
  const choose=character=>{
   if(!ready||starting)return;
 
@@ -2638,6 +2638,18 @@ async function initStandaloneRelease(){
 
   ready=true;
   buttons.forEach(button=>button.disabled=false);
+  // One status read per selection visit. It returns verified points plus
+  // uncelebrated milestones; never fetch when an individual character is tapped.
+  let milestonePointsReceived=false;
+  void showCharacterUnlockCelebrations({
+   root:nativeHost.root,menu,
+   request:(path,body)=>authorizedDemoFetch(path,body),
+   active:()=>menu.isConnected&&!state.active&&!intro.hidden,
+   onPoints:points=>{milestonePointsReceived=true;applyEarnedPoints(points,'fallback')}
+  }).then(()=>{
+   if(milestonePointsReceived||headerPointsVerified||!menu.isConnected)return;
+   void authoritativeDuskPoints().then(p=>applyEarnedPoints(p)).catch(e=>console.warn('[FT] Points fallback unavailable',String(e)));
+  }).catch(e=>console.warn('[FT] Milestone preview unavailable',String(e)));
  }catch(e){showError(e.message||'Could not prepare Free Talking.')}
 }
 
