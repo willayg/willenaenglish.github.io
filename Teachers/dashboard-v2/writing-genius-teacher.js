@@ -160,7 +160,7 @@ function reviewLines(entry){
 function writingDiff(original,corrected){
  const before=String(original||''),after=String(corrected||'');
  if(before===after)return {original:[],corrected:[],changed:false};
- const a=before.match(/\\s+|\\S+/g)||[],b=after.match(/\\s+|\\S+/g)||[];
+ const a=before.match(/\s+|\S+/g)||[],b=after.match(/\s+|\S+/g)||[];
  // Bound expensive comparisons for unusually long student submissions.
  if(a.length*b.length>300000)return {
   original:[{text:before,changed:true}],corrected:[{text:after,changed:true}],changed:true
@@ -176,9 +176,9 @@ function writingDiff(original,corrected){
   if(i<a.length&&j<b.length&&a[i]===b[j]){
    left.push({text:a[i],changed:false});right.push({text:b[j],changed:false});i++;j++;
   }else if(j<b.length&&(i===a.length||dp[i*cols+j+1]>=dp[(i+1)*cols+j])){
-   right.push({text:b[j],changed:!/^\\s+$/.test(b[j])});j++;
+   right.push({text:b[j],changed:!/^\s+$/.test(b[j])});j++;
   }else{
-   left.push({text:a[i],changed:!/^\\s+$/.test(a[i])});i++;
+   left.push({text:a[i],changed:!/^\s+$/.test(a[i])});i++;
   }
  }
  return {original:left,corrected:right,changed:true};
