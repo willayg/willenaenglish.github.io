@@ -1359,7 +1359,7 @@ async function launchFreeTalkingV2(){
  await new Promise(resolve=>requestAnimationFrame(resolve));
  try{
   if(!freeTalkingV2){
-   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261115-steve-mouth5');
+   const {createFreeTalkingV2}=await import('./free-talking-v2.js?v=20261115-steve-mouth6');
    freeTalkingV2=createFreeTalkingV2({
     host:$('ftFreeTalkingV2'),getToken:()=>token(),
     onBack:()=>{
