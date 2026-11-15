@@ -1,5 +1,5 @@
-import {CHARACTER_REGISTRY,registryDiagnostics} from './character-registry.js?v=20261115-cmpreview1';
-import {mountCharacter,characterThumbnailMarkup,validateCharacterAssets} from './character-runtime.js?v=20261115-cmpreview1';
+import {CHARACTER_REGISTRY,registryDiagnostics} from './character-registry.js?v=20261115-modular-p2-1';
+import {mountCharacter,characterThumbnailMarkup,validateCharacterAssets} from './character-runtime.js?v=20261115-modular-p2-1';
 const $=s=>document.querySelector(s);
 let current=null;
 let characterStage=null;
