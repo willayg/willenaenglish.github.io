@@ -37,7 +37,7 @@ async function mount(header){
   '/students/free-talking-genius/styles.css?v=20261114-p4-visual1',
   '/students/free-talking-genius/character-animations.css?v=20261114-shared-finish-v1',
   '/students/free-talking-genius/dusk-character.css?v=20261114-dusk-db-grid3',
-  '/students/free-talking-genius/steve-character.css?v=20261115-steve10k1',
+  '/students/free-talking-genius/steve-character.css?v=20261115-steve8k1',
   '/students/free-talking-genius/live-animal-ui.css?v=20261113-willy-animal1',
   '/students/free-talking-genius/guide.css?v=20261107-guide-kids2',
   '/students/free-talking-hybrid-lab/shared-character-stage.css?v=20261114-willo-restored1'
@@ -53,7 +53,7 @@ async function mount(header){
  const hideNativeFooter=document.createElement('style');
  hideNativeFooter.textContent='#demo .control-dock{display:none!important;}'+
   '#demo .wrap{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;}';
- root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261115-steve10k1'),hideNativeFooter,document.importNode(intro,true),document.importNode(demo,true));
+ root.append(v1style,stylesheet('/students/free-talking-genius/shared-character-menu.css?v=20261115-steve8k1'),hideNativeFooter,document.importNode(intro,true),document.importNode(demo,true));
  document.body.append(element);
  const state={element,root,header,context:null,active:false,reopen:null,shutdown:null,onExit:null,bodyOverflow:'',headerZIndex:'',exit({notify=true}={}){
   if(!state.active)return;
