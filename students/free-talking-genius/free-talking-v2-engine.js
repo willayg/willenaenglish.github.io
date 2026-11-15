@@ -7,6 +7,7 @@ import {createHybridCharacterStage} from '/students/free-talking-hybrid-lab/shar
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
 import {DUSK_ART,DUSK_UNLOCK_POINTS} from '/students/free-talking-genius/dusk-character.js?v=20261114-no-legacy-card1';
+import {STEVE_ART,STEVE_UNLOCK_POINTS} from '/students/free-talking-genius/steve-character.js?v=20261115-steve10k1';
 import {scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261114-p4-visual1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 // Native pilot uses the existing document and an isolated ShadowRoot.
@@ -44,7 +45,7 @@ if(releaseMode){
 }
 
 const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,askedQuestionTexts:[],attemptCount:0,reviewing:false};
-const NAMES={willi:'Willo',willy:'AI Willy',bunny:'Bunny Fox',pigfish:'Pigfish',dusk:'Dusk'};
+const NAMES={willi:'Willo',willy:'AI Willy',bunny:'Bunny Fox',pigfish:'Pigfish',dusk:'Dusk',steve:'Sergeant Steve'};
 const serverCharacter=()=>state.character;
 async function authoritativeDuskPoints(){
  const api=window.WillenaAPI;
@@ -556,6 +557,7 @@ function ftShowFinish(result,{playSound=true}={}){
  portrait.dataset.state='idle';portrait.dataset.mood='neutral';
  if(state.character==='bunny')portrait.innerHTML=BUNNY_FOX_ART;
   else if(state.character==='dusk')portrait.innerHTML='<span class="ft-dusk-actor">'+scopedCharacterArt(DUSK_ART,'dusk-finish')+'</span>';
+  else if(state.character==='steve')portrait.innerHTML='<span class="ft-steve-actor">'+scopedCharacterArt(STEVE_ART,'steve-finish')+'</span>';
  else if(state.character==='willy')portrait.innerHTML=scopedCharacterArt(AI_WILLY_HEAD_SVG,'finish');
  else if(state.character==='pigfish'){
   portrait.innerHTML=PIGFISH_ART.replaceAll('id="pigBody"','id="pigBody-finish"').replaceAll('id="pigBelly"','id="pigBelly-finish"').replaceAll('url(#pigBody)','url(#pigBody-finish)').replaceAll('url(#pigBelly)','url(#pigBelly-finish)');
@@ -730,7 +732,7 @@ function showActor(){
  const speakButton=$('ftPushToSpeak');
  state.actor=createHybridCharacterStage($('actorStage'),
   state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':
-  state.character==='willy'?'willy':state.character==='dusk'?'dusk':'marin');
+  state.character==='willy'?'willy':state.character==='dusk'?'dusk':state.character==='steve'?'steve':'marin');
  if(speakButton)$('actorStage').append(speakButton);
  actorPhase('ready');
 }
@@ -879,7 +881,7 @@ function ticking(){
 // The published question IDs are the conversation track. Reactions and
 // follow-ups are the only generated speech; question playback reuses Willena R2.
 function guidedCharacterVoice(){
- return state.character==='bunny'?'bunny':state.character==='pigfish'?'pigfish':state.character==='willy'?'willy2':state.character==='dusk'?'prince':'marin';
+ return state.character==='bunny'?'bunny':state.character==='pigfish'?'pigfish':state.character==='willy'?'willy2':state.character==='dusk'?'prince':state.character==='steve'?'steve':'marin';
 }
 
 function hybridStop(){
@@ -1293,7 +1295,7 @@ async function getAnchorClip(anchor){
   const file=await r.json().catch(()=>null);
   if(!r.ok||file?.success!==true)throw Error(file?.error||('Question audio unavailable: '+r.status));
   // Selected ElevenLabs characters must never play an OpenAI cached voice.
-  if((state.character==='bunny'||state.character==='pigfish'||state.character==='willy'||state.character==='dusk')&&file.provider!=='elevenlabs'){
+  if((state.character==='bunny'||state.character==='pigfish'||state.character==='willy'||state.character==='dusk'||state.character==='steve')&&file.provider!=='elevenlabs'){
    throw Error('Wrong cached voice provider; requesting character ElevenLabs fallback');
   }
   let clip;
@@ -2402,6 +2404,9 @@ async function initStandaloneRelease(){
  const bunnyPortrait=menu.querySelector('#ftChooseLili .ft-character-symbol');
  const pigfishPortrait=menu.querySelector('#ftChoosePigfish .ft-character-symbol');
  const willyPortrait=menu.querySelector('#ftChooseWilly .ft-character-symbol');
+ const steveOption=menu.querySelector('#ftChooseSteve');
+ const stevePortrait=steveOption?.querySelector('.ft-character-symbol');
+ if(steveOption){steveOption.hidden=false;if(stevePortrait)stevePortrait.innerHTML='<span class="ft-steve-actor">'+scopedCharacterArt(STEVE_ART,'steve-menu')+'</span>'}
  const duskOption=menu.querySelector('#ftChooseDusk');
  const duskPortrait=duskOption?.querySelector('.ft-character-symbol');
  if(duskOption){duskOption.hidden=false;if(duskPortrait)duskPortrait.innerHTML='<span class="ft-dusk-actor">'+scopedCharacterArt(DUSK_ART,'dusk-menu')+'</span>'}
@@ -2415,18 +2420,21 @@ async function initStandaloneRelease(){
  if(back){back.hidden=false;back.textContent='← 교재로 돌아가기'}
  host.append(menu);
  const choices=[
-  ['ftChooseLili','bunny'],['ftChooseWilli','willi'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy'],['ftChooseDusk','dusk']
+  ['ftChooseLili','bunny'],['ftChooseWilli','willi'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy'],['ftChooseDusk','dusk'],['ftChooseSteve','steve']
  ];
  const buttons=choices.map(([id])=>menu.querySelector('#'+id)).filter(Boolean);
  menu.querySelector('#ftChooseWilly .ft-willy-coming-notice')?.remove();
  const startButton=menu.querySelector('#ftCharacterContinue');
  if(startButton)startButton.disabled=true;
- let selected=null,ready=false,starting=false,duskPoints=null;
+ let selected=null,ready=false,starting=false,duskPoints=null,stevePoints=null;
  const duskUnlock=window.WillenaFTSharedMenu?.createDuskUnlockUI(menu,DUSK_UNLOCK_POINTS);
  const showDuskPoints=points=>{duskPoints=points;duskUnlock?.update(points)};
  const openDuskDialog=()=>duskUnlock?.open();
+ const steveUnlock=window.WillenaFTSharedMenu?.createSteveUnlockUI(menu,STEVE_UNLOCK_POINTS);
+ const showStevePoints=points=>{stevePoints=points;steveUnlock?.update(points)};
+ const openSteveDialog=()=>steveUnlock?.open();
  showDuskPoints(null);
- void authoritativeDuskPoints().then(showDuskPoints).catch(()=>showDuskPoints(null));
+ void authoritativeDuskPoints().then(points=>{showDuskPoints(points);showStevePoints(points)}).catch(()=>{showDuskPoints(null);showStevePoints(null)});
  const choose=character=>{
   if(!ready||starting)return;
 
@@ -2435,6 +2443,7 @@ async function initStandaloneRelease(){
    openDuskDialog();
    return;
   }
+  if(character==='steve'&&(stevePoints==null||stevePoints<STEVE_UNLOCK_POINTS)){openSteveDialog();return}
   const repeated=selected===character;selected=character;
   for(const [id,name] of choices)menu.querySelector('#'+id)?.setAttribute('aria-pressed',String(name===character));
   if(startButton)startButton.disabled=false;
@@ -2448,6 +2457,11 @@ async function initStandaloneRelease(){
     const points=await authoritativeDuskPoints();showDuskPoints(points);
     if(points<DUSK_UNLOCK_POINTS){showError('🔒 5,000 points required to unlock Dusk.');starting=false;return}
    }catch(ex){showError('Cannot verify Dusk unlock: '+ex.message);starting=false;return}
+  }
+  if(selected==='steve'){
+   try{const points=await authoritativeDuskPoints();showStevePoints(points);
+    if(points<STEVE_UNLOCK_POINTS){showError('🔒 10,000 points required to unlock Sergeant Steve.');starting=false;return}
+   }catch(ex){showError('Cannot verify Sergeant Steve unlock: '+ex.message);starting=false;return}
   }
   buttons.forEach(b=>b.disabled=true);
   if(startButton)startButton.disabled=true;
