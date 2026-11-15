@@ -18,6 +18,12 @@ export function characterMarkup(characterId){
  if(!config)throw Error('Unregistered character: '+characterId);
  const artwork=ASSETS[config.asset];
  if(!artwork)throw Error('No SVG asset for character '+characterId);
+ // Willo's canonical vector is embedded in the existing shared student menu.
+ // Reuse it live; the plain ring is only a standalone preview fallback.
+ if(config.id==='willi'&&typeof window!=='undefined'){
+  const portrait=window.WillenaFTSharedMenu?.makeMenu?.()?.querySelector('#ftChooseWilli .ft-willi-portrait svg');
+  if(portrait){const svg=portrait.cloneNode(true);svg.classList.add('ft-willo-svg');return '<span class="ft-willo-actor">'+svg.outerHTML+'</span>'}
+ }
  return artwork;
 }
 function scopeIds(markup,suffix){
