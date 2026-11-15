@@ -3,6 +3,7 @@
 import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from './willy-svg.js?v=20261114-electric-cat-v3';
 import {DUSK_ART} from './dusk-character.js?v=20261114-no-legacy-card1';
+import {STEVE_ART} from './steve-character.js?v=20261115-steve10k1';
 // Willo has no animal SVG: his original artwork is the voice-circle stored
 // in the canonical shared character menu. Reuse that exact SVG in the live
 // activity rather than inventing a different icon or leaving an empty ring.
@@ -18,7 +19,7 @@ function originalWilloArt(){
  // the same vector geometry/colours as the canonical menu's Willo portrait.
  return '<span class="ft-willo-actor"><svg class="ft-willo-svg" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke="#69d7df" stroke-width="7"/><circle cx="50" cy="50" r="19" fill="none" stroke="#d6f2f4" stroke-width="8"/><path d="M50 31 A19 19 0 0 1 67 42" fill="none" stroke="#69c1cc" stroke-width="7" stroke-linecap="round"/><path d="M33 57 A19 19 0 0 0 47 69" fill="none" stroke="#efadce" stroke-width="7" stroke-linecap="round"/></svg></span>';
 }
-const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:AI_WILLY_HEAD_SVG,marin:originalWilloArt(),dusk:'<span class="ft-dusk-actor">'+DUSK_ART+'</span>'};
+const ART={'bunny-v3':BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:AI_WILLY_HEAD_SVG,marin:originalWilloArt(),dusk:'<span class="ft-dusk-actor">'+DUSK_ART+'</span>',steve:'<span class="ft-steve-actor">'+STEVE_ART+'</span>'};
 const PORTRAITS={...ART};
 // One animation-state vocabulary for the Speaking and live conversation workspaces.
 // This is visual-only: it never starts recording, audio playback, or grading.
@@ -39,7 +40,7 @@ export function scopedCharacterArt(markup,suffix){
  // Dusk's SVG is reused in both the character menu and the activity.
  // Scope gradient and clipPath IDs independently so Android never resolves
  // a live stage fill against a hidden menu SVG.
- if(markup.includes('ft-dusk-svg')){
+ if(markup.includes('ft-dusk-svg')||markup.includes('ft-steve-svg')){
   for(const match of markup.matchAll(/<(?:linearGradient|clipPath)\b[^>]*\bid="([^"]+)"/g)){
    const id=match[1],scoped=id+'-'+suffix;
    markup=markup.replace(match[0],match[0].replace('id="'+id+'"','id="'+scoped+'"'));
@@ -82,7 +83,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   actor.innerHTML=ART[selected]?scopedCharacterArt(ART[selected],'stage'):'';
   // Drop any legacy smile markup if a stale source managed to enter the renderer.
   actor.querySelectorAll('.aw-idle-mouth').forEach(el=>el.remove());
-  actor.dataset.state='idle';actor.dataset.mood='neutral';
+  actor.dataset.state='idle';actor.dataset.mood='neutral';actor.dataset.steveMood='stern';
   voiceSpeaking=false;
   update();
  }
@@ -90,6 +91,11 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   actor.dataset.mood=selected==='willy'&&['happy','surprised','sad','angry','cat'].includes(mood)?mood:'neutral';
  }
  function setMoodFromText(text){
+  if(selected==='steve'){
+   const t=String(text||'').toLowerCase();
+   actor.dataset.steveMood=/\[(?:surprised|shocked)\]|\b(?:what|really|no way|unbelievable|seriously)\b/i.test(t)?'surprised':'stern';
+   return;
+  }
   if(selected==='dusk'){
    const t=String(text||'').toLowerCase();
    const body=actor.querySelector('.ft-dusk-actor');
@@ -143,7 +149,7 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   // Keep the mood inferred from THIS spoken line, never cycle through moods.
   // All expression and spark effects are CSS-gated to the speaking state.
   if(!voiceSpeaking){
-   actor.dataset.mood='neutral';
+   actor.dataset.mood='neutral';actor.dataset.steveMood='stern';
    if(actor.dataset.state==='celebrating')actor.dataset.state='idle';
   }
   update();
