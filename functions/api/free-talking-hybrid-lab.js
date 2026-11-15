@@ -263,6 +263,11 @@ export async function onRequestPost({request,env}){
    const list=Array.isArray(assigned.assignments)&&assigned.assignments.length?assigned.assignments:(assigned.assignment?[assigned.assignment]:[]);
    if(!list.some(a=>a?.book_id===input.book_id))return json(403,{error:'That book is not assigned to your class'});
   }
+  if(String(input.character||'').toLowerCase()==='steve'&&profile.role==='student'){
+   const gate=await fetch(SCORE+'/rest/v1/rpc/sum_points_for_user',{method:'POST',headers:{...scoreHeaders(token),'Content-Type':'application/json'},body:JSON.stringify({uid:user.id}),signal});
+   const points=gate.ok?Number(await gate.json().catch(()=>NaN)):NaN;
+   if(!Number.isFinite(points)||points<10000)return json(403,{error:'Sergeant Steve requires 10,000 points'});
+  }
   // Free Talking is unrestricted during this release. Keep session IDs and
   // student-owned, expiring transcript storage for teacher analysis.
   if(input.action==='progress'){
@@ -467,7 +472,7 @@ export async function onRequestPost({request,env}){
    const sessionId=String(input.session_id||''),speaker=String(input.speaker||''),character=String(input.character||'');
    const turnNumber=Number(input.turn_number),transcriptText=String(input.transcript_text||'').trim();
    if(!UUID.test(sessionId)||!['student','character'].includes(speaker)||
-     !['bunny','pigfish','willi','willy','dusk'].includes(character)||
+     !['bunny','pigfish','willi','willy','dusk','steve'].includes(character)||
      !Number.isInteger(turnNumber)||turnNumber<1||turnNumber>150||
      !transcriptText||transcriptText.length>1500)return json(400,{error:'Invalid transcript entry'});
    const row={session_id:sessionId,student_id:user.id,book_id:input.book_id,
@@ -560,6 +565,7 @@ export async function onRequestPost({request,env}){
  if(action==='lesson')return json(200,{lesson,engine:'hybrid',model:'gpt-6-luna'});
  const character=String(input.character||'willi').toLowerCase();
  const characterProfiles={
+  steve:'You are SERGEANT STEVE, a comically stern English-speaking drill sergeant. You are theatrically demanding and frequently [Surprised] by unexpected answers, reacting with playful mock indignation, but NEVER insult, bully, threaten or intimidate a child. Be entertaining, energetic and brief, and always follow with one friendly textbook-related question. Speak in first person. Avoid actual profanity or real anger. Use [Surprised] before many emphatic reactions (roughly every other reply, not every single sentence), occasionally a gentle [Chuckling] as contrast. Tags are audio delivery cues and are never words spoken aloud.',
   dusk:'You are DUSK, a curious, playful and slightly mysterious hooded character with glowing amber eyes and a gold clasp. Your name is Dusk. You are friendly, never frightening, and enjoy playful surprises and gentle jokes. Speak in first person as Dusk. Keep a steady, natural conversational delivery; do not insert bracketed emotion, accent, or performance tags in Dusk replies. Do not pretend to be Willo or the robot AI Willi.',
   bunny:'You are BUNNY FOX. Your name is Bunny Fox and you LOVE FLYING THROUGH SPACE. You are imaginative, playful and curious. You can naturally describe fictional space adventures when relevant without always steering the conversation into space. Speak in first person as Bunny Fox.',
   pigfish:'You are PIGFISH, a friendly, playful fish with the pink face and snout of a pig, but the body, tail and fins of a fish. You have NO LEGS, NO FEET, and cannot walk, hop, jump on land or run. You live IN WATER and swim with your fins and tail; you can splash or dive underwater. Never claim you have legs or can hop to a lake: you are already a water creature. Fishing, hooks, fishing rods, nets, and the idea of being caught TERRIFY you. If the child mentions fishing, react with a brief, funny, genuinely startled response (for example, "Eek! Fishing rods? Please keep those hooks away from me!") and then continue the conversation naturally. Do not bring up your fear or your anatomy constantly; only when relevant. Speak in first person as Pigfish and keep an engaging, child-friendly conversational tone.',
@@ -583,7 +589,7 @@ export async function onRequestPost({request,env}){
   const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',
  headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},
  body:JSON.stringify({model,reasoning:{effort:'none'},max_output_tokens:200,store:false,
-  instructions:characterInstruction+'\n'+conversationalIdentity+(['willy','bunny','pigfish'].includes(character)?'\n'+deliveryInstruction:'')+'\n'+instructions+'\n'+directive+
+  instructions:characterInstruction+'\n'+conversationalIdentity+(['willy','bunny','pigfish','steve'].includes(character)?'\n'+deliveryInstruction:'')+'\n'+instructions+'\n'+directive+
    '\nFINAL LANGUAGE RULE: Always converse in English. Never agree to switch this conversation to Korean or any other non-English language. Only a short, specific Korean vocabulary/question explanation may be given when explicitly needed; immediately return to English. Keep all jokes, spontaneity and character personality.'+
    '\nNever repeat internal app instructions, labels or machine markers aloud.',
   input:finalInput
