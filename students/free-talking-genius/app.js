@@ -1019,7 +1019,7 @@ function renderQuestion({retry=false}={}){
  aiRecorder.releaseIdle();
  void questionVoice.select(state.current.id,{autoplay:false});
 }
-let roundChoice=null,duskAvailablePoints=null;
+let roundChoice=null,duskAvailablePoints=null,duskChoiceRequest=0;
 const duskUnlockUI=window.WillenaFTSharedMenu?.createDuskUnlockUI($('ftCharacter'),DUSK_UNLOCK_POINTS);
 async function getCurrentDuskPoints(){
  const response=await WillenaAPI.fetch('/.netlify/functions/progress_summary?section=overview&_='+Date.now(),{cache:'no-store'});
@@ -1043,18 +1043,20 @@ async function verifyDuskAccess(){
 }
 function chooseRoundVoice(voice){
  if(!['marin','bunny-v3','pigfish','willy','prince'].includes(voice))return;
-
+ // Paint the selected ring/start button synchronously before any audio preload
+ // or network eligibility checks. A second tap retains the existing start flow.
  if(roundChoice===voice&&!state.loading&&state.pendingMode){void beginRound(state.pendingMode);return}
  roundChoice=voice;
- if(voice==='prince')void retryVoice.preloadOne('prince');
- else retryVoice.preloadBoth();
  for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy'],['ftChooseDusk','prince']])
   $(id)?.setAttribute('aria-pressed',String(value===voice));
  $('ftCharacterContinue').disabled=false;
+ if(voice==='prince')void retryVoice.preloadOne('prince');
+ else retryVoice.preloadBoth();
 }
+
 function openMode(mode){
  if(state.loading||!['speaking','writing'].includes(mode))return;
- state.pendingMode=mode;roundChoice=null;
+ state.pendingMode=mode;roundChoice=null;duskChoiceRequest++;
  $('ftCharacterRound').textContent=bookTitle()+' · Unit '+state.unit+' · '+(mode==='speaking'?'말하기':'쓰기');
  for(const id of ['ftChooseWilli','ftChooseLili','ftChoosePigfish','ftChooseWilly','ftChooseDusk'])$(id)?.setAttribute('aria-pressed','false');
  $('ftCharacterContinue').disabled=true;
@@ -1301,7 +1303,20 @@ $('ftChooseWilli').addEventListener('click',()=>chooseRoundVoice('marin'));
 $('ftChooseLili').addEventListener('click',()=>chooseRoundVoice('bunny-v3'));
 $('ftChoosePigfish').addEventListener('click',()=>chooseRoundVoice('pigfish'));
 $('ftChooseWilly').addEventListener('click',()=>chooseRoundVoice('willy'));
-$('ftChooseDusk')?.addEventListener('click',async()=>{if(await verifyDuskAccess())chooseRoundVoice('prince')})
+$('ftChooseDusk')?.addEventListener('click',()=>{
+ // Optimistic visual selection: do not block the highlight on the points API.
+ const request=++duskChoiceRequest;
+ const previous=roundChoice;
+ chooseRoundVoice('prince');
+ if(duskAvailablePoints!=null&&duskAvailablePoints>=DUSK_UNLOCK_POINTS)return;
+ void verifyDuskAccess().then(ok=>{
+  if(request!==duskChoiceRequest||roundChoice!=='prince'||ok)return;
+  roundChoice=previous;
+  for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy'],['ftChooseDusk','prince']])
+   $(id)?.setAttribute('aria-pressed',String(value===previous));
+  $('ftCharacterContinue').disabled=!previous;
+ });
+});
 $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pendingMode));
 $('ftCharacterBack').addEventListener('click',()=>{
  if(visibleScreen==='ftCharacter'&&history.state?.[FT_NAV_KEY]?.screen==='ftCharacter')history.back();
