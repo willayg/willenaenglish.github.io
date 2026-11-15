@@ -2552,11 +2552,17 @@ async function initStandaloneRelease(){
   if(!ready||starting)return;
 
 
-  if(character==='dusk'&&(duskPoints==null||duskPoints<DUSK_UNLOCK_POINTS)){
-   openDuskDialog();
+  const info=getCharacter(character);
+  // All six characters use the same registry thresholds and one verified
+  // screen-level points value. Never query the database on character taps.
+  const availablePoints=headerPointsVerified?nativeHost.header?._points:duskPoints;
+  const required=info?.unlockPoints??Infinity;
+  if(required>0&&(availablePoints==null||!Number.isFinite(Number(availablePoints))||Number(availablePoints)<required)){
+   if(character==='dusk')openDuskDialog();
+   else if(character==='steve')openSteveDialog();
+   else showError('🔒 '+required.toLocaleString()+' points required to unlock this character.');
    return;
   }
-  if(character==='steve'&&(stevePoints==null||stevePoints<STEVE_UNLOCK_POINTS)){openSteveDialog();return}
   const repeated=selected===character;selected=character;
   for(const [id,name] of choices)menu.querySelector('#'+id)?.setAttribute('aria-pressed',String(name===character));
   if(startButton)startButton.disabled=false;
@@ -2565,20 +2571,22 @@ async function initStandaloneRelease(){
  async function begin(){
   if(!ready||!selected||starting)return;
   starting=true;
-  if(selected==='dusk'||selected==='steve'){
-   // Dusk and Steve share the same eligibility path and verified total.
-   // The back end independently checks Steve's 8k threshold at session start.
+  const minimum=getCharacter(selected)?.unlockPoints??Infinity;
+  if(minimum>0){
+   // Revalidate once at activity entry; screen selection itself never fetches.
    try{
     const header=nativeHost.header;
     const refreshed=await header?._fetchOverview?.().catch(()=>null);
     const points=header?._uid&&Number.isFinite(Number(refreshed?.points))
-     ? Number(refreshed.points)
-     : header?._uid&&Number.isFinite(Number(header?._points))
-       ? Number(header._points)
-       : await authoritativeDuskPoints();
+     ?Number(refreshed.points)
+     :header?._uid&&Number.isFinite(Number(header?._points))
+       ?Number(header._points)
+       :await authoritativeDuskPoints();
     applyEarnedPoints(points,header?._uid?'header':'fallback');
-    const minimum=selected==='steve'?STEVE_UNLOCK_POINTS:DUSK_UNLOCK_POINTS;
-    if(points<minimum){showError('🔒 '+minimum.toLocaleString()+' points required to unlock '+(selected==='steve'?'Sergeant Steve':'Dusk')+'.');starting=false;return}
+    if(points<minimum){
+     showError('🔒 '+minimum.toLocaleString()+' points required to unlock this character.');
+     starting=false;return;
+    }
    }catch(ex){showError('Cannot verify character unlock: '+ex.message);starting=false;return}
   }
   buttons.forEach(b=>b.disabled=true);
