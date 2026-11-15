@@ -55,10 +55,10 @@ async function authoritativeDuskPoints(){
   const claims=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
   const uid=String(claims.sub||'');
   if(!/^[0-9a-f-]{36}$/i.test(uid))throw Error('Invalid student identity');
-  const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/sum_points_for_user',{
+  const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/student_own_total_points',{
    method:'POST',cache:'no-store',
    headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,'Content-Type':'application/json'},
-   body:JSON.stringify({uid}),signal:AbortSignal.timeout(12000)
+   body:'{}',signal:AbortSignal.timeout(12000)
   });
   if(!response.ok)throw Error('Points service HTTP '+response.status);
   const points=Number(await response.json());
