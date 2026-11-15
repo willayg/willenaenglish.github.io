@@ -19,7 +19,7 @@ function selectCharacter(id){
  const c=CHARACTER_REGISTRY.find(c=>c.id===id);if(!c)return;
  current=c;
  for(const node of document.querySelectorAll('.character'))node.setAttribute('aria-pressed',String(node.dataset.id===id));
- const stage=$('#stage');stage.dataset.character=c.id;stage.dataset.state='idle';stage.innerHTML=portrait(c,'stage');
+ const stage=$('#stage');stage.dataset.character=c.id;stage.dataset.state='idle';stage.innerHTML=art[c.asset]||art.willi;
  $('#name').textContent=c.name;$('#personality').textContent=c.personality;
  const info=$('#info');info.replaceChildren();
  const fields=[['Character ID',c.id],['Unlock points',c.unlockPoints.toLocaleString()],['Voice provider',c.voiceProvider],['Voice ID',c.voiceId],['Animation states',c.states.join(', ')],['Publishing status',c.status]];
