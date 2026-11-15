@@ -52,7 +52,7 @@ class StudentHeader extends HTMLElement {
         this.refresh();
         // Check the authoritative ledger after a points award in ANY Genius app.
         this._scheduleOverviewRefresh();
-        setTimeout(()=>void checkStudentCharacterUnlocks(),1600);
+        setTimeout(()=>void this._fetchOverview(),1600);
       }
     } catch {}
   };
@@ -63,7 +63,7 @@ class StudentHeader extends HTMLElement {
         this._points += delta;
         this.refresh();
         this._scheduleOverviewRefresh();
-        setTimeout(()=>void checkStudentCharacterUnlocks(),1600);
+        setTimeout(()=>void this._fetchOverview(),1600);
       }
     } catch {}
   };
@@ -359,7 +359,7 @@ class StudentHeader extends HTMLElement {
         // Header exists on every Genius app. The server independently verifies
         // both the points threshold and that celebration was not already claimed.
         if(ov && Number.isFinite(ov.points) && ov.points>=5000){
-          void checkStudentCharacterUnlocks();
+          void checkStudentCharacterUnlocks(ov.points,this._uid);
         }
         return ov || null;
       })
