@@ -37,7 +37,7 @@ async function mount(header){
   '/students/free-talking-genius/styles.css?v=20261114-p4-visual1',
   '/students/free-talking-genius/character-animations.css?v=20261114-shared-finish-v1',
   '/students/free-talking-genius/dusk-character.css?v=20261114-dusk-db-grid3',
-  '/students/free-talking-genius/steve-character.css?v=20261115-steve-grey-overlayfix3',
+  '/students/free-talking-genius/steve-character.css?v=20261115-shared-lock5',
   '/students/free-talking-genius/character-unlock-celebrations.css?v=20261115-unlock-cards1',
   '/students/free-talking-genius/live-animal-ui.css?v=20261113-willy-animal1',
   '/students/free-talking-genius/guide.css?v=20261107-guide-kids2',
