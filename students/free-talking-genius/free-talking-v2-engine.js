@@ -7,7 +7,7 @@ import {createHybridCharacterStage} from '/students/free-talking-hybrid-lab/shar
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
 import {DUSK_ART,DUSK_UNLOCK_POINTS} from '/students/free-talking-genius/dusk-character.js?v=20261114-no-legacy-card1';
-import {STEVE_ART,STEVE_UNLOCK_POINTS} from '/students/free-talking-genius/steve-character.js?v=20261115-steve10k1';
+import {STEVE_ART,STEVE_UNLOCK_POINTS} from '/students/free-talking-genius/steve-character.js?v=20261115-steve8k1';
 import {scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261114-p4-visual1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 // Native pilot uses the existing document and an isolated ShadowRoot.
@@ -2460,7 +2460,7 @@ async function initStandaloneRelease(){
   }
   if(selected==='steve'){
    try{const points=await authoritativeDuskPoints();showStevePoints(points);
-    if(points<STEVE_UNLOCK_POINTS){showError('🔒 10,000 points required to unlock Sergeant Steve.');starting=false;return}
+    if(points<STEVE_UNLOCK_POINTS){showError('🔒 8,000 points required to unlock Sergeant Steve.');starting=false;return}
    }catch(ex){showError('Cannot verify Sergeant Steve unlock: '+ex.message);starting=false;return}
   }
   buttons.forEach(b=>b.disabled=true);
