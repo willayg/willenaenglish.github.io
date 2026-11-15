@@ -354,58 +354,77 @@
 /* Result card is the SAME actor: equalizer only for spoken evaluation feedback. */
 #ftResultMascot.bf-actor[data-state="speaking"] .aw-svg .aw-mouth-wave{display:inline!important}
 
-/* Structured Speaking: Dusk and Steve use the existing ftTurnCircle action
-   and its original listening/recording handler. This is a presentation-only
-   extension; Willo and the Bunny/Pigfish controls are not changed. */
-.free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle{
+/* One shared structured-Speaking circle for the four illustrated characters.
+   The actual #ftTurnCircle stays the single listening/recording button.
+   A permanent cyan ring is independent of phase, focus and microphone state. */
+.free-talking-genius #ftSession:is(
+ [data-character="bunny-v3"],[data-character="pigfish"],
+ [data-character="dusk"],[data-character="steve"]
+) #ftTurnCircle,
+.free-talking-genius #ftSession:is(
+ [data-character="bunny-v3"],[data-character="pigfish"],
+ [data-character="dusk"],[data-character="steve"]
+) #ftTurnCircle:is(:hover,:active,:focus,:focus-visible,[data-phase="ready"],[data-phase="ai"],[data-phase="student"],[data-phase="thinking"]){
  width:clamp(205px,35vw,255px)!important;
  height:clamp(205px,35vw,255px)!important;
+ border:9px solid #54c1cb!important;
+ outline:0!important;
+ border-radius:50%!important;
+ background:#fff!important;background-image:none!important;
+ box-shadow:none!important;
  position:relative!important;
  overflow:visible!important;
- border:9px solid #1ec4ce!important;
- outline:3px solid #d6f3f4!important;
- border-radius:50%!important;
- background:#fff!important;
- box-shadow:none!important;
  isolation:isolate;
  animation:none!important;
- margin-bottom:70px!important;
- cursor:pointer!important;
+ -webkit-appearance:none!important;appearance:none!important;
+ -webkit-tap-highlight-color:transparent!important;
+ user-select:none!important;-webkit-user-select:none!important;
 }
-.free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle .bf-actor{
- position:absolute!important;
+.free-talking-genius #ftSession:is(
+ [data-character="bunny-v3"],[data-character="pigfish"],
+ [data-character="dusk"],[data-character="steve"]
+) #ftTurnCircle::before{content:none!important;display:none!important}
+.free-talking-genius #ftSession:is(
+ [data-character="bunny-v3"],[data-character="pigfish"],
+ [data-character="dusk"],[data-character="steve"]
+) #ftTurnCircle .bf-actor{
+ position:absolute!important;top:50%!important;left:50%!important;
  width:81%!important;height:81%!important;
- top:50%!important;left:50%!important;
  transform:translate(-50%,-50%)!important;
+ pointer-events:none!important;
  filter:none!important;
 }
-.free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle::before{
- content:none!important;display:none!important;
+@media(max-width:600px){
+ .free-talking-genius #ftSession:is(
+  [data-character="bunny-v3"],[data-character="pigfish"],
+  [data-character="dusk"],[data-character="steve"]
+ ) #ftTurnCircle{width:220px!important;height:220px!important}
+}
+/* All non-Willo portraits hide the old internal orbit and record decorations,
+   leaving the outside ring as the single permanent circle. */
+.free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle :is(
+ .ft-circle-glow,.ft-orbit-visual,.ft-circle-start,.ft-circle-ai,
+ .ft-circle-mic,.ft-circle-thinking,.ft-circle-score,.ft-record-countdown
+){display:none!important}
+/* Same outer-button action; Dusk and Steve keep the existing accessible
+   #ftTurnCircle click handler while presenting its label below the portrait. */
+.free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle{
+ margin-bottom:70px!important;
 }
 .free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle::after{
  content:"눌러서 듣기"!important;
- position:absolute!important;
- display:flex!important;
- justify-content:center!important;
- align-items:center!important;
- top:calc(100% + 20px)!important;
- left:50%!important;
+ display:flex!important;justify-content:center!important;align-items:center!important;
+ position:absolute!important;top:calc(100% + 20px)!important;left:50%!important;
  transform:translateX(-50%)!important;
- width:190px!important;height:52px!important;
- box-sizing:border-box!important;
- border:5px solid #e9a8c9!important;
- border-radius:24px!important;
- background:white!important;
- color:#697f85!important;
+ width:190px!important;height:52px!important;box-sizing:border-box!important;
+ border:5px solid #e9a8c9!important;border-radius:24px!important;
+ background:#fff!important;color:#697f85!important;
  font:850 16px/1.25 Poppins,system-ui,sans-serif!important;
- pointer-events:auto!important;
- white-space:nowrap;
+ pointer-events:auto!important;white-space:nowrap;
 }
 .free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle[data-phase="student"]::after{
- content:"눌러서 말하기"!important;
- border-color:#91dce5!important;
+ content:"눌러서 말하기"!important;border-color:#91dce5!important;
 }
 .free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle[data-ai-recording="true"]::after{
- content:"녹음 끝내기"!important;
- border-color:#e9a8c9!important;
+ content:"녹음 끝내기"!important;border-color:#e9a8c9!important;
 }
