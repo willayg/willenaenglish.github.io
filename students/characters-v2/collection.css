@@ -74,3 +74,16 @@ html.leaderboard-only .character-collection{display:none!important}
  outline:none!important;
  transform:none!important;
 }
+
+/* Bunny Fox has both resting and talking mouth paths in its shared SVG.
+   Collection portraits and celebration replays are never speaking. */
+.character-collection .bf-svg .bf-talk-mouth,
+.ft-character-unlock-celebration.collection-replay .bf-svg .bf-talk-mouth{
+ display:none!important;
+ opacity:0!important;
+}
+.character-collection .bf-svg .bf-rest-mouth,
+.ft-character-unlock-celebration.collection-replay .bf-svg .bf-rest-mouth{
+ display:inline!important;
+ opacity:1!important;
+}
