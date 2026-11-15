@@ -49,7 +49,7 @@ async function previewToken(){
  }catch{}
  throw Error('No authenticated teacher session available for voice preview. Open the Teachers dashboard and sign in again.');
 }
-async function playSample(){if(!current||!characterStage)return;stopSample();const character=current.id;const text=$('#sampleSentence').value.trim();if(text.length<2||text.length>300){$('#voiceStatus').textContent='Enter 2–300 characters.';return}const b=$('#playVoice');b.disabled=true;b.textContent='Generating voice…';$('#voiceStatus').textContent='Requesting current '+current.name+' voice…';const controller=new AbortController();previewAbort=controller;try{const token=await previewToken();if(controller.signal.aborted)return;const response=await fetch('/api/free-talking-realtime-eleven',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({character,text}),signal:controller.signal,cache:'no-store'});if(!response.ok){let detail=await response.json().catch(()=>({}));throw Error(detail.error||'Voice service HTTP '+response.status)}const blob=await response.blob();if(blob.size<400)throw Error('Voice recording was empty');if(controller.signal.aborted||current.id!==character)return;previewObjectUrl=URL.createObjectURL(blob);
+async function playSample(){if(!current||!characterStage)return;stopSample();const character=current.id;const text=$('#sampleSentence').value.trim();if(text.length<2||text.length>300){$('#voiceStatus').textContent='Enter 2–300 characters.';return}const b=$('#playVoice');b.disabled=true;b.textContent='Generating voice…';$('#voiceStatus').textContent='Requesting current '+current.name+' voice…';const controller=new AbortController();previewAbort=controller;try{const token=await previewToken();if(controller.signal.aborted)return;const response=await fetch('/api/free-talking-realtime-eleven',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({character,text}),signal:controller.signal,cache:'no-store'});if(!response.ok){let detail=await response.json().catch(()=>({}));throw Error(detail.error||'Voice service HTTP '+response.status)}const cacheStatus=response.headers.get('X-Willena-Audio-Cache')||'not-a-fixed-line';$('#celebrationAudioStatus').textContent='Audio cache: '+cacheStatus+(cacheStatus==='unavailable'?' · Bind AUDIO_BUCKET to the Students Pages deployment':'');const blob=await response.blob();if(blob.size<400)throw Error('Voice recording was empty');if(controller.signal.aborted||current.id!==character)return;previewObjectUrl=URL.createObjectURL(blob);
  const audio=$('#voicePlayback');previewAudio=audio;audio.hidden=false;audio.src=previewObjectUrl;
  audio.onplay=()=>{if(previewAudio!==audio||current?.id!==character)return;characterStage?.setPhase('speaking');b.textContent='Playing…';$('#voiceStatus').textContent='Playing '+current.name+' voice'};
  audio.onpause=()=>{if(previewAudio===audio)characterStage?.setPhase('idle')};
@@ -124,6 +124,13 @@ function mount(){
   const details=document.createElement('span');const name=document.createElement('strong'),small=document.createElement('small');name.textContent=c.name;small.textContent=c.unlockPoints.toLocaleString()+' points · '+c.status;details.append(name,small);button.append(icon,details);button.onclick=()=>selectCharacter(c.id);box.append(button);
  }
  $('#playVoice').onclick=()=>void playSample();
+ $('#playCelebrationVoice').onclick=()=>{
+  if(!current)return;
+  const fixed=celebrationFor(current.id)?.line;
+  if(!fixed)return;
+  $('#sampleSentence').value=fixed;
+  void playSample();
+ };
  $('#previewCelebration').onclick=()=>{
   if(!current)return;
   document.querySelector('.ft-character-unlock-celebration.manager-preview')?.remove();
