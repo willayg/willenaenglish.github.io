@@ -21,8 +21,13 @@ export function characterMarkup(characterId){
  return artwork;
 }
 function scopeIds(markup,suffix){
- const ids=new Map();markup=markup.replace(/\bid="([^"]+)"/g,(all,id)=>{
-  const scoped=id+'-'+suffix;ids.set(id,scoped);return 'id="'+scoped+'"'});
+ // Only SVG resource IDs are scoped. Animation target IDs must remain
+ // stable so the original student CSS can reach eye/mouth/body controls.
+ const ids=new Map();
+ markup=markup.replace(/<(linearGradient|radialGradient|clipPath|mask|pattern|filter)\b[^>]*\bid="([^"]+)"/g,(match,tag,id)=>{
+  const scoped=id+'-'+suffix;ids.set(id,scoped);
+  return match.replace('id="'+id+'"','id="'+scoped+'"');
+ });
  for(const [id,scoped]of ids)markup=markup.replaceAll('url(#'+id+')','url(#'+scoped+')');
  return markup;
 }
