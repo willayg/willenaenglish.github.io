@@ -264,10 +264,14 @@ export async function onRequestPost({request,env}){
    const list=Array.isArray(assigned.assignments)&&assigned.assignments.length?assigned.assignments:(assigned.assignment?[assigned.assignment]:[]);
    if(!list.some(a=>a?.book_id===input.book_id))return json(403,{error:'That book is not assigned to your class'});
   }
-  if(String(input.character||'').toLowerCase()==='steve'&&profile.role==='student'){
+  // Canonical character registry is authoritative for all paid-point gates.
+  // Only validate at conversation start; repeated turns do not reread points.
+  const selectedCharacter=CHARACTER_REGISTRY.find(c=>c.id===String(input.character||'').toLowerCase()&&c.status==='published');
+  if(profile.role==='student'&&input.action==='start'&&selectedCharacter?.unlockPoints>0){
    const gate=await fetch(SCORE+'/rest/v1/rpc/student_own_total_points',{method:'POST',headers:{...scoreHeaders(token),'Content-Type':'application/json'},body:'{}',signal});
    const points=gate.ok?Number(await gate.json().catch(()=>NaN)):NaN;
-   if(!Number.isFinite(points)||points<8000)return json(403,{error:'Sergeant Steve requires 8,000 points'});
+   if(!Number.isFinite(points)||points<selectedCharacter.unlockPoints)
+    return json(403,{error:'Character requires '+selectedCharacter.unlockPoints.toLocaleString('en-US')+' points'});
   }
   // Free Talking is unrestricted during this release. Keep session IDs and
   // student-owned, expiring transcript storage for teacher analysis.
