@@ -41,7 +41,7 @@ async function mount(header){
   '/students/free-talking-genius/character-unlock-celebrations.css?v=20261115-unlock-cards1',
   '/students/free-talking-genius/live-animal-ui.css?v=20261113-willy-animal1',
   '/students/free-talking-genius/guide.css?v=20261107-guide-kids2',
-  '/students/free-talking-hybrid-lab/shared-character-stage.css?v=20261114-willo-restored1'
+  '/students/free-talking-hybrid-lab/shared-character-stage.css?v=20261115-steve-stage2'
  ])root.append(stylesheet(file));
  // Native release-specific responsive rules are injected LAST, after
  // legacy V1 selectors. A single narrow column avoids the portrait/name
