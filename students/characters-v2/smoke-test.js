@@ -1,5 +1,7 @@
 import {CHARACTER_REGISTRY,CHARACTER_PERSONAS,registryDiagnostics,charactersInMenu,isCharacterEligible} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
 import {characterMarkup,mountCharacter} from './character-runtime.js?v=20261115-modular-p2-2';
+import {CELEBRATIONS,celebrationAudioKey,visibleCelebrationLine} from '/shared/character-celebration-config.js?v=20261116-p4-1';
+import {createCharacterCelebration} from './celebration-card.js?v=20261116-p4-1';
 const checks=document.getElementById('checks'),tests=document.getElementById('tests'),summary=document.getElementById('summary');
 function run(){
  checks.replaceChildren();tests.replaceChildren();
@@ -19,6 +21,18 @@ function run(){
  }
  check('Free characters start unlocked',isCharacterEligible('willi',0)&&isCharacterEligible('willy',0));
  check('Unknown points never unlock earned characters',!isCharacterEligible('bunny',NaN)&&!isCharacterEligible('pigfish',NaN));
+ // P4 shared component and fixed-audio cache identity regression checks.
+ for(const c of charactersInMenu()){
+  const config=CELEBRATIONS[c.id];
+  check(c.name+' has a themed celebration',Boolean(config?.theme&&config?.line));
+  check(c.name+' fixed audio key is stable',Boolean(celebrationAudioKey(c.id,c.voiceId)?.startsWith('characters/celebrations/v1/'+c.id+'/')));
+  check(c.name+' visible line strips speech tags',!visibleCelebrationLine(c.id).includes('['));
+  try{
+   const {root:dialog,listen,next,voiceLine}=createCharacterCelebration(c.id,{preview:true});
+   check(c.name+' shared celebration renders correctly',dialog.classList.contains('is-'+c.id)&&Boolean(dialog.querySelector('svg'))&&Boolean(listen)&&Boolean(next)&&voiceLine===config.line);
+  }catch(error){check(c.name+' shared celebration renders correctly',false,String(error.message||error))}
+ }
+
 
  for(const c of charactersInMenu()){
   const card=document.createElement('div');card.className='test-card';
