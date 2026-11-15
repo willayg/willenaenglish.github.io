@@ -2292,8 +2292,9 @@ async function startConversation(){
  const character=state.character;state.voiceMode='eleven'; // guided text responses use controlled TTS for ALL three voices
 
  try{
-  showActor();actorPhase('thinking');
+  // Set shared recorder mode before mounting the existing character button.
   state.hybrid=hybridMode();
+  showActor();actorPhase('thinking');
   state.hybridModel=selectedEngine();state.sttEngine=selectedStt();
   if(releaseMode&&!continuing){
    const saved=await authorizedDemoFetch('/api/free-talking-hybrid-lab',{
@@ -2336,6 +2337,7 @@ async function startConversation(){
    if(mic)monitorMicrophone(mic);
    state.micUserMuted=false;state.ttsPlaying=false;
    state.active=true;state.starting=false;state.resumeIndex=0;
+   updatePushToSpeak(); // Keep the one existing recorder button visible at session start.
    if(!continuing)prepareReviewOutro();
    ftUsage.begin();
    if(ftUsage.current){ftUsage.current.engine='hybrid';ftUsage.current.model=state.hybridModel;ftUsage.current.sttModel=state.sttEngine;ftUsage.current.transcribedAudioSeconds=0;ftUsage.current.transcriptionRequests=0;ftUsage.current.timingSettingsMs={...ftTiming}}
