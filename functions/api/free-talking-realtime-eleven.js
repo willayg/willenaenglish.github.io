@@ -1,11 +1,12 @@
 import {CHARACTER_REGISTRY} from '../../shared/free-talking-character-catalog.js';
+import {celebrationFor,celebrationAudioKey} from '../../shared/character-celebration-config.js';
 // Demo-only authenticated ElevenLabs v3 Conversational TTS proxy.
 // The existing Free Talking Genius endpoints and files are untouched.
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co';
 const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const VOICES=Object.fromEntries(CHARACTER_REGISTRY.filter(c=>c.status==='published').map(c=>[c.id,c.voiceId]));
 const reply=(status,message)=>new Response(JSON.stringify({error:message}),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
-export async function onRequestPost({request,env}){
+export async function onRequestPost({request,env,context}){
  const origin=request.headers.get('Origin');
  if(origin&&origin!==new URL(request.url).origin)return reply(403,'Invalid origin');
  if(!request.headers.get('content-type')?.startsWith('application/json'))return reply(415,'JSON required');
@@ -33,6 +34,27 @@ export async function onRequestPost({request,env}){
    headers:{apikey:PUB,Authorization:'Bearer '+bearer},signal:AbortSignal.timeout(8000)});
   const profile=p.ok?(await p.json())[0]:null;
   if(!profile||profile.approved!==true||!['student','teacher','admin','owner'].includes(profile.role))return reply(403,'Not authorized');
+  // Cache ONLY the six canonical fixed celebration lines. Dynamic replies
+  // keep streaming from the live TTS service. Authorization happens first.
+  const fixed=celebrationFor(character);
+  const r2=(env.AUDIO_BUCKET&&typeof env.AUDIO_BUCKET.get==='function'&&typeof env.AUDIO_BUCKET.put==='function')?env.AUDIO_BUCKET:null;
+  const cacheKey=fixed&&sentence===fixed.line?celebrationAudioKey(character,VOICES[character]):null;
+  if(cacheKey&&r2){
+   try{
+    const hit=await r2.get(cacheKey);
+    if(hit?.body)return new Response(hit.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'private, max-age=86400','X-Willena-Audio-Cache':'r2-hit','X-Content-Type-Options':'nosniff'}});
+   }catch(e){console.warn('[Character celebration R2] read',String(e))}
+  }
+  const storeFixedAudio=async bytes=>{
+   if(!cacheKey||!r2)return;
+   try{await r2.put(cacheKey,bytes,{httpMetadata:{contentType:'audio/mpeg',cacheControl:'public, max-age=31536000, immutable'}})}
+   catch(e){console.warn('[Character celebration R2] write',String(e))}
+  };
+  const scheduleCache=bytes=>{
+   if(!cacheKey||!r2)return;
+   const work=storeFixedAudio(bytes);
+   if(context?.waitUntil)context.waitUntil(work);else void work;
+  };
   if(character==='willi'){
    const openaiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
    if(!openaiKey)return reply(503,'OpenAI speech is not configured');
@@ -42,6 +64,7 @@ export async function onRequestPost({request,env}){
     signal:AbortSignal.timeout(25000)
    });
    if(!speech.ok||!speech.body)return reply(502,'AI Willi speech unavailable ('+speech.status+')');
+   if(cacheKey&&r2){const bytes=await speech.arrayBuffer();scheduleCache(bytes);return new Response(bytes,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Willena-TTS-Route':'openai-marin','X-Willena-Audio-Cache':'r2-miss','X-Content-Type-Options':'nosniff'}})}
    return new Response(speech.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Willena-TTS-Route':'openai-marin','X-Content-Type-Options':'nosniff'}});
   }
   const definition=CHARACTER_REGISTRY.find(c=>c.id===character&&c.status==='published');
@@ -64,8 +87,10 @@ export async function onRequestPost({request,env}){
      body:JSON.stringify({text:ttsText,model_id:selectedModel.id,voice_settings:voiceSettings}),
      signal:AbortSignal.timeout(24000)
     });
-    if(upstream.ok&&upstream.body)
+    if(upstream.ok&&upstream.body){
+     if(cacheKey&&r2){const bytes=await upstream.arrayBuffer();scheduleCache(bytes);return new Response(bytes,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Willena-Audio-Cache':'r2-miss','X-Willena-TTS':selectedModel.id,'X-Willena-TTS-Route':'direct'}})}
      return new Response(upstream.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Willena-TTS':selectedModel.id,'X-Willena-TTS-Route':'direct'}});
+    }
     directError='HTTP '+upstream.status;
     const detail=await upstream.json().catch(()=>null);
     const code=String(detail?.detail?.status||detail?.error?.code||'').slice(0,64);
@@ -91,7 +116,8 @@ export async function onRequestPost({request,env}){
    if(typeof payload?.audio!=='string')return reply(502,'Voice backup returned no audio (direct '+directError+')');
    const bytes=Uint8Array.from(atob(payload.audio),c=>c.charCodeAt(0));
    if(bytes.length<500||bytes.length>1200000)return reply(502,'Voice backup returned invalid audio');
-   return new Response(bytes,{status:200,headers:{'Content-Type':'audio/mpeg','Content-Length':String(bytes.length),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Willena-TTS':selectedModel.id,'X-Willena-TTS-Route':'netlify-fallback'}});
+   scheduleCache(bytes);
+   return new Response(bytes,{status:200,headers:{'Content-Type':'audio/mpeg','Content-Length':String(bytes.length),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Willena-Audio-Cache':cacheKey&&r2?'r2-miss':'unavailable','X-Willena-TTS':selectedModel.id,'X-Willena-TTS-Route':'netlify-fallback'}});
   }catch(ex){
    console.warn('[Free Talking TTS] backup connection failed',{direct:directError,backup:String(ex?.name||'error')});
    return reply(502,'Voice unavailable (direct '+directError+', backup connection failed)');
