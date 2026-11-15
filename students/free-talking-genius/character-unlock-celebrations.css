@@ -63,3 +63,54 @@
  display:inline!important;
  opacity:1!important;
 }
+
+/* P4.1: shared character-themed celebration skins.
+   Reused by automatic unlocks, Free Talking milestones, collection replays
+   and Teacher Character Manager. Dusk's established night card is preserved. */
+.ft-character-unlock-celebration{--celebration-accent:#64cbd2;--celebration-ink:#284e57;--celebration-paper:#f7fdfe}
+.ft-character-unlock-celebration .ft-milestone-card{isolation:isolate}
+.ft-character-unlock-celebration.is-bunny{
+ --celebration-accent:#d9a4ff;--celebration-ink:#f5ecff;
+ background:radial-gradient(circle at 79% 15%,#efdefa 0 3%,transparent 3.5%),radial-gradient(circle at 13% 19%,#f4d8ff 0 1px,transparent 2px),radial-gradient(circle at 67% 59%,#d6b5ff 0 1.5px,transparent 2px),radial-gradient(circle at 24% 75%,#fff 0 1px,transparent 2px),linear-gradient(145deg,#0c173d,#2b1b5b 61%,#101a43)!important;
+}
+.ft-character-unlock-celebration.is-bunny .ft-milestone-card{
+ background:radial-gradient(circle at 83% 13%,#fbf6e9 0 42px,#efdbbe 43px 48px,transparent 50px),radial-gradient(circle at 12% 17%,#edbdf9 0 2px,transparent 3px),radial-gradient(circle at 78% 77%,#e7ceff 0 2px,transparent 3px),linear-gradient(155deg,#211d52,#34235b)!important;
+ border-color:#d3a6f3!important;color:#f9f2ff!important;
+}
+.ft-character-unlock-celebration.is-bunny .ft-milestone-art{background:#edf0ff!important;border-color:#d5abf6!important;box-shadow:0 0 0 6px #d9b3f438,0 0 30px #ba8ded44}
+.ft-character-unlock-celebration.is-bunny .ft-milestone-eyebrow{color:#f9c9e4!important}
+.ft-character-unlock-celebration.is-bunny .ft-milestone-actions .ft-milestone-continue{background:#9465ce!important;border-color:#9465ce!important}
+.ft-character-unlock-celebration.is-bunny .ft-milestone-actions .ft-milestone-listen{color:#46326c!important;border-color:#cda4f2!important}
+
+.ft-character-unlock-celebration.is-pigfish{
+ background:radial-gradient(circle at 15% 22%,#b5f4ff16 0 5px,transparent 6px),radial-gradient(circle at 85% 62%,#b5f4ff20 0 9px,transparent 10px),linear-gradient(160deg,#06345c,#052546 60%,#03152d)!important;
+}
+.ft-character-unlock-celebration.is-pigfish .ft-milestone-card{
+ background:radial-gradient(ellipse at 10% 8%,#8ceafe35,transparent 49%),repeating-linear-gradient(111deg,transparent 0 36px,#61d9f30b 37px 48px,transparent 49px 94px),linear-gradient(155deg,#0d5c84,#073c69 68%,#092947)!important;
+ border-color:#73daed!important;color:#ecffff!important;
+}
+.ft-character-unlock-celebration.is-pigfish .ft-milestone-art{background:#a6e9f4!important;border-color:#76ddec!important;box-shadow:0 0 0 6px #64d6e52b}
+.ft-character-unlock-celebration.is-pigfish .ft-milestone-eyebrow{color:#a7f4ff!important}
+.ft-character-unlock-celebration.is-pigfish .ft-milestone-actions .ft-milestone-continue{background:#118ab3!important;border-color:#20b9d2!important}
+.ft-character-unlock-celebration.is-pigfish .ft-milestone-actions .ft-milestone-listen{color:#064c6a!important;border-color:#7bdfef!important}
+
+.ft-character-unlock-celebration.is-steve{background:linear-gradient(145deg,#1b2c1f,#394233 65%,#192c21)!important}
+.ft-character-unlock-celebration.is-steve .ft-milestone-card{
+ background:radial-gradient(ellipse 65px 40px at 10% 18%,#5f7049a6 0 99%,transparent 100%),radial-gradient(ellipse 80px 45px at 94% 65%,#3b4d35aa 0 99%,transparent 100%),radial-gradient(ellipse 36px 70px at 25% 85%,#a19c63a0 0 99%,transparent 100%),repeating-linear-gradient(125deg,#485d3e 0 31px,#5d714b 32px 62px,#384d38 63px 96px,#717953 97px 126px)!important;
+ border-color:#c1ba83!important;color:#fff9db!important;
+}
+.ft-character-unlock-celebration.is-steve .ft-milestone-art{background:#d3d6b8!important;border-color:#c7bf7f!important;box-shadow:0 0 0 6px #171e1644}
+.ft-character-unlock-celebration.is-steve .ft-milestone-eyebrow{color:#f5e4a3!important}
+.ft-character-unlock-celebration.is-steve .ft-milestone-actions .ft-milestone-continue{background:#354f31!important;border-color:#c4c17f!important}
+.ft-character-unlock-celebration.is-steve .ft-milestone-actions .ft-milestone-listen{color:#39512c!important;border-color:#c5c18b!important}
+
+.ft-character-unlock-celebration.is-dusk .ft-milestone-card{background:linear-gradient(155deg,#1b2540,#101c32)!important;border-color:#62d4ce!important;color:#f3f7ff!important}
+.ft-character-unlock-celebration.is-dusk .ft-milestone-eyebrow{color:#9cd9e7!important}
+.ft-character-unlock-celebration.is-willy .ft-milestone-card{background:linear-gradient(150deg,#f9ffff,#d3f4fd)!important;border-color:#42bdcf!important}
+.ft-character-unlock-celebration.is-willi .ft-milestone-card{background:linear-gradient(150deg,#fffefe,#eff3fc)!important;border-color:#98cadc!important}
+.ft-character-unlock-celebration :is(.ft-milestone-quote,.ft-milestone-korean){position:relative;z-index:2}
+.ft-character-unlock-celebration :is(.ft-milestone-quote,.ft-milestone-korean){text-shadow:0 1px 2px #0003}
+.ft-character-unlock-celebration.is-steve :is(.ft-milestone-quote,.ft-milestone-korean){text-shadow:0 2px 3px #172018}
+.ft-character-unlock-celebration .aw-svg :is(.aw-eyes-mood,.aw-cat-details,.aw-electric,.aw-mouth-wave,.aw-idle-mouth){display:none!important}
+.ft-character-unlock-celebration .aw-svg .aw-eyes-default{display:inline!important}
+@media(prefers-reduced-motion:reduce){.ft-character-unlock-celebration *, .ft-character-unlock-celebration *::before,.ft-character-unlock-celebration *::after{animation:none!important}}
