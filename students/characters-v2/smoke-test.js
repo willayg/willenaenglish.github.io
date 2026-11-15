@@ -1,7 +1,7 @@
 import {CHARACTER_REGISTRY,CHARACTER_PERSONAS,registryDiagnostics,charactersInMenu,isCharacterEligible} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
 import {characterMarkup,mountCharacter} from './character-runtime.js?v=20261115-modular-p2-2';
 import {CELEBRATIONS,celebrationAudioKey,visibleCelebrationLine} from '/shared/character-celebration-config.js?v=20261116-p4-1';
-import {createCharacterCelebration} from './celebration-card.js?v=20261116-p4-1';
+import {createCharacterCelebration} from './celebration-card.js?v=20261116-p4-visible-scenery2';
 const checks=document.getElementById('checks'),tests=document.getElementById('tests'),summary=document.getElementById('summary');
 function run(){
  checks.replaceChildren();tests.replaceChildren();
