@@ -5,22 +5,27 @@ import {characterThumbnailMarkup} from '/students/characters-v2/character-runtim
 const root=document.getElementById('characterCollection');
 const celebrationNames={bunny:'BUNNY FOX',pigfish:'PIGFISH',willi:'WILLO',willy:'AI WILLI 2',dusk:'DUSK',steve:'SERGEANT STEVE'};
 const number=n=>Math.max(0,Math.floor(Number(n)||0)).toLocaleString();
+let verifiedPoints=NaN;
+const isUnlocked=(c,points)=>c.unlockPoints===0||c.id==='bunny'||c.id==='pigfish'||(Number.isFinite(points)&&points>=c.unlockPoints);
 function draw(points){
  if(!root)return;
  root.replaceChildren();
  const valid=Number.isFinite(points);
+ verifiedPoints=valid?points:NaN;
  const characters=charactersInMenu();
  const fragment=document.createDocumentFragment();
  for(const c of characters){
   const earned=valid&&points>=c.unlockPoints;
-  const available=c.unlockPoints===0||c.id==='bunny'||c.id==='pigfish';
+  const unlocked=isUnlocked(c,points);
   const card=document.createElement('button');card.type='button';card.className='collection-character';card.dataset.character=c.id;
-  card.setAttribute('aria-label','Play '+c.name+' celebration');
+  card.dataset.locked=String(!unlocked);
+  card.disabled=!unlocked;
+  card.setAttribute('aria-label',unlocked?'Play '+c.name+' celebration':'Locked mystery character');
   const art=document.createElement('div');art.className='collection-art';
   art.innerHTML=characterThumbnailMarkup(c.id,'collection-'+c.id);
-  const title=document.createElement('strong');title.textContent=c.name;
+  const title=document.createElement('strong');title.textContent=unlocked?c.name:'???';
   const detail=document.createElement('span');
-  if(!valid)detail.textContent='Checking points…';
+  if(!valid&&!unlocked)detail.textContent='Checking points…';
   else if(c.unlockPoints===0)detail.textContent='Available';
   else if(c.id==='bunny'||c.id==='pigfish')detail.textContent=number(c.unlockPoints)+' point milestone';
   else detail.textContent=earned?'Unlocked':'Unlock at '+number(c.unlockPoints)+' points';
@@ -32,10 +37,10 @@ function draw(points){
   progress.setAttribute('aria-valuenow',String(valid?(c.unlockPoints===0?100:Math.min(100,Math.round(points/c.unlockPoints*100))):0));
   const caption=document.createElement('small');
   caption.textContent=!valid?'Points unavailable':c.unlockPoints===0?'Ready to use':earned?'Milestone reached':number(points)+' / '+number(c.unlockPoints)+' points';
-  if(available)card.dataset.available='true';
+  if(unlocked)card.dataset.available='true';
   if(earned)card.dataset.earned='true';
   card.append(art,title,detail,progress,caption);
-  card.addEventListener('click',()=>playCollectionCelebration(c));
+  if(unlocked)card.addEventListener('click',()=>playCollectionCelebration(c));
   fragment.append(card);
  }
  root.append(fragment);
@@ -47,6 +52,9 @@ document.addEventListener('willena:profile-overview',event=>{
  draw(event.detail?.points==null?NaN:p);
 });
 function playCollectionCelebration(c){
+ // The UI and its click handler both enforce the same cached unlock state.
+ // Never show a locked character's original artwork or celebration.
+ if(!isUnlocked(c,verifiedPoints))return;
  const existing=document.querySelector('.ft-character-unlock-celebration.collection-replay');
  if(existing)existing.remove();
  // Replay is cosmetic: no unlock claims, points changes, or authentication calls.
