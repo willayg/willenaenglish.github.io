@@ -25,7 +25,7 @@
   steve.className='ft-character-option ft-character-steve';steve.dataset.voice='steve';
   steve.setAttribute('aria-pressed','false');steve.setAttribute('aria-disabled','true');
   steve.hidden=true;
-  steve.innerHTML='<span class="ft-character-symbol" aria-hidden="true"><img class="ft-steve-portrait" src="/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-cropfix4" alt="" draggable="false"></span><strong>Sergeant Steve</strong>';
+  steve.innerHTML='<span class="ft-character-symbol" aria-hidden="true" style="filter:grayscale(1) brightness(.38) contrast(1.2)!important;opacity:.72!important;position:relative"><img class="ft-steve-portrait" src="/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-cropfix5" alt="" draggable="false"><span class="ft-steve-locked-mark" aria-hidden="true" style="position:absolute;inset:0;z-index:8;display:grid;place-items:center;font-size:clamp(27px,5vw,42px);font-weight:800;color:#e8e4f5;text-shadow:0 2px 16px #0b1029,0 0 12px #0b1029;pointer-events:none">?</span></span><strong>Sergeant Steve</strong>';
   choices?.append(steve);
   return menu;
  }
@@ -75,9 +75,21 @@
     button.hidden=false;button.classList.toggle('ft-steve-is-locked',!unlocked);button.classList.toggle('ft-steve-is-unlocked',unlocked);
     button.setAttribute('aria-disabled',String(!unlocked));
     button.setAttribute('aria-label',unlocked?'Sergeant Steve':'Sergeant Steve, '+threshold.toLocaleString()+'포인트 필요');
-    // The unlock threshold belongs in the tap dialog, not under the portrait.
+    // Match Dusk on the WHOLE symbol; !important inline styles win against stale or
+    // late-loading shared stylesheets inside the native Free Talking ShadowRoot.
+    const symbol=button.querySelector('.ft-character-symbol');
+    const mark=button.querySelector('.ft-steve-locked-mark');
+    if(symbol){
+      symbol.style.setProperty('filter',unlocked?'none':'grayscale(1) brightness(.38) contrast(1.2)','important');
+      symbol.style.setProperty('opacity',unlocked?'1':'.72','important');
+      symbol.style.setProperty('position','relative','important');
+    }
+    if(mark)mark.hidden=unlocked;
     const portrait=button.querySelector('.ft-steve-portrait');
-    if(portrait){portrait.style.filter=unlocked?'none':'grayscale(1) saturate(0) brightness(.5) contrast(1.1)';portrait.style.opacity=unlocked?'1':'.77';}
+    if(portrait){
+      portrait.style.setProperty('filter','none','important');
+      portrait.style.setProperty('opacity','1','important');
+    }
     return unlocked}
   close.addEventListener('click',dismiss);dialog.addEventListener('click',e=>{if(e.target===dialog)dismiss()});
   dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();dismiss()}});
