@@ -2308,7 +2308,7 @@ async function startConversation(){
    state.sessionStartContributions=count;
    renderTopicTicker();
   }
-  const res=await authorizedDemoFetch(state.hybrid?'/api/free-talking-hybrid-lab':'/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id,guided:true,action:'lesson'},startAbort.signal);
+  const res=await authorizedDemoFetch(state.hybrid?'/api/free-talking-hybrid-lab':'/api/free-talking-realtime-lab',{book_id:state.book.id,unit_id:state.unit.id,character:state.character,guided:true,action:'lesson'},startAbort.signal);
   if(startId!==activeStartId)return;
   const session=await res.json().catch(()=>({}));
   if(startId!==activeStartId)return;
