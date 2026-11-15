@@ -1,4 +1,5 @@
 import {mountStudentInbox} from './student-inbox.js?v=20261101-menu-prominent1';
+import {checkStudentCharacterUnlocks} from './student-character-unlocks.js?v=20261115-header-milestones1';
 // Student session repair bootstrap.
 if (typeof window !== 'undefined' && window.location.hostname === 'students.willenaenglish.com') {
   import('/students/auth-refresh.js?v=20260726a')
@@ -49,6 +50,9 @@ class StudentHeader extends HTMLElement {
       if (typeof total === 'number') {
         this._points = total;
         this.refresh();
+        // Check the authoritative ledger after a points award in ANY Genius app.
+        this._scheduleOverviewRefresh();
+        setTimeout(()=>void checkStudentCharacterUnlocks(),1600);
       }
     } catch {}
   };
@@ -58,6 +62,8 @@ class StudentHeader extends HTMLElement {
       if (typeof this._points === 'number') {
         this._points += delta;
         this.refresh();
+        this._scheduleOverviewRefresh();
+        setTimeout(()=>void checkStudentCharacterUnlocks(),1600);
       }
     } catch {}
   };
@@ -350,6 +356,11 @@ class StudentHeader extends HTMLElement {
         if (ov && typeof ov.points === 'number' && ov.points !== this._points) { this._points = ov.points; changed = true; }
         if (ov && typeof ov.stars === 'number' && ov.stars !== this._stars) { this._stars = ov.stars; changed = true; }
         if (changed) this.refresh();
+        // Header exists on every Genius app. The server independently verifies
+        // both the points threshold and that celebration was not already claimed.
+        if(ov && Number.isFinite(ov.points) && ov.points>=5000){
+          void checkStudentCharacterUnlocks();
+        }
         return ov || null;
       })
       .catch(() => null)
