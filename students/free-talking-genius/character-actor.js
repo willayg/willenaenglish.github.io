@@ -1,5 +1,5 @@
-import {CHARACTER_REGISTRY} from '/shared/free-talking-character-catalog.js?v=20261115-p2-a';
-import {characterMarkup} from '/students/characters-v2/character-runtime.js?v=20261115-modular-p2-1';
+import {CHARACTER_REGISTRY} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
+import {characterMarkup} from '/students/characters-v2/character-runtime.js?v=20261115-modular-p2-2';
 // Visual-only bridge to the exact SVG animation assets from the Bunny Fox demo.
 // No audio interception, app cloning, auth, recording, grading or progress logic.
 import {BUNNY_FOX_ART,PIGFISH_ART} from './character-art.js?v=20261113-willy-wave3';
