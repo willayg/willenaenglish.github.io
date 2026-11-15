@@ -45,7 +45,7 @@ export async function showCharacterUnlockCelebrations({
       '<p class="ft-milestone-points">'+config.unlockPoints.toLocaleString('en-US')+' POINTS</p>'+
       '<p class="ft-milestone-quote">'+text+'</p>'+
       '<p class="ft-milestone-korean">새로운 대화 친구가 열렸어요!</p>'+
-      '<div class="ft-milestone-actions"><button type="button" class="ft-milestone-listen">🔊 목소리 듣기</button>'+
+      '<div class="ft-milestone-actions"><button type="button" class="ft-milestone-listen">목소리 듣기</button>'+
       '<button type="button" class="ft-milestone-continue">친구 만나기</button></div>'+
       '<p class="ft-milestone-status" role="status" aria-live="polite"></p></div>';
     root.append(dialog);
@@ -56,7 +56,7 @@ export async function showCharacterUnlockCelebrations({
     const stop=()=>{if(audio){try{audio.pause();URL.revokeObjectURL(audio.src)}catch{}audio=null}};
     const play=async()=>{
       if(disposed||busy||!active())return;
-      busy=true;listen.disabled=true;listen.textContent='🔊 준비 중…';message.textContent='';
+      busy=true;listen.disabled=true;listen.textContent='준비 중…';message.textContent='';
       try{
         stop();
         const res=await request('/api/free-talking-realtime-eleven',{character,text});
@@ -65,10 +65,10 @@ export async function showCharacterUnlockCelebrations({
         if(disposed)return;
         if(blob.size<500)throw Error('Voice unavailable');
         audio=new Audio();audio.src=URL.createObjectURL(blob);
-        audio.onended=()=>{listen.textContent='🔊 다시 듣기'};
+        audio.onended=()=>{listen.textContent='다시 듣기'};
         await audio.play();
-        listen.textContent='🔊 다시 듣기';
-      }catch(e){if(!disposed){message.textContent='음성을 재생할 수 없어요. 다시 눌러 주세요.';listen.textContent='🔊 다시 듣기'}}
+        listen.textContent='다시 듣기';
+      }catch(e){if(!disposed){message.textContent='음성을 재생할 수 없어요. 다시 눌러 주세요.';listen.textContent='다시 듣기'}}
       finally{busy=false;if(!disposed)listen.disabled=false}
     };
     listen.addEventListener('click',()=>void play());
