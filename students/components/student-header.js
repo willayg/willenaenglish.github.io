@@ -361,6 +361,13 @@ class StudentHeader extends HTMLElement {
         if (ov && typeof ov.points === 'number' && ov.points !== this._points) { this._points = ov.points; changed = true; }
         if (ov && typeof ov.stars === 'number' && ov.stars !== this._stars) { this._stars = ov.stars; changed = true; }
         if (changed) this.refresh();
+        // Publish the same authenticated overview to every shared character
+        // menu in this page; never let a stale iframe points fetch relock Steve.
+        if(ov&&Number.isFinite(Number(ov.points))&&this._uid){
+          window.dispatchEvent(new CustomEvent('willena:verified-student-points',{
+            detail:{userId:this._uid,points:Number(ov.points)}
+          }));
+        }
         // Header exists on every Genius app. The server independently verifies
         // both the points threshold and that celebration was not already claimed.
         if(ov && Number.isFinite(ov.points) && ov.points>=5000){
