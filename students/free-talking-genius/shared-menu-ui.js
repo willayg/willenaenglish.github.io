@@ -25,7 +25,7 @@
   steve.className='ft-character-option ft-character-steve';steve.dataset.voice='steve';
   steve.setAttribute('aria-pressed','false');steve.setAttribute('aria-disabled','true');
   steve.hidden=true;
-  steve.innerHTML='<span class="ft-character-symbol" aria-hidden="true"></span><strong>Sergeant Steve</strong><small>🔒 10,000 points</small>';
+  steve.innerHTML='<span class="ft-character-symbol" aria-hidden="true"></span><strong>Sergeant Steve</strong><small>🔒 8,000 points</small>';
   choices?.append(steve);
   return menu;
  }
@@ -61,7 +61,7 @@
   dialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
   update(null);return {update,open,close:dismiss};
  }
- function createSteveUnlockUI(menu,threshold=10000){
+ function createSteveUnlockUI(menu,threshold=8000){
   const button=menu?.querySelector('#ftChooseSteve');if(!button)return null;
   const dialog=document.createElement('div');dialog.className='ft-dusk-unlock-dialog';dialog.hidden=true;
   dialog.innerHTML='<div class="ft-dusk-unlock-panel" role="dialog" aria-modal="true" aria-labelledby="steveUnlockTitle"><span class="ft-dusk-unlock-icon">★</span><h3 id="steveUnlockTitle">Sergeant Steve</h3><p class="steve-lock-message"></p><button type="button" class="ft-dusk-unlock-close">확인</button></div>';
