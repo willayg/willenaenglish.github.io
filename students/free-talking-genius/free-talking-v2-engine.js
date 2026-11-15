@@ -3,11 +3,11 @@
 // audio, pause, prompt, review and result behaviour without modifying V1.
 // NativeHost is mandatory; standalone V1 remains in extension.js.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
-import {createHybridCharacterStage} from '/students/free-talking-hybrid-lab/shared-character-stage.js?v=20261115-steve-mouth5';
+import {createHybridCharacterStage} from '/students/free-talking-hybrid-lab/shared-character-stage.js?v=20261115-steve-mouthposition7';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
 import {DUSK_ART,DUSK_UNLOCK_POINTS} from '/students/free-talking-genius/dusk-character.js?v=20261114-no-legacy-card1';
-import {STEVE_ART,STEVE_UNLOCK_POINTS} from '/students/free-talking-genius/steve-character.js?v=20261115-steve-mouth5';
+import {STEVE_ART,STEVE_UNLOCK_POINTS} from '/students/free-talking-genius/steve-character.js?v=20261115-steve-mouthposition7';
 import {scopedCharacterArt} from '/students/free-talking-genius/character-actor.js?v=20261114-p4-visual1';
 import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 // Native pilot uses the existing document and an isolated ShadowRoot.
