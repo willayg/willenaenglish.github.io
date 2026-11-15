@@ -21,7 +21,7 @@ export async function onRequestPost({request}){
   const res=await fetch(ROOT+'/rest/v1/profiles?select=role,approved&id=eq.'+encodeURIComponent(user.id)+'&limit=1',{headers:auth,signal:AbortSignal.timeout(9000)});
   const p=res.ok?(await res.json())[0]:null;
   if(!p||p.role!=='student'||p.approved!==true)return json(403,{error:'Student account required'});
-  const pointsRes=await fetch(ROOT+'/rest/v1/rpc/sum_points_for_user',{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify({uid:user.id}),signal:AbortSignal.timeout(11000)});
+  const pointsRes=await fetch(ROOT+'/rest/v1/rpc/student_own_total_points',{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(11000)});
   const points=pointsRes.ok?Number(await pointsRes.json().catch(()=>NaN)):NaN;
   if(!Number.isFinite(points)||points<0)return json(503,{error:'Could not verify points'});
   const base=ROOT+'/rest/v1/free_talking_character_unlocks';
