@@ -36,20 +36,34 @@ export function mountCharacter(host,characterId,{thumbnail=false}={}){
  if(!config)throw Error('Unknown character: '+characterId);
  const suffix='v2-'+(++instanceSerial);
  const markup=characterMarkup(characterId);
- host.innerHTML=thumbnail?scopeIds(markup,suffix):markup;
+ host.replaceChildren();
+ const actor=document.createElement('span');
+ actor.className='bf-actor';
+ actor.dataset.state='idle';
+ actor.dataset.mood='neutral';
+ actor.dataset.steveMood='stern';
+ actor.dataset.audioSpeaking='false';
+ actor.innerHTML=thumbnail?scopeIds(markup,suffix):markup;
+ host.append(actor);
  host.dataset.character=characterId;
- host.dataset.state='idle';host.dataset.steveMood='stern';
- const actor=host.firstElementChild;
+ host.dataset.state='idle';
  return {
   character:config,host,actor,
   setPhase(phase){
    if(!VALID_PHASES.has(phase)||!config.states.includes(phase))return false;
    host.dataset.state=phase;
-   if(phase==='surprised'||phase==='shouting')host.dataset.steveMood=phase;
-   else if(phase==='idle')host.dataset.steveMood='stern';
+   const speaking=['speaking','surprised','shouting'].includes(phase);
+   actor.dataset.state=speaking?'speaking':phase;
+   actor.dataset.audioSpeaking=String(speaking);
+   actor.dataset.mood=characterId==='willy'&&phase==='surprised'?'surprised':'neutral';
+   if(characterId==='steve')actor.dataset.steveMood=phase==='surprised'?'surprised':phase==='shouting'?'shouting':'stern';
+   if(characterId==='dusk'){
+     const body=actor.querySelector('.ft-dusk-actor');
+     if(body){if(phase==='surprised')body.dataset.duskEffect='surprised';else delete body.dataset.duskEffect}
+   }
    return true;
   },
-  setSpeaking(playing){host.dataset.audioSpeaking=playing?'true':'false';return true},
+  setSpeaking(playing){actor.dataset.audioSpeaking=String(Boolean(playing));actor.dataset.state=playing?'speaking':'idle';host.dataset.audioSpeaking=String(Boolean(playing));return true},
   destroy(){if(host.dataset.character===characterId){host.replaceChildren();delete host.dataset.character;delete host.dataset.state}}
  };
 }
