@@ -1,4 +1,4 @@
-import {CHARACTER_REGISTRY,CHARACTER_PERSONAS,registryDiagnostics,charactersInMenu} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
+import {CHARACTER_REGISTRY,CHARACTER_PERSONAS,registryDiagnostics,charactersInMenu,isCharacterEligible} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
 import {characterMarkup,mountCharacter} from './character-runtime.js?v=20261115-modular-p2-2';
 const checks=document.getElementById('checks'),tests=document.getElementById('tests'),summary=document.getElementById('summary');
 function run(){
@@ -13,6 +13,13 @@ function run(){
  check('Catalog validates',issues.length===0,issues.join('; '));
  check('All six original characters registered',CHARACTER_REGISTRY.length===6);
  check('Requested character menu ordering',charactersInMenu().map(c=>c.id).join(',')==='bunny,willy,pigfish,willi,dusk,steve');
+ // P3: canonical thresholds must match every client selector and backend.
+ for(const [id,threshold] of [['bunny',100],['pigfish',300],['dusk',5000],['steve',8000]]){
+  check(id+' unlocks at '+threshold+' points',!isCharacterEligible(id,threshold-1)&&isCharacterEligible(id,threshold));
+ }
+ check('Free characters start unlocked',isCharacterEligible('willi',0)&&isCharacterEligible('willy',0));
+ check('Unknown points never unlock earned characters',!isCharacterEligible('bunny',NaN)&&!isCharacterEligible('pigfish',NaN));
+
  for(const c of charactersInMenu()){
   const card=document.createElement('div');card.className='test-card';
   const label=document.createElement('strong');label.textContent=c.name;card.append(label);
