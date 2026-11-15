@@ -1,5 +1,5 @@
 import {getCharacter} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
-import {createCharacterCelebration} from '/students/characters-v2/celebration-card.js?v=20261116-p4-1';
+import {createCharacterCelebration} from '/students/characters-v2/celebration-card.js?v=20261116-p4-visible-scenery2';
 // Free Talking-only milestone cards. Uses the existing student token and one-time server record.
 // Never interrupts an active conversation, never changes points or student assignments.
 export async function showCharacterUnlockCelebrations({
