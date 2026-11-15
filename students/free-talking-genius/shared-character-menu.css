@@ -248,3 +248,7 @@
   box-shadow:0 0 0 5px #7fcbd588!important;
   transform:scale(1.045)!important;
 }
+
+/* Steve is intentionally absent from Structured Speaking. The shared menu creates him hidden;
+   this specificity defeats legacy !important flex rules in both app layouts. */
+#ftCharacter .ft-character-steve[hidden]{display:none!important}
