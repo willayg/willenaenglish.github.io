@@ -25,7 +25,7 @@
   steve.className='ft-character-option ft-character-steve';steve.dataset.voice='steve';
   steve.setAttribute('aria-pressed','false');steve.setAttribute('aria-disabled','true');
   steve.hidden=true;
-  steve.innerHTML='<span class="ft-character-symbol" aria-hidden="true"></span><strong>Sergeant Steve</strong><small>🔒 8,000 points</small>';
+  steve.innerHTML='<span class="ft-character-symbol" aria-hidden="true"><img class="ft-steve-portrait" src="/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-portrait1" alt="" draggable="false"></span><strong>Sergeant Steve</strong>';
   choices?.append(steve);
   return menu;
  }
@@ -75,7 +75,7 @@
     button.hidden=false;button.classList.toggle('ft-steve-is-locked',!unlocked);button.classList.toggle('ft-steve-is-unlocked',unlocked);
     button.setAttribute('aria-disabled',String(!unlocked));
     button.setAttribute('aria-label',unlocked?'Sergeant Steve':'Sergeant Steve, '+threshold.toLocaleString()+'포인트 필요');
-    const label=button.querySelector('small');if(label)label.textContent=unlocked?'준비 완료':'🔒 '+threshold.toLocaleString()+' points';
+    // The unlock threshold belongs in the tap dialog, not under the portrait.
     return unlocked}
   close.addEventListener('click',dismiss);dialog.addEventListener('click',e=>{if(e.target===dialog)dismiss()});
   dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();dismiss()}});
