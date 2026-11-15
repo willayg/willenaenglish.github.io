@@ -44,7 +44,7 @@ export async function onRequestPost({request,env}){
    return new Response(speech.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Willena-TTS-Route':'openai-marin','X-Content-Type-Options':'nosniff'}});
   }
   if(character==='steve'&&profile.role==='student'){
-   const checked=await fetch(ROOT+'/rest/v1/rpc/sum_points_for_user',{method:'POST',headers:{apikey:PUB,Authorization:'Bearer '+bearer,'Content-Type':'application/json'},body:JSON.stringify({uid:user.id}),signal:AbortSignal.timeout(10000)});
+   const checked=await fetch(ROOT+'/rest/v1/rpc/student_own_total_points',{method:'POST',headers:{apikey:PUB,Authorization:'Bearer '+bearer,'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(10000)});
    const value=checked.ok?Number(await checked.json().catch(()=>NaN)):NaN;
    if(!Number.isFinite(value)||value<8000)return reply(403,'Sergeant Steve requires 8,000 points');
   }
