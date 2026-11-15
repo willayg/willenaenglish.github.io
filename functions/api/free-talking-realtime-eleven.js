@@ -1,8 +1,9 @@
+import {CHARACTER_REGISTRY} from '../../shared/free-talking-character-catalog.js';
 // Demo-only authenticated ElevenLabs v3 Conversational TTS proxy.
 // The existing Free Talking Genius endpoints and files are untouched.
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co';
 const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const VOICES={willi:'marin',willy:'GSGMGjgDtwaXe25hDMNI',bunny:'M7zl2TS7ORAIGUejDfoy',pigfish:'W7UbuMY4ypluqgZS2UzT',dusk:'OBZs1sGUHfHnTlpkyXwC',steve:'8j74BTqU7XqD2faIlSD4'};
+const VOICES=Object.fromEntries(CHARACTER_REGISTRY.filter(c=>c.status==='published').map(c=>[c.id,c.voiceId]));
 const reply=(status,message)=>new Response(JSON.stringify({error:message}),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
 export async function onRequestPost({request,env}){
  const origin=request.headers.get('Origin');
