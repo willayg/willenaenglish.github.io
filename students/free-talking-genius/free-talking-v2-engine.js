@@ -690,7 +690,8 @@ function saveHybridTranscript(who,spoken,verdict=null,proof=null,stamp=null,sour
   }
   (state.transcriptFailedWrites||(state.transcriptFailedWrites=[])).push(body);
   state.transcriptSaveErrors=state.transcriptFailedWrites.length;
-  console.warn('[Free Talking] transcript not saved',sessionId,turnNumber,String(lastError));
+  state.transcriptLastError=String(lastError?.message||lastError||'Unknown error').slice(0,180);
+  console.warn('[Free Talking] transcript not saved',sessionId,turnNumber,state.transcriptLastError);
  });
 }
 async function retryUnsentTranscripts(){
@@ -1423,7 +1424,7 @@ async function playAnchor(index){
    $('restart').hidden=false;$('restart').disabled=false;
    $('pauseResume').disabled=false;
    $('listenCheck').textContent='Transcript save failed · Tap Retry';
-   error('Could not save the conversation transcript. Please retry or tell your teacher.');
+   error('Could not save the conversation transcript ('+(state.transcriptLastError||'connection error')+'). Please retry or tell your teacher.');
    return;
   }
  }
@@ -2220,7 +2221,7 @@ async function startConversation(){
    try{state.recentQualified=JSON.parse(localStorage.getItem(ftCompletionKey()+':recentQualified')||'[]').slice(-18)}catch{state.recentQualified=[]}
   state.transcriptSessionId=crypto.randomUUID();
   state.transcriptTurnNumber=0;state.transcriptSaved=0;state.transcriptSaveErrors=0;
-  state.transcriptFailedWrites=[];
+  state.transcriptFailedWrites=[];state.transcriptLastError='';
   state.transcriptSaveQueue=Promise.resolve();
  }
  if(!continuing&&!state.initialLoadingShown){state.initialLoadingShown=true;$('ftBootSpinner').hidden=false;}
