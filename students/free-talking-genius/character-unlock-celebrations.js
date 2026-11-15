@@ -18,7 +18,8 @@ export async function showCharacterUnlockCelebrations({
   if(!queue.length)return;
   // Prevent a second async menu reopen from displaying duplicate dialogs.
   if(root.querySelector('.ft-character-unlock-celebration'))return;
-  for(const character of queue){
+  // One milestone per menu visit: don't barrage existing students with multiple dialogs.
+  for(const character of queue.slice(0,1)){
     if(!menu.isConnected||!active())break;
     await showOne(character);
   }
@@ -73,7 +74,7 @@ export async function showCharacterUnlockCelebrations({
     listen.addEventListener('click',()=>void play());
     // The first attempt may be blocked by mobile autoplay; the listen button is
     // an explicit user-gesture fallback and remains available.
-    void play();
+    // No paid TTS request until the student explicitly taps Listen.
     await new Promise(resolve=>{
       let closing=false;
       next.addEventListener('click',async()=>{
