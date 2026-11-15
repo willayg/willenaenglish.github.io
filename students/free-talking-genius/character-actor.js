@@ -149,7 +149,9 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
   // Keep the mood inferred from THIS spoken line, never cycle through moods.
   // All expression and spark effects are CSS-gated to the speaking state.
   if(!voiceSpeaking){
-   actor.dataset.mood='neutral';actor.dataset.steveMood='stern';
+   actor.dataset.mood='neutral';
+   // Keep Steve's chosen expression until the next generated line sets it.
+   if(selected!=='steve')actor.dataset.steveMood='stern';
    if(actor.dataset.state==='celebrating')actor.dataset.state='idle';
   }
   update();
