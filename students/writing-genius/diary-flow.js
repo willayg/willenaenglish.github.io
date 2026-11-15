@@ -777,40 +777,49 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    reference.append(p);return p;
   });
   stage.append(reference);
+  // Progress is monotonic: every recognized sentence stays complete across
+  // separate microphone recordings. Never rescan from the start of the diary.
+  let speechLineIndex=0;
+  let pendingSpeechWords=[];
+  const showSpeechProgress=()=>{
+   lineNodes.forEach((node,i)=>{
+    node.classList.toggle('is-complete',i<speechLineIndex);
+    node.classList.toggle('is-current',i===speechLineIndex);
+   });
+   if(speechLineIndex<scriptLines.length&&lineNodes[speechLineIndex]){
+    lineNodes[speechLineIndex].scrollIntoView({block:'nearest',behavior:'smooth'});
+   }
+  };
   const updateTeleprompter=heard=>{
-   if(!lineNodes.length)return;
-   const spoken=speechWords(heard);
-   let consumed=0,activeIndex=0;
-   for(let i=0;i<scriptLines.length;i++){
-    const tokens=speechWords(scriptLines[i]);
-    if(!tokens.length)continue;
-    // Match the line itself, not the line plus two words from the next line.
-    // The old +2 window made short lines such as "Dear Diary." impossible
-    // to complete: 4 recognized words could never match a 2-word target.
-    const remaining=spoken.slice(consumed);
-    let advance=0;
-    for(let offset=0;offset<=Math.min(2,remaining.length-1)&&!advance;offset++){
-     for(let size=Math.max(1,tokens.length-1);size<=tokens.length+1;size++){
-      const candidate=remaining.slice(offset,offset+size);
-      if(candidate.length!==size)continue;
-      const segment=candidate.join(' ');
-      if(writingSpeechAccepted(scriptLines[i],segment)||
-        (tokens.length<=3&&size>=tokens.length&&spokenAccuracy(scriptLines[i],segment)>=.84)){
-       advance=offset+size;
-       break;
-      }
+   if(!lineNodes.length)return false;
+   pendingSpeechWords.push(...speechWords(heard));
+   // A result may contain several sentences, or only part of one sentence.
+   // Match the current line first, then carry any remaining words forwards.
+   while(speechLineIndex<scriptLines.length&&pendingSpeechWords.length){
+    const target=scriptLines[speechLineIndex];
+    const targetWords=speechWords(target);
+    if(!targetWords.length){speechLineIndex++;continue}
+    let match=null;
+    const minSize=Math.max(1,Math.ceil(targetWords.length*.75));
+    const maxSize=Math.min(pendingSpeechWords.length,targetWords.length+2);
+    for(let offset=0;offset<=Math.min(3,pendingSpeechWords.length-minSize)&&!match;offset++){
+     for(let size=minSize;size<=maxSize;size++){
+      const candidate=pendingSpeechWords.slice(offset,offset+size).join(' ');
+      const accurate=writingSpeechAccepted(target,candidate)||
+       (targetWords.length>=4&&spokenAccuracy(target,candidate)>=.82);
+      if(accurate){match={used:offset+size};break}
      }
     }
-    if(advance){
-     consumed+=advance;activeIndex=i+1;
-    }else break;
+    if(!match)break;
+    pendingSpeechWords.splice(0,match.used);
+    speechLineIndex++;
    }
-   activeIndex=Math.min(activeIndex,lineNodes.length-1);
-   lineNodes.forEach((node,i)=>{
-    node.classList.toggle('is-complete',i<activeIndex);
-    node.classList.toggle('is-current',i===activeIndex);
-   });
-   if(heard&&activeIndex<lineNodes.length)lineNodes[activeIndex].scrollIntoView({block:'nearest',behavior:'smooth'});
+   // Keep enough context to join speech fragments without accumulating
+   // unrelated recognition noise forever.
+   const maxPending=Math.max(12,speechWords(scriptLines[speechLineIndex]||'').length+6);
+   if(pendingSpeechWords.length>maxPending)pendingSpeechWords=pendingSpeechWords.slice(-maxPending);
+   showSpeechProgress();
+   return speechLineIndex>=scriptLines.length;
   };
   const speakArea=el('div','df-final-speak');
   const typeArea=el('div','df-final-type');
@@ -871,7 +880,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    reference.classList.toggle('is-writing-mode',useTyping);
    speakBtn.classList.toggle('wg-primary',!useTyping);typeBtn.classList.toggle('wg-primary',useTyping);
    if(useTyping)renderTypingLine();
-   else lineNodes.forEach((node,i)=>{node.classList.toggle('is-complete',confirmed);node.classList.toggle('is-current',!confirmed&&i===0)});
+   else showSpeechProgress();
    if(typeof finishButton!=='undefined')finishButton.disabled=useTyping?typingIndex<scriptLines.length:!confirmed;
   };
   speakBtn.onclick=()=>setMode(false);typeBtn.onclick=()=>setMode(true);
@@ -886,17 +895,15 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    if(!segment)return;
    spokenParts.push(segment);
    const joined=spokenParts.join(' ');
-   updateTeleprompter(joined);
-   const accuracy=spokenAccuracy(current.body,joined);
-   const coverage=speechWords(joined).length/Math.max(1,speechWords(current.body).length);
-   if(accuracy>=.8&&coverage>=.78){
+   const allLinesRead=updateTeleprompter(segment);
+   if(allLinesRead){
     confirmed=true;spoken=[joined];typedUsed=false;
     lineNodes.forEach(node=>{node.classList.add('is-complete');node.classList.remove('is-current')});
     status('말하기 연습을 완료했어요.');
     if(mic)mic.disabled=true;
     finishButton.disabled=false;
    }else{
-    speakStatus.textContent='계속 읽어 주세요. 인식한 단어: '+speechWords(joined).length+' / '+speechWords(current.body).length;
+    speakStatus.textContent='계속 읽어 주세요. '+(speechLineIndex+1)+' / '+scriptLines.length+' 문장 · 인식한 단어: '+speechWords(joined).length+' / '+speechWords(current.body).length;
    }
   };
   audioRenderer.onSpeechResult=alternatives=>{
