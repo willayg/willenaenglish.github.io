@@ -228,7 +228,7 @@ function ensureKeyboard(){
     if(key==='backspace')startRepeat();
     else if(key==='space')replaceSelection(' ');
     else if(key==='period')replaceSelection('.');
-    else if(key==='enter')replaceSelection(active?.tagName==='TEXTAREA'?'\n':' ');
+    else if(key==='enter'){if(active?.tagName==='TEXTAREA')replaceSelection('\n');else focusNextEmpty()}
     else if(key==='question')replaceSelection('?');
     else if(key==='shift'){caps=!caps;renderCaps()}
     else if(key==='confirm')keyBtn.dataset.submitOnUp='1';
@@ -307,7 +307,7 @@ function onInput(e){if(!isRendererField(e.target))return;active=e.target;schedul
 function onKeyDown(e){
   const el=e.target;if(!isAppField(el))return;active=el;
   if(e.ctrlKey||e.metaKey||e.altKey)return;
-  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.stopImmediatePropagation();submitOrNext();return}
+  if(e.key==='Enter'&&!e.shiftKey){if(el.tagName==='TEXTAREA')return;e.preventDefault();e.stopImmediatePropagation();focusNextEmpty();return}
   if(e.key.length===1||e.key==='Backspace'||e.key==='Delete'||e.key.startsWith('Arrow'))hideWillenaKeyboard();
 }
 
