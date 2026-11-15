@@ -1893,6 +1893,7 @@ async function playReviewOutro(){
  message(NAMES[state.character]+' is wrapping up our chat…');
  state.actor?.setMood?.('happy');
  const audio=new Audio(clip.url);state.speaker=audio;state.playing=audio;
+ bindCharacterMouth(audio);
  routeAudio(audio);state.ttsPlaying=true;
  try{
   await releaseMicForPlayback();
