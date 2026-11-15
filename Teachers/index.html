@@ -2201,5 +2201,30 @@ window.addEventListener('willena:assignment-created',e=>window.WillenaAssignment
  choose(initial);
 })();
 </script>
+<script>
+// Character Manager V2 is hosted on Students. Hand a teacher token only to the
+// specifically embedded Students preview, in response to a direct Play click.
+// No token is included in URLs or stored in the iframe by the bridge.
+window.addEventListener('message',async event=>{
+ if(event.origin!=='https://students.willenaenglish.com')return;
+ const frame=document.getElementById('teacherCharacterManagerV2Frame');
+ if(!frame||event.source!==frame.contentWindow)return;
+ if(event.data?.type!=='willena:character-preview-token-request')return;
+ const nonce=String(event.data.nonce||'');
+ if(!/^[a-z0-9-]{8,80}$/i.test(nonce))return;
+ let token=window.WillenaAPI?.getLocalAccessToken?.()||'';
+ const valid=t=>{try{const c=JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return Number(c.exp)*1000>Date.now()+30000}catch{return false}};
+ if(!valid(token)){
+  try{
+   const fn=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
+   const res=await fn('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'});
+   const data=await res.json().catch(()=>({}));
+   if(res.ok&&valid(data.access_token)){token=data.access_token;window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'')}
+  }catch{}
+ }
+ if(event.source!==frame.contentWindow)return;
+ event.source.postMessage({type:'willena:character-preview-token-response',nonce,token:valid(token)?token:''},'https://students.willenaenglish.com');
+});
+</script>
 </body>
 </html>
