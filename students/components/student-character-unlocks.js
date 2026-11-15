@@ -9,7 +9,7 @@ const SCORES='https://fiieuiktlsivwfgyivai.supabase.co';
 const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const earnedCharacters=charactersInMenu().filter(c=>c.unlockPoints>0).sort((a,b)=>a.unlockPoints-b.unlockPoints);
 let inProgress=false, lastCheck=0;
-const styles='/students/free-talking-genius/character-unlock-celebrations.css?v=20261116-bunny-closed-mouth1';
+const styles='/students/free-talking-genius/character-unlock-celebrations.css?v=20261116-p4-themed1';
 function validToken(token){
  if(!token||token.split('.').length!==3)return false;
  try{const claims=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
