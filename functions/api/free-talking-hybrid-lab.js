@@ -521,8 +521,10 @@ export async function onRequestPost({request,env}){
       (speaker!=='character'||String(existing.message_source||'')===String(row.message_source||'')))
       return json(200,{saved:true,previouslySaved:true});
     }
-    console.warn('[Free Talking] transcript write rejected',saved.status);
-    return json(502,{error:'Could not save transcript ('+saved.status+')'});
+    const failure=await saved.json().catch(()=>null);
+    const dbCode=String(failure?.code||'').slice(0,24);
+    console.warn('[Free Talking] transcript write rejected',saved.status,dbCode);
+    return json(502,{error:'Could not save transcript (DB '+saved.status+(dbCode?', '+dbCode:'')+')'});
    }
    return json(200,{saved:true});
   }
