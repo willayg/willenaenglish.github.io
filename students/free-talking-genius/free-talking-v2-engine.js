@@ -2454,9 +2454,12 @@ async function initStandaloneRelease(){
  const openSteveDialog=()=>steveUnlock?.open();
  // Both earned characters use one verified points state. The shared header is
  // authoritative across apps and is mounted outside the native conversation.
- const applyEarnedPoints=points=>{
-  if(!Number.isFinite(Number(points)))return;
+ let headerPointsVerified=false;
+ const applyEarnedPoints=(points,source='fallback')=>{
+  if(points==null||!Number.isFinite(Number(points)))return;
+  if(source!=='header'&&headerPointsVerified)return;
   const total=Math.max(0,Math.floor(Number(points)));
+  if(source==='header')headerPointsVerified=true;
   showDuskPoints(total);showStevePoints(total);
  };
  nativeHost._earnedPointsListener?.abort();
@@ -2465,12 +2468,12 @@ async function initStandaloneRelease(){
  window.addEventListener('willena:verified-student-points',event=>{
   if(!menu.isConnected||!nativeHost.active)return;
   if(event.detail?.userId&&nativeHost.header?._uid&&event.detail.userId!==nativeHost.header._uid)return;
-  applyEarnedPoints(event.detail?.points);
+  applyEarnedPoints(event.detail?.points,'header');
  },{signal:earnedListener.signal});
  showDuskPoints(null);showStevePoints(null);
  // Refresh the same authoritative shared header source now, rather than
  // depending on a separate iframe fetch that can be stale or unavailable.
- if(nativeHost.header?._points!=null&&nativeHost.header?._uid)applyEarnedPoints(nativeHost.header._points);
+ if(nativeHost.header?._points!=null&&nativeHost.header?._uid)applyEarnedPoints(nativeHost.header._points,'header');
  void nativeHost.header?._fetchOverview?.();
  // Dusk's existing server-verified lookup remains a secondary backstop only.
  void authoritativeDuskPoints().then(points=>applyEarnedPoints(points)).catch(err=>{
@@ -2493,16 +2496,21 @@ async function initStandaloneRelease(){
  async function begin(){
   if(!ready||!selected||starting)return;
   starting=true;
-  if(selected==='dusk'){
+  if(selected==='dusk'||selected==='steve'){
+   // Dusk and Steve share the same eligibility path and verified total.
+   // The back end independently checks Steve's 8k threshold at session start.
    try{
-    const points=await authoritativeDuskPoints();showDuskPoints(points);
-    if(points<DUSK_UNLOCK_POINTS){showError('🔒 5,000 points required to unlock Dusk.');starting=false;return}
-   }catch(ex){showError('Cannot verify Dusk unlock: '+ex.message);starting=false;return}
-  }
-  if(selected==='steve'){
-   try{const points=await authoritativeDuskPoints();showStevePoints(points);
-    if(points<STEVE_UNLOCK_POINTS){showError('🔒 8,000 points required to unlock Sergeant Steve.');starting=false;return}
-   }catch(ex){showError('Cannot verify Sergeant Steve unlock: '+ex.message);starting=false;return}
+    const header=nativeHost.header;
+    const refreshed=await header?._fetchOverview?.().catch(()=>null);
+    const points=header?._uid&&Number.isFinite(Number(refreshed?.points))
+     ? Number(refreshed.points)
+     : header?._uid&&Number.isFinite(Number(header?._points))
+       ? Number(header._points)
+       : await authoritativeDuskPoints();
+    applyEarnedPoints(points,header?._uid?'header':'fallback');
+    const minimum=selected==='steve'?STEVE_UNLOCK_POINTS:DUSK_UNLOCK_POINTS;
+    if(points<minimum){showError('🔒 '+minimum.toLocaleString()+' points required to unlock '+(selected==='steve'?'Sergeant Steve':'Dusk')+'.');starting=false;return}
+   }catch(ex){showError('Cannot verify character unlock: '+ex.message);starting=false;return}
   }
   buttons.forEach(b=>b.disabled=true);
   if(startButton)startButton.disabled=true;
