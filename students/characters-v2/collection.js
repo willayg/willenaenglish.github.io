@@ -76,5 +76,5 @@ function playCollectionCelebration(c){
  overlay.addEventListener('click',e=>{if(e.target===overlay)dismiss()});
  close.focus({preventScroll:true});
 }
-if(window.__willenaDashboardOverview)draw(Number(window.__willenaDashboardOverview.points));
+if(window.__willenaDashboardOverview)draw(window.__willenaDashboardOverview.points==null?NaN:Number(window.__willenaDashboardOverview.points));
 else draw(NaN);
