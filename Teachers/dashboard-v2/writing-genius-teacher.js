@@ -145,15 +145,19 @@ async function load(){
 function reviewLines(entry){
  const feedback=entry.ai_feedback;
  const changes=Array.isArray(feedback?.improvements)?feedback.improvements:[];
- const original=String(entry.body||'');
- let corrected=original;
+ // The saved entry body is the student's final submitted text. Earlier wording
+ // is available only in AI improvement pairs, not as a complete first draft.
+ const final=String(entry.body||'');
+ let draft=final,matched=0,unmatched=0;
  for(const x of changes){
   const before=String(x.original||'').trim(),after=String(x.better||'').trim();
-  if(!before||!after)continue;
-  const index=corrected.indexOf(before);
-  if(index>=0)corrected=corrected.slice(0,index)+after+corrected.slice(index+before.length);
+  if(!before||!after||before===after)continue;
+  const index=draft.indexOf(after);
+  if(index<0){unmatched++;continue}
+  draft=draft.slice(0,index)+before+draft.slice(index+after.length);
+  matched++;
  }
- return {corrected,changes};
+ return {draft,final,changes,matched,unmatched};
 }
 // Compare the rendered versions, not merely the list of AI suggestions. This also
 // handles saved suggestions that could not be applied to the original paragraph.
@@ -291,21 +295,22 @@ function detail(entry){
  head.append(attribution);
  host.append(head);
  if(entry.prompt_text)host.append(make('div','wg-t-prompt',entry.prompt_text));
- const section=(title,body,cls)=>{const wrapper=make('section','wg-t-version');wrapper.append(make('h3','wg-t-version-title',title),make('div','wg-t-paper '+(cls||''),body));host.append(wrapper)};
- section('Original · 학생이 쓴 글',entry.body||'');
+ const section=(title,body,cls)=>{const wrapper=make('section','wg-t-version');wrapper.append(make('h3','wg-t-version-title',title),make('div','wg-t-paper '+(cls||''),body));host.append(wrapper);return wrapper};
  if(entry.ai_feedback){
-  const {corrected,changes}=reviewLines(entry);
-  const difference=writingDiff(entry.body||'',corrected);
-  section('AI Willi · Corrected version',corrected,'wg-t-corrected');
+  const {draft,final,changes,matched,unmatched}=reviewLines(entry);
+  const originalSection=section(matched?'First draft · AI 기록에서 복원':'Student submission · 학생이 제출한 글',draft);
+  if(matched)originalSection.append(make('p','wg-t-note','Reconstructed from saved AI correction pairs; not a separately preserved verbatim first draft.'));
+  const correctedSection=section('Final submitted version · 학생 최종 제출본',final,'wg-t-corrected');
+  const difference=writingDiff(draft,final);
   if(difference.changed){
-   const papers=$('.wg-t-version .wg-t-paper',host);
+   const papers=$$('.wg-t-version .wg-t-paper',host);
    if(papers.length>=2){
     appendDiffText(papers[0],difference.original,'removed');
     appendDiffText(papers[1],difference.corrected,'added');
    }
-   const legend=make('p','wg-t-diff-legend','Highlighted in pink: original wording changed · Highlighted in teal: AI wording added');
-   const versions=$('.wg-t-version',host);versions[1]?.append(legend);
-  }else host.append(make('p','wg-t-note','No differences between the saved original and AI-corrected text.'));
+   correctedSection.append(make('p','wg-t-diff-legend','Pink: earlier wording · Teal: wording in the final submission'));
+  }else host.append(make('p','wg-t-note','No recoverable text differences in this saved submission.'));
+  if(unmatched)host.append(make('p','wg-t-note',unmatched+' saved AI correction(s) could not be located in the final text. The reconstructed draft may be incomplete.'));
   if(changes.some(x=>x.clarified_better)){
    const alternatives=make('section','wg-t-version');
    alternatives.append(make('h3','wg-t-version-title','Clarified alternatives'));
@@ -313,8 +318,8 @@ function detail(entry){
    host.append(alternatives);
   }
   if(!changes.length)host.append(make('p','wg-t-note','AI Willi suggested no corrections.'));
-  else host.append(make('p','wg-t-note','AI suggestions shown; the student’s final choices are not yet stored centrally.'));
- }else host.append(make('p','wg-t-note','No saved AI correction is available for this submission.'));
+  else host.append(make('p','wg-t-note','AI suggestions are historical; the final submitted writing is shown above.'));
+ }else{section('Student submission · 학생이 제출한 글',entry.body||'');host.append(make('p','wg-t-note','No saved AI correction is available to reconstruct an earlier draft.'))}
  if(entry.status!=='submitted'){draftAssessmentForm(entry,host);return}
  const form=make('section','wg-t-feedback');form.append(make('h3','','Teacher feedback'));
  const textarea=make('textarea','wg-t-feedback-input');textarea.placeholder='Write a message to the student…';textarea.maxLength=1500;
@@ -374,7 +379,7 @@ function detailPractice(entry){
 }
 function openView(){try{localStorage.setItem('willena.teachers.activeView.v1','writing-genius')}catch{};show();if(!state.loaded)void load();else void refreshFeedbackBadge()}
 function boot(){
- const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261115-diff-highlights1';
+ const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261115-first-draft1';
  document.head.append(css);addNav();mount();void refreshFeedbackBadge();
 }
 window.WritingGeniusTeacher={openView,refresh:load,refreshFeedbackBadge};
