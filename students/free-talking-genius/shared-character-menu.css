@@ -281,3 +281,30 @@
 /* Steve is intentionally absent from Structured Speaking. The shared menu creates him hidden;
    this specificity defeats legacy !important flex rules in both app layouts. */
 #ftCharacter .ft-character-steve[hidden]{display:none!important}
+
+/* Shared picker is the single source of truth for Dusk and Steve unlocks. */
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve .ft-character-symbol{
+ position:relative!important;isolation:isolate!important;overflow:hidden!important;
+ background:#fff!important;border:9px solid #59c9c8!important;outline:3px solid #d7f5f3!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve .ft-character-symbol::before{
+ content:none!important;display:none!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve .ft-steve-portrait{
+ display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;
+ position:relative!important;z-index:1!important;transform:none!important;filter:none!important;opacity:1!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve .ft-steve-locked-mark{
+ position:absolute!important;inset:0!important;z-index:3!important;display:grid!important;place-items:center!important;
+ font-size:clamp(27px,5vw,42px)!important;font-weight:800!important;color:#e8e4f5!important;
+ text-shadow:0 2px 16px #0b1029,0 0 12px #0b1029!important;pointer-events:none!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve .ft-steve-locked-mark[hidden]{
+ display:none!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve:not(.ft-steve-is-unlocked) .ft-character-symbol{
+ filter:grayscale(1) brightness(.38) contrast(1.2)!important;opacity:.72!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve.ft-steve-is-unlocked .ft-character-symbol{
+ filter:none!important;opacity:1!important;
+}
