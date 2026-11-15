@@ -662,6 +662,41 @@ async function finishTimedQuestion(){}
 function studentTurnInProgress(){
  return Boolean(state.speechStartedAt||state.awaitingSpeechCommit||state.pendingSpeech.size||state.turnFragments.length||state.turnGraceTimer);
 }
+// Compatibility path for a temporarily stale Pages worker. ONLY plain dialogue
+// turns may be saved directly; scored review credits still require the server's
+// signed evaluator proof. Supabase RLS verifies the authenticated student.
+async function saveOrdinaryHybridTurnDirect(body){
+ if(!['character','student'].includes(body.speaker)||body.message_source==='review_credit'||body.verdict==='QUALIFIES'||body.review_points!=null)
+  throw Error('Protected transcript must use the review API');
+ const token=await originalStudentToken();
+ const claims=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+ const uid=String(claims.sub||'');
+ if(!/^[a-f0-9-]{36}$/i.test(uid))throw Error('Student identity not available');
+ const row={
+  session_id:body.session_id,student_id:uid,book_id:body.book_id,unit_id:body.unit_id,
+  character:body.character,turn_number:body.turn_number,speaker:body.speaker,
+  transcript_text:body.transcript_text,
+  ...(body.speaker==='character'?{message_source:body.message_source}:{}),
+  ...(body.speaker==='student'&&['NEEDS_MORE','HELP_REQUEST'].includes(body.verdict)?{verdict:body.verdict}:{})
+ };
+ const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/free_talking_hybrid_transcripts',{
+  method:'POST',cache:'no-store',
+  headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token,
+   'Content-Type':'application/json',Prefer:'return=minimal'},
+  body:JSON.stringify(row),signal:AbortSignal.timeout(12000)
+ });
+ if(response.status===409){
+  // The API may have saved the row before losing its response. Accept only
+  // a matching existing turn, never overwrite or silently skip changed text.
+  const url='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/free_talking_hybrid_transcripts?select=character,speaker,transcript_text,book_id,unit_id&student_id=eq.'+
+   uid+'&session_id=eq.'+body.session_id+'&turn_number=eq.'+body.turn_number+'&limit=1';
+  const existing=await fetch(url,{headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+token},cache:'no-store'});
+  const prior=existing.ok?(await existing.json())[0]:null;
+  if(prior?.character===body.character&&prior?.speaker===body.speaker&&
+     prior.transcript_text===body.transcript_text&&prior.book_id===body.book_id&&prior.unit_id===body.unit_id)return;
+ }
+ if(!response.ok)throw Error('Direct transcript HTTP '+response.status);
+}
 // Save text only (never the audio recording) for a restricted, expiring teacher review.
 function isTranscriptionPromptEcho(value){return /korean students are speaking english|transcribe only words actually spoken|never translate into spanish|preserve imperfect but intelligible english|avoid guessing from silence|inventing textbook answers/i.test(String(value||''))}
 function saveHybridTranscript(who,spoken,verdict=null,proof=null,stamp=null,source='ai_reply'){
@@ -685,8 +720,24 @@ function saveHybridTranscript(who,spoken,verdict=null,proof=null,stamp=null,sour
     if(response.ok){state.transcriptSaved=(state.transcriptSaved||0)+1;return}
     const detail=await response.json().catch(()=>null);
     lastError=Error('HTTP '+response.status+(detail?.error?' — '+String(detail.error).slice(0,160):''));
+    // Steve was added after the older deployed transcript worker. Do not lose
+    // a child's plain conversation turn if that worker still rejects Steve.
+    if(body.character==='steve'&&body.message_source!=='review_credit'&&
+       body.verdict!=='QUALIFIES'){
+      try{await saveOrdinaryHybridTurnDirect(body);
+       state.transcriptSaved=(state.transcriptSaved||0)+1;
+       console.info('[Free Talking] Steve transcript stored via RLS fallback');
+       return;
+      }catch(fallbackError){lastError=Error(lastError.message+'; '+String(fallbackError?.message||fallbackError))}
+    }
     if(response.status<500)break;
-   }catch(ex){lastError=ex}
+   }catch(ex){
+    lastError=ex;
+    if(body.character==='steve'&&body.message_source!=='review_credit'&&body.verdict!=='QUALIFIES'){
+     try{await saveOrdinaryHybridTurnDirect(body);state.transcriptSaved=(state.transcriptSaved||0)+1;return}
+     catch(fallbackError){lastError=Error(String(ex?.message||ex)+'; '+String(fallbackError?.message||fallbackError))}
+    }
+   }
   }
   (state.transcriptFailedWrites||(state.transcriptFailedWrites=[])).push(body);
   state.transcriptSaveErrors=state.transcriptFailedWrites.length;
