@@ -194,7 +194,7 @@ export async function onRequestPost({request,env,context}){
   const body=await request.json().catch(()=>null);
   if(body?.voice==='steve'){
    const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
-   const checked=await fetch(SCORES+'/rest/v1/rpc/sum_points_for_user',{method:'POST',headers:{apikey:SCORES_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({uid:userId}),signal:AbortSignal.timeout(10000)});
+   const checked=await fetch(SCORES+'/rest/v1/rpc/student_own_total_points',{method:'POST',headers:{apikey:SCORES_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(10000)});
    const points=checked.ok?Number(await checked.json().catch(()=>NaN)):NaN;
    if(!Number.isFinite(points)||points<8000)return json(403,{success:false,error:'Sergeant Steve requires 8,000 points'});
   }
