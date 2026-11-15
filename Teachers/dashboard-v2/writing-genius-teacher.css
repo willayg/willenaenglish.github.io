@@ -108,3 +108,9 @@
 #view-writing-genius .wg-t-feedback-badge{display:inline-flex;align-self:flex-start;align-items:center;gap:5px;margin-top:7px;border-radius:999px;padding:5px 9px;font-size:.72rem;font-weight:800;line-height:1.2}
 #view-writing-genius .wg-t-feedback-badge.is-sent{color:#177a5e;background:#e4f7ed;border:1px solid #aee3c9}
 #view-writing-genius .wg-t-feedback-badge.is-needed{color:#a36516;background:#fff4df;border:1px solid #f0d39e}
+
+/* Teacher-only side-by-side AI writing corrections. */
+#view-writing-genius .wg-t-diff-mark{border-radius:3px;padding:1px 0;font:inherit;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+#view-writing-genius .wg-t-diff-removed{background:#ffe1e8;color:#872c49;text-decoration:line-through;text-decoration-thickness:1px}
+#view-writing-genius .wg-t-diff-added{background:#c9f5eb;color:#086653;font-weight:600}
+#view-writing-genius .wg-t-diff-legend{font-size:.76rem;color:#667f88;line-height:1.5;margin:10px 2px 0}
