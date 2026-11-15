@@ -52,3 +52,14 @@
 @keyframes ftMilestonePop{from{transform:scale(.76);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes ftMilestoneConfetti{to{transform:translateY(115dvh) rotate(540deg)}}
 @media(prefers-reduced-motion:reduce){.ft-character-unlock-celebration *{animation:none!important}}
+
+/* Milestone portraits use idle expressions; Bunny Fox's speech-only
+   open mouth must not appear in the unlock dialog. */
+.ft-character-unlock-celebration .bf-svg .bf-talk-mouth{
+ display:none!important;
+ opacity:0!important;
+}
+.ft-character-unlock-celebration .bf-svg .bf-rest-mouth{
+ display:inline!important;
+ opacity:1!important;
+}
