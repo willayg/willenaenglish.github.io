@@ -155,6 +155,43 @@ function reviewLines(entry){
  }
  return {corrected,changes};
 }
+// Compare the rendered versions, not merely the list of AI suggestions. This also
+// handles saved suggestions that could not be applied to the original paragraph.
+function writingDiff(original,corrected){
+ const before=String(original||''),after=String(corrected||'');
+ if(before===after)return {original:[],corrected:[],changed:false};
+ const a=before.match(/\\s+|\\S+/g)||[],b=after.match(/\\s+|\\S+/g)||[];
+ // Bound expensive comparisons for unusually long student submissions.
+ if(a.length*b.length>300000)return {
+  original:[{text:before,changed:true}],corrected:[{text:after,changed:true}],changed:true
+ };
+ const cols=b.length+1,dp=new Uint16Array((a.length+1)*cols);
+ for(let i=a.length-1;i>=0;i--)for(let j=b.length-1;j>=0;j--){
+  const p=i*cols+j;
+  dp[p]=a[i]===b[j]?1+dp[(i+1)*cols+j+1]:
+   Math.max(dp[(i+1)*cols+j],dp[i*cols+j+1]);
+ }
+ const left=[],right=[];let i=0,j=0;
+ while(i<a.length||j<b.length){
+  if(i<a.length&&j<b.length&&a[i]===b[j]){
+   left.push({text:a[i],changed:false});right.push({text:b[j],changed:false});i++;j++;
+  }else if(j<b.length&&(i===a.length||dp[i*cols+j+1]>=dp[(i+1)*cols+j])){
+   right.push({text:b[j],changed:!/^\\s+$/.test(b[j])});j++;
+  }else{
+   left.push({text:a[i],changed:!/^\\s+$/.test(a[i])});i++;
+  }
+ }
+ return {original:left,corrected:right,changed:true};
+}
+function appendDiffText(container,parts,kind){
+ const fragment=document.createDocumentFragment();
+ for(const part of parts){
+  if(!part.changed){fragment.append(document.createTextNode(part.text));continue}
+  const mark=make('mark','wg-t-diff-mark wg-t-diff-'+kind,part.text);
+  fragment.append(mark);
+ }
+ container.replaceChildren(fragment);
+}
 function render(){
  if(state.tab==='practice'){renderPractice();return}
  const container=$('#wgTeacherList'),count=$('#wgTeacherCount');if(!container)return;
@@ -258,7 +295,17 @@ function detail(entry){
  section('Original · 학생이 쓴 글',entry.body||'');
  if(entry.ai_feedback){
   const {corrected,changes}=reviewLines(entry);
+  const difference=writingDiff(entry.body||'',corrected);
   section('AI Willi · Corrected version',corrected,'wg-t-corrected');
+  if(difference.changed){
+   const papers=$('.wg-t-version .wg-t-paper',host);
+   if(papers.length>=2){
+    appendDiffText(papers[0],difference.original,'removed');
+    appendDiffText(papers[1],difference.corrected,'added');
+   }
+   const legend=make('p','wg-t-diff-legend','Highlighted in pink: original wording changed · Highlighted in teal: AI wording added');
+   const versions=$('.wg-t-version',host);versions[1]?.append(legend);
+  }else host.append(make('p','wg-t-note','No differences between the saved original and AI-corrected text.'));
   if(changes.some(x=>x.clarified_better)){
    const alternatives=make('section','wg-t-version');
    alternatives.append(make('h3','wg-t-version-title','Clarified alternatives'));
@@ -327,7 +374,7 @@ function detailPractice(entry){
 }
 function openView(){try{localStorage.setItem('willena.teachers.activeView.v1','writing-genius')}catch{};show();if(!state.loaded)void load();else void refreshFeedbackBadge()}
 function boot(){
- const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261107-feedback-status1';
+ const css=make('link');css.rel='stylesheet';css.href='./writing-genius-teacher.css?v=20261115-diff-highlights1';
  document.head.append(css);addNav();mount();void refreshFeedbackBadge();
 }
 window.WritingGeniusTeacher={openView,refresh:load,refreshFeedbackBadge};
