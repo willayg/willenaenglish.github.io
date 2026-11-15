@@ -1,5 +1,5 @@
 import {getCharacter} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
-import {characterThumbnailMarkup} from '/students/characters-v2/character-runtime.js?v=20261115-unique-svg-resources1';
+import {createCharacterCelebration} from '/students/characters-v2/celebration-card.js?v=20261116-p4-1';
 // Free Talking-only milestone cards. Uses the existing student token and one-time server record.
 // Never interrupts an active conversation, never changes points or student assignments.
 export async function showCharacterUnlockCelebrations({
@@ -26,28 +26,7 @@ export async function showCharacterUnlockCelebrations({
   async function showOne(character){
     const config=getCharacter(character);
     if(!config)return;
-    const quotes={
-     bunny:'Bunny Fox is ready for your next space adventure!',
-     pigfish:'Splash! Pigfish is here to practise English with you!',
-     dusk:'Well, well... Five thousand points. You found me. Welcome to the shadows!',
-     steve:'WHAT?! EIGHT THOUSAND POINTS?! YOU HAVE EARNED MY RESPECT, RECRUIT!'
-    };
-    const text=quotes[character]||'A new English friend is ready!';
-    const portrait='<span class="ft-milestone-dusk">'+characterThumbnailMarkup(character,'unlock-'+character)+'</span>';
-    const dialog=document.createElement('section');
-    dialog.className='ft-character-unlock-celebration is-'+character;
-    dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
-    dialog.setAttribute('aria-label',config.name+' unlocked');
-    dialog.innerHTML='<div class="ft-milestone-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>'+
-      '<div class="ft-milestone-card"><div class="ft-milestone-eyebrow">NEW CHARACTER UNLOCKED!</div>'+
-      '<div class="ft-milestone-art">'+portrait+'</div>'+
-      '<h2>'+config.name.toUpperCase()+'</h2>'+
-      '<p class="ft-milestone-points">'+config.unlockPoints.toLocaleString('en-US')+' POINTS</p>'+
-      '<p class="ft-milestone-quote">'+text+'</p>'+
-      '<p class="ft-milestone-korean">새로운 대화 친구가 열렸어요!</p>'+
-      '<div class="ft-milestone-actions"><button type="button" class="ft-milestone-listen">목소리 듣기</button>'+
-      '<button type="button" class="ft-milestone-continue">친구 만나기</button></div>'+
-      '<p class="ft-milestone-status" role="status" aria-live="polite"></p></div>';
+    const {root:dialog,voiceLine:text}=createCharacterCelebration(character);
     root.append(dialog);
     const listen=dialog.querySelector('.ft-milestone-listen');
     const next=dialog.querySelector('.ft-milestone-continue');
