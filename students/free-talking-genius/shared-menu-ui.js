@@ -30,70 +30,65 @@
   return menu;
  }
 
- function createDuskUnlockUI(menu,threshold=5000){
-  const button=menu?.querySelector('#ftChooseDusk');if(!button)return null;
-  const label=button.querySelector('.ft-dusk-lock'),dialog=document.createElement('div');
-  dialog.className='ft-dusk-unlock-dialog';dialog.hidden=true;
-  dialog.innerHTML='<div class="ft-dusk-unlock-panel" role="dialog" aria-modal="true" aria-labelledby="ftDuskUnlockTitle" aria-describedby="ftDuskUnlockDescription"><span class="ft-dusk-unlock-icon" aria-hidden="true">✦</span><h3 id="ftDuskUnlockTitle">비밀 친구 Dusk</h3><p id="ftDuskUnlockDescription"></p><button type="button" class="ft-dusk-unlock-close">확인</button></div>';
+ // One identical lock/unlock controller for the two earned characters.
+ // Dusk remains 5,000; Sergeant Steve is 8,000. Only the card copy differs.
+ function createEarnedCharacterUnlockUI(menu,{id,name,threshold,lockedClass,unlockedClass,title,copy}){
+  const button=menu?.querySelector('#'+id);if(!button)return null;
+  const dialog=document.createElement('div');dialog.className='ft-dusk-unlock-dialog';dialog.hidden=true;
+  dialog.innerHTML='<div class="ft-dusk-unlock-panel" role="dialog" aria-modal="true"><span class="ft-dusk-unlock-icon" aria-hidden="true">✦</span><h3></h3><p></p><button type="button" class="ft-dusk-unlock-close">확인</button></div>';
   menu.append(dialog);
-  const description=dialog.querySelector('#ftDuskUnlockDescription'),close=dialog.querySelector('.ft-dusk-unlock-close');
+  const heading=dialog.querySelector('h3'),description=dialog.querySelector('p'),close=dialog.querySelector('button');
+  heading.textContent=title;
   let points=null;
   function dismiss(){dialog.hidden=true;button.focus()}
   function open(){
    const remaining=points==null?null:Math.max(0,threshold-points);
-   description.textContent=remaining==null
-    ? 'Dusk는 '+threshold.toLocaleString()+'포인트를 모으면 만날 수 있어요! 포인트를 확인한 뒤 다시 시도해 주세요.'
-    : 'Dusk를 만나려면 총 '+threshold.toLocaleString()+'포인트가 필요해요. 앞으로 '+remaining.toLocaleString()+'포인트만 더 모으면 돼요!';
-   dialog.hidden=false;close?.focus();
+   description.textContent=copy(remaining,threshold);
+   dialog.hidden=false;close.focus();
   }
-  function update(next){
-   points=Number.isFinite(next)?next:null;
+  function update(value){
+   points=Number.isFinite(Number(value))&&value!=null?Math.floor(Number(value)):null;
    const unlocked=points!=null&&points>=threshold;
-   button.hidden=false;button.classList.toggle('ft-dusk-is-locked',!unlocked);
-   button.classList.toggle('ft-dusk-is-unlocked',unlocked);
+   button.hidden=false;
+   button.classList.toggle(lockedClass,!unlocked);
+   button.classList.toggle(unlockedClass,unlocked);
    button.setAttribute('aria-disabled',String(!unlocked));
-   button.setAttribute('aria-label',unlocked?'Dusk':'Dusk, 비밀 캐릭터, '+threshold.toLocaleString()+'포인트 필요');
-   if(label){label.hidden=true;label.textContent='';}
+   button.setAttribute('aria-label',unlocked?name:name+', '+threshold.toLocaleString()+'포인트 필요');
+   const oldLabel=button.querySelector('.ft-dusk-lock');
+   if(oldLabel){oldLabel.hidden=true;oldLabel.textContent=''}
+   if(id==='ftChooseSteve'){
+    const symbol=button.querySelector('.ft-character-symbol');
+    const mark=button.querySelector('.ft-steve-locked-mark');
+    if(symbol){
+     symbol.style.setProperty('filter',unlocked?'none':'grayscale(1) brightness(.38) contrast(1.2)','important');
+     symbol.style.setProperty('opacity',unlocked?'1':'.72','important');
+    }
+    if(mark)mark.hidden=unlocked;
+   }
    return unlocked;
   }
-  close?.addEventListener('click',dismiss);
+  close.addEventListener('click',dismiss);
   dialog.addEventListener('click',event=>{if(event.target===dialog)dismiss()});
   dialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
   update(null);return {update,open,close:dismiss};
  }
+ function createDuskUnlockUI(menu,threshold=5000){
+  return createEarnedCharacterUnlockUI(menu,{
+   id:'ftChooseDusk',name:'Dusk',threshold,lockedClass:'ft-dusk-is-locked',
+   unlockedClass:'ft-dusk-is-unlocked',title:'비밀 친구 Dusk',
+   copy:(remaining,min)=>remaining==null
+    ? 'Dusk는 '+min.toLocaleString()+'포인트를 모으면 만날 수 있어요! 포인트를 확인한 뒤 다시 시도해 주세요.'
+    : 'Dusk를 만나려면 총 '+min.toLocaleString()+'포인트가 필요해요. 앞으로 '+remaining.toLocaleString()+'포인트만 더 모으면 돼요!'
+  });
+ }
  function createSteveUnlockUI(menu,threshold=8000){
-  const button=menu?.querySelector('#ftChooseSteve');if(!button)return null;
-  const dialog=document.createElement('div');dialog.className='ft-dusk-unlock-dialog';dialog.hidden=true;
-  dialog.innerHTML='<div class="ft-dusk-unlock-panel" role="dialog" aria-modal="true" aria-labelledby="steveUnlockTitle"><span class="ft-dusk-unlock-icon">★</span><h3 id="steveUnlockTitle">Sergeant Steve</h3><p class="steve-lock-message"></p><button type="button" class="ft-dusk-unlock-close">확인</button></div>';
-  menu.append(dialog);
-  const message=dialog.querySelector('.steve-lock-message'),close=dialog.querySelector('button');let points=null;
-  function dismiss(){dialog.hidden=true;button.focus()}
-  function open(){const remaining=points==null?null:Math.max(0,threshold-points);
-    message.textContent=remaining==null?'포인트를 확인할 수 없어요. 나중에 다시 시도해 주세요.':'Sergeant Steve는 '+threshold.toLocaleString()+'포인트를 모으면 만날 수 있어요! '+remaining.toLocaleString()+'포인트가 더 필요해요.';
-    dialog.hidden=false;close.focus()}
-  function update(n){points=Number.isFinite(n)?n:null;const unlocked=points!=null&&points>=threshold;
-    button.hidden=false;button.classList.toggle('ft-steve-is-locked',!unlocked);button.classList.toggle('ft-steve-is-unlocked',unlocked);
-    button.setAttribute('aria-disabled',String(!unlocked));
-    button.setAttribute('aria-label',unlocked?'Sergeant Steve':'Sergeant Steve, '+threshold.toLocaleString()+'포인트 필요');
-    // Match Dusk on the WHOLE symbol; !important inline styles win against stale or
-    // late-loading shared stylesheets inside the native Free Talking ShadowRoot.
-    const symbol=button.querySelector('.ft-character-symbol');
-    const mark=button.querySelector('.ft-steve-locked-mark');
-    if(symbol){
-      symbol.style.setProperty('filter',unlocked?'none':'grayscale(1) brightness(.38) contrast(1.2)','important');
-      symbol.style.setProperty('opacity',unlocked?'1':'.72','important');
-      symbol.style.setProperty('position','relative','important');
-    }
-    if(mark)mark.hidden=unlocked;
-    const portrait=button.querySelector('.ft-steve-portrait');
-    if(portrait){
-      portrait.style.setProperty('filter','none','important');
-      portrait.style.setProperty('opacity','1','important');
-    }
-    return unlocked}
-  close.addEventListener('click',dismiss);dialog.addEventListener('click',e=>{if(e.target===dialog)dismiss()});
-  dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();dismiss()}});
-  update(null);return {update,open,close:dismiss};
+  return createEarnedCharacterUnlockUI(menu,{
+   id:'ftChooseSteve',name:'Sergeant Steve',threshold,lockedClass:'ft-steve-is-locked',
+   unlockedClass:'ft-steve-is-unlocked',title:'Sergeant Steve',
+   copy:(remaining,min)=>remaining==null
+    ? 'Sergeant Steve는 '+min.toLocaleString()+'포인트를 모으면 만날 수 있어요! 포인트를 확인한 뒤 다시 시도해 주세요.'
+    : 'Sergeant Steve는 '+min.toLocaleString()+'포인트를 모으면 만날 수 있어요! '+remaining.toLocaleString()+'포인트가 더 필요해요.'
+  });
  }
  function replace(existing){
   if(!existing||!existing.parentNode)return null;
