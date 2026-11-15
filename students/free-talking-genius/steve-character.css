@@ -4,8 +4,15 @@
 .free-talking-genius #ftCharacter .ft-character-steve[hidden]{display:none!important}
 #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol::before,
 .free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol::before{background:transparent!important}
-.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked .ft-character-symbol{filter:grayscale(1) brightness(.38)!important;opacity:.72!important}
-.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked .ft-character-symbol::after{content:'?';position:absolute;inset:0;display:grid;place-items:center;font-size:38px;color:#eee;pointer-events:none}
+/* Match Dusk's portrait circle. Keep the artwork visible even when locked. */
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-steve .ft-character-symbol{background:transparent!important;border:9px solid #59c9c8!important;outline:3px solid #d7f5f3!important;overflow:hidden!important}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve .ft-steve-portrait,
+.free-talking-genius #ftCharacter .ft-character-steve .ft-steve-portrait{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;max-width:100%!important;max-height:100%!important;opacity:1!important}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked .ft-steve-portrait,
+.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked .ft-steve-portrait{filter:grayscale(1) brightness(.7) contrast(1.05)!important}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked strong,
+.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-locked strong{color:#9794a5!important}
 .free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-unlocked[aria-pressed="true"] .ft-character-symbol{box-shadow:0 0 0 5px #7fcbd588!important;transform:scale(1.045)!important}
 @media(max-width:700px){.free-talking-genius #ftCharacter .ft-character-steve:not([hidden]){justify-self:center!important}}
 #demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg)::before{background:transparent!important}
