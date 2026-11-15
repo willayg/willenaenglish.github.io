@@ -2406,7 +2406,7 @@ async function initStandaloneRelease(){
  const willyPortrait=menu.querySelector('#ftChooseWilly .ft-character-symbol');
  const steveOption=menu.querySelector('#ftChooseSteve');
  const stevePortrait=steveOption?.querySelector('.ft-character-symbol');
- if(steveOption){steveOption.hidden=false;if(stevePortrait&&!stevePortrait.querySelector('.ft-steve-portrait'))stevePortrait.innerHTML='<img class="ft-steve-portrait" src="/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-cropfix4" alt="" draggable="false">'}
+ if(steveOption){steveOption.hidden=false;if(stevePortrait&&!stevePortrait.querySelector('.ft-steve-portrait'))stevePortrait.innerHTML='<img class="ft-steve-portrait" src="/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-cropfix5" alt="" draggable="false">'}
  const duskOption=menu.querySelector('#ftChooseDusk');
  const duskPortrait=duskOption?.querySelector('.ft-character-symbol');
  if(duskOption){duskOption.hidden=false;if(duskPortrait)duskPortrait.innerHTML='<span class="ft-dusk-actor">'+scopedCharacterArt(DUSK_ART,'dusk-menu')+'</span>'}
