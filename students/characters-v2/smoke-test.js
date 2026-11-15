@@ -30,6 +30,10 @@ function run(){
   try{
    const {root:dialog,listen,next,voiceLine}=createCharacterCelebration(c.id,{preview:true});
    check(c.name+' shared celebration renders correctly',dialog.classList.contains('is-'+c.id)&&Boolean(dialog.querySelector('svg'))&&Boolean(listen)&&Boolean(next)&&voiceLine===config.line);
+   check(c.name+' theme scenery renders without external CSS',Boolean(dialog.querySelector('.ft-milestone-scenery'))&&dialog.querySelector('.ft-milestone-card')?.style.getPropertyValue('background').length>5);
+   if(c.id==='bunny')check('Bunny has visible moon and stars',dialog.querySelectorAll('.ft-milestone-scenery span').length>=12);
+   if(c.id==='pigfish')check('Pigfish has undersea bubbles',dialog.querySelectorAll('.ft-milestone-scenery span').length>=9);
+   if(c.id==='steve')check('Steve has camo shapes',dialog.querySelectorAll('.ft-milestone-scenery span').length>=6);
   }catch(error){check(c.name+' shared celebration renders correctly',false,String(error.message||error))}
  }
 
