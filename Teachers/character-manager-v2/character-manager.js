@@ -1,25 +1,13 @@
 import {CHARACTER_REGISTRY,registryDiagnostics} from '/students/characters-v2/character-registry.js?v=20261115-character-v2-1';
-import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
-import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
-import {DUSK_ART} from '/students/free-talking-genius/dusk-character.js?v=20261114-no-legacy-card1';
-import {STEVE_ART} from '/students/free-talking-genius/steve-character.js?v=20261115-steve-sleeve2';
+import {mountCharacter,characterThumbnailMarkup,validateCharacterAssets} from '/students/characters-v2/character-runtime.js?v=20261115-character-v2-2';
 const $=s=>document.querySelector(s);
 let current=null;
-const art={bunny:BUNNY_FOX_ART,pigfish:PIGFISH_ART,willy:AI_WILLY_HEAD_SVG,dusk:DUSK_ART,steve:STEVE_ART,willi:'<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="39" fill="none" stroke="#6bd6dc" stroke-width="8"/><circle cx="50" cy="50" r="20" fill="none" stroke="#c8eef1" stroke-width="7"/><path d="M50 30A20 20 0 0167 41" fill="none" stroke="#69bfc9" stroke-width="7"/></svg>'};
-function clean(html,id){
- // All source artwork is repository-owned SVG. Scope SVG ids when displayed
- // simultaneously so gradients from the menu do not mask the stage on Android.
- const map=new Map();
- html=html.replace(/\bid="([^"]+)"/g,(m,value)=>{const replacement=value+'-manager-'+id;map.set(value,replacement);return 'id="'+replacement+'"'});
- for(const [before,after]of map)html=html.replaceAll('url(#'+before+')','url(#'+after+')');
- return html;
-}
-const portrait=(c,instance)=>clean(art[c.asset]||art.willi,instance);
+const portrait=(c,instance)=>characterThumbnailMarkup(c.id,instance);
 function selectCharacter(id){
  const c=CHARACTER_REGISTRY.find(c=>c.id===id);if(!c)return;
  current=c;
  for(const node of document.querySelectorAll('.character'))node.setAttribute('aria-pressed',String(node.dataset.id===id));
- const stage=$('#stage');stage.dataset.character=c.id;stage.dataset.state='idle';stage.innerHTML=art[c.asset]||art.willi;
+ const stage=$('#stage');stage.dataset.character=c.id;stage.dataset.state='idle';mountCharacter(stage,c.id);
  $('#name').textContent=c.name;$('#personality').textContent=c.personality;
  const info=$('#info');info.replaceChildren();
  const fields=[['Character ID',c.id],['Unlock points',c.unlockPoints.toLocaleString()],['Voice provider',c.voiceProvider],['Voice ID',c.voiceId],['Animation states',c.states.join(', ')],['Publishing status',c.status]];
@@ -29,7 +17,7 @@ function selectCharacter(id){
  $('#previewStatus').textContent='Preview: idle · static SVG test';
 }
 function mount(){
- const issues=registryDiagnostics();
+ const issues=[...registryDiagnostics(),...validateCharacterAssets()];
  $('#health').textContent=issues.length?issues.length+' registry issues':'✓ '+CHARACTER_REGISTRY.length+' registered characters';
  $('#health').title=issues.join('\n');
  const box=$('#characters');
