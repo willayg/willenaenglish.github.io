@@ -3,6 +3,8 @@
 // audio, pause, prompt, review and result behaviour without modifying V1.
 // NativeHost is mandatory; standalone V1 remains in extension.js.
 import {contentDbGet} from '/students/shared/content-db.js?v=1.0.0';
+import {CHARACTER_REGISTRY,getCharacter,charactersInMenu} from '/shared/free-talking-character-catalog.js?v=20261115-p2-a';
+import {characterThumbnailMarkup} from '/students/characters-v2/character-runtime.js?v=20261115-p2-a';
 import {createHybridCharacterStage} from '/students/free-talking-hybrid-lab/shared-character-stage.js?v=20261115-steve-sleeve2';
 import {BUNNY_FOX_ART,PIGFISH_ART} from '/students/free-talking-genius/character-art.js?v=20261113-willy-wave3';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js?v=20261114-electric-cat-v3';
@@ -45,7 +47,7 @@ if(releaseMode){
 }
 
 const state={actor:null,book:null,unit:null,character:'willi',peer:null,channel:null,stream:null,remote:null,speaker:null,mediaURL:null,playing:null,controller:null,seconds:180,timer:null,active:false,starting:false,turnText:'',pendingText:false,alreadySpoken:false,generation:0,voiceMode:'audio',audioContext:null,audioGain:null,quietMode:false,remoteStream:null,linkedSources:new WeakSet(),micAnalyzer:null,micSource:null,micContext:null,micRaf:null,micNoiseSeen:false,serverHeard:false,micUserMuted:false,ttsPlaying:false,guided:true,anchors:[],anchorIndex:0,anchorPhase:'idle',anchorResponding:false,anchorClipCache:new Map(),anchorClipPromises:new Map(),anchorTimer:null,anchorResponseText:'',anchorToken:0,guidedSessionReady:false,lessonLevel:2,speechStartedAt:0,speechPeak:0,lastSpeechDuration:0,pendingSpeech:new Map(),turnFragments:[],turnGraceTimer:null,turnGraceToken:0,verifiedAnswer:'',paused:false,resumeIndex:0,resumePhase:null,resumeLog:null,lastChoice:null,replyWasSecond:false,emotionTimer:null,idleTimer:null,sessionDeadline:null,vocabDetours:0,asideTerm:'',audioSender:null,micCyclePromise:Promise.resolve(),micReleased:false,bluetoothAudio:false,topicCompleted:new Set(),questionRemainingMs:20000,questionTotalMs:20000,questionBoostUsed:false,questionClock:null,questionTickAt:0,questionGrace:null,questionExpired:false,awaitingSpeechCommit:false,finishingTopic:false,asideKind:null,topicQuestion:'',topicDetours:0,initialLoadingShown:false,beginnerRescueUsed:false,pendingWordConfirmation:null,verifiedBeginnerAnswer:'',questionRewards:new Map(),guideAccepted:false,guideIndex:0,guideLaunch:false,askedQuestionTexts:[],attemptCount:0,reviewing:false};
-const NAMES={willi:'Willo',willy:'AI Willy',bunny:'Bunny Fox',pigfish:'Pigfish',dusk:'Dusk',steve:'Sergeant Steve'};
+const NAMES=Object.fromEntries(CHARACTER_REGISTRY.map(c=>[c.id,c.name]));
 const serverCharacter=()=>state.character;
 async function authoritativeDuskPoints(){
  // Use the SAME secured Scores RPC as the shared milestone celebrations and
@@ -574,15 +576,8 @@ function ftShowFinish(result,{playSound=true}={}){
  // The finish card is another instance of the SAME shared SVG actor.
  portrait.classList.toggle('bf-actor',state.character==='willy');
  portrait.dataset.state='idle';portrait.dataset.mood='neutral';
- if(state.character==='bunny')portrait.innerHTML=BUNNY_FOX_ART;
-  else if(state.character==='dusk')portrait.innerHTML='<span class="ft-dusk-actor">'+scopedCharacterArt(DUSK_ART,'dusk-finish')+'</span>';
-  else if(state.character==='steve')portrait.innerHTML='<span class="ft-steve-actor">'+scopedCharacterArt(STEVE_ART,'steve-finish')+'</span>';
- else if(state.character==='willy')portrait.innerHTML=scopedCharacterArt(AI_WILLY_HEAD_SVG,'finish');
- else if(state.character==='pigfish'){
-  portrait.innerHTML=PIGFISH_ART.replaceAll('id="pigBody"','id="pigBody-finish"').replaceAll('id="pigBelly"','id="pigBelly-finish"').replaceAll('url(#pigBody)','url(#pigBody-finish)').replaceAll('url(#pigBelly)','url(#pigBelly-finish)');
- }else{
-  portrait.innerHTML='<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="48" fill="#e9fafc" stroke="#68cbd5" stroke-width="5"/><circle cx="60" cy="60" r="21" fill="none" stroke="#23a5b4" stroke-width="9"/><path d="M38 73a25 25 0 0 0 44 0" fill="none" stroke="#eda4c2" stroke-width="6" stroke-linecap="round"/></svg>';
- }
+ portrait.innerHTML=characterThumbnailMarkup(state.character,'finish-'+state.character);
+
  ftCompletionSave(result);prepareCard();
  if(playSound&&result.stars>0)try{preloadStudentSfx();setTimeout(()=>{if(!$('ftCelebration').hidden)playStudentSfx('complete',{volume:.7})},420)}catch{}
 }
@@ -803,8 +798,7 @@ function showActor(){
  // element must survive resume/restart, not disappear after the first round.
  const speakButton=$('ftPushToSpeak');
  state.actor=createHybridCharacterStage($('actorStage'),
-  state.character==='bunny'?'bunny-v3':state.character==='pigfish'?'pigfish':
-  state.character==='willy'?'willy':state.character==='dusk'?'dusk':state.character==='steve'?'steve':'marin');
+  getCharacter(state.character)?.actorKey||'marin');
  if(speakButton)$('actorStage').append(speakButton);
  actorPhase('ready');
 }
@@ -2492,9 +2486,28 @@ async function initStandaloneRelease(){
  const back=menu.querySelector('#ftCharacterBack');
  if(back){back.hidden=false;back.textContent='← 교재로 돌아가기'}
  host.append(menu);
- const choices=[
-  ['ftChooseLili','bunny'],['ftChooseWilli','willi'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy'],['ftChooseDusk','dusk'],['ftChooseSteve','steve']
- ];
+ // Canonical menu source: new characters appear without editing the engine.
+ // Preserve the existing CSS/portrait structure for the six published entries.
+ const container=menu.querySelector('.ft-character-options');
+ const choices=charactersInMenu().map(c=>[c.menuId,c.id]);
+ for(const entry of charactersInMenu()){
+  let btn=menu.querySelector('#'+entry.menuId);
+  if(!btn&&container){
+   btn=document.createElement('button');
+   btn.id=entry.menuId;btn.type='button';
+   btn.className='ft-character-option ft-character-'+entry.id;
+   btn.dataset.voice=entry.actorKey;
+   btn.setAttribute('aria-pressed','false');
+   const icon=document.createElement('span');icon.className='ft-character-symbol';icon.setAttribute('aria-hidden','true');
+   const name=document.createElement('strong');name.textContent=entry.name;
+   btn.append(icon,name);
+  }
+  if(btn&&container)container.append(btn);
+  const portrait=btn?.querySelector('.ft-character-symbol');
+  if(portrait&&!portrait.querySelector('svg,img')){
+   portrait.innerHTML=characterThumbnailMarkup(entry.id,'menu-'+entry.id);
+  }
+ }
  const buttons=choices.map(([id])=>menu.querySelector('#'+id)).filter(Boolean);
  menu.querySelector('#ftChooseWilly .ft-willy-coming-notice')?.remove();
  const startButton=menu.querySelector('#ftCharacterContinue');
