@@ -1,12 +1,13 @@
 // Shared student-header character milestones (all Genius apps).
 // Exactly-once acknowledgement lives in the Scores DB, not in localStorage.
 // Any signed-in student can earn and celebrate while using any Genius app.
-import {DUSK_ART} from '/students/free-talking-genius/dusk-character.js?v=20261114-no-legacy-card1';
+import {charactersInMenu,getCharacter} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
+import {characterThumbnailMarkup} from '/students/characters-v2/character-runtime.js?v=20261115-unique-svg-resources1';
 const ENDPOINT='/api/free-talking-character-unlocks';
 const TTS='/api/free-talking-realtime-eleven';
 const SCORES='https://fiieuiktlsivwfgyivai.supabase.co';
 const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const artSteve='/students/free-talking-genius/steve-portrait.svg?v=20261115-steve-cropfix4';
+const earnedCharacters=charactersInMenu().filter(c=>c.unlockPoints>0).sort((a,b)=>a.unlockPoints-b.unlockPoints);
 let inProgress=false, lastCheck=0;
 const styles='/students/free-talking-genius/character-unlock-celebrations.css?v=20261115-unlock-cards1';
 function validToken(token){
@@ -53,9 +54,9 @@ async function directUnlockRequest(body,token){
  const saved=await fetch(base+'?select=character&student_id=eq.'+encodeURIComponent(uid),{headers,cache:'no-store'});
  if(!saved.ok)throw Error('Checking past unlocks failed: '+saved.status);
  const celebrated=(await saved.json()).map(x=>x.character);
- const pending=[['dusk',5000],['steve',8000]]
-  .filter(([character,min])=>points>=min&&!celebrated.includes(character))
-  .map(([character])=>character);
+ const pending=earnedCharacters
+  .filter(c=>points>=c.unlockPoints&&!celebrated.includes(c.id))
+  .map(c=>c.id);
  return {ok:true,json:async()=>({points,celebrated,pending})};
 }
 async function request(body){
@@ -97,16 +98,15 @@ export async function checkStudentCharacterUnlocks(verifiedPoints=null,verifiedU
    if(!res.ok)throw Error('Unlock status HTTP '+res.status);
    const status=await res.json();
    if(!Array.isArray(status.pending))throw Error('Invalid unlock status');
-   pending=status.pending.filter(c=>c==='dusk'||c==='steve');
+   pending=status.pending.filter(id=>earnedCharacters.some(c=>c.id===id));
   }catch(e){
    console.warn('[Student unlock] Using verified-header points fallback:',String(e));
    const points=Number(verifiedPoints);
-   if(!Number.isFinite(points)||points<5000)return;
-   pending=[['dusk',5000],['steve',8000]]
-     .filter(([c,min])=>points>=min).map(([c])=>c);
+   if(!Number.isFinite(points)||points<100)return;
+   pending=earnedCharacters.filter(c=>points>=c.unlockPoints).map(c=>c.id);
   }
-  // Celebrate the newest milestone first (Steve at 8k, then Dusk at 5k).
-  pending.sort((a,b)=>(a==='steve'?-1:1)-(b==='steve'?-1:1));
+  // Celebrate milestones in earned order, only one at a time.
+  pending.sort((a,b)=>(getCharacter(a)?.unlockPoints??Infinity)-(getCharacter(b)?.unlockPoints??Infinity));
   for(const character of pending){
    if(!document.body||document.hidden)break;
    if(hasSeen(uid,character))continue;
@@ -117,10 +117,15 @@ export async function checkStudentCharacterUnlocks(verifiedPoints=null,verifiedU
  finally{inProgress=false}
 }
 async function showOne(character,uid){
- const steve=character==='steve';
- const sentence=steve
-  ? '[surprised] WHAT?! EIGHT THOUSAND POINTS?! YOU HAVE EARNED MY RESPECT, RECRUIT!'
-  : 'Well, well... Five thousand points. You found me. Welcome to the shadows!';
+ const config=getCharacter(character);
+ if(!config||config.unlockPoints<=0)return false;
+ const sentences={
+  bunny:'Bunny Fox is ready for your next space adventure!',
+  pigfish:'Splash! Pigfish is here to practise English with you!',
+  dusk:'Well, well... Five thousand points. You found me. Welcome to the shadows!',
+  steve:'[surprised] WHAT?! EIGHT THOUSAND POINTS?! YOU HAVE EARNED MY RESPECT, RECRUIT!'
+ };
+ const sentence=sentences[character]||'A new English friend is ready!';
  const visibleText=sentence.replace(/\[[^\]]+\]\s*/g,'');
  const host=document.createElement('div');
  host.className='willena-student-milestone-host';
@@ -130,14 +135,14 @@ async function showOne(character,uid){
  const fallback=document.createElement('style');
  fallback.textContent=':host{position:fixed;inset:0;display:block;z-index:2147483646}.ft-character-unlock-celebration{position:fixed;inset:0;z-index:3;display:grid;place-items:center;background:#15232be8;padding:16px}.ft-milestone-card{background:#fff;border:5px solid #65ced2;border-radius:22px;padding:22px;max-width:390px;width:100%;text-align:center;display:grid;justify-items:center;gap:10px}.ft-milestone-art{width:170px;height:170px;overflow:hidden;border-radius:50%}.ft-milestone-art svg,.ft-milestone-art img{width:100%;height:100%}.ft-milestone-actions{display:grid;gap:8px;width:100%}.ft-milestone-actions button{min-height:48px}';
  const wrap=document.createElement('section');
- wrap.className='ft-character-unlock-celebration '+(steve?'is-steve':'is-dusk');
+ wrap.className='ft-character-unlock-celebration is-'+character;
  wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');
- wrap.setAttribute('aria-label',(steve?'Sergeant Steve':'Dusk')+' unlocked');
- const portrait=steve?'<img src="'+artSteve+'" alt="Sergeant Steve" draggable="false">':'<span class="ft-milestone-dusk">'+DUSK_ART+'</span>';
+ wrap.setAttribute('aria-label',config.name+' unlocked');
+ const portrait='<span class="ft-milestone-dusk">'+characterThumbnailMarkup(character,'earned-'+character)+'</span>';
  wrap.innerHTML='<div class="ft-milestone-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>'+
  '<div class="ft-milestone-card"><div class="ft-milestone-eyebrow">NEW CHARACTER UNLOCKED!</div>'+
- '<div class="ft-milestone-art">'+portrait+'</div><h2>'+(steve?'SERGEANT STEVE':'DUSK')+'</h2>'+
- '<p class="ft-milestone-points">'+(steve?'8,000':'5,000')+' POINTS</p>'+
+ '<div class="ft-milestone-art">'+portrait+'</div><h2>'+config.name.toUpperCase()+'</h2>'+
+ '<p class="ft-milestone-points">'+config.unlockPoints.toLocaleString('en-US')+' POINTS</p>'+
  '<p class="ft-milestone-quote">'+visibleText+'</p>'+
  '<p class="ft-milestone-korean">새로운 대화 친구가 열렸어요!</p>'+
  '<div class="ft-milestone-actions"><button type="button" class="ft-milestone-listen">🔊 목소리 듣기</button>'+
@@ -201,7 +206,7 @@ async function showOne(character,uid){
  });
  // Fetch the clip on card display but NEVER treat blocked autoplay as a
  // speech-service failure. The first user tap can play an already-loaded MP3.
- void prepareVoice();
+ // Avoid spending credits before a student explicitly requests the voice.
  next.focus();
  return await new Promise(resolve=>{
   next.addEventListener('click',async()=>{
