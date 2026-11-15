@@ -14,6 +14,7 @@ import {createFreeTalkingRecorder} from './ai-recording.js?v=20261107-media-rout
 import {createFreeTalkingRetryVoice} from './retry-voice.js?v=20261114-clone-transparent3';
 import {createFreeTalkingCharacters} from './character-actor.js?v=20261115-modular-p2-2';
 import {DUSK_UNLOCK_POINTS} from './dusk-character.js?v=20261114-no-legacy-card1';
+import {getCharacter,isCharacterEligible} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
 import {createFreeTalkingGuide} from './guide.js?v=20261114-quiet-room6';
 // Keep the inline character menu if the optional shared UI script is unavailable.
 try{window.WillenaFTSharedMenu?.replace(document.getElementById('ftCharacter'))}
@@ -1020,6 +1021,13 @@ function renderQuestion({retry=false}={}){
  void questionVoice.select(state.current.id,{autoplay:false});
 }
 let roundChoice=null,duskAvailablePoints=null,duskChoiceVisit=0,duskChoicePromise=null;
+const voiceCharacterId=voice=>({'marin':'willi','bunny-v3':'bunny','pigfish':'pigfish','willy':'willy','prince':'dusk'})[voice]||null;
+const voiceThreshold=voice=>getCharacter(voiceCharacterId(voice))?.unlockPoints??Infinity;
+function showVoiceLock(voice){
+ if(voice==='prince'){duskUnlockUI?.open();return}
+ const target=voiceThreshold(voice);
+ showError('🔒 '+target.toLocaleString()+' points required to unlock this character.');
+}
 const duskUnlockUI=window.WillenaFTSharedMenu?.createDuskUnlockUI($('ftCharacter'),DUSK_UNLOCK_POINTS);
 async function getCurrentDuskPoints(){
  const response=await WillenaAPI.fetch('/.netlify/functions/progress_summary?section=overview&_='+Date.now(),{cache:'no-store'});
@@ -1033,9 +1041,9 @@ function showDuskUnlock(points){
  duskUnlockUI?.update(points);
 }
 function clearDeniedDuskSelection(){
- if(roundChoice!=='prince')return;
+ if(!roundChoice)return;
  roundChoice=null;
- $('ftChooseDusk')?.setAttribute('aria-pressed','false');
+ for(const id of ['ftChooseWilli','ftChooseLili','ftChoosePigfish','ftChooseWilly','ftChooseDusk'])$(id)?.setAttribute('aria-pressed','false');
  $('ftCharacterContinue').disabled=true;
 }
 function loadDuskEligibilityForVisit(){
@@ -1045,7 +1053,7 @@ function loadDuskEligibilityForVisit(){
  duskChoicePromise=getCurrentDuskPoints().then(points=>{
   if(visit!==duskChoiceVisit)return null;
   showDuskUnlock(points);
-  if(points<DUSK_UNLOCK_POINTS)clearDeniedDuskSelection();
+  if(roundChoice&&voiceThreshold(roundChoice)>points)clearDeniedDuskSelection();
   return points;
  }).catch(()=>{
   if(visit===duskChoiceVisit){showDuskUnlock(null);clearDeniedDuskSelection()}
@@ -1062,14 +1070,25 @@ async function verifyDuskAccess(){
  }
 }
 function chooseRoundVoice(voice){
- if(!['marin','bunny-v3','pigfish','willy','prince'].includes(voice))return;
- // Paint the selected ring/start button synchronously before any audio preload
- // or network eligibility checks. A second tap retains the existing start flow.
+ if(!voiceCharacterId(voice))return;
+ // One picker points lookup, reused for every character tap.
+ const required=voiceThreshold(voice);
+ if(required>0&&duskAvailablePoints!=null&&duskAvailablePoints<required){
+  showVoiceLock(voice);return;
+ }
  if(roundChoice===voice&&!state.loading&&state.pendingMode){void beginRound(state.pendingMode);return}
  roundChoice=voice;
  for(const [id,value] of [['ftChooseWilli','marin'],['ftChooseLili','bunny-v3'],['ftChoosePigfish','pigfish'],['ftChooseWilly','willy'],['ftChooseDusk','prince']])
   $(id)?.setAttribute('aria-pressed',String(value===voice));
- $('ftCharacterContinue').disabled=false;
+ $('ftCharacterContinue').disabled=required>0&&duskAvailablePoints==null;
+ if(required>0&&duskAvailablePoints==null){
+  void duskChoicePromise?.then(points=>{
+   if(roundChoice!==voice)return;
+   if(points==null||!isCharacterEligible(voiceCharacterId(voice),points)){
+    clearDeniedDuskSelection();showVoiceLock(voice);
+   }else $('ftCharacterContinue').disabled=false;
+  });
+ }
  if(voice==='prince')void retryVoice.preloadOne('prince');
  else retryVoice.preloadBoth();
 }
@@ -1090,16 +1109,22 @@ function openMode(mode){
 }
 async function beginRound(mode){
  if(state.loading||!['speaking','writing'].includes(mode)||!roundChoice)return;
- if(roundChoice==='prince'){
-  if(duskAvailablePoints==null){
-   await duskChoicePromise;
-   if(duskAvailablePoints==null||duskAvailablePoints<DUSK_UNLOCK_POINTS){
-    duskUnlockUI?.open();return;
-   }
+ if(voiceThreshold(roundChoice)>0){
+  if(duskAvailablePoints==null)await duskChoicePromise;
+  if(duskAvailablePoints==null||!isCharacterEligible(voiceCharacterId(roundChoice),duskAvailablePoints)){
+   showVoiceLock(roundChoice);return;
   }
-  if(duskAvailablePoints<DUSK_UNLOCK_POINTS){duskUnlockUI?.open();return}
-  // Fresh validation only at entry, not on character taps.
-  if(!await verifyDuskAccess())return;
+  // Fresh check once at activity entry, not on every picker tap.
+  if(roundChoice==='prince'){if(!await verifyDuskAccess())return}
+  else {
+   try{
+    const points=await getCurrentDuskPoints();
+    showDuskUnlock(points);
+    if(!isCharacterEligible(voiceCharacterId(roundChoice),points)){
+     showVoiceLock(roundChoice);return;
+    }
+   }catch{showError('Could not verify character unlock. Please try again.');return}
+  }
  }
 
  if(!questionVoice.setVoice(roundChoice)){
@@ -1332,21 +1357,7 @@ $('ftChooseWilli').addEventListener('click',()=>chooseRoundVoice('marin'));
 $('ftChooseLili').addEventListener('click',()=>chooseRoundVoice('bunny-v3'));
 $('ftChoosePigfish').addEventListener('click',()=>chooseRoundVoice('pigfish'));
 $('ftChooseWilly').addEventListener('click',()=>chooseRoundVoice('willy'));
-$('ftChooseDusk')?.addEventListener('click',()=>{
- // Selection is synchronous and never issues a new points query.
- if(duskAvailablePoints!=null&&duskAvailablePoints<DUSK_UNLOCK_POINTS){
-  duskUnlockUI?.open();return;
- }
- chooseRoundVoice('prince');
- if(duskAvailablePoints==null){
-  $('ftCharacterContinue').disabled=true;
-  void duskChoicePromise?.then(points=>{
-   if(roundChoice!=='prince')return;
-   if(points==null||points<DUSK_UNLOCK_POINTS){clearDeniedDuskSelection();duskUnlockUI?.open()}
-   else $('ftCharacterContinue').disabled=false;
-  });
- }
-});
+$('ftChooseDusk')?.addEventListener('click',()=>chooseRoundVoice('prince'));
 $('ftCharacterContinue').addEventListener('click',()=>void beginRound(state.pendingMode));
 $('ftCharacterBack').addEventListener('click',()=>{
  if(visibleScreen==='ftCharacter'&&history.state?.[FT_NAV_KEY]?.screen==='ftCharacter')history.back();
