@@ -2,7 +2,7 @@
 // The existing Free Talking Genius endpoints and files are untouched.
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co';
 const PUB='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const VOICES={willi:'marin',willy:'GSGMGjgDtwaXe25hDMNI',bunny:'M7zl2TS7ORAIGUejDfoy',pigfish:'W7UbuMY4ypluqgZS2UzT',dusk:'OBZs1sGUHfHnTlpkyXwC'};
+const VOICES={willi:'marin',willy:'GSGMGjgDtwaXe25hDMNI',bunny:'M7zl2TS7ORAIGUejDfoy',pigfish:'W7UbuMY4ypluqgZS2UzT',dusk:'OBZs1sGUHfHnTlpkyXwC',steve:'8j74BTqU7XqD2faIlSD4'};
 const reply=(status,message)=>new Response(JSON.stringify({error:message}),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
 export async function onRequestPost({request,env}){
  const origin=request.headers.get('Origin');
@@ -17,7 +17,7 @@ export async function onRequestPost({request,env}){
  // Willi 2 uses natural, unprefixed text; preserve model-supplied emotion tags.
  const ttsText=character==='dusk'
   ? '[british][dark][low tone] '+sentence.replace(/\[(?:chuckling|laughing|giggles|giggling|surprised|whispering|crying|screaming|bombastic|irish|british)\]/gi,'').replace(/\s+/g,' ').trim()
-  : sentence;
+  : character==='steve'&&!/^\[surprised\]/i.test(sentence)?'[surprised] '+sentence:sentence;
  // Match the ElevenLabs model used to cache this character's textbook questions.
  // Never substitute an OpenAI voice for Bunny or Pigfish.
  const selectedModel={id:'eleven_v3'};
@@ -42,6 +42,11 @@ export async function onRequestPost({request,env}){
    });
    if(!speech.ok||!speech.body)return reply(502,'AI Willi speech unavailable ('+speech.status+')');
    return new Response(speech.body,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'no-store','X-Willena-TTS-Route':'openai-marin','X-Content-Type-Options':'nosniff'}});
+  }
+  if(character==='steve'&&profile.role==='student'){
+   const checked=await fetch(ROOT+'/rest/v1/rpc/sum_points_for_user',{method:'POST',headers:{apikey:PUB,Authorization:'Bearer '+bearer,'Content-Type':'application/json'},body:JSON.stringify({uid:user.id}),signal:AbortSignal.timeout(10000)});
+   const value=checked.ok?Number(await checked.json().catch(()=>NaN)):NaN;
+   if(!Number.isFinite(value)||value<10000)return reply(403,'Sergeant Steve requires 10,000 points');
   }
   const voiceId=VOICES[character];
   const voiceSettings=character==='dusk'
