@@ -1,5 +1,7 @@
 import {CHARACTER_REGISTRY,registryDiagnostics} from './character-registry.js?v=20261115-modular-p2-2';
 import {mountCharacter,characterThumbnailMarkup,validateCharacterAssets} from './character-runtime.js?v=20261115-unique-svg-resources1';
+import {createCharacterCelebration} from './celebration-card.js?v=20261116-p4-1';
+import {celebrationFor} from '/shared/character-celebration-config.js?v=20261116-p4-1';
 const $=s=>document.querySelector(s);
 let current=null;
 let characterStage=null;
@@ -72,6 +74,7 @@ function selectCharacter(id){
  const stage=$('#stage');if(effectTimer){clearTimeout(effectTimer);effectTimer=null}
  characterStage?.destroy?.();characterStage=mountCharacter(stage,c.id);
  $('#name').textContent=c.name;$('#personality').textContent=c.personality;
+ $('#themeName').textContent='Theme: '+(celebrationFor(c.id)?.theme||'unknown')+' · '+c.unlockPoints.toLocaleString()+' points';
  const info=$('#info');info.replaceChildren();
  const fields=[['Character ID',c.id],['Unlock points',c.unlockPoints.toLocaleString()],['Voice provider',c.voiceProvider],['Voice ID',c.voiceId],['Animation states',c.states.join(', ')],['Publishing status',c.status]];
  for(const [key,value]of fields){const label=document.createElement('dt'),out=document.createElement('dd');label.textContent=key;out.textContent=value;info.append(label,out)}
@@ -121,6 +124,19 @@ function mount(){
   const details=document.createElement('span');const name=document.createElement('strong'),small=document.createElement('small');name.textContent=c.name;small.textContent=c.unlockPoints.toLocaleString()+' points · '+c.status;details.append(name,small);button.append(icon,details);button.onclick=()=>selectCharacter(c.id);box.append(button);
  }
  $('#playVoice').onclick=()=>void playSample();
+ $('#previewCelebration').onclick=()=>{
+  if(!current)return;
+  document.querySelector('.ft-character-unlock-celebration.manager-preview')?.remove();
+  const {root:dialog,next,listen}=createCharacterCelebration(current.id,{preview:true});
+  listen.hidden=true;
+  document.body.append(dialog);
+  const close=()=>{dialog.remove();document.removeEventListener('keydown',esc)};
+  const esc=e=>{if(e.key==='Escape')close()};
+  document.addEventListener('keydown',esc);
+  next.addEventListener('click',close);
+  dialog.addEventListener('click',e=>{if(e.target===dialog)close()});
+  next.focus();
+ };
  $('#copy').onclick=()=>{if(!current)return;navigator.clipboard?.writeText(JSON.stringify(current,null,2)).then(()=>{$('#previewStatus').textContent='Configuration copied'},()=>{$('#previewStatus').textContent='Clipboard unavailable'})};
  selectCharacter('steve');
 }
