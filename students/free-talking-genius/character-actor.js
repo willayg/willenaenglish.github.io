@@ -93,7 +93,11 @@ export function createFreeTalkingCharacters({circle,session,voiceHost,choices}){
  function setMoodFromText(text){
   if(selected==='steve'){
    const t=String(text||'').toLowerCase();
-   actor.dataset.steveMood=/\[(?:surprised|shocked)\]|\b(?:what|really|no way|unbelievable|seriously)\b/i.test(t)?'surprised':'stern';
+   // Surprise from Character Lab takes priority; dramatic yelling has a
+   // separate bark animation, while grumbling stays cross-faced.
+   const surprised=/\[(?:surprised|shocked|gasps|gasping)\]|\b(?:what\?!|no way|unbelievable|seriously\?!|you did what)\b/i.test(t);
+   const shouting=/\[(?:shout|shouting|yell|yelling|screaming)\]/i.test(t);
+   actor.dataset.steveMood=surprised?'surprised':shouting?'shouting':'stern';
    return;
   }
   if(selected==='dusk'){
