@@ -2518,7 +2518,7 @@ async function initStandaloneRelease(){
   void showCharacterUnlockCelebrations({
    root:nativeHost.root,menu,request:authorizedDemoFetch,
    scopedCharacterArt,duskArt:DUSK_ART,
-   active:()=>nativeHost.active&&!state.active&&!state.starting&&host.contains(menu),
+   active:()=>nativeHost.active&&!state.active&&!state.starting&&!starting&&!intro.hidden&&host.contains(menu),
    onPoints:points=>{showDuskPoints(points);showStevePoints(points)}
   }).catch(e=>console.warn('[Free Talking] unlock celebration',e));
  }catch(e){showError(e.message||'Could not prepare Free Talking.')}
