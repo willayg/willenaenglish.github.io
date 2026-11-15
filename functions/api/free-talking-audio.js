@@ -13,7 +13,7 @@ const model=env=>env.FREE_TALKING_REALTIME_MODEL||'gpt-realtime-2.1-mini';
 const voice=env=>env.FREE_TALKING_REALTIME_VOICE||'marin';
 // Only these two voices are selectable. Prize voices remain registered separately
 // but are not reachable through this endpoint until an authenticated unlock system exists.
-const SELECTABLE_VOICES=new Set(['marin','bunny-v3','pigfish','willy','willy2','prince']);
+const SELECTABLE_VOICES=new Set(['marin','bunny-v3','pigfish','willy','willy2','prince','steve']);
 const ELEVEN_VOICES=Object.freeze({
  bunny:'M7zl2TS7ORAIGUejDfoy',
  'bunny-v3':'M7zl2TS7ORAIGUejDfoy',
@@ -22,7 +22,8 @@ const ELEVEN_VOICES=Object.freeze({
  willy:'GSGMGjgDtwaXe25hDMNI',
  willy2:'GSGMGjgDtwaXe25hDMNI',
  // Original clone is preserved as a reserved future character (The Prince).
- prince:'0yhUIig4twaXoIhuQoCQ'
+ prince:'0yhUIig4twaXoIhuQoCQ',
+ steve:'8j74BTqU7XqD2faIlSD4'
 });
 const ELEVEN_MODEL='eleven_v3';
 // ElevenLabs requires the API key on Cloudflare, not Netlify.
@@ -191,6 +192,12 @@ export async function onRequestPost({request,env,context}){
   const userId=await verifyStudent(request);
   if(!userId)return json(401,{success:false,error:'학생 로그인을 확인해 주세요.'});
   const body=await request.json().catch(()=>null);
+  if(body?.voice==='steve'){
+   const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
+   const checked=await fetch(SCORES+'/rest/v1/rpc/sum_points_for_user',{method:'POST',headers:{apikey:SCORES_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({uid:userId}),signal:AbortSignal.timeout(10000)});
+   const points=checked.ok?Number(await checked.json().catch(()=>NaN)):NaN;
+   if(!Number.isFinite(points)||points<10000)return json(403,{success:false,error:'Sergeant Steve requires 10,000 points'});
+  }
   if(body?.storage_probe===true){
    try{
     const probe=await probeAudioStorage(request);
