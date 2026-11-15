@@ -145,24 +145,63 @@ async function showOne(character,uid){
  '<p class="ft-milestone-status" role="status" aria-live="polite"></p></div>';
  root.append(fallback,link,wrap);document.body.append(host);
  const listen=wrap.querySelector('.ft-milestone-listen'),next=wrap.querySelector('.ft-milestone-continue'),status=wrap.querySelector('.ft-milestone-status');
- let audio=null,busy=false,done=false;
- const stop=()=>{if(audio){audio.pause();URL.revokeObjectURL(audio.src);audio=null}};
- async function play(){
-  if(done||busy)return;busy=true;listen.disabled=true;listen.textContent='🔊 준비 중…';
+ let audio=null,busy=false,done=false,voiceUrl=null,voiceFailure='';
+ const stop=()=>{
+  if(audio){try{audio.pause();audio.removeAttribute('src');audio.load()}catch{}audio=null}
+  if(voiceUrl){URL.revokeObjectURL(voiceUrl);voiceUrl=null}
+ };
+ async function prepareVoice(){
+  if(done||busy||voiceUrl)return;
+  busy=true;listen.disabled=true;listen.textContent='🔊 음성 준비 중…';status.textContent='';
   try{
-   stop();
    const r=await request({action:'tts',character,text:sentence});
-   if(!r.ok)throw Error('TTS HTTP '+r.status);
-   const blob=await r.blob();if(done)return;
-   if(blob.size<500)throw Error('Empty voice');
-   audio=new Audio();audio.src=URL.createObjectURL(blob);
-   await audio.play();listen.textContent='🔊 다시 듣기';status.textContent='';
-  }catch(e){if(!done){listen.textContent='🔊 다시 듣기';status.textContent='음성을 재생할 수 없어요. 다시 듣기를 눌러 주세요.'}}
-  finally{busy=false;if(!done)listen.disabled=false}
+   if(!r.ok){
+    const data=await r.json().catch(()=>null);
+    throw Error('HTTP '+r.status+(data?.error?': '+String(data.error).slice(0,120):''));
+   }
+   const type=r.headers.get('content-type')||'';
+   if(!type.includes('audio/'))throw Error('Unexpected speech response ('+type+')');
+   const blob=await r.blob();
+   if(blob.size<500)throw Error('Empty speech audio');
+   if(done)return;
+   voiceUrl=URL.createObjectURL(blob);
+   audio=new Audio();
+   audio.preload='auto';
+   audio.src=voiceUrl;
+   audio.load();
+   audio.onended=()=>{if(!done)listen.textContent='🔊 다시 듣기'};
+   listen.textContent='🔊 목소리 듣기';
+  }catch(e){
+   voiceFailure=String(e?.message||e);
+   console.warn('[Character milestone voice]',character,voiceFailure);
+   if(!done){
+    listen.textContent='🔄 음성 다시 시도';
+    status.textContent='음성 서비스 오류 ('+voiceFailure.slice(0,80)+')';
+   }
+  }finally{busy=false;if(!done)listen.disabled=false}
  }
- listen.addEventListener('click',()=>void play());
- // Mobile autoplay is best effort; students can always tap Replay.
- void play();
+ function playPrepared(){
+  // Playback happens synchronously inside a tap handler: Android browsers
+  // otherwise reject audio.play() after the awaited speech API request.
+  if(!audio)return;
+  try{
+   audio.currentTime=0;
+   const result=audio.play();
+   if(result?.catch)result.catch(e=>{
+    if(!done){status.textContent='음성 재생이 차단됐어요. 다시 눌러 주세요.';
+     console.warn('[Character milestone playback]',String(e))}
+   });
+   listen.textContent='🔊 다시 듣기';status.textContent='';
+  }catch(e){status.textContent='음성 재생 오류: '+String(e?.message||e).slice(0,60)}
+ }
+ listen.addEventListener('click',()=>{
+  if(done||busy)return;
+  if(audio){playPrepared();return}
+  void prepareVoice();
+ });
+ // Fetch the clip on card display but NEVER treat blocked autoplay as a
+ // speech-service failure. The first user tap can play an already-loaded MP3.
+ void prepareVoice();
  next.focus();
  return await new Promise(resolve=>{
   next.addEventListener('click',async()=>{
