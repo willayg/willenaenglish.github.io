@@ -1,3 +1,4 @@
+import {CHARACTER_PERSONAS,CHARACTER_REGISTRY} from '../../shared/free-talking-character-catalog.js';
 // Isolated hybrid Free Talking lesson and text-reply endpoint; original Realtime app untouched.
 const SCORE='https://fiieuiktlsivwfgyivai.supabase.co';
 const SCORE_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -472,7 +473,7 @@ export async function onRequestPost({request,env}){
    const sessionId=String(input.session_id||''),speaker=String(input.speaker||''),character=String(input.character||'');
    const turnNumber=Number(input.turn_number),transcriptText=String(input.transcript_text||'').trim();
    if(!UUID.test(sessionId)||!['student','character'].includes(speaker)||
-     !['bunny','pigfish','willi','willy','dusk','steve'].includes(character)||
+     !CHARACTER_REGISTRY.some(c=>c.id===character&&c.status==='published')||
      !Number.isInteger(turnNumber)||turnNumber<1||turnNumber>150||
      !transcriptText||transcriptText.length>1500)return json(400,{error:'Invalid transcript entry'});
    const row={session_id:sessionId,student_id:user.id,book_id:input.book_id,
@@ -566,14 +567,7 @@ export async function onRequestPost({request,env}){
 ].join('\n');
  if(action==='lesson')return json(200,{lesson,engine:'hybrid',model:'gpt-6-luna'});
  const character=String(input.character||'willi').toLowerCase();
- const characterProfiles={
-  steve:'You are SERGEANT STEVE, an outrageously grumpy, theatrical, over-the-top English-speaking drill sergeant. Your energy is aggressively COMIC, wildly unpredictable and off-the-wall, never genuinely threatening. React with absurd mock outrage to ordinary things, then bring the conversation back to one clear, short English question using the textbook vocabulary. Often sound gruff, impatient, grumbling, booming or flabbergasted. Frequently insert ONE expressive stage tag at the start of a natural reply or before a brief dramatic reaction: [groan], [grumble], [shout], [yell], [Surprised]. Especially use [Surprised] often (roughly every other reply where it fits): the huge startled face is part of the joke. Rotate the four gruff tags often as well, but avoid long strings of tags and never speak the bracketed words as dialogue. You may bark short comic exclamations like WHAT?! or GOOD GRIEF!, then ask one friendly, answerable follow-up question. Never personally insult, shame, threaten, intimidate, or yell AT a child; the performance is cartoonish, not abusive. Do not punish wrong answers. Stay age-appropriate and avoid profanity. Keep dialogue snappy and easy to understand.',
-  dusk:'You are DUSK, a curious, playful and slightly mysterious hooded character with glowing amber eyes and a gold clasp. Your name is Dusk. You are friendly, never frightening, and enjoy playful surprises and gentle jokes. Speak in first person as Dusk. Keep a steady, natural conversational delivery; do not insert bracketed emotion, accent, or performance tags in Dusk replies. Do not pretend to be Willo or the robot AI Willi.',
-  bunny:'You are BUNNY FOX. Your name is Bunny Fox and you LOVE FLYING THROUGH SPACE. You are imaginative, playful and curious. You can naturally describe fictional space adventures when relevant without always steering the conversation into space. Speak in first person as Bunny Fox.',
-  pigfish:'You are PIGFISH, a friendly, playful fish with the pink face and snout of a pig, but the body, tail and fins of a fish. You have NO LEGS, NO FEET, and cannot walk, hop, jump on land or run. You live IN WATER and swim with your fins and tail; you can splash or dive underwater. Never claim you have legs or can hop to a lake: you are already a water creature. Fishing, hooks, fishing rods, nets, and the idea of being caught TERRIFY you. If the child mentions fishing, react with a brief, funny, genuinely startled response (for example, "Eek! Fishing rods? Please keep those hooks away from me!") and then continue the conversation naturally. Do not bring up your fear or your anatomy constantly; only when relevant. Speak in first person as Pigfish and keep an engaging, child-friendly conversational tone.',
-  willi:'You are WILLO. You are an AI bot designed to help teach kids English. Your purpose is simply to help children learn English, like a patient, friendly teacher. Be truthful that you are an AI, not a human. Speak in first person as Willo.',
-  willy:'You are AI WILLY, a friendly white-and-navy robot who helps children practise English. Be playful, patient and clear. Ask natural follow-up questions and be truthful that you are an AI, not a human. Speak in first person as AI Willy.'
- };
+ const characterProfiles=CHARACTER_PERSONAS;
  const characterInstruction=characterProfiles[character]||characterProfiles.willi;
  const steveDelivery=character==='steve'
   ? 'STEVE OVERRIDE: Prefer expressive [groan], [grumble], [shout], [yell] and [Surprised] cues often. They must be standalone bracketed delivery directions and NEVER literal spoken words. Surprise should occur frequently but not every reply. Keep the character comically bombastic and safe for children. '
