@@ -20,6 +20,13 @@
   dusk.hidden=true;
   dusk.innerHTML='<span class="ft-character-symbol" aria-hidden="true"></span><strong>Dusk</strong><small class="ft-dusk-lock">🔒 5,000 points</small>';
   choices?.append(dusk);
+  const steve=document.createElement('button');
+  steve.id='ftChooseSteve';steve.type='button';
+  steve.className='ft-character-option ft-character-steve';steve.dataset.voice='steve';
+  steve.setAttribute('aria-pressed','false');steve.setAttribute('aria-disabled','true');
+  steve.hidden=true;
+  steve.innerHTML='<span class="ft-character-symbol" aria-hidden="true"></span><strong>Sergeant Steve</strong><small>🔒 10,000 points</small>';
+  choices?.append(steve);
   return menu;
  }
 
@@ -54,6 +61,26 @@
   dialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
   update(null);return {update,open,close:dismiss};
  }
+ function createSteveUnlockUI(menu,threshold=10000){
+  const button=menu?.querySelector('#ftChooseSteve');if(!button)return null;
+  const dialog=document.createElement('div');dialog.className='ft-dusk-unlock-dialog';dialog.hidden=true;
+  dialog.innerHTML='<div class="ft-dusk-unlock-panel" role="dialog" aria-modal="true" aria-labelledby="steveUnlockTitle"><span class="ft-dusk-unlock-icon">★</span><h3 id="steveUnlockTitle">Sergeant Steve</h3><p class="steve-lock-message"></p><button type="button" class="ft-dusk-unlock-close">확인</button></div>';
+  menu.append(dialog);
+  const message=dialog.querySelector('.steve-lock-message'),close=dialog.querySelector('button');let points=null;
+  function dismiss(){dialog.hidden=true;button.focus()}
+  function open(){const remaining=points==null?null:Math.max(0,threshold-points);
+    message.textContent=remaining==null?'포인트를 확인할 수 없어요. 나중에 다시 시도해 주세요.':'Sergeant Steve는 '+threshold.toLocaleString()+'포인트를 모으면 만날 수 있어요! '+remaining.toLocaleString()+'포인트가 더 필요해요.';
+    dialog.hidden=false;close.focus()}
+  function update(n){points=Number.isFinite(n)?n:null;const unlocked=points!=null&&points>=threshold;
+    button.hidden=false;button.classList.toggle('ft-steve-is-locked',!unlocked);button.classList.toggle('ft-steve-is-unlocked',unlocked);
+    button.setAttribute('aria-disabled',String(!unlocked));
+    button.setAttribute('aria-label',unlocked?'Sergeant Steve':'Sergeant Steve, '+threshold.toLocaleString()+'포인트 필요');
+    const label=button.querySelector('small');if(label)label.textContent=unlocked?'준비 완료':'🔒 '+threshold.toLocaleString()+' points';
+    return unlocked}
+  close.addEventListener('click',dismiss);dialog.addEventListener('click',e=>{if(e.target===dialog)dismiss()});
+  dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();dismiss()}});
+  update(null);return {update,open,close:dismiss};
+ }
  function replace(existing){
   if(!existing||!existing.parentNode)return null;
   const menu=makeMenu();
@@ -80,5 +107,5 @@
   if(bookId&&unitId){url.searchParams.set('book',String(bookId));url.searchParams.set('unit',String(unitId));url.searchParams.set('return','1')}
   return url;
  }
- global.WillenaFTSharedMenu=Object.freeze({makeMenu,replace,mount,createDuskUnlockUI,paths,conversationRoute,returnRoute});
+ global.WillenaFTSharedMenu=Object.freeze({makeMenu,replace,mount,createDuskUnlockUI,createSteveUnlockUI,paths,conversationRoute,returnRoute});
 })(window);
