@@ -4,10 +4,21 @@ const $=s=>document.querySelector(s);
 let current=null;
 let characterStage=null;
 let effectTimer=null;
+let previewAudio=null;
+let previewObjectUrl=null;
+let previewAbort=null;
+const SAMPLES={willi:'Hello! I am Willo. Tell me something interesting about your day!',willy:'[excited] Hello! I am AI Willi. Ready for a brilliant English adventure?',bunny:'[giggles] Hi! Bunny Fox here! Want to fly through space with me?',pigfish:'[laughing] Oink! Splash! I am Pigfish! What is your favourite animal?',dusk:'Good evening. I am Dusk. Tell me, what mysterious thing did you discover today?',steve:'[grumble] GOOD GRIEF, RECRUIT! [shout] ARE YOU READY TO SPEAK ENGLISH?'};
+function stopSample(){previewAbort?.abort();previewAbort=null;previewAudio?.pause();if(previewAudio)previewAudio.src='';previewAudio=null;if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=null;characterStage?.setPhase('idle');const button=$('#playVoice');if(button){button.disabled=false;button.textContent='▶ Play voice sample'}}
+function jwtValid(token){if(!token||token.split('.').length!==3)return false;try{const c=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return Number(c.exp)*1000>Date.now()+30000}catch{return false}}
+async function previewToken(){const gateway=window.WillenaAPI;const cached=gateway?.getLocalAccessToken?.();if(jwtValid(cached))return cached;const fn=gateway?.fetch?gateway.fetch.bind(gateway):fetch;const r=await fn('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'});const data=await r.json().catch(()=>({}));if(!r.ok||!jwtValid(data.access_token))throw Error('Teacher session not available on Students domain. Open this preview directly and sign in to the Students site.');gateway?.setLocalTokens?.(data.access_token,data.refresh_token||'');return data.access_token}
+async function playSample(){if(!current||!characterStage)return;stopSample();const character=current.id;const text=$('#sampleSentence').value.trim();if(text.length<2||text.length>300){$('#voiceStatus').textContent='Enter 2–300 characters.';return}const b=$('#playVoice');b.disabled=true;b.textContent='Generating voice…';$('#voiceStatus').textContent='Requesting current '+current.name+' voice…';const controller=new AbortController();previewAbort=controller;try{const token=await previewToken();if(controller.signal.aborted)return;const response=await fetch('/api/free-talking-realtime-eleven',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({character,text}),signal:controller.signal,cache:'no-store'});if(!response.ok){let detail=await response.json().catch(()=>({}));throw Error(detail.error||'Voice service HTTP '+response.status)}const blob=await response.blob();if(blob.size<400)throw Error('Voice recording was empty');if(controller.signal.aborted||current.id!==character)return;previewObjectUrl=URL.createObjectURL(blob);const audio=new Audio(previewObjectUrl);previewAudio=audio;const end=()=>{if(previewAudio===audio){characterStage?.setPhase('idle');b.disabled=false;b.textContent='▶ Play voice sample';$('#voiceStatus').textContent='Voice preview finished'}};audio.addEventListener('ended',end,{once:true});audio.addEventListener('error',()=>{$('#voiceStatus').textContent='Audio playback failed';end()},{once:true});characterStage.setPhase('speaking');$('#voiceStatus').textContent='Playing '+current.name+' voice';b.textContent='Playing…';await audio.play()}catch(err){if(!controller.signal.aborted){$('#voiceStatus').textContent=String(err.message||err);b.textContent='▶ Try voice again';b.disabled=false;characterStage?.setPhase('idle')}}}
+
 const portrait=(c,instance)=>characterThumbnailMarkup(c.id,instance);
 function selectCharacter(id){
  const c=CHARACTER_REGISTRY.find(c=>c.id===id);if(!c)return;
- current=c;
+ stopSample();current=c;
+ $('#sampleSentence').value=SAMPLES[c.id]||('Hello! I am '+c.name+'. Nice to meet you!');
+ $('#voiceStatus').textContent='Tap Play to hear the current voice.';
  for(const node of document.querySelectorAll('.character'))node.setAttribute('aria-pressed',String(node.dataset.id===id));
  const stage=$('#stage');if(effectTimer){clearTimeout(effectTimer);effectTimer=null}
  characterStage?.destroy?.();characterStage=mountCharacter(stage,c.id);
@@ -60,6 +71,7 @@ function mount(){
   const icon=document.createElement('span');icon.className='portrait';icon.innerHTML=portrait(c,'picker-'+c.id);
   const details=document.createElement('span');const name=document.createElement('strong'),small=document.createElement('small');name.textContent=c.name;small.textContent=c.unlockPoints.toLocaleString()+' points · '+c.status;details.append(name,small);button.append(icon,details);button.onclick=()=>selectCharacter(c.id);box.append(button);
  }
+ $('#playVoice').onclick=()=>void playSample();
  $('#copy').onclick=()=>{if(!current)return;navigator.clipboard?.writeText(JSON.stringify(current,null,2)).then(()=>{$('#previewStatus').textContent='Configuration copied'},()=>{$('#previewStatus').textContent='Clipboard unavailable'})};
  selectCharacter('steve');
 }
