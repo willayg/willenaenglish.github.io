@@ -266,7 +266,7 @@ export async function onRequestPost({request,env}){
   if(String(input.character||'').toLowerCase()==='steve'&&profile.role==='student'){
    const gate=await fetch(SCORE+'/rest/v1/rpc/sum_points_for_user',{method:'POST',headers:{...scoreHeaders(token),'Content-Type':'application/json'},body:JSON.stringify({uid:user.id}),signal});
    const points=gate.ok?Number(await gate.json().catch(()=>NaN)):NaN;
-   if(!Number.isFinite(points)||points<10000)return json(403,{error:'Sergeant Steve requires 10,000 points'});
+   if(!Number.isFinite(points)||points<8000)return json(403,{error:'Sergeant Steve requires 8,000 points'});
   }
   // Free Talking is unrestricted during this release. Keep session IDs and
   // student-owned, expiring transcript storage for teacher analysis.
