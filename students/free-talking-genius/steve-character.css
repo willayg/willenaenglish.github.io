@@ -1,9 +1,9 @@
 /* Steve activity animation only. Locked portrait styling belongs to the shared character menu. */
 .ft-steve-actor{display:grid;place-items:center;width:100%;height:100%;background:transparent}
-.ft-steve-actor .ft-steve-svg{width:100%;height:100%;display:block;background:transparent;overflow:visible}
+.ft-steve-actor .ft-steve-svg{width:100%;height:100%;display:block;background:transparent;overflow:hidden;clip-path:circle(49% at 50% 50%)}
 #demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg)::before{background:transparent!important}
 #demo #actorStage .ft-original-character-stage .ft-animal-avatar .bf-actor:has(.ft-steve-svg){width:95%!important;height:95%!important}
-#demo #actorStage .ft-original-character-stage .ft-animal-avatar .ft-steve-svg{width:100%!important;height:100%!important;display:block!important;overflow:visible!important}
+#demo #actorStage .ft-original-character-stage .ft-animal-avatar .ft-steve-svg{width:100%!important;height:100%!important;display:block!important;overflow:hidden!important;clip-path:circle(49% at 50% 50%)!important}
 /* Steve's jaw is centred below the moustache. Animate its vertical opening,
    never the entire mouth group or SVG (which caused sideways movement). */
 .bf-actor .ft-steve-svg #steve-talk-mouth,
@@ -64,5 +64,32 @@
 #demo #actorStage .ft-original-character-stage .ft-animal-avatar:has(.ft-steve-svg) .ft-steve-svg{
  display:block!important;position:relative!important;visibility:visible!important;
  opacity:1!important;width:100%!important;height:100%!important;
- overflow:visible!important;z-index:6!important;
+ overflow:hidden!important;clip-path:circle(49% at 50% 50%)!important;z-index:6!important;
+}
+
+/* Steve only: animated comic overreaction and theatrically cross expression.
+   The Character Lab surprise is keyed by data-steve-mood. Keep the ring fixed. */
+.bf-actor[data-steve-mood="surprised"] .ft-steve-svg #steve-brows{
+ transform:translateY(-19px)!important;
+}
+.bf-actor[data-steve-mood="surprised"] .ft-steve-svg #steve-eye-left,
+.bf-actor[data-steve-mood="surprised"] .ft-steve-svg #steve-eye-right{
+ transform:scaleY(1.32)!important;transform-box:fill-box;transform-origin:center;
+}
+.bf-actor[data-steve-mood="surprised"][data-audio-speaking="true"] .ft-steve-svg #steve-head{
+ animation:steveComicShock .38s ease-out 1;
+ transform-origin:440px 360px;
+}
+.bf-actor[data-steve-mood="shouting"][data-audio-speaking="true"] .ft-steve-svg #steve-head{
+ animation:steveGrumpyBark .24s ease-in-out infinite alternate;
+ transform-origin:440px 360px;
+}
+.bf-actor[data-steve-mood="shouting"] .ft-steve-svg #steve-brows{
+ transform:translateY(4px)!important;
+}
+@keyframes steveComicShock{0%{transform:scale(1)}45%{transform:scale(1.055) translateY(-6px)}100%{transform:scale(1)}}
+@keyframes steveGrumpyBark{from{transform:translateY(0)}to{transform:translateY(2px) rotate(-.4deg)}}
+@media(prefers-reduced-motion:reduce){
+ .bf-actor[data-steve-mood="surprised"] .ft-steve-svg #steve-head,
+ .bf-actor[data-steve-mood="shouting"] .ft-steve-svg #steve-head{animation:none!important}
 }
