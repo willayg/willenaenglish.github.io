@@ -264,7 +264,7 @@ export async function onRequestPost({request,env}){
    if(!list.some(a=>a?.book_id===input.book_id))return json(403,{error:'That book is not assigned to your class'});
   }
   if(String(input.character||'').toLowerCase()==='steve'&&profile.role==='student'){
-   const gate=await fetch(SCORE+'/rest/v1/rpc/sum_points_for_user',{method:'POST',headers:{...scoreHeaders(token),'Content-Type':'application/json'},body:JSON.stringify({uid:user.id}),signal});
+   const gate=await fetch(SCORE+'/rest/v1/rpc/student_own_total_points',{method:'POST',headers:{...scoreHeaders(token),'Content-Type':'application/json'},body:'{}',signal});
    const points=gate.ok?Number(await gate.json().catch(()=>NaN)):NaN;
    if(!Number.isFinite(points)||points<8000)return json(403,{error:'Sergeant Steve requires 8,000 points'});
   }
