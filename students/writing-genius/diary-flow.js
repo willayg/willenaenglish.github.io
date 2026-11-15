@@ -777,48 +777,54 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    reference.append(p);return p;
   });
   stage.append(reference);
-  // Progress is monotonic: every recognized sentence stays complete across
-  // separate microphone recordings. Never rescan from the start of the diary.
+  // Each recognized recording advances the current line without revisiting
+  // completed lines. STT errors must never scroll the student backwards.
   let speechLineIndex=0;
   let pendingSpeechWords=[];
+  let recognizedAnySpeech=false;
   const showSpeechProgress=()=>{
    lineNodes.forEach((node,i)=>{
     node.classList.toggle('is-complete',i<speechLineIndex);
     node.classList.toggle('is-current',i===speechLineIndex);
    });
-   if(speechLineIndex<scriptLines.length&&lineNodes[speechLineIndex]){
-    lineNodes[speechLineIndex].scrollIntoView({block:'nearest',behavior:'smooth'});
-   }
+  };
+  const lineMatch=(target,candidate)=>{
+   const targetWords=speechWords(target),said=speechWords(candidate);
+   if(!said.length||!targetWords.length)return false;
+   if(writingSpeechAccepted(target,candidate))return true;
+   const accuracy=spokenAccuracy(target,candidate);
+   // Short headings ("Dear Diary") need to tolerate one STT error.
+   if(targetWords.length<=3)return said.length>=Math.max(1,targetWords.length-1)&&
+    said.length<=targetWords.length+1&&accuracy>=.72;
+   return said.length>=Math.ceil(targetWords.length*.65)&&accuracy>=.72;
   };
   const updateTeleprompter=heard=>{
    if(!lineNodes.length)return false;
    pendingSpeechWords.push(...speechWords(heard));
-   // A result may contain several sentences, or only part of one sentence.
-   // Match the current line first, then carry any remaining words forwards.
+   let advanced=false;
    while(speechLineIndex<scriptLines.length&&pendingSpeechWords.length){
     const target=scriptLines[speechLineIndex];
     const targetWords=speechWords(target);
-    if(!targetWords.length){speechLineIndex++;continue}
+    if(!targetWords.length){speechLineIndex++;advanced=true;continue}
     let match=null;
-    const minSize=Math.max(1,Math.ceil(targetWords.length*.75));
+    const minSize=Math.max(1,Math.ceil(targetWords.length*.65));
     const maxSize=Math.min(pendingSpeechWords.length,targetWords.length+2);
     for(let offset=0;offset<=Math.min(3,pendingSpeechWords.length-minSize)&&!match;offset++){
      for(let size=minSize;size<=maxSize;size++){
       const candidate=pendingSpeechWords.slice(offset,offset+size).join(' ');
-      const accurate=writingSpeechAccepted(target,candidate)||
-       (targetWords.length>=4&&spokenAccuracy(target,candidate)>=.82);
-      if(accurate){match={used:offset+size};break}
+      if(lineMatch(target,candidate)){match={used:offset+size};break}
      }
     }
     if(!match)break;
     pendingSpeechWords.splice(0,match.used);
-    speechLineIndex++;
+    speechLineIndex++;advanced=true;
    }
-   // Keep enough context to join speech fragments without accumulating
-   // unrelated recognition noise forever.
    const maxPending=Math.max(12,speechWords(scriptLines[speechLineIndex]||'').length+6);
    if(pendingSpeechWords.length>maxPending)pendingSpeechWords=pendingSpeechWords.slice(-maxPending);
    showSpeechProgress();
+   // Scroll only after genuine progress, never on a failed recognition.
+   if(advanced&&speechLineIndex<scriptLines.length)
+    lineNodes[speechLineIndex]?.scrollIntoView({block:'nearest',behavior:'smooth'});
    return speechLineIndex>=scriptLines.length;
   };
   const speakArea=el('div','df-final-speak');
@@ -870,10 +876,34 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();lineCheck.click()}
   });
   typeArea.append(typingStatus,targetLine,input,lineCheck);
-  const speakStatus=el('p','df-muted','마이크를 눌러 글 전체를 읽으세요. 길면 여러 번 나누어 읽어도 됩니다.');
-  speakArea.append(speakStatus);
+  const speakStatus=el('p','df-muted','마이크를 누르고 현재 문장을 읽어 주세요. 문장마다 이어서 진행할 수 있어요.');
+  const nextSpokenLine=el('button','wg-button wg-secondary df-speech-next','다음 문장');
+  nextSpokenLine.type='button';nextSpokenLine.hidden=true;
+  speakArea.append(speakStatus,nextSpokenLine);
   stage.append(speakArea,typeArea);
   let spokenParts=[],confirmed=false;
+  const finishSpeech=()=>{
+   confirmed=true;spoken=[spokenParts.join(' ')];typedUsed=false;
+   lineNodes.forEach(node=>{node.classList.add('is-complete');node.classList.remove('is-current')});
+   status('말하기 연습을 완료했어요.');
+   speakStatus.textContent='모든 문장을 연습했어요. 완료하고 제출을 눌러 주세요.';
+   nextSpokenLine.hidden=true;
+   if(mic)mic.disabled=true;
+   finishButton.disabled=false;
+  };
+  nextSpokenLine.addEventListener('click',()=>{
+   if(!recognizedAnySpeech||confirmed||speechLineIndex>=scriptLines.length)return;
+   speechLineIndex++;
+   pendingSpeechWords=[];
+   recognizedAnySpeech=false;
+   showSpeechProgress();
+   nextSpokenLine.hidden=true;
+   if(speechLineIndex>=scriptLines.length)finishSpeech();
+   else {
+    speakStatus.textContent=(speechLineIndex+1)+' / '+scriptLines.length+' 문장 · 다음 문장을 읽어 주세요.';
+    lineNodes[speechLineIndex]?.scrollIntoView({block:'nearest',behavior:'smooth'});
+   }
+  });
   const setMode=useTyping=>{
    typedMode=useTyping;
    speakArea.hidden=useTyping;typeArea.hidden=!useTyping;
@@ -894,16 +924,18 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    const segment=String(text||'').trim();
    if(!segment)return;
    spokenParts.push(segment);
-   const joined=spokenParts.join(' ');
+   recognizedAnySpeech=speechWords(segment).length>=2;
+   const before=speechLineIndex;
    const allLinesRead=updateTeleprompter(segment);
-   if(allLinesRead){
-    confirmed=true;spoken=[joined];typedUsed=false;
-    lineNodes.forEach(node=>{node.classList.add('is-complete');node.classList.remove('is-current')});
-    status('말하기 연습을 완료했어요.');
-    if(mic)mic.disabled=true;
-    finishButton.disabled=false;
-   }else{
-    speakStatus.textContent='계속 읽어 주세요. '+(speechLineIndex+1)+' / '+scriptLines.length+' 문장 · 인식한 단어: '+speechWords(joined).length+' / '+speechWords(current.body).length;
+   if(allLinesRead)finishSpeech();
+   else{
+    const advanced=speechLineIndex>before;
+    // A recording can advance automatically; manual next is only a fallback
+    // for a real utterance that STT didn't match to the printed sentence.
+    nextSpokenLine.hidden=advanced||!recognizedAnySpeech;
+    speakStatus.textContent=advanced
+     ?(speechLineIndex+1)+' / '+scriptLines.length+' 문장 · 잘했어요! 다음 문장을 읽어 주세요.'
+     :(speechLineIndex+1)+' / '+scriptLines.length+' 문장 · 잘못 인식했으면 다시 말하거나 다음 문장을 누르세요.';
    }
   };
   audioRenderer.onSpeechResult=alternatives=>{
