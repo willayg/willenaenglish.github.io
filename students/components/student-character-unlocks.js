@@ -2,7 +2,7 @@
 // Exactly-once acknowledgement lives in the Scores DB, not in localStorage.
 // Any signed-in student can earn and celebrate while using any Genius app.
 import {charactersInMenu,getCharacter} from '/shared/free-talking-character-catalog.js?v=20261115-p2-b';
-import {characterThumbnailMarkup} from '/students/characters-v2/character-runtime.js?v=20261115-unique-svg-resources1';
+import {createCharacterCelebration} from '/students/characters-v2/celebration-card.js?v=20261116-p4-1';
 const ENDPOINT='/api/free-talking-character-unlocks';
 const TTS='/api/free-talking-realtime-eleven';
 const SCORES='https://fiieuiktlsivwfgyivai.supabase.co';
@@ -119,14 +119,7 @@ export async function checkStudentCharacterUnlocks(verifiedPoints=null,verifiedU
 async function showOne(character,uid){
  const config=getCharacter(character);
  if(!config||config.unlockPoints<=0)return false;
- const sentences={
-  bunny:'Bunny Fox is ready for your next space adventure!',
-  pigfish:'Splash! Pigfish is here to practise English with you!',
-  dusk:'Well, well... Five thousand points. You found me. Welcome to the shadows!',
-  steve:'[surprised] WHAT?! EIGHT THOUSAND POINTS?! YOU HAVE EARNED MY RESPECT, RECRUIT!'
- };
- const sentence=sentences[character]||'A new English friend is ready!';
- const visibleText=sentence.replace(/\[[^\]]+\]\s*/g,'');
+ const {root:wrap,listen,next,status,voiceLine:sentence}=createCharacterCelebration(character);
  const host=document.createElement('div');
  host.className='willena-student-milestone-host';
  host.style.cssText='position:fixed;inset:0;z-index:2147483646;display:block;isolation:isolate;';
@@ -134,22 +127,7 @@ async function showOne(character,uid){
  const link=document.createElement('link');link.rel='stylesheet';link.href=styles;
  const fallback=document.createElement('style');
  fallback.textContent=':host{position:fixed;inset:0;display:block;z-index:2147483646}.ft-character-unlock-celebration{position:fixed;inset:0;z-index:3;display:grid;place-items:center;background:#15232be8;padding:16px}.ft-milestone-card{background:#fff;border:5px solid #65ced2;border-radius:22px;padding:22px;max-width:390px;width:100%;text-align:center;display:grid;justify-items:center;gap:10px}.ft-milestone-art{width:170px;height:170px;overflow:hidden;border-radius:50%}.ft-milestone-art svg,.ft-milestone-art img{width:100%;height:100%}.ft-milestone-actions{display:grid;gap:8px;width:100%}.ft-milestone-actions button{min-height:48px}';
- const wrap=document.createElement('section');
- wrap.className='ft-character-unlock-celebration is-'+character;
- wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');
- wrap.setAttribute('aria-label',config.name+' unlocked');
- const portrait='<span class="ft-milestone-dusk">'+characterThumbnailMarkup(character,'earned-'+character)+'</span>';
- wrap.innerHTML='<div class="ft-milestone-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>'+
- '<div class="ft-milestone-card"><div class="ft-milestone-eyebrow">NEW CHARACTER UNLOCKED!</div>'+
- '<div class="ft-milestone-art">'+portrait+'</div><h2>'+config.name.toUpperCase()+'</h2>'+
- '<p class="ft-milestone-points">'+config.unlockPoints.toLocaleString('en-US')+' POINTS</p>'+
- '<p class="ft-milestone-quote">'+visibleText+'</p>'+
- '<p class="ft-milestone-korean">새로운 대화 친구가 열렸어요!</p>'+
- '<div class="ft-milestone-actions"><button type="button" class="ft-milestone-listen">목소리 듣기</button>'+
- '<button type="button" class="ft-milestone-continue">친구 만나기</button></div>'+
- '<p class="ft-milestone-status" role="status" aria-live="polite"></p></div>';
  root.append(fallback,link,wrap);document.body.append(host);
- const listen=wrap.querySelector('.ft-milestone-listen'),next=wrap.querySelector('.ft-milestone-continue'),status=wrap.querySelector('.ft-milestone-status');
  let audio=null,busy=false,done=false,voiceUrl=null,voiceFailure='';
  const stop=()=>{
   if(audio){try{audio.pause();audio.removeAttribute('src');audio.load()}catch{}audio=null}
