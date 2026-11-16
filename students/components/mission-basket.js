@@ -84,8 +84,9 @@ async function standardHomework(){
   if(app==='Grammar Genius Books'){
    const required=Array.isArray(a.list_meta?.required_modes)?a.list_meta.required_modes:[];
    const evidence=grammarProof.filter(p=>String(p.assignment_id)===String(a.id));
-   const count=required.reduce((sum,mode)=>sum+Math.min(8,Math.max(0,Number(evidence.find(p=>p.mode===mode)?.correct_count)||0)),0);
-   const total=required.length*8;
+   const perMode=String(a.list_meta?.book_key||'')==='grammar_ten_2'?8:5;
+   const count=required.reduce((sum,mode)=>sum+Math.min(perMode,Math.max(0,Number(evidence.find(p=>p.mode===mode)?.correct_count)||0)),0);
+   const total=required.length*perMode;
    entry.progress=total?Math.round(100*count/total):0;
    entry.done=total>0&&count===total;
    entry.detail=count+'/'+total+' questions';
@@ -166,8 +167,9 @@ async function grammarBookHomework(){
  }).map(a=>{
   const meta=a.list_meta||{},required=Array.isArray(meta.required_modes)?meta.required_modes:[];
   const answers=(evidence||[]).filter(p=>p.assignment_id===a.id);
-  const finished=required.reduce((sum,mode)=>sum+Math.min(8,Math.max(0,Number(answers.find(p=>p.mode===mode)?.correct_count)||0)),0);
-  const total=required.length*8;
+  const perMode=String(meta.book_key||'')==='grammar_ten_2'?8:5;
+  const finished=required.reduce((sum,mode)=>sum+Math.min(perMode,Math.max(0,Number(answers.find(p=>p.mode===mode)?.correct_count)||0)),0);
+  const total=required.length*perMode;
   const chapter=Number(meta.chapter)||1;
   const link='/students/grammar-books/?book='+encodeURIComponent(meta.source_book_id||'1e3a2112-07be-45e2-a8fc-ce20011e0e57')+'&unit='+chapter+'&homework='+encodeURIComponent(a.id);
   const mission=item('standard:'+a.id,'Grammar Genius Books',a.title||'Grammar homework',link,a.created_at||a.due_at,total>0&&finished===total,finished+'/'+total+' questions');
