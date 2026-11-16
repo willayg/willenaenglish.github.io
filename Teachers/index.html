@@ -672,7 +672,7 @@ try{
 <div class="wc-dialog-actions"><button id="wcDelete" class="wc-button wc-delete" type="button" hidden>Delete</button><button class="wc-button" type="button" id="wcCancel">Cancel</button><button class="wc-button wc-primary" id="wcSave" type="submit">Save event</button></div></form></dialog>
 <div id="rosterAssignmentsOverlay" class="rs-assign-overlay" hidden><section class="rs-assign-dialog" role="dialog" aria-modal="true" aria-label="Student assignments"><div class="rs-assign-head"><div><h2 id="rosterAssignmentsTitle">Assignments</h2><p>Student mission history</p></div><button type="button" id="rosterAssignmentsClose" aria-label="Close assignments">×</button></div><div class="rs-assign-tabs"><button data-rs-assign-tab="current" class="active" type="button">Current</button><button data-rs-assign-tab="history" type="button">History</button></div><div id="rosterAssignmentsBody" class="rs-assign-body"></div></section></div>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.73</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.74</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -963,8 +963,11 @@ function rsAppProgress(studentId,book,unit){
  const sentencePassed=sentenceModes.map(skill=>Math.max(0,...sentences.filter(r=>r.skill===skill).map(r=>Number(r.done||0))));
  const sentencePct=sentenceTotal>0?Math.round(100*sentencePassed.reduce((a,v)=>a+Math.min(v,sentenceTotal),0)/(sentenceTotal*3)):null;
  const grammar=rosterCurriculum.extra.filter(r=>present(r)&&String(r.book_id)===bid&&Number(r.unit_number)===number&&r.app==='grammar');
- const grammarModes=['choose','check','hunt'];const gParts=grammarModes.map(m=>Math.max(0,...grammar.filter(r=>r.skill===m).map(r=>Math.min(Number(r.done)||0,8))));
- const gPct=grammar.length?Math.round(100*gParts.reduce((a,b)=>a+b,0)/24):null;
+ const grammarModes=['choose','check','hunt'];
+ const gParts=grammarModes.map(m=>Math.max(0,...grammar.filter(r=>r.skill===m).map(r=>Math.min(Math.max(0,Number(r.done)||0),Math.max(0,Number(r.total)||0)))));
+ const gTotals=grammarModes.map(m=>Math.max(0,...grammar.filter(r=>r.skill===m).map(r=>Number(r.total)||0)));
+ const gTotal=gTotals.reduce((a,b)=>a+b,0);
+ const gPct=grammar.length&&gTotal>0?Math.round(100*gParts.reduce((a,b)=>a+b,0)/gTotal):null;
  const talking=rosterCurriculum.extra.filter(r=>present(r)&&String(r.book_id)===bid&&Number(r.unit_number)===number&&r.app==='talking'&&r.skill==='speaking');
  const bestTalk=talking.sort((a,b)=>Number(b.done||0)-Number(a.done||0))[0];
  const talkPct=bestTalk&&Number(bestTalk.total)>0?Math.round(100*Math.min(Number(bestTalk.done)||0,Number(bestTalk.total))/Number(bestTalk.total)):null;
@@ -975,7 +978,7 @@ function rsAppProgress(studentId,book,unit){
  const tracked=[
   {id:'word',percent:wordPct,started:wordHas,complete:wordPct!=null&&wordParts.every(v=>v/totalVocab>.9)},
   {id:'sentence',percent:sentencePct,started:sentences.some(r=>Number(r.done)>0),complete:sentencePct!=null&&sentencePassed.every(v=>v/sentenceTotal>.9)},
-  {id:'grammar',percent:gPct,started:grammar.length>0,complete:gParts.every(v=>v/8>.9)},
+  {id:'grammar',percent:gPct,started:grammar.length>0,complete:gTotal>0&&gTotals.every(v=>v>0)&&gParts.every((v,i)=>v/gTotals[i]>.9)},
   {id:'talking',percent:talkPct,started:talking.length>0,complete:talking.some(r=>r.finished===true)},
   {id:'writing',percent:writingComplete?100:null,started:writing.length>0,complete:writingComplete,detail:writing.length&&!writingComplete?'In progress':null},
   {id:'puzzles',percent:puzzle?Math.round(puzzleDone/5*100):0,started:puzzleDone>0,complete:puzzleDone===5}
@@ -1404,8 +1407,8 @@ function ccExtraRows(book,unit,group,className){
  if(group.key==='freeconversation')return (curriculum.conversationEvidence||[]).filter(r=>String(r.book_id)===String(book.book_id)&&String(r.unit_id)===String(unit.id)&&String(r.class||'').toLowerCase()===String(className).toLowerCase());
  if(!['grammar','talking'].includes(group.key))return [];
  const ids=new Set(ccClassStudents(className).map(s=>String(s.id)));
- return (curriculum.extraActivity||[]).filter(r=>r.book_id===book.book_id&&
- Number(r.unit_number)===Number(unit.unit_number)&&r.app===group.key&&ids.has(String(r.student_id)));
+ return (curriculum.extraActivity||[]).filter(r=>String(r.book_id||'').trim()===String(book.book_id||'').trim()&&
+ Number(r.unit_number)===Number(unit.unit_number)&&String(r.app||'').trim()===group.key&&ids.has(String(r.student_id)));
 }
 function ccExtraCompletion(book,unit,group,className){
  const rows=ccExtraRows(book,unit,group,className);
@@ -1549,6 +1552,7 @@ function ccRenderDetail(){
  books.map(b=>'<button type="button" class="'+(b.id===book.id?'active':'')+'" data-cc-book="'+ccEscape(b.id)+'">'+ccEscape(b.book_title||'Textbook')+'</button>').join('')+
  (inAssignments?'</div><small>'+students.length+' students · Unit progress</small></div>':'</div><div class="cc-progress-heading"><div><h3>'+ccEscape(book.book_title||'Textbook')+'</h3><p>Current classroom unit: <strong>'+ccEscape(book.current_unit||'Not set')+'</strong></p></div><label>Mark unit being taught <select class="control" id="ccTaught"><option value="">Not set</option>'+units.map(u=>'<option value="'+ccEscape(String(u.unit_number))+'" '+(String(book.current_unit||'')===String(u.unit_number)?'selected':'')+'>Unit '+ccEscape(u.unit_number)+'</option>').join('')+'</select></label></div>')+
  '<p class="cc-helper">Gold: more than 90% verified complete · Light pink: in progress · White: not started. Unverified practice is never marked completed.</p>'+
+ (curriculum.extraError?'<p class="cc-helper" role="alert">Grammar Genius progress could not be loaded ('+ccEscape(curriculum.extraError)+'). Refresh to retry; blank cells are not reliable.</p>':'')+
  (!curriculum.unitCache.has(book.book_id)?'<div class="cc-empty">Loading textbook units…</div>':!units.length?'<div class="cc-empty">No published or review units are available for this book.</div>':
  '<div class="cc-grid-scroll"><div class="cc-matrix"><div class="cc-matrix-head"><span>Unit</span>'+groups.map(g=>'<span>'+ccEscape(g.name)+'</span>').join('')+'</div>'+
  units.map(u=>'<div class="cc-matrix-row"><div class="cc-unit-name"><strong>Unit '+ccEscape(u.unit_number)+'</strong><small>'+ccEscape(u.title||'')+'</small></div>'+
@@ -1792,7 +1796,7 @@ async function loadClassOverview(force=false){
   if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.puzzleDetail.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];}
   curriculum.data=await ccRpc('teacher_curriculum_overview_v1');
   try{const puzzle=await ccRpc('teacher_curriculum_puzzle_overview_v1');curriculum.puzzleOverview=Array.isArray(puzzle)?puzzle:[]}catch(e){console.warn('[Class Curriculum] Puzzle overview:',e.message);curriculum.puzzleOverview=[];}
-  try{const extra=await ccRpc('teacher_curriculum_extra_activity_v1');curriculum.extraActivity=Array.isArray(extra)?extra:[]}catch(e){console.warn('[Class Curriculum] Grammar / Talking overview:',e.message);curriculum.extraActivity=[];}
+  try{const extra=await ccRpc('teacher_curriculum_extra_activity_v1');if(!Array.isArray(extra))throw Error('Unexpected curriculum evidence response');curriculum.extraActivity=extra;curriculum.extraError='';}catch(e){console.warn('[Class Curriculum] Grammar / Talking overview:',e.message);curriculum.extraActivity=[];curriculum.extraError=e.message||'Unavailable';}
   try{
    // The two mission modes are intentionally separate. Conversation progress
    // comes from its own verified mission RPC and is never copied from Speaking.
