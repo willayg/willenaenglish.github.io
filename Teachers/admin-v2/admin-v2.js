@@ -1,5 +1,5 @@
 import { loadStudentRoster, replaceStudentRoster } from '/Teachers/shared/student-roster.js?v=20260917-p21';
-import { ensureAuthRefresh } from '/Teachers/auth-refresh.js?v=20261021-sessionfix1';
+import { ensureAuthRefresh, ensureTeacherSession } from '/Teachers/auth-refresh.js?v=20261021-sessionfix1';
 
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -127,7 +127,7 @@ async function createStudentFromDrawer(event){
 async function loadStudents(force=false){
   if(force){$('#studentStatus').textContent='Refreshing…';$('#studentList').innerHTML='<div class="empty">Refreshing students…</div>'}
   try{const roster=await loadStudentRoster({force,repairSession:true,onRefresh:fresh=>{state.students=fresh.students||[];buildFilters();applyFilters();populateAddClass()}});state.students=roster.students||[];buildFilters();applyFilters();populateAddClass()}
-  catch(error){console.error('[Admin V2] roster/authorization failed',error);if(Number(error.status)===403){location.replace('/Teachers/dashboard-v2/');return}if(Number(error.status)===401){location.replace(loginUrl());return}$('#studentStatus').textContent='Could not load students';$('#studentList').innerHTML=`<div class="empty">${esc(error.message)}</div>`}
+  catch(error){console.error('[Admin V2] roster/authorization failed',error);const code=Number(error.status);if(code===401||code===403){const session=await ensureTeacherSession();if(session?.temporary){showAuthRetry('Connection interrupted. Your login is still saved.');return}if(!session?.success){location.replace(loginUrl());return}if(code===403){location.replace('/Teachers/');return}showAuthRetry('Could not load admin records. Your teacher login is still active.');return}$('#studentStatus').textContent='Could not load students';$('#studentList').innerHTML=`<div class="empty">${esc(error.message)}</div>`}
 }
 function bindLevelTestModes(){
   const tabs=$('[data-level-test-mode]');
@@ -150,13 +150,33 @@ function bindStudents(){
   $('#studentSearch').addEventListener('input',applyFilters);$('#classFilter').addEventListener('change',applyFilters);$('#gradeFilter').addEventListener('change',applyFilters);$('#studentRefresh').addEventListener('click',()=>loadStudents(true));$('#addStudent').addEventListener('click',openAdd);$('#closeStudentDrawer').addEventListener('click',closeStudent);$('#studentDrawerBg').addEventListener('click',e=>{if(e.target===$('#studentDrawerBg'))closeStudent()});$('#closeAddStudentDrawer').addEventListener('click',closeAdd);$('#cancelAddStudent').addEventListener('click',closeAdd);$('#addStudentDrawerBg').addEventListener('click',e=>{if(e.target===$('#addStudentDrawerBg'))closeAdd()});$('#addStudentForm').addEventListener('submit',createStudentFromDrawer);document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeStudent();closeAdd()}})
 }
 window.addEventListener('willena-student-enrolled',()=>loadStudents(true));
-function boot(){
- // Keep the shared teacher/admin cookie session refreshed while Admin V2 is open.
- // Server-side authorization remains the source of truth for protected data.
+function showAuthRetry(message){
+ $('#studentStatus').textContent=message;
+ $('#studentList').innerHTML='<div class="empty">Connection problem — your login has not been cleared. <button id="retryAdminAuth" type="button">Retry connection</button></div>';
+ $('#retryAdminAuth')?.addEventListener('click',()=>bootAuth());
+}
+async function bootAuth(){
+ const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+ let session=null;
+ for(let attempt=0;attempt<3;attempt++){
+   session=await ensureTeacherSession();
+   if(session?.success||!session?.temporary)break;
+   $('#studentStatus').textContent='Connection interrupted. Restoring teacher session…';
+   await wait(700*(attempt+1));
+ }
+ if(!session?.success||!session.user_id){
+   if(session?.temporary){showAuthRetry('Unable to verify teacher session.');return}
+   location.replace(loginUrl());return;
+ }
+ // Use the same session validation and refresh as /Teachers/.
+ // Admin APIs continue to check permissions on the server.
  ensureAuthRefresh();
+ loadStudents(false);
+}
+function boot(){
  bindNavigation();bindStudents();bindLevelTestModes();
  import('./admin-v2-teachers.js?v=20261115-archive').then(m=>m.checkAccess()).catch(e=>console.warn('Teacher Manager access check unavailable',e));$('#adminV2Boot')?.classList.add('hidden');
- loadStudents(false);
+ bootAuth();
  // The red unread badge must appear even when Admin V2 opens on Students.
  import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiryBadge()).catch(e=>console.debug('[Enquiries] Badge unavailable',e));
  setInterval(()=>{if(!document.hidden)import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiryBadge()).catch(()=>{})},60000);
