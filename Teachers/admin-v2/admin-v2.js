@@ -1,4 +1,5 @@
 import { loadStudentRoster, replaceStudentRoster } from '/Teachers/shared/student-roster.js?v=20260917-p21';
+import { ensureAuthRefresh } from '/Teachers/auth-refresh.js?v=20261021-sessionfix1';
 
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -150,6 +151,9 @@ function bindStudents(){
 }
 window.addEventListener('willena-student-enrolled',()=>loadStudents(true));
 function boot(){
+ // Keep the shared teacher/admin cookie session refreshed while Admin V2 is open.
+ // Server-side authorization remains the source of truth for protected data.
+ ensureAuthRefresh();
  bindNavigation();bindStudents();bindLevelTestModes();
  import('./admin-v2-teachers.js?v=20261115-archive').then(m=>m.checkAccess()).catch(e=>console.warn('Teacher Manager access check unavailable',e));$('#adminV2Boot')?.classList.add('hidden');
  loadStudents(false);
