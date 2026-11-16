@@ -231,9 +231,9 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
 
  function topic(){
   screen('topic','1 · Topic');
-  const isTopic=current.kind==='topic';const ideas=isTopic?allTopicIdeas:diaryTopics;
+  const isTopic=current.kind==='topic';const assigned=/^homework-/.test(current.prompt_key||'');const ideas=isTopic?allTopicIdeas:diaryTopics;
   const heading=el('h2','df-heading',isTopic?'주제 글쓰기':'오늘의 일기');stage.append(heading);
-  const selected=ideas.find(t=>t.title===current.title||t.en===current.title);
+  const selected=assigned?null:ideas.find(t=>t.title===current.title||t.en===current.title);
   const picker=el('div','df-topic-picker');
   const choose=el('button','df-topic-trigger');choose.type='button';choose.setAttribute('aria-expanded','false');
   const menu=el('div','df-topic-menu');menu.hidden=true;
@@ -245,10 +245,10 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   let active=selected||null;
   function render(){
    choose.textContent=active?(active.title+(active.en?' · '+active.en:'')):'직접 제목 쓰기';
-   titleInput.hidden=!!active;
+   titleInput.hidden=!!active||assigned;
    if(active)current.title=active.title;
    else titleInput.value=current.title||'';
-   guide.textContent=active?active.guide:'Write about anything you like. What happened? How did you feel?';
+   guide.textContent=assigned?(current.prompt_text||'선생님의 글쓰기 안내를 확인하세요.'):(active?active.guide:'Write about anything you like. What happened? How did you feel?');
    const example=active||ideas[0];
    exampleTitle.textContent=example.en||example.title;exampleText.textContent=example.example||'Write at least 8 sentences about this topic. Introduce the idea, develop it with details, and finish clearly.';
    [...menu.querySelectorAll('[data-topic-index]')].forEach(btn=>btn.classList.toggle('is-selected',btn.dataset.topicIndex===String(active?ideas.indexOf(active):-1)));
@@ -262,7 +262,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const custom=el('button','df-topic-option','✎ 직접 제목 쓰기 · My Own Topic');custom.type='button';custom.dataset.topicIndex='-1';
   custom.addEventListener('click',()=>{active=null;current.title='';render();closeMenu();titleInput.focus()});menu.append(custom);
   titleInput.addEventListener('input',()=>{current.title=titleInput.value});
-  if(isTopic){
+  if(isTopic&&!assigned){
    const random=el('button','df-random-topic','Random Topic · 랜덤 주제');random.type='button';random.setAttribute('aria-label','Choose a random writing topic');
    random.onclick=()=>{
     if(random.disabled)return;random.disabled=true;random.classList.add('is-spinning');
@@ -289,7 +289,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    stage.append(random);
   }
   picker.append(choose,menu);
-  stage.append(picker,titleInput,guide,examplesBtn,exampleBox);
+  if(assigned){picker.hidden=true;titleInput.hidden=true;stage.append(el('strong','df-assigned-title',current.title||'선생님 지정 주제'));guide.style.cssText='white-space:pre-wrap;padding:14px;border:1px solid #b7e8ed;border-radius:12px;background:#f3fcfd;color:#244a54';}
+   stage.append(picker,titleInput,guide,examplesBtn,exampleBox);
   examplesBtn.addEventListener('click',()=>{exampleBox.hidden=!exampleBox.hidden;examplesBtn.setAttribute('aria-expanded',String(!exampleBox.hidden))});
   render();
   button('다음',async()=>{if(!current.title.trim()){status('제목을 써 주세요.',true);return}try{await persist();write()}catch(e){status(e.message,true)}},true);
@@ -298,7 +299,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   screen('write','2 · Write');
   const count=el('span','df-count');const area=el('textarea','df-textarea');area.value=current.body||'';area.placeholder=current.kind==='topic'?'Write at least 8 sentences. Use paragraphs for the beginning, middle and ending.':'Write 6–30 complete sentences.';area.maxLength=12000;
   if(current.kind==='topic'){const guide=el('p','df-topic-write-guide','Beginning: introduce your idea or characters. Middle: develop the story or explain with details. Ending: finish clearly. Start a new paragraph for each part.');stage.append(guide)}
-  function update(){current.body=area.value;const n=split(area.value).length;count.textContent=n+' sentences';count.classList.toggle('is-invalid',n<(current.kind==='topic'?8:6)||n>30)}
+  if(/^homework-/.test(current.prompt_key||'')){const note=el('section','df-assigned-instructions');note.style.cssText='white-space:pre-wrap;margin:12px 0;padding:14px;border:1px solid #b7e8ed;border-radius:12px;background:#f3fcfd;color:#244a54';note.append(el('strong','','선생님 안내 · Teacher instructions'),el('p','',current.prompt_text||'선생님이 지정한 주제로 글을 쓰세요.'));stage.prepend(note)}
+   function update(){current.body=area.value;const n=split(area.value).length;count.textContent=n+' sentences';count.classList.toggle('is-invalid',n<(current.kind==='topic'?8:6)||n>30)}
   captureDraft=()=>{current.body=area.value};
   area.addEventListener('input',()=>{update();clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{void persist().catch(e=>status(e.message,true))},1800)});update();stage.append(area,count);
   button('이전',topic);
