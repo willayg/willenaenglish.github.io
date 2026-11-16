@@ -130,6 +130,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
         onListeningAvailable:()=>{if(token===epoch&&mode==='speaking')$('listenTools').hidden=false}
       });
       prefetchAudio(queue.slice(index,index+3));
+      if(mode==='speaking'&&item.mustListen)offerHeadphones({requireBeforeSpeaking:true});
     }
     $('sessionMain').scrollTop=0;
   }
@@ -151,8 +152,51 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     node.style.setProperty('background-color',({green:'#ebfff2',lime:'#f0fbd7',yellow:'#fff8da',orange:'#fff0df',red:'#fff0f2'})[grade.level],'important');
     node.dataset.accepted=grade.level==='green'?'true':grade.level;
   }
-  function queueRetry(row){
-    const retry={...row,retry:row.retry+1};
+  // A zero-point speaking attempt gets a listening step before the queued retry.
+  // This uses only Sentence Genius's session UI, not the shared microphone renderer.
+  function offerHeadphones({requireBeforeSpeaking=false}={}){
+    if(mode!=='speaking'||!renderer)return;
+    const host=renderer.host;
+    const mic=host?.querySelector('[data-speaking-mic]');
+    if(!mic||host.querySelector('[data-sg-retry-headphones]'))return;
+    mic.hidden=true;
+    mic.style.display='none';
+    const headphones=document.createElement('button');
+    headphones.type='button';
+    headphones.className='speaking-mic sg-retry-headphones';
+    headphones.setAttribute('data-sg-retry-headphones','');
+    headphones.setAttribute('aria-label','정답 듣기');
+    headphones.innerHTML='<svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><path d="M3 13h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8"/><path d="M21 13h-2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v-8"/></svg>';
+    mic.before(headphones);
+    const status=host.querySelector('[data-speaking-status]');
+    if(status)status.textContent='헤드폰을 눌러 정답을 들어 보세요.';
+    const token=epoch;
+    headphones.addEventListener('click',async()=>{
+      if(headphones.disabled||token!==epoch)return;
+      headphones.disabled=true;
+      try{
+        const played=await playModel(current()?.en);
+        if(token!==epoch)return;
+        if(!played){
+          onMessage('듣기 오디오를 재생할 수 없어요. 다시 눌러 보세요.');
+          return;
+        }
+        if(requireBeforeSpeaking){
+          // Listening is remedial feedback here; leave existing reward/scoring untouched.
+          headphones.remove();
+          mic.hidden=false;
+          mic.style.removeProperty('display');
+          if(status)status.textContent='이제 마이크를 누르고 다시 말해 보세요.';
+        }else if(status){
+          status.textContent='한 번 더 듣고 다음 문제로 넘어가세요.';
+        }
+      }finally{
+        if(headphones.isConnected)headphones.disabled=false;
+      }
+    });
+  }
+  function queueRetry(row,{mustListen=false}={}){
+    const retry={...row,retry:row.retry+1,mustListen};
     // Retry later, not immediately: same as Word Genius's incorrect-only recovery.
     queue.push(retry);
   }
@@ -184,11 +228,12 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     const almostRight=correct&&result.points<4;
     const verdict=ctx.store.attempt(mode,item.id,{correct,assisted,almostRight,gradePoints:mode==='unscramble'?(correct?4:0):result.points});
     reward?.note(verdict.mastered,item.retry,verdict.points,mode==='unscramble'?(correct?4:0):result.points,item.id);
-    if(verdict.repeat)queueRetry(item);
+    if(verdict.repeat)queueRetry(item,{mustListen:mode==='speaking'&&result.points===0});
     answered=true;
     const rec=renderer;
     speech?.dispose();speech=null;
     rec.setDisabled(true);
+    if(mode==='speaking'&&result.points===0)offerHeadphones();
     const acceptedAlternative=correct&&[
       'approved_alternative','equivalent_quantifier','equivalent_possession_question',
       'equivalent_permission','equivalent_request','ai','ai_cached'
