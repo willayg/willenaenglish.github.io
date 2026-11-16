@@ -1322,7 +1322,7 @@ async function openStudent(id){window.rosterDrawerStudent=String(id);const base=
 
 /* Class Curriculum — read from staff-scoped operations RPC and shared content catalog. */
 const curriculum={
- data:null, selectedClass:'', selectedBook:'', selectedUnit:'', selectedSkill:'', assignmentSubview:'curriculum', unitCache:new Map(),
+ data:null, loadedAt:0, extraError:'', selectedClass:'', selectedBook:'', selectedUnit:'', selectedSkill:'', assignmentSubview:'curriculum', unitCache:new Map(),
  pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[], skillDetail:new Map(), extraActivity:[], sentenceEvidence:[], writingUnits:[], writingEntries:[],conversationEvidence:[],jellyRewards:new Map()
 };
 // Both screens use this ONE curriculum renderer and the same state/cache.
@@ -1786,7 +1786,7 @@ function ccRenderStudentDrilldown(book,unit,group){
 }
 async function loadClassOverview(force=false){
  if(curriculum.pending)return;
- if(curriculum.data&&!force){
+ if(curriculum.data&&!force&&curriculum.extraActivity.length&&!curriculum.extraError&&Date.now()-curriculum.loadedAt<60000){
   if(ccHost()?.id==='assignmentClassGrid'){if(!curriculum.selectedClass){try{curriculum.selectedClass=sessionStorage.getItem('willena:assignments:curriculum-class')||''}catch{}}ccRenderDetail();}
   else if(curriculum.selectedClass)ccRenderDetail();else ccRenderOverview();
   return
@@ -1818,6 +1818,7 @@ async function loadClassOverview(force=false){
   const byId=new Map();
   await Promise.all(allIds.map(async id=>{try{byId.set(id,await ccUnits(id))}catch(e){console.warn('[Class Curriculum] Catalog:',e.message)}}));
   curriculum.data.books.forEach(b=>{b._units=byId.get(b.book_id)||[];b._className=curriculum.data.classes.find(c=>c.id===b.class_id)?.name||''});
+  curriculum.loadedAt=Date.now();
   if(ccHost()?.id==='assignmentClassGrid'){
    if(!curriculum.selectedClass){try{curriculum.selectedClass=sessionStorage.getItem('willena:assignments:curriculum-class')||''}catch{}}
    if(!curriculum.data.classes.some(c=>c.name===curriculum.selectedClass)){curriculum.selectedClass=curriculum.data.classes[0]?.name||'';curriculum.selectedBook='';}
