@@ -311,6 +311,10 @@ try{
 </section>
 <style>
 /* Curriculum Class View */
+.cc-jelly-label{display:flex;align-items:center;gap:9px;margin-top:12px;padding:10px 11px;border:1px solid #e8c66b;background:#fff9e8;border-radius:10px;color:#805e14;font-size:12px;font-weight:800;cursor:pointer}
+.cc-jelly-label:has(input:checked){background:#e9f8ef;border-color:#a5d9b4;color:#287549}
+.cc-jelly-label input{width:17px;height:17px;accent-color:#189b72;cursor:pointer}
+.cc-jelly-label input:disabled{cursor:wait;opacity:.65}
 .curriculum-root{font-family:inherit;color:#233d4c}
 .cc-assignment-mode{display:flex;gap:7px;margin:3px 0 17px;padding:5px;background:#eef4f5;border:1px solid #dce7eb;border-radius:14px;max-width:660px}
 .cc-assignment-mode button{flex:1;min-width:0;border:0;border-radius:10px;background:transparent;color:#59717a;font:inherit;font-size:13px;font-weight:750;padding:12px 8px;cursor:pointer}
@@ -1316,7 +1320,7 @@ async function openStudent(id){window.rosterDrawerStudent=String(id);const base=
 /* Class Curriculum — read from staff-scoped operations RPC and shared content catalog. */
 const curriculum={
  data:null, selectedClass:'', selectedBook:'', selectedUnit:'', selectedSkill:'', assignmentSubview:'curriculum', unitCache:new Map(),
- pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[], skillDetail:new Map(), extraActivity:[], sentenceEvidence:[], writingUnits:[], writingEntries:[],conversationEvidence:[]
+ pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[], skillDetail:new Map(), extraActivity:[], sentenceEvidence:[], writingUnits:[], writingEntries:[],conversationEvidence:[],jellyRewards:new Map()
 };
 // Both screens use this ONE curriculum renderer and the same state/cache.
 const ccHost=()=>document.querySelector('#view-assignments.active #assignmentClassGrid')||document.getElementById('classGrid');
@@ -1581,12 +1585,25 @@ function ccRenderDetail(){
   ccRenderDetail();
  });
  host.querySelectorAll('[data-cc-book]').forEach(b=>b.onclick=()=>{curriculum.selectedBook=b.dataset.ccBook;curriculum.selectedUnit='';curriculum.selectedSkill='';ccRenderDetail()});
- host.querySelectorAll('[data-cc-unit]').forEach(b=>b.onclick=async()=>{curriculum.selectedUnit=b.dataset.ccUnit;curriculum.selectedSkill=b.dataset.ccSkill;const selectedBook=book,selectedUnit=units.find(u=>u.id===curriculum.selectedUnit);const selectedClass=c.name;ccRenderDetail();host.querySelector('.cc-drilldown')?.scrollIntoView({behavior:'smooth',block:'nearest'});if(selectedUnit){try{if(curriculum.selectedSkill==='puzzles')await ccLoadPuzzleDetail(selectedBook,selectedUnit);else await ccLoadSkillDetail(selectedBook,selectedUnit);if(curriculum.selectedClass===selectedClass&&curriculum.selectedBook===selectedBook.id&&curriculum.selectedUnit===selectedUnit.id)ccRenderDetail()}catch(e){console.warn('[Class Curriculum] Skill detail:',e);}}});
+ host.querySelectorAll('[data-cc-unit]').forEach(b=>b.onclick=async()=>{curriculum.selectedUnit=b.dataset.ccUnit;curriculum.selectedSkill=b.dataset.ccSkill;const selectedBook=book,selectedUnit=units.find(u=>u.id===curriculum.selectedUnit);const selectedClass=c.name;ccRenderDetail();host.querySelector('.cc-drilldown')?.scrollIntoView({behavior:'smooth',block:'nearest'});if(selectedUnit){try{if(curriculum.selectedSkill==='puzzles')await ccLoadPuzzleDetail(selectedBook,selectedUnit);else await Promise.all([ccLoadSkillDetail(selectedBook,selectedUnit),ccLoadJelly(selectedBook,selectedUnit,curriculum.selectedSkill)]);if(curriculum.selectedClass===selectedClass&&curriculum.selectedBook===selectedBook.id&&curriculum.selectedUnit===selectedUnit.id)ccRenderDetail()}catch(e){console.warn('[Class Curriculum] Skill detail:',e);}}});
  const taught=host.querySelector('#ccTaught');
  if(taught){taught.onchange=async()=>{const before=book.current_unit;const val=taught.value||null;taught.disabled=true;
   try{await ccRpc('teacher_curriculum_set_unit_v1',{p_assignment_id:book.id,p_unit:val});book.current_unit=val;ccRenderDetail()}
   catch(e){taught.disabled=false;taught.value=before||'';alert('Could not save current unit: '+e.message)}
  }}
+ host.querySelectorAll('[data-cc-jelly-student]').forEach(box=>box.onchange=async()=>{
+  const studentId=box.dataset.ccJellyStudent,app=curriculum.selectedSkill,unit=units.find(u=>u.id===curriculum.selectedUnit);
+  if(!unit||!book||!['word','sentence'].includes(app))return;
+  const before=!box.checked;
+  if(before&&!confirm('Clear Jelly Time for this student? This means the reward can be given again.')){box.checked=true;return}
+  box.disabled=true;
+  try{
+   await ccRpc('teacher_unit_jelly_set_v1',{p_student_id:studentId,p_book_id:book.book_id,p_unit_id:unit.id,p_app:app,p_given:!before});
+   curriculum.jellyRewards.delete(ccJellyKey(book,unit,app));
+   await ccLoadJelly(book,unit,app);
+   ccRenderDetail();
+  }catch(e){box.checked=before;box.disabled=false;alert('Jelly Time could not be saved: '+e.message)}
+ });
  host.querySelectorAll('[data-cc-student]').forEach(b=>b.onclick=()=>openClassFromOverview(c.name,30));
  host.querySelectorAll('[data-cc-mission]').forEach(b=>b.onclick=()=>{
   const unit=units.find(u=>u.id===curriculum.selectedUnit);
@@ -1629,6 +1646,14 @@ function ccRequiredSkills(book,group){
  return level<3?['vocabulary','spelling_coach','speaking']:['vocabulary','spelling_test','speaking'];
 }
 function ccSkillKey(book,unit){return [curriculum.selectedClass,book.book_id,unit.id].join(':')}
+const ccJellyKey=(book,unit,app)=>[curriculum.selectedClass,book.book_id,unit.id,app].join(':');
+async function ccLoadJelly(book,unit,app){
+ if(!['word','sentence'].includes(app))return;
+ const key=ccJellyKey(book,unit,app);
+ if(curriculum.jellyRewards.has(key))return;
+ const entries=await ccRpc('teacher_unit_jelly_get_v1',{p_class:curriculum.selectedClass,p_book_id:book.book_id,p_unit_id:unit.id,p_app:app});
+ curriculum.jellyRewards.set(key,new Map((Array.isArray(entries)?entries:[]).map(e=>[String(e.student_id),e])));
+}
 async function ccLoadSkillDetail(book,unit){
  const key=ccSkillKey(book,unit);
  if(curriculum.skillDetail.has(key))return;
@@ -1667,6 +1692,7 @@ function ccRenderStudentDrilldown(book,unit,group){
  const puzzleByStudent=new Map((puzzleRecords||[]).map(r=>[String(r.student_id),r]));
  const details=curriculum.skillDetail.get(ccSkillKey(book,unit));
  const detailMap=new Map((details?.rows||[]).map(r=>[String(r.student_id),r]));
+ const jelly=curriculum.jellyRewards.get(ccJellyKey(book,unit,group.key));
  return '<section class="cc-drilldown"><div class="cc-drill-head"><div><h3>Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name)+'</h3><p>Unit progress by skill · Correctly completed items, not attempts</p></div><button type="button" class="cc-btn cc-primary" data-cc-mission="1">Assign mission →</button></div>'+
  '<div class="cc-student-grid">'+students.map(student=>{
   const rows=d.rows.filter(r=>String(r.student_id)===String(student.id));
@@ -1745,7 +1771,9 @@ function ccRenderStudentDrilldown(book,unit,group){
   const summary=requiredCells.length&&requiredCells.every(x=>x.known)?complete+' of '+requiredCells.length+' required skills completed':requiredCells.length?'Required skill totals unavailable':'Completion requirements unavailable';
   return '<div class="cc-student-row cc-'+(verified?'complete':hasData?'in-progress':'not-started')+'">'+first+'<span class="cc-percent-muted">'+status+'</span></div>'+subtitle+
    '<div class="cc-skill-summary">'+ccEscape(summary)+'</div><div class="cc-skill-list">'+bars+'</div>'+
-   '<div class="cc-student-details">Last '+ccEscape(ccActivityTime(record.last_at)||last||'—')+'</div></div>';
+   '<div class="cc-student-details">Last '+ccEscape(ccActivityTime(record.last_at)||last||'—')+'</div>'+
+   (verified&&['word','sentence'].includes(group.key)?
+    '<label class="cc-jelly-label"><input type="checkbox" data-cc-jelly-student="'+ccEscape(student.id)+'" '+(jelly?.has(String(student.id))?'checked ':'')+(jelly?'':'disabled ')+'><span>🍬 Jelly Time'+(jelly?.has(String(student.id))?' · Given ✓':jelly?' · Not given':' · Loading…')+'</span></label>':'')+'</div>';
  }).join('')+'</div><p class="cc-helper">Progress reflects distinct passed unit targets. Below Level 3, Spelling Coach is required and Spelling Test is optional. At Level 3 and above, Spelling Test is required and Spelling Coach is optional. Only required skills determine unit completion.</p></section>';
 }
 async function loadClassOverview(force=false){
@@ -1757,7 +1785,7 @@ async function loadClassOverview(force=false){
  }
  curriculum.pending=true;ccHost().innerHTML='<div class="empty">Loading active class books and practice records…</div>';
  try{
-  if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.puzzleDetail.clear();curriculum.skillDetail.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];}
+  if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.puzzleDetail.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];}
   curriculum.data=await ccRpc('teacher_curriculum_overview_v1');
   try{const puzzle=await ccRpc('teacher_curriculum_puzzle_overview_v1');curriculum.puzzleOverview=Array.isArray(puzzle)?puzzle:[]}catch(e){console.warn('[Class Curriculum] Puzzle overview:',e.message);curriculum.puzzleOverview=[];}
   try{const extra=await ccRpc('teacher_curriculum_extra_activity_v1');curriculum.extraActivity=Array.isArray(extra)?extra:[]}catch(e){console.warn('[Class Curriculum] Grammar / Talking overview:',e.message);curriculum.extraActivity=[];}
