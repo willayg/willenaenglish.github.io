@@ -1585,7 +1585,7 @@ function ccRenderDetail(){
   ccRenderDetail();
  });
  host.querySelectorAll('[data-cc-book]').forEach(b=>b.onclick=()=>{curriculum.selectedBook=b.dataset.ccBook;curriculum.selectedUnit='';curriculum.selectedSkill='';ccRenderDetail()});
- host.querySelectorAll('[data-cc-unit]').forEach(b=>b.onclick=async()=>{curriculum.selectedUnit=b.dataset.ccUnit;curriculum.selectedSkill=b.dataset.ccSkill;const selectedBook=book,selectedUnit=units.find(u=>u.id===curriculum.selectedUnit);const selectedClass=c.name;ccRenderDetail();host.querySelector('.cc-drilldown')?.scrollIntoView({behavior:'smooth',block:'nearest'});if(selectedUnit){try{if(curriculum.selectedSkill==='puzzles')await ccLoadPuzzleDetail(selectedBook,selectedUnit);else await Promise.all([ccLoadSkillDetail(selectedBook,selectedUnit),ccLoadJelly(selectedBook,selectedUnit,curriculum.selectedSkill)]);if(curriculum.selectedClass===selectedClass&&curriculum.selectedBook===selectedBook.id&&curriculum.selectedUnit===selectedUnit.id)ccRenderDetail()}catch(e){console.warn('[Class Curriculum] Skill detail:',e);}}});
+ host.querySelectorAll('[data-cc-unit]').forEach(b=>b.onclick=async()=>{curriculum.selectedUnit=b.dataset.ccUnit;curriculum.selectedSkill=b.dataset.ccSkill;const selectedBook=book,selectedUnit=units.find(u=>u.id===curriculum.selectedUnit);const selectedClass=c.name;ccRenderDetail();host.querySelector('.cc-drilldown')?.scrollIntoView({behavior:'smooth',block:'nearest'});if(selectedUnit){try{if(curriculum.selectedSkill==='puzzles')await Promise.all([ccLoadPuzzleDetail(selectedBook,selectedUnit),ccLoadJelly(selectedBook,selectedUnit,curriculum.selectedSkill)]);else await Promise.all([ccLoadSkillDetail(selectedBook,selectedUnit),ccLoadJelly(selectedBook,selectedUnit,curriculum.selectedSkill)]);if(curriculum.selectedClass===selectedClass&&curriculum.selectedBook===selectedBook.id&&curriculum.selectedUnit===selectedUnit.id)ccRenderDetail()}catch(e){console.warn('[Class Curriculum] Skill detail:',e);}}});
  const taught=host.querySelector('#ccTaught');
  if(taught){taught.onchange=async()=>{const before=book.current_unit;const val=taught.value||null;taught.disabled=true;
   try{await ccRpc('teacher_curriculum_set_unit_v1',{p_assignment_id:book.id,p_unit:val});book.current_unit=val;ccRenderDetail()}
@@ -1593,7 +1593,7 @@ function ccRenderDetail(){
  }}
  host.querySelectorAll('[data-cc-jelly-student]').forEach(box=>box.onchange=async()=>{
   const studentId=box.dataset.ccJellyStudent,app=curriculum.selectedSkill,unit=units.find(u=>u.id===curriculum.selectedUnit);
-  if(!unit||!book||!['word','sentence'].includes(app))return;
+  if(!unit||!book||!ccSkillGroups.some(group=>group.key===app))return;
   const before=!box.checked;
   if(before&&!confirm('Clear Jelly Time for this student? This means the reward can be given again.')){box.checked=true;return}
   box.disabled=true;
@@ -1648,7 +1648,7 @@ function ccRequiredSkills(book,group){
 function ccSkillKey(book,unit){return [curriculum.selectedClass,book.book_id,unit.id].join(':')}
 const ccJellyKey=(book,unit,app)=>[curriculum.selectedClass,book.book_id,unit.id,app].join(':');
 async function ccLoadJelly(book,unit,app){
- if(!['word','sentence'].includes(app))return;
+ if(!ccSkillGroups.some(group=>group.key===app))return;
  const key=ccJellyKey(book,unit,app);
  if(curriculum.jellyRewards.has(key))return;
  const entries=await ccRpc('teacher_unit_jelly_get_v1',{p_class:curriculum.selectedClass,p_book_id:book.book_id,p_unit_id:unit.id,p_app:app});
@@ -1685,6 +1685,11 @@ function ccSkillBar(name,passed,total,started){
  const pct=Math.round(100*safe/total);
  return '<div class="cc-skill-item"><span class="cc-skill-name">'+ccEscape(name)+'</span><div class="cc-skill-track" role="progressbar" aria-label="'+ccEscape(name)+'" aria-valuenow="'+pct+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pct+'%"></i></div><span class="cc-skill-value">'+pct+'%</span></div>';
 }
+function ccJellyControl(studentId,done,jelly){
+ if(!done)return '';
+ const given=jelly?.has(String(studentId));
+ return '<label class="cc-jelly-label"><input type="checkbox" data-cc-jelly-student="'+ccEscape(studentId)+'" '+(given?'checked ':'')+(jelly?'':'disabled ')+'><span>🍬 Jelly Time'+(given?' · Given ✓':jelly?' · Not given':' · Loading…')+'</span></label>';
+}
 function ccRenderStudentDrilldown(book,unit,group){
  if(!group)return '';
  const d=ccSkillData(book,unit,group),students=ccClassStudents(curriculum.selectedClass);
@@ -1709,7 +1714,7 @@ function ccRenderStudentDrilldown(book,unit,group){
    const bars=Object.entries(ccPuzzleModeNames).map(([id,name])=>ccSkillBar(name,modes.includes(id)?1:0,1,false)).join('');
    return '<div class="cc-student-row cc-'+(percent>90?'complete':active?'in-progress':'not-started')+'">'+first+'<span class="cc-percent-muted">'+(percent>90?'Completed':active?'In progress':'Not started')+'</span></div>'+subtitle+
    '<div class="cc-skill-summary">'+modes.length+' of 5 puzzle types completed · '+Number(p?.sessions||0)+' sessions</div><div class="cc-skill-list">'+bars+'</div>'+
-   '<div class="cc-student-details">Last '+ccEscape(ccActivityTime(p?.last_at)||last||'—')+'</div></div>';
+   '<div class="cc-student-details">Last '+ccEscape(ccActivityTime(p?.last_at)||last||'—')+'</div>'+ccJellyControl(student.id,percent>90,jelly)+'</div>';
   }
   if(group.key==='writing'){
    const activities=ccWritingRows(book,unit,curriculum.selectedClass).filter(r=>String(r.student_id)===String(student.id));
@@ -1734,7 +1739,7 @@ function ccRenderStudentDrilldown(book,unit,group){
     '<span class="cc-percent-muted">'+(fullyDone?'Completed':hasActivity?'In progress':'Not started')+'</span></div>'+subtitle+
     '<div class="cc-skill-summary">'+(fullyDone?'Sentence-writing activity completed':hasActivity?'Sentence writing in progress':'Unit not started')+'</div>'+
     '<div class="cc-skill-list">'+bars+'</div>'+
-    '<div class="cc-student-details">Last '+ccEscape(lastWriting||last||'—')+'</div></div>';
+    '<div class="cc-student-details">Last '+ccEscape(lastWriting||last||'—')+'</div>'+ccJellyControl(student.id,fullyDone,jelly)+'</div>';
   }
   if(group.key==='grammar'||group.key==='talking'||group.key==='freeconversation'){
    const evidence=ccExtraRows(book,unit,group,curriculum.selectedClass).filter(r=>String(r.student_id)===String(student.id));
@@ -1746,7 +1751,7 @@ function ccRenderStudentDrilldown(book,unit,group){
    return '<div class="cc-student-row cc-'+(allDone?'complete':hasEvidence?'in-progress':'not-started')+'">'+first+'<span class="cc-percent-muted">'+status+'</span></div>'+subtitle+
     '<div class="cc-skill-summary">'+skills.filter(v=>v.done>=v.total).length+' of '+skills.length+' required skills completed</div>'+
     '<div class="cc-skill-list">'+skills.map(v=>ccSkillBar(v.name,v.done,v.total,v.started)).join('')+'</div>'+
-    '<div class="cc-student-details">Last '+ccEscape(lastExtra||last||'—')+'</div></div>';
+    '<div class="cc-student-details">Last '+ccEscape(lastExtra||last||'—')+'</div>'+ccJellyControl(student.id,allDone,jelly)+'</div>';
   }
   const spec=ccSkillConfig[group.key]||group.skills;
   if(!details)return '<div class="cc-student-row cc-not-started">'+first+'<span class="cc-percent-muted">Loading skills…</span></div>'+subtitle+'</div>';
@@ -1772,8 +1777,7 @@ function ccRenderStudentDrilldown(book,unit,group){
   return '<div class="cc-student-row cc-'+(verified?'complete':hasData?'in-progress':'not-started')+'">'+first+'<span class="cc-percent-muted">'+status+'</span></div>'+subtitle+
    '<div class="cc-skill-summary">'+ccEscape(summary)+'</div><div class="cc-skill-list">'+bars+'</div>'+
    '<div class="cc-student-details">Last '+ccEscape(ccActivityTime(record.last_at)||last||'—')+'</div>'+
-   (verified&&['word','sentence'].includes(group.key)?
-    '<label class="cc-jelly-label"><input type="checkbox" data-cc-jelly-student="'+ccEscape(student.id)+'" '+(jelly?.has(String(student.id))?'checked ':'')+(jelly?'':'disabled ')+'><span>🍬 Jelly Time'+(jelly?.has(String(student.id))?' · Given ✓':jelly?' · Not given':' · Loading…')+'</span></label>':'')+'</div>';
+   ccJellyControl(student.id,verified,jelly)+'</div>';
  }).join('')+'</div><p class="cc-helper">Progress reflects distinct passed unit targets. Below Level 3, Spelling Coach is required and Spelling Test is optional. At Level 3 and above, Spelling Test is required and Spelling Coach is optional. Only required skills determine unit completion.</p></section>';
 }
 async function loadClassOverview(force=false){
