@@ -352,8 +352,8 @@ function updateCounts(){
   $('wgCounts').textContent=wordCount(body)+' words · '+sentenceCount(body)+' sentences';
 }
 function setReadOnly(readOnly){
-  $('wgTitle').readOnly=readOnly;
-  $('wgPromptSelect').disabled=readOnly;
+  $('wgTitle').readOnly=readOnly||/^homework-/.test(state.active?.prompt_key||'');
+  $('wgPromptSelect').disabled=readOnly||/^homework-/.test(state.active?.prompt_key||'');
   $('wgBody').readOnly=readOnly;
   $('wgSave').hidden=readOnly;$('wgSubmit').hidden=readOnly;
   $('wgIdeasToggle').disabled=readOnly;
@@ -370,6 +370,7 @@ function showEditor(entry){
   $('wgTitle').value=a.title||'';
   $('wgBody').value=a.body||'';
   setPromptOptions(a.kind,a.prompt_key);
+  if(/^homework-/.test(a.prompt_key||'')){$('wgPromptHelp').textContent=a.prompt_text||'선생님이 지정한 주제입니다.';$('wgPromptHelp').style.whiteSpace='pre-wrap';}else $('wgPromptHelp').style.whiteSpace='';
   setReadOnly(a.status==='submitted');
   $('wgIdeas').hidden=true;$('wgIdeasToggle').setAttribute('aria-expanded','false');
   $('wgIdeasToggle').querySelector('span').textContent='보기';
@@ -424,8 +425,8 @@ function start(kind){
 }
 function readForm(){
   const active=state.active,p=prompts[active.kind].find(p=>p.key===$('wgPromptSelect').value)||prompts[active.kind][0];
-  return {id:active.id,student_id:state.student.id,kind:active.kind,title:$('wgTitle').value.trim(),
-    prompt_key:p.key,prompt_text:p.help,body:$('wgBody').value,writing_date:active.writing_date,status:'draft'};
+  return {id:active.id,student_id:state.student.id,kind:active.kind,title:/^homework-/.test(active.prompt_key||'')?active.title:$('wgTitle').value.trim(),
+    prompt_key:/^homework-/.test(active.prompt_key||'')?active.prompt_key:p.key,prompt_text:/^homework-/.test(active.prompt_key||'')?active.prompt_text:p.help,body:$('wgBody').value,writing_date:active.writing_date,status:'draft'};
 }
 function markDirty(){
   const active=state.active;if(!active||active.status==='submitted')return;
@@ -595,7 +596,7 @@ async function bootstrap(){
           const custom={key,title:hw.title||'Topic writing',help:hw.list_meta?.prompt_text||hw.description||hw.title||'Write about this topic.',starters:[]};
           if(!prompts.topic.some(p=>p.key===key))prompts.topic.push(custom);
           const existing=state.entries.find(e=>e.kind==='topic'&&e.prompt_key===key);
-          if(existing)openEditor(existing);
+          if(existing){existing.title=custom.title;existing.prompt_text=custom.help;openEditor(existing);}
           else{
             const draft=createEntry('topic');
             draft.title=custom.title;draft.prompt_key=key;draft.prompt_text=custom.help;
@@ -612,7 +613,7 @@ async function bootstrap(){
           const custom={key,title:hw.title||'Daily diary',help:hw.list_meta?.prompt_text||hw.description||'Write your diary.',starters:[]};
           if(!prompts.diary.some(p=>p.key===key))prompts.diary.push(custom);
           const existing=state.entries.find(e=>e.kind==='diary'&&e.prompt_key===key);
-          if(existing)openEditor(existing);
+          if(existing){existing.title=custom.title;existing.prompt_text=custom.help;openEditor(existing);}
           else{
             const draft=createEntry('diary');
             draft.prompt_key=key;draft.prompt_text=custom.help;draft.title=custom.title;
@@ -893,6 +894,7 @@ $('wgPromptSelect').addEventListener('change',()=>{
   const a=state.active;if(!a)return;
   const prev=prompts[a.kind].find(p=>p.key===a.prompt_key);
   const next=prompts[a.kind].find(p=>p.key===$('wgPromptSelect').value);
+  if(/^homework-/.test(a.prompt_key||'')){$('wgPromptSelect').value=a.prompt_key;return;}
   if(next&&a.kind==='topic'&&(!$('wgTitle').value.trim()||$('wgTitle').value===prev?.title))
     $('wgTitle').value=next.title;
   a.prompt_key=$('wgPromptSelect').value;renderHelp();markDirty();
