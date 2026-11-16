@@ -340,7 +340,22 @@ function setPromptOptions(kind,selected){
 function renderHelp(){
   if(!state.active)return;
   const p=prompts[state.active.kind].find(p=>p.key===$('wgPromptSelect').value)||prompts[state.active.kind][0];
-  $('wgPromptHelp').textContent=p.help;
+  const assigned=/^homework-/.test(state.active.prompt_key||'');
+  // The assignment instructions belong to the teacher, not the student's editable writing.
+  $('wgPromptHelp').textContent=assigned?(state.active.prompt_text||p.help):p.help;
+  $('wgPromptHelp').style.whiteSpace=assigned?'pre-wrap':'';
+  let teacherNote=$('wgTeacherAssignmentNote');
+  if(!teacherNote){
+    teacherNote=document.createElement('div');
+    teacherNote.id='wgTeacherAssignmentNote';
+    teacherNote.style.cssText='margin:12px 0 8px;padding:14px 16px;border:2px solid #9cdee3;border-radius:14px;background:#effbfc;color:#24515b;white-space:pre-wrap;line-height:1.6;';
+    $('wgPromptHelp').parentNode.insertBefore(teacherNote,$('wgPromptHelp'));
+  }
+  teacherNote.hidden=!assigned;
+  if(assigned){
+    teacherNote.replaceChildren(el('strong','','선생님 안내 · Teacher instructions'),el('div','',state.active.prompt_text||p.help));
+    $('wgPromptHelp').hidden=true;
+  }else $('wgPromptHelp').hidden=false;
   const root=$('wgStarters');root.replaceChildren();
   for(const starter of p.starters){
     const b=el('button','',starter);b.type='button';b.addEventListener('click',()=>insertStarter(starter));
@@ -593,7 +608,7 @@ async function bootstrap(){
         if((kind==='topic'||kind==='diary')&&!state.creativeAllowed)throw Error('일기와 주제 글쓰기는 레벨 4 이상 학생만 이용할 수 있어요.');
         if(kind==='topic'){
           const key='homework-'+hw.id;
-          const custom={key,title:hw.title||'Topic writing',help:hw.list_meta?.prompt_text||hw.description||hw.title||'Write about this topic.',starters:[]};
+          const custom={key,title:hw.title||'Topic writing',help:[hw.list_meta?.prompt_text,hw.list_meta?.teacher_notes||hw.list_meta?.instructions||hw.list_meta?.notes,hw.description].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join('\n\n')||hw.title||'Write about this topic.',starters:[]};
           if(!prompts.topic.some(p=>p.key===key))prompts.topic.push(custom);
           const existing=state.entries.find(e=>e.kind==='topic'&&e.prompt_key===key);
           if(existing){existing.title=custom.title;existing.prompt_text=custom.help;openEditor(existing);}
@@ -610,7 +625,7 @@ async function bootstrap(){
           await practice.open(state.student,{assignmentId:hw.id,bookId,unitId});
         }else if(kind==='diary'){
           const key='homework-'+hw.id;
-          const custom={key,title:hw.title||'Daily diary',help:hw.list_meta?.prompt_text||hw.description||'Write your diary.',starters:[]};
+          const custom={key,title:hw.title||'Daily diary',help:[hw.list_meta?.prompt_text,hw.list_meta?.teacher_notes||hw.list_meta?.instructions||hw.list_meta?.notes,hw.description].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join('\n\n')||'Write your diary.',starters:[]};
           if(!prompts.diary.some(p=>p.key===key))prompts.diary.push(custom);
           const existing=state.entries.find(e=>e.kind==='diary'&&e.prompt_key===key);
           if(existing){existing.title=custom.title;existing.prompt_text=custom.help;openEditor(existing);}
