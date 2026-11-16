@@ -617,7 +617,7 @@ function mixDeckBackMarkup(style){
 
 function renderMixMatch(pool){
   const candidates=shuffle(pool.filter(x=>x.ko&&x.clean.length>=2)).slice(0,Math.min(MIX_MATCH_TARGET,pool.length));
-  if(candidates.length<4)throw new Error('Not enough vocabulary for Mix & Match yet.');
+  if(candidates.length<4)throw new Error('Not enough vocabulary for Memory Game yet.');
   state.placements=candidates;
   state.found.clear();
   state.gimmes.clear();
@@ -805,7 +805,7 @@ async function finishPuzzle(){
   playPuzzleSfx('complete');
   const points=earnedPuzzlePoints();
   const stars=earnedPuzzleStars();
-  const completeLabel=state.mode==='crossword'?'Crossword complete!':(state.mode==='boggle'?'Boggle complete!':(state.mode==='mixmatch'?'Mix & Match complete!':'Word search complete!'));
+  const completeLabel=state.mode==='crossword'?'Crossword complete!':(state.mode==='boggle'?'Boggle complete!':(state.mode==='mixmatch'?'Memory Game complete!':'Word search complete!'));
   completePoints.textContent=completeLabel+' You earned '+stars+' star'+(stars===1?'':'s')+'.';
   rewardCelebration.innerHTML=
     '<student-reward-celebration percent="100" stars="'+stars+'" star-max="5" points="'+points+'" label="PUZZLE REWARD"></student-reward-celebration>';
@@ -855,7 +855,7 @@ async function saveReward(){
     return;
   }
 
-  const listBase=state.mode==='crossword'?'Crossword':(state.mode==='boggle'?'Boggle':(state.mode==='mixmatch'?'Mix & Match':'Word Search'));
+  const listBase=state.mode==='crossword'?'Crossword':(state.mode==='boggle'?'Boggle':(state.mode==='mixmatch'?'Memory Game':'Word Search'));
   const sessionPayload={
     reward_only:true,
     session_id:state.sessionId,
@@ -1057,7 +1057,7 @@ function openGameHelp({mode=state.mode,markSeen=true}={}){
     panel.hidden=panel.dataset.helpMode!==mode;
   });
   const kicker=$('gameHelpKicker');
-  if(kicker)kicker.textContent=mode==='crossword'?'CROSSWORD':(mode==='boggle'?'BOGGLE':(mode==='mixmatch'?'MIX & MATCH':'WORD SEARCH'));
+  if(kicker)kicker.textContent=mode==='crossword'?'CROSSWORD':(mode==='boggle'?'BOGGLE':(mode==='mixmatch'?'MEMORY GAME':'WORD SEARCH'));
 
   try{
     if(typeof dialog.showModal==='function'){
@@ -1173,7 +1173,7 @@ document.querySelectorAll('.puzzle-tab').forEach(btn=>{
   const isMixMatch=state.mode==='mixmatch';
   wordGridStage?.classList.toggle('is-boggle',isBoggle);
   wordGridStage?.classList.toggle('is-wordsearch',isWordSearch);
-  modeLabel.textContent=isCrossword?'CROSSWORD':(isBoggle?'BOGGLE':(isMixMatch?'MIX & MATCH':'WORD SEARCH'));
+  modeLabel.textContent=isCrossword?'CROSSWORD':(isBoggle?'BOGGLE':(isMixMatch?'MEMORY GAME':'WORD SEARCH'));
   listEyebrow.textContent=isCrossword?'CLUES':(isBoggle?'FIND WORDS':'FIND THESE');
   listTitle.textContent=isCrossword?'Crossword':(isBoggle?'Meanings':'Words');
 
@@ -1537,7 +1537,7 @@ async function buildPuzzle(){
         renderBoggle();setModeUI();maybeShowFirstGameHelp('boggle');
       }
     }else if(state.mode==='mixmatch'){
-      loadingCard.querySelector('strong').textContent='Building Mix & Match…';
+      loadingCard.querySelector('strong').textContent='Building Memory Game…';
       renderMixMatch(state.pool);setModeUI();maybeShowFirstGameHelp('mixmatch');
     }else{
       loadingCard.querySelector('strong').textContent='Building your word search…';
