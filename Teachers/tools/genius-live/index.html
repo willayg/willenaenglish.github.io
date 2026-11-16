@@ -31,79 +31,124 @@ import {ensureTeacherSession,ensureAuthRefresh} from "/Teachers/auth-refresh.js?
 // Original, royalty-free in-browser soundtrack. No external tracks or student-device playback.
 // One audio context per teacher page. Music starts only after an explicit tap/click.
 const gameMusic=(()=>{
- let ctx=null,master=null,interval=null,nextBeat=0,beat=0,enabled=false,volume=0.35,noise=null;
- const bpm=138,step=60/bpm/2;
- const bass=[43,43,46,43,41,41,48,46,39,39,46,43,41,41,46,48];
- const chords=[[55,58,62],[53,57,60],[51,55,58],[53,57,62]];
- const melody=[67,null,70,72,74,72,70,null,67,70,72,null,74,null,72,70,
-               65,null,69,72,74,72,69,null,65,69,72,null,77,null,74,72,
-               63,null,67,70,72,70,67,null,63,67,70,null,75,null,72,70,
-               65,null,69,72,77,74,72,null,69,72,74,null,77,null,79,77];
- const hz=m=>440*Math.pow(2,(m-69)/12);
- function tone(note,time,duration,type,gainLevel,cutoff=0){
+ // Four original 8-bit cues: lobby, question, reveal, results. Teacher browser only.
+ // Pure Web Audio oscillators/noise: no streamed audio and no copyrighted samples.
+ let ctx=null,master=null,interval=null,nextTick=0,tickNo=0,enabled=false,volume=0.35,noise=null,phase="lobby";
+ const tracks={
+  lobby:{bpm:118,bass:[48,48,55,55,53,53,55,55,50,50,57,57,55,55,50,50],lead:[72,null,76,79,76,null,74,72,74,null,77,81,79,null,77,74,76,null,79,84,81,null,79,76,74,null,77,81,79,null,76,74],chords:[[60,64,67],[62,65,69],[57,60,65],[59,62,67]]},
+  question:{bpm:160,bass:[45,45,45,52,43,43,43,50,41,41,41,48,43,43,45,47],lead:[69,72,76,null,77,76,72,69,72,null,79,77,76,null,72,74,76,79,81,null,79,76,74,72,71,74,76,null,79,81,83,84],chords:[[57,60,64],[55,59,62],[53,57,60],[55,59,64]]},
+  reveal:{bpm:132,bass:[48,55,60,55,53,60,57,60],lead:[72,76,79,84,null,79,84,null,81,84,88,84,null,81,79,null],chords:[[60,64,67],[65,69,72],[60,64,67],[67,71,74]]},
+  finished:{bpm:145,bass:[48,55,60,55,53,60,57,60],lead:[72,76,79,84,79,84,88,null,81,84,88,91,88,84,81,null,79,83,86,91,86,83,79,null,84,88,91,96,91,88,84,null],chords:[[60,64,67],[65,69,72],[67,71,74],[60,64,67]]}
+ };
+ const hz=n=>440*Math.pow(2,(n-69)/12);
+ function note(n,at,len,shape,level){
   const osc=ctx.createOscillator(),env=ctx.createGain();
-  osc.type=type;osc.frequency.setValueAtTime(hz(note),time);
-  if(cutoff){const filter=ctx.createBiquadFilter();filter.type="lowpass";filter.frequency.value=cutoff;osc.connect(filter);filter.connect(env)}else osc.connect(env);
-  env.connect(master);env.gain.setValueAtTime(0.0001,time);env.gain.exponentialRampToValueAtTime(gainLevel,time+0.012);
-  env.gain.exponentialRampToValueAtTime(0.0001,time+duration);
-  osc.start(time);osc.stop(time+duration+0.015);
+  osc.type=shape;osc.frequency.setValueAtTime(hz(n),at);
+  osc.connect(env);env.connect(master);
+  env.gain.setValueAtTime(0.0001,at);
+  env.gain.exponentialRampToValueAtTime(level,at+0.008);
+  env.gain.exponentialRampToValueAtTime(0.0001,at+Math.max(0.03,len));
+  osc.start(at);osc.stop(at+Math.max(0.03,len)+0.012);
  }
- function drum(time,kind){
-  if(kind==="kick"){
-   const osc=ctx.createOscillator(),env=ctx.createGain();osc.type="sine";osc.frequency.setValueAtTime(135,time);osc.frequency.exponentialRampToValueAtTime(48,time+0.14);
-   osc.connect(env);env.connect(master);env.gain.setValueAtTime(0.32,time);env.gain.exponentialRampToValueAtTime(0.0001,time+0.17);osc.start(time);osc.stop(time+0.18);return;
+ function percussion(at,type){
+  if(type==="kick"){
+   const osc=ctx.createOscillator(),env=ctx.createGain();osc.type="triangle";
+   osc.frequency.setValueAtTime(120,at);osc.frequency.exponentialRampToValueAtTime(45,at+0.13);
+   osc.connect(env);env.connect(master);env.gain.setValueAtTime(0.14,at);
+   env.gain.exponentialRampToValueAtTime(0.0001,at+0.14);
+   osc.start(at);osc.stop(at+0.15);return;
   }
-  const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),env=ctx.createGain();
-  source.buffer=noise;filter.type="highpass";filter.frequency.value=kind==="snare"?1700:7000;
-  source.connect(filter);filter.connect(env);env.connect(master);
-  env.gain.setValueAtTime(kind==="snare"?0.105:0.035,time);
-  env.gain.exponentialRampToValueAtTime(0.0001,time+(kind==="snare"?0.14:0.045));
-  source.start(time);source.stop(time+(kind==="snare"?0.15:0.05));
+  const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),env=ctx.createGain();
+  src.buffer=noise;filter.type="highpass";filter.frequency.value=type==="snare"?2100:7500;
+  src.connect(filter);filter.connect(env);env.connect(master);
+  const len=type==="snare"?0.09:0.027;
+  env.gain.setValueAtTime(type==="snare"?0.06:0.016,at);
+  env.gain.exponentialRampToValueAtTime(0.0001,at+len);
+  src.start(at);src.stop(at+len+0.008);
  }
- function schedule(i,time){
-  // 16 eighth notes to the bar pair; a four-chord, original 8-bar progression.
-  const k=i%16,bar=Math.floor(i/16)%4;
-  if(k%4===0)drum(time,"kick");
-  if(k%4===2)drum(time,"snare");
-  drum(time,"hat");
-  if(k%2===0)tone(bass[bar*4+Math.floor(k/4)]||bass[k],time,step*1.65,"sawtooth",0.06,420);
-  if(k===0||k===8)for(const n of chords[bar])tone(n,time,step*3.3,"triangle",0.015);
-  const n=melody[(bar*16+k)%melody.length];
-  if(n!=null && (k%2===0||k===3||k===11))tone(n,time,step*0.82,"square",0.022,1550);
+ function playStep(i,at){
+  const track=tracks[phase],step=30/track.bpm,k=i%16,bar=Math.floor(i/16)%4;
+  const chord=track.chords[bar%track.chords.length];
+  const lead=track.lead[i%track.lead.length];
+  if(phase==="lobby"){
+   if(k%4===0)percussion(at,"kick");
+   if(k%4===2)percussion(at,"snare");
+   if(k%2===0)percussion(at,"hat");
+   if(k%2===0)note(track.bass[i%track.bass.length],at,step*1.55,"triangle",0.065);
+   if(k===0||k===8)for(const n of chord)note(n,at,step*3.3,"square",0.012);
+   if(lead!==null)note(lead,at,step*0.70,"square",0.037);
+  }else if(phase==="question"){
+   if(k%4===0)percussion(at,"kick");
+   if(k%4===2)percussion(at,"snare");
+   percussion(at,"hat");
+   note(track.bass[i%track.bass.length],at,step*0.7,"square",0.034);
+   if(k===0||k===8)for(const n of chord)note(n,at,step*2.0,"triangle",0.018);
+   if(lead!==null)note(lead,at,step*0.77,"square",0.039);
+   // A chiptune clock pulse grows more urgent during the last five seconds.
+   if(state?.status==="question"&&state.deadline){
+    const remaining=(Date.parse(state.deadline)-Date.now())/1000;
+    if(remaining>0&&remaining<=5&&k%2===0)note(88,at,step*0.3,"square",0.045);
+   }
+  }else if(phase==="reveal"){
+   // Brief bright answer-reveal cue, followed by a soft, nonintrusive 8-bit loop.
+   if(i<8){
+    if(k===0)percussion(at,"kick");
+    if(lead!==null)note(lead,at,step*0.9,"square",0.06);
+    if(k===0||k===4)for(const n of chord)note(n,at,step*3.0,"triangle",0.025);
+   }else{
+    if(k%4===0)note(track.bass[i%track.bass.length],at,step*1.5,"triangle",0.032);
+    if(k%4===0&&lead!==null)note(lead,at,step*1.2,"square",0.020);
+   }
+  }else{
+   if(k%4===0){percussion(at,"kick");for(const n of chord)note(n,at,step*3.3,"triangle",0.023)}
+   if(k%4===2)percussion(at,"snare");
+   if(k%2===0)note(track.bass[i%track.bass.length],at,step*1.4,"square",0.033);
+   if(lead!==null)note(lead,at,step*0.8,"square",0.052);
+  }
  }
  function run(){
   if(!ctx||!enabled||ctx.state!=="running")return;
   const now=ctx.currentTime;
-  // Do not build a long queue: music stops promptly when toggled off.
-  while(nextBeat<now+0.13){schedule(beat++,nextBeat);nextBeat+=step}
+  while(nextTick<now+0.095){
+   playStep(tickNo++,nextTick);
+   nextTick+=30/tracks[phase].bpm;
+  }
  }
  function init(){
   if(ctx)return;
-  const AudioContext=window.AudioContext||window.webkitAudioContext;
-  if(!AudioContext)throw Error("This browser does not support game audio.");
-  ctx=new AudioContext();master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)throw Error("This browser does not support game audio.");
+  ctx=new AC();master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
   noise=ctx.createBuffer(1,Math.floor(ctx.sampleRate*0.2),ctx.sampleRate);
-  const data=noise.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
+  const data=noise.getChannelData(0);
+  for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
  }
  function setVolume(v){
   volume=Math.max(0,Math.min(1,v));
-  if(master&&ctx)master.gain.setTargetAtTime(enabled?volume*0.5:0,ctx.currentTime,0.03);
+  if(master&&ctx)master.gain.setTargetAtTime(enabled?volume*0.5:0,ctx.currentTime,0.035);
+ }
+ function setPhase(next){
+  next=["lobby","question","reveal","finished"].includes(next)?next:"lobby";
+  if(phase===next)return;
+  phase=next;tickNo=0;
+  if(ctx&&enabled){
+   master.gain.setTargetAtTime(0,ctx.currentTime,0.025);
+   nextTick=ctx.currentTime+0.08;
+   master.gain.setTargetAtTime(volume*0.5,ctx.currentTime+0.07,0.06);
+  }
  }
  async function toggle(){
-  if(enabled){enabled=false;clearInterval(interval);interval=null;if(master)master.gain.setTargetAtTime(0,ctx.currentTime,0.025);}
-  else{
-   init();await ctx.resume();enabled=true;nextBeat=ctx.currentTime+0.04;beat=0;
-   master.gain.setTargetAtTime(volume*0.5,ctx.currentTime,0.06);
-   run();interval=setInterval(run,55);
-  }
-  return enabled;
+  if(enabled){stop();return false}
+  init();await ctx.resume();enabled=true;tickNo=0;nextTick=ctx.currentTime+0.045;
+  master.gain.setTargetAtTime(volume*0.5,ctx.currentTime,0.05);
+  run();interval=setInterval(run,35);return true;
  }
  function stop(){
   if(!enabled)return;
   enabled=false;clearInterval(interval);interval=null;
   if(master&&ctx)master.gain.setTargetAtTime(0,ctx.currentTime,0.025);
  }
- return {toggle,setVolume,stop,isPlaying:()=>enabled};
+ return {toggle,setVolume,setPhase,stop,isPlaying:()=>enabled};
 })();
 function setupMusic(){
  const button=document.querySelector("#musicToggle"),slider=document.querySelector("#musicVolume");
@@ -175,7 +220,7 @@ function quiz(){const q=state.question;return '<div class="grid"><section class=
  '<div class="row"><button id="reveal" '+(state.status!=="question"?"disabled":"")+'>Reveal Answer</button><button id="next" class="primary" '+(state.status!=="reveal"?"disabled":"")+'>'+(state.questionNumber===state.total?"Finish Game":"Next Question")+'</button><button id="cancel">End game</button></div></section>'+
  '<section class="panel"><h2>'+ (state.mode==="team"?"Team leaderboard":"Leaderboard")+'</h2>'+leaderboard()+'<h3 style="margin-top:25px">Players</h3>'+state.players.map(p=>'<div class="player">'+esc(p.name)+'<span class="tag">'+(state.answeredPlayerIds?.includes(p.id)?"Answered":"Waiting")+'</span></div>').join("")+'</section></div>'}
 function finished(){return '<div class="grid"><section class="panel em"><h2>Game complete</h2><p>'+state.total+' Word Genius quiz questions played.</p>'+leaderboard()+'<p><button id="again" class="primary">Create another game</button></p></section><section class="panel"><h2>Individual scores</h2>'+state.players.slice().sort((a,b)=>b.score-a.score).map(p=>'<div class="score">'+esc(p.name)+'<b>'+p.score+' pts</b></div>').join("")+'</section></div>'}
-function paint(){if(!state){setup();return}const key=roundStatus();if(key===lastView)return;lastView=key;$("#app").innerHTML=state.status==="lobby"?lobby():["question","reveal"].includes(state.status)?quiz():finished();
+function paint(){if(!state){gameMusic.setPhase("lobby");setup();return}gameMusic.setPhase(state.status);const key=roundStatus();if(key===lastView)return;lastView=key;$("#app").innerHTML=state.status==="lobby"?lobby():["question","reveal"].includes(state.status)?quiz():finished();
  const on=(id,fn)=>{const b=$("#"+id);if(b)b.onclick=fn};
  on("previewWords",togglePreview);on("start",()=>doAction("start"));on("reveal",()=>doAction("reveal"));on("next",()=>doAction("next"));on("cancel",()=>{if(confirm("End this game?"))doAction("cancel")});
  on("addGhosts",()=>doAction("add_ghosts"));
