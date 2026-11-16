@@ -130,7 +130,22 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
         onListeningAvailable:()=>{if(token===epoch&&mode==='speaking')$('listenTools').hidden=false}
       });
       prefetchAudio(queue.slice(index,index+3));
-      if(mode==='speaking'&&item.mustListen)offerHeadphones({requireBeforeSpeaking:true});
+      if(item.mustListen)offerHeadphones({requireBeforeSpeaking:true});
+      // The child can retry recognition repeatedly without ever pressing
+      // Check Answer. Intercept a finished zero-grade recording immediately.
+      const recognition=instance.speechRecognition;
+      recognition?.addEventListener?.('end',()=>{
+        if(token!==epoch||answered||!renderer||!current())return;
+        const text=instance.getResponse();
+        if(!String(text||'').trim())return;
+        const alternatives=instance.getSpeechAlternatives?.();
+        const usable=usableAlternatives(alternatives?.length?alternatives:[text],item.en);
+        let grade=gradeSpeaking(item.en,usable,{mode:'sentence'});
+        if(matchSentence(item.en,usable,item.gradingContext).correct)grade.points=4;
+        if(grade.points===0&&!bestProgress?.best?.correct){
+          offerHeadphones({requireBeforeSpeaking:true});
+        }
+      });
     }
     $('sessionMain').scrollTop=0;
   }
@@ -155,7 +170,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
   // A zero-point speaking attempt gets a listening step before the queued retry.
   // This uses only Sentence Genius's session UI, not the shared microphone renderer.
   function offerHeadphones({requireBeforeSpeaking=false}={}){
-    if(mode!=='speaking'||!renderer)return;
+    if(mode==='unscramble'||!renderer)return;
     const host=renderer.host;
     const mic=host?.querySelector('[data-speaking-mic]');
     if(!mic||host.querySelector('[data-sg-retry-headphones]'))return;
@@ -182,7 +197,8 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
           return;
         }
         if(requireBeforeSpeaking){
-          // Listening is remedial feedback here; leave existing reward/scoring untouched.
+          if(mode==='speaking')listenUsed=true;
+          // Do not modify the current score until Check Answer is pressed.
           headphones.remove();
           mic.hidden=false;
           mic.style.removeProperty('display');
@@ -228,12 +244,12 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     const almostRight=correct&&result.points<4;
     const verdict=ctx.store.attempt(mode,item.id,{correct,assisted,almostRight,gradePoints:mode==='unscramble'?(correct?4:0):result.points});
     reward?.note(verdict.mastered,item.retry,verdict.points,mode==='unscramble'?(correct?4:0):result.points,item.id);
-    if(verdict.repeat)queueRetry(item,{mustListen:mode==='speaking'&&result.points===0});
+    if(verdict.repeat)queueRetry(item,{mustListen:mode!=='unscramble'&&result.points===0});
     answered=true;
     const rec=renderer;
     speech?.dispose();speech=null;
     rec.setDisabled(true);
-    if(mode==='speaking'&&result.points===0)offerHeadphones();
+    if(mode!=='unscramble'&&result.points===0)offerHeadphones();
     const acceptedAlternative=correct&&[
       'approved_alternative','equivalent_quantifier','equivalent_possession_question',
       'equivalent_permission','equivalent_request','ai','ai_cached'
