@@ -5,7 +5,14 @@
 <style>
 :root{--pink:#ed5fa5;--cyan:#75d5df;--ink:#253f4c;--muted:#738891;--border:#d4e7eb;--bg:#f5fafb}*{box-sizing:border-box}
 body{margin:0;background:var(--bg);font:14px Poppins,Arial,sans-serif;color:var(--ink)}header{background:#374151;color:#fff;padding:16px max(16px,calc((100vw - 1240px)/2));display:flex;gap:14px;align-items:center;justify-content:space-between}
-header h1{font-size:21px;margin:0}header h1 span{color:#ff8dc6}main{max-width:1240px;margin:22px auto;padding:0 18px}h2{font-size:21px;margin:0 0 14px}h3{font-size:17px;margin:0 0 9px}
+header h1{font-size:21px;margin:0}
+.music-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-left:auto}
+.music-controls button{background:#fff;color:#a92e71;border-color:#ff8dc6;padding:7px 12px}
+.music-controls button[aria-pressed="true"]{background:#ffe5f1}
+.music-controls label{display:flex;align-items:center;gap:7px;margin:0;color:#fff;font-size:11px}
+.music-controls input[type="range"]{width:95px;accent-color:#f47db5;padding:0;min-width:75px}
+.music-controls small{color:#e0e7eb;font-size:10px}
+@media(max-width:600px){.music-controls{width:100%;justify-content:flex-start}.music-controls small{display:none}}header h1 span{color:#ff8dc6}main{max-width:1240px;margin:22px auto;padding:0 18px}h2{font-size:21px;margin:0 0 14px}h3{font-size:17px;margin:0 0 9px}
 .panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 3px 15px #1c51550b;margin-bottom:16px}.panel.em{border:2px solid var(--cyan)}
 .row{display:flex;align-items:center;flex-wrap:wrap;gap:10px}.between{justify-content:space-between}.grid{display:grid;grid-template-columns:1.45fr 1fr;gap:17px}.two{display:grid;grid-template-columns:1fr 1fr;gap:13px}.small{font-size:12px}.muted{color:var(--muted)}.tag{display:inline-block;padding:5px 10px;border-radius:20px;background:#eaf8fa;color:#327988;font-size:11px;font-weight:700}
 label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}select,input{font:inherit;border:1px solid #bfdae1;border-radius:9px;background:white;color:var(--ink);padding:10px;width:100%}button{font:600 13px Poppins,Arial,sans-serif;color:#c74584;border:1px solid var(--cyan);background:white;border-radius:9px;padding:10px 14px;cursor:pointer}
@@ -14,9 +21,102 @@ button.primary{background:var(--pink);border-color:var(--pink);color:white}butto
 .join-layout{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin:12px 0}.join-code{flex:1;min-width:230px}.qr-panel{display:flex;align-items:center;flex-direction:column;gap:9px;padding:14px;background:#fff;border:1px solid var(--border);border-radius:14px}.qr-panel #joinQR{width:170px;height:170px;display:grid;place-items:center}.qr-panel #joinQR img,.qr-panel #joinQR canvas{max-width:100%;height:auto}.join-url{font-size:12px;overflow-wrap:anywhere}.join-url a{color:#c74584}.pin{font-size:clamp(44px,6vw,80px);font-weight:800;letter-spacing:9px;color:#d94891;line-height:1.3}.question{font-size:clamp(22px,3vw,35px);font-weight:800;line-height:1.35;margin:17px 0}.answers{display:grid;grid-template-columns:1fr 1fr;gap:11px}.answer{padding:20px 14px;min-height:93px;border-radius:12px;color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;gap:12px}.answer:nth-child(4n+1){background:#e96297}.answer:nth-child(4n+2){background:#42b8d5}.answer:nth-child(4n+3){background:#e8ac44}.answer:nth-child(4n+4){background:#8f7ed4}.answer.correct{outline:5px solid #27965e;outline-offset:2px}.answer.dim{opacity:.4}
 .letter{border:1px solid #ffffff77;width:30px;height:30px;flex:none;border-radius:8px;display:grid;place-items:center}.timer{font-size:36px;font-weight:800;color:#c8428d;font-variant-numeric:tabular-nums}.bar{height:7px;border-radius:7px;background:#e3eef0;overflow:hidden}.bar i{display:block;height:100%;background:var(--pink);transition:width .2s}.score{display:flex;justify-content:space-between;border-bottom:1px solid #e9f0f1;padding:10px 4px;gap:8px}.score:last-child{border:0}.player{display:flex;align-items:center;justify-content:space-between;border:1px solid #e6f0f2;border-radius:10px;padding:9px 12px;margin:6px 0}.team{font-size:11px;color:#a43d77}.word-preview{border:1px solid var(--border);border-radius:12px;padding:12px;margin:12px 0;max-height:390px;overflow:auto;background:#fbfeff}.word-preview-row{display:grid;grid-template-columns:28px minmax(130px,1fr) minmax(120px,1fr);gap:10px;align-items:center;padding:8px;border-bottom:1px solid #e5f1f3}.word-preview-row:last-child{border:0}.word-preview small{display:block;color:var(--muted)}.team-picker{max-width:185px;width:52%;padding:7px;font-size:12px}.team-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.team-summary{display:flex;flex-wrap:wrap;gap:5px;margin:12px 0}.team-summary .tag{font-size:10px}
 @media(max-width:750px){.grid,.two,.answers{grid-template-columns:1fr}header{padding:13px 16px}.panel{padding:15px}.pin{letter-spacing:4px}}
-</style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script></head><body><header><h1>Willena <span>Genius Live</span></h1><span class="tag">Teacher · v1.0</span></header><main><div id="message" class="notice">Checking teacher login…</div><div id="app"></div></main>
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script></head><body><header><h1>Willena <span>Genius Live</span></h1><div class="music-controls" aria-label="Game music controls">
+<button id="musicToggle" type="button" aria-pressed="false">♫ Play music</button>
+<label for="musicVolume">Volume <input id="musicVolume" type="range" min="0" max="100" value="35" aria-label="Game music volume"></label>
+<small>Original game soundtrack · teacher device only</small>
+</div><span class="tag">Teacher · v1.0</span></header><main><div id="message" class="notice">Checking teacher login…</div><div id="app"></div></main>
 <script type="module">
 import {ensureTeacherSession,ensureAuthRefresh} from "/Teachers/auth-refresh.js?v=20261021-sessionfix1";
+// Original, royalty-free in-browser soundtrack. No external tracks or student-device playback.
+// One audio context per teacher page. Music starts only after an explicit tap/click.
+const gameMusic=(()=>{
+ let ctx=null,master=null,interval=null,nextBeat=0,beat=0,enabled=false,volume=0.35,noise=null;
+ const bpm=138,step=60/bpm/2;
+ const bass=[43,43,46,43,41,41,48,46,39,39,46,43,41,41,46,48];
+ const chords=[[55,58,62],[53,57,60],[51,55,58],[53,57,62]];
+ const melody=[67,null,70,72,74,72,70,null,67,70,72,null,74,null,72,70,
+               65,null,69,72,74,72,69,null,65,69,72,null,77,null,74,72,
+               63,null,67,70,72,70,67,null,63,67,70,null,75,null,72,70,
+               65,null,69,72,77,74,72,null,69,72,74,null,77,null,79,77];
+ const hz=m=>440*Math.pow(2,(m-69)/12);
+ function tone(note,time,duration,type,gainLevel,cutoff=0){
+  const osc=ctx.createOscillator(),env=ctx.createGain();
+  osc.type=type;osc.frequency.setValueAtTime(hz(note),time);
+  if(cutoff){const filter=ctx.createBiquadFilter();filter.type="lowpass";filter.frequency.value=cutoff;osc.connect(filter);filter.connect(env)}else osc.connect(env);
+  env.connect(master);env.gain.setValueAtTime(0.0001,time);env.gain.exponentialRampToValueAtTime(gainLevel,time+0.012);
+  env.gain.exponentialRampToValueAtTime(0.0001,time+duration);
+  osc.start(time);osc.stop(time+duration+0.015);
+ }
+ function drum(time,kind){
+  if(kind==="kick"){
+   const osc=ctx.createOscillator(),env=ctx.createGain();osc.type="sine";osc.frequency.setValueAtTime(135,time);osc.frequency.exponentialRampToValueAtTime(48,time+0.14);
+   osc.connect(env);env.connect(master);env.gain.setValueAtTime(0.32,time);env.gain.exponentialRampToValueAtTime(0.0001,time+0.17);osc.start(time);osc.stop(time+0.18);return;
+  }
+  const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),env=ctx.createGain();
+  source.buffer=noise;filter.type="highpass";filter.frequency.value=kind==="snare"?1700:7000;
+  source.connect(filter);filter.connect(env);env.connect(master);
+  env.gain.setValueAtTime(kind==="snare"?0.105:0.035,time);
+  env.gain.exponentialRampToValueAtTime(0.0001,time+(kind==="snare"?0.14:0.045));
+  source.start(time);source.stop(time+(kind==="snare"?0.15:0.05));
+ }
+ function schedule(i,time){
+  // 16 eighth notes to the bar pair; a four-chord, original 8-bar progression.
+  const k=i%16,bar=Math.floor(i/16)%4;
+  if(k%4===0)drum(time,"kick");
+  if(k%4===2)drum(time,"snare");
+  drum(time,"hat");
+  if(k%2===0)tone(bass[bar*4+Math.floor(k/4)]||bass[k],time,step*1.65,"sawtooth",0.06,420);
+  if(k===0||k===8)for(const n of chords[bar])tone(n,time,step*3.3,"triangle",0.015);
+  const n=melody[(bar*16+k)%melody.length];
+  if(n!=null && (k%2===0||k===3||k===11))tone(n,time,step*0.82,"square",0.022,1550);
+ }
+ function run(){
+  if(!ctx||!enabled||ctx.state!=="running")return;
+  const now=ctx.currentTime;
+  // Do not build a long queue: music stops promptly when toggled off.
+  while(nextBeat<now+0.13){schedule(beat++,nextBeat);nextBeat+=step}
+ }
+ function init(){
+  if(ctx)return;
+  const AudioContext=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContext)throw Error("This browser does not support game audio.");
+  ctx=new AudioContext();master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
+  noise=ctx.createBuffer(1,Math.floor(ctx.sampleRate*0.2),ctx.sampleRate);
+  const data=noise.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
+ }
+ function setVolume(v){
+  volume=Math.max(0,Math.min(1,v));
+  if(master&&ctx)master.gain.setTargetAtTime(enabled?volume*0.5:0,ctx.currentTime,0.03);
+ }
+ async function toggle(){
+  if(enabled){enabled=false;clearInterval(interval);interval=null;if(master)master.gain.setTargetAtTime(0,ctx.currentTime,0.025);}
+  else{
+   init();await ctx.resume();enabled=true;nextBeat=ctx.currentTime+0.04;beat=0;
+   master.gain.setTargetAtTime(volume*0.5,ctx.currentTime,0.06);
+   run();interval=setInterval(run,55);
+  }
+  return enabled;
+ }
+ function stop(){
+  if(!enabled)return;
+  enabled=false;clearInterval(interval);interval=null;
+  if(master&&ctx)master.gain.setTargetAtTime(0,ctx.currentTime,0.025);
+ }
+ return {toggle,setVolume,stop,isPlaying:()=>enabled};
+})();
+function setupMusic(){
+ const button=document.querySelector("#musicToggle"),slider=document.querySelector("#musicVolume");
+ slider.oninput=()=>gameMusic.setVolume(Number(slider.value)/100);
+ gameMusic.setVolume(Number(slider.value)/100);
+ button.onclick=async()=>{
+  try{await gameMusic.toggle();button.textContent=gameMusic.isPlaying()?"♫ Pause music":"♫ Play music";button.setAttribute("aria-pressed",String(gameMusic.isPlaying()))}
+  catch(err){notify(err.message||"Could not start music.",true)}
+ };
+ document.addEventListener("visibilitychange",()=>{if(document.hidden&&gameMusic.isPlaying()){gameMusic.stop();button.textContent="♫ Play music";button.setAttribute("aria-pressed","false")}});
+}
+setupMusic();
+
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const api=async(action,body={})=>{const r=await fetch("/api/genius-live",{method:"POST",credentials:"include",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,...body})});const j=await r.json().catch(()=>({}));if(!r.ok||!j.ok)throw Error(j.error||"Request failed ("+r.status+")");return j};
 let catalog=[],classes=[],classBookIds={},selectedClassId="",selected=new Map(),pin=sessionStorage.getItem("genius.live.host.pin")||"",state=null,busy=false,initialized=false,autoReveal=false;
