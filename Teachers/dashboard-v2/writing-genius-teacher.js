@@ -212,7 +212,11 @@ function render(){
   const date=dateLabel(e.activity_at||e.submitted_at||e.updated_at);
   if(date!==previousDate){const group=make('h3','wg-t-date-heading',date);container.append(group);previousDate=date}
   const b=make('button','wg-t-item wg-t-submission-card');b.type='button';b.dataset.entryId=e.id;
-  b.append(make('strong','wg-t-item-name',e.korean_name||e.name||'Student'));
+  const koreanName=String(e.korean_name||'').trim();
+  const englishName=String(e.name||'').trim();
+  const displayName=koreanName&&englishName&&koreanName.toLowerCase()!==englishName.toLowerCase()
+   ?koreanName+' ('+englishName+')':koreanName||englishName||'Student';
+  b.append(make('strong','wg-t-item-name',displayName));
   const stages={started:'Draft opened',writing:'Writing draft',reviewed:'AI review done',speaking_done:'Speaking recorded',completed:'Completed'};
   b.append(make('span','wg-t-item-meta',(kindName[e.kind]||'Writing')+' · '+(stages[e.stage]||(e.status==='draft'?'Draft':'Completed'))));
   b.append(make('strong','wg-t-card-title',e.title||'Untitled'));
