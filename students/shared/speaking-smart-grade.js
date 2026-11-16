@@ -14,6 +14,7 @@ function tokens(value,mode='word'){
  if(mode==='sentence'){
   const numbers={zero:'0',one:'1',two:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9',ten:'10',eleven:'11',twelve:'12',thirteen:'13',fourteen:'14',fifteen:'15',sixteen:'16',seventeen:'17',eighteen:'18',nineteen:'19',twenty:'20'};
   s=s.split(' ').map(w=>numbers[w]||w).join(' ');
+  s=s.replace(/\beveryday\b/g,'every day');
   s=s.replace(/\bmom\b/g,'mother').replace(/\bdad\b/g,'father');
   s=s.replace(/\b([0-9]{1,3})\s+years?\s+old\b/g,'$1');
  }
@@ -71,6 +72,14 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
   if(!heard.length)continue;
   let score=0,reason='unrecognized';
   if(expected.join(' ')===heard.join(' ')){score=4;reason='exact';}
+  // A complete target spoken inside a longer utterance is fully correct.
+  // Match whole tokens in the original order, never substrings within words.
+  // Keep this sentence-only: isolated vocabulary scoring remains unchanged.
+  else if(mode==='sentence'&&heard.length>expected.length&&
+    heard.some((_,start)=>start+expected.length<=heard.length&&
+      expected.every((word,i)=>heard[start+i]===word))){
+    score=4;reason='target_inside_longer_speech';
+  }
   // Vocabulary phrases: an inserted definite article can be a natural,
   // fully correct utterance (watch birds -> watch the birds).
   // Require every original target token in order and exactly one extra "the".
