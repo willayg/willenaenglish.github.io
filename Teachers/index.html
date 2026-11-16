@@ -1412,7 +1412,7 @@ function ccExtraCompletion(book,unit,group,className){
  const ids=[...new Set(rows.map(r=>String(r.student_id)))];
  const finished=new Set(ids.filter(id=>{
   const student=rows.filter(r=>String(r.student_id)===id);
-  if(group.key==='grammar')return ['choose','check','hunt'].every(mode=>student.some(r=>r.skill===mode&&Number(r.done)>=8));
+  if(group.key==='grammar')return ['choose','check','hunt'].every(mode=>student.some(r=>r.skill===mode&&Number(r.total)>0&&Number(r.done)>=Number(r.total)));
   if(group.key==='freeconversation')return student.some(r=>r.finished===true);
   return student.some(r=>r.skill==='speaking'&&r.finished===true);
  }));
@@ -1744,7 +1744,7 @@ function ccRenderStudentDrilldown(book,unit,group){
   if(group.key==='grammar'||group.key==='talking'||group.key==='freeconversation'){
    const evidence=ccExtraRows(book,unit,group,curriculum.selectedClass).filter(r=>String(r.student_id)===String(student.id));
    const modes=group.key==='grammar'?[['choose','Choose the blank'],['check','Correct / Incorrect'],['hunt','Find the wrong part']]:[[group.key==='freeconversation'?'conversation':'speaking',group.key==='freeconversation'?'Conversation':'Speaking']];
-   const skills=modes.map(([mode,name])=>{const v=evidence.find(r=>r.skill===mode);return {name,done:Number(v?.done||0),total:Number(v?.total|| (group.key==='grammar'?8:1)),started:Boolean(v)}});
+   const skills=modes.map(([mode,name])=>{const v=evidence.find(r=>r.skill===mode);return {name,done:Number(v?.done||0),total:Number(v?.total|| (group.key==='grammar'?(String(book.book_title||'').toLowerCase().startsWith('grammar ten')?8:5):1)),started:Boolean(v)}});
    const allDone=group.key==='freeconversation'?evidence.some(r=>r.finished===true):group.key==='talking'?evidence.some(r=>r.skill==='speaking'&&r.finished===true):skills.every(v=>v.done>=v.total),hasEvidence=evidence.length>0||started;
    const status=allDone?'Completed':hasEvidence?'In progress':'Not started';
    const lastExtra=ccActivityTime(evidence.map(v=>v.last_at).filter(Boolean).sort().at(-1));
