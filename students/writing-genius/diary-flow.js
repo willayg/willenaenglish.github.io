@@ -1001,7 +1001,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     }catch(error){
      // The server may have committed the submission before a timeout. On retry
      // finish() rechecks submission state; the award RPC is idempotent.
-     error.completionStep='submission-or-reward';
+     if(!error.completionStep)error.completionStep='submission';
      throw error;
     }
    }else if(completionPhase==='reward'){
@@ -1018,8 +1018,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    }
   }catch(e){
    console.error('[Writing Genius] completion failed', {entryId:current?.id,phase:e.completionStep||completionPhase,code:e.code||'',message:e.message||''});
-   const isReward=completionPhase==='reward'||(completionPhase==='submission'&&current?.status==='submitted');
-   if(isReward)completionPhase='reward';
+   const isReward=e.completionStep==='reward'||completionPhase==='reward'||(completionPhase==='submission'&&current?.status==='submitted');
+   if(isReward){completionPhase='reward';current.status='submitted';}
    const prefix=isReward?'글은 제출됐어요. 보상 확인만 다시 시도해 주세요.':completionPhase==='practice'?'말하기 또는 타이핑 기록을 저장하지 못했어요.':'글 제출 또는 보상 확인에 실패했어요.';
    status(prefix+' '+(e.message||''),true);
    button(isReward?'보상 다시 확인':'다시 시도',complete);
