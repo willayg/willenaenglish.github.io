@@ -140,6 +140,22 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
     }
    }
   }
+  // Vocabulary phrases: a single STT substitution in an otherwise intact
+  // phrase earns lime (3/4). This is transcript tolerance, not a claim to
+  // have measured acoustic pronunciation. Keep protected meanings strict.
+  if(mode==='word'&&score<3&&expected.length>=3&&expected.length===heard.length){
+    const differences=expected.map((w,i)=>w===heard[i]?null:i).filter(i=>i!==null);
+    if(differences.length===1){
+      const i=differences[0],from=expected[i],to=heard[i];
+      const protectedWord=w=>CRITICAL.has(w)||/^[0-9]+$/.test(w);
+      const opposites=[['left','right'],['up','down'],['before','after'],['first','last'],['yes','no'],['mother','father']];
+      const reversed=opposites.some(([a,b])=>(from===a&&to===b)||(from===b&&to===a));
+      // All remaining tokens must be exact. No blanket fuzzy matches.
+      if(!protectedWord(from)&&!protectedWord(to)&&!reversed){
+        score=3;reason='one_word_stt_substitution';
+      }
+    }
+  }
   // A single ordinary word substitution in an otherwise correctly ordered
   // sentence earns lime. Keep age, negation and direction changes on the
   // existing lower-credit path.
