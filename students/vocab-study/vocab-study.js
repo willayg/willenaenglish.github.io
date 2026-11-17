@@ -1953,6 +1953,16 @@ function renderSpeakingQuestion(){
     listenButton.append(listenLabel);
     listenButton.setAttribute('aria-label','영어 발음 듣기 · Listen to the English word');
     listenButton.hidden=true;
+    const speakingMic=host.querySelector('[data-speaking-mic]');
+    let listenRequired=false;
+    function requireListeningBeforeRetry(){
+      if(listenRequired||session.checked||state.renderer?.host!==host)return;
+      listenRequired=true;
+      if(speakingMic){speakingMic.hidden=true;speakingMic.style.display='none';}
+      listenLabel.innerHTML='<img src="/shared/svgs/headphones.svg?v=20260927-icons1" alt="" aria-hidden="true"> Listen · 발음 듣기';
+      listenButton.hidden=false;
+      host.querySelector('[data-speaking-status]')?.replaceChildren(document.createTextNode('헤드폰을 눌러 정답을 들어 보세요.'));
+    }
     speakingControl.insertBefore(listenButton,speakingControl.firstChild);
     const voiceNotice=document.createElement('small');
     voiceNotice.className='vocab-speaking-ai-voice-notice';
@@ -1966,13 +1976,20 @@ function renderSpeakingQuestion(){
       listenButton.classList.add('is-loading');
       listenButton.setAttribute('aria-busy','true');
       listenLabel.textContent='🔊 음성 준비 중…';
-      try{await playSpeakingModelAudio(word.speakingTarget||word.word)}
-      catch(error){console.warn('[Vocab Study] speaking audio failed',error)}
+      try{
+        const played=await playSpeakingModelAudio(word.speakingTarget||word.word);
+        if(listenRequired&&played&&state.renderer?.host===host&&!session.checked){
+          listenRequired=false;
+          if(speakingMic){speakingMic.hidden=false;speakingMic.style.removeProperty('display');}
+          listenButton.hidden=true;
+          host.querySelector('[data-speaking-status]')?.replaceChildren(document.createTextNode('이제 마이크를 누르고 다시 말해 보세요.'));
+        }
+      }catch(error){console.warn('[Vocab Study] speaking audio failed',error)}
       finally{
         listenButton.disabled=false;
         listenButton.classList.remove('is-loading');
         listenButton.removeAttribute('aria-busy');
-        listenLabel.textContent='🔊 Listen · 발음 듣기';
+        if(!listenRequired)listenLabel.textContent='🔊 Listen · 발음 듣기';
       }
     });
     // Prevent the microphone from transcribing our own model playback.
@@ -1984,18 +2001,25 @@ function renderSpeakingQuestion(){
     // Listen becomes available only after two genuine browser-microphone starts.
     // Count even if recognition cannot decipher a short word, but not a cancelled recording before it starts.
     const renderer=state.renderer;
+    const expected=word.speakingTarget||word.word;
     let speakingAttempts=0;
     const recognition=renderer.speechRecognition;
     if(recognition?.addEventListener){
       recognition.addEventListener('start',()=>{speakingAttempts++});
       recognition.addEventListener('end',()=>{
-        if(speakingAttempts>=2&&state.speakingSession===session&&!session.checked&&session.words[session.index]===word){
+        if(state.speakingSession!==session||session.checked||session.words[session.index]!==word||state.renderer!==renderer)return;
+        const response=renderer.getResponse();
+        if(String(response||'').trim()){
+          const alternatives=renderer.getSpeechAlternatives?.()||[response];
+          const grade=gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
+          if(grade.points===0&&!state.bestSpeakingProgress?.best?.correct)requireListeningBeforeRetry();
+        }
+        if(speakingAttempts>=2){
           listenButton.hidden=false;
           voiceNotice.hidden=false;
         }
       });
     }
-    const expected=word.speakingTarget||word.word;
     state.aiSpeechUi=attachAISpeakingFallback({
       host,target:expected,
       isCurrent:()=>state.speakingSession===session&&!session.checked&&session.words[session.index]===word&&!sessionEl.hidden,
