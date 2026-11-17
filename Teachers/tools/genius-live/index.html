@@ -39,12 +39,24 @@ button.primary{background:var(--pink);border-color:var(--pink);color:white}butto
 @media(max-width:560px){.team-editor{grid-template-columns:minmax(0,1fr) 70px auto}.team-editor .danger{grid-column:3}}
 
 @media(max-width:750px){.grid,.two,.answers{grid-template-columns:1fr}header{padding:13px 16px}.panel{padding:15px}.pin{letter-spacing:4px}}
+/* The same game runs inside the teacher dashboard without a second app copy. */
+body.genius-embedded{background:transparent}
+body.genius-embedded header{background:#e7f6f8;color:#244a54;padding:10px 12px;border-radius:12px;gap:10px;flex-wrap:wrap}
+body.genius-embedded header h1{font-size:16px}
+body.genius-embedded .music-controls{margin-left:auto}
+body.genius-embedded .music-controls label{color:#244a54}
+body.genius-embedded .music-controls small{color:#627e88}
+body.genius-embedded main{max-width:none;margin:12px auto;padding:0 2px}
+body.genius-embedded .panel{box-shadow:none}
+@media(max-width:700px){body.genius-embedded .grid{grid-template-columns:1fr}body.genius-embedded .music-controls{width:auto}}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script></head><body><header><h1>Willena <span>Genius Live</span></h1><div class="music-controls" aria-label="Game music controls">
 <button id="musicToggle" type="button" aria-pressed="false">♫ Play music</button>
 <label for="musicVolume">Volume <input id="musicVolume" type="range" min="0" max="100" value="35" aria-label="Game music volume"></label>
 <small>Original game soundtrack · teacher device only</small>
 </div><span class="tag">Teacher · v1.0</span></header><main><div id="message" class="notice">Checking teacher login…</div><div id="app"></div></main>
-<script type="module">
+<script>
+if(new URLSearchParams(location.search).get('embedded')==='1')document.body.classList.add('genius-embedded');
+</script><script type="module">
 import {ensureTeacherSession,ensureAuthRefresh} from "/Teachers/auth-refresh.js?v=20261021-sessionfix1";
 import {TEAM_CHARACTER_LOGOS,TEAM_CHARACTER_IDS,teamCharacterMarkup} from "./team-logo-art.js?v=20261117-20logos";
 // Original, royalty-free in-browser soundtrack. No external tracks or student-device playback.
