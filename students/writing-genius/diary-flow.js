@@ -975,24 +975,56 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    body.append(total);table.append(body);box.append(table);stage.append(box);
   }else stage.append(el('p','df-reward-breakdown',(reward.sentences||split(current.body).length)+' sentences × 5 points'));
  }
+ // Keep completion steps independent: a reward retry must never replay saved speech.
+ let completionPhase='practice';
+ let completionResult=null;
  async function complete(){
   if(busy)return;busy=true;
   screen('finish','Complete');stage.append(el('h2','df-heading',current.kind==='topic'?'글쓰기 완료':'일기 완료'));
-  status('보상을 확인하고 있어요…');
+  status(completionPhase==='reward'?'보상을 확인하고 있어요…':'완료 내용을 저장하고 있어요…');
   button('메인 메뉴',close,true);
   try{
-   if(!current._speechSaved){if(typedUsed){await typing(current,current.body,spoken.join(' '));current._speechSaved=true}else if(current.kind==='topic'&&speechSkipped){current._speechSaved=true}else{await speech(current,spoken.join(' '),finalLines);current._speechSaved=true}}
-   const reward=await finish(current,{reviewComplete:!reviewSkipped,speakingComplete:!speechSkipped&&spoken.length>0});
-   rewardCard(reward);
-   status('완료했습니다!');
-   showTeacherFeedback();
+   if(completionPhase==='practice'){
+    try{
+     if(!current._speechSaved){
+      if(typedUsed)await typing(current,current.body,spoken.join(' '));
+      else if(!(current.kind==='topic'&&speechSkipped))await speech(current,spoken.join(' '),finalLines);
+      current._speechSaved=true;
+     }
+     completionPhase='submission';
+    }catch(error){error.completionStep='practice';throw error}
+   }
+   if(completionPhase==='submission'){
+    try{
+     completionResult=await finish(current,{reviewComplete:!reviewSkipped,speakingComplete:!speechSkipped&&spoken.length>0});
+     completionPhase='done';
+    }catch(error){
+     // The server may have committed the submission before a timeout. On retry
+     // finish() rechecks submission state; the award RPC is idempotent.
+     error.completionStep='submission-or-reward';
+     throw error;
+    }
+   }else if(completionPhase==='reward'){
+    // A failed reward confirmation retries only the idempotent award call.
+    completionResult=await finish(current,{reviewComplete:!reviewSkipped,speakingComplete:!speechSkipped&&spoken.length>0});
+    completionPhase='done';
+   }
+   // A successful award is already handled by finish; render the stored result below.
+   if(completionPhase==='done'){
+    // The reward response is held by finish's successful call in the current invocation.
+    if(completionResult)rewardCard(completionResult);
+    status('완료했습니다!');
+    showTeacherFeedback();
+   }
   }catch(e){
-   // Submission may already be committed; never imply the entire diary failed.
-   const submitted=current?.status==='submitted'||String(e?.message||'').includes('reward');
-   status(submitted?'일기는 제출됐어요. 보상을 다시 확인해 주세요.':'저장 또는 보상 확인에 실패했어요. 다시 시도해 주세요.',true);
-   button('보상 다시 확인',complete);
+   console.error('[Writing Genius] completion failed', {entryId:current?.id,phase:e.completionStep||completionPhase,code:e.code||'',message:e.message||''});
+   const isReward=completionPhase==='reward'||(completionPhase==='submission'&&current?.status==='submitted');
+   if(isReward)completionPhase='reward';
+   const prefix=isReward?'글은 제출됐어요. 보상 확인만 다시 시도해 주세요.':completionPhase==='practice'?'말하기 또는 타이핑 기록을 저장하지 못했어요.':'글 제출 또는 보상 확인에 실패했어요.';
+   status(prefix+' '+(e.message||''),true);
+   button(isReward?'보상 다시 확인':'다시 시도',complete);
    showTeacherFeedback();
   }finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];typedIndexes=new Set();typedUsed=false;typedMode=false;reviewSkipped=false;finalDraftText='';speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback?.finalized_from_body){finalLines=split(current.body);finalDraftText=current.body;finalPractice()}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};completionPhase=entry.status==='submitted'?'reward':'practice';completionResult=null;feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];typedIndexes=new Set();typedUsed=false;typedMode=false;reviewSkipped=false;finalDraftText='';speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback?.finalized_from_body){finalLines=split(current.body);finalDraftText=current.body;finalPractice()}else if(feedback)summary();else topic()},close};
 }
