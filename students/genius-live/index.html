@@ -19,6 +19,32 @@ button{padding:12px 17px;font-weight:700;border-radius:12px;border:2px solid var
 .gl-countdown .pulse{animation:gl-pulse .7s ease-out}
 @keyframes gl-pulse{from{transform:scale(1.25);opacity:.6}to{transform:scale(1);opacity:1}}
 @media(prefers-reduced-motion:reduce){.gl-countdown .pulse{animation:none}}
+
+/* Pixel-art answer lock. Displayed only after the server accepts the answer. */
+.gl-locked{position:fixed;inset:0;z-index:1000;background:radial-gradient(circle at 50% 34%,#354d91,#101931 68%,#090e21);color:white;display:flex;align-items:center;justify-content:center;padding:22px;text-align:center;overflow:hidden}
+.gl-locked::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 4px,#ffffff0b 4px 6px);pointer-events:none}
+.gl-lock-inner{position:relative;width:min(370px,100%)}
+.gl-lock-icon{position:relative;width:104px;height:104px;margin:0 auto 32px;background:#ffc65e;box-shadow:inset -12px -12px #e78b51,0 0 0 9px #ffffff,9px 9px 0 12px #1e244b;clip-path:polygon(0 0,100% 0,100% 100%,0 100%);image-rendering:pixelated}
+.gl-lock-icon::before{content:"";position:absolute;width:22px;height:22px;background:#223056;left:24px;top:32px;box-shadow:44px 0 #223056,9px 31px #223056,22px 31px #223056,35px 31px #223056,0 -21px #fff7,44px -21px #fff7}
+.gl-lock-flag{display:inline-block;margin:0 auto 13px;padding:12px 16px;background:#ffe57e;color:#3a2452;border:4px solid #fff;box-shadow:6px 6px 0 #081027;text-shadow:none;letter-spacing:.065em;font-size:clamp(19px,6vw,27px);font-weight:900}
+.gl-lock-sub{margin:15px 0 18px;font-size:clamp(15px,4.1vw,20px);font-weight:800;color:#9feefd}
+.gl-lock-wait{font-size:13px;color:#d5eaf4;font-weight:600}
+.gl-lock-sweep{height:12px;border:3px solid #8ae8fb;background:#172343;margin-top:20px;overflow:hidden}
+.gl-lock-sweep i{display:block;height:100%;width:38%;background:linear-gradient(90deg,#ff69ae,#ffe57e,#82f5ef);animation:gl-sweep 1.25s steps(9) infinite}
+.gl-lock-stars{height:24px;margin:12px auto;display:flex;align-items:center;justify-content:center;gap:15px}
+.gl-lock-stars i{width:12px;height:12px;background:#ffdc72;box-shadow:0 0 0 4px #ffdc7225;animation:gl-star .85s steps(2) infinite}
+.gl-lock-stars i:nth-child(2){animation-delay:.19s}.gl-lock-stars i:nth-child(3){animation-delay:.36s}
+.gl-locked.is-fresh .gl-lock-flag{animation:gl-lock-pop .55s steps(4) both}
+.gl-locked.is-fresh .gl-lock-icon{animation:gl-lock-bounce .8s steps(4) both}
+.gl-locked.is-fresh .gl-lock-inner::before,.gl-locked.is-fresh .gl-lock-inner::after{content:"✦";position:absolute;font-size:40px;color:#8bf5ff;left:3%;top:8%;animation:gl-spark .9s steps(4) both}
+.gl-locked.is-fresh .gl-lock-inner::after{left:auto;right:4%;top:21%;color:#ff8cc8;animation-delay:.12s}
+@keyframes gl-lock-pop{0%{transform:scale(.35) rotate(-7deg);opacity:0}60%{transform:scale(1.14) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes gl-lock-bounce{0%,100%{transform:translateY(0)}45%{transform:translateY(-16px)}70%{transform:translateY(6px)}}
+@keyframes gl-spark{0%{transform:translate(0,14px) scale(.3);opacity:0}45%{opacity:1}100%{transform:translate(16px,-24px) scale(1.3);opacity:0}}
+@keyframes gl-sweep{from{transform:translateX(-100%)}to{transform:translateX(280%)}}
+@keyframes gl-star{50%{transform:scale(1.5);opacity:.6}}
+@media(prefers-reduced-motion:reduce){.gl-locked *,.gl-locked::before,.gl-locked::after{animation:none!important}}
+
 </style></head><body><header><strong>Genius <span>Live</span></strong><span class="pill">Willena Students</span></header><main><div id="message" class="notice" hidden></div><div id="app"></div></main>
 <script type="module">
 import {TEAM_CHARACTER_LOGOS,TEAM_CHARACTER_IDS,teamCharacterMarkup} from "./team-logo-art.js?v=20261117-20logos";
@@ -64,10 +90,37 @@ function lobby(){
  const teamControls=!teamMode?"":'<div style="margin:18px auto;max-width:650px;text-align:left"><h2>Choose your team</h2>'+(!state.teamCount?'<p class="muted">No teams yet. Create the first team!</p>':teams)+create+captainEditor+'</div>';
  return '<section class="card pink" style="text-align:center"><span class="pill">Joined successfully · '+esc(state.className||"Class")+'</span><h1>Waiting for your teacher</h1><div class="pin">'+esc(pin)+'</div><p>You are playing as <b>'+esc(own?.name||"Student")+'</b>.</p><p class="muted">'+state.players.length+' players ready'+(teamMode&&myTeam>=0?" · "+logoVisual(teamLogo(myTeam),28)+" "+esc(teamName(myTeam)):"")+'</p>'+teamControls+'<div class="notice">The game will begin when your teacher presses Start.</div></section>';
 }
+let answerLockAnimatedKey="",answerLockFreshUntil=0;
+let lockSoundContext=null;
+function lockSfx(){
+ try{
+  const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
+  if(!lockSoundContext)lockSoundContext=new Audio();
+  const ctx=lockSoundContext;
+  if(ctx.state==="suspended")ctx.resume().catch(()=>{});
+  [74,81,86].forEach((m,i)=>{
+   const time=ctx.currentTime+i*.09,osc=ctx.createOscillator(),gain=ctx.createGain();
+   osc.type="square";osc.frequency.setValueAtTime(440*Math.pow(2,(m-69)/12),time);
+   osc.connect(gain);gain.connect(ctx.destination);
+   gain.gain.setValueAtTime(.0001,time);gain.gain.exponentialRampToValueAtTime(.032,time+.012);
+   gain.gain.exponentialRampToValueAtTime(.0001,time+.14);
+   osc.start(time);osc.stop(time+.15);
+  });
+ }catch{}
+}
+function answerLockView(fresh){
+ return '<div class="gl-locked '+(fresh?"is-fresh":"")+'" role="status" aria-live="polite">'+
+ '<div class="gl-lock-inner"><div class="gl-lock-icon" aria-hidden="true"></div>'+
+ '<div class="gl-lock-flag">ANSWER LOCKED!</div>'+
+ '<div class="gl-lock-stars" aria-hidden="true"><i></i><i></i><i></i></div>'+
+ '<div class="gl-lock-sub">READY FOR THE REVEAL</div>'+
+ '<div class="gl-lock-wait">Waiting for the other players...</div>'+
+ '<div class="gl-lock-sweep" aria-hidden="true"><i></i></div></div></div>';
+}
 function quiz(){const q=state.question,done=state.myAnswer!==null,reveal=state.status==="reveal";return '<div class="grid"><section class="card pink"><div class="row between"><span class="pill">'+esc(q.book)+' · '+(q.skill==='Grammar Genius'?'Grammar':q.skill==='Sentence Genius'?'Sentence · Unit '+q.unit:'Vocabulary · Unit '+q.unit)+'</span><b>'+state.questionNumber+' / '+state.total+'</b></div>'+
  '<div class="row between" style="margin:15px 0 8px"><div class="timer" id="timer">—</div><span class="small muted">'+state.answeredCount+' / '+state.players.length+' answered</span></div><div class="bar"><i id="timerBar"></i></div>'+
  '<div class="question">'+esc(q.prompt)+'</div><div class="answers">'+q.options.map((s,i)=>'<button data-answer="'+i+'" class="answer '+(done&&state.myAnswer===i?"chosen ":"")+(reveal?(i===q.correct?"correct":"dim"):"")+'" '+(done||reveal||Date.now()>=Date.parse(state.deadline)?"disabled":"")+'><span class="letter">'+["A","B","C","D","E"][i]+'</span>'+esc(s)+'</button>').join("")+'</div>'+
- (reveal?'<div class="notice"><b>'+esc(q.options[q.correct])+'</b> = '+esc(q.explanation)+'<p>You earned '+state.myPoints+' points this round.</p></div>':done?'<p class="notice">Answer locked! Wait for the teacher to reveal the answer.</p>':'<p class="muted small">Choose one answer before time runs out.</p>')+'</section>'+
+ (reveal?'<div class="notice"><b>'+esc(q.options[q.correct])+'</b> = '+esc(q.explanation)+'<p>You earned '+state.myPoints+' points this round.</p></div>':done?answerLockView(answerLockAnimatedKey===pin+":"+state.questionNumber&&Date.now()<answerLockFreshUntil):'<p class="muted small">Choose one answer before time runs out.</p>')+'</section>'+
  '<section class="card"><h2>'+ (state.mode==="team"?"Team scores":"Leaderboard")+'</h2>'+scores()+'</section></div>'}
 function finish(){return '<div class="grid"><section class="card pink"><h1>Game complete!</h1><p>Great work playing '+state.total+' Genius Live questions.</p><h2>Results</h2>'+scores()+'<p><button class="primary" id="leave">Join another game</button></p></section><section class="card"><h2>Thanks for playing!</h2><p>Your live quiz score does not change your regular Genius points or homework.</p></section></div>'}
 function countdownView(){return '<section class="gl-countdown" role="status" aria-live="polite"><h1>Question '+state.questionNumber+' / '+state.total+'</h1><div class="big" id="glStudentCountdown">3</div><h2>GET READY!</h2></section>'}
@@ -92,7 +145,7 @@ async function teamAction(action,options){if(working)return;working=true;try{con
 async function joinGame(){if(working)return;working=true;notice("Joining…");try{state=await api("join",{pin});sessionStorage.setItem("genius.live.student.pin",pin);sessionStorage.setItem("genius.live.student.joined","1");last="";notice("");paint()}catch(e){notice(e.message,true);if(e.status===401){showLogin();const link=$("#message a");if(link)link.focus()}}finally{working=false}}
 function showLogin(){const link=document.createElement("a");link.href="/students/signin.html?next="+encodeURIComponent(location.pathname+location.search);link.textContent=" Sign in to Willena";$("#message").append(" · ",link)}
 async function refresh(){if(!pin||working)return;try{const fresh=await api("state",{pin});state=fresh;notice("");paint()}catch(e){if(e.status===401){notice("Please sign in to your Willena account.",true);showLogin()}else if(/not found|expired|cancelled|not joined/i.test(e.message)){state=null;last="";sessionStorage.removeItem("genius.live.student.pin");sessionStorage.removeItem("genius.live.student.joined");notice(e.message,true);paint()}else notice(e.message,true)}}
-async function answer(choice){if(working||!state||state.myAnswer!==null||state.status!=="question")return;working=true;try{await api("answer",{pin,choice,questionIndex:state.questionNumber-1});await refreshDirect()}catch(e){notice(e.message,true)}finally{working=false}}
+async function answer(choice){if(working||!state||state.myAnswer!==null||state.status!=="question")return;working=true;try{const roundKey=pin+":"+state.questionNumber;const accepted=await api("answer",{pin,choice,questionIndex:state.questionNumber-1});if(accepted?.accepted){answerLockAnimatedKey=roundKey;answerLockFreshUntil=Date.now()+1200;lockSfx()}await refreshDirect()}catch(e){notice(e.message,true)}finally{working=false}}
 async function refreshDirect(){const fresh=await api("state",{pin});state=fresh;last="";paint()}
 function tick(){if(!state||state.status!=="question")return;const rem=Math.max(0,Date.parse(state.deadline)-Date.now()),t=$("#timer"),b=$("#timerBar");if(t)t.textContent=Math.ceil(rem/1000)+"s";if(b)b.style.width=(100*rem/(state.seconds*1000))+"%";if(rem===0)document.querySelectorAll("[data-answer]").forEach(b=>b.disabled=true)}
 setInterval(()=>{if(pin&&state&&document.visibilityState==="visible")refresh()},1900);
