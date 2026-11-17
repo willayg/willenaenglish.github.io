@@ -5,7 +5,7 @@
 body.embedded header{display:none}body.embedded main{padding-top:8px}</style></head><body>
 <header><h1>Willena <span style="color:#ff8dc6">Genius Live</span> · Blockbusters</h1><a href="./index.html">← Quiz Battle</a></header>
 <main><p id="message"></p><section id="setup" class="panel"><h2>Start Blockbusters</h2><p class="muted">Choose a class, an assigned textbook, and the units to use. Vocabulary is loaded from the same content database as Word Genius.</p><div class="row"><div class="field"><label for="class">Class</label><select id="class"><option value="">Loading classes…</option></select></div><div class="field"><label for="book">Assigned book</label><select id="book" disabled><option value="">Choose class first</option></select></div><div class="field"><label for="seconds">Seconds per turn</label><select id="seconds"><option value="0">No timer</option><option value="20">20 seconds</option><option value="30" selected>30 seconds</option><option value="45">45 seconds</option><option value="60">60 seconds</option></select></div></div><p><strong>Units</strong></p><div id="units" class="row muted">Select a book first.</div><p id="bank" class="muted"></p><button id="start" class="primary" disabled>Start Blockbusters</button></section>
-<section id="game" class="hide"><div class="headrow"><h2>BLOCKBUSTERS</h2><button id="new">New game</button></div><div class="scorebar"><div id="score0" class="score active"><span>BLUE · LEFT → RIGHT</span><b id="count0">0</b></div><div id="score1" class="score"><span>WHITE · TOP ↓ BOTTOM</span><b id="count1">0</b></div></div><div id="status">Blue chooses first</div><svg id="board" class="board" viewBox="0 0 610 547" role="group" aria-label="Blockbusters board"></svg><div class="row" style="justify-content:space-between"><span class="tips" id="source"></span><button id="pass">Pass turn</button></div></section>
+<section id="game" class="hide"><div class="headrow"><h2>BLOCKBUSTERS</h2><button id="new">New game</button></div><div class="scorebar"><div id="score0" class="score active"><span>BLUE · LEFT → RIGHT</span><b id="count0">0</b></div><div id="score1" class="score"><span>WHITE · TOP ↓ BOTTOM</span><b id="count1">0</b></div></div><div id="status">Blue chooses first</div><svg id="board" class="board" viewBox="48 36 390 365" role="group" aria-label="Blockbusters board"></svg><div class="row" style="justify-content:space-between"><span class="tips" id="source"></span><button id="pass">Pass turn</button></div></section>
 <section id="questionPanel" class="panel hide" aria-live="polite"><div class="row" style="justify-content:space-between"><span id="letter" class="pill"></span><span id="clock">30s</span></div><p id="prompt" class="question"></p><button id="reveal">Show answer</button><div id="answer" class="answer hide"></div><div class="actions" style="margin-top:12px"><button id="correct" class="primary">Correct — claim hexagon</button><button id="wrong">Wrong — pass turn</button></div></section></main>
 <script>if(new URLSearchParams(location.search).get('embedded')==='1')document.body.classList.add('embedded');</script><script type="module">
 import {ensureTeacherSession,ensureAuthRefresh} from "/Teachers/auth-refresh.js?v=20261021-sessionfix1";
@@ -21,13 +21,25 @@ function fillUnits(){const b=catalog.find(x=>x.id===bookId);$("units").replaceCh
 $("class").onchange=e=>{classId=e.target.value;fillBooks()};$("book").onchange=e=>{bookId=e.target.value;units=new Set(catalog.find(x=>x.id===bookId)?.units.map(u=>u.id)||[]);fillUnits()};
 function el(tag,attrs){const e=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));return e}
 function boardSetup(){
- cells=[];const counts=[5,6,6,7,6,6,5],dy=Math.sqrt(3)*42,dx=63,top=[82,45.6,82,45.6,82,45.6,82];let id=0;
- counts.forEach((count,col)=>{for(let row=0;row<count;row++){let base=(col===0||col===6)?0:(row===0||row===count-1)?1:null;cells.push({id:id++,col,row,x:53+dx*col,y:top[col]+dy*row,base,owner:base,entry:null})}});
- const options=bank.filter(x=>/^[a-z]/i.test(x.word));for(const c of cells.filter(c=>c.base===null)){c.entry=options[Math.floor(Math.random()*options.length)]||null}
+ cells=[];const radius=42,dx=radius*1.5,dy=Math.sqrt(3)*radius;
+ const options=bank.filter(x=>/^[a-z]/i.test(x.word));
+ for(let col=0;col<5;col++)for(let row=0;row<4;row++){
+  const id=col*4+row;
+  cells.push({id,col,row,x:105+col*dx,y:94+row*dy+(col%2?dy/2:0),base:null,owner:null,entry:options[Math.floor(Math.random()*options.length)]||null});
+ }
 }
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 function connected(c){return cells.filter(d=>d.id!==c.id&&Math.abs(dist(c,d)-Math.sqrt(3)*42)<1.5)}
-function pathFor(t){let start=cells.filter(c=>c.owner===t&&(t===0?c.col===0:c.base===1&&c.row===0));let queue=start.map(c=>({c,path:[c.id]}));const seen=new Set(start.map(c=>c.id));while(queue.length){const {c,path}=queue.shift();if(t===0?c.col===6:c.base===1&&c.row===[5,6,6,7,6,6,5][c.col]-1)return path;for(const n of connected(c))if(n.owner===t&&!seen.has(n.id)){seen.add(n.id);queue.push({c:n,path:[...path,n.id]})}}return null}
+function pathFor(t){
+ const start=cells.filter(c=>c.owner===t&&(t===0?c.col===0:c.row===0));
+ const queue=start.map(c=>({c,path:[c.id]})),seen=new Set(start.map(c=>c.id));
+ while(queue.length){
+  const {c,path}=queue.shift();
+  if(t===0?c.col===4:c.row===3)return path;
+  for(const n of connected(c))if(n.owner===t&&!seen.has(n.id)){seen.add(n.id);queue.push({c:n,path:[...path,n.id]})}
+ }
+ return null;
+}
 function draw(){
 const svg=$("board");svg.replaceChildren();for(const c of cells){const g=el("g",{class:"hex"+(winpath.includes(c.id)?" winner":""),transform:"translate("+c.x+" "+c.y+")",role:"button",tabindex:c.base===null&&c.owner===null&&selected===null&&winner===null?0:-1});g.setAttribute("aria-label",c.entry?c.entry.word[0].toUpperCase()+" hexagon":c.owner===0?"Blue boundary":"White boundary");g.append(el("polygon",{points:"-21,-36.373 21,-36.373 42,0 21,36.373 -21,36.373 -42,0",fill:c.owner===0?"#1599f2":c.owner===1?"#fff":"#ffda17"}));if(c.entry){const t=el("text",{x:0,y:2,fill:c.owner===0?"#fff":"#1c2a36"});t.textContent=c.entry.word[0].toUpperCase();g.append(t)}g.addEventListener("click",()=>choose(c.id));g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();choose(c.id)}});svg.append(g)}
 $("count0").textContent=cells.filter(c=>c.base===null&&c.owner===0).length;$("count1").textContent=cells.filter(c=>c.base===null&&c.owner===1).length;$("score0").classList.toggle("active",turn===0);$("score1").classList.toggle("active",turn===1);$("status").textContent=winner!==null?(winner===0?"BLUE":"WHITE")+" WINS!":(turn===0?"BLUE":"WHITE")+" TEAM — "+(selected===null?"choose a hexagon":"answer the question");
