@@ -649,7 +649,7 @@ function paint(){if(!state){activeReveal?.close();gameMusic.setPhase("lobby");se
  tick();
 }
 async function doAction(action,options={}){if(busy)return;if(action==="next"||action==="cancel"){activeReveal?.close()}busy=true;try{state=await api(action,{pin,...options});if(state.status==="cancelled"){pin="";state=null;sessionStorage.removeItem("genius.live.host.pin")}lastView="";autoReveal=false;paint()}catch(e){notify(e.message,true)}finally{busy=false}}
-async function refresh(){if(!pin||busy)return;try{state=await api(state?.simulation&&state.status==="question"?"simulate_ghosts":"state",{pin});if(!state.teacher)throw Error("This game belongs to another teacher.");if(state.status==="cancelled"){pin="";state=null;sessionStorage.removeItem("genius.live.host.pin")}paint()}catch(e){notify(e.message,true)}}
+async function refresh(){if(!pin||busy)return;try{const simulation=!!(state?.simulation&&state.status==="question");try{state=await api(simulation?"simulate_ghosts":"state",{pin})}catch(e){if(!simulation||!/Simulation action not available in this round/i.test(e.message))throw e;state=await api("state",{pin})}if(!state.teacher)throw Error("This game belongs to another teacher.");if(state.status==="cancelled"){pin="";state=null;sessionStorage.removeItem("genius.live.host.pin")}paint()}catch(e){notify(e.message,true)}}
 function tick(){if(!state||state.status!=="question")return;const rem=Math.max(0,Date.parse(state.deadline)-Date.now()),sec=Math.ceil(rem/1000),t=$("#timer"),bar=$("#timerBar");if(t)t.textContent=sec+"s";if(bar)bar.style.width=(100*rem/(state.seconds*1000))+"%";if(rem===0&&!autoReveal&&!busy){autoReveal=true;doAction("reveal")}}
 async function login(){
  try{const session=await ensureTeacherSession();
