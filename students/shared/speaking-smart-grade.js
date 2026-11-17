@@ -85,6 +85,25 @@ function likelySttSoundSlip(from,to){
  // One small sound/spelling difference, not any arbitrary changed word.
  return a.length>=3&&b.length>=3&&speakingSoundDistance(a,b)===1;
 }
+// Common quantifier paraphrases in Word Genius vocabulary phrases.
+// Require the rest of the phrase to match exactly and give lime, never green.
+function comparableQuantityPhrase(words){
+ const out=[];
+ for(let i=0;i<words.length;i++){
+  if(words[i]==='a'&&words[i+1]==='lot'&&words[i+2]==='of'){
+   out.push('many');i+=2;
+  }else if(words[i]==='lots'&&words[i+1]==='of'){
+   out.push('many');i+=1;
+  }else out.push(words[i]);
+ }
+ return out;
+}
+function equivalentVocabularyQuantity(expected,heard){
+ const e=comparableQuantityPhrase(expected),h=comparableQuantityPhrase(heard);
+ return e.length===h.length&&e.every((w,i)=>w===h[i])&&
+  expected.join(' ')!==heard.join(' ')&&
+  (expected.includes('many')||heard.includes('many')||expected.includes('lot')||heard.includes('lot')||expected.includes('lots')||heard.includes('lots'));
+}
 const result=(points,transcript,reason)=>({points,correct:points>=1,level:points===4?'green':points===3?'lime':points===2?'yellow':points===1?'orange':'red',transcript,matchedBy:reason});
 export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null}={}){
  const expectedForms=(mode==='sentence'?sentenceContractionForms(target):[target]).map(v=>tokens(v,mode));
@@ -104,6 +123,11 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
     heard.some((_,start)=>start+expected.length<=heard.length&&
       expected.every((word,i)=>heard[start+i]===word))){
     score=4;reason='target_inside_longer_speech';
+  }
+  // An equivalent quantity phrase communicates the intended meaning, but
+  // differs from the model vocabulary expression: lime (3/4), not green.
+  else if(mode==='word'&&equivalentVocabularyQuantity(expected,heard)){
+    score=3;reason='equivalent_quantity_phrase';
   }
   // Vocabulary phrases: an inserted definite article can be a natural,
   // fully correct utterance (watch birds -> watch the birds).
