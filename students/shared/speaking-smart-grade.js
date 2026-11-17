@@ -60,6 +60,31 @@ function fragmentedWordGrade(expected,heard){
  if(heard.slice(1).some(w=>w.length>4))return 0;
  return 1;
 }
+// Conservative spelling-to-sound approximation for vocabulary STT errors.
+// This does not assess recorded audio or change sentence scoring.
+function speakingSoundKey(value){
+ return String(value||'').toLowerCase()
+  .replace(/^wr/,'r').replace(/cture$/,'ccher').replace(/tcher$/,'cher')
+  .replace(/ture$/,'cher').replace(/ph/g,'f').replace(/ck/g,'k')
+  .replace(/gh/g,'').replace(/e$/,'');
+}
+function speakingSoundDistance(a,b){
+ let prev=Array.from({length:b.length+1},(_,i)=>i);
+ for(let i=1;i<=a.length;i++){
+  const next=[i];
+  for(let j=1;j<=b.length;j++)next[j]=Math.min(next[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+  prev=next;
+ }
+ return prev[b.length];
+}
+function likelySttSoundSlip(from,to){
+ if(from.length<3||to.length<3)return false;
+ // A known near-sound pair that ordinary spelling distance misses.
+ if((from==='drive'&&to==='ride')||(from==='ride'&&to==='drive'))return true;
+ const a=speakingSoundKey(from),b=speakingSoundKey(to);
+ // One small sound/spelling difference, not any arbitrary changed word.
+ return a.length>=3&&b.length>=3&&speakingSoundDistance(a,b)===1;
+}
 const result=(points,transcript,reason)=>({points,correct:points>=1,level:points===4?'green':points===3?'lime':points===2?'yellow':points===1?'orange':'red',transcript,matchedBy:reason});
 export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null}={}){
  const expectedForms=(mode==='sentence'?sentenceContractionForms(target):[target]).map(v=>tokens(v,mode));
@@ -140,9 +165,9 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
     }
    }
   }
-  // Vocabulary phrases: a single STT substitution in an otherwise intact
-  // phrase earns lime (3/4). This is transcript tolerance, not a claim to
-  // have measured acoustic pronunciation. Keep protected meanings strict.
+  // Word Genius: one changed word in an otherwise identical phrase.
+  // Lime only for a plausible STT sound slip; unrelated substitutions get
+  // yellow partial credit, never the same grade as a close pronunciation.
   if(mode==='word'&&score<3&&expected.length>=3&&expected.length===heard.length){
     const differences=expected.map((w,i)=>w===heard[i]?null:i).filter(i=>i!==null);
     if(differences.length===1){
@@ -150,9 +175,9 @@ export function gradeSpeaking(target,alternatives,{mode='word',exactMatcher=null
       const protectedWord=w=>CRITICAL.has(w)||/^[0-9]+$/.test(w);
       const opposites=[['left','right'],['up','down'],['before','after'],['first','last'],['yes','no'],['mother','father']];
       const reversed=opposites.some(([a,b])=>(from===a&&to===b)||(from===b&&to===a));
-      // All remaining tokens must be exact. No blanket fuzzy matches.
       if(!protectedWord(from)&&!protectedWord(to)&&!reversed){
-        score=3;reason='one_word_stt_substitution';
+        if(likelySttSoundSlip(from,to)){score=3;reason='one_word_stt_sound_slip';}
+        else if(score<2){score=2;reason='one_word_phrase_substitution';}
       }
     }
   }
