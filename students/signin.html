@@ -331,8 +331,9 @@
     function getNextDest() {
       try {
         const params = new URLSearchParams(location.search);
-        const nxt = params.get('next');
-        if (nxt && /^\//.test(nxt)) return nxt; // only allow same-site absolute path
+        // Support deep links from classroom games and older links using "redirect".
+        const nxt = params.get('next') || params.get('redirect');
+        if (nxt && nxt.startsWith('/') && !nxt.startsWith('//') && !nxt.includes('\\')) return nxt; // same-site path only
       } catch {}
       return '/students/dashboard';
     }
