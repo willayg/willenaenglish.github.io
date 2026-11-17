@@ -222,15 +222,37 @@ export class QuestionRenderer{
       recognition.interimResults=false;
       recognition.maxAlternatives=5;
       recognition.continuous=false;
-      const setListening=on=>{
-        mic?.classList.toggle('is-listening',!!on);
-        if(status)status.textContent=on?'듣고 있어요… 영어로 말해 보세요.':'마이크를 누르고 영어로 말해 보세요.';
+      // Safari may end recognition immediately without ever reaching audio capture.
+      // Keep startup distinct from active listening and preserve actionable errors.
+      let phase='idle',lastError='',hasResult=false,startedAt=0;
+      const setPhase=(next,message)=>{
+        phase=next;
+        mic?.classList.toggle('is-listening',next==='listening');
+        mic?.classList.toggle('is-starting',next==='starting');
+        mic?.setAttribute('aria-busy',next==='starting'?'true':'false');
+        if(status)status.textContent=message;
       };
-      recognition.onstart=()=>setListening(true);
-      recognition.onend=()=>setListening(false);
+      const readyMessage='마이크를 누르고 영어로 말해 보세요.';
+      const retryMessage='마이크가 시작되지 않았어요. 다시 눌러 주세요. 계속 안 되면 Safari를 새로고침해 주세요.';
+      recognition.onstart=()=>{
+        startedAt=Date.now();
+        lastError='';
+        setPhase('listening','듣고 있어요… 영어로 말해 보세요.');
+      };
+      recognition.onend=()=>{
+        if(phase==='idle')return;
+        const wasStarting=phase==='starting';
+        const endedQuickly=!hasResult&&startedAt&&Date.now()-startedAt<900;
+        setPhase('idle',lastError||((wasStarting||endedQuickly)?retryMessage:readyMessage));
+        if(wasStarting||endedQuickly)console.warn('[Willena speech] recognition ended before usable audio',{wasStarting,endedQuickly});
+      };
       recognition.onerror=e=>{
-        setListening(false);
-        if(status)status.textContent=e?.error==='not-allowed'?'마이크 권한이 필요해요.':'잘 듣지 못했어요. 다시 눌러 말해 보세요.';
+        const code=String(e?.error||'unknown');
+        lastError=(code==='not-allowed'||code==='service-not-allowed')
+          ?'마이크 권한을 확인해 주세요. Safari 설정에서 이 사이트의 마이크를 허용해 주세요.'
+          :(code==='no-speech'?'목소리를 듣지 못했어요. 다시 눌러 말해 보세요.':retryMessage);
+        setPhase('idle',lastError);
+        console.warn('[Willena speech] recognition error',code);
       };
       recognition.onresult=e=>{
         const result=e?.results?.[0];
@@ -242,6 +264,7 @@ export class QuestionRenderer{
           }
         }
         const value=alternatives[0]||'';
+        if(value)hasResult=true;
         this.state.speakingTranscript=value;
         this.state.speakingAlternatives=alternatives;
         if(transcript){
@@ -254,15 +277,24 @@ export class QuestionRenderer{
       };
       mic?.addEventListener('click',()=>{
         if(this.disabled)return;
+        if(phase==='starting')return; // Prevent duplicate taps while Safari initializes.
+        if(phase==='listening'){
+          try{recognition.stop()}catch(error){console.warn('[Willena speech] stop failed',error?.name||error)}
+          return;
+        }
+        this.state.speakingTranscript='';
+        this.state.speakingAlternatives=[];
+        if(transcript){transcript.hidden=true;transcript.textContent=''}
+        lastError='';hasResult=false;startedAt=0;
+        setPhase('starting','마이크 연결 중…');
         try{
-          if(mic.classList.contains('is-listening'))recognition.stop();
-          else{
-            this.state.speakingTranscript='';
-            this.state.speakingAlternatives=[];
-            if(transcript){transcript.hidden=true;transcript.textContent=''}
-            recognition.start();
-          }
-        }catch{}
+          // Must happen synchronously in the user's tap handler on iOS Safari.
+          recognition.start();
+        }catch(error){
+          lastError=retryMessage;
+          setPhase('idle',lastError);
+          console.warn('[Willena speech] start failed',error?.name||error);
+        }
       });
       return;
     }
