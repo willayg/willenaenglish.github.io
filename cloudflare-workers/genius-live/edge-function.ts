@@ -112,6 +112,18 @@ async function action(req:Request){
   const data=await content("content_books?select=id,title,content_units(id,unit_number,title,status)&status=in.(review,published)&order=title.asc&limit=1000");
   return response({ok:true,classes:(classes||[]).filter((c:any)=>clean(c.name)),classBookIds:assignments,books:(data as any[]).map(b=>({id:b.id,title:b.title,units:(b.content_units||[]).filter((u:any)=>["review","published"].includes(u.status)).sort((a:any,b:any)=>a.unit_number-b.unit_number)})).filter(b=>b.units.length)});
  }
+ if(mode==="class-roster"){
+  if(!["teacher","admin"].includes(who.role))return fail("Teacher access required",403);
+  const classId=clean(p.classId);
+  if(!/^[0-9a-f-]{36}$/i.test(classId))return fail("Choose a class first.");
+  const {data:enrollments,error:enrollmentError}=await sb.from("class_enrollments").select("student_id").eq("class_id",classId).eq("status","active").is("ended_at",null);
+  if(enrollmentError)throw enrollmentError;
+  const ids=[...new Set((enrollments||[]).map((r:any)=>r.student_id).filter(Boolean))];
+  if(!ids.length)return response({ok:true,students:[]});
+  const {data:profiles,error:profileError}=await sb.from("profiles").select("id,name,korean_name,role").in("id",ids);
+  if(profileError)throw profileError;
+  return response({ok:true,students:(profiles||[]).filter((p:any)=>p.role==="student").map((p:any)=>({id:p.id,name:p.name||p.korean_name||"Student",koreanName:p.korean_name||""})).sort((a:any,b:any)=>a.name.localeCompare(b.name))});
+ }
  if(mode==="create"){
   if(!["teacher","admin"].includes(who.role))return fail("Teacher access required",403);
   const count=Math.max(1,Math.min(40,Number(p.count)||10)),seconds=Math.max(8,Math.min(60,Number(p.seconds)||20));
