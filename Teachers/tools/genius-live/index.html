@@ -64,6 +64,20 @@ button.primary{background:var(--pink);border-color:var(--pink);color:white}butto
 
 @media(max-width:750px){.grid,.two,.answers{grid-template-columns:1fr}header{padding:13px 16px}.panel{padding:15px}.pin{letter-spacing:4px}}
 
+.gl-countdown-stage{position:fixed;inset:0;z-index:9998;background:radial-gradient(circle at center,#17446a 0%,#0b1429 72%);color:#fff;display:grid;place-items:center;padding:18px;text-align:center}
+.gl-countdown-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.gl-countdown-kicker{font-size:clamp(18px,3vw,30px);font-weight:800;letter-spacing:.12em;color:#a4eaff}
+.gl-countdown-number{font-size:clamp(130px,33vw,360px);font-weight:900;line-height:1;text-shadow:0 0 60px #f254aa88;color:#fff;font-variant-numeric:tabular-nums}
+.gl-countdown-number.pulse{animation:gl-count-pulse .7s cubic-bezier(.15,.8,.25,1)}
+.gl-countdown-sub{font-size:clamp(16px,2.4vw,26px);font-weight:700;color:#f5a6d2}
+@keyframes gl-count-pulse{from{transform:scale(1.28);opacity:.65}to{transform:scale(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){.gl-countdown-number.pulse{animation:none}}
+body:fullscreen{overflow:auto}
+body:fullscreen main{max-width:100%;padding:12px 22px}
+body:fullscreen .grid{grid-template-columns:minmax(0,1.5fr) minmax(310px,1fr)}
+body:fullscreen .question{font-size:clamp(28px,3.6vw,65px)}
+body:fullscreen .answer{min-height:120px;font-size:clamp(19px,2vw,30px)}
+@media(max-width:850px){body:fullscreen .grid{grid-template-columns:1fr}}
 /* Genius Live round reveal: projector-sized scoreboard; no duplicate scoring. */
 .gl-reveal-screen{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:clamp(9px,3vw,32px);background:radial-gradient(circle at 50% 5%,#2c5475 0%,#0a1429 65%,#070b19 100%);color:#f8fbff;overflow:auto}
 .gl-reveal-content{width:min(960px,100%);max-height:100%;overflow-y:auto;position:relative}
@@ -105,7 +119,7 @@ body.genius-embedded main{max-width:none;margin:12px auto;padding:0 2px}
 body.genius-embedded .panel{box-shadow:none}
 @media(max-width:700px){body.genius-embedded .grid{grid-template-columns:1fr}body.genius-embedded .music-controls{width:auto}}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script></head><body><header><h1>Willena <span>Genius Live</span></h1><div class="music-controls" aria-label="Game music controls">
-<button id="musicToggle" type="button" aria-pressed="false">♫ Play music</button><button id="sfxToggle" type="button" aria-pressed="true" title="Toggle scoreboard sound effects">SFX On</button>
+<button id="fullscreenToggle" type="button" title="Fullscreen classroom view">⛶ Fullscreen</button><button id="musicToggle" type="button" aria-pressed="false">♫ Play music</button><button id="sfxToggle" type="button" aria-pressed="true" title="Toggle scoreboard sound effects">SFX On</button>
 <label for="musicVolume">Volume <input id="musicVolume" type="range" min="0" max="100" value="35" aria-label="Game music volume"></label>
 <small>Original game soundtrack · teacher device only</small>
 </div><span class="tag">Teacher · v1.0</span></header><main><div id="message" class="notice">Checking teacher login…</div><div id="app"></div></main>
@@ -592,8 +606,35 @@ function showRoundReveal(rows,round,total,teams){
  // Retain teacher control: no automatic navigation to the next question.
 }
 
+let lastCountdownKey="",lastCountdownDigit=null;
+function countdownMarkup(){return '<div class="gl-countdown-stage" role="status" aria-live="polite"><div class="gl-countdown-center"><div class="gl-countdown-kicker">QUESTION '+state.questionNumber+' / '+state.total+'</div><div class="gl-countdown-number" id="glCountdownNumber">3</div><div class="gl-countdown-sub">GET READY!</div></div></div>'}
+function updateCountdown(){
+ if(!state||state.status!=="countdown")return;
+ const until=Date.parse(state.countdownUntil||"");
+ const remaining=Math.max(0,Math.ceil((until-Date.now())/1000));
+ const digit=remaining>0?remaining:"GO!";
+ const el=document.querySelector("#glCountdownNumber");
+ if(el&&el.textContent!==String(digit)){
+  el.textContent=String(digit);el.classList.remove("pulse");void el.offsetWidth;el.classList.add("pulse");
+  if(remaining>0&&remaining<=3&&lastCountdownDigit!==remaining){revealSfx.play("count");lastCountdownDigit=remaining}
+ }
+ if(remaining===0&&!busy&&Date.now()-lastCountdownPoll>300){lastCountdownPoll=Date.now();refresh()}
+}
+let lastCountdownPoll=0;
+function setupFullscreen(){
+ const button=document.querySelector("#fullscreenToggle");
+ button.onclick=async()=>{
+  try{
+   if(document.fullscreenElement)await document.exitFullscreen();
+   else await document.body.requestFullscreen();
+  }catch(e){notify("Fullscreen is blocked here. Try Open game in new tab.",true)}
+ };
+ document.addEventListener("fullscreenchange",()=>{button.textContent=document.fullscreenElement?"⛶ Exit fullscreen":"⛶ Fullscreen"});
+}
+setupFullscreen();
+
 function finished(){return '<div class="grid"><section class="panel em"><h2>Game complete</h2><p>'+state.total+' questions played.</p>'+leaderboard()+'<p><button id="again" class="primary">Create another game</button></p></section><section class="panel"><h2>Individual scores</h2>'+state.players.slice().sort((a,b)=>b.score-a.score).map(p=>'<div class="score">'+esc(p.name)+'<b>'+p.score+' pts</b></div>').join("")+'</section></div>'}
-function paint(){if(!state){activeReveal?.close();gameMusic.setPhase("lobby");setup();return}if(state.status!=="reveal")activeReveal?.close();gameMusic.setPhase(state.status);maybeRoundReveal();const key=roundStatus();if(key===lastView)return;lastView=key;$("#app").innerHTML=state.status==="lobby"?lobby():["question","reveal"].includes(state.status)?quiz():finished();
+function paint(){if(!state){activeReveal?.close();gameMusic.setPhase("lobby");setup();return}if(state.status!=="reveal")activeReveal?.close();if(state.status==="countdown"&&lastCountdownKey!==state.pin+":"+state.questionNumber){lastCountdownKey=state.pin+":"+state.questionNumber;lastCountdownDigit=null;}gameMusic.setPhase(state.status==="countdown"?"lobby":state.status);maybeRoundReveal();const key=roundStatus();if(key===lastView)return;lastView=key;$("#app").innerHTML=state.status==="lobby"?lobby():state.status==="countdown"?countdownMarkup():["question","reveal"].includes(state.status)?quiz():finished();
  const on=(id,fn)=>{const b=$("#"+id);if(b)b.onclick=fn};
  on("previewWords",togglePreview);on("start",()=>{revealSfx.unlock();doAction("start")});on("reveal",()=>doAction("reveal"));on("next",()=>doAction("next"));on("cancel",()=>{if(confirm("End this game?"))doAction("cancel")});
  on("hostAddTeam",()=>doAction("host_add_team"));
@@ -604,7 +645,7 @@ function paint(){if(!state){activeReveal?.close();gameMusic.setPhase("lobby");se
  on("balanceTeams",()=>doAction("balance_teams"));on("randomizeTeams",()=>doAction("randomize_teams"));
  wireTeamBoard();
  on("again",()=>{pin="";state=null;lastView="";sessionStorage.removeItem("genius.live.host.pin");setup()});
- if(state.status==="lobby")renderJoinQR();
+ if(state.status==="lobby")renderJoinQR();if(state.status==="countdown")updateCountdown();
  tick();
 }
 async function doAction(action,options={}){if(busy)return;if(action==="next"||action==="cancel"){activeReveal?.close()}busy=true;try{state=await api(action,{pin,...options});if(state.status==="cancelled"){pin="";state=null;sessionStorage.removeItem("genius.live.host.pin")}lastView="";autoReveal=false;paint()}catch(e){notify(e.message,true)}finally{busy=false}}
@@ -622,6 +663,7 @@ async function login(){
  }catch(e){notify(e.message,true);$("#app").innerHTML='<div class="panel"><h2>Could not open Genius Live</h2><button id="retryLogin">Retry login</button> <a href="/Teachers/">Teachers Dashboard</a></div>';$("#retryLogin").onclick=login}}
 setInterval(()=>{if(initialized&&pin&&document.visibilityState==="visible")refresh()},1800);
 setInterval(tick,200);
+setInterval(updateCountdown,100);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&pin)refresh()});
 login();
 </script></body></html>
