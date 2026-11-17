@@ -19,7 +19,9 @@ import {TEAM_CHARACTER_LOGOS,TEAM_CHARACTER_IDS,teamCharacterMarkup} from "./tea
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const api=async(action,body={})=>{const r=await fetch("/api/genius-live",{method:"POST",credentials:"include",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,...body})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok){const e=new Error(d.error||"Game server error");e.status=r.status;throw e}return d};
 const teamName=n=>state?.teamNames?.[n]||["Pink Dragons","Blue Sharks","Green Tigers","Yellow Stars","Purple Panthers","Orange Foxes","Silver Wolves","Red Falcons"][n]||"Team";
-let pin=new URLSearchParams(location.search).get("pin")||sessionStorage.getItem("genius.live.student.pin")||"",state=null,working=false,last="";
+const linkPin=new URLSearchParams(location.search).get("pin")||"";
+const previousPin=sessionStorage.getItem("genius.live.student.pin")||"";
+let pin=linkPin||previousPin,state=null,working=false,last="";
 function notice(t,err=false){const m=$("#message");m.hidden=!t;m.className="notice"+(err?" error":"");m.textContent=t}
 function scores(){const teams=state.mode==="team";const list=teams?Array.from({length:state.teamCount},(_,i)=>{const members=state.players.filter(p=>p.team===i);const total=members.reduce((n,p)=>n+p.score,0);return{name:teamName(i),logo:teamLogo(i),score:members.length?total/members.length:0,count:members.length}}):state.players.map(p=>({name:p.name,score:p.score}));list.sort((a,b)=>b.score-a.score);return list.map((p,i)=>'<div class="score"><span>'+(i+1)+'. '+(teams?logoVisual(p.logo,26)+' ':'')+esc(p.name)+(teams?' <small class="muted">('+p.count+' players)</small>':"")+'</span><b>'+Math.round(p.score).toLocaleString()+(teams?" avg pts":" pts")+'</b></div>').join("")}
 function joinForm(){return '<div class="grid"><section class="card pink"><span class="pill">Classroom game</span><h1>Join Genius Live</h1><p class="muted">Ask your teacher for the six-digit game PIN.</p>'+
@@ -82,12 +84,12 @@ setInterval(()=>{if(pin&&state&&document.visibilityState==="visible")refresh()},
 setInterval(tick,200);document.addEventListener("visibilitychange",()=>{if(!document.hidden&&pin)refresh()});
 paint();
 if(pin){
- // Deep links must work on a different student phone, including immediately after login.
- // A PIN from the URL overrides stale session state from older games.
- const hasJoin=sessionStorage.getItem("genius.live.student.joined")==="1";
- if(new URLSearchParams(location.search).has("pin")&&!hasJoin){
-  sessionStorage.setItem("genius.live.student.pin",pin);
+ // A newly supplied classroom PIN always takes priority over any previously joined room.
+ const sameRoom=pin===previousPin&&sessionStorage.getItem("genius.live.student.joined")==="1";
+ if(linkPin&&!sameRoom){
+  sessionStorage.setItem("genius.live.student.pin",linkPin);
+  sessionStorage.removeItem("genius.live.student.joined");
   joinGame();
- }else if(hasJoin)refresh();
+ }else if(sameRoom)refresh();
 }
 </script></body></html>
