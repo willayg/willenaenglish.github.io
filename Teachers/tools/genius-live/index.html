@@ -63,6 +63,37 @@ button.primary{background:var(--pink);border-color:var(--pink);color:white}butto
 @media(max-width:560px){.team-editor{grid-template-columns:minmax(0,1fr) 70px auto}.team-editor .danger{grid-column:3}}
 
 @media(max-width:750px){.grid,.two,.answers{grid-template-columns:1fr}header{padding:13px 16px}.panel{padding:15px}.pin{letter-spacing:4px}}
+
+/* Genius Live round reveal: projector-sized scoreboard; no duplicate scoring. */
+.gl-reveal-screen{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:clamp(9px,3vw,32px);background:radial-gradient(circle at 50% 5%,#2c5475 0%,#0a1429 65%,#070b19 100%);color:#f8fbff;overflow:auto}
+.gl-reveal-content{width:min(960px,100%);max-height:100%;overflow-y:auto;position:relative}
+.gl-reveal-kicker{text-align:center;font-size:clamp(12px,2vw,17px);letter-spacing:.22em;text-transform:uppercase;color:#9feaff;font-weight:800}
+.gl-reveal-title{text-align:center;font-size:clamp(29px,5vw,58px);font-weight:900;letter-spacing:-.045em;margin:2px 0 6px;color:#fff;text-shadow:0 0 26px #50cfff88}
+.gl-reveal-subtitle{text-align:center;font-size:clamp(12px,1.8vw,17px);color:#bfd4e9;min-height:24px;margin:0 0 22px}
+.gl-reveal-rows{display:flex;flex-direction:column;gap:11px;margin:0 auto;max-width:860px}
+.gl-reveal-row{background:linear-gradient(105deg,#192d4de8,#12213ce8);border:2px solid #58728b88;border-radius:17px;display:grid;grid-template-columns:clamp(36px,6vw,70px) minmax(0,1fr) auto;gap:clamp(7px,2vw,18px);align-items:center;padding:clamp(9px,1.5vw,16px);min-height:clamp(73px,10vh,103px);position:relative;will-change:transform}
+.gl-reveal-row.is-first{background:linear-gradient(105deg,#69511f,#2a2941 65%,#172f4c);border-color:#ffca65;box-shadow:0 0 22px #ffcf6750}
+.gl-reveal-row.is-gaining{box-shadow:0 0 22px #42d4ff66;border-color:#63e1ff}
+.gl-reveal-rank{font-size:clamp(27px,5vw,47px);font-weight:900;text-align:center;color:#f4c65c}
+.gl-reveal-name{display:flex;align-items:center;gap:clamp(5px,1.5vw,14px);min-width:0;font-size:clamp(16px,2.8vw,29px);font-weight:800;overflow-wrap:anywhere}
+.gl-reveal-name .gl-character-logo{width:clamp(34px,5vw,56px)!important;height:clamp(34px,5vw,56px)!important}
+.gl-reveal-score{display:flex;flex-direction:column;align-items:flex-end;min-width:96px}
+.gl-reveal-number{font-size:clamp(22px,4vw,43px);font-weight:900;font-variant-numeric:tabular-nums;line-height:1.05}
+.gl-reveal-unit{font-size:12px;font-weight:700;color:#b6cedc}
+.gl-reveal-gain{color:#65f5b2;font-size:clamp(13px,2vw,20px);font-weight:900;font-variant-numeric:tabular-nums;min-height:24px}
+.gl-reveal-footer{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:22px 0 4px}
+.gl-reveal-footer button{background:#fff;color:#213a53;border:0;min-width:145px;font-size:15px;font-weight:800}
+.gl-reveal-footer button.primary{background:#ffcd62;color:#19233a}
+.gl-reveal-footer button:disabled{opacity:.5}
+.gl-reveal-screen .gl-reveal-progress{height:4px;width:100%;max-width:850px;margin:17px auto 0;border-radius:4px;background:#ffffff26;overflow:hidden}
+.gl-reveal-screen .gl-reveal-progress i{display:block;height:100%;background:#5de2ff;transform-origin:left;width:0}
+.gl-reveal-screen .gl-scoreboard-confetti{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden}
+.gl-reveal-spark{position:absolute;top:-20px;width:7px;height:18px;border-radius:2px;background:var(--spark);animation:gl-fall 2.1s ease-in both;left:var(--left);animation-delay:var(--delay)}
+@keyframes gl-fall{to{transform:translate(var(--drift),95vh) rotate(680deg);opacity:0}}
+@keyframes gl-glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.65)}}
+@media(max-width:520px){.gl-reveal-row{grid-template-columns:30px minmax(0,1fr) 97px;gap:7px}.gl-reveal-name{font-size:14px}.gl-reveal-name .gl-character-logo{width:29px!important;height:29px!important}.gl-reveal-score{min-width:0}.gl-reveal-number{font-size:21px}.gl-reveal-gain{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.gl-reveal-row,.gl-reveal-spark{animation:none!important;transition:none!important}}
+
 /* The same game runs inside the teacher dashboard without a second app copy. */
 body.genius-embedded{background:transparent}
 body.genius-embedded header{background:#e7f6f8;color:#244a54;padding:10px 12px;border-radius:12px;gap:10px;flex-wrap:wrap}
@@ -74,7 +105,7 @@ body.genius-embedded main{max-width:none;margin:12px auto;padding:0 2px}
 body.genius-embedded .panel{box-shadow:none}
 @media(max-width:700px){body.genius-embedded .grid{grid-template-columns:1fr}body.genius-embedded .music-controls{width:auto}}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script></head><body><header><h1>Willena <span>Genius Live</span></h1><div class="music-controls" aria-label="Game music controls">
-<button id="musicToggle" type="button" aria-pressed="false">♫ Play music</button>
+<button id="musicToggle" type="button" aria-pressed="false">♫ Play music</button><button id="sfxToggle" type="button" aria-pressed="true" title="Toggle scoreboard sound effects">SFX On</button>
 <label for="musicVolume">Volume <input id="musicVolume" type="range" min="0" max="100" value="35" aria-label="Game music volume"></label>
 <small>Original game soundtrack · teacher device only</small>
 </div><span class="tag">Teacher · v1.0</span></header><main><div id="message" class="notice">Checking teacher login…</div><div id="app"></div></main>
@@ -197,10 +228,45 @@ const gameMusic=(()=>{
  }
  return {toggle,setVolume,setPhase,stop,isPlaying:()=>enabled};
 })();
+
+// Original, synthesized 8-bit reveal effects. SFX has its own gain control; music remains unchanged.
+const revealSfx=(()=>{
+ let ctx=null,bus=null,volume=.35,enabled=true;
+ function init(){
+  if(ctx)return;
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return;
+  ctx=new AC();bus=ctx.createGain();bus.connect(ctx.destination);bus.gain.value=volume*.38;
+ }
+ function unlock(){
+  try{init();if(ctx?.state==="suspended")ctx.resume().catch(()=>{})}catch{}
+ }
+ function note(pitch,delay=0,length=.12,level=.13,wave="square"){
+  if(!enabled||!ctx||ctx.state!=="running")return;
+  const at=ctx.currentTime+delay,o=ctx.createOscillator(),g=ctx.createGain();
+  o.type=wave;o.frequency.setValueAtTime(440*Math.pow(2,(pitch-69)/12),at);
+  o.connect(g);g.connect(bus);
+  g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(level,at+.008);
+  g.gain.exponentialRampToValueAtTime(.0001,at+length);o.start(at);o.stop(at+length+.02);
+ }
+ function play(kind){
+  if(!enabled)return;
+  unlock();
+  if(kind==="reveal"){[52,59,64,71].forEach((n,i)=>note(n,i*.10,.18,.18));}
+  if(kind==="count"){[72,79].forEach((n,i)=>note(n,i*.055,.07,.095));}
+  if(kind==="rise"){[62,66,69,74,78].forEach((n,i)=>note(n,i*.08,.22,.14));}
+  if(kind==="final"){[67,71,74,79,83].forEach((n,i)=>note(n,i*.11,.35,.14));}
+ }
+ return {unlock,play,setVolume(v){volume=Math.max(0,Math.min(1,v));if(bus)bus.gain.value=volume*.38;},setEnabled(v){enabled=!!v},get enabled(){return enabled}};
+})();
+
 function setupMusic(){
  const button=document.querySelector("#musicToggle"),slider=document.querySelector("#musicVolume");
- slider.oninput=()=>gameMusic.setVolume(Number(slider.value)/100);
+ slider.oninput=()=>{gameMusic.setVolume(Number(slider.value)/100);revealSfx.setVolume(Number(slider.value)/100)};
  gameMusic.setVolume(Number(slider.value)/100);
+ revealSfx.setVolume(Number(slider.value)/100);
+ const sfxButton=document.querySelector("#sfxToggle");
+ sfxButton.onclick=()=>{revealSfx.setEnabled(!revealSfx.enabled);sfxButton.textContent=revealSfx.enabled?"SFX On":"SFX Off";sfxButton.setAttribute("aria-pressed",String(revealSfx.enabled));revealSfx.unlock()};
  button.onclick=async()=>{
   try{await gameMusic.toggle();button.textContent=gameMusic.isPlaying()?"♫ Pause music":"♫ Play music";button.setAttribute("aria-pressed",String(gameMusic.isPlaying()))}
   catch(err){notify(err.message||"Could not start music.",true)}
@@ -390,10 +456,143 @@ function quiz(){const q=state.question;return '<div class="grid"><section class=
  (state.status==="reveal"?'<p class="notice"><strong>Answer: '+esc(q.options[q.correct])+'</strong> · '+esc(q.explanation)+'</p>':'<p class="muted small">Answers remain hidden until you reveal them.</p>')+
  '<div class="row"><button id="reveal" '+(state.status!=="question"?"disabled":"")+'>Reveal Answer</button><button id="next" class="primary" '+(state.status!=="reveal"?"disabled":"")+'>'+(state.questionNumber===state.total?"Finish Game":"Next Question")+'</button><button id="cancel">End game</button></div></section>'+
  '<section class="panel"><h2>'+ (state.mode==="team"?"Team leaderboard":"Leaderboard")+'</h2>'+leaderboard()+'<h3 style="margin-top:25px">Players</h3>'+state.players.map(p=>'<div class="player">'+esc(p.name)+'<span class="tag">'+(state.answeredPlayerIds?.includes(p.id)?"Answered":"Waiting")+'</span></div>').join("")+'</section></div>'}
+
+// Server-authoritative points: subtract this question's awards from current scores
+// to reconstruct the pre-round leaderboard even when reveal arrives via polling.
+let lastAnimatedRound="",activeReveal=null;
+function scoreboardRows(data){
+ const gains=new Map((data.roundPoints||[]).map(x=>[x.playerId,Number(x.points)||0]));
+ const teams=data.mode==="team";
+ const rows=teams?Array.from({length:data.teamCount},(_,i)=>{
+  const members=data.players.filter(p=>p.team===i),total=members.reduce((n,p)=>n+p.score,0);
+  const delta=members.reduce((n,p)=>n+(gains.get(p.id)||0),0);
+  const divisor=members.length||1;
+  return {id:String(i),name:data.teamNames?.[i]||teamName(i),logo:data.teamLogos?.[i]||"⭐",count:members.length,
+   end:members.length?total/divisor:0,start:members.length?(total-delta)/divisor:0,delta:members.length?delta/divisor:0};
+ }):data.players.map(p=>{
+  const delta=gains.get(p.id)||0;
+  return{id:p.id,name:p.name,logo:null,count:1,end:p.score,start:p.score-delta,delta};
+ });
+ return rows;
+}
+function maybeRoundReveal(){
+ if(!state||state.status!=="reveal"||!state.teacher||!state.roundPoints)return;
+ const key=state.pin+":"+state.questionNumber;
+ if(lastAnimatedRound===key)return;
+ lastAnimatedRound=key;
+ showRoundReveal(scoreboardRows(state),state.questionNumber,state.total,state.mode==="team");
+}
+function showRoundReveal(rows,round,total,teams){
+ activeReveal?.close();
+ const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches||false;
+ const overlay=document.createElement("section");
+ overlay.className="gl-reveal-screen";
+ overlay.setAttribute("role","dialog");overlay.setAttribute("aria-modal","true");overlay.setAttribute("aria-label","Round "+round+" leaderboard");
+ const label=(teams?"TEAM":"PLAYER")+" RANKINGS";
+ const ordered=[...rows].sort((a,b)=>b.start-a.start||String(a.id).localeCompare(String(b.id)));
+ const rowMarkup=p=>'<div class="gl-reveal-row" data-score-row="'+esc(p.id)+'">'+
+  '<span class="gl-reveal-rank">—</span><div class="gl-reveal-name">'+(p.logo?logoVisual(p.logo,44):"")+ '<span>'+esc(p.name)+'</span></div>'+
+  '<div class="gl-reveal-score"><span class="gl-reveal-number">0</span><span class="gl-reveal-unit">'+(teams?"average pts":"points")+'</span><span class="gl-reveal-gain"></span></div></div>';
+ overlay.innerHTML='<div class="gl-reveal-content"><div class="gl-scoreboard-confetti" aria-hidden="true"></div>'+
+  '<div class="gl-reveal-kicker">Question '+round+' of '+total+' complete</div><h2 class="gl-reveal-title">POINTS ARE IN!</h2>'+
+  '<div class="gl-reveal-subtitle" id="glRankingSubtitle">Calculating the scores...</div>'+
+  '<div class="gl-reveal-rows">'+ordered.map(rowMarkup).join("")+'</div>'+
+  '<div class="gl-reveal-progress"><i></i></div><div class="gl-reveal-footer">'+
+  '<button id="glSkipReveal">Skip animation</button><button id="glContinueReveal" class="primary" disabled>'+(round===total?"Finish Game":"Next Question")+'</button>'+
+  '<button id="glCloseReveal">Back to answers</button></div></div>';
+ document.body.append(overlay);
+ const rowsEl=overlay.querySelector(".gl-reveal-rows"),title=overlay.querySelector(".gl-reveal-title"),
+ subtitle=overlay.querySelector("#glRankingSubtitle"),progress=overlay.querySelector(".gl-reveal-progress i"),
+ continueBtn=overlay.querySelector("#glContinueReveal");
+ let timers=[],frames=[],closed=false,finished=false;
+ const at=(delay,fn)=>{timers.push(setTimeout(()=>{if(!closed)fn()},delay))};
+ const raf=fn=>{const id=requestAnimationFrame(fn);frames.push(id);return id};
+ const elOf=id=>[...rowsEl.children].find(el=>el.dataset.scoreRow===String(id));
+ function ranks(order){
+  order.forEach((p,i)=>{
+   const el=elOf(p.id);if(!el)return;
+   el.querySelector(".gl-reveal-rank").textContent=String(i+1);
+   el.classList.toggle("is-first",i===0);
+  });
+ }
+ function paintNumber(p,n){
+  const el=elOf(p.id);if(!el)return;
+  el.querySelector(".gl-reveal-number").textContent=Math.round(n).toLocaleString();
+  el.querySelector(".gl-reveal-gain").textContent=(p.delta>0?"+":"")+Math.round(p.delta).toLocaleString()+(p.delta?" pts":"");
+ }
+ function reorder(){
+  const next=[...rows].sort((a,b)=>b.end-a.end||String(a.id).localeCompare(String(b.id)));
+  const old=new Map([...rowsEl.children].map(el=>[el.dataset.scoreRow,el.getBoundingClientRect()]));
+  next.forEach(p=>rowsEl.append(elOf(p.id)));
+  ranks(next);
+  if(!reduced){
+   [...rowsEl.children].forEach(el=>{
+    const from=old.get(el.dataset.scoreRow),to=el.getBoundingClientRect();
+    if(from&&to){const dy=from.top-to.top;
+     if(Math.abs(dy)>1)el.animate([{transform:"translateY("+dy+"px)"},{transform:"translateY(0)"}],{duration:900,easing:"cubic-bezier(.21,.77,.22,1)"});
+    }
+   });
+  }
+  const moved=next.some((p,i)=>ordered[i]?.id!==p.id);
+  if(moved)revealSfx.play("rise");
+  else revealSfx.play("final");
+  title.textContent=moved?"THE RANKINGS HAVE CHANGED!":"ROUND RESULTS";
+  subtitle.textContent=moved?"What a turnaround!":"Here's where everyone stands!";
+  if(!reduced&&next.length&&next[0].delta>0){
+   const sparks=overlay.querySelector(".gl-scoreboard-confetti");
+   for(let i=0;i<35;i++){
+    const node=document.createElement("i");node.className="gl-reveal-spark";
+    node.style.setProperty("--left",((i*37)%99)+"%");
+    node.style.setProperty("--delay",((i%9)*.065)+"s");
+    node.style.setProperty("--drift",(((i*29)%180)-90)+"px");
+    node.style.setProperty("--spark",["#53dfff","#ffcc65","#f57aab","#83efb7"][i%4]);
+    sparks.append(node);
+   }
+  }
+ }
+ function finishAnimation(){
+  if(finished||closed)return;finished=true;
+  rows.forEach(p=>paintNumber(p,p.end));reorder();
+  continueBtn.disabled=false;
+  progress.style.width="100%";
+ }
+ function close(){
+  if(closed)return;
+  closed=true;timers.forEach(clearTimeout);frames.forEach(cancelAnimationFrame);
+  overlay.remove();if(activeReveal?.element===overlay)activeReveal=null;
+ }
+ activeReveal={element:overlay,close};
+ overlay.querySelector("#glCloseReveal").onclick=close;
+ overlay.querySelector("#glSkipReveal").onclick=finishAnimation;
+ continueBtn.onclick=()=>{if(!finished)return;close();revealSfx.play("final");doAction("next")};
+ const totalDuration=reduced?100:5000;
+ overlay.querySelector("#glSkipReveal").style.display=reduced?"none":"";
+ ranks(ordered);
+ rows.forEach(p=>paintNumber(p,p.start));
+ if(reduced){subtitle.textContent="Round standings";finishAnimation();return;}
+ revealSfx.play("reveal");
+ subtitle.textContent="Adding this round's points...";
+ progress.animate([{width:"0%"},{width:"100%"}],{duration:totalDuration,fill:"forwards"});
+ at(650,()=>{
+  const started=performance.now(),duration=2500;
+  function update(now){
+   if(closed||finished)return;
+   const t=Math.max(0,Math.min(1,(now-started)/duration)),eased=1-Math.pow(1-t,3);
+   rows.forEach(p=>paintNumber(p,p.start+(p.end-p.start)*eased));
+   if(t<1)raf(update);
+  }
+  raf(update);
+  revealSfx.play("count");
+ });
+ at(3550,()=>{subtitle.textContent="And the new standings are...";reorder()});
+ at(4900,finishAnimation);
+ // Retain teacher control: no automatic navigation to the next question.
+}
+
 function finished(){return '<div class="grid"><section class="panel em"><h2>Game complete</h2><p>'+state.total+' questions played.</p>'+leaderboard()+'<p><button id="again" class="primary">Create another game</button></p></section><section class="panel"><h2>Individual scores</h2>'+state.players.slice().sort((a,b)=>b.score-a.score).map(p=>'<div class="score">'+esc(p.name)+'<b>'+p.score+' pts</b></div>').join("")+'</section></div>'}
-function paint(){if(!state){gameMusic.setPhase("lobby");setup();return}gameMusic.setPhase(state.status);const key=roundStatus();if(key===lastView)return;lastView=key;$("#app").innerHTML=state.status==="lobby"?lobby():["question","reveal"].includes(state.status)?quiz():finished();
+function paint(){if(!state){activeReveal?.close();gameMusic.setPhase("lobby");setup();return}if(state.status!=="reveal")activeReveal?.close();gameMusic.setPhase(state.status);maybeRoundReveal();const key=roundStatus();if(key===lastView)return;lastView=key;$("#app").innerHTML=state.status==="lobby"?lobby():["question","reveal"].includes(state.status)?quiz():finished();
  const on=(id,fn)=>{const b=$("#"+id);if(b)b.onclick=fn};
- on("previewWords",togglePreview);on("start",()=>doAction("start"));on("reveal",()=>doAction("reveal"));on("next",()=>doAction("next"));on("cancel",()=>{if(confirm("End this game?"))doAction("cancel")});
+ on("previewWords",togglePreview);on("start",()=>{revealSfx.unlock();doAction("start")});on("reveal",()=>doAction("reveal"));on("next",()=>doAction("next"));on("cancel",()=>{if(confirm("End this game?"))doAction("cancel")});
  on("hostAddTeam",()=>doAction("host_add_team"));
  document.querySelectorAll("[data-save-team]").forEach(button=>button.onclick=()=>{const i=Number(button.dataset.saveTeam);doAction("host_edit_team",{team:i,name:document.querySelector('[data-team-name="'+i+'"]').value,logo:document.querySelector('[data-team-logo="'+i+'"]').value})});
  document.querySelectorAll("[data-remove-team]").forEach(button=>button.onclick=()=>{const i=Number(button.dataset.removeTeam);const members=state.players.filter(p=>p.team===i).length;if(confirm('Remove '+teamName(i)+'? '+(members?members+' player(s) will move to another team.':'This team is empty.')))doAction("host_remove_team",{team:i})});
@@ -405,7 +604,7 @@ function paint(){if(!state){gameMusic.setPhase("lobby");setup();return}gameMusic
  if(state.status==="lobby")renderJoinQR();
  tick();
 }
-async function doAction(action,options={}){if(busy)return;busy=true;try{state=await api(action,{pin,...options});if(state.status==="cancelled"){pin="";state=null;sessionStorage.removeItem("genius.live.host.pin")}lastView="";autoReveal=false;paint()}catch(e){notify(e.message,true)}finally{busy=false}}
+async function doAction(action,options={}){if(busy)return;if(action==="next"||action==="cancel"){activeReveal?.close()}busy=true;try{state=await api(action,{pin,...options});if(state.status==="cancelled"){pin="";state=null;sessionStorage.removeItem("genius.live.host.pin")}lastView="";autoReveal=false;paint()}catch(e){notify(e.message,true)}finally{busy=false}}
 async function refresh(){if(!pin||busy)return;try{state=await api(state?.simulation&&state.status==="question"?"simulate_ghosts":"state",{pin});if(!state.teacher)throw Error("This game belongs to another teacher.");if(state.status==="cancelled"){pin="";state=null;sessionStorage.removeItem("genius.live.host.pin")}paint()}catch(e){notify(e.message,true)}}
 function tick(){if(!state||state.status!=="question")return;const rem=Math.max(0,Date.parse(state.deadline)-Date.now()),sec=Math.ceil(rem/1000),t=$("#timer"),bar=$("#timerBar");if(t)t.textContent=sec+"s";if(bar)bar.style.width=(100*rem/(state.seconds*1000))+"%";if(rem===0&&!autoReveal&&!busy){autoReveal=true;doAction("reveal")}}
 async function login(){
