@@ -835,9 +835,19 @@ const diaryFlow=createDiaryFlow({
  finish:async(entry,completion={})=>{
   if(state.active?.status!=='submitted'){
    const submitted=await saveEntry({submit:true,force:true});
-   if(!submitted)throw Error('제출에 실패했어요.');
+   if(!submitted){
+    const error=new Error('제출에 실패했어요. 저장 상태를 확인해 주세요.');
+    error.completionStep='submission';throw error;
+   }
+   entry.status='submitted';
   }
-  const reward=await databaseApi(entry.kind==='topic'?'rpc/award_writing_topic_v1':'rpc/award_writing_diary_v1','POST','',entry.kind==='topic'?{p_entry_id:entry.id,p_review_complete:completion.reviewComplete===true,p_spoken_complete:completion.speakingComplete===true}:{p_entry_id:entry.id});
+  let reward;
+  try{
+   reward=await databaseApi(entry.kind==='topic'?'rpc/award_writing_topic_v1':'rpc/award_writing_diary_v1','POST','',entry.kind==='topic'?{p_entry_id:entry.id,p_review_complete:completion.reviewComplete===true,p_spoken_complete:completion.speakingComplete===true}:{p_entry_id:entry.id});
+  }catch(error){
+   error.completionStep='reward';
+   throw error;
+  }
   window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.awarded?reward.stars:0}}));
   try{localStorage.setItem('stars:refresh',String(Date.now()))}catch{}
   return reward;
