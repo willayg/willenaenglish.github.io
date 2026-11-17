@@ -248,11 +248,16 @@ export class QuestionRenderer{
       };
       recognition.onerror=e=>{
         const code=String(e?.error||'unknown');
-        lastError=(code==='not-allowed'||code==='service-not-allowed')
-          ?'마이크 권한을 확인해 주세요. Safari 설정에서 이 사이트의 마이크를 허용해 주세요.'
-          :(code==='no-speech'?'목소리를 듣지 못했어요. 다시 눌러 말해 보세요.':retryMessage);
+        const denied=(code==='not-allowed');
+        const serviceDenied=(code==='service-not-allowed');
+        lastError=serviceDenied
+          ?'Safari 음성 인식 서비스를 사용할 수 없어요. 마이크 허용과는 별개예요. Safari에서 다시 열거나 선생님에게 알려 주세요. (SR-SERVICE)'
+          :denied
+            ?'Safari가 음성 인식을 거부했어요. 사이트의 마이크 및 iPhone 음성 인식 설정을 확인해 주세요. (SR-DENIED)'
+            :(code==='no-speech'?'목소리를 듣지 못했어요. 다시 눌러 말해 보세요.'
+              :('음성 인식이 중단됐어요. 다시 눌러 주세요. (SR-'+code.toUpperCase()+')'));
         setPhase('idle',lastError);
-        console.warn('[Willena speech] recognition error',code);
+        console.warn('[Willena speech] recognition error',{code,phase,elapsedMs:startedAt?Date.now()-startedAt:0,userAgent:navigator.userAgent});
       };
       recognition.onresult=e=>{
         const result=e?.results?.[0];
