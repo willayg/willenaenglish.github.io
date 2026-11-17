@@ -26,6 +26,30 @@ button.primary{background:var(--pink);border-color:var(--pink);color:white}butto
 .team-editor button{padding:8px 10px}
 .team-editor button.danger{color:#a53d51;border-color:#eac7ce}
 .team-editor label{display:none}
+
+/* Lobby-only interactive team board. One board for mouse, keyboard and touch. */
+.gl-teams-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:12px;margin:15px 0 7px}
+.gl-team-zone{border:2px dashed #c3e4ea;background:#f9fdfd;border-radius:15px;min-width:0;padding:12px;transition:border-color .15s,background .15s}
+.gl-team-zone.is-over,.gl-team-zone.is-target{border-color:#ed5fa5;background:#fff0f7}
+.gl-team-head{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:4px 2px 12px;border-bottom:1px solid #dcebee;margin-bottom:10px}
+.gl-team-heading{display:flex;align-items:center;gap:8px;font-size:14px;min-width:0}
+.gl-team-heading strong{overflow-wrap:anywhere}
+.gl-team-number{font-size:12px;color:#64838b;font-weight:700;white-space:nowrap}
+.gl-team-member-list{min-height:72px;display:flex;flex-direction:column;gap:7px}
+.gl-team-player{display:flex;align-items:center;gap:8px;background:white;border:1px solid #d5e7ea;border-radius:10px;padding:10px;cursor:grab;touch-action:pan-y;user-select:none;font-weight:700;min-width:0}
+.gl-team-player:active{cursor:grabbing}
+.gl-team-player:focus-visible,.gl-team-zone:focus-visible{outline:3px solid #ef83b5;outline-offset:2px}
+.gl-team-player.is-dragging{opacity:.42}
+.gl-team-player.is-selected{border-color:#ec5c9d;background:#ffedf6}
+.gl-player-handle{color:#8197a1;flex:none;font-size:17px;letter-spacing:1px;cursor:grab;touch-action:none}
+.gl-team-player-label{min-width:0;overflow-wrap:anywhere}
+.gl-team-empty{text-align:center;color:#7b9ba5;padding:19px 5px;font-size:12px}
+.gl-team-board-help{font-size:12px;color:#69848d;margin:12px 0}
+.gl-team-move{display:flex;align-items:center;justify-content:center;border:1px solid #a6dbe4;background:#fff;min-height:35px;border-radius:9px;margin-top:9px;width:100%;font-size:12px}
+.gl-team-move:disabled{opacity:.35}
+.gl-team-touch-ghost{position:fixed;pointer-events:none;z-index:99999;background:#fff;border:2px solid #ec5c9d;padding:10px 16px;border-radius:11px;box-shadow:0 7px 24px #20435444;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:560px){.gl-teams-board{grid-template-columns:1fr 1fr;gap:8px}.gl-team-zone{padding:8px}.gl-team-heading{font-size:12px}.gl-team-player{padding:9px 6px;font-size:12px}.gl-team-head{gap:4px}.gl-team-heading .gl-character-logo{width:23px!important;height:23px!important}.gl-team-number{font-size:11px}}
+
 .gl-logo-preview{display:inline-flex;align-items:center;justify-content:center;min-width:30px;min-height:30px;font-size:24px;vertical-align:middle}
 .gl-logo-picker{position:relative;min-width:0}
 .gl-logo-picker summary{display:flex;align-items:center;justify-content:center;cursor:pointer;list-style:none;padding:4px;border:1px solid #bddce1;border-radius:9px;background:#fff;min-height:43px}
@@ -245,16 +269,116 @@ function attachLogoPickers(){
   wrap.querySelector("details").open=false;
  });
 }
+let selectedLobbyPlayerId=null;
 function teamControls(){
  if(state.mode!=="team")return '<p class="muted small">This is an individual game.</p>';
- const counts=Array.from({length:state.teamCount},(_,i)=>({logo:state.teamLogos?.[i]||"⭐",name:teamName(i),count:state.players.filter(p=>p.team===i).length}));
- const logoSelect=(i)=>logoPickerHtml(String(i),state.teamLogos?.[i]||TEAM_EMOJIS[i%TEAM_EMOJIS.length]);
- const manager='<div class="team-manager"><div class="row between"><strong>Manage teams ('+state.teamCount+'/8)</strong><button id="hostAddTeam" '+(state.teamCount>=8?"disabled":"")+'>+ Add team</button></div><p class="muted small">Edit each team name or logo, then press Save. Removing a team moves its members to a remaining team.</p>'+
+ const logoSelect=i=>logoPickerHtml(String(i),state.teamLogos?.[i]||TEAM_EMOJIS[i%TEAM_EMOJIS.length]);
+ const manager='<div class="team-manager"><div class="row between"><strong>Manage teams ('+state.teamCount+'/8)</strong><button id="hostAddTeam" '+(state.teamCount>=8?"disabled":"")+'>+ Add team</button></div><p class="muted small">Rename teams or change their logos here. Teams can also be created by students.</p>'+
  Array.from({length:state.teamCount},(_,i)=>'<div class="team-editor"><input data-team-name="'+i+'" maxlength="24" aria-label="Name for team '+(i+1)+'" value="'+esc(teamName(i))+'">'+logoSelect(i)+'<button data-save-team="'+i+'">Save</button><button class="danger" data-remove-team="'+i+'" '+(state.teamCount<=1?"disabled":"")+'>Remove</button></div>').join("")+'</div>';
- return '<p class="muted small">Students can create, name and join teams. The creator becomes captain. Teachers can adjust all teams before starting.</p>'+
+ const board=Array.from({length:state.teamCount},(_,i)=>{
+  const members=state.players.filter(p=>p.team===i);
+  return '<div class="gl-team-zone" data-team-zone="'+i+'" tabindex="0" role="group" aria-label="'+esc(teamName(i))+' drop area">'+
+   '<div class="gl-team-head"><div class="gl-team-heading">'+logoVisual(state.teamLogos?.[i]||"⭐",29)+'<strong>'+esc(teamName(i))+'</strong></div><span class="gl-team-number">'+members.length+' player'+(members.length===1?"":"s")+'</span></div>'+
+   '<div class="gl-team-member-list">'+(members.length?members.map(p=>'<div class="gl-team-player" data-team-player="'+esc(p.id)+'" draggable="true" role="button" tabindex="0" aria-label="Move '+esc(p.name)+' to another team" title="Drag to another team or tap to select"><span class="gl-player-handle" aria-hidden="true">⠿</span><span class="gl-team-player-label">'+esc(p.name)+'</span></div>').join(""):'<div class="gl-team-empty">Drop students here</div>')+'</div>'+
+   '<button type="button" class="gl-team-move" data-move-to-team="'+i+'" disabled>Move selected student here</button></div>';
+ }).join("");
+ const unassigned=state.players.filter(p=>p.team<0);
+ const waiting=unassigned.length?'<div class="gl-team-zone" data-team-zone="-1"><div class="gl-team-head"><strong>Unassigned</strong><span class="gl-team-number">'+unassigned.length+'</span></div><div class="gl-team-member-list">'+unassigned.map(p=>'<div class="gl-team-player" data-team-player="'+esc(p.id)+'" draggable="true" role="button" tabindex="0"><span class="gl-player-handle" aria-hidden="true">⠿</span><span class="gl-team-player-label">'+esc(p.name)+'</span></div>').join("")+'</div></div>':"";
+ return '<p class="muted small">Drag students between teams. On a phone, tap a name and then tap the destination team.</p>'+
  manager+'<div class="team-actions"><button id="balanceTeams" '+(state.teamCount?'':'disabled')+'>Auto-balance</button><button id="randomizeTeams" '+(state.teamCount?'':'disabled')+'>Randomize Teams</button><button id="addGhosts" '+(state.teamCount?'':'disabled')+'>Add 6 ghost players (simulation)</button></div>'+
- '<div class="team-summary">'+counts.map(x=>'<span class="tag">'+logoVisual(x.logo,22)+' '+esc(x.name)+' · '+x.count+'</span>').join("")+'</div>'+
- state.players.map(p=>'<div class="player"><strong>'+esc(p.name)+'</strong><select class="team-picker" aria-label="Team for '+esc(p.name)+'" data-player-team="'+esc(p.id)+'">'+(p.team<0?'<option value="-1" selected disabled>Not assigned</option>':"")+Array.from({length:state.teamCount},(_,i)=>'<option value="'+i+'" '+(p.team===i?"selected":"")+'>'+esc(teamName(i))+'</option>').join("")+'</select></div>').join("");
+ '<div class="gl-teams-board">'+waiting+board+'</div>';
+}
+function wireTeamBoard(){
+ if(state?.status!=="lobby"||state?.mode!=="team")return;
+ const playerEl=id=>[...document.querySelectorAll("[data-team-player]")].find(el=>el.dataset.teamPlayer===id);
+ function selectPlayer(id){
+  selectedLobbyPlayerId=(selectedLobbyPlayerId===id?null:id);
+  document.querySelectorAll("[data-team-player]").forEach(el=>{
+   const on=el.dataset.teamPlayer===selectedLobbyPlayerId;
+   el.classList.toggle("is-selected",on);el.setAttribute("aria-pressed",String(on));
+  });
+  document.querySelectorAll("[data-move-to-team]").forEach(btn=>{
+   const target=Number(btn.dataset.moveToTeam);
+   const member=state.players.find(p=>p.id===selectedLobbyPlayerId);
+   btn.disabled=!member||member.team===target;
+  });
+ }
+ function move(id,target){
+  const p=state.players.find(x=>x.id===id);
+  if(!p||!Number.isInteger(target)||target<0||target>=state.teamCount||p.team===target)return;
+  selectedLobbyPlayerId=null;
+  doAction("set_team",{playerId:id,team:target});
+ }
+ let draggedId=null,ghost=null,touch=null;
+ const clear=()=>{
+  document.querySelectorAll(".gl-team-zone").forEach(el=>el.classList.remove("is-over","is-target"));
+  document.querySelectorAll(".gl-team-player").forEach(el=>el.classList.remove("is-dragging"));
+  ghost?.remove();ghost=null;touch=null;draggedId=null;
+ };
+ document.querySelectorAll("[data-team-player]").forEach(el=>{
+  const id=el.dataset.teamPlayer;
+  el.onclick=()=>{if(!touch)selectPlayer(id)};
+  el.onkeydown=e=>{
+   if(e.key==="Enter"||e.key===" "){e.preventDefault();selectPlayer(id)}
+  };
+  el.addEventListener("dragstart",e=>{
+   draggedId=id;e.dataTransfer.effectAllowed="move";
+   e.dataTransfer.setData("text/plain",id);
+   requestAnimationFrame(()=>el.classList.add("is-dragging"));
+  });
+  el.addEventListener("dragend",clear);
+  // Touchscreen: drag only by the handle, leaving vertical list scrolling intact.
+  const handle=el.querySelector(".gl-player-handle");
+  handle?.addEventListener("pointerdown",e=>{
+   if(e.pointerType==="mouse"||e.button!==0)return;
+   e.preventDefault();
+   draggedId=id;
+   touch={pointerId:e.pointerId,from:el,started:false,startX:e.clientX,startY:e.clientY};
+   handle.setPointerCapture(e.pointerId);
+  });
+  handle?.addEventListener("pointermove",e=>{
+   if(!touch||touch.pointerId!==e.pointerId)return;
+   if(!touch.started&&Math.hypot(e.clientX-touch.startX,e.clientY-touch.startY)<9)return;
+   touch.started=true;touch.from.classList.add("is-dragging");
+   if(!ghost){ghost=document.createElement("div");ghost.className="gl-team-touch-ghost";ghost.textContent=state.players.find(p=>p.id===id)?.name||"Student";document.body.append(ghost)}
+   ghost.style.left=(e.clientX+12)+"px";ghost.style.top=(e.clientY-22)+"px";
+   const zone=document.elementFromPoint(e.clientX,e.clientY)?.closest("[data-team-zone]");
+   document.querySelectorAll(".gl-team-zone").forEach(x=>x.classList.toggle("is-target",x===zone&&Number(x.dataset.teamZone)>=0));
+  });
+  const finishTouch=e=>{
+   if(!touch||touch.pointerId!==e.pointerId)return;
+   const moved=touch.started;
+   const zone=document.elementFromPoint(e.clientX,e.clientY)?.closest("[data-team-zone]");
+   const dest=zone?Number(zone.dataset.teamZone):-1;
+   clear();
+   if(moved&&dest>=0){move(id,dest)}
+  };
+  handle?.addEventListener("pointerup",finishTouch);
+  handle?.addEventListener("pointercancel",clear);
+ });
+ document.querySelectorAll("[data-team-zone]").forEach(zone=>{
+  const n=Number(zone.dataset.teamZone);
+  zone.addEventListener("dragover",e=>{
+   if(n<0||!draggedId)return;
+   e.preventDefault();e.dataTransfer.dropEffect="move";zone.classList.add("is-over");
+  });
+  zone.addEventListener("dragleave",e=>{if(!zone.contains(e.relatedTarget))zone.classList.remove("is-over")});
+  zone.addEventListener("drop",e=>{
+   if(n<0)return;
+   e.preventDefault();
+   const id=draggedId||e.dataTransfer.getData("text/plain");
+   clear();
+   move(id,n);
+  });
+  zone.addEventListener("keydown",e=>{
+   if((e.key==="Enter"||e.key===" ")&&selectedLobbyPlayerId&&n>=0){e.preventDefault();move(selectedLobbyPlayerId,n)}
+  });
+ });
+ document.querySelectorAll("[data-move-to-team]").forEach(btn=>{
+  btn.onclick=()=>{if(selectedLobbyPlayerId)move(selectedLobbyPlayerId,Number(btn.dataset.moveToTeam))};
+ });
+ // A selected player from a previous render should not remain selected after it moves.
+ if(selectedLobbyPlayerId&&state.players.some(p=>p.id===selectedLobbyPlayerId))selectPlayer(selectedLobbyPlayerId),selectPlayer(selectedLobbyPlayerId);
 }
 function lobby(){return '<div class="grid"><section class="panel em"><span class="tag">Waiting room · '+esc(state.className||"Class")+'</span><h2 style="margin-top:10px">Students join with PIN</h2><div class="join-layout"><div class="join-code"><div class="pin">'+esc(pin)+'</div><p class="small muted">Enter this PIN or scan the QR code.</p><button id="copyJoin">Copy student game link</button></div><div class="qr-panel"><div id="joinQR" role="img" aria-label="QR code to join this game"></div><span class="small muted">Scan to join this game</span></div></div><p class="join-url"><a id="joinLink" target="_blank" rel="noopener" href="'+esc(studentJoinUrl())+'">'+esc(studentJoinUrl())+'</a></p>'+
  '<p class="small muted">Students open the separate Genius Live student page, log in and enter this PIN. Students can select and name their own teams before the game begins.</p><div class="row"><button id="previewWords">'+(previewOpen?"Hide question preview":"Preview questions")+'</button><button class="primary" id="start" '+(!state.players.length?"disabled":"")+'>Start Game</button><button id="cancel">Cancel game</button></div>'+
@@ -276,7 +400,7 @@ function paint(){if(!state){gameMusic.setPhase("lobby");setup();return}gameMusic
  on("addGhosts",()=>doAction("add_ghosts"));
  attachLogoPickers();
  on("balanceTeams",()=>doAction("balance_teams"));on("randomizeTeams",()=>doAction("randomize_teams"));
- document.querySelectorAll("[data-player-team]").forEach(select=>select.onchange=()=>doAction("set_team",{playerId:select.dataset.playerTeam,team:Number(select.value)}));
+ wireTeamBoard();
  on("again",()=>{pin="";state=null;lastView="";sessionStorage.removeItem("genius.live.host.pin");setup()});
  if(state.status==="lobby")renderJoinQR();
  tick();
