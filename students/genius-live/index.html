@@ -92,6 +92,7 @@ function lobby(){
 }
 let answerLockAnimatedKey="",answerLockFreshUntil=0;
 let lockSoundContext=null;
+function unlockLockSfx(){try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;if(!lockSoundContext)lockSoundContext=new Audio();if(lockSoundContext.state==="suspended")lockSoundContext.resume().catch(()=>{})}catch{}}
 function lockSfx(){
  try{
   const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
@@ -145,7 +146,7 @@ async function teamAction(action,options){if(working)return;working=true;try{con
 async function joinGame(){if(working)return;working=true;notice("Joining…");try{state=await api("join",{pin});sessionStorage.setItem("genius.live.student.pin",pin);sessionStorage.setItem("genius.live.student.joined","1");last="";notice("");paint()}catch(e){notice(e.message,true);if(e.status===401){showLogin();const link=$("#message a");if(link)link.focus()}}finally{working=false}}
 function showLogin(){const link=document.createElement("a");link.href="/students/signin.html?next="+encodeURIComponent(location.pathname+location.search);link.textContent=" Sign in to Willena";$("#message").append(" · ",link)}
 async function refresh(){if(!pin||working)return;try{const fresh=await api("state",{pin});state=fresh;notice("");paint()}catch(e){if(e.status===401){notice("Please sign in to your Willena account.",true);showLogin()}else if(/not found|expired|cancelled|not joined/i.test(e.message)){state=null;last="";sessionStorage.removeItem("genius.live.student.pin");sessionStorage.removeItem("genius.live.student.joined");notice(e.message,true);paint()}else notice(e.message,true)}}
-async function answer(choice){if(working||!state||state.myAnswer!==null||state.status!=="question")return;working=true;try{const roundKey=pin+":"+state.questionNumber;const accepted=await api("answer",{pin,choice,questionIndex:state.questionNumber-1});if(accepted?.accepted){answerLockAnimatedKey=roundKey;answerLockFreshUntil=Date.now()+1200;lockSfx()}await refreshDirect()}catch(e){notice(e.message,true)}finally{working=false}}
+async function answer(choice){if(working||!state||state.myAnswer!==null||state.status!=="question")return;unlockLockSfx();working=true;try{const roundKey=pin+":"+state.questionNumber;const accepted=await api("answer",{pin,choice,questionIndex:state.questionNumber-1});if(accepted?.accepted){answerLockAnimatedKey=roundKey;answerLockFreshUntil=Date.now()+1200;lockSfx()}await refreshDirect()}catch(e){notice(e.message,true)}finally{working=false}}
 async function refreshDirect(){const fresh=await api("state",{pin});state=fresh;last="";paint()}
 function tick(){if(!state||state.status!=="question")return;const rem=Math.max(0,Date.parse(state.deadline)-Date.now()),t=$("#timer"),b=$("#timerBar");if(t)t.textContent=Math.ceil(rem/1000)+"s";if(b)b.style.width=(100*rem/(state.seconds*1000))+"%";if(rem===0)document.querySelectorAll("[data-answer]").forEach(b=>b.disabled=true)}
 setInterval(()=>{if(pin&&state&&document.visibilityState==="visible")refresh()},1900);
