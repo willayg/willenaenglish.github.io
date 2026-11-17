@@ -504,7 +504,7 @@ function showRoundReveal(rows,round,total,teams){
  const rowsEl=overlay.querySelector(".gl-reveal-rows"),title=overlay.querySelector(".gl-reveal-title"),
  subtitle=overlay.querySelector("#glRankingSubtitle"),progress=overlay.querySelector(".gl-reveal-progress i"),
  continueBtn=overlay.querySelector("#glContinueReveal");
- let timers=[],frames=[],closed=false,finished=false;
+ let timers=[],frames=[],closed=false,finished=false,reordered=false;
  const at=(delay,fn)=>{timers.push(setTimeout(()=>{if(!closed)fn()},delay))};
  const raf=fn=>{const id=requestAnimationFrame(fn);frames.push(id);return id};
  const elOf=id=>[...rowsEl.children].find(el=>el.dataset.scoreRow===String(id));
@@ -521,6 +521,7 @@ function showRoundReveal(rows,round,total,teams){
   el.querySelector(".gl-reveal-gain").textContent=(p.delta>0?"+":"")+Math.round(p.delta).toLocaleString()+(p.delta?" pts":"");
  }
  function reorder(){
+  if(reordered||closed)return;reordered=true;
   const next=[...rows].sort((a,b)=>b.end-a.end||String(a.id).localeCompare(String(b.id)));
   const old=new Map([...rowsEl.children].map(el=>[el.dataset.scoreRow,el.getBoundingClientRect()]));
   next.forEach(p=>rowsEl.append(elOf(p.id)));
@@ -562,7 +563,9 @@ function showRoundReveal(rows,round,total,teams){
   overlay.remove();if(activeReveal?.element===overlay)activeReveal=null;
  }
  activeReveal={element:overlay,close};
+ overlay.setAttribute("tabindex","-1");overlay.focus({preventScroll:true});
  overlay.querySelector("#glCloseReveal").onclick=close;
+ overlay.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault();close()}});
  overlay.querySelector("#glSkipReveal").onclick=finishAnimation;
  continueBtn.onclick=()=>{if(!finished)return;close();revealSfx.play("final");doAction("next")};
  const totalDuration=reduced?100:5000;
