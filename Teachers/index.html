@@ -1719,7 +1719,14 @@ function ccSkillBar(name,passed,total,started){
 }
 // Canonical Golden Unit eligibility for the mission reward controls.
 // Uses the same required-skill thresholds and evidence as Curriculum Progress.
+let goldOverviewPending=null;
 window.WillenaGoldEligibility=async function({className,bookId,unitId,app}={}){
+ // Management tabs can open before All Classes is visited. Load the
+ // curriculum roster without changing the current tab or selected class.
+ if(!curriculum.data){
+  if(!goldOverviewPending)goldOverviewPending=ccRpc('teacher_curriculum_overview_v1').then(data=>{curriculum.data=data;return data}).finally(()=>{goldOverviewPending=null});
+  await goldOverviewPending;
+ }
  if(!curriculum.data)return [];
  const group=ccSkillGroups.find(g=>g.key===app);
  const c=(curriculum.data.classes||[]).find(x=>String(x.name).toLowerCase()===String(className).toLowerCase());
@@ -1944,9 +1951,9 @@ window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 </script>
 <script src="./vocab-v1.js?v=20261025-genius-snapshot-v1"></script>
 <script src="./word-genius-mastery.js?v=20261019-goldunits1"></script>
-<script src="./genius-homework-card.js?v=20261105-app-label1"></script>
+<script src="./genius-homework-card.js?v=20261118-gold-in-management1"></script>
 <script src="./homework-selection.js?v=20261103-shared-all-genius3"></script>
-<script src="./assignments-v1.js?v=20261105-shared-overview2"></script>
+<script src="./assignments-v1.js?v=20261118-gold-in-management1"></script>
 <script src="./naesin.js?v=20260917-r14-03"></script>
 <script src="./naesin-v2/naesin-v2-data.js?v=20261009-retry69"></script>
 <script src="./naesin-v2/naesin-v2-editor-api.js?v=20260924-r14-25"></script>
