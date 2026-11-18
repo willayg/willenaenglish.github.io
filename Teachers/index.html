@@ -508,6 +508,7 @@ try{
   <nav id="geniusGameTabs" aria-label="Choose classroom game" style="display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px">
     <button type="button" class="control" data-genius-game="quiz" aria-pressed="true" style="background:#ed5fa5;color:white;border-color:#ed5fa5;font-weight:800">Quiz Battle</button>
     <button type="button" class="control" data-genius-game="blockbusters" aria-pressed="false" style="font-weight:800">Blockbusters</button>
+    <button type="button" class="control" data-genius-game="teams" aria-pressed="false" style="font-weight:800">Team Generator</button>
     <a id="geniusGameNewTab" class="control" href="/Teachers/tools/genius-live/?embedded=1" target="_blank" rel="noopener" style="text-decoration:none;margin-left:auto">Open in new tab</a>
   </nav>
   <iframe id="geniusLiveFrame" title="Genius Live — Quiz Battle" loading="lazy" allow="fullscreen" allowfullscreen
@@ -2276,7 +2277,7 @@ window.addEventListener('message',async event=>{
 </script>
 <script>
 (function(){
- const urls={quiz:'/Teachers/tools/genius-live/?embedded=1',blockbusters:'/Teachers/tools/genius-live/blockbusters.html?embedded=1'};
+ const urls={quiz:'/Teachers/tools/genius-live/?embedded=1',blockbusters:'/Teachers/tools/genius-live/blockbusters.html?embedded=1',teams:'/Teachers/tools/genius-live/team-generator.html?embedded=1'};
  document.addEventListener('click',function(event){
   const button=event.target.closest('[data-genius-game]');
   if(!button)return;
@@ -2285,7 +2286,7 @@ window.addEventListener('message',async event=>{
   const frame=document.getElementById('geniusLiveFrame');
   if(!frame)return;
   if(frame.getAttribute('src')!==urls[mode])frame.setAttribute('src',urls[mode]);
-  frame.title='Genius Live — '+(mode==='quiz'?'Quiz Battle':'Blockbusters');
+  frame.title='Genius Live — '+(mode==='quiz'?'Quiz Battle':mode==='teams'?'Team Generator':'Blockbusters');
   const link=document.getElementById('geniusGameNewTab');
   if(link)link.href=urls[mode];
   document.querySelectorAll('[data-genius-game]').forEach(tab=>{
