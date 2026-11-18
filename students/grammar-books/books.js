@@ -268,7 +268,10 @@ function prepareRound(questions,mode){
    };
    walk([],options);
    if(!ordered)throw Error('Error Hunt spans do not reconstruct sentence: '+q.id);
-   return {...q,options:ordered,answerIndex:ordered.indexOf(wrong),underlined:ordered};
+   const answerIndex=ordered.indexOf(wrong);
+    // Shuffle answer cards independently: the underlined sentence must remain in reading order.
+    const huntChoices=shuffle(ordered.map((value,index)=>({value,index})));
+    return {...q,options:ordered,answerIndex,underlined:ordered,huntChoices};
   }
   const opts=shuffle(q.options.map((value,i)=>({value,i})));
   return {...q,options:opts.map(o=>o.value),answerIndex:opts.findIndex(o=>o.i===q.answerIndex)};
@@ -447,7 +450,7 @@ function toSharedQuestion(q){
   if(q.displayStyle==='beginner-underlined'){
     const markers=['①','②','③','④'];
     const sentence=q.options.map((part,index)=>markers[index]+' '+part).join(' ').replace(/\s+([,.!?;:])/g,'$1');
-    return {id:q.id,form:'choice',prompt:q.prompt+'\n'+sentence,choices:q.options.map((part,index)=>markers[index]+' '+part),answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit}};
+    return {id:q.id,form:'choice',prompt:q.prompt+'\n'+sentence,choices:q.huntChoices?q.huntChoices.map(item=>markers[item.index]+' '+item.value):q.options.map((part,index)=>markers[index]+' '+part),answer:[String((q.huntChoices?q.huntChoices.findIndex(item=>item.index===q.answerIndex):q.answerIndex)+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit}};
   }
  if(q.displayStyle==='sentence-options'){
   return {id:q.id,form:'choice',prompt:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
@@ -458,7 +461,7 @@ function toSharedQuestion(q){
  const hunt=activeMode==='hunt';
  const sentence=hunt?markedSentence(q):'';
  const instruction=hunt?'다음 문장에서 어법상 틀린 부분을 고르시오.':activeMode==='choose'&&q.prompt.startsWith('다음 중')?'':activeMode==='choose'&&((q.prompt.match(/____/g)||[]).length>1)?'빈칸에 들어갈 말이 바르게 짝지어진 것을 고르시오.':activeMode==='choose'?'빈칸에 들어갈 알맞은 말을 고르시오.':q.prompt;
- return {id:q.id,form:'choice',prompt:instruction+(hunt?'\n'+sentence:activeMode==='choose'?(instruction?'\n':'')+q.prompt:''),choices:q.options,answer:[String(q.answerIndex+1)],context:hunt?{underlined_spans:['①','②','③','④']}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
+ return {id:q.id,form:'choice',prompt:instruction+(hunt?'\n'+sentence:activeMode==='choose'?(instruction?'\n':'')+q.prompt:''),choices:hunt&&q.huntChoices?q.huntChoices.map(item=>item.value):q.options,answer:[String((hunt&&q.huntChoices?q.huntChoices.findIndex(item=>item.index===q.answerIndex):q.answerIndex)+1)],context:hunt?{underlined_spans:['①','②','③','④']}:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
 }
 function renderQuestion(){
  const questions=activeQuestions,q=questions[position];
