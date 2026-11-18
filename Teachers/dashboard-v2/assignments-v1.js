@@ -446,7 +446,7 @@
       students.map(s=>{
         const summary=adjustedStudentSummary(assignmentView,s,modes);
         return '<tr class="assignment-student-row" data-student-id="'+esc(s.student_id)+'">'+
-          '<td><strong>'+esc(s.name||s.korean_name||'Student')+'</strong>'+(s.korean_name&&s.korean_name!==s.name?'<small>'+esc(s.korean_name)+'</small>':'')+'</td>'+
+          '<td><strong data-jelly-id="'+esc(s.student_id)+'">'+esc(s.name||s.korean_name||'Student')+'</strong>'+(s.korean_name&&s.korean_name!==s.name?'<small>'+esc(s.korean_name)+'</small>':'')+'</td>'+
           modes.map(mode=>{
             const m=adjustedStudentMode(assignmentView,s,mode);
             return '<td><span class="assignment-pct '+pctClass(m.percent)+'">'+m.percent+'%</span><small>'+m.clean+'/'+m.total+'</small></td>';
@@ -458,6 +458,9 @@
       '</tbody></table></div>'+
       '<div id="assignmentStudentDetail" class="assignment-student-detail" hidden></div>';
 
+    const meta=assignmentView.list_meta||{};
+    const units=Array.isArray(meta.source_unit_ids)?meta.source_unit_ids:(meta.source_unit_id?[meta.source_unit_id]:[]);
+    if(units.length===1)void window.WillenaGeniusHomeworkCard?.jellyRows?.(detail,{className:a.class||assignmentView.class,bookId:meta.source_book_id,unitId:units[0],app:'word'}).catch(error=>console.warn('[Word Genius] Jelly Time',error));
     $('#assignmentBackBtn')?.addEventListener('click',renderList);
     $('#assignmentDetailRefresh')?.addEventListener('click',()=>openAssignment(a.id,true));
     $('#assignmentEditBtn')?.addEventListener('click',()=>showAssignmentEdit(a.id));
