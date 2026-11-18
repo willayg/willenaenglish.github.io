@@ -2018,6 +2018,86 @@ window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 <script src="./grammar-books-teacher.js?v=20261116-question-label1"></script>
 <script src="./writing-genius-teacher.js?v=20261106-drafts-visible2"></script>
 <script src="./dashboard-history.js?v=20261008-student-nav1"></script>
+<style id="willena-genius-apps-tabs-style">
+/* One sidebar destination, four unchanged teacher app views. Writing Genius stays separate. */
+.rail .nav[data-view="vocab"],.rail .nav[data-view="sentence-genius"],.rail .nav[data-view="grammar-foundations"],.rail .nav[data-view="free-talking-genius"],
+.mobile-tabs .mobile-tab[data-view="vocab"],.mobile-tabs .mobile-tab[data-view="sentence-genius"],.mobile-tabs .mobile-tab[data-view="grammar-foundations"],.mobile-tabs .mobile-tab[data-view="free-talking-genius"]{display:none!important}
+.genius-apps-tabs{display:none;align-items:center;gap:8px;flex-wrap:wrap;padding:9px;margin:2px 0 18px;border:1px solid #d9e9ec;border-radius:15px;background:#f1f7f8}
+.genius-apps-tabs.is-visible{display:flex}
+.genius-apps-tab{appearance:none;border:1px solid transparent;background:transparent;color:#546b75;border-radius:10px;padding:11px 15px;font:inherit;font-size:13px;font-weight:750;cursor:pointer;min-height:40px}
+.genius-apps-tab:hover{background:#fff}
+.genius-apps-tab.active{background:#fff;border-color:#a7dce2;color:#117e88;box-shadow:0 2px 6px #23455010}
+.rail .nav[data-view="genius-apps"].active,.mobile-tabs .mobile-tab[data-view="genius-apps"].active{color:#087e88}
+@media(max-width:600px){.genius-apps-tabs{gap:5px;padding:6px}.genius-apps-tab{flex:1 1 calc(50% - 6px);font-size:12px;padding:10px 7px}}
+</style>
+<script id="willena-genius-apps-navigation">
+(()=>{
+ 'use strict';
+ const apps=[
+  {view:'vocab',label:'Word Genius'},
+  {view:'sentence-genius',label:'Sentence Genius'},
+  {view:'grammar-foundations',label:'Grammar Genius'},
+  {view:'free-talking-genius',label:'Free Talking Genius'}
+ ];
+ const allowed=new Set(apps.map(x=>x.view));
+ const viewKey='willena.teachers.geniusApps.lastView.v1';
+ const rail=document.querySelector('.rail'),mobile=document.querySelector('.mobile-tabs'),workspace=document.querySelector('.workspace');
+ if(!rail||!workspace||rail.querySelector('[data-view="genius-apps"]'))return;
+ const make=(tag,cls,label)=>{const el=document.createElement(tag);el.className=cls;el.type='button';el.textContent=label;return el};
+ const go=view=>{
+  if(!allowed.has(view))return;
+  try{sessionStorage.setItem(viewKey,view)}catch{}
+  const existing=document.querySelector('.rail [data-view="'+view+'"]')||document.querySelector('.mobile-tabs [data-view="'+view+'"]');
+  if(existing)existing.click();
+  else if(view==='free-talking-genius')window.FreeTalkingGeniusTeacher?.openView?.();
+  else if(view==='grammar-foundations')window.GrammarFoundationTeacher?.openView?.();
+  else if(typeof switchView==='function')switchView(view);
+  // The existing app owns its loading and active-state logic.
+  sync();
+ };
+ const sidebar=make('button','nav','');
+ sidebar.dataset.view='genius-apps';
+ sidebar.innerHTML='<span class="nav-icon" aria-hidden="true">Aa</span><span>Genius Apps</span>';
+ const before=rail.querySelector('[data-view="vocab"]')||rail.querySelector('[data-view="apps"]');
+ rail.insertBefore(sidebar,before);
+ const mobileBtn=mobile?make('button','mobile-tab',''):null;
+ if(mobileBtn){
+  mobileBtn.dataset.view='genius-apps';
+  mobileBtn.innerHTML='<b aria-hidden="true">Aa</b>Genius Apps';
+  mobile.insertBefore(mobileBtn,mobile.querySelector('[data-view="vocab"]')||mobile.querySelector('[data-view="apps"]'));
+ }
+ const tabs=document.createElement('nav');tabs.className='genius-apps-tabs';tabs.setAttribute('aria-label','Genius Apps');
+ tabs.setAttribute('role','tablist');
+ for(const app of apps){
+  const tab=make('button','genius-apps-tab',app.label);
+  tab.dataset.geniusView=app.view;tab.setAttribute('role','tab');tab.setAttribute('aria-selected','false');
+  tab.addEventListener('click',()=>go(app.view));tabs.appendChild(tab);
+ }
+ workspace.insertBefore(tabs,workspace.firstChild);
+ const activeView=()=>apps.find(app=>document.getElementById('view-'+app.view)?.classList.contains('active'))?.view||null;
+ function sync(){
+  const current=activeView(),inside=!!current;
+  tabs.classList.toggle('is-visible',inside);
+  sidebar.classList.toggle('active',inside);
+  mobileBtn?.classList.toggle('active',inside);
+  for(const tab of tabs.children){
+   const on=tab.dataset.geniusView===current;
+   tab.classList.toggle('active',on);tab.setAttribute('aria-selected',String(on));tab.tabIndex=on?0:-1;
+  }
+  if(current)try{sessionStorage.setItem(viewKey,current)}catch{}
+ }
+ const reopen=()=>{
+  let previous='vocab';try{const stored=sessionStorage.getItem(viewKey);if(allowed.has(stored))previous=stored}catch{}
+  go(previous);
+ };
+ sidebar.addEventListener('click',reopen);mobileBtn?.addEventListener('click',reopen);
+ // Observe original app view switches, including those initiated by deep links
+ // and legacy buttons, without replacing any app's own navigation functions.
+ const observer=new MutationObserver(sync);
+ observer.observe(workspace,{subtree:true,attributes:true,attributeFilter:['class'],childList:true});
+ sync();
+})();
+</script>
 <style id="willena-assignment-success-style">
 .willena-assignment-success{position:fixed;inset:0;z-index:2147483645;display:grid;place-items:center;background:rgba(25,40,48,.20);padding:20px;animation:was-fade .2s ease}
 .willena-assignment-success[hidden]{display:none}
