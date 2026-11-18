@@ -1,23 +1,25 @@
 /* Shared unread-completion state: sidebar, class buttons, and existing homework cards. */
 (()=>{'use strict';
- const state={items:new Map(),reviewed:new Set(),ready:false,refreshing:false,complete:false};
+ const state={items:new Map(),reviewed:new Set(),ready:false,refreshing:false,complete:false,teacherId:null};
  const api=()=>window.WillenaHomeworkNotificationAPI;
  const highlighted=new WeakMap();
  function paint(details,ids){details.querySelectorAll('.ghc-student-row').forEach(row=>{const id=row.querySelector('[data-jelly-id]')?.dataset.jellyId;row.classList.toggle('whn-new-student',Boolean(id&&ids.has(id)))});}
  function clearHighlights(details){highlighted.delete(details);paint(details,new Set())}
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const pending=()=>[...state.items.values()].filter(x=>!state.reviewed.has(x.key));
- const badge=(node,count,nav=false)=>{if(!node)return;let b=node.querySelector(':scope > .whn-badge');if(!count){b?.remove();return}if(!b){b=document.createElement('span');b.className='whn-badge'+(nav?' whn-nav-badge':'');b.setAttribute('aria-label','Unread homework completions');node.appendChild(b)}{const label=count>99?'99+':String(count);if(b.textContent!==label)b.textContent=label}};
+ const badge=(node,count,nav=false,tone='red')=>{if(!node)return;let b=[...node.children].find(el=>el.classList?.contains('whn-badge')&&el.dataset.whnTone===tone);if(!count){b?.remove();return}if(!b){b=document.createElement('span');b.className='whn-badge whn-'+tone+(nav?' whn-nav-badge':'');b.dataset.whnTone=tone;b.setAttribute('aria-label','Unread homework completions');node.appendChild(b)}{const label=count>99?'99+':String(count);if(b.textContent!==label)b.textContent=label}};
  function render(){
   const unread=pending(),byClass=new Map(),byAssignment=new Map();
-  for(const x of unread){const cls=x.className.trim().toLowerCase();byClass.set(cls,(byClass.get(cls)||0)+1);byAssignment.set(x.assignmentId,(byAssignment.get(x.assignmentId)||[]).concat(x));}
-  document.querySelectorAll('.rail .nav[data-view="assignments"],.mobile-tabs .mobile-tab[data-view="assignments"]').forEach(el=>badge(el,unread.length,true));
-  document.querySelectorAll('.cc-assignment-class-tabs [data-cc-switch-class]').forEach(el=>badge(el,byClass.get((el.dataset.ccSwitchClass||'').trim().toLowerCase())||0));
+  const counts=(items)=>({red:items.filter(x=>x.createdBy===state.teacherId).length,amber:items.filter(x=>x.createdBy!==state.teacherId).length});
+  for(const x of unread){const cls=x.className.trim().toLowerCase();byClass.set(cls,(byClass.get(cls)||[]).concat(x));byAssignment.set(x.assignmentId,(byAssignment.get(x.assignmentId)||[]).concat(x));}
+  const paintBadges=(el,items,nav=false)=>{const n=counts(items);badge(el,n.red,nav,'red');badge(el,n.amber,nav,'amber')};
+  document.querySelectorAll('.rail .nav[data-view="assignments"],.mobile-tabs .mobile-tab[data-view="assignments"]').forEach(el=>paintBadges(el,unread,true));
+  document.querySelectorAll('.cc-assignment-class-tabs [data-cc-switch-class]').forEach(el=>paintBadges(el,byClass.get((el.dataset.ccSwitchClass||'').trim().toLowerCase())||[]));
   document.querySelectorAll('[data-genius-card^="class-mission-"]').forEach(card=>{
    const assignmentId=card.dataset.geniusCard.slice('class-mission-'.length),items=byAssignment.get(assignmentId)||[];
    const details=card.querySelector('.ghc-details'),summary=details?.querySelector('summary');
    if(!details||!summary)return;
-   badge(summary,items.length);
+   paintBadges(summary,items);
    if(details.open&&highlighted.has(details))paint(details,highlighted.get(details));
    // The student progress dropdown is the acknowledgement action, not card viewing.
    // Keep the listener attached to this details element through ordinary badge redraws.
@@ -45,7 +47,7 @@
   render();
   if(failed)console.warn('[Homework Notifications] '+failed+' completion acknowledgement(s) could not be saved');
  }
- async function sync(){try{const rows=await api().list();state.reviewed=new Set((rows||[]).map(r=>r.completion_key));state.ready=true;render()}catch(error){console.warn('[Homework Notifications] Acknowledgements unavailable',error)}}
+ async function sync(){try{state.teacherId=await api().identity();const rows=await api().list();state.reviewed=new Set((rows||[]).map(r=>r.completion_key));state.ready=true;render()}catch(error){console.warn('[Homework Notifications] Acknowledgements unavailable',error)}}
  function receive(items,{complete=false,errors=[]}={}){if(!Array.isArray(items))return;if(complete){if(errors.length){console.warn('[Homework Notifications] Incomplete progress snapshot',errors);return}state.items.clear();state.complete=true}for(const item of items){if(item.key&&item.assignmentId&&item.studentId)state.items.set(item.key,item)}render()}
  async function refresh(){if(state.refreshing)return;state.refreshing=true;try{await sync();await window.UniversalAssignmentTracker?.loadCompletionSnapshot?.()}catch(error){console.warn('[Homework Notifications] Refresh failed',error)}finally{state.refreshing=false}}
  const observer=new MutationObserver(()=>{if(state.items.size)requestAnimationFrame(render)});
