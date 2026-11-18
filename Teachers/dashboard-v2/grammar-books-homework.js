@@ -284,7 +284,7 @@ function renderAssignment(a){
   notStarted:data.rows.filter(r=>r.done===0).length,
   label:'Class progress',summary:data.done+'/'+data.total+' complete · '+Math.max(0,data.total-data.done)+' not complete'
  })+'<div class="ghc-progress-modes">'+esc(modeNames)+'</div>'+buttons;
- return shared.card({id:a.id,className:a.class,task:a.title,dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Student progress',body,qrUrl:a.list_meta?.source_book_id?'https://students.willenaenglish.com/students/grammar-books/?book='+encodeURIComponent(a.list_meta.source_book_id)+'&unit='+encodeURIComponent(a.list_meta?.chapter||1)+'&homework='+encodeURIComponent(a.id):''});
+ return shared.card({id:a.id,className:a.class,task:a.title,dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Student progress',progressPercent:data.pct,body,qrUrl:a.list_meta?.source_book_id?'https://students.willenaenglish.com/students/grammar-books/?book='+encodeURIComponent(a.list_meta.source_book_id)+'&unit='+encodeURIComponent(a.list_meta?.chapter||1)+'&homework='+encodeURIComponent(a.id):''});
 }
 async function drawManage(){
  const el=panel();if(!el)return;el.innerHTML='<div class="gf-hw-loading">Loading book assignments…</div>';
