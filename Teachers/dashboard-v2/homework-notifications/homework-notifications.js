@@ -10,8 +10,8 @@
   for(const x of unread){const cls=x.className.trim().toLowerCase();byClass.set(cls,(byClass.get(cls)||0)+1);byAssignment.set(x.assignmentId,(byAssignment.get(x.assignmentId)||[]).concat(x));}
   document.querySelectorAll('.rail .nav[data-view="assignments"],.mobile-tabs .mobile-tab[data-view="assignments"]').forEach(el=>badge(el,unread.length,true));
   document.querySelectorAll('.cc-assignment-class-tabs [data-cc-switch-class]').forEach(el=>badge(el,byClass.get((el.dataset.ccSwitchClass||'').trim().toLowerCase())||0));
-  document.querySelectorAll('[id^="class-mission-"]').forEach(card=>{
-   const assignmentId=card.id.slice('class-mission-'.length),items=byAssignment.get(assignmentId)||[];
+  document.querySelectorAll('[data-genius-card^="class-mission-"]').forEach(card=>{
+   const assignmentId=card.dataset.geniusCard.slice('class-mission-'.length),items=byAssignment.get(assignmentId)||[];
    const details=card.querySelector('.ghc-details'),summary=details?.querySelector('summary');
    if(!details||!summary)return;
    badge(summary,items.length);
