@@ -1720,7 +1720,7 @@ function ccSkillBar(name,passed,total,started){
 // Canonical Golden Unit eligibility for the mission reward controls.
 // Uses the same required-skill thresholds and evidence as Curriculum Progress.
 window.WillenaGoldEligibility=async function({className,bookId,unitId,app}={}){
- if(!curriculum.data||String(curriculum.selectedClass).toLowerCase()!==String(className).toLowerCase())return [];
+ if(!curriculum.data)return [];
  const group=ccSkillGroups.find(g=>g.key===app);
  const c=(curriculum.data.classes||[]).find(x=>String(x.name).toLowerCase()===String(className).toLowerCase());
  const book=c&&ccBooks(c).find(x=>String(x.book_id)===String(bookId));
@@ -1729,9 +1729,15 @@ window.WillenaGoldEligibility=async function({className,bookId,unitId,app}={}){
  if(!unit)return [];
  const roster=ccClassStudents(className);
  if(app==='word'||app==='sentence'){
-  await ccLoadSkillDetail(book,unit);
-  const details=curriculum.skillDetail.get(ccSkillKey(book,unit));
-  if(!details)return [];
+  // An app management tab may be showing a different class than the
+  // curriculum selector. Fetch that class's evidence directly, not through
+  // the selector-scoped progress cache.
+  const [rows,targetRows]=await Promise.all([
+   ccRpc('teacher_curriculum_skill_progress_v1',{p_class:className,p_book_id:book.book_id,p_unit_id:unit.id}),
+   fetch(ccCatalog+(app==='word'?'unit_vocab_targets?select=lexical_entry_id&unit_id=eq.':'source_content_occurrences?select=sentence_id,source_key,status&unit_id=eq.')+encodeURIComponent(unit.id)+(app==='word'?'&active=eq.true':'&sentence_id=not.is.null&status=in.(review,published)')+'&limit=2000',{headers:{apikey:ccCatalogKey,Authorization:'Bearer '+ccCatalogKey},cache:'no-store'}).then(async r=>{if(!r.ok)throw Error('Gold target lookup failed');return r.json()})
+  ]);
+  const totalCount=app==='word'?new Set(targetRows.map(r=>r.lexical_entry_id).filter(Boolean)).size:new Set(ccPlayableSentenceOccurrences(targetRows).map(r=>r.sentence_id).filter(Boolean)).size;
+  const details={rows:Array.isArray(rows)?rows:[],vocabTotal:app==='word'?totalCount:null,sentenceTotal:app==='sentence'?totalCount:null};
   const byStudent=new Map((details.rows||[]).map(r=>[String(r.student_id),r]));
   const required=ccRequiredSkills(book,group);
   const total=app==='word'?details.vocabTotal:details.sentenceTotal;
