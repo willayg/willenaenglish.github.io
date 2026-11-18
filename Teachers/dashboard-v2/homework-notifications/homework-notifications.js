@@ -4,7 +4,7 @@
  const api=()=>window.WillenaHomeworkNotificationAPI;
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const pending=()=>[...state.items.values()].filter(x=>!state.reviewed.has(x.key));
- const badge=(node,count,nav=false)=>{if(!node)return;let b=node.querySelector(':scope > .whn-badge');if(!count){b?.remove();return}if(!b){b=document.createElement('span');b.className='whn-badge'+(nav?' whn-nav-badge':'');b.setAttribute('aria-label','Unread homework completions');node.appendChild(b)}b.textContent=count>99?'99+':String(count)};
+ const badge=(node,count,nav=false)=>{if(!node)return;let b=node.querySelector(':scope > .whn-badge');if(!count){b?.remove();return}if(!b){b=document.createElement('span');b.className='whn-badge'+(nav?' whn-nav-badge':'');b.setAttribute('aria-label','Unread homework completions');node.appendChild(b)}{const label=count>99?'99+':String(count);if(b.textContent!==label)b.textContent=label}};
  function render(){
   const unread=pending(),byClass=new Map(),byAssignment=new Map();
   for(const x of unread){const cls=x.className.trim().toLowerCase();byClass.set(cls,(byClass.get(cls)||0)+1);byAssignment.set(x.assignmentId,(byAssignment.get(x.assignmentId)||[]).concat(x));}
