@@ -33,16 +33,22 @@ function groupCardStart({key,title,task,teacher,dueAt,dueLabel,checkbox='',progr
   '<div class="ua-group-body" hidden>';
 }
 // One verified progress layout reused by Word Genius and the My/All overview.
-function progressPanel({students=[],average=null,completed=0,notStarted=0,label='Class progress'}={}){
- const valid=Number.isFinite(average),pct=valid?Math.max(0,Math.min(100,Math.round(average))):null;
+// ONE student-progress renderer for every Genius management card.
+// Apps supply percentage, completion and target IDs; this component owns layout.
+function progressPanel({students=[],average=null,completed=0,notStarted=0,label='Class progress',summary=null}={}){
+ const valid=average!==null&&average!==undefined&&Number.isFinite(Number(average));
+ const pct=valid?Math.max(0,Math.min(100,Math.round(Number(average)))):null;
  const lines=students.map(st=>{
   const n=Number(st.percent),known=st.percent!==null&&st.percent!==undefined&&Number.isFinite(n);
   const p=known?Math.max(0,Math.min(100,Math.round(n))):0;
-  return '<div class="ghc-student-row"><span class="ghc-student-name">'+esc(st.name||'Student')+'</span>'+
-   '<span class="ghc-student-track" role="progressbar" aria-label="'+esc(st.name||'Student')+' progress" aria-valuemin="0" aria-valuemax="100"'+(known?' aria-valuenow="'+p+'"':'')+'><i style="width:'+p+'%"></i></span>'+
-   '<strong class="ghc-student-pct">'+(known?p+'%':'—')+'</strong></div>';
+  const name=esc(st.name||'Student'),studentId=String(st.id||st.student_id||'');
+  return '<div class="ghc-student-row"><span class="ghc-student-name">'+name+'</span>'+
+   '<span class="ghc-student-track" role="progressbar" aria-label="'+name+' progress" aria-valuemin="0" aria-valuemax="100"'+(known?' aria-valuenow="'+p+'"':'')+'><i style="width:'+p+'%"></i></span>'+
+   '<strong class="ghc-student-pct">'+(known?p+'%':'—')+'</strong>'+
+   '<span class="ghc-gold-slot"'+(studentId?' data-jelly-id="'+esc(studentId)+'"':'')+'>'+(st.rewardHtml||'')+'</span></div>';
  }).join('');
- return '<div class="ghc-shared-progress"><div class="ghc-progress-summary"><span>'+esc(label)+' <b>'+(valid?pct+'%':'—')+'</b></span><span>'+completed+'/'+students.length+' complete · '+notStarted+' not started</span></div>'+
+ const summaryText=summary===null?completed+'/'+students.length+' complete · '+notStarted+' not started':esc(summary);
+ return '<div class="ghc-shared-progress"><div class="ghc-progress-summary"><span>'+esc(label)+' <b>'+(valid?pct+'%':'—')+'</b></span><span>'+summaryText+'</span></div>'+
   '<div class="ghc-progress-track" role="progressbar" aria-label="Class homework progress" aria-valuemin="0" aria-valuemax="100"'+(valid?' aria-valuenow="'+pct+'"':'')+'><i style="width:'+(valid?pct:0)+'%"></i></div>'+
   '<div class="ghc-student-list">'+lines+'</div></div>';
 }
@@ -154,7 +160,7 @@ document.addEventListener('click',event=>{
 // The same student+book+unit+app reward as the All Classes curriculum cards.
 // Caller must provide exact IDs; never guess identity from a displayed name.
 const jellyCss=document.createElement('style');
-jellyCss.textContent='.ghc-jelly-inline{display:inline-flex;align-items:center;gap:4px;margin-left:8px;color:#257a83;font-weight:650;font-size:11px;white-space:nowrap;cursor:pointer}.ghc-jelly-inline input{width:15px;height:15px;accent-color:#159b7f}.ghc-jelly-inline input:disabled{opacity:.5}';
+jellyCss.textContent='.ghc-student-row{grid-template-columns:minmax(110px,1fr) minmax(120px,2fr) 48px 44px;gap:12px;min-height:33px}.ghc-gold-slot{display:flex;justify-content:flex-end;align-items:center;min-width:44px}.ghc-jelly-inline{display:inline-flex;align-items:center;gap:6px;margin:0;color:#936d0b;font-weight:650;font-size:11px;white-space:nowrap;cursor:pointer}.ghc-jelly-inline svg{flex:none;width:17px;height:17px}.ghc-jelly-inline input{width:16px;height:16px;margin:0;accent-color:#168b62;cursor:pointer}.ghc-jelly-inline input:disabled{opacity:.5}@media(max-width:600px){.ghc-student-row{grid-template-columns:minmax(65px,1fr) minmax(60px,1.8fr) 39px 41px;gap:6px}.ghc-gold-slot{min-width:41px}}';
 document.head.appendChild(jellyCss);
 const jellyUuid=/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i;
 const jellyCache=new Map();
@@ -190,7 +196,11 @@ async function jellyRows(host,{className,bookId,unitId,app}={}){
   const studentId=name.dataset.jellyId;
   const label=document.createElement('label');label.className='ghc-jelly-inline';label.title='Shared Jelly Time reward';
   const input=document.createElement('input');input.type='checkbox';input.checked=given.has(studentId);input.dataset.jellyKey=key;input.dataset.jellyStudent=studentId;input.setAttribute('aria-label','Jelly Time given to '+(name.textContent||'student'));
-  const text=document.createElement('span');text.textContent='Gold';label.append(input,text);name.append(label);label.addEventListener('click',event=>event.stopPropagation());
+  const award=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  award.setAttribute('viewBox','0 0 24 24');award.setAttribute('fill','none');award.setAttribute('stroke','#bb8a0a');award.setAttribute('stroke-width','1.8');award.setAttribute('stroke-linecap','round');award.setAttribute('stroke-linejoin','round');award.setAttribute('aria-hidden','true');
+  const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');circle.setAttribute('cx','12');circle.setAttribute('cy','8');circle.setAttribute('r','5');
+  const ribbon=document.createElementNS('http://www.w3.org/2000/svg','path');ribbon.setAttribute('d','m8.5 12-1 9 4.5-2.7 4.5 2.7-1-9');award.append(circle,ribbon);
+  label.append(award,input);name.append(label);label.addEventListener('click',event=>event.stopPropagation());
   input.addEventListener('change',async()=>{
    const value=input.checked;
    if(!value&&!confirm('Clear Jelly Time for this student? This means the reward can be given again.')){input.checked=true;return}
