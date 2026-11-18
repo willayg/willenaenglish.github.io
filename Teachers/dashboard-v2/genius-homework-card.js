@@ -174,14 +174,23 @@ async function jellyRpc(name,args){
  if(!response.ok)throw Error(data?.message||data?.error||'Jelly Time request failed');
  return data;
 }
-async function jellyRows(host,{className,bookId,unitId,app}={}){
+// A textbook chapter can contain several content units. Its reward identity
+// must not collide with an individual unit's reward record.
+async function grammarChapterRewardId(bookId,chapter){
+ const text='willena:grammar-chapter:v1:'+String(bookId).toLowerCase()+':'+String(chapter);
+ const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)));
+ const id=bytes.slice(0,16);id[6]=(id[6]&15)|128;id[8]=(id[8]&63)|128;
+ const hex=Array.from(id,b=>b.toString(16).padStart(2,'0')).join('');
+ return hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20);
+}
+async function jellyRows(host,{className,bookId,unitId,app,eligibleStudentIds=null}={}){
  if(!host||!className||!jellyUuid.test(String(bookId||''))||!jellyUuid.test(String(unitId||''))||!['word','sentence','grammar','talking','freeconversation','writing','puzzles'].includes(app))return;
  const names=[...host.querySelectorAll('[data-jelly-id]')].filter(node=>jellyUuid.test(node.dataset.jellyId||''));
  if(!names.length)return;
  // Assignment completion alone is never enough: reuse the curriculum Gold rule.
  const verified=window.WillenaGoldEligibility;
- if(typeof verified!=='function')return;
- const eligible=new Set((await verified({className,bookId,unitId,app})).map(String));
+ if(eligibleStudentIds===null&&typeof verified!=='function')return;
+ const eligible=new Set((eligibleStudentIds===null?await verified({className,bookId,unitId,app}):eligibleStudentIds).map(String));
  if(!host.isConnected)return;
  const key=[className.toLowerCase(),bookId,unitId,app].join(':');
  let given=jellyCache.get(key);
@@ -225,6 +234,6 @@ window.addEventListener('willena:jelly-changed',event=>{
   .then(values=>{const given=(Array.isArray(values)?values:[]).some(row=>String(row.student_id)===d.studentId);matching.forEach(input=>{input.checked=given})})
   .catch(error=>console.warn('[Jelly Time] Sync',error));
 });
-window.WillenaGeniusHomeworkCard={card,groupCardStart,progressPanel,dday,escape:esc,hydrateTeachers,updateRing,groupByDate,classReadiness,jellyRows};
+window.WillenaGeniusHomeworkCard={card,groupCardStart,progressPanel,dday,escape:esc,hydrateTeachers,updateRing,groupByDate,classReadiness,jellyRows,grammarChapterRewardId};
 
 })();
