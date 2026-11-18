@@ -1617,6 +1617,7 @@ function ccRenderDetail(){
    await ccRpc('teacher_unit_jelly_set_v1',{p_student_id:studentId,p_book_id:book.book_id,p_unit_id:unit.id,p_app:app,p_given:!before});
    curriculum.jellyRewards.delete(ccJellyKey(book,unit,app));
    await ccLoadJelly(book,unit,app);
+   window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId:book.book_id,unitId:unit.id,app}}));
    ccRenderDetail();
   }catch(e){box.checked=before;box.disabled=false;alert('Jelly Time could not be saved: '+e.message)}
  });
@@ -1662,6 +1663,21 @@ function ccRequiredSkills(book,group){
  return level<3?['vocabulary','spelling_coach','speaking']:['vocabulary','spelling_test','speaking'];
 }
 function ccSkillKey(book,unit){return [curriculum.selectedClass,book.book_id,unit.id].join(':')}
+// Shared reward writes elsewhere (Current Missions / Genius tabs) invalidate
+// just the Jelly cache, never the independently calculated mastery progress.
+window.addEventListener('willena:jelly-changed',event=>{
+ const d=event.detail||{};
+ for(const key of curriculum.jellyRewards.keys()){
+  if(key.includes(':'+d.bookId+':'+d.unitId+':'+d.app))curriculum.jellyRewards.delete(key);
+ }
+ const book=(curriculum.data?.books||[]).find(b=>b.id===curriculum.selectedBook);
+ if(book&&book.book_id===d.bookId&&curriculum.selectedUnit===d.unitId&&curriculum.selectedSkill===d.app){
+  ccUnits(book.book_id).then(units=>{
+   const unit=units.find(u=>u.id===d.unitId);
+   if(unit)return ccLoadJelly(book,unit,d.app).then(()=>ccRenderDetail());
+  }).catch(error=>console.warn('[Jelly Time] Refresh',error));
+ }
+});
 const ccJellyKey=(book,unit,app)=>[curriculum.selectedClass,book.book_id,unit.id,app].join(':');
 async function ccLoadJelly(book,unit,app){
  if(!ccSkillGroups.some(group=>group.key===app))return;
