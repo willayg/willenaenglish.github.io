@@ -360,7 +360,7 @@ window.addEventListener('ua:assignments-changed',()=>invalidateOverviewCache(tru
 window.addEventListener('willena:assignment-created',()=>invalidateOverviewCache(true));
 async function loadOverview(scopeName='my',force=false,options={}){
  const classMission=String(options.className||'').trim();
- const classMissionStage=options.stage==='history'?'history':'active';
+ const classMissionStage=options.stage==='history'?'history':options.stage==='active-hw'?'active-hw':'active';
  const host=classMission?document.querySelector('#uaClassMissions'):document.querySelector('#uaOverview');
  if(!host)return;
  const loadStarted=performance.now();
@@ -668,6 +668,38 @@ async function loadOverview(scopeName='my',force=false,options={}){
     const done=list.filter(st=>st.done).length;
     const started=list.filter(st=>Number(st.pct)>0).length;
     return {list,done,started,note};
+   }
+
+   if(classMissionStage==='active-hw'){
+    const keyPrefix='willena:active-hw-reviewed:v1:';
+    const key=keyPrefix+className;
+    let reviewed={};try{reviewed=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch{}
+    const entries=[];
+    for(const mission of current){
+     const progress=progressFor(mission);
+     for(const student of progress.list){
+      const entryKey=id(mission.id)+'::'+id(student.student_id);
+      entries.push({key:entryKey,name:student.name,app:mission.app,title:mission.label||'Homework',pct:student.pct,done:student.done,created:mission.created_at||'',due:mission.due_at||''});
+     }
+    }
+    entries.sort((a,b)=>Number(b.done)-Number(a.done)||String(b.created).localeCompare(String(a.created))||a.name.localeCompare(b.name));
+    const pending=entries.filter(x=>x.done&&!reviewed[x.key]).length;
+    const renderInbox=()=>{
+     if(generation!==overviewGeneration||!host.isConnected)return;
+     const visible=entries.filter(x=>!x.done||!reviewed[x.key]);
+     host.innerHTML='<div class="cc-mission-toolbar"><div><strong>Active homework</strong><small>'+esc(classMission)+' · '+pending+' completed, awaiting review · '+entries.length+' student assignments</small></div><button type="button" class="cc-btn" id="ccMissionRefresh">Refresh</button></div>'+
+      '<p class="cc-helper">Completed homework appears first. Tick Reviewed to clear a completed item. Unfinished homework stays visible.</p>'+
+      (visible.length?'<div style="display:grid;gap:8px">'+visible.map(x=>'<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid #dce7eb;border-radius:12px;background:#fff"><div style="flex:1;min-width:0"><strong>'+esc(x.name)+'</strong><div style="color:#607983;font-size:13px">'+esc(x.app)+' · '+esc(x.title)+'</div></div><span style="font-weight:700;color:'+(x.done?'#118c8c':'#7b8791')+'">'+(x.done?'Finished':x.pct===null?'Not verified':Math.round(Number(x.pct)||0)+'%')+'</span>'+(x.done?'<label style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:13px"><input type="checkbox" data-hw-review="'+esc(x.key)+'"> Reviewed</label>':'')+'</div>').join('')+'</div>':'<div class="cc-empty">No unchecked homework. All recorded completions have been reviewed.</div>');
+     host.querySelectorAll('[data-hw-review]').forEach(input=>input.addEventListener('change',()=>{
+      if(!input.checked)return;
+      reviewed[input.dataset.hwReview]=true;
+      try{localStorage.setItem(key,JSON.stringify(reviewed))}catch{}
+      renderInbox();
+     }));
+     host.querySelector('#ccMissionRefresh')?.addEventListener('click',()=>{void loadOverview('all',true,{className:classMission,stage:'active-hw'})});
+    };
+    renderInbox();
+    return;
    }
    const isHistory=classMissionStage==='history';
    const sectionTitle=isHistory?'Past missions':'Current missions';
