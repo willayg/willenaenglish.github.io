@@ -8,3 +8,10 @@
 .rail .nav[data-view="assignments"]>span:not(.nav-icon):not(.whn-badge),.mobile-tabs .mobile-tab[data-view="assignments"]>span:not(.nav-icon):not(.whn-badge){font-size:inherit!important;font-weight:inherit!important;line-height:inherit!important}
 .rail .nav[data-view="assignments"]:has(>.whn-badge)>span:not(.nav-icon):not(.whn-badge),.mobile-tabs .mobile-tab[data-view="assignments"]:has(>.whn-badge)>span:not(.nav-icon):not(.whn-badge){color:#111827!important}
 .rail .nav[data-view="assignments"]>.whn-badge,.mobile-tabs .mobile-tab[data-view="assignments"]>.whn-badge{font-size:11px!important;line-height:1!important;flex:none}
+
+/* The dashboard historically identifies nav labels with :last-child. A badge becomes
+   the last child, so explicitly preserve the original label layout and typography. */
+.layout.sidebar-expanded .rail .nav[data-view="assignments"]>span:nth-child(2){display:inline!important;font-size:14px!important;font-weight:600!important;line-height:normal!important;flex:0 1 auto;min-width:0;color:inherit}
+.layout.sidebar-expanded .rail .nav[data-view="assignments"]:has(>.whn-badge)>span:nth-child(2){color:#111827!important}
+.layout.sidebar-expanded .rail .nav[data-view="assignments"]>.whn-badge{display:inline-flex!important;font-size:11px!important;flex:0 0 auto;margin-left:auto}
+.layout:not(.sidebar-expanded) .rail .nav[data-view="assignments"]>span:nth-child(2){display:none!important}
