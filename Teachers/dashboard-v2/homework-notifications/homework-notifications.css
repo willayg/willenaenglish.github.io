@@ -15,3 +15,5 @@
 .layout.sidebar-expanded .rail .nav[data-view="assignments"]:has(>.whn-badge)>span:nth-child(2){color:#111827!important}
 .layout.sidebar-expanded .rail .nav[data-view="assignments"]>.whn-badge{display:inline-flex!important;font-size:11px!important;flex:0 0 auto;margin-left:auto}
 .layout:not(.sidebar-expanded) .rail .nav[data-view="assignments"]>span:nth-child(2){display:none!important}
+
+.whn-badge.whn-amber{background:#d97706!important;color:#fff!important}.whn-badge.whn-red{background:#dc2626!important;color:#fff!important}.ghc-details>summary>.whn-badge+.whn-badge{margin-left:4px}.rail .nav[data-view="assignments"]>.whn-badge+.whn-badge{margin-left:3px!important}
