@@ -2,6 +2,9 @@
 (()=>{'use strict';
  const state={items:new Map(),reviewed:new Set(),ready:false,refreshing:false,complete:false};
  const api=()=>window.WillenaHomeworkNotificationAPI;
+ const highlighted=new WeakMap();
+ function paint(details,ids){details.querySelectorAll('.ghc-student-row').forEach(row=>{const id=row.querySelector('[data-jelly-id]')?.dataset.jellyId;row.classList.toggle('whn-new-student',Boolean(id&&ids.has(id)))});}
+ function clearHighlights(details){highlighted.delete(details);paint(details,new Set())}
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const pending=()=>[...state.items.values()].filter(x=>!state.reviewed.has(x.key));
  const badge=(node,count,nav=false)=>{if(!node)return;let b=node.querySelector(':scope > .whn-badge');if(!count){b?.remove();return}if(!b){b=document.createElement('span');b.className='whn-badge'+(nav?' whn-nav-badge':'');b.setAttribute('aria-label','Unread homework completions');node.appendChild(b)}{const label=count>99?'99+':String(count);if(b.textContent!==label)b.textContent=label}};
@@ -15,13 +18,17 @@
    const details=card.querySelector('.ghc-details'),summary=details?.querySelector('summary');
    if(!details||!summary)return;
    badge(summary,items.length);
+   if(details.open&&highlighted.has(details))paint(details,highlighted.get(details));
    // The student progress dropdown is the acknowledgement action, not card viewing.
    // Keep the listener attached to this details element through ordinary badge redraws.
    if(!details.dataset.whnBound){
     details.dataset.whnBound='1';
     details.addEventListener('toggle',()=>{
-     if(!details.open)return;
+     if(!details.open){clearHighlights(details);return;}
      const unread=pending().filter(x=>x.assignmentId===assignmentId);
+     const ids=new Set(unread.map(x=>String(x.studentId)));
+     highlighted.set(details,ids);
+     paint(details,ids);
      if(unread.length)void acknowledgeMany(unread);
     });
    }
