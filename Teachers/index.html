@@ -1558,10 +1558,11 @@ function ccRenderDetail(){
  const classStripScroll=previousClassStrip?previousClassStrip.scrollLeft:Number(curriculum.classStripScroll)||0;
  if(inAssignments){const status=document.querySelector('#uaStatus');if(status)status.textContent=assignmentMode==='history'?'Past class missions':assignmentMode==='missions'?'Current class missions':'Curriculum progress';}
  host.innerHTML=(inAssignments?
- '<div class="cc-assignment-mode" role="tablist" aria-label="All Classes view"><button type="button" role="tab" data-cc-subview="curriculum" aria-selected="'+(assignmentMode==='curriculum')+'" class="'+(assignmentMode==='curriculum'?'active':'')+'">Curriculum Progress</button><button type="button" role="tab" data-cc-subview="missions" aria-selected="'+(assignmentMode==='missions')+'" class="'+(assignmentMode==='missions'?'active':'')+'">Current Missions</button><button type="button" role="tab" data-cc-subview="history" aria-selected="'+(assignmentMode==='history')+'" class="'+(assignmentMode==='history'?'active':'')+'">Past Missions</button></div>'+
+ '<div class="cc-assignment-mode" role="tablist" aria-label="All Classes view"><button type="button" role="tab" data-cc-subview="curriculum" aria-selected="'+(assignmentMode==='curriculum')+'" class="'+(assignmentMode==='curriculum'?'active':'')+'">Curriculum Progress</button><button type="button" role="tab" data-cc-subview="missions" aria-selected="'+(assignmentMode==='missions')+'" class="'+(assignmentMode==='missions'?'active':'')+'">Current Missions</button><button type="button" role="tab" data-cc-subview="history" aria-selected="'+(assignmentMode==='history')+'" class="'+(assignmentMode==='history'?'active':'')+'">Past Missions</button><button type="button" role="tab" data-cc-subview="activity" aria-selected="'+(assignmentMode==='activity')+'" class="'+(assignmentMode==='activity'?'active':'')+'">Activity <span id="ccActivityTabCount"></span></button></div>'+
  '<div class="cc-assignment-class-tabs" role="tablist" aria-label="Active classes">'+classes.map(item=>'<button type="button" role="tab" data-cc-switch-class="'+ccEscape(item.name)+'" aria-selected="'+(item.name===c.name)+'" class="'+(item.name===c.name?'active':'')+'">'+ccEscape(item.display_name||item.name)+'</button>').join('')+'</div>':
  '<div class="cc-detail-top">'+ccButton('← All classes','back','cc-back')+
  '<div><h2>'+ccEscape(c.name)+'</h2><p>'+students.length+' students · Curriculum coverage</p></div>'+ccButton('Open students','students')+'</div>')+
+ (inAssignments&&assignmentMode==='activity'?'<div id="ccHomeworkActivity" class="cc-class-missions" aria-live="polite"><div class="cc-empty">Loading recent completions…</div></div>':
  (inAssignments&&(assignmentMode==='missions'||assignmentMode==='history')?'<div id="uaClassMissions" class="cc-class-missions" aria-live="polite"><div class="cc-empty">Loading missions…</div></div>':
  !books.length?'<div class="cc-empty">No textbooks are assigned to this class. Assign a book from class management first.</div>':
  (inAssignments?'<div class="cc-assignment-bookline"><div class="cc-book-tabs">':'<div class="cc-book-tabs">')+
@@ -1590,6 +1591,7 @@ function ccRenderDetail(){
   try{sessionStorage.setItem('willena:assignments:all-classes-view',value)}catch{}
   ccRenderDetail();
  }));
+ if(inAssignments&&assignmentMode==='activity')void ccLoadHomeworkActivity();
  if(inAssignments&&(assignmentMode==='missions'||assignmentMode==='history')){
   const load=window.UniversalAssignmentTracker?.loadClassMissions;
   if(load)void load(c.name,assignmentMode==='history'?'history':'active');else{
@@ -1678,6 +1680,62 @@ function ccActivityTime(value){
  const d=new Date(value);
  return Number.isFinite(d.getTime())?d.toLocaleString('en-GB',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
 }
+
+// Homework Activity: reads the existing teacher homework-status completion evaluator.
+// No score writes, no synthetic completions, no duplicate notifications per assignment/student.
+const ccHomeworkActivity={items:[],loading:false,error:'',lastFetch:0,seen:new Set(),initialized:false};
+function ccActivitySeenKey(){return 'willena:homework-activity:seen:'+String(localStorage.getItem('user_id')||'teacher')}
+function ccActivitySeenLoad(){
+ try{ccHomeworkActivity.seen=new Set(JSON.parse(localStorage.getItem(ccActivitySeenKey())||'[]'))}catch{ccHomeworkActivity.seen=new Set()}
+}
+function ccActivitySeenSave(){
+ try{localStorage.setItem(ccActivitySeenKey(),JSON.stringify([...ccHomeworkActivity.seen].slice(-1500)))}catch{}
+}
+function ccActivityDate(ts){
+ const d=new Date(ts);return Number.isFinite(d.getTime())?d.toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+}
+function ccRenderHomeworkActivity(){
+ const host=document.getElementById('ccHomeworkActivity');
+ const badge=document.getElementById('ccActivityTabCount');
+ const unread=ccHomeworkActivity.items.filter(x=>!ccHomeworkActivity.seen.has(x.id)).length;
+ if(badge)badge.textContent=unread?'('+unread+')':'';
+ if(!host)return;
+ const cls=curriculum.selectedClass;
+ const rows=ccHomeworkActivity.items.filter(x=>x.class===cls);
+ const filters='<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0"><strong>Recent homework completions</strong><button type="button" id="ccActivityReadAll" class="cc-jelly-label">Mark all seen</button></div>';
+ if(ccHomeworkActivity.error){host.innerHTML='<div class="cc-empty">'+ccEscape(ccHomeworkActivity.error)+'</div>';return}
+ if(ccHomeworkActivity.loading&&!ccHomeworkActivity.lastFetch){host.innerHTML='<div class="cc-empty">Loading completions…</div>';return}
+ host.innerHTML=filters+(rows.length?rows.map(x=>{
+ const unread=!ccHomeworkActivity.seen.has(x.id);
+ return '<div class="cc-student-row" style="display:flex;align-items:center;gap:12px;padding:13px;border-bottom:1px solid #e3ecee;background:'+(unread?'#f3fafb':'transparent')+'"><span style="width:8px;height:8px;border-radius:50%;background:'+(unread?'#d84040':'transparent')+'"></span><div style="flex:1"><strong>'+ccEscape(x.name)+'</strong> <span class="cc-percent-muted">'+ccEscape(x.class)+'</span><div>'+ccEscape(x.title)+'</div></div><span class="cc-percent-muted">'+ccEscape(ccActivityDate(x.at))+'</span></div>';
+ }).join(''):'<div class="cc-empty">No recorded completions for this class yet.</div>');
+ host.querySelector('#ccActivityReadAll')?.addEventListener('click',()=>{
+  rows.forEach(x=>ccHomeworkActivity.seen.add(x.id));ccActivitySeenSave();ccRenderHomeworkActivity();
+ });
+}
+async function ccLoadHomeworkActivity(){
+ if(ccHomeworkActivity.loading)return;
+ ccHomeworkActivity.loading=true;ccRenderHomeworkActivity();
+ try{
+  const data=await api(homeworkRoute('teacher_homework_status'));
+  if(!data?.success)throw Error(data?.error||'Homework activity unavailable');
+  const entries=[];
+  for(const a of data.assignments||[])for(const s of a.done||[]){
+   if(!s.completed_at||!Number.isFinite(Date.parse(s.completed_at)))continue;
+   entries.push({id:String(a.assignment_id)+'::'+String(s.user_id),class:String(a.class||''),name:s.name||s.korean_name||'Student',title:a.assignment_title||'Homework',at:s.completed_at});
+  }
+  entries.sort((a,b)=>Date.parse(b.at)-Date.parse(a.at));
+  ccHomeworkActivity.items=entries;ccHomeworkActivity.error='';ccHomeworkActivity.lastFetch=Date.now();
+  if(!ccHomeworkActivity.initialized){
+   ccActivitySeenLoad();ccHomeworkActivity.initialized=true;
+  }
+ }catch(e){ccHomeworkActivity.error=e.message||'Unable to load homework activity'}
+ finally{ccHomeworkActivity.loading=false;ccRenderHomeworkActivity()}
+}
+// Refresh while the teacher dashboard is open, including when returning to the tab.
+setInterval(()=>{if(!document.hidden)void ccLoadHomeworkActivity()},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void ccLoadHomeworkActivity()});
+
 const ccSkillNames={vocabulary:'Vocabulary',spelling_coach:'Spelling Coach',spelling_test:'Spelling Test',speaking:'Speaking',sentence_coach:'Coach',sentence_unscramble:'Unscramble',sentence_speaking:'Speaking',grammar:'Grammar',conversation:'Free Talking',writing:'Writing'};
 const ccSkillConfig={
  word:['vocabulary','spelling_coach','spelling_test','speaking'],
