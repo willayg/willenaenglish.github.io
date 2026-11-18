@@ -970,7 +970,7 @@ function rsAppProgress(studentId,book,unit){
  const wordKeys=Number.isFinite(level)&&level>0&&level<3?
   ['vocabulary_passed_count','spelling_coach_passed_count','speaking_passed_count']:
   ['vocabulary_passed_count','spelling_test_passed_count','speaking_passed_count'];
- const wordParts=wordKeys.map(k=>Number(word?.[k]||0));
+ const wordParts=wordKeys.map(k=>k==='spelling_coach_passed_count'&&totalVocab>0&&Number(word?.spelling_test_passed_count||0)>=totalVocab?totalVocab:Number(word?.[k]||0));
  const wordHas=Boolean(word&&[word.vocabulary_passed_count,word.spelling_coach_passed_count,word.spelling_test_passed_count,word.speaking_passed_count].some(n=>Number(n)>0));
  const wordPct=totalVocab>0?Math.round(100*wordParts.reduce((a,v)=>a+Math.min(v,totalVocab),0)/(totalVocab*3)):null;
  const sentences=rosterCurriculum.sentences.filter(r=>present(r)&&String(r.book_id)===bid&&String(r.unit_id)===uid);
@@ -1897,9 +1897,14 @@ function ccRenderStudentDrilldown(book,unit,group){
   const hasData=started||cells.some(x=>x.passed>0);
   const required=ccRequiredSkills(book,group);
   const requiredCells=required?cells.filter(x=>required.includes(x.key)):[];
-  const verified=requiredCells.length>0&&requiredCells.every(x=>x.known&&x.pct>90);
-  const complete=requiredCells.filter(x=>x.known&&x.pct>90).length;
-  const bars=cells.map(x=>ccSkillBar((ccSkillNames[x.key]||x.key)+(required&&!required.includes(x.key)?' (optional)':''),x.passed,x.known?total:null,x.observed||x.passed>0)).join('');
+  // A fully mastered Spelling Test may cover the easier Coach requirement.
+  // Preserve the real Coach score; substitution affects eligibility only.
+  const testCell=cells.find(x=>x.key==='spelling_test');
+  const testCoversCoach=group.key==='word'&&required?.includes('spelling_coach')&&testCell?.known&&testCell.pct===100;
+  const requirementMet=x=>x.known&&(x.pct>90||(testCoversCoach&&x.key==='spelling_coach'));
+  const verified=requiredCells.length>0&&requiredCells.every(requirementMet);
+  const complete=requiredCells.filter(requirementMet).length;
+  const bars=cells.map(x=>ccSkillBar((ccSkillNames[x.key]||x.key)+(required&&!required.includes(x.key)?' (optional)':''),x.passed,x.known?total:null,x.observed||x.passed>0)+(testCoversCoach&&x.key==='spelling_coach'&&x.pct<100?'<div class="cc-helper">Covered by perfect Spelling Test</div>':'')).join('');
   const status=verified?'Completed':hasData?'In progress':'Not started';
   const summary=requiredCells.length&&requiredCells.every(x=>x.known)?complete+' of '+requiredCells.length+' required skills completed':requiredCells.length?'Required skill totals unavailable':'Completion requirements unavailable';
   return '<div class="cc-student-row cc-'+(verified?'complete':hasData?'in-progress':'not-started')+'">'+first+'<span class="cc-percent-muted">'+status+'</span></div>'+subtitle+
