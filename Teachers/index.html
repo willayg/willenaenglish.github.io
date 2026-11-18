@@ -1717,6 +1717,55 @@ function ccSkillBar(name,passed,total,started){
  const pct=Math.round(100*safe/total);
  return '<div class="cc-skill-item"><span class="cc-skill-name">'+ccEscape(name)+'</span><div class="cc-skill-track" role="progressbar" aria-label="'+ccEscape(name)+'" aria-valuenow="'+pct+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pct+'%"></i></div><span class="cc-skill-value">'+pct+'%</span></div>';
 }
+// Canonical Golden Unit eligibility for the mission reward controls.
+// Uses the same required-skill thresholds and evidence as Curriculum Progress.
+window.WillenaGoldEligibility=async function({className,bookId,unitId,app}={}){
+ if(!curriculum.data||String(curriculum.selectedClass).toLowerCase()!==String(className).toLowerCase())return [];
+ const group=ccSkillGroups.find(g=>g.key===app);
+ const c=(curriculum.data.classes||[]).find(x=>String(x.name).toLowerCase()===String(className).toLowerCase());
+ const book=c&&ccBooks(c).find(x=>String(x.book_id)===String(bookId));
+ if(!book||!group)return [];
+ const unit=(await ccUnits(bookId)).find(x=>String(x.id)===String(unitId));
+ if(!unit)return [];
+ const roster=ccClassStudents(className);
+ if(app==='word'||app==='sentence'){
+  await ccLoadSkillDetail(book,unit);
+  const details=curriculum.skillDetail.get(ccSkillKey(book,unit));
+  if(!details)return [];
+  const byStudent=new Map((details.rows||[]).map(r=>[String(r.student_id),r]));
+  const required=ccRequiredSkills(book,group);
+  const total=app==='word'?details.vocabTotal:details.sentenceTotal;
+  if(!required?.length||!Number.isInteger(total)||total<=0)return [];
+  return roster.filter(student=>{
+   const record=byStudent.get(String(student.id))||{};
+   if(app==='sentence')record.sentence=Object.fromEntries(ccSentenceRows(book,unit,className).filter(r=>String(r.student_id)===String(student.id)).map(r=>[r.skill,Number(r.done||0)]));
+   return required.every(key=>Math.round(100*Math.min(total,Number(app==='sentence'?record.sentence?.[key]:record[key])||0)/total)>90);
+  }).map(student=>String(student.id));
+ }
+ if(app==='puzzles'){
+  await ccLoadPuzzleDetail(book,unit);
+  const records=curriculum.puzzleDetail.get(ccPuzzleCacheKey(book,unit))||[];
+  return records.filter(r=>(Array.isArray(r.modes)?r.modes.filter(m=>ccPuzzleModeNames[m]).length:0)===5).map(r=>String(r.student_id));
+ }
+ if(app==='writing'){
+  return roster.filter(student=>{
+   const activities=ccWritingRows(book,unit,className).filter(r=>String(r.student_id)===String(student.id));
+   const byExercise=new Map();
+   for(const entry of activities){const key=String(entry.exercise_type||'sentence'),previous=byExercise.get(key);if(!previous||Boolean(entry.completed)&&!Boolean(previous.completed)||Number(entry.answered||0)>Number(previous.answered||0))byExercise.set(key,entry)}
+   const exercises=[...byExercise.values()];return exercises.length>0&&exercises.every(r=>r.completed===true);
+  }).map(student=>String(student.id));
+ }
+ if(['grammar','talking','freeconversation'].includes(app)){
+  return roster.filter(student=>{
+   const evidence=ccExtraRows(book,unit,group,className).filter(r=>String(r.student_id)===String(student.id));
+   if(app==='freeconversation')return evidence.some(r=>r.finished===true);
+   if(app==='talking')return evidence.some(r=>r.skill==='speaking'&&r.finished===true);
+   const isTen=String(book.book_title||'').toLowerCase().startsWith('grammar ten');
+   return ['choose','check','hunt'].every(mode=>{const r=evidence.find(x=>x.skill===mode);return Number(r?.done||0)>=Number(r?.total||(isTen?8:5))});
+  }).map(student=>String(student.id));
+ }
+ return [];
+};
 function ccJellyControl(studentId,done,jelly){
  if(!done)return '';
  const given=jelly?.has(String(studentId));
