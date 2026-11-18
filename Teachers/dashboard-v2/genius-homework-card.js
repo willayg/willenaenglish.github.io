@@ -172,6 +172,11 @@ async function jellyRows(host,{className,bookId,unitId,app}={}){
  if(!host||!className||!jellyUuid.test(String(bookId||''))||!jellyUuid.test(String(unitId||''))||!['word','sentence','grammar','talking','freeconversation','writing','puzzles'].includes(app))return;
  const names=[...host.querySelectorAll('[data-jelly-id]')].filter(node=>jellyUuid.test(node.dataset.jellyId||''));
  if(!names.length)return;
+ // Assignment completion alone is never enough: reuse the curriculum Gold rule.
+ const verified=window.WillenaGoldEligibility;
+ if(typeof verified!=='function')return;
+ const eligible=new Set((await verified({className,bookId,unitId,app})).map(String));
+ if(!host.isConnected)return;
  const key=[className.toLowerCase(),bookId,unitId,app].join(':');
  let given=jellyCache.get(key);
  if(!given){
@@ -180,11 +185,12 @@ async function jellyRows(host,{className,bookId,unitId,app}={}){
  }
  if(!host.isConnected)return;
  for(const name of names){
+  if(!eligible.has(name.dataset.jellyId)){name.querySelector('.ghc-jelly-inline')?.remove();continue}
   const existing=name.querySelector('.ghc-jelly-inline input');if(existing){existing.checked=given.has(name.dataset.jellyId);continue}
   const studentId=name.dataset.jellyId;
   const label=document.createElement('label');label.className='ghc-jelly-inline';label.title='Shared Jelly Time reward';
   const input=document.createElement('input');input.type='checkbox';input.checked=given.has(studentId);input.dataset.jellyKey=key;input.dataset.jellyStudent=studentId;input.setAttribute('aria-label','Jelly Time given to '+(name.textContent||'student'));
-  const text=document.createElement('span');text.textContent='Jelly';label.append(input,text);name.append(label);label.addEventListener('click',event=>event.stopPropagation());
+  const text=document.createElement('span');text.textContent='Gold';label.append(input,text);name.append(label);label.addEventListener('click',event=>event.stopPropagation());
   input.addEventListener('change',async()=>{
    const value=input.checked;
    if(!value&&!confirm('Clear Jelly Time for this student? This means the reward can be given again.')){input.checked=true;return}
