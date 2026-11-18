@@ -1551,18 +1551,17 @@ function ccRenderDetail(){
  const students=ccClassStudents(c.name),units=book&&curriculum.unitCache.has(book.book_id)?(book._units||[]):[];
  const selected=units.find(u=>u.id===curriculum.selectedUnit);
  const groups=ccSkillGroups;
- const assignmentMode=['missions','history','activity'].includes(curriculum.assignmentSubview)?curriculum.assignmentSubview:'curriculum';
+ const assignmentMode=['missions','history'].includes(curriculum.assignmentSubview)?curriculum.assignmentSubview:'curriculum';
  // Preserve the horizontal class-strip position across every grid re-render.
  // In particular, selecting a distant class must not jump back to Brown.
  const previousClassStrip=host.querySelector('.cc-assignment-class-tabs');
  const classStripScroll=previousClassStrip?previousClassStrip.scrollLeft:Number(curriculum.classStripScroll)||0;
  if(inAssignments){const status=document.querySelector('#uaStatus');if(status)status.textContent=assignmentMode==='history'?'Past class missions':assignmentMode==='missions'?'Current class missions':'Curriculum progress';}
  host.innerHTML=(inAssignments?
- '<div class="cc-assignment-mode" role="tablist" aria-label="All Classes view"><button type="button" role="tab" data-cc-subview="curriculum" aria-selected="'+(assignmentMode==='curriculum')+'" class="'+(assignmentMode==='curriculum'?'active':'')+'">Curriculum Progress</button><button type="button" role="tab" data-cc-subview="missions" aria-selected="'+(assignmentMode==='missions')+'" class="'+(assignmentMode==='missions'?'active':'')+'">Current Missions</button><button type="button" role="tab" data-cc-subview="history" aria-selected="'+(assignmentMode==='history')+'" class="'+(assignmentMode==='history'?'active':'')+'">Past Missions</button><button type="button" role="tab" data-cc-subview="activity" aria-selected="'+(assignmentMode==='activity')+'" class="'+(assignmentMode==='activity'?'active':'')+'">Activity</button></div>'+
+ '<div class="cc-assignment-mode" role="tablist" aria-label="All Classes view"><button type="button" role="tab" data-cc-subview="curriculum" aria-selected="'+(assignmentMode==='curriculum')+'" class="'+(assignmentMode==='curriculum'?'active':'')+'">Curriculum Progress</button><button type="button" role="tab" data-cc-subview="missions" aria-selected="'+(assignmentMode==='missions')+'" class="'+(assignmentMode==='missions'?'active':'')+'">Current Missions</button><button type="button" role="tab" data-cc-subview="history" aria-selected="'+(assignmentMode==='history')+'" class="'+(assignmentMode==='history'?'active':'')+'">Past Missions</button></div>'+
  '<div class="cc-assignment-class-tabs" role="tablist" aria-label="Active classes">'+classes.map(item=>'<button type="button" role="tab" data-cc-switch-class="'+ccEscape(item.name)+'" aria-selected="'+(item.name===c.name)+'" class="'+(item.name===c.name?'active':'')+'">'+ccEscape(item.display_name||item.name)+'</button>').join('')+'</div>':
  '<div class="cc-detail-top">'+ccButton('← All classes','back','cc-back')+
  '<div><h2>'+ccEscape(c.name)+'</h2><p>'+students.length+' students · Curriculum coverage</p></div>'+ccButton('Open students','students')+'</div>')+
- (inAssignments&&assignmentMode==='activity'?'<div id="ccHomeworkActivity" class="cc-class-missions" aria-live="polite"><div class="cc-empty">Loading activity…</div></div>':
  (inAssignments&&(assignmentMode==='missions'||assignmentMode==='history')?'<div id="uaClassMissions" class="cc-class-missions" aria-live="polite"><div class="cc-empty">Loading missions…</div></div>':
  !books.length?'<div class="cc-empty">No textbooks are assigned to this class. Assign a book from class management first.</div>':
  (inAssignments?'<div class="cc-assignment-bookline"><div class="cc-book-tabs">':'<div class="cc-book-tabs">')+
@@ -1591,7 +1590,6 @@ function ccRenderDetail(){
   try{sessionStorage.setItem('willena:assignments:all-classes-view',value)}catch{}
   ccRenderDetail();
  }));
- if(inAssignments&&assignmentMode==='activity')void ccLoadHomeworkActivity();
  if(inAssignments&&(assignmentMode==='missions'||assignmentMode==='history')){
   const load=window.UniversalAssignmentTracker?.loadClassMissions;
   if(load)void load(c.name,assignmentMode==='history'?'history':'active');else{
@@ -1680,33 +1678,6 @@ function ccActivityTime(value){
  const d=new Date(value);
  return Number.isFinite(d.getTime())?d.toLocaleString('en-GB',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
 }
-
-const ccHomeworkActivityState={items:[],seen:new Set(),loading:false,initialized:false,error:''};
-function ccActivityRender(){
- const host=document.getElementById('ccHomeworkActivity');if(!host)return;
- const s=ccHomeworkActivityState,rows=s.items.filter(x=>x.className===curriculum.selectedClass);
- if(s.error){host.innerHTML='<div class="cc-empty">'+ccEscape(s.error)+'</div>';return}
- if(s.loading&&!s.initialized){host.innerHTML='<div class="cc-empty">Loading activity…</div>';return}
- host.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0"><strong>Recent completions ('+rows.length+')</strong><button id="ccActivitySeen" type="button">Mark all seen</button></div>'+
- (rows.map(x=>'<div style="display:flex;gap:12px;align-items:center;padding:12px;border-bottom:1px solid #dce7eb;background:'+(!s.seen.has(x.key)?'#f1fafc':'transparent')+'"><span style="width:8px;height:8px;border-radius:50%;background:'+(!s.seen.has(x.key)?'#df4141':'transparent')+'"></span><div style="flex:1"><strong>'+ccEscape(x.name)+'</strong><div>'+ccEscape(x.title)+'</div></div><small>'+ccEscape(ccActivityTime(x.time))+'</small></div>').join('')||'<div class="cc-empty">No recorded completions for this class.</div>');
- host.querySelector('#ccActivitySeen')?.addEventListener('click',()=>{rows.forEach(x=>s.seen.add(x.key));try{localStorage.setItem('willena:homework-activity:seen',JSON.stringify([...s.seen].slice(-1000)))}catch(e){}ccActivityRender()});
-}
-async function ccLoadHomeworkActivity(){
- const s=ccHomeworkActivityState;if(s.loading)return;s.loading=true;
- try{
-  const data=await api(homeworkRoute('teacher_homework_status'));
-  if(data.success===false)throw Error(data.error||'Activity unavailable');
-  const rows=[];
-  for(const a of data.assignments||[])for(const p of a.done||[]){
-   if(!p.completed_at||!Number.isFinite(Date.parse(p.completed_at)))continue;
-   rows.push({key:String(a.assignment_id)+':'+String(p.user_id),className:String(a.class||''),name:p.name||p.korean_name||'Student',title:a.assignment_title||'Homework',time:p.completed_at});
-  }
-  rows.sort((a,b)=>Date.parse(b.time)-Date.parse(a.time));s.items=rows;s.error='';
-  if(!s.initialized){try{s.seen=new Set(JSON.parse(localStorage.getItem('willena:homework-activity:seen')||'[]'))}catch(e){}s.initialized=true}
- }catch(e){s.error=e.message||'Activity unavailable'}finally{s.loading=false;ccActivityRender()}
-}
-setInterval(()=>{if(!document.hidden&&document.getElementById('ccHomeworkActivity'))void ccLoadHomeworkActivity()},30000);
-
 const ccSkillNames={vocabulary:'Vocabulary',spelling_coach:'Spelling Coach',spelling_test:'Spelling Test',speaking:'Speaking',sentence_coach:'Coach',sentence_unscramble:'Unscramble',sentence_speaking:'Speaking',grammar:'Grammar',conversation:'Free Talking',writing:'Writing'};
 const ccSkillConfig={
  word:['vocabulary','spelling_coach','spelling_test','speaking'],
