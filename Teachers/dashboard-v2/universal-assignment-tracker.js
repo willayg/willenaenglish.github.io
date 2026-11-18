@@ -359,15 +359,16 @@ function overviewGet(path,options={}){
 window.addEventListener('ua:assignments-changed',()=>invalidateOverviewCache(true));
 window.addEventListener('willena:assignment-created',()=>invalidateOverviewCache(true));
 async function loadOverview(scopeName='my',force=false,options={}){
+ const snapshotOnly=options.snapshotOnly===true;
  const classMission=String(options.className||'').trim();
  const classMissionStage=options.stage==='history'?'history':'active';
- const host=classMission?document.querySelector('#uaClassMissions'):document.querySelector('#uaOverview');
+ const host=snapshotOnly?document.body:classMission?document.querySelector('#uaClassMissions'):document.querySelector('#uaOverview');
  if(!host)return;
  const loadStarted=performance.now();
  overviewPerf.loads++;
  if(force)invalidateOverviewCache();
  const generation=++overviewGeneration;
- host.textContent='Loading assignments across apps…';
+ if(!snapshotOnly)host.textContent='Loading assignments across apps…';
  try{
   const teacher=await teacherIdentity();
   overviewSelections.clear();
@@ -613,13 +614,6 @@ async function loadOverview(scopeName='my',force=false,options={}){
   assignmentDateStyle.textContent+='.cc-mission-cards .ghc-student-row{grid-template-columns:minmax(110px,1fr) minmax(120px,2fr) 48px 44px;gap:12px;min-height:33px}.cc-mission-cards .ghc-student-name{min-width:0}.cc-mission-cards .ghc-student-pct{text-align:right}.cc-mission-jelly{display:flex;justify-content:flex-end;align-items:center;gap:7px;min-width:44px;white-space:nowrap;cursor:pointer}.cc-mission-jelly[hidden]{display:none!important}.cc-mission-jelly svg{flex:none}.cc-mission-jelly input{width:16px;height:16px;margin:0;accent-color:#168b62;cursor:pointer}.cc-mission-jelly input:disabled{cursor:wait;opacity:.5}@media(max-width:600px){.cc-mission-cards .ghc-student-row{grid-template-columns:minmax(65px,1fr) minmax(60px,1.8fr) 39px 41px;gap:6px}.cc-mission-jelly{gap:5px;min-width:41px}.cc-mission-jelly svg{width:15px;height:15px}}';
   // All Classes > Current Missions consumes the same sources and progress maps
   // as My / All, while presenting each mission in a simple expandable card.
-  function renderClassMissions(){
-   if(generation!==overviewGeneration||!host.isConnected)return;
-   const now=Date.now();
-   const className=classMission.toLowerCase();
-   const rowClass=r=>String(r.class||r.class_name||students.get(id(r.student_id))?.class||'').trim().toLowerCase();
-   const current=rows.filter(r=>rowClass(r)===className&&(classMissionStage==='history'?(!r.isActive||(r.due_at&&Date.parse(r.due_at)<now)):(r.isActive&&(!r.due_at||Date.parse(r.due_at)>=now))))
-    .sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
    const nameFor=st=>displayStudentName(st.student_id||st.id,st.name||'Student');
    const round=n=>Math.max(0,Math.min(100,Math.round(Number(n)||0)));
    const bar=(name,pct,note='')=>'<div class="cc-mission-student"><span>'+esc(name)+'</span>'+
@@ -669,6 +663,14 @@ async function loadOverview(scopeName='my',force=false,options={}){
     const started=list.filter(st=>Number(st.pct)>0).length;
     return {list,done,started,note};
    }
+
+  function renderClassMissions(){
+   if(generation!==overviewGeneration||!host.isConnected)return;
+   const now=Date.now();
+   const className=classMission.toLowerCase();
+   const rowClass=r=>String(r.class||r.class_name||students.get(id(r.student_id))?.class||'').trim().toLowerCase();
+   const current=rows.filter(r=>rowClass(r)===className&&(classMissionStage==='history'?(!r.isActive||(r.due_at&&Date.parse(r.due_at)<now)):(r.isActive&&(!r.due_at||Date.parse(r.due_at)>=now))))
+    .sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
    const isHistory=classMissionStage==='history';
    const sectionTitle=isHistory?'Past missions':'Current missions';
    const sectionNote=isHistory?'Completed, closed and past-due assignments':'Active assignments';
@@ -1088,10 +1090,10 @@ async function loadOverview(scopeName='my',force=false,options={}){
    const bulk=host.querySelector('#uaCompleteSelected');
    if(bulk)bulk.onclick=()=>completeRows(selectable.filter(row=>overviewSelections.has(homeworkKey(row))));
   }
-  if(classMission){
+  if(classMission||snapshotOnly){
    // Fetch exact Word Genius homework mastery for just this class, rather
    // than estimating progress from raw attempts or scanning every assignment.
-   const target=rows.filter(r=>r.app==='Word Genius'&&r.isActive&&String(r.class||r.class_name||'').toLowerCase()===classMission.toLowerCase()&&!wordCompletionCache.has(id(r.id)));
+   const target=rows.filter(r=>r.app==='Word Genius'&&r.isActive&&(snapshotOnly||String(r.class||r.class_name||'').toLowerCase()===classMission.toLowerCase())&&!wordCompletionCache.has(id(r.id)));
    let cursor=0;
    await Promise.all(Array.from({length:Math.min(3,target.length)},async()=>{
     while(cursor<target.length){
@@ -1102,11 +1104,22 @@ async function loadOverview(scopeName='my',force=false,options={}){
      }catch(error){wordCompletionCache.set(id(row.id),{assignment:{},students:[],error:String(error.message||error)})}
     }
    }));
-   renderClassMissions();
+   if(!snapshotOnly)renderClassMissions();
   }else renderOverview();
+  if(snapshotOnly||classMission){
+   const active=rows.filter(r=>r.isActive&&(!r.due_at||Date.parse(r.due_at)>=Date.now()));
+   const completions=[];
+   for(const mission of active){
+    const className=String(mission.class||mission.class_name||students.get(id(mission.student_id))?.class||'').trim();
+    if(!className)continue;
+    const progress=progressFor(mission);
+    for(const student of progress.list){if(student.done&&student.student_id)completions.push({key:mission.app+'|'+id(mission.id)+'|'+id(student.student_id),assignmentId:id(mission.id),studentId:id(student.student_id),studentName:student.name,app:mission.app,className,title:mission.label||'Homework'});}
+   }
+   window.WillenaHomeworkNotifications?.receive(completions,{complete:snapshotOnly,errors});
+  }
   overviewPerf.lastLoadMs=Math.round(performance.now()-loadStarted);
   overviewPerf.lastCompletedAt=new Date().toISOString();
- }catch(e){if(generation===overviewGeneration&&host.isConnected)host.innerHTML='<p class="ua-empty">Could not load homework: '+esc(e.message)+'</p>'}
+ }catch(e){if(!snapshotOnly&&generation===overviewGeneration&&host.isConnected)host.innerHTML='<p class="ua-empty">Could not load homework: '+esc(e.message)+'</p>';console.warn('[Homework tracker]',e)}
 }
 async function loadCalendar(){
  const host=document.querySelector('#uaCalendar');if(!host)return;
@@ -1218,5 +1231,5 @@ async function pollNotifications(){
  }catch(error){console.warn('[Homework Notifications] Read unavailable:',error.message)}
  finally{notificationPollInFlight=false}
 }
-window.UniversalAssignmentTracker={load,loadOverview,loadCalendar,pollNotifications,loadClassMissions:(className,stage='active')=>loadOverview('all',false,{className,stage})};
+window.UniversalAssignmentTracker={load,loadOverview,loadCalendar,pollNotifications,loadClassMissions:(className,stage='active')=>loadOverview('all',false,{className,stage}),loadCompletionSnapshot:()=>loadOverview('all',false,{snapshotOnly:true})};
 })();
