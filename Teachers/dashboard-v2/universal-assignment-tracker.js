@@ -669,6 +669,33 @@ async function loadOverview(scopeName='my',force=false,options={}){
     const started=list.filter(st=>Number(st.pct)>0).length;
     return {list,done,started,note};
    }
+
+   if(classMissionStage==='inbox'){
+    const storageKey='willena:hw-inbox-checked:v1';
+    let checked={};try{checked=JSON.parse(localStorage.getItem(storageKey)||'{}')||{}}catch{}
+    const entries=[];
+    for(const mission of current){
+     const p=progressFor(mission);
+     for(const student of p.list){
+      if(!student.done)continue;
+      const key=id(mission.id)+'::'+id(student.student_id);
+      entries.push({key,name:student.name,app:mission.app,title:mission.label||'Mission',mission:mission.id,created:mission.created_at||''});
+     }
+    }
+    entries.sort((a,b)=>String(b.created).localeCompare(String(a.created)));
+    const unchecked=entries.filter(x=>!checked[x.key]);
+    host.innerHTML='<div class="cc-mission-toolbar"><div><strong>Homework inbox</strong><small>All teachers · '+esc(classMission)+' · Completed active missions awaiting review</small></div><button type="button" class="cc-btn" id="ccMissionRefresh">Refresh</button></div>'+
+      '<p class="cc-helper">'+unchecked.length+' unchecked of '+entries.length+' verified completions. Tick when reviewed. This does not change student scores or rewards.</p>'+
+      (unchecked.length?'<div class="cc-mission-cards">'+unchecked.map(x=>'<label style="display:flex;align-items:center;gap:14px;padding:15px;margin:8px 0;border:1px solid #dce7eb;border-radius:12px;background:#fff;cursor:pointer"><input type="checkbox" data-hw-checked="'+esc(x.key)+'" style="width:20px;height:20px;accent-color:#169a9c"><span><strong>'+esc(x.name)+'</strong><span style="display:block;color:#607983">'+esc(x.app)+' · '+esc(x.title)+'</span></span></label>').join('')+'</div>':'<div class="cc-empty">Inbox clear — no unchecked completions for this class.</div>');
+    host.querySelectorAll('[data-hw-checked]').forEach(box=>box.addEventListener('change',()=>{
+     if(!box.checked)return;
+     checked[box.dataset.hwChecked]=true;
+     try{localStorage.setItem(storageKey,JSON.stringify(checked))}catch{}
+     renderClassMissions();
+    }));
+    host.querySelector('#ccMissionRefresh')?.addEventListener('click',()=>{void loadOverview('all',true,{className:classMission,stage:'inbox'})});
+    return;
+   }
    const isHistory=classMissionStage==='history';
    const sectionTitle=isHistory?'Past missions':'Current missions';
    const sectionNote=isHistory?'Completed, closed and past-due assignments':'Active assignments';
