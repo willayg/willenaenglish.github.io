@@ -1231,5 +1231,5 @@ async function pollNotifications(){
  }catch(error){console.warn('[Homework Notifications] Read unavailable:',error.message)}
  finally{notificationPollInFlight=false}
 }
-window.UniversalAssignmentTracker={load,loadOverview,loadCalendar,pollNotifications,loadClassMissions:(className,stage='active')=>loadOverview('all',false,{className,stage}),loadCompletionSnapshot:()=>loadOverview('all',false,{snapshotOnly:true})};
+window.UniversalAssignmentTracker={load,loadOverview,loadCalendar,pollNotifications,loadClassMissions:(className,stage='active')=>loadOverview('all',false,{className,stage}),loadCompletionSnapshot:()=>loadOverview('all',false,{snapshotOnly:true}),notificationRequest:get,notificationIdentity:teacherIdentity};
 })();
