@@ -1342,7 +1342,7 @@ const ccHost=()=>document.querySelector('#view-assignments.active #assignmentCla
 window.addEventListener('willena:curriculum-mount',()=>{
  if(!document.querySelector('#view-assignments.active #assignmentClassGrid'))return;
  try{curriculum.assignmentSubview=['curriculum','missions','history'].includes(sessionStorage.getItem('willena:assignments:all-classes-view'))?sessionStorage.getItem('willena:assignments:all-classes-view'):'curriculum'}catch{}
- loadClassOverview();
+ loadClassOverview(true);
 });
 const ccOp='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const ccOpKey='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -1601,7 +1601,26 @@ function ccRenderDetail(){
   ccRenderDetail();
  });
  host.querySelectorAll('[data-cc-book]').forEach(b=>b.onclick=()=>{curriculum.selectedBook=b.dataset.ccBook;curriculum.selectedUnit='';curriculum.selectedSkill='';ccRenderDetail()});
- host.querySelectorAll('[data-cc-unit]').forEach(b=>b.onclick=async()=>{curriculum.selectedUnit=b.dataset.ccUnit;curriculum.selectedSkill=b.dataset.ccSkill;const selectedBook=book,selectedUnit=units.find(u=>u.id===curriculum.selectedUnit);const selectedClass=c.name;ccRenderDetail();host.querySelector('.cc-drilldown')?.scrollIntoView({behavior:'smooth',block:'nearest'});if(selectedUnit){try{if(curriculum.selectedSkill==='puzzles')await Promise.all([ccLoadPuzzleDetail(selectedBook,selectedUnit),ccLoadJelly(selectedBook,selectedUnit,curriculum.selectedSkill)]);else await Promise.all([ccLoadSkillDetail(selectedBook,selectedUnit),ccLoadJelly(selectedBook,selectedUnit,curriculum.selectedSkill)]);if(curriculum.selectedClass===selectedClass&&curriculum.selectedBook===selectedBook.id&&curriculum.selectedUnit===selectedUnit.id)ccRenderDetail()}catch(e){console.warn('[Class Curriculum] Skill detail:',e);}}});
+ host.querySelectorAll('[data-cc-unit]').forEach(b=>b.onclick=async()=>{
+  curriculum.selectedUnit=b.dataset.ccUnit;curriculum.selectedSkill=b.dataset.ccSkill;
+  const selectedBook=book,selectedUnit=units.find(u=>u.id===curriculum.selectedUnit),selectedClass=c.name,selectedSkill=curriculum.selectedSkill;
+  ccRenderDetail();host.querySelector('.cc-drilldown')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(!selectedUnit)return;
+  try{
+   // Always refresh chapter evidence before displaying final Grammar Genius results.
+   if(selectedSkill==='grammar'){
+    const rows=await ccRpc('teacher_curriculum_extra_activity_v1');
+    if(!Array.isArray(rows))throw Error('Unexpected grammar progress response');
+    curriculum.extraActivity=rows;curriculum.extraError='';
+   }
+   if(selectedSkill==='puzzles')await Promise.all([ccLoadPuzzleDetail(selectedBook,selectedUnit),ccLoadJelly(selectedBook,selectedUnit,selectedSkill)]);
+   else await Promise.all([ccLoadSkillDetail(selectedBook,selectedUnit),ccLoadJelly(selectedBook,selectedUnit,selectedSkill)]);
+  }catch(e){
+   if(selectedSkill==='grammar')curriculum.extraError=e.message||'Grammar progress unavailable';
+   console.warn('[Class Curriculum] Skill detail:',e);
+  }
+  if(curriculum.selectedClass===selectedClass&&curriculum.selectedBook===selectedBook.id&&curriculum.selectedUnit===selectedUnit.id&&curriculum.selectedSkill===selectedSkill)ccRenderDetail();
+ });
  const taught=host.querySelector('#ccTaught');
  if(taught){taught.onchange=async()=>{const before=book.current_unit;const val=taught.value||null;taught.disabled=true;
   try{await ccRpc('teacher_curriculum_set_unit_v1',{p_assignment_id:book.id,p_unit:val});book.current_unit=val;ccRenderDetail()}
@@ -1793,6 +1812,7 @@ function ccRenderStudentDrilldown(book,unit,group){
  const detailMap=new Map((details?.rows||[]).map(r=>[String(r.student_id),r]));
  const jelly=curriculum.jellyRewards.get(ccJellyKey(book,unit,group.key));
  return '<section class="cc-drilldown"><div class="cc-drill-head"><div><h3>Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name)+'</h3><p>Unit progress by skill · Correctly completed items, not attempts</p></div><button type="button" class="cc-btn cc-primary" data-cc-mission="1">Assign mission →</button></div>'+
+ (group.key==='grammar'&&curriculum.extraError?'<p class="cc-helper" role="alert">Grammar completion records could not be refreshed: '+ccEscape(curriculum.extraError)+'. Values may be out of date.</p>':'')+
  '<div class="cc-student-grid">'+students.map(student=>{
   const rows=d.rows.filter(r=>String(r.student_id)===String(student.id));
   const started=rows.some(r=>Number(r.attempts)>0||Number(r.attempted_content_count)>0);
@@ -1875,7 +1895,7 @@ function ccRenderStudentDrilldown(book,unit,group){
  }).join('')+'</div><p class="cc-helper">Progress reflects distinct passed unit targets. Below Level 3, Spelling Coach is required and Spelling Test is optional. At Level 3 and above, Spelling Test is required and Spelling Coach is optional. Only required skills determine unit completion.</p></section>';
 }
 async function loadClassOverview(force=false){
- if(curriculum.pending)return;
+ if(curriculum.pending){curriculum.refreshRequested=curriculum.refreshRequested||force;return;}
  if(curriculum.data&&!force&&curriculum.extraActivity.length&&!curriculum.extraError&&Date.now()-curriculum.loadedAt<60000){
   if(ccHost()?.id==='assignmentClassGrid'){if(!curriculum.selectedClass){try{curriculum.selectedClass=sessionStorage.getItem('willena:assignments:curriculum-class')||''}catch{}}ccRenderDetail();}
   else if(curriculum.selectedClass)ccRenderDetail();else ccRenderOverview();
@@ -1909,13 +1929,14 @@ async function loadClassOverview(force=false){
   await Promise.all(allIds.map(async id=>{try{byId.set(id,await ccUnits(id))}catch(e){console.warn('[Class Curriculum] Catalog:',e.message)}}));
   curriculum.data.books.forEach(b=>{b._units=byId.get(b.book_id)||[];b._className=curriculum.data.classes.find(c=>c.id===b.class_id)?.name||''});
   curriculum.loadedAt=Date.now();
+  curriculum.refreshRequested=false;
   if(ccHost()?.id==='assignmentClassGrid'){
    if(!curriculum.selectedClass){try{curriculum.selectedClass=sessionStorage.getItem('willena:assignments:curriculum-class')||''}catch{}}
    if(!curriculum.data.classes.some(c=>c.name===curriculum.selectedClass)){curriculum.selectedClass=curriculum.data.classes[0]?.name||'';curriculum.selectedBook='';}
    ccRenderDetail();
   }else if(curriculum.selectedClass)ccRenderDetail();else ccRenderOverview();
  }catch(e){curriculum.error=e.message;ccHost().innerHTML='<div class="cc-empty">Could not load class curriculum: '+ccEscape(e.message)+' <button class="cc-btn" id="ccRetry">Retry</button></div>';ccHost().querySelector('#ccRetry').onclick=()=>loadClassOverview(true)}
- finally{curriculum.pending=false}
+ finally{curriculum.pending=false;if(curriculum.refreshRequested){curriculum.refreshRequested=false;void loadClassOverview(true)}}
 }
 
 async function openClassFromOverview(name,days){$('#classSelect').value=name;$('#daysSelect').value=String(days);state.className=name;state.days=days;switchView('students');await loadClass()}
