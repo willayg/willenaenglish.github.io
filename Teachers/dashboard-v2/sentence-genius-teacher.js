@@ -718,14 +718,29 @@ function renderManage(root){
  });
  holder.querySelectorAll('[data-sg-progress]').forEach(b=>b.onclick=async()=>{
   const box=document.getElementById('sgtProgress-'+b.dataset.sgProgress);
-  if(!box)return;box.hidden=!box.hidden;if(box.hidden)return;
+  if(!box)return;box.hidden=false;
   box.textContent='Loading recorded completion…';
-  try{const data=await rpc('sg_homework_progress_v1',{p_id:b.dataset.sgProgress});
-   const rows=data.students||[];
-   box.innerHTML=rows.length?rows.map(s=>'<div class="sgt-student"><div><strong data-jelly-id="'+escapeHtml(s.student_id||s.id||'')+'">'+escapeHtml(s.name||s.korean_name||'Student')+'</strong></div><div class="sgt-bar"><i style="width:'+Math.max(0,Math.min(100,Number(s.percent)||0))+'%"></i></div><b>'+Math.round(Number(s.percent)||0)+'%</b></div>').join(''):'No students enrolled in this class.';
+  try{
+   const data=await rpc('sg_homework_progress_v1',{p_id:b.dataset.sgProgress});
+   if(!box.isConnected)return;
+   const rows=Array.isArray(data.students)?data.students:[];
+   const students=rows.map(st=>{
+    const total=Number(st.total)||0,done=Number(st.done)||0;
+    const supplied=st.percent;
+    const percent=supplied!==null&&supplied!==undefined&&Number.isFinite(Number(supplied))
+     ?Number(supplied):total>0?100*done/total:null;
+    return {id:st.student_id||st.id||'',name:st.name||st.korean_name||'Student',percent};
+   });
+   const known=students.filter(st=>st.percent!==null);
+   const average=known.length?known.reduce((sum,st)=>sum+Number(st.percent),0)/known.length:null;
+   const completed=rows.filter(st=>st.completed===true||(Number(st.total)>0&&Number(st.done)>=Number(st.total))).length;
+   box.innerHTML=window.WillenaGeniusHomeworkCard.progressPanel({
+    students,average,completed,
+    notStarted:rows.filter(st=>!(Number(st.done)>0)).length,label:'Class progress'
+   });
    const assignment=state.assignments.find(a=>String(a.id)===String(b.dataset.sgProgress));
-   if(assignment)void window.WillenaGeniusHomeworkCard?.jellyRows?.(box,{className:assignment.class_name,bookId:assignment.book_id,unitId:assignment.unit_id,app:'sentence'}).catch(e=>console.warn('[Sentence Genius] Jelly Time',e));
-  }catch(e){box.textContent=e.message}
+   if(assignment)void window.WillenaGeniusHomeworkCard.jellyRows(box,{className:assignment.class_name,bookId:assignment.book_id,unitId:assignment.unit_id,app:'sentence'}).catch(error=>console.warn('[Sentence Genius] Gold',error));
+  }catch(error){box.textContent='Student progress unavailable: '+error.message}
  });
 }
 // Expose read-only assignment summaries for the existing student roster.
