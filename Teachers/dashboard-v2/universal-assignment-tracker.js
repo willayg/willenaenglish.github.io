@@ -678,10 +678,10 @@ async function loadOverview(scopeName='my',force=false,options={}){
      const appName=r.app==='Free Talking Genius'?(r.list_meta?.mission_mode==='conversation'?'Free Talking Genius · AI Conversation':'Free Talking Genius · Speaking'):r.app;
      const known=p.list.filter(st=>st.pct!==null&&Number.isFinite(Number(st.pct)));
      const average=known.length?Math.round(known.reduce((sum,st)=>sum+Number(st.pct),0)/known.length):null;
-     const progressRows=p.list.map(st=>({name:st.name,percent:st.pct}));
+     const progressRows=p.list.map(st=>({name:st.name,id:st.student_id,percent:st.pct,rewardHtml:missionJellyMarkup(st,r)}));
      const notStarted=p.list.filter(st=>st.pct===0&&!st.done).length;
      const body=p.list.length?
-      (()=>{let studentIndex=0;return cardApi.progressPanel({students:progressRows,average,completed:p.done,notStarted,label:appName+' · Student progress'}).replace(/(<strong class="ghc-student-pct">[^<]*<\/strong>)/g,match=>match+missionJellyMarkup(p.list[studentIndex++],r))})():
+      cardApi.progressPanel({students:progressRows,average,completed:p.done,notStarted,label:appName+' · Student progress'}):
       '<p class="cc-helper">'+esc(p.note||'No verified student progress available yet.')+'</p>';
      return cardApi.card({id:'class-mission-'+id(r.id),className:classMission,qrUrl:missionQrUrl(r),
       task:appName+' · '+(r.label||'Mission'),dueAt:r.due_at,teacher:teacherName,
