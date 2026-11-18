@@ -300,13 +300,18 @@ async function drawManage(){
  if(shared){
   for(const a of rows)shared.updateRing(a.id,progressFor(a).pct,el);
   void shared.hydrateTeachers(el);
-  // Reward keys are a specific content unit, never a whole multi-unit chapter.
+  // Grammar Book assignments are chapter-scoped: Gold eligibility is based
+  // on verified completion of this chapter, not an arbitrary child unit.
   for(const a of rows){
-   const book=(store.books||[]).find(b=>b.id===a.list_meta?.source_book_id);
-   const chapter=(book?.units||[]).find(u=>u.number===Number(a.list_meta?.chapter));
-   if(chapter?.unitIds?.length!==1)continue;
+   const bookId=String(a.list_meta?.source_book_id||''),chapter=Number(a.list_meta?.chapter);
+   if(!bookId||!Number.isInteger(chapter)||chapter<1)continue;
    const card=Array.from(el.querySelectorAll('[data-genius-card]')).find(node=>node.dataset.geniusCard===String(a.id));
-   if(card)void shared.jellyRows(card,{className:a.class,bookId:book.id,unitId:chapter.unitIds[0],app:'grammar'}).catch(error=>console.warn('[Grammar Genius] Gold rewards',error));
+   if(!card)continue;
+   const eligibleStudentIds=progressFor(a).rows.filter(r=>r.total>0&&r.done>=r.total).map(r=>r.student.id).filter(Boolean);
+   void (async()=>{
+    const unitId=await shared.grammarChapterRewardId(bookId,chapter);
+    await shared.jellyRows(card,{className:a.class,bookId,unitId,app:'grammar',eligibleStudentIds});
+   })().catch(error=>console.warn('[Grammar Genius] Chapter Gold rewards',error));
   }
  }
  $$('[data-gb-edit]',el).forEach(b=>b.onclick=()=>editAssignment(b.dataset.gbEdit));
