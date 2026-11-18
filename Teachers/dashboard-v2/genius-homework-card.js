@@ -180,11 +180,11 @@ async function jellyRows(host,{className,bookId,unitId,app}={}){
  }
  if(!host.isConnected)return;
  for(const name of names){
-  if(name.querySelector('.ghc-jelly-inline'))continue;
+  const existing=name.querySelector('.ghc-jelly-inline input');if(existing){existing.checked=given.has(name.dataset.jellyId);continue}
   const studentId=name.dataset.jellyId;
   const label=document.createElement('label');label.className='ghc-jelly-inline';label.title='Shared Jelly Time reward';
-  const input=document.createElement('input');input.type='checkbox';input.checked=given.has(studentId);input.setAttribute('aria-label','Jelly Time given to '+(name.textContent||'student'));
-  const text=document.createElement('span');text.textContent='Jelly';label.append(input,text);name.append(label);
+  const input=document.createElement('input');input.type='checkbox';input.checked=given.has(studentId);input.dataset.jellyKey=key;input.dataset.jellyStudent=studentId;input.setAttribute('aria-label','Jelly Time given to '+(name.textContent||'student'));
+  const text=document.createElement('span');text.textContent='Jelly';label.append(input,text);name.append(label);label.addEventListener('click',event=>event.stopPropagation());
   input.addEventListener('change',async()=>{
    const value=input.checked;
    if(!value&&!confirm('Clear Jelly Time for this student? This means the reward can be given again.')){input.checked=true;return}
@@ -192,7 +192,7 @@ async function jellyRows(host,{className,bookId,unitId,app}={}){
    try{
     await jellyRpc('teacher_unit_jelly_set_v1',{p_student_id:studentId,p_book_id:bookId,p_unit_id:unitId,p_app:app,p_given:value});
     jellyCache.delete(key);
-    window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId,unitId,app}}));
+    window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId,unitId,app,given:value}}));
    }catch(error){input.checked=!value;alert('Jelly Time could not be saved: '+error.message)}
    finally{input.disabled=false}
   });
@@ -201,12 +201,13 @@ async function jellyRows(host,{className,bookId,unitId,app}={}){
 window.addEventListener('willena:jelly-changed',event=>{
  const d=event.detail||{};
  for(const key of jellyCache.keys())if(key.includes(':'+d.bookId+':'+d.unitId+':'+d.app))jellyCache.delete(key);
- document.querySelectorAll('.ghc-jelly-inline input').forEach(input=>{
-  const label=input.closest('[data-jelly-id]');if(label&&label.dataset.jellyId===d.studentId){
-   const info=label.closest('[data-jelly-book]');
-   if(info&&info.dataset.jellyBook===d.bookId&&info.dataset.jellyUnit===d.unitId&&info.dataset.jellyApp===d.app)void jellyRows(info,{className:info.dataset.jellyClass,bookId:d.bookId,unitId:d.unitId,app:d.app});
-  }
- });
+ const matching=[...document.querySelectorAll('.ghc-jelly-inline input[data-jelly-key]')].filter(input=>
+  input.dataset.jellyStudent===d.studentId&&input.dataset.jellyKey.endsWith(':'+d.bookId+':'+d.unitId+':'+d.app));
+ if(!matching.length)return;
+ if(typeof d.given==='boolean'){matching.forEach(input=>{input.checked=d.given});return}
+ void jellyRpc('teacher_unit_jelly_get_v1',{p_class:matching[0].dataset.jellyKey.split(':')[0],p_book_id:d.bookId,p_unit_id:d.unitId,p_app:d.app})
+  .then(values=>{const given=(Array.isArray(values)?values:[]).some(row=>String(row.student_id)===d.studentId);matching.forEach(input=>{input.checked=given})})
+  .catch(error=>console.warn('[Jelly Time] Sync',error));
 });
 window.WillenaGeniusHomeworkCard={card,groupCardStart,progressPanel,dday,escape:esc,hydrateTeachers,updateRing,groupByDate,classReadiness,jellyRows};
 
