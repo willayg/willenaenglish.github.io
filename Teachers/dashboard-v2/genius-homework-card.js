@@ -151,6 +151,63 @@ document.addEventListener('click',event=>{
  overlay.querySelector('.ghc-qr-close').focus();
 });
 
-window.WillenaGeniusHomeworkCard={card,groupCardStart,progressPanel,dday,escape:esc,hydrateTeachers,updateRing,groupByDate,classReadiness};
+// The same student+book+unit+app reward as the All Classes curriculum cards.
+// Caller must provide exact IDs; never guess identity from a displayed name.
+const jellyCss=document.createElement('style');
+jellyCss.textContent='.ghc-jelly-inline{display:inline-flex;align-items:center;gap:4px;margin-left:8px;color:#257a83;font-weight:650;font-size:11px;white-space:nowrap;cursor:pointer}.ghc-jelly-inline input{width:15px;height:15px;accent-color:#159b7f}.ghc-jelly-inline input:disabled{opacity:.5}';
+document.head.appendChild(jellyCss);
+const jellyUuid=/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i;
+const jellyCache=new Map();
+const jellyApi='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/';
+const jellyKey='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+async function jellyRpc(name,args){
+ const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+ if(!token)throw Error('Teacher login required');
+ const response=await fetch(jellyApi+name,{method:'POST',cache:'no-store',headers:{apikey:jellyKey,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(args)});
+ const data=await response.json().catch(()=>null);
+ if(!response.ok)throw Error(data?.message||data?.error||'Jelly Time request failed');
+ return data;
+}
+async function jellyRows(host,{className,bookId,unitId,app}={}){
+ if(!host||!className||!jellyUuid.test(String(bookId||''))||!jellyUuid.test(String(unitId||''))||!['word','sentence','grammar','talking','freeconversation','writing','puzzles'].includes(app))return;
+ const names=[...host.querySelectorAll('[data-jelly-id]')].filter(node=>jellyUuid.test(node.dataset.jellyId||''));
+ if(!names.length)return;
+ const key=[className.toLowerCase(),bookId,unitId,app].join(':');
+ let given=jellyCache.get(key);
+ if(!given){
+  const values=await jellyRpc('teacher_unit_jelly_get_v1',{p_class:className,p_book_id:bookId,p_unit_id:unitId,p_app:app});
+  given=new Set((Array.isArray(values)?values:[]).map(x=>String(x.student_id)));jellyCache.set(key,given);
+ }
+ if(!host.isConnected)return;
+ for(const name of names){
+  if(name.querySelector('.ghc-jelly-inline'))continue;
+  const studentId=name.dataset.jellyId;
+  const label=document.createElement('label');label.className='ghc-jelly-inline';label.title='Shared Jelly Time reward';
+  const input=document.createElement('input');input.type='checkbox';input.checked=given.has(studentId);input.setAttribute('aria-label','Jelly Time given to '+(name.textContent||'student'));
+  const text=document.createElement('span');text.textContent='Jelly';label.append(input,text);name.append(label);
+  input.addEventListener('change',async()=>{
+   const value=input.checked;
+   if(!value&&!confirm('Clear Jelly Time for this student? This means the reward can be given again.')){input.checked=true;return}
+   input.disabled=true;
+   try{
+    await jellyRpc('teacher_unit_jelly_set_v1',{p_student_id:studentId,p_book_id:bookId,p_unit_id:unitId,p_app:app,p_given:value});
+    jellyCache.delete(key);
+    window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId,unitId,app}}));
+   }catch(error){input.checked=!value;alert('Jelly Time could not be saved: '+error.message)}
+   finally{input.disabled=false}
+  });
+ }
+}
+window.addEventListener('willena:jelly-changed',event=>{
+ const d=event.detail||{};
+ for(const key of jellyCache.keys())if(key.includes(':'+d.bookId+':'+d.unitId+':'+d.app))jellyCache.delete(key);
+ document.querySelectorAll('.ghc-jelly-inline input').forEach(input=>{
+  const label=input.closest('[data-jelly-id]');if(label&&label.dataset.jellyId===d.studentId){
+   const info=label.closest('[data-jelly-book]');
+   if(info&&info.dataset.jellyBook===d.bookId&&info.dataset.jellyUnit===d.unitId&&info.dataset.jellyApp===d.app)void jellyRows(info,{className:info.dataset.jellyClass,bookId:d.bookId,unitId:d.unitId,app:d.app});
+  }
+ });
+});
+window.WillenaGeniusHomeworkCard={card,groupCardStart,progressPanel,dday,escape:esc,hydrateTeachers,updateRing,groupByDate,classReadiness,jellyRows};
 
 })();
