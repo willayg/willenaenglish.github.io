@@ -1113,7 +1113,7 @@ async function loadOverview(scopeName='my',force=false,options={}){
     const className=String(mission.class||mission.class_name||students.get(id(mission.student_id))?.class||'').trim();
     if(!className)continue;
     const progress=progressFor(mission);
-    for(const student of progress.list){if(student.done&&student.student_id)completions.push({key:mission.app+'|'+id(mission.id)+'|'+id(student.student_id),assignmentId:id(mission.id),studentId:id(student.student_id),studentName:student.name,app:mission.app,className,title:mission.label||'Homework'});}
+    for(const student of progress.list){if(student.done&&student.student_id)completions.push({key:mission.app+'|'+id(mission.id)+'|'+id(student.student_id),assignmentId:id(mission.id),studentId:id(student.student_id),studentName:student.name,app:mission.app,className,createdBy:id(mission.created_by),title:mission.label||'Homework'});}
    }
    window.WillenaHomeworkNotifications?.receive(completions,{complete:snapshotOnly,errors});
   }
