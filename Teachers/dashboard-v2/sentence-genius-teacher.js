@@ -722,7 +722,9 @@ function renderManage(root){
   box.textContent='Loading recorded completion…';
   try{const data=await rpc('sg_homework_progress_v1',{p_id:b.dataset.sgProgress});
    const rows=data.students||[];
-   box.innerHTML=rows.length?rows.map(s=>'<div class="sgt-student"><div><strong>'+escapeHtml(s.name||s.korean_name||'Student')+'</strong></div><div class="sgt-bar"><i style="width:'+Math.max(0,Math.min(100,Number(s.percent)||0))+'%"></i></div><b>'+Math.round(Number(s.percent)||0)+'%</b></div>').join(''):'No students enrolled in this class.';
+   box.innerHTML=rows.length?rows.map(s=>'<div class="sgt-student"><div><strong data-jelly-id="'+escapeHtml(s.student_id||s.id||'')+'">'+escapeHtml(s.name||s.korean_name||'Student')+'</strong></div><div class="sgt-bar"><i style="width:'+Math.max(0,Math.min(100,Number(s.percent)||0))+'%"></i></div><b>'+Math.round(Number(s.percent)||0)+'%</b></div>').join(''):'No students enrolled in this class.';
+   const assignment=state.assignments.find(a=>String(a.id)===String(b.dataset.sgProgress));
+   if(assignment)void window.WillenaGeniusHomeworkCard?.jellyRows?.(box,{className:assignment.class_name,bookId:assignment.book_id,unitId:assignment.unit_id,app:'sentence'}).catch(e=>console.warn('[Sentence Genius] Jelly Time',e));
   }catch(e){box.textContent=e.message}
  });
 }
