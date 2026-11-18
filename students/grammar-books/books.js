@@ -269,9 +269,9 @@ function prepareRound(questions,mode){
    walk([],options);
    if(!ordered)throw Error('Error Hunt spans do not reconstruct sentence: '+q.id);
    const answerIndex=ordered.indexOf(wrong);
-    // Shuffle answer cards independently: the underlined sentence must remain in reading order.
-    const huntChoices=shuffle(ordered.map((value,index)=>({value,index})));
-    return {...q,options:ordered,answerIndex,underlined:ordered,huntChoices};
+   // Shuffle answer cards independently: the underlined sentence must remain in reading order.
+   const huntChoices=shuffle(ordered.map((value,index)=>({value,index})));
+   return {...q,options:ordered,answerIndex,underlined:ordered,huntChoices};
   }
   const opts=shuffle(q.options.map((value,i)=>({value,i})));
   return {...q,options:opts.map(o=>o.value),answerIndex:opts.findIndex(o=>o.i===q.answerIndex)};
@@ -456,7 +456,7 @@ function toSharedQuestion(q){
   return {id:q.id,form:'choice',prompt:q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
  }
  if(q.instruction){
-  return {id:q.id,form:'choice',prompt:q.instruction+'\n'+q.prompt,choices:q.options,answer:[String(q.answerIndex+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
+  return {id:q.id,form:'choice',prompt:q.instruction+'\n'+q.prompt,choices:q.huntChoices?q.huntChoices.map(item=>item.value):q.options,answer:[String((q.huntChoices?q.huntChoices.findIndex(item=>item.index===q.answerIndex):q.answerIndex)+1)],context:{},metadata:{sourceKey:q.id,practiceType:'grammar_books',chapter:activeUnit,subunit:q.subunit}};
  }
  const hunt=activeMode==='hunt';
  const sentence=hunt?markedSentence(q):'';
