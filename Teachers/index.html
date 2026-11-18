@@ -1799,6 +1799,9 @@ window.WillenaGoldEligibility=async function({className,bookId,unitId,app}={}){
   }).map(student=>String(student.id));
  }
  if(['grammar','talking','freeconversation'].includes(app)){
+  if(!curriculum.extraActivity.length){
+   try{const evidence=await ccRpc('teacher_curriculum_extra_activity_v1');if(Array.isArray(evidence))curriculum.extraActivity=evidence}catch(error){console.warn('[Gold eligibility] Extra activity unavailable',error);return []}
+  }
   return roster.filter(student=>{
    const evidence=ccExtraRows(book,unit,group,className).filter(r=>String(r.student_id)===String(student.id));
    if(app==='freeconversation')return evidence.some(r=>r.finished===true);
