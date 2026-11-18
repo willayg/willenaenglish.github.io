@@ -92,7 +92,7 @@ function renderManage(host){
   '<select class="control" id="ftTeacherClassFilter"><option value="all">All classes</option>'+classes.map(c=>'<option value="'+esc(c)+'"'+(state.classFilter===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select>'+
   '<button type="button" class="control" data-ft-refresh>Refresh</button></div>'+
   '<div class="ua-genius-manage-list">'+(rows.length?cards.groupByDate(rows,a=>{
-   const p=stats(a);let jellyIndex=0;const body=cards.progressPanel({students:p.students,average:p.avg,completed:p.completed,notStarted:p.notStarted,label:isConversation(a)?'AI conversation · 8 contributions':'Speaking · 8 questions'}).replace(/<span class="ghc-student-name">[^<]*<\/span>/g,match=>{const st=p.students[jellyIndex++];return st?match.replace('<span class="ghc-student-name">','<span class="ghc-student-name" data-jelly-id="'+esc(st.student_id||st.id||'')+'">'):match});
+   const p=stats(a);const body=cards.progressPanel({students:p.students.map(st=>({id:st.student_id||st.id,name:st.name,percent:st.percent})),average:p.avg,completed:p.completed,notStarted:p.notStarted,label:isConversation(a)?'AI conversation · 8 contributions':'Speaking · 8 questions'});
    const actions='<div class="ua-actions">'+(state.history
     ?'<button class="control ua-primary" type="button" data-ft-restore="'+esc(a.id)+'">Restore to Current</button>'
     :'<button class="control" type="button" data-ft-end="'+esc(a.id)+'">End mission</button>')+'</div>';
