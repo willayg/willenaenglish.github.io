@@ -571,8 +571,11 @@ async function loadOverview(scopeName='my',force=false,options={}){
   // Shared Jelly Time: same RPC and four-part reward key as Curriculum Progress.
   // An assignment with multiple or unknown units deliberately gets no checkbox.
   const missionJellyCache=new Map(),missionJellyPending=new Map();
+  const grammarChapterTargets=new Map(),grammarChapterPending=new Set();
+
   function missionRewardTarget(row){
    const m=row.list_meta||{},uuid=/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i;
+   if(row.app==='Grammar Genius'&&row.source_type==='grammar_books'&&grammarChapterTargets.has(id(row.id)))return grammarChapterTargets.get(id(row.id));
    const book=row.book_id||m.source_book_id||m.book_id;
    const units=Array.isArray(m.source_unit_ids)?m.source_unit_ids:(m.source_unit_id?[m.source_unit_id]:(m.unit_id?[m.unit_id]:[]));
    const unit=row.unit_id||(units.length===1?units[0]:null);
@@ -692,6 +695,21 @@ async function loadOverview(scopeName='my',force=false,options={}){
     const average=known.length?Math.round(known.reduce((sum,st)=>sum+Number(st.pct),0)/known.length):null;
     cardApi?.updateRing?.('class-mission-'+id(r.id),average,host);
    }
+   // Resolve chapter-scoped Grammar rewards before rendering their Gold slots.
+   for(const r of current){
+    if(r.app!=='Grammar Genius'||r.source_type!=='grammar_books')continue;
+    const key=id(r.id),meta=r.list_meta||{},book=meta.source_book_id;
+    const chapter=Number(meta.chapter);
+    if(grammarChapterTargets.has(key)||grammarChapterPending.has(key)||!book||!Number.isInteger(chapter)||chapter<1)continue;
+    const resolve=cardApi?.grammarChapterRewardId;
+    if(typeof resolve!=='function')continue;
+    grammarChapterPending.add(key);
+    void Promise.resolve(resolve(book,chapter)).then(unit=>{
+     grammarChapterTargets.set(key,{book:String(book),unit:String(unit),app:'grammar',chapter:true});
+     if(host.isConnected&&generation===overviewGeneration)renderClassMissions();
+    }).catch(error=>console.warn('[Current Missions] Grammar chapter reward identity',error))
+     .finally(()=>grammarChapterPending.delete(key));
+   }
    const byId=new Map(current.map(row=>[id(row.id),row]));
    for(const r of current){
     const target=missionRewardTarget(r);
@@ -700,8 +718,10 @@ async function loadOverview(scopeName='my',force=false,options={}){
     // Keep every Gold control hidden unless the canonical curriculum rule confirms it.
     void (async()=>{
      const verify=window.WillenaGoldEligibility;
-     if(typeof verify!=='function')return;
-     const eligible=new Set((await verify({className:classMission,bookId:target.book,unitId:target.unit,app:target.app})).map(String));
+     if(!target.chapter&&typeof verify!=='function')return;
+     const eligible=new Set((target.chapter
+      ?progressFor(r).list.filter(st=>st.done===true&&Number(st.pct)===100).map(st=>String(st.student_id))
+      :(await verify({className:classMission,bookId:target.book,unitId:target.unit,app:target.app})).map(String)));
      if(!host.isConnected||generation!==overviewGeneration)return;
      const values=await missionJellyLoad(r);
      if(!host.isConnected||generation!==overviewGeneration)return;
