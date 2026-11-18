@@ -263,11 +263,39 @@ async function creativeManage(app,body){
     if(!result){host.textContent='No linked student progress yet.';return}
     const isSentence=record?.list_key==='writing_genius:sentence';
     const writingStage=st=>({not_started:'Not started',started:'Draft opened',writing:'Writing draft',reviewed:'AI review done',speaking_done:'Speaking recorded',completed:'Completed'})[st.stage]||(st.completed?'Completed':'Not started');
-    host.innerHTML=isSentence?'<p><b>'+Number(result.progress_percent||0)+'%</b> progress · '+Number(result.checked||0)+'/'+Number(result.total_questions||0)+' questions checked</p>'+(result.student_rows||[]).map(st=>'<div class="ua-creative-student-row"><span>'+esc(st.name)+'</span><span>'+Number(st.checked||0)+'/'+Number(st.total||0)+' · '+Number(st.progress_percent||0)+'%</span></div>').join(''):'<p><b>'+result.completed+' / '+result.students+'</b> completed</p>'+(result.student_rows||[]).map(st=>{
-      const body=String(st.draft_body||'').trim();
-      const preview=body&&!st.completed?'<details style="margin:4px 0 12px;padding:8px 12px;border:1px solid #cde6e8;border-radius:10px"><summary style="cursor:pointer;color:#25838b">View saved draft'+(st.draft_title?' · '+esc(st.draft_title):'')+'</summary><p style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(body)+'</p></details>':'';
-      return '<div class="ua-creative-student-row"><span>'+esc(st.name)+'</span><span>'+esc(writingStage(st))+'</span></div>'+preview;
-    }).join('');
+    const source=Array.isArray(result.student_rows)?result.student_rows:[];
+    const students=source.map(st=>{
+     let percent=null;
+     if(isSentence){
+      const total=Number(st.total)||0,checked=Number(st.checked)||0;
+      percent=total>0?100*Math.min(total,checked)/total:null;
+     }else if(app==='puzzles'){
+      percent=st.completed===true?100:0;
+     }else{
+      // A saved draft is not a completion percentage.
+      percent=st.completed===true?100:st.stage==='not_started'?0:null;
+     }
+     return {id:st.student_id||st.id||'',name:st.name||st.korean_name||'Student',percent};
+    });
+    const completed=source.filter(st=>st.completed===true||(isSentence&&Number(st.total)>0&&Number(st.checked)>=Number(st.total))).length;
+    const average=students.length&&students.every(st=>st.percent!==null)
+     ?students.reduce((sum,st)=>sum+Number(st.percent),0)/students.length:null;
+    const panel=window.WillenaGeniusHomeworkCard?.progressPanel({
+     students,average,completed,
+     notStarted:source.filter(st=>st.stage==='not_started'||(!isSentence&&st.completed!==true&&!st.stage)).length,
+     label:'Class progress',
+     summary:completed+'/'+source.length+' completed'
+    });
+    const extras=!isSentence&&app==='writing'?source.map(st=>{
+     const draft=String(st.draft_body||'').trim(),stage=writingStage(st);
+     const preview=draft&&!st.completed?'<details style="margin:4px 0 12px;padding:8px 12px;border:1px solid #cde6e8;border-radius:10px"><summary style="cursor:pointer;color:#25838b">View saved draft'+(st.draft_title?' · '+esc(st.draft_title):'')+'</summary><p style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(draft)+'</p></details>':'';
+     return preview?'<div class="ghc-writing-draft"><small>'+esc(st.name||'Student')+' · '+esc(stage)+'</small>'+preview+'</div>':'';
+    }).join(''):'';
+    host.innerHTML=(panel||'<p>Student progress unavailable.</p>')+extras;
+    const meta=record?.list_meta||{};
+    const bookId=meta.source_book_id||meta.book_id;
+    const unitIds=Array.isArray(meta.source_unit_ids)?meta.source_unit_ids:(meta.source_unit_id?[meta.source_unit_id]:(meta.unit_id?[meta.unit_id]:[]));
+    if(bookId&&unitIds.length===1)void window.WillenaGeniusHomeworkCard?.jellyRows?.(host,{className:record.class,bookId,unitId:unitIds[0],app:app==='writing'?'writing':'puzzles'}).catch(e=>console.warn('[Creative Genius] Gold unavailable',e));
    }catch(e){host.textContent=e.message}
   }))};
   paint();
