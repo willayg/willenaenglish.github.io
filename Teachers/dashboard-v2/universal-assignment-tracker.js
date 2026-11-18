@@ -681,7 +681,7 @@ async function loadOverview(scopeName='my',force=false,options={}){
      const progressRows=p.list.map(st=>({name:st.name,percent:st.pct}));
      const notStarted=p.list.filter(st=>st.pct===0&&!st.done).length;
      const body=p.list.length?
-      (()=>{let studentIndex=0;return cardApi.progressPanel({students:progressRows,average,completed:p.done,notStarted,label:appName+' · Student progress'}).replace(/<span class="ghc-student-name">[^<]*<\/span>/g,match=>match+missionJellyMarkup(p.list[studentIndex++],r))})():
+      (()=>{let studentIndex=0;return cardApi.progressPanel({students:progressRows,average,completed:p.done,notStarted,label:appName+' · Student progress'}).replace(/<span class="ghc-student-name">[^<]*<\/span>/g,match=>match.replace('</span>',missionJellyMarkup(p.list[studentIndex++],r)+'</span>'))})():
       '<p class="cc-helper">'+esc(p.note||'No verified student progress available yet.')+'</p>';
      return cardApi.card({id:'class-mission-'+id(r.id),className:classMission,qrUrl:missionQrUrl(r),
       task:appName+' · '+(r.label||'Mission'),dueAt:r.due_at,teacher:teacherName,
