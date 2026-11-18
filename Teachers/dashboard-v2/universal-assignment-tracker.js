@@ -605,9 +605,9 @@ async function loadOverview(scopeName='my',force=false,options={}){
   function missionJellyMarkup(st,row){
    const key=missionRewardKey(row),value=key?missionJellyCache.get(key):null;
    if(!key)return '';
-   return '<label class="cc-mission-jelly" title="Jelly Time is shared with Curriculum Progress"><input type="checkbox" data-mission-jelly-student="'+esc(st.student_id)+'" data-mission-jelly-key="'+esc(key)+'" data-mission-jelly-assignment="'+esc(row.id)+'" '+(value?.has(id(st.student_id))?'checked ':'')+(value?'':'disabled ')+'><span>Jelly</span></label>';
+   return '<label class="cc-mission-jelly" hidden title="Gold reward given"><input type="checkbox" data-mission-jelly-student="'+esc(st.student_id)+'" data-mission-jelly-key="'+esc(key)+'" data-mission-jelly-assignment="'+esc(row.id)+'" '+(value?.has(id(st.student_id))?'checked ':'')+(value?'':'disabled ')+'><span>Gold</span></label>';
   }
-  assignmentDateStyle.textContent+='.cc-mission-student{display:flex;align-items:center;gap:9px}.cc-mission-student>span:first-child{min-width:110px}.cc-mission-jelly{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#267a80;white-space:nowrap;cursor:pointer}.cc-mission-jelly input{accent-color:#159b7f;width:15px;height:15px}.cc-mission-jelly input:disabled{opacity:.4}';
+  assignmentDateStyle.textContent+='.cc-mission-jelly[hidden]{display:none!important}.ghc-student-name:has(.cc-mission-jelly){display:inline-flex;align-items:center;gap:6px}.cc-mission-student{display:flex;align-items:center;gap:9px}.cc-mission-student>span:first-child{min-width:110px}.cc-mission-jelly{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#267a80;white-space:nowrap;cursor:pointer}.cc-mission-jelly input{accent-color:#159b7f;width:15px;height:15px}.cc-mission-jelly input:disabled{opacity:.4}';
   // All Classes > Current Missions consumes the same sources and progress maps
   // as My / All, while presenting each mission in a simple expandable card.
   function renderClassMissions(){
@@ -694,14 +694,26 @@ async function loadOverview(scopeName='my',force=false,options={}){
    }
    const byId=new Map(current.map(row=>[id(row.id),row]));
    for(const r of current){
-    if(!missionRewardTarget(r))continue;
-    void missionJellyLoad(r).then(values=>{
+    const target=missionRewardTarget(r);
+    if(!target)continue;
+    // Progress percentages are assignment-specific, NOT evidence of a Golden Unit.
+    // Keep every Gold control hidden unless the canonical curriculum rule confirms it.
+    void (async()=>{
+     const verify=window.WillenaGoldEligibility;
+     if(typeof verify!=='function')return;
+     const eligible=new Set((await verify({className:classMission,bookId:target.book,unitId:target.unit,app:target.app})).map(String));
+     if(!host.isConnected||generation!==overviewGeneration)return;
+     const values=await missionJellyLoad(r);
      if(!host.isConnected||generation!==overviewGeneration)return;
      host.querySelectorAll('[data-mission-jelly-assignment]').forEach(box=>{
       if(box.dataset.missionJellyAssignment!==id(r.id))return;
-      box.checked=values.has(box.dataset.missionJellyStudent);box.disabled=false;
+      const gold=eligible.has(box.dataset.missionJellyStudent);
+      const label=box.closest('.cc-mission-jelly');
+      if(label)label.hidden=!gold;
+      box.checked=gold&&values.has(box.dataset.missionJellyStudent);
+      box.disabled=!gold;
      });
-    }).catch(error=>console.warn('[Current Missions] Jelly Time unavailable',error));
+    })().catch(error=>console.warn('[Current Missions] Gold eligibility unavailable',error));
    }
    host.querySelectorAll('[data-mission-jelly-student]').forEach(box=>box.addEventListener('change',async()=>{
     const row=byId.get(box.dataset.missionJellyAssignment),t=row&&missionRewardTarget(row),key=box.dataset.missionJellyKey,studentId=box.dataset.missionJellyStudent;
