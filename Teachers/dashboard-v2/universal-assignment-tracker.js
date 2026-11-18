@@ -596,10 +596,10 @@ async function loadOverview(scopeName='my',force=false,options={}){
     'Grammar Genius':row.source_type==='grammar_books'?'/students/grammar-genius/?homework=':'/students/grammar-foundations/?homework=',
     'Writing Genius':'/students/writing-genius/?homework=',
     'Puzzles':'/students/wordsearch/?homework=',
-    'Free Talking Genius':m.mission_mode==='conversation'?'/students/free-talking-genius/?homework=':'/students/free-talking-hybrid-lab/?homework=',
+    'Free Talking Genius':m.mission_mode==='conversation'?'/students/free-talking-hybrid-lab/?release=1&book='+encodeURIComponent(m.book_id||'')+'&unit='+encodeURIComponent(m.unit_id||'')+'&homework=':'/students/free-talking-genius/?book='+encodeURIComponent(m.book_id||'')+'&unit='+encodeURIComponent(m.unit_number||'')+'&homework=',
     '내신':'/students/test-prep-v2/?homework='
    };
-   if(row.app==='Word Genius')return 'https://students.willenaenglish.com/students/word-genius/?homework='+hw;
+   if(row.app==='Word Genius')return 'https://students.willenaenglish.com/students/vocab-study/?open=wordtest&assignment_id='+hw;
    const path=paths[row.app];return path?'https://students.willenaenglish.com'+path+hw+(row.app==='Puzzles'?'&mode='+encodeURIComponent(m.kind||'boggle'):''):null;
   }
   function missionJellyMarkup(st,row){
@@ -714,7 +714,7 @@ async function loadOverview(scopeName='my',force=false,options={}){
      missionJellyCache.delete(key);
      const values=await missionJellyLoad(row);
      host.querySelectorAll('[data-mission-jelly-key]').forEach(other=>{if(other.dataset.missionJellyKey===key&&other.dataset.missionJellyStudent===studentId){other.checked=values.has(studentId);other.disabled=false}});
-     window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId:t.book,unitId:t.unit,app:t.app}}));
+     window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId:t.book,unitId:t.unit,app:t.app,given}}));
     }catch(error){box.checked=!given;box.disabled=false;alert('Jelly Time could not be saved: '+error.message)}
    }));
    host.querySelector('#ccMissionRefresh')?.addEventListener('click',()=>loadOverview('all',true,{className:classMission,stage:classMissionStage}));
