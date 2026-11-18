@@ -12,16 +12,32 @@
   document.querySelectorAll('.cc-assignment-class-tabs [data-cc-switch-class]').forEach(el=>badge(el,byClass.get((el.dataset.ccSwitchClass||'').trim().toLowerCase())||0));
   document.querySelectorAll('[id^="class-mission-"]').forEach(card=>{
    const assignmentId=card.id.slice('class-mission-'.length),items=byAssignment.get(assignmentId)||[];
-   badge(card.querySelector('.ghc-class')||card.querySelector('.ghc-task')||card,items.length);
-   let panel=card.querySelector(':scope > .whn-review-panel');
-   if(!items.length){panel?.remove();return}
-   const signature=items.map(x=>x.key).sort().join('|');if(panel?.dataset.signature===signature)return;
-   if(!panel){panel=document.createElement('div');panel.className='whn-review-panel';card.appendChild(panel)}panel.dataset.signature=signature;
-   panel.innerHTML='<div class="whn-review-title">'+items.length+' finished homework '+(items.length===1?'submission':'submissions')+' to review</div>'+items.map(x=>'<div class="whn-review-row"><span>'+esc(x.studentName||'Student')+'</span><button type="button" data-whn-ack="'+esc(x.key)+'">Mark reviewed</button></div>').join('');
-   panel.querySelectorAll('[data-whn-ack]').forEach(button=>button.addEventListener('click',()=>acknowledge(button.dataset.whnAck,button)));
+   const details=card.querySelector('.ghc-details'),summary=details?.querySelector('summary');
+   if(!details||!summary)return;
+   badge(summary,items.length);
+   // The student progress dropdown is the acknowledgement action, not card viewing.
+   // Keep the listener attached to this details element through ordinary badge redraws.
+   if(!details.dataset.whnBound){
+    details.dataset.whnBound='1';
+    details.addEventListener('toggle',()=>{
+     if(!details.open)return;
+     const unread=pending().filter(x=>x.assignmentId===assignmentId);
+     if(unread.length)void acknowledgeMany(unread);
+    });
+   }
+   // Remove the previous review panel, including any old Mark reviewed controls.
+   card.querySelector(':scope > .whn-review-panel')?.remove();
   });
  }
- async function acknowledge(key,button){const entry=state.items.get(key);if(!entry||state.reviewed.has(key))return;button.disabled=true;try{await api().acknowledge(entry);state.reviewed.add(key);render()}catch(error){button.disabled=false;console.warn('[Homework Notifications] Review failed',error);alert('Could not save homework review. Please try again.')}}
+ async function acknowledgeMany(entries){
+  if(!entries.length)return;
+  // Persist every student's acknowledgement independently; a failed write remains unread.
+  const outcomes=await Promise.allSettled(entries.map(entry=>api().acknowledge(entry)));
+  let failed=0;
+  outcomes.forEach((outcome,index)=>{if(outcome.status==='fulfilled')state.reviewed.add(entries[index].key);else{failed++;console.warn('[Homework Notifications] Save failed',outcome.reason)}});
+  render();
+  if(failed)console.warn('[Homework Notifications] '+failed+' completion acknowledgement(s) could not be saved');
+ }
  async function sync(){try{const rows=await api().list();state.reviewed=new Set((rows||[]).map(r=>r.completion_key));state.ready=true;render()}catch(error){console.warn('[Homework Notifications] Acknowledgements unavailable',error)}}
  function receive(items,{complete=false,errors=[]}={}){if(!Array.isArray(items))return;if(complete){if(errors.length){console.warn('[Homework Notifications] Incomplete progress snapshot',errors);return}state.items.clear();state.complete=true}for(const item of items){if(item.key&&item.assignmentId&&item.studentId)state.items.set(item.key,item)}render()}
  async function refresh(){if(state.refreshing)return;state.refreshing=true;try{await sync();await window.UniversalAssignmentTracker?.loadCompletionSnapshot?.()}catch(error){console.warn('[Homework Notifications] Refresh failed',error)}finally{state.refreshing=false}}
