@@ -568,6 +568,46 @@ async function loadOverview(scopeName='my',force=false,options={}){
     }).join('');
     return '<div class="ghc-student-list">'+rows+'</div>';
   }
+  // Shared Jelly Time: same RPC and four-part reward key as Curriculum Progress.
+  // An assignment with multiple or unknown units deliberately gets no checkbox.
+  const missionJellyCache=new Map(),missionJellyPending=new Map();
+  function missionRewardTarget(row){
+   const m=row.list_meta||{},uuid=/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i;
+   const book=row.book_id||m.source_book_id||m.book_id;
+   const units=Array.isArray(m.source_unit_ids)?m.source_unit_ids:(m.source_unit_id?[m.source_unit_id]:(m.unit_id?[m.unit_id]:[]));
+   const unit=row.unit_id||(units.length===1?units[0]:null);
+   const app=row.app==='Word Genius'?'word':row.app==='Sentence Genius'?'sentence':row.app==='Writing Genius'?'writing':row.app==='Puzzles'?'puzzles':row.app==='Grammar Genius'?'grammar':row.app==='Free Talking Genius'?(m.mission_mode==='conversation'?'freeconversation':'talking'):null;
+   return book&&unit&&app&&uuid.test(String(book))&&uuid.test(String(unit))?{book:String(book),unit:String(unit),app}:null;
+  }
+  function missionRewardKey(row){const t=missionRewardTarget(row);return t?[String(row.class||row.class_name||classMission).toLowerCase(),t.book,t.unit,t.app].join(':'):null}
+  async function missionJellyLoad(row){
+   const t=missionRewardTarget(row),key=missionRewardKey(row);if(!key)return null;
+   if(missionJellyCache.has(key))return missionJellyCache.get(key);
+   if(missionJellyPending.has(key))return missionJellyPending.get(key);
+   const task=get('rpc/teacher_unit_jelly_get_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_class:row.class||row.class_name||classMission,p_book_id:t.book,p_unit_id:t.unit,p_app:t.app})})
+    .then(result=>{const values=new Set((Array.isArray(result)?result:[]).map(x=>id(x.student_id)));missionJellyCache.set(key,values);return values})
+    .finally(()=>missionJellyPending.delete(key));
+   missionJellyPending.set(key,task);return task;
+  }
+  function missionQrUrl(row){
+   const hw=encodeURIComponent(row.id),m=row.list_meta||{};
+   const paths={
+    'Sentence Genius':'/students/sentence-genius/?homework=',
+    'Grammar Genius':row.source_type==='grammar_books'?'/students/grammar-genius/?homework=':'/students/grammar-foundations/?homework=',
+    'Writing Genius':'/students/writing-genius/?homework=',
+    'Puzzles':'/students/wordsearch/?homework=',
+    'Free Talking Genius':m.mission_mode==='conversation'?'/students/free-talking-genius/?homework=':'/students/free-talking-hybrid-lab/?homework=',
+    '내신':'/students/test-prep-v2/?homework='
+   };
+   if(row.app==='Word Genius')return 'https://students.willenaenglish.com/students/word-genius/?homework='+hw;
+   const path=paths[row.app];return path?'https://students.willenaenglish.com'+path+hw+(row.app==='Puzzles'?'&mode='+encodeURIComponent(m.kind||'boggle'):''):null;
+  }
+  function missionJellyMarkup(st,row){
+   const key=missionRewardKey(row),value=key?missionJellyCache.get(key):null;
+   if(!key)return '';
+   return '<label class="cc-mission-jelly" title="Jelly Time is shared with Curriculum Progress"><input type="checkbox" data-mission-jelly-student="'+esc(st.student_id)+'" data-mission-jelly-key="'+esc(key)+'" data-mission-jelly-assignment="'+esc(row.id)+'" '+(value?.has(id(st.student_id))?'checked ':'')+(value?'':'disabled ')+'><span>Jelly</span></label>';
+  }
+  assignmentDateStyle.textContent+='.cc-mission-student{display:flex;align-items:center;gap:9px}.cc-mission-student>span:first-child{min-width:110px}.cc-mission-jelly{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#267a80;white-space:nowrap;cursor:pointer}.cc-mission-jelly input{accent-color:#159b7f;width:15px;height:15px}.cc-mission-jelly input:disabled{opacity:.4}';
   // All Classes > Current Missions consumes the same sources and progress maps
   // as My / All, while presenting each mission in a simple expandable card.
   function renderClassMissions(){
@@ -641,9 +681,9 @@ async function loadOverview(scopeName='my',force=false,options={}){
      const progressRows=p.list.map(st=>({name:st.name,percent:st.pct}));
      const notStarted=p.list.filter(st=>st.pct===0&&!st.done).length;
      const body=p.list.length?
-      cardApi.progressPanel({students:progressRows,average,completed:p.done,notStarted,label:appName+' · Student progress'}):
+      (()=>{let studentIndex=0;return cardApi.progressPanel({students:progressRows,average,completed:p.done,notStarted,label:appName+' · Student progress'}).replace(/<span class="ghc-student-name">[^<]*<\/span>/g,match=>match+missionJellyMarkup(p.list[studentIndex++],r))})():
       '<p class="cc-helper">'+esc(p.note||'No verified student progress available yet.')+'</p>';
-     return cardApi.card({id:'class-mission-'+id(r.id),className:classMission,
+     return cardApi.card({id:'class-mission-'+id(r.id),className:classMission,qrUrl:missionQrUrl(r),
       task:appName+' · '+(r.label||'Mission'),dueAt:r.due_at,teacher:teacherName,
       createdBy:id(r.created_by),progressLabel:'Student progress',progressPercent:average,body});
     }).join('')+'</div>':'<div class="cc-empty">'+(isHistory?'No past missions for this class.':'No current missions for this class.')+'</div>');
@@ -652,6 +692,31 @@ async function loadOverview(scopeName='my',force=false,options={}){
     const average=known.length?Math.round(known.reduce((sum,st)=>sum+Number(st.pct),0)/known.length):null;
     cardApi?.updateRing?.('class-mission-'+id(r.id),average,host);
    }
+   const byId=new Map(current.map(row=>[id(row.id),row]));
+   for(const r of current){
+    if(!missionRewardTarget(r))continue;
+    void missionJellyLoad(r).then(values=>{
+     if(!host.isConnected||generation!==overviewGeneration)return;
+     host.querySelectorAll('[data-mission-jelly-assignment]').forEach(box=>{
+      if(box.dataset.missionJellyAssignment!==id(r.id))return;
+      box.checked=values.has(box.dataset.missionJellyStudent);box.disabled=false;
+     });
+    }).catch(error=>console.warn('[Current Missions] Jelly Time unavailable',error));
+   }
+   host.querySelectorAll('[data-mission-jelly-student]').forEach(box=>box.addEventListener('change',async()=>{
+    const row=byId.get(box.dataset.missionJellyAssignment),t=row&&missionRewardTarget(row),key=box.dataset.missionJellyKey,studentId=box.dataset.missionJellyStudent;
+    if(!t)return;
+    const given=box.checked;
+    if(!given&&!confirm('Clear Jelly Time for this student? This means the reward can be given again.')){box.checked=true;return}
+    box.disabled=true;
+    try{
+     await get('rpc/teacher_unit_jelly_set_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_student_id:studentId,p_book_id:t.book,p_unit_id:t.unit,p_app:t.app,p_given:given})});
+     missionJellyCache.delete(key);
+     const values=await missionJellyLoad(row);
+     host.querySelectorAll('[data-mission-jelly-key]').forEach(other=>{if(other.dataset.missionJellyKey===key&&other.dataset.missionJellyStudent===studentId){other.checked=values.has(studentId);other.disabled=false}});
+     window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId:t.book,unitId:t.unit,app:t.app}}));
+    }catch(error){box.checked=!given;box.disabled=false;alert('Jelly Time could not be saved: '+error.message)}
+   }));
    host.querySelector('#ccMissionRefresh')?.addEventListener('click',()=>loadOverview('all',true,{className:classMission,stage:classMissionStage}));
   }
   function renderOverview(){
