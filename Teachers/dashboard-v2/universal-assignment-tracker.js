@@ -367,11 +367,11 @@ async function loadOverview(scopeName='my',force=false,options={}){
  const loadStarted=performance.now();
  overviewPerf.loads++;
  if(force)invalidateOverviewCache();
- const generation=++overviewGeneration;
+ const generation=snapshotOnly?overviewGeneration:++overviewGeneration;
  if(!snapshotOnly)host.textContent='Loading assignments across apps…';
  try{
   const teacher=await teacherIdentity();
-  overviewSelections.clear();
+  if(!snapshotOnly)overviewSelections.clear();
   const sources=[
    {app:'Word Genius',table:'homework_assignments',select:'id,created_by,class,title,status,active,created_at,due_at,ended_at,list_key,list_meta,source_type',label:r=>r.title||r.class||'Vocabulary homework',isActive:r=>r.active!==false&&!['ended','archived','closed','completed','cancelled'].includes(r.status)},
    {app:'Grammar Genius',table:'grammar_foundation_homework',select:'id,created_by,class_name,module_title,stage_title,active,created_at,due_at,closed_at',label:r=>[r.module_title,r.stage_title].filter(Boolean).join(' · '),isActive:r=>r.active!==false},
