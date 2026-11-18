@@ -1345,7 +1345,7 @@ const curriculum={
 const ccHost=()=>document.querySelector('#view-assignments.active #assignmentClassGrid')||document.getElementById('classGrid');
 window.addEventListener('willena:curriculum-mount',()=>{
  if(!document.querySelector('#view-assignments.active #assignmentClassGrid'))return;
- try{curriculum.assignmentSubview=['curriculum','missions','history','inbox'].includes(sessionStorage.getItem('willena:assignments:all-classes-view'))?sessionStorage.getItem('willena:assignments:all-classes-view'):'curriculum'}catch{}
+ try{curriculum.assignmentSubview=['curriculum','missions','history'].includes(sessionStorage.getItem('willena:assignments:all-classes-view'))?sessionStorage.getItem('willena:assignments:all-classes-view'):'curriculum'}catch{}
  loadClassOverview(true);
 });
 const ccOp='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
@@ -1551,18 +1551,18 @@ function ccRenderDetail(){
  const students=ccClassStudents(c.name),units=book&&curriculum.unitCache.has(book.book_id)?(book._units||[]):[];
  const selected=units.find(u=>u.id===curriculum.selectedUnit);
  const groups=ccSkillGroups;
- const assignmentMode=['missions','history','inbox'].includes(curriculum.assignmentSubview)?curriculum.assignmentSubview:'curriculum';
+ const assignmentMode=['missions','history'].includes(curriculum.assignmentSubview)?curriculum.assignmentSubview:'curriculum';
  // Preserve the horizontal class-strip position across every grid re-render.
  // In particular, selecting a distant class must not jump back to Brown.
  const previousClassStrip=host.querySelector('.cc-assignment-class-tabs');
  const classStripScroll=previousClassStrip?previousClassStrip.scrollLeft:Number(curriculum.classStripScroll)||0;
  if(inAssignments){const status=document.querySelector('#uaStatus');if(status)status.textContent=assignmentMode==='history'?'Past class missions':assignmentMode==='missions'?'Current class missions':'Curriculum progress';}
  host.innerHTML=(inAssignments?
- '<div class="cc-assignment-mode" role="tablist" aria-label="All Classes view"><button type="button" role="tab" data-cc-subview="curriculum" aria-selected="'+(assignmentMode==='curriculum')+'" class="'+(assignmentMode==='curriculum'?'active':'')+'">Curriculum Progress</button><button type="button" role="tab" data-cc-subview="missions" aria-selected="'+(assignmentMode==='missions')+'" class="'+(assignmentMode==='missions'?'active':'')+'">Current Missions</button><button type="button" role="tab" data-cc-subview="history" aria-selected="'+(assignmentMode==='history')+'" class="'+(assignmentMode==='history'?'active':'')+'">Past Missions</button><button type="button" role="tab" data-cc-subview="inbox" aria-selected="'+(assignmentMode==='inbox')+'" class="'+(assignmentMode==='inbox'?'active':'')+'">HW Inbox</button></div>'+
+ '<div class="cc-assignment-mode" role="tablist" aria-label="All Classes view"><button type="button" role="tab" data-cc-subview="curriculum" aria-selected="'+(assignmentMode==='curriculum')+'" class="'+(assignmentMode==='curriculum'?'active':'')+'">Curriculum Progress</button><button type="button" role="tab" data-cc-subview="missions" aria-selected="'+(assignmentMode==='missions')+'" class="'+(assignmentMode==='missions'?'active':'')+'">Current Missions</button><button type="button" role="tab" data-cc-subview="history" aria-selected="'+(assignmentMode==='history')+'" class="'+(assignmentMode==='history'?'active':'')+'">Past Missions</button></div>'+
  '<div class="cc-assignment-class-tabs" role="tablist" aria-label="Active classes">'+classes.map(item=>'<button type="button" role="tab" data-cc-switch-class="'+ccEscape(item.name)+'" aria-selected="'+(item.name===c.name)+'" class="'+(item.name===c.name?'active':'')+'">'+ccEscape(item.display_name||item.name)+'</button>').join('')+'</div>':
  '<div class="cc-detail-top">'+ccButton('← All classes','back','cc-back')+
  '<div><h2>'+ccEscape(c.name)+'</h2><p>'+students.length+' students · Curriculum coverage</p></div>'+ccButton('Open students','students')+'</div>')+
- (inAssignments&&(assignmentMode==='missions'||assignmentMode==='history'||assignmentMode==='inbox')?'<div id="uaClassMissions" class="cc-class-missions" aria-live="polite"><div class="cc-empty">Loading missions…</div></div>':
+ (inAssignments&&(assignmentMode==='missions'||assignmentMode==='history')?'<div id="uaClassMissions" class="cc-class-missions" aria-live="polite"><div class="cc-empty">Loading missions…</div></div>':
  !books.length?'<div class="cc-empty">No textbooks are assigned to this class. Assign a book from class management first.</div>':
  (inAssignments?'<div class="cc-assignment-bookline"><div class="cc-book-tabs">':'<div class="cc-book-tabs">')+
  books.map(b=>'<button type="button" class="'+(b.id===book.id?'active':'')+'" data-cc-book="'+ccEscape(b.id)+'">'+ccEscape(b.book_title||'Textbook')+'</button>').join('')+
@@ -1590,9 +1590,9 @@ function ccRenderDetail(){
   try{sessionStorage.setItem('willena:assignments:all-classes-view',value)}catch{}
   ccRenderDetail();
  }));
- if(inAssignments&&(assignmentMode==='missions'||assignmentMode==='history'||assignmentMode==='inbox')){
+ if(inAssignments&&(assignmentMode==='missions'||assignmentMode==='history')){
   const load=window.UniversalAssignmentTracker?.loadClassMissions;
-  if(load)void load(c.name,assignmentMode==='history'?'history':assignmentMode==='inbox'?'inbox':'active');else{
+  if(load)void load(c.name,assignmentMode==='history'?'history':'active');else{
    const slot=host.querySelector('#uaClassMissions');
    if(slot)slot.innerHTML='<div class="cc-empty">Assignment tracker unavailable. Refresh the dashboard.</div>';
   }
