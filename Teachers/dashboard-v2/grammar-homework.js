@@ -130,6 +130,16 @@ function paintStudentView(){
    el.querySelectorAll('[data-gf-student]').forEach(next=>{if(next.dataset.gfStudent===id)next.focus({preventScroll:true})});
  });
 }
+function grammarStudentPanel(shared,data){
+ const all=Array.isArray(data?.students)?data.students:[];
+ const total=Number(data?.total)||0,done=Number(data?.completed)||0;
+ const students=all.map(st=>({
+  id:st.student_id||st.id||'',name:st.name||st.korean_name||'Student',
+  percent:st.percent!==null&&st.percent!==undefined&&st.percent!==''&&Number.isFinite(Number(st.percent))?Number(st.percent):(st.complete===true?100:null)
+ }));
+ return shared.progressPanel({students,average:total>0?100*done/total:null,completed:done,
+  notStarted:all.filter(st=>!st.attempts&&!st.complete).length,label:'Class progress',summary:done+'/'+total+' students completed'});
+}
 async function paintBatchView(){
  const el=$('#gfHwManageBody');if(!el)return;
  const entries=state.items.filter(a=>state.filter==='history'?!a.active:a.active);
@@ -156,8 +166,7 @@ async function paintBatchView(){
     const total=Number(data.total)||0,done=Number(data.completed)||0;
     shared.updateRing(a.id,total>0?100*done/total:null,el);
     const detail=card.querySelector('#gfHwDetail-'+CSS.escape(String(a.id)));
-    if(detail)detail.innerHTML='<div class="gf-hw-progress-summary">'+done+'/'+total+' students completed</div>'+
-     '<div class="gf-hw-students">'+(data.students||[]).map(st=>'<div class="gf-hw-student"><span>'+esc(st.name||st.korean_name||'Student')+'</span><span>'+esc(st.attempts?'Best '+st.best_score+'/'+st.total:'Not started')+'</span><strong class="'+(st.complete?'gf-hw-done':'')+'">'+(st.complete?'Complete':esc(st.percent)+'%')+'</strong></div>').join('')+'</div>';
+    if(detail)detail.innerHTML=grammarStudentPanel(shared,data);
    }
    return;
   }catch(error){console.warn('Grammar batch unavailable, falling back',error);}
@@ -175,8 +184,7 @@ async function paintBatchView(){
     shared.updateRing(a.id,total>0?100*done/total:null,el);
     const detail=card.querySelector('#gfHwDetail-'+CSS.escape(String(a.id)));
     if(detail){
-     detail.innerHTML='<div class="gf-hw-progress-summary">'+done+'/'+total+' students completed</div>'+
-      '<div class="gf-hw-students">'+(data.students||[]).map(st=>'<div class="gf-hw-student"><span>'+esc(st.name||st.korean_name||'Student')+'</span><span>'+esc(st.attempts?'Best '+st.best_score+'/'+st.total:'Not started')+'</span><strong class="'+(st.complete?'gf-hw-done':'')+'">'+(st.complete?'Complete':esc(st.percent)+'%')+'</strong></div>').join('')+'</div>';
+     detail.innerHTML=grammarStudentPanel(shared,data);
     }
    }catch(e){
     const detail=card.querySelector('.ghc-content');if(detail)detail.textContent='Unable to load progress: '+e.message;
