@@ -67,13 +67,14 @@ async function loadBooks(){
  for(const row of Array.isArray(rows)?rows:[]){
   const id=String(row.id),isTen=id===ACTIVE_BOOK_ID,key=isTen?'grammar_ten_2':COURSE_BOOKS[id];
   if(!key)continue;
-  const r=await fetch(CONTENT+'content_units?select=unit_number,title,metadata&book_id=eq.'+encodeURIComponent(id)+'&status=eq.published&order=unit_number.asc&limit=200',{headers,cache:'no-store'});
+  const r=await fetch(CONTENT+'content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(id)+'&status=eq.published&order=unit_number.asc&limit=200',{headers,cache:'no-store'});
   if(!r.ok)throw Error('Grammar units unavailable ('+r.status+')');
   const raw=await r.json(),grouped=new Map();
   for(const unit of Array.isArray(raw)?raw:[]){
    const chapter=isTen?Number(unit.metadata?.chapter_number):Number(unit.unit_number);
    if(!Number.isInteger(chapter)||chapter<1||chapter>(isTen?11:8))continue;
-   if(!grouped.has(chapter))grouped.set(chapter,{number:chapter,title:String((isTen?unit.metadata?.chapter_title:unit.title)||'Unit '+chapter)});
+   if(!grouped.has(chapter))grouped.set(chapter,{number:chapter,title:String((isTen?unit.metadata?.chapter_title:unit.title)||'Unit '+chapter),unitIds:[]});
+   if(unit.id)grouped.get(chapter).unitIds.push(String(unit.id));
   }
   const units=[...grouped.values()].sort((a,b)=>a.number-b.number);
   books.push({id,title:String(row.title||'Grammar book'),bookKey:key,playable:units.length===(isTen?11:8),units});
@@ -296,7 +297,18 @@ async function drawManage(){
  $$('[data-gb-stage]',el).forEach(b=>b.onclick=()=>{store.history=b.dataset.gbStage==='history';void drawManage()});
  $('#gbHwRefresh',el).onclick=()=>drawManage();
  const shared=window.WillenaGeniusHomeworkCard;
- if(shared){for(const a of rows)shared.updateRing(a.id,progressFor(a).pct,el);void shared.hydrateTeachers(el)}
+ if(shared){
+  for(const a of rows)shared.updateRing(a.id,progressFor(a).pct,el);
+  void shared.hydrateTeachers(el);
+  // Reward keys are a specific content unit, never a whole multi-unit chapter.
+  for(const a of rows){
+   const book=(store.books||[]).find(b=>b.id===a.list_meta?.source_book_id);
+   const chapter=(book?.units||[]).find(u=>u.number===Number(a.list_meta?.chapter));
+   if(chapter?.unitIds?.length!==1)continue;
+   const card=Array.from(el.querySelectorAll('[data-genius-card]')).find(node=>node.dataset.geniusCard===String(a.id));
+   if(card)void shared.jellyRows(card,{className:a.class,bookId:book.id,unitId:chapter.unitIds[0],app:'grammar'}).catch(error=>console.warn('[Grammar Genius] Gold rewards',error));
+  }
+ }
  $$('[data-gb-edit]',el).forEach(b=>b.onclick=()=>editAssignment(b.dataset.gbEdit));
 
  }catch(error){el.innerHTML='<div class="gf-hw-error">Book homework unavailable: '+esc(error.message)+'</div>'}
