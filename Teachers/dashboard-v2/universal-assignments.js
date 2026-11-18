@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const root=document.getElementById('universalAssignments');if(!root)return;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const apps=[{id:'classes',label:'All Classes',sub:'Curriculum homework planner',icon:'▦'},{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'All',sub:'All homework',icon:'▦'},{id:'activity',label:'Activity',sub:'Recent completed homework',icon:'✓'},{id:'calendar',label:'Calendar',sub:'Assignment dates',icon:'▦'},{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'free-talking',label:'Free Talking Genius',sub:'Speaking missions',icon:'FT'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'writing',label:'Writing Genius',sub:'Diaries & topic writing',icon:'✎'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
+const apps=[{id:'classes',label:'All Classes',sub:'Curriculum homework planner',icon:'▦'},{id:'my',label:'My',sub:'My homework',icon:'◎'},{id:'all',label:'All',sub:'All homework',icon:'▦'},{id:'calendar',label:'Calendar',sub:'Assignment dates',icon:'▦'},{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'sentence',label:'Sentence Genius',sub:'Sentence speaking & building',icon:'S'},{id:'free-talking',label:'Free Talking Genius',sub:'Speaking missions',icon:'FT'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'writing',label:'Writing Genius',sub:'Diaries & topic writing',icon:'✎'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
 
 // Retire the old homework completion counter. It measured historical completions,
 // not actionable homework, and had no remaining acknowledgement interface.
@@ -14,7 +14,7 @@ const stateKey='willena.teachers.assignments.v2';
 let saved={};try{saved=JSON.parse(sessionStorage.getItem(stateKey)||'{}')||{}}catch{}
 let active=apps.some(a=>a.id===saved.active)?saved.active:'classes',loading=false,groups=[];
 const remember=()=>{try{sessionStorage.setItem(stateKey,JSON.stringify({active,subviews,scrollLeft:(root.querySelector('.ua-app-tabs')?.scrollLeft??Number(saved.scrollLeft)??0)}))}catch{}};
-const subviews={activity:'manage',classes:'manage',my:'manage',all:'manage',calendar:'manage',naesin:'manage',word:'manage',grammar:'manage','free-talking':'manage',sentence:'manage',puzzles:'manage',writing:'manage'};
+const subviews={classes:'manage',my:'manage',all:'manage',calendar:'manage',naesin:'manage',word:'manage',grammar:'manage','free-talking':'manage',sentence:'manage',puzzles:'manage',writing:'manage'};
 Object.keys(subviews).forEach(k=>{if(saved.subviews?.[k]==='create'||saved.subviews?.[k]==='manage')subviews[k]=saved.subviews[k]});
 let wordPanel=null,wordHome=null;
 function restoreWordPanel(){if(wordPanel&&wordHome&&wordPanel.parentElement!==wordHome)wordHome.appendChild(wordPanel)}
@@ -354,36 +354,6 @@ function activate(){
  };
  ready();
 }
-
-const uaActivity={rows:[],seen:new Set(),loading:false,filter:'all',error:'',ready:false};
-function uaActivityRender(){
- const host=root.querySelector('#uaActivityFeed');if(!host)return;
- const a=uaActivity,classes=[...new Set(a.rows.map(r=>r.className))].sort();
- const filtered=a.rows.filter(r=>a.filter==='all'||r.className===a.filter);
- const unread=a.rows.filter(r=>!a.seen.has(r.key)).length;
- const options='<option value="all">All classes</option>'+classes.map(n=>'<option value="'+esc(n)+'"'+(a.filter===n?' selected':'')+'>'+esc(n)+'</option>').join('');
- host.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0"><label for="uaActivityClass">Class</label><select id="uaActivityClass" class="control">'+options+'</select><strong style="margin-left:auto">'+unread+' new</strong><button type="button" id="uaActivitySeen" class="control">Mark all seen</button></div>'+
- (a.error?'<div class="empty">'+esc(a.error)+'</div>':filtered.length?filtered.map(r=>'<div style="display:flex;align-items:center;gap:12px;padding:13px 8px;border-bottom:1px solid #dce7eb;background:'+(!a.seen.has(r.key)?'#f0fafb':'transparent')+'"><span style="width:9px;height:9px;border-radius:50%;background:'+(!a.seen.has(r.key)?'#dc4040':'transparent')+'"></span><div style="flex:1"><strong>'+esc(r.name)+'</strong> · '+esc(r.className)+'<div>'+esc(r.title)+'</div></div><small>'+esc(new Date(r.time).toLocaleString('en-GB',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}))+'</small></div>').join(''):'<div class="empty">'+(a.loading?'Loading…':'No completed homework found.')+'</div>');
- host.querySelector('#uaActivityClass')?.addEventListener('change',e=>{a.filter=e.target.value;uaActivityRender()});
- host.querySelector('#uaActivitySeen')?.addEventListener('click',()=>{filtered.forEach(r=>a.seen.add(r.key));try{localStorage.setItem('willena:ua-activity-seen',JSON.stringify([...a.seen].slice(-1500)))}catch{}uaActivityRender()});
-}
-async function uaActivityLoad(){
- const a=uaActivity;if(a.loading)return;a.loading=true;
- try{
-  const response=await fetch('/.netlify/functions/homework_api?action=teacher_homework_status',{credentials:'include'});
-  if(!response.ok)throw Error('Homework activity request failed ('+response.status+')');
-  const data=await response.json();if(data.success===false)throw Error(data.error||'Activity unavailable');
-  const rows=[];
-  for(const assignment of data.assignments||[])for(const student of assignment.done||[]){
-   if(!student.completed_at||!Number.isFinite(Date.parse(student.completed_at)))continue;
-   rows.push({key:String(assignment.assignment_id)+':'+String(student.user_id),className:String(assignment.class||''),name:student.name||student.korean_name||'Student',title:assignment.assignment_title||'Homework',time:student.completed_at});
-  }
-  rows.sort((x,y)=>Date.parse(y.time)-Date.parse(x.time));a.rows=rows;a.error='';
-  if(!a.ready){try{a.seen=new Set(JSON.parse(localStorage.getItem('willena:ua-activity-seen')||'[]'))}catch{}a.ready=true}
- }catch(e){a.error=e.message||'Activity unavailable'}finally{a.loading=false;uaActivityRender()}
-}
-setInterval(()=>{if(active==='activity'&&!document.hidden&&root.closest('.view')?.classList.contains('active'))void uaActivityLoad()},30000);
-
 function groupRows(){return window.NaesinV2Data?.getCachedGroups?.()||[]}
 function render(){
  restoreWordPanel();
@@ -392,11 +362,11 @@ function render(){
  const selected=apps.find(a=>a.id===active),sub=subviews[active];
  root.innerHTML=
  '<div class="ua-app-tabs" role="tablist" aria-label="Assignment app">'+apps.map(a=>'<button type="button" role="tab" aria-selected="'+(active===a.id)+'" class="ua-app-tab'+(active===a.id?' active':'')+'" data-ua-tab="'+a.id+'"><span class="ua-app-icon" aria-hidden="true">'+a.icon+'</span><span class="ua-app-label"><b>'+a.label+'</b></span></button>').join('')+'</div>'+
- '<section class="ua-workspace" aria-label="'+selected.label+' assignments"><div class="ua-section-heading"><div><div class="ua-eyebrow">'+(['my','all','calendar','classes','activity'].includes(active)?'REVIEW HOMEWORK':'CREATE & MANAGE')+'</div><h3>'+selected.label+'</h3></div><span class="ua-section-count" id="uaStatus">'+(active==='classes'?'Curriculum progress':active==='naesin'?groups.length+' exam groups':active==='word'?'Word Genius homework':active==='free-talking'?'Connected · Free Talking Genius':active==='grammar'?'Connected · Grammar Genius':active==='sentence'?'Connected · Sentence Genius':active==='writing'?'Writing homework':active==='puzzles'?'Puzzle homework':'Homework overview')+'</span></div>'+
+ '<section class="ua-workspace" aria-label="'+selected.label+' assignments"><div class="ua-section-heading"><div><div class="ua-eyebrow">'+(['my','all','calendar','classes'].includes(active)?'REVIEW HOMEWORK':'CREATE & MANAGE')+'</div><h3>'+selected.label+'</h3></div><span class="ua-section-count" id="uaStatus">'+(active==='classes'?'Curriculum progress':active==='naesin'?groups.length+' exam groups':active==='word'?'Word Genius homework':active==='free-talking'?'Connected · Free Talking Genius':active==='grammar'?'Connected · Grammar Genius':active==='sentence'?'Connected · Sentence Genius':active==='writing'?'Writing homework':active==='puzzles'?'Puzzle homework':'Homework overview')+'</span></div>'+
  (['my','all','calendar','classes'].includes(active)?'':'<div class="ua-subtabs" role="tablist" aria-label="Homework workflow"><button type="button" role="tab" data-ua-sub="manage" class="ua-subtab'+(sub==='manage'?' active':'')+'" aria-selected="'+(sub==='manage')+'">Manage Homework</button><button type="button" role="tab" data-ua-sub="create" class="ua-subtab'+(sub==='create'?' active':'')+'" aria-selected="'+(sub==='create')+'">Assign Mission</button></div>')+
  '<div class="ua-app-body" id="uaAppBody"></div></section>';
  const nextStrip=root.querySelector('.ua-app-tabs');if(nextStrip){nextStrip.scrollLeft=previousScroll;nextStrip.addEventListener('scroll',()=>{try{const value=JSON.parse(sessionStorage.getItem(stateKey)||'{}');value.scrollLeft=nextStrip.scrollLeft;sessionStorage.setItem(stateKey,JSON.stringify(value))}catch{}},{passive:true})}
- root.querySelectorAll('[data-ua-tab]').forEach(b=>b.addEventListener('click',()=>{const next=b.dataset.uaTab;if(!['my','all','calendar','classes','activity'].includes(next))subviews[next]=subviews[active];active=next;remember();render()}));
+ root.querySelectorAll('[data-ua-tab]').forEach(b=>b.addEventListener('click',()=>{const next=b.dataset.uaTab;if(!['my','all','calendar','classes'].includes(next))subviews[next]=subviews[active];active=next;remember();render()}));
  root.querySelectorAll('[data-ua-sub]').forEach(b=>b.addEventListener('click',()=>{subviews[active]=b.dataset.uaSub;remember();render()}));
  const body=root.querySelector('#uaAppBody');
  if(active==='classes'){
@@ -405,7 +375,6 @@ function render(){
   
   return;
  }
- if(active==='activity'){body.innerHTML='<div id="uaActivityFeed" aria-live="polite">Loading completed homework…</div>';void uaActivityLoad();return;}
  if(active==='calendar'){body.innerHTML='<div id="uaCalendar">Loading calendar…</div>';window.UniversalAssignmentTracker?.loadCalendar?.();return}
  if(active==='my'||active==='all'){
    body.innerHTML='<div id="uaOverview" aria-live="polite">Loading cross-app homework…</div>';
