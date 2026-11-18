@@ -311,10 +311,14 @@ try{
 </section>
 <style>
 /* Curriculum Class View */
-.cc-jelly-label{display:flex;align-items:center;gap:9px;margin-top:12px;padding:10px 11px;border:1px solid #e8c66b;background:#fff9e8;border-radius:10px;color:#805e14;font-size:12px;font-weight:800;cursor:pointer}
-.cc-jelly-label:has(input:checked){background:#e9f8ef;border-color:#a5d9b4;color:#287549}
-.cc-jelly-label input{width:17px;height:17px;accent-color:#189b72;cursor:pointer}
-.cc-jelly-label input:disabled{cursor:wait;opacity:.65}
+/* Gold reward uses the same compact affordance as Current Missions. */
+.cc-jelly-label{display:inline-flex;align-items:center;gap:5px;flex:none;margin:0;padding:0;border:0;background:transparent;color:#936d0b;font-size:11px;font-weight:650;cursor:pointer;white-space:nowrap}
+.cc-jelly-label:has(input:checked){background:transparent;border:0;color:#936d0b}
+.cc-jelly-label input{width:16px;height:16px;margin:0;accent-color:#168b62;cursor:pointer}
+.cc-jelly-label input:disabled{cursor:wait;opacity:.5}
+.cc-jelly-label svg{width:17px;height:17px;flex:none}
+.cc-student-top>.cc-jelly-label{margin-right:auto}
+.cc-student-top>.cc-percent-muted{margin-left:auto}
 .curriculum-root{font-family:inherit;color:#233d4c}
 .cc-assignment-mode{display:flex;gap:7px;margin:3px 0 17px;padding:5px;background:#eef4f5;border:1px solid #dce7eb;border-radius:14px;max-width:660px}
 .cc-assignment-mode button{flex:1;min-width:0;border:0;border-radius:10px;background:transparent;color:#59717a;font:inherit;font-size:13px;font-weight:750;padding:12px 8px;cursor:pointer}
@@ -1626,6 +1630,13 @@ function ccRenderDetail(){
   try{await ccRpc('teacher_curriculum_set_unit_v1',{p_assignment_id:book.id,p_unit:val});book.current_unit=val;ccRenderDetail()}
   catch(e){taught.disabled=false;taught.value=before||'';alert('Could not save current unit: '+e.message)}
  }}
+ // Reward badges are rendered only for completed units. Move them into the
+ // student's heading without changing the unit progress cards or data source.
+ host.querySelectorAll('.cc-student-grid .cc-jelly-label').forEach(label=>{
+  const heading=label.closest('.cc-student-row')?.querySelector('.cc-student-top');
+  const studentName=heading?.querySelector('strong');
+  if(studentName)studentName.after(label);
+ });
  host.querySelectorAll('[data-cc-jelly-student]').forEach(box=>box.onchange=async()=>{
   const studentId=box.dataset.ccJellyStudent,app=curriculum.selectedSkill,unit=units.find(u=>u.id===curriculum.selectedUnit);
   if(!unit||!book||!ccSkillGroups.some(group=>group.key===app))return;
@@ -1636,7 +1647,7 @@ function ccRenderDetail(){
    await ccRpc('teacher_unit_jelly_set_v1',{p_student_id:studentId,p_book_id:book.book_id,p_unit_id:unit.id,p_app:app,p_given:!before});
    curriculum.jellyRewards.delete(ccJellyKey(book,unit,app));
    await ccLoadJelly(book,unit,app);
-   window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId:book.book_id,unitId:unit.id,app}}));
+   window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId:book.book_id,unitId:unit.id,app,given:!before}}));
    ccRenderDetail();
   }catch(e){box.checked=before;box.disabled=false;alert('Jelly Time could not be saved: '+e.message)}
  });
@@ -1801,7 +1812,7 @@ window.WillenaGoldEligibility=async function({className,bookId,unitId,app}={}){
 function ccJellyControl(studentId,done,jelly){
  if(!done)return '';
  const given=jelly?.has(String(studentId));
- return '<label class="cc-jelly-label"><input type="checkbox" data-cc-jelly-student="'+ccEscape(studentId)+'" '+(given?'checked ':'')+(jelly?'':'disabled ')+'><span>🍬 Jelly Time'+(given?' · Given ✓':jelly?' · Not given':' · Loading…')+'</span></label>';
+ return '<label class="cc-jelly-label" title="Golden Unit — mark reward given"><svg viewBox="0 0 24 24" fill="none" stroke="#bb8a0a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="m8.5 12-1 9 4.5-2.7 4.5 2.7-1-9"/></svg><input type="checkbox" aria-label="Gold reward given" data-cc-jelly-student="'+ccEscape(studentId)+'" '+(given?'checked ':'')+(jelly?'':'disabled ')+'></label>';
 }
 function ccRenderStudentDrilldown(book,unit,group){
  if(!group)return '';
