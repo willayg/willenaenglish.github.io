@@ -92,13 +92,14 @@ function renderManage(host){
   '<select class="control" id="ftTeacherClassFilter"><option value="all">All classes</option>'+classes.map(c=>'<option value="'+esc(c)+'"'+(state.classFilter===c?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select>'+
   '<button type="button" class="control" data-ft-refresh>Refresh</button></div>'+
   '<div class="ua-genius-manage-list">'+(rows.length?cards.groupByDate(rows,a=>{
-   const p=stats(a),body=cards.progressPanel({students:p.students,average:p.avg,completed:p.completed,notStarted:p.notStarted,label:isConversation(a)?'AI conversation · 8 contributions':'Speaking · 8 questions'});
+   const p=stats(a);let jellyIndex=0;const body=cards.progressPanel({students:p.students,average:p.avg,completed:p.completed,notStarted:p.notStarted,label:isConversation(a)?'AI conversation · 8 contributions':'Speaking · 8 questions'}).replace(/<span class="ghc-student-name">[^<]*<\/span>/g,match=>{const st=p.students[jellyIndex++];return st?match.replace('<span class="ghc-student-name">','<span class="ghc-student-name" data-jelly-id="'+esc(st.student_id||st.id||'')+'">'):match});
    const actions='<div class="ua-actions">'+(state.history
     ?'<button class="control ua-primary" type="button" data-ft-restore="'+esc(a.id)+'">Restore to Current</button>'
     :'<button class="control" type="button" data-ft-end="'+esc(a.id)+'">End mission</button>')+'</div>';
    return cards.card({id:a.id,className:a.class,task:a.title,createdBy:a.created_by,teacher:a.teacher_name||'Teacher',dueAt:a.due_at,progressLabel:'Student progress',progressPercent:p.avg,body,action:actions,qrUrl:unitUrl(a)});
   }):'<div class="ua-empty">No '+(state.history?'previous':'current')+' Free Talking missions.</div>')+'</div>';
  for(const a of rows){const p=stats(a);cards.updateRing(a.id,p.avg,host)}
+ for(const a of rows){const card=Array.from(host.querySelectorAll('[data-genius-card]')).find(el=>el.dataset.geniusCard===String(a.id));if(!card)continue;const meta=a.list_meta||{};void cards.jellyRows?.(card,{className:a.class,bookId:meta.book_id||meta.source_book_id,unitId:meta.unit_id||meta.source_unit_id,app:isConversation(a)?'freeconversation':'talking'}).catch(e=>console.warn('[Free Talking] Jelly Time',e))}
  $$('[data-ft-period]',host).forEach(b=>b.onclick=()=>{state.history=b.dataset.ftPeriod==='history';renderManage(host)});
  $('#ftTeacherClassFilter',host).onchange=e=>{state.classFilter=e.target.value;renderManage(host)};
  $('[data-ft-refresh]',host).onclick=()=>void showManage(host,true);
