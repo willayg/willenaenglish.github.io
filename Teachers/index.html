@@ -1781,7 +1781,7 @@ window.addEventListener('willena:jelly-changed',event=>{
   if(key.includes(':'+d.bookId+':'+d.unitId+':'+d.app))curriculum.jellyRewards.delete(key);
  }
  const book=(curriculum.data?.books||[]).find(b=>b.id===curriculum.selectedBook);
- if(book&&book.book_id===d.bookId&&curriculum.selectedUnit===d.unitId&&curriculum.selectedSkill===d.app){
+ if(curriculum.assignmentSubview!=='rewards'&&book&&book.book_id===d.bookId&&curriculum.selectedUnit===d.unitId&&curriculum.selectedSkill===d.app){
   ccUnits(book.book_id).then(units=>{
    const unit=units.find(u=>u.id===d.unitId);
    if(unit)return ccLoadJelly(book,unit,d.app).then(()=>ccRenderDetail());
