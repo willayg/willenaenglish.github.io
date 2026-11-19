@@ -1542,7 +1542,7 @@ async function ccOpenClass(name){
 /* Outstanding Jelly Time: independently verified Golden Units, grouped by student.
    Reward state comes from the same teacher_unit_jelly_* RPCs as Curriculum Progress. */
 const ccRewardStyle=document.createElement('style');
-ccRewardStyle.textContent='.cc-outstanding-rewards{padding:14px 2px}.cc-reward-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}.cc-reward-summary strong{font-size:15px;color:#294b58}.cc-reward-summary small{display:block;color:#6b7d85;font-size:12px}.cc-reward-refresh{padding:8px 13px;border:1px solid #c7dce0;background:#fff;border-radius:10px;color:#147b89;cursor:pointer;font-weight:700}.cc-reward-list{display:grid;gap:10px}.cc-reward-student{border:1px solid #dce8eb;border-radius:14px;padding:12px 15px;background:#fff}.cc-reward-name{font-weight:750;color:#234855;margin-bottom:7px}.cc-reward-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #eef2f3}.cc-reward-entry span{font-size:13px;color:#455d66}.cc-reward-entry small{color:#71848c;font-size:11px}.cc-reward-give{padding:7px 12px;background:#f9f0cc;color:#75530c;border:1px solid #e8d282;border-radius:9px;cursor:pointer;font-weight:700;white-space:nowrap}.cc-reward-give:disabled{opacity:.55;cursor:wait}.cc-reward-error{color:#b45309;font-size:12px;margin-top:10px}.cc-reward-empty{padding:28px 12px;text-align:center;color:#62808a;border:1px dashed #d4e5e8;border-radius:13px}';
+ccRewardStyle.textContent='.cc-outstanding-rewards{padding:14px 2px}.cc-reward-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}.cc-reward-summary strong{font-size:15px;color:#294b58}.cc-reward-summary small{display:block;color:#6b7d85;font-size:12px}.cc-reward-refresh{padding:8px 13px;border:1px solid #c7dce0;background:#fff;border-radius:10px;color:#147b89;cursor:pointer;font-weight:700}.cc-reward-list{display:grid;gap:10px}.cc-reward-student{border:1px solid #dce8eb;border-radius:14px;padding:12px 15px;background:#fff}.cc-reward-name{font-weight:750;color:#234855;margin-bottom:7px;display:flex;align-items:center;gap:10px}.cc-reward-name small{font-weight:500;color:#72858c}.cc-reward-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0 9px 34px;border-top:1px solid #eef2f3}.cc-reward-entry span{font-size:13px;color:#455d66}.cc-reward-entry small{color:#71848c;font-size:11px}.cc-reward-check{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;flex:none;cursor:pointer}.cc-reward-check input{appearance:none;-webkit-appearance:none;width:20px;height:20px;border-radius:6px;border:2px solid #b5cdd3;background:white;cursor:pointer;display:grid;place-content:center;margin:0;transition:background .15s,border-color .15s}.cc-reward-check input:checked{background:#168b80;border-color:#168b80}.cc-reward-check input:checked:after{content:"";width:10px;height:6px;border-left:2px solid white;border-bottom:2px solid white;transform:rotate(-45deg) translate(1px,-1px)}.cc-reward-check input:focus-visible{outline:3px solid #7ccbd0;outline-offset:2px}.cc-reward-check input:disabled{cursor:wait;opacity:.5}.cc-reward-check:has(input:disabled){cursor:wait}.cc-reward-error{color:#b45309;font-size:12px;margin-top:10px}.cc-reward-empty{padding:28px 12px;text-align:center;color:#62808a;border:1px dashed #d4e5e8;border-radius:13px}@media(max-width:600px){.cc-reward-entry{padding-left:30px}}';
 document.head.appendChild(ccRewardStyle);
 let ccRewardRequest=0;
 function ccRewardStudentName(student){
@@ -1557,9 +1557,29 @@ async function ccLoadOutstandingRewards(className){
  const roster=ccClassStudents(className);
  const studentById=new Map(roster.map(s=>[String(s.id),s]));
  const entries=[],errors=[];
- let checked=0,total=0;
+ let checked=0,total=0,loading=true,saving=false;
  const live=()=>run===ccRewardRequest&&curriculum.assignmentSubview==='rewards'&&curriculum.selectedClass===className&&host.isConnected;
- function paint(loading=false){
+ async function saveRewards(batch){
+  if(saving||loading||!live()||!batch.length)return;
+  saving=true;paint();
+  let saved=0;
+  const failed=[];
+  // Wait for each write. Never remove an entry until the shared reward RPC confirms it.
+  for(const entry of batch){
+   try{
+    await ccRpc('teacher_unit_jelly_set_v1',{p_student_id:entry.studentId,p_book_id:entry.bookId,p_unit_id:entry.unitId,p_app:entry.app,p_given:true});
+    saved++;
+    const index=entries.findIndex(e=>e.key===entry.key);
+    if(index!==-1)entries.splice(index,1);
+    window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId:entry.studentId,bookId:entry.bookId,unitId:entry.unitId,app:entry.app,given:true}}));
+   }catch(error){failed.push(entry.appName+' Unit '+entry.unitNumber+': '+(error.message||'Save failed'))}
+  }
+  if(!live())return;
+  saving=false;
+  if(failed.length)errors.push('Could not mark '+failed.length+' of '+batch.length+' rewards as given. '+failed[0]);
+  paint();
+ }
+ function paint(){
   if(!live())return;
   const grouped=new Map();
   for(const entry of entries){
@@ -1567,24 +1587,24 @@ async function ccLoadOutstandingRewards(className){
    grouped.get(entry.studentId).push(entry);
   }
   const people=[...grouped].sort((a,b)=>ccRewardStudentName(studentById.get(a[0])||{}).localeCompare(ccRewardStudentName(studentById.get(b[0])||{}),'en'));
-  host.innerHTML='<div class="cc-reward-summary"><div><strong>'+entries.length+' outstanding Jelly Time'+(entries.length===1?'':'s')+' · '+people.length+' student'+(people.length===1?'':'s')+'</strong><small>'+(loading?'Checking earned Gold units: '+checked+' / '+total+' combinations…':'Earned Golden Units that have not been rewarded')+'</small></div><button class="cc-reward-refresh" type="button" id="ccRewardRefresh">Refresh</button></div>'+
-   (people.length?'<div class="cc-reward-list">'+people.map(([studentId,items])=>'<article class="cc-reward-student"><div class="cc-reward-name">'+ccEscape(ccRewardStudentName(studentById.get(studentId)||{}))+' <small>('+items.length+')</small></div>'+items.map((entry)=>'<div class="cc-reward-entry"><span><strong>'+ccEscape(entry.appName)+'</strong> · '+ccEscape(entry.bookTitle)+' · Unit '+ccEscape(entry.unitNumber)+(entry.unitTitle?' <small>'+ccEscape(entry.unitTitle)+'</small>':'')+'</span><button type="button" class="cc-reward-give" data-reward-id="'+ccEscape(entry.key)+'">Mark given</button></div>').join('')+'</article>').join('')+'</div>':
+  const disabled=loading||saving?' disabled':'';
+  host.innerHTML='<div class="cc-reward-summary"><div><strong>'+entries.length+' outstanding Jelly Time'+(entries.length===1?'':'s')+' · '+people.length+' student'+(people.length===1?'':'s')+'</strong><small>'+(loading?'Checking earned Gold units: '+checked+' / '+total+' combinations…':saving?'Saving given rewards…':'Earned Golden Units that have not been rewarded')+'</small></div><button class="cc-reward-refresh" type="button" id="ccRewardRefresh"'+(saving?' disabled':'')+'>Refresh</button></div>'+
+   (people.length?'<div class="cc-reward-list">'+people.map(([studentId,items])=>'<article class="cc-reward-student"><div class="cc-reward-name"><label class="cc-reward-check" title="Mark all '+items.length+' Jelly Times given"><input type="checkbox" data-reward-student="'+ccEscape(studentId)+'" aria-label="Mark all '+items.length+' Jelly Times given to '+ccEscape(ccRewardStudentName(studentById.get(studentId)||{}))+'"'+disabled+'></label><span>'+ccEscape(ccRewardStudentName(studentById.get(studentId)||{}))+' <small>('+items.length+')</small></span></div>'+items.map(entry=>'<div class="cc-reward-entry"><span><strong>'+ccEscape(entry.appName)+'</strong> · '+ccEscape(entry.bookTitle)+' · Unit '+ccEscape(entry.unitNumber)+(entry.unitTitle?' <small>'+ccEscape(entry.unitTitle)+'</small>':'')+'</span><label class="cc-reward-check" title="Mark Jelly Time given"><input type="checkbox" data-reward-id="'+ccEscape(entry.key)+'" aria-label="Mark Jelly Time given for '+ccEscape(entry.appName)+' Unit '+ccEscape(entry.unitNumber)+'"'+disabled+'></label></div>').join('')+'</article>').join('')+'</div>':
    '<div class="cc-reward-empty">'+(loading?'Checking students for outstanding Jelly Time…':errors.length?'Could not verify all rewards. Refresh to retry.':'No outstanding Jelly Time rewards for this class.')+'</div>')+
-   (errors.length?'<p class="cc-reward-error">'+errors.length+' reward checks failed; results may be incomplete. Refresh to retry.</p>':'');
+   (errors.length?'<p class="cc-reward-error">'+ccEscape(errors[errors.length-1])+'</p>':'');
   host.querySelector('#ccRewardRefresh')?.addEventListener('click',()=>ccLoadOutstandingRewards(className));
-  host.querySelectorAll('[data-reward-id]').forEach(button=>button.addEventListener('click',async()=>{
-   const entry=entries.find(e=>e.key===button.dataset.rewardId);
-   if(!entry||!confirm('Mark Jelly Time given to '+ccRewardStudentName(studentById.get(entry.studentId)||{})+' for '+entry.appName+' Unit '+entry.unitNumber+'?'))return;
-   button.disabled=true;
-   try{
-    await ccRpc('teacher_unit_jelly_set_v1',{p_student_id:entry.studentId,p_book_id:entry.bookId,p_unit_id:entry.unitId,p_app:entry.app,p_given:true});
-    entries.splice(entries.indexOf(entry),1);
-    window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId:entry.studentId,bookId:entry.bookId,unitId:entry.unitId,app:entry.app,given:true}}));
-    paint(false);
-   }catch(error){button.disabled=false;alert('Could not save Jelly Time: '+error.message)}
+  host.querySelectorAll('[data-reward-student]').forEach(box=>box.addEventListener('change',()=>{
+   const person=box.dataset.rewardStudent;
+   const batch=entries.filter(entry=>entry.studentId===person);
+   if(!box.checked||!batch.length)return;
+   void saveRewards(batch);
+  }));
+  host.querySelectorAll('[data-reward-id]').forEach(box=>box.addEventListener('change',()=>{
+   const entry=entries.find(e=>e.key===box.dataset.rewardId);
+   if(box.checked&&entry)void saveRewards([entry]);
   }));
  }
- paint(true);
+ paint();
  try{
   const unitGroups=await Promise.all(books.filter(b=>b.book_id).map(async book=>({book,units:await ccUnits(book.book_id)})));
   if(!live())return;
@@ -1609,12 +1629,12 @@ async function ccLoadOutstandingRewards(className){
      }
     }catch(error){errors.push(error.message||'Reward verification failed')}
     checked++;
-    if(checked%8===0||checked===total)paint(checked!==total);
+    if(checked%8===0||checked===total)paint();
    }
   }
   await Promise.all(Array.from({length:Math.min(4,total)},()=>worker()));
-  paint(false);
- }catch(error){errors.push(error.message||'Could not load reward data');paint(false)}
+  loading=false;paint();
+ }catch(error){errors.push(error.message||'Could not load reward data');loading=false;paint()}
 }
 
 function ccCurrentBook(){return curriculum.data?.books.find(b=>b.id===curriculum.selectedBook)}
