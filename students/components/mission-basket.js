@@ -179,13 +179,38 @@ async function grammarBookHomework(){
 }
 async function sentences(){
  const d=await authed(SUPA+'/rest/v1/rpc/sg_homework_student_v3',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
- return (d.assignments||[]).map(a=>{
+ const assignments=d.assignments||[];
+ // The homework RPC counts assignment-scoped answers. Mission Basket also recognises
+ // correct Sentence Genius work completed before the assignment was created.
+ // Read only the signed-in student's RLS-scoped attempts; never write synthetic answers.
+ const proofByUnit=new Map();
+ async function unitProof(a){
+  const key=a.book_id+':'+a.unit_id;
+  if(!proofByUnit.has(key))proofByUnit.set(key,authed(SUPA+'/rest/v1/study_attempts?select=content_id,skill&book_id=eq.'+encodeURIComponent(a.book_id)+'&unit_id=eq.'+encodeURIComponent(a.unit_id)+'&is_correct=eq.true&metadata->>sentence_genius=eq.true&limit=5000').catch(error=>{
+   console.warn('[mission basket] Historical Sentence Genius proof unavailable',key,error);
+   return null;
+  }));
+  return proofByUnit.get(key);
+ }
+ return Promise.all(assignments.map(async a=>{
   const query=new URLSearchParams();if(a.book_id)query.set('book',a.book_id);if(a.unit_id)query.set('unit',a.unit_id);if(a.id)query.set('homework',a.id);
-  const entry=item('sentence:'+a.id,'Sentence Genius',a.title||a.unit_title||'문장 숙제','/students/sentence-genius/'+(query.size?'?'+query:''),a.created_at||a.assigned_at||a.due_at,Number(a.total)>0&&Number(a.done)>=Number(a.total));
+  const total=Number(a.total)||0;
+  let done=Number(a.done)||0;
+  const targets=Array.isArray(a.target_sentence_ids)?a.target_sentence_ids.map(String):[];
+  const modes=Array.isArray(a.required_modes)?a.required_modes.map(String):[];
+  if(total>0&&targets.length&&modes.length&&a.book_id&&a.unit_id){
+   const proof=await unitProof(a);
+   if(Array.isArray(proof)&&proof.length<5000){
+    const passed=new Set(proof.map(p=>String(p.content_id)+'|'+String(p.skill||'').replace(/^sentence_/,'')));
+    const historical=targets.reduce((n,id)=>n+modes.reduce((m,mode)=>m+(passed.has(id+'|'+mode)?1:0),0),0);
+    done=Math.min(total,Math.max(done,historical));
+   }
+  }
+  const entry=item('sentence:'+a.id,'Sentence Genius',a.title||a.unit_title||'문장 숙제','/students/sentence-genius/'+(query.size?'?'+query:''),a.created_at||a.assigned_at||a.due_at,total>0&&done>=total);
   entry.teacherId=a.created_by||null;entry.teacherName=a.teacher_name||'';
-  entry.dueAt=a.due_at||null;entry.progress=Number(a.total)>0?Math.min(100,Math.round(100*(Number(a.done)||0)/Number(a.total))):0;
+  entry.dueAt=a.due_at||null;entry.progress=total>0?Math.min(100,Math.round(100*done/total)):0;
   return entry;
- });
+ }));
 }
 async function grammar(){
  const rows=await authed(SUPA+'/rest/v1/grammar_foundation_homework?select=id,module_title,stage_title,module_id,stage_id,completion_percent,due_at,created_by&active=eq.true&order=due_at.desc&limit=300');
