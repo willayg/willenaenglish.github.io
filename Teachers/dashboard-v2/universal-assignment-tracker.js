@@ -606,12 +606,8 @@ async function loadOverview(scopeName='my',force=false,options={}){
    if(row.app==='Word Genius')return 'https://students.willenaenglish.com/students/vocab-study/?open=wordtest&assignment_id='+hw;
    const path=paths[row.app];return path?'https://students.willenaenglish.com'+path+hw+(row.app==='Puzzles'?'&mode='+encodeURIComponent(m.kind||'boggle'):''):null;
   }
-  function missionJellyMarkup(st,row){
-   const key=missionRewardKey(row),value=key?missionJellyCache.get(key):null;
-   if(!key)return '';
-   return '<label class="cc-mission-jelly" hidden title="Golden Unit — mark reward given"><svg viewBox="0 0 24 24" aria-hidden="true" width="17" height="17" fill="none" stroke="#bb8a0a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="m8.5 12-1 9 4.5-2.7 4.5 2.7-1-9"/></svg><input type="checkbox" aria-label="Gold reward given to '+esc(st.name||'student')+'" data-mission-jelly-student="'+esc(st.student_id)+'" data-mission-jelly-key="'+esc(key)+'" data-mission-jelly-assignment="'+esc(row.id)+'" '+(value?.has(id(st.student_id))?'checked ':'')+(value?'':'disabled ')+'></label>';
-  }
-  assignmentDateStyle.textContent+='.cc-mission-cards .ghc-student-row{grid-template-columns:minmax(110px,1fr) minmax(120px,2fr) 48px 44px;gap:12px;min-height:33px}.cc-mission-cards .ghc-student-name{min-width:0}.cc-mission-cards .ghc-student-pct{text-align:right}.cc-mission-jelly{display:flex;justify-content:flex-end;align-items:center;gap:7px;min-width:44px;white-space:nowrap;cursor:pointer}.cc-mission-jelly[hidden]{display:none!important}.cc-mission-jelly svg{flex:none}.cc-mission-jelly input{width:16px;height:16px;margin:0;accent-color:#168b62;cursor:pointer}.cc-mission-jelly input:disabled{cursor:wait;opacity:.5}@media(max-width:600px){.cc-mission-cards .ghc-student-row{grid-template-columns:minmax(65px,1fr) minmax(60px,1.8fr) 39px 41px;gap:6px}.cc-mission-jelly{gap:5px;min-width:41px}.cc-mission-jelly svg{width:15px;height:15px}}';
+  function missionJellyMarkup(){return '';}
+    assignmentDateStyle.textContent+='.cc-mission-cards .ghc-student-row{grid-template-columns:minmax(110px,1fr) minmax(120px,2fr) 48px 44px;gap:12px;min-height:33px}.cc-mission-cards .ghc-student-name{min-width:0}.cc-mission-cards .ghc-student-pct{text-align:right}.cc-mission-jelly{display:flex;justify-content:flex-end;align-items:center;gap:7px;min-width:44px;white-space:nowrap;cursor:pointer}.cc-mission-jelly[hidden]{display:none!important}.cc-mission-jelly svg{flex:none}.cc-mission-jelly input{width:16px;height:16px;margin:0;accent-color:#168b62;cursor:pointer}.cc-mission-jelly input:disabled{cursor:wait;opacity:.5}@media(max-width:600px){.cc-mission-cards .ghc-student-row{grid-template-columns:minmax(65px,1fr) minmax(60px,1.8fr) 39px 41px;gap:6px}.cc-mission-jelly{gap:5px;min-width:41px}.cc-mission-jelly svg{width:15px;height:15px}}';
   // All Classes > Current Missions consumes the same sources and progress maps
   // as My / All, while presenting each mission in a simple expandable card.
    const nameFor=st=>displayStudentName(st.student_id||st.id,st.name||'Student');
@@ -729,7 +725,7 @@ async function loadOverview(scopeName='my',force=false,options={}){
      if(!host.isConnected||generation!==overviewGeneration)return;
      host.querySelectorAll('[data-mission-jelly-assignment]').forEach(box=>{
       if(box.dataset.missionJellyAssignment!==id(r.id))return;
-      const gold=eligible.has(box.dataset.missionJellyStudent);
+      const gold=false;
       const label=box.closest('.cc-mission-jelly');
       if(label)label.hidden=!gold;
       box.checked=gold&&values.has(box.dataset.missionJellyStudent);
