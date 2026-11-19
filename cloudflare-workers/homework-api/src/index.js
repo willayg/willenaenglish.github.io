@@ -497,9 +497,7 @@ export default {
                 Number(previous.goal_value) !== Number(goal_value ?? (isVocabStudyAssignment ? 100 : 5)) ||
                 !sameMeta(meta, sourceMeta) ||
                 (effectiveSourceType !== 'vocab_study' &&
-                 (previous.goal_type !== (goal_type || (isVocabStudyAssignment ? 'clean_pass' : 'stars')) ||
-                  Number(previous.goal_value) !== Number(goal_value ?? (isVocabStudyAssignment ? 100 : 5)) ||
-                  previous.list_key !== effectiveListKey || previous.title !== title ||
+                 (previous.list_key !== effectiveListKey || previous.title !== title ||
                   previous.description !== (description || null)))) continue;
             if (isVocabStudyAssignment) {
               const oldTargets = await supabaseSelect(env, 'study_assignment_targets',
