@@ -573,6 +573,48 @@ export default {
           }, 400, origin);
         }
         
+        // Renew an identical non-fresh mission rather than issuing a second basket item.
+        // Match actual targets and student scope; keep the original assignment ID and evidence.
+        if (body.fresh_assignment !== true && sourceMeta.fresh_session !== true) {
+          const existing = await supabaseSelect(env, 'homework_assignments',
+            'class=eq.' + encodeURIComponent(className) +
+            '&source_type=eq.' + encodeURIComponent(effectiveSourceType) +
+            '&select=*&order=created_at.desc&limit=100');
+          const ids = values => [...new Set((Array.isArray(values) ? values : []).map(String))].sort().join('|');
+          const sameMeta = (a, b) => {
+            const keys = effectiveSourceType === 'vocab_study'
+              ? ['source_book_id','source_unit_id','source_unit_ids','required_modes','workload_mode','target_student_ids','coach_golden_enabled']
+              : ['creative_type','kind','book_id','unit_id','game_id','target_student_ids','required_modes'];
+            return keys.every(key => JSON.stringify(
+              Array.isArray(a?.[key]) ? [...a[key]].map(String).sort() : a?.[key] ?? null
+            ) === JSON.stringify(
+              Array.isArray(b?.[key]) ? [...b[key]].map(String).sort() : b?.[key] ?? null
+            ));
+          };
+          const desiredTargets = ids(normalizeVocabTargets(targets).map(t => t.lexical_entry_id));
+          for (const previous of existing) {
+            const meta = previous.list_meta || {};
+            if (previous.status === 'cancelled' || meta.fresh_session === true ||
+                !sameMeta(meta, sourceMeta) ||
+                (effectiveSourceType !== 'vocab_study' &&
+                 (previous.list_key !== effectiveListKey || previous.title !== title ||
+                  previous.description !== (description || null)))) continue;
+            if (isVocabStudyAssignment) {
+              const oldTargets = await supabaseSelect(env, 'study_assignment_targets',
+                'assignment_id=eq.' + previous.id + '&select=lexical_entry_id&limit=1000');
+              if (ids(oldTargets.map(t => t.lexical_entry_id)) !== desiredTargets) continue;
+            }
+            const renewed = await supabaseUpdate(env, 'homework_assignments',
+              'id=eq.' + previous.id,
+              { due_at, start_at: start_at || new Date().toISOString(),
+                active: true, status: 'active', ended_at: null });
+            if (renewed?.[0]) {
+              return jsonResponse({ success: true, assignment: renewed[0],
+                renewed: true, targets: isVocabStudyAssignment ? normalizeVocabTargets(targets) : undefined }, 200, origin);
+            }
+          }
+        }
+
         const insertData = {
           class: className,
           title,
