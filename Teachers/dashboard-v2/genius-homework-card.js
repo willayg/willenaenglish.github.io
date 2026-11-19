@@ -183,46 +183,7 @@ async function grammarChapterRewardId(bookId,chapter){
  const hex=Array.from(id,b=>b.toString(16).padStart(2,'0')).join('');
  return hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20);
 }
-async function jellyRows(host,{className,bookId,unitId,app,eligibleStudentIds=null}={}){
- if(!host||!className||!jellyUuid.test(String(bookId||''))||!jellyUuid.test(String(unitId||''))||!['word','sentence','grammar','talking','freeconversation','writing','puzzles'].includes(app))return;
- const names=[...host.querySelectorAll('[data-jelly-id]')].filter(node=>jellyUuid.test(node.dataset.jellyId||''));
- if(!names.length)return;
- // Assignment completion alone is never enough: reuse the curriculum Gold rule.
- const verified=window.WillenaGoldEligibility;
- if(eligibleStudentIds===null&&typeof verified!=='function')return;
- const eligible=new Set((eligibleStudentIds===null?await verified({className,bookId,unitId,app}):eligibleStudentIds).map(String));
- if(!host.isConnected)return;
- const key=[className.toLowerCase(),bookId,unitId,app].join(':');
- let given=jellyCache.get(key);
- if(!given){
-  const values=await jellyRpc('teacher_unit_jelly_get_v1',{p_class:className,p_book_id:bookId,p_unit_id:unitId,p_app:app});
-  given=new Set((Array.isArray(values)?values:[]).map(x=>String(x.student_id)));jellyCache.set(key,given);
- }
- if(!host.isConnected)return;
- for(const name of names){
-  if(!eligible.has(name.dataset.jellyId)){name.querySelector('.ghc-jelly-inline')?.remove();continue}
-  const existing=name.querySelector('.ghc-jelly-inline input');if(existing){existing.checked=given.has(name.dataset.jellyId);continue}
-  const studentId=name.dataset.jellyId;
-  const label=document.createElement('label');label.className='ghc-jelly-inline';label.title='Shared Jelly Time reward';
-  const input=document.createElement('input');input.type='checkbox';input.checked=given.has(studentId);input.dataset.jellyKey=key;input.dataset.jellyStudent=studentId;input.setAttribute('aria-label','Jelly Time given to '+(name.textContent||'student'));
-  const award=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  award.setAttribute('viewBox','0 0 24 24');award.setAttribute('fill','none');award.setAttribute('stroke','#bb8a0a');award.setAttribute('stroke-width','1.8');award.setAttribute('stroke-linecap','round');award.setAttribute('stroke-linejoin','round');award.setAttribute('aria-hidden','true');
-  const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');circle.setAttribute('cx','12');circle.setAttribute('cy','8');circle.setAttribute('r','5');
-  const ribbon=document.createElementNS('http://www.w3.org/2000/svg','path');ribbon.setAttribute('d','m8.5 12-1 9 4.5-2.7 4.5 2.7-1-9');award.append(circle,ribbon);
-  label.append(award,input);name.append(label);label.addEventListener('click',event=>event.stopPropagation());
-  input.addEventListener('change',async()=>{
-   const value=input.checked;
-   if(!value&&!confirm('Clear Jelly Time for this student? This means the reward can be given again.')){input.checked=true;return}
-   input.disabled=true;
-   try{
-    await jellyRpc('teacher_unit_jelly_set_v1',{p_student_id:studentId,p_book_id:bookId,p_unit_id:unitId,p_app:app,p_given:value});
-    jellyCache.delete(key);
-    window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId,unitId,app,given:value}}));
-   }catch(error){input.checked=!value;alert('Jelly Time could not be saved: '+error.message)}
-   finally{input.disabled=false}
-  });
- }
-}
+async function jellyRows(){return;}
 window.addEventListener('willena:jelly-changed',event=>{
  const d=event.detail||{};
  for(const key of jellyCache.keys())if(key.includes(':'+d.bookId+':'+d.unitId+':'+d.app))jellyCache.delete(key);
