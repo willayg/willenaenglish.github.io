@@ -1563,19 +1563,19 @@ async function ccLoadOutstandingRewards(className){
  const claimed=id=>redeemed.get(id)||0;
  const owed=id=>Math.max(0,Math.floor(goldCount(id)/4)-claimed(id));
  function people(){
-  return roster.filter(s=>goldCount(String(s.id))>0)
+  return roster.filter(s=>owed(String(s.id))>0)
    .sort((a,b)=>ccRewardStudentName(a).localeCompare(ccRewardStudentName(b),'en'));
  }
  function paint(){
   if(!live())return;
   const students=people(),pending=students.reduce((sum,s)=>sum+owed(String(s.id)),0);
   const disabled=loading||saving?' disabled':'';
-  host.innerHTML='<div class="cc-reward-summary"><div><strong>'+pending+' Jelly Time'+(pending===1?'':'s')+' ready · '+students.filter(s=>owed(String(s.id))>0).length+' students</strong><small>1 jelly for every 4 Golden Units · Previous jellies already given are deducted'+(loading?' · Checking '+checked+' / '+total+' combinations…':saving?' · Saving…':'')+'</small></div><button class="cc-reward-refresh" type="button" id="ccRewardRefresh"'+(saving?' disabled':'')+'>Refresh</button></div>'+
+  host.innerHTML='<div class="cc-reward-summary"><div><strong>'+pending+' Jelly Time'+(pending===1?'':'s')+' ready · '+students.filter(s=>owed(String(s.id))>0).length+' students</strong><small>Outstanding rewards'+(loading?' · Checking '+checked+' / '+total+' combinations…':saving?' · Saving…':'')+'</small></div><button class="cc-reward-refresh" type="button" id="ccRewardRefresh"'+(saving?' disabled':'')+'>Refresh</button></div>'+
    (students.length?'<div class="cc-reward-list">'+students.map(student=>{
-    const id=String(student.id),gold=goldCount(id),paid=claimed(id),due=owed(id);
-    return '<article class="cc-reward-student"><div class="cc-reward-name">'+(due?'<label class="cc-reward-check" title="Give all '+due+' jellies"><input type="checkbox" data-reward-student="'+ccEscape(id)+'" aria-label="Mark all '+due+' jellies given to '+ccEscape(ccRewardStudentName(student))+'"'+disabled+'></label>':'')+'<span>'+ccEscape(ccRewardStudentName(student))+'</span></div><div class="cc-reward-info">'+gold+' Golden Units · '+paid+' jellies already given · '+due+' ready · '+(gold%4)+' / 4 toward next jelly</div>'+
-     Array.from({length:due},(_,i)=>'<div class="cc-reward-entry"><span>Jelly '+(paid+i+1)+' · 4 Golden Units</span><label class="cc-reward-check" title="Mark one jelly given"><input type="checkbox" data-reward-single="'+ccEscape(id)+'" aria-label="Give one jelly to '+ccEscape(ccRewardStudentName(student))+'"'+disabled+'></label></div>').join('')+'</article>';
-   }).join('')+'</div>':'<div class="cc-reward-empty">'+(loading?'Checking Gold rewards…':'No Golden Units found for this class.')+'</div>')+
+    const id=String(student.id),due=owed(id);
+    return '<article class="cc-reward-student"><div class="cc-reward-name">'+(due?'<label class="cc-reward-check" title="Give all '+due+' jellies"><input type="checkbox" data-reward-student="'+ccEscape(id)+'" aria-label="Mark all '+due+' jellies given to '+ccEscape(ccRewardStudentName(student))+'"'+disabled+'></label>':'')+'<span>'+ccEscape(ccRewardStudentName(student))+' · '+due+' '+(due===1?'jelly':'jellies')+' owed</span></div>'+
+     Array.from({length:due},(_,i)=>'<div class="cc-reward-entry"><span>Jelly '+(i+1)+'</span><label class="cc-reward-check" title="Mark one jelly given"><input type="checkbox" data-reward-single="'+ccEscape(id)+'" aria-label="Give one jelly to '+ccEscape(ccRewardStudentName(student))+'"'+disabled+'></label></div>').join('')+'</article>';
+   }).join('')+'</div>':'<div class="cc-reward-empty">'+(loading?'Checking Gold rewards…':'No jellies owed in this class.')+'</div>')+
    (errors.length?'<p class="cc-reward-error">'+ccEscape(errors[errors.length-1])+'</p>':'');
   host.querySelector('#ccRewardRefresh')?.addEventListener('click',()=>ccLoadOutstandingRewards(className));
   host.querySelectorAll('[data-reward-student]').forEach(box=>box.addEventListener('change',()=>{if(box.checked)void save(box.dataset.rewardStudent,owed(box.dataset.rewardStudent))}));
