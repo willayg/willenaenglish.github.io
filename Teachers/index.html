@@ -1345,7 +1345,7 @@ const curriculum={
 const ccHost=()=>document.querySelector('#view-assignments.active #assignmentClassGrid')||document.getElementById('classGrid');
 window.addEventListener('willena:curriculum-mount',()=>{
  if(!document.querySelector('#view-assignments.active #assignmentClassGrid'))return;
- try{curriculum.assignmentSubview=['curriculum','missions','history'].includes(sessionStorage.getItem('willena:assignments:all-classes-view'))?sessionStorage.getItem('willena:assignments:all-classes-view'):'curriculum'}catch{}
+ try{curriculum.assignmentSubview=['curriculum','missions','history','rewards'].includes(sessionStorage.getItem('willena:assignments:all-classes-view'))?sessionStorage.getItem('willena:assignments:all-classes-view'):'curriculum'}catch{}
  loadClassOverview(true);
 });
 const ccOp='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
@@ -1538,6 +1538,85 @@ async function ccOpenClass(name){
  await Promise.all(ids.map(async id=>{try{await ccUnits(id)}catch(e){console.warn('[Class Curriculum] Units:',e)}}));
  if(curriculum.selectedClass===name)ccRenderDetail();
 }
+
+/* Outstanding Jelly Time: independently verified Golden Units, grouped by student.
+   Reward state comes from the same teacher_unit_jelly_* RPCs as Curriculum Progress. */
+const ccRewardStyle=document.createElement('style');
+ccRewardStyle.textContent='.cc-outstanding-rewards{padding:14px 2px}.cc-reward-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}.cc-reward-summary strong{font-size:15px;color:#294b58}.cc-reward-summary small{display:block;color:#6b7d85;font-size:12px}.cc-reward-refresh{padding:8px 13px;border:1px solid #c7dce0;background:#fff;border-radius:10px;color:#147b89;cursor:pointer;font-weight:700}.cc-reward-list{display:grid;gap:10px}.cc-reward-student{border:1px solid #dce8eb;border-radius:14px;padding:12px 15px;background:#fff}.cc-reward-name{font-weight:750;color:#234855;margin-bottom:7px}.cc-reward-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid #eef2f3}.cc-reward-entry span{font-size:13px;color:#455d66}.cc-reward-entry small{color:#71848c;font-size:11px}.cc-reward-give{padding:7px 12px;background:#f9f0cc;color:#75530c;border:1px solid #e8d282;border-radius:9px;cursor:pointer;font-weight:700;white-space:nowrap}.cc-reward-give:disabled{opacity:.55;cursor:wait}.cc-reward-error{color:#b45309;font-size:12px;margin-top:10px}.cc-reward-empty{padding:28px 12px;text-align:center;color:#62808a;border:1px dashed #d4e5e8;border-radius:13px}';
+document.head.appendChild(ccRewardStyle);
+let ccRewardRequest=0;
+function ccRewardStudentName(student){
+ return [student.english_name,student.englishName,student.name_en,student.name,student.student_name,student.korean_name].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(' · ')||'Student';
+}
+async function ccLoadOutstandingRewards(className){
+ const host=document.getElementById('ccOutstandingRewards');
+ if(!host||curriculum.assignmentSubview!=='rewards')return;
+ const run=++ccRewardRequest;
+ const klass=(curriculum.data?.classes||[]).find(c=>c.name===className);
+ const books=klass?ccBooks(klass):[];
+ const roster=ccClassStudents(className);
+ const studentById=new Map(roster.map(s=>[String(s.id),s]));
+ const entries=[],errors=[];
+ let checked=0,total=0;
+ const live=()=>run===ccRewardRequest&&curriculum.assignmentSubview==='rewards'&&curriculum.selectedClass===className&&host.isConnected;
+ function paint(loading=false){
+  if(!live())return;
+  const grouped=new Map();
+  for(const entry of entries){
+   if(!grouped.has(entry.studentId))grouped.set(entry.studentId,[]);
+   grouped.get(entry.studentId).push(entry);
+  }
+  const people=[...grouped].sort((a,b)=>ccRewardStudentName(studentById.get(a[0])||{}).localeCompare(ccRewardStudentName(studentById.get(b[0])||{}),'en'));
+  host.innerHTML='<div class="cc-reward-summary"><div><strong>'+entries.length+' outstanding Jelly Time'+(entries.length===1?'':'s')+' · '+people.length+' student'+(people.length===1?'':'s')+'</strong><small>'+(loading?'Checking earned Gold units: '+checked+' / '+total+' combinations…':'Earned Golden Units that have not been rewarded')+'</small></div><button class="cc-reward-refresh" type="button" id="ccRewardRefresh">Refresh</button></div>'+
+   (people.length?'<div class="cc-reward-list">'+people.map(([studentId,items])=>'<article class="cc-reward-student"><div class="cc-reward-name">'+ccEscape(ccRewardStudentName(studentById.get(studentId)||{}))+' <small>('+items.length+')</small></div>'+items.map((entry)=>'<div class="cc-reward-entry"><span><strong>'+ccEscape(entry.appName)+'</strong> · '+ccEscape(entry.bookTitle)+' · Unit '+ccEscape(entry.unitNumber)+(entry.unitTitle?' <small>'+ccEscape(entry.unitTitle)+'</small>':'')+'</span><button type="button" class="cc-reward-give" data-reward-id="'+ccEscape(entry.key)+'">Mark given</button></div>').join('')+'</article>').join('')+'</div>':
+   '<div class="cc-reward-empty">'+(loading?'Checking students for outstanding Jelly Time…':errors.length?'Could not verify all rewards. Refresh to retry.':'No outstanding Jelly Time rewards for this class.')+'</div>')+
+   (errors.length?'<p class="cc-reward-error">'+errors.length+' reward checks failed; results may be incomplete. Refresh to retry.</p>':'');
+  host.querySelector('#ccRewardRefresh')?.addEventListener('click',()=>ccLoadOutstandingRewards(className));
+  host.querySelectorAll('[data-reward-id]').forEach(button=>button.addEventListener('click',async()=>{
+   const entry=entries.find(e=>e.key===button.dataset.rewardId);
+   if(!entry||!confirm('Mark Jelly Time given to '+ccRewardStudentName(studentById.get(entry.studentId)||{})+' for '+entry.appName+' Unit '+entry.unitNumber+'?'))return;
+   button.disabled=true;
+   try{
+    await ccRpc('teacher_unit_jelly_set_v1',{p_student_id:entry.studentId,p_book_id:entry.bookId,p_unit_id:entry.unitId,p_app:entry.app,p_given:true});
+    entries.splice(entries.indexOf(entry),1);
+    window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId:entry.studentId,bookId:entry.bookId,unitId:entry.unitId,app:entry.app,given:true}}));
+    paint(false);
+   }catch(error){button.disabled=false;alert('Could not save Jelly Time: '+error.message)}
+  }));
+ }
+ paint(true);
+ try{
+  const unitGroups=await Promise.all(books.filter(b=>b.book_id).map(async book=>({book,units:await ccUnits(book.book_id)})));
+  if(!live())return;
+  const tasks=unitGroups.flatMap(({book,units})=>units.flatMap(unit=>ccSkillGroups.map(group=>({book,unit,group}))));
+  total=tasks.length;
+  // Bound concurrency: verification also reads progress and catalog targets.
+  let cursor=0;
+  async function worker(){
+   while(live()&&cursor<tasks.length){
+    const task=tasks[cursor++],{book,unit,group}=task;
+    try{
+     const eligible=await window.WillenaGoldEligibility({className,bookId:book.book_id,unitId:unit.id,app:group.key});
+     if(!live())return;
+     if(eligible.length){
+      const given=await ccRpc('teacher_unit_jelly_get_v1',{p_class:className,p_book_id:book.book_id,p_unit_id:unit.id,p_app:group.key});
+      if(!live())return;
+      const givenIds=new Set((Array.isArray(given)?given:[]).map(row=>String(row.student_id)));
+      for(const studentId of eligible.map(String)){
+       if(!studentById.has(studentId)||givenIds.has(studentId))continue;
+       entries.push({key:[studentId,book.book_id,unit.id,group.key].join(':'),studentId,bookId:book.book_id,unitId:unit.id,app:group.key,appName:group.name,bookTitle:book.book_title||'Textbook',unitNumber:unit.unit_number,unitTitle:unit.title||''});
+      }
+     }
+    }catch(error){errors.push(error.message||'Reward verification failed')}
+    checked++;
+    if(checked%8===0||checked===total)paint(checked!==total);
+   }
+  }
+  await Promise.all(Array.from({length:Math.min(4,total)},()=>worker()));
+  paint(false);
+ }catch(error){errors.push(error.message||'Could not load reward data');paint(false)}
+}
+
 function ccCurrentBook(){return curriculum.data?.books.find(b=>b.id===curriculum.selectedBook)}
 function ccRenderDetail(){
  const host=ccHost();if(!host)return;
@@ -1551,18 +1630,18 @@ function ccRenderDetail(){
  const students=ccClassStudents(c.name),units=book&&curriculum.unitCache.has(book.book_id)?(book._units||[]):[];
  const selected=units.find(u=>u.id===curriculum.selectedUnit);
  const groups=ccSkillGroups;
- const assignmentMode=['missions','history'].includes(curriculum.assignmentSubview)?curriculum.assignmentSubview:'curriculum';
+ const assignmentMode=['missions','history','rewards'].includes(curriculum.assignmentSubview)?curriculum.assignmentSubview:'curriculum';
  // Preserve the horizontal class-strip position across every grid re-render.
  // In particular, selecting a distant class must not jump back to Brown.
  const previousClassStrip=host.querySelector('.cc-assignment-class-tabs');
  const classStripScroll=previousClassStrip?previousClassStrip.scrollLeft:Number(curriculum.classStripScroll)||0;
- if(inAssignments){const status=document.querySelector('#uaStatus');if(status)status.textContent=assignmentMode==='history'?'Past class missions':assignmentMode==='missions'?'Current class missions':'Curriculum progress';}
+ if(inAssignments){const status=document.querySelector('#uaStatus');if(status)status.textContent=assignmentMode==='history'?'Past class missions':assignmentMode==='missions'?'Current class missions':assignmentMode==='rewards'?'Outstanding Jelly Time rewards':'Curriculum progress';}
  host.innerHTML=(inAssignments?
- '<div class="cc-assignment-mode" role="tablist" aria-label="All Classes view"><button type="button" role="tab" data-cc-subview="curriculum" aria-selected="'+(assignmentMode==='curriculum')+'" class="'+(assignmentMode==='curriculum'?'active':'')+'">Curriculum Progress</button><button type="button" role="tab" data-cc-subview="missions" aria-selected="'+(assignmentMode==='missions')+'" class="'+(assignmentMode==='missions'?'active':'')+'">Current Missions</button><button type="button" role="tab" data-cc-subview="history" aria-selected="'+(assignmentMode==='history')+'" class="'+(assignmentMode==='history'?'active':'')+'">Past Missions</button></div>'+
+ '<div class="cc-assignment-mode" role="tablist" aria-label="All Classes view"><button type="button" role="tab" data-cc-subview="curriculum" aria-selected="'+(assignmentMode==='curriculum')+'" class="'+(assignmentMode==='curriculum'?'active':'')+'">Curriculum Progress</button><button type="button" role="tab" data-cc-subview="missions" aria-selected="'+(assignmentMode==='missions')+'" class="'+(assignmentMode==='missions'?'active':'')+'">Current Missions</button><button type="button" role="tab" data-cc-subview="history" aria-selected="'+(assignmentMode==='history')+'" class="'+(assignmentMode==='history'?'active':'')+'">Past Missions</button><button type="button" role="tab" data-cc-subview="rewards" aria-selected="'+(assignmentMode==='rewards')+'" class="'+(assignmentMode==='rewards'?'active':'')+'">Rewards</button></div>'+
  '<div class="cc-assignment-class-tabs" role="tablist" aria-label="Active classes">'+classes.map(item=>'<button type="button" role="tab" data-cc-switch-class="'+ccEscape(item.name)+'" aria-selected="'+(item.name===c.name)+'" class="'+(item.name===c.name?'active':'')+'">'+ccEscape(item.display_name||item.name)+'</button>').join('')+'</div>':
  '<div class="cc-detail-top">'+ccButton('← All classes','back','cc-back')+
  '<div><h2>'+ccEscape(c.name)+'</h2><p>'+students.length+' students · Curriculum coverage</p></div>'+ccButton('Open students','students')+'</div>')+
- (inAssignments&&(assignmentMode==='missions'||assignmentMode==='history')?'<div id="uaClassMissions" class="cc-class-missions" aria-live="polite"><div class="cc-empty">Loading missions…</div></div>':
+ (inAssignments&&assignmentMode==='rewards'?'<div id="ccOutstandingRewards" class="cc-outstanding-rewards" aria-live="polite"><div class="cc-empty">Finding earned rewards…</div></div>':inAssignments&&(assignmentMode==='missions'||assignmentMode==='history')?'<div id="uaClassMissions" class="cc-class-missions" aria-live="polite"><div class="cc-empty">Loading missions…</div></div>':
  !books.length?'<div class="cc-empty">No textbooks are assigned to this class. Assign a book from class management first.</div>':
  (inAssignments?'<div class="cc-assignment-bookline"><div class="cc-book-tabs">':'<div class="cc-book-tabs">')+
  books.map(b=>'<button type="button" class="'+(b.id===book.id?'active':'')+'" data-cc-book="'+ccEscape(b.id)+'">'+ccEscape(b.book_title||'Textbook')+'</button>').join('')+
@@ -1590,6 +1669,7 @@ function ccRenderDetail(){
   try{sessionStorage.setItem('willena:assignments:all-classes-view',value)}catch{}
   ccRenderDetail();
  }));
+ if(inAssignments&&assignmentMode==='rewards')void ccLoadOutstandingRewards(c.name);
  if(inAssignments&&(assignmentMode==='missions'||assignmentMode==='history')){
   const load=window.UniversalAssignmentTracker?.loadClassMissions;
   if(load)void load(c.name,assignmentMode==='history'?'history':'active');else{
