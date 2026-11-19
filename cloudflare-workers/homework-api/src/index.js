@@ -548,6 +548,7 @@ export default {
           list_meta, start_at, due_at, goal_type, goal_value, source_type, targets,
         } = body;
         const sourceMeta = list_meta && typeof list_meta === 'object' ? { ...list_meta } : {};
+        if (body.fresh_assignment === true) sourceMeta.fresh_session = true;
         const requestedSourceType = String(source_type || sourceMeta.source_type || '').trim().toLowerCase();
         const isSavedGameAssignment = requestedSourceType === 'saved_game' || !!sourceMeta.game_id;
         const effectiveSourceType = requestedSourceType || (isSavedGameAssignment ? 'saved_game' : 'wordlist');
