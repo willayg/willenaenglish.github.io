@@ -456,6 +456,7 @@ export default {
           list_meta, start_at, due_at, goal_type, goal_value,
         } = body;
         const sourceMeta = list_meta && typeof list_meta === 'object' ? { ...list_meta } : {};
+        if (body.fresh_assignment === true) sourceMeta.fresh_session = true;
         const isSavedGameAssignment = String(sourceMeta.source_type || '').toLowerCase() === 'saved_game' || !!sourceMeta.game_id;
         const effectiveListKey = list_key || (isSavedGameAssignment && sourceMeta.game_id ? `saved_game:${sourceMeta.game_id}` : '');
 
