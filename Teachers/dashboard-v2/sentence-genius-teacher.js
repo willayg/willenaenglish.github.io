@@ -570,7 +570,8 @@ function createShell(){
  '<div class="sgt-target"><strong>Units</strong><div id="sgtUnits">Choose a textbook.</div></div>'+
  '<fieldset class="sgt-modes"><legend>Required steps</legend>'+
  Object.entries(types).map(([key,label])=>'<label><input type="checkbox" name="sgtMode" value="'+key+'" checked> '+label+'</label>').join('')+'</fieldset>'+
- '<div id="sgtPreAssignmentReport" aria-live="polite"></div>'+
+ '<label class="sgt-fresh-option"><input type="checkbox" id="sgtFreshAssignment"> Start Fresh · create a separate mission and count only new work</label>'+
+  '<div id="sgtPreAssignmentReport" aria-live="polite"></div>'+
  '<div class="sgt-actions"><button type="submit" id="sgtCreate" class="control ua-primary">Assign Mission</button></div><div data-sg-status role="status"></div></form>';
 }
 async function mountCreate(root){
@@ -648,10 +649,10 @@ async function mountCreate(root){
      if(!targets.length)throw Error('Unit '+u.unit_number+' has no eligible translated sentences');
      payloads.push({p_class:className,p_book_id:book.id,p_book_title:book.title,p_unit_id:id,
       p_unit_label:'Unit '+u.unit_number,p_title:book.title+' · Unit '+u.unit_number,
-      p_targets:targets,p_modes:modes,p_due_at:new Date(day+'T23:59:59+09:00').toISOString()});
+      p_targets:targets,p_modes:modes,p_due_at:new Date(day+'T23:59:59+09:00').toISOString(),p_fresh:$('#sgtFreshAssignment',root).checked});
     }
-    for(const payload of payloads){await rpc('sg_homework_create_v1',payload);saved++}
-    status(root,'Assigned '+saved+' unit'+(saved===1?'':'s')+' to '+className+'.');
+    let renewed=0;for(const payload of payloads){const result=await rpc('sg_homework_create_v2',payload);saved++;if(result.renewed)renewed++}
+    status(root,'Saved '+saved+' unit'+(saved===1?'':'s')+' for '+className+' ('+renewed+' renewed, '+(saved-renewed)+' new).');
     if(saved)window.dispatchEvent(new CustomEvent('willena:assignment-created',{detail:{message:saved+' Sentence Genius units · '+className}}));
    }catch(e){status(root,'Saved '+saved+' units. '+e.message)}
    finally{btn.disabled=false}
