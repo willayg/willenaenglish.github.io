@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2027 대기 연장 신청 · 윌레나원어민영어학원</title>
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="../form.css">
+<script type="module" src="./form.js"></script></head><body><main>
+<header><b>윌레나원어민영어학원</b><h1>2027 대기 연장 신청</h1>
+<p>올 한 해 기다려 주셔서 감사합니다. 2026년 기존 대기 가정 중 내년에도 대기를 이어가거나 등록을 원하시는 분은 아래 내용을 작성해 주세요.</p>
+<p><mark>신청 마감</mark> <strong>2026년 11월 26일(목)까지</strong></p></header>
+<section id="entry"><h2>학생 정보</h2>
+<form id="application" method="post">
+<div class="pair"><div><label for="student"><span class="required-star" aria-hidden="true">*</span> <span class="field-number">1.</span> 학생 이름</label>
+<input id="student" name="student" autocomplete="off" required maxlength="50"></div>
+<div><label for="birth"><span class="required-star" aria-hidden="true">*</span> <span class="field-number">2.</span> 출생연도 / 2027년의 학년</label>
+<input id="birth" name="birth" maxlength="50" placeholder="예) 2020년생 / 초등 1학년" required></div></div>
+<label for="phone"><span class="required-star" aria-hidden="true">*</span> <span class="field-number">3.</span> 보호자 연락처</label>
+<input id="phone" name="phone" type="tel" autocomplete="tel-national" maxlength="22" required placeholder="대기 신청 시 등록한 연락처">
+<label for="school"><span class="required-star" aria-hidden="true">*</span> <span class="field-number">4.</span> 현재 유치원 또는 학교</label>
+<input id="school" name="school" maxlength="80" required>
+<label for="note">학원에 전할 내용 · 선택</label><textarea id="note" name="note" rows="2" maxlength="400" placeholder="연락처 변경, 희망 입학 시기 등"></textarea>
+<div class="trap" aria-hidden="true"><label for="website">홈페이지 주소</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+<aside>기존 대기 순번은 자동 이월되지 않습니다. 기한 내 연장 신청이 없으면 올해 대기는 12월 말 종료됩니다. 신청 후 개별 안내 드리겠습니다.</aside>
+<details><summary>개인정보 수집·이용 안내</summary><p>학생 이름, 출생연도·학년, 보호자 연락처, 현재 유치원·학교 및 선택 메모를 기존 대기 확인과 입학·설명회 안내에 사용합니다. 해당 학생의 대기·설명회 안내가 끝날 때까지 보관합니다. 동의를 거부하시면 온라인 접수가 어렵습니다. 정정·철회는 학원 <a href="tel:03180422203">031-8042-2203</a>으로 요청해 주세요.</p></details>
+<label class="consent"><input type="checkbox" name="consent" required><span>학생의 보호자로서 개인정보 수집·이용에 동의합니다.</span></label>
+<p class="error status" id="error" role="alert"></p><button id="submit" type="submit" disabled>작성 내용 보내기</button>
+<noscript><p>온라인 신청을 위해 브라우저의 자바스크립트를 켜 주세요.</p></noscript>
+</form></section>
+<section id="result" hidden><h2 id="result-title" tabindex="-1"></h2><p id="result-text"></p><a class="home" href="/">홈페이지로 돌아가기</a></section>
+</main></body></html>
