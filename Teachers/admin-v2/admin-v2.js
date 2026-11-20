@@ -56,6 +56,9 @@ function activateView(view){
   setView(view);
   if(view!=='enquiries')import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.closeEnquiriesDrawer()).catch(()=>{});
 
+  if(view==='admissions'){
+    import('./admissions.js?v=1').then(m=>m.openAdmissions()).catch(()=>{ $('#admission-message').textContent='입학 관리 화면을 불러오지 못했습니다. 페이지를 다시 열어 주세요.' });
+  }
   if(view==='enquiries'){
     if(!enquiriesModulePromise)enquiriesModulePromise=import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.mountEnquiries());
     else enquiriesModulePromise=enquiriesModulePromise.then(()=>import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiries())).catch(()=>{enquiriesModulePromise=null;return import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.mountEnquiries())});
@@ -180,6 +183,7 @@ function boot(){
  // The red unread badge must appear even when Admin V2 opens on Students.
  import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiryBadge()).catch(e=>console.debug('[Enquiries] Badge unavailable',e));
  setInterval(()=>{if(!document.hidden)import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiryBadge()).catch(()=>{})},60000);
- if(new URLSearchParams(location.search).get('view')==='enquiries')activateView('enquiries');
+ const initialView=new URLSearchParams(location.search).get('view');
+ if(initialView==='enquiries'||initialView==='admissions')activateView(initialView);
 }
 boot();

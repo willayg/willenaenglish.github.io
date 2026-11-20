@@ -1,0 +1,35 @@
+#view-admissions { --adm-teal:#087b87; --adm-border:#b5e4e9; --adm-muted:#516873; color:#2e3044; }
+#view-admissions button { cursor:pointer; }
+#view-admissions .adm-tabs { display:flex; background:#fff; border:1px solid var(--adm-border); border-radius:14px; overflow:hidden; }
+.adm-tabs button { flex:1; border:0; border-bottom:4px solid transparent; background:transparent; padding:15px; font:inherit; font-weight:700; color:var(--adm-muted); }
+.adm-tabs button[aria-pressed="true"] { color:var(--adm-teal); border-bottom-color:var(--adm-teal); }
+.adm-controls,.adm-years,.adm-actions,.adm-counts,.adm-dialog-head { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.adm-controls { justify-content:space-between; margin:18px 0; }
+.adm-years strong { margin-right:8px; }.adm-years button,.adm-actions button,.adm-row-btn { background:#fff; border:1px solid var(--adm-border); color:#205a67; border-radius:9px; padding:8px 12px; font:inherit; font-weight:650; }
+.adm-years button[aria-pressed="true"],.adm-actions button.primary { background:var(--adm-teal); color:white; border-color:var(--adm-teal); }
+#view-admissions .adm-panel { margin:0; padding:clamp(14px,2.5vw,28px); }
+.adm-panel h2,.adm-dialog-head h2 { margin:0; line-height:1.35; font-size:1.35rem; }
+#admission-event { margin:.4rem 0 0; color:var(--adm-muted); }
+.adm-counts { margin:15px 0; }.adm-counts span { border:1px solid #d4e9eb; border-radius:10px; padding:7px 13px; color:var(--adm-muted); background:#fafdfd; }
+.adm-counts b { margin-left:8px; color:#116876; }
+.adm-table-wrap { overflow:auto; }.adm-panel table { width:100%; border-collapse:collapse; font:inherit; font-size:.94rem; text-align:left; }
+.adm-panel th { background:#eef8f9; color:#344c57; }.adm-panel :is(th,td) { text-align:left; padding:12px 9px; border-bottom:1px solid #dce8ea; white-space:nowrap; }
+.adm-row-btn { text-decoration:underline; text-underline-offset:3px; padding:2px; border:0; text-align:left; }
+.adm-badge { display:inline-block; padding:3px 9px; border-radius:12px; background:#eef0f2; color:#485362; font-size:.875rem; }
+.adm-badge.done { background:#d6f2ef; color:#065e60; }
+.adm-empty,.adm-message { color:var(--adm-muted); }.adm-message:empty,#admission-action-status:empty { margin:0; }
+.adm-empty { text-align:center; padding:18px 0; }.adm-message:not(:empty) { margin:.8rem 0; }
+#admission-detail { max-width:min(530px,calc(100vw - 28px)); max-height:85dvh; width:100%; padding:23px; border:1px solid var(--adm-border); border-radius:16px; color:inherit; box-shadow:0 20px 80px #203c4844; }
+#admission-detail::backdrop { background:#18273370; }.adm-dialog-head { justify-content:space-between; }.adm-dialog-head h2 { overflow-wrap:anywhere; }
+#admission-fields { display:grid; grid-template-columns:minmax(90px,35%) 1fr; gap:8px 12px; margin:20px 0; }
+#admission-fields dt { color:var(--adm-muted); }#admission-fields dd { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.adm-actions button.danger { color:#9e2945; border-color:#e3cad0; }
+#admission-link { display:block; width:100%; margin-top:6px; }
+#view-admissions :focus-visible { outline:3px solid #0598ad; outline-offset:2px; }
+#view-admissions [hidden] { display:none!important; }
+.mobile-tab[data-view="admissions"] svg { width:22px; height:22px; }
+@media(max-width:760px){
+  .adm-controls { align-items:stretch; }.adm-years { gap:4px; }.adm-years strong { width:100%; margin-bottom:4px; }.adm-controls input { width:100%; }
+  .adm-counts { gap:4px; }.adm-counts span { padding:5px 8px; }
+  .mobile-tabs:has([data-view="admissions"]) .mobile-tab { flex:1 0 16.5%; min-width:0; }
+}
