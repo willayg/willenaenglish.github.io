@@ -1018,3 +1018,17 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 }
 .writing-genius #wgDiaryFlow .df-speech-next[hidden]{display:none!important}
 .writing-genius #wgDiaryFlow .df-speech-next{margin:0 auto 10px;display:block}
+
+/* Saved writing library: standalone read-only document viewer. */
+.writing-genius #wgViewer[hidden]{display:none!important}
+.wg-viewer{max-width:850px;margin:4px auto 30px}
+.wg-viewer>.vocab-screen-back{margin:8px 0 18px}
+.wg-viewer-paper{background:var(--vocab-card,#fff);border:2px solid var(--vocab-border,#c9f1f4);border-radius:24px;padding:clamp(22px,4vw,42px);box-shadow:0 10px 30px rgba(20,80,95,.05);color:var(--ink,#173f46)}
+.wg-viewer-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid var(--vocab-border,#c9f1f4);padding-bottom:20px}
+.wg-viewer-eyebrow{margin:0 0 8px;font-size:.72rem;font-weight:800;letter-spacing:.08em;color:var(--pink,#e93186)}
+.wg-viewer-header h2{font-size:clamp(1.3rem,3vw,2rem);line-height:1.35;overflow-wrap:anywhere;margin:0 0 8px}
+.wg-viewer-meta{color:var(--vocab-muted,#6f8190);font-size:.82rem;margin:0}
+.wg-viewer-header .wg-status-pill{flex-shrink:0}
+.wg-viewer-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:1.05rem;line-height:1.9;min-height:180px;padding-top:24px;user-select:text}
+.wg-viewer-body.is-empty{color:var(--vocab-muted,#6f8190);font-style:italic}
+@media(max-width:600px){.wg-viewer-header{flex-direction:column;gap:10px}.wg-viewer-body{font-size:1rem;line-height:1.8}}
