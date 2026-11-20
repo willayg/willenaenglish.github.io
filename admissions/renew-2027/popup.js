@@ -7,7 +7,7 @@
   dialog.innerHTML = `<div class="inv-card">
     <img src="/admissions/renew-2027/invitation.webp" width="1050" height="1498" alt="">
     <strong class="academy-name">윌레나원어민영어학원</strong>
-    <h2 class="inv-sr" id="renewal-invitation-title">2027 대기 연장 신청</h2>
+    <h2 class="inv-sr" id="renewal-invitation-title" tabindex="-1" autofocus>2027 대기 연장 신청</h2>
     <p class="inv-sr">2026년 기존 대기 가정 중 2027년에도 대기를 희망하시는 분은 11월 26일까지 신청해 주세요.</p>
     <a class="inv-apply" href="/admissions/renew-2027/"><span class="inv-sr">대기 연장 신청하기</span></a>
     <button class="inv-close" type="button" aria-label="팝업 닫기"></button></div>`;
