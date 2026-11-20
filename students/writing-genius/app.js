@@ -307,11 +307,62 @@ function openWritingViewer(entry,fromPop=false){
   $('wgViewerStatus').classList.toggle('is-submitted',entry.status==='submitted');
   $('wgViewerBody').textContent=entry.body?.trim()||'저장된 글 내용이 없어요.';
   $('wgViewerBody').classList.toggle('is-empty',!entry.body?.trim());
+  $('wgViewerEditForm').hidden=true;
+  $('wgViewerDocument').hidden=false;
+  $('wgViewerEdit').hidden=false;
+  $('wgViewerEdit').disabled=false;
+  $('wgViewerEditStatus').textContent='';
+  $('wgViewerSave').disabled=false;
   show('viewer');
   window.scrollTo({top:0,behavior:'auto'});
   if(!fromPop)history.pushState(navState('viewer',entry.id),'');
 }
+function beginWritingViewerEdit(){
+  const entry=state.entries.find(row=>row.id===state.viewingId);
+  if(!entry)return;
+  $('wgViewerEditTitle').value=entry.title||'';
+  $('wgViewerEditBody').value=entry.body||'';
+  $('wgViewerEditStatus').textContent=entry.status==='submitted'
+    ?'제출된 글입니다. 저장하면 선생님에게 보이는 원본 글도 변경됩니다.'
+    :'수정한 내용은 저장 버튼을 누를 때 반영됩니다.';
+  $('wgViewerDocument').hidden=true;
+  $('wgViewerEditForm').hidden=false;
+  $('wgViewerEdit').hidden=true;
+}
+function cancelWritingViewerEdit(){
+  $('wgViewerEditForm').hidden=true;
+  $('wgViewerDocument').hidden=false;
+  $('wgViewerEdit').hidden=false;
+  $('wgViewerEditStatus').textContent='';
+}
+async function saveWritingViewerEdit(){
+  const entry=state.entries.find(row=>row.id===state.viewingId);
+  if(!entry)return;
+  const title=$('wgViewerEditTitle').value.trim();
+  const body=$('wgViewerEditBody').value;
+  if(!body.trim()){$('wgViewerEditStatus').textContent='글 내용을 입력해 주세요.';return}
+  if(entry.status==='submitted'&&!window.confirm('이미 제출한 글입니다. 저장하면 선생님에게 보이는 글도 변경됩니다. 계속할까요?'))return;
+  $('wgViewerSave').disabled=true;
+  $('wgViewerEditStatus').textContent='저장 중…';
+  try{
+    // Keep the same row, ownership, submission status and submitted_at.
+    // Archive edits must never replay a diary or award submission points.
+    const rows=await api('PATCH','?id=eq.'+encodeURIComponent(entry.id)+'&student_id=eq.'+encodeURIComponent(state.student.id),
+      {title,body});
+    if(!Array.isArray(rows)||rows[0]?.id!==entry.id)throw Error('변경된 글을 확인할 수 없어요.');
+    Object.assign(entry,rows[0]);
+    renderLibrary();
+    openWritingViewer(entry,true);
+    $('wgViewerEditStatus').textContent='';
+  }catch(error){
+    $('wgViewerEditStatus').textContent='저장하지 못했어요. '+error.message;
+  }finally{$('wgViewerSave').disabled=false}
+}
 function closeWritingViewer(fromPop=false){
+  if(!$('wgViewerEditForm').hidden&&
+     ($('wgViewerEditTitle').value!==(state.entries.find(e=>e.id===state.viewingId)?.title||'')||
+      $('wgViewerEditBody').value!==(state.entries.find(e=>e.id===state.viewingId)?.body||''))&&
+     !window.confirm('저장하지 않은 수정 내용이 있습니다. 나갈까요?'))return;
   state.viewingId=null;
   show('home');
   togglePortfolio(true);
@@ -931,6 +982,9 @@ document.querySelectorAll('[data-start]').forEach(button=>button.addEventListene
 $('wgOpenLibrary').addEventListener('click',()=>togglePortfolio(true));
 $('wgCloseLibrary').addEventListener('click',()=>togglePortfolio(false));
 $('wgViewerBack').addEventListener('click',()=>closeWritingViewer());
+$('wgViewerEdit').addEventListener('click',beginWritingViewerEdit);
+$('wgViewerCancel').addEventListener('click',cancelWritingViewerEdit);
+$('wgViewerSave').addEventListener('click',()=>void saveWritingViewerEdit());
 $('wgHistoryFilter').addEventListener('change',e=>{state.filter=e.target.value;renderLibrary()});
 $('wgBack').addEventListener('click',()=>void backHome());
 $('wgSave').addEventListener('click',()=>void saveEntry({force:true}));
