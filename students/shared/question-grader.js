@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage,classifyVocabSemanticNearMatch} from './ai-willi.js?v=1.0.3';
 
-export const GRADER_VERSION='2.4.1';
+export const GRADER_VERSION='2.4.2';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -264,6 +264,20 @@ function correctionArrayEquivalent(referenceAnswers,studentAnswers,{requireLabel
   return true;
 }
 
+// A lowercase L and capital I are nearly indistinguishable in many student fonts.
+// Accept this confusion ONLY when the complete answer otherwise exactly matches a
+// written target containing the English pronoun I. Never use fuzzy string matching.
+function writtenPronounILookalike(question,response){
+  if(question?.form!==FORMS.write||typeof response!=='string')return false;
+  const submitted=normExact(response);
+  if(!/\bl\b/.test(submitted))return false;
+  const corrected=submitted.replace(/\bl\b/g,'i');
+  return (question.answer||[]).some(answer=>{
+    const expected=normExact(answer);
+    return /\bi\b/.test(expected)&&corrected===expected;
+  });
+}
+
 function checkConstraints(question,response,policy){
   const c=policy.constraints||{},parts=Array.isArray(response)?response:[response],text=parts.join('\n');
   if(c.wordCount&&words(text).length!==Number(c.wordCount))return{ok:false,message:`${c.wordCount}단어로 써야 합니다.`};
@@ -297,6 +311,7 @@ export async function gradeQuestion(question,response,options={}){
   const constraint=checkConstraints(question,response,policy);
   if(!constraint.ok)return stamp({correct:false,message:constraint.message,correctAnswer:question.answer,method:'constraint',gradingPolicy:policy});
   if(exact(question,response,policy))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy});
+  if(writtenPronounILookalike(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'pronoun_i_lookalike',gradingPolicy:policy});
   if(missingTargetSpacesEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_missing_space',gradingPolicy:policy});
   if(slashAlternativeEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_slash_alternative',gradingPolicy:policy});
   if(possessivePlaceholderEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_possessive_placeholder',gradingPolicy:policy});
