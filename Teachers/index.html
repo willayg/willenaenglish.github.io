@@ -410,7 +410,7 @@ try{
 .cc-unit-name small{color:#80919b;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cc-cell{border:1.5px solid transparent;border-radius:10px;cursor:pointer;min-height:52px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px}
 .cc-cell b{font-size:14px}.cc-cell small{font-size:10px}.cc-full{background:#FFF0BD;color:#815B10;border-color:#E5BD56}.cc-partial{background:#fff0f6;color:#955b77;border-color:#efd1df}
-.cc-empty-cell{background:#fff;color:#8799a0;border-color:#e5ecef}.cc-selected{border-color:#188995;box-shadow:0 0 0 2px #b1e4e9}
+.cc-empty-cell{background:#fff;color:#8799a0;border-color:#e5ecef}.cc-unavailable{background:#f1f3f5;color:#849097;border-color:#dce1e5;cursor:default}.cc-unavailable:hover{filter:none;border-color:#dce1e5}.cc-selected{border-color:#188995;box-shadow:0 0 0 2px #b1e4e9}
 .cc-cell:hover{filter:brightness(.97);border-color:#53b5bf}
 .cc-drilldown{border:1px solid #cce5e7;border-radius:17px;background:#fff;padding:20px;margin-top:18px}
 .cc-primary{background:#1b8994;color:white;border-color:#1b8994}.cc-primary:hover{background:#147987}
@@ -1339,7 +1339,7 @@ async function openStudent(id){window.rosterDrawerStudent=String(id);const base=
 /* Class Curriculum — read from staff-scoped operations RPC and shared content catalog. */
 const curriculum={
  data:null, loadedAt:0, extraError:'', selectedClass:'', selectedBook:'', selectedUnit:'', selectedSkill:'', assignmentSubview:'curriculum', unitCache:new Map(),
- pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[], skillDetail:new Map(), extraActivity:[], sentenceEvidence:[], writingUnits:[], writingEntries:[],conversationEvidence:[],jellyRewards:new Map()
+ availability:new Map(), pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[], skillDetail:new Map(), extraActivity:[], sentenceEvidence:[], writingUnits:[], writingEntries:[],conversationEvidence:[],jellyRewards:new Map()
 };
 // Both screens use this ONE curriculum renderer and the same state/cache.
 const ccHost=()=>document.querySelector('#view-assignments.active #assignmentClassGrid')||document.getElementById('classGrid');
@@ -1436,6 +1436,14 @@ function ccExtraCompletion(book,unit,group,className){
   return student.some(r=>r.skill==='speaking'&&r.finished===true);
  }));
  return {rows,started:new Set(ids),finished};
+}
+function ccSkillAvailability(book,unit,group){
+ // null means unknown (including a failed catalog request), never unavailable.
+ if(!['word','sentence'].includes(group.key))return null;
+ const catalog=curriculum.availability.get(String(book.book_id));
+ if(!catalog)return null;
+ const entries=catalog[group.key];
+ return entries instanceof Map?((entries.get(String(unit.id))?.size||0)>0):null;
 }
 function ccSkillData(book,unit,group){
  const rows=ccUnitRows(book,unit).filter(r=>group.skills.includes(r.skill));
@@ -1671,12 +1679,12 @@ function ccRenderDetail(){
  (inAssignments?'<div class="cc-assignment-bookline"><div class="cc-book-tabs">':'<div class="cc-book-tabs">')+
  books.map(b=>'<button type="button" class="'+(b.id===book.id?'active':'')+'" data-cc-book="'+ccEscape(b.id)+'">'+ccEscape(b.book_title||'Textbook')+'</button>').join('')+
  (inAssignments?'</div><small>'+students.length+' students · Unit progress</small></div>':'</div><div class="cc-progress-heading"><div><h3>'+ccEscape(book.book_title||'Textbook')+'</h3><p>Current classroom unit: <strong>'+ccEscape(book.current_unit||'Not set')+'</strong></p></div><label>Mark unit being taught <select class="control" id="ccTaught"><option value="">Not set</option>'+units.map(u=>'<option value="'+ccEscape(String(u.unit_number))+'" '+(String(book.current_unit||'')===String(u.unit_number)?'selected':'')+'>Unit '+ccEscape(u.unit_number)+'</option>').join('')+'</select></label></div>')+
- '<p class="cc-helper">Gold: more than 90% verified complete · Light pink: in progress · White: not started. Unverified practice is never marked completed.</p>'+
+ '<p class="cc-helper">Gold: more than 90% verified complete · Light pink: in progress · White: not started · Grey ✕: no content available. Unverified practice is never marked completed.</p>'+
  (curriculum.extraError?'<p class="cc-helper" role="alert">Grammar Genius progress could not be loaded ('+ccEscape(curriculum.extraError)+'). Refresh to retry; blank cells are not reliable.</p>':'')+
  (!curriculum.unitCache.has(book.book_id)?'<div class="cc-empty">Loading textbook units…</div>':!units.length?'<div class="cc-empty">No published or review units are available for this book.</div>':
  '<div class="cc-grid-scroll"><div class="cc-matrix"><div class="cc-matrix-head"><span>Unit</span>'+groups.map(g=>'<span>'+ccEscape(g.name)+'</span>').join('')+'</div>'+
  units.map(u=>'<div class="cc-matrix-row"><div class="cc-unit-name"><strong>Unit '+ccEscape(u.unit_number)+'</strong><small>'+ccEscape(u.title||'')+'</small></div>'+
- groups.map(g=>{const d=ccSkillData(book,u,g),count=d.touched.size;const knownPuzzle=(curriculum.puzzleOverview||[]).filter(x=>x.book_id===book.book_id&&x.unit_id===u.id&&ccClassStudents(c.name).some(s=>String(s.id)===String(x.student_id)));const puzzleStarted=new Set(knownPuzzle.filter(x=>Number(x.completed_modes)>0).map(x=>String(x.student_id)));const started=g.key==='puzzles'?new Set([...d.touched,...puzzleStarted]).size:count;const pct=g.key==='puzzles'&&d.total?100*knownPuzzle.reduce((sum,x)=>sum+Math.min(5,Number(x.completed_modes||0))/5,0)/d.total:0;const extra=ccExtraCompletion(book,u,g,c.name);const included=new Set([...d.touched,...extra.started,...(g.key==='sentence'?ccSentenceRows(book,u,c.name).map(r=>String(r.student_id)):[]),...(g.key==='writing'?ccWritingRows(book,u,c.name).map(r=>String(r.student_id)):[])]);const actualStarted=included.size;const extraPct=extra.finished.size&&d.total?100*extra.finished.size/d.total:0;const state=(['grammar','talking','freeconversation'].includes(g.key)?extraPct:pct)>90?'cc-full':actualStarted?'cc-partial':'cc-empty-cell';return '<button type="button" class="cc-cell '+state+(selected?.id===u.id&&curriculum.selectedSkill===g.key?' cc-selected':'')+'" data-cc-unit="'+ccEscape(u.id)+'" data-cc-skill="'+g.key+'" aria-label="Unit '+ccEscape(u.unit_number)+' '+g.name+', '+actualStarted+' of '+d.total+' with recorded practice"><b>'+(actualStarted?actualStarted+'/'+d.total:'—')+'</b><small>'+(state==='cc-full'?'over 90% done':actualStarted?'in progress':'not started')+'</small></button>'}).join('')+'</div>').join('')+'</div></div>')+
+ groups.map(g=>{const d=ccSkillData(book,u,g),count=d.touched.size;const knownPuzzle=(curriculum.puzzleOverview||[]).filter(x=>x.book_id===book.book_id&&x.unit_id===u.id&&ccClassStudents(c.name).some(s=>String(s.id)===String(x.student_id)));const puzzleStarted=new Set(knownPuzzle.filter(x=>Number(x.completed_modes)>0).map(x=>String(x.student_id)));const started=g.key==='puzzles'?new Set([...d.touched,...puzzleStarted]).size:count;const pct=g.key==='puzzles'&&d.total?100*knownPuzzle.reduce((sum,x)=>sum+Math.min(5,Number(x.completed_modes||0))/5,0)/d.total:0;const extra=ccExtraCompletion(book,u,g,c.name);const included=new Set([...d.touched,...extra.started,...(g.key==='sentence'?ccSentenceRows(book,u,c.name).map(r=>String(r.student_id)):[]),...(g.key==='writing'?ccWritingRows(book,u,c.name).map(r=>String(r.student_id)):[])]);const actualStarted=included.size;const extraPct=extra.finished.size&&d.total?100*extra.finished.size/d.total:0;const unavailable=ccSkillAvailability(book,u,g)===false&&!actualStarted;const state=unavailable?'cc-unavailable':(['grammar','talking','freeconversation'].includes(g.key)?extraPct:pct)>90?'cc-full':actualStarted?'cc-partial':'cc-empty-cell';return '<button type="button" class="cc-cell '+state+(selected?.id===u.id&&curriculum.selectedSkill===g.key?' cc-selected':'')+'" data-cc-unit="'+ccEscape(u.id)+'" data-cc-skill="'+g.key+'" aria-label="Unit '+ccEscape(u.unit_number)+' '+g.name+', '+(unavailable?'not available':actualStarted+' of '+d.total+' with recorded practice')+'"'+(unavailable?' disabled':'')+'><b>'+(unavailable?'✕':actualStarted?actualStarted+'/'+d.total:'—')+'</b><small>'+(unavailable?'not available':state==='cc-full'?'over 90% done':actualStarted?'in progress':'not started')+'</small></button>'}).join('')+'</div>').join('')+'</div></div>')+
  (selected&&curriculum.selectedSkill?ccRenderStudentDrilldown(book,selected,groups.find(g=>g.key===curriculum.selectedSkill)):'')+
  (inAssignments?'':ccWritingActivitySummary(c.name)));
  if(inAssignments){
@@ -2009,7 +2017,7 @@ async function loadClassOverview(force=false){
  }
  curriculum.pending=true;ccHost().innerHTML='<div class="empty">Loading active class books and practice records…</div>';
  try{
-  if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.puzzleDetail.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];}
+  if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.availability.clear();curriculum.puzzleDetail.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];}
   curriculum.data=await ccRpc('teacher_curriculum_overview_v1');
   try{const puzzle=await ccRpc('teacher_curriculum_puzzle_overview_v1');curriculum.puzzleOverview=Array.isArray(puzzle)?puzzle:[]}catch(e){console.warn('[Class Curriculum] Puzzle overview:',e.message);curriculum.puzzleOverview=[];}
   try{const extra=await ccRpc('teacher_curriculum_extra_activity_v1');if(!Array.isArray(extra))throw Error('Unexpected curriculum evidence response');curriculum.extraActivity=extra;curriculum.extraError='';}catch(e){console.warn('[Class Curriculum] Grammar / Talking overview:',e.message);curriculum.extraActivity=[];curriculum.extraError=e.message||'Unavailable';}
@@ -2034,6 +2042,15 @@ async function loadClassOverview(force=false){
   const byId=new Map();
   await Promise.all(allIds.map(async id=>{try{byId.set(id,await ccUnits(id))}catch(e){console.warn('[Class Curriculum] Catalog:',e.message)}}));
   curriculum.data.books.forEach(b=>{b._units=byId.get(b.book_id)||[];b._className=curriculum.data.classes.find(c=>c.id===b.class_id)?.name||''});
+  // Catalog presence is separate from student progress. Unknown fetches remain white,
+  // rather than incorrectly reporting that a skill is unavailable.
+  await Promise.all(allIds.map(async id=>{
+   const [word,sentence]=await Promise.all([
+    rsCatalogTotals(id,'unit_vocab_targets','lexical_entry_id','&active=eq.true').catch(e=>{console.warn('[Class Curriculum] Word availability:',e);return null}),
+    rsCatalogTotals(id,'source_content_occurrences','sentence_id','&sentence_id=not.is.null&status=in.(review,published)').catch(e=>{console.warn('[Class Curriculum] Sentence availability:',e);return null})
+   ]);
+   curriculum.availability.set(String(id),{word,sentence});
+  }));
   curriculum.loadedAt=Date.now();
   curriculum.refreshRequested=false;
   if(ccHost()?.id==='assignmentClassGrid'){
