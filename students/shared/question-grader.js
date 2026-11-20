@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage,classifyVocabSemanticNearMatch} from './ai-willi.js?v=1.0.3';
 
-export const GRADER_VERSION='2.4.2';
+export const GRADER_VERSION='2.4.3';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -269,13 +269,13 @@ function correctionArrayEquivalent(referenceAnswers,studentAnswers,{requireLabel
 // written target containing the English pronoun I. Never use fuzzy string matching.
 function writtenPronounILookalike(question,response){
   if(question?.form!==FORMS.write||typeof response!=='string')return false;
-  const submitted=normExact(response);
-  if(!/\bl\b/.test(submitted))return false;
-  const corrected=submitted.replace(/\bl\b/g,'i');
-  return (question.answer||[]).some(answer=>{
-    const expected=normExact(answer);
-    return /\bi\b/.test(expected)&&corrected===expected;
-  });
+  // Restrict the exception to a lowercase L standing alone, never to the
+  // letter L inside a word or to uppercase L in a name/grade/label.
+  if(!/\bl\b/.test(response))return false;
+  const corrected=normExact(response.replace(/\bl\b/g,'I'));
+  return (question.answer||[]).some(answer=>
+    /\bI\b/.test(String(answer))&&words(answer).length>=3&&corrected===normExact(answer)
+  );
 }
 
 function checkConstraints(question,response,policy){
