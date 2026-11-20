@@ -1032,3 +1032,15 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .wg-viewer-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:1.05rem;line-height:1.9;min-height:180px;padding-top:24px;user-select:text}
 .wg-viewer-body.is-empty{color:var(--vocab-muted,#6f8190);font-style:italic}
 @media(max-width:600px){.wg-viewer-header{flex-direction:column;gap:10px}.wg-viewer-body{font-size:1rem;line-height:1.8}}
+
+/* Archive reader edit controls. Viewing remains read-only until explicitly selected. */
+.writing-genius #wgViewerEditForm[hidden],.writing-genius #wgViewerDocument[hidden]{display:none!important}
+.wg-viewer-edit-button{margin-top:12px}
+.wg-viewer-edit-form{display:grid;gap:12px;padding-top:22px}
+.wg-viewer-edit-form label{font-weight:800;color:var(--ink,#173f46);font-size:.87rem}
+.wg-viewer-edit-form input,.wg-viewer-edit-form textarea{width:100%;box-sizing:border-box;border:2px solid var(--vocab-border,#c9f1f4);border-radius:14px;background:var(--vocab-card,#fff);color:var(--ink,#173f46);font:500 1rem/1.7 Poppins,system-ui,sans-serif;padding:12px 16px}
+.wg-viewer-edit-form textarea{min-height:260px;resize:vertical;white-space:pre-wrap}
+.wg-viewer-edit-form input:focus-visible,.wg-viewer-edit-form textarea:focus-visible{outline:2px solid var(--cyan-strong,#25b8c4);outline-offset:2px}
+.wg-viewer-edit-form #wgViewerEditStatus{font-size:.82rem;color:var(--vocab-muted,#6f8190);margin:2px 0;min-height:1em}
+.wg-viewer-edit-actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:600px){.wg-viewer-edit-actions>.wg-button{flex:1}}
