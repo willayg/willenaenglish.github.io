@@ -445,7 +445,7 @@ async function showBook(book,push=true,requestedUnit=null){
  }
  window.scrollTo(0,0);
 }
-function showHome(push=true){saveInterruptedRound();activeHomework=null;homeworkModeEvidence.clear();++navEpoch;activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;if(push)updateUrl();window.scrollTo(0,0)}
+function showHome(push=true,confirmed=false){if(!confirmed&&!confirmDiscardRound())return;discardRound();activeHomework=null;homeworkModeEvidence.clear();++navEpoch;activeBook=null;activeMode=null;detail.hidden=true;home.hidden=false;$('grammarRound').hidden=true;$('grammarResult').hidden=true;if(push)updateUrl();window.scrollTo(0,0)}
 function toSharedQuestion(q){
   if(q.displayStyle==='beginner-underlined'){
     const markers=['①','②','③','④'];
@@ -526,7 +526,7 @@ async function checkAnswer(){
  checked=true;
  if(result.correct){
   correct++;masteredIds.add(q.id);
-  if(activeHomework){homeworkAttemptIds.add(q.id);scheduleHomeworkSave()}
+  if(activeHomework)homeworkAttemptIds.add(q.id)
   if(rewardSession&&!rewardSession.awardedIds.has(q.id)){
    rewardSession.awardedIds.add(q.id);
    if(!rewardSession.reviewOnly){
@@ -559,7 +559,7 @@ async function finishRound(){
    points:rewardSession.reviewOnly?0:rewardSession.points
   });
  }
- if(!retryingWrong||completed){
+ if(completed){
   try{
    if(isTen(activeBook)&&!currentGrammarContext().isHomework&&typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
    const alreadyGold=goldChapter(activeUnit);
@@ -606,16 +606,19 @@ function showFinishSaveWarning(message){
  }
  warning.textContent=[warning.textContent,message].filter(Boolean).join(' ');
 }
-function saveInterruptedRound(){
- if(!activeMode||$('grammarRound').hidden||!masteredIds.size)return;
- const mode=activeMode,chapter=activeUnit,ids=[...masteredIds];
- if(activeHomework){void saveHomeworkQuestions().catch(e=>console.warn('[Grammar Textbooks] unfinished homework save failed',e));return}
- void (courseKey(activeBook)?saveCourseProgress(chapter,mode,ids):window.WillenaMissionBasket?.recordGrammarBookRound?.(chapter,mode,ids.length,ids))
-  ?.then(()=>{if(activeBook)void refreshGrammarProgress()})
-  .catch(e=>console.warn('[Grammar Books] could not save exited round',e));
+function hasUnfinishedRound(){
+ return !!activeMode&&(!$('grammarRound').hidden||(!$('grammarResult').hidden&&retryQueue.pendingCount>0));
+}
+function confirmDiscardRound(){
+ return !hasUnfinishedRound()||window.confirm('이 활동을 나가면 현재 진행 상황이 사라집니다.\n\nLeave this activity? Your unfinished progress will be lost.');
+}
+function discardRound(){
+ if(homeworkSaveTimer){clearTimeout(homeworkSaveTimer);homeworkSaveTimer=null}
+ homeworkAttemptIds=new Set();masteredIds=new Set();activeQuestions=[];rewardSession=null;retryingWrong=false;
 }
 function goToModes(push=true){
- saveInterruptedRound();
+ if(!confirmDiscardRound())return;
+ discardRound();
  ++navEpoch;
  $('grammarRound').hidden=true;$('grammarResult').hidden=true;
  $('grammarModePanel').hidden=false;activeMode=null;
@@ -665,11 +668,19 @@ $('grammarRoundBack')?.addEventListener('click',goToModes);
 $('grammarSessionHome')?.addEventListener('click',()=>showHome());
 $('grammarResultHome')?.addEventListener('click',()=>showHome());
 back?.addEventListener('click',()=>{if(!$('grammarRound').hidden||!$('grammarResult').hidden){goToModes();return}showHome()});
+window.addEventListener('beforeunload',event=>{
+ if(!hasUnfinishedRound())return;
+ event.preventDefault();event.returnValue='';
+});
 window.addEventListener('popstate',()=>{
- saveInterruptedRound();
+ if(!confirmDiscardRound()){
+  if(activeBook&&activeMode)updateUrl(activeBook.id,activeUnit,activeMode);
+  return;
+ }
+ discardRound();
  const params=new URLSearchParams(location.search),id=params.get('book'),book=books.find(b=>String(b.id)===id);
  const unit=Number(params.get('unit'))||null,mode=params.get('mode');
- if(!book){showHome(false);return}
+ if(!book){showHome(false,true);return}
  if(activeBook&&String(activeBook.id)===String(book.id)&&units.length){
   ++navEpoch;
   if(unit&&units.some(u=>Number(u.unit_number)===unit))selectUnit(unit,{push:false});
