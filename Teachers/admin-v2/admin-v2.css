@@ -90,3 +90,15 @@
 .admin-class-drawer .admin-class-body{min-height:0;overscroll-behavior:contain;overflow-y:auto}
 #classDrawerCloseV2{cursor:pointer;flex:0 0 40px;min-height:40px;touch-action:manipulation}
 @media(max-width:700px){.admin-class-drawer{height:min(88dvh,760px);max-height:calc(100dvh - env(safe-area-inset-top,0px));bottom:0;top:auto}.admin-class-drawer .admin-class-head{position:sticky;top:0;background:var(--shell);z-index:3}.admin-class-form-actions{position:relative}}
+
+
+/* Keep top-right drawer close controls centered, visible and easy to tap. */
+#adminLayout :is(#closeStudentDrawer,#closeAddStudentDrawer,#enqClose,#classDrawerCloseV2,[data-close-level-test],#bwClose) {
+  display:inline-flex;align-items:center;justify-content:center;
+  flex:0 0 40px;width:40px;height:40px;min-width:40px;min-height:40px;
+  padding:0;line-height:1;font-size:24px;font-weight:400;
+  border-radius:10px;cursor:pointer;touch-action:manipulation;
+}
+#adminLayout :is(#closeStudentDrawer,#closeAddStudentDrawer,#enqClose,#classDrawerCloseV2,[data-close-level-test],#bwClose):focus-visible {
+  outline:3px solid #55c7d4;outline-offset:2px;
+}
