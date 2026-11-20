@@ -93,12 +93,12 @@
 
 
 /* Keep top-right drawer close controls centered, visible and easy to tap. */
-#adminLayout :is(#closeStudentDrawer,#closeAddStudentDrawer,#enqClose,#classDrawerCloseV2,[data-close-level-test],#bwClose) {
+body :is(#closeStudentDrawer,#closeAddStudentDrawer,#enqClose,#classDrawerCloseV2,[data-close-level-test],#bwClose) {
   display:inline-flex;align-items:center;justify-content:center;
   flex:0 0 40px;width:40px;height:40px;min-width:40px;min-height:40px;
   padding:0;line-height:1;font-size:24px;font-weight:400;
   border-radius:10px;cursor:pointer;touch-action:manipulation;
 }
-#adminLayout :is(#closeStudentDrawer,#closeAddStudentDrawer,#enqClose,#classDrawerCloseV2,[data-close-level-test],#bwClose):focus-visible {
+body :is(#closeStudentDrawer,#closeAddStudentDrawer,#enqClose,#classDrawerCloseV2,[data-close-level-test],#bwClose):focus-visible {
   outline:3px solid #55c7d4;outline-offset:2px;
 }
