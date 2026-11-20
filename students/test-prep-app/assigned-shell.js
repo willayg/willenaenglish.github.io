@@ -8,7 +8,7 @@ function addScript(src,dataKey){if(document.querySelector(`script[${dataKey}]`))
 addScript('./tracking-phase1.js?v=20260827-phase10','data-testprep-phase1-tracking');
 addScript('./vocab-practice.js?v=20260827-vocab9','data-testprep-vocab-practice');
 addScript('./vocab-test-practice.js?v=20260827-vocabtest3','data-testprep-vocab-test-practice');
-addScript('./sentence-practice.js?v=20260827-sentence8','data-testprep-sentence-practice');
+addScript('./sentence-practice.js?v=20261120-ybm-alignment1','data-testprep-sentence-practice');
 
 const esc=s=>String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot',"'":'&#39;'}[c]));
 
