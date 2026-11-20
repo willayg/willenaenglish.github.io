@@ -246,7 +246,7 @@ const exampleDiaries=[
 ];
 let diaryRecognition=null,diaryTranscript='',diaryInterim='',diaryBusy=false,diaryReviewBody='';
 const fullDiarySentences=text=>String(text||'').trim().match(/[^.!?\n]+[.!?]+(?=\s|$)/g)?.map(x=>x.trim()).filter(x=>/[a-z]/i.test(x))||[];
-const state={student:null,entries:[],active:null,filter:'all',timer:0,loading:false,creativeAllowed:false};
+const state={student:null,entries:[],active:null,viewingId:null,filter:'all',timer:0,loading:false,creativeAllowed:false};
 const fmtDate=s=>{if(!s)return'';const d=new Date(s);return Number.isNaN(d.getTime())?String(s).slice(0,10):d.toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'})};
 const seoulDate=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return parts.year+'-'+parts.month+'-'+parts.day};
 const wordCount=s=>String(s||'').trim().match(/\b[\p{L}\p{N}][\p{L}\p{N}'’-]*\b/gu)?.length||0;
@@ -256,10 +256,10 @@ const todayTitle=date=>date===seoulDate()?'오늘의 일기':date+' 일기';
 const validKind=kind=>Object.hasOwn(modeNames,kind)?kind:'sentence';
 function notice(message='',error=false){const node=$('wgNotice');node.textContent=message;node.classList.toggle('is-error',error)}
 function saveState(message='',error=false){const node=$('wgSaveState');node.textContent=message;node.classList.toggle('is-error',error)}
-function navState(screen,id){return {[NAV]:true,screen,id:id||null,depth:screen==='editor'?1:0}}
+function navState(screen,id){return {[NAV]:true,screen,id:id||null,depth:screen==='editor'||screen==='viewer'?1:0}}
 function show(name){
  hideWillenaKeyboard();
- $('wgHome').hidden=name!=='home';$('wgEditor').hidden=name!=='editor';$('wgPractice').hidden=name!=='practice';
+ $('wgHome').hidden=name!=='home';$('wgEditor').hidden=name!=='editor';$('wgViewer').hidden=name!=='viewer';$('wgPractice').hidden=name!=='practice';
  // Reuse the SAME mounted Mission HAM on the Sentence Writing picker.
  // Moving its node preserves mission state and avoids another API subscription.
  const basket=$('appMissionBasket'),picker=$('spPicker'),home=$('wgHome');
@@ -292,9 +292,30 @@ function renderLibrary(){
     const side=el('span','wg-library-meta'),pill=el('span','wg-status-pill'+(entry.status==='submitted'?' is-submitted':''),
       entry.status==='submitted'?'제출 완료':'임시 저장');
     side.append(pill,el('span','wg-library-arrow','›'));button.append(main,side);
-    button.addEventListener('click',()=>openEditor(entry));
+    button.addEventListener('click',()=>openWritingViewer(entry));
     root.append(button);
   }
+}
+// A writing-history item is a read-only document, never an activity replay.
+function openWritingViewer(entry,fromPop=false){
+  if(!entry||!state.entries.some(row=>row.id===entry.id))return;
+  if(state.active?.dirty){notice('변경된 글을 먼저 저장해 주세요.',true);return}
+  state.viewingId=entry.id;
+  $('wgViewerTitle').textContent=entry.title||modeNames[entry.kind]||'내가 쓴 글';
+  $('wgViewerMeta').textContent=[modeNames[entry.kind]||'글쓰기',fmtDate(entry.writing_date||entry.created_at)].filter(Boolean).join(' · ');
+  $('wgViewerStatus').textContent=entry.status==='submitted'?'제출 완료':'임시 저장';
+  $('wgViewerStatus').classList.toggle('is-submitted',entry.status==='submitted');
+  $('wgViewerBody').textContent=entry.body?.trim()||'저장된 글 내용이 없어요.';
+  $('wgViewerBody').classList.toggle('is-empty',!entry.body?.trim());
+  show('viewer');
+  window.scrollTo({top:0,behavior:'auto'});
+  if(!fromPop)history.pushState(navState('viewer',entry.id),'');
+}
+function closeWritingViewer(fromPop=false){
+  state.viewingId=null;
+  show('home');
+  togglePortfolio(true);
+  if(!fromPop)history.replaceState(navState('home'),'');
 }
 async function authToken(force=false){
   let token=!force?window.WillenaAPI?.getLocalAccessToken?.()||'':'';
@@ -536,6 +557,10 @@ async function popRoute(){
     const safe=await practice.closeForNavigation();
     if(!safe){history.pushState(navState('practice'),'');return}
   }
+  if(nav?.[NAV]&&nav.screen==='viewer'&&nav.id){
+    const match=state.entries.find(e=>e.id===nav.id);
+    if(match){openWritingViewer(match,true);return}
+  }
   if(nav?.[NAV]&&nav.screen==='editor'&&nav.id){
     const match=state.entries.find(e=>e.id===nav.id);
     if(match){openEditor(match,true);return}
@@ -643,8 +668,9 @@ async function bootstrap(){
     if(!history.state?.[NAV])history.replaceState(navState('home'),'');
     const route=history.state;
     if(route?.screen==='practice'){show('practice');await practice.open(state.student);return}
+    const view=route?.screen==='viewer'?state.entries.find(e=>e.id===route.id):null;
     const match=route?.screen==='editor'?state.entries.find(e=>e.id===route.id):null;
-    if(match)openEditor(match,true);else show('home');
+    if(view)openWritingViewer(view,true);else if(match)openEditor(match,true);else show('home');
   }catch(error){
     show('home');notice(error.message+' 로그인 페이지에서 다시 시도해 주세요.',true);
   }finally{
@@ -904,6 +930,7 @@ const practice=createSentencePractice({
 document.querySelectorAll('[data-start]').forEach(button=>button.addEventListener('click',()=>{if(state.student)start(button.dataset.start)}));
 $('wgOpenLibrary').addEventListener('click',()=>togglePortfolio(true));
 $('wgCloseLibrary').addEventListener('click',()=>togglePortfolio(false));
+$('wgViewerBack').addEventListener('click',()=>closeWritingViewer());
 $('wgHistoryFilter').addEventListener('change',e=>{state.filter=e.target.value;renderLibrary()});
 $('wgBack').addEventListener('click',()=>void backHome());
 $('wgSave').addEventListener('click',()=>void saveEntry({force:true}));
