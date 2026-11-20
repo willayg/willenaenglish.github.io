@@ -9,8 +9,8 @@
 #renewal-invitation .inv-card { position:relative; container-type:inline-size; }
 #renewal-invitation img { display:block; width:100%; height:auto; }
 #renewal-invitation .academy-name {
-  position:absolute; top:11.65%; left:5.3%; width:49%; height:5.15%; display:flex; align-items:center;
-  padding-left:1.05%; background:linear-gradient(100deg,#fff,#fefefe); color:#0c0c0c; white-space:nowrap;
+  position:absolute; top:11.82%; left:5.24%; width:47.34%; height:4.54%; display:flex; align-items:center;
+  padding-left:1.05%; background:#fefefe url("/admissions/renew-2027/invitation.webp") -15.05cqw -22.76cqw / 100cqw auto no-repeat; color:#0c0c0c; white-space:nowrap;
   font:900 4.6cqw/1 "Noto Sans KR","Malgun Gothic",sans-serif; letter-spacing:-.055em;
 }
 #renewal-invitation .inv-apply, #renewal-invitation .inv-close { position:absolute; padding:0; border:0; background:transparent; cursor:pointer; }
