@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
-<link rel="stylesheet" href="./styles.css?v=20261120-writing-viewer1">
+<link rel="stylesheet" href="./styles.css?v=20261120-writing-viewer-edit1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -82,7 +82,21 @@
           </div>
           <span id="wgViewerStatus" class="wg-status-pill"></span>
         </div>
-        <div id="wgViewerBody" class="wg-viewer-body"></div>
+        <div id="wgViewerDocument">
+          <div id="wgViewerBody" class="wg-viewer-body"></div>
+          <button id="wgViewerEdit" class="wg-button wg-secondary wg-viewer-edit-button" type="button">수정 · Edit</button>
+        </div>
+        <div id="wgViewerEditForm" class="wg-viewer-edit-form" hidden>
+          <label for="wgViewerEditTitle">제목 · Title</label>
+          <input id="wgViewerEditTitle" type="text" maxlength="120" autocomplete="off">
+          <label for="wgViewerEditBody">글 내용 · Writing</label>
+          <textarea id="wgViewerEditBody" rows="12" spellcheck="true"></textarea>
+          <p id="wgViewerEditStatus" role="status" aria-live="polite"></p>
+          <div class="wg-viewer-edit-actions">
+            <button id="wgViewerCancel" class="wg-button wg-secondary" type="button">취소 · Cancel</button>
+            <button id="wgViewerSave" class="wg-button wg-primary" type="button">수정 저장 · Save</button>
+          </div>
+        </div>
       </article>
     </section>
     <section id="wgEditor" class="wg-editor" data-willena-keyboard-safe aria-label="Writing editor" hidden>
@@ -259,7 +273,7 @@
 </div>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
 <script src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
-<script type="module" src="./app.js?v=20261120-writing-viewer1"></script>
+<script type="module" src="./app.js?v=20261120-writing-viewer-edit1"></script>
 
 <script src="/students/components/mission-basket.js?v=20261112-conversation-route4"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
