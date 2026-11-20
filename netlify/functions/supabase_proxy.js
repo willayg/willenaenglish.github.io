@@ -1,9 +1,23 @@
 const { createClient } = require('@supabase/supabase-js');
 
+
+// Validate the caller before allowing access to a profile through service-role queries.
+async function authorizedProfileId(event, supabase, requestedId) {
+  const h = event.headers || {};
+  const cookie = String(h.cookie || h.Cookie || '');
+  const match = cookie.match(/(?:^|;\s*)sb_access=([^;]+)/);
+  const bearer = String(h.authorization || h.Authorization || '').match(/^Bearer\s+(.+)$/i);
+  const token = bearer?.[1] || (match ? decodeURIComponent(match[1]) : '');
+  if (!token) return null;
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user?.id) return null;
+  return !requestedId || requestedId === data.user.id ? data.user.id : null;
+}
+
 exports.handler = async (event) => {
   console.log('=== FUNCTION START ===');
   console.log('Received event:', event.httpMethod, event.path);
-  console.log('Event body:', event.body);
+  // Never log request bodies: they can contain passwords or student data.
   console.log('Environment check:', {
     SUPABASE_URL: process.env.SUPABASE_URL ? 'PRESENT' : 'MISSING',
     SUPABASE_KEY: process.env.SUPABASE_KEY ? 'PRESENT' : 'MISSING', 
@@ -44,6 +58,7 @@ exports.handler = async (event) => {
         if (!userId) {
           return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing user_id' }) };
         }
+        if (!await authorizedProfileId(event, supabase, userId)) return { statusCode: 403, body: JSON.stringify({ success: false, error: 'Forbidden' }) };
         const { data, error } = await supabase
           .from('profiles')
           .select('name, email, approved, role')
@@ -62,6 +77,7 @@ exports.handler = async (event) => {
     if (event.queryStringParameters && event.queryStringParameters.action === 'update_profile' && event.httpMethod === 'POST') {
       try {
         const { user_id, name, email, password } = JSON.parse(event.body);
+        if (!await authorizedProfileId(event, supabase, user_id)) return { statusCode: 403, body: JSON.stringify({ success: false, error: 'Forbidden' }) };
         if (!user_id) {
           return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing user_id' }) };
         }
@@ -165,6 +181,7 @@ exports.handler = async (event) => {
         if (!userId) {
           return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Missing user_id' }) };
         }
+        if (!await authorizedProfileId(event, supabase, userId)) return { statusCode: 403, body: JSON.stringify({ success: false, error: 'Forbidden' }) };
         const { data, error } = await supabase
           .from('profiles')
           .select('role')
