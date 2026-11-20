@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="./biweekly-report.css?v=20261101-v1">
 <link rel="stylesheet" href="./admin-v2-enquiries.css?v=20261112-scroll2">
 <link rel="stylesheet" href="./admin-v2-teachers.css?v=20261115-archive">
+<link rel="stylesheet" href="./admissions.css?v=1">
 </head>
 <body>
 <div id="teacher-header"></div>
@@ -35,7 +36,9 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
     <button class="nav" data-view="classes"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v16M16 4v16M4 9h16M4 15h16"/></svg></span><span>Classes</span></button>
     <button class="nav" data-view="level-tests" data-page="levelTests"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Level Tests</span></button>
     <button class="nav" data-view="biweekly"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Biweekly Reports</span></button>
-    <button class="nav" type="button" data-view="enquiries" title="Website enquiries"><span class="nav-icon enq-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/><path d="M8 3h8"/></svg><span id="adminEnquiryCount" class="enq-unread" hidden>0</span></span><span>문의 관리</span></button><button type="button" class="nav" data-view="staff-calendar" title="Shared Willena Calendar"><span class="nav-icon" aria-hidden="true">▦</span><span>Willena Calendar</span></button><button class="nav" type="button" data-view="teachers-manager" hidden style="display:none"><span class="nav-icon" aria-hidden="true">♙</span><span>Teachers Manager</span></button><div class="rail-spacer"></div>
+    <button class="nav" type="button" data-view="enquiries" title="Website enquiries"><span class="nav-icon enq-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/><path d="M8 3h8"/></svg><span id="adminEnquiryCount" class="enq-unread" hidden>0</span></span><span>문의 관리</span></button>
+    <button class="nav" type="button" data-view="admissions" title="입학 관리"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3z"/></svg></span><span>입학 관리</span></button>
+    <button type="button" class="nav" data-view="staff-calendar" title="Shared Willena Calendar"><span class="nav-icon" aria-hidden="true">▦</span><span>Willena Calendar</span></button><button class="nav" type="button" data-view="teachers-manager" hidden style="display:none"><span class="nav-icon" aria-hidden="true">♙</span><span>Teachers Manager</span></button><div class="rail-spacer"></div>
   </aside>
   <main class="workspace">
 <section class="view" id="view-staff-calendar" aria-label="Shared Willena Calendar">
@@ -53,6 +56,27 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
    </section>
   </div>
  </section>
+<section class="view" id="view-admissions" lang="ko" aria-label="입학 관리">
+  <div class="page-head"><h1>입학 관리</h1><button type="button" class="control" id="admission-refresh">새로고침</button></div>
+  <div class="adm-tabs" role="group" aria-label="관리 화면">
+    <button type="button" data-admission-tab="wait" aria-pressed="true">대기 관리</button>
+    <button type="button" data-admission-tab="seminar" aria-pressed="false">설명회 관리</button>
+  </div>
+  <div class="adm-controls"><div class="adm-years" role="group" aria-label="입학 희망 연도">
+    <strong>입학 희망 연도</strong><button type="button" data-cohort="2027" aria-pressed="true">2027년</button>
+    <button type="button" data-cohort="2028" aria-pressed="false">2028년</button><button type="button" data-cohort="2029" aria-pressed="false">2029년</button>
+  </div><input id="admission-search" class="control" type="search" placeholder="학생 이름 · 연락처 검색" aria-label="학생 이름 또는 연락처 검색"></div>
+  <div class="panel adm-panel"><header><h2 id="admission-title">2027년 대기 명단</h2><p id="admission-event" hidden></p></header>
+    <div id="admission-counts" class="adm-counts"></div><p id="admission-message" class="adm-message" role="status" aria-live="polite"></p>
+    <div class="adm-table-wrap"><table><thead><tr id="admission-head"></tr></thead><tbody id="admission-body"></tbody></table></div>
+    <p id="admission-empty" class="adm-empty" hidden></p>
+  </div>
+  <dialog id="admission-detail" aria-labelledby="admission-detail-name"><div class="adm-dialog-head"><h2 id="admission-detail-name"></h2><button class="control" type="button" id="admission-close">닫기</button></div>
+    <dl id="admission-fields"></dl><div id="admission-actions" class="adm-actions"></div>
+    <p role="status" aria-live="polite" id="admission-action-status"></p>
+    <label id="admission-link-label" hidden>개별 초대 링크<input class="control" id="admission-link" readonly></label>
+  </dialog>
+</section>
 <section class="view" id="view-enquiries" aria-label="Website enquiry management">
  <div class="page-head"><div><h1>문의 관리 <span id="enqNewCount" class="enq-count">0</span></h1><div class="panel-sub">Website Enquiries · 상담 문의</div></div><div class="enq-head-actions"><button id="wcEnablePush" type="button" class="control">🔔 알림 켜기</button><button id="wcDisablePush" type="button" class="control" hidden>알림 끄기</button><button id="wcTestPush" type="button" class="control" hidden>알림 테스트</button><button id="enqRefresh" type="button" class="control admin-primary">새로고침 ↻</button></div></div><p id="wcPushStatus" hidden role="status" class="enq-notification-status"></p>
  <div class="enq-toolbar"><select class="control" id="enqFilter" aria-label="Enquiry status"><option value="">전체 상태</option><option value="new">신규</option><option value="contacted">연락 완료</option><option value="consultation">상담 예약</option><option value="enrolled">등록 완료</option><option value="closed">종료</option></select><input class="control" type="search" id="enqSearch" placeholder="이름 · 전화번호 검색" aria-label="Search enquiries"><span id="enqCount" class="panel-sub"></span></div>
@@ -92,7 +116,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
     </section>
   </main>
 </div>
-<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="level-tests" data-page="levelTests"><b>◫</b>Tests</button><button class="mobile-tab" data-view="biweekly"><b>▤</b>Reports</button><button class="mobile-tab" type="button" data-view="enquiries"><b class="enq-mobile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/><path d="M8 3h8"/></svg><span id="mobileEnquiryCount" class="enq-unread" hidden>0</span></b>문의</button></nav>
+<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="level-tests" data-page="levelTests"><b>◫</b>Tests</button><button class="mobile-tab" data-view="biweekly"><b>▤</b>Reports</button><button class="mobile-tab" type="button" data-view="enquiries"><b class="enq-mobile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/><path d="M8 3h8"/></svg><span id="mobileEnquiryCount" class="enq-unread" hidden>0</span></b>문의</button><button class="mobile-tab" type="button" data-view="admissions"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3z"/></svg></b>입학 관리</button></nav>
 <div class="drawer-bg" id="enqDrawerBg"><aside class="drawer enq-drawer" role="dialog" aria-modal="true" aria-label="문의 상세"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="enqDrawerName">문의 상세</div><div class="drawer-meta" id="enqDrawerMeta">상담 문의</div></div><button class="close" id="enqClose" type="button" aria-label="Close enquiry details">×</button></div><div class="drawer-body enq-drawer-body enq-detail" id="enqDetail"></div></aside></div>
 <div class="drawer-bg" id="studentDrawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeStudentDrawer" type="button">×</button></div><div class="drawer-body" id="drawerBody"></div></aside></div>
 <div class="drawer-bg" id="addStudentDrawerBg"><aside class="drawer admin-add-drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name">Add student</div><div class="drawer-meta">Create a new student account</div></div><button class="close" id="closeAddStudentDrawer" type="button">×</button></div><div class="drawer-body"><form id="addStudentForm" class="admin-add-form" novalidate><div class="detail"><h3>Student details</h3><div class="admin-form-grid"><label class="admin-form-field"><span>English name</span><input id="addName" type="text"></label><label class="admin-form-field"><span>Korean name</span><input id="addKorean" type="text"></label><label class="admin-form-field"><span>Username</span><input id="addUsername" type="text" autocomplete="off"></label><label class="admin-form-field"><span>Temporary password</span><input id="addPassword" type="text" autocomplete="new-password"></label><label class="admin-form-field"><span>Class</span><select id="addClass"><option value="">No class</option></select></label><label class="admin-form-field"><span>Grade</span><input id="addGrade" type="text"></label><label class="admin-form-field"><span>School</span><input id="addSchool" type="text"></label><label class="admin-form-field"><span>Phone</span><input id="addPhone" type="text"></label></div><p class="admin-form-note">Username uses lowercase letters, numbers, dots, dashes or underscores.</p><div class="admin-modal-error" id="addStudentError"></div></div></form></div><div class="admin-add-foot"><button type="button" class="cancel" id="cancelAddStudent">Cancel</button><button type="submit" form="addStudentForm" class="create" id="createStudentButton">Create student</button></div></aside></div>
@@ -152,7 +176,7 @@ document.querySelector('[data-view="staff-calendar"]')?.addEventListener('click'
  if(frame && !frame.getAttribute('src'))frame.setAttribute('src',frame.getAttribute('data-src'));
 });
 </script>
-<script type="module" src="./admin-v2.js?v=20261116-shared-session-gate"></script>
+<script type="module" src="./admin-v2.js?v=20261120-admissions"></script>
 <script type="module" src="./biweekly-report.js?v=20261101-v1"></script>
 <script>
 (function(){
