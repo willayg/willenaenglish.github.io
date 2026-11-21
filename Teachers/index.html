@@ -1473,7 +1473,7 @@ async function ccLoadPublishedAvailability(bookIds){
   });
   const info=byBook.get(bookId);
   for(const key of ['word','sentence','grammar','talking','freeconversation','writing']){
-   info[key].set(key==='grammar'?String(row.unitNumber):unitId,Math.max(0,Number(row[key])||0));
+   info[key].set(key==='grammar'?String(row.unitNumber):unitId,Math.max(0,Number(key==='talking'?row.speaking:row[key])||0));
   }
   info.puzzles.set('book',Math.max(0,Number(row.puzzles)||0));
  }
