@@ -130,7 +130,7 @@ begin
   ) into v_result;
   return v_result;
 end;
-$function$
+$function$;
 
 REVOKE ALL ON FUNCTION public.teacher_genius_usage_analytics_v1(integer,text,text,date,date) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.teacher_genius_usage_analytics_v1(integer,text,text,date,date) TO service_role;
