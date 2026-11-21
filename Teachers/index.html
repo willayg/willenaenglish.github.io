@@ -1795,7 +1795,7 @@ function ccRenderDetail(){
    const active=Array.isArray(bookRecords)?bookRecords.filter(r=>Number(r.sessions||0)>0).length:0;
    const unavailable=available===false&&active===0;
    const unknown=loaded&&bookRecords===null;
-   const state=unavailable?'cc-unavailable':active?'cc-partial':available===null||unknown?'cc-unknown':'cc-empty-cell';
+   const state=unavailable?'cc-unavailable':active?ccCompletionTone(active,students.length,active):available===null||unknown?'cc-unknown':'cc-empty-cell';
    const count=Number(curriculum.availability.get(String(book.book_id))?.puzzles?.get('book')||0);
    return '<button type="button" class="cc-cell '+state+
     (selected?.id===u.id&&curriculum.selectedSkill===g.key?' cc-selected':'')+
@@ -1804,24 +1804,21 @@ function ccRenderDetail(){
     (unavailable?' disabled':'')+'><b>'+(unavailable?'✕':active?active+'/'+students.length:!loaded?'…':unknown?'?':'—')+
     '</b><small>'+(unavailable?'not available':active?'book-wide':unknown||available===null?'unknown':!loaded?'loading':'book words')+'</small></button>';
   }
-  const d=ccSkillData(book,u,g),extra=ccExtraCompletion(book,u,g,c.name);
-  const included=new Set([...d.touched,...extra.started,
-   ...(g.key==='sentence'?ccSentenceRows(book,u,c.name).map(r=>String(r.student_id)):[]),
-   ...(g.key==='writing'?ccWritingRows(book,u,c.name).map(r=>String(r.student_id)):[])]);
-  const actualStarted=included.size;
-  const extraPct=extra.finished.size&&d.total?100*extra.finished.size/d.total:0;
+  const progress=ccCellProgress(book,u,g,c.name);
+  const actualStarted=progress.started.size,done=progress.finished.size;
   const availability=ccSkillAvailability(book,u,g);
   const unavailable=availability===false&&!actualStarted;
   const state=unavailable?'cc-unavailable':
-   (['grammar','talking','freeconversation'].includes(g.key)?extraPct:0)>90?'cc-full':
-   actualStarted?'cc-partial':availability===null?'cc-unknown':'cc-empty-cell';
+   actualStarted?(progress.verified?ccCompletionTone(done,progress.total,actualStarted):'cc-progress-low'):
+   availability===null||!progress.verified?'cc-unknown':'cc-empty-cell';
+  const shown=progress.verified?done:actualStarted;
   return '<button type="button" class="cc-cell '+state+
    (selected?.id===u.id&&curriculum.selectedSkill===g.key?' cc-selected':'')+
    '" data-cc-unit="'+ccEscape(u.id)+'" data-cc-skill="'+g.key+
    '" aria-label="Unit '+ccEscape(u.unit_number)+' '+g.name+', '+
-   (unavailable?'not available':availability===null?'content status unknown':actualStarted+' of '+d.total+' with recorded practice')+'"'+
-   (unavailable?' disabled':'')+'><b>'+(unavailable?'✕':actualStarted?actualStarted+'/'+d.total:availability===null?'?':'—')+
-   '</b><small>'+(unavailable?'not available':state==='cc-full'?'over 90% done':actualStarted?'in progress':availability===null?'unknown':'not started')+
+   (unavailable?'not available':availability===null?'content status unknown':progress.verified?done+' of '+progress.total+' completed, '+actualStarted+' started':actualStarted+' started; completion data unavailable')+'"'+
+   (unavailable?' disabled':'')+'><b>'+(unavailable?'✕':actualStarted?shown+'/'+progress.total:availability===null||!progress.verified?'?':'—')+
+   '</b><small>'+(unavailable?'not available':state==='cc-full'?'complete':done?'completed':actualStarted?'in progress':availability===null||!progress.verified?'unknown':'not started')+
    '</small></button>';
 }).join('')+'</div>').join('')+'</div></div>')+
  (selected&&curriculum.selectedSkill?ccRenderStudentDrilldown(book,selected,groups.find(g=>g.key===curriculum.selectedSkill)):'')+
