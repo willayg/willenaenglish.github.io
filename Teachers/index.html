@@ -105,7 +105,8 @@ html.willena-calendar-embed #view-staff-calendar.active{display:block!important}
 <script>if(new URLSearchParams(location.search).get('embed')==='calendar')document.documentElement.classList.add('willena-calendar-embed');</script>
 <link rel="stylesheet" href="./staff-calendar-native.css?v=20261110-native1">
 <script src="./staff-calendar-native.js?v=20261112-reminders1" defer></script>
-<link rel="stylesheet" href="./genius-usage-analytics.css?v=20261121-usage1">
+<link rel="stylesheet" href="./genius-usage-analytics.css?v=20261121-tabs2">
+<link rel="stylesheet" href="./teacher-homework-bell.css?v=20261121-bell2">
 </head>
 <body>
 <div id="teacher-header"></div>
@@ -178,7 +179,7 @@ html.willena-calendar-embed #view-staff-calendar.active{display:block!important}
 </script>
 
 <script type="module">
-import { mountTeacherHeader } from '/components/teacher-header/teacher-header.js?v=20260927-persistent-p3';
+import { mountTeacherHeader } from '/components/teacher-header/teacher-header.js?v=20261121-modern-bell2';
 mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teacher' })
   .catch((e)=>console.error('Teacher header init failed', e));
 </script>
@@ -2526,6 +2527,7 @@ window.addEventListener('message',async event=>{
   });
  });
 })();
-</script><script src="./genius-usage-analytics.js?v=20261121-usage1"></script>
+</script><script src="./genius-usage-analytics.js?v=20261121-tabs2"></script>
+<script src="./teacher-homework-bell.js?v=20261121-bell2"></script>
 </body>
 </html>
