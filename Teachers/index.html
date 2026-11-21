@@ -2167,10 +2167,11 @@ async function loadClassOverview(force=false){
  }
  curriculum.pending=true;ccHost().innerHTML='<div class="empty">Loading active class books and practice records…</div>';
  try{
-  if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.availability.clear();curriculum.puzzleDetail.clear();curriculum.puzzlePending.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];}
+  if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.availability.clear();curriculum.puzzleDetail.clear();curriculum.puzzlePending.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];curriculum.wordSnapshots=[];curriculum.evidenceReady={word:false,sentence:false,writing:false,extra:false,freeconversation:false};}
   curriculum.data=await ccRpc('teacher_curriculum_overview_v1');
+  try{const rows=await ccRpc('teacher_curriculum_word_snapshot_overview_v1');if(!Array.isArray(rows))throw Error('Unexpected Word Genius snapshot response');curriculum.wordSnapshots=rows;curriculum.evidenceReady.word=true;}catch(e){console.warn('[Class Curriculum] Word Genius mastery:',e.message);curriculum.wordSnapshots=[];curriculum.evidenceReady.word=false;}
   try{const puzzle=await ccRpc('teacher_curriculum_puzzle_overview_v1');curriculum.puzzleOverview=Array.isArray(puzzle)?puzzle:[]}catch(e){console.warn('[Class Curriculum] Puzzle overview:',e.message);curriculum.puzzleOverview=[];}
-  try{const extra=await ccRpc('teacher_curriculum_extra_activity_v1');if(!Array.isArray(extra))throw Error('Unexpected curriculum evidence response');curriculum.extraActivity=extra;curriculum.extraError='';}catch(e){console.warn('[Class Curriculum] Grammar / Talking overview:',e.message);curriculum.extraActivity=[];curriculum.extraError=e.message||'Unavailable';}
+  try{const extra=await ccRpc('teacher_curriculum_extra_activity_v1');if(!Array.isArray(extra))throw Error('Unexpected curriculum evidence response');curriculum.extraActivity=extra;curriculum.extraError='';curriculum.evidenceReady.extra=true;}catch(e){console.warn('[Class Curriculum] Grammar / Talking overview:',e.message);curriculum.extraActivity=[];curriculum.extraError=e.message||'Unavailable';curriculum.evidenceReady.extra=false;}
   try{
    // The two mission modes are intentionally separate. Conversation progress
    // comes from its own verified mission RPC and is never copied from Speaking.
@@ -2180,14 +2181,14 @@ async function loadClassOverview(force=false){
     skill:'conversation',done:Math.min(8,Math.max(0,Number(st.completed_questions??st.contributions??(Number(st.percent||0)*8/100)))),
     total:8,finished:st.complete===true||st.completed===true,
     last_at:st.last_at||st.completed_at||null
-   }))).filter(r=>r.student_id&&r.book_id&&r.unit_id);
-  }catch(e){console.warn('[Class Curriculum] Conversation overview:',e.message);curriculum.conversationEvidence=[];}
-  try{const sentence=await ccRpc('teacher_curriculum_sentence_overview_v1');curriculum.sentenceEvidence=Array.isArray(sentence)?sentence:[]}catch(e){console.warn('[Class Curriculum] Sentence overview:',e.message);curriculum.sentenceEvidence=[];}
+   }))).filter(r=>r.student_id&&r.book_id&&r.unit_id);curriculum.evidenceReady.freeconversation=true;
+  }catch(e){console.warn('[Class Curriculum] Conversation overview:',e.message);curriculum.conversationEvidence=[];curriculum.evidenceReady.freeconversation=false;}
+  try{const sentence=await ccRpc('teacher_curriculum_sentence_overview_v1');if(!Array.isArray(sentence))throw Error('Unexpected Sentence Genius overview');curriculum.sentenceEvidence=sentence;curriculum.evidenceReady.sentence=true}catch(e){console.warn('[Class Curriculum] Sentence overview:',e.message);curriculum.sentenceEvidence=[];curriculum.evidenceReady.sentence=false;}
   try{
    const writing=await ccRpc('teacher_curriculum_writing_overview_v1');
    curriculum.writingUnits=Array.isArray(writing.unit_rows)?writing.unit_rows:[];
-   curriculum.writingEntries=Array.isArray(writing.writing_rows)?writing.writing_rows:[];
-  }catch(e){console.warn('[Class Curriculum] Writing overview:',e.message);curriculum.writingUnits=[];curriculum.writingEntries=[];}
+   curriculum.writingEntries=Array.isArray(writing.writing_rows)?writing.writing_rows:[];curriculum.evidenceReady.writing=Array.isArray(writing.unit_rows);
+  }catch(e){console.warn('[Class Curriculum] Writing overview:',e.message);curriculum.writingUnits=[];curriculum.writingEntries=[];curriculum.evidenceReady.writing=false;}
   const allIds=[...new Set(curriculum.data.books.map(b=>b.book_id).filter(Boolean))];
   const byId=new Map();
   await Promise.all(allIds.map(async id=>{try{byId.set(id,await ccUnits(id))}catch(e){console.warn('[Class Curriculum] Catalog:',e.message)}}));
