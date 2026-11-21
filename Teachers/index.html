@@ -1513,7 +1513,9 @@ function ccUnitStatus(book,unit,className){
  if(!roster.length)return {status:'not-started',percent:0,started:0};
  const ids=new Set(roster.map(s=>String(s.id)));
  const rows=(curriculum.data?.progress||[]).filter(r=>r.book_id===book.book_id&&r.unit_id===unit.id&&ids.has(String(r.student_id)));
- const started=new Set(rows.filter(r=>Number(r.attempts)>0||Number(r.attempted_content_count)>0).map(r=>String(r.student_id)));
+ // Do not attribute book-wide puzzle reward events (often tagged Unit 1)
+ // to a particular curriculum unit's actual start/progress.
+ const started=new Set(rows.filter(r=>r.skill!=='puzzle'&&(Number(r.attempts)>0||Number(r.attempted_content_count)>0)).map(r=>String(r.student_id)));
  for(const group of [ccSkillGroups.find(g=>g.key==='grammar'),ccSkillGroups.find(g=>g.key==='talking'),ccSkillGroups.find(g=>g.key==='freeconversation')]){
   const evidence=ccExtraCompletion(book,unit,group,className);
   for(const id of evidence.started)started.add(id);
@@ -2011,24 +2013,26 @@ function ccRenderStudentDrilldown(book,unit,group){
  const details=curriculum.skillDetail.get(ccSkillKey(book,unit));
  const detailMap=new Map((details?.rows||[]).map(r=>[String(r.student_id),r]));
  const jelly=curriculum.jellyRewards.get(ccJellyKey(book,unit,group.key));
- return '<section class="cc-drilldown"><div class="cc-drill-head"><div><h3>Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name)+'</h3><p>Unit progress by skill · Correctly completed items, not attempts</p></div><button type="button" class="cc-btn cc-primary" data-cc-mission="1">Assign mission →</button></div>'+
+ return '<section class="cc-drilldown"><div class="cc-drill-head"><div><h3>'+(group.key==='puzzles'?'Whole Book · Puzzles':'Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name))+'</h3><p>'+(group.key==='puzzles'?'Completed puzzle sessions from words across '+ccEscape(book.book_title||'this textbook')+'. No unit-specific progress is implied.':'Unit progress by skill · Correctly completed items, not attempts')+'</p></div><button type="button" class="cc-btn cc-primary" data-cc-mission="1">Assign mission →</button></div>'+
  (group.key==='grammar'&&curriculum.extraError?'<p class="cc-helper" role="alert">Grammar completion records could not be refreshed: '+ccEscape(curriculum.extraError)+'. Values may be out of date.</p>':'')+
  '<div class="cc-student-grid">'+students.map(student=>{
   const rows=d.rows.filter(r=>String(r.student_id)===String(student.id));
   const started=rows.some(r=>Number(r.attempts)>0||Number(r.attempted_content_count)>0);
   const label=ccStudentLabel(student,students);
-  const subtitle='<div class="cc-unit-subtitle">Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name)+'</div>';
+  const subtitle='<div class="cc-unit-subtitle">'+(group.key==='puzzles'?'Book-wide · Puzzles':'Unit '+ccEscape(unit.unit_number)+' · '+ccEscape(group.name))+'</div>';
   const first='<div class="cc-student-top"><strong>'+label+'</strong>';
   const last=ccActivityTime(rows.map(r=>r.updated_at).filter(Boolean).sort().at(-1));
   if(group.key==='puzzles'){
    const p=puzzleByStudent.get(String(student.id));
-   if(!puzzleRecords)return '<div class="cc-student-row cc-not-started">'+first+'<span class="cc-percent-muted">Loading…</span></div>'+subtitle+'</div>';
-   const modes=Array.isArray(p?.modes)?p.modes.filter(m=>ccPuzzleModeNames[m]):[];
-   const percent=Math.round(modes.length/5*100),active=started||modes.length>0;
+   if(!Array.isArray(puzzleRecords))return '<div class="cc-student-row cc-not-started">'+first+'<span class="cc-percent-muted">Unavailable</span></div>'+subtitle+'<div class="cc-student-details">Book-wide puzzle records could not be loaded. No activity has been assumed.</div></div>';
+   const modes=[...new Set(Array.isArray(p?.modes)?p.modes.filter(m=>ccPuzzleModeNames[m]):[])];
+   const sessions=Math.max(0,Number(p?.sessions)||0),active=sessions>0;
    const bars=Object.entries(ccPuzzleModeNames).map(([id,name])=>ccSkillBar(name,modes.includes(id)?1:0,1,false)).join('');
-   return '<div class="cc-student-row cc-'+(percent>90?'complete':active?'in-progress':'not-started')+'">'+first+'<span class="cc-percent-muted">'+(percent>90?'Completed':active?'In progress':'Not started')+'</span></div>'+subtitle+
-   '<div class="cc-skill-summary">'+modes.length+' of 5 puzzle types completed · '+Number(p?.sessions||0)+' sessions</div><div class="cc-skill-list">'+bars+'</div>'+
-   '<div class="cc-student-details">Last '+ccEscape(ccActivityTime(p?.last_at)||last||'—')+'</div>'+ccJellyControl(student.id,percent>90,jelly)+'</div>';
+   return '<div class="cc-student-row cc-'+(active?'in-progress':'not-started')+'">'+first+
+    '<span class="cc-percent-muted">'+(active?'Played':'Not started')+'</span></div>'+subtitle+
+    '<div class="cc-skill-summary">'+sessions+' completed '+(sessions===1?'session':'sessions')+' · '+modes.length+' puzzle types tried (entire book)</div>'+
+    '<div class="cc-skill-list">'+bars+'</div>'+
+    '<div class="cc-student-details">Last '+ccEscape(ccActivityTime(p?.last_at)||'—')+'</div></div>';
   }
   if(group.key==='writing'){
    const activities=ccWritingRows(book,unit,curriculum.selectedClass).filter(r=>String(r.student_id)===String(student.id));
