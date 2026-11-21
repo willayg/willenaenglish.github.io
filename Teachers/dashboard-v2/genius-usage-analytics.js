@@ -219,6 +219,28 @@
     $('#gaMessage',section).hidden=true;
     $('#gaContent',section).hidden=false;
   }
+  // Teacher auth cookies are HttpOnly; obtain a short-lived JWT through the
+  // existing refresh endpoint, or reuse the valid token cached by WillenaAPI.
+  function validToken(token) {
+    if(typeof token!=='string'||token.split('.').length!==3)return false;
+    try {
+      const claims=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+      return Number(claims.exp)*1000>Date.now()+30000;
+    } catch { return false; }
+  }
+  async function teacherToken() {
+    let token=window.WillenaAPI?.getLocalAccessToken?.()||'';
+    if(validToken(token))return token;
+    const path='/.netlify/functions/supabase_auth?action=refresh';
+    const request=window.WillenaAPI?.fetch
+      ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
+      : (url,options)=>fetch(url,options);
+    const response=await request(path,{credentials:'include',cache:'no-store'});
+    const body=await response.json().catch(()=>({}));
+    if(!response.ok||!validToken(body.access_token))return null;
+    window.WillenaAPI?.setLocalTokens?.(body.access_token,body.refresh_token||'');
+    return body.access_token;
+  }
   let pending=null;
   async function load() {
     const id=++ui.current;
@@ -237,10 +259,20 @@
       params.set('start',$('#gaStart',section).value);
       params.set('end',$('#gaEnd',section).value);
     }
-    const path='/.netlify/functions/teacher_genius_usage?'+params.toString();
-    const url=window.WillenaAPI?.getApiUrl?.(path)||path;
+    const endpoint='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/genius-usage-analytics';
     try {
-      const response=await fetch(url,{credentials:'include',cache:'no-store',signal:controller.signal});
+      const token=await teacherToken();
+      if(!token)throw new Error('Teacher session not ready. Sign in again or refresh the page.');
+      const body=Object.fromEntries(params.entries());
+      const response=await fetch(endpoint,{
+        method:'POST',credentials:'omit',cache:'no-store',signal:controller.signal,
+        headers:{
+          'Content-Type':'application/json',
+          'apikey':'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',
+          'Authorization':'Bearer '+token
+        },
+        body:JSON.stringify(body)
+      });
       const result=await response.json().catch(()=>({}));
       if(!response.ok||result.success===false)throw new Error(result.error||'Analytics request failed ('+response.status+')');
       if(id!==ui.current)return;
@@ -288,7 +320,7 @@
   $('#gaEnd',section).value=today;
   $('#gaStart',section).value=new Date(t.getTime()-29*86400000).toISOString().slice(0,10);
   const previouslySelected=(()=>{try{return localStorage.getItem('willena.teachers.activeView.v1')}catch{return''}})();
-  if(previouslySelected==='genius-apps'){
+  if(['genius-apps','vocab','sentence-genius','grammar-foundations','free-talking-genius'].includes(previouslySelected)){
     try{localStorage.setItem('willena.teachers.activeView.v1','genius-usage')}catch{}
   }
   if(section.classList.contains('active'))load();
