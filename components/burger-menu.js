@@ -292,7 +292,11 @@ export function insertBurgerMenu(targetSelector = 'body') {
     };
   }
 
-  initNotificationBell(wrapper);
+  // The main Teachers dashboard uses the newer per-teacher unread homework
+  // state. Do not also start this legacy token-based bell and its polling.
+  if (!/^\/Teachers\/(?:index\.html)?\/?$/i.test(location.pathname)) {
+    initNotificationBell(wrapper);
+  }
 }
 
 // ── Notification Bell ──────────────────────────────────────────────────
