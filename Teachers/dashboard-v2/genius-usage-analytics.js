@@ -323,6 +323,12 @@
   if(['genius-apps','vocab','sentence-genius','grammar-foundations','free-talking-genius'].includes(previouslySelected)){
     try{localStorage.setItem('willena.teachers.activeView.v1','genius-usage')}catch{}
   }
+  // The main teacher shell can restore a view without clicking its sidebar item.
+  // Load data when that restored view becomes active as well.
+  const viewObserver=new MutationObserver(()=>{
+    if(section.classList.contains('active') && !ui.data && !pending)load();
+  });
+  viewObserver.observe(section,{attributes:true,attributeFilter:['class']});
   if(section.classList.contains('active'))load();
   window.WillenaGeniusUsage={open:changeView,refresh:load};
 })();
