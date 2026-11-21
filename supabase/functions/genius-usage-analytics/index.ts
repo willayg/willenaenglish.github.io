@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     const days = Number(input.days ?? 30);
     const chosenClass = String(input.class || "").trim().slice(0,100) || null;
     const app = String(input.app || "").trim().toLowerCase() || null;
-    if (![7,30,90].includes(days) || (app && !["word","sentence","grammar","talking","writing","puzzles"].includes(app))) {
+    if (![7,30,90].includes(days) || (app && !["word","sentence","grammar","talking","writing","puzzles","naesin"].includes(app))) {
       return reply(req,400,{success:false,error:"Invalid analytics filter"});
     }
     const custom = input.start !== undefined || input.end !== undefined;
