@@ -67,7 +67,7 @@
     '<div class="ga-feed" id="gaRecent"></div></article></div>',
     '<p class="ga-note">Counts represent recorded practice sessions, not app opens or time on screen. ',
     'Where both study and progress systems recorded the same activity, the overlapping event is counted once. ',
-    'Student testing/ghost profiles and Test classes are excluded. All dates use Korean time (KST).</p>',
+    'Ghost profiles and classes named Test are excluded; other test activity under regular student accounts may remain. All dates use Korean time (KST).</p>',
     '</div>'
   ].join('');
 
