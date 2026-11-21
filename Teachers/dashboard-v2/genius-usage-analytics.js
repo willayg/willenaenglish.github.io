@@ -7,10 +7,11 @@
     grammar: { name: 'Grammar Genius', short: 'GG', color: '#9655e4' },
     talking: { name: 'Free Talking Genius', short: 'FTG', color: '#ef65a0' },
     writing: { name: 'Writing Genius', short: 'WR', color: '#f5a623' },
-    puzzles: { name: 'Puzzles', short: 'PZ', color: '#86c65b' }
+    puzzles: { name: 'Puzzles', short: 'PZ', color: '#86c65b' },
+    naesin: { name: '내신 V2', short: '내신', color: '#df7862' }
   };
   const ui = { data: null, period: '30', className: '', app: '', trend: 'sessions',
-               ranking: 'students', rankingStatus: 'active', classOptions: [], current: 0 };
+               ranking: 'students', rankingStatus: 'active', selectedTab: 'all', classOptions: [], current: 0 };
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
   const format = value => Number(value || 0).toLocaleString('en-US');
@@ -34,21 +35,24 @@
   section.className = 'view';
   section.innerHTML = [
     '<div class="ga-header"><div class="ga-heading"><span class="ga-mark" aria-hidden="true">▥</span>',
-    '<div><h1>Genius Apps</h1><p class="ga-subtitle">App usage, activity and top users</p></div></div>',
+    '<div><h1>Genius Apps</h1><p id="gaSubtitle" class="ga-subtitle">App usage, activity and top users</p></div></div>',
     '<div class="ga-controls">',
     '<select class="ga-control" id="gaPeriod" aria-label="Date range">',
     '<option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option>',
     '<option value="90">Last 90 days</option><option value="custom">Custom range</option></select>',
     '<select class="ga-control" id="gaClass" aria-label="Class"><option value="">All classes</option></select>',
-    '<select class="ga-control" id="gaApp" aria-label="Genius app"><option value="">All apps</option>',
-    ...Object.keys(APP).map(k => '<option value="' + k + '">' + escape(label(k)) + '</option>'),
-    '</select><button class="ga-button" id="gaRefresh" type="button">↻ Refresh</button></div></div>',
+    '<button class="ga-button" id="gaRefresh" type="button">↻ Refresh</button></div></div>',
+    '<nav class="ga-tabs" id="gaTabs" role="tablist" aria-label="App usage views">',
+    '<button type="button" class="ga-tab active" role="tab" aria-selected="true" data-ga-tab="all">All Apps</button>',
+    ...Object.keys(APP).map(k => '<button type="button" class="ga-tab" role="tab" aria-selected="false" data-ga-tab="' + k + '">' + escape(label(k)) + '</button>'),
+    '<button type="button" class="ga-tab ga-tab-analytics" role="tab" aria-selected="false" data-ga-tab="analytics">Analytics</button>',
+    '</nav>',
     '<div id="gaCustom" class="ga-custom-range" hidden><label>From <input type="date" id="gaStart" class="ga-control"></label>',
     '<label>To <input type="date" id="gaEnd" class="ga-control"></label>',
     '<button type="button" class="ga-button" id="gaApply">Apply dates</button></div>',
     '<div id="gaMessage" class="ga-loading" role="status">Open Genius Apps to load usage analytics.</div>',
     '<div id="gaContent" hidden>',
-    '<div class="ga-kpis" id="gaKpis"></div>',
+    '<div id="gaMainPanel">',
     '<div class="ga-grid"><article class="ga-card"><div class="ga-card-head">',
     '<div><h2>Daily App Usage</h2><p id="gaTrendDescription">Recorded sessions per day</p></div>',
     '<div class="ga-pills"><button type="button" class="ga-pill active" data-ga-trend="sessions">Sessions</button>',
@@ -59,12 +63,16 @@
     '<div class="ga-pills"><button type="button" class="ga-pill active" data-ga-ranking="students">Students</button>',
     '<button type="button" class="ga-pill" data-ga-ranking="classes">Classes</button></div></div>',
     '<div id="gaRankingExtras"></div><div class="ga-ranked" id="gaRanking"></div></article></div>',
-    '<div class="ga-grid"><article class="ga-card"><div class="ga-card-head"><div>',
-    '<h2>App Usage Breakdown</h2><p>Share of recorded sessions · tap to filter</p></div></div>',
-    '<div class="ga-app-content"><div id="gaDonut"></div><div id="gaAppList" class="ga-app-list"></div></div></article>',
-    '<article class="ga-card"><div class="ga-card-head"><div><h2>Recent Activity</h2>',
+    '<article class="ga-card ga-full-card"><div class="ga-card-head"><div><h2>Recent Activity</h2>',
     '<p>Latest recorded student sessions in the selected period</p></div></div>',
-    '<div class="ga-feed" id="gaRecent"></div></article></div>',
+    '<div class="ga-feed" id="gaRecent"></div></article>',
+    '</div>',
+    '<div id="gaAnalyticsPanel" hidden>',
+    '<div class="ga-kpis" id="gaKpis"></div>',
+    '<article class="ga-card ga-full-card"><div class="ga-card-head"><div>',
+    '<h2>App Usage Breakdown</h2><p>Share of recorded sessions · tap an app to open its tab</p></div></div>',
+    '<div class="ga-app-content"><div id="gaDonut"></div><div id="gaAppList" class="ga-app-list"></div></div></article>',
+    '</div>',
     '<p class="ga-note">Counts represent recorded practice sessions, not app opens or time on screen. ',
     'Where both study and progress systems recorded the same activity, the overlapping event is counted once. ',
     'Ghost profiles and classes named Test are excluded; other test activity under regular student accounts may remain. All dates use Korean time (KST).</p>',
@@ -151,25 +159,25 @@
     const isClasses=ui.ranking==='classes';
     $('#gaRankingTitle',section).textContent=isClasses?'Top Classes':'Top Students';
     $('#gaRankingSubtitle',section).textContent=isClasses
-      ? 'Participation and usage by class'
+      ? 'Sessions recorded by class'
       : ui.rankingStatus==='inactive'?'Students without recorded activity in this period':'Most active students in this period';
     section.querySelectorAll('[data-ga-ranking]').forEach(btn=>btn.classList.toggle('active',btn.dataset.gaRanking===ui.ranking));
     const extras=$('#gaRankingExtras',section);
     extras.innerHTML=isClasses?'':'<div class="ga-pills" style="margin:-3px 0 14px">'+
       '<button type="button" class="ga-pill '+(ui.rankingStatus==='active'?'active':'')+'" data-ga-students="active">Top users</button>'+
       '<button type="button" class="ga-pill '+(ui.rankingStatus==='inactive'?'active':'')+'" data-ga-students="inactive">Not active</button></div>';
-    const rows=isClasses?[...(data.classes||[])].filter(r=>r.name!=='Unassigned').sort((a,b)=>Number(b.participation||0)-Number(a.participation||0)||Number(b.sessions||0)-Number(a.sessions||0)):(ui.rankingStatus==='inactive'?data.inactive:data.students);
+    const rows=isClasses?[...(data.classes||[])].filter(r=>r.name!=='Unassigned').sort((a,b)=>Number(b.sessions||0)-Number(a.sessions||0)||String(a.name).localeCompare(String(b.name))):(ui.rankingStatus==='inactive'?data.inactive:data.students);
     const max=Math.max(1,...(rows||[]).map(r=>Number(r.sessions||0)));
     $('#gaRanking',section).innerHTML=(rows?.length?rows.map((r,i)=>{
-      const value=Number(r.sessions||0), fill=isClasses?Math.max(3,Number(r.participation||0)):value/max*100;
+      const value=Number(r.sessions||0), fill=value/max*100;
       const detail=isClasses
-        ? format(r.activeStudents)+' / '+format(r.students)+' students · '+format(r.sessions)+' sessions'
+        ? format(r.activeStudents)+' / '+format(r.students)+' students active'
         : ui.rankingStatus==='inactive'?r.className
         : escape(r.className)+' · '+format(r.days)+' days · '+format(r.apps)+' apps';
       return '<div class="ga-rank"><span class="ga-rank-num">'+(i+1)+'</span>'+
         '<div class="ga-rank-name" title="'+escape(r.name)+'">'+escape(r.name)+
         '<small>'+detail+'</small></div><div class="ga-rank-bar-wrap">'+
-        '<div class="ga-rank-value">'+(isClasses?pct(r.participation)+'% participating':ui.rankingStatus==='inactive'?'No sessions':format(value)+' sessions')+'</div>'+
+        '<div class="ga-rank-value">'+(isClasses?format(value)+' sessions':ui.rankingStatus==='inactive'?'No sessions':format(value)+' sessions')+'</div>'+
         '<div class="ga-track"><div class="ga-fill" style="width:'+Math.min(100,fill).toFixed(1)+'%"></div></div></div></div>';
     }).join(''):'<div class="ga-empty">No students found for this filter.</div>');
   }
@@ -206,6 +214,29 @@
         '<time class="ga-feed-time" datetime="'+escape(r.at)+'">'+escape(when)+'</time></div>';
     }).join(''):'<div class="ga-empty">No sessions recorded.</div>';
   }
+  function syncTabs() {
+    const analytics=ui.selectedTab==='analytics';
+    $('#gaMainPanel',section).hidden=analytics;
+    $('#gaAnalyticsPanel',section).hidden=!analytics;
+    $('#gaSubtitle',section).textContent=analytics
+      ? 'Usage summary and app popularity'
+      : ui.app ? label(ui.app)+' — daily activity and top users'
+      : 'Daily app activity and top users';
+    section.querySelectorAll('[data-ga-tab]').forEach(tab=>{
+      const selected=tab.dataset.gaTab===ui.selectedTab;
+      tab.classList.toggle('active',selected);
+      tab.setAttribute('aria-selected',String(selected));
+      tab.tabIndex=selected?0:-1;
+    });
+  }
+  function selectTab(tab) {
+    if(tab!=='all'&&tab!=='analytics'&&!APP[tab])return;
+    if(ui.selectedTab===tab)return;
+    ui.selectedTab=tab;
+    ui.app=tab==='analytics'||tab==='all'?'':tab;
+    syncTabs();
+    load();
+  }
   function populateClasses() {
     const select=$('#gaClass',section);
     const options=ui.classOptions;
@@ -215,7 +246,7 @@
   }
   function render() {
     if (!ui.data) return;
-    kpis(ui.data);drawChart(ui.data);ranking(ui.data);breakdown(ui.data);recent(ui.data);
+    kpis(ui.data);drawChart(ui.data);ranking(ui.data);breakdown(ui.data);recent(ui.data);syncTabs();
     $('#gaMessage',section).hidden=true;
     $('#gaContent',section).hidden=false;
   }
@@ -297,7 +328,7 @@
     if(ui.period!=='custom')load();
   });
   $('#gaClass',section).addEventListener('change',event=>{ui.className=event.target.value;load();});
-  $('#gaApp',section).addEventListener('change',event=>{ui.app=event.target.value;load();});
+  section.querySelectorAll('[data-ga-tab]').forEach(tab=>tab.addEventListener('click',()=>selectTab(tab.dataset.gaTab)));
   $('#gaRefresh',section).addEventListener('click',load);
   $('#gaApply',section).addEventListener('click',()=>{
     const start=$('#gaStart',section).value,end=$('#gaEnd',section).value;
@@ -313,7 +344,7 @@
     const studentMode=event.target.closest('[data-ga-students]');
     if(studentMode){ui.rankingStatus=studentMode.dataset.gaStudents;if(ui.data)ranking(ui.data);return;}
     const app=event.target.closest('[data-ga-app]');
-    if(app){ui.app=ui.app===app.dataset.gaApp?'':app.dataset.gaApp;$('#gaApp',section).value=ui.app;load();}
+    if(app)selectTab(app.dataset.gaApp);
   });
   const today = new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'});
   const t=new Date(today+'T00:00:00Z');
