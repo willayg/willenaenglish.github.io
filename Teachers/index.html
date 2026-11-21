@@ -1341,7 +1341,7 @@ async function openStudent(id){window.rosterDrawerStudent=String(id);const base=
 /* Class Curriculum — read from staff-scoped operations RPC and shared content catalog. */
 const curriculum={
  data:null, loadedAt:0, extraError:'', selectedClass:'', selectedBook:'', selectedUnit:'', selectedSkill:'', assignmentSubview:'curriculum', unitCache:new Map(),
- availability:new Map(), pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[], skillDetail:new Map(), extraActivity:[], sentenceEvidence:[], writingUnits:[], writingEntries:[],conversationEvidence:[],jellyRewards:new Map()
+ availability:new Map(), puzzlePending:new Map(), pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[], skillDetail:new Map(), extraActivity:[], sentenceEvidence:[], writingUnits:[], writingEntries:[],conversationEvidence:[],jellyRewards:new Map()
 };
 // Both screens use this ONE curriculum renderer and the same state/cache.
 const ccHost=()=>document.querySelector('#view-assignments.active #assignmentClassGrid')||document.getElementById('classGrid');
@@ -1448,15 +1448,41 @@ async function ccCatalogAvailability(bookId,table,unitField,itemField,filter){
   const key=String(record[unitField]),items=result.get(key)||new Set();items.add(String(record[itemField]));result.set(key,items)}
  return result;
 }
+async function ccLoadPublishedAvailability(bookIds){
+ if(!bookIds.length)return new Map();
+ const res=await fetch(ccCatalog+'rpc/teacher_curriculum_content_availability_v1',{
+  method:'POST',headers:{apikey:ccCatalogKey,Authorization:'Bearer '+ccCatalogKey,'Content-Type':'application/json'},
+  body:JSON.stringify({p_book_ids:bookIds}),cache:'no-store'
+ });
+ const rows=await res.json().catch(()=>null);
+ if(!res.ok||!Array.isArray(rows))throw Error('Content availability unavailable ('+res.status+')');
+ const byBook=new Map();
+ for(const row of rows){
+  const bookId=String(row.bookId||''),unitId=String(row.unitId||'');
+  if(!bookId||!unitId)continue;
+  if(!byBook.has(bookId))byBook.set(bookId,{
+   word:new Map(),sentence:new Map(),grammar:new Map(),talking:new Map(),
+   freeconversation:new Map(),writing:new Map(),puzzles:new Map()
+  });
+  const info=byBook.get(bookId);
+  for(const key of ['word','sentence','grammar','talking','freeconversation','writing']){
+   info[key].set(key==='grammar'?String(row.unitNumber):unitId,Math.max(0,Number(row[key])||0));
+  }
+  info.puzzles.set('book',Math.max(0,Number(row.puzzles)||0));
+ }
+ return byBook;
+}
 function ccSkillAvailability(book,unit,group){
- // null means unknown (including a failed catalog request), never unavailable.
- if(!['word','sentence','grammar','freeconversation'].includes(group.key))return null;
+ // Null means unknown: failed or missing catalog responses must NEVER be grey X.
  const catalog=curriculum.availability.get(String(book.book_id));
  if(!catalog)return null;
  const entries=catalog[group.key];
  if(!(entries instanceof Map))return null;
- const key=group.key==='grammar'?String(unit.unit_number):String(unit.id);
- return (entries.get(key)?.size||0)>0;
+ const key=group.key==='puzzles'?'book':group.key==='grammar'?String(unit.unit_number):String(unit.id);
+ const value=entries.get(key);
+ if(value===undefined)return group.key==='puzzles'?null:false;
+ // Puzzles need >=6 book words; the memory game is the smallest supported mode.
+ return (typeof value==='number'?value:(value?.size||0)) >= (group.key==='puzzles'?6:1);
 }
 function ccSkillData(book,unit,group){
  const rows=ccUnitRows(book,unit).filter(r=>group.skills.includes(r.skill));
@@ -2030,7 +2056,7 @@ async function loadClassOverview(force=false){
  }
  curriculum.pending=true;ccHost().innerHTML='<div class="empty">Loading active class books and practice records…</div>';
  try{
-  if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.availability.clear();curriculum.puzzleDetail.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];}
+  if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.availability.clear();curriculum.puzzleDetail.clear();curriculum.puzzlePending.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];}
   curriculum.data=await ccRpc('teacher_curriculum_overview_v1');
   try{const puzzle=await ccRpc('teacher_curriculum_puzzle_overview_v1');curriculum.puzzleOverview=Array.isArray(puzzle)?puzzle:[]}catch(e){console.warn('[Class Curriculum] Puzzle overview:',e.message);curriculum.puzzleOverview=[];}
   try{const extra=await ccRpc('teacher_curriculum_extra_activity_v1');if(!Array.isArray(extra))throw Error('Unexpected curriculum evidence response');curriculum.extraActivity=extra;curriculum.extraError='';}catch(e){console.warn('[Class Curriculum] Grammar / Talking overview:',e.message);curriculum.extraActivity=[];curriculum.extraError=e.message||'Unavailable';}
@@ -2057,15 +2083,24 @@ async function loadClassOverview(force=false){
   curriculum.data.books.forEach(b=>{b._units=byId.get(b.book_id)||[];b._className=curriculum.data.classes.find(c=>c.id===b.class_id)?.name||''});
   // Catalog presence is separate from student progress. Unknown fetches remain white,
   // rather than incorrectly reporting that a skill is unavailable.
-  await Promise.all(allIds.map(async id=>{
-   const [word,sentence,grammar,freeconversation]=await Promise.all([
-    rsCatalogTotals(id,'unit_vocab_targets','lexical_entry_id','&active=eq.true').catch(e=>{console.warn('[Class Curriculum] Word availability:',e);return null}),
-    rsCatalogTotals(id,'source_content_occurrences','sentence_id','&sentence_id=not.is.null&status=in.(review,published)').catch(e=>{console.warn('[Class Curriculum] Sentence availability:',e);return null}),
-    ccCatalogAvailability(id,'grammar_coursebook_live_questions','unit_number','question_id','&status=eq.published').catch(e=>{console.warn('[Class Curriculum] Grammar availability:',e);return null}),
-    ccCatalogAvailability(id,'free_talking_questions','unit_id','id','&is_published=eq.true').catch(e=>{console.warn('[Class Curriculum] Free Talking availability:',e);return null})
-   ]);
-   curriculum.availability.set(String(id),{word,sentence,grammar,freeconversation});
-  }));
+  try{
+   // All app availability comes from published runnable catalog content.
+   // Puzzle availability is an aggregate of words across the entire book.
+   const snapshot=await ccLoadPublishedAvailability(allIds);
+   for(const id of allIds)curriculum.availability.set(String(id),snapshot.get(String(id))||null);
+  }catch(e){
+   console.warn('[Class Curriculum] Published content unavailable; using conservative fallback:',e);
+   // Safe fallback: failed lookups never become proof of no content.
+   await Promise.all(allIds.map(async id=>{
+    const [word,sentence,grammar,freeconversation]=await Promise.all([
+     rsCatalogTotals(id,'unit_vocab_targets','lexical_entry_id','&active=eq.true').catch(()=>null),
+     rsCatalogTotals(id,'source_content_occurrences','sentence_id','&sentence_id=not.is.null&status=in.(review,published)').catch(()=>null),
+     ccCatalogAvailability(id,'grammar_coursebook_live_questions','unit_number','question_id','&status=eq.published').catch(()=>null),
+     ccCatalogAvailability(id,'free_talking_questions','unit_id','id','&is_published=eq.true').catch(()=>null)
+    ]);
+    curriculum.availability.set(String(id),{word,sentence,grammar,talking:freeconversation,freeconversation});
+   }));
+  }
   curriculum.loadedAt=Date.now();
   curriculum.refreshRequested=false;
   if(ccHost()?.id==='assignmentClassGrid'){
