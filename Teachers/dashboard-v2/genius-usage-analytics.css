@@ -83,7 +83,7 @@
 #view-genius-usage .ga-note{font-size:11px;line-height:1.6;color:#7c8c97;margin:6px 2px 0}
 #view-genius-usage .ga-inactive-toggle{margin-left:auto}
 #view-genius-usage [hidden]{display:none!important}
-@media(max-width:1180px){#view-genius-usage .ga-grid{grid-template-columns:1fr}#view-genius-usage .ga-app-content{grid-template-columns:210px 1fr}}
+@media(max-width:1180px){#view-genius-usage .ga-grid{grid-template-columns:1fr}#view-genius-usage .ga-app-content{grid-template-columns:1fr}}
 @media(max-width:850px){#view-genius-usage .ga-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){
  #view-genius-usage .ga-header{gap:14px}
