@@ -80,13 +80,23 @@ async function loadStudentRoster(){
  renderRecipientPicker();
  if(!cls)return;
  try{
-  const route='/.netlify/functions/progress_summary?'+new URLSearchParams({section:'teacher_class_insights',class:cls,days:'30'});
-  const response=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch(route,{credentials:'include',cache:'no-store'}):fetch(window.WillenaAPI?.getApiUrl?.(route)||route,{credentials:'include',cache:'no-store'}));
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok||data.success===false||!Array.isArray(data.students))throw Error(data.error||'Student roster unavailable ('+response.status+')');
+  // Staff-scoped roster RPC: the legacy progress_summary section is not supported.
+  const call=token=>fetch(OP_HOST+'/rest/v1/rpc/teacher_class_student_roster_v1',{
+   method:'POST',cache:'no-store',headers:{apikey:OP_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+   body:JSON.stringify({p_class:cls})
+  });
+  let response=await call(window.WillenaAPI?.getLocalAccessToken?.()||'');
+  if(response.status===401){
+   const uri='/.netlify/functions/supabase_auth?action=refresh';
+   const refresh=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch(uri,{credentials:'include'}):fetch(window.WillenaAPI?.getApiUrl?.(uri)||uri,{credentials:'include'}));
+   const auth=await refresh.json().catch(()=>({}));
+   if(refresh.ok&&auth.access_token){window.WillenaAPI?.setLocalTokens?.(auth.access_token,auth.refresh_token||'');response=await call(auth.access_token)}
+  }
+  const data=await response.json().catch(()=>null);
+  if(!response.ok||!Array.isArray(data))throw Error('Student roster unavailable ('+response.status+')');
   if(revision!==rosterRevision||panel()!==p||p.querySelector('#uaClass').value!==cls)return;
   const byId=new Map();
-  for(const student of data.students){
+  for(const student of data){
    const id=String(student.user_id||student.id||student.student_id||'').trim();
    if(!id)continue;
    byId.set(id,{id,label:String(student.name||student.korean_name||student.username||'Student'),korean:String(student.korean_name||'')});
