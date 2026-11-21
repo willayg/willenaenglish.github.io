@@ -1,4 +1,4 @@
-import { insertBurgerMenu } from '/components/burger-menu.js?v=20261121-modern-bell2';
+import { insertBurgerMenu } from '/components/burger-menu.js?v=20261121-modern-bell3';
 
 const AUTH_URL = '/.netlify/functions/supabase_auth';
 let instance = null;
