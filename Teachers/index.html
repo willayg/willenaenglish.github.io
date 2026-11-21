@@ -1529,26 +1529,26 @@ function ccCellProgress(book,unit,group,className){
  if(group.key==='word'){
   const required=ccRequiredSkills(book,group);
   verified=Boolean(curriculum.evidenceReady.word&&catalog&&target>0&&required?.length);
-  if(verified)for(const r of curriculum.wordSnapshots){
+  for(const r of curriculum.wordSnapshots){
    if(String(r.book_id)!==String(book.book_id)||String(r.unit_id)!==String(unit.id)||!ids.has(String(r.student_id)))continue;
    const id=String(r.student_id);
    if(['vocabulary','spelling_coach','spelling_test','speaking'].some(key=>Number(r[key])>0))started.add(id);
-   const testCoversCoach=Number(r.spelling_test)>=target;
-   if(required.every(key=>Number(r[key])>target*.9||(key==='spelling_coach'&&testCoversCoach)))finished.add(id);
+   if(verified){
+    const testCoversCoach=Number(r.spelling_test)>=target;
+    if(required.every(key=>Number(r[key])>target*.9||(key==='spelling_coach'&&testCoversCoach)))finished.add(id);
+   }
   }
  }else if(group.key==='sentence'){
   verified=Boolean(curriculum.evidenceReady.sentence&&catalog&&target>0);
-  if(verified){
-   const byStudent=new Map();
-   for(const r of (curriculum.sentenceEvidence||[])){
-    if(String(r.book_id)!==String(book.book_id)||String(r.unit_id)!==String(unit.id)||!ids.has(String(r.student_id)))continue;
-    const id=String(r.student_id),skills=byStudent.get(id)||{};
-    skills[String(r.skill)]=Math.max(Number(skills[String(r.skill)])||0,Number(r.done)||0);
-    byStudent.set(id,skills);
-    if(Number(r.done)>0)started.add(id);
-   }
-   for(const [id,skills] of byStudent)if(['sentence_coach','sentence_unscramble','sentence_speaking'].every(key=>Number(skills[key])>target*.9))finished.add(id);
+  const byStudent=new Map();
+  for(const r of (curriculum.sentenceEvidence||[])){
+   if(String(r.book_id)!==String(book.book_id)||String(r.unit_id)!==String(unit.id)||!ids.has(String(r.student_id)))continue;
+   const id=String(r.student_id),skills=byStudent.get(id)||{};
+   skills[String(r.skill)]=Math.max(Number(skills[String(r.skill)])||0,Number(r.done)||0);
+   byStudent.set(id,skills);
+   if(Number(r.done)>0)started.add(id);
   }
+  if(verified)for(const [id,skills] of byStudent)if(['sentence_coach','sentence_unscramble','sentence_speaking'].every(key=>Number(skills[key])>target*.9))finished.add(id);
  }else if(group.key==='writing'){
   verified=Boolean(curriculum.evidenceReady.writing);
   if(verified){
