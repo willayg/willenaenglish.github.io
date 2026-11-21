@@ -1,0 +1,52 @@
+/* Main Teachers dashboard: modern per-teacher homework bell.
+   Shared burger-menu styles remain unchanged on legacy teacher tools. */
+#teacher-header .hw-notif-panel{
+ width:min(380px,calc(100vw - 24px));
+ max-height:min(560px,76dvh);
+ border:1px solid #dcebed;
+ border-radius:14px;
+ box-shadow:0 18px 50px rgba(25,55,65,.22);
+}
+#teacher-header .hw-notif-header{font-size:14px;padding:13px 15px}
+#teacher-header .hw-notif-body{overflow-y:auto}
+#teacher-header .hw-my-title{
+ padding:11px 14px 7px;font-size:11px;font-weight:800;
+ color:#387985;background:#f3fafb;text-transform:uppercase;
+ letter-spacing:.035em;border-block:1px solid #e4eff1;
+}
+#teacher-header .hw-my-title:first-child{border-top:0}
+#teacher-header .hw-my-state{font-size:12px;color:#7b8994;padding:13px 14px;margin:0;line-height:1.5}
+#teacher-header .hw-my-error{padding:12px 14px;background:#fff6f4;color:#ad504a;font-size:11px;line-height:1.5;margin:0}
+#teacher-header .hw-my-row{
+ display:flex;width:100%;min-height:55px;align-items:center;gap:9px;
+ background:#fff;border:0;border-bottom:1px solid #edf2f5;
+ padding:10px 13px;text-align:left;cursor:pointer;font:inherit;
+}
+#teacher-header .hw-my-row:hover{background:#edfafa}
+#teacher-header .hw-my-row:focus-visible{outline:3px solid #71d7de;outline-offset:-3px}
+#teacher-header .hw-my-text{display:block;flex:1;min-width:0}
+#teacher-header .hw-my-text b{
+ font-weight:750;color:#253d49;font-size:12px;
+ display:block;overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap;
+}
+#teacher-header .hw-my-text small{
+ display:block;font-size:10px;color:#758993;margin-top:4px;
+ white-space:normal;overflow-wrap:anywhere;line-height:1.4;
+}
+#teacher-header .hw-my-icon{
+ width:23px;height:23px;flex-shrink:0;border-radius:50%;
+ display:grid;place-items:center;color:#008f86;background:#dff7f3;font-size:13px;font-weight:800;
+}
+#teacher-header .hw-my-dot{
+ width:8px;height:8px;flex-shrink:0;margin:0 7px;border-radius:50%;background:#26b5bc;
+}
+#teacher-header .hw-my-label{
+ flex-shrink:0;font-size:10px;font-weight:700;background:#e7f8f9;
+ color:#118c94;padding:5px 8px;border-radius:8px;
+}
+#teacher-header .hw-my-date{flex-shrink:0;font-size:10px;color:#81929d;max-width:92px;text-align:right}
+#teacher-header .hw-notif-footer{position:sticky;bottom:0;z-index:1}
+@media(max-width:760px){
+ #teacher-header .hw-notif-panel{right:0;left:auto;max-height:min(530px,72dvh)}
+}
