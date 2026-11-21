@@ -158,18 +158,18 @@
     extras.innerHTML=isClasses?'':'<div class="ga-pills" style="margin:-3px 0 14px">'+
       '<button type="button" class="ga-pill '+(ui.rankingStatus==='active'?'active':'')+'" data-ga-students="active">Top users</button>'+
       '<button type="button" class="ga-pill '+(ui.rankingStatus==='inactive'?'active':'')+'" data-ga-students="inactive">Not active</button></div>';
-    const rows=isClasses?data.classes:(ui.rankingStatus==='inactive'?data.inactive:data.students);
+    const rows=isClasses?[...(data.classes||[])].filter(r=>r.name!=='Unassigned').sort((a,b)=>Number(b.participation||0)-Number(a.participation||0)||Number(b.sessions||0)-Number(a.sessions||0)):(ui.rankingStatus==='inactive'?data.inactive:data.students);
     const max=Math.max(1,...(rows||[]).map(r=>Number(r.sessions||0)));
     $('#gaRanking',section).innerHTML=(rows?.length?rows.map((r,i)=>{
       const value=Number(r.sessions||0), fill=isClasses?Math.max(3,Number(r.participation||0)):value/max*100;
       const detail=isClasses
-        ? format(r.activeStudents)+' / '+format(r.students)+' active · '+pct(r.participation)+'%'
+        ? format(r.activeStudents)+' / '+format(r.students)+' students · '+format(r.sessions)+' sessions'
         : ui.rankingStatus==='inactive'?r.className
         : escape(r.className)+' · '+format(r.days)+' days · '+format(r.apps)+' apps';
       return '<div class="ga-rank"><span class="ga-rank-num">'+(i+1)+'</span>'+
         '<div class="ga-rank-name" title="'+escape(r.name)+'">'+escape(r.name)+
         '<small>'+detail+'</small></div><div class="ga-rank-bar-wrap">'+
-        '<div class="ga-rank-value">'+(ui.rankingStatus==='inactive'&&!isClasses?'No sessions':format(value)+' sessions')+'</div>'+
+        '<div class="ga-rank-value">'+(isClasses?pct(r.participation)+'% participating':ui.rankingStatus==='inactive'?'No sessions':format(value)+' sessions')+'</div>'+
         '<div class="ga-track"><div class="ga-fill" style="width:'+Math.min(100,fill).toFixed(1)+'%"></div></div></div></div>';
     }).join(''):'<div class="ga-empty">No students found for this filter.</div>');
   }
