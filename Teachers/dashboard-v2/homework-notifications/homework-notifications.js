@@ -7,6 +7,14 @@
  function clearHighlights(details){highlighted.delete(details);paint(details,new Set())}
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const pending=()=>[...state.items.values()].filter(x=>!state.reviewed.has(x.key));
+ // The header bell consumes this same per-teacher unread state. It never
+ // acknowledges items merely because the bell was opened.
+ const ownUnread=()=>!state.ready||!state.teacherId?null:
+  pending().filter(x=>String(x.createdBy)===String(state.teacherId));
+ const notifyBell=()=>window.dispatchEvent(new CustomEvent('willena:teacher-homework-unread-change',{
+  detail:{teacherId:state.teacherId,items:ownUnread()}
+ }));
+
  const badge=(node,count,nav=false,tone='red')=>{if(!node)return;let b=[...node.children].find(el=>el.classList?.contains('whn-badge')&&el.dataset.whnTone===tone);if(!count){b?.remove();return}if(!b){b=document.createElement('span');b.className='whn-badge whn-'+tone+(nav?' whn-nav-badge':'');b.dataset.whnTone=tone;b.setAttribute('aria-label','Unread homework completions');node.appendChild(b)}{const label=count>99?'99+':String(count);if(b.textContent!==label)b.textContent=label}};
  function render(){
   const unread=pending(),byClass=new Map(),byAssignment=new Map();
@@ -44,14 +52,14 @@
   const outcomes=await Promise.allSettled(entries.map(entry=>api().acknowledge(entry)));
   let failed=0;
   outcomes.forEach((outcome,index)=>{if(outcome.status==='fulfilled')state.reviewed.add(entries[index].key);else{failed++;console.warn('[Homework Notifications] Save failed',outcome.reason)}});
-  render();
+  render();notifyBell();
   if(failed)console.warn('[Homework Notifications] '+failed+' completion acknowledgement(s) could not be saved');
  }
- async function sync(){try{state.teacherId=await api().identity();const rows=await api().list();state.reviewed=new Set((rows||[]).map(r=>r.completion_key));state.ready=true;render()}catch(error){console.warn('[Homework Notifications] Acknowledgements unavailable',error)}}
- function receive(items,{complete=false,errors=[]}={}){if(!Array.isArray(items))return;if(complete){if(errors.length){console.warn('[Homework Notifications] Incomplete progress snapshot',errors);return}state.items.clear();state.complete=true}for(const item of items){if(item.key&&item.assignmentId&&item.studentId)state.items.set(item.key,item)}render()}
+ async function sync(){try{state.teacherId=await api().identity();const rows=await api().list();state.reviewed=new Set((rows||[]).map(r=>r.completion_key));state.ready=true;render();notifyBell()}catch(error){console.warn('[Homework Notifications] Acknowledgements unavailable',error)}}
+ function receive(items,{complete=false,errors=[]}={}){if(!Array.isArray(items))return;if(complete){if(errors.length){console.warn('[Homework Notifications] Incomplete progress snapshot',errors);return}state.items.clear();state.complete=true}for(const item of items){if(item.key&&item.assignmentId&&item.studentId)state.items.set(item.key,item)}render();notifyBell()}
  async function refresh(){if(state.refreshing)return;state.refreshing=true;try{await sync();await window.UniversalAssignmentTracker?.loadCompletionSnapshot?.()}catch(error){console.warn('[Homework Notifications] Refresh failed',error)}finally{state.refreshing=false}}
  const observer=new MutationObserver(()=>{if(state.items.size)requestAnimationFrame(render)});
  function start(){observer.observe(document.body,{subtree:true,childList:true});void refresh();setInterval(()=>{if(!document.hidden)void refresh()},90000);window.addEventListener('focus',()=>void refresh())}
- window.WillenaHomeworkNotifications={receive,refresh,render};
+ window.WillenaHomeworkNotifications={receive,refresh,render,getOwnUnread:ownUnread};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
