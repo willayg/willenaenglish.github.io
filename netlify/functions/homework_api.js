@@ -1271,7 +1271,10 @@ async function listAssignmentsForStudent(event) {
   }
 
   // Map teacher name for convenience on each assignment
-  const assignments = (data || []).map(a => ({
+  const assignments = (data || []).filter(a => {
+    const targets = getAssignmentTargetStudentIds(a.list_meta);
+    return targets.length === 0 || targets.includes(String(prof.id));
+  }).map(a => ({
     ...a,
       teacher_name: a.profiles?.name || null,
       list_meta: parseAssignmentMeta(a.list_meta),
@@ -1325,6 +1328,10 @@ async function getRunTokenForStudent(event) {
   }
 
   const listMeta = parseAssignmentMeta(assignment.list_meta);
+  const targetIds = getAssignmentTargetStudentIds(listMeta);
+  if (targetIds.length && !targetIds.includes(String(prof.id))) {
+    return _json(403, { success: false, error: 'Mission not assigned to this student' });
+  }
   let tokens = Array.isArray(listMeta?.run_tokens) ? listMeta.run_tokens.map(r => r?.token).filter(Boolean) : [];
 
   // Backfill token here as well so student session_start can always get a token
