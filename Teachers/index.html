@@ -1513,25 +1513,9 @@ function ccUnitStatus(book,unit,className){
  }
  for(const evidence of ccSentenceRows(book,unit,className))started.add(String(evidence.student_id));
  for(const evidence of ccWritingRows(book,unit,className))started.add(String(evidence.student_id));
- // Completed puzzles provide a known five-mode denominator. Other apps need
- // an authoritative total before claiming a percentage is complete.
- const completedByStudent=new Map();
- for(const record of (curriculum.puzzleOverview||[])){
-  if(record.book_id!==book.book_id||record.unit_id!==unit.id||!ids.has(String(record.student_id)))continue;
-  const modes=Number(record.completed_modes||0);
-  if(modes>0)started.add(String(record.student_id));
-  completedByStudent.set(String(record.student_id),Math.max(modes,completedByStudent.get(String(record.student_id))||0));
- }
- const puzzleComplete=[...completedByStudent.values()].reduce((sum,n)=>sum+Math.min(5,n)/5,0);
- // A unit is gold only when every relevant app's completion can be verified.
- // This conservative fallback remains pink while other Genius completion
- // totals aren't available, rather than presenting activity as mastery.
- const pct=Math.round(100*puzzleComplete/roster.length);
- const otherActivity=rows.some(r=>r.skill!=='puzzle'&&(Number(r.attempts)>0||Number(r.attempted_content_count)>0));
- // Only a puzzle-only unit with fully verifiable completion can be cyan.
- // Other app mastery cannot be calculated from attempts alone.
- const verifiedComplete=pct>90&&!otherActivity;
- return {status:verifiedComplete?'complete':started.size?'in-progress':'not-started',percent:pct,started:started.size};
+ // Book-wide puzzle completions cannot prove mastery of any one unit.
+ // Only genuinely unit-linked activity contributes to class curriculum status.
+ return {status:started.size?'in-progress':'not-started',percent:0,started:started.size};
 }
 function ccClassStatus(books,className){
  const stats=books.flatMap(b=>(b._units||[]).map(u=>ccUnitStatus(b,u,className)));
@@ -1804,12 +1788,24 @@ function ccRenderDetail(){
  });
 }
 const ccPuzzleModeNames={wordsearch:'Word Search',crossword:'Crossword',boggle:'Boggle',mixmatch:'Mix & Match',wordle:'Wordle'};
-const ccPuzzleCacheKey=(book,unit)=>[curriculum.selectedClass,book.book_id,unit.id].join(':');
+// Puzzles use an entire textbook. Never treat the first-unit reward tag as
+// evidence that puzzles belong to Unit 1.
+const ccPuzzleCacheKey=(book,unit)=>[curriculum.selectedClass,book.book_id,'whole-book'].join(':');
 async function ccLoadPuzzleDetail(book,unit){
  const key=ccPuzzleCacheKey(book,unit);
  if(curriculum.puzzleDetail.has(key))return;
- const rows=await ccRpc('teacher_curriculum_puzzle_unit_v1',{p_class:curriculum.selectedClass,p_book_id:book.book_id,p_unit_id:unit.id});
- curriculum.puzzleDetail.set(key,Array.isArray(rows)?rows:[]);
+ if(curriculum.puzzlePending.has(key))return curriculum.puzzlePending.get(key);
+ const className=curriculum.selectedClass;
+ const pending=ccRpc('teacher_curriculum_puzzle_book_v1',{p_class:className,p_book_id:book.book_id})
+  .then(rows=>{if(!Array.isArray(rows))throw Error('Invalid book puzzle progress');curriculum.puzzleDetail.set(key,rows)})
+  .catch(error=>{
+   // Unknown is not the same as zero activity. Keep evidence unavailable.
+   curriculum.puzzleDetail.set(key,null);
+   console.warn('[Class Curriculum] Book puzzle progress unavailable:',error);
+  })
+  .finally(()=>curriculum.puzzlePending.delete(key));
+ curriculum.puzzlePending.set(key,pending);
+ return pending;
 }
 function ccActivityTime(value){
  if(!value)return '';
