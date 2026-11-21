@@ -419,7 +419,7 @@ try{
 .cc-unit-name small{color:#80919b;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cc-cell{border:1.5px solid transparent;border-radius:10px;cursor:pointer;min-height:52px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px}
 .cc-cell b{font-size:14px}.cc-cell small{font-size:10px}.cc-full{background:#FFF0BD;color:#815B10;border-color:#E5BD56}.cc-partial{background:#eef9f2;color:#2d7652;border-color:#cde9d8}
-/* One family of greens, then gold at 90% class completion. */
+/* One family of greens, then gold at 80% class completion. */
 .cc-progress-low{background:#eef9f2;color:#327654;border-color:#cde9d8}
 .cc-progress-mid{background:#ccebd9;color:#245f42;border-color:#a4d7b9}
 .cc-progress-high{background:#95d4b0;color:#164a32;border-color:#71ba92}
@@ -1511,7 +1511,7 @@ function ccSkillData(book,unit,group){
 function ccCompletionTone(complete,total,started){
  if(!(total>0))return 'cc-empty-cell';
  const pct=100*complete/total;
- if(pct>=90)return 'cc-full';
+ if(pct>=80)return 'cc-full';
  if(!started)return 'cc-empty-cell';
  if(pct>=60)return 'cc-progress-high';
  if(pct>=25)return 'cc-progress-mid';
@@ -1581,7 +1581,7 @@ function ccUnitStatus(book,unit,className){
  const groups=ccSkillGroups.filter(g=>g.key!=='puzzles'&&ccSkillAvailability(book,unit,g)!==false);
  const snapshots=groups.map(g=>ccCellProgress(book,unit,g,className));
  const started=new Set(snapshots.flatMap(s=>[...s.started]));
- const complete=snapshots.length>0&&snapshots.every(s=>s.verified&&s.total>0&&s.finished.size/s.total>=.9);
+ const complete=snapshots.length>0&&snapshots.every(s=>s.verified&&s.total>0&&s.finished.size/s.total>=.8);
  return {status:complete?'complete':started.size?'in-progress':'not-started',percent:0,started:started.size};
 }
 function ccClassStatus(books,className){
@@ -1609,7 +1609,7 @@ function ccBookProgress(book){
  if(!curriculum.unitCache.get(book.book_id))return '<span class="cc-muted">Unit data loading…</span>';
  return '<div class="cc-unit-strip">'+(book._units||[]).map(u=>{
    const result=ccUnitStatus(book,u,book._className);
-   return '<i class="cc-'+result.status+'" title="Unit '+ccEscape(u.unit_number)+' · '+result.started+' students with recorded work · '+(result.status==='not-started'?'Not started':result.status==='complete'?'At least 90% completed':'In progress')+'"></i>';
+   return '<i class="cc-'+result.status+'" title="Unit '+ccEscape(u.unit_number)+' · '+result.started+' students with recorded work · '+(result.status==='not-started'?'Not started':result.status==='complete'?'At least 80% completed':'In progress')+'"></i>';
  }).join('')+'</div>';
 }
 function ccRenderOverview(){
