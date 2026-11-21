@@ -99,3 +99,47 @@
  #view-genius-usage .ga-feed-item{grid-template-columns:75px minmax(0,1fr) auto;gap:6px}
  #view-genius-usage .ga-tag{font-size:9px}
 }
+
+
+/* Horizontal app switcher: explicit app tabs replace the old app dropdown.
+   Analytics is intentionally last and the summary cards live only there. */
+#view-genius-usage .ga-tabs{
+ display:flex;align-items:stretch;gap:4px;
+ padding:5px 6px 0;margin:2px 0 20px;
+ border:1px solid #dce9eb;border-bottom:2px solid #d9e9ec;
+ border-radius:16px 16px 0 0;
+ background:#f5f9fa;
+ overflow-x:auto;overscroll-behavior-x:contain;
+ scrollbar-width:thin;scrollbar-color:#b6dfe1 transparent;
+ -webkit-overflow-scrolling:touch;
+}
+#view-genius-usage .ga-tab{
+ display:inline-flex;align-items:center;justify-content:center;
+ flex:none;white-space:nowrap;
+ border:1px solid transparent;border-bottom:3px solid transparent;
+ border-radius:11px 11px 0 0;
+ background:transparent;color:#617984;
+ min-height:49px;padding:10px 14px 9px;
+ font-size:12px;font-weight:750;cursor:pointer;
+}
+#view-genius-usage .ga-tab:hover{background:#e9f5f6;color:#217f89}
+#view-genius-usage .ga-tab.active{
+ color:#058a94;background:#fff;
+ border-color:#c8e8eb;border-bottom-color:#0bb5bd;
+ box-shadow:0 2px 8px rgba(12,95,105,.07);
+}
+#view-genius-usage .ga-tab-analytics{
+ color:#845e9c;margin-left:auto;border-left:1px solid #d9e1e9;
+}
+#view-genius-usage .ga-tab-analytics.active{color:#7e4c9d;border-bottom-color:#9a62ce}
+#view-genius-usage .ga-full-card{margin-bottom:16px}
+#view-genius-usage .ga-full-card .ga-feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;max-height:450px}
+#view-genius-usage #gaMainPanel[hidden],#view-genius-usage #gaAnalyticsPanel[hidden]{display:none!important}
+@media(max-width:850px){
+ #view-genius-usage .ga-tabs{margin-bottom:14px}
+ #view-genius-usage .ga-full-card .ga-feed{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+ #view-genius-usage .ga-tabs{margin-inline:-4px;padding:4px 4px 0;border-radius:12px 12px 0 0}
+ #view-genius-usage .ga-tab{min-height:43px;padding:9px 12px 8px;font-size:11px}
+}
