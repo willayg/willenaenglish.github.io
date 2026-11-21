@@ -3,7 +3,7 @@
  * a completion reviewed; that happens in the existing assignment card. */
 (() => {
  'use strict';
- if(!/^\/Teachers\/(?:index\.html)?\/?$/i.test(location.pathname))return;
+ if(!/^\/Teachers(?:\/index\.html|\/)?$/i.test(location.pathname))return;
  const $=(selector,root=document)=>root.querySelector(selector);
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
  const labels={word:'Word Genius',sentence:'Sentence Genius',grammar:'Grammar Genius',talking:'Free Talking',writing:'Writing Genius',puzzles:'Puzzles',naesin:'내신'};
