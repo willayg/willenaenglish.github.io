@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage,classifyVocabSemanticNearMatch} from './ai-willi.js?v=1.0.3';
 
-export const GRADER_VERSION='2.4.3';
+export const GRADER_VERSION='2.4.4';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -308,6 +308,14 @@ function exact(question,response,policy){
 
 export async function gradeQuestion(question,response,options={}){
   const policy=resolveQuestionGradingPolicy(question);
+  // A written answer identical to the published model answer (ignoring case and
+  // terminal punctuation) must not fail an inconsistent generated constraint.
+  // Use normBasic rather than normExact here: contractions must NOT be expanded,
+  // so an explicit no-contractions instruction remains enforceable.
+  if(question?.form===FORMS.write&&typeof response==='string'&&
+     (question.answer||[]).some(answer=>normBasic(answer)===normBasic(response))){
+    return stamp({correct:true,message:'',correctAnswer:question.answer,method:'canonical_exact',gradingPolicy:policy});
+  }
   const constraint=checkConstraints(question,response,policy);
   if(!constraint.ok)return stamp({correct:false,message:constraint.message,correctAnswer:question.answer,method:'constraint',gradingPolicy:policy});
   if(exact(question,response,policy))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy});
