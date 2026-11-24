@@ -199,3 +199,107 @@ export function attachAISpeakingFallback({host,target,isCurrent,onAccepted,match
   }
   return {observe,dispose};
 }
+
+
+// Third-try assistance: same mic, no modal, no background recording.
+// One assisted recording per question visit; normal browser speech resumes afterward.
+export function attachSilentAISpeaking({host,target,keywords,isCurrent,shouldAssist,onResult,onDiagnostic,callApi}){
+  const mic=host?.querySelector('[data-speaking-mic]');
+  const status=host?.querySelector('[data-speaking-status]');
+  if(!mic)return {dispose(){}};
+  let used=false,busy=false,disposed=false,stream=null,recorder=null,timer=null,started=0;
+  const alive=()=>!disposed&&isCurrent();
+  const message=text=>{if(alive()&&status)status.textContent=text};
+  function cleanup(){
+    if(timer){clearTimeout(timer);timer=null;}
+    if(recorder?.state==='recording'){try{recorder.stop()}catch{}}
+    recorder=null;
+    if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  }
+  async function capture(){
+    let context=null,analyser=null,levelTimer=null,voiced=false,lastVoice=0;
+    busy=true;used=true;started=Date.now();
+    const mime=chooseMime();
+    mic.disabled=true;mic.setAttribute('aria-busy','true');
+    message('마이크 연결 중…');
+    let outcome='error',transcript='';
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}});
+      if(!alive())return;
+      recorder=new MediaRecorder(stream,{mimeType:mime,audioBitsPerSecond:32000});
+      const parts=[];
+      const finished=new Promise((resolve,reject)=>{
+        recorder.ondataavailable=e=>{if(e.data?.size)parts.push(e.data)};
+        recorder.onerror=e=>reject(e.error||new Error('Recording failed'));
+        recorder.onstop=()=>resolve(new Blob(parts,{type:mime}));
+      });
+      recorder.start(100);
+      mic.disabled=false;mic.classList.add('is-listening');mic.removeAttribute('aria-busy');
+      message('듣고 있어요… 영어로 말해 보세요.');
+      const recordingStart=Date.now();
+      // Use an available analyser to end a short utterance naturally and avoid
+      // passing pure silence to a context-biased recognizer. Manual stop remains available.
+      try{
+        const AudioCtx=window.AudioContext||window.webkitAudioContext;
+        if(AudioCtx){
+          context=new AudioCtx();
+          void context.resume().catch(()=>{});
+          analyser=context.createAnalyser();analyser.fftSize=1024;
+          context.createMediaStreamSource(stream).connect(analyser);
+          const samples=new Float32Array(analyser.fftSize);
+          levelTimer=setInterval(()=>{
+            if(context?.state!=='running'||recorder?.state!=='recording')return;
+            analyser.getFloatTimeDomainData(samples);
+            let power=0;for(const v of samples)power+=v*v;
+            const rms=Math.sqrt(power/samples.length),now=Date.now();
+            if(rms>0.012){voiced=true;lastVoice=now}
+            if(voiced&&now-lastVoice>1100&&now-recordingStart>1300)recorder.stop();
+          },100);
+        }
+      }catch{}
+      timer=setTimeout(()=>{if(recorder?.state==='recording')recorder.stop()},MAX_SECONDS*1000);
+      const blob=await finished;
+      const silence=!!analyser&&context?.state==='running'&&!voiced;
+      cleanup();
+      if(!alive())return;
+      mic.disabled=true;mic.classList.remove('is-listening');mic.setAttribute('aria-busy','true');
+      if(silence||blob.size<400){outcome='no_speech';message('잘 듣지 못했어요. 다시 말해 보세요.');return}
+      message('AI 윌리가 확인하고 있어요…');
+      const audio_base64=await toBase64(blob);
+      if(!alive())return;
+      const reply=await callApi({action:'transcribe',audio_base64,mime_type:mime,assisted:true,keywords:[target,...keywords]});
+      if(!alive())return;
+      if(reply?.success!==true||typeof reply.transcript!=='string')throw new Error('Invalid AI response');
+      transcript=reply.transcript.trim();
+      outcome=transcript?'result':'no_speech';
+      if(!transcript){message('잘 듣지 못했어요. 다시 말해 보세요.');return}
+      message('AI 윌리가 들은 말: “'+transcript+'”');
+    }catch(e){
+      outcome='error';
+      message(errorMessage(e)+' 일반 말하기로 다시 시도해 주세요.');
+      console.warn('[Word Genius] assisted retry unavailable',e?.name||'error');
+    }finally{
+      if(levelTimer)clearInterval(levelTimer);
+      if(context)void context.close().catch(()=>{});
+      cleanup();busy=false;
+      onDiagnostic?.({outcome,transcript,duration_ms:Math.min(180000,Date.now()-started)});
+      if(alive()){
+        mic.disabled=false;mic.classList.remove('is-listening');mic.removeAttribute('aria-busy');
+        if(transcript)onResult?.(transcript);
+      }
+    }
+  }
+  const tap=e=>{
+    if(!alive())return;
+    if(busy){
+      e.preventDefault();e.stopImmediatePropagation();
+      if(recorder?.state==='recording')try{recorder.stop()}catch{}
+      return;
+    }
+    if(used||!shouldAssist()||!navigator.mediaDevices?.getUserMedia||!chooseMime())return;
+    e.preventDefault();e.stopImmediatePropagation();
+    void capture();
+  };
+  mic.addEventListener('click',tap,{capture:true});
+  return {dispose(){disposed=true;mic.removeEventListener('click',tap,true);cleanup();}};
+}
