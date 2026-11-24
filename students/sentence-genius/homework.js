@@ -26,14 +26,20 @@ export async function loadSentenceHomework(){
   return (Array.isArray(body.assignments)?body.assignments:[]).filter(row=>row.active!==false);
 }
 
-export async function recordSentenceHomeworkAnswer({assignmentId,sentenceId,mode,sessionId,correct}){
- const auth=await token();
- const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/record_sentence_genius_homework_answer_v1',{
+export async function recordSentenceHomeworkAnswer({assignmentId,sentenceId,mode,sessionId,correct,retryCount=0,attemptId}){
+ if(!attemptId)throw Error('Sentence attempt identifier missing');
+ const payload={p_assignment_id:assignmentId,p_sentence_id:sentenceId,p_mode:mode,
+  p_session_id:sessionId,p_correct:!!correct,p_retry_count:Math.max(0,retryCount),
+  p_client_attempt_id:attemptId};
+ const call=async jwt=>fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/record_sentence_genius_homework_answer_v2',{
   method:'POST',cache:'no-store',
-  headers:{apikey:KEY,Authorization:'Bearer '+auth,'Content-Type':'application/json'},
-  body:JSON.stringify({p_assignment_id:assignmentId,p_sentence_id:sentenceId,p_mode:mode,p_session_id:sessionId,p_correct:!!correct})
+  headers:{apikey:KEY,Authorization:'Bearer '+jwt,'Content-Type':'application/json'},
+  body:JSON.stringify(payload)
  });
+ let response=await call(await token());
+ if(response.status===401)response=await call(await token(true));
  const body=await response.json().catch(()=>null);
- if(!response.ok||body?.success!==true)throw Error(body?.message||body?.reason||'Homework answer not saved');
+ if(!response.ok||body?.success!==true||body.attempt_recorded!==true)
+   throw Error(body?.message||body?.reason||'Sentence attempt not saved');
  return body;
 }
