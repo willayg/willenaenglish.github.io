@@ -58,6 +58,42 @@ function playSpeechReadyCue(){
   }catch{}
 }
 
+// Short, quiet loading ticks only while this question's microphone is connecting.
+// The ready chirp remains distinct. Never schedule a future tick into recording.
+function createSpeechWaitingCue(isConnecting){
+  let timer=null,oscillator=null;
+  function stop(){
+    if(timer!==null){clearTimeout(timer);timer=null;}
+    if(oscillator){try{oscillator.stop()}catch{} oscillator=null;}
+  }
+  function tick(){
+    timer=null;
+    if(!isConnecting()){stop();return;}
+    const ctx=speechCueContext;
+    if(ctx?.state==='running'){
+      try{
+        const t=ctx.currentTime,osc=ctx.createOscillator(),gain=ctx.createGain();
+        osc.type='sine';
+        osc.frequency.setValueAtTime(440,t);
+        gain.gain.setValueAtTime(.001,t);
+        gain.gain.exponentialRampToValueAtTime(.045,t+.008);
+        gain.gain.exponentialRampToValueAtTime(.001,t+.052);
+        osc.connect(gain);gain.connect(ctx.destination);
+        oscillator=osc;
+        osc.onended=()=>{if(oscillator===osc)oscillator=null;osc.disconnect();gain.disconnect();};
+        osc.start(t);osc.stop(t+.06);
+      }catch{}
+    }
+    timer=setTimeout(tick,600);
+  }
+  function start(){
+    stop();prepareSpeechCue();
+    // Both microphone paths have set the connecting state by the next task.
+    timer=setTimeout(tick,0);
+  }
+  return {start,stop};
+}
+
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const OP_URL='https://fiieuiktlsivwfgyivai.supabase.co';
@@ -2118,8 +2154,10 @@ function renderSpeakingQuestion(){
     host.classList.add('vocab-speech-cues');
     const recognition=renderer.speechRecognition;
     const isCurrent=()=>state.speakingSession===session&&!session.checked&&session.words[session.index]===word&&state.renderer===renderer&&!sessionEl.hidden;
-    renderer.onSpeechStartRequest=prepareSpeechCue;
+    const waitingCue=createSpeechWaitingCue(()=>isCurrent()&&!document.hidden&&host.querySelector('[data-speaking-status]')?.dataset.speechPhase==='starting');
+    renderer.onSpeechStartRequest=waitingCue.start;
     renderer.onSpeechReady=({duration_ms,source})=>{
+      waitingCue.stop();
       if(!isCurrent())return;
       playSpeechReadyCue();
       diagnostic('mic_ready','browser',source,{duration_ms:Math.min(180000,duration_ms),attempt_no:speakingAttempts+(browserPending?0:1)});
@@ -2130,11 +2168,13 @@ function renderSpeakingQuestion(){
         speakingAttempts++;retryState.attempts=speakingAttempts;startedAt=Date.now();browserPending=true;
       });
       recognition.addEventListener('error',e=>{
+        waitingCue.stop();
         const code=String(e?.error||'unknown');
         if(browserPending)browserDiagnostic(code==='no-speech'?'no_speech':'error_'+code);
         else if(isCurrent())diagnostic('startup_error','browser','error_'+code);
       });
       recognition.addEventListener('end',()=>{
+        waitingCue.stop();
         if(browserPending)browserDiagnostic('no_speech');
         if(!isCurrent())return;
         const response=renderer.getResponse();
@@ -2153,14 +2193,16 @@ function renderSpeakingQuestion(){
     state.aiSpeechUi=attachSilentAISpeaking({
       host,target:expected,keywords:unitKeywords,isCurrent,
       shouldAssist:()=>failedAttempts>=2&&!retryState.aiUsed&&!browserPending&&!state.bestSpeakingProgress?.best?.correct,
-      onStart:()=>{prepareSpeechCue();retryState.aiUsed=true;speakingAttempts++;retryState.attempts=speakingAttempts;},
+      onStart:()=>{waitingCue.start();retryState.aiUsed=true;speakingAttempts++;retryState.attempts=speakingAttempts;},
       onReady:({duration_ms,source})=>{
+        waitingCue.stop();
         if(!isCurrent())return;
         playSpeechReadyCue();
         diagnostic('mic_ready','openai',source,{duration_ms:Math.min(180000,duration_ms)});
       },
       callApi:callVocabSpeechAI,
       onDiagnostic:({outcome,transcript,duration_ms})=>{
+        waitingCue.stop();
         const grade=transcript?gradeSpeaking(expected,[transcript],{mode:'word',exactMatcher:matchSpeakingTarget}):null;
         diagnostic('ai_check','openai',outcome,{attempt_no:speakingAttempts,duration_ms,
           grade_points:grade?.points??null,match_reason:grade?.matchedBy||null});
@@ -2178,6 +2220,9 @@ function renderSpeakingQuestion(){
         if(matched.correct&&['exact','spacing','homophone','in_sentence','in_sentence_homophone','numeric_equivalent'].includes(matched.matchedBy))checkSpeaking();
       }
     });
+    // Dispose both audio paths on navigation, skip, or the next question.
+    const speechUi=state.aiSpeechUi;
+    state.aiSpeechUi={...speechUi,dispose(){waitingCue.stop();speechUi.dispose();}};
     // Show acceptance before the student presses Check Answer.
     // Use exactly the same matcher as scoring, including full-word matches
     // inside sentences, so the preview never contradicts the result.
@@ -2192,6 +2237,7 @@ function renderSpeakingQuestion(){
       }
     };
     renderer.onSpeechResult=alternatives=>{
+      waitingCue.stop();
       updateSpeakingPreview(alternatives);
       browserDiagnostic('result',gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget}));
     };
