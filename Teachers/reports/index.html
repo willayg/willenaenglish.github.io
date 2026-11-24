@@ -36,7 +36,7 @@ h2{font-size:16px;margin:28px 0 12px;letter-spacing:-.3px;font-weight:800}
 .lines{margin:7px 0 20px}.line{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px dashed #d5d7d1;font-size:14px}.line b{font-variant-numeric:tabular-nums}
 .achievements{padding-top:0}
 .summary-block{padding-top:4px;border-top:1px solid #d8d9d3;margin-top:28px}
-.summary-block h2{margin-top:16px}
+.summary-block h2{margin-top:16px}.summary-footnote{font-size:11px;line-height:1.65;color:#87918e;margin:9px 0 4px}
 .stamp-wrap{text-align:center;margin:22px auto 10px}.stamp{display:inline-block;border:2px solid #648f83;color:#648f83;font-weight:800;padding:8px 15px;transform:rotate(-6deg);font-size:14px}
 .comment{margin-top:28px;padding:20px 0 14px;border-top:1px solid #d8d9d3;border-bottom:1px solid #d8d9d3}
 .comment label{display:block;font-size:14px;color:#667472;margin-bottom:10px}
@@ -61,7 +61,7 @@ h2{font-size:16px;margin:28px 0 12px;letter-spacing:-.3px;font-weight:800}
  <section class="hero" id="hero"><small>이번 달 해결한 학습 과제</small><strong id="headline"></strong><div class="bar" id="heroBar"></div><div id="heroLabel" class="meta"></div></section>
  <section id="skillSection"><h2>영역별 학습 기록</h2><div id="skills"></div><div class="legend"><span><i class="green"></i>처음부터 정답</span><span><i class="orange"></i>연습 후 해결</span><span><i class="red"></i>추가 연습 필요</span></div></section>
  <section id="otherSection" class="achievements"><h2>그 밖의 학습 활동</h2><div class="lines" id="other"></div></section>
- <section class="summary-block"><h2>학습 활동 요약</h2><div class="lines" id="overview"></div></section>
+ <section class="summary-block"><h2>학습 활동 요약</h2><div class="lines" id="overview"></div><div class="summary-footnote">학습한 과제는 정답 여부를 기록한 서로 다른 과제 수입니다. 다른 학습 활동은 위에 별도로 표시됩니다.</div></section>
  <div class="stamp-wrap"><div class="stamp">월간 학습 기록</div></div>
  <section class="comment"><label for="comment">선생님 의견</label><textarea id="comment" placeholder="담당 선생님의 평가를 입력하세요. (현재 페이지에서만 유지됩니다)"></textarea><div class="screen-only" style="font-size:11px;color:#788780;margin-top:7px">교사 의견은 서버에 저장되지 않습니다. 인쇄 전에 입력하세요.</div></section>
  <footer class="footer" id="footer"></footer>
@@ -136,7 +136,15 @@ function render(){
   $('skills').innerHTML=skillRow({skill:'내신 문제 풀이',first,fixed,pending}).replace('내신 문제 풀이','내신 문제 풀이');
  }else $('skills').innerHTML=skills.length?skills.map(skillRow).join(''):'<p class="empty">이 기간의 학습 기록이 없습니다.</p>';
  $('skillSection').hidden=!skills.length&&!exam;
- const extra=[['완성한 글',s.writings,'편'],['문법 학습 완료',s.grammar,'회'],['문장 과제 학습',s.assigned_sentences,'개'],['영어 대화 완료',s.conversations,'회'],['퍼즐 활동',s.puzzles,'회']];
+ const extra=[['완성한 글',s.writings,'편'],['작성 중인 글',s.writing_drafts,'편'],
+ ['문법 학습 완료',s.grammar,'회'],['문법 기초 연습',s.grammar_practice,'회']];
+ const practice=s.sentence_practice_modes||{};
+ for(const [mode,label] of [['coach','문장 말하기 연습'],['unscramble','문장 배열 연습'],['speaking','문장 말하기 연습 기록']]){
+   if(num(practice[mode]))extra.push([label,practice[mode],'개']);
+ }
+ if(!Object.keys(practice).length&&num(s.assigned_sentences))extra.push(['문장 과제 연습',s.assigned_sentences,'개']);
+ extra.push(['자유 대화 참여',s.free_talking_started,'회'],['자유 대화 발화',s.free_talking_turns,'회'],
+ ['자유 대화 완료',s.conversations,'회'],['퍼즐 활동',s.puzzles,'회']);
  if(!exam&&num(s.exam_tasks))extra.push(['내신 학습 문제',s.exam_tasks,'개']);
  const rendered=extra.filter(v=>num(v[1])>0);
  $('other').innerHTML=rendered.map(v=>line(v[0],num(v[1])+v[2])).join('');
