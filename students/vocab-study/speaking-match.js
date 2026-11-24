@@ -225,7 +225,7 @@ function clock(raw,assisted=false){
   if(suffix){period=suffix[1];s=s.slice(0,suffix.index).trim();}
   const out=(h,m)=>Number.isInteger(h)&&Number.isInteger(m)&&h>=0&&h<=23&&m>=0&&m<=59&&(!period||(h>=1&&h<=12))?{h,m,period}:null;
   const num=v=>cardinal(v,assisted);
-  let x=s.match(/^(\d{1,2})\s*[:.]\s*(\d{2})$/);
+  let x=s.match(assisted?/^(\d{1,2})\s*[:.]\s*(\d{2})$/:/^(\d{1,2})\s*:\s*(\d{2})$/);
   if(x)return out(Number(x[1]),Number(x[2]));
   if(s==='noon'||s==='midday')return {h:12,m:0,period:'pm'};
   if(s==='midnight')return {h:12,m:0,period:'am'};
