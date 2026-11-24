@@ -701,7 +701,7 @@ try{
 <div class="wc-dialog-actions"><button id="wcDelete" class="wc-button wc-delete" type="button" hidden>Delete</button><button class="wc-button" type="button" id="wcCancel">Cancel</button><button class="wc-button wc-primary" id="wcSave" type="submit">Save event</button></div></form></dialog>
 <div id="rosterAssignmentsOverlay" class="rs-assign-overlay" hidden><section class="rs-assign-dialog" role="dialog" aria-modal="true" aria-label="Student assignments"><div class="rs-assign-head"><div><h2 id="rosterAssignmentsTitle">Assignments</h2><p>Student mission history</p></div><button type="button" id="rosterAssignmentsClose" aria-label="Close assignments">×</button></div><div class="rs-assign-tabs"><button data-rs-assign-tab="current" class="active" type="button">Current</button><button data-rs-assign-tab="history" type="button">History</button></div><div id="rosterAssignmentsBody" class="rs-assign-body"></div></section></div>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.74</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.75</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -1352,7 +1352,7 @@ async function openStudent(id){window.rosterDrawerStudent=String(id);const base=
 /* Class Curriculum — read from staff-scoped operations RPC and shared content catalog. */
 const curriculum={
  data:null, loadedAt:0, extraError:'', selectedClass:'', selectedBook:'', selectedUnit:'', selectedSkill:'', assignmentSubview:'curriculum', unitCache:new Map(),
- availability:new Map(), puzzlePending:new Map(), pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[], skillDetail:new Map(), extraActivity:[], sentenceEvidence:[], writingUnits:[], writingEntries:[],conversationEvidence:[],wordSnapshots:[],evidenceReady:{word:false,sentence:false,writing:false,extra:false,freeconversation:false},jellyRewards:new Map()
+ availability:new Map(), wordMasteryTotals:new Map(), puzzlePending:new Map(), pending:false, request:0, search:'', error:'', puzzleDetail:new Map(), puzzleOverview:[], skillDetail:new Map(), extraActivity:[], sentenceEvidence:[], writingUnits:[], writingEntries:[],conversationEvidence:[],wordSnapshots:[],evidenceReady:{word:false,sentence:false,writing:false,extra:false,freeconversation:false},jellyRewards:new Map()
 };
 // Both screens use this ONE curriculum renderer and the same state/cache.
 const ccHost=()=>document.querySelector('#view-assignments.active #assignmentClassGrid')||document.getElementById('classGrid');
@@ -1483,6 +1483,29 @@ async function ccLoadPublishedAvailability(bookIds){
  }
  return byBook;
 }
+// Availability includes supplementary content; mastery counts only active unit targets.
+async function ccLoadWordMasteryTotals(bookId){
+ const byUnit=new Map(),pageSize=500;
+ for(let offset=0;;offset+=pageSize){
+  const url=ccCatalog+'unit_vocab_targets?select=unit_id,lexical_entry_id&book_id=eq.'+encodeURIComponent(bookId)+'&active=eq.true&order=id.asc&limit='+pageSize+'&offset='+offset;
+  const response=await fetch(url,{headers:{apikey:ccCatalogKey,Authorization:'Bearer '+ccCatalogKey},cache:'no-store'});
+  if(!response.ok)throw Error('Word mastery target lookup failed ('+response.status+')');
+  const rows=await response.json();
+  if(!Array.isArray(rows))throw Error('Invalid word mastery targets');
+  for(const row of rows){
+   if(!row.unit_id||!row.lexical_entry_id)continue;
+   const key=String(row.unit_id),items=byUnit.get(key)||new Set();
+   items.add(String(row.lexical_entry_id));byUnit.set(key,items);
+  }
+  if(rows.length<pageSize)break;
+ }
+ return byUnit;
+}
+function ccWordSkillMet(key,record,total,required){
+ if(!Number.isInteger(total)||total<=0)return false;
+ const pct=key=>Math.round(100*Math.min(total,Number(record[key])||0)/total);
+ return pct(key)>90||(key==='spelling_coach'&&required?.includes(key)&&pct('spelling_test')===100);
+}
 function ccSkillAvailability(book,unit,group){
  // Null means unknown: failed or missing catalog responses must NEVER be grey X.
  const catalog=curriculum.availability.get(String(book.book_id));
@@ -1528,14 +1551,14 @@ function ccCellProgress(book,unit,group,className){
  let verified=true;
  if(group.key==='word'){
   const required=ccRequiredSkills(book,group);
-  verified=Boolean(curriculum.evidenceReady.word&&catalog&&target>0&&required?.length);
+  const masteryTarget=curriculum.wordMasteryTotals.get(String(book.book_id))?.get(String(unit.id))?.size||0;
+  verified=Boolean(curriculum.evidenceReady.word&&masteryTarget>0&&required?.length);
   for(const r of curriculum.wordSnapshots){
    if(String(r.book_id)!==String(book.book_id)||String(r.unit_id)!==String(unit.id)||!ids.has(String(r.student_id)))continue;
    const id=String(r.student_id);
    if(['vocabulary','spelling_coach','spelling_test','speaking'].some(key=>Number(r[key])>0))started.add(id);
    if(verified){
-    const testCoversCoach=Number(r.spelling_test)>=target;
-    if(required.every(key=>Number(r[key])>target*.9||(key==='spelling_coach'&&testCoversCoach)))finished.add(id);
+    if(required.every(key=>ccWordSkillMet(key,r,masteryTarget,required)))finished.add(id);
    }
   }
  }else if(group.key==='sentence'){
@@ -2146,7 +2169,7 @@ function ccRenderStudentDrilldown(book,unit,group){
   // Preserve the real Coach score; substitution affects eligibility only.
   const testCell=cells.find(x=>x.key==='spelling_test');
   const testCoversCoach=group.key==='word'&&required?.includes('spelling_coach')&&testCell?.known&&testCell.pct===100;
-  const requirementMet=x=>x.known&&(x.pct>90||(testCoversCoach&&x.key==='spelling_coach'));
+  const requirementMet=x=>x.known&&(group.key==='word'?ccWordSkillMet(x.key,record,total,required):x.pct>90);
   const verified=requiredCells.length>0&&requiredCells.every(requirementMet);
   const complete=requiredCells.filter(requirementMet).length;
   const bars=cells.map(x=>ccSkillBar((ccSkillNames[x.key]||x.key)+(required&&!required.includes(x.key)?' (optional)':''),x.passed,x.known?total:null,x.observed||x.passed>0)+(testCoversCoach&&x.key==='spelling_coach'&&x.pct<100?'<div class="cc-helper">Covered by perfect Spelling Test</div>':'')).join('');
@@ -2167,7 +2190,7 @@ async function loadClassOverview(force=false){
  }
  curriculum.pending=true;ccHost().innerHTML='<div class="empty">Loading active class books and practice records…</div>';
  try{
-  if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.availability.clear();curriculum.puzzleDetail.clear();curriculum.puzzlePending.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];curriculum.wordSnapshots=[];curriculum.evidenceReady={word:false,sentence:false,writing:false,extra:false,freeconversation:false};}
+  if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.availability.clear();curriculum.wordMasteryTotals.clear();curriculum.puzzleDetail.clear();curriculum.puzzlePending.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];curriculum.wordSnapshots=[];curriculum.evidenceReady={word:false,sentence:false,writing:false,extra:false,freeconversation:false};}
   curriculum.data=await ccRpc('teacher_curriculum_overview_v1');
   try{const rows=await ccRpc('teacher_curriculum_word_snapshot_overview_v1');if(!Array.isArray(rows))throw Error('Unexpected Word Genius snapshot response');curriculum.wordSnapshots=rows;curriculum.evidenceReady.word=true;}catch(e){console.warn('[Class Curriculum] Word Genius mastery:',e.message);curriculum.wordSnapshots=[];curriculum.evidenceReady.word=false;}
   try{const puzzle=await ccRpc('teacher_curriculum_puzzle_overview_v1');curriculum.puzzleOverview=Array.isArray(puzzle)?puzzle:[]}catch(e){console.warn('[Class Curriculum] Puzzle overview:',e.message);curriculum.puzzleOverview=[];}
@@ -2213,6 +2236,12 @@ async function loadClassOverview(force=false){
     curriculum.availability.set(String(id),{word,sentence,grammar,talking:freeconversation,freeconversation});
    }));
   }
+  // Load authoritative mastery denominators independently of availability.
+  curriculum.wordMasteryTotals.clear();
+  await Promise.all(allIds.map(async id=>{
+   try{curriculum.wordMasteryTotals.set(String(id),await ccLoadWordMasteryTotals(id))}
+   catch(e){console.warn('[Class Curriculum] Word mastery targets:',e.message)}
+  }));
   curriculum.loadedAt=Date.now();
   curriculum.refreshRequested=false;
   if(ccHost()?.id==='assignmentClassGrid'){
