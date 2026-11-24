@@ -1992,13 +1992,20 @@ function renderSpeakingQuestion(){
     const expected=word.speakingTarget||word.word;
     const teacher=state.activeTeacherAssignment;
     const assignment=teacher?.assignment;
+    session.speechRetryState ||= new Map();
+    const retryKey=word.id||expected;
+    if(!session.speechRetryState.has(retryKey))session.speechRetryState.set(retryKey,{attempts:0,failures:0,aiUsed:false});
+    const retryState=session.speechRetryState.get(retryKey);
     const questionId=window.crypto?.randomUUID?.();
-    let speakingAttempts=0,failedAttempts=0,startedAt=0,browserPending=false;
+    const bookId=assignment?.list_meta?.source_book_id||assignment?.book_id||state.book?.book_id;
+    const unitId=assignment?.list_meta?.source_unit_id||assignment?.list_meta?.unit_id||assignment?.unit_id||state.unit?.id;
+    const adminPreview=state.adminMode;
+    let speakingAttempts=retryState.attempts,failedAttempts=retryState.failures,startedAt=0,browserPending=false;
     const diagnostic=(event_type,engine,outcome,extra={})=>{
-      if(state.adminMode||!questionId||!window.crypto?.randomUUID)return;
+      if(adminPreview||!questionId||!window.crypto?.randomUUID)return;
       const event={event_id:window.crypto.randomUUID(),question_id:questionId,
-        lexical_entry_id:word.id,book_id:assignment?.list_meta?.source_book_id||assignment?.book_id||state.book?.book_id,
-        unit_id:assignment?.list_meta?.source_unit_id||assignment?.list_meta?.unit_id||assignment?.unit_id||state.unit?.id,
+        lexical_entry_id:word.id,book_id:bookId,
+        unit_id:unitId,
         assignment_id:assignment?.id||null,target:expected,attempt_no:speakingAttempts,
         event_type,engine,outcome,...extra};
       const headers={'Content-Type':'application/json'};
@@ -2015,7 +2022,8 @@ function renderSpeakingQuestion(){
       diagnostic('recognition','browser',outcome,{
         duration_ms:Math.min(180000,Math.max(0,Date.now()-startedAt)),
         grade_points:grade?.points??null,match_reason:grade?.matchedBy||null});
-      if(outcome==='no_speech'||grade?.points===0)failedAttempts++;
+      if(outcome==='no_speech'||grade?.points===0){failedAttempts++;retryState.failures=failedAttempts;}
+      else if(grade?.points>0){failedAttempts=0;retryState.failures=0;}
     };
     let listenRequired=false;
     function requireListeningBeforeRetry(){
@@ -2063,15 +2071,15 @@ function renderSpeakingQuestion(){
       try{vocabWordAudio?.pause?.()}catch(_){}
       try{window.speechSynthesis?.cancel?.()}catch(_){}
     },{capture:true});
-    // Listen becomes available only after two genuine browser-microphone starts.
-    // Count even if recognition cannot decipher a short word, but not a cancelled recording before it starts.
+    // Count genuine microphone starts and unsubmitted recognition results.
+    // Keep the retry count when a failed word comes around again.
     const renderer=state.renderer;
     const recognition=renderer.speechRecognition;
     const isCurrent=()=>state.speakingSession===session&&!session.checked&&session.words[session.index]===word&&state.renderer===renderer&&!sessionEl.hidden;
     if(recognition?.addEventListener){
       recognition.addEventListener('start',()=>{
         if(!isCurrent())return;
-        speakingAttempts++;startedAt=Date.now();browserPending=true;
+        speakingAttempts++;retryState.attempts=speakingAttempts;startedAt=Date.now();browserPending=true;
       });
       recognition.addEventListener('error',e=>{
         const code=String(e?.error||'unknown');
@@ -2096,11 +2104,12 @@ function renderSpeakingQuestion(){
     const unitKeywords=unique(session.words.map(w=>w.speakingTarget||w.word)).filter(w=>w!==expected).slice(0,15);
     state.aiSpeechUi=attachSilentAISpeaking({
       host,target:expected,keywords:unitKeywords,isCurrent,
-      shouldAssist:()=>failedAttempts>=2&&!state.bestSpeakingProgress?.best?.correct,
+      shouldAssist:()=>failedAttempts>=2&&!retryState.aiUsed&&!browserPending&&!state.bestSpeakingProgress?.best?.correct,
+      onStart:()=>{retryState.aiUsed=true;speakingAttempts++;retryState.attempts=speakingAttempts;},
       callApi:callVocabSpeechAI,
       onDiagnostic:({outcome,transcript,duration_ms})=>{
         const grade=transcript?gradeSpeaking(expected,[transcript],{mode:'word',exactMatcher:matchSpeakingTarget}):null;
-        diagnostic('ai_check','openai',outcome,{attempt_no:speakingAttempts+1,duration_ms,
+        diagnostic('ai_check','openai',outcome,{attempt_no:speakingAttempts,duration_ms,
           grade_points:grade?.points??null,match_reason:grade?.matchedBy||null});
       },
       onResult:transcript=>{
