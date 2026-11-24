@@ -193,7 +193,7 @@ function wireSpellingField(field,{focus=false}={}){
   const syncSubmit=()=>{
     if(!state.spellingTest&&!state.spellingPractice&&!state.inlineCoach)return;
     const response=txt(field.value);
-    const practice=state.spellingPractice;
+    const practice=state.spellingPractice||state.inlineCoach;
     actionBtn.disabled=!response||!!(practice&&(practice.submitting||practice.lastRejectedAnswer===response));
   };
   field.addEventListener('input',syncSubmit);
@@ -1765,7 +1765,7 @@ function scheduleRetry(item){
 function startInlineCoach(word, resume){
   const target=getSpellingTarget(word?.word||'');
   if(!target){resume();return;}
-  state.inlineCoach={word:Object.assign({},word,{spellingTarget:target}),resume};
+  state.inlineCoach={word:Object.assign({},word,{spellingTarget:target}),resume,lastRejectedAnswer:null,submitting:false};
   renderInlineCoach();
 }
 function renderInlineCoach(){
@@ -1778,7 +1778,10 @@ function renderInlineCoach(){
   root.innerHTML='<div class="question-card" id="vocabQuestionHost"></div>';
   const host=el('vocabQuestionHost');
   state.renderer=new QuestionRenderer(host).render(spellingCoachQuestion(word,0),{
-    onChange:(_,has)=>{actionBtn.disabled=!has}
+    onChange:(_,has)=>{
+      const response=txt(state.renderer?.getResponse());
+      actionBtn.disabled=!has||recovery.submitting||recovery.lastRejectedAnswer===response;
+    }
   });
   actionBtn.textContent='Check Answer';actionBtn.disabled=true;actionBtn.classList.remove('is-next');
   const input=host.querySelector('[data-spelling-input]');
@@ -1786,12 +1789,22 @@ function renderInlineCoach(){
   sessionMain.scrollTop=0;
 }
 function checkInlineCoach(){
-  const recovery=state.inlineCoach,renderer=state.renderer;if(!recovery||!renderer)return;
+  const recovery=state.inlineCoach,renderer=state.renderer;
+  if(!recovery||!renderer||recovery.submitting)return;
   const answer=txt(renderer.getResponse()),word=recovery.word,target=word.spellingTarget;
   if(!answer)return;
+  if(recovery.lastRejectedAnswer===answer){actionBtn.disabled=true;return;}
+  recovery.submitting=true;
+  actionBtn.disabled=true;
   const correct=matchesSpellingTarget(answer,target);
   renderer.showFeedback({correct,correctAnswer:correct?[target]:[],message:correct?'잘했어요! / Good job!':'다시 해보세요. / Try again.'});
-  if(!correct){playStudentSfx('wrong');return;}
+  if(!correct){
+    recovery.lastRejectedAnswer=answer;
+    recovery.submitting=false;
+    actionBtn.disabled=true;
+    playStudentSfx('wrong');
+    return;
+  }
   playStudentSfx('correct');
   renderer.setDisabled(true);actionBtn.disabled=true;
   state.inlineCoach=null;
