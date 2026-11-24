@@ -76,12 +76,13 @@ function monthRange(){
  return {start:m+'-01',end:m+'-'+String(last).padStart(2,'0')};
 }
 function line(label,value){return '<div class="line"><span>'+escape(label)+'</span><b>'+escape(value)+'</b></div>';}
-function bar(first,fixed,pending){
- const all=first+fixed+pending;if(!all)return '<div class="bar"></div>';
- return '<div class="bar" role="img" aria-label="처음부터 정답 '+first+', 연습 후 해결 '+fixed+', 추가 연습 필요 '+pending+'">'+
- (first?'<span class="green" style="flex:'+first+'"></span>':'')+
+function barSegments(first,fixed,pending){
+ return (first?'<span class="green" style="flex:'+first+'"></span>':'')+
  (fixed?'<span class="orange" style="flex:'+fixed+'"></span>':'')+
- (pending?'<span class="red" style="flex:'+pending+'"></span>':'')+'</div>';
+ (pending?'<span class="red" style="flex:'+pending+'"></span>':'');
+}
+function bar(first,fixed,pending){
+ return '<div class="bar" role="img" aria-label="처음부터 정답 '+first+', 연습 후 해결 '+fixed+', 추가 연습 필요 '+pending+'">'+barSegments(first,fixed,pending)+'</div>';
 }
 function skillRow(v){
  const first=num(v.first),fixed=num(v.fixed),pending=num(v.pending),total=first+fixed+pending;
@@ -121,7 +122,9 @@ function render(){
  $('other').innerHTML=rendered.map(v=>line(v[0],num(v[1])+v[2])).join('');
  $('otherSection').hidden=!rendered.length;
  $('headline').textContent=(first+fixed)+'개 해결';
- $('heroBar').innerHTML=bar(first,fixed,pending).replace('class="bar"','class="bar" style="margin:0"');
+ $('heroBar').innerHTML=barSegments(first,fixed,pending);
+ $('heroBar').setAttribute('role','img');
+ $('heroBar').setAttribute('aria-label','처음부터 정답 '+first+', 연습 후 해결 '+fixed+', 추가 연습 필요 '+pending);
  $('heroLabel').textContent='처음부터 '+first+' · 연습 후 '+fixed+' · 추가 연습 '+pending;
  $('hero').hidden=task===0;
  $('footer').textContent=start+' ~ '+end+' · 윌레나 원어민 영어학원';
