@@ -1,7 +1,7 @@
 import {fetchClassBookAssignments,extractClassBookAssignments} from '/students/shared/class-book-assignments.js?v=20261105-shared1';
 import {renderStudentSessionFinish} from '../components/student-session-finish.js?v=1';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261117-safari-mic2';
-import {attachAISpeakingFallback} from './vocab-ai-speech-ui.js?v=20261104-sentence-match1';
+import {attachSilentAISpeaking} from './vocab-ai-speech-ui.js?v=20261124-third-try1';
 import {createSpeakingAudioCache} from './vocab-listening-cache.js?v=20261024-audio-prefetch2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
 import {getSpellingTarget,matchesSpellingTarget} from './spelling-targets.js?v=20261028-apostrophes1';
@@ -1989,10 +1989,39 @@ function renderSpeakingQuestion(){
     listenButton.setAttribute('aria-label','영어 발음 듣기 · Listen to the English word');
     listenButton.hidden=true;
     const speakingMic=host.querySelector('[data-speaking-mic]');
+    const expected=word.speakingTarget||word.word;
+    const teacher=state.activeTeacherAssignment;
+    const assignment=teacher?.assignment;
+    const questionId=window.crypto?.randomUUID?.();
+    let speakingAttempts=0,failedAttempts=0,startedAt=0,browserPending=false;
+    const diagnostic=(event_type,engine,outcome,extra={})=>{
+      if(state.adminMode||!questionId||!window.crypto?.randomUUID)return;
+      const event={event_id:window.crypto.randomUUID(),question_id:questionId,
+        lexical_entry_id:word.id,book_id:assignment?.list_meta?.source_book_id||assignment?.book_id||state.book?.book_id,
+        unit_id:assignment?.list_meta?.source_unit_id||assignment?.list_meta?.unit_id||assignment?.unit_id||state.unit?.id,
+        assignment_id:assignment?.id||null,target:expected,attempt_no:speakingAttempts,
+        event_type,engine,outcome,...extra};
+      const headers={'Content-Type':'application/json'};
+      const token=window.WillenaAPI?.getLocalAccessToken?.();
+      if(token&&token.length>40)headers.Authorization='Bearer '+token;
+      void fetch('/api/vocab-ai-speech',{method:'POST',credentials:'include',keepalive:true,headers,
+        body:JSON.stringify({action:'diagnostic',event})})
+        .then(r=>{if(!r.ok)console.warn('[Word Genius] speech diagnostic HTTP',r.status)})
+        .catch(()=>{});
+    };
+    const browserDiagnostic=(outcome,grade=null)=>{
+      if(!browserPending)return;
+      browserPending=false;
+      diagnostic('recognition','browser',outcome,{
+        duration_ms:Math.min(180000,Math.max(0,Date.now()-startedAt)),
+        grade_points:grade?.points??null,match_reason:grade?.matchedBy||null});
+      if(outcome==='no_speech'||grade?.points===0)failedAttempts++;
+    };
     let listenRequired=false;
     function requireListeningBeforeRetry(){
       if(listenRequired||session.checked||state.renderer?.host!==host)return;
       listenRequired=true;
+      diagnostic('listening_required','none','required');
       if(speakingMic){speakingMic.hidden=true;speakingMic.style.display='none';}
       listenLabel.innerHTML='<img src="/shared/svgs/headphones.svg?v=20260927-icons1" alt="" aria-hidden="true"> Listen · 발음 듣기';
       listenButton.hidden=false;
@@ -2013,6 +2042,7 @@ function renderSpeakingQuestion(){
       listenLabel.textContent='🔊 음성 준비 중…';
       try{
         const played=await playSpeakingModelAudio(word.speakingTarget||word.word);
+        diagnostic('listening_played','none',played?'played':'unavailable');
         if(listenRequired&&played&&state.renderer?.host===host&&!session.checked){
           listenRequired=false;
           if(speakingMic){speakingMic.hidden=false;speakingMic.style.removeProperty('display');}
@@ -2036,18 +2066,26 @@ function renderSpeakingQuestion(){
     // Listen becomes available only after two genuine browser-microphone starts.
     // Count even if recognition cannot decipher a short word, but not a cancelled recording before it starts.
     const renderer=state.renderer;
-    const expected=word.speakingTarget||word.word;
-    let speakingAttempts=0;
     const recognition=renderer.speechRecognition;
+    const isCurrent=()=>state.speakingSession===session&&!session.checked&&session.words[session.index]===word&&state.renderer===renderer&&!sessionEl.hidden;
     if(recognition?.addEventListener){
-      recognition.addEventListener('start',()=>{speakingAttempts++});
+      recognition.addEventListener('start',()=>{
+        if(!isCurrent())return;
+        speakingAttempts++;startedAt=Date.now();browserPending=true;
+      });
+      recognition.addEventListener('error',e=>{
+        const code=String(e?.error||'unknown');
+        if(browserPending)browserDiagnostic(code==='no-speech'?'no_speech':'error_'+code);
+        else if(isCurrent())diagnostic('startup_error','browser','error_'+code);
+      });
       recognition.addEventListener('end',()=>{
-        if(state.speakingSession!==session||session.checked||session.words[session.index]!==word||state.renderer!==renderer)return;
+        if(browserPending)browserDiagnostic('no_speech');
+        if(!isCurrent())return;
         const response=renderer.getResponse();
         if(String(response||'').trim()){
           const alternatives=renderer.getSpeechAlternatives?.()||[response];
           const grade=gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
-          if(grade.points===0&&!state.bestSpeakingProgress?.best?.correct)requireListeningBeforeRetry();
+          if(grade.points===0&&failedAttempts<2&&!state.bestSpeakingProgress?.best?.correct)requireListeningBeforeRetry();
         }
         if(speakingAttempts>=2){
           listenButton.hidden=false;
@@ -2055,24 +2093,27 @@ function renderSpeakingQuestion(){
         }
       });
     }
-    state.aiSpeechUi=attachAISpeakingFallback({
-      host,target:expected,
-      isCurrent:()=>state.speakingSession===session&&!session.checked&&session.words[session.index]===word&&!sessionEl.hidden,
-      match:(target,alternatives)=>{
-        const result=matchSpeakingTarget(target,alternatives);
-        // AI fallback accepts only exact, spacing and true homophone matches.
-        return result;
-      },
+    const unitKeywords=unique(session.words.map(w=>w.speakingTarget||w.word)).filter(w=>w!==expected).slice(0,15);
+    state.aiSpeechUi=attachSilentAISpeaking({
+      host,target:expected,keywords:unitKeywords,isCurrent,
+      shouldAssist:()=>failedAttempts>=2&&!state.bestSpeakingProgress?.best?.correct,
       callApi:callVocabSpeechAI,
-      stopBrowserSpeech:()=>{try{renderer.speechRecognition?.stop?.()}catch(_){}},
-      onAccepted:transcript=>{
-        if(state.renderer!==renderer||session.checked)return;
-        // Preserve the normal recording and reward logic, including teacher assignments.
+      onDiagnostic:({outcome,transcript,duration_ms})=>{
+        const grade=transcript?gradeSpeaking(expected,[transcript],{mode:'word',exactMatcher:matchSpeakingTarget}):null;
+        diagnostic('ai_check','openai',outcome,{attempt_no:speakingAttempts+1,duration_ms,
+          grade_points:grade?.points??null,match_reason:grade?.matchedBy||null});
+      },
+      onResult:transcript=>{
+        if(!isCurrent())return;
+        const matched=matchSpeakingTarget(expected,[transcript]);
         session.aiAcceptedTranscript=transcript;
         renderer.state.speakingTranscript=transcript;
         renderer.state.speakingAlternatives=[transcript];
+        const preview=host.querySelector('[data-speaking-transcript]');
+        if(preview){preview.hidden=false;preview.textContent='“'+transcript+'”';}
         renderer.emit();
-        checkSpeaking();
+        // Only independently matched exact/true homophone answers auto-submit.
+        if(matched.correct&&['exact','spacing','homophone','in_sentence','in_sentence_homophone'].includes(matched.matchedBy))checkSpeaking();
       }
     });
     // Show acceptance before the student presses Check Answer.
@@ -2090,8 +2131,7 @@ function renderSpeakingQuestion(){
     };
     renderer.onSpeechResult=alternatives=>{
       updateSpeakingPreview(alternatives);
-      // Keep optional AI fallback for microphone failures only; local grades never require it.
-      if(gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget}).points===0)state.aiSpeechUi?.observe(alternatives);
+      browserDiagnostic('result',gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget}));
     };
     host.querySelector('[data-speaking-mic]')?.addEventListener('click',()=>{
       // The next recording may be worse; keep the best grade and progress visible.
