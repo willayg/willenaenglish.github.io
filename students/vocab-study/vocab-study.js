@@ -192,7 +192,9 @@ function wireSpellingField(field,{focus=false}={}){
   if(!field)return;
   const syncSubmit=()=>{
     if(!state.spellingTest&&!state.spellingPractice&&!state.inlineCoach)return;
-    actionBtn.disabled=!String(field.value||'').trim();
+    const response=txt(field.value);
+    const practice=state.spellingPractice;
+    actionBtn.disabled=!response||!!(practice&&(practice.submitting||practice.lastRejectedAnswer===response));
   };
   field.addEventListener('input',syncSubmit);
   field.addEventListener('change',syncSubmit);
@@ -2747,6 +2749,9 @@ function renderSpellingCoach(){
   const practice=state.spellingPractice;
   if(!practice||practice.index>=practice.words.length)return finishSpellingPractice();
   const word=practice.words[practice.index];
+  // A new prompt may be answered once; retrying requires a changed response.
+  practice.lastRejectedAnswer=null;
+  practice.submitting=false;
   const current=practice.index+1,total=practice.words.length;
   progressEl.textContent=current+' / '+total;
   progressFill.style.width=((current-1)/Math.max(1,total)*100)+'%';
@@ -2759,7 +2764,10 @@ function renderSpellingCoach(){
   root.innerHTML='<div class="question-card" id="vocabQuestionHost"></div>';
   const host=el('vocabQuestionHost');
   state.renderer=new QuestionRenderer(host).render(spellingCoachQuestion(word,practice.index),{
-    onChange:(_,has)=>{actionBtn.disabled=!has}
+    onChange:(_,has)=>{
+      const response=txt(state.renderer?.getResponse());
+      actionBtn.disabled=!has||practice.submitting||practice.lastRejectedAnswer===response;
+    }
   });
   state.questionStartedAt=Date.now();
   const spellingInput=host.querySelector('[data-spelling-input]');
@@ -2771,10 +2779,17 @@ function renderSpellingCoach(){
 }
 function checkSpellingCoach(){
   const practice=state.spellingPractice,renderer=state.renderer;
-  if(!practice||!renderer)return;
+  if(!practice||!renderer||practice.submitting)return;
   const word=practice.words[practice.index];
+  if(!word)return;
   const response=txt(renderer.getResponse());
   if(!response)return;
+  if(practice.lastRejectedAnswer===response){
+    actionBtn.disabled=true;
+    return;
+  }
+  practice.submitting=true;
+  actionBtn.disabled=true;
   const target=word.spellingTarget||word.word;
   const correct=matchesSpellingTarget(response,target);
   const result=recordSpellingAttempt(practice,word,renderer,correct);
@@ -2803,8 +2818,12 @@ function checkSpellingCoach(){
     sessionSource:'student'
   });
   if(!correct){
+    practice.lastRejectedAnswer=response;
+    practice.submitting=false;
     playStudentSfx('wrong');
     renderer.showFeedback({correct:false,correctAnswer:[],message:'다시 해보세요.'});
+    // Keep Check disabled until the student edits the wrong answer.
+    actionBtn.disabled=true;
     return;
   }
   if(flow.repeat)appendRetry(practice.words,word);
