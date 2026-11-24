@@ -834,13 +834,32 @@ function teacherModeTargetIds(row,mode){
   const ids=arr(raw).map(txt).filter(Boolean);
   return new Set(ids);
 }
+// Classroom vocabulary targets must not require students to say grammar notation.
+// Preserve lexical IDs and the original authored patterns for progress and other apps.
+function naturalVocabTarget(item){
+  const word=txt(item.word),ko=txt(item.ko);
+  const key=word.toLowerCase().replace(/\s+/g,' ').replace(/\bv\s*-?\s*ing\b/g,'ving');
+  const replacements={
+    'start ving':['start','시작하다'],
+    'stop ving':['stop','멈추다'],
+    'like ving':['like','좋아하다'],
+    'love ving':['love','아주 좋아하다'],
+    'have trouble ving':['have trouble','어려움을 겪다'],
+    'have problems ving':['have problems','문제가 있다'],
+    'was/were ving':['was/were','be동사의 과거형 (두 가지)']
+  };
+  const replacement=Object.prototype.hasOwnProperty.call(replacements,key)?replacements[key]:null;
+  if(replacement)return {...item,word:replacement[0],ko:replacement[1]};
+  if(key==='high'&&ko==='높이')return {...item,word,ko:'높게'};
+  return item;
+}
 function teacherAssignmentWords(row,mode=''){
   const allowed=mode?teacherModeTargetIds(row,mode):null;
   return arr(row?.targets).map((target,index)=>{
     const id=txt(target?.lexical_entry_id),word=txt(target?.english),ko=txt(target?.korean);
     if(!id||!word||!ko)return null;
     if(allowed&& !allowed.has(id))return null;
-    return{id,word,ko,position:Number(target?.position)||index};
+    return naturalVocabTarget({id,word,ko,position:Number(target?.position)||index});
   }).filter(Boolean);
 }
 function teacherModeWordCount(row,mode){
@@ -1569,6 +1588,7 @@ function mergeVocabularyTargets(...groups){
   return [...map.values()];
 }
 function sourceVocabularyActivities(book,unit,items){
+  items=items.map(naturalVocabTarget);
   const out=[],koPool=unique(items.map(x=>x.ko)),enPool=unique(items.map(x=>x.word));
   items.forEach(item=>{
     const koChoices=shuffle(unique([item.ko,...shuffle(koPool.filter(x=>x!==item.ko)).slice(0,3)]));
@@ -1658,7 +1678,7 @@ function unitVocabularyWords(items){
     }
     if(!word||!ko||!/[A-Za-z]/.test(word))return;
     const key=txt(m.lexical_entry_id||item?.sourceId)||(word.toLowerCase()+'|'+ko);
-    if(!map.has(key))map.set(key,{id:key,word,ko});
+    if(!map.has(key))map.set(key,naturalVocabTarget({id:key,word,ko}));
   });
   return [...map.values()];
 }
