@@ -73,6 +73,8 @@ const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const skillNames={vocabulary:'어휘 이해',spelling:'철자 쓰기',speaking:'단어 말하기',sentence_coach:'문장 말하기 연습',sentence_speaking:'문장 말하기',sentence_unscramble:'문장 배열'};
 const skillOrder=['vocabulary','speaking','spelling','sentence_coach','sentence_speaking','sentence_unscramble'];
+const examSkillNames={reading:'독해',communication:'의사소통',grammar:'문법',constructed_response:'서술형',vocab_test:'어휘 평가',vocabulary:'어휘 학습',sentences:'문장 배열'};
+const examSkillOrder=['reading','communication','grammar','constructed_response','vocab_test','vocabulary','sentences'];
 const num=x=>Math.max(0,Number(x)||0);
 const endpoint='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/teacher-student-report';
 const key='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -105,9 +107,9 @@ function barSegments(first,fixed,pending,verified=0){
 function bar(first,fixed,pending,verified=0){
  return '<div class="bar" role="img" aria-label="정답 '+(first+verified)+', 연습 후 해결 '+fixed+', 추가 연습 필요 '+pending+'">'+barSegments(first,fixed,pending,verified)+'</div>';
 }
-function skillRow(v){
+function skillRow(v,names=skillNames){
  const first=num(v.first),fixed=num(v.fixed),pending=num(v.pending),verified=num(v.verified),total=first+fixed+pending+verified;
- return '<div class="skill"><div class="skill-head"><span>'+escape(skillNames[v.skill]||v.skill)+'</span><strong>'+(first+fixed+verified)+'/'+total+'</strong></div>'+
+ return '<div class="skill"><div class="skill-head"><span>'+escape(names[v.skill]||v.skill)+'</span><strong>'+(first+fixed+verified)+'/'+total+'</strong></div>'+
  bar(first,fixed,pending,verified)+'<div class="meta"><span>정답 '+(first+verified)+' · 연습 후 '+fixed+'</span><span class="'+(pending?'needs':'')+'">'+(pending?'추가 연습 '+pending:'모두 해결')+'</span></div></div>';
 }
 function choose(){
@@ -133,10 +135,16 @@ function render(){
  if(exam){overview.splice(0,3,['학습 영역',num(s.exam_areas)+'개']);}
  $('overview').innerHTML=overview.map(([label,val])=>line(label,val)).join('');
  const skills=(Array.isArray(s.skills)?s.skills:[]).filter(x=>num(x.n)).sort((a,b)=>skillOrder.indexOf(a.skill)-skillOrder.indexOf(b.skill));
+ const examSkills=(Array.isArray(s.exam_skills)?s.exam_skills:[]).filter(x=>num(x.n))
+  .sort((a,b)=>examSkillOrder.indexOf(a.skill)-examSkillOrder.indexOf(b.skill));
  if(exam){
-  $('skills').innerHTML=skillRow({skill:'내신 문제 풀이',first,fixed,pending}).replace('내신 문제 풀이','내신 문제 풀이');
- }else $('skills').innerHTML=skills.length?skills.map(skillRow).join(''):'<p class="empty">이 기간의 학습 기록이 없습니다.</p>';
- $('skillSection').hidden=!skills.length&&!exam;
+  $('skills').innerHTML=examSkills.length?examSkills.map(v=>skillRow(v,examSkillNames)).join(''):
+   skillRow({skill:'내신 문제 풀이',first,fixed,pending}, {'내신 문제 풀이':'내신 문제 풀이'});
+ }else {
+  $('skills').innerHTML=skills.length?skills.map(v=>skillRow(v)).join(''):'<p class="empty">이 기간의 학습 기록이 없습니다.</p>';
+  if(examSkills.length) $('skills').innerHTML+='<h2>내신 학습 기록</h2>'+examSkills.map(v=>skillRow(v,examSkillNames)).join('');
+ }
+ $('skillSection').hidden=!skills.length&&!examSkills.length&&!exam;
  const extra=[['완성한 글',s.writings,'편'],['작성 중인 글',s.writing_drafts,'편'],
  ['문법 학습 완료',s.grammar,'회'],['문법 기초 연습',s.grammar_practice,'회']];
  extra.push(['자유 대화 참여',s.free_talking_started,'회'],['자유 대화 발화',s.free_talking_turns,'회'],
