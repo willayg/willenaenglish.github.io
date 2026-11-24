@@ -1,0 +1,42 @@
+# Retired one-time workflows
+
+Archived 2026-11-24 from students. These historical definitions are not executable by GitHub Actions in this directory. They are obsolete or malformed one-shot patches, cache busts, or special deployments; do not restore or run without reviewing current code. Archiving does not assert that every original patch succeeded. Daily Study star aggregation remains a separate audit item.
+
+- `add-daily-session-polish-once.yml`: one-time patch / cache bust
+- `add-fresh-study-settings-launcher-staging-once.yml`: one-time patch / cache bust
+- `add-internal-assessment-recording.yml`: historical repair / special deployment
+- `align-test-prep-written-scope-once.yml`: one-time patch / cache bust
+- `build-test-prep-auth-app-once.yml`: one-time patch / cache bust
+- `bump-coach-needs-progress-db-once.yml`: one-time patch / cache bust
+- `bump-study-v2-activity-css-once.yml`: one-time patch / cache bust
+- `bump-study-v2-hero-responsive-once.yml`: one-time patch / cache bust
+- `deploy-teacher-class-fix-now.yml`: historical repair / special deployment
+- `fix-admin-classes-live-gateway-once.yml`: one-time patch / cache bust
+- `fix-daily-standard-auth-once.yml`: one-time patch / cache bust
+- `fix-daily-study-star-floor-once.yml`: one-time patch / cache bust
+- `fix-internal-level-test-recorder-cookie-route-once.yml`: one-time patch / cache bust
+- `fix-internal-recorder-race-once.yml`: one-time patch / cache bust
+- `fix-naesin-student-api-once.yml`: one-time patch / cache bust
+- `fix-qc-login-redirect-once.yml`: one-time patch / cache bust
+- `fix-stale-internal-level-test-attempt-once.yml`: one-time patch / cache bust
+- `fix-student-grade-profile.yml`: historical repair / special deployment
+- `fix-vocab-complete-reentry-once-v2.yml`: one-time patch / cache bust
+- `fix-vocab-complete-reentry-once.yml`: one-time patch / cache bust
+- `install-dashboard-v2-naesin-once.yml`: one-time patch / cache bust
+- `install-naesin-tracker-once.yml`: one-time patch / cache bust
+- `move-settings-below-hero-structural-once.yml`: one-time patch / cache bust
+- `patch-admin-classes-cookie-auth-direct-once.yml`: one-time patch / cache bust
+- `patch-admin-classes-cookie-domain-once.yml`: one-time patch / cache bust
+- `patch-admin-classes-to-supabase-once.yml`: one-time patch / cache bust
+- `patch-admin-cookie-minimal-once.yml`: one-time patch / cache bust
+- `patch-daily-study-cookie-auth-once.yml`: one-time patch / cache bust
+- `patch-progress-summary-daily-star-floor.yml`: historical repair / special deployment
+- `patch-real-admin-gateway-source-once.yml`: one-time patch / cache bust
+- `patch-study-progress-cloudflare-once.yml`: one-time patch / cache bust
+- `patch-study-v2-daily-auth-helper-once.yml`: one-time patch / cache bust
+- `run-daily-study-immediate-next-once.yml`: one-time patch / cache bust
+- `run-daily-study-queue-correction-once.yml`: one-time patch / cache bust
+- `run-daily-study-queue-patch-once.yml`: one-time patch / cache bust
+- `staging-cachebust-settings-row2.yml`: one-time patch / cache bust
+- `unify-testprep-keyboard-once.yml`: one-time patch / cache bust
+- `wire-v3-speaking-once.yml`: one-time patch / cache bust
