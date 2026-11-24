@@ -1,7 +1,7 @@
 import {fetchClassBookAssignments,extractClassBookAssignments} from '/students/shared/class-book-assignments.js?v=20261105-shared1';
 import {renderStudentSessionFinish} from '../components/student-session-finish.js?v=1';
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261117-safari-mic2';
-import {attachSilentAISpeaking} from './vocab-ai-speech-ui.js?v=20261124-ai-quiet-retry1';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261124-mic-ready1';
+import {attachSilentAISpeaking} from './vocab-ai-speech-ui.js?v=20261124-mic-ready1';
 import {createSpeakingAudioCache} from './vocab-listening-cache.js?v=20261024-audio-prefetch2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
 import {getSpellingTarget,matchesSpellingTarget} from './spelling-targets.js?v=20261028-apostrophes1';
@@ -27,6 +27,35 @@ function gradeSpeaking(target,alternatives,options){
   const eligible=checked.filter(v=>v.match!==false).map(v=>v.transcript);
   if(heard.length&&!eligible.length)return {points:0,correct:false,level:'red',transcript:heard[0],matchedBy:'numeric_mismatch'};
   return gradeOrdinarySpeech(target,eligible,options);
+}
+
+
+ // Unlock the cue on a deliberate mic tap; never pre-open the microphone.
+ // Reuse the audio output context to avoid asset/network startup delays.
+let speechCueContext=null;
+function prepareSpeechCue(){
+  try{
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtx)return;
+    if(!speechCueContext||speechCueContext.state==='closed')speechCueContext=new AudioCtx();
+    if(speechCueContext.state!=='running')void speechCueContext.resume().catch(()=>{});
+  }catch{}
+}
+function playSpeechReadyCue(){
+  try{
+    const ctx=speechCueContext;
+    if(!ctx||ctx.state!=='running')return;
+    const t=ctx.currentTime,osc=ctx.createOscillator(),gain=ctx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(880,t);
+    osc.frequency.setValueAtTime(1175,t+.045);
+    gain.gain.setValueAtTime(.001,t);
+    gain.gain.exponentialRampToValueAtTime(.18,t+.008);
+    gain.gain.exponentialRampToValueAtTime(.001,t+.11);
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.onended=()=>{osc.disconnect();gain.disconnect();};
+    osc.start(t);osc.stop(t+.12);
+  }catch{}
 }
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -2086,8 +2115,15 @@ function renderSpeakingQuestion(){
     // Count genuine microphone starts and unsubmitted recognition results.
     // Keep the retry count when a failed word comes around again.
     const renderer=state.renderer;
+    host.classList.add('vocab-speech-cues');
     const recognition=renderer.speechRecognition;
     const isCurrent=()=>state.speakingSession===session&&!session.checked&&session.words[session.index]===word&&state.renderer===renderer&&!sessionEl.hidden;
+    renderer.onSpeechStartRequest=prepareSpeechCue;
+    renderer.onSpeechReady=({duration_ms,source})=>{
+      if(!isCurrent())return;
+      playSpeechReadyCue();
+      diagnostic('mic_ready','browser',source,{duration_ms:Math.min(180000,duration_ms),attempt_no:speakingAttempts+(browserPending?0:1)});
+    };
     if(recognition?.addEventListener){
       recognition.addEventListener('start',()=>{
         if(!isCurrent())return;
@@ -2117,7 +2153,12 @@ function renderSpeakingQuestion(){
     state.aiSpeechUi=attachSilentAISpeaking({
       host,target:expected,keywords:unitKeywords,isCurrent,
       shouldAssist:()=>failedAttempts>=2&&!retryState.aiUsed&&!browserPending&&!state.bestSpeakingProgress?.best?.correct,
-      onStart:()=>{retryState.aiUsed=true;speakingAttempts++;retryState.attempts=speakingAttempts;},
+      onStart:()=>{prepareSpeechCue();retryState.aiUsed=true;speakingAttempts++;retryState.attempts=speakingAttempts;},
+      onReady:({duration_ms,source})=>{
+        if(!isCurrent())return;
+        playSpeechReadyCue();
+        diagnostic('mic_ready','openai',source,{duration_ms:Math.min(180000,duration_ms)});
+      },
       callApi:callVocabSpeechAI,
       onDiagnostic:({outcome,transcript,duration_ms})=>{
         const grade=transcript?gradeSpeaking(expected,[transcript],{mode:'word',exactMatcher:matchSpeakingTarget}):null;
