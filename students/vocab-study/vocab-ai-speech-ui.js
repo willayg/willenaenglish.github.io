@@ -203,7 +203,7 @@ export function attachAISpeakingFallback({host,target,isCurrent,onAccepted,match
 
 // Third-try assistance: same mic, no modal, no background recording.
 // One assisted recording per question visit; normal browser speech resumes afterward.
-export function attachSilentAISpeaking({host,target,keywords,isCurrent,shouldAssist,onResult,onDiagnostic,callApi}){
+export function attachSilentAISpeaking({host,target,keywords,isCurrent,shouldAssist,onStart,onResult,onDiagnostic,callApi}){
   const mic=host?.querySelector('[data-speaking-mic]');
   const status=host?.querySelector('[data-speaking-status]');
   if(!mic)return {dispose(){}};
@@ -218,14 +218,14 @@ export function attachSilentAISpeaking({host,target,keywords,isCurrent,shouldAss
   }
   async function capture(){
     let context=null,analyser=null,levelTimer=null,voiced=false,lastVoice=0;
-    busy=true;used=true;started=Date.now();
+    busy=true;used=true;started=Date.now();onStart?.();
     const mime=chooseMime();
     mic.disabled=true;mic.setAttribute('aria-busy','true');
     message('마이크 연결 중…');
     let outcome='error',transcript='';
     try{
       stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}});
-      if(!alive())return;
+      if(!alive()){cleanup();return;}
       recorder=new MediaRecorder(stream,{mimeType:mime,audioBitsPerSecond:32000});
       const parts=[];
       const finished=new Promise((resolve,reject)=>{
