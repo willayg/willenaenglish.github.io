@@ -413,8 +413,14 @@ export class QuestionRenderer{
         animation:speakingMicPulse .72s ease-in-out infinite alternate
       }
       .speaking-mic:disabled{opacity:.45;cursor:default}
-      .vocab-speech-cues .speaking-mic.is-starting{opacity:1;border-color:#e0a33c;color:#c58517;background:#fff9eb;animation:speakingMicPulse .7s ease-in-out infinite alternate;cursor:wait}
-      .vocab-speech-cues .speaking-status[data-speech-phase=starting]{font-size:1.12rem;color:#a76b0e;font-weight:850}
+      @keyframes vocabMicConnectingSpin{to{transform:rotate(360deg)}}
+      .vocab-speech-cues .speaking-mic.is-starting{opacity:1;border-color:#e0a33c;color:#c58517;background:#fff9eb;animation:none;transform:none;cursor:wait}
+      .vocab-speech-cues .speaking-mic.is-starting .speaking-mic-icon{
+        box-sizing:border-box;width:44px;height:44px;background:none;
+        -webkit-mask:none;mask:none;border:5px solid #f4dfb4;border-top-color:#b87910;
+        border-radius:50%;animation:vocabMicConnectingSpin .75s linear infinite;
+      }
+      .vocab-speech-cues .speaking-status[data-speech-phase=starting]{font-size:1.3rem;color:#a76b0e;font-weight:900}
       .vocab-speech-cues .speaking-status[data-speech-phase=listening]{font-size:1.2rem;color:#d31668;font-weight:900}
       .vocab-speech-cues .speaking-status[data-speech-phase=checking]{font-size:1.06rem;color:#a14d92;font-weight:850}
       .speaking-status{color:#607b80;font:750 .9rem Poppins,system-ui,sans-serif;text-align:center}
