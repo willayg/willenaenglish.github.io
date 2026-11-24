@@ -35,7 +35,32 @@ const HOMOPHONE_GROUPS=[
   ['sew','so'],
   ['no','know'],
   ['here','hear'],
-  ['right','write','rite']
+  ['right','write','rite'],
+  // Short isolated words are especially susceptible to STT spelling ambiguity.
+  ['high','hi'],
+  ['eye','i'],
+  ['meat','meet'],
+  ['week','weak'],
+  ['peace','piece'],
+  ['hole','whole'],
+  ['way','weigh'],
+  ['wait','weight'],
+  ['tail','tale'],
+  ['mail','male'],
+  ['sail','sale'],
+  ['dear','deer'],
+  ['fair','fare'],
+  ['stair','stare'],
+  ['pain','pane'],
+  ['rain','rein','reign'],
+  ['road','rode','rowed'],
+  ['threw','through'],
+  ['allowed','aloud'],
+  ['weather','whether'],
+  ['would','wood'],
+  ['some','sum'],
+  ['cent','sent','scent'],
+  ['steal','steel']
 ];
 
 function normalizeNumberToken(token){
