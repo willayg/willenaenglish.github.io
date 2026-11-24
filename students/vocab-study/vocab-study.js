@@ -5,8 +5,8 @@ import {attachSilentAISpeaking} from './vocab-ai-speech-ui.js?v=20261124-third-t
 import {createSpeakingAudioCache} from './vocab-listening-cache.js?v=20261024-audio-prefetch2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
 import {getSpellingTarget,matchesSpellingTarget} from './spelling-targets.js?v=20261028-apostrophes1';
-import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261124-homophones1';
-import {gradeSpeaking,speakingStars} from '/students/shared/speaking-smart-grade.js?v=20261117-quantity-phrase3';
+import {isSpeakableTarget,matchSpeakingTarget,numericSpeakingMatch} from './speaking-match.js?v=20261124-numbers1';
+import {gradeSpeaking as gradeOrdinarySpeech,speakingStars} from '/students/shared/speaking-smart-grade.js?v=20261117-quantity-phrase3';
 import {summarizeSpeakingSession} from './speaking-finish-summary.js?v=20261111-simple-average4';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-startup2';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260927-startup2';
@@ -16,6 +16,18 @@ import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=20260927-s
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 import {createSpeakingGradesGuide} from '/students/shared/speaking-grades-guide.js?v=20261112-energy4';
 import {createSpeakingBestProgress} from '/students/shared/speaking-best-progress.js?v=20261112-visual-only2';
+
+// Numeric equivalents receive full credit before generic partial/fuzzy grading.
+// A different value cannot be promoted by phonetic or word-overlap rules.
+function gradeSpeaking(target,alternatives,options){
+  const heard=(Array.isArray(alternatives)?alternatives:[alternatives]).map(v=>String(v??'').trim()).filter(Boolean).slice(0,5);
+  const checked=heard.map(transcript=>({transcript,match:numericSpeakingMatch(target,transcript)}));
+  const same=checked.find(v=>v.match===true);
+  if(same)return {points:4,correct:true,level:'green',transcript:same.transcript,matchedBy:'numeric_equivalent'};
+  const eligible=checked.filter(v=>v.match!==false).map(v=>v.transcript);
+  if(heard.length&&!eligible.length)return {points:0,correct:false,level:'red',transcript:heard[0],matchedBy:'numeric_mismatch'};
+  return gradeOrdinarySpeech(target,eligible,options);
+}
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -2122,7 +2134,7 @@ function renderSpeakingQuestion(){
         if(preview){preview.hidden=false;preview.textContent='“'+transcript+'”';}
         renderer.emit();
         // Only independently matched exact/true homophone answers auto-submit.
-        if(matched.correct&&['exact','spacing','homophone','in_sentence','in_sentence_homophone'].includes(matched.matchedBy))checkSpeaking();
+        if(matched.correct&&['exact','spacing','homophone','in_sentence','in_sentence_homophone','numeric_equivalent'].includes(matched.matchedBy))checkSpeaking();
       }
     });
     // Show acceptance before the student presses Check Answer.
