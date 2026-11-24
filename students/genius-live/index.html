@@ -20,29 +20,30 @@ button{padding:12px 17px;font-weight:700;border-radius:12px;border:2px solid var
 @keyframes gl-pulse{from{transform:scale(1.25);opacity:.6}to{transform:scale(1);opacity:1}}
 @media(prefers-reduced-motion:reduce){.gl-countdown .pulse{animation:none}}
 
-/* Pixel-art answer lock. Displayed only after the server accepts the answer. */
-.gl-locked{position:fixed;inset:0;z-index:1000;background:radial-gradient(circle at 50% 34%,#354d91,#101931 68%,#090e21);color:white;display:flex;align-items:center;justify-content:center;padding:22px;text-align:center;overflow:hidden}
-.gl-locked::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 4px,#ffffff0b 4px 6px);pointer-events:none}
-.gl-lock-inner{position:relative;width:min(370px,100%)}
-.gl-lock-icon{position:relative;width:104px;height:104px;margin:0 auto 32px;background:#ffc65e;box-shadow:inset -12px -12px #e78b51,0 0 0 9px #ffffff,9px 9px 0 12px #1e244b;clip-path:polygon(0 0,100% 0,100% 100%,0 100%);image-rendering:pixelated}
-.gl-lock-icon::before{content:"";position:absolute;width:22px;height:22px;background:#223056;left:24px;top:32px;box-shadow:44px 0 #223056,9px 31px #223056,22px 31px #223056,35px 31px #223056,0 -21px #fff7,44px -21px #fff7}
-.gl-lock-flag{display:inline-block;margin:0 auto 13px;padding:12px 16px;background:#ffe57e;color:#3a2452;border:4px solid #fff;box-shadow:6px 6px 0 #081027;text-shadow:none;letter-spacing:.065em;font-size:clamp(19px,6vw,27px);font-weight:900}
-.gl-lock-sub{margin:15px 0 18px;font-size:clamp(15px,4.1vw,20px);font-weight:800;color:#9feefd}
-.gl-lock-wait{font-size:13px;color:#d5eaf4;font-weight:600}
-.gl-lock-sweep{height:12px;border:3px solid #8ae8fb;background:#172343;margin-top:20px;overflow:hidden}
-.gl-lock-sweep i{display:block;height:100%;width:38%;background:linear-gradient(90deg,#ff69ae,#ffe57e,#82f5ef);animation:gl-sweep 1.25s steps(9) infinite}
-.gl-lock-stars{height:24px;margin:12px auto;display:flex;align-items:center;justify-content:center;gap:15px}
-.gl-lock-stars i{width:12px;height:12px;background:#ffdc72;box-shadow:0 0 0 4px #ffdc7225;animation:gl-star .85s steps(2) infinite}
-.gl-lock-stars i:nth-child(2){animation-delay:.19s}.gl-lock-stars i:nth-child(3){animation-delay:.36s}
-.gl-locked.is-fresh .gl-lock-flag{animation:gl-lock-pop .55s steps(4) both}
-.gl-locked.is-fresh .gl-lock-icon{animation:gl-lock-bounce .8s steps(4) both}
-.gl-locked.is-fresh .gl-lock-inner::before,.gl-locked.is-fresh .gl-lock-inner::after{content:"✦";position:absolute;font-size:40px;color:#8bf5ff;left:3%;top:8%;animation:gl-spark .9s steps(4) both}
-.gl-locked.is-fresh .gl-lock-inner::after{left:auto;right:4%;top:21%;color:#ff8cc8;animation-delay:.12s}
-@keyframes gl-lock-pop{0%{transform:scale(.35) rotate(-7deg);opacity:0}60%{transform:scale(1.14) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0)}}
-@keyframes gl-lock-bounce{0%,100%{transform:translateY(0)}45%{transform:translateY(-16px)}70%{transform:translateY(6px)}}
-@keyframes gl-spark{0%{transform:translate(0,14px) scale(.3);opacity:0}45%{opacity:1}100%{transform:translate(16px,-24px) scale(1.3);opacity:0}}
-@keyframes gl-sweep{from{transform:translateX(-100%)}to{transform:translateX(280%)}}
-@keyframes gl-star{50%{transform:scale(1.5);opacity:.6}}
+/* Immediate answer feedback and lightweight local confirmation animations. */
+.answer{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.answer.is-sending{outline:5px solid #2c6179;outline-offset:2px;filter:brightness(1.13)}
+.answer:focus-visible{outline:4px solid #183951;outline-offset:3px}
+.gl-locked{position:fixed;inset:0;z-index:1000;background:radial-gradient(circle at 50% 24%,#334b84 0%,#121d40 56%,#080e22 100%);color:#fff;display:flex;align-items:center;justify-content:center;padding:clamp(16px,5vw,32px);text-align:center;overflow:auto}
+.gl-locked::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 4px,#ffffff09 4px 5px);pointer-events:none}
+.gl-lock-inner{position:relative;width:min(420px,100%);margin:auto}
+.gl-lock-kicker{font-size:12px;font-weight:800;letter-spacing:.15em;color:#a8dfea}
+.gl-lock-mascot{width:174px;height:174px;margin:24px auto 14px;border:5px solid #8be8f4;border-radius:30px;background:radial-gradient(circle,#ffffff 0%,#e5f9fc 100%);box-shadow:0 9px 0 #0a1534,0 17px 40px #0008;display:flex;align-items:center;justify-content:center}
+.gl-lock-mascot .gl-character-logo{width:148px!important;height:148px!important}
+.gl-lock-mascot .gl-character-logo svg{max-width:100%;max-height:100%}
+.gl-lock-emoji{font-size:100px;line-height:1}
+.gl-lock-team{font-size:13px;font-weight:800;color:#aee6f6;letter-spacing:.07em;margin-bottom:12px}
+.gl-lock-message{font-size:clamp(24px,6.5vw,36px);line-height:1.2;font-weight:800;margin:10px auto 22px;color:#fff;max-width:390px}
+.gl-lock-confirm{display:inline-flex;align-items:center;gap:9px;padding:10px 17px;border-radius:99px;background:#233e63;border:1px solid #74dfc6;color:#d6fff1;font-weight:800;font-size:13px;letter-spacing:.03em}
+.gl-lock-check{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#67dbb1;color:#102c36;font-size:15px;font-weight:900}
+.gl-lock-wait{font-size:13px;color:#bfd4eb;font-weight:600;margin:24px 0 0}
+.gl-lock-sweep{height:8px;max-width:270px;border-radius:9px;background:#ffffff24;margin:15px auto 0;overflow:hidden}
+.gl-lock-sweep i{display:block;height:100%;width:35%;border-radius:9px;background:linear-gradient(90deg,#ff7aaf,#ffe486,#81f1ef);animation:gl-sweep 1.6s linear infinite}
+.gl-locked.is-fresh .gl-lock-message{animation:gl-lock-pop .5s ease-out both}
+.gl-locked.is-fresh .gl-lock-mascot{animation:gl-lock-bounce .7s ease-out both}
+@keyframes gl-lock-pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes gl-lock-bounce{0%,100%{transform:translateY(0)}48%{transform:translateY(-12px)}75%{transform:translateY(4px)}}
+@keyframes gl-sweep{from{transform:translateX(-100%)}to{transform:translateX(290%)}}
 @media(prefers-reduced-motion:reduce){.gl-locked *,.gl-locked::before,.gl-locked::after{animation:none!important}}
 
 </style></head><body><header><strong>Genius <span>Live</span></strong><span class="pill">Willena Students</span></header><main><div id="message" class="notice" hidden></div><div id="app"></div></main>
@@ -53,7 +54,20 @@ const api=async(action,body={})=>{const r=await fetch("/api/genius-live",{method
 const teamName=n=>state?.teamNames?.[n]||["Pink Dragons","Blue Sharks","Green Tigers","Yellow Stars","Purple Panthers","Orange Foxes","Silver Wolves","Red Falcons"][n]||"Team";
 const linkPin=new URLSearchParams(location.search).get("pin")||"";
 const previousPin=sessionStorage.getItem("genius.live.student.pin")||"";
-let pin=linkPin||previousPin,state=null,working=false,last="";
+let pin=linkPin||previousPin,state=null,working=false,last="",refreshing=false;
+let localAnswer=null;
+const LOCK_MESSAGES=[
+ "Did you get it right?",
+ "Hope you double-checked!",
+ "Feeling confident?",
+ "Was that your final answer?",
+ "Trust your instincts!",
+ "Too easy? We'll see!",
+ "Big brain move?",
+ "The suspense is killing me!",
+ "Your team is counting on you!",
+ "No changing your mind now!"
+];
 function notice(t,err=false){const m=$("#message");m.hidden=!t;m.className="notice"+(err?" error":"");m.textContent=t}
 function scores(){const teams=state.mode==="team";const list=teams?Array.from({length:state.teamCount},(_,i)=>{const members=state.players.filter(p=>p.team===i);const total=members.reduce((n,p)=>n+p.score,0);return{name:teamName(i),logo:teamLogo(i),score:members.length?total/members.length:0,count:members.length}}):state.players.map(p=>({name:p.name,score:p.score}));list.sort((a,b)=>b.score-a.score);return list.map((p,i)=>'<div class="score"><span>'+(i+1)+'. '+(teams?logoVisual(p.logo,26)+' ':'')+esc(p.name)+(teams?' <small class="muted">('+p.count+' players)</small>':"")+'</span><b>'+Math.round(p.score).toLocaleString()+(teams?" avg pts":" pts")+'</b></div>').join("")}
 function joinForm(){return '<div class="grid"><section class="card pink"><span class="pill">Classroom game</span><h1>Join Genius Live</h1><p class="muted">Ask your teacher for the six-digit game PIN.</p>'+
@@ -109,19 +123,51 @@ function lockSfx(){
   });
  }catch{}
 }
+function answerMessage(){
+ const key=pin+":"+state.questionNumber;
+ if(localAnswer?.key===key&&localAnswer.message)return localAnswer.message;
+ // Stable fallback for refresh/reopen: never shuffle the text every polling cycle.
+ const source=String(state.myPlayerId||pin)+":"+state.questionNumber;
+ let hash=0;for(const char of source)hash=(hash*31+char.charCodeAt(0))>>>0;
+ return LOCK_MESSAGES[hash%LOCK_MESSAGES.length];
+}
 function answerLockView(fresh){
+ const player=state.players.find(p=>p.id===state.myPlayerId);
+ const team=state.mode==="team"&&Number.isInteger(player?.team)&&player.team>=0?player.team:-1;
+ const logo=team>=0?teamLogo(team):"willi";
+ const mascot=TEAM_CHARACTER_IDS.includes(logo)?teamCharacterMarkup(logo,148):'<span class="gl-lock-emoji" aria-hidden="true">'+esc(logo||"⭐")+'</span>';
  return '<div class="gl-locked '+(fresh?"is-fresh":"")+'" role="status" aria-live="polite">'+
- '<div class="gl-lock-inner"><div class="gl-lock-icon" aria-hidden="true"></div>'+
- '<div class="gl-lock-flag">ANSWER LOCKED!</div>'+
- '<div class="gl-lock-stars" aria-hidden="true"><i></i><i></i><i></i></div>'+
- '<div class="gl-lock-sub">READY FOR THE REVEAL</div>'+
- '<div class="gl-lock-wait">Waiting for the other players...</div>'+
+ '<div class="gl-lock-inner"><div class="gl-lock-kicker">GENIUS LIVE · QUESTION '+state.questionNumber+' / '+state.total+'</div>'+
+ '<div class="gl-lock-mascot" aria-hidden="true">'+mascot+'</div>'+
+ '<div class="gl-lock-team">'+esc(team>=0?teamName(team):"GENIUS LIVE")+'</div>'+
+ '<h2 class="gl-lock-message">'+esc(answerMessage())+'</h2>'+
+ '<div class="gl-lock-confirm"><span class="gl-lock-check" aria-hidden="true">✓</span>ANSWER LOCKED!</div>'+
+ '<p class="gl-lock-wait">Waiting for the other players...</p>'+
  '<div class="gl-lock-sweep" aria-hidden="true"><i></i></div></div></div>';
 }
-function quiz(){const q=state.question,done=state.myAnswer!==null,reveal=state.status==="reveal";return '<div class="grid"><section class="card pink"><div class="row between"><span class="pill">'+esc(q.book)+' · '+(q.skill==='Grammar Genius'?'Grammar':q.skill==='Sentence Genius'?'Sentence · Unit '+q.unit:'Vocabulary · Unit '+q.unit)+'</span><b>'+state.questionNumber+' / '+state.total+'</b></div>'+
+function showAnswerSending(choice){
+ // Make the response visible before any network request finishes.
+ document.querySelectorAll("[data-answer]").forEach(button=>{
+  const selected=Number(button.dataset.answer)===choice;
+  button.disabled=true;
+  button.classList.toggle("chosen",selected);
+  button.classList.toggle("is-sending",selected);
+  if(selected)button.setAttribute("aria-pressed","true");
+ });
+ const hint=$("#glAnswerHint");
+ if(hint){hint.textContent="Sending your answer...";hint.setAttribute("role","status");}
+}
+function confirmLocalAnswer(roundKey,choice){
+ if(localAnswer?.key!==roundKey)return;
+ localAnswer.choice=choice;localAnswer.status="confirmed";
+ answerLockAnimatedKey=roundKey;answerLockFreshUntil=Date.now()+1200;
+ lockSfx();last="";notice("");paint();
+}
+
+function quiz(){const q=state.question,roundKey=pin+":"+state.questionNumber,localDone=localAnswer?.key===roundKey&&localAnswer.status==="confirmed",done=state.myAnswer!==null||localDone,reveal=state.status==="reveal";return '<div class="grid"><section class="card pink"><div class="row between"><span class="pill">'+esc(q.book)+' · '+(q.skill==='Grammar Genius'?'Grammar':q.skill==='Sentence Genius'?'Sentence · Unit '+q.unit:'Vocabulary · Unit '+q.unit)+'</span><b>'+state.questionNumber+' / '+state.total+'</b></div>'+
  '<div class="row between" style="margin:15px 0 8px"><div class="timer" id="timer">—</div><span class="small muted">'+state.answeredCount+' / '+state.players.length+' answered</span></div><div class="bar"><i id="timerBar"></i></div>'+
  '<div class="question">'+esc(q.prompt)+'</div><div class="answers">'+q.options.map((s,i)=>'<button data-answer="'+i+'" class="answer '+(done&&state.myAnswer===i?"chosen ":"")+(reveal?(i===q.correct?"correct":"dim"):"")+'" '+(done||reveal||Date.now()>=Date.parse(state.deadline)?"disabled":"")+'><span class="letter">'+["A","B","C","D","E"][i]+'</span>'+esc(s)+'</button>').join("")+'</div>'+
- (reveal?'<div class="notice"><b>'+esc(q.options[q.correct])+'</b> = '+esc(q.explanation)+'<p>You earned '+state.myPoints+' points this round.</p></div>':done?answerLockView(answerLockAnimatedKey===pin+":"+state.questionNumber&&Date.now()<answerLockFreshUntil):'<p class="muted small">Choose one answer before time runs out.</p>')+'</section>'+
+ (reveal?'<div class="notice"><b>'+esc(q.options[q.correct])+'</b> = '+esc(q.explanation)+'<p>You earned '+state.myPoints+' points this round.</p></div>':done?answerLockView(answerLockAnimatedKey===pin+":"+state.questionNumber&&Date.now()<answerLockFreshUntil):'<p class="muted small" id="glAnswerHint">Choose one answer before time runs out.</p>')+'</section>'+
  '<section class="card"><h2>'+ (state.mode==="team"?"Team scores":"Leaderboard")+'</h2>'+scores()+'</section></div>'}
 function finish(){return '<div class="grid"><section class="card pink"><h1>Game complete!</h1><p>Great work playing '+state.total+' Genius Live questions.</p><h2>Results</h2>'+scores()+'<p><button class="primary" id="leave">Join another game</button></p></section><section class="card"><h2>Thanks for playing!</h2><p>Your live quiz score does not change your regular Genius points or homework.</p></section></div>'}
 function countdownView(){return '<section class="gl-countdown" role="status" aria-live="polite"><h1>Question '+state.questionNumber+' / '+state.total+'</h1><div class="big" id="glStudentCountdown">3</div><h2>GET READY!</h2></section>'}
@@ -140,14 +186,63 @@ function paint(){const key=state?state.status+"|"+state.questionNumber+"|"+state
  attachLogoPickers();
  const join=$("#joinForm");if(join)join.onsubmit=e=>{e.preventDefault();pin=$("#pinInput").value.trim();joinGame()};
  document.querySelectorAll("[data-answer]").forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));
- const leave=$("#leave");if(leave)leave.onclick=()=>{pin="";state=null;last="";sessionStorage.removeItem("genius.live.student.pin");sessionStorage.removeItem("genius.live.student.joined");paint()};
+ const leave=$("#leave");if(leave)leave.onclick=()=>{pin="";state=null;localAnswer=null;last="";sessionStorage.removeItem("genius.live.student.pin");sessionStorage.removeItem("genius.live.student.joined");paint()};
  tick();tickCountdown()}
 async function teamAction(action,options){if(working)return;working=true;try{const next=await api(action,{pin,...options});state=next;last="";notice("");paint()}catch(e){notice(e.message,true)}finally{working=false}}
-async function joinGame(){if(working)return;working=true;notice("Joining…");try{state=await api("join",{pin});sessionStorage.setItem("genius.live.student.pin",pin);sessionStorage.setItem("genius.live.student.joined","1");last="";notice("");paint()}catch(e){notice(e.message,true);if(e.status===401){showLogin();const link=$("#message a");if(link)link.focus()}}finally{working=false}}
+async function joinGame(){if(working)return;working=true;notice("Joining…");try{state=await api("join",{pin});localAnswer=null;sessionStorage.setItem("genius.live.student.pin",pin);sessionStorage.setItem("genius.live.student.joined","1");last="";notice("");paint()}catch(e){notice(e.message,true);if(e.status===401){showLogin();const link=$("#message a");if(link)link.focus()}}finally{working=false}}
 function showLogin(){const link=document.createElement("a");link.href="/students/signin.html?next="+encodeURIComponent(location.pathname+location.search);link.textContent=" Sign in to Willena";$("#message").append(" · ",link)}
-async function refresh(){if(!pin||working)return;try{const fresh=await api("state",{pin});state=fresh;notice("");paint()}catch(e){if(e.status===401){notice("Please sign in to your Willena account.",true);showLogin()}else if(/not found|expired|cancelled|not joined/i.test(e.message)){state=null;last="";sessionStorage.removeItem("genius.live.student.pin");sessionStorage.removeItem("genius.live.student.joined");notice(e.message,true);paint()}else notice(e.message,true)}}
-async function answer(choice){if(working||!state||state.myAnswer!==null||state.status!=="question")return;unlockLockSfx();working=true;try{const roundKey=pin+":"+state.questionNumber;const accepted=await api("answer",{pin,choice,questionIndex:state.questionNumber-1});if(accepted?.accepted){answerLockAnimatedKey=roundKey;answerLockFreshUntil=Date.now()+1200;lockSfx()}await refreshDirect()}catch(e){notice(e.message,true)}finally{working=false}}
-async function refreshDirect(){const fresh=await api("state",{pin});state=fresh;last="";paint()}
+async function refresh(){
+ if(!pin||working||refreshing)return;
+ refreshing=true;
+ try{
+  const fresh=await api("state",{pin});
+  // An older poll must not erase the immediate tap UI while a submission is pending.
+  if(working)return;
+  state=fresh;notice("");paint();
+ }catch(e){
+  if(working)return;
+  if(e.status===401){notice("Please sign in to your Willena account.",true);showLogin()}
+  else if(/not found|expired|cancelled|not joined/i.test(e.message)){
+   state=null;localAnswer=null;last="";
+   sessionStorage.removeItem("genius.live.student.pin");
+   sessionStorage.removeItem("genius.live.student.joined");
+   notice(e.message,true);paint();
+  }else notice(e.message,true);
+ }finally{refreshing=false}
+}
+
+async function answer(choice){
+ if(working||!state||state.myAnswer!==null||state.status!=="question")return;
+ const roundKey=pin+":"+state.questionNumber;
+ if(localAnswer?.key===roundKey)return;
+ unlockLockSfx();
+ localAnswer={key:roundKey,choice,status:"sending",message:LOCK_MESSAGES[Math.floor(Math.random()*LOCK_MESSAGES.length)]};
+ working=true;
+ showAnswerSending(choice);
+ const started=performance.now();
+ try{
+  const accepted=await api("answer",{pin,choice,questionIndex:state.questionNumber-1});
+  if(!accepted?.accepted)throw Error("Answer was not accepted.");
+  console.debug("[Genius Live] Answer acknowledgement",Math.round(performance.now()-started),"ms");
+  // Don't block the splash on a second /state request; normal polling catches up.
+  confirmLocalAnswer(roundKey,choice);
+ }catch(e){
+  // A lost acknowledgement does not necessarily mean the server lost the answer.
+  // Reconcile first to avoid suggesting a double-submit.
+  try{
+   const fresh=await api("state",{pin});
+   state=fresh;
+   if(fresh.pin===pin&&fresh.questionNumber===Number(roundKey.split(":").pop())&&fresh.myAnswer!==null){
+    confirmLocalAnswer(roundKey,fresh.myAnswer);
+    return;
+   }
+   if(fresh.status!=="question"){localAnswer=null;last="";paint();return;}
+  }catch{}
+  localAnswer=null;last="";paint();
+  notice(e.message||"Could not confirm your answer. Try again.",true);
+ }finally{working=false}
+}
+
 function tick(){if(!state||state.status!=="question")return;const rem=Math.max(0,Date.parse(state.deadline)-Date.now()),t=$("#timer"),b=$("#timerBar");if(t)t.textContent=Math.ceil(rem/1000)+"s";if(b)b.style.width=(100*rem/(state.seconds*1000))+"%";if(rem===0)document.querySelectorAll("[data-answer]").forEach(b=>b.disabled=true)}
 setInterval(()=>{if(pin&&state&&document.visibilityState==="visible")refresh()},1900);
 setInterval(tick,200);setInterval(tickCountdown,100);document.addEventListener("visibilitychange",()=>{if(!document.hidden&&pin)refresh()});
