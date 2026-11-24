@@ -26,8 +26,17 @@ jobs:
             echo "value=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Trigger deploy hook (teachers)
-        if: steps.branch.outputs.value == 'teachers'
+      # Cloudflare Pages Git integration deploys teachers on every push.
+      # Keep the hook for explicit manual dispatch only; do not duplicate builds.
+      - name: Teachers deployment is handled by Cloudflare Git integration
+        if: steps.branch.outputs.value == 'teachers' && github.event_name == 'push'
+        run: |
+          echo "Cloudflare Pages Git integration deploys the teachers branch."
+          echo "Preview URL: https://teachers.willenaenglish-github-io.pages.dev"
+          echo "See the Cloudflare Pages check on this commit for actual deployment status."
+
+      - name: Trigger deploy hook (teachers, manual only)
+        if: steps.branch.outputs.value == 'teachers' && github.event_name == 'workflow_dispatch'
         env:
           CF_PAGES_TEACHERS_HOOK: ${{ secrets.CF_PAGES_TEACHERS_HOOK }}
         run: |
