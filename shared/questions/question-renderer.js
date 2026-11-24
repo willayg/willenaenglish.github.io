@@ -224,20 +224,32 @@ export class QuestionRenderer{
       recognition.continuous=false;
       // Safari may end recognition immediately without ever reaching audio capture.
       // Keep startup distinct from active listening and preserve actionable errors.
-      let phase='idle',lastError='',hasResult=false,startedAt=0;
+      let phase='idle',lastError='',hasResult=false,startedAt=0,requestedAt=0,readySent=false;
       const setPhase=(next,message)=>{
         phase=next;
         mic?.classList.toggle('is-listening',next==='listening');
         mic?.classList.toggle('is-starting',next==='starting');
         mic?.setAttribute('aria-busy',next==='starting'?'true':'false');
-        if(status)status.textContent=message;
+        if(status){
+          status.textContent=message;
+          if(this.onSpeechReady)status.dataset.speechPhase=next;
+        }
       };
+      const notifyReady=source=>{
+        if(!this.onSpeechReady||readySent||!requestedAt||phase==='idle'||this.disabled)return;
+        readySent=true;
+        setPhase('listening','지금 말하세요!');
+        try{this.onSpeechReady({duration_ms:Math.max(0,Date.now()-requestedAt),source})}catch(_){}
+      };
+      const supportsAudioStart='onaudiostart' in recognition;
+      recognition.addEventListener?.('audiostart',()=>notifyReady('audio_start'));
       const readyMessage='마이크를 누르고 영어로 말해 보세요.';
       const retryMessage='마이크가 시작되지 않았어요. 다시 눌러 주세요. 계속 안 되면 Safari를 새로고침해 주세요.';
       recognition.onstart=()=>{
         startedAt=Date.now();
         lastError='';
-        setPhase('listening','듣고 있어요… 영어로 말해 보세요.');
+        if(this.onSpeechReady){if(!supportsAudioStart)notifyReady('service_start_fallback');}
+        else setPhase('listening','듣고 있어요… 영어로 말해 보세요.');
       };
       recognition.onend=()=>{
         if(phase==='idle')return;
@@ -290,8 +302,9 @@ export class QuestionRenderer{
         this.state.speakingTranscript='';
         this.state.speakingAlternatives=[];
         if(transcript){transcript.hidden=true;transcript.textContent=''}
-        lastError='';hasResult=false;startedAt=0;
-        setPhase('starting','마이크 연결 중…');
+        lastError='';hasResult=false;startedAt=0;readySent=false;requestedAt=Date.now();
+        setPhase('starting',this.onSpeechReady?'잠시만요! 마이크 연결 중…':'마이크 연결 중…');
+        try{this.onSpeechStartRequest?.()}catch(_){}
         try{
           // Must happen synchronously in the user's tap handler on iOS Safari.
           recognition.start();
@@ -400,6 +413,10 @@ export class QuestionRenderer{
         animation:speakingMicPulse .72s ease-in-out infinite alternate
       }
       .speaking-mic:disabled{opacity:.45;cursor:default}
+      .vocab-speech-cues .speaking-mic.is-starting{opacity:1;border-color:#e0a33c;color:#c58517;background:#fff9eb;animation:speakingMicPulse .7s ease-in-out infinite alternate;cursor:wait}
+      .vocab-speech-cues .speaking-status[data-speech-phase=starting]{font-size:1.12rem;color:#a76b0e;font-weight:850}
+      .vocab-speech-cues .speaking-status[data-speech-phase=listening]{font-size:1.2rem;color:#d31668;font-weight:900}
+      .vocab-speech-cues .speaking-status[data-speech-phase=checking]{font-size:1.06rem;color:#a14d92;font-weight:850}
       .speaking-status{color:#607b80;font:750 .9rem Poppins,system-ui,sans-serif;text-align:center}
       .speaking-transcript{
         min-width:min(100%,360px);padding:12px 16px;border:1px solid #ddd8f5;border-radius:14px;background:#faf9ff;
