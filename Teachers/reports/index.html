@@ -29,7 +29,7 @@ h2{font-size:16px;margin:28px 0 12px;letter-spacing:-.3px;font-weight:800}
 .skill-head{display:flex;justify-content:space-between;align-items:center;gap:15px;font-size:15px;font-weight:600}
 .skill-head strong{font-variant-numeric:tabular-nums;font-weight:800}
 .bar{display:flex;gap:2px;height:12px;margin:10px 0 7px;border-radius:3px;overflow:hidden;background:#dadcd9}
-.bar span{display:block;min-width:0}.green{background:#548d80}.orange{background:#dba35c}.red{background:#aeb5b5}
+.bar span{display:block;min-width:0}.green{background:#548d80}.orange{background:#dba35c}.verified{background:#8eada8}.red{background:#aeb5b5}
 .meta{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#74817e}.meta .needs{color:#738082}
 .legend{display:flex;gap:14px;flex-wrap:wrap;margin:20px 0 11px;justify-content:center;font-size:11px;color:#667572}
 .legend span{display:inline-flex;align-items:center;gap:5px}.legend i{display:inline-block;width:9px;height:9px;border-radius:2px}
@@ -59,9 +59,9 @@ h2{font-size:16px;margin:28px 0 12px;letter-spacing:-.3px;font-weight:800}
 <main class="page">
  <header class="report-head"><div class="brand">WILLENA</div><div class="period" id="dateHeading"></div><h1 id="studentName"></h1><small id="classHeading"></small></header>
  <section class="hero" id="hero"><small>이번 달 해결한 학습 과제</small><strong id="headline"></strong><div class="bar" id="heroBar"></div><div id="heroLabel" class="meta"></div></section>
- <section id="skillSection"><h2>영역별 학습 기록</h2><div id="skills"></div><div class="legend"><span><i class="green"></i>처음부터 정답</span><span><i class="orange"></i>연습 후 해결</span><span><i class="red"></i>추가 연습 필요</span></div></section>
+ <section id="skillSection"><h2>영역별 학습 기록</h2><div id="skills"></div><div class="legend"><span><i class="green"></i>처음부터 정답</span><span><i class="orange"></i>연습 후 해결</span><span><i class="verified"></i>정답 기록</span><span><i class="red"></i>추가 연습 필요</span></div></section>
  <section id="otherSection" class="achievements"><h2>그 밖의 학습 활동</h2><div class="lines" id="other"></div></section>
- <section class="summary-block"><h2>학습 활동 요약</h2><div class="lines" id="overview"></div><div class="summary-footnote">학습한 과제는 정답 여부를 기록한 서로 다른 과제 수입니다. 다른 학습 활동은 위에 별도로 표시됩니다.</div></section>
+ <section class="summary-block"><h2>학습 활동 요약</h2><div class="lines" id="overview"></div><div class="summary-footnote">학습한 과제는 같은 문장을 반복한 횟수가 아닌 서로 다른 과제 수입니다. 정답 기록은 해결했지만 첫 시도 정보가 남아 있지 않은 과제입니다.</div></section>
  <div class="stamp-wrap"><div class="stamp">월간 학습 기록</div></div>
  <section class="comment"><label for="comment">선생님 의견</label><textarea id="comment" placeholder="담당 선생님의 평가를 입력하세요. (현재 페이지에서만 유지됩니다)"></textarea><div class="screen-only" style="font-size:11px;color:#788780;margin-top:7px">교사 의견은 서버에 저장되지 않습니다. 인쇄 전에 입력하세요.</div></section>
  <footer class="footer" id="footer"></footer>
@@ -96,18 +96,20 @@ function monthRange(){
  return {start:m+'-01',end:m+'-'+String(last).padStart(2,'0')};
 }
 function line(label,value){return '<div class="line"><span>'+escape(label)+'</span><b>'+escape(value)+'</b></div>';}
-function barSegments(first,fixed,pending){
+function barSegments(first,fixed,pending,verified=0){
  return (first?'<span class="green" style="flex:'+first+'"></span>':'')+
  (fixed?'<span class="orange" style="flex:'+fixed+'"></span>':'')+
+ (verified?'<span class="verified" style="flex:'+verified+'"></span>':'')+
  (pending?'<span class="red" style="flex:'+pending+'"></span>':'');
 }
-function bar(first,fixed,pending){
- return '<div class="bar" role="img" aria-label="처음부터 정답 '+first+', 연습 후 해결 '+fixed+', 추가 연습 필요 '+pending+'">'+barSegments(first,fixed,pending)+'</div>';
+function bar(first,fixed,pending,verified=0){
+ return '<div class="bar" role="img" aria-label="처음부터 정답 '+first+', 연습 후 해결 '+fixed+', 정답 기록 '+verified+', 추가 연습 필요 '+pending+'">'+barSegments(first,fixed,pending,verified)+'</div>';
 }
 function skillRow(v){
- const first=num(v.first),fixed=num(v.fixed),pending=num(v.pending),total=first+fixed+pending;
- return '<div class="skill"><div class="skill-head"><span>'+escape(skillNames[v.skill]||v.skill)+'</span><strong>'+(first+fixed)+'/'+total+'</strong></div>'+
- bar(first,fixed,pending)+'<div class="meta"><span>처음 '+first+' · 연습 후 '+fixed+'</span><span class="'+(pending?'needs':'')+'">'+(pending?'추가 연습 '+pending:'모두 해결')+'</span></div></div>';
+ const first=num(v.first),fixed=num(v.fixed),pending=num(v.pending),verified=num(v.verified),total=first+fixed+pending+verified;
+ const chunks=['처음 '+first,'연습 후 '+fixed];if(verified)chunks.push('정답 기록 '+verified);
+ return '<div class="skill"><div class="skill-head"><span>'+escape(skillNames[v.skill]||v.skill)+'</span><strong>'+(first+fixed+verified)+'/'+total+'</strong></div>'+
+ bar(first,fixed,pending,verified)+'<div class="meta"><span>'+chunks.join(' · ')+'</span><span class="'+(pending?'needs':'')+'">'+(pending?'추가 연습 '+pending:'모두 해결')+'</span></div></div>';
 }
 function choose(){
  const saved=activeStudent;$('student').innerHTML='';
@@ -126,7 +128,7 @@ function render(){
  $('classHeading').textContent=s.class_name+'반'+(s.grade?' · '+s.grade:'');
  let exam=num(s.exam_tasks)>0&&num(s.tasks)===0;
  const task=exam?num(s.exam_tasks):num(s.tasks);
- const first=exam?num(s.exam_first):num(s.first),fixed=exam?num(s.exam_fixed):num(s.fixed),pending=exam?num(s.exam_pending):num(s.pending);
+ const first=exam?num(s.exam_first):num(s.first),fixed=exam?num(s.exam_fixed):num(s.fixed),pending=exam?num(s.exam_pending):num(s.pending),verified=exam?0:num(s.verified);
  const overview=[['학습한 날',num(s.days)+'일'],['학습 단원',num(s.units)+'개'],['학습 세션',num(s.sessions)+'회'],['학습한 과제',task+'개']];
  // Exam preparation is stored separately; never display zero study days as no activity.
  if(exam){overview.splice(0,3,['학습 영역',num(s.exam_areas)+'개']);}
@@ -138,22 +140,17 @@ function render(){
  $('skillSection').hidden=!skills.length&&!exam;
  const extra=[['완성한 글',s.writings,'편'],['작성 중인 글',s.writing_drafts,'편'],
  ['문법 학습 완료',s.grammar,'회'],['문법 기초 연습',s.grammar_practice,'회']];
- const practice=s.sentence_practice_modes||{};
- for(const [mode,label] of [['coach','문장 말하기 연습'],['unscramble','문장 배열 연습'],['speaking','문장 말하기 연습 기록']]){
-   if(num(practice[mode]))extra.push([label,practice[mode],'개']);
- }
- if(!Object.keys(practice).length&&num(s.assigned_sentences))extra.push(['문장 과제 연습',s.assigned_sentences,'개']);
  extra.push(['자유 대화 참여',s.free_talking_started,'회'],['자유 대화 발화',s.free_talking_turns,'회'],
  ['자유 대화 완료',s.conversations,'회'],['퍼즐 활동',s.puzzles,'회']);
  if(!exam&&num(s.exam_tasks))extra.push(['내신 학습 문제',s.exam_tasks,'개']);
  const rendered=extra.filter(v=>num(v[1])>0);
  $('other').innerHTML=rendered.map(v=>line(v[0],num(v[1])+v[2])).join('');
  $('otherSection').hidden=!rendered.length;
- $('headline').textContent=(first+fixed)+'개';
- $('heroBar').innerHTML=barSegments(first,fixed,pending);
+ $('headline').textContent=(first+fixed+verified)+'개';
+ $('heroBar').innerHTML=barSegments(first,fixed,pending,verified);
  $('heroBar').setAttribute('role','img');
- $('heroBar').setAttribute('aria-label','처음부터 정답 '+first+', 연습 후 해결 '+fixed+', 추가 연습 필요 '+pending);
- $('heroLabel').textContent='처음부터 '+first+' · 연습 후 '+fixed+' · 추가 연습 '+pending;
+ $('heroBar').setAttribute('aria-label','처음부터 정답 '+first+', 연습 후 해결 '+fixed+', 정답 기록 '+verified+', 추가 연습 필요 '+pending);
+ $('heroLabel').textContent='처음부터 '+first+' · 연습 후 '+fixed+(verified?' · 정답 기록 '+verified:'')+' · 추가 연습 '+pending;
  $('hero').hidden=task===0;
  $('footer').textContent=start+' ~ '+end+' · 윌레나 원어민 영어학원';
  $('comment').value=notes.get(s.student_id+'|'+start)||'';
