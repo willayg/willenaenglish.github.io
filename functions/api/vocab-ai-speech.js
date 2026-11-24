@@ -11,7 +11,7 @@ const error=(status,message)=>json(status,{success:false,error:message});
 const allow=(id,kind)=>{
   const key=id+':'+kind,now=Date.now();
   const stamps=(limits.get(key)||[]).filter(t=>now-t<3600000);
-  const max=kind==='listen'?90:24;
+  const max=kind==='listen'?90:kind==='diagnostic'?600:24;
   if(stamps.length>=max){limits.set(key,stamps);return false}
   stamps.push(now);limits.set(key,stamps);
   if(limits.size>500)for(const [k,v] of limits)if(!v.length||now-v[v.length-1]>3600000)limits.delete(k);
@@ -53,7 +53,7 @@ async function requireStudent(request){
     const allowed=['student','teacher','admin'].includes(String(profile?.role||'').toLowerCase());
     if(profile?.id!==user.id||!allowed||profile.approved!==true)
       return {userId:null,reason:'approved_account_required'};
-    return {userId:String(user.id),reason:null};
+    return {userId:String(user.id),token,role:String(profile.role).toLowerCase(),reason:null};
   }
   return {userId:null,reason:'session_invalid'};
 }
@@ -116,7 +116,7 @@ export async function onRequestPost({request,env,context}){
   let body;
   try{body=await request.json()}catch(_){return error(400,'Invalid JSON')}
   const action=body?.action;
-  if(!['listen','transcribe'].includes(action))return error(400,'Invalid action');
+  if(!['listen','transcribe','diagnostic'].includes(action))return error(400,'Invalid action');
   let identity;
   try{identity=await requireStudent(request)}
   catch(e){
@@ -129,6 +129,30 @@ export async function onRequestPost({request,env,context}){
   }
   const userId=identity.userId;
   if(!allow(userId,action))return error(429,'AI service limit reached');
+  if(action==='diagnostic'){
+    if(identity.role!=='student')return json(200,{success:true,ignored:true});
+    const e=body.event||{};
+    const uuid=v=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)?v:null;
+    const types=['recognition','listening_required','listening_played','ai_check','startup_error'];
+    const engines=['browser','openai','none'];
+    const target=String(e.target||'').trim().slice(0,160);
+    const outcome=String(e.outcome||'').trim().slice(0,80);
+    if(!uuid(e.event_id)||!uuid(e.question_id)||!target||!outcome||!types.includes(e.event_type)||!engines.includes(e.engine))return error(400,'Invalid diagnostic');
+    const int=(v,min,max)=>Number.isInteger(v)&&v>=min&&v<=max?v:null;
+    const row={event_id:e.event_id,student_id:userId,question_id:e.question_id,
+      lexical_entry_id:uuid(e.lexical_entry_id),book_id:uuid(e.book_id),unit_id:uuid(e.unit_id),assignment_id:uuid(e.assignment_id),
+      target,attempt_no:int(e.attempt_no,0,1000)??0,event_type:e.event_type,engine:e.engine,
+      duration_ms:int(e.duration_ms,0,180000),grade_points:int(e.grade_points,0,4),
+      match_reason:String(e.match_reason||'').slice(0,80)||null,outcome};
+    try{
+      const saved=await fetch(SUPABASE_URL+'/rest/v1/word_genius_speech_diagnostics',{
+        method:'POST',headers:{apikey:PUBLISHABLE_KEY,Authorization:'Bearer '+identity.token,'Content-Type':'application/json',Prefer:'return=minimal'},
+        body:JSON.stringify(row),signal:AbortSignal.timeout(8000)
+      });
+      if(!saved.ok&&saved.status!==409)return error(502,'Diagnostic storage unavailable');
+      return json(200,{success:true});
+    }catch{return error(503,'Diagnostic connection failed')}
+  }
   const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
   if(!apiKey)return error(503,'AI audio service not configured in student Pages');
   try{
@@ -175,7 +199,15 @@ export async function onRequestPost({request,env,context}){
     form.append('model','gpt-transcribe');
     form.append('languages[]','en');
     form.append('response_format','json');
-    // No target hint: model must transcribe the spoken audio independently.
+    // Context is only provided by the assisted retry path. Never substitute
+    // the expected text for the returned transcript.
+    const hints=Array.isArray(body.keywords)?body.keywords:[];
+    const keywords=[...new Set(hints.filter(v=>typeof v==='string')
+      .map(v=>v.trim()).filter(v=>v.length>0&&v.length<=100&&/^[a-zA-Z0-9 .,'’!?-]+$/.test(v)))].slice(0,16);
+    if(body.assisted===true&&keywords.length){
+      keywords.forEach(v=>form.append('keywords[]',v));
+      form.append('prompt','English vocabulary practice by a child. Transcribe only audible speech verbatim. Vocabulary hints are possibilities, not answers. Preserve unrelated words; do not guess the expected answer or fill silence.');
+    }
     const response=await fetch(BASE+'transcriptions',{
       method:'POST',headers:{Authorization:'Bearer '+apiKey},body:form,
       signal:AbortSignal.timeout(25000)
