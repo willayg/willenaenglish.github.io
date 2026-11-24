@@ -217,11 +217,11 @@ export function attachSilentAISpeaking({host,target,keywords,isCurrent,shouldAss
     if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
   }
   async function capture(){
-    let context=null,analyser=null,levelTimer=null,voiced=false,lastVoice=0;
+    let context=null,analyser=null,levelTimer=null,voiced=false,lastVoice=0,peakRms=0;
     busy=true;used=true;started=Date.now();onStart?.();
     const mime=chooseMime();
     mic.disabled=true;mic.setAttribute('aria-busy','true');
-    message('마이크 연결 중…');
+    message('AI 윌리가 마이크를 연결하고 있어요…');
     let outcome='error',transcript='';
     try{
       stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}});
@@ -235,7 +235,7 @@ export function attachSilentAISpeaking({host,target,keywords,isCurrent,shouldAss
       });
       recorder.start(100);
       mic.disabled=false;mic.classList.add('is-listening');mic.removeAttribute('aria-busy');
-      message('듣고 있어요… 영어로 말해 보세요.');
+      message('AI 윌리가 듣고 있어요… 영어로 말해 보세요.');
       const recordingStart=Date.now();
       // Use an available analyser to end a short utterance naturally and avoid
       // passing pure silence to a context-biased recognizer. Manual stop remains available.
@@ -252,27 +252,30 @@ export function attachSilentAISpeaking({host,target,keywords,isCurrent,shouldAss
             analyser.getFloatTimeDomainData(samples);
             let power=0;for(const v of samples)power+=v*v;
             const rms=Math.sqrt(power/samples.length),now=Date.now();
-            if(rms>0.012){voiced=true;lastVoice=now}
+            peakRms=Math.max(peakRms,rms);
+            if(rms>0.004){voiced=true;lastVoice=now}
             if(voiced&&now-lastVoice>1100&&now-recordingStart>1300)recorder.stop();
           },100);
         }
       }catch{}
       timer=setTimeout(()=>{if(recorder?.state==='recording')recorder.stop()},MAX_SECONDS*1000);
       const blob=await finished;
-      const silence=!!analyser&&context?.state==='running'&&!voiced;
+      // The analyser is a timing aid, not a reliable voice detector. Quiet
+      // children and mobile audio routing can produce very low levels.
+      const silence=!!analyser&&context?.state==='running'&&peakRms<0.0001;
       cleanup();
       if(!alive())return;
       mic.disabled=true;mic.classList.remove('is-listening');mic.setAttribute('aria-busy','true');
-      if(silence||blob.size<400){outcome='no_speech';message('잘 듣지 못했어요. 다시 말해 보세요.');return}
       message('AI 윌리가 확인하고 있어요…');
+      if(blob.size<400||silence){outcome=blob.size<400?'recording_too_small':'recording_silent';message('AI 윌리가 소리를 듣지 못했어요. 다시 말해 보세요.');return}
       const audio_base64=await toBase64(blob);
       if(!alive())return;
       const reply=await callApi({action:'transcribe',audio_base64,mime_type:mime,assisted:true,keywords:[target,...keywords]});
       if(!alive())return;
       if(reply?.success!==true||typeof reply.transcript!=='string')throw new Error('Invalid AI response');
       transcript=reply.transcript.trim();
-      outcome=transcript?'result':'no_speech';
-      if(!transcript){message('잘 듣지 못했어요. 다시 말해 보세요.');return}
+      outcome=transcript?'result':'empty_ai_transcript';
+      if(!transcript){message('AI 윌리가 잘 듣지 못했어요. 다시 말해 보세요.');return}
       message('AI 윌리가 들은 말: “'+transcript+'”');
     }catch(e){
       outcome='error';
