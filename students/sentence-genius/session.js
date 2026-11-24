@@ -284,7 +284,8 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     if(!ctx.preview){
     const recorded=Promise.resolve().then(()=>ctx.homework?
      recordSentenceHomeworkAnswer({assignmentId:ctx.homework.id,sentenceId:item.id,mode,
-      sessionId:sessionRunId,correct:verdict.mastered}):
+      sessionId:sessionRunId,correct:verdict.mastered,retryCount:item.retry,
+      attemptId:window.crypto.randomUUID()}):
      recordSentenceAttempt({
       book:ctx.book,unit:ctx.unit,item,mode,response:finalResponse,correct:verdict.mastered,
       assisted,almostRight,gradePoints:mode==='unscramble'?null:result.points,retryCount:item.retry,points:verdict.points,
