@@ -1,0 +1,42 @@
+# Retired one-time workflows
+
+Archived 2026-11-24 from staging. Historical definitions are not executable by GitHub Actions here. Obsolete or malformed one-shot patches, cache busts, and special deployments. Do not restore or run without reviewing current code. Archiving does not assert that every original patch succeeded. Daily Study star aggregation remains a separate audit item.
+
+- `add-daily-session-polish-once.yml`: historical one-time repair or special deployment
+- `add-fresh-study-settings-launcher-staging-once.yml`: historical one-time repair or special deployment
+- `add-internal-assessment-recording.yml`: historical one-time repair or special deployment
+- `align-test-prep-written-scope-once.yml`: historical one-time repair or special deployment
+- `build-test-prep-auth-app-once.yml`: historical one-time repair or special deployment
+- `bump-coach-needs-progress-db-once.yml`: historical one-time repair or special deployment
+- `bump-study-v2-activity-css-once.yml`: historical one-time repair or special deployment
+- `bump-study-v2-hero-responsive-once.yml`: historical one-time repair or special deployment
+- `deploy-teacher-class-fix-now.yml`: historical one-time repair or special deployment
+- `fix-admin-classes-live-gateway-once.yml`: historical one-time repair or special deployment
+- `fix-daily-standard-auth-once.yml`: historical one-time repair or special deployment
+- `fix-daily-study-star-floor-once.yml`: historical one-time repair or special deployment
+- `fix-internal-level-test-recorder-cookie-route-once.yml`: historical one-time repair or special deployment
+- `fix-internal-recorder-race-once.yml`: historical one-time repair or special deployment
+- `fix-naesin-student-api-once.yml`: historical one-time repair or special deployment
+- `fix-qc-login-redirect-once.yml`: historical one-time repair or special deployment
+- `fix-stale-internal-level-test-attempt-once.yml`: historical one-time repair or special deployment
+- `fix-student-grade-profile.yml`: historical one-time repair or special deployment
+- `fix-vocab-complete-reentry-once-v2.yml`: historical one-time repair or special deployment
+- `fix-vocab-complete-reentry-once.yml`: historical one-time repair or special deployment
+- `install-dashboard-v2-naesin-once.yml`: historical one-time repair or special deployment
+- `install-naesin-tracker-once.yml`: historical one-time repair or special deployment
+- `move-settings-below-hero-structural-once.yml`: historical one-time repair or special deployment
+- `patch-admin-classes-cookie-auth-direct-once.yml`: historical one-time repair or special deployment
+- `patch-admin-classes-cookie-domain-once.yml`: historical one-time repair or special deployment
+- `patch-admin-classes-to-supabase-once.yml`: historical one-time repair or special deployment
+- `patch-admin-cookie-minimal-once.yml`: historical one-time repair or special deployment
+- `patch-daily-study-cookie-auth-once.yml`: historical one-time repair or special deployment
+- `patch-progress-summary-daily-star-floor.yml`: historical one-time repair or special deployment
+- `patch-real-admin-gateway-source-once.yml`: historical one-time repair or special deployment
+- `patch-study-progress-cloudflare-once.yml`: historical one-time repair or special deployment
+- `patch-study-v2-daily-auth-helper-once.yml`: historical one-time repair or special deployment
+- `run-daily-study-immediate-next-once.yml`: historical one-time repair or special deployment
+- `run-daily-study-queue-correction-once.yml`: historical one-time repair or special deployment
+- `run-daily-study-queue-patch-once.yml`: historical one-time repair or special deployment
+- `staging-cachebust-settings-row2.yml`: historical one-time repair or special deployment
+- `unify-testprep-keyboard-once.yml`: historical one-time repair or special deployment
+- `wire-v3-speaking-once.yml`: historical one-time repair or special deployment
