@@ -9,7 +9,7 @@ h1{font-size:clamp(27px,5vw,44px);margin:0 0 10px}h2{margin:0 0 12px;font-size:2
 input,button{font:inherit}input{width:100%;padding:13px;border:2px solid #c7e9ef;border-radius:12px;background:#fff;font-size:17px}
 button{padding:12px 17px;font-weight:700;border-radius:12px;border:2px solid var(--cyan);background:white;color:#bd387d;cursor:pointer}button.primary{color:white;background:var(--pink);border-color:var(--pink)}button:disabled{opacity:.5;cursor:not-allowed}
 .pin{font-size:clamp(40px,6vw,65px);font-weight:800;color:#d94894;letter-spacing:8px}.question{white-space:pre-line;font-size:clamp(23px,3vw,35px);line-height:1.4;font-weight:800;margin:18px 0}.answers{display:grid;grid-template-columns:1fr 1fr;gap:11px}.answers:has(.answer:nth-child(5)) .answer:nth-child(5){grid-column:1 / -1}.answer{border:0;color:white;text-align:left;padding:19px 17px;min-height:100px;font-size:17px;display:flex;align-items:center;gap:12px}
-.answer:nth-child(4n+1){background:#eb6197}.answer:nth-child(4n+2){background:#3db5d1}.answer:nth-child(4n+3){background:#e9a746}.answer:nth-child(4n+4){background:#8978d2}.answer.chosen{outline:5px solid #2c6179;outline-offset:2px}.answer.correct{outline:5px solid #2ba36c;outline-offset:2px}.answer.dim{opacity:.4}.letter{width:32px;height:32px;flex:none;border:1px solid #fff9;border-radius:9px;display:grid;place-items:center}
+.answer:nth-child(4n+1){background:#eb6197}.answer:nth-child(4n+2){background:#3db5d1}.answer:nth-child(4n+3){background:#e9a746}.answer:nth-child(4n+4){background:#8978d2}.answer.chosen{outline:5px solid #2c6179;outline-offset:2px}.letter{width:32px;height:32px;flex:none;border:1px solid #fff9;border-radius:9px;display:grid;place-items:center}
 .timer{font-size:33px;color:var(--pink);font-weight:800;font-variant-numeric:tabular-nums}.bar{height:9px;border-radius:9px;overflow:hidden;background:#e4f1f3}.bar i{height:100%;display:block;background:linear-gradient(90deg,var(--cyan),var(--pink))}
 .notice{border:1px solid #f4dba5;background:#fff8e7;border-radius:12px;padding:13px;margin:12px 0}.notice.error{border-color:#f2b6cf;background:#fff0f5}.score{display:flex;justify-content:space-between;gap:9px;border-bottom:1px solid #e7eff0;padding:11px 0}.score:last-child{border:0}
 @media(max-width:700px){.grid,.answers{grid-template-columns:1fr}.card{padding:16px}.answer{min-height:77px}.pin{letter-spacing:5px}}
@@ -24,6 +24,15 @@ button{padding:12px 17px;font-weight:700;border-radius:12px;border:2px solid var
 .answer{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .answer.is-sending{outline:5px solid #2c6179;outline-offset:2px;filter:brightness(1.13)}
 .answer:focus-visible{outline:4px solid #183951;outline-offset:3px}
+/* During reveal, preserve the student's chosen-answer ring, but use colour fills to show the correct answer. */
+.answers .answer{transition:background-color .55s ease,color .55s ease,box-shadow .55s ease}
+.answers.is-revealed .answer:disabled{opacity:1}
+.answers.is-revealed .answer:not(.correct){background-color:#667487;color:#fff}
+.answers.is-revealed .answer.correct{background-color:#13854f;color:#fff;box-shadow:inset 0 0 0 3px #bdf5cf}
+.answers.is-revealed .answer.correct::after{content:"✓";display:grid;place-items:center;margin-left:auto;flex:none;width:36px;height:36px;border-radius:50%;background:#f0fff6;color:#08713d;font-size:23px;font-weight:900}
+.answers.is-revealed .answer.chosen,
+.answers.is-revealed .answer.chosen:focus-visible{outline:5px solid #2c6179;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.answers .answer{transition:none}}
 .gl-locked{position:fixed;inset:0;z-index:1000;background:radial-gradient(circle at 50% 24%,#334b84 0%,#121d40 56%,#080e22 100%);color:#fff;display:flex;align-items:center;justify-content:center;padding:clamp(16px,5vw,32px);text-align:center;overflow:auto}
 .gl-locked::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 4px,#ffffff09 4px 5px);pointer-events:none}
 .gl-lock-inner{position:relative;width:min(420px,100%);margin:auto}
@@ -104,7 +113,7 @@ function lobby(){
  const teamControls=!teamMode?"":'<div style="margin:18px auto;max-width:650px;text-align:left"><h2>Choose your team</h2>'+(!state.teamCount?'<p class="muted">No teams yet. Create the first team!</p>':teams)+create+captainEditor+'</div>';
  return '<section class="card pink" style="text-align:center"><span class="pill">Joined successfully · '+esc(state.className||"Class")+'</span><h1>Waiting for your teacher</h1><div class="pin">'+esc(pin)+'</div><p>You are playing as <b>'+esc(own?.name||"Student")+'</b>.</p><p class="muted">'+state.players.length+' players ready'+(teamMode&&myTeam>=0?" · "+logoVisual(teamLogo(myTeam),28)+" "+esc(teamName(myTeam)):"")+'</p>'+teamControls+'<div class="notice">The game will begin when your teacher presses Start.</div></section>';
 }
-let answerLockAnimatedKey="",answerLockFreshUntil=0;
+let answerLockAnimatedKey="",answerLockFreshUntil=0,lastAnimatedRevealKey="";
 let lockSoundContext=null;
 function unlockLockSfx(){try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;if(!lockSoundContext)lockSoundContext=new Audio();if(lockSoundContext.state==="suspended")lockSoundContext.resume().catch(()=>{})}catch{}}
 function lockSfx(){
@@ -187,6 +196,20 @@ function paint(){const key=state?state.status+"|"+state.questionNumber+"|"+state
  const join=$("#joinForm");if(join)join.onsubmit=e=>{e.preventDefault();pin=$("#pinInput").value.trim();joinGame()};
  document.querySelectorAll("[data-answer]").forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));
  const leave=$("#leave");if(leave)leave.onclick=()=>{pin="";state=null;localAnswer=null;last="";sessionStorage.removeItem("genius.live.student.pin");sessionStorage.removeItem("genius.live.student.joined");paint()};
+ // Animate the first reveal each round from the original option colours to grey/green.
+ // Repaints during an already revealed round should stay coloured without replaying the transition.
+ if(state?.status==="reveal"){
+  const grid=$("#app .answers");
+  if(grid){
+   const roundKey=pin+":"+state.questionNumber;
+   if(roundKey!==lastAnimatedRevealKey){
+    lastAnimatedRevealKey=roundKey;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+     if(grid.isConnected&&state?.status==="reveal"&&pin+":"+state.questionNumber===roundKey)grid.classList.add("is-revealed");
+    }));
+   }else grid.classList.add("is-revealed");
+  }
+ }
  tick();tickCountdown()}
 async function teamAction(action,options){if(working)return;working=true;try{const next=await api(action,{pin,...options});state=next;last="";notice("");paint()}catch(e){notice(e.message,true)}finally{working=false}}
 async function joinGame(){if(working)return;working=true;notice("Joining…");try{state=await api("join",{pin});localAnswer=null;sessionStorage.setItem("genius.live.student.pin",pin);sessionStorage.setItem("genius.live.student.joined","1");last="";notice("");paint()}catch(e){notice(e.message,true);if(e.status===401){showLogin();const link=$("#message a");if(link)link.focus()}}finally{working=false}}
