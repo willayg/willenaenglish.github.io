@@ -2,30 +2,48 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title>월간 학습 성적표 | Willena Teachers</title>
 <script src="/js/api-config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;color:#182d39;background:#e8ecee;font-synthesis:none}
-*{box-sizing:border-box}body{margin:0}button,select,input,textarea{font:inherit}button,select,input{min-height:42px}
-button{cursor:pointer}.toolbar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #dce4e7;padding:13px clamp(12px,3vw,32px);display:flex;gap:12px;flex-wrap:wrap;align-items:end;box-shadow:0 2px 12px #1327340c}
+:root{font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;color:#1b303c;background:#e8edf0;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}button,select,input,textarea{font:inherit}button,select,input{min-height:42px}button{cursor:pointer}
+.toolbar{background:#fff;border-bottom:1px solid #dce4e7;padding:13px clamp(12px,3vw,32px);display:flex;gap:12px;flex-wrap:wrap;align-items:end}
 .toolbar label{display:flex;flex-direction:column;gap:5px;color:#526976;font-size:12px;font-weight:700}
-.toolbar select,.toolbar input{border:1px solid #c6d6dc;border-radius:8px;padding:8px 11px;background:white;color:#193745;min-width:135px}
+.toolbar select,.toolbar input{border:1px solid #c6d6dc;border-radius:8px;padding:8px 11px;background:white;color:#193745;min-width:130px}
 .toolbar button,.toolbar a{border:1px solid #a6c2c8;background:#f4faf9;color:#225468;padding:11px 15px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px}
-.toolbar button.primary{background:#2d766c;color:white;border-color:#2d766c}.toolbar .spacer{flex:1}
-#notice{max-width:840px;margin:16px auto;padding:12px;border-radius:8px;background:#eaf5f3;color:#245349;font-size:14px}#notice.error{background:#fff0eb;color:#8f3327}
-.page{max-width:760px;margin:28px auto 55px;background:#f7f5ef;border:1px solid #deddd5;box-shadow:0 15px 40px #162d3416;padding:40px 48px 30px}
-.report-head{text-align:center;padding:0 0 20px}.report-head .period{color:#929891;font-size:14px}.report-head h1{margin:20px 0 0;font-size:38px;letter-spacing:-1.3px;color:#19303f}.report-head small{font-size:14px;color:#849197}
-.lines{margin:12px 0 24px}.line{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 0;border-bottom:1px dashed #d8d8d0;font-size:15px}.line b{font-variant-numeric:tabular-nums}
-h2{font-size:17px;margin:28px 0 15px}.skill{padding:14px 0;border-bottom:1px dashed #d8d8d0}.skill-head{display:flex;justify-content:space-between;align-items:center;gap:15px;font-size:15px;font-weight:600}.skill-head strong{font-variant-numeric:tabular-nums}
-.bar{display:flex;gap:2px;height:12px;margin:9px 0 7px;border-radius:3px;overflow:hidden;background:#e2e1da}
-.bar span{display:block;min-width:0}.green{background:#51897a}.orange{background:#dda15a}.red{background:#c37979}.meta{display:flex;justify-content:space-between;gap:6px;font-size:12px;color:#71817d}
-.meta .needs{color:#a34d50}.legend{display:flex;gap:14px;flex-wrap:wrap;margin:18px 0 12px;justify-content:center;font-size:12px;color:#576b69}
+.toolbar button.primary{background:#2d766c;color:#fff;border-color:#2d766c}.toolbar .spacer{flex:1}
+#notice{max-width:900px;margin:15px auto;padding:10px 14px;border-radius:7px;background:#eaf5f3;color:#245349;font-size:13px}#notice.error{background:#fff0eb;color:#8f3327}
+.paper-stage{max-width:850px;margin:26px auto 56px;padding:20px 21px 18px;background:#f0ece2;border-radius:20px;box-shadow:0 14px 42px #23333d18}
+.page{position:relative;background:#faf9f5;border:1px solid #e7e3d9;padding:42px 48px 40px;box-shadow:0 2px 10px #242e2a09;min-height:800px}
+.page:before{content:"";display:block;border-top:2px dashed #a8aaa4;margin:0 0 32px}
+.page:after{content:"";display:block;border-bottom:2px dashed #a8aaa4;margin:28px 0 0}
+.report-head{text-align:center;padding:0 0 18px}.report-head .brand{font:600 14px system-ui,sans-serif;letter-spacing:.29em;color:#223b46;margin-bottom:20px;padding-left:.29em}
+.report-head .period{color:#8c9491;font-size:13px}.report-head h1{margin:16px 0 1px;font-size:42px;letter-spacing:-1.4px;color:#192f3d;font-weight:800}
+.report-head small{font-size:14px;color:#8b9694}
+.hero{text-align:center;padding:24px 8px 27px;border-bottom:1px dashed #bcbdb6;margin:0 0 24px}
+.hero small{font-size:13px;color:#89948f}.hero strong{display:block;font-size:43px;color:#1b4037;margin:5px 0 15px;letter-spacing:-1px;line-height:1.35}
+.hero .bar{max-width:430px;margin:0 auto 11px;height:16px}.hero .meta{justify-content:center!important;font-size:12px}
+h2{font-size:16px;margin:28px 0 12px;letter-spacing:-.3px;font-weight:800}
+.skill{padding:15px 0;border-bottom:1px dashed #d5d7d1;break-inside:avoid}
+.skill-head{display:flex;justify-content:space-between;align-items:center;gap:15px;font-size:15px;font-weight:600}
+.skill-head strong{font-variant-numeric:tabular-nums;font-weight:800}
+.bar{display:flex;gap:2px;height:12px;margin:10px 0 7px;border-radius:3px;overflow:hidden;background:#dadcd9}
+.bar span{display:block;min-width:0}.green{background:#548d80}.orange{background:#dba35c}.red{background:#aeb5b5}
+.meta{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#74817e}.meta .needs{color:#738082}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:20px 0 11px;justify-content:center;font-size:11px;color:#667572}
 .legend span{display:inline-flex;align-items:center;gap:5px}.legend i{display:inline-block;width:9px;height:9px;border-radius:2px}
-.achievements{padding-top:3px}.hero{border-top:1px solid #deddd5;text-align:center;padding-top:27px;margin-top:26px}.hero small{font-size:13px;color:#85928f}.hero strong{display:block;font-size:40px;color:#173f35;margin:8px 0 15px;letter-spacing:-1px}
-.hero .bar{max-width:330px;margin:0 auto 10px;height:17px}.stamp{display:inline-block;border:2px solid #598579;color:#598579;font-weight:800;padding:10px 18px;margin:25px 0 0;transform:rotate(-6deg);font-size:16px}
-.comment{margin-top:25px;padding:20px 0 10px;border-top:1px solid #deddd5;border-bottom:1px solid #deddd5}
-.comment label{display:block;font-size:14px;color:#647578;margin-bottom:12px}.comment textarea{width:100%;min-height:100px;resize:vertical;background:transparent;color:#253b42;padding:12px;border:1px solid #d3d9d4;border-radius:6px;font-size:14px;line-height:1.65}
-.footer{font-size:11px;color:#939b9a;text-align:center;padding-top:22px}.empty{padding:25px;text-align:center;color:#74847c}
-@media(max-width:700px){.page{margin:12px;padding:25px 20px}.toolbar{position:static}.toolbar label{flex:1 1 130px}.toolbar .spacer{display:none}.report-head h1{font-size:32px}.meta{font-size:11px}.hero strong{font-size:34px}}
-@media print{@page{size:A4;margin:11mm}html,body{background:white!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.toolbar,#notice,.screen-only{display:none!important}.page{margin:0 auto;padding:10px 10px 0;max-width:none;box-shadow:none;border:0}.skill{break-inside:avoid}.report-head{padding-bottom:10px}.line{padding:11px 0}.skill{padding:10px 0}.bar span{print-color-adjust:exact;-webkit-print-color-adjust:exact}.comment textarea{border:0;padding:0;resize:none;overflow:visible;min-height:80px}.stamp{margin-top:15px}}
+.lines{margin:7px 0 20px}.line{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px dashed #d5d7d1;font-size:14px}.line b{font-variant-numeric:tabular-nums}
+.achievements{padding-top:0}
+.summary-block{padding-top:4px;border-top:1px solid #d8d9d3;margin-top:28px}
+.summary-block h2{margin-top:16px}
+.stamp-wrap{text-align:center;margin:22px auto 10px}.stamp{display:inline-block;border:2px solid #648f83;color:#648f83;font-weight:800;padding:8px 15px;transform:rotate(-6deg);font-size:14px}
+.comment{margin-top:28px;padding:20px 0 14px;border-top:1px solid #d8d9d3;border-bottom:1px solid #d8d9d3}
+.comment label{display:block;font-size:14px;color:#667472;margin-bottom:10px}
+.comment textarea{width:100%;min-height:92px;resize:vertical;background:transparent;color:#253b42;padding:11px;border:1px solid #d7dcd5;border-radius:3px;font-size:13px;line-height:1.65}
+.footer{font-size:11px;color:#949c9a;text-align:center;padding-top:21px}.empty{padding:19px;text-align:center;color:#74847c}
+@media(max-width:700px){.toolbar label{flex:1 1 130px}.toolbar .spacer{display:none}.paper-stage{margin:12px 6px;padding:11px;border-radius:12px}.page{padding:26px 19px}.report-head h1{font-size:36px}.hero strong{font-size:37px}.meta{font-size:10px}.legend{gap:9px}}
+@media print{@page{size:A4;margin:9mm}html,body{background:#fff!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.toolbar,#notice,.screen-only{display:none!important}.paper-stage{background:#f0ece2!important;max-width:none;margin:0;padding:6mm;box-shadow:none;border-radius:0}.page{background:#faf9f5!important;box-shadow:none;border:1px solid #e7e3d9;padding:8mm 10mm;min-height:0}.skill{padding:10px 0}.bar span{print-color-adjust:exact;-webkit-print-color-adjust:exact}.comment textarea{border:0;padding:0;resize:none;overflow:visible;min-height:70px}.report-head{padding-bottom:7px}.hero{padding:12px 0 17px}.line{padding:9px 0}h2{margin-top:16px}.stamp-wrap{margin-top:12px}}
 </style></head>
 <body>
 <div class="toolbar">
@@ -37,21 +55,23 @@ h2{font-size:17px;margin:28px 0 15px}.skill{padding:14px 0;border-bottom:1px das
  <button id="print" type="button" class="primary" disabled>성적표 인쇄 / PDF</button>
 </div>
 <div id="notice" role="status">교사 로그인 확인 중…</div>
-<main class="page" id="paper" hidden>
- <header class="report-head"><div class="period" id="dateHeading"></div><h1 id="studentName"></h1><small id="classHeading"></small></header>
- <section class="lines" id="overview"></section>
+<div class="paper-stage" id="paper" hidden>
+<main class="page">
+ <header class="report-head"><div class="brand">WILLENA</div><div class="period" id="dateHeading"></div><h1 id="studentName"></h1><small id="classHeading"></small></header>
+ <section class="hero" id="hero"><small>이번 달 해결한 학습 과제</small><strong id="headline"></strong><div class="bar" id="heroBar"></div><div id="heroLabel" class="meta"></div></section>
  <section id="skillSection"><h2>영역별 학습 기록</h2><div id="skills"></div><div class="legend"><span><i class="green"></i>처음부터 정답</span><span><i class="orange"></i>연습 후 해결</span><span><i class="red"></i>추가 연습 필요</span></div></section>
- <section id="otherSection" class="achievements"><h2>그 밖의 학습 성과</h2><div class="lines" id="other"></div></section>
- <section class="hero" id="hero"><small>이번 달의 학습 성과</small><strong id="headline"></strong><div class="bar" id="heroBar"></div><div id="heroLabel" class="meta" style="justify-content:center"></div><div class="stamp">월간 학습 기록</div></section>
+ <section id="otherSection" class="achievements"><h2>그 밖의 학습 활동</h2><div class="lines" id="other"></div></section>
+ <section class="summary-block"><h2>학습 활동 요약</h2><div class="lines" id="overview"></div></section>
+ <div class="stamp-wrap"><div class="stamp">월간 학습 기록</div></div>
  <section class="comment"><label for="comment">선생님 의견</label><textarea id="comment" placeholder="담당 선생님의 평가를 입력하세요. (현재 페이지에서만 유지됩니다)"></textarea><div class="screen-only" style="font-size:11px;color:#788780;margin-top:7px">교사 의견은 서버에 저장되지 않습니다. 인쇄 전에 입력하세요.</div></section>
  <footer class="footer" id="footer"></footer>
-</main>
+</main></div>
 <script>
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const skillNames={vocabulary:'어휘 이해',spelling:'철자 쓰기',speaking:'단어 말하기',sentence_coach:'문장 만들기',sentence_speaking:'문장 말하기',sentence_unscramble:'문장 배열'};
+const skillNames={vocabulary:'어휘 이해',spelling:'철자 쓰기',speaking:'단어 말하기',sentence_coach:'문장 말하기 연습',sentence_speaking:'문장 말하기',sentence_unscramble:'문장 배열'};
 const skillOrder=['vocabulary','speaking','spelling','sentence_coach','sentence_speaking','sentence_unscramble'];
 const num=x=>Math.max(0,Number(x)||0);
 const endpoint='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/teacher-student-report';
@@ -121,7 +141,7 @@ function render(){
  const rendered=extra.filter(v=>num(v[1])>0);
  $('other').innerHTML=rendered.map(v=>line(v[0],num(v[1])+v[2])).join('');
  $('otherSection').hidden=!rendered.length;
- $('headline').textContent=(first+fixed)+'개 해결';
+ $('headline').textContent=(first+fixed)+'개';
  $('heroBar').innerHTML=barSegments(first,fixed,pending);
  $('heroBar').setAttribute('role','img');
  $('heroBar').setAttribute('aria-label','처음부터 정답 '+first+', 연습 후 해결 '+fixed+', 추가 연습 필요 '+pending);
