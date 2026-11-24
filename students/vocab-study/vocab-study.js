@@ -1,6 +1,6 @@
 import {fetchClassBookAssignments,extractClassBookAssignments} from '/students/shared/class-book-assignments.js?v=20261105-shared1';
 import {renderStudentSessionFinish} from '../components/student-session-finish.js?v=1';
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261124-mic-ready1';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261124-mic-spinner1';
 import {attachSilentAISpeaking} from './vocab-ai-speech-ui.js?v=20261124-mic-ready1';
 import {createSpeakingAudioCache} from './vocab-listening-cache.js?v=20261024-audio-prefetch2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
