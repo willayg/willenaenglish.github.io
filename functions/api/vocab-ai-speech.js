@@ -133,7 +133,7 @@ export async function onRequestPost({request,env,context}){
     if(identity.role!=='student')return json(200,{success:true,ignored:true});
     const e=body.event||{};
     const uuid=v=>typeof v==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)?v:null;
-    const types=['recognition','listening_required','listening_played','ai_check','startup_error'];
+    const types=['recognition','listening_required','listening_played','ai_check','startup_error','mic_ready'];
     const engines=['browser','openai','none'];
     const target=String(e.target||'').trim().slice(0,160);
     const outcome=String(e.outcome||'').trim().slice(0,80);
