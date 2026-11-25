@@ -114,7 +114,9 @@ html.leaderboard-only #learningUpgrade{display:none!important}
 #learningUpgrade a.lu-cell:focus-visible .lu-ring{outline:2px solid #28b7c4;outline-offset:2px;border-radius:50%}
 #learningUpgrade .lu-grid>strong:first-child{align-self:stretch}
 
-#learningUpgrade .lu-cell[data-mission=true] .lu-ring{filter:drop-shadow(0 0 5px #ed76ad) drop-shadow(0 0 4px #f5a5ca)}
+#learningUpgrade .lu-cell[data-mission=true] .lu-ring{filter:drop-shadow(0 0 2px rgba(237,118,173,.65));animation:luMissionGlow 2s ease-in-out infinite}
+@keyframes luMissionGlow{0%,100%{filter:drop-shadow(0 0 1px rgba(237,118,173,.45))}50%{filter:drop-shadow(0 0 3px rgba(237,118,173,.95))}}
+@media(prefers-reduced-motion:reduce){#learningUpgrade .lu-cell[data-mission=true] .lu-ring{animation:none}}
 #learningUpgrade .lu-cell[data-mission=true] .lu-ring text{fill:#d94f94}
 
 #learningUpgrade #luBooks button{background:#fff}
