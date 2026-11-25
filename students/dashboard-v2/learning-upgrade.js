@@ -42,13 +42,13 @@ function remember(book,units,gold,results){cache.set(String(book.id),{book,units
 
 function cell(label,p,url,state='unknown',tone='cyan'){
  const value=p==null||p<0?null:Math.max(0,Math.min(100,p));
- const text=value===null?'—':value+'%';
+ const text=value===null||value===0?'':value+'%';
  const progress=value===null?0:value;
  const gold=state==='gold';
  const ring='<svg class="lu-ring" viewBox="0 0 64 68" aria-hidden="true"><circle class="lu-ring-depth" cx="32" cy="32" r="30.5"/><circle class="lu-ring-track" cx="32" cy="32" r="27"/>'+
  (progress>0?'<circle class="lu-ring-progress" cx="32" cy="32" r="27" pathLength="100" stroke-dasharray="'+progress+' 100" transform="rotate(-90 32 32)"/>':'')+
  (gold?'<path class="lu-ring-star" d="M32 18l4.2 9 9.8 1.2-7.1 7 1.7 9.8-8.6-4.7-8.6 4.7 1.7-9.8-7.1-7 9.8-1.2z"/>':'<text x="32" y="33" dominant-baseline="middle" text-anchor="middle">'+esc(text)+'</text>')+'</svg>';
- const attrs=' class="lu-cell" data-state="'+state+'" aria-label="'+esc(gold?'100% · Completed':text+(value===null?' · '+label:''))+'"';
+ const attrs=' class="lu-cell" data-state="'+state+'" aria-label="'+esc(gold?'100% · Completed':value===null?label:value+'%')+'"';
  return url?'<a'+attrs+' href="'+esc(url)+'">'+ring+'</a>':'<span'+attrs+'>'+ring+'</span>';
 }
 function render(book,units,wordGold,sentenceResults){
