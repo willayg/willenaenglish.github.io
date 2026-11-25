@@ -220,7 +220,11 @@ function showGame(){loadingCard.hidden=true;errorCard.hidden=true;gameArea.hidde
 async function loadBookWords(book){
   const units=await content('content_units?select=id,unit_number,title&book_id=eq.'+encodeURIComponent(book.book_id)+'&status=in.(review,published)&order=unit_number.asc');
   if(!units.length)throw new Error('This book has no available units.');
-  const unitIds=units.map(u=>u.id);
+  const requested=state.mapUnit;
+  const selected=requested?units.find(u=>String(u.id)===requested):null;
+  if(requested&&!selected)throw Error('This unit is not assigned to your book.');
+  const unitIds=selected?[selected.id]:units.map(u=>u.id);
+  if(selected)state.rewardContext={book_id:book.book_id,unit_id:selected.id};
 
   let targets=await content('unit_vocab_targets?select=unit_id,lexical_entry_id,priority&unit_id=in.'+encodeURIComponent('('+unitIds.join(',')+')')+'&active=eq.true&order=priority.desc').catch(()=>[]);
   let lexIds=unique(targets.map(r=>r.lexical_entry_id));
@@ -240,7 +244,7 @@ async function loadBookWords(book){
 
   if(!rows.length){
     const collections=await content('collections?select=id,unit_id,metadata&collection_type=eq.word_builder&book_id=eq.'+encodeURIComponent(book.book_id)).catch(()=>[]);
-    const collectionIds=unique(collections.map(r=>r.id));
+    const collectionIds=unique(collections.filter(r=>!requested||String(r.unit_id)===requested).map(r=>r.id));
     if(collectionIds.length){
       const items=await content('collection_items?select=content_id&content_type=eq.lexical_entry&collection_id=in.'+encodeURIComponent('('+collectionIds.join(',')+')')).catch(()=>[]);
       lexIds=unique(items.map(r=>r.content_id));
@@ -1521,7 +1525,7 @@ async function buildPuzzle(){
     if(state.mode==='crossword'||state.mode==='boggle'){
       loadingCard.querySelector('strong').textContent='Finding level vocabulary…';
       if(!state.studentLevel)state.studentLevel=await resolveStudentLevel(state.books);
-      if(!state.crosswordPool.length&&state.studentLevel){
+      if(!state.mapUnit&&!state.crosswordPool.length&&state.studentLevel){
         state.crosswordPool=await loadLevelCrosswordWords(state.studentLevel);
       }
       const levelSource=state.crosswordPool.length>=12?state.crosswordPool:state.pool;
@@ -1570,6 +1574,8 @@ async function boot(){
     if(!who?.success||!who?.class)throw new Error('No active student class was found.');
     loadingCard.querySelector('strong').textContent='Finding your books…';
     state.books=await assignedBooks(who.class);
+    const mapParams=new URLSearchParams(location.search),bookId=mapParams.get('book'),unitId=mapParams.get('unit');
+    if(bookId&&unitId){state.books=state.books.filter(b=>String(b.book_id)===bookId);if(!state.books.length)throw Error('This textbook is not assigned to your class.');state.mapUnit=unitId;}
     state.ready=true;
     setPuzzleControlsEnabled(true);
     await buildPuzzle();
