@@ -196,6 +196,14 @@ window.addEventListener('keydown',event=>{
   leaveExplainerViaHistory();
 },true);
 
+// Route changes made by Home and the app's Back controls are not popstate events.
+// Close the lesson overlay whenever the student leaves its guide route.
+window.addEventListener('grammar-genius:route-change',event=>{
+  if(event.detail?.view==='guide')return;
+  closeGuide();
+  activeExplainerRoute='';
+});
+
 window.addEventListener('popstate',event=>{
   const next=event.state?.app===APP_ID?event.state?.route:null;
   if(next?.view!=='guide'){

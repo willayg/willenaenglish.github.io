@@ -1,5 +1,5 @@
-import * as BaseRenderer from './question-renderer.js?v=2.20.6-base';
-export * from './question-renderer.js?v=2.20.6-base';
+import * as BaseRenderer from './question-renderer.js?v=20261025-shared-unified-v1';
+export * from './question-renderer.js?v=20261025-shared-unified-v1';
 
 const BIG_TEXT_KEY='willena-testprep-big-text';
 const BIG_TEXT_EVENT='willena:test-prep-big-text';

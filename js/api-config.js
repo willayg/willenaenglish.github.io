@@ -86,6 +86,11 @@
       return TEST_PREP_TEACHER_EDGE + search;
     }
 
+    // Verified student sign-in must use the Cloudflare identity-check worker.
+    // The generic API proxy still forwards verify_student to legacy Netlify.
+    if (fn === 'verify_student' && isCloudflarePages) {
+      return CF_FUNCTIONS.verify_student + search;
+    }
     if (USE_CF_WORKERS && fn && CF_FUNCTIONS[fn]) {
       return CF_FUNCTIONS[fn] + search;
     }

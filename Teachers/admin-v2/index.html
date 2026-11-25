@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Willena Admin V2</title>
+<script src="/students/api-gateway.js?v=20261104-enroll2"></script>
+<script src="/js/api-config.js?v=20260917-adminv2-120"></script>
+<script defer src="/Teachers/willena-pwa.js?v=20261112-enquiry-alerts1"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2.css?v=20260919-r14-14">
+<link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2-polish.css?v=20260917-r14-07">
+<link rel="stylesheet" href="/components/teacher-header/teacher-header.css?v=20260919-p2-3">
+<link rel="stylesheet" href="/Teachers/admin/admin-level-tests.css?v=20260813-archive1">
+<link rel="stylesheet" href="/Teachers/admin/admin-level-test-pips.css?v=20260812-pips3">
+<link rel="stylesheet" href="./admin-v2.css?v=1.37-drawer-close">
+<link rel="stylesheet" href="./admin-v2-level-tests.css?v=1.32">
+<link rel="stylesheet" href="./visitor-enrollment.css?v=1">
+<link rel="stylesheet" href="./biweekly-report.css?v=20261101-v1">
+<link rel="stylesheet" href="./admin-v2-enquiries.css?v=20261112-scroll2">
+<link rel="stylesheet" href="./admin-v2-teachers.css?v=20261115-archive">
+<link rel="stylesheet" href="./admissions.css?v=1">
+</head>
+<body>
+<div id="teacher-header"></div>
+<script type="module">
+import { mountTeacherHeader } from '/components/teacher-header/teacher-header.js?v=20260919-p2-3';
+mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admin' })
+  .catch((e)=>console.error('Teacher header init failed', e));
+</script>
+<div class="layout" id="adminLayout">
+  <aside class="rail">
+    <button class="rail-collapse-toggle" id="railCollapseToggle" type="button" aria-label="Expand sidebar" aria-expanded="false"><span>›</span></button>
+    <button class="nav active" data-view="students"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg></span><span>Students</span></button>
+    <button class="nav" data-view="classes"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v16M16 4v16M4 9h16M4 15h16"/></svg></span><span>Classes</span></button>
+    <button class="nav" data-view="level-tests" data-page="levelTests"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Level Tests</span></button>
+    <button class="nav" data-view="biweekly"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Biweekly Reports</span></button>
+    <button class="nav" type="button" data-view="enquiries" title="Website enquiries"><span class="nav-icon enq-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/><path d="M8 3h8"/></svg><span id="adminEnquiryCount" class="enq-unread" hidden>0</span></span><span>문의 관리</span></button>
+    <button class="nav" type="button" data-view="admissions" title="입학 관리"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3z"/></svg></span><span>입학 관리</span></button>
+    <button type="button" class="nav" data-view="staff-calendar" title="Shared Willena Calendar"><span class="nav-icon" aria-hidden="true">▦</span><span>Willena Calendar</span></button><button class="nav" type="button" data-view="teachers-manager" hidden style="display:none"><span class="nav-icon" aria-hidden="true">♙</span><span>Teachers Manager</span></button><div class="rail-spacer"></div>
+  </aside>
+  <main class="workspace">
+<section class="view" id="view-staff-calendar" aria-label="Shared Willena Calendar">
+  <iframe id="adminSharedCalendarFrame" title="Willena Calendar — shared with Teachers" data-src="/Teachers/?view=staff-calendar&amp;embed=calendar" style="display:block;width:100%;min-height:75vh;height:calc(100dvh - 125px);border:0;border-radius:12px;background:transparent" loading="lazy"></iframe>
+</section>
+<section class="view" id="view-teachers-manager" aria-label="Teachers Manager">
+  <div class="page-head"><div><h1>Teachers Manager</h1><div class="panel-sub">Account access · available to designated admins only</div></div><button type="button" id="tmRefresh" class="control">Refresh</button></div>
+  <p id="tmMessage" role="status" aria-live="polite"></p>
+  <div class="tm-layout">
+   <section class="panel tm-panel"><div class="panel-head"><div><div class="panel-title">Teachers & admins</div><div class="panel-sub" id="tmCount">Loading…</div></div></div>
+   <div class="tm-tabs" role="tablist" aria-label="Teacher account status"><button type="button" class="tm-tab active" data-tm-tab="active" role="tab" aria-selected="true">Active <span id="tmActiveCount">0</span></button><button type="button" class="tm-tab" data-tm-tab="archive" role="tab" aria-selected="false">Archive <span id="tmArchiveCount">0</span></button></div><div class="tm-toolbar"><input id="tmSearch" class="control" type="search" placeholder="Search teachers"></div>
+   <div id="tmList" class="tm-list"></div></section>
+   <section class="panel tm-panel" id="tmAddPanel"><div class="panel-head"><div class="panel-title">Add teacher</div></div>
+   <form id="tmCreateForm" class="tm-form"><label>Full name<input id="tmName" required maxlength="120" autocomplete="off"></label><label>Email<input id="tmEmail" type="email" required autocomplete="off"></label><label>Username (optional)<input id="tmUsername" maxlength="80" autocomplete="off"></label><label>Initial password<input id="tmPassword" type="password" required minlength="8" autocomplete="new-password"></label><small>A new teacher account is active immediately. For retirement, the profile and teaching history are preserved.</small><button id="tmCreate" type="submit" class="control admin-primary">+ Add teacher</button></form>
+   </section>
+  </div>
+ </section>
+<section class="view" id="view-admissions" lang="ko" aria-label="입학 관리">
+  <div class="page-head"><h1>입학 관리</h1><button type="button" class="control" id="admission-refresh">새로고침</button></div>
+  <div class="adm-tabs" role="group" aria-label="관리 화면">
+    <button type="button" data-admission-tab="wait" aria-pressed="true">대기 관리</button>
+    <button type="button" data-admission-tab="seminar" aria-pressed="false">설명회 관리</button>
+  </div>
+  <div class="adm-controls"><div class="adm-years" role="group" aria-label="입학 희망 연도">
+    <strong>입학 희망 연도</strong><button type="button" data-cohort="2027" aria-pressed="true">2027년</button>
+    <button type="button" data-cohort="2028" aria-pressed="false">2028년</button><button type="button" data-cohort="2029" aria-pressed="false">2029년</button>
+  </div><input id="admission-search" class="control" type="search" placeholder="학생 이름 · 연락처 검색" aria-label="학생 이름 또는 연락처 검색"></div>
+  <div class="panel adm-panel"><header><h2 id="admission-title">2027년 대기 명단</h2><p id="admission-event" hidden></p></header>
+    <div id="admission-counts" class="adm-counts"></div><p id="admission-message" class="adm-message" role="status" aria-live="polite"></p>
+    <div class="adm-table-wrap"><table><thead><tr id="admission-head"></tr></thead><tbody id="admission-body"></tbody></table></div>
+    <p id="admission-empty" class="adm-empty" hidden></p>
+  </div>
+  <dialog id="admission-detail" aria-labelledby="admission-detail-name"><div class="adm-dialog-head"><h2 id="admission-detail-name"></h2><button class="control" type="button" id="admission-close">닫기</button></div>
+    <dl id="admission-fields"></dl><div id="admission-actions" class="adm-actions"></div>
+    <p role="status" aria-live="polite" id="admission-action-status"></p>
+    <label id="admission-link-label" hidden>개별 초대 링크<input class="control" id="admission-link" readonly></label>
+  </dialog>
+</section>
+<section class="view" id="view-enquiries" aria-label="Website enquiry management">
+ <div class="page-head"><div><h1>문의 관리 <span id="enqNewCount" class="enq-count">0</span></h1><div class="panel-sub">Website Enquiries · 상담 문의</div></div><div class="enq-head-actions"><button id="wcEnablePush" type="button" class="control">🔔 알림 켜기</button><button id="wcDisablePush" type="button" class="control" hidden>알림 끄기</button><button id="wcTestPush" type="button" class="control" hidden>알림 테스트</button><button id="enqRefresh" type="button" class="control admin-primary">새로고침 ↻</button></div></div><p id="wcPushStatus" hidden role="status" class="enq-notification-status"></p>
+ <div class="enq-toolbar"><select class="control" id="enqFilter" aria-label="Enquiry status"><option value="">전체 상태</option><option value="new">신규</option><option value="contacted">연락 완료</option><option value="consultation">상담 예약</option><option value="enrolled">등록 완료</option><option value="closed">종료</option></select><input class="control" type="search" id="enqSearch" placeholder="이름 · 전화번호 검색" aria-label="Search enquiries"><span id="enqCount" class="panel-sub"></span></div>
+ <p class="enq-feedback" role="status" id="enqMessage"></p>
+ <div class="enq-panel enq-list" id="enqList"><div class="enq-empty">문의 관리 탭을 열면 내역을 불러옵니다.</div></div>
+ </section>
+ 
+    <section class="view active" id="view-students">
+      <div class="page-head"><div><h1>Students</h1></div><div class="filters"><select class="control" id="classFilter"><option value="">All classes</option></select><select class="control" id="gradeFilter"><option value="">All grades</option></select><input class="control search" id="studentSearch" type="search" placeholder="Search student…"><button class="control" id="studentRefresh" type="button">Refresh</button><button class="control admin-primary" id="addStudent" type="button">+ Add student</button></div></div>
+      <div class="panel"><div class="panel-head"><div><div class="panel-title">Students</div><div class="panel-sub" id="studentStatus">Loading…</div></div><span class="count-pill" id="studentCount">0 students</span></div><div class="student-list" id="studentList"><div class="empty">Loading students…</div></div></div>
+    </section>
+    <section class="view" id="view-classes"><div class="page-head"><div><h1>Classes</h1></div><div class="admin-class-toolbar"><span class="class-order-status" id="classOrderStatusV2"></span><button class="control class-order-toolbar-button" id="classOrderEditV2" type="button">Edit order</button><button class="control class-order-toolbar-button" id="classOrderCancelV2" type="button" hidden>Cancel</button><button class="control admin-primary class-order-toolbar-button" id="classOrderDoneV2" type="button" hidden>Done</button><button class="control" id="classRefreshV2" type="button">Refresh</button><button class="control admin-primary" id="classAddV2" type="button">+ Add class</button></div></div><div class="class-grid" id="classGridV2"><div class="empty">Open Classes to load class management.</div></div></section>
+    <section class="view" id="view-level-tests"><div class="page-head"><div><h1>Level Tests</h1></div></div><div class="level-test-mode-tabs" role="tablist" aria-label="Level test input mode"><button type="button" class="active" data-level-test-mode="auto" role="tab" aria-selected="true">Auto Input</button><button type="button" data-level-test-mode="manual" role="tab" aria-selected="false">Manual Input</button></div><div id="levelTestAutoPane" class="level-test-mode-pane active"><div class="level-test-toolbar"><div class="search"><input id="levelTestSearch" placeholder="Search student, class or school"></div><button class="btn" id="levelTestRefresh">Refresh</button></div><div class="level-test-filters" id="levelTestFilters" aria-label="Filter level tests"><button class="active" data-test-filter="all">All</button><button data-test-filter="prospective">Online test</button><button data-test-filter="internal">Willena Student</button><button data-test-filter="visitor">Face-to-face test</button><button class="new-filter" data-test-filter="new"><i></i> New <b id="levelTestNewCount">0</b></button><button class="archived-filter" data-test-filter="archived">Archived <b id="levelTestArchivedCount">0</b></button></div><div class="panel level-test-table-wrap"><table class="level-test-table"><thead><tr><th>Name</th><th>Date</th><th>Level</th><th>Status</th><th>Source</th></tr></thead><tbody id="levelTestRows"><tr><td colspan="5" class="empty">Open Level Tests to load records.</td></tr></tbody></table></div></div><div id="levelTestManualPane" class="level-test-mode-pane" hidden><iframe id="manualLevelReportFrame" class="manual-level-report-frame" title="Manual level report" data-src="/Teachers/tools/manual-level-report/?embed=1"></iframe></div></section>
+    
+    <section class="view" id="view-biweekly">
+      <div class="page-head"><div><h1>Biweekly Reports</h1><p class="bw-subtitle">14-day learning evidence · parent-ready reports</p></div>
+        <div class="filters"><select id="bwRunPicker" class="control" aria-label="Select saved period"><option value="">Select report period</option></select><button id="bwReload" type="button" class="control">Refresh</button></div>
+      </div>
+      <div class="panel bw-setup">
+        <div class="panel-head"><div><div class="panel-title">Reporting period</div><div class="panel-sub">Generate once the final day has passed. Reports are frozen and can be sent unchanged.</div></div><span id="bwRunState" class="admin-pill">Not generated</span></div>
+        <div class="bw-toolbar">
+          <label class="bw-date-label">First day <input id="bwStart" class="control" type="date" aria-label="Period first day"></label>
+          <span class="bw-period-arrow">→</span>
+          <label class="bw-date-label">Last day <input id="bwEnd" class="control" type="date" readonly aria-label="Period last day"></label>
+          <button id="bwGenerate" type="button" class="control admin-primary">Generate 14-day snapshot</button>
+          <button id="bwPublish" type="button" class="control" disabled>Publish / Lock</button>
+        </div>
+        <div id="bwStatus" class="bw-status" role="status" aria-live="polite">Select a saved period or generate one.</div>
+      </div>
+      <div class="bw-stats" id="bwStats"></div>
+      <div class="panel bw-directory">
+        <div class="panel-head"><div><div class="panel-title">Student reports</div><div class="panel-sub">Select a student to preview, edit the note and share the report.</div></div>
+          <div class="bw-list-filters"><select id="bwClass" class="control"><option value="">All classes</option></select><input id="bwSearch" class="control search" type="search" placeholder="Find student…" aria-label="Search students"></div>
+        </div>
+        <div id="bwStudentList" class="bw-student-list"><div class="empty">No report period selected yet.</div></div>
+      </div>
+    </section>
+  </main>
+</div>
+<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="level-tests" data-page="levelTests"><b>◫</b>Tests</button><button class="mobile-tab" data-view="biweekly"><b>▤</b>Reports</button><button class="mobile-tab" type="button" data-view="enquiries"><b class="enq-mobile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/><path d="M8 3h8"/></svg><span id="mobileEnquiryCount" class="enq-unread" hidden>0</span></b>문의</button><button class="mobile-tab" type="button" data-view="admissions"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3z"/></svg></b>입학 관리</button></nav>
+<div class="drawer-bg" id="enqDrawerBg"><aside class="drawer enq-drawer" role="dialog" aria-modal="true" aria-label="문의 상세"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="enqDrawerName">문의 상세</div><div class="drawer-meta" id="enqDrawerMeta">상담 문의</div></div><button class="close" id="enqClose" type="button" aria-label="Close enquiry details">×</button></div><div class="drawer-body enq-drawer-body enq-detail" id="enqDetail"></div></aside></div>
+<div class="drawer-bg" id="studentDrawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeStudentDrawer" type="button">×</button></div><div class="drawer-body" id="drawerBody"></div></aside></div>
+<div class="drawer-bg" id="addStudentDrawerBg"><aside class="drawer admin-add-drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name">Add student</div><div class="drawer-meta">Create a new student account</div></div><button class="close" id="closeAddStudentDrawer" type="button">×</button></div><div class="drawer-body"><form id="addStudentForm" class="admin-add-form" novalidate><div class="detail"><h3>Student details</h3><div class="admin-form-grid"><label class="admin-form-field"><span>English name</span><input id="addName" type="text"></label><label class="admin-form-field"><span>Korean name</span><input id="addKorean" type="text"></label><label class="admin-form-field"><span>Username</span><input id="addUsername" type="text" autocomplete="off"></label><label class="admin-form-field"><span>Temporary password</span><input id="addPassword" type="text" autocomplete="new-password"></label><label class="admin-form-field"><span>Class</span><select id="addClass"><option value="">No class</option></select></label><label class="admin-form-field"><span>Grade</span><input id="addGrade" type="text"></label><label class="admin-form-field"><span>School</span><input id="addSchool" type="text"></label><label class="admin-form-field"><span>Phone</span><input id="addPhone" type="text"></label></div><p class="admin-form-note">Username uses lowercase letters, numbers, dots, dashes or underscores.</p><div class="admin-modal-error" id="addStudentError"></div></div></form></div><div class="admin-add-foot"><button type="button" class="cancel" id="cancelAddStudent">Cancel</button><button type="submit" form="addStudentForm" class="create" id="createStudentButton">Create student</button></div></aside></div>
+<div class="admin-class-backdrop" id="classDrawerBgV2"></div><aside class="admin-class-drawer" id="classDrawerV2"><div class="admin-class-head"><div><h2 id="classDrawerTitleV2">Class</h2><p id="classDrawerMetaV2"></p></div><button id="classDrawerCloseV2" type="button">×</button></div><div class="admin-class-body" id="classDrawerBodyV2"></div></aside>
+<div class="level-test-drawer" id="levelTestDrawer" aria-hidden="true"><button class="level-test-drawer-backdrop" data-close-level-test aria-label="Close"></button><aside><div class="level-test-drawer-head"><div><span class="level-test-source" id="levelTestDetailSource"></span><h2 id="levelTestDetailName">Level test</h2><p id="levelTestDetailMeta"></p></div><button class="close" data-close-level-test>×</button></div><div class="level-test-drawer-body" id="levelTestDetailBody"></div><div class="level-test-drawer-actions"><button class="btn visitor-enroll-trigger" id="levelTestEnroll" type="button" hidden disabled>Enroll student</button><button class="btn level-test-archive-action" id="levelTestArchive" disabled>Archive</button><button class="btn" id="levelTestManualOverride" disabled>Manual override</button><button class="btn" id="levelTestFullReport" disabled>Full report</button><button class="btn primary" id="levelTestFullResults" disabled>Full test results</button></div><section class="level-test-results" id="levelTestResults" aria-hidden="true"><div class="level-test-results-head"><button class="btn" id="levelTestResultsBack">← Mini report</button><div><h2>Full test results</h2><p id="levelTestResultsMeta"></p></div></div><div id="levelTestResultsBody"></div></section></aside></div>
+
+<div class="drawer-bg bw-drawer-bg" id="bwDrawerBg" aria-hidden="true">
+  <aside class="drawer bw-drawer" role="dialog" aria-modal="true" aria-labelledby="bwDrawerTitle">
+    <div class="drawer-head">
+      <div class="drawer-head-main"><div class="drawer-name" id="bwDrawerTitle">Biweekly report</div><div class="drawer-meta" id="bwDrawerMeta">Learning activity · 14 days</div></div>
+      <button class="close" id="bwClose" type="button" aria-label="Close report">×</button>
+    </div>
+    <div class="bw-drawer-actions">
+      <button id="bwCopyImage" type="button" class="control admin-primary">Copy image</button>
+      <button id="bwDownloadImage" type="button" class="control">Download PNG</button>
+      <button id="bwCopyMessage" type="button" class="control">Copy message</button>
+      <button id="bwPrint" type="button" class="control">Print</button>
+    </div>
+    <div class="drawer-body bw-drawer-scroll">
+      <p class="bw-helper" id="bwCopyHint">Use “Copy image”, then paste directly into your parent message app. Download PNG works when clipboard image permission is unavailable.</p>
+      <div class="bw-report-area"><div id="bwReportCard" class="bw-report-card"></div></div>
+      <label class="bw-note-label" for="bwNote">Teacher's note <span>(optional, appears on parent report)</span></label>
+      <textarea id="bwNote" class="control bw-note-input" rows="3" maxlength="1500" placeholder="Write a verified observation or next learning goal…"></textarea>
+      <div class="bw-note-actions"><button id="bwSaveNote" type="button" class="control admin-primary">Save note</button><span id="bwNoteState" role="status"></span></div>
+    </div>
+  </aside>
+</div>
+<div class="admin-v2-boot hidden" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Checking admin access…</span></div>
+<div class="admin-v2-rev">Admin V2 · 1.37</div>
+
+<script src="/free-level-test/js/report-calculation.js?v=1.27"></script>
+<script src="./admin-v2-visitor-qr.js?v=1.28"></script>
+<script>
+/* Resilient class drawer dismissal, including when the classes module fails to initialize.
+   Runs after the primary handler; if it has already closed the drawer, this is a no-op. */
+(function(){
+  function dismissClassDrawer(){
+    const drawer=document.getElementById('classDrawerV2');
+    if(!drawer?.classList.contains('open'))return;
+    drawer.classList.remove('open');
+    document.getElementById('classDrawerBgV2')?.classList.remove('open');
+    document.body.style.overflow='';
+  }
+  document.addEventListener('click',function(event){
+    if(event.target.closest?.('#classDrawerCloseV2,#classCancelV2') ||
+       event.target.id==='classDrawerBgV2')dismissClassDrawer();
+  });
+  document.addEventListener('keydown',function(event){
+    if(event.key==='Escape')dismissClassDrawer();
+  });
+})();
+</script>
+<script>
+/* Reuse the actual Teachers calendar. Load only on opening the Admin calendar tab. */
+document.querySelector('[data-view="staff-calendar"]')?.addEventListener('click',()=>{
+ const frame=document.getElementById('adminSharedCalendarFrame');
+ if(frame && !frame.getAttribute('src'))frame.setAttribute('src',frame.getAttribute('data-src'));
+});
+</script>
+<script type="module" src="./admin-v2.js?v=20261120-admissions"></script>
+<script type="module" src="./biweekly-report.js?v=20261101-v1"></script>
+<script>
+(function(){
+  function bindManualLevelTabs(){
+    var tabs=Array.prototype.slice.call(document.querySelectorAll('[data-level-test-mode]'));
+    var autoPane=document.getElementById('levelTestAutoPane');
+    var manualPane=document.getElementById('levelTestManualPane');
+    var frame=document.getElementById('manualLevelReportFrame');
+    if(!tabs.length||!autoPane||!manualPane)return;
+    function setMode(mode){
+      var manual=mode==='manual';
+      tabs.forEach(function(tab){
+        var active=tab.getAttribute('data-level-test-mode')===mode;
+        tab.classList.toggle('active',active);
+        tab.setAttribute('aria-selected',active?'true':'false');
+      });
+      autoPane.hidden=manual;
+      manualPane.hidden=!manual;
+      autoPane.classList.toggle('active',!manual);
+      manualPane.classList.toggle('active',manual);
+      if(manual&&frame&&!frame.getAttribute('src')){
+        frame.setAttribute('src',frame.getAttribute('data-src')||'/Teachers/tools/manual-level-report/?embed=1');
+      }
+    }
+    window.WillenaOpenManualLevelReport=function(detail){
+      detail=detail||{};
+      var src='/Teachers/tools/manual-level-report/?embed=1';
+      if(detail.source&&detail.attempt_id)src+='&source='+encodeURIComponent(detail.source)+'&attempt_id='+encodeURIComponent(detail.attempt_id)+'&_='+Date.now();
+      else src+='&new=1&_='+Date.now();
+      if(frame)frame.setAttribute('src',src);
+      setMode('manual');
+    };
+    tabs.forEach(function(tab){
+      tab.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        if(tab.getAttribute('data-level-test-mode')==='manual')window.WillenaOpenManualLevelReport({});
+        else setMode('auto');
+      });
+    });
+    window.addEventListener('message',function(event){
+      if(!event.data||event.data.type!=='willena-manual-level-saved')return;
+      var refresh=document.getElementById('levelTestRefresh');if(refresh)refresh.click();
+    });
+    setMode('auto');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindManualLevelTabs);
+  else bindManualLevelTabs();
+})();
+</script>
+
+</body>
+</html>

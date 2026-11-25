@@ -1,0 +1,105 @@
+/* Native Admin V2 enquiries view */
+#view-enquiries .enq-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 15px}
+#view-enquiries .enq-toolbar input{flex:1;min-width:175px}
+#view-enquiries .enq-toolbar select{min-width:135px}
+#view-enquiries .enq-columns{display:grid;grid-template-columns:minmax(250px,.85fr) minmax(290px,1.15fr);gap:15px}
+#view-enquiries .enq-panel{background:#fff;border:1px solid #dfe8eb;border-radius:15px;min-width:0;padding:12px;min-height:365px}
+#view-enquiries .enq-list{max-height:650px;overflow:auto}
+#view-enquiries .enq-row{width:100%;display:block;text-align:left;border:1px solid transparent;border-bottom-color:#edf0f3;border-radius:9px;background:white;padding:13px;color:#302b41;cursor:pointer}
+#view-enquiries .enq-row:hover,#view-enquiries .enq-row.active{background:#eaf8fa;border-color:#c4eced}
+#view-enquiries .enq-row strong{font-size:15px}
+#view-enquiries .enq-row small{display:block;font-size:12px;color:#727b84;margin:4px 0}
+#view-enquiries .enq-row .preview{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;color:#777}
+#view-enquiries .enq-badge{display:inline-block;margin-left:8px;border-radius:14px;padding:4px 9px;background:#e5f2f3;color:#227b84;font-size:11px;font-weight:800}
+#view-enquiries .enq-badge.new{background:#fce1ef;color:#b22e75}
+#view-enquiries .enq-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+#view-enquiries .enq-meta div{padding:11px;border-radius:10px;background:#f5f9fa;overflow-wrap:anywhere}
+#view-enquiries .enq-meta small{display:block;color:#75818d;font-size:11px;margin-bottom:4px}
+#view-enquiries .enq-detail-message{padding:15px;border-radius:10px;background:#f6fafb;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75;margin:15px 0}
+#view-enquiries .enq-detail label{display:block;font-size:13px;font-weight:700;margin:15px 0 6px}
+#view-enquiries .enq-detail select,#view-enquiries .enq-detail textarea{display:block;width:100%;padding:12px;border:1px solid #dbe4e7;border-radius:10px;font:inherit;min-height:45px}
+#view-enquiries .enq-detail textarea{min-height:125px;resize:vertical}
+#view-enquiries .enq-detail a{color:#168a98;font-weight:800}
+#view-enquiries .enq-empty{text-align:center;padding:45px 16px;color:#697984}
+#view-enquiries .enq-count{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:23px;border-radius:50%;background:#fce1ef;color:#a6286a;font-size:11px;font-weight:800;margin-left:5px}
+#view-enquiries .enq-feedback{color:#b52d65;font-size:13px;min-height:22px}
+@media(max-width:720px){#view-enquiries .enq-columns{grid-template-columns:1fr}#view-enquiries .enq-list{max-height:330px}#view-enquiries .enq-meta{grid-template-columns:1fr}#view-enquiries .enq-toolbar select{max-width:100%;flex:1}}
+
+
+/* Compact inbox and native sliding details drawer */
+#view-enquiries .enq-list{min-height:200px;max-height:none;padding:8px;overflow:visible}
+#view-enquiries .enq-row{padding:17px 18px;min-height:91px;margin:3px 0;border:1px solid #edf0f3;border-radius:12px;transition:background .15s,border-color .15s}
+#view-enquiries .enq-row-top{display:flex;align-items:center;gap:10px}
+#view-enquiries .enq-row-top strong{font-size:16px}
+#view-enquiries .enq-row-arrow{font-size:28px;font-weight:400;color:#7c8892;margin-left:auto;line-height:1}
+#view-enquiries .enq-row small{font-size:12px}
+#view-enquiries .enq-row .preview{margin-top:6px}
+#view-enquiries .enq-count[hidden]{display:none!important}
+.enq-unread{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:999px;background:#e2324b;color:#fff;min-width:21px;height:21px;padding:0 5px;font-family:Poppins,sans-serif;font-weight:800;font-size:11px;line-height:1;box-shadow:0 2px 5px #e2324b44}
+.enq-unread[hidden]{display:none!important}
+.rail .nav[data-view="enquiries"]{position:relative}
+.rail .nav[data-view="enquiries"] .nav-icon svg{width:23px;height:23px;display:block;stroke:currentColor;stroke-width:1.9}
+.rail:not(:hover) .nav[data-view="enquiries"] .enq-unread{margin-left:auto}
+.mobile-tabs [data-view="enquiries"] .enq-mobile-icon{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin:0 auto 3px}
+.mobile-tabs [data-view="enquiries"] svg{width:23px;height:23px;stroke:currentColor}
+.mobile-tabs [data-view="enquiries"] .enq-unread{position:absolute;right:-14px;top:-9px;min-width:18px;height:18px;font-size:10px}
+#enqDrawerBg{z-index:1100}
+#enqDrawerBg .enq-drawer{max-width:min(540px,100%);width:100%;background:#fff}
+#enqDrawerBg .enq-drawer-body{padding:20px;overflow-y:auto;overscroll-behavior:contain}
+#enqDrawerBg .enq-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 18px}
+#enqDrawerBg .enq-meta div{padding:14px;background:#f3f8fa;border-radius:12px;overflow-wrap:anywhere}
+#enqDrawerBg .enq-meta small{display:block;color:#72808a;margin-bottom:5px;font-size:12px}
+#enqDrawerBg .enq-detail-message{background:#f3f8fa;border-radius:13px;padding:18px;margin:0 0 22px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}
+#enqDrawerBg .enq-detail label{display:block;font-weight:700;font-size:13px;margin:16px 0 7px}
+#enqDrawerBg .enq-detail select,#enqDrawerBg .enq-detail textarea{display:block;width:100%;border:1px solid #dce4e7;border-radius:11px;background:white;color:inherit;font:inherit;padding:12px}
+#enqDrawerBg .enq-detail textarea{min-height:150px;resize:vertical}
+#enqDrawerBg .enq-detail a{color:#148998;font-weight:800}
+#enqDrawerBg .enq-feedback{color:#bc3260;font-size:13px}
+body.enq-drawer-open{overflow:hidden}
+@media(max-width:720px){
+ #view-enquiries .enq-list{min-height:180px;max-height:none}
+ #enqDrawerBg .enq-drawer{top:auto;bottom:0;height:min(88dvh,850px);max-height:calc(100dvh - env(safe-area-inset-top,0px))}
+ #enqDrawerBg .enq-meta{grid-template-columns:1fr}
+ #enqDrawerBg .enq-drawer-body{padding:16px}
+}
+
+/* Badge sits on the envelope rather than displacing sidebar labels. */
+.rail .nav[data-view="enquiries"] .enq-nav-icon{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.rail .nav[data-view="enquiries"] .enq-nav-icon>.enq-unread{
+ position:absolute;top:-9px;right:-12px;margin:0;z-index:4;
+}
+.rail .nav[data-view="enquiries"]>span:last-child{white-space:nowrap}
+.rail .nav[data-view="enquiries"] svg{width:23px;height:23px}
+
+/* Unread is independent of consultation workflow status. */
+#view-enquiries .enq-row.enq-unread-row{background:#f4fcfc;border-color:#bfebef}
+#view-enquiries .enq-unread-dot{width:9px;height:9px;flex-shrink:0;background:#e2324b;border-radius:50%}
+
+
+/* Push opt-in controls, using the same Admin V2 control language. */
+#view-enquiries .enq-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+#view-enquiries .enq-head-actions button{white-space:nowrap}
+#view-enquiries .enq-head-actions button[hidden]{display:none!important}
+#view-enquiries .enq-notification-status{margin:6px 0 14px;font-size:13px;line-height:1.6}
+#view-enquiries .enq-notification-status[hidden]{display:none!important}
+@media(max-width:700px){#view-enquiries .enq-head-actions{justify-content:flex-start}}
+
+/* Enquiry details: fixed viewport drawer with a genuinely scrollable body. */
+#enqDrawerBg .enq-drawer{
+ display:flex!important;flex-direction:column!important;
+ overflow:hidden!important;height:100dvh;max-height:100dvh;
+}
+#enqDrawerBg .enq-drawer>.drawer-head{flex:0 0 auto;position:relative;z-index:3}
+#enqDrawerBg .enq-drawer>.enq-drawer-body{
+ flex:1 1 0!important;min-height:0!important;max-height:none!important;
+ overflow-x:hidden!important;overflow-y:auto!important;
+ -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+ padding-bottom:calc(90px + env(safe-area-inset-bottom,0px));
+ touch-action:pan-y;
+}
+@media(max-width:720px){
+ #enqDrawerBg .enq-drawer{
+  top:auto!important;bottom:0!important;
+  height:min(88dvh,850px)!important;max-height:calc(100dvh - env(safe-area-inset-top,0px))!important;
+ }
+}

@@ -195,7 +195,28 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
  * Show file load modal
  */
 export function showFileModal(fileModalEl) {
-  if (fileModalEl) fileModalEl.style.display = 'flex';
+  if (!fileModalEl) return;
+  fileModalEl.style.display = 'flex';
+
+  // The active Saved Games implementation still lives in main.js and resets
+  // itself to My Games each time it opens. As soon as its scope selector is
+  // rendered, switch it to All Users and trigger its existing reload handler.
+  let attempts = 0;
+  const selectAllUsers = () => {
+    const scope = fileModalEl.querySelector('#creatorScope');
+    if (scope) {
+      if (scope.value !== 'all') {
+        scope.value = 'all';
+        scope.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      return;
+    }
+    attempts += 1;
+    if (attempts < 40 && fileModalEl.style.display !== 'none') {
+      setTimeout(selectAllUsers, 100);
+    }
+  };
+  setTimeout(selectAllUsers, 0);
 }
 
 /**

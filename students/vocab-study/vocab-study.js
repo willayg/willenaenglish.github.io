@@ -1,19 +1,105 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260927-startup2';
+import {fetchClassBookAssignments,extractClassBookAssignments} from '/students/shared/class-book-assignments.js?v=20261105-shared1';
+import {renderStudentSessionFinish} from '../components/student-session-finish.js?v=1';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261124-mic-spinner1';
+import {attachSilentAISpeaking} from './vocab-ai-speech-ui.js?v=20261124-mic-ready1';
+import {createSpeakingAudioCache} from './vocab-listening-cache.js?v=20261024-audio-prefetch2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
-import {getSpellingTarget} from './spelling-targets.js?v=20260927-startup2';
-import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260927-spacing1';
+import {getSpellingTarget,matchesSpellingTarget} from './spelling-targets.js?v=20261028-apostrophes1';
+import {isSpeakableTarget,matchSpeakingTarget,numericSpeakingMatch} from './speaking-match.js?v=20261124-numbers2';
+import {gradeSpeaking as gradeOrdinarySpeech,speakingStars} from '/students/shared/speaking-smart-grade.js?v=20261117-quantity-phrase3';
+import {summarizeSpeakingSession} from './speaking-finish-summary.js?v=20261111-simple-average4';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-startup2';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260927-startup2';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260927-startup2';
-import {createVocabHistoryNavigation} from './navigation-history.js?v=20260927-startup2';
+import {createVocabHistoryNavigation} from './navigation-history.js?v=20261024-home-depth1';
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=20260927-startup2';
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
+import {createSpeakingGradesGuide} from '/students/shared/speaking-grades-guide.js?v=20261112-energy4';
+import {createSpeakingBestProgress} from '/students/shared/speaking-best-progress.js?v=20261112-visual-only2';
+
+// Numeric equivalents receive full credit before generic partial/fuzzy grading.
+// A different value cannot be promoted by phonetic or word-overlap rules.
+function gradeSpeaking(target,alternatives,options){
+  const heard=(Array.isArray(alternatives)?alternatives:[alternatives]).map(v=>String(v??'').trim()).filter(Boolean).slice(0,5);
+  const checked=heard.map(transcript=>({transcript,match:numericSpeakingMatch(target,transcript)}));
+  const same=checked.find(v=>v.match===true);
+  if(same)return {points:4,correct:true,level:'green',transcript:same.transcript,matchedBy:'numeric_equivalent'};
+  const eligible=checked.filter(v=>v.match!==false).map(v=>v.transcript);
+  if(heard.length&&!eligible.length)return {points:0,correct:false,level:'red',transcript:heard[0],matchedBy:'numeric_mismatch'};
+  return gradeOrdinarySpeech(target,eligible,options);
+}
+
+
+ // Unlock the cue on a deliberate mic tap; never pre-open the microphone.
+ // Reuse the audio output context to avoid asset/network startup delays.
+let speechCueContext=null;
+function prepareSpeechCue(){
+  try{
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtx)return;
+    if(!speechCueContext||speechCueContext.state==='closed')speechCueContext=new AudioCtx();
+    if(speechCueContext.state!=='running')void speechCueContext.resume().catch(()=>{});
+  }catch{}
+}
+function playSpeechReadyCue(){
+  try{
+    const ctx=speechCueContext;
+    if(!ctx||ctx.state!=='running')return;
+    const t=ctx.currentTime,osc=ctx.createOscillator(),gain=ctx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(880,t);
+    osc.frequency.setValueAtTime(1175,t+.045);
+    gain.gain.setValueAtTime(.001,t);
+    gain.gain.exponentialRampToValueAtTime(.18,t+.008);
+    gain.gain.exponentialRampToValueAtTime(.001,t+.11);
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.onended=()=>{osc.disconnect();gain.disconnect();};
+    osc.start(t);osc.stop(t+.12);
+  }catch{}
+}
+
+// Short, quiet loading ticks only while this question's microphone is connecting.
+// The ready chirp remains distinct. Never schedule a future tick into recording.
+function createSpeechWaitingCue(isConnecting){
+  let timer=null,oscillator=null;
+  function stop(){
+    if(timer!==null){clearTimeout(timer);timer=null;}
+    if(oscillator){try{oscillator.stop()}catch{} oscillator=null;}
+  }
+  function tick(){
+    timer=null;
+    if(!isConnecting()){stop();return;}
+    const ctx=speechCueContext;
+    if(ctx?.state==='running'){
+      try{
+        const t=ctx.currentTime,osc=ctx.createOscillator(),gain=ctx.createGain();
+        osc.type='sine';
+        osc.frequency.setValueAtTime(440,t);
+        gain.gain.setValueAtTime(.001,t);
+        gain.gain.exponentialRampToValueAtTime(.045,t+.008);
+        gain.gain.exponentialRampToValueAtTime(.001,t+.052);
+        osc.connect(gain);gain.connect(ctx.destination);
+        oscillator=osc;
+        osc.onended=()=>{if(oscillator===osc)oscillator=null;osc.disconnect();gain.disconnect();};
+        osc.start(t);osc.stop(t+.06);
+      }catch{}
+    }
+    timer=setTimeout(tick,600);
+  }
+  function start(){
+    stop();prepareSpeechCue();
+    // Both microphone paths have set the connecting state by the next task.
+    timer=setTimeout(tick,0);
+  }
+  return {start,stop};
+}
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const OP_URL='https://fiieuiktlsivwfgyivai.supabase.co';
 const OP_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const ACTIVE_BOOK_KEY='willena-study-v2-active-book';
+const speakingGradesGuide=createSpeakingGradesGuide({app:'word'});
 
 const el=id=>document.getElementById(id);
 const statusEl=el('vocabStudyStatus');
@@ -118,8 +204,10 @@ const state={
   activeTeacherAssignment:null,
   activeTeacherItems:[],
   assignedSpellingRecovery:null,
+  optionalTeacherCoach:false,
   pendingTeacherRecords:new Set()
 };
+let focusedHomeworkId=(()=>{try{return new URLSearchParams(location.search).get('assignment_id')||new URLSearchParams(location.search).get('homework')||''}catch(_){return ''}})();
 let navController=null;
 let spellingKeyboard=null;
 
@@ -180,8 +268,10 @@ function wireSpellingField(field,{focus=false}={}){
   field=prepareSharedKeyboardField(field);
   if(!field)return;
   const syncSubmit=()=>{
-    if(!state.spellingTest&&!state.spellingPractice)return;
-    actionBtn.disabled=!String(field.value||'').trim();
+    if(!state.spellingTest&&!state.spellingPractice&&!state.inlineCoach)return;
+    const response=txt(field.value);
+    const practice=state.spellingPractice||state.inlineCoach;
+    actionBtn.disabled=!response||!!(practice&&(practice.submitting||practice.lastRejectedAnswer===response));
   };
   field.addEventListener('input',syncSubmit);
   field.addEventListener('change',syncSubmit);
@@ -208,6 +298,7 @@ function setStatus(message){if(statusEl)statusEl.textContent=message}
 
 function vocabPointValue(skill,responseType,{correct=true,hintsUsed=0,metadata={}}={}){
   if(!correct)return 0;
+  if(skill==='speaking'&&Number.isFinite(metadata?.speaking_grade_points))return Math.max(0,Math.min(4,Number(metadata.speaking_grade_points)));
   const mode=txt(metadata?.vocab_mode);
   if(mode==='spelling_coach'){
     const hints=Math.max(0,Number(hintsUsed)||0);
@@ -233,6 +324,9 @@ function wordTestStarsForPercent(percent){
   return Math.max(0,Math.min(10,Math.floor(p/10)));
 }
 function startRewardSession(mode){
+  // Review of an already-golden unit is practice only, without a new reward.
+  if(state.goldPracticeMode&&!state.activeTeacherAssignment){state.rewardSession=null;return;}
+
   const rewardSessionId=(window.crypto?.randomUUID?.()||('vocab-'+Date.now()+'-'+Math.random().toString(16).slice(2)));
   const listName=state.activeTeacherAssignment
     ?('Word Test Study · '+txt(state.activeTeacherAssignment?.assignment?.title||'Vocabulary'))
@@ -241,6 +335,7 @@ function startRewardSession(mode){
     mode:txt(mode),
     firstTotal:0,
     firstCorrect:0,
+    firstQualityPoints:0,
     points:0,
     completed:false,
     rewardSessionId,
@@ -255,9 +350,14 @@ function noteRewardAttempt(correct,retryCount,points){
   if(Math.max(0,Number(retryCount)||0)===0){
     reward.firstTotal+=1;
     if(correct)reward.firstCorrect+=1;
+    if(reward.mode==='speaking')reward.firstQualityPoints+=Math.max(0,Math.min(4,Number(points)||0));
   }
 }
 function rewardPercent(reward=state.rewardSession){
+  // Speaking completion is independent of first-attempt pronunciation quality.
+  if(reward?.mode==='speaking'&&state.speakingSession?.initialTotal){
+    return Math.round(100*uniquePassedCount(state.speakingSession.results)/state.speakingSession.initialTotal);
+  }
   return reward?.firstTotal?Math.round(reward.firstCorrect*100/reward.firstTotal):0;
 }
 async function completeRewardSession(){
@@ -268,7 +368,9 @@ async function completeRewardSession(){
   const teacherContext=state.activeTeacherAssignment;
   const reviewOnly=!!teacherContext?._reviewOnly;
   const teacher=reviewOnly?null:teacherContext;
-  reward.stars=reviewOnly?0:(teacher?wordTestStarsForPercent(reward.percent):starsForPercent(reward.percent));
+  const speechSummary=reward.mode==='speaking'?summarizeSpeakingSession(state.speakingSession):null;
+  const qualityPercent=speechSummary?speechSummary.score:reward.percent;
+  reward.stars=reviewOnly?0:(reward.mode==='speaking'?speakingStars(qualityPercent):teacher?wordTestStarsForPercent(reward.percent):starsForPercent(reward.percent));
   if(reviewOnly)return reward;
   const listName=reward.listName||(
     teacher
@@ -281,8 +383,8 @@ async function completeRewardSession(){
       reward_only:true,
       session_id:reward.rewardSessionId,
       client_attempt_id:(window.crypto?.randomUUID?.()||('reward-'+Date.now()+'-'+Math.random().toString(16).slice(2))),
-      book_id:teacher?(teacher?.assignment?.book_id||null):(state.book?.book_id||null),
-      unit_id:teacher?(teacher?.assignment?.unit_id||null):(state.unit?.id||null),
+      book_id:teacher?(teacher?.assignment?.list_meta?.source_book_id||teacher?.assignment?.book_id||null):(state.book?.book_id||null),
+      unit_id:teacher?(teacher?.assignment?.list_meta?.source_unit_id||teacher?.assignment?.list_meta?.unit_id||teacher?.assignment?.unit_id||null):(state.unit?.id||null),
       skill:'vocabulary',
       response_type:'reward',
       activity_id:'vocab-reward',
@@ -294,17 +396,20 @@ async function completeRewardSession(){
         completed:true,
         stars:reward.stars,
         accuracy:reward.firstTotal?reward.firstCorrect/reward.firstTotal:0,
+        speaking_quality_percent:reward.mode==='speaking'?qualityPercent:null,
+        speaking_retry_count:speechSummary?.retryCount??null,
+        speaking_hardest_word:speechSummary?.hardestWord??null,
         percent:reward.percent,
         score:reward.firstCorrect,
         total:reward.firstTotal,
         points_earned:reward.points,
-        book_id:teacher?(teacher?.assignment?.book_id||null):(state.book?.book_id||null),
-        unit_id:teacher?(teacher?.assignment?.unit_id||null):(state.unit?.id||null),
+        book_id:teacher?(teacher?.assignment?.list_meta?.source_book_id||teacher?.assignment?.book_id||null):(state.book?.book_id||null),
+        unit_id:teacher?(teacher?.assignment?.list_meta?.source_unit_id||teacher?.assignment?.list_meta?.unit_id||teacher?.assignment?.unit_id||null):(state.unit?.id||null),
         assignment_id:teacher?.assignment?.id||null,
         session_source:teacher?'teacher':'student',
         vocab_mode:reward.mode,
         reward_scheme:teacher?'word-test-study-v1':'vocab-study-v1',
-        star_cap:teacher?10:5
+        star_cap:reward.mode==='speaking'?5:teacher?10:5
       }
     };
     payload.assignment_id=teacher?.assignment?.id||null;
@@ -321,7 +426,7 @@ async function completeRewardSession(){
       window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.stars}}));
       localStorage.setItem('stars:refresh',String(Date.now()));
     }catch(_){}
-    if(teacher)await loadTeacherAssignments();
+    if(teacher){await loadTeacherAssignments();await checkTeacherGoldenUnit(teacher)}
     else await checkGoldenUnit();
   }catch(error){
     console.warn('[Vocab Study] reward session save failed',error);
@@ -330,10 +435,12 @@ async function completeRewardSession(){
 }
 function rewardSummaryHtml(reward=state.rewardSession,{pointsOnly=false}={}){
   if(!reward||state.activeTeacherAssignment?._reviewOnly)return'';
-  const starMax=state.activeTeacherAssignment?10:5;
+  const starMax=reward.mode==='speaking'?5:state.activeTeacherAssignment?10:5;
   const stars=Math.max(0,Math.min(starMax,Number(reward.stars)||0));
   const points=Math.max(0,Number(reward.points)||0);
-  return '<student-reward-celebration '+(pointsOnly?'points-only ':'')+'percent="'+rewardPercent(reward)+'" stars="'+stars+'" star-max="'+starMax+'" points="'+points+'" label="'+(state.activeTeacherAssignment?'WORD TEST STUDY':'SESSION REWARD')+'"></student-reward-celebration>';
+  const quality=reward.mode==='speaking'?summarizeSpeakingSession(state.speakingSession).score:rewardPercent(reward);
+  const starsShown=reward.mode==='speaking'?speakingStars(quality):stars;
+  return '<student-reward-celebration '+(pointsOnly?'points-only ':'')+'percent="'+rewardPercent(reward)+'" stars="'+starsShown+'" star-max="'+starMax+'" points="'+points+'" label="'+(state.optionalTeacherCoach?'OPTIONAL PRACTICE':state.activeTeacherAssignment?'WORD TEST STUDY':'SESSION REWARD')+'"></student-reward-celebration>';
 }
 
 function perfNow(){return window.performance?.now?.()||Date.now()}
@@ -387,7 +494,18 @@ function goldenUnits(){
 function isGoldenUnit(unitId){
   return goldenUnits().some(row=>String(row?.unit_id)===String(unitId));
 }
+function confirmGoldenPractice(){
+  if(state.adminMode||state.activeTeacherAssignment||!isGoldenUnit(state.unit?.id)){
+    state.goldPracticeMode=false;
+    return true;
+  }
+  const yes=window.confirm('축하합니다! 이 단원은 골드 유닛입니다. 다시 연습하시겠어요?\n\nYou earned Gold for this unit! Would you like to practice it again?\n\n다시 연습 / Practice Again');
+  state.goldPracticeMode=yes;
+  return yes;
+}
 function renderMotivation(){
+  if(window.WillenaAchievements&&document.querySelector('[data-shared-achievements]')){window.WillenaAchievements.refresh().catch(()=>{});return;}
+
   const unavailable=state.adminMode||!state.motivation;
   if(motivationEl)motivationEl.hidden=unavailable;
   if(frontAchievementsEl)frontAchievementsEl.hidden=unavailable;
@@ -459,6 +577,27 @@ async function checkGoldenUnit(){
     return null;
   }
 }
+async function checkTeacherGoldenUnit(teacher){
+ const a=teacher?.assignment||{},meta=a.list_meta||{};
+ const bookId=txt(meta.source_book_id||a.book_id);
+ const unitId=txt(meta.source_unit_id||meta.unit_id||a.unit_id||(arr(meta.source_unit_ids).length===1?meta.source_unit_ids[0]:''));
+ if(state.adminMode||!isUuid(bookId)||!isUuid(unitId))return null;
+ try{
+  const matching=String(state.book?.book_id)===bookId&&String(state.unit?.id)===unitId;
+  let items=matching?state.items:null;
+  if(!items){
+   const units=await content('content_units?select=id,unit_number,title&book_id=eq.'+encodeURIComponent(bookId)+'&id=eq.'+encodeURIComponent(unitId));
+   const unit=arr(units)[0];if(!unit)return null;
+   items=await loadVocabularyItems({book_id:bookId,book_title:txt(a.title)},unit);
+  }
+  const totals={quiz:unitVocabularyWords(items).map(w=>w.id).filter(isUuid).length,spelling:spellingWords(items).map(w=>w.id).filter(isUuid).length,speaking:speakingWords(items).map(w=>w.id).filter(isUuid).length};
+  if(totals.quiz<=0||totals.spelling<=0)return null;
+  const result=await api('/.netlify/functions/progress_summary?section=vocab_golden_unit&_='+Date.now(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({book_id:bookId,unit_id:unitId,quiz_total:totals.quiz,spelling_total:totals.spelling,speaking_total:totals.speaking})});
+  if(result?.earned_now)state.pendingGoldenAward={unitId,unitNumber:'',earnedAt:result?.achievement?.earned_at||new Date().toISOString()};
+  if(matching)await loadMotivation(bookId);
+  return result;
+ }catch(error){console.warn('[Vocab Study] homework Golden Unit check unavailable',error);return null}
+}
 function goldenAwardHtml(){
   const award=state.pendingGoldenAward;
   if(!award)return'';
@@ -506,8 +645,9 @@ function writeNavigation(route,mode='replace'){
   else navController.replace(route);
 }
 function navigateBackHome(){
-  if(navController)navController.back({screen:'home'});
-  else setMainScreen('home');
+  // Home always jumps to the front menu, regardless of previous activities.
+  if(navController)navController.home();
+  else {void applyNavigationRoute({screen:'home'})}
 }
 async function applyNavigationRoute(route){
   const screen=route?.screen||'home';
@@ -566,7 +706,7 @@ async function reopenActivityRoute(route){
   if(teacherId){
     const row=arr(state.teacherAssignments).find(item=>String(item?.assignment?.id)===String(teacherId));
     if(row){
-      const mode=kind==='quiz'?'quiz':kind==='spelling_test'?'spelling_test':kind==='speaking'?'speaking':'';
+      const mode=kind==='quiz'?'quiz':kind==='spelling_test'?'spelling_test':kind==='spelling_coach'?'spelling_coach':kind==='speaking'?'speaking':'';
       if(mode){startTeacherAssignment(row,mode,{historyMode:'none'});return}
     }
   }
@@ -720,7 +860,7 @@ function renderOldWordTests(){
     const a=row.assignment||{},student=arr(row.students)[0]||{},modes=arr(a.required_modes);
     const starTotal=modes.reduce((sum,mode)=>sum+Math.max(0,Number(student?.modes?.[mode]?.stars)||0),0);
     const starMax=modes.length*10;
-    const labels={quiz:'퀴즈',spelling_test:'철자',speaking:'말하기'};
+    const labels={quiz:'퀴즈',spelling_test:'철자',spelling_coach:'철자 코치',speaking:'말하기'};
     const reviewButtons=modes.map(mode=>
       '<button type="button" class="vocab-old-review-mode" data-old-test="'+index+'" data-old-mode="'+escapeHtml(mode)+'">'+escapeHtml(labels[mode]||mode)+'</button>'
     ).join('');
@@ -771,17 +911,45 @@ function teacherModeTargetIds(row,mode){
   const ids=arr(raw).map(txt).filter(Boolean);
   return new Set(ids);
 }
+// Classroom vocabulary targets must not require students to say grammar notation.
+// Preserve lexical IDs and the original authored patterns for progress and other apps.
+function naturalVocabTarget(item){
+  const word=txt(item.word),ko=txt(item.ko);
+  const key=word.toLowerCase().replace(/\s+/g,' ').replace(/\bv\s*-?\s*ing\b/g,'ving');
+  const replacements={
+    'start ving':['start','시작하다'],
+    'stop ving':['stop','멈추다'],
+    'like ving':['like','좋아하다'],
+    'love ving':['love','아주 좋아하다'],
+    'have trouble ving':['have trouble','어려움을 겪다'],
+    'have problems ving':['have problems','문제가 있다'],
+    'was/were ving':['was/were','be동사의 과거형 (두 가지)']
+  };
+  const replacement=Object.prototype.hasOwnProperty.call(replacements,key)?replacements[key]:null;
+  if(replacement)return {...item,word:replacement[0],ko:replacement[1]};
+  if(key==='high'&&ko==='높이')return {...item,word,ko:'높게'};
+  return item;
+}
 function teacherAssignmentWords(row,mode=''){
   const allowed=mode?teacherModeTargetIds(row,mode):null;
   return arr(row?.targets).map((target,index)=>{
     const id=txt(target?.lexical_entry_id),word=txt(target?.english),ko=txt(target?.korean);
     if(!id||!word||!ko)return null;
     if(allowed&& !allowed.has(id))return null;
-    return{id,word,ko,position:Number(target?.position)||index};
+    return naturalVocabTarget({id,word,ko,position:Number(target?.position)||index});
   }).filter(Boolean);
 }
 function teacherModeWordCount(row,mode){
   return teacherAssignmentWords(row,mode).length;
+}
+function teacherCoachWords(row){
+  // Use the spelling allocation in split assignments; otherwise all assigned words.
+  const required=arr(row?.assignment?.required_modes);
+  const assignedSpelling=!required.length||required.includes('spelling_test')||required.includes('spelling_coach');
+  return teacherAssignmentWords(row,required.includes('spelling_coach')?'spelling_coach':(assignedSpelling?'spelling_test':'')).map(word=>{
+    const spellingTarget=getSpellingTarget(word.word);
+    return spellingTarget?Object.assign({},word,{spellingTarget}):null;
+  }).filter(Boolean);
 }
 function teacherModeProgress(row,student,mode){
   const raw=student?.modes?.[mode]||{};
@@ -841,7 +1009,19 @@ function teacherRemainingWords(row,mode){
   return teacherAssignmentWords(row,mode).filter(word=>!done.has(txt(word?.id)));
 }
 
+function clearFocusedHomework(){
+ focusedHomeworkId='';
+ try{const url=new URL(location.href);url.searchParams.delete('assignment_id');url.searchParams.delete('homework');url.searchParams.set('open','wordtest');history.replaceState(history.state,'',url.pathname+url.search+url.hash)}catch(_){}
+ renderTeacherAssignments();
+}
 function renderTeacherAssignments(){
+ if(wordTestScreenEl)wordTestScreenEl.classList.toggle('vocab-focused-homework',!!focusedHomeworkId);
+ const focusToolbar=el('vocabFocusedHomeworkToolbar');
+ if(focusToolbar){
+   focusToolbar.hidden=!focusedHomeworkId;
+   focusToolbar.innerHTML=focusedHomeworkId?'<span class="vocab-focused-label">선택한 숙제 · Your Homework</span><button type="button" class="vocab-view-all-homework">모든 숙제 보기 · View all</button>':'';
+   focusToolbar.querySelector('button')?.addEventListener('click',clearFocusedHomework);
+ }
   if(!teacherPracticeEl||!teacherPracticeListEl)return;
   if(state.adminMode){
     teacherPracticeEl.hidden=true;
@@ -874,12 +1054,25 @@ function renderTeacherAssignments(){
     wordTestEmptyEl.hidden=true;
     wordTestEmptyEl.classList.remove('is-loading');
   }
-  if(teacherPracticeCountEl)teacherPracticeCountEl.textContent=state.teacherAssignments.length+' assignment'+(state.teacherAssignments.length===1?'':'s');
-  teacherPracticeListEl.innerHTML=state.teacherAssignments.map((row,index)=>{
+  const visibleAssignments=focusedHomeworkId
+    ? state.teacherAssignments.map((row,index)=>({row,index})).filter(({row})=>String(row?.assignment?.id)===String(focusedHomeworkId))
+    : state.teacherAssignments.map((row,index)=>({row,index}));
+  if(teacherPracticeCountEl)teacherPracticeCountEl.textContent=visibleAssignments.length+' assignment'+(visibleAssignments.length===1?'':'s');
+  if(focusedHomeworkId&&!visibleAssignments.length){
+    teacherPracticeEl.hidden=true;
+    if(wordTestEmptyEl){
+      wordTestEmptyEl.hidden=false;
+      wordTestEmptyEl.classList.remove('is-loading');
+      wordTestEmptyEl.innerHTML='<strong>선택한 숙제를 찾을 수 없어요</strong><span>완료되었거나 현재 계정에 배정되지 않은 숙제일 수 있어요. 모든 숙제를 확인해 주세요.</span>';
+    }
+    teacherPracticeListEl.innerHTML='';
+    return;
+  }
+  teacherPracticeListEl.innerHTML=visibleAssignments.map(({row,index})=>{
     const a=row.assignment||{},student=arr(row.students)[0]||{},modes=arr(a.required_modes);
-    const labels={quiz:'퀴즈',spelling_test:'철자',speaking:'말하기'};
-    const modeClasses={quiz:'vocab-skill-quiz',spelling_test:'vocab-skill-spelling',speaking:'vocab-skill-pronunciation'};
-    const stepNumbers={quiz:1,spelling_test:2,speaking:3};
+    const labels={quiz:'퀴즈',spelling_test:'철자',spelling_coach:'철자 코치',speaking:'말하기'};
+    const modeClasses={quiz:'vocab-skill-quiz',spelling_test:'vocab-skill-spelling',spelling_coach:'vocab-skill-spelling',speaking:'vocab-skill-pronunciation'};
+    const stepNumbers={quiz:1,spelling_test:2,spelling_coach:2,speaking:3};
     const modeHtml=modes.map(mode=>{
       const m=teacherModeProgress(row,student,mode);
       const complete=m.complete;
@@ -892,24 +1085,35 @@ function renderTeacherAssignments(){
       '</button>';
     }).join('');
     const wordCount=teacherAssignmentWords(row).length;
-    return '<article class="vocab-teacher-card">'+
+    const coachCount=teacherCoachWords(row).length;
+    const coachHtml=coachCount&&!modes.includes('spelling_coach')
+      ?'<button type="button" class="vocab-teacher-optional-coach" data-teacher-coach="'+index+'">'+
+        '<span><strong>철자 코치 <small>선택 연습</small></strong><span>'+coachCount+' words · 힌트와 재도전 · 숙제 완료율에 미반영</span></span>'+
+        '<span class="vocab-teacher-optional-arrow">연습하기 →</span>'+
+      '</button>'
+      :'';
+    return '<article class="vocab-teacher-card'+(focusedHomeworkId?' is-focused':'')+'">'+
       '<div class="vocab-teacher-card-title">'+
-        '<div><strong>'+escapeHtml(a.title||'Vocabulary Practice')+'</strong><small>'+wordCount+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
+        '<div><strong>숙제 / Homework</strong><small>'+wordCount+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+(a.teacher_name?' · 선생님: '+escapeHtml(a.teacher_name):'')+'</small></div>'+
         '<button class="vocab-teacher-words" type="button" data-teacher-words="'+index+'">'+wordCount+' 단어 보기</button>'+
       '</div>'+
-      '<div class="vocab-teacher-modes">'+modeHtml+'</div>'+
+      '<div class="vocab-teacher-modes">'+modeHtml+'</div>'+coachHtml+
     '</article>';
   }).join('');
   teacherPracticeListEl.querySelectorAll('[data-teacher-assignment]').forEach(btn=>btn.addEventListener('click',()=>{
     const row=state.teacherAssignments[Number(btn.dataset.teacherAssignment)];
     if(row)startTeacherAssignment(row,btn.dataset.teacherMode);
   }));
+  teacherPracticeListEl.querySelectorAll('[data-teacher-coach]').forEach(btn=>btn.addEventListener('click',()=>{
+    const row=state.teacherAssignments[Number(btn.dataset.teacherCoach)];
+    if(row)startTeacherAssignment(row,'spelling_coach');
+  }));
   teacherPracticeListEl.querySelectorAll('[data-teacher-words]').forEach(btn=>btn.addEventListener('click',()=>{
     const row=state.teacherAssignments[Number(btn.dataset.teacherWords)];
     if(row)openTeacherWordList(row,btn);
   }));
 }
-async function loadTeacherAssignments({showLoader=true}={}){
+async function loadTeacherAssignments({showLoader=false}={}){
   if(state.adminMode)return[];
   state.teacherAssignmentsLoading=true;
   renderTeacherAssignments();
@@ -917,23 +1121,34 @@ async function loadTeacherAssignments({showLoader=true}={}){
   try{
     const list=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&include_history=1&_='+Date.now());
     const envelopes=await resolveAssignmentBookIds(arr(list.assignments).filter(a=>txt(a?.source_type)==='vocab_study'));
+    // Fetch progress in bounded parallel batches rather than serially.
+    // Preserve original assignment order, and display results as each batch lands.
     const hydrated=[];
-    for(const assignment of envelopes){
+    const fetchProgress=async assignment=>{
       try{
         const row=await api('/.netlify/functions/homework_api?action=vocab_assignment_progress&assignment_id='+encodeURIComponent(assignment.id)+'&_='+Date.now());
-        if(row?.success){
-          row.assignment=Object.assign({},row.assignment||{},{
-            list_meta:assignment.list_meta||{},
-            list_key:assignment.list_key||null,
-            active:assignment.active,
-            ended_at:assignment.ended_at||null,
-            status:assignment.status||row.assignment?.status
-          });
-          hydrated.push(row);
-        }
+        if(!row?.success)return null;
+        row.assignment=Object.assign({},row.assignment||{},{
+          list_meta:assignment.list_meta||{},
+          teacher_name:assignment.teacher_name||row.assignment?.teacher_name||null,
+          list_key:assignment.list_key||null,
+          active:assignment.active,
+          ended_at:assignment.ended_at||null,
+          status:assignment.status||row.assignment?.status
+        });
+        return row;
       }catch(error){
-        console.warn('[Vocab Study] word test assignment unavailable',assignment?.id,error);
+        console.warn('[Vocab Study] homework assignment unavailable',assignment?.id,error);
+        return null;
       }
+    };
+    for(let index=0;index<envelopes.length;index+=4){
+      const batch=await Promise.all(envelopes.slice(index,index+4).map(fetchProgress));
+      hydrated.push(...batch.filter(Boolean));
+      state.teacherAssignments=hydrated.filter(row=>row?.assignment?.active!==false&&!row?.assignment?.ended_at);
+      state.teacherAssignmentHistory=hydrated.filter(row=>row?.assignment?.active===false||!!row?.assignment?.ended_at);
+      state.teacherAssignmentsLoading=false;
+      renderTeacherAssignments();
     }
     state.teacherAssignments=hydrated.filter(row=>row?.assignment?.active!==false&&!row?.assignment?.ended_at);
     state.teacherAssignmentHistory=hydrated.filter(row=>row?.assignment?.active===false||!!row?.assignment?.ended_at);
@@ -957,7 +1172,7 @@ async function loadTeacherAssignments({showLoader=true}={}){
 }
 function teacherTitle(mode){
   const title=txt(state.activeTeacherAssignment?.assignment?.title||'Word Test Study');
-  const suffix={quiz:'Quiz',spelling_test:'Spelling Test',speaking:'Speaking'}[mode]||'Practice';
+  const suffix={quiz:'Quiz',spelling_test:'Spelling Test',spelling_coach:'Spelling Coach',speaking:'Speaking'}[mode]||'Practice';
   return title+' · '+suffix;
 }
 function startTeacherAssignment(row,mode,{historyMode='push'}={}){
@@ -974,6 +1189,7 @@ function startTeacherAssignment(row,mode,{historyMode='push'}={}){
   state.rewardSession=null;
   state.activeTeacherItems=[];
   state.assignedSpellingRecovery=null;
+  state.optionalTeacherCoach=mode==='spelling_coach'&&!arr(row?.assignment?.required_modes).includes('spelling_coach');
   state.activeTeacherAssignment=row;
   state.progressSnapshot=null;
 
@@ -985,9 +1201,10 @@ function startTeacherAssignment(row,mode,{historyMode='push'}={}){
     return;
   }
 
-  const words=teacherRemainingWords(row,mode);
+  const words=mode==='spelling_coach'?(state.optionalTeacherCoach?teacherCoachWords(row):teacherRemainingWords(row,'spelling_coach').map(word=>{const spellingTarget=getSpellingTarget(word.word);return spellingTarget?Object.assign({},word,{spellingTarget}):null}).filter(Boolean)):teacherRemainingWords(row,mode);
   if(!words.length)return;
   if(mode==='spelling_test')openSpellingTest({teacherWords:words,historyMode});
+  else if(mode==='spelling_coach')openSpellingPreview({teacherWords:words,historyMode});
   else if(mode==='speaking')openSpeakingSession({teacherWords:words,historyMode});
 }
 
@@ -1003,6 +1220,7 @@ function startPastTestReview(row,mode,{historyMode='push'}={}){
   state.rewardSession=null;
   state.activeTeacherItems=[];
   state.assignedSpellingRecovery=null;
+  state.optionalTeacherCoach=false;
   state.activeTeacherAssignment=Object.assign({},row,{_reviewOnly:true});
   state.progressSnapshot=null;
 
@@ -1098,17 +1316,21 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
 
   const lexicalId=isUuid(lexicalEntryId)?txt(lexicalEntryId):null;
   const teacherContext=state.activeTeacherAssignment;
-  const teacher=teacherContext?._reviewOnly?null:teacherContext;
+  // Optional Coach is a student practice attempt, NOT an assigned Spelling Test attempt.
+  const optionalCoach=!!state.optionalTeacherCoach&&txt(metadata?.vocab_mode)==='spelling_coach';
+  const teacher=teacherContext?._reviewOnly||optionalCoach?null:teacherContext;
+  const sourceContext=teacher||(optionalCoach?teacherContext:null);
   if(reviewOnly)return;
   const baseMeta=Object.assign({
-    book_id:teacher?(teacher?.assignment?.book_id||null):(state.book?.book_id||null),
-    unit_id:teacher?(teacher?.assignment?.unit_id||null):(state.unit?.id||null),
+    book_id:sourceContext?(sourceContext?.assignment?.list_meta?.source_book_id||sourceContext?.assignment?.book_id||null):(state.book?.book_id||null),
+    unit_id:sourceContext?(sourceContext?.assignment?.list_meta?.source_unit_id||sourceContext?.assignment?.list_meta?.unit_id||sourceContext?.assignment?.unit_id||null):(state.unit?.id||null),
     lexical_entry_id:lexicalId,
     mastery_content_type:'lexical_entry',
     mastery_content_id:lexicalId,
     vocab_study:true,
     points_override:pointValue,
-    assignment_id:teacher?.assignment?.id||null
+    assignment_id:teacher?.assignment?.id||null,
+    optional_assigned_coach:optionalCoach
   },metadata||{});
 
   const recorder=window.WillenaStudyProgress;
@@ -1152,15 +1374,7 @@ async function api(url,opts){
   return d;
 }
 async function whoami(){return api('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now())}
-async function fetchAssignmentsNetwork(className){
-  const r=await fetch(OP_URL+'/rest/v1/rpc/get_study_assignment_for_class',{
-    method:'POST',headers:{apikey:OP_KEY,Authorization:'Bearer '+OP_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({p_class_name:className}),cache:'no-store'
-  });
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok||!d.success)throw new Error(d.error||'Could not load assigned books.');
-  return d;
-}
+const fetchAssignmentsNetwork=fetchClassBookAssignments;
 async function assignments(className){
   const cached=getAssignment(className);
   if(cached){
@@ -1296,7 +1510,7 @@ async function hydrateSecondaryBooks(list,activeBookId){
 async function resolveAssignedBooks(authData){
   const className=txt(authData?.class);if(!className)throw new Error('No active class is assigned.');
   const a=await assignments(className);
-  const list=(Array.isArray(a.assignments)&&a.assignments.length?a.assignments:(a.assignment?[a.assignment]:[])).filter(x=>x&&x.book_id);
+  const list=extractClassBookAssignments(a);
   if(!list.length)throw new Error('No active book is assigned.');
   let wanted='';try{wanted=localStorage.getItem(ACTIVE_BOOK_KEY)||''}catch(_){}
   const fallback=a.assignment&&a.assignment.book_id;
@@ -1329,6 +1543,9 @@ async function selectUnit(id,{updateHistory=true}={}){
     if(loaded){loaded.unit=unit;loaded.items=items}
     try{localStorage.setItem('willena-study-v2-unit:'+state.book.book_id,unit.id)}catch(_){}
     renderHome();
+    // Reconcile 100%-mastered units when revisiting them, in case the
+    // award request was missed during the last session.
+    void checkGoldenUnit();
     if(updateHistory&&state.activeScreen==='book')writeNavigation(currentBookRoute(),'replace');
   }catch(error){
     console.error('[Vocab Study] unit switch',error);
@@ -1448,6 +1665,7 @@ function mergeVocabularyTargets(...groups){
   return [...map.values()];
 }
 function sourceVocabularyActivities(book,unit,items){
+  items=items.map(naturalVocabTarget);
   const out=[],koPool=unique(items.map(x=>x.ko)),enPool=unique(items.map(x=>x.word));
   items.forEach(item=>{
     const koChoices=shuffle(unique([item.ko,...shuffle(koPool.filter(x=>x!==item.ko)).slice(0,3)]));
@@ -1537,7 +1755,7 @@ function unitVocabularyWords(items){
     }
     if(!word||!ko||!/[A-Za-z]/.test(word))return;
     const key=txt(m.lexical_entry_id||item?.sourceId)||(word.toLowerCase()+'|'+ko);
-    if(!map.has(key))map.set(key,{id:key,word,ko});
+    if(!map.has(key))map.set(key,naturalVocabTarget({id:key,word,ko}));
   });
   return [...map.values()];
 }
@@ -1639,6 +1857,57 @@ function scheduleRetry(item){
   const insertAt=Math.min(state.queue.length,state.index+4);
   state.queue.splice(insertAt,0,retry);
 }
+
+// Inline recovery is part of the current question, not a second reward session.
+function startInlineCoach(word, resume){
+  const target=getSpellingTarget(word?.word||'');
+  if(!target){resume();return;}
+  state.inlineCoach={word:Object.assign({},word,{spellingTarget:target}),resume,lastRejectedAnswer:null,submitting:false};
+  renderInlineCoach();
+}
+function renderInlineCoach(){
+  const recovery=state.inlineCoach;if(!recovery)return;
+  enableSpellingKeyboard();
+  const word=recovery.word;
+  instructionEl.hidden=false;
+  instructionEl.textContent='철자 코치 · Spelling Coach — 맞게 쓸 때까지 연습해요.';
+  answerNote.hidden=true;bottomEl.hidden=false;
+  root.innerHTML='<div class="question-card" id="vocabQuestionHost"></div>';
+  const host=el('vocabQuestionHost');
+  state.renderer=new QuestionRenderer(host).render(spellingCoachQuestion(word,0),{
+    onChange:(_,has)=>{
+      const response=txt(state.renderer?.getResponse());
+      actionBtn.disabled=!has||recovery.submitting||recovery.lastRejectedAnswer===response;
+    }
+  });
+  actionBtn.textContent='Check Answer';actionBtn.disabled=true;actionBtn.classList.remove('is-next');
+  const input=host.querySelector('[data-spelling-input]');
+  wireSpellingField(input,{focus:true});
+  sessionMain.scrollTop=0;
+}
+function checkInlineCoach(){
+  const recovery=state.inlineCoach,renderer=state.renderer;
+  if(!recovery||!renderer||recovery.submitting)return;
+  const answer=txt(renderer.getResponse()),word=recovery.word,target=word.spellingTarget;
+  if(!answer)return;
+  if(recovery.lastRejectedAnswer===answer){actionBtn.disabled=true;return;}
+  recovery.submitting=true;
+  actionBtn.disabled=true;
+  const correct=matchesSpellingTarget(answer,target);
+  renderer.showFeedback({correct,correctAnswer:correct?[target]:[],message:correct?'잘했어요! / Good job!':'다시 해보세요. / Try again.'});
+  if(!correct){
+    recovery.lastRejectedAnswer=answer;
+    recovery.submitting=false;
+    actionBtn.disabled=true;
+    playStudentSfx('wrong');
+    return;
+  }
+  playStudentSfx('correct');
+  renderer.setDisabled(true);actionBtn.disabled=true;
+  state.inlineCoach=null;
+  setTimeout(()=>{if(state.inlineCoach===null)recovery.resume()},350);
+}
+
 function checkCurrent(){
   if(state.checked){
     if(Date.now()<state.nextReadyAt)return;
@@ -1693,6 +1962,16 @@ function checkCurrent(){
   actionBtn.classList.add('is-next');
   actionBtn.textContent=state.index>=state.queue.length-1?'Finish':'Next';
   updateProgress();
+  if(!correct){
+    const currentIndex=state.index;
+    const source=state.activeTeacherAssignment?state.activeTeacherItems:state.items;
+    const lexical=source.find(x=>activityKey(x)===key);
+    const word={id:item?.metadata?.lexical_entry_id||item?.sourceId,word:activityWord(lexical||item),ko:item?.metadata?.translation_ko||''};
+    if(word.ko&&word.word)setTimeout(()=>{
+      if(state.index!==currentIndex||sessionEl.hidden||!state.checked)return;
+      startInlineCoach(word,()=>{state.index++;renderQuestion()});
+    },300);
+  }
 }
 function speakingWords(items){
   return unitVocabularyWords(items).map(word=>{
@@ -1709,7 +1988,7 @@ async function openSpeakingSession({teacherWords=null,historyMode='push'}={}){
     }).filter(Boolean));
   }else{
     await ensureProgressSnapshot();
-    words=shuffle(nextSkillTargets(state.progressSnapshot,'speaking',speakingWords(state.items),item=>item?.id,'speaking'));
+    words=state.goldPracticeMode?shuffle(speakingWords(state.items)):shuffle(nextSkillTargets(state.progressSnapshot,'speaking',speakingWords(state.items),item=>item?.id,'speaking'));
   }
   if(!words.length){disableSpellingKeyboard();return}
   state.spellingPractice=null;
@@ -1721,6 +2000,7 @@ async function openSpeakingSession({teacherWords=null,historyMode='push'}={}){
   document.body.classList.add('vocab-session-open');
   writeActivityNavigation('speaking',historyMode);
   renderSpeakingQuestion();
+  if(!state.adminMode)speakingGradesGuide.showOnSessionStart(state.rewardSession?.rewardSessionId||String(Date.now()));
 }
 function speakingQuestion(word,index){
   return{
@@ -1734,10 +2014,13 @@ function speakingQuestion(word,index){
   };
 }
 function renderSpeakingQuestion(){
+  state.aiSpeechUi?.dispose?.();state.aiSpeechUi=null;
+  state.bestSpeakingProgress?.dispose?.();state.bestSpeakingProgress=null;
   const session=state.speakingSession;
   if(!session||session.index>=session.words.length)return finishSpeakingSession();
   if(speakingSkipBtn)speakingSkipBtn.hidden=false;
   const word=session.words[session.index],current=session.index+1,total=session.words.length;
+  session.aiAcceptedTranscript=null;
   session.checked=false;
   progressEl.textContent=current+' / '+total;
   progressFill.style.width=((current-1)/Math.max(1,total)*100)+'%';
@@ -1751,8 +2034,221 @@ function renderSpeakingQuestion(){
   root.innerHTML='<div class="question-card speaking-card" id="vocabQuestionHost"></div>';
   const host=el('vocabQuestionHost');
   state.renderer=new QuestionRenderer(host).render(speakingQuestion(word,session.index),{
-    onChange:(_,has)=>{if(!session.checked)actionBtn.disabled=!has}
+    onChange:(response,has)=>{
+      if(session.checked)return;
+      actionBtn.disabled=!has&&!state.bestSpeakingProgress?.best?.correct;
+      // Renderer.emit() runs whenever a browser speech result is displayed.
+      // Colour from the actual response, rather than relying on a secondary
+      // recognition callback that some browsers do not deliver.
+      const preview=host.querySelector('[data-speaking-transcript]');
+      if(preview){
+        if(!has){delete preview.dataset.accepted;return;}
+        const candidates=state.renderer?.getSpeechAlternatives?.()||[];
+        const heard=candidates.length?candidates:[response];
+        const grade=state.bestSpeakingProgress?.observe(gradeSpeaking(word.speakingTarget||word.word,heard,{mode:'word',exactMatcher:matchSpeakingTarget}),heard)||gradeSpeaking(word.speakingTarget||word.word,heard,{mode:'word',exactMatcher:matchSpeakingTarget});
+        preview.dataset.accepted=grade.level==='green'?'true':grade.level;
+        preview.style.color=({green:'#168345',lime:'#719D19',yellow:'#A87C07',orange:'#B9631A',red:'#cf304c'})[grade.level];
+      }
+    }
   });
+  state.bestSpeakingProgress=createSpeakingBestProgress(host);
+  // Let students hear the target as often as they need without changing
+  // scores, speech transcripts, or their unlimited microphone retries.
+  const speakingControl=host.querySelector('.speaking-control');
+  if(speakingControl){
+    const listenButton=document.createElement('button');
+    listenButton.type='button';
+    listenButton.className='vocab-speaking-listen';
+    const listenLabel=document.createElement('span');
+    listenLabel.className='vocab-speaking-listen-label';
+    listenLabel.textContent='🔊 Listen · 발음 듣기';
+    listenButton.append(listenLabel);
+    listenButton.setAttribute('aria-label','영어 발음 듣기 · Listen to the English word');
+    listenButton.hidden=true;
+    const speakingMic=host.querySelector('[data-speaking-mic]');
+    const expected=word.speakingTarget||word.word;
+    const teacher=state.activeTeacherAssignment;
+    const assignment=teacher?.assignment;
+    session.speechRetryState ||= new Map();
+    const retryKey=word.id||expected;
+    if(!session.speechRetryState.has(retryKey))session.speechRetryState.set(retryKey,{attempts:0,failures:0,aiUsed:false});
+    const retryState=session.speechRetryState.get(retryKey);
+    const questionId=window.crypto?.randomUUID?.();
+    const bookId=assignment?.list_meta?.source_book_id||assignment?.book_id||state.book?.book_id;
+    const unitId=assignment?.list_meta?.source_unit_id||assignment?.list_meta?.unit_id||assignment?.unit_id||state.unit?.id;
+    const adminPreview=state.adminMode;
+    let speakingAttempts=retryState.attempts,failedAttempts=retryState.failures,startedAt=0,browserPending=false;
+    const diagnostic=(event_type,engine,outcome,extra={})=>{
+      if(adminPreview||!questionId||!window.crypto?.randomUUID)return;
+      const event={event_id:window.crypto.randomUUID(),question_id:questionId,
+        lexical_entry_id:word.id,book_id:bookId,
+        unit_id:unitId,
+        assignment_id:assignment?.id||null,target:expected,attempt_no:speakingAttempts,
+        event_type,engine,outcome,...extra};
+      const headers={'Content-Type':'application/json'};
+      const token=window.WillenaAPI?.getLocalAccessToken?.();
+      if(token&&token.length>40)headers.Authorization='Bearer '+token;
+      void fetch('/api/vocab-ai-speech',{method:'POST',credentials:'include',keepalive:true,headers,
+        body:JSON.stringify({action:'diagnostic',event})})
+        .then(r=>{if(!r.ok)console.warn('[Word Genius] speech diagnostic HTTP',r.status)})
+        .catch(()=>{});
+    };
+    const browserDiagnostic=(outcome,grade=null)=>{
+      if(!browserPending)return;
+      browserPending=false;
+      diagnostic('recognition','browser',outcome,{
+        duration_ms:Math.min(180000,Math.max(0,Date.now()-startedAt)),
+        grade_points:grade?.points??null,match_reason:grade?.matchedBy||null});
+      if(outcome==='no_speech'||grade?.points===0){failedAttempts++;retryState.failures=failedAttempts;}
+      else if(grade?.points>0){failedAttempts=0;retryState.failures=0;}
+    };
+    let listenRequired=false;
+    function requireListeningBeforeRetry(){
+      if(listenRequired||session.checked||state.renderer?.host!==host)return;
+      listenRequired=true;
+      diagnostic('listening_required','none','required');
+      if(speakingMic){speakingMic.hidden=true;speakingMic.style.display='none';}
+      listenLabel.innerHTML='<img src="/shared/svgs/headphones.svg?v=20260927-icons1" alt="" aria-hidden="true"> Listen · 발음 듣기';
+      listenButton.hidden=false;
+      host.querySelector('[data-speaking-status]')?.replaceChildren(document.createTextNode('헤드폰을 눌러 정답을 들어 보세요.'));
+    }
+    speakingControl.insertBefore(listenButton,speakingControl.firstChild);
+    const voiceNotice=document.createElement('small');
+    voiceNotice.className='vocab-speaking-ai-voice-notice';
+    voiceNotice.textContent='Voice by AI Willi · AI Willi - 생성 음성';
+    voiceNotice.hidden=true;
+    speakingControl.insertBefore(voiceNotice,listenButton.nextSibling);
+    listenButton.addEventListener('click',async()=>{
+      if(listenButton.disabled)return;
+      try{state.renderer?.speechRecognition?.stop?.()}catch(_){}
+      listenButton.disabled=true;
+      listenButton.classList.add('is-loading');
+      listenButton.setAttribute('aria-busy','true');
+      listenLabel.textContent='🔊 음성 준비 중…';
+      try{
+        const played=await playSpeakingModelAudio(word.speakingTarget||word.word);
+        diagnostic('listening_played','none',played?'played':'unavailable');
+        if(listenRequired&&played&&state.renderer?.host===host&&!session.checked){
+          listenRequired=false;
+          if(speakingMic){speakingMic.hidden=false;speakingMic.style.removeProperty('display');}
+          listenButton.hidden=true;
+          host.querySelector('[data-speaking-status]')?.replaceChildren(document.createTextNode('이제 마이크를 누르고 다시 말해 보세요.'));
+        }
+      }catch(error){console.warn('[Vocab Study] speaking audio failed',error)}
+      finally{
+        listenButton.disabled=false;
+        listenButton.classList.remove('is-loading');
+        listenButton.removeAttribute('aria-busy');
+        if(!listenRequired)listenLabel.textContent='🔊 Listen · 발음 듣기';
+      }
+    });
+    // Prevent the microphone from transcribing our own model playback.
+    host.querySelector('[data-speaking-mic]')?.addEventListener('click',()=>{
+      speakingAudioRequestId++;
+      try{vocabWordAudio?.pause?.()}catch(_){}
+      try{window.speechSynthesis?.cancel?.()}catch(_){}
+    },{capture:true});
+    // Count genuine microphone starts and unsubmitted recognition results.
+    // Keep the retry count when a failed word comes around again.
+    const renderer=state.renderer;
+    host.classList.add('vocab-speech-cues');
+    const recognition=renderer.speechRecognition;
+    const isCurrent=()=>state.speakingSession===session&&!session.checked&&session.words[session.index]===word&&state.renderer===renderer&&!sessionEl.hidden;
+    const waitingCue=createSpeechWaitingCue(()=>isCurrent()&&!document.hidden&&host.querySelector('[data-speaking-status]')?.dataset.speechPhase==='starting');
+    renderer.onSpeechStartRequest=waitingCue.start;
+    renderer.onSpeechReady=({duration_ms,source})=>{
+      waitingCue.stop();
+      if(!isCurrent())return;
+      playSpeechReadyCue();
+      diagnostic('mic_ready','browser',source,{duration_ms:Math.min(180000,duration_ms),attempt_no:speakingAttempts+(browserPending?0:1)});
+    };
+    if(recognition?.addEventListener){
+      recognition.addEventListener('start',()=>{
+        if(!isCurrent())return;
+        speakingAttempts++;retryState.attempts=speakingAttempts;startedAt=Date.now();browserPending=true;
+      });
+      recognition.addEventListener('error',e=>{
+        waitingCue.stop();
+        const code=String(e?.error||'unknown');
+        if(browserPending)browserDiagnostic(code==='no-speech'?'no_speech':'error_'+code);
+        else if(isCurrent())diagnostic('startup_error','browser','error_'+code);
+      });
+      recognition.addEventListener('end',()=>{
+        waitingCue.stop();
+        if(browserPending)browserDiagnostic('no_speech');
+        if(!isCurrent())return;
+        const response=renderer.getResponse();
+        if(String(response||'').trim()){
+          const alternatives=renderer.getSpeechAlternatives?.()||[response];
+          const grade=gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
+          if(grade.points===0&&failedAttempts<2&&!state.bestSpeakingProgress?.best?.correct)requireListeningBeforeRetry();
+        }
+        if(speakingAttempts>=2){
+          listenButton.hidden=false;
+          voiceNotice.hidden=false;
+        }
+      });
+    }
+    const unitKeywords=unique(session.words.map(w=>w.speakingTarget||w.word)).filter(w=>w!==expected).slice(0,15);
+    state.aiSpeechUi=attachSilentAISpeaking({
+      host,target:expected,keywords:unitKeywords,isCurrent,
+      shouldAssist:()=>failedAttempts>=2&&!retryState.aiUsed&&!browserPending&&!state.bestSpeakingProgress?.best?.correct,
+      onStart:()=>{waitingCue.start();retryState.aiUsed=true;speakingAttempts++;retryState.attempts=speakingAttempts;},
+      onReady:({duration_ms,source})=>{
+        waitingCue.stop();
+        if(!isCurrent())return;
+        playSpeechReadyCue();
+        diagnostic('mic_ready','openai',source,{duration_ms:Math.min(180000,duration_ms)});
+      },
+      callApi:callVocabSpeechAI,
+      onDiagnostic:({outcome,transcript,duration_ms})=>{
+        waitingCue.stop();
+        const grade=transcript?gradeSpeaking(expected,[transcript],{mode:'word',exactMatcher:matchSpeakingTarget}):null;
+        diagnostic('ai_check','openai',outcome,{attempt_no:speakingAttempts,duration_ms,
+          grade_points:grade?.points??null,match_reason:grade?.matchedBy||null});
+      },
+      onResult:transcript=>{
+        if(!isCurrent())return;
+        const matched=matchSpeakingTarget(expected,[transcript]);
+        session.aiAcceptedTranscript=transcript;
+        renderer.state.speakingTranscript=transcript;
+        renderer.state.speakingAlternatives=[transcript];
+        const preview=host.querySelector('[data-speaking-transcript]');
+        if(preview){preview.hidden=false;preview.textContent='“'+transcript+'”';}
+        renderer.emit();
+        // Only independently matched exact/true homophone answers auto-submit.
+        if(matched.correct&&['exact','spacing','homophone','in_sentence','in_sentence_homophone','numeric_equivalent'].includes(matched.matchedBy))checkSpeaking();
+      }
+    });
+    // Dispose both audio paths on navigation, skip, or the next question.
+    const speechUi=state.aiSpeechUi;
+    state.aiSpeechUi={...speechUi,dispose(){waitingCue.stop();speechUi.dispose();}};
+    // Show acceptance before the student presses Check Answer.
+    // Use exactly the same matcher as scoring, including full-word matches
+    // inside sentences, so the preview never contradicts the result.
+    const transcriptEl=host.querySelector('[data-speaking-transcript]');
+    const updateSpeakingPreview=alternatives=>{
+      if(session.checked||state.renderer!==renderer)return;
+      const grade=state.bestSpeakingProgress?.observe(gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget}),alternatives)||gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
+      if(transcriptEl){
+        transcriptEl.style.color=({green:'#168345',lime:'#719D19',yellow:'#A87C07',orange:'#B9631A',red:'#cf304c'})[grade.level];
+        transcriptEl.style.borderColor=({green:'#77c99a',lime:'#B5DB70',yellow:'#F1D079',orange:'#F3B477',red:'#efa4ae'})[grade.level];
+        transcriptEl.setAttribute('data-accepted',grade.level==='green'?'true':grade.level);
+      }
+    };
+    renderer.onSpeechResult=alternatives=>{
+      waitingCue.stop();
+      updateSpeakingPreview(alternatives);
+      browserDiagnostic('result',gradeSpeaking(expected,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget}));
+    };
+    host.querySelector('[data-speaking-mic]')?.addEventListener('click',()=>{
+      // The next recording may be worse; keep the best grade and progress visible.
+      state.bestSpeakingProgress?.render();
+    });
+  }
+  // Prepare a small window in the background while students try the normal mic.
+  // Silent preload does not show the target or play anything.
+  scheduleSpeakingAudioPrefetch(session);
   state.questionStartedAt=Date.now();
   sessionMain.scrollTop=0;
 }
@@ -1765,48 +2261,68 @@ function checkSpeaking(){
     return;
   }
   const word=session.words[session.index];
-  const response=txt(renderer.getResponse());if(!response)return;
+  const response=txt(renderer.getResponse())||state.bestSpeakingProgress?.best?.transcript||'';if(!response)return;
   const target=word.speakingTarget||word.word;
   const alternatives=renderer.getSpeechAlternatives?.()||[response];
-  const match=matchSpeakingTarget(target,alternatives);
-  const correct=!!match.correct;
+  const match=state.bestSpeakingProgress?.observe(gradeSpeaking(target,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget}),alternatives)||gradeSpeaking(target,alternatives,{mode:'word',exactMatcher:matchSpeakingTarget});
+  const aiFallback=!!session.aiAcceptedTranscript&&session.aiAcceptedTranscript===response;
+  const correct=match.points>=1;
+  const savedAlternatives=state.bestSpeakingProgress?.best?.alternatives?.length?state.bestSpeakingProgress.best.alternatives:alternatives;
+  const savedResponse=correct?(match.transcript||response):response;
   const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0);
   session.results.push({
     lexicalEntryId:word.id||null,
     word:target,
     ko:word.ko,
-    response,
-    alternatives,
+    response:savedResponse,
+    alternatives:savedAlternatives,
     correct,
+    gradePoints:match.points,
+    gradeLevel:match.level,
     matchedBy:match.matchedBy
   });
-  recordVocabAttempt({
+  try{recordVocabAttempt({
     skill:'speaking',
     responseType:'speech',
     lexicalEntryId:word.id,
     activityId:'vocab-speaking-'+word.id,
     prompt:word.ko,
-    studentAnswer:response,
+    studentAnswer:savedResponse,
     correctAnswer:target,
     correct,
     metadata:{
-      stt_alternatives:alternatives,
+      stt_alternatives:savedAlternatives,
       stt_match:match.matchedBy||null,
+      speaking_grade_points:match.points,
+      speaking_grade_level:match.level,
+      stt_source:aiFallback?'openai_ai_fallback':'browser',
       vocab_mode:'speaking',
       recorded_from:'vocab-study-speaking'
     },
     retryCount,
     attemptNumber:retryCount+1,
     sessionSource:'student'
-  });
+  });}catch(error){console.error('[Vocab Study] speaking attempt recording failed; allowing question navigation',error);}
   if(repeatUntilCorrect(correct))appendRetry(session.words,word);
   playStudentSfx(correct?'correct':'wrong');
-  renderer.setDisabled(true);
-  renderer.showFeedback({
-    correct,
-    correctAnswer:[target],
-    message:correct?'정답입니다!':'다시 확인해 보세요.'
-  });
+  try{
+    renderer.setDisabled(true);
+    renderer.showFeedback({
+      correct,
+      correctAnswer:[target],
+      message:match.points===4?'정답입니다! +4':match.points===3?'좋아요! 거의 맞았어요. +3':match.points===2?'잘했어요! 조금 더 연습해요. +2':match.points===1?'좋아요! 조금 알아들었어요. +1':'다시 확인해 보세요.'
+    });
+  }catch(error){console.warn('[Vocab Study] speaking feedback rendering failed',error);}
+  // Once speaking is accepted, display the textbook's target phrase rather than
+  // the speech recognizer's spelling (e.g. "so a button" → "sew a button").
+  // The raw transcript is already stored above for tracking/debugging.
+  if(correct){
+    const transcriptEl=renderer.host?.querySelector('[data-speaking-transcript]');
+    if(transcriptEl){
+      transcriptEl.hidden=false;
+      transcriptEl.textContent='“'+target+'”';
+    }
+  }
   session.checked=true;
   actionBtn.disabled=false;
   actionBtn.classList.add('is-next');
@@ -1844,30 +2360,48 @@ async function finishSpeakingSession(){
   playStudentSfx('complete');
   if(speakingSkipBtn)speakingSkipBtn.hidden=true;
   const session=state.speakingSession;
-  const passed=uniquePassedCount(session?.results);
-  const total=session?.initialTotal||0;
-  const skipped=(session?.results||[]).filter(result=>result?.skipped).length;
-  const retries=wrongAttemptCount((session?.results||[]).filter(result=>!result?.skipped));
-  const reward=await completeRewardSession();
+  const summary=summarizeSpeakingSession(session);
+  // Completion and pronunciation energy are separate. Only this session's
+  // accepted grades and retries contribute to the student-facing energy bar.
+  const reward=state.rewardSession;
+  void completeRewardSession().catch(error=>console.warn('[Vocab Study] background completion failed',error));
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   instructionEl.hidden=true;
   answerNote.hidden=true;
   bottomEl.hidden=true;
+  const hardest=summary.hardestWord;
   root.innerHTML=
-    '<section class="vocab-finish">'+
+    '<section class="vocab-finish vocab-speaking-finish">'+
       '<span class="eyebrow">SPEAKING COMPLETE</span>'+
-      '<h2>'+passed+' / '+total+'</h2>'+
-      '<p>틀린 단어는 맞힐 때까지 다시 말해 봤어요.</p>'+
-      '<div class="vocab-finish-stats">'+
-        '<div><strong>'+passed+' / '+total+'</strong><span>PASSED</span></div>'+
-        '<div><strong>'+retries+'</strong><span>RETRIES</span></div>'+
-        '<div><strong>'+skipped+'</strong><span>SKIPPED</span></div>'+
+      '<h2>Great speaking!</h2>'+
+      '<div class="vocab-pronunciation-panel" aria-label="Pronunciation practice score">'+
+        '<div class="vocab-pronunciation-heading"><span>PRONUNCIATION ENERGY</span>'+
+          '<strong>'+summary.score+'%</strong></div>'+
+        '<div class="vocab-pronunciation-energy" role="progressbar" aria-label="Pronunciation energy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+summary.score+'">'+
+          '<div class="vocab-pronunciation-energy-fill" style="width:'+summary.score+'%"></div>'+
+        '</div>'+
+        (hardest?
+          '<div class="vocab-pronunciation-hardest">'+
+            '<div class="vocab-pronunciation-hardest-copy"><span>LET\'S PRACTICE AGAIN</span>'+
+              '<strong>'+escapeHtml(hardest)+'</strong></div>'+
+            '<button type="button" id="vocabHardestWordListen" class="vocab-pronunciation-listen" aria-label="Listen to '+escapeHtml(hardest)+'">'+
+              '<span aria-hidden="true">▶</span> Listen</button>'+
+          '</div>':
+          '<div class="vocab-pronunciation-perfect">Wonderful! No tricky words this time.</div>')+
       '</div>'+
       rewardSummaryHtml(reward)+
       goldenAwardHtml()+
       '<div class="vocab-finish-actions"><button id="vocabSpeakingDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
+  const listen=el('vocabHardestWordListen');
+  listen?.addEventListener('click',async()=>{
+    if(listen.disabled)return;
+    listen.disabled=true;listen.setAttribute('aria-busy','true');
+    try{await playSpeakingModelAudio(hardest)}
+    catch(error){console.warn('[Vocab Study] hardest word playback failed',error)}
+    finally{if(listen.isConnected){listen.disabled=false;listen.removeAttribute('aria-busy')}}
+  });
   el('vocabSpeakingDone')?.addEventListener('click',closeSession);
   sessionMain.scrollTop=0;
 }
@@ -1911,7 +2445,7 @@ function browserTtsWord(text){
   }
 }
 
-async function playPreviewWord(word){
+async function playPreviewWord(word,{rate=1}={}){
   const text=txt(word);
   if(!text)return false;
 
@@ -1937,6 +2471,7 @@ async function playPreviewWord(word){
     }
 
     const audio=new Audio(objectUrl);
+    audio.playbackRate=Math.max(.65,Math.min(1.25,rate));
     vocabWordAudio=audio;
     await audio.play();
     audio.addEventListener('ended',()=>{if(vocabWordAudio===audio)vocabWordAudio=null},{once:true});
@@ -1947,6 +2482,110 @@ async function playPreviewWord(word){
   }
 }
 
+// OpenAI Shimmer listening, played at the source's normal speed.
+const speakingModelAudioCache=createSpeakingAudioCache(text=>callVocabSpeechAI({action:'listen',text}));
+let speakingAudioRequestId=0;
+async function callVocabSpeechAI(body){
+  const endpoint='/api/vocab-ai-speech';
+  // All calls stay on the student Pages origin. Browser STT needs no AI request.
+  const postOnce=()=>{
+    const headers={'Content-Type':'application/json'};
+    const accessToken=window.WillenaAPI?.getLocalAccessToken?.();
+    if(accessToken&&accessToken.length>40)headers.Authorization='Bearer '+accessToken;
+    return fetch(endpoint,{
+      method:'POST',headers,credentials:'include',cache:'no-store',
+      body:JSON.stringify(body),signal:AbortSignal.timeout(35000)
+    });
+  };
+  async function diagnoseNetwork(error){
+    let route='probe_not_reached';
+    try{
+      // The existing unauthenticated health check has no audio or user data.
+      const check=await fetch(endpoint,{method:'GET',credentials:'same-origin',cache:'no-store',
+        signal:AbortSignal.timeout(6500)});
+      const info=await check.json().catch(()=>null);
+      route=check.status+'_'+(info?.service==='vocab-ai-speech'?'ai_route':'unexpected_route');
+      if(info?.service==='vocab-ai-speech'&&!info?.configured)route+='_unconfigured';
+    }catch(probeError){route='probe_failed_'+String(probeError?.name||'network')}
+    const detail=(error?.name||'TypeError')+': '+(error?.message||'Failed to fetch');
+    const online=navigator.onLine===false?'offline':'online_unknown';
+    const issue=new Error('AI POST connection failed ('+online+', '+route+') · '+detail);
+    console.warn('[Word Genius] AI endpoint transport failure',{route,online,error:String(error?.message||error)});
+    return issue;
+  }
+  async function postWithRetry(){
+    try{return await postOnce()}
+    catch(firstError){
+      // A short mobile-network interruption should not consume an AI chance.
+      await new Promise(resolve=>setTimeout(resolve,650));
+      try{return await postOnce()}
+      catch(secondError){throw await diagnoseNetwork(secondError)}
+    }
+  }
+  let response=await postWithRetry();
+  if(response.status===401){
+    try{
+      const refresh=await (window.WillenaAPI?.fetch
+        ?window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'})
+        :fetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'}));
+      const data=await refresh.json().catch(()=>null);
+      if(refresh.ok&&data?.success){
+        if(data?.access_token)window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');
+        response=await postWithRetry();
+      }
+    }catch(error){console.warn('[Word Genius] AI session refresh unavailable',error?.message||error);throw error}
+  }
+  const result=await response.json().catch(()=>null);
+  if(!response.ok||result?.success!==true){
+    const code=result?.error_code?' ['+String(result.error_code).slice(0,60)+']':'';
+    throw new Error((result?.error||'AI speech server unavailable')+' (HTTP '+response.status+')'+code);
+  }
+  return result;
+}
+function femaleBrowserVoice(text){
+  if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return false;
+  const voices=speechSynthesis.getVoices();
+  const female=/\b(samantha|zira|ava|jenny|aria|susan|victoria|allison|joanna|kendra|female|shimmer|nova)\b/i;
+  const voice=voices.find(v=>/^en[-_]US$/i.test(v.lang)&&female.test(v.name));
+  if(!voice)return false;
+  try{
+    speechSynthesis.cancel();
+    const utterance=new SpeechSynthesisUtterance(cleanBrowserTtsText(text));
+    utterance.lang='en-US';utterance.voice=voice;utterance.rate=1;
+    speechSynthesis.speak(utterance);return true;
+  }catch(_){return false}
+}
+function scheduleSpeakingAudioPrefetch(session){
+  const index=session.index;
+  setTimeout(()=>{
+    if(state.speakingSession!==session||sessionEl.hidden||session.index!==index)return;
+    const windowOfWords=session.words.slice(index,index+3)
+      .map(word=>word.speakingTarget||word.word).filter(Boolean);
+    speakingModelAudioCache.prefetch(windowOfWords);
+  },250);
+}
+async function playSpeakingModelAudio(word){
+  const text=txt(word);
+  if(!text)return false;
+  const requestId=++speakingAudioRequestId;
+  try{vocabWordAudio?.pause?.();window.speechSynthesis?.cancel?.()}catch(_){}
+  try{
+    // A background prefetch and a click share exactly the same in-flight request.
+    const cached=await speakingModelAudioCache.get(text);
+    if(requestId!==speakingAudioRequestId)return false;
+    const audio=new Audio(cached.url);
+    audio.playbackRate=1;
+    vocabWordAudio=audio;
+    await audio.play();
+    audio.addEventListener('ended',()=>{if(vocabWordAudio===audio)vocabWordAudio=null},{once:true});
+    return true;
+  }catch(error){
+    if(requestId!==speakingAudioRequestId)return false;
+    console.warn('[Vocab Study] Shimmer listening unavailable; fallback',error?.message||error);
+    if(femaleBrowserVoice(text))return true;
+    return playPreviewWord(text,{rate:1});
+  }
+}
 window.WillenaPlayWordAudio=playPreviewWord;
 function createSpellingPractice(words){
   return{words,index:0,currentAttemptCount:0,attempts:[],results:[],initialTotal:words.length};
@@ -2031,7 +2670,7 @@ async function openSpellingTest({teacherWords=null,historyMode=null}={}){
     }).filter(Boolean));
   }else{
     await ensureProgressSnapshot();
-    words=shuffle(nextSkillTargets(state.progressSnapshot,'spelling',spellingTestWords(state.items),item=>item?.id,'spelling_test'));
+    words=state.goldPracticeMode?spellingTestWords(state.items):shuffle(nextSkillTargets(state.progressSnapshot,'spelling',spellingTestWords(state.items),item=>item?.id,'spelling_test'));
   }
   if(!words.length)return;
   state.speakingSession=null;
@@ -2083,9 +2722,12 @@ function renderSpellingTestQuestion(){
   state.questionStartedAt=Date.now();
   const spellingInput=host.querySelector('[data-write]');
   wireSpellingField(spellingInput,{focus:true});
+  const skip=document.createElement('button');skip.type='button';skip.className='vocab-review-btn';
+  skip.textContent='건너뛰기 / Skip';skip.style.marginTop='12px';
+  skip.addEventListener('click',()=>checkSpellingTest(true));host.appendChild(skip);
   sessionMain.scrollTop=0;
 }
-function checkSpellingTest(){
+function checkSpellingTest(skipped=false){
   const test=state.spellingTest,renderer=state.renderer;
   if(!test||!renderer)return;
   if(test.checked){
@@ -2095,9 +2737,9 @@ function checkSpellingTest(){
   }
   const word=test.words[test.index];
   const response=txt(renderer.getResponse());
-  if(!response)return;
+  if(!response&&!skipped)return;
   const target=word.spellingTarget||word.word;
-  const correct=response.toLowerCase()===target.toLowerCase();
+  const correct=!skipped&&matchesSpellingTarget(response,target);
   const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0);
   test.results.push({lexicalEntryId:word.id||null,word:target,ko:word.ko,response,correct});
   recordVocabAttempt({
@@ -2130,9 +2772,19 @@ function checkSpellingTest(){
   actionBtn.disabled=false;
   actionBtn.classList.add('is-next');
   actionBtn.textContent=test.index>=test.words.length-1?'Finish':'Next';
+  if(!correct){
+    const currentIndex=test.index;
+    setTimeout(()=>{
+      if(state.spellingTest!==test||test.index!==currentIndex||sessionEl.hidden)return;
+      startInlineCoach(word,()=>{test.index++;renderSpellingTestQuestion()});
+    },300);
+  }
 }
 function assignedSpellingWrongWords(test){
-  const wrongIds=new Set(arr(test?.results).filter(result=>result&&!result.correct).map(result=>txt(result.lexicalEntryId)).filter(Boolean));
+  // A successful independent retry in this session clears recovery status.
+  const latestById=new Map();
+  arr(test?.results).forEach(result=>{const id=txt(result?.lexicalEntryId);if(id)latestById.set(id,!!result.correct)});
+  const wrongIds=new Set([...latestById].filter(([,correct])=>!correct).map(([id])=>id));
   if(!wrongIds.size)return[];
   const seen=new Set();
   return arr(test?.words).filter(word=>{
@@ -2175,7 +2827,9 @@ async function finishSpellingTest(){
   const total=test?.initialTotal||0;
   const retries=wrongAttemptCount(test?.results);
   const assignedWrongWords=state.activeTeacherAssignment?assignedSpellingWrongWords(test):[];
-  const reward=await completeRewardSession();
+  // Render completion immediately: server saves and teacher/gold refreshes must never trap a child on the last question.
+  const reward=state.rewardSession;
+  void completeRewardSession().catch(error=>console.warn('[Vocab Study] background completion failed',error));
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   instructionEl.hidden=true;
@@ -2205,11 +2859,20 @@ async function finishSpellingTest(){
   sessionMain.scrollTop=0;
 }
 
-async function openSpellingPreview({historyMode='replace'}={}){
-  await ensureProgressSnapshot();
-  const words=nextSkillTargets(state.progressSnapshot,'spelling',spellingPreviewWords(state.items),item=>item?.id,'spelling_coach');if(!words.length)return;
+async function openSpellingPreview({teacherWords=null,historyMode='replace'}={}){
+  let words;
+  if(Array.isArray(teacherWords)){
+    words=shuffle(teacherWords.map(word=>{
+      const spellingTarget=getSpellingTarget(word.word);
+      return spellingTarget?Object.assign({},word,{spellingTarget}):null;
+    }).filter(Boolean));
+  }else{
+    await ensureProgressSnapshot();
+    words=state.goldPracticeMode?spellingPreviewWords(state.items):nextSkillTargets(state.progressSnapshot,'spelling',spellingPreviewWords(state.items),item=>item?.id,'spelling_coach');
+  }
+  if(!words.length)return;
   state.spellingPractice=createSpellingPractice(words);
-  titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling';
+  titleEl.textContent=state.optionalTeacherCoach?teacherTitle('spelling_coach'):(state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling');
   progressEl.textContent='Practice';
   progressFill.style.width='0%';
   instructionEl.hidden=true;
@@ -2219,8 +2882,7 @@ async function openSpellingPreview({historyMode='replace'}={}){
   root.innerHTML=
     '<section class="practice-panel vocab-coach-preview">'+
       '<div class="practice-toolbar vocab-coach-toolbar">'+
-        '<div class="vocab-coach-heading"><span class="eyebrow">SPELLING COACH</span><h2>단어를 보고 들어보세요</h2><small class="section-note">힌트를 쓴 단어는 마지막에 한 번 더 해요.</small></div>'+
-        '<button id="vocabStartSpelling" class="vocab-coach-start" type="button">Start Coach</button>'+
+        '<button id="vocabStartSpelling" class="vocab-coach-start" type="button">시작</button>'+
       '</div>'+
       '<div class="lesson-word-grid vocab-coach-word-grid">'+
         words.map((w,i)=>
@@ -2268,6 +2930,9 @@ function renderSpellingCoach(){
   const practice=state.spellingPractice;
   if(!practice||practice.index>=practice.words.length)return finishSpellingPractice();
   const word=practice.words[practice.index];
+  // A new prompt may be answered once; retrying requires a changed response.
+  practice.lastRejectedAnswer=null;
+  practice.submitting=false;
   const current=practice.index+1,total=practice.words.length;
   progressEl.textContent=current+' / '+total;
   progressFill.style.width=((current-1)/Math.max(1,total)*100)+'%';
@@ -2280,7 +2945,10 @@ function renderSpellingCoach(){
   root.innerHTML='<div class="question-card" id="vocabQuestionHost"></div>';
   const host=el('vocabQuestionHost');
   state.renderer=new QuestionRenderer(host).render(spellingCoachQuestion(word,practice.index),{
-    onChange:(_,has)=>{actionBtn.disabled=!has}
+    onChange:(_,has)=>{
+      const response=txt(state.renderer?.getResponse());
+      actionBtn.disabled=!has||practice.submitting||practice.lastRejectedAnswer===response;
+    }
   });
   state.questionStartedAt=Date.now();
   const spellingInput=host.querySelector('[data-spelling-input]');
@@ -2292,12 +2960,19 @@ function renderSpellingCoach(){
 }
 function checkSpellingCoach(){
   const practice=state.spellingPractice,renderer=state.renderer;
-  if(!practice||!renderer)return;
+  if(!practice||!renderer||practice.submitting)return;
   const word=practice.words[practice.index];
+  if(!word)return;
   const response=txt(renderer.getResponse());
   if(!response)return;
+  if(practice.lastRejectedAnswer===response){
+    actionBtn.disabled=true;
+    return;
+  }
+  practice.submitting=true;
+  actionBtn.disabled=true;
   const target=word.spellingTarget||word.word;
-  const correct=response.toLowerCase()===target.toLowerCase();
+  const correct=matchesSpellingTarget(response,target);
   const result=recordSpellingAttempt(practice,word,renderer,correct);
   const supportLevel=Number(result?.supportLevel||0);
   const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0)+Math.max(0,Number(result?.attemptCount||1)-1);
@@ -2324,8 +2999,12 @@ function checkSpellingCoach(){
     sessionSource:'student'
   });
   if(!correct){
+    practice.lastRejectedAnswer=response;
+    practice.submitting=false;
     playStudentSfx('wrong');
     renderer.showFeedback({correct:false,correctAnswer:[],message:'다시 해보세요.'});
+    // Keep Check disabled until the student edits the wrong answer.
+    actionBtn.disabled=true;
     return;
   }
   if(flow.repeat)appendRetry(practice.words,word);
@@ -2343,6 +3022,18 @@ async function finishSpellingPractice(){
   playStudentSfx('complete');
   disableSpellingKeyboard();
   const practice=state.spellingPractice;
+  const assignedCoach=!!state.activeTeacherAssignment&&!state.optionalTeacherCoach&&arr(state.activeTeacherAssignment?.assignment?.required_modes).includes('spelling_coach');
+  if(assignedCoach){
+    // Persist/refresh in the background so the Coach finish screen cannot hang on the network.
+    const teacherAssignment=state.activeTeacherAssignment;
+    void (async()=>{
+      try{
+        await Promise.allSettled([...state.pendingTeacherRecords]);
+        await loadTeacherAssignments({showLoader:false});
+        await checkTeacherGoldenUnit(teacherAssignment);
+      }catch(error){console.warn('[Vocab Study] assigned Coach completion refresh failed',error);}
+    })();
+  }
   const passedIds=new Set(arr(practice?.results).filter(r=>Number(r.supportLevel||0)===0).map(r=>txt(r.lexicalEntryId||r.word)).filter(Boolean));
   const supported=arr(practice?.results).filter(r=>Number(r.supportLevel||0)>0).length;
   const wrongs=arr(practice?.attempts).filter(r=>!r.correct).length;
@@ -2366,7 +3057,7 @@ async function finishSpellingPractice(){
         '<div><strong>'+supported+'</strong><span>HELPED</span></div>'+
         '<div><strong>'+wrongs+'</strong><span>RETRIES</span></div>'+
       '</div>'+
-      rewardSummaryHtml(reward,{pointsOnly:true})+
+      rewardSummaryHtml(reward,{pointsOnly:true})+goldenAwardHtml()+
       '<div class="vocab-finish-actions">'+
         (state.assignedSpellingRecovery?'<button id="vocabAssignedSpellRetry" class="vocab-review-btn" type="button">틀린 단어 다시 시험</button>':'')+
         '<button id="vocabSpellingDone" class="vocab-done-btn" type="button">Finish</button>'+
@@ -2381,9 +3072,10 @@ async function startSession(items=null,{teacher=false,historyMode='push'}={}){
   let source=items&&items.length?items:null;
   if(!source){
     await ensureProgressSnapshot();
-    source=nextSkillTargets(state.progressSnapshot,'vocabulary',state.items,activityKey,'quiz');
+    source=state.goldPracticeMode?state.items:nextSkillTargets(state.progressSnapshot,'vocabulary',state.items,activityKey,'quiz');
   }
   if(!source.length)return;
+  state.inlineCoach=null;
   state.queue=buildSession(source);
   startRewardSession('quiz');
   state.index=0;state.outcomes=new Map();state.reviewKeys=new Set();state.retryCounts=new Map();
@@ -2401,51 +3093,51 @@ function reviewSession(){
 }
 async function finishSession(){
   playStudentSfx('complete');
-  const reward=await completeRewardSession();
+  // Render completion immediately: server saves and teacher/gold refreshes must never trap a child on the last question.
+  const reward=state.rewardSession;
+  void completeRewardSession().catch(error=>console.warn('[Vocab Study] background completion failed',error));
   progressFill.style.width='100%';
   progressEl.textContent='완료';
   bottomEl.hidden=true;
   const studied=[...state.outcomes.keys()];
   const review=[...state.reviewKeys];
   const solid=Math.max(0,studied.length-review.length);
+  // Assigned quizzes use their own question set, not the current book unit.
+  // Otherwise a lexical UUID appears as the review label when the unit differs.
+  const reviewSource=state.activeTeacherAssignment?state.activeTeacherItems:state.items;
   const reviewWords=review.map(key=>{
-    const item=state.items.find(x=>activityKey(x)===key);
-    return item?activityWord(item):key;
+    const item=reviewSource.find(x=>activityKey(x)===key)||state.queue.find(x=>activityKey(x)===key);
+    if(item)return activityWord(item);
+    const target=arr(state.activeTeacherAssignment?.targets).find(x=>String(x?.lexical_entry_id)===String(key));
+    return txt(target?.english)||'Review word';
   }).filter(Boolean);
   questionStage.hidden=false;
   instructionEl.hidden=true;
   instructionEl.textContent='';
-  root.innerHTML=
-    '<section class="vocab-finish">'+
-      '<span class="eyebrow">SESSION COMPLETE</span>'+
-      '<h2>잘했어요!</h2>'+
-      '<p>이번 단어 학습이 끝났어요.</p>'+
-      '<div class="vocab-finish-stats">'+
-        '<div><strong>'+studied.length+'</strong><span>STUDIED</span></div>'+
-        '<div><strong>'+solid+'</strong><span>SOLID</span></div>'+
-        '<div><strong>'+review.length+'</strong><span>REVIEW</span></div>'+
-      '</div>'+
-      rewardSummaryHtml(reward)+
-      goldenAwardHtml()+
-      (reviewWords.length?'<div class="vocab-review-words"><strong>한 번 더 볼 단어</strong><br>'+reviewWords.map(escapeHtml).join(' · ')+'</div>':'')+
-      '<div class="vocab-finish-actions">'+
-        (reviewWords.length?'<button id="vocabReviewAgain" class="vocab-review-btn" type="button">Review '+reviewWords.length+'</button>':'')+
-        '<button id="vocabDone" class="vocab-done-btn" type="button">Finish</button>'+
-      '</div>'+
-    '</section>';
+  root.innerHTML=renderStudentSessionFinish({
+    title:'잘했어요!',
+    description:'이번 단어 학습이 끝났어요.',
+    stats:[{value:studied.length,label:'STUDIED'},{value:solid,label:'SOLID'},{value:review.length,label:'REVIEW'}],
+    rewardHtml:rewardSummaryHtml(reward),
+    goldHtml:goldenAwardHtml(),
+    reviewHtml:reviewWords.length?'<div class="vocab-review-words"><strong>한 번 더 볼 단어</strong><br>'+reviewWords.map(escapeHtml).join(' · ')+'</div>':'',
+    actionsHtml:(reviewWords.length?'<button id="vocabReviewAgain" class="vocab-review-btn" type="button">Review '+reviewWords.length+'</button>':'')+
+      '<button id="vocabDone" class="vocab-done-btn" type="button">Finish</button>'
+  });
   answerNote.hidden=true;
   el('vocabReviewAgain')?.addEventListener('click',reviewSession);
   el('vocabDone')?.addEventListener('click',closeSession);
   sessionMain.scrollTop=0;
 }
 async function closeSession({historyMode='back'}={}){
+  state.aiSpeechUi?.dispose?.();state.aiSpeechUi=null;
   disableSpellingKeyboard();
   if(speakingSkipBtn)speakingSkipBtn.hidden=true;
   if(historyMode==='back'&&navController?.current?.().screen==='activity'){
     navController.back(activityParentFromRoute(navController.current()));
     return;
   }
-  const wasTeacher=!!state.activeTeacherAssignment&&!state.activeTeacherAssignment?._reviewOnly;
+  const wasTeacher=!!state.activeTeacherAssignment&&!state.activeTeacherAssignment?._reviewOnly&&!state.optionalTeacherCoach;
   document.body.classList.remove('vocab-session-open');
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
   if(state.renderer?.setDisabled)state.renderer.setDisabled(true);
@@ -2454,14 +3146,18 @@ async function closeSession({historyMode='back'}={}){
     try{await Promise.allSettled([...state.pendingTeacherRecords])}catch(_){}
   }
   if(wasTeacher){
-    try{await loadTeacherAssignments()}catch(error){console.warn('[Vocab Study] partial homework refresh failed',error)}
+    try{await loadTeacherAssignments({showLoader:false})}catch(error){console.warn('[Vocab Study] partial homework refresh failed',error)}
   }
 
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];state.assignedSpellingRecovery=null;
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.inlineCoach=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];state.assignedSpellingRecovery=null;state.optionalTeacherCoach=false;state.goldPracticeMode=false;state.inlineCoach=null;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
   let bootLoaderReleased=false;
+  const deepLinkAssignmentId=focusedHomeworkId;
+  const openWordTestRequested=(()=>{
+    try{return new URLSearchParams(location.search).get('open')==='wordtest'}catch(_){return false}
+  })();
   beginVocabLoading('단어 지니어스를 준비하는 중...');
   try{
     wireShellNavigation();
@@ -2499,23 +3195,46 @@ async function boot(){
 
       // The app is usable now. Do not block the whole UI on secondary
       // books or teacher Word Test hydration.
-      endVocabLoading();
+      // Keep the cover over focused homework until the correct assignment is
+      // hydrated and visible. Normal Word Genius startup stays unchanged.
+      if(!deepLinkAssignmentId)endVocabLoading();
       bootLoaderReleased=true;
 
       hydrateSecondaryBooks(resolved.deferredAssignments,state.book.book_id);
       background(async()=>{
-        await loadTeacherAssignments({showLoader:false});
-        renderFrontMenu();
+        try{
+          await loadTeacherAssignments({showLoader:false});
+          renderFrontMenu();
+          if((openWordTestRequested||deepLinkAssignmentId)&&state.activeScreen==='home'){
+            openWordTestScreen({historyMode:'replace'});
+          }
+        }catch(error){
+          console.warn('[Vocab Study] homework startup',error);
+          if(deepLinkAssignmentId){
+            openWordTestScreen({historyMode:'replace'});
+            const notice=document.createElement('p');
+            notice.setAttribute('role','alert');
+            notice.textContent='숙제를 불러오지 못했어요. 모든 숙제를 확인하거나 다시 시도해 주세요.';
+            notice.className='vocab-focused-load-error';
+            wordTestScreenEl?.prepend(notice);
+          }
+        }finally{
+          if(deepLinkAssignmentId){
+            document.documentElement.classList.remove('vocab-focused-boot');
+            endVocabLoading();
+          }
+        }
       },'teacher word tests');
     }
-    startBtn.addEventListener('click',()=>startSession());
-    spellingPreviewBtn?.addEventListener('click',openSpellingMenu);
-    pronunciationStartBtn?.addEventListener('click',openSpeakingSession);
+    startBtn.addEventListener('click',()=>{if(confirmGoldenPractice())startSession()});
+    spellingPreviewBtn?.addEventListener('click',()=>{if(confirmGoldenPractice())openSpellingMenu()});
+    pronunciationStartBtn?.addEventListener('click',()=>{if(confirmGoldenPractice())openSpeakingSession()});
     wordListOpenBtn?.addEventListener('click',openWordList);
     wordModalCloseBtn?.addEventListener('click',closeWordList);
     wordModalEl?.addEventListener('click',e=>{if(e.target===wordModalEl)closeWordList()});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
+    el('vocabSessionHome')?.addEventListener('click',navigateBackHome);
     speakingSkipBtn?.addEventListener('click',skipSpeaking);
     actionBtn.addEventListener('pointerdown',event=>{
       if(Number.isFinite(event.clientX)&&Number.isFinite(event.clientY)){
@@ -2526,7 +3245,7 @@ async function boot(){
       if(!state.pointTapOrigin&&Number.isFinite(event.clientX)&&Number.isFinite(event.clientY)&&(event.clientX||event.clientY)){
         state.pointTapOrigin={x:event.clientX,y:event.clientY};
       }
-      state.speakingSession?checkSpeaking():state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent();
+      state.inlineCoach?checkInlineCoach():state.speakingSession?checkSpeaking():state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent();
     });
     window.addEventListener('willena:vocab-snapshot-updated',event=>{
       const detail=event?.detail||{};
@@ -2540,6 +3259,7 @@ async function boot(){
 window.WillenaVocabStudy={version:'0.102',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
+    document.documentElement.classList.remove('vocab-focused-boot');
     const startupError=el('vocabStartupError');
     if(startupError){startupError.hidden=false;startupError.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
@@ -2547,7 +3267,7 @@ window.WillenaVocabStudy={version:'0.102',getState:()=>state,start:startSession,
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
     if(unitTitleEl)unitTitleEl.textContent='Please try again.';startBtn.disabled=true;if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
   }finally{
-    if(!bootLoaderReleased)endVocabLoading();
+    if(!bootLoaderReleased){document.documentElement.classList.remove('vocab-focused-boot');endVocabLoading();}
   }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

@@ -1,0 +1,21 @@
+#renewal-invitation {
+  box-sizing:border-box; position:fixed; inset:0; margin:auto; padding:0; border:0;
+  width:min(430px, calc(100vw - 28px), calc(70.09vh - 20px));
+  width:min(430px, calc(100vw - 28px), calc(70.09dvh - 20px));
+  max-width:none; max-height:none; border-radius:14px; overflow:hidden;
+  background:#fff; box-shadow:0 20px 75px #17152755; color:#111;
+}
+#renewal-invitation::backdrop { background:rgb(26 24 39 / 48%); }
+#renewal-invitation .inv-card { position:relative; container-type:inline-size; }
+#renewal-invitation img { display:block; width:100%; height:auto; }
+#renewal-invitation .academy-name {
+  position:absolute; top:11.82%; left:5.24%; width:47.34%; height:4.54%; display:flex; align-items:center;
+  padding-left:1.05%; background:#fefefe url("/admissions/renew-2027/invitation.webp") -15.05cqw -22.76cqw / 100cqw auto no-repeat; color:#0c0c0c; white-space:nowrap;
+  font:900 4.6cqw/1 "Noto Sans KR","Malgun Gothic",sans-serif; letter-spacing:-.055em;
+}
+#renewal-invitation .inv-apply, #renewal-invitation .inv-close { position:absolute; padding:0; border:0; background:transparent; cursor:pointer; }
+#renewal-invitation .inv-apply { left:9%; right:9%; top:78.5%; bottom:10.7%; border-radius:100px; }
+#renewal-invitation .inv-close { top:0; right:0; width:13%; height:9%; min-width:32px; min-height:32px; }
+#renewal-invitation :is(a,button):focus-visible { outline:3px solid #00858e; outline-offset:-3px; }
+#renewal-invitation .inv-sr { position:absolute; inset:0 auto auto 0; margin:0; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+html:has(#renewal-invitation[open]) { overflow:hidden; }

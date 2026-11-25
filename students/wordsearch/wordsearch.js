@@ -40,28 +40,12 @@ const POINTS_PER_WORD=1;
 const BOGGLE_SIZE=5;
 const BOGGLE_TARGET=8;
 const MIX_MATCH_TARGET=6;
-const WORDLE_LENGTH=5;
-const WORDLE_GUESSES=6;
 
 const $=id=>document.getElementById(id);
 const gridEl=$('grid');
 const wordGridStage=$('wordGridStage');
 const boggleCanvas=$('boggleCanvas');
 const mixMatchGrid=$('mixMatchGrid');
-const wordleStage=$('wordleStage');
-const wordleBoard=$('wordleBoard');
-const wordleKeyboard=$('wordleKeyboard');
-const wordleMessage=$('wordleMessage');
-const wordleResult=$('wordleResult');
-const wordleResultWord=$('wordleResultWord');
-const wordleResultMeaning=$('wordleResultMeaning');
-const wordleAudioBtn=$('wordleAudioBtn');
-const wordleHintMeaningBtn=$('wordleHintMeaningBtn');
-const wordleHintLetterBtn=$('wordleHintLetterBtn');
-const wordleHintScrambleBtn=$('wordleHintScrambleBtn');
-const wordleHintMeaning=$('wordleHintMeaning');
-const wordleHintLetter=$('wordleHintLetter');
-const wordleHintScramble=$('wordleHintScramble');
 const clueStripWrap=$('clueStripWrap');
 const wordSearchSizeControl=$('wordSearchSizeControl');
 const gameHelpBtn=$('gameHelpBtn');
@@ -86,9 +70,8 @@ const cheatFinishBtn=$('cheatFinishBtn');
 const CHEAT_MODE=new URLSearchParams(location.search).get('cheat')==='1';
 
 const state={
-  auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],wordlePool:[],wordleAnswerPool:[],studentLevel:null,rewardContext:null,ready:false,buildToken:0,grid:[],size:GRID_TARGET,placements:[],
-  found:new Set(),gimmes:new Set(),bogglePaths:new Map(),boggleReveals:new Set(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'boggle',gridSize:8,activeCrossword:null,crosswordCursor:0,cheatCompletion:false,matchFirst:null,matchLocked:false,matchDeckStyle:null,
-  wordleAnswer:null,wordleRows:[],wordleCurrent:'',wordleDone:false,wordleKeyStates:{},wordleHintsUsed:new Set(),wordleHintLetter:'',wordleHintScramble:'',
+  auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],studentLevel:null,rewardContext:null,ready:false,buildToken:0,grid:[],size:GRID_TARGET,placements:[],
+  found:new Set(),gimmes:new Set(),bogglePaths:new Map(),boggleReveals:new Set(),drag:null,sessionId:null,startedAt:null,saving:false,mode:(['boggle','wordsearch','crossword','mixmatch'].includes(new URLSearchParams(location.search).get('mode'))?new URLSearchParams(location.search).get('mode'):'boggle'),gridSize:8,activeCrossword:null,crosswordCursor:0,cheatCompletion:false,matchFirst:null,matchLocked:false,matchDeckStyle:null,
   modeSnapshots:new Map()
 };
 
@@ -312,32 +295,6 @@ async function loadLevelCrosswordWords(level){
     seen.add(item.clean);
     return true;
   });
-}
-
-async function loadWordleWords(){
-  const rows=await content(
-    'lexical_entries?select=id,canonical_text,translation_ko,definition_en,status'+
-    '&canonical_text=like._____&status=in.(review,published)&order=canonical_text.asc'
-  );
-  const seen=new Set();
-  const all=rows.map(row=>{
-    const display=txt(row.canonical_text);
-    const clean=normalizeWord(display);
-    return{
-      id:row.id,display,clean,ko:txt(row.translation_ko),
-      definition:txt(row.definition_en),status:txt(row.status)
-    };
-  }).filter(item=>{
-    if(!/^[A-Za-z]{5}$/.test(item.display)||item.clean.length!==WORDLE_LENGTH)return false;
-    if(seen.has(item.clean))return false;
-    seen.add(item.clean);
-    return true;
-  });
-  const answers=all.filter(item=>item.status==='published'&&item.ko);
-  if(answers.length<50)throw new Error('The Wordle answer pool is not ready yet.');
-  state.wordlePool=all;
-  state.wordleAnswerPool=answers;
-  return all;
 }
 
 const DIRECTIONS=[
@@ -660,7 +617,7 @@ function mixDeckBackMarkup(style){
 
 function renderMixMatch(pool){
   const candidates=shuffle(pool.filter(x=>x.ko&&x.clean.length>=2)).slice(0,Math.min(MIX_MATCH_TARGET,pool.length));
-  if(candidates.length<4)throw new Error('Not enough vocabulary for Mix & Match yet.');
+  if(candidates.length<4)throw new Error('Not enough vocabulary for Memory Game yet.');
   state.placements=candidates;
   state.found.clear();
   state.gimmes.clear();
@@ -722,259 +679,6 @@ async function chooseMatchCard(card){
   },850);
 }
 
-function wordleStatusRank(status){
-  return status==='exact'?3:(status==='present'?2:(status==='absent'?1:0));
-}
-function scoreWordleGuess(guess,answer){
-  const result=Array(WORDLE_LENGTH).fill('absent');
-  const remaining=answer.split('');
-  for(let i=0;i<WORDLE_LENGTH;i++){
-    if(guess[i]===answer[i]){
-      result[i]='exact';
-      remaining[i]=null;
-    }
-  }
-  for(let i=0;i<WORDLE_LENGTH;i++){
-    if(result[i]==='exact')continue;
-    const found=remaining.indexOf(guess[i]);
-    if(found>=0){
-      result[i]='present';
-      remaining[found]=null;
-    }
-  }
-  return result;
-}
-function setWordleMessage(message,tone=''){
-  if(!wordleMessage)return;
-  wordleMessage.textContent=message;
-  wordleMessage.dataset.tone=tone;
-}
-function renderWordleKeyboard(){
-  if(!wordleKeyboard)return;
-  const rows=['QWERTYUIOP','ASDFGHJKL','ZXCVBNM'];
-  wordleKeyboard.innerHTML=rows.map((letters,rowIndex)=>{
-    const keys=letters.split('').map(letter=>
-      '<button type="button" class="wordle-key" data-wordle-key="'+letter+'" data-state="'+(state.wordleKeyStates[letter]||'')+'">'+letter+'</button>'
-    );
-    if(rowIndex===2){
-      keys.unshift('<button type="button" class="wordle-key wide" data-wordle-key="ENTER">ENTER</button>');
-      keys.push('<button type="button" class="wordle-key wide" data-wordle-key="BACKSPACE" aria-label="Delete">⌫</button>');
-    }
-    return '<div class="wordle-key-row">'+keys.join('')+'</div>';
-  }).join('');
-}
-function renderWordleBoard(){
-  if(!wordleBoard)return;
-  const cells=[];
-  for(let row=0;row<WORDLE_GUESSES;row++){
-    const completed=state.wordleRows[row]||null;
-    const current=!completed&&row===state.wordleRows.length?state.wordleCurrent:'';
-    for(let col=0;col<WORDLE_LENGTH;col++){
-      const letter=completed?completed.guess[col]:(current[col]||'');
-      const status=completed?completed.result[col]:'';
-      const filled=letter?' filled':'';
-      cells.push(
-        '<div class="wordle-tile'+filled+'" role="gridcell" data-row="'+row+'" data-col="'+col+'" data-state="'+status+'">'+
-          escapeHtml(letter)+
-        '</div>'
-      );
-    }
-  }
-  wordleBoard.innerHTML=cells.join('');
-}
-function wordleDiscoveredLetters(){
-  const found=new Set();
-  state.wordleRows.forEach(row=>{
-    row.result.forEach((status,index)=>{
-      if(status==='exact'||status==='present')found.add(row.guess[index]);
-    });
-  });
-  if(state.wordleHintLetter)found.add(state.wordleHintLetter);
-  return found;
-}
-function renderWordleHints(){
-  const used=state.wordleHintsUsed;
-  const meaningUsed=used.has('meaning');
-  const letterUsed=used.has('letter');
-  const scrambleUsed=used.has('scramble');
-
-  if(wordleHintMeaningBtn){
-    wordleHintMeaningBtn.disabled=state.wordleDone||meaningUsed;
-    wordleHintMeaningBtn.classList.toggle('used',meaningUsed);
-  }
-  if(wordleHintLetterBtn){
-    wordleHintLetterBtn.disabled=state.wordleDone||letterUsed;
-    wordleHintLetterBtn.classList.toggle('used',letterUsed);
-  }
-  if(wordleHintScrambleBtn){
-    wordleHintScrambleBtn.disabled=state.wordleDone||scrambleUsed;
-    wordleHintScrambleBtn.classList.toggle('used',scrambleUsed);
-  }
-
-  if(wordleHintMeaning){
-    wordleHintMeaning.hidden=!meaningUsed;
-    wordleHintMeaning.innerHTML=meaningUsed
-      ?'<span>뜻</span><strong>'+escapeHtml(state.wordleAnswer?.ko||'')+'</strong>'
-      :'';
-  }
-  if(wordleHintLetter){
-    wordleHintLetter.hidden=!letterUsed;
-    wordleHintLetter.innerHTML=letterUsed
-      ?'<span>글자</span><strong>'+escapeHtml(state.wordleHintLetter)+'</strong>'
-      :'';
-  }
-  if(wordleHintScramble){
-    wordleHintScramble.hidden=!scrambleUsed;
-    wordleHintScramble.innerHTML=scrambleUsed
-      ?'<span>섞인 글자</span><strong>'+escapeHtml(state.wordleHintScramble.split('').join(' · '))+'</strong>'
-      :'';
-  }
-}
-function useWordleHint(type){
-  if(state.mode!=='wordle'||state.wordleDone||!state.wordleAnswer||state.wordleHintsUsed.has(type))return;
-  const answer=state.wordleAnswer.clean;
-
-  if(type==='letter'){
-    const known=wordleDiscoveredLetters();
-    const uniqueLetters=[...new Set(answer.split(''))];
-    const choices=uniqueLetters.filter(letter=>!known.has(letter));
-    if(!choices.length){
-      setWordleMessage('You already found every answer letter. No star used.','warn');
-      return;
-    }
-    state.wordleHintLetter=shuffle(choices)[0];
-  }else if(type==='scramble'){
-    state.wordleHintScramble=scrambleLetters(answer);
-  }else if(type!=='meaning'){
-    return;
-  }
-
-  state.wordleHintsUsed.add(type);
-  setWordleMessage('Hint used. −1★','warn');
-  renderWordleHints();
-  updateProgress();
-}
-function renderWordleResult(){
-  if(!wordleResult)return;
-  wordleResult.hidden=!state.wordleDone;
-  if(!state.wordleDone||!state.wordleAnswer)return;
-  wordleResultWord.textContent=state.wordleAnswer.display.toUpperCase();
-  wordleResultMeaning.textContent=state.wordleAnswer.ko||state.wordleAnswer.definition||'';
-}
-function refreshWordle(){
-  renderWordleBoard();
-  renderWordleKeyboard();
-  renderWordleHints();
-  renderWordleResult();
-  updateProgress();
-}
-function renderWordle(){
-  if(!state.wordleAnswerPool.length)throw new Error('No Wordle answers are available.');
-  state.wordleAnswer=shuffle(state.wordleAnswerPool)[0];
-  state.wordleRows=[];
-  state.wordleCurrent='';
-  state.wordleDone=false;
-  state.wordleKeyStates={};
-  state.wordleHintsUsed=new Set();
-  state.wordleHintLetter='';
-  state.wordleHintScramble='';
-  state.found.clear();
-  state.gimmes.clear();
-  state.drag=null;
-  state.sessionId=crypto.randomUUID?.()||('wordle-'+Date.now());
-  state.startedAt=new Date().toISOString();
-  state.placements=[state.wordleAnswer];
-  wordListEl.innerHTML=
-    '<div class="wordle-rule-chip"><span class="wordle-mini exact">A</span> right letter + spot</div>'+
-    '<div class="wordle-rule-chip"><span class="wordle-mini present">E</span> right letter</div>'+
-    '<div class="wordle-rule-chip"><span class="wordle-mini absent">R</span> not in word</div>';
-  setWordleMessage('Type any five letters.');
-  refreshWordle();
-}
-function wordleInputLetter(letter){
-  if(state.mode!=='wordle'||state.wordleDone)return;
-  const clean=normalizeWord(letter);
-  if(clean.length!==1||state.wordleCurrent.length>=WORDLE_LENGTH)return;
-  state.wordleCurrent+=clean;
-  setWordleMessage('Type any five letters.');
-  renderWordleBoard();
-}
-function wordleDelete(){
-  if(state.mode!=='wordle'||state.wordleDone||!state.wordleCurrent)return;
-  state.wordleCurrent=state.wordleCurrent.slice(0,-1);
-  renderWordleBoard();
-}
-function wordleWon(){
-  return !!(state.wordleDone&&state.wordleAnswer&&state.wordleRows.some(row=>row.guess===state.wordleAnswer.clean));
-}
-function wordleStars(){
-  if(!wordleWon())return 0;
-  const guesses=state.wordleRows.length;
-  const base=guesses<=2?5:(guesses===3?4:(guesses===4?3:(guesses===5?2:1)));
-  return Math.max(0,base-state.wordleHintsUsed.size);
-}
-function wordlePoints(){
-  if(!wordleWon())return 0;
-  return Math.max(1,WORDLE_GUESSES-state.wordleRows.length+1);
-}
-async function finishWordle(won){
-  state.wordleDone=true;
-  state.found=won?new Set([0]):new Set();
-  if(won){
-    playPuzzleSfx('complete');
-    setWordleMessage('Nice! You got it in '+state.wordleRows.length+' '+(state.wordleRows.length===1?'guess.':'guesses.'),'win');
-  }else{
-    playPuzzleSfx('wrong');
-    setWordleMessage('Good try. The word was '+state.wordleAnswer.clean+'.','loss');
-  }
-  refreshWordle();
-
-  const stars=wordleStars();
-  const points=wordlePoints();
-  if(won){
-    const hintCount=state.wordleHintsUsed.size;
-    completePoints.textContent='Solved in '+state.wordleRows.length+' '+(state.wordleRows.length===1?'guess':'guesses')+'. You earned '+stars+' star'+(stars===1?'':'s')+(hintCount?' after '+hintCount+' hint'+(hintCount===1?'':'s')+'.':'.');
-    rewardCelebration.innerHTML=
-      '<student-reward-celebration percent="100" stars="'+stars+'" star-max="5" points="'+points+'" label="WORDLE REWARD"></student-reward-celebration>';
-    if(typeof completeCard.showModal==='function')completeCard.showModal();
-    else completeCard.setAttribute('open','');
-  }
-  await saveReward();
-}
-function submitWordle(){
-  if(state.mode!=='wordle'||state.wordleDone)return;
-  const guess=state.wordleCurrent;
-  if(guess.length!==WORDLE_LENGTH){
-    setWordleMessage('Enter all five letters first.','warn');
-    return;
-  }
-  const answer=state.wordleAnswer?.clean||'';
-  if(answer.length!==WORDLE_LENGTH)return;
-  const result=scoreWordleGuess(guess,answer);
-  state.wordleRows.push({guess,result});
-  state.wordleCurrent='';
-  result.forEach((status,index)=>{
-    const letter=guess[index];
-    if(wordleStatusRank(status)>wordleStatusRank(state.wordleKeyStates[letter])){
-      state.wordleKeyStates[letter]=status;
-    }
-  });
-  const won=guess===answer;
-  if(won||state.wordleRows.length>=WORDLE_GUESSES){
-    finishWordle(won);
-    return;
-  }
-  playPuzzleSfx(result.some(x=>x==='exact'||x==='present')?'correct':'wrong');
-  setWordleMessage((WORDLE_GUESSES-state.wordleRows.length)+' guesses left.');
-  refreshWordle();
-}
-function handleWordleKey(key){
-  if(state.mode!=='wordle'||state.wordleDone)return;
-  if(key==='ENTER'){submitWordle();return}
-  if(key==='BACKSPACE'){wordleDelete();return}
-  if(/^[A-Z]$/.test(key))wordleInputLetter(key);
-}
-
 function renderPuzzle(){
   gridEl.classList.remove('boggle-grid');
   clearBoggleCanvas();
@@ -999,7 +703,6 @@ function renderPuzzle(){
 }
 function escapeHtml(v){return txt(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function earnedPuzzlePoints(){
-  if(state.mode==='wordle')return wordlePoints();
   return Math.max(0,(state.found.size-state.gimmes.size)*POINTS_PER_WORD);
 }
 function puzzleStarCap(){
@@ -1007,19 +710,10 @@ function puzzleStarCap(){
   return state.gridSize===8?3:(state.gridSize===10?4:5);
 }
 function earnedPuzzleStars(){
-  if(state.mode==='wordle')return wordleStars();
   const bogglePenalty=state.mode==='boggle'?Math.min(2,state.boggleReveals.size):0;
   return Math.max(0,puzzleStarCap()-state.gimmes.size-bogglePenalty);
 }
 function updateProgress(){
-  if(state.mode==='wordle'){
-    const used=state.wordleRows.length;
-    progressEl.textContent=state.wordleDone
-      ?(state.wordleRows.some(row=>row.guess===state.wordleAnswer?.clean)?'Solved in '+used+' / '+WORDLE_GUESSES:'Answer revealed')
-      :used+' / '+WORDLE_GUESSES+' guesses';
-    sessionPointsEl.textContent=state.wordleDone?('+'+earnedPuzzlePoints()+' pts'):'WORDLE';
-    return;
-  }
   const verb=state.mode==='crossword'?'solved':(state.mode==='mixmatch'?'matched':'found');
   progressEl.textContent=state.found.size+' / '+state.placements.length+' '+verb;
   sessionPointsEl.textContent='+'+earnedPuzzlePoints()+' pts';
@@ -1111,13 +805,29 @@ async function finishPuzzle(){
   playPuzzleSfx('complete');
   const points=earnedPuzzlePoints();
   const stars=earnedPuzzleStars();
-  const completeLabel=state.mode==='crossword'?'Crossword complete!':(state.mode==='boggle'?'Boggle complete!':(state.mode==='mixmatch'?'Mix & Match complete!':'Word search complete!'));
+  const completeLabel=state.mode==='crossword'?'Crossword complete!':(state.mode==='boggle'?'Boggle complete!':(state.mode==='mixmatch'?'Memory Game complete!':'Word search complete!'));
   completePoints.textContent=completeLabel+' You earned '+stars+' star'+(stars===1?'':'s')+'.';
   rewardCelebration.innerHTML=
     '<student-reward-celebration percent="100" stars="'+stars+'" star-max="5" points="'+points+'" label="PUZZLE REWARD"></student-reward-celebration>';
   if(typeof completeCard.showModal==='function')completeCard.showModal();
   else completeCard.setAttribute('open','');
   await saveReward();
+  await markAssignedPuzzleCompleted();
+}
+async function markAssignedPuzzleCompleted(){
+  const assignmentId=new URLSearchParams(location.search).get('homework');
+  if(!assignmentId||state.cheatCompletion||CHEAT_MODE)return;
+  const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+  if(!token||!state.sessionId)return;
+  try{
+    const response=await fetch(OP_URL+'/rest/v1/rpc/student_complete_puzzle_homework_v1',{
+      method:'POST',cache:'no-store',
+      headers:{apikey:OP_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+      body:JSON.stringify({p_assignment_id:assignmentId,p_mode:state.mode,p_session_id:state.sessionId,p_stars:earnedPuzzleStars()})
+    });
+    if(!response.ok)throw Error('Puzzle mission record HTTP '+response.status);
+    window.dispatchEvent(new CustomEvent('willena:homework-progress',{detail:{assignment_id:assignmentId,completed:true}}));
+  }catch(error){console.warn('[Puzzle homework] completion could not be recorded',error)}
 }
 async function resolvePuzzleRewardContext(){
   if(state.rewardContext)return state.rewardContext;
@@ -1130,136 +840,87 @@ async function resolvePuzzleRewardContext(){
   state.rewardContext={book_id:book.book_id,unit_id:unit.id};
   return state.rewardContext;
 }
-function captureRewardSnapshot(){
-  if(!state.sessionId)return null;
-  const mode=state.mode;
-  const isWordle=mode==='wordle';
-  const wordleWin=isWordle?wordleWon():null;
-  return{
-    sessionId:state.sessionId,
-    startedAt:state.startedAt,
-    mode,
-    listSize:state.placements.length,
-    gimmesUsed:state.gimmes.size,
-    gridSize:state.gridSize,
-    points:earnedPuzzlePoints(),
-    stars:earnedPuzzleStars(),
-    starCap:puzzleStarCap(),
-    wordleWin,
-    wordleGuessCount:isWordle?state.wordleRows.length:null,
-    wordleAnswer:isWordle?(state.wordleAnswer?.clean||null):null,
-    wordleHintsUsed:isWordle?[...state.wordleHintsUsed]:[]
-  };
-}
-async function saveReward(reward=captureRewardSnapshot()){
-  if(state.saving||!reward?.sessionId)return;
+async function saveReward(){
+  if(state.saving||!state.sessionId)return;
   state.saving=true;
+  const points=earnedPuzzlePoints();
+  const stars=earnedPuzzleStars();
   let ctx=null;
 
   try{
-    try{
-      ctx=await resolvePuzzleRewardContext();
-    }catch(error){
-      console.warn('[Word Games] reward context failed',error);
-      return;
-    }
+    ctx=await resolvePuzzleRewardContext();
+  }catch(error){
+    console.warn('[Word Games] reward context failed',error);
+    state.saving=false;
+    return;
+  }
 
-    const isWordle=reward.mode==='wordle';
-    const listBase=reward.mode==='crossword'?'Crossword':(reward.mode==='boggle'?'Boggle':(reward.mode==='mixmatch'?'Mix & Match':(isWordle?'Wordle':'Word Search')));
-    const sessionPayload={
-      reward_only:true,
-      session_id:reward.sessionId,
-      client_attempt_id:crypto.randomUUID?.()||((reward.mode||'wordsearch')+'-reward-'+Date.now()),
-      book_id:ctx.book_id,
-      unit_id:ctx.unit_id,
-      skill:'puzzle',
-      response_type:'reward',
-      activity_id:reward.mode,
-      reward_mode:reward.mode,
-      reward_list_name:listBase+' · '+reward.sessionId,
-      reward_list_size:reward.listSize,
-      reward_started_at:reward.startedAt,
-      reward_summary:{
-        completed:true,
-        stars:reward.stars,
-        accuracy:isWordle?(reward.wordleWin?1:0):1,
-        percent:isWordle?(reward.wordleWin?100:0):100,
-        score:isWordle?(reward.wordleWin?1:0):(reward.listSize-reward.gimmesUsed),
-        total:isWordle?1:reward.listSize,
-        points_earned:reward.points,
+  const listBase=state.mode==='crossword'?'Crossword':(state.mode==='boggle'?'Boggle':(state.mode==='mixmatch'?'Memory Game':'Word Search'));
+  const sessionPayload={
+    reward_only:true,
+    session_id:state.sessionId,
+    client_attempt_id:crypto.randomUUID?.()||((state.mode||'wordsearch')+'-reward-'+Date.now()),
+    book_id:ctx.book_id,
+    unit_id:ctx.unit_id,
+    skill:'puzzle',
+    response_type:'reward',
+    activity_id:state.mode,
+    reward_mode:state.mode,
+    reward_list_name:listBase+' · '+state.sessionId,
+    reward_list_size:state.placements.length,
+    reward_started_at:state.startedAt,
+    reward_summary:{
+      completed:true,stars,accuracy:1,percent:100,
+      score:state.placements.length-state.gimmes.size,total:state.placements.length,
+      points_earned:points,book_id:ctx.book_id,unit_id:ctx.unit_id,
+      assignment_id:null,session_source:'student',vocab_mode:state.mode,
+      reward_scheme:(state.mode||'wordsearch')+'-v3',star_cap:puzzleStarCap(),
+      gimmes_used:state.gimmes.size,
+      grid_size:state.mode==='wordsearch'?state.gridSize:null
+    }
+  };
+
+  let sessionSaved=false;
+  try{
+    const result=await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:sessionPayload})
+    });
+    sessionSaved=!!(result?.success??true);
+  }catch(error){
+    console.warn('[Word Games] session tracking save failed',state.mode,error);
+  }
+
+  if(points>0){
+    try{
+      const pointPayload={
+        session_id:state.sessionId,
+        client_attempt_id:crypto.randomUUID?.()||('puzzle-points-'+Date.now()),
         book_id:ctx.book_id,
         unit_id:ctx.unit_id,
-        assignment_id:null,
-        session_source:'student',
-        vocab_mode:reward.mode,
-        reward_scheme:isWordle?'wordle-v1':((reward.mode||'wordsearch')+'-v3'),
-        star_cap:reward.starCap,
-        gimmes_used:reward.gimmesUsed,
-        grid_size:reward.mode==='wordsearch'?reward.gridSize:null,
-        won:isWordle?reward.wordleWin:null,
-        guesses_used:isWordle?reward.wordleGuessCount:null,
-        guess_limit:isWordle?WORDLE_GUESSES:null,
-        answer_word:isWordle?reward.wordleAnswer:null,
-        hints_used:isWordle?reward.wordleHintsUsed.length:0,
-        hint_types:isWordle?reward.wordleHintsUsed:[]
-      }
-    };
-
-    let sessionSaved=false;
-    try{
-      const result=await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({payload:sessionPayload})
+        skill:'puzzle',
+        response_type:'completion',
+        activity_id:state.mode+'-completion',
+        content_type:'puzzle',
+        is_correct:true,
+        score:1,
+        study_context:'independent',
+        metadata:{points_override:points,puzzle_mode:state.mode,gimmes_used:state.gimmes.size,grid_size:state.mode==='wordsearch'?state.gridSize:null}
+      };
+      await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:pointPayload})
       });
-      sessionSaved=!!(result?.success??true);
     }catch(error){
-      console.warn('[Word Games] session tracking save failed',reward.mode,error);
+      console.warn('[Word Games] point save failed',state.mode,error);
     }
-
-    if(reward.points>0){
-      try{
-        const pointPayload={
-          session_id:reward.sessionId,
-          client_attempt_id:crypto.randomUUID?.()||('puzzle-points-'+Date.now()),
-          book_id:ctx.book_id,
-          unit_id:ctx.unit_id,
-          skill:'puzzle',
-          response_type:'completion',
-          activity_id:reward.mode+'-completion',
-          content_type:'puzzle',
-          is_correct:true,
-          score:1,
-          study_context:'independent',
-          metadata:{
-            points_override:reward.points,
-            puzzle_mode:reward.mode,
-            gimmes_used:reward.gimmesUsed,
-            grid_size:reward.mode==='wordsearch'?reward.gridSize:null,
-            won:isWordle?reward.wordleWin:null,
-            guesses_used:isWordle?reward.wordleGuessCount:null,
-            hints_used:isWordle?reward.wordleHintsUsed.length:0
-          }
-        };
-        await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({payload:pointPayload})
-        });
-      }catch(error){
-        console.warn('[Word Games] point save failed',reward.mode,error);
-      }
-    }
-
-    if(sessionSaved){
-      window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.sessionId,mode:reward.mode,list_size:reward.listSize}}));
-      window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.stars}}));
-      window.dispatchEvent(new CustomEvent('points:refresh',{detail:{earned:reward.points}}));
-      try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
-    }
-  }finally{
-    state.saving=false;
   }
+
+  if(sessionSaved){
+    window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:state.sessionId,mode:state.mode,list_size:state.placements.length}}));
+    window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:stars}}));
+    window.dispatchEvent(new CustomEvent('points:refresh',{detail:{earned:points}}));
+    try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
+  }
+  state.saving=false;
 }
 
 function makeCrossword(pool){
@@ -1396,7 +1057,7 @@ function openGameHelp({mode=state.mode,markSeen=true}={}){
     panel.hidden=panel.dataset.helpMode!==mode;
   });
   const kicker=$('gameHelpKicker');
-  if(kicker)kicker.textContent=mode==='crossword'?'CROSSWORD':(mode==='boggle'?'BOGGLE':(mode==='mixmatch'?'MIX & MATCH':(mode==='wordle'?'WORDLE':'WORD SEARCH')));
+  if(kicker)kicker.textContent=mode==='crossword'?'CROSSWORD':(mode==='boggle'?'BOGGLE':(mode==='mixmatch'?'MEMORY GAME':'WORD SEARCH'));
 
   try{
     if(typeof dialog.showModal==='function'){
@@ -1452,17 +1113,7 @@ function snapshotCurrentMode(){
     wordListHtml:wordListEl.innerHTML,
     crosswordHtml:crosswordGridEl.innerHTML,
     crosswordCols:crosswordGridEl.style.getPropertyValue('--cw-cols'),
-    mixHtml:mixMatchGrid?.innerHTML||'',
-    wordleAnswer:state.wordleAnswer,
-    wordleRows:state.wordleRows.map(row=>({guess:row.guess,result:row.result.slice()})),
-    wordleCurrent:state.wordleCurrent,
-    wordleDone:state.wordleDone,
-    wordleKeyStates:{...state.wordleKeyStates},
-    wordleHintsUsed:[...state.wordleHintsUsed],
-    wordleHintLetter:state.wordleHintLetter,
-    wordleHintScramble:state.wordleHintScramble,
-    wordleMessage:wordleMessage?.textContent||'',
-    wordleMessageTone:wordleMessage?.dataset?.tone||''
+    mixHtml:mixMatchGrid?.innerHTML||''
   };
   state.modeSnapshots.set(state.mode,snap);
 }
@@ -1493,19 +1144,6 @@ function restoreModeSnapshot(mode){
   crosswordGridEl.innerHTML=snap.crosswordHtml||'';
   if(snap.crosswordCols)crosswordGridEl.style.setProperty('--cw-cols',snap.crosswordCols);
   if(mixMatchGrid)mixMatchGrid.innerHTML=snap.mixHtml||'';
-  state.wordleAnswer=snap.wordleAnswer||null;
-  state.wordleRows=(snap.wordleRows||[]).map(row=>({guess:row.guess,result:(row.result||[]).slice()}));
-  state.wordleCurrent=snap.wordleCurrent||'';
-  state.wordleDone=!!snap.wordleDone;
-  state.wordleKeyStates={...(snap.wordleKeyStates||{})};
-  state.wordleHintsUsed=new Set(snap.wordleHintsUsed||[]);
-  state.wordleHintLetter=snap.wordleHintLetter||'';
-  state.wordleHintScramble=snap.wordleHintScramble||'';
-  if(wordleMessage){
-    wordleMessage.textContent=snap.wordleMessage||'Type any five letters.';
-    wordleMessage.dataset.tone=snap.wordleMessageTone||'';
-  }
-  if(state.mode==='wordle')refreshWordle();
 
   state.matchFirst=state.mode==='mixmatch'?mixMatchGrid?.querySelector('.mix-card.selected.flipped')||null:null;
   document.querySelectorAll('[data-grid-size]').forEach(btn=>{
@@ -1533,18 +1171,16 @@ document.querySelectorAll('.puzzle-tab').forEach(btn=>{
   const isBoggle=state.mode==='boggle';
   const isWordSearch=state.mode==='wordsearch';
   const isMixMatch=state.mode==='mixmatch';
-  const isWordle=state.mode==='wordle';
   wordGridStage?.classList.toggle('is-boggle',isBoggle);
   wordGridStage?.classList.toggle('is-wordsearch',isWordSearch);
-  modeLabel.textContent=isCrossword?'CROSSWORD':(isBoggle?'BOGGLE':(isMixMatch?'MIX & MATCH':(isWordle?'WORDLE':'WORD SEARCH')));
-  listEyebrow.textContent=isCrossword?'CLUES':(isBoggle?'FIND WORDS':(isWordle?'COLOR CLUES':'FIND THESE'));
-  listTitle.textContent=isCrossword?'Crossword':(isBoggle?'Meanings':(isWordle?'Five-letter word':'Words'));
+  modeLabel.textContent=isCrossword?'CROSSWORD':(isBoggle?'BOGGLE':(isMixMatch?'MEMORY GAME':'WORD SEARCH'));
+  listEyebrow.textContent=isCrossword?'CLUES':(isBoggle?'FIND WORDS':'FIND THESE');
+  listTitle.textContent=isCrossword?'Crossword':(isBoggle?'Meanings':'Words');
 
-  wordGridStage.hidden=isCrossword||isMixMatch||isWordle;
-  gridEl.hidden=isCrossword||isMixMatch||isWordle;
+  wordGridStage.hidden=isCrossword||isMixMatch;
+  gridEl.hidden=isCrossword||isMixMatch;
   crosswordGridEl.hidden=!isCrossword;
   mixMatchGrid.hidden=!isMixMatch;
-  if(wordleStage)wordleStage.hidden=!isWordle;
   clueStripWrap.hidden=isMixMatch;
   wordSearchSizeControl.hidden=!isWordSearch;
   if(boggleCanvas)boggleCanvas.hidden=!isBoggle;
@@ -1553,7 +1189,7 @@ document.querySelectorAll('.puzzle-tab').forEach(btn=>{
 
   dragHint.textContent=isCrossword
     ?'Tap a clue, then type the English word.'
-    :(isBoggle?'Drag through touching letters. Diagonals are allowed.':(isMixMatch?'Match each English word with its Korean meaning.':(isWordle?'Type any five letters, then press Enter.':'Drag in a straight line ↔ ↕ ↗ ↘')));
+    :(isBoggle?'Drag through touching letters. Diagonals are allowed.':(isMixMatch?'Match each English word with its Korean meaning.':'Drag in a straight line ↔ ↕ ↗ ↘'));
 }
 
 function renderCrossword(cw){
@@ -1859,17 +1495,6 @@ async function buildPuzzle(){
   showLoading();
   try{
     closeWinModal();
-    if(state.mode==='wordle'){
-      loadingCard.querySelector('strong').textContent='Loading five-letter words…';
-      if(!state.wordleAnswerPool.length)await loadWordleWords();
-      if(buildToken!==state.buildToken)return;
-      renderWordle();
-      setModeUI();
-      maybeShowFirstGameHelp('wordle');
-      showGame();
-      return;
-    }
-
     if(!state.pool.length){
       loadingCard.querySelector('strong').textContent='Loading puzzle words…';
       const results=await Promise.allSettled(state.books.map(book=>loadBookWords(book)));
@@ -1912,7 +1537,7 @@ async function buildPuzzle(){
         renderBoggle();setModeUI();maybeShowFirstGameHelp('boggle');
       }
     }else if(state.mode==='mixmatch'){
-      loadingCard.querySelector('strong').textContent='Building Mix & Match…';
+      loadingCard.querySelector('strong').textContent='Building Memory Game…';
       renderMixMatch(state.pool);setModeUI();maybeShowFirstGameHelp('mixmatch');
     }else{
       loadingCard.querySelector('strong').textContent='Building your word search…';
@@ -1953,16 +1578,13 @@ async function boot(){
     setPuzzleControlsEnabled(false);
     console.error('[Word Search boot]',error);
     showError(error);
+  }finally{
+    window.WillenaHomeworkDeepLinkSplash?.hide();
   }
 }
 
 async function cheatFinishPuzzle(){
   if(!CHEAT_MODE||!state.placements.length)return;
-  if(state.mode==='wordle'){
-    state.wordleCurrent=state.wordleAnswer?.clean||'';
-    submitWordle();
-    return;
-  }
   state.cheatCompletion=true;
   state.gimmes.clear();
   state.found=new Set(state.placements.map((_,i)=>i));
@@ -2028,25 +1650,6 @@ wordListEl.addEventListener('keydown',e=>{
 mixMatchGrid?.addEventListener('click',e=>{
   const card=e.target.closest('.mix-card');
   if(card)chooseMatchCard(card);
-});
-wordleKeyboard?.addEventListener('click',e=>{
-  const key=e.target.closest?.('[data-wordle-key]')?.dataset.wordleKey;
-  if(key)handleWordleKey(key);
-});
-wordleAudioBtn?.addEventListener('click',()=>{
-  if(state.wordleAnswer?.display)speakHintWord(state.wordleAnswer.display);
-});
-wordleHintMeaningBtn?.addEventListener('click',()=>useWordleHint('meaning'));
-wordleHintLetterBtn?.addEventListener('click',()=>useWordleHint('letter'));
-wordleHintScrambleBtn?.addEventListener('click',()=>useWordleHint('scramble'));
-document.addEventListener('keydown',e=>{
-  if(state.mode!=='wordle'||state.wordleDone||e.ctrlKey||e.metaKey||e.altKey)return;
-  if(e.target?.matches?.('input,textarea,[contenteditable="true"]'))return;
-  const key=e.key==='Enter'?'ENTER':(e.key==='Backspace'?'BACKSPACE':txt(e.key).toUpperCase());
-  if(key==='ENTER'||key==='BACKSPACE'||/^[A-Z]$/.test(key)){
-    e.preventDefault();
-    handleWordleKey(key);
-  }
 });
 document.querySelectorAll('[data-grid-size]').forEach(btn=>btn.addEventListener('click',()=>{
   const size=Number(btn.dataset.gridSize);

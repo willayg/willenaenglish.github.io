@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Willena · Character SVG Studio</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:#1d3a48;background:#eef5f7}*{box-sizing:border-box}
+body{margin:0}.shell{max-width:1390px;margin:auto;padding:25px 22px 55px}header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.brand{display:flex;gap:12px;align-items:center}.brandmark{width:45px;height:45px;display:grid;place-items:center;border-radius:15px;background:#0d5367;color:white;font-weight:1000;font-size:26px;box-shadow:0 9px 28px #28627827}
+h1{font-size:clamp(22px,3.5vw,33px);letter-spacing:-.06em;margin:0}header p,.muted{color:#79909c;margin:4px 0 0;font-size:13px}
+.pill{border:1px solid #c7dfe4;background:#fff;border-radius:99px;padding:10px 13px;font-size:12px;color:#517681;font-weight:700}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.tab{background:white;color:#57737e;border:1px solid #d5e5e8;border-radius:15px;padding:13px 18px;font-size:14px;font-weight:800;cursor:pointer}
+.tab[aria-selected="true"]{color:#08697b;border-color:#64d6dc;background:#dff7f8;box-shadow:0 4px 14px #4d9da421}
+.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);gap:18px}.panel{border:1px solid #d3e5e9;background:#fff;border-radius:25px;overflow:hidden;box-shadow:0 13px 38px #25627310}
+.viewhead{padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-bottom:1px solid #e6eff1}
+.viewhead h2{font-size:19px;letter-spacing:-.03em;margin:0}.viewhead small{color:#7f969f;font-weight:650}.toggle{display:flex;align-items:center;gap:7px;font-size:12px;color:#6b8a94;font-weight:750}
+.stage{height:min(67vh,670px);min-height:420px;display:flex;align-items:center;justify-content:center;padding:26px;overflow:hidden;transition:background .2s}
+.stage.checker{background-color:#fff;background-image:linear-gradient(45deg,#e4ecef 25%,transparent 25%),linear-gradient(-45deg,#e4ecef 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e4ecef 75%),linear-gradient(-45deg,transparent 75%,#e4ecef 75%);background-size:26px 26px;background-position:0 0,0 13px,13px -13px,-13px 0}
+.stage.navy{background:#172c42}.stage.white{background:#fff}
+/* Studio shares the same blank idle mouth as the live student character. */
+.stage .aw-mouth-wave{opacity:0}.stage .aw-idle-mouth{display:none!important}
+.stage svg{display:block;max-width:100%;max-height:100%;width:100%;height:100%;overflow:hidden;object-fit:contain;filter:drop-shadow(0 7px 5px #102a3320)}
+.stagedesc{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:15px 22px;background:#f8fcfc;border-top:1px solid #e2eef0;color:#718b95;font-size:12px;font-weight:700}
+.controls{padding:20px 22px;max-height:760px;overflow:auto}.controls h3{font-size:16px;margin:2px 0 18px}.control{margin:0 0 19px}.control .lab{display:flex;justify-content:space-between;gap:5px;font-size:13px;font-weight:800;margin-bottom:8px;color:#446370}
+.control output{font-variant-numeric:tabular-nums;color:#14879b}input[type=range]{accent-color:#00aab5;width:100%;cursor:pointer}select{font:inherit;border:1px solid #d2e3e7;border-radius:10px;padding:9px 11px;width:100%;background:#f9fcfd;color:#34505d}
+details{border-top:1px solid #e6f0f2;padding:15px 0}details summary{font-size:14px;font-weight:900;cursor:pointer;color:#1e6370}details .inner{padding-top:18px}
+.swatches{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.swatch{display:flex;flex-direction:column;gap:6px;font-size:11px;color:#58717b;font-weight:800}.swatch input{height:36px;width:100%;border:0;padding:0;background:transparent}
+.actions{display:flex;flex-wrap:wrap;gap:8px;padding:15px 22px;border-top:1px solid #dfecef;background:#f7fcfc}.btn{appearance:none;border:1px solid #c8dfe3;background:#fff;border-radius:13px;padding:11px 16px;cursor:pointer;color:#305b68;font-size:13px;font-weight:850}.btn.primary{background:#09a6b4;border-color:#09a6b4;color:white}.btn:hover{filter:brightness(.97)}
+.notice{font-size:12px;line-height:1.6;color:#63838d;background:#f2fafb;border-radius:14px;padding:13px}.hide{display:none!important}
+.code{width:100%;min-height:155px;max-height:250px;resize:vertical;background:#122834;color:#d3f5f3;border:0;border-radius:12px;padding:12px;font-family:ui-monospace,monospace;font-size:11px}
+@media(max-width:850px){
+.layout{grid-template-columns:1fr;gap:12px;align-items:start}
+.layout>section.panel{position:sticky;top:0;z-index:15;box-shadow:0 8px 23px #163f5340;border-radius:0 0 19px 19px}
+.controls{max-height:none}
+.stage{height:clamp(195px,31dvh,320px);min-height:0;padding:5px}
+.viewhead{padding:8px 13px;gap:4px}.viewhead h2{font-size:15px}.viewhead small{font-size:10px}
+.viewhead .toggle{font-size:10px;gap:3px}.viewhead select{font-size:11px;padding:5px;width:auto}
+.stagedesc{display:none}
+.actions{padding:7px 9px;gap:5px}.actions .btn{padding:8px 10px;font-size:11px;flex:1 0 auto}
+#sourceArea{position:absolute;z-index:20;background:white;max-height:25dvh;overflow:auto;left:0;right:0}
+#sourceArea .code{min-height:105px}
+.shell{padding:17px 12px 34px}.tab{flex:1 1 42%;padding:11px}.panel{border-radius:20px}
+}
+</style></head><body>
+<div class="shell"><header><div class="brand"><span class="brandmark">W</span><div><h1>Character SVG Studio</h1><p>Willena · Free Talking Genius · isolated design playground</p></div></div><span class="pill">Design only · student app unchanged</span></header>
+<nav class="tabs" role="tablist" aria-label="Characters"><button class="tab" role="tab" data-character="willi" aria-selected="true">🤖 AI Willi · edit</button><button class="tab" role="tab" data-character="bunny" aria-selected="false">Bunny Fox</button><button class="tab" role="tab" data-character="pigfish" aria-selected="false">Pigfish</button><button class="tab" role="tab" data-character="willo" aria-selected="false">Willo · original</button></nav>
+<div class="layout"><section class="panel"><div class="viewhead"><div><h2 id="stageTitle">AI Willi</h2><small id="stageSubtitle">Build the new white robot mascot as real editable SVG</small></div><label class="toggle">Background <select id="background"><option value="checker">Transparent grid</option><option value="white">White</option><option value="navy">Dark navy</option></select></label></div>
+<div class="stage checker" id="stage"><div id="art" style="width:100%;height:100%;display:grid;place-items:center"></div></div>
+<div class="stagedesc"><span id="stageStatus">Editable vector · 800 × 800 canvas</span><span id="dimensions">SVG · transparent background</span></div>
+<div class="actions"><button class="btn primary" id="download">Download SVG</button><button class="btn" id="copy">Copy SVG</button><button class="btn" id="reset">Reset proportions</button><button class="btn" id="sourceBtn">View SVG source</button></div>
+<div id="sourceArea" class="hide" style="padding:0 22px 20px"><textarea id="source" class="code" spellcheck="false" readonly aria-label="SVG source"></textarea></div></section>
+<aside class="panel"><div id="editor" class="controls"><h3>Build AI Willi</h3><p class="notice">Designed around the original poster: a very large, wide rounded head; compact little body; yellow antenna and W; navy face, ears and cuffs. Sliders update the exported SVG instantly.</p>
+<details open><summary>Proportions</summary><div class="inner" id="proportionControls"></div></details>
+<details open><summary>Expression & pose</summary><div class="inner"><div class="control"><div class="lab"><label for="expression">Eyes and mouth</label></div><select id="expression"><option value="smile">Happy closed eyes</option><option value="open">Bright open eyes</option><option value="wink">One-eye wink</option></select></div><div class="control"><div class="lab"><label for="pose">Left hand</label></div><select id="pose"><option value="wave">Wave</option><option value="down">At side</option><option value="up">Both hands up</option></select></div><div class="control"><div class="lab"><label for="tablet">Tablet</label></div><select id="tablet"><option value="yes">Holding W tablet</option><option value="no">No tablet</option></select></div></div></details>
+<details open><summary>Colour palette</summary><div class="inner swatches"><label class="swatch">White shell<input type="color" data-color="shell" value="#f8fbff"></label><label class="swatch">Navy<input type="color" data-color="navy" value="#142b51"></label><label class="swatch">Yellow<input type="color" data-color="yellow" value="#ffce12"></label><label class="swatch">Face<input type="color" data-color="face" value="#101b30"></label><label class="swatch">Eyes<input type="color" data-color="eyes" value="#9cddff"></label><label class="swatch">Outline<input type="color" data-color="outline" value="#294674"></label></div></details>
+<div class="notice">This design page is standalone and makes no changes to audio, grading, character selection or the live student app. Bunny Fox, Pigfish and Willo remain unedited references.</div></div>
+<div id="reference" class="controls hide"><h3 id="referenceTitle">Original character</h3><p class="notice">This preview uses the actual existing character asset from Free Talking Genius. Its SVG is read-only here; no alterations are made to the character or the student app.</p><p class="muted">Use the other tabs to compare proportions and styling against the new AI Willi robot.</p></div>
+</aside></div></div>
+<script type="module">
+import {BUNNY_FOX_ART,PIGFISH_ART} from '../character-art.js';
+import {createWillySvg,DEFAULT_WILLY_CONFIG} from '../willy-svg.js?v=20261114-electric-cat-v3';
+const $=id=>document.getElementById(id);
+const defaults=DEFAULT_WILLY_CONFIG;
+let cfg={...defaults},tab='willi',markup='';
+const rangeSettings=[
+ ['head','Head size',75,140,'%'],['body','Body size',55,120,'%'],['headY','Head height offset',-40,40,'px'],['eyes','Eye spacing',70,130,'%'],['legs','Leg length',45,130,'%'],['antenna','Antenna height',50,140,'%'],['arms','Arm length',65,135,'%'],['tabletSize','Tablet size',65,135,'%']];
+for(const [key,name,min,max,unit] of rangeSettings){
+ const div=document.createElement('div');div.className='control';
+ div.innerHTML='<div class="lab"><label for="range-'+key+'">'+name+'</label><output id="value-'+key+'">'+defaults[key]+unit+'</output></div><input type="range" id="range-'+key+'" min="'+min+'" max="'+max+'" value="'+defaults[key]+'">';
+ $('proportionControls').appendChild(div);
+ div.querySelector('input').addEventListener('input',e=>{cfg[key]=Number(e.target.value);$('value-'+key).textContent=cfg[key]+unit;render()});
+}
+const colors={shell:'shell',navy:'navy',yellow:'yellow',face:'face',eyes:'eyesColor',outline:'outline'};
+document.querySelectorAll('[data-color]').forEach(el=>el.addEventListener('input',()=>{cfg[colors[el.dataset.color]]=el.value;render()}));
+for(const id of ['expression','pose','tablet'])$(id).addEventListener('change',e=>{cfg[id]=e.target.value;render()});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const willo='<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" fill="none" stroke="#69d7df" stroke-width="7"/><circle cx="50" cy="50" r="19" fill="none" stroke="#d6f2f4" stroke-width="8"/><path d="M50 31 A19 19 0 0 1 67 42" fill="none" stroke="#69c1cc" stroke-width="7" stroke-linecap="round"/><path d="M33 57 A19 19 0 0 0 47 69" fill="none" stroke="#efadce" stroke-width="7" stroke-linecap="round"/></svg>';
+function scope(markup){return markup.replaceAll('id="pigBody"','id="studioPigBody"').replaceAll('url(#pigBody)','url(#studioPigBody)').replaceAll('id="pigBelly"','id="studioPigBelly"').replaceAll('url(#pigBelly)','url(#studioPigBelly)')}
+function render(){
+ const ref={bunny:{name:'Bunny Fox',subtitle:'Original Free Talking SVG · unchanged',svg:BUNNY_FOX_ART},
+ pigfish:{name:'Pigfish',subtitle:'Original Free Talking SVG · unchanged',svg:scope(PIGFISH_ART)},
+ willo:{name:'Willo',subtitle:'Original AI voice-circle design · unchanged',svg:willo}};
+ markup=tab==='willi'?createWillySvg(cfg):ref[tab].svg;
+ $('art').innerHTML=markup;
+ $('stageTitle').textContent=tab==='willi'?'AI Willi':ref[tab].name;
+ $('stageSubtitle').textContent=tab==='willi'?'Customisable robot SVG with accurate mascot proportions':ref[tab].subtitle;
+ $('editor').classList.toggle('hide',tab!=='willi');
+ $('reference').classList.toggle('hide',tab==='willi');
+ $('stageStatus').textContent=tab==='willi'?'Editable robot · 800 × 800 canvas':'Original SVG · read-only reference';
+ $('dimensions').textContent='SVG · transparent background';
+ $('reset').classList.toggle('hide',tab!=='willi');
+ $('source').value=markup;
+}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{tab=b.dataset.character;document.querySelectorAll('.tab').forEach(z=>z.setAttribute('aria-selected',String(z===b)));render()}));
+$('background').addEventListener('change',e=>{$('stage').className='stage '+e.target.value});
+$('sourceBtn').onclick=()=>{$('sourceArea').classList.toggle('hide');$('source').value=markup};
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(markup);$('copy').textContent='Copied!';setTimeout(()=>$('copy').textContent='Copy SVG',1600)}catch{ $('sourceArea').classList.remove('hide');$('source').select()}};
+$('download').onclick=()=>{const blob=new Blob([markup],{type:'image/svg+xml;charset=utf-8'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=(tab==='willi'?'ai-willi':tab==='willo'?'willo-original':tab==='bunny'?'bunny-fox-original':'pigfish-original')+'.svg';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
+$('reset').onclick=()=>{cfg={...defaults};rangeSettings.forEach(([k,,,unit])=>{$('range-'+k).value=cfg[k];$('value-'+k).textContent=cfg[k]+unit});for(const id of ['expression','pose','tablet'])$(id).value=cfg[id];document.querySelectorAll('[data-color]').forEach(el=>el.value=cfg[colors[el.dataset.color]]);render()};
+render();
+</script></body></html>

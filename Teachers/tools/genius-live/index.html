@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Genius Live · Teachers</title><script src="/js/api-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ed5fa5;--cyan:#75d5df;--ink:#253f4c;--muted:#738891;--border:#d4e7eb;--bg:#f5fafb}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font:14px Poppins,Arial,sans-serif;color:var(--ink)}header{background:#374151;color:#fff;padding:16px max(16px,calc((100vw - 1240px)/2));display:flex;gap:14px;align-items:center;justify-content:space-between}
+header h1{font-size:21px;margin:0}
+.music-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-left:auto}
+.music-controls button{background:#fff;color:#a92e71;border-color:#ff8dc6;padding:7px 12px}
+.music-controls button[aria-pressed="true"]{background:#ffe5f1}
+.music-controls label{display:flex;align-items:center;gap:7px;margin:0;color:#fff;font-size:11px}
+.music-controls input[type="range"]{width:95px;accent-color:#f47db5;padding:0;min-width:75px}
+.music-controls small{color:#e0e7eb;font-size:10px}
+@media(max-width:600px){.music-controls{width:100%;justify-content:flex-start}.music-controls small{display:none}}header h1 span{color:#ff8dc6}main{max-width:1240px;margin:22px auto;padding:0 18px}h2{font-size:21px;margin:0 0 14px}h3{font-size:17px;margin:0 0 9px}
+.panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 3px 15px #1c51550b;margin-bottom:16px}.panel.em{border:2px solid var(--cyan)}
+.row{display:flex;align-items:center;flex-wrap:wrap;gap:10px}.between{justify-content:space-between}.grid{display:grid;grid-template-columns:1.45fr 1fr;gap:17px}.two{display:grid;grid-template-columns:1fr 1fr;gap:13px}.small{font-size:12px}.muted{color:var(--muted)}.tag{display:inline-block;padding:5px 10px;border-radius:20px;background:#eaf8fa;color:#327988;font-size:11px;font-weight:700}
+label{display:block;font-size:12px;font-weight:700;margin-bottom:6px}select,input{font:inherit;border:1px solid #bfdae1;border-radius:9px;background:white;color:var(--ink);padding:10px;width:100%}button{font:600 13px Poppins,Arial,sans-serif;color:#c74584;border:1px solid var(--cyan);background:white;border-radius:9px;padding:10px 14px;cursor:pointer}
+button.primary{background:var(--pink);border-color:var(--pink);color:white}button:disabled{opacity:.45;cursor:not-allowed}.chip{padding:7px 11px}.chip.active{background:#ffe8f2;border-color:var(--pink)}.chips{display:flex;flex-wrap:wrap;gap:6px}.book{padding:13px 15px;background:#faffff;border:1px solid #dbedf1;border-radius:12px;margin-top:10px}
+.booktop{display:flex;align-items:center;justify-content:space-between;gap:10px}.field{margin-bottom:15px}.notice{padding:13px 15px;background:#fff6e5;border:1px solid #f4dfa8;border-radius:10px;margin-bottom:16px}.notice.error{background:#fff0f3;border-color:#f2c6d3}
+.join-layout{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin:12px 0}.join-code{flex:1;min-width:230px}.qr-panel{display:flex;align-items:center;flex-direction:column;gap:9px;padding:14px;background:#fff;border:1px solid var(--border);border-radius:14px}.qr-panel #joinQR{width:170px;height:170px;display:grid;place-items:center}.qr-panel #joinQR img,.qr-panel #joinQR canvas{max-width:100%;height:auto}.join-url{font-size:12px;overflow-wrap:anywhere}.join-url a{color:#c74584}.pin{font-size:clamp(44px,6vw,80px);font-weight:800;letter-spacing:9px;color:#d94891;line-height:1.3}.question{white-space:pre-line;font-size:clamp(22px,3vw,35px);font-weight:800;line-height:1.35;margin:17px 0}.answers{display:grid;grid-template-columns:1fr 1fr;gap:11px}.answer{padding:20px 14px;min-height:93px;border-radius:12px;color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;gap:12px}.answer:nth-child(4n+1){background:#e96297}.answer:nth-child(4n+2){background:#42b8d5}.answer:nth-child(4n+3){background:#e8ac44}.answer:nth-child(4n+4){background:#8f7ed4}.answer.correct{outline:5px solid #27965e;outline-offset:2px}.answer.dim{opacity:.4}
+.letter{border:1px solid #ffffff77;width:30px;height:30px;flex:none;border-radius:8px;display:grid;place-items:center}.timer{font-size:36px;font-weight:800;color:#c8428d;font-variant-numeric:tabular-nums}.bar{height:7px;border-radius:7px;background:#e3eef0;overflow:hidden}.bar i{display:block;height:100%;background:var(--pink);transition:width .2s}.score{display:flex;justify-content:space-between;border-bottom:1px solid #e9f0f1;padding:10px 4px;gap:8px}.score:last-child{border:0}.player{display:flex;align-items:center;justify-content:space-between;border:1px solid #e6f0f2;border-radius:10px;padding:9px 12px;margin:6px 0}.team{font-size:11px;color:#a43d77}.word-preview{border:1px solid var(--border);border-radius:12px;padding:12px;margin:12px 0;max-height:390px;overflow:auto;background:#fbfeff}.word-preview-row{display:grid;grid-template-columns:28px minmax(130px,1fr) minmax(120px,1fr);gap:10px;align-items:center;padding:8px;border-bottom:1px solid #e5f1f3}.word-preview-row:last-child{border:0}.word-preview small{display:block;color:var(--muted)}.team-picker{max-width:185px;width:52%;padding:7px;font-size:12px}.team-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.team-summary{display:flex;flex-wrap:wrap;gap:5px;margin:12px 0}.team-summary .tag{font-size:10px}
+.team-manager{border:1px solid #dbeef1;border-radius:13px;padding:12px;margin:14px 0;background:#faffff}
+.team-editor{display:grid;grid-template-columns:minmax(0,1fr) 74px auto auto;align-items:center;gap:7px;margin:8px 0}
+.team-editor input,.team-editor select{width:100%;min-width:0;padding:8px}
+.team-editor button{padding:8px 10px}
+.team-editor button.danger{color:#a53d51;border-color:#eac7ce}
+.team-editor label{display:none}
+
+/* Lobby-only interactive team board. One board for mouse, keyboard and touch. */
+.gl-teams-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:12px;margin:15px 0 7px}
+.gl-team-zone{border:2px dashed #c3e4ea;background:#f9fdfd;border-radius:15px;min-width:0;padding:12px;transition:border-color .15s,background .15s}
+.gl-team-zone.is-over,.gl-team-zone.is-target{border-color:#ed5fa5;background:#fff0f7}
+.gl-team-head{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:4px 2px 12px;border-bottom:1px solid #dcebee;margin-bottom:10px}
+.gl-team-heading{display:flex;align-items:center;gap:8px;font-size:14px;min-width:0}
+.gl-team-heading strong{overflow-wrap:anywhere}
+.gl-team-number{font-size:12px;color:#64838b;font-weight:700;white-space:nowrap}
+.gl-team-member-list{min-height:72px;display:flex;flex-direction:column;gap:7px}
+.gl-team-player{display:flex;align-items:center;gap:8px;background:white;border:1px solid #d5e7ea;border-radius:10px;padding:10px;cursor:grab;touch-action:pan-y;user-select:none;font-weight:700;min-width:0}
+.gl-team-player:active{cursor:grabbing}
+.gl-team-player:focus-visible,.gl-team-zone:focus-visible{outline:3px solid #ef83b5;outline-offset:2px}
+.gl-team-player.is-dragging{opacity:.42}
+.gl-team-player.is-selected{border-color:#ec5c9d;background:#ffedf6}
+.gl-player-handle{color:#8197a1;flex:none;font-size:17px;letter-spacing:1px;cursor:grab;touch-action:none}
+.gl-team-player-label{min-width:0;overflow-wrap:anywhere}
+.gl-team-empty{text-align:center;color:#7b9ba5;padding:19px 5px;font-size:12px}
+.gl-team-board-help{font-size:12px;color:#69848d;margin:12px 0}
+.gl-team-move{display:flex;align-items:center;justify-content:center;border:1px solid #a6dbe4;background:#fff;min-height:35px;border-radius:9px;margin-top:9px;width:100%;font-size:12px}
+.gl-team-move:disabled{opacity:.35}
+.gl-team-touch-ghost{position:fixed;pointer-events:none;z-index:99999;background:#fff;border:2px solid #ec5c9d;padding:10px 16px;border-radius:11px;box-shadow:0 7px 24px #20435444;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:560px){.gl-teams-board{grid-template-columns:1fr 1fr;gap:8px}.gl-team-zone{padding:8px}.gl-team-heading{font-size:12px}.gl-team-player{padding:9px 6px;font-size:12px}.gl-team-head{gap:4px}.gl-team-heading .gl-character-logo{width:23px!important;height:23px!important}.gl-team-number{font-size:11px}}
+
+.gl-logo-preview{display:inline-flex;align-items:center;justify-content:center;min-width:30px;min-height:30px;font-size:24px;vertical-align:middle}
+.gl-logo-picker{position:relative;min-width:0}
+.gl-logo-picker summary{display:flex;align-items:center;justify-content:center;cursor:pointer;list-style:none;padding:4px;border:1px solid #bddce1;border-radius:9px;background:#fff;min-height:43px}
+.gl-logo-picker summary::-webkit-details-marker{display:none}
+.gl-logo-picker[open] summary{border-color:#ed5fa5}
+.gl-logo-gallery{position:absolute;z-index:50;right:0;top:calc(100% + 4px);display:grid;grid-template-columns:repeat(5,54px);gap:5px;max-width:min(92vw,305px);max-height:280px;overflow:auto;padding:10px;border:1px solid #c9e3e7;background:white;box-shadow:0 8px 25px #19394425;border-radius:13px}
+.gl-logo-gallery button{display:grid;place-items:center;padding:4px;width:54px;height:52px;font-size:24px;overflow:hidden;color:inherit;border:1px solid transparent}
+.gl-logo-gallery button[aria-pressed="true"]{border-color:#e85fa1;background:#fff0f7}
+.gl-logo-gallery svg{width:39px!important;height:39px!important}
+
+@media(max-width:560px){.team-editor{grid-template-columns:minmax(0,1fr) 70px auto}.team-editor .danger{grid-column:3}}
+
+@media(max-width:750px){.grid,.two,.answers{grid-template-columns:1fr}header{padding:13px 16px}.panel{padding:15px}.pin{letter-spacing:4px}}
+
+.gl-countdown-stage{position:fixed;inset:0;z-index:9998;background:radial-gradient(circle at center,#17446a 0%,#0b1429 72%);color:#fff;display:grid;place-items:center;padding:18px;text-align:center}
+.gl-countdown-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.gl-countdown-kicker{font-size:clamp(18px,3vw,30px);font-weight:800;letter-spacing:.12em;color:#a4eaff}
+.gl-countdown-number{font-size:clamp(130px,33vw,360px);font-weight:900;line-height:1;text-shadow:0 0 60px #f254aa88;color:#fff;font-variant-numeric:tabular-nums}
+.gl-countdown-number.pulse{animation:gl-count-pulse .7s cubic-bezier(.15,.8,.25,1)}
+.gl-countdown-sub{font-size:clamp(16px,2.4vw,26px);font-weight:700;color:#f5a6d2}
+@keyframes gl-count-pulse{from{transform:scale(1.28);opacity:.65}to{transform:scale(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){.gl-countdown-number.pulse{animation:none}}
+body:fullscreen{overflow:auto}
+body:fullscreen main{max-width:100%;padding:12px 22px}
+body:fullscreen .grid{grid-template-columns:minmax(0,1.5fr) minmax(310px,1fr)}
+body:fullscreen .question{font-size:clamp(28px,3.6vw,65px)}
+body:fullscreen .answer{min-height:120px;font-size:clamp(19px,2vw,30px)}
+@media(max-width:850px){body:fullscreen .grid{grid-template-columns:1fr}}
+
+/* Genius Live: final outrun sunset — original CSS pixel art, not image assets. */
+.gl-outro{position:relative;isolation:isolate;min-height:min(78vh,760px);border:4px solid #80eafb;border-radius:15px;overflow:hidden;background:#29144a;color:#fff;box-shadow:0 10px 35px #17274540;font-family:system-ui,sans-serif}
+.gl-outro-sky{position:absolute;inset:0;background:linear-gradient(#1b153d 0%,#69306e 36%,#d75882 67%,#fa995f 85%,#542054 100%)}
+.gl-outro-sun{position:absolute;top:12%;left:50%;width:min(36vw,310px);height:min(36vw,310px);min-width:155px;min-height:155px;border-radius:50%;transform:translateX(-50%);background:linear-gradient(#fff4aa,#ffcc71 40%,#ff9870 64%,#fd648e 90%);box-shadow:0 0 70px #fcb15d99;z-index:1}
+.gl-outro-sun:after{content:"";position:absolute;inset:43% 0 0;background:repeating-linear-gradient(to bottom,transparent 0 12px,#ab416e 12px 18px);border-radius:0 0 50% 50%;clip-path:circle(50% at 50% 0%)}
+.gl-outro-mountain{position:absolute;bottom:33%;width:100%;height:29%;background:#41215b;clip-path:polygon(0 66%,11% 37%,22% 68%,35% 28%,48% 64%,61% 30%,74% 74%,86% 33%,100% 69%,100% 100%,0 100%);z-index:2}
+.gl-outro-mountain:after{content:"";display:block;height:100%;width:100%;background:#6b3289;transform:translateY(24px);clip-path:inherit}
+.gl-outro-grid{position:absolute;inset:65% -40% -75%;transform:perspective(360px) rotateX(62deg);transform-origin:50% 0%;background:repeating-linear-gradient(90deg,transparent 0 8%,#fd58b6 8.15% 8.4%,transparent 8.55% 16%),repeating-linear-gradient(0deg,transparent 0 8%,#69eaff 8.2% 8.55%,transparent 8.8% 16%);background-color:#160e33;z-index:3}
+.gl-outro-palm{position:absolute;bottom:32%;width:130px;height:230px;z-index:4;pointer-events:none;filter:drop-shadow(3px 4px 0 #0c0c20)}
+.gl-outro-palm.left{left:1.4%}.gl-outro-palm.right{right:1.4%;transform:scaleX(-1)}
+.gl-outro-palm .trunk{position:absolute;bottom:0;left:60px;width:16px;height:152px;background:#180e29;transform:rotate(12deg);transform-origin:bottom}
+.gl-outro-palm .leaf{position:absolute;width:85px;height:17px;left:62px;top:68px;background:#170d29;transform-origin:left center;clip-path:polygon(0 0,100% 0,86% 50%,100% 100%,0 100%)}
+.gl-outro-palm .leaf:nth-child(2){transform:rotate(-42deg)}.gl-outro-palm .leaf:nth-child(3){transform:rotate(-10deg)}.gl-outro-palm .leaf:nth-child(4){transform:rotate(23deg)}.gl-outro-palm .leaf:nth-child(5){transform:rotate(65deg)}.gl-outro-palm .leaf:nth-child(6){transform:rotate(145deg)}
+.gl-outro-title{position:absolute;top:3%;left:2%;right:2%;text-align:center;z-index:8;font-size:clamp(23px,4.3vw,60px);line-height:1.15;font-weight:1000;letter-spacing:.035em;color:#ffe27c;text-shadow:4px 4px 0 #69235a,0 0 25px #ff6aad}
+.gl-outro-title small{display:block;font-size:clamp(10px,1.2vw,16px);letter-spacing:.2em;color:#98f9fc;text-shadow:2px 2px #202248;margin-bottom:10px}
+.gl-outro-podiums{position:absolute;bottom:10%;left:3%;right:3%;z-index:7;display:flex;align-items:end;justify-content:center;gap:clamp(5px,2vw,22px);height:60%}
+.gl-outro-slot{width:29%;max-width:280px;min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;text-align:center;filter:drop-shadow(5px 6px 0 #080a2599);opacity:0;animation:gl-podium-enter .75s steps(7) both}
+.gl-outro-slot.third{animation-delay:.18s}.gl-outro-slot.second{animation-delay:1.1s}.gl-outro-slot.first{animation-delay:2.1s}
+.gl-outro-emblem{margin:0 auto 5px;height:clamp(40px,6.4vw,77px);width:clamp(40px,6.4vw,77px);display:grid;place-items:center;font-size:clamp(30px,4vw,52px);filter:drop-shadow(0 4px 0 #1c1b32)}
+.gl-outro-emblem .gl-character-logo{width:100%!important;height:100%!important}
+.gl-outro-name{font-size:clamp(11px,1.7vw,22px);line-height:1.2;font-weight:900;text-shadow:2px 3px #141434;overflow-wrap:anywhere;padding:0 1px}
+.gl-outro-points{font-size:clamp(11px,1.45vw,18px);line-height:1.4;font-weight:900;color:#b1ffff;text-shadow:2px 2px #121b35;font-variant-numeric:tabular-nums;margin:4px 0 8px}
+.gl-outro-block{height:clamp(66px,13vh,125px);display:flex;align-items:center;justify-content:center;background:linear-gradient(#6edaf8,#2773ce);border:5px solid #b2f8ff;box-shadow:inset -10px -10px #124a8b;color:#fff;font-size:clamp(28px,5vw,65px);font-weight:1000;text-shadow:4px 4px #222c58}
+.gl-outro-slot.second .gl-outro-block{height:clamp(108px,19vh,180px);background:linear-gradient(#ff90ca,#b356c3);border-color:#ffb8eb;box-shadow:inset -10px -10px #7d369d}
+.gl-outro-slot.first .gl-outro-block{height:clamp(145px,29vh,275px);background:linear-gradient(#ffe59a,#eea34c);border-color:#fff1b2;box-shadow:inset -10px -10px #bd6c35;color:#523056}
+.gl-outro-slot.first .gl-outro-emblem{filter:drop-shadow(0 0 20px #fff9a1)}
+.gl-outro-crown{font-size:clamp(20px,3vw,38px);height:clamp(26px,3vw,40px);color:#ffe681;font-weight:900;text-shadow:3px 3px #6d2b58;animation:gl-crown-bounce 1.1s steps(3) infinite}
+.gl-outro-bottom{position:absolute;bottom:2%;left:0;right:0;text-align:center;color:#ffc6e9;font-size:clamp(9px,1.3vw,14px);font-weight:800;letter-spacing:.12em;z-index:8}
+.gl-final-detail{margin:16px 0 24px;padding:18px;border:1px solid var(--border);border-radius:16px;background:white}
+.gl-final-detail .score{padding:11px 4px}
+@keyframes gl-podium-enter{from{transform:translateY(95%) scale(.83);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+@keyframes gl-crown-bounce{50%{transform:translateY(-7px)}}
+.gl-outro:after{content:"";position:absolute;inset:0;pointer-events:none;z-index:9;background:repeating-linear-gradient(0deg,transparent 0 4px,#ffffff0b 4px 5px)}
+@media(max-width:650px){.gl-outro{min-height:490px}.gl-outro-podiums{left:2%;right:2%;bottom:10%;height:54%}.gl-outro-slot{width:32%}.gl-outro-block{border-width:3px}.gl-outro-palm{transform:scale(.7);transform-origin:left bottom}.gl-outro-palm.right{transform:scaleX(-.7)}.gl-outro-title{top:5%}}
+@media(prefers-reduced-motion:reduce){.gl-outro-slot{animation:none;opacity:1}.gl-outro-crown{animation:none}}
+
+/* Genius Live round reveal: projector-sized scoreboard; no duplicate scoring. */
+.gl-reveal-screen{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:clamp(9px,3vw,32px);background:radial-gradient(circle at 50% 5%,#2c5475 0%,#0a1429 65%,#070b19 100%);color:#f8fbff;overflow:auto}
+.gl-reveal-content{width:min(960px,100%);max-height:100%;overflow-y:auto;position:relative}
+.gl-reveal-kicker{text-align:center;font-size:clamp(12px,2vw,17px);letter-spacing:.22em;text-transform:uppercase;color:#9feaff;font-weight:800}
+.gl-reveal-title{text-align:center;font-size:clamp(29px,5vw,58px);font-weight:900;letter-spacing:-.045em;margin:2px 0 6px;color:#fff;text-shadow:0 0 26px #50cfff88}
+.gl-reveal-subtitle{text-align:center;font-size:clamp(12px,1.8vw,17px);color:#bfd4e9;min-height:24px;margin:0 0 22px}
+.gl-reveal-rows{display:flex;flex-direction:column;gap:11px;margin:0 auto;max-width:860px}
+.gl-reveal-row{background:linear-gradient(105deg,#192d4de8,#12213ce8);border:2px solid #58728b88;border-radius:17px;display:grid;grid-template-columns:clamp(36px,6vw,70px) minmax(0,1fr) auto;gap:clamp(7px,2vw,18px);align-items:center;padding:clamp(9px,1.5vw,16px);min-height:clamp(73px,10vh,103px);position:relative;will-change:transform}
+.gl-reveal-row.is-first{background:linear-gradient(105deg,#69511f,#2a2941 65%,#172f4c);border-color:#ffca65;box-shadow:0 0 22px #ffcf6750}
+.gl-reveal-row.is-gaining{box-shadow:0 0 22px #42d4ff66;border-color:#63e1ff}
+.gl-reveal-rank{font-size:clamp(27px,5vw,47px);font-weight:900;text-align:center;color:#f4c65c}
+.gl-reveal-name{display:flex;align-items:center;gap:clamp(5px,1.5vw,14px);min-width:0;font-size:clamp(16px,2.8vw,29px);font-weight:800;overflow-wrap:anywhere}
+.gl-reveal-name .gl-character-logo{width:clamp(34px,5vw,56px)!important;height:clamp(34px,5vw,56px)!important}
+.gl-reveal-score{display:flex;flex-direction:column;align-items:flex-end;min-width:96px}
+.gl-reveal-number{font-size:clamp(22px,4vw,43px);font-weight:900;font-variant-numeric:tabular-nums;line-height:1.05}
+.gl-reveal-unit{font-size:12px;font-weight:700;color:#b6cedc}
+.gl-reveal-gain{color:#65f5b2;font-size:clamp(13px,2vw,20px);font-weight:900;font-variant-numeric:tabular-nums;min-height:24px}
+.gl-reveal-footer{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:22px 0 4px}
+.gl-reveal-footer button{background:#fff;color:#213a53;border:0;min-width:145px;font-size:15px;font-weight:800}
+.gl-reveal-footer button.primary{background:#ffcd62;color:#19233a}
+.gl-reveal-footer button:disabled{opacity:.5}
+.gl-reveal-screen .gl-reveal-progress{height:4px;width:100%;max-width:850px;margin:17px auto 0;border-radius:4px;background:#ffffff26;overflow:hidden}
+.gl-reveal-screen .gl-reveal-progress i{display:block;height:100%;background:#5de2ff;transform-origin:left;width:0}
+.gl-reveal-screen .gl-scoreboard-confetti{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden}
+.gl-reveal-spark{position:absolute;top:-20px;width:7px;height:18px;border-radius:2px;background:var(--spark);animation:gl-fall 2.1s ease-in both;left:var(--left);animation-delay:var(--delay)}
+@keyframes gl-fall{to{transform:translate(var(--drift),95vh) rotate(680deg);opacity:0}}
+@keyframes gl-glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.65)}}
+@media(max-width:520px){.gl-reveal-row{grid-template-columns:30px minmax(0,1fr) 97px;gap:7px}.gl-reveal-name{font-size:14px}.gl-reveal-name .gl-character-logo{width:29px!important;height:29px!important}.gl-reveal-score{min-width:0}.gl-reveal-number{font-size:21px}.gl-reveal-gain{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.gl-reveal-row,.gl-reveal-spark{animation:none!important;transition:none!important}}
+
+/* The same game runs inside the teacher dashboard without a second app copy. */
+body.genius-embedded{background:transparent}
+body.genius-embedded #geniusChildTabs{display:none!important}
+body.genius-embedded header{background:#e7f6f8;color:#244a54;padding:10px 12px;border-radius:12px;gap:10px;flex-wrap:wrap}
+body.genius-embedded header h1{font-size:16px}
+body.genius-embedded .music-controls{margin-left:auto}
+body.genius-embedded .music-controls label{color:#244a54}
+body.genius-embedded .music-controls small{color:#627e88}
+body.genius-embedded main{max-width:none;margin:12px auto;padding:0 2px}
+body.genius-embedded .panel{box-shadow:none}
+@media(max-width:700px){body.genius-embedded .grid{grid-template-columns:1fr}body.genius-embedded .music-controls{width:auto}}
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script></head><body><header><h1>Willena <span>Genius Live</span></h1><div class="music-controls" aria-label="Game music controls">
+<button id="fullscreenToggle" type="button" title="Fullscreen classroom view">⛶ Fullscreen</button><button id="musicToggle" type="button" aria-pressed="false">♫ Play music</button><button id="sfxToggle" type="button" aria-pressed="true" title="Toggle scoreboard sound effects">SFX On</button>
+<label for="musicVolume">Volume <input id="musicVolume" type="range" min="0" max="100" value="35" aria-label="Game music volume"></label>
+<small>Original game soundtrack · teacher device only</small>
+</div><span class="tag">Teacher · v1.0</span></header><nav id="geniusChildTabs" aria-label="Genius Live games" style="max-width:1240px;margin:14px auto -12px;padding:0 18px;display:flex;gap:9px;flex-wrap:wrap"><span style="background:#ed5fa5;color:white;padding:10px 16px;border-radius:10px;font-weight:800">Quiz Battle</span><a href="./blockbusters.html" style="background:white;color:#253f4c;border:1px solid #d4e7eb;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:800">Blockbusters</a></nav><main><div id="message" class="notice">Checking teacher login…</div><div id="app"></div></main>
+<script>
+if(new URLSearchParams(location.search).get('embedded')==='1'){document.body.classList.add('genius-embedded');document.addEventListener('DOMContentLoaded',()=>{const tabs=document.getElementById('geniusChildTabs');if(tabs)tabs.hidden=true;});}
+</script><script type="module">
+import {ensureTeacherSession,ensureAuthRefresh} from "/Teachers/auth-refresh.js?v=20261021-sessionfix1";
+import {TEAM_CHARACTER_LOGOS,TEAM_CHARACTER_IDS,teamCharacterMarkup} from "./team-logo-art.js?v=20261117-20logos";
+// Original, royalty-free in-browser soundtrack. No external tracks or student-device playback.
+// One audio context per teacher page. Music starts only after an explicit tap/click.
+const gameMusic=(()=>{
+ let ctx=null,master=null,interval=null,nextBeat=0,beat=0,enabled=false,volume=0.35,noise=null,phase="lobby";
+ const bpm=138,step=60/bpm/2;
+ // Separate original cyberpunk battle cue, minor-key chiptune at 156 BPM.
+ const cyberStep=60/156/2;
+ const cyberBass=[38,38,38,38,38,38,41,38,36,36,36,36,36,43,41,36,
+                  34,34,34,34,34,34,41,34,36,36,36,36,43,41,38,36];
+ const cyberLead=[74,null,77,81,74,null,77,82,74,77,84,82,81,null,77,74,
+                  72,null,75,79,72,75,82,79,72,null,75,79,84,82,79,75];
+ const cyberChords=[[50,53,57],[48,52,55],[46,50,53],[48,53,57]];
+ const bass=[43,43,46,43,41,41,48,46,39,39,46,43,41,41,46,48];
+ const chords=[[55,58,62],[53,57,60],[51,55,58],[53,57,62]];
+ const melody=[67,null,70,72,74,72,70,null,67,70,72,null,74,null,72,70,
+               65,null,69,72,74,72,69,null,65,69,72,null,77,null,74,72,
+               63,null,67,70,72,70,67,null,63,67,70,null,75,null,72,70,
+               65,null,69,72,77,74,72,null,69,72,74,null,77,null,79,77];
+ const hz=m=>440*Math.pow(2,(m-69)/12);
+ function tone(note,time,duration,type,gainLevel,cutoff=0){
+  const osc=ctx.createOscillator(),env=ctx.createGain();
+  osc.type=type;osc.frequency.setValueAtTime(hz(note),time);
+  if(cutoff){const filter=ctx.createBiquadFilter();filter.type="lowpass";filter.frequency.value=cutoff;osc.connect(filter);filter.connect(env)}else osc.connect(env);
+  env.connect(master);env.gain.setValueAtTime(0.0001,time);env.gain.exponentialRampToValueAtTime(gainLevel,time+0.012);
+  env.gain.exponentialRampToValueAtTime(0.0001,time+duration);
+  osc.start(time);osc.stop(time+duration+0.015);
+ }
+ function drum(time,kind){
+  if(kind==="kick"){
+   const osc=ctx.createOscillator(),env=ctx.createGain();osc.type="sine";osc.frequency.setValueAtTime(135,time);osc.frequency.exponentialRampToValueAtTime(48,time+0.14);
+   osc.connect(env);env.connect(master);env.gain.setValueAtTime(0.32,time);env.gain.exponentialRampToValueAtTime(0.0001,time+0.17);osc.start(time);osc.stop(time+0.18);return;
+  }
+  const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),env=ctx.createGain();
+  source.buffer=noise;filter.type="highpass";filter.frequency.value=kind==="snare"?1700:7000;
+  source.connect(filter);filter.connect(env);env.connect(master);
+  env.gain.setValueAtTime(kind==="snare"?0.105:0.035,time);
+  env.gain.exponentialRampToValueAtTime(0.0001,time+(kind==="snare"?0.14:0.045));
+  source.start(time);source.stop(time+(kind==="snare"?0.15:0.05));
+ }
+ function cyberSchedule(i,time){
+  const k=i%16,section=Math.floor(i/16)%4;
+  // Driving four-on-the-floor drum machine with short, metallic 8-bit pulses.
+  if(k%2===0)drum(time,"kick");
+  if(k%4===2)drum(time,"snare");
+  drum(time,"hat");
+  tone(cyberBass[i%cyberBass.length],time,cyberStep*0.76,"sawtooth",0.075,540);
+  if(k===0||k===8)for(const n of cyberChords[section])tone(n,time,cyberStep*3.2,"sawtooth",0.017,890);
+  const lead=cyberLead[i%cyberLead.length];
+  if(lead!==null)tone(lead,time,cyberStep*0.72,"square",0.037,2600);
+  // Countdown pressure: rising danger beeps in final five seconds.
+  if(k%2===0&&state?.status==="question"&&state.deadline){
+   const remain=(Date.parse(state.deadline)-Date.now())/1000;
+   if(remain>0&&remain<=5)tone(remain<=2?91:86,time,cyberStep*0.25,"square",0.034,3600);
+  }
+ }
+ function schedule(i,time){
+  // 16 eighth notes to the bar pair; a four-chord, original 8-bar progression.
+  const k=i%16,bar=Math.floor(i/16)%4;
+  if(k%4===0)drum(time,"kick");
+  if(k%4===2)drum(time,"snare");
+  drum(time,"hat");
+  if(k%2===0)tone(bass[bar*4+Math.floor(k/4)]||bass[k],time,step*1.65,"sawtooth",0.06,420);
+  if(k===0||k===8)for(const n of chords[bar])tone(n,time,step*3.3,"triangle",0.015);
+  const n=melody[(bar*16+k)%melody.length];
+  if(n!=null && (k%2===0||k===3||k===11))tone(n,time,step*0.82,"square",0.022,1550);
+ }
+ function run(){
+  if(!ctx||!enabled||ctx.state!=="running")return;
+  const now=ctx.currentTime;
+  // Do not build a long queue: music stops promptly when toggled off.
+  while(nextBeat<now+0.13){
+   if(phase==="question"){cyberSchedule(beat++,nextBeat);nextBeat+=cyberStep}
+   else{schedule(beat++,nextBeat);nextBeat+=step}
+  }
+ }
+ function init(){
+  if(ctx)return;
+  const AudioContext=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContext)throw Error("This browser does not support game audio.");
+  ctx=new AudioContext();master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
+  noise=ctx.createBuffer(1,Math.floor(ctx.sampleRate*0.2),ctx.sampleRate);
+  const data=noise.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
+ }
+ function setVolume(v){
+  volume=Math.max(0,Math.min(1,v));
+  if(master&&ctx)master.gain.setTargetAtTime(enabled?volume*0.5:0,ctx.currentTime,0.03);
+ }
+ async function toggle(){
+  if(enabled){enabled=false;clearInterval(interval);interval=null;if(master)master.gain.setTargetAtTime(0,ctx.currentTime,0.025);}
+  else{
+   init();await ctx.resume();enabled=true;nextBeat=ctx.currentTime+0.04;beat=0;
+   master.gain.setTargetAtTime(volume*0.5,ctx.currentTime,0.06);
+   run();interval=setInterval(run,55);
+  }
+  return enabled;
+ }
+ function setPhase(status){
+  const next=status==="question"?"question":"lobby";
+  if(next===phase)return;
+  phase=next;beat=0;
+  if(ctx&&enabled){
+   // A small fade hides the change of rhythm without overlapping two songs.
+   master.gain.setTargetAtTime(0,ctx.currentTime,0.018);
+   nextBeat=ctx.currentTime+0.085;
+   master.gain.setTargetAtTime(volume*0.5,ctx.currentTime+0.08,0.045);
+  }
+ }
+ function stop(){
+  if(!enabled)return;
+  enabled=false;clearInterval(interval);interval=null;
+  if(master&&ctx)master.gain.setTargetAtTime(0,ctx.currentTime,0.025);
+ }
+ return {toggle,setVolume,setPhase,stop,isPlaying:()=>enabled};
+})();
+
+// Original, synthesized 8-bit reveal effects. SFX has its own gain control; music remains unchanged.
+const revealSfx=(()=>{
+ let ctx=null,bus=null,volume=.35,enabled=true;
+ function init(){
+  if(ctx)return;
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return;
+  ctx=new AC();bus=ctx.createGain();bus.connect(ctx.destination);bus.gain.value=volume*.38;
+ }
+ function unlock(){
+  try{init();if(ctx?.state==="suspended")ctx.resume().catch(()=>{})}catch{}
+ }
+ function note(pitch,delay=0,length=.12,level=.13,wave="square"){
+  if(!enabled||!ctx||ctx.state!=="running")return;
+  const at=ctx.currentTime+delay,o=ctx.createOscillator(),g=ctx.createGain();
+  o.type=wave;o.frequency.setValueAtTime(440*Math.pow(2,(pitch-69)/12),at);
+  o.connect(g);g.connect(bus);
+  g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(level,at+.008);
+  g.gain.exponentialRampToValueAtTime(.0001,at+length);o.start(at);o.stop(at+length+.02);
+ }
+ function play(kind){
+  if(!enabled)return;
+  unlock();
+  if(kind==="reveal"){[52,59,64,71].forEach((n,i)=>note(n,i*.10,.18,.18));}
+  if(kind==="count"){[72,79].forEach((n,i)=>note(n,i*.055,.07,.095));}
+  if(kind==="rise"){[62,66,69,74,78].forEach((n,i)=>note(n,i*.08,.22,.14));}
+  if(kind==="final"){[67,71,74,79,83].forEach((n,i)=>note(n,i*.11,.35,.14));}
+ }
+ return {unlock,play,setVolume(v){volume=Math.max(0,Math.min(1,v));if(bus)bus.gain.value=volume*.38;},setEnabled(v){enabled=!!v},get enabled(){return enabled}};
+})();
+
+function setupMusic(){
+ const button=document.querySelector("#musicToggle"),slider=document.querySelector("#musicVolume");
+ slider.oninput=()=>{gameMusic.setVolume(Number(slider.value)/100);revealSfx.setVolume(Number(slider.value)/100)};
+ gameMusic.setVolume(Number(slider.value)/100);
+ revealSfx.setVolume(Number(slider.value)/100);
+ const sfxButton=document.querySelector("#sfxToggle");
+ sfxButton.onclick=()=>{revealSfx.setEnabled(!revealSfx.enabled);sfxButton.textContent=revealSfx.enabled?"SFX On":"SFX Off";sfxButton.setAttribute("aria-pressed",String(revealSfx.enabled));revealSfx.unlock()};
+ button.onclick=async()=>{
+  try{await gameMusic.toggle();button.textContent=gameMusic.isPlaying()?"♫ Pause music":"♫ Play music";button.setAttribute("aria-pressed",String(gameMusic.isPlaying()))}
+  catch(err){notify(err.message||"Could not start music.",true)}
+ };
+ document.addEventListener("visibilitychange",()=>{if(document.hidden&&gameMusic.isPlaying()){gameMusic.stop();button.textContent="♫ Play music";button.setAttribute("aria-pressed","false")}});
+}
+setupMusic();
+
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const api=async(action,body={})=>{const r=await fetch("/api/genius-live",{method:"POST",credentials:"include",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,...body})});const j=await r.json().catch(()=>({}));if(!r.ok||!j.ok)throw Error(j.error||"Request failed ("+r.status+")");return j};
+let catalog=[],classes=[],classBookIds={},selectedClassId="",selected=new Map(),pin=sessionStorage.getItem("genius.live.host.pin")||"",state=null,busy=false,initialized=false,autoReveal=false;
+let settings={count:15,seconds:20,mode:"team",teamCount:2,teamCreation:"fixed",skills:["vocab","sentence","grammar"]},lastView="",previewOpen=false,previewWords=[],previewPin="";
+function notify(message,error=false){const n=$("#message");n.textContent=message;n.className="notice"+(error?" error":"");n.hidden=!message}
+function bookName(id){return catalog.find(b=>b.id===id)?.title||"Unknown book"}
+function classBooks(){const allowed=new Set(classBookIds[selectedClassId]||[]);return catalog.filter(b=>allowed.has(b.id))}
+function resetToClassBooks(){const allowed=new Set(classBookIds[selectedClassId]||[]);for(const id of [...selected.keys()])if(!allowed.has(id))selected.delete(id)}
+function selectedUnits(){return [...selected].map(([bookId,units])=>({bookId,units:[...units]})).filter(x=>x.units.length)}
+function roundStatus(){if(!state)return "";return state.status+"|"+state.questionNumber+"|"+state.answeredCount+"|"+state.players.length+"|"+state.className+"|"+state.teamCount+"|"+(state.teamNames||[]).join(",")+"|"+(state.teamLogos||[]).join(",")+"|"+state.players.map(p=>p.id+":"+p.team+":"+p.score).join(",")}
+function teamName(n){return state?.teamNames?.[n]||["Pink Dragons","Blue Sharks","Green Tigers","Yellow Stars","Purple Panthers","Orange Foxes","Silver Wolves","Red Falcons"][n]||"Team"}
+function leaderboard(){if(!state)return "";const teams=state.mode==="team";const list=teams?Array.from({length:state.teamCount},(_,i)=>{const members=state.players.filter(p=>p.team===i);const total=members.reduce((s,p)=>s+p.score,0);return{name:teamName(i),logo:state.teamLogos?.[i]||"⭐",score:members.length?total/members.length:0,count:members.length}}):state.players.map(p=>({name:p.name,score:p.score}));list.sort((a,b)=>b.score-a.score);return list.map((p,i)=>'<div class="score"><span>'+(i+1)+'. '+(teams?logoVisual(p.logo,24)+' ':'')+esc(p.name)+(teams?' <small class="muted">('+p.count+' players)</small>':"")+'</span><b>'+Math.round(p.score).toLocaleString()+(teams?" avg pts":" pts")+'</b></div>').join("")}
+function setup(){
+ // Grammar Ten is a grammar-only question bank, indexed by its 31 instructional units.
+ // Do not leave vocabulary/sentence selected from a previous textbook.
+ const onlyGrammarTen=selectedUnits().length>0&&selectedUnits().every(x=>x.bookId==="1e3a2112-07be-45e2-a8fc-ce20011e0e57");
+ if(onlyGrammarTen)settings.skills=["grammar"];
+ $("#app").innerHTML='<div class="grid"><section class="panel em"><div class="row between"><h2>Create a classroom game</h2><span class="tag">Vocabulary · Sentences · Grammar</span></div><p class="muted small">Only books actively assigned to the selected class are available. Sentence and grammar questions come from the exact selected book and units in the matching Genius apps.</p>'+
+ '<div class="field"><label for="classSelect">Class</label><select id="classSelect"><option value="">Choose a class…</option>'+classes.map(c=>'<option value="'+esc(c.id)+'" '+(selectedClassId===c.id?"selected":"")+'>'+esc(c.name)+'</option>').join("")+'</select></div>'+
+ '<div class="field"><label for="bookSelect">Assigned books</label><select id="bookSelect" '+(!selectedClassId||!classBooks().length?"disabled":"")+'><option value="">'+(!selectedClassId?"Choose a class first…":!classBooks().length?"No active assigned books":"Select a class book…")+'</option>'+classBooks().map(b=>'<option value="'+b.id+'">'+esc(b.title)+'</option>').join("")+'</select></div><div id="bookCards">'+bookCards()+'</div>'+
+ '<div class="field"><label>Question types</label><div class="row" style="gap:14px;margin:6px 0 14px">'+[["vocab","Vocabulary"],["sentence","Sentences"],["grammar","Grammar"]].map(([key,name])=>'<label style="display:flex;align-items:center;gap:7px;font-size:13px;margin:0"><input type="checkbox" '+(onlyGrammarTen&&key!=="grammar"?"disabled ":"")+'data-skill="'+key+'" style="width:auto" '+(settings.skills.includes(key)?"checked":"")+'>'+name+'</label>').join("")+'</div><p class="muted small">'+(onlyGrammarTen?"Grammar Ten 완성 2: select any of its 31 lessons. Only its exact Grammar Genius Books questions are used.":"Uses existing questions from selected book units; grammar uses the matching Grammar Genius Books unit bank when available.")+'</p></div>'+
+ '<div class="two"><div class="field"><label>Number of questions</label><select id="count">'+[5,10,15,20,30,40].map(n=>'<option '+(settings.count===n?"selected":"")+'>'+n+'</option>').join("")+'</select></div>'+
+ '<div class="field"><label>Seconds per question</label><select id="seconds">'+[10,15,20,30,45,60].map(n=>'<option '+(settings.seconds===n?"selected":"")+'>'+n+'</option>').join("")+'</select></div>'+
+ '<div class="field"><label>Game type</label><select id="mode"><option value="team" '+(settings.mode==="team"?"selected":"")+'>Team battle</option><option value="individual" '+(settings.mode==="individual"?"selected":"")+'>Individual</option></select></div>'+
+ '<div class="field"><label>Who decides teams?</label><select id="teamCreation" '+(settings.mode==="individual"?"disabled":"")+'><option value="fixed" '+(settings.teamCreation==="fixed"?"selected":"")+'>Teacher decides</option><option value="students" '+(settings.teamCreation==="students"?"selected":"")+'>Students decide (up to 8 teams)</option></select></div>'+
+ '<div class="field"><label>Number of teams</label><select id="teamCount" '+(settings.mode==="individual"||settings.teamCreation==="students"?"disabled":"")+'>'+[2,3,4,5,6,7,8].map(n=>'<option '+(settings.teamCount===n?"selected":"")+'>'+n+'</option>').join("")+'</select></div></div>'+
+ '<button class="primary" id="create" '+(!selectedUnits().length||!selectedClassId||!settings.skills.length?"disabled":"")+'>Create Live Game</button></section>'+
+ '<aside class="panel"><h2>Teacher instructions</h2><p>1. Select one or more books and units.</p><p>2. Create a game and show the six-digit PIN.</p><p>3. Students sign into the separate Genius Live student page and join.</p><p>4. Start the quiz, reveal each answer and follow the scoreboard.</p>'+
+ '<div class="notice"><b>Student game:</b><p class="small">https://students.willenaenglish.com/students/genius-live/</p><button id="copyLink">Copy student link</button></div>'+
+ '<p class="muted small">No dashboard link has been added, and Genius homework scores are unaffected.</p></aside></div>';
+ $("#classSelect").onchange=e=>{selectedClassId=e.target.value;resetToClassBooks();setup()};
+ $("#bookSelect").onchange=e=>{const id=e.target.value;if(!id)return;const b=catalog.find(x=>x.id===id);if(!selected.has(id))selected.set(id,new Set(b.units.map(u=>u.id)));setup()};
+ document.querySelectorAll("[data-unit]").forEach(b=>b.onclick=()=>{const id=b.dataset.book,unit=b.dataset.unit,chosen=selected.get(id);chosen.has(unit)?chosen.delete(unit):chosen.add(unit);setup()});
+ document.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{selected.delete(b.dataset.remove);setup()});
+ document.querySelectorAll("[data-all]").forEach(b=>b.onclick=()=>{const id=b.dataset.all;selected.set(id,new Set(catalog.find(x=>x.id===id).units.map(u=>u.id)));setup()});
+ document.querySelectorAll("[data-none]").forEach(b=>b.onclick=()=>{selected.get(b.dataset.none).clear();setup()});
+ document.querySelectorAll("[data-skill]").forEach(el=>el.onchange=()=>{settings.skills=[...document.querySelectorAll("[data-skill]:checked")].map(x=>x.dataset.skill);$("#create").disabled=!settings.skills.length||!selectedUnits().length||!selectedClassId});
+ for(const key of ["count","seconds","mode","teamCount","teamCreation"])$("#"+key).onchange=e=>{settings[key]=["mode","teamCreation"].includes(key)?e.target.value:Number(e.target.value);if(["mode","teamCreation"].includes(key))setup()};
+ $("#copyLink").onclick=()=>navigator.clipboard.writeText("https://students.willenaenglish.com/students/genius-live/").then(()=>notify("Student link copied."));
+ $("#create").onclick=async()=>{if(busy)return;busy=true;notify("Building a mixed quiz from the selected units…");try{const g=await api("create",{classId:selectedClassId,selections:selectedUnits(),...settings});pin=g.pin;sessionStorage.setItem("genius.live.host.pin",pin);state=await api("state",{pin});previewOpen=false;previewWords=[];previewPin="";lastView="";paint();notify(g.total+" questions ready: "+(g.breakdown?.vocab||0)+" vocabulary, "+(g.breakdown?.sentence||0)+" sentence, "+(g.breakdown?.grammar||0)+" grammar. Grammar Genius Books questions are matched to the selected book and unit.");}catch(e){notify(e.message,true)}finally{busy=false}};
+}
+function bookCards(){return [...selected].map(([id,set])=>{const b=catalog.find(x=>x.id===id);if(!b)return "";return '<div class="book"><div class="booktop"><strong>'+esc(b.title)+'</strong><button data-remove="'+id+'">Remove</button></div>'+
+ '<div class="row" style="margin:10px 0"><button data-all="'+id+'">All units</button><button data-none="'+id+'">Clear units</button><span class="muted small">'+set.size+' selected</span></div><div class="chips">'+b.units.map(u=>'<button class="chip '+(set.has(u.id)?"active":"")+'" data-unit="'+u.id+'" data-book="'+id+'">Unit '+u.unit_number+'</button>').join("")+'</div></div>'}).join("")}
+function previewMarkup(){if(!previewOpen)return "";if(previewPin!==pin)return '<div class="word-preview">Loading actual questions…</div>';return '<div class="word-preview"><p class="small muted">Teacher-only · These are the exact '+previewWords.length+' questions in this game, in question order.</p>'+previewWords.map(x=>'<div class="word-preview-row"><span class="muted">'+x.number+'</span><span><strong>'+esc(x.word)+'</strong><small>'+esc(x.book)+' · '+(x.skill==='grammar'?'Grammar':x.skill==='sentence'?'Sentence':'Vocabulary')+' · '+(x.skill==='grammar'?esc(x.unit):'Unit '+esc(x.unit))+'</small></span><span>'+esc(x.meaning)+'</span></div>').join("")+'</div>'}
+async function togglePreview(){previewOpen=!previewOpen;if(!previewOpen){lastView="";paint();return}previewPin="";lastView="";paint();try{const result=await api("preview",{pin});if(!previewOpen)return;previewWords=result.words||[];previewPin=pin;lastView="";paint()}catch(e){previewOpen=false;notify(e.message,true);lastView="";paint()}}
+function studentJoinUrl(){return "https://students.willenaenglish.com/students/genius-live/?pin="+encodeURIComponent(pin)}
+function renderJoinQR(){const box=$("#joinQR");if(!box)return;box.replaceChildren();if(window.QRCode){new window.QRCode(box,{text:studentJoinUrl(),width:170,height:170,colorDark:"#233c48",colorLight:"#ffffff",correctLevel:window.QRCode.CorrectLevel.M});}else{const fallback=document.createElement("a");fallback.href=studentJoinUrl();fallback.textContent="Open student join link";box.append(fallback)}const copy=$("#copyJoin");if(copy)copy.onclick=()=>navigator.clipboard.writeText(studentJoinUrl()).then(()=>notify("Student game link copied."),()=>notify("Could not copy the link. Use the link below.",true));}
+const TEAM_EMOJIS=["🦊","🐉","🦈","🐯","⭐","🦁","🐺","🚀","⚡","🔥","🐼","🦅","🌙","👑"];
+function logoVisual(code,size=30){
+ return TEAM_CHARACTER_IDS.includes(code)?teamCharacterMarkup(code,size):'<span class="gl-logo-preview">'+esc(code||"⭐")+'</span>';
+}
+function logoPickerHtml(id,current){
+ const selected=current||"⭐";
+ const options=TEAM_EMOJIS.map(code=>({id:code,name:code})).concat(TEAM_CHARACTER_LOGOS);
+ return '<div class="gl-logo-picker" data-logo-wrap="'+esc(id)+'"><input type="hidden" data-team-logo="'+esc(id)+'" value="'+esc(selected)+'"><details><summary aria-label="Choose team logo"><span class="gl-current-logo">'+logoVisual(selected,30)+'</span></summary><div class="gl-logo-gallery">'+options.map(o=>'<button type="button" title="'+esc(o.name)+'" aria-label="'+esc(o.name)+'" aria-pressed="'+(o.id===selected)+'" data-select-logo="'+esc(o.id)+'" data-logo-target="'+esc(id)+'">'+logoVisual(o.id,34)+'</button>').join("")+'</div></details></div>';
+}
+function attachLogoPickers(){
+ document.querySelectorAll("[data-select-logo]").forEach(btn=>btn.onclick=()=>{
+  const wrap=btn.closest("[data-logo-wrap]");if(!wrap)return;
+  const value=btn.dataset.selectLogo;wrap.querySelector("[data-team-logo]").value=value;
+  wrap.querySelector(".gl-current-logo").innerHTML=logoVisual(value,30);
+  wrap.querySelector("details").open=false;
+ });
+}
+let selectedLobbyPlayerId=null;
+function teamControls(){
+ if(state.mode!=="team")return '<p class="muted small">This is an individual game.</p>';
+ const logoSelect=i=>logoPickerHtml(String(i),state.teamLogos?.[i]||TEAM_EMOJIS[i%TEAM_EMOJIS.length]);
+ const manager='<div class="team-manager"><div class="row between"><strong>Manage teams ('+state.teamCount+'/8)</strong><button id="hostAddTeam" '+(state.teamCount>=8?"disabled":"")+'>+ Add team</button></div><p class="muted small">Rename teams or change their logos here. Teams can also be created by students.</p>'+
+ Array.from({length:state.teamCount},(_,i)=>'<div class="team-editor"><input data-team-name="'+i+'" maxlength="24" aria-label="Name for team '+(i+1)+'" value="'+esc(teamName(i))+'">'+logoSelect(i)+'<button data-save-team="'+i+'">Save</button><button class="danger" data-remove-team="'+i+'" '+(state.teamCount<=1?"disabled":"")+'>Remove</button></div>').join("")+'</div>';
+ const board=Array.from({length:state.teamCount},(_,i)=>{
+  const members=state.players.filter(p=>p.team===i);
+  return '<div class="gl-team-zone" data-team-zone="'+i+'" tabindex="0" role="group" aria-label="'+esc(teamName(i))+' drop area">'+
+   '<div class="gl-team-head"><div class="gl-team-heading">'+logoVisual(state.teamLogos?.[i]||"⭐",29)+'<strong>'+esc(teamName(i))+'</strong></div><span class="gl-team-number">'+members.length+' player'+(members.length===1?"":"s")+'</span></div>'+
+   '<div class="gl-team-member-list">'+(members.length?members.map(p=>'<div class="gl-team-player" data-team-player="'+esc(p.id)+'" draggable="true" role="button" tabindex="0" aria-label="Move '+esc(p.name)+' to another team" title="Drag to another team or tap to select"><span class="gl-player-handle" aria-hidden="true">⠿</span><span class="gl-team-player-label">'+esc(p.name)+'</span></div>').join(""):'<div class="gl-team-empty">Drop students here</div>')+'</div>'+
+   '<button type="button" class="gl-team-move" data-move-to-team="'+i+'" disabled>Move selected student here</button></div>';
+ }).join("");
+ const unassigned=state.players.filter(p=>p.team<0);
+ const waiting=unassigned.length?'<div class="gl-team-zone" data-team-zone="-1"><div class="gl-team-head"><strong>Unassigned</strong><span class="gl-team-number">'+unassigned.length+'</span></div><div class="gl-team-member-list">'+unassigned.map(p=>'<div class="gl-team-player" data-team-player="'+esc(p.id)+'" draggable="true" role="button" tabindex="0"><span class="gl-player-handle" aria-hidden="true">⠿</span><span class="gl-team-player-label">'+esc(p.name)+'</span></div>').join("")+'</div></div>':"";
+ return '<p class="muted small">Drag students between teams. On a phone, tap a name and then tap the destination team.</p>'+
+ manager+'<div class="team-actions"><button id="balanceTeams" '+(state.teamCount?'':'disabled')+'>Auto-balance</button><button id="randomizeTeams" '+(state.teamCount?'':'disabled')+'>Randomize Teams</button><button id="addGhosts" '+(state.teamCount?'':'disabled')+'>Add 6 ghost players (simulation)</button></div>'+
+ '<div class="gl-teams-board">'+waiting+board+'</div>';
+}
+function wireTeamBoard(){
+ if(state?.status!=="lobby"||state?.mode!=="team")return;
+ const playerEl=id=>[...document.querySelectorAll("[data-team-player]")].find(el=>el.dataset.teamPlayer===id);
+ function selectPlayer(id){
+  selectedLobbyPlayerId=(selectedLobbyPlayerId===id?null:id);
+  document.querySelectorAll("[data-team-player]").forEach(el=>{
+   const on=el.dataset.teamPlayer===selectedLobbyPlayerId;
+   el.classList.toggle("is-selected",on);el.setAttribute("aria-pressed",String(on));
+  });
+  document.querySelectorAll("[data-move-to-team]").forEach(btn=>{
+   const target=Number(btn.dataset.moveToTeam);
+   const member=state.players.find(p=>p.id===selectedLobbyPlayerId);
+   btn.disabled=!member||member.team===target;
+  });
+ }
+ function move(id,target){
+  const p=state.players.find(x=>x.id===id);
+  if(!p||!Number.isInteger(target)||target<0||target>=state.teamCount||p.team===target)return;
+  selectedLobbyPlayerId=null;
+  doAction("set_team",{playerId:id,team:target});
+ }
+ let draggedId=null,ghost=null,touch=null;
+ const clear=()=>{
+  document.querySelectorAll(".gl-team-zone").forEach(el=>el.classList.remove("is-over","is-target"));
+  document.querySelectorAll(".gl-team-player").forEach(el=>el.classList.remove("is-dragging"));
+  ghost?.remove();ghost=null;touch=null;draggedId=null;
+ };
+ document.querySelectorAll("[data-team-player]").forEach(el=>{
+  const id=el.dataset.teamPlayer;
+  el.onclick=()=>{if(!touch)selectPlayer(id)};
+  el.onkeydown=e=>{
+   if(e.key==="Enter"||e.key===" "){e.preventDefault();selectPlayer(id)}
+  };
+  el.addEventListener("dragstart",e=>{
+   draggedId=id;e.dataTransfer.effectAllowed="move";
+   e.dataTransfer.setData("text/plain",id);
+   requestAnimationFrame(()=>el.classList.add("is-dragging"));
+  });
+  el.addEventListener("dragend",clear);
+  // Touchscreen: drag only by the handle, leaving vertical list scrolling intact.
+  const handle=el.querySelector(".gl-player-handle");
+  handle?.addEventListener("pointerdown",e=>{
+   if(e.pointerType==="mouse"||e.button!==0)return;
+   e.preventDefault();
+   draggedId=id;
+   touch={pointerId:e.pointerId,from:el,started:false,startX:e.clientX,startY:e.clientY};
+   handle.setPointerCapture(e.pointerId);
+  });
+  handle?.addEventListener("pointermove",e=>{
+   if(!touch||touch.pointerId!==e.pointerId)return;
+   if(!touch.started&&Math.hypot(e.clientX-touch.startX,e.clientY-touch.startY)<9)return;
+   touch.started=true;touch.from.classList.add("is-dragging");
+   if(!ghost){ghost=document.createElement("div");ghost.className="gl-team-touch-ghost";ghost.textContent=state.players.find(p=>p.id===id)?.name||"Student";document.body.append(ghost)}
+   ghost.style.left=(e.clientX+12)+"px";ghost.style.top=(e.clientY-22)+"px";
+   const zone=document.elementFromPoint(e.clientX,e.clientY)?.closest("[data-team-zone]");
+   document.querySelectorAll(".gl-team-zone").forEach(x=>x.classList.toggle("is-target",x===zone&&Number(x.dataset.teamZone)>=0));
+  });
+  const finishTouch=e=>{
+   if(!touch||touch.pointerId!==e.pointerId)return;
+   const moved=touch.started;
+   const zone=document.elementFromPoint(e.clientX,e.clientY)?.closest("[data-team-zone]");
+   const dest=zone?Number(zone.dataset.teamZone):-1;
+   clear();
+   if(moved&&dest>=0){move(id,dest)}
+  };
+  handle?.addEventListener("pointerup",finishTouch);
+  handle?.addEventListener("pointercancel",clear);
+ });
+ document.querySelectorAll("[data-team-zone]").forEach(zone=>{
+  const n=Number(zone.dataset.teamZone);
+  zone.addEventListener("dragover",e=>{
+   if(n<0||!draggedId)return;
+   e.preventDefault();e.dataTransfer.dropEffect="move";zone.classList.add("is-over");
+  });
+  zone.addEventListener("dragleave",e=>{if(!zone.contains(e.relatedTarget))zone.classList.remove("is-over")});
+  zone.addEventListener("drop",e=>{
+   if(n<0)return;
+   e.preventDefault();
+   const id=draggedId||e.dataTransfer.getData("text/plain");
+   clear();
+   move(id,n);
+  });
+  zone.addEventListener("keydown",e=>{
+   if((e.key==="Enter"||e.key===" ")&&selectedLobbyPlayerId&&n>=0){e.preventDefault();move(selectedLobbyPlayerId,n)}
+  });
+ });
+ document.querySelectorAll("[data-move-to-team]").forEach(btn=>{
+  btn.onclick=()=>{if(selectedLobbyPlayerId)move(selectedLobbyPlayerId,Number(btn.dataset.moveToTeam))};
+ });
+ // A selected player from a previous render should not remain selected after it moves.
+ if(selectedLobbyPlayerId&&state.players.some(p=>p.id===selectedLobbyPlayerId))selectPlayer(selectedLobbyPlayerId),selectPlayer(selectedLobbyPlayerId);
+}
+function lobby(){return '<div class="grid"><section class="panel em"><span class="tag">Waiting room · '+esc(state.className||"Class")+'</span><h2 style="margin-top:10px">Students join with PIN</h2><div class="join-layout"><div class="join-code"><div class="pin">'+esc(pin)+'</div><p class="small muted">Enter this PIN or scan the QR code.</p><button id="copyJoin">Copy student game link</button></div><div class="qr-panel"><div id="joinQR" role="img" aria-label="QR code to join this game"></div><span class="small muted">Scan to join this game</span></div></div><p class="join-url"><a id="joinLink" target="_blank" rel="noopener" href="'+esc(studentJoinUrl())+'">'+esc(studentJoinUrl())+'</a></p>'+
+ '<p class="small muted">Students open the separate Genius Live student page, log in and enter this PIN. Students can select and name their own teams before the game begins.</p><div class="row"><button id="previewWords">'+(previewOpen?"Hide question preview":"Preview questions")+'</button><button class="primary" id="start" '+(!state.players.length?"disabled":"")+'>Start Game</button><button id="cancel">Cancel game</button></div>'+
+ '<p class="small muted">Class: '+esc(state.className||"—")+' · '+state.total+' questions ('+(state.breakdown?.vocab||0)+' vocabulary / '+(state.breakdown?.sentence||0)+' sentences / '+(state.breakdown?.grammar||0)+' grammar) · '+state.seconds+' seconds · '+state.mode+'</p>'+previewMarkup()+'</section>'+
+ '<section class="panel"><h2>Players ('+state.players.length+')</h2>'+teamControls()+'</section></div>'}
+function quiz(){const q=state.question;return '<div class="grid"><section class="panel em"><div class="row between"><span class="tag">'+esc(state.className||"Class")+' · '+esc(q.book)+' · Unit '+q.unit+' · '+esc(q.skill||'Word Genius')+'</span><b>Question '+state.questionNumber+' / '+state.total+'</b></div>'+
+ '<div class="row between" style="margin-top:12px"><span class="timer" id="timer">—</span><b>'+state.answeredCount+' / '+state.players.length+' answered</b></div><div class="bar"><i id="timerBar"></i></div>'+
+ '<div class="question">'+esc(q.prompt)+'</div><div class="answers">'+q.options.map((s,i)=>'<div class="answer '+(state.status==="reveal"?(i===q.correct?"correct":"dim"):"")+'"><span class="letter">'+["A","B","C","D","E"][i]+'</span>'+esc(s)+'</div>').join("")+'</div>'+
+ (state.status==="reveal"?'<p class="notice"><strong>Answer: '+esc(q.options[q.correct])+'</strong> · '+esc(q.explanation)+'</p>':'<p class="muted small">Answers remain hidden until you reveal them.</p>')+
+ '<div class="row"><button id="reveal" '+(state.status!=="question"?"disabled":"")+'>Reveal Answer</button><button id="next" class="primary" '+(state.status!=="reveal"?"disabled":"")+'>'+(state.questionNumber===state.total?"Finish Game":"Next Question")+'</button><button id="cancel">End game</button></div></section>'+
+ '<section class="panel"><h2>'+ (state.mode==="team"?"Team leaderboard":"Leaderboard")+'</h2>'+leaderboard()+'<h3 style="margin-top:25px">Players</h3>'+state.players.map(p=>'<div class="player">'+esc(p.name)+'<span class="tag">'+(state.answeredPlayerIds?.includes(p.id)?"Answered":"Waiting")+'</span></div>').join("")+'</section></div>'}
+
+// Server-authoritative points: subtract this question's awards from current scores
+// to reconstruct the pre-round leaderboard even when reveal arrives via polling.
+let lastAnimatedRound="",activeReveal=null;
+function scoreboardRows(data){
+ const gains=new Map((data.roundPoints||[]).map(x=>[x.playerId,Number(x.points)||0]));
+ const teams=data.mode==="team";
+ const rows=teams?Array.from({length:data.teamCount},(_,i)=>{
+  const members=data.players.filter(p=>p.team===i),total=members.reduce((n,p)=>n+p.score,0);
+  const delta=members.reduce((n,p)=>n+(gains.get(p.id)||0),0);
+  const divisor=members.length||1;
+  return {id:String(i),name:data.teamNames?.[i]||teamName(i),logo:data.teamLogos?.[i]||"⭐",count:members.length,
+   end:members.length?total/divisor:0,start:members.length?(total-delta)/divisor:0,delta:members.length?delta/divisor:0};
+ }):data.players.map(p=>{
+  const delta=gains.get(p.id)||0;
+  return{id:p.id,name:p.name,logo:null,count:1,end:p.score,start:p.score-delta,delta};
+ });
+ return rows;
+}
+function maybeRoundReveal(){
+ if(!state||state.status!=="reveal"||!state.teacher||!state.roundPoints)return;
+ const key=state.pin+":"+state.questionNumber;
+ if(lastAnimatedRound===key)return;
+ lastAnimatedRound=key;
+ showRoundReveal(scoreboardRows(state),state.questionNumber,state.total,state.mode==="team");
+}
+function showRoundReveal(rows,round,total,teams){
+ activeReveal?.close();
+ const reduced=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches||false;
+ const overlay=document.createElement("section");
+ overlay.className="gl-reveal-screen";
+ overlay.setAttribute("role","dialog");overlay.setAttribute("aria-modal","true");overlay.setAttribute("aria-label","Round "+round+" leaderboard");
+ const label=(teams?"TEAM":"PLAYER")+" RANKINGS";
+ const ordered=[...rows].sort((a,b)=>b.start-a.start||String(a.id).localeCompare(String(b.id)));
+ const rowMarkup=p=>'<div class="gl-reveal-row" data-score-row="'+esc(p.id)+'">'+
+  '<span class="gl-reveal-rank">—</span><div class="gl-reveal-name">'+(p.logo?logoVisual(p.logo,44):"")+ '<span>'+esc(p.name)+'</span></div>'+
+  '<div class="gl-reveal-score"><span class="gl-reveal-number">0</span><span class="gl-reveal-unit">'+(teams?"average pts":"points")+'</span><span class="gl-reveal-gain"></span></div></div>';
+ overlay.innerHTML='<div class="gl-reveal-content"><div class="gl-scoreboard-confetti" aria-hidden="true"></div>'+
+  '<div class="gl-reveal-kicker">Question '+round+' of '+total+' complete</div><h2 class="gl-reveal-title">POINTS ARE IN!</h2>'+
+  '<div class="gl-reveal-subtitle" id="glRankingSubtitle">Calculating the scores...</div>'+
+  '<div class="gl-reveal-rows">'+ordered.map(rowMarkup).join("")+'</div>'+
+  '<div class="gl-reveal-progress"><i></i></div><div class="gl-reveal-footer">'+
+  '<button id="glSkipReveal">Skip animation</button><button id="glContinueReveal" class="primary" disabled>'+(round===total?"Finish Game":"Next Question")+'</button>'+
+  '<button id="glCloseReveal">Back to answers</button></div></div>';
+ document.body.append(overlay);
+ const rowsEl=overlay.querySelector(".gl-reveal-rows"),title=overlay.querySelector(".gl-reveal-title"),
+ subtitle=overlay.querySelector("#glRankingSubtitle"),progress=overlay.querySelector(".gl-reveal-progress i"),
+ continueBtn=overlay.querySelector("#glContinueReveal");
+ let timers=[],frames=[],closed=false,finished=false,reordered=false;
+ const at=(delay,fn)=>{timers.push(setTimeout(()=>{if(!closed)fn()},delay))};
+ const raf=fn=>{const id=requestAnimationFrame(fn);frames.push(id);return id};
+ const elOf=id=>[...rowsEl.children].find(el=>el.dataset.scoreRow===String(id));
+ function ranks(order){
+  order.forEach((p,i)=>{
+   const el=elOf(p.id);if(!el)return;
+   el.querySelector(".gl-reveal-rank").textContent=String(i+1);
+   el.classList.toggle("is-first",i===0);
+  });
+ }
+ function paintNumber(p,n){
+  const el=elOf(p.id);if(!el)return;
+  el.querySelector(".gl-reveal-number").textContent=Math.round(n).toLocaleString();
+  el.querySelector(".gl-reveal-gain").textContent=(p.delta>0?"+":"")+Math.round(p.delta).toLocaleString()+(p.delta?" pts":"");
+ }
+ function reorder(){
+  if(reordered||closed)return;reordered=true;
+  const next=[...rows].sort((a,b)=>b.end-a.end||String(a.id).localeCompare(String(b.id)));
+  const old=new Map([...rowsEl.children].map(el=>[el.dataset.scoreRow,el.getBoundingClientRect()]));
+  next.forEach(p=>rowsEl.append(elOf(p.id)));
+  ranks(next);
+  if(!reduced){
+   [...rowsEl.children].forEach(el=>{
+    const from=old.get(el.dataset.scoreRow),to=el.getBoundingClientRect();
+    if(from&&to){const dy=from.top-to.top;
+     if(Math.abs(dy)>1)el.animate([{transform:"translateY("+dy+"px)"},{transform:"translateY(0)"}],{duration:900,easing:"cubic-bezier(.21,.77,.22,1)"});
+    }
+   });
+  }
+  const moved=next.some((p,i)=>ordered[i]?.id!==p.id);
+  if(moved)revealSfx.play("rise");
+  else revealSfx.play("final");
+  title.textContent=moved?"THE RANKINGS HAVE CHANGED!":"ROUND RESULTS";
+  subtitle.textContent=moved?"What a turnaround!":"Here's where everyone stands!";
+  if(!reduced&&next.length&&next[0].delta>0){
+   const sparks=overlay.querySelector(".gl-scoreboard-confetti");
+   for(let i=0;i<35;i++){
+    const node=document.createElement("i");node.className="gl-reveal-spark";
+    node.style.setProperty("--left",((i*37)%99)+"%");
+    node.style.setProperty("--delay",((i%9)*.065)+"s");
+    node.style.setProperty("--drift",(((i*29)%180)-90)+"px");
+    node.style.setProperty("--spark",["#53dfff","#ffcc65","#f57aab","#83efb7"][i%4]);
+    sparks.append(node);
+   }
+  }
+ }
+ function finishAnimation(){
+  if(finished||closed)return;finished=true;
+  rows.forEach(p=>paintNumber(p,p.end));reorder();
+  continueBtn.disabled=false;
+  progress.style.width="100%";
+ }
+ function close(){
+  if(closed)return;
+  closed=true;timers.forEach(clearTimeout);frames.forEach(cancelAnimationFrame);
+  overlay.remove();if(activeReveal?.element===overlay)activeReveal=null;
+ }
+ activeReveal={element:overlay,close};
+ overlay.setAttribute("tabindex","-1");overlay.focus({preventScroll:true});
+ overlay.querySelector("#glCloseReveal").onclick=close;
+ overlay.addEventListener("keydown",e=>{if(e.key==="Escape"){e.preventDefault();close()}});
+ overlay.querySelector("#glSkipReveal").onclick=finishAnimation;
+ continueBtn.onclick=()=>{if(!finished)return;close();revealSfx.play("final");doAction("next")};
+ const totalDuration=reduced?100:5000;
+ overlay.querySelector("#glSkipReveal").style.display=reduced?"none":"";
+ ranks(ordered);
+ rows.forEach(p=>paintNumber(p,p.start));
+ if(reduced){subtitle.textContent="Round standings";finishAnimation();return;}
+ revealSfx.play("reveal");
+ subtitle.textContent="Adding this round's points...";
+ progress.animate([{width:"0%"},{width:"100%"}],{duration:totalDuration,fill:"forwards"});
+ at(650,()=>{
+  const started=performance.now(),duration=2500;
+  function update(now){
+   if(closed||finished)return;
+   const t=Math.max(0,Math.min(1,(now-started)/duration)),eased=1-Math.pow(1-t,3);
+   rows.forEach(p=>paintNumber(p,p.start+(p.end-p.start)*eased));
+   if(t<1)raf(update);
+  }
+  raf(update);
+  revealSfx.play("count");
+ });
+ at(3550,()=>{subtitle.textContent="And the new standings are...";reorder()});
+ at(4900,finishAnimation);
+ // Retain teacher control: no automatic navigation to the next question.
+}
+
+let lastCountdownKey="",lastCountdownDigit=null;
+function countdownMarkup(){return '<div class="gl-countdown-stage" role="status" aria-live="polite"><div class="gl-countdown-center"><div class="gl-countdown-kicker">QUESTION '+state.questionNumber+' / '+state.total+'</div><div class="gl-countdown-number" id="glCountdownNumber">3</div><div class="gl-countdown-sub">GET READY!</div></div></div>'}
+function updateCountdown(){
+ if(!state||state.status!=="countdown")return;
+ const until=Date.parse(state.countdownUntil||"");
+ const remaining=Math.max(0,Math.ceil((until-Date.now())/1000));
+ const digit=remaining>0?remaining:"GO!";
+ const el=document.querySelector("#glCountdownNumber");
+ if(el&&el.textContent!==String(digit)){
+  el.textContent=String(digit);el.classList.remove("pulse");void el.offsetWidth;el.classList.add("pulse");
+  if(remaining>0&&remaining<=3&&lastCountdownDigit!==remaining){revealSfx.play("count");lastCountdownDigit=remaining}
+ }
+ if(remaining===0&&!busy&&Date.now()-lastCountdownPoll>300){lastCountdownPoll=Date.now();refresh()}
+}
+let lastCountdownPoll=0;
+function setupFullscreen(){
+ const button=document.querySelector("#fullscreenToggle");
+ button.onclick=async()=>{
+  try{
+   if(document.fullscreenElement)await document.exitFullscreen();
+   else await document.body.requestFullscreen();
+  }catch(e){notify("Fullscreen is blocked here. Try Open game in new tab.",true)}
+ };
+ document.addEventListener("fullscreenchange",()=>{button.textContent=document.fullscreenElement?"⛶ Exit fullscreen":"⛶ Fullscreen"});
+}
+setupFullscreen();
+
+let finalFanfareKey="";
+function podiumEntries(){
+ const teamGame=state.mode==="team";
+ const entries=teamGame?Array.from({length:state.teamCount},(_,i)=>{
+  const people=state.players.filter(p=>p.team===i);
+  return {id:i,name:teamName(i),logo:state.teamLogos?.[i]||"⭐",score:people.length?people.reduce((sum,p)=>sum+p.score,0)/people.length:0,count:people.length};
+ }):state.players.map((p,i)=>({id:p.id,name:p.name,logo:null,score:p.score,count:1}));
+ // Empty teams must never win or displace a team that actually participated.
+ return entries.filter(x=>x.count>0).sort((a,b)=>b.score-a.score||String(a.name).localeCompare(String(b.name)));
+}
+function maybeFinalFanfare(){
+ if(!state||state.status!=="finished")return;
+ const key=state.pin+":"+state.total;
+ if(finalFanfareKey===key)return;
+ finalFanfareKey=key;
+ // Audio follows the teacher's SFX setting and previously unlocked WebAudio context.
+ if(revealSfx.enabled)setTimeout(()=>{if(state?.status==="finished"&&state.pin+":"+state.total===key)revealSfx.play("final")},1900);
+}
+function finished(){
+ const players=state.players.slice().sort((a,b)=>b.score-a.score);
+ const ranked=podiumEntries();
+ // 2-1-3 order gives the familiar podium silhouette while still supporting small games.
+ const positions=[{rank:2,cls:"second"},{rank:1,cls:"first"},{rank:3,cls:"third"}];
+ const podium=positions.map(pos=>{
+  const item=ranked[pos.rank-1];
+  if(!item)return '<div class="gl-outro-slot '+pos.cls+'" aria-hidden="true"></div>';
+  return '<div class="gl-outro-slot '+pos.cls+'">'+(pos.rank===1?'<div class="gl-outro-crown" aria-label="Winner">★ ★ ★</div>':'')+
+  '<div class="gl-outro-emblem">'+(item.logo?logoVisual(item.logo,64):'<span aria-hidden="true">★</span>')+'</div>'+
+  '<div class="gl-outro-name">'+esc(item.name)+'</div>'+
+  '<div class="gl-outro-points">'+Math.round(item.score).toLocaleString()+(state.mode==="team"?" AVG PTS":" PTS")+'</div>'+
+  '<div class="gl-outro-block">'+pos.rank+'</div></div>';
+ }).join("");
+ const extra=ranked.slice(3).map((p,i)=>'<div class="score"><span>'+(i+4)+'. '+(p.logo?logoVisual(p.logo,25)+' ':'')+esc(p.name)+'</span><b>'+Math.round(p.score).toLocaleString()+' pts</b></div>').join("");
+ const palm='<div class="gl-outro-palm left" aria-hidden="true"><i class="trunk"></i>'+Array.from({length:5},()=>'<i class="leaf"></i>').join("")+'</div><div class="gl-outro-palm right" aria-hidden="true"><i class="trunk"></i>'+Array.from({length:5},()=>'<i class="leaf"></i>').join("")+'</div>';
+ return '<section class="gl-outro" aria-label="Genius Live final standings">'+
+ '<div class="gl-outro-sky"></div><div class="gl-outro-sun"></div><div class="gl-outro-mountain"></div><div class="gl-outro-grid"></div>'+palm+
+ '<div class="gl-outro-title"><small>GENIUS LIVE · FINAL RESULTS</small>CHAMPIONS</div>'+
+ '<div class="gl-outro-podiums">'+podium+'</div><div class="gl-outro-bottom">CALIFORNIA SUNSET · '+esc(state.total)+' QUESTIONS COMPLETE</div></section>'+
+ '<div class="gl-final-detail"><h2>Final standings</h2>'+leaderboard()+extra+
+ '<details><summary style="cursor:pointer;font-weight:800;margin:14px 0">Individual scores ('+players.length+')</summary>'+
+ players.map(p=>'<div class="score">'+esc(p.name)+'<b>'+Math.round(p.score).toLocaleString()+' pts</b></div>').join("")+'</details>'+
+ '<p><button id="again" class="primary">Create another game</button></p></div>';
+}
+function paint(){if(!state){activeReveal?.close();gameMusic.setPhase("lobby");setup();return}if(state.status!=="reveal")activeReveal?.close();if(state.status==="countdown"&&lastCountdownKey!==state.pin+":"+state.questionNumber){lastCountdownKey=state.pin+":"+state.questionNumber;lastCountdownDigit=null;}gameMusic.setPhase(state.status==="countdown"?"lobby":state.status);maybeRoundReveal();maybeFinalFanfare();const key=roundStatus();if(key===lastView)return;lastView=key;$("#app").innerHTML=state.status==="lobby"?lobby():state.status==="countdown"?countdownMarkup():["question","reveal"].includes(state.status)?quiz():finished();
+ const on=(id,fn)=>{const b=$("#"+id);if(b)b.onclick=fn};
+ on("previewWords",togglePreview);on("start",()=>{revealSfx.unlock();doAction("start")});on("reveal",()=>doAction("reveal"));on("next",()=>doAction("next"));on("cancel",()=>{if(confirm("End this game?"))doAction("cancel")});
+ on("hostAddTeam",()=>doAction("host_add_team"));
+ document.querySelectorAll("[data-save-team]").forEach(button=>button.onclick=()=>{const i=Number(button.dataset.saveTeam);doAction("host_edit_team",{team:i,name:document.querySelector('[data-team-name="'+i+'"]').value,logo:document.querySelector('[data-team-logo="'+i+'"]').value})});
+ document.querySelectorAll("[data-remove-team]").forEach(button=>button.onclick=()=>{const i=Number(button.dataset.removeTeam);const members=state.players.filter(p=>p.team===i).length;if(confirm('Remove '+teamName(i)+'? '+(members?members+' player(s) will move to another team.':'This team is empty.')))doAction("host_remove_team",{team:i})});
+ on("addGhosts",()=>doAction("add_ghosts"));
+ attachLogoPickers();
+ on("balanceTeams",()=>doAction("balance_teams"));on("randomizeTeams",()=>doAction("randomize_teams"));
+ wireTeamBoard();
+ on("again",()=>{pin="";state=null;lastView="";sessionStorage.removeItem("genius.live.host.pin");setup()});
+ if(state.status==="lobby")renderJoinQR();if(state.status==="countdown")updateCountdown();
+ tick();
+}
+async function doAction(action,options={}){if(busy)return;if(action==="next"||action==="cancel"){activeReveal?.close()}busy=true;try{state=await api(action,{pin,...options});if(state.status==="cancelled"){pin="";state=null;sessionStorage.removeItem("genius.live.host.pin")}lastView="";autoReveal=false;paint()}catch(e){notify(e.message,true)}finally{busy=false}}
+async function refresh(){if(!pin||busy)return;try{const simulation=!!(state?.simulation&&state.status==="question");try{state=await api(simulation?"simulate_ghosts":"state",{pin})}catch(e){if(!simulation||!/Simulation action not available in this round/i.test(e.message))throw e;state=await api("state",{pin})}if(!state.teacher)throw Error("This game belongs to another teacher.");if(state.status==="cancelled"){pin="";state=null;sessionStorage.removeItem("genius.live.host.pin")}paint()}catch(e){notify(e.message,true)}}
+function tick(){if(!state||state.status!=="question")return;const rem=Math.max(0,Date.parse(state.deadline)-Date.now()),sec=Math.ceil(rem/1000),t=$("#timer"),bar=$("#timerBar");if(t)t.textContent=sec+"s";if(bar)bar.style.width=(100*rem/(state.seconds*1000))+"%";if(rem===0&&!autoReveal&&!busy){autoReveal=true;doAction("reveal")}}
+async function login(){
+ try{const session=await ensureTeacherSession();
+  if(!session?.success){if(session?.temporary){notify("Connection problem. Your login has not been cleared. Reload to retry.",true);return}location.replace("/Teachers/login.html?redirect="+encodeURIComponent(location.pathname));return}
+  const u=window.WillenaAPI.getApiUrl("/.netlify/functions/supabase_auth?action=get_role&user_id="+encodeURIComponent(session.user_id));
+  const res=await window.WillenaAPI.fetch(u,{cache:"no-store"}),r=await res.json();
+  if(!res.ok||!["teacher","admin"].includes(String(r.role||"").toLowerCase()))throw Error("Teacher access required.");
+  ensureAuthRefresh();initialized=true;
+  if(pin){await refresh();if(state){notify("");return}pin="";sessionStorage.removeItem("genius.live.host.pin")}
+  notify("Loading books…");const data=await api("catalog");catalog=data.books||[];classes=data.classes||[];classBookIds=data.classBookIds||{};resetToClassBooks();notify("");setup();
+ }catch(e){notify(e.message,true);$("#app").innerHTML='<div class="panel"><h2>Could not open Genius Live</h2><button id="retryLogin">Retry login</button> <a href="/Teachers/">Teachers Dashboard</a></div>';$("#retryLogin").onclick=login}}
+setInterval(()=>{if(initialized&&pin&&document.visibilityState==="visible")refresh()},1800);
+setInterval(tick,200);
+setInterval(updateCountdown,100);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&pin)refresh()});
+login();
+</script></body></html>

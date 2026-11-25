@@ -1,0 +1,140 @@
+#view-sentence-genius .sgt-dashboard{padding:20px;max-width:1050px}
+.sgt-head{margin-bottom:14px}.sgt-head h3{font-size:1.12rem;margin:0 0 4px;color:#23565e}
+.sgt-head p{margin:0;color:#697780;font-size:.82rem;line-height:1.5}
+.sgt-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:15px 0}
+.sgt-fields label{display:flex;flex-direction:column;gap:6px;font-size:.75rem;font-weight:700;color:#566873}
+.sgt-fields select,.sgt-fields input{width:100%;min-width:0;box-sizing:border-box;min-height:42px}
+.sgt-fields .sgt-wide{grid-column:1/-1}
+.sgt-target{padding:16px;border:1px solid #d5eaed;background:#f7fbfc;border-radius:13px;line-height:1.6;white-space:normal}
+.sgt-result{margin-top:15px;border:1px solid #d5eaed;background:#f9fcfc;border-radius:14px;padding:15px;min-height:54px;font-size:.84rem;white-space:pre-wrap}
+.sgt-result strong{display:block;color:#1a686e;font-size:1.03rem}
+.sgt-result p{margin:7px 0}.sgt-result small{color:#6a8186}
+.sgt-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0}
+.sgt-actions .control{flex:0 0 auto;cursor:pointer}
+.sgt-unit{display:flex;align-items:center;gap:12px;padding:8px 4px;border-bottom:1px solid #e1edf0;font-size:.84rem;cursor:pointer}
+.sgt-unit input{width:16px;height:16px;flex-shrink:0}
+.sgt-modes{display:flex;flex-wrap:wrap;align-items:center;gap:20px;border:1px solid #d5eaed;border-radius:12px;padding:12px 16px}
+.sgt-modes legend{font-size:.8rem;font-weight:700}
+.sgt-modes label{font-size:.81rem;display:flex;align-items:center;gap:7px}
+.sgt-assignment-list{display:grid;gap:12px}
+.sgt-assignment-card{padding:14px 16px;border:1px solid #d5eaed;background:#fff;border-radius:14px}
+.sgt-assignment-card strong{display:block;font-size:.89rem}
+.sgt-assignment-card small{display:block;font-size:.73rem;color:#657880;margin-top:5px}
+.sgt-progress{padding:10px 0 2px;border-top:1px solid #edf2f3}
+.sgt-student{display:grid;grid-template-columns:minmax(100px,1fr) minmax(90px,2fr) 50px;align-items:center;gap:12px;margin:10px 0;font-size:.79rem}
+.sgt-student strong{font-size:.8rem}
+.sgt-student small{font-size:.68rem}
+.sgt-student b{text-align:right;color:#236e76}
+.sgt-bar{height:8px;background:#e8f1f2;border-radius:20px;overflow:hidden}.sgt-bar i{height:100%;background:#2d9da9;display:block;border-radius:20px}
+#uaSentenceHomework [data-sg-status]{color:#247987;font-size:.8rem;min-height:18px}
+@media(max-width:700px){#view-sentence-genius .sgt-dashboard{padding:14px}.sgt-fields{grid-template-columns:1fr}.sgt-actions .control{flex:1}.sgt-student{grid-template-columns:1fr 1fr 46px;gap:7px}}
+
+/* Class progress lives in the main Sentence Genius teacher view, not only the
+   assignment detail drawers. */
+.sgt-class-dashboard{border-top:1px solid #e1edf0;margin-top:28px;padding-top:22px}
+.sgt-class-label{display:flex;align-items:center;gap:9px;font-size:.8rem;font-weight:700;color:#566873}
+.sgt-class-label .control{min-width:190px}
+.sgt-progress-overview{display:grid;gap:10px;margin-top:10px}
+.sgt-class-summary{display:flex;gap:10px;flex-wrap:wrap}
+.sgt-class-summary strong{flex:1;min-width:120px;padding:14px 15px;border-radius:13px;background:#f2fafa;border:1px solid #d5eaed;font-size:.83rem;color:#24666c}
+.sgt-progress-student{border:1px solid #d7e8eb;border-radius:14px;padding:12px 15px;background:#fff}
+.sgt-progress-student summary{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;list-style:none}
+.sgt-progress-student summary::-webkit-details-marker{display:none}
+.sgt-progress-student summary strong{font-size:.86rem;color:#23565e}
+.sgt-progress-student summary small{display:block;color:#6a8186;margin-top:5px;line-height:1.4;font-size:.72rem}
+.sgt-progress-percent{font-size:.92rem;font-weight:800;color:#276d75}
+.sgt-progress-student .sgt-bar{margin-top:12px}
+.sgt-progress-units{display:grid;gap:7px;margin-top:12px}
+.sgt-progress-units>div{display:flex;justify-content:space-between;gap:12px;padding-top:7px;border-top:1px solid #edf3f4;font-size:.78rem}
+.sgt-progress-units b{white-space:nowrap;color:#246b74}
+.sgt-empty,.sgt-error{font-size:.82rem;color:#667d85;margin:8px 0}
+.sgt-error{color:#b45309}
+@media(max-width:700px){.sgt-class-label{width:100%}.sgt-class-label .control{flex:1;min-width:0}.sgt-class-summary strong{min-width:95px}}
+
+
+/* Sentence Genius: the General Progress tab follows the other Genius dashboards. */
+#view-sentence-genius [data-sgt-panel][hidden],
+#view-sentence-genius .sgt-matrix-detail[hidden]{display:none!important}
+#view-sentence-genius .sgt-dashboard{max-width:1220px}
+.sgt-tab-list{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px;border-bottom:1px solid #dcebed;padding-bottom:10px}
+.sgt-tab{border:1px solid #d9e9ec;border-radius:11px;background:#f8fbfc;color:#536a73;
+  padding:12px 18px;font-size:.87rem;font-weight:750;cursor:pointer;min-height:44px}
+.sgt-tab:hover{background:#edf8fa}.sgt-tab.active{background:#e8f7f9;color:#1f7983;border-color:#71c8d1}
+.sgt-tab:focus-visible,.sgt-matrix-row:focus-visible{outline:3px solid #1f8b96;outline-offset:2px}
+.sgt-stats-intro{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.sgt-stats-intro .sgt-head{margin-bottom:0;max-width:700px}
+.sgt-stats-intro .control{white-space:nowrap}
+.sgt-lab-note{background:#f4f9fa;border-left:3px solid #80c6d0;padding:11px 14px;
+  border-radius:8px;font-size:.79rem;color:#506c75;margin:10px 0 18px;line-height:1.55}
+#sgtGeneralStats{min-width:0}
+.sgt-stats-filter{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.sgt-filter-field{display:flex;flex-direction:column;gap:5px;min-width:145px;font-size:.71rem;font-weight:700;color:#526c76}
+.sgt-filter-field .control{width:100%;min-width:0;min-height:42px}
+.sgt-filter-search{flex:1 1 180px}
+.sgt-stats-filter>.control{min-height:42px}
+.sgt-matrix-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:12px 0 18px}
+.sgt-summary-card{background:#f3fafb;border:1px solid #d6e8eb;border-radius:13px;padding:13px 15px;min-width:0}
+.sgt-summary-card b{display:block;font-size:1.25rem;font-weight:800;line-height:1.25;color:#237881;font-variant-numeric:tabular-nums}
+.sgt-summary-card span{display:block;font-size:.71rem;color:#627985;margin-top:6px}
+.sgt-matrix{border:1px solid #dce8eb;border-radius:16px;background:#fff;overflow:hidden}
+.sgt-matrix-head,.sgt-matrix-row{display:grid;grid-template-columns:minmax(160px,1.3fr) repeat(4,minmax(92px,.85fr)) minmax(70px,.65fr);
+  align-items:center;gap:12px;padding:13px 18px;text-align:center}
+.sgt-matrix-head{background:#f4f9fa;border-bottom:1px solid #dce9ec;color:#627b83;font-size:.72rem;font-weight:750}
+.sgt-matrix-head span:first-child{text-align:left}
+.sgt-matrix-row{width:100%;border:0;background:transparent;border-bottom:1px solid #e6eef0;cursor:pointer;font:inherit}
+.sgt-matrix-row:hover,.sgt-matrix-row.is-selected{background:#f8fbfc}
+.sgt-matrix-student{text-align:left;min-width:0}
+.sgt-matrix-student strong{display:block;font-weight:750;font-size:.87rem;color:#244b55}
+.sgt-matrix-student small{display:block;font-size:.69rem;color:#84969c;margin-top:4px;overflow-wrap:anywhere}
+.sgt-matrix-metric strong,.sgt-matrix-today strong{display:block;font-size:1rem;font-weight:800;color:#2c5662;font-variant-numeric:tabular-nums}
+.sgt-matrix-metric small,.sgt-matrix-today small{display:block;font-size:.66rem;color:#80949b;margin-top:4px}
+.sgt-matrix-metric.no-evidence strong{color:#b1c0c5}
+.sgt-matrix-metric.sgt-coach strong{color:#259284}
+.sgt-matrix-metric.sgt-unscramble strong{color:#cc628b}
+.sgt-matrix-metric.sgt-speaking strong{color:#7968bf}
+.sgt-matrix-today strong{color:#27988b}
+.sgt-matrix-empty{padding:22px;color:#71858b;font-size:.84rem}
+.sgt-matrix-detail{padding:18px;background:#fafdfd;border-bottom:1px solid #dcebed}
+.sgt-student-detail-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:13px}
+.sgt-student-detail-head strong{font-size:.91rem;color:#265e69}
+.sgt-student-detail-head small{display:block;font-size:.71rem;color:#6c8189;margin-top:5px}
+.sgt-student-detail-head>span{font-size:.71rem;color:#68818a}
+.sgt-book-detail{padding:13px;border:1px solid #d8eaed;background:#fff;border-radius:13px;margin:10px 0}
+.sgt-book-detail h4{font-size:.83rem;color:#245e67;margin:0 0 11px}
+.sgt-book-detail h4 small{font-size:.7rem;color:#81959c;font-weight:500;margin-left:8px}
+.sgt-unit-stack{display:grid;gap:9px}
+.sgt-unit-item{border-radius:10px;border:1px solid #e0ecee;background:#fafdfd;padding:12px}
+.sgt-unit-title{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.sgt-unit-title strong{font-size:.77rem;color:#2d4f59}
+.sgt-unit-title>span{font-size:.71rem;color:#80939a}
+.sgt-unit-status{font-weight:750!important;color:#507d85!important}
+.sgt-unit-status.is-gold{color:#a36b11!important}
+.sgt-unit-status.is-working{color:#26898f!important}
+.sgt-unit-skills{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:11px}
+.sgt-unit-skill{display:grid;grid-template-columns:1fr auto;gap:6px;font-size:.72rem;color:#69818a}
+.sgt-unit-skill b{color:#2a6973;font-variant-numeric:tabular-nums}
+.sgt-unit-skill .sgt-bar{grid-column:1/-1;height:6px}
+.sgt-unit-quick{font-size:.73rem;color:#7b8e96;margin-top:7px}
+.sgt-stats-footnote{font-size:.74rem;color:#778c93;line-height:1.55;margin:13px 0 6px}
+@media(max-width:980px){
+ .sgt-matrix-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .sgt-matrix-head,.sgt-matrix-row{grid-template-columns:minmax(135px,1.2fr) repeat(4,minmax(75px,1fr));gap:6px;padding:12px}
+ .sgt-matrix-head span:last-child,.sgt-matrix-today{display:none}
+}
+@media(max-width:660px){
+ .sgt-matrix-head{display:none}
+ .sgt-matrix-row{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:14px;padding:15px 13px}
+ .sgt-matrix-student{grid-column:1/-1;padding-bottom:7px;border-bottom:1px solid #e8f1f3}
+ .sgt-matrix-metric.sgt-overall{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;background:#f0f9fa;border-radius:9px;padding:8px 10px}
+ .sgt-matrix-metric.sgt-overall strong{font-size:1.12rem}
+ .sgt-matrix-metric.sgt-overall small{margin:0}
+ .sgt-matrix-today{display:none}
+ .sgt-unit-skills{grid-template-columns:1fr}
+ .sgt-stats-filter>.control{flex:1}
+ .sgt-filter-field{flex:1 1 135px}
+ .sgt-filter-search{flex:1 1 100%}
+ .sgt-matrix-summary{gap:8px}
+ .sgt-summary-card{padding:12px}
+ .sgt-summary-card b{font-size:1.05rem}
+ .sgt-student-detail-head>span{display:none}
+}

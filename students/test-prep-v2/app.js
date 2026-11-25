@@ -1,12 +1,14 @@
-import {QuestionRenderer} from './question-renderer-accessible.js?v=2.25.94';
-import {gradeQuestion} from '../shared/question-grader.js?v=2.4.1';
-import {createQuestionSession} from './question-session.js?v=2.0.10';
-import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.js?v=2.0.5';
+import {assignmentOverview} from './assignment-overview.js?v=2.25.184';
+import {assignmentMetrics,loadAssignmentResults} from './assignment-results.js?v=2.25.181';
+import {QuestionRenderer} from './question-renderer-accessible.js?v=20261025-shared-unified-v1';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.4.4';
+import {createQuestionSession} from './question-session.js?v=2.25.181';
+import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.js?v=2.25.181';
 import {createPerfDebug} from './perf-debug.js?v=1.0.0';
-import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=2.24.4';
-import {initTracking,refreshTrackingState,refreshPlanSnapshot,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17t';
-import {startVocabularyLearning} from './vocab-learning.js?v=2.15.1';
-import {startSentencePracticeV1,stopSentencePracticeV1} from './sentence-practice-v1.js?v=1.2.0';
+import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=20261026-multi-answer-fix';
+import {initTracking,refreshTrackingState,refreshPlanSnapshot,setTrackingContext,startSession,recordAttempt,completeSession,homeworkSet,loadHomeworkArchives,archiveHomework,trackingState} from './tracking-client.js?v=20261102-mobile-refresh';
+import {startVocabularyLearning} from './vocab-learning.js?v=20261106-tracking-context-fix';
+import {startSentencePracticeV1,stopSentencePracticeV1} from './sentence-practice-v1.js?v=20261106-tracking-context-fix';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
 import {renderMockTestPreflight,stopMockTest} from './mock-test.js?v=1.4.3';
@@ -37,7 +39,7 @@ function activeTasks(plan){return(plan?.tasks||[]).filter(t=>t?.active!==false)}
 function tasksForUnit(plan,unitId){if(!unitId)return[];return activeTasks(plan).filter(t=>String(t?.unit_id||'')===String(unitId))}
 function standaloneTasks(plan){const scoped=new Set(scopeFor(plan).map(x=>String(x?.unit_id||'')).filter(Boolean));return activeTasks(plan).filter(t=>!t?.unit_id||!scoped.has(String(t.unit_id)))}
 function taskProgress(t){const p=t?.progress||{},done=Number(p.done)||0,target=Math.max(1,Number(p.target)||Number(t?.target_count)||10),percent=Math.min(100,Math.round(Number(p.percent)||done/target*100||0)),due=t?.due_at?new Date(t.due_at).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'}):'';return{done,target,percent,due}}
-function inlineAssignments(plan,unitId){const rows=tasksForUnit(plan,unitId);if(!rows.length)return'';return `<div class="lesson-unit-assignments">${rows.map(t=>{const p=taskProgress(t),label=PRACTICES[t.practice_type]?.label||t.practice_type||'과제';return `<button type="button" class="lesson-unit-assignment ${p.percent>=100?'done':''}" data-task="${esc(t.id)}"><span class="lesson-unit-assignment-copy"><span class="lesson-unit-assignment-kicker"><b>선생님 과제 · ${esc(label)}</b>${p.due?`<span>마감 ${esc(p.due)}</span>`:''}</span></span><span class="lesson-unit-assignment-progress"><strong>${p.done}/${p.target}</strong><small>${p.percent}%</small></span></button>`}).join('')}</div>`}
+function inlineAssignments(plan,unitId){const rows=tasksForUnit(plan,unitId);if(!rows.length)return'';return `<div class="lesson-unit-assignments">${rows.map(t=>{const p=assignmentMetrics(t),label=PRACTICES[t.practice_type]?.label||t.practice_type||'과제';return `<button type="button" class="lesson-unit-assignment ${p.complete?'done':''}" data-task="${esc(t.id)}"><span class="lesson-unit-assignment-copy"><span class="lesson-unit-assignment-kicker"><b>선생님 과제 · ${esc(label)}</b>${p.due?`<span>마감 ${esc(p.due)}</span>`:''}</span><span class="assignment-result-breakdown">${esc(p.resultLabel)}</span></span><span class="lesson-unit-assignment-progress"><strong>${esc(p.statusLabel)}</strong><small>${p.done}/${p.target}문항 풀이</small></span></button>`}).join('')}</div>`}
 function trackingId(q){return String(q?.tracking?.questionId||q?.id||'')}
 function fieldState(key){return{get:()=>state[key],set:value=>{state[key]=value}}}
 function setBottom(html=''){bottom.innerHTML=html;bottom.hidden=!html}
@@ -56,17 +58,60 @@ async function refreshPlanCardStats(plan){invalidateCardStats(plan?.id);return l
 async function preloadCardStats(){const plans=trackingState().plans||[];await Promise.all(plans.map(p=>loadPlanCardStats(p)))}
 function mockCard(){return `<button class="wrong-card mock-entry-card" type="button" data-mock><span class="wrong-copy"><b>실전모의고사</b><small>25문항 · 45분 · 제출 후 채점</small></span><span class="wrong-cta">시험지 구성 →</span></button>`}
 function reviewCard(plan,loaded){const r=reviewCounts(plan),total=(Number(r.now)||0)+(Number(r.later)||0),disabled=!loaded||!total;return `<button class="wrong-card" type="button" data-review ${disabled?'disabled':''}><span class="wrong-copy"><b>전체 범위 오답</b></span><span class="wrong-stats"><span class="wrong-stat"><strong>${loaded?r.now:'—'}</strong><small>지금 할 문제</small></span><span class="wrong-stat"><strong>${loaded?r.later:'—'}</strong><small>1시간 후 재복습</small></span><span class="wrong-stat"><strong>${loaded?total:'—'}</strong><small>총 남은 문제</small></span></span><span class="wrong-cta">${loaded?(total?'복습 시작 →':'오답 없음'):'불러오는 중…'}</span></button>`}
-function assignmentCards(plan){const rows=standaloneTasks(plan);if(!rows.length)return'';return `<section class="assignment-section"><div class="assignment-section-title"><h3>선생님 과제</h3><span>${rows.length}개</span></div><div class="assignment-list">${rows.map(t=>{const p=taskProgress(t),external=taskIsExternal(plan,t);return `<button type="button" class="assignment-card ${p.percent>=100?'done':''}" data-task="${esc(t.id)}"><span class="assignment-main"><span class="assignment-kicker"><span>${esc(PRACTICES[t.practice_type]?.label||t.practice_type||'과제')}</span>${external?'<span class="external">외부지문</span>':''}</span><strong class="assignment-title">${esc(t.title||`${t.lesson||''} ${PRACTICES[t.practice_type]?.label||t.practice_type||''}`)}</strong><span class="assignment-meta"><span>${esc(t.lesson||'')}</span>${p.due?`<span>마감 ${esc(p.due)}</span>`:''}</span></span><span class="assignment-progress"><strong>${p.done}/${p.target}</strong><small>${p.percent}%</small></span></button>`}).join('')}</div></section>`}
+function assignmentCards(plan){const rows=standaloneTasks(plan);if(!rows.length)return'';return `<section class="assignment-section"><div class="assignment-section-title"><h3>선생님 과제</h3><span>${rows.length}개</span></div><div class="assignment-list">${rows.map(t=>{const p=assignmentMetrics(t),external=taskIsExternal(plan,t);return `<button type="button" class="assignment-card ${p.complete?'done':''}" data-task="${esc(t.id)}"><span class="assignment-main"><span class="assignment-kicker"><span>${esc(PRACTICES[t.practice_type]?.label||t.practice_type||'과제')}</span>${external?'<span class="external">외부지문</span>':''}</span><strong class="assignment-title">${esc(t.title||`${t.lesson||''} ${PRACTICES[t.practice_type]?.label||t.practice_type||''}`)}</strong><span class="assignment-meta"><span>${esc(t.lesson||'')}</span>${p.due?`<span>마감 ${esc(p.due)}</span>`:''}</span><span class="assignment-result-breakdown">${esc(p.resultLabel)}</span></span><span class="assignment-progress"><strong>${esc(p.statusLabel)}</strong><small>${p.done}/${p.target}문항 풀이</small></span></button>`}).join('')}</div></section>`}
 function performanceCards(plan){const rows=performanceAssignmentsForPlan(plan.id);if(!rows.length)return'';return `<div class="performance-section-title">수행평가</div><div class="grid">${rows.map(a=>`<button class="tile performance-card" data-performance="${esc(a.id)}"><div class="exam-head"><div><span class="exam-school">수행평가</span><h3>${esc(a.title||'수행평가')}</h3><p>${esc(a.unit_key||'')}</p><span class="metric">${a.due_date?`${esc(a.due_date)}까지`:'문장 암기 · 쓰기 연습'}</span></div><span class="ring" style="--p:0%"><b>→</b></span></div></button>`).join('')}</div>`}
 
-function renderHome(){state={...state,plan:null,lesson:null,practice:null,queue:[],index:0,renderer:null,reviewData:null};const plans=trackingState().plans||[];setBottom('');root.innerHTML=`<div class="heading"><div><h2>내 시험 대비</h2><p>학교 시험 범위를 선택하세요.</p></div></div>${plans.length?plans.map(p=>{const loaded=hasCardData(p),s=cardData(p).plan,r=reviewCounts(p),school=p.group?.school||'학교 시험';return `<button class="exam-card" data-plan="${esc(p.id)}"><div class="exam-head"><div><span class="exam-school">${esc(school)}</span><h3 class="exam-title">${esc(p.exam_name||'시험 대비')}</h3><div class="exam-book">${esc(p.book_label||'')}</div></div>${loaded?ring(s.coverage):ring(0,'…')}</div><div class="exam-meta">${loaded?`<span class="pill">${esc(formatCardMetric(s))}</span><span class="pill">${esc(formatAccuracy(s))}</span>`:'<span class="pill">통계 불러오는 중…</span>'}${p.exam_date?`<span class="pill">${esc(p.exam_date)}</span>`:''}${r.now?`<span class="pill">오답 지금 ${r.now}</span>`:''}${r.later?`<span class="pill">나중 ${r.later}</span>`:''}${activeTasks(p).length?`<span class="pill">과제 ${activeTasks(p).length}</span>`:''}</div></button>`}).join(''):'<div class="empty">지정된 시험 대비가 없습니다.</div>'}`;root.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>navigate({view:'plan',planId:b.dataset.plan}))}
-function renderLessons(plan){state.plan=plan;state.lesson=null;state.practice=null;const lessons=scopeFor(plan),data=cardData(plan),loaded=hasCardData(plan);setBottom('');root.innerHTML=`<button class="back" id="homeBack">← 시험 대비</button><div class="heading"><div><h2>${esc(plan.book_label||'')}</h2><p>${esc(plan.exam_name||'Lesson 선택')}</p></div></div>${assignmentCards(plan)}${reviewCard(plan,loaded)}${lessons.length?`<div class="grid">${lessons.map(l=>{const s=data.lessons?.[String(l.lesson)]?.summary||emptyStat();return `<article class="tile lesson-unit-card"><button type="button" class="lesson-unit-main" data-lesson="${esc(l.lesson)}"><div class="exam-head"><div>${l.external?'<span class="exam-school">외부지문</span>':''}<h3>${esc(l.lesson)}</h3><p>${esc((l.sections||[]).join(' · '))}</p><span class="metric">${loaded?`${esc(formatCardMetric(s))} · ${esc(formatAccuracy(s))}`:'통계 불러오는 중…'}</span></div>${loaded?ring(s.coverage):ring(0,'…')}</div></button>${inlineAssignments(plan,l.unit_id)}</article>`}).join('')}</div>`:'<div class="empty">Lesson 범위가 없습니다.</div>'}${performanceCards(plan)}${mockCard()}`;$('#homeBack').onclick=back;root.querySelector('[data-mock]')?.addEventListener('click',()=>navigate({view:'mock',planId:plan.id}));root.querySelector('[data-review]')?.addEventListener('click',()=>navigate({view:'review',planId:plan.id}));root.querySelectorAll('[data-task]').forEach(b=>{b.onclick=()=>{const t=taskById(plan,b.dataset.task);if(t)navigate({view:'practice',planId:plan.id,lesson:t.lesson,practice:t.practice_type,taskId:t.id})}});root.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>navigate({view:'lesson',planId:plan.id,lesson:b.dataset.lesson}));root.querySelectorAll('[data-performance]').forEach(b=>b.onclick=()=>navigate({view:'performance',planId:plan.id,assignmentId:b.dataset.performance}))}
+const BASKET_STATE='willena_testprep_v2_homework_basket_expanded';
+let archivedHomework=new Set(),basketTab='active';
+async function refreshArchivedHomework(){const r=await loadHomeworkArchives();archivedHomework=new Set((r.archives||[]).map(a=>String(a.task_id)))}
+function basketExpanded(){return sessionStorage.getItem(BASKET_STATE)!=='0'}
+function wireBasket(){
+ const toggle=root.querySelector('[data-basket-toggle]');
+ if(toggle)toggle.onclick=()=>{
+  const next=toggle.getAttribute('aria-expanded')!=='true';
+  sessionStorage.setItem(BASKET_STATE,next?'1':'0');
+  toggle.setAttribute('aria-expanded',String(next));
+  const list=toggle.closest('.homework-basket')?.querySelector('.homework-basket-content');
+  if(list)list.hidden=!next;
+  const arrow=toggle.querySelector('.homework-basket-chevron');if(arrow)arrow.textContent=next?'▾':'▸';
+ };
+ root.querySelectorAll('[data-basket-tab]').forEach(btn=>btn.onclick=()=>{
+  basketTab=btn.dataset.basketTab;
+  renderRoute(currentRoute());
+ });
+ root.querySelectorAll('[data-home-task]').forEach(b=>b.onclick=async()=>{
+  const p=planById(b.dataset.homePlan),t=p&&taskById(p,b.dataset.homeTask);
+  if(!t)return;
+  if(b.dataset.homeArchived==='1')return;
+  if(b.dataset.homeGold==='1'){
+   if(b.disabled)return;
+   b.disabled=true;
+   try{
+    await archiveHomework(t.id);
+    archivedHomework.add(String(t.id));
+    if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      b.classList.add('homework-burst');
+      const rect=b.getBoundingClientRect();
+      const burst=document.createElement('div');burst.className='homework-burst-particles';burst.setAttribute('aria-hidden','true');
+      for(let i=0;i<14;i++){const star=document.createElement('span');star.textContent=i%3?'✦':'★';star.style.setProperty('--angle',String(i*360/14)+'deg');burst.appendChild(star)}
+      burst.style.left=(rect.left+rect.width/2)+'px';burst.style.top=(rect.top+rect.height/2)+'px';document.body.appendChild(burst);
+      await new Promise(resolve=>setTimeout(resolve,650));burst.remove();
+    }
+    renderRoute(currentRoute());
+   }catch(e){b.disabled=false;console.warn('[homework archive]',e);alert(e.message||'보관에 실패했습니다. 다시 시도해 주세요.')}
+   return;
+  }
+  navigate({view:'practice',planId:p.id,lesson:t.lesson,practice:t.practice_type,taskId:t.id});
+ });
+}
+function renderHome(){state={...state,plan:null,lesson:null,practice:null,queue:[],index:0,renderer:null,reviewData:null};const plans=trackingState().plans||[];setBottom('');root.innerHTML=`<div class="heading"><div><h2>내 시험 대비</h2><p>학교 시험 범위를 선택하세요.</p></div></div>${assignmentOverview(plans,esc,basketExpanded(),archivedHomework,basketTab)}${plans.length?plans.map(p=>{const loaded=hasCardData(p),s=cardData(p).plan,r=reviewCounts(p),school=p.group?.school||'학교 시험';return `<button class="exam-card" data-plan="${esc(p.id)}"><div class="exam-head"><div><span class="exam-school">${esc(school)}</span><h3 class="exam-title">${esc(p.exam_name||'시험 대비')}</h3><div class="exam-book">${esc(p.book_label||'')}</div></div>${loaded?ring(s.coverage):ring(0,'…')}</div><div class="exam-meta">${loaded?`<span class="pill">${esc(formatCardMetric(s))}</span><span class="pill">${esc(formatAccuracy(s))}</span>`:'<span class="pill">통계 불러오는 중…</span>'}${p.exam_date?`<span class="pill">${esc(p.exam_date)}</span>`:''}${r.now?`<span class="pill">오답 지금 ${r.now}</span>`:''}${r.later?`<span class="pill">나중 ${r.later}</span>`:''}${activeTasks(p).length?`<span class="pill">과제 ${activeTasks(p).length}</span>`:''}</div></button>`}).join(''):'<div class="empty">지정된 시험 대비가 없습니다.</div>'}`;root.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>navigate({view:'plan',planId:b.dataset.plan}));wireBasket()}
+function renderLessons(plan){state.plan=plan;state.lesson=null;state.practice=null;const lessons=scopeFor(plan),data=cardData(plan),loaded=hasCardData(plan);setBottom('');root.innerHTML=`<button class="back" id="homeBack">← 시험 대비</button><div class="heading"><div><h2>${esc(plan.book_label||'')}</h2><p>${esc(plan.exam_name||'Lesson 선택')}</p></div></div>${assignmentOverview(trackingState().plans||[],esc,basketExpanded(),archivedHomework,basketTab)}${reviewCard(plan,loaded)}${lessons.length?`<div class="grid">${lessons.map(l=>{const s=data.lessons?.[String(l.lesson)]?.summary||emptyStat();return `<article class="tile lesson-unit-card"><button type="button" class="lesson-unit-main" data-lesson="${esc(l.lesson)}"><div class="exam-head"><div>${l.external?'<span class="exam-school">외부지문</span>':''}<h3>${esc(l.lesson)}</h3><p>${esc((l.sections||[]).join(' · '))}</p><span class="metric">${loaded?`${esc(formatCardMetric(s))} · ${esc(formatAccuracy(s))}`:'통계 불러오는 중…'}</span></div>${loaded?ring(s.coverage):ring(0,'…')}</div></button></article>`}).join('')}</div>`:'<div class="empty">Lesson 범위가 없습니다.</div>'}${performanceCards(plan)}${mockCard()}`;$('#homeBack').onclick=back;wireBasket();root.querySelector('[data-mock]')?.addEventListener('click',()=>navigate({view:'mock',planId:plan.id}));root.querySelector('[data-review]')?.addEventListener('click',()=>navigate({view:'review',planId:plan.id}));root.querySelectorAll('[data-task]').forEach(b=>{b.onclick=()=>{const t=taskById(plan,b.dataset.task);if(t)navigate({view:'practice',planId:plan.id,lesson:t.lesson,practice:t.practice_type,taskId:t.id})}});root.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>navigate({view:'lesson',planId:plan.id,lesson:b.dataset.lesson}));root.querySelectorAll('[data-performance]').forEach(b=>b.onclick=()=>navigate({view:'performance',planId:plan.id,assignmentId:b.dataset.performance}))}
 async function renderLesson(plan,lesson){state.plan=plan;state.lesson=lesson;state.practice=null;state.renderer=null;const sections=sectionsFor(plan,lesson),data=cardData(plan).lessons?.[String(lesson)]||{summary:emptyStat(),practices:{}},loaded=hasCardData(plan);setBottom('');if(!lessonRouteMatches(plan.id,lesson))return;const available=Object.entries(PRACTICES).filter(([k])=>sections.has(k));root.innerHTML=`<button class="back" id="lessonBack">← ${esc(plan.book_label||'시험 대비')}</button><div class="lesson-head"><div class="heading"><div><h2>${esc(lesson)}</h2><p>${esc(plan.book_label||'')}</p></div></div></div>${available.length?`<div class="journey">${available.map(([k,p],i)=>{const s=data.practices?.[k]||emptyStat();return `<div class="journey-stop" data-practice="${k}"><div class="station">${i+1}</div><div class="stop-copy"><b>${esc(p.label)}</b><small>${esc(p.desc)}</small><div class="mini"><i style="width:${loaded?s.coverage:0}%"></i></div></div><div class="stop-stat">${loaded?`${s.completed} / ${s.total}`:'…'}<small>${loaded?(s.accuracySample?`${s.accuracy}% accuracy`:'— accuracy'):'loading'}</small></div></div>`}).join('')}</div>`:'<div class="empty">이 Lesson에 활성화된 영역이 없습니다.</div>'}`;$('#lessonBack').onclick=back;root.querySelectorAll('[data-practice]').forEach(b=>b.onclick=()=>navigate({view:'practice',planId:plan.id,lesson,practice:b.dataset.practice}))}
 
 async function refreshAfterSentencePractice(){
   try{
     if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);
-    await refreshTrackingState();
+    await refreshTrackingState();await loadAssignmentResults().catch(e=>console.warn('[test-prep-v2] assignment results refresh unavailable',e));
     const fresh=planById(state.plan?.id);
     if(fresh)state.plan=fresh;
     if(state.plan)await refreshPlanCardStats(state.plan);
@@ -79,7 +124,7 @@ async function refreshAfterPracticeExit({sessionClosed=false}={}){
   try{
     if(!sessionClosed)await completeSession({correct:state.score,total:state.index+(state.checked?1:0),wrongIds:state.wrongIds});
     if(planId)await refreshPlanSnapshot(planId);
-    await refreshTrackingState();
+    await refreshTrackingState();await loadAssignmentResults().catch(e=>console.warn('[test-prep-v2] assignment results refresh unavailable',e));
     const fresh=planById(planId);
     if(fresh)state.plan=fresh;
     if(state.plan)await refreshPlanCardStats(state.plan);
@@ -87,20 +132,70 @@ async function refreshAfterPracticeExit({sessionClosed=false}={}){
   back();
 }
 
-async function startPracticeRoute(plan,lesson,practice,taskId=null){const config=PRACTICES[practice];if(!config){return replaceRoute({view:'lesson',planId:plan.id,lesson})}const task=taskId?taskById(plan,taskId):null;state.plan=plan;state.lesson=lesson;state.practice=practice;state.queue=[];state.index=0;state.score=0;state.wrongIds=[];state.checked=false;state.renderer=null;root.innerHTML='<div class="loading">문제를 불러오는 중...</div>';setBottom('');try{const ids=await resolveContentIds(plan,lesson,task?.unit_id||null);if(!practiceRouteMatches(practice,plan.id,lesson))return;state.ids=ids;setTrackingContext(plan,lesson);if(practice==='sentences'){root.innerHTML='<div id="sentencePracticeHost"></div>';const host=$('#sentencePracticeHost');await startSentencePracticeV1({host,plan,lesson,unitId:ids.unitId,onExit:refreshAfterSentencePractice});return}const loaded=await loadPracticeContent({kind:config.kind,practice,unitId:ids.unitId,studentId:trackingState().user?.id||null,planId:plan.id,lesson,count:task?Math.max(1,Number(task.target_count)||10):20});if(!practiceRouteMatches(practice,plan.id,lesson))return;if(loaded.mode==='workflow'&&loaded.kind==='vocab-learning'){root.innerHTML='<div id="vocabActivityHost"></div>';const host=$('#vocabActivityHost');await startVocabularyLearning({host,plan,lesson,unitId:ids.unitId,onExit:()=>refreshAfterPracticeExit({sessionClosed:true})});return}if(!loaded.rawCount){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}if(!loaded.pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">선택할 수 있는 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}state.queue=loaded.pool;await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;renderQuestion()}catch(e){if(!practiceRouteMatches(state.practice))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}}
+async function startPracticeRoute(plan,lesson,practice,taskId=null){const config=PRACTICES[practice];if(!config){return replaceRoute({view:'lesson',planId:plan.id,lesson})}const task=taskId?taskById(plan,taskId):null;state.plan=plan;state.lesson=lesson;state.practice=practice;state.queue=[];state.index=0;state.score=0;state.wrongIds=[];state.checked=false;state.renderer=null;root.innerHTML='<div class="loading">문제를 불러오는 중...</div>';setBottom('');try{const ids=await resolveContentIds(plan,lesson,task?.unit_id||null);if(!practiceRouteMatches(practice,plan.id,lesson))return;state.ids=ids;setTrackingContext(plan,lesson);if(practice==='sentences'){root.innerHTML='<div id="sentencePracticeHost"></div>';const host=$('#sentencePracticeHost');await startSentencePracticeV1({host,plan,lesson,unitId:ids.unitId,onExit:refreshAfterSentencePractice});return}const frozen=task?await homeworkSet(task.id):null;const loaded=await loadPracticeContent({kind:config.kind,practice,unitId:ids.unitId,studentId:trackingState().user?.id||null,planId:plan.id,lesson,count:task?Math.max(1,Number(task.target_count)||10):20,homework:!!task,fixedQuestionIds:frozen?.initialized?frozen.question_ids:null});if(!practiceRouteMatches(practice,plan.id,lesson))return;if(loaded.mode==='workflow'&&loaded.kind==='vocab-learning'){root.innerHTML='<div id="vocabActivityHost"></div>';const host=$('#vocabActivityHost');await startVocabularyLearning({host,plan,lesson,unitId:ids.unitId,onExit:()=>refreshAfterPracticeExit({sessionClosed:true})});return}if(!loaded.rawCount){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}if(!loaded.pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">선택할 수 있는 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}state.queue=loaded.pool;
+if(task){
+ if(['sentences','vocabulary'].includes(practice))throw Error('이 숙제 유형의 고정 문제 세트는 아직 지원하지 않습니다.');
+ let hw=frozen;
+ if(!hw.initialized){
+   const chosen=[...new Map(loaded.pool.map(q=>[trackingId(q),q])).values()];
+   const target=Math.max(1,Number(task.target_count)||10);
+   if(!chosen.length)throw Error('이 숙제에 사용할 문제가 없습니다.');
+   hw=await homeworkSet(task.id,chosen.slice(0,Math.min(target,chosen.length)).map(trackingId));
+ }
+ if(hw.complete){await refreshTrackingState();await loadAssignmentResults().catch(()=>{});return homeworkCompleteScreen(hw)}
+ const ids=hw.next_question_ids||[];
+ const map=new Map(loaded.pool.map(q=>[trackingId(q),q]));
+ const next=ids.map(id=>map.get(String(id)));
+ if(!next.length||next.some(q=>!q))throw Error('저장된 숙제 문제를 찾을 수 없습니다. 선생님에게 알려 주세요.');
+ state.queue=next;state.homeworkTaskId=task.id;state.homeworkPool=loaded.pool;
+}else state.homeworkTaskId=null;
+await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;renderQuestion()}catch(e){if(!practiceRouteMatches(state.practice))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}}
 function current(){return state.queue[state.index]||null}
 function headerFor(q){const code=q.source?.code||'',source=code?`<span class="badge ${code.toLowerCase()}" title="${code==='Z'?'Zocbo':code==='W'?'Willena authored':'Book reference'}">${code}</span>`:'';return `<div class="practice-head"><div><button class="back" id="practiceBack" data-session-back>← ${esc(state.lesson)}</button><div class="practice-meta">${source}<span>${esc(state.plan.book_label||'')}</span><span>·</span><span>${esc(PRACTICES[state.practice]?.label||state.practice)}</span></div></div><strong>${state.index+1} / ${state.queue.length}</strong></div><div class="progress"><i style="width:${Math.round(state.index/Math.max(1,state.queue.length)*100)}%"></i></div>`}
 let practiceQuestionSession=null;
-function getPracticeQuestionSession(){if(practiceQuestionSession)return practiceQuestionSession;practiceQuestionSession=createQuestionSession({root,bottom,Renderer:QuestionRenderer,gradeQuestion,recordAttempt,isActive:()=>practiceRouteMatches(state.practice),getEntry:current,getQuestion:q=>q,renderHeader:(_,q)=>headerFor(q),getPracticeType:()=>state.practice,onCorrect:()=>{state.score++},onWrong:(_,q)=>{state.wrongIds.push(trackingId(q))},onFinished:finishPractice,onBack:()=>refreshAfterPracticeExit(),checkedState:fieldState('checked'),indexState:fieldState('index'),startedAtState:fieldState('startedAt'),rendererState:fieldState('renderer'),queueLength:()=>state.queue.length,buttonIds:{skip:'skipQuestion',check:'checkAnswer'},logLabel:'practice'});return practiceQuestionSession}
+function getPracticeQuestionSession(){if(practiceQuestionSession)return practiceQuestionSession;practiceQuestionSession=createQuestionSession({root,bottom,Renderer:QuestionRenderer,gradeQuestion,recordAttempt,isActive:()=>practiceRouteMatches(state.practice),getEntry:current,getQuestion:q=>q,renderHeader:(_,q)=>headerFor(q),getPracticeType:()=>state.practice,onCorrect:()=>{state.score++},onWrong:(_,q)=>{state.wrongIds.push(trackingId(q))},onFinished:finishPractice,disableSavedProgress:()=>!!state.homeworkTaskId,onBack:()=>refreshAfterPracticeExit(),checkedState:fieldState('checked'),indexState:fieldState('index'),startedAtState:fieldState('startedAt'),rendererState:fieldState('renderer'),queueLength:()=>state.queue.length,buttonIds:{skip:'skipQuestion',check:'checkAnswer'},logLabel:'practice'});return practiceQuestionSession}
 function renderQuestion(){return getPracticeQuestionSession().render()}
 async function checkAnswer(){return getPracticeQuestionSession().check()}
 async function skipQuestion(){return getPracticeQuestionSession().skip()}
-async function finishPractice(){const route=currentRoute();if(route.view!=='practice')return;setBottom('');try{await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);await refreshTrackingState();const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan)}catch(e){console.warn('[test-prep-v2] finish/refresh failed',e)}if(!practiceRouteMatches(state.practice,route.planId,route.lesson))return;const pct=state.queue.length?Math.round(state.score/state.queue.length*100):0;state.lastResult={planId:route.planId,lesson:route.lesson,practice:route.practice,score:state.score,total:state.queue.length,wrong:state.wrongIds.length,pct};await replaceRoute({view:'result',planId:route.planId,lesson:route.lesson,practice:route.practice})}
+function homeworkCompleteScreen(hw){
+ state.homeworkTaskId=null;setBottom('');
+ root.innerHTML='<div class="card result homework-gold-result"><div class="score">★ GOLD ★</div><h2>숙제 완료!</h2><div class="statline">최종 완료 100% · 전체 정확도 '+(hw.overall_accuracy_percent??'—')+'%</div><button class="tile" id="homeworkDone" style="min-height:auto;margin-top:20px">숙제 바구니로 돌아가기</button></div>';
+ $('#homeworkDone').onclick=()=>navigate({view:'home'});
+}
+async function finishPractice(){
+ const route=currentRoute();if(route.view!=='practice')return;
+ setBottom('');
+ if(state.homeworkTaskId){
+  const id=state.homeworkTaskId;
+  try{
+   const result=await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});
+   if(result?.queued)throw Error('답안이 아직 저장되지 않았어요.');
+   let hw=await homeworkSet(id);
+   if(hw.complete){await refreshTrackingState();await loadAssignmentResults().catch(()=>{});return homeworkCompleteScreen(hw)}
+   const lookup=new Map(state.homeworkPool.map(q=>[trackingId(q),q]));
+   const ids=hw.next_question_ids||[],next=ids.map(x=>lookup.get(String(x)));
+   if(!next.length||next.some(q=>!q))throw Error('복습 문제를 다시 불러오지 못했습니다.');
+   state.queue=next;state.index=0;state.score=0;state.wrongIds=[];state.checked=false;state.renderer=null;
+   await startSession(state.practice);
+   renderQuestion();
+   return;
+  }catch(e){
+   root.innerHTML='<div class="error">숙제 답안 저장을 확인하지 못했습니다. '+esc(e.message)+'</div><button class="tile" id="retryHomeworkSave">다시 시도</button>';
+   $('#retryHomeworkSave').onclick=finishPractice;
+   return;
+  }
+ }
+ try{await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);await refreshTrackingState();await loadAssignmentResults().catch(e=>console.warn('[test-prep-v2] assignment results refresh unavailable',e));const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan)}catch(e){console.warn('[test-prep-v2] finish/refresh failed',e)}
+ if(!practiceRouteMatches(state.practice,route.planId,route.lesson))return;
+ const pct=state.queue.length?Math.round(state.score/state.queue.length*100):0;
+ state.lastResult={planId:route.planId,lesson:route.lesson,practice:route.practice,score:state.score,total:state.queue.length,wrong:state.wrongIds.length,pct};
+ await replaceRoute({view:'result',planId:route.planId,lesson:route.lesson,practice:route.practice});
+}
 async function returnToLessonFresh(plan,route){
   const btn=$('#resultBack');if(btn){btn.disabled=true;btn.textContent='업데이트 중...'}
   try{
     if(plan?.id)await refreshPlanSnapshot(plan.id);
-    await refreshTrackingState();
+    await refreshTrackingState();await loadAssignmentResults().catch(e=>console.warn('[test-prep-v2] assignment results refresh unavailable',e));
     const fresh=planById(plan?.id);
     if(fresh)state.plan=fresh;
     if(state.plan)await refreshPlanCardStats(state.plan);
@@ -120,7 +215,7 @@ function getReviewQuestionSession(){if(reviewQuestionSession)return reviewQuesti
 function renderReviewQuestion(){return getReviewQuestionSession().render()}
 async function checkReviewAnswer(){return getReviewQuestionSession().check()}
 async function skipReviewQuestion(){return getReviewQuestionSession().skip()}
-async function finishReview(){const route=currentRoute();if(route.view!=='review')return;const answered=state.queue.length,correct=state.score;setBottom('');root.innerHTML='<div class="loading">오답 결과를 정리하는 중...</div>';let data=state.reviewData;try{await completeSession({correct,total:answered,wrongIds:state.wrongIds});if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);await refreshTrackingState();const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan);data=await refreshReviewQueue(state.plan,{limit:20});state.reviewData=data}catch(e){console.warn('[test-prep-v2] review finish refresh failed',e)}if(!reviewRouteMatches(route.planId))return;renderReviewDone(state.plan,data,answered,correct)}
+async function finishReview(){const route=currentRoute();if(route.view!=='review')return;const answered=state.queue.length,correct=state.score;setBottom('');root.innerHTML='<div class="loading">오답 결과를 정리하는 중...</div>';let data=state.reviewData;try{await completeSession({correct,total:answered,wrongIds:state.wrongIds});if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);await refreshTrackingState();await loadAssignmentResults().catch(e=>console.warn('[test-prep-v2] assignment results refresh unavailable',e));const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan);data=await refreshReviewQueue(state.plan,{limit:20});state.reviewData=data}catch(e){console.warn('[test-prep-v2] review finish refresh failed',e)}if(!reviewRouteMatches(route.planId))return;renderReviewDone(state.plan,data,answered,correct)}
 function renderReviewDone(plan,data,answered,correct){const s=data?.summary||{},canContinue=(s.now||0)>0;setBottom('');root.innerHTML=`<button class="back" id="reviewDoneBack">← ${esc(plan.book_label||'시험 범위')}</button><div class="card result review-result"><div class="score">${correct}/${answered}</div><h2>${canContinue?'이번 묶음 복습 완료':'지금 할 오답 완료'}</h2><div class="statline">${canContinue?`지금 ${s.now}개 · 나중 ${s.later||0}개`:(s.later?`${s.later}개는 1시간 후 다시 복습해요.`:'모든 오답을 정리했어요.')}</div>${reviewOverview(data)}<div class="review-actions">${canContinue?'<button class="review-primary" id="reviewContinue">다음 오답 계속하기 →</button>':''}<button class="review-secondary" id="reviewReturn">시험 범위로 돌아가기</button></div></div>`;$('#reviewDoneBack').onclick=back;$('#reviewReturn').onclick=back;$('#reviewContinue')?.addEventListener('click',()=>replaceRoute({view:'review',planId:plan.id}))}
 
 function beforeRouteChange(previous,next){
@@ -136,7 +231,7 @@ function beforeRouteChange(previous,next){
         else if(previous.practice==='vocabulary')await completeSession({correct:0,total:0,wrongIds:[]});
         else await completeSession({correct:state.score,total:state.index+(state.checked?1:0),wrongIds:state.wrongIds});
         if(planId)await refreshPlanSnapshot(planId);
-        await refreshTrackingState();
+        await refreshTrackingState();await loadAssignmentResults().catch(e=>console.warn('[test-prep-v2] assignment results refresh unavailable',e));
         const fresh=planById(planId);
         if(fresh)state.plan=fresh;
         if(state.plan)await refreshPlanCardStats(state.plan);
@@ -153,5 +248,19 @@ function beforeRouteChange(previous,next){
 async function renderRoute(route){if(route.view==='home'){renderHome();return}const plan=planById(route.planId);if(!plan){await replaceRoute({view:'home'});return}if(route.view==='plan'){renderLessons(plan);return}if(route.view==='performance'){const assignment=performanceAssignmentById(route.assignmentId);if(!assignment||String(assignment.plan_id)!==String(plan.id)){await replaceRoute({view:'plan',planId:plan.id});return}state.plan=plan;state.lesson=assignment.unit_key||null;state.practice='performance';state.renderer=null;setBottom('');await startPerformanceLearning({host:root,bottom,plan,assignment,studentId:trackingState().user?.id||null,onExit:back});return}if(route.view==='mock'){state.plan=plan;state.lesson=null;state.practice=null;state.renderer=null;setBottom('');await renderMockTestPreflight({host:root,plan,studentId:trackingState().user?.id||null,onBack:back});return}if(route.view==='lesson'){await renderLesson(plan,route.lesson);return}if(route.view==='practice'){await startPracticeRoute(plan,route.lesson,route.practice,route.taskId||null);return}if(route.view==='review'){await startReviewRoute(plan);return}if(route.view==='result'){renderResult(plan,route)}}
 async function refreshVisibleStats(){const route=currentRoute();if(route&&['home','plan','lesson'].includes(route.view))await renderRoute(route)}
 
-async function boot(){try{perf.update();root.innerHTML='<div class="loading">Test Prep v2.25을 준비하는 중...</div>';await initTracking();perf.mark('auth');updateUser();try{await loadPerformanceAssignments()}catch(e){console.warn('[test-prep-v2] performance assignments unavailable',e)}let route=initNavigation({render:renderRoute,beforeRouteChange,initialRoute:{view:'home'}});if(route.view==='practice'||route.view==='result'){route={view:'lesson',planId:route.planId,lesson:route.lesson};await replaceRoute(route,{render:false})}if(route.view==='review'){route={view:'plan',planId:route.planId};await replaceRoute(route,{render:false})}await renderRoute(route);perf.mark('ui');preloadCardStats().then(async()=>{perf.mark('stats');await refreshVisibleStats()}).catch(e=>{console.warn('[test-prep-v2] background stats failed',e);perf.mark('stats')})}catch(e){console.error('[test-prep-v2] boot failed',e);error(e.message||'앱을 시작하지 못했습니다.');perf.update()}}
+async function boot(){try{perf.update();root.innerHTML='<div class="loading">Test Prep v2.25을 준비하는 중...</div>';await initTracking();if(!trackingState().user)return;await refreshArchivedHomework().catch(e=>console.warn('[v2] archive load failed',e));perf.mark('auth');try{await loadAssignmentResults()}catch(e){console.warn('[test-prep-v2] assignment results unavailable',e)}updateUser();try{await loadPerformanceAssignments()}catch(e){console.warn('[test-prep-v2] performance assignments unavailable',e)}let route=initNavigation({render:renderRoute,beforeRouteChange,initialRoute:{view:'home'}});if(route.view==='practice'||route.view==='result'){route={view:'lesson',planId:route.planId,lesson:route.lesson};await replaceRoute(route,{render:false})}if(route.view==='review'){route={view:'plan',planId:route.planId};await replaceRoute(route,{render:false})}await renderRoute(route);
+const focusedTaskId=new URLSearchParams(location.search).get('homework');
+if(focusedTaskId){
+  const match=(trackingState().plans||[]).map(plan=>({plan,task:taskById(plan,focusedTaskId)})).find(x=>x.task&&x.task.active!==false);
+  if(match&&match.task.lesson&&PRACTICES[match.task.practice_type]){
+    await navigate({view:'practice',planId:match.plan.id,lesson:match.task.lesson,practice:match.task.practice_type,taskId:match.task.id});
+  }else{
+    const notice=document.createElement('div');
+    notice.className='card';notice.setAttribute('role','alert');
+    notice.style.cssText='border:2px solid #b8e9ed;border-radius:18px;padding:18px;margin:16px 0;color:#267e87;background:#fff';
+    notice.textContent='선택한 숙제를 찾을 수 없어요. 배정된 숙제 목록을 확인하세요.';
+    root.prepend(notice);
+  }
+}
+perf.mark('ui');preloadCardStats().then(async()=>{perf.mark('stats');await refreshVisibleStats()}).catch(e=>{console.warn('[test-prep-v2] background stats failed',e);perf.mark('stats')})}catch(e){console.error('[test-prep-v2] boot failed',e);error(e.message||'앱을 시작하지 못했습니다.');perf.update()}finally{window.WillenaHomeworkDeepLinkSplash?.hide()}}
 boot();

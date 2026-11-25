@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<title>Willena AI Willi</title>
+<rect width="512" height="512" rx="100" fill="#fff"/>
+<circle cx="256" cy="256" r="223" fill="#a9ebed"/>
+<circle cx="256" cy="256" r="203" fill="#c4f4f5"/>
+<circle cx="256" cy="256" r="187" fill="#e8fdff"/>
+<path d="M244 127V84h24v43" stroke="#153e66" stroke-width="15" fill="#163d65"/>
+<circle cx="256" cy="75" r="29" fill="#ffc218" stroke="#e99500" stroke-width="6"/>
+<rect x="76" y="230" width="57" height="114" rx="27" fill="#ffcf10" stroke="#143b66" stroke-width="11"/>
+<rect x="379" y="230" width="57" height="114" rx="27" fill="#ffcf10" stroke="#143b66" stroke-width="11"/>
+<rect x="112" y="145" width="288" height="242" rx="105" fill="#fff" stroke="#21476d" stroke-width="12"/>
+<rect x="145" y="196" width="222" height="155" rx="67" fill="#112e54" stroke="#254b71" stroke-width="7"/>
+<path d="M183 263 Q208 220 232 263 M280 263 Q303 220 329 263" fill="none" stroke="#62d6ee" stroke-width="12" stroke-linecap="round"/>
+<circle cx="184" cy="319" r="6" fill="#ffd022"/><circle cx="329" cy="319" r="6" fill="#ffd022"/>
+</svg>

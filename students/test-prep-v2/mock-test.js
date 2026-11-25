@@ -1,5 +1,5 @@
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
-import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.4.3';
 import {setTrackingContext,startSession,recordAttempt,completeSession,refreshTrackingState} from './tracking-client.js?v=2.17a';
 import {invalidateCardStats,loadCardStats} from './stats-client.js?v=2.16a';
 import {setNavigationGuard} from './navigation.js?v=2.19.0';

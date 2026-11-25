@@ -1,23 +1,72 @@
-/* Vanilla builder-style header */
+/* Full-width Word Builder header */
 .header {
+  position: relative;
   background: linear-gradient(135deg, #0ea5a3 0%, #9adbe2 100%);
   color: #ffffff;
-  padding: 5px 5px;
-  display: flex;
+  padding: 7px 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   top: 0;
   z-index: 1000;
   min-height: var(--header-height);
   border-bottom: 1px solid rgba(95, 143, 155, 0.35);
+  box-sizing: border-box;
+}
+
+.header-left {
+  min-width: 0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.header-title {
+  grid-column: 2;
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.header-right {
+  grid-column: 3;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .logo { display: flex; align-items: center; }
 .logo-img { height: 50px; width: auto; display: block; }
-.header h1 { font-size: 1.4rem; font-weight: 700; margin: 0; flex: 1; text-align: center; }
+.header h1 { font-size: 1.4rem; font-weight: 700; margin: 0 0 3px; text-align: center; }
+#wordBuilderRevision {
+  font: 10px/1 Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: .04em;
+  color: rgba(255,255,255,.78);
+}
 
-/* Burger mount */
-#burger-menu-mount { position: absolute; top: 50%; right: 16px; transform: translateY(-50%); z-index: 9999; }
+/* Shared burger is mounted inside the Word Builder header. */
+#burger-menu-mount {
+  position: static;
+  top: auto;
+  right: auto;
+  transform: none;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+}
+#burger-menu-mount #burger-menu-template-inserted {
+  display: flex;
+  align-items: center;
+}
+#burger-menu-mount .burger-menu {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
 .menu-icon { display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
 .menu-icon span { width: 20px; height: 3px; background: white; border-radius: 2px; }
 

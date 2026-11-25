@@ -19,6 +19,24 @@ const testPrepBButton=document.getElementById('studentTestPrepB');
 const logoutButton=document.getElementById('studentLogout');
 const headerTitle=document.querySelector('.header-title');
 
+const sharedDestinations=[
+ ['Dashboard','/students/dashboard/','▦'],
+ ['Puzzles','/students/wordsearch/','▧'],
+ ['Word Genius','/students/vocab-study/','★'],
+ ['Sentence Genius','/students/sentence-genius/','✎'],
+ ['Grammar Genius','/students/grammar-foundations/','◇'],
+ ['Writing Genius','/students/writing-genius/','✍'],
+ ['English Arcade','/Games/english_arcade/index.html','▶'],
+ ['내신 명중','/students/test-prep-v2/','✓'],
+ ['Profile','/students/profile.html','☺']
+];
+if(menu){
+ menu.classList.add('willena-unified-menu');
+ menu.innerHTML=sharedDestinations.map(([label,href,icon])=>'<a class="willena-menu-link" href="'+href+'"><span aria-hidden="true">'+icon+'</span>'+label+'</a>').join('')+
+ '<div class="willena-menu-separator"></div><button type="button" class="willena-menu-link willena-menu-logout" id="studentLogout"><span aria-hidden="true">↪</span>Logout</button>';
+}
+
+
 if(headerTitle){
   headerTitle.setAttribute('aria-label','Willena Test Prep');
   headerTitle.innerHTML='<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" focusable="false" style="display:block"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="16" cy="16" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="16" cy="16" r="2.5" fill="currentColor"/></svg>';
@@ -61,8 +79,12 @@ profileButton?.addEventListener('click',()=>openStudentProfile());
 dashboardButton?.addEventListener('click',()=>{window.location.href='/students/dashboard/'});
 bigTextButton?.addEventListener('click',()=>{setBigText(!bigTextEnabled());setMenu(false)});
 testPrepAButton?.addEventListener('click',()=>{window.location.href='../test-prep-app/'});
-testPrepBButton?.addEventListener('click',()=>setMenu(false));
-logoutButton?.addEventListener('click',()=>logoutStudent());
+testPrepBButton?.addEventListener('click',()=>{
+  if(!window.location.pathname.startsWith('/students/test-prep-v2/'))
+    window.location.href='/students/test-prep-v2/';
+  else setMenu(false);
+});
+menu?.querySelector('#studentLogout')?.addEventListener('click',()=>logoutStudent());
 
 renderBigTextSetting();
 startStudentHeaderData();

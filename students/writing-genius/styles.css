@@ -1,0 +1,1046 @@
+/* Writing Genius reuses Word Genius' study, theme, buttons and student header.
+   This file only styles the new free-writing surfaces. */
+.writing-genius .wg-page{width:min(960px,100%);margin:0 auto;padding:16px clamp(14px,3vw,25px) 55px;color:var(--ink,#173f46)}
+.writing-genius [hidden]{display:none!important}
+.wg-brand{display:flex;align-items:center;gap:14px;max-width:760px;margin:12px auto 26px}
+.wg-brand>img{width:66px;height:66px;object-fit:contain;border-radius:20px;background:#fff;box-shadow:0 8px 25px #17465215}
+.wg-brand h1{font-size:clamp(1.65rem,5vw,2.25rem);line-height:1.08;margin:3px 0;color:var(--vocab-heading,#244f56);letter-spacing:-.04em}
+.wg-brand p{font-size:.91rem;margin:3px 0;color:var(--vocab-muted,#6f8190);font-weight:650}
+.wg-brand .eyebrow{font-size:.72rem;font-weight:900;letter-spacing:.12em;color:var(--cyan-strong,#25b8c4)}
+.wg-notice{font-size:.88rem;line-height:1.5;text-align:center;color:var(--vocab-heading,#244f56);margin:8px auto;max-width:740px;overflow-wrap:anywhere}
+.wg-notice:empty{display:none}
+.wg-notice.is-error{padding:14px;background:#fff3f5;border:1px solid #e9a4b4;border-radius:14px;color:#ae2754}
+.wg-section-title{font-size:clamp(1rem,3vw,1.3rem);font-weight:900;color:var(--vocab-heading,#244f56);margin:0 0 12px}
+.wg-mode-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:0 0 30px}
+.writing-genius .wg-mode{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:12px;border:2px solid var(--vocab-border,#c9f1f4);border-radius:23px;min-width:0;min-height:190px;background:var(--vocab-card,#fff);box-shadow:0 8px 23px rgba(34,106,116,.09);padding:20px 16px;position:relative;cursor:pointer;color:var(--ink,#173f46);transition:transform .16s ease,border-color .16s ease}
+.wg-mode:hover,.wg-mode:focus-visible{transform:translateY(-3px);border-color:var(--cyan-strong,#25b8c4);outline:none}
+.wg-mode:active{transform:translateY(0)}
+.wg-mode:nth-child(2){border-color:color-mix(in srgb,var(--pink,#ff0a8a) 38%,var(--vocab-border,#c9f1f4))}
+.wg-mode-icon{display:grid;place-items:center;width:55px;height:55px;border-radius:18px;background:var(--vocab-track,#e9fbfc);color:var(--cyan-strong,#25b8c4)}
+.wg-mode:nth-child(2) .wg-mode-icon{background:#fff0f7;color:#e85198}
+.wg-mode:nth-child(3) .wg-mode-icon{background:#fff5d9;color:#ba821b}
+.wg-mode-icon svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.wg-mode-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.wg-mode-copy strong{font-size:1.1rem;font-weight:900;line-height:1.23}
+.wg-mode-copy small{font-size:.75rem;color:var(--vocab-muted,#6f8190);font-weight:600}
+.wg-mode-copy em{font-size:.73rem;font-style:normal;color:var(--cyan-strong,#25b8c4);font-weight:800;margin-top:5px}
+.wg-mode .vocab-front-arrow{position:absolute;right:15px;top:15px;font-size:1.55rem;color:var(--cyan-strong,#25b8c4)}
+.wg-library-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:4px}
+.wg-library-head p{margin:0;color:var(--vocab-muted,#6f8190);font-size:.82rem;font-weight:600}
+.wg-library-head .wg-section-title{margin:0 0 3px}
+.wg-library-head select,.wg-field select,.wg-field input{width:100%;appearance:auto;border:2px solid var(--vocab-border,#c9f1f4);border-radius:14px;background:var(--vocab-card,#fff);color:var(--ink,#173f46);padding:12px 13px;font:700 .92rem/1.3 Poppins,system-ui,sans-serif}
+.wg-library-head select{width:auto;min-width:130px}
+.wg-library{display:grid;gap:10px;margin:17px 0 8px}
+.wg-library-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;width:100%;border:2px solid var(--vocab-border,#c9f1f4);border-radius:17px;padding:15px;background:var(--vocab-card,#fff);text-align:left;color:var(--ink,#173f46);cursor:pointer}
+.wg-library-item:hover,.wg-library-item:focus-visible{outline:2px solid var(--cyan-strong,#25b8c4);outline-offset:1px}
+.wg-library-item strong{display:block;font-size:.94rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wg-library-item small{display:block;color:var(--vocab-muted,#6f8190);margin:5px 0;font-size:.76rem}
+.wg-library-item .wg-excerpt{display:block;font-size:.79rem;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;max-width:100%;color:var(--ink,#173f46)}
+.wg-library-meta{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.wg-status-pill{font-size:.67rem;font-weight:850;border-radius:999px;padding:5px 9px;background:var(--vocab-track,#e7f4f7);white-space:nowrap}
+.wg-status-pill.is-submitted{background:#e2f8e9;color:#20774b}
+.wg-library-arrow{font-size:1.5rem;color:var(--cyan-strong,#25b8c4)}
+.wg-empty{padding:38px 18px;text-align:center;border:2px dashed var(--vocab-border,#c9f1f4);border-radius:19px;color:var(--vocab-muted,#6f8190);background:var(--vocab-card,#fff);font-size:.87rem}
+.wg-editor{max-width:800px;margin:auto}
+.wg-editor-nav{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:16px}
+.wg-editor-nav .vocab-screen-back{font:800 .9rem Poppins,system-ui,sans-serif;cursor:pointer}
+.wg-save-state{font-size:.77rem;font-weight:750;color:var(--vocab-muted,#6f8190);text-align:right}
+.wg-save-state.is-error{color:#bd3752}
+.wg-editor-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.wg-editor-top h2{color:var(--vocab-heading,#244f56);font-size:clamp(1.25rem,4vw,1.9rem);font-weight:900;margin:4px 0 0;line-height:1.3}
+.wg-kind{font-size:.71rem;letter-spacing:.09em;color:var(--cyan-strong,#25b8c4);font-weight:900;text-transform:uppercase}
+.wg-date{white-space:nowrap;font-size:.76rem;font-weight:800;padding:8px 12px;border-radius:12px;background:var(--vocab-card,#fff);color:var(--vocab-heading,#244f56);border:1px solid var(--vocab-border,#c9f1f4)}
+.wg-field{display:flex;flex-direction:column;gap:7px;margin:11px 0;font-weight:850;color:var(--vocab-heading,#244f56)}
+.wg-field span{font-size:.82rem}
+.wg-field input:focus,.wg-field select:focus,#wgBody:focus{outline:3px solid var(--cyan-strong,#25b8c4);outline-offset:1px}
+.wg-prompt-row{margin-bottom:16px}
+.wg-prompt-help{font-size:.79rem;font-weight:650;line-height:1.65;margin:8px 3px;color:var(--vocab-muted,#6f8190)}
+.wg-paper{border:2px solid var(--vocab-border,#c9f1f4);background:var(--vocab-card,#fff);border-radius:23px;box-shadow:0 10px 28px rgba(38,98,107,.09);overflow:hidden}
+.wg-paper-head{display:flex;justify-content:space-between;gap:12px;padding:14px 18px 10px;font-size:.74rem;font-weight:900;color:var(--cyan-strong,#25b8c4);letter-spacing:.06em}
+.wg-paper-head #wgCounts{letter-spacing:0;color:var(--vocab-muted,#6f8190);font-size:.72rem}
+#wgBody{width:100%;min-height:clamp(265px,42vh,480px);max-width:100%;resize:vertical;border:0;outline:0;background:transparent;color:var(--ink,#173f46);padding:10px 19px 24px;font:600 clamp(.95rem,3vw,1.12rem)/2 Poppins,system-ui,sans-serif;tab-size:2;overflow-wrap:break-word}
+#wgBody:focus{outline:0}
+#wgBody::placeholder{color:var(--vocab-muted,#8a9da4);opacity:.72}
+.wg-help{border:2px solid var(--vocab-border,#c9f1f4);border-radius:17px;background:var(--vocab-card,#fff);margin-top:17px;overflow:hidden}
+.wg-help-toggle{background:transparent;border:0;width:100%;text-align:left;color:var(--vocab-heading,#244f56);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 17px;font:900 .86rem Poppins,system-ui,sans-serif;cursor:pointer}
+.wg-help-toggle span{font-size:.74rem;color:var(--cyan-strong,#25b8c4)}
+#wgIdeas{padding:0 18px 17px}
+#wgIdeas p{color:var(--vocab-muted,#6f8190);font-size:.81rem}
+.wg-starters{display:flex;gap:8px;flex-wrap:wrap}
+.wg-starters button{border:1.5px solid var(--vocab-border,#c9f1f4);background:var(--vocab-track,#e7f4f7);color:var(--vocab-heading,#244f56);font:800 .81rem Poppins,system-ui,sans-serif;border-radius:11px;padding:9px 11px;cursor:pointer}
+.wg-starters button:hover{border-color:var(--cyan-strong,#25b8c4)}
+.wg-checklist{display:flex;flex-wrap:wrap;gap:13px;margin-top:16px}
+.wg-checklist label{display:flex;align-items:center;gap:7px;font-size:.76rem;font-weight:700;color:var(--vocab-heading,#244f56)}
+.wg-checklist input{accent-color:var(--cyan-strong,#25b8c4);width:16px;height:16px}
+.wg-submit-note{font-size:.77rem;color:var(--vocab-muted,#6f8190);margin:17px 3px 8px}
+.wg-actions{display:flex;gap:12px;justify-content:flex-end}
+.wg-button{font:900 .92rem Poppins,system-ui,sans-serif;border:2px solid transparent;border-radius:14px;padding:13px 21px;cursor:pointer;min-height:48px}
+.wg-button:disabled{cursor:wait;opacity:.6}
+.wg-primary{background:var(--cyan-strong,#25b8c4);color:white}
+.wg-secondary{background:var(--vocab-card,#fff);border-color:var(--vocab-border,#c9f1f4);color:var(--vocab-heading,#244f56)}
+.wg-button:focus-visible{outline:3px solid var(--pink,#ff0a8a);outline-offset:3px}
+.wg-complete{display:flex;align-items:center;flex-direction:column;gap:7px;text-align:center;background:var(--vocab-card,#fff);border:2px solid #b2e8c7;border-radius:21px;padding:24px;margin-top:14px;color:var(--vocab-heading,#244f56)}
+.wg-complete strong{font-size:1.05rem}
+.wg-complete span{font-size:.8rem}
+.wg-complete .wg-button{margin-top:10px}
+.wg-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.wg-editor.is-submitted #wgTitle,.wg-editor.is-submitted #wgPromptSelect,.wg-editor.is-submitted #wgBody{opacity:.76}
+html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme="cyberpunk"] .wg-status-pill.is-submitted{background:#204d3d;color:#baf4d7}
+@media(max-width:680px){.wg-mode-grid{grid-template-columns:1fr;gap:10px}.writing-genius .wg-mode{min-height:92px;flex-direction:row;align-items:center;padding:14px}.wg-mode-icon{flex:0 0 55px}.wg-mode .vocab-front-arrow{position:static;margin-left:auto}.wg-brand{margin:9px auto 20px}.wg-brand>img{width:53px;height:53px}.wg-actions .wg-button{flex:1}.wg-checklist{flex-direction:column;gap:9px}}
+@media(max-width:360px){.wg-brand h1{font-size:1.45rem}.wg-brand>img{width:47px;height:47px}.wg-library-head select{min-width:104px}.wg-paper-head{padding:12px}.wg-paper-head #wgCounts{font-size:.66rem}.wg-actions{gap:8px}.wg-button{padding:10px 12px}}
+@media(prefers-reduced-motion:reduce){.writing-genius .wg-mode{transition:none}}
+
+/* Writing Genius compact home — no duplicate masthead. Keep the mode choices first. */
+.writing-genius .wg-page{padding-top:6px}
+.writing-genius #wgHome .wg-mode-grid{margin-top:4px;margin-bottom:20px;gap:10px}
+.writing-genius .wg-mode{min-height:125px;padding:15px 14px;gap:6px;border-radius:18px}
+.writing-genius .wg-mode-icon{width:42px;height:42px;border-radius:13px}
+.writing-genius .wg-mode-icon svg{width:27px;height:27px}
+.writing-genius .wg-mode-copy strong{font-size:1rem;line-height:1.2}
+.writing-genius .wg-mode-copy small{font-size:.74rem;margin:0}
+.writing-genius .wg-mode .vocab-front-arrow{top:11px;right:12px;font-size:1.3rem}
+@media(max-width:680px){
+ .writing-genius .wg-page{padding-top:0}
+ .writing-genius #wgHome .wg-mode-grid{gap:8px}
+ .writing-genius .wg-mode{min-height:73px;padding:11px 13px;gap:11px}
+ .writing-genius .wg-mode-icon{width:42px;height:42px;flex-basis:42px}
+ .writing-genius .wg-mode .vocab-front-arrow{position:static;margin-left:auto}
+}
+
+/* Sentence Practice: compact text-first flow, styled using the Genius palette. */
+.wg-practice{max-width:800px;margin:0 auto}
+.sp-mini-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:5px 0 17px}
+.sp-mini-head strong{font-size:1.1rem;font-weight:900;color:var(--vocab-heading,#244f56)}
+.sp-mini-head small{font-size:.72rem;color:var(--vocab-muted,#6f8190);font-weight:700}
+.sp-type-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:19px}
+.sp-type-grid button{min-width:0;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:3px;
+ padding:16px 15px;border:2px solid var(--vocab-border,#c9f1f4);border-radius:17px;
+ color:var(--vocab-heading,#244f56);background:var(--vocab-card,#fff);font-family:inherit}
+.sp-type-grid button strong{font-size:.91rem;font-weight:900}
+.sp-type-grid button small{font-size:.72rem;color:var(--vocab-muted,#6f8190);font-weight:700}
+.sp-type-grid button.is-selected,.sp-type-grid button[aria-pressed=true]{border-color:var(--cyan-strong,#25b8c4);
+ box-shadow:0 0 0 2px color-mix(in srgb,var(--cyan-strong,#25b8c4) 15%,transparent);
+ background:color-mix(in srgb,var(--vocab-card,#fff) 88%,var(--cyan-strong,#25b8c4))}
+.sp-type-grid button:focus-visible{outline:3px solid var(--pink,#ff0a8a);outline-offset:2px}
+.sp-select-row{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.sp-select-row .wg-field{margin-top:0}
+.sp-subtle{font-size:.78rem;font-weight:650;color:var(--vocab-muted,#6f8190);line-height:1.6;margin:5px 0 14px}
+.sp-start{width:100%;margin:4px 0 15px}
+.sp-saved{margin:12px 0 0;padding-top:13px;border-top:2px solid var(--vocab-border,#c9f1f4)}
+.sp-saved>strong{font-size:.85rem;font-weight:900;color:var(--vocab-heading,#244f56)}
+#spSessionList{display:grid;gap:8px;margin-top:9px}
+.sp-history{display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;
+ border:2px solid var(--vocab-border,#c9f1f4);border-radius:15px;background:var(--vocab-card,#fff);
+ color:var(--vocab-heading,#244f56);padding:11px 14px;cursor:pointer;font-family:inherit}
+.sp-history>span:first-child{display:flex;flex-direction:column;gap:2px}
+.sp-history strong{font-size:.83rem}
+.sp-history small{font-size:.7rem;color:var(--vocab-muted,#6f8190)}
+.sp-history-tag{font-size:.71rem;font-weight:900;white-space:nowrap;color:var(--cyan-strong,#25b8c4)}
+.sp-topline{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 10px}
+.sp-step{font-size:.86rem;color:var(--vocab-heading,#244f56);font-weight:900}
+.sp-progress{height:8px;background:var(--vocab-border,#c9f1f4);border-radius:15px;overflow:hidden;margin:0 0 15px}
+.sp-progress>div{height:100%;width:0;background:var(--cyan-strong,#25b8c4);border-radius:inherit;transition:width .2s ease}
+.sp-task{padding:19px 18px;border:2px solid var(--vocab-border,#c9f1f4);
+ border-radius:20px;background:var(--vocab-card,#fff);margin-bottom:14px}
+.sp-unit-name{font-size:.71rem;font-weight:900;color:var(--cyan-strong,#25b8c4)}
+.sp-task h2{font-size:clamp(.95rem,3.5vw,1.2rem);line-height:1.45;font-weight:900;
+ color:var(--vocab-heading,#244f56);margin:9px 0}
+.sp-display{white-space:pre-line;overflow-wrap:anywhere;font-size:clamp(1.02rem,3.7vw,1.3rem);
+ line-height:1.8;letter-spacing:-.015em;font-weight:750;padding:12px 14px;border-radius:13px;
+ background:var(--vocab-track,#e9fbfc);color:var(--vocab-heading,#244f56)}
+.sp-task .sp-subtle{margin:11px 0 0}
+.sp-answer-label{font-size:.84rem}
+.sp-input{display:block;width:100%;min-height:120px;max-height:50vh;resize:vertical;
+ border:2px solid var(--vocab-border,#c9f1f4);border-radius:18px;background:var(--vocab-card,#fff);
+ color:var(--ink,#173f46);font:650 clamp(1rem,3.4vw,1.13rem)/1.8 Poppins,system-ui,sans-serif;padding:16px;overflow-wrap:break-word}
+.sp-input:focus{outline:3px solid var(--cyan-strong,#25b8c4);outline-offset:1px}
+.sp-inline-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:9px;margin:13px 0}
+.sp-inline-actions .wg-button{flex:1;min-width:120px}
+.sp-hint{margin-top:12px;font-size:.84rem;font-weight:700;padding:13px 14px;
+ border-radius:14px;background:#fff7df;color:#77561f;white-space:pre-wrap;overflow-wrap:anywhere}
+.sp-compare{margin-top:13px;border:2px solid #a7dedb;background:var(--vocab-card,#fff);
+ border-radius:17px;padding:17px;color:var(--vocab-heading,#244f56)}
+.sp-compare strong{font-size:.77rem;font-weight:900;color:var(--cyan-strong,#25b8c4)}
+.sp-compare p#spModel{font-size:clamp(1.02rem,3vw,1.2rem);line-height:1.7;font-weight:800;
+ overflow-wrap:anywhere;margin:10px 0}
+.sp-compare p#spComparisonNote{font-size:.8rem;line-height:1.6;margin:8px 0;color:var(--vocab-muted,#6f8190)}
+.sp-compare-caption{border-top:1px solid var(--vocab-border,#c9f1f4);padding-top:9px;
+ font-size:.74rem;color:var(--vocab-muted,#6f8190)}
+.sp-next-row{margin-top:14px}
+.sp-done{padding:40px 20px;text-align:center;border-radius:23px;border:2px solid var(--vocab-border,#c9f1f4);
+ background:var(--vocab-card,#fff)}
+.sp-done-star{display:grid;place-items:center;width:65px;height:65px;border-radius:100%;
+ font-size:2rem;font-weight:900;background:#dbf9eb;color:#168052;margin:0 auto 13px}
+.sp-done h2{font-size:1.5rem;font-weight:900;color:var(--vocab-heading,#244f56);margin:0}
+.sp-done p{font-size:.85rem;color:var(--vocab-muted,#6f8190)}
+.sp-done .sp-inline-actions{max-width:430px;margin:25px auto 0}
+@media(max-width:540px){.sp-select-row{grid-template-columns:1fr;gap:0}
+ .sp-type-grid{gap:8px}.sp-type-grid button{padding:13px 11px}.sp-type-grid button strong{font-size:.82rem}
+ .sp-type-grid button small{font-size:.68rem}.sp-task{padding:14px}.sp-mini-head{margin-bottom:12px}
+ .sp-inline-actions .wg-button{min-width:0;padding:11px}
+}
+@media(prefers-reduced-motion:reduce){.sp-progress>div{transition:none}}
+
+/* One daily Make a Sentence activity. Unit strip matches Word/Sentence Genius. */
+.wg-practice .sp-picker{max-width:730px;margin:auto}
+.wg-practice .sp-book-field{margin:0 0 10px}
+.wg-practice .sp-units{margin:9px 0 14px}
+.wg-practice .sp-units .study-v2-unit-strip{gap:8px;padding:3px 1px 7px}
+.wg-practice .sp-hint{
+ display:block;margin:12px 0 16px;padding:11px 15px;
+ border:1.5px solid #f0d7a1;background:#fff9e9;color:#705126;
+ border-radius:14px;font-weight:850;font-size:.84rem;line-height:1.55;overflow-wrap:anywhere}
+.wg-practice .sp-feedback{margin:14px 0;border:2px solid #a4e3dc;border-radius:17px;
+ background:var(--vocab-card,#fff);padding:16px;color:var(--vocab-heading,#244f56)}
+.wg-practice .sp-feedback[data-grade="correct"]{border-color:#8cddbb}
+.wg-practice .sp-feedback[data-grade="almost"]{border-color:#f2ce79}
+.wg-practice .sp-feedback[data-grade="needs_work"]{border-color:#e8aab8}
+.wg-practice .sp-feedback strong{font-size:1.02rem;font-weight:900}
+.wg-practice .sp-feedback p{font-size:.83rem;line-height:1.65;margin:10px 0 0;overflow-wrap:anywhere}
+.wg-practice .sp-feedback #spSuggestion{font-weight:800}
+.wg-practice .sp-next-row .wg-button{width:100%}
+.wg-practice .sp-start[disabled]{opacity:.65;cursor:default}
+.wg-practice #spSaved{display:none!important}
+.wg-practice #spTaskDetail{margin-bottom:0}
+@media(max-width:540px){
+ .wg-practice .sp-book-field{font-size:.82rem}
+
+ .wg-practice .sp-task{margin-bottom:11px}
+ .wg-practice .sp-input{min-height:105px}
+}
+
+/* Writing Genius rewards: match Word Genius star levels and Golden Unit icons. */
+.wg-practice .sp-unit-stars{font-size:.72rem;font-weight:900;color:#b67d0f;margin-left:5px;white-space:nowrap}
+.wg-practice .sp-units .vocab-unit-gold{width:18px;height:18px;vertical-align:-4px;margin-left:5px}
+.wg-practice .sp-gold-count{font-size:.78rem;font-weight:800;color:#a66b12;
+ margin:4px 0 12px;padding:8px 11px;border:1.5px solid #edd18a;border-radius:12px;
+ background:#fff8e5}
+.wg-practice .sp-stars-earned{font-size:clamp(1.55rem,6vw,2.15rem);letter-spacing:.13em;
+ color:#e5aa24;font-weight:900;margin:8px auto 4px}
+.wg-practice .sp-gold-award{display:flex;align-items:center;justify-content:center;gap:10px;
+ padding:12px;margin:14px auto 0;border:2px solid #e7b742;border-radius:15px;
+ background:#fff8dd;color:#8f660a;max-width:280px;font-size:1rem}
+.wg-practice .sp-gold-award img{width:37px;height:37px}
+.wg-practice .sp-mastery-note{font-size:.77rem;font-weight:800;color:var(--vocab-heading,#244f56);
+ line-height:1.55;margin:10px 0 0}
+.wg-practice .sp-sync-status{font-size:.73rem;color:var(--vocab-muted,#6f8190);
+ font-weight:700;margin:11px 0 0}
+
+/* Writing Practice: put recovery actions directly below feedback, not below examples. */
+.wg-practice .sp-next-row{display:flex;gap:10px;align-items:stretch;margin:10px 0 14px}
+.wg-practice .sp-next-row[hidden]{display:none!important}
+.wg-practice .sp-next-row .wg-button{flex:1 1 0;min-width:0;min-height:48px;
+ font-weight:850;font-size:.87rem;white-space:normal;line-height:1.35}
+.wg-practice .sp-next-row .wg-button[hidden]{display:none!important}
+@media(max-width:400px){.wg-practice .sp-next-row{gap:7px}
+ .wg-practice .sp-next-row .wg-button{padding:11px 7px;font-size:.82rem}}
+
+/* Writing Genius now uses the exact shared QuestionRenderer from Sentence Genius.
+   Only a scoped skin belongs here; prompts, word banks and typed inputs are
+   generated by /shared/questions/question-renderer.js. */
+.wg-practice .sp-shared-question.question-card{
+ background:transparent;border:0;box-shadow:none;padding:0;margin:0;
+ max-width:100%;min-width:0;font-family:inherit;text-align:left
+}
+.wg-practice .sp-shared-question .prompt{
+ font-size:clamp(.97rem,3.5vw,1.18rem);line-height:1.55;
+ color:var(--vocab-heading,#244f56);font-weight:900;
+ margin:9px 0 16px;white-space:pre-wrap
+}
+.wg-practice .sp-shared-question .context{
+ display:grid;gap:13px;margin:0 0 18px
+}
+.wg-practice .sp-shared-question .context-block{
+ margin:0;min-width:0
+}
+.wg-practice .sp-shared-question .context-label{
+ color:var(--cyan-strong,#25b8c4);font-size:.73rem;font-weight:900;
+ margin-bottom:7px
+}
+.wg-practice .sp-shared-question .context-value{
+ color:var(--vocab-heading,#244f56);
+ font-size:clamp(1.04rem,3.7vw,1.27rem);font-weight:800;line-height:1.75;
+ overflow-wrap:anywhere;white-space:pre-wrap;
+ background:var(--vocab-track,#e9fbfc);border-radius:14px;padding:12px 14px
+}
+.wg-practice .sp-shared-question .context-list{
+ display:flex;flex-wrap:wrap;gap:7px
+}
+.wg-practice .sp-shared-question .context-item{
+ border-radius:11px;border:1.5px solid #eddba8;
+ background:#fff7df;color:#795821;
+ font-size:.82rem;font-weight:850;
+ padding:7px 11px;line-height:1.35;overflow-wrap:anywhere
+}
+.wg-practice .sp-shared-question [data-answer]{
+ display:block;margin:0
+}
+.wg-practice .sp-shared-question [data-answer]::before{
+ content:'내 문장 · My sentence';display:block;
+ font-size:.84rem;font-weight:850;color:var(--vocab-heading,#244f56);
+ margin-bottom:8px
+}
+.wg-practice .sp-shared-question textarea.answer[data-write]{
+ width:100%;min-height:126px;max-height:50vh;resize:vertical;
+ border:2px solid var(--vocab-border,#c9f1f4);
+ border-radius:18px;background:var(--vocab-card,#fff);
+ color:var(--ink,#173f46);
+ font:650 clamp(1rem,3.4vw,1.12rem)/1.8 Poppins,system-ui,sans-serif;
+ padding:15px 16px;overflow-wrap:break-word;box-sizing:border-box
+}
+.wg-practice .sp-shared-question textarea.answer[data-write]:focus{
+ outline:3px solid var(--cyan-strong,#25b8c4);outline-offset:1px
+}
+.wg-practice .sp-shared-question .feedback[data-feedback]{display:none}
+@media(max-width:540px){
+ .wg-practice .sp-shared-question textarea.answer[data-write]{min-height:112px}
+ .wg-practice .sp-shared-question .context{gap:11px}
+}
+
+/* Writing Genius v1.10.0 — build label and compact Gold/AI rules. */
+.wg-version-row{display:flex;justify-content:flex-end;align-items:center;gap:7px;margin:-6px 1px 15px;color:var(--vocab-muted,#647d82);font-size:.69rem;font-weight:700;letter-spacing:.02em}
+.wg-version-row strong{display:inline-flex;padding:3px 9px;min-height:24px;align-items:center;border-radius:999px;background:var(--vocab-track,#e7f7f9);border:1px solid var(--vocab-border,#b7e9ec);color:var(--vocab-heading,#24535b);font-size:.73rem;font-weight:900;font-variant-numeric:tabular-nums}
+.wg-home-practice-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:-14px 0 23px}
+.wg-home-practice-info>div{display:flex;align-items:center;gap:9px;min-width:0;padding:11px 13px;border:1px solid var(--vocab-border,#c9f1f4);border-radius:15px;background:var(--vocab-card,#fff);color:var(--vocab-heading,#244f56)}
+.wg-home-practice-info strong{font-size:.69rem;letter-spacing:.05em;flex:0 0 auto;color:var(--cyan-strong,#259aa3);font-weight:900}
+.wg-home-practice-info span{font-size:.73rem;font-weight:700;line-height:1.45;overflow-wrap:anywhere}
+@media(max-width:560px){.wg-home-practice-info{grid-template-columns:1fr;margin-top:-13px}}
+
+/* v1.11.0: reuse the live Word/Sentence Genius fullscreen lesson components.
+   The shared QuestionRenderer now renders the Korean as the central prompt. */
+.writing-genius .wg-shared-session{
+ position:fixed;inset:0;z-index:10000;overflow:hidden;
+ display:grid;grid-template-rows:auto minmax(0,1fr) auto;
+ background:var(--vocab-page,#effafb);color:var(--vocab-heading,#244f56)
+}
+.writing-genius .wg-shared-session[hidden]{display:none!important}
+.writing-genius .wg-shared-session .vocab-session-topline{
+ grid-template-columns:44px minmax(0,1fr) 76px
+}
+.writing-genius .wg-shared-session .vocab-session-home{
+ min-height:44px;padding:8px 10px;border-radius:14px;white-space:nowrap;
+ border:2px solid var(--vocab-border,#c9f1f4);background:var(--vocab-card,#fff);
+ color:var(--vocab-heading,#244f56);
+ font:900 .79rem Poppins,system-ui,sans-serif;cursor:pointer
+}
+.writing-genius .wg-shared-session .vocab-session-main{
+ min-height:0;overflow:auto;overscroll-behavior:contain;
+ padding:clamp(18px,4vw,34px) 16px 30px
+}
+.writing-genius .wg-shared-session .vocab-question-wrap{width:min(720px,100%);margin:0 auto}
+.writing-genius .wg-shared-session .wg-round-quota{
+ text-align:right;font-size:.73rem;margin:0 0 12px;font-weight:750;color:var(--vocab-muted,#627e86)
+}
+.writing-genius .wg-shared-session .sp-unit-name{margin-bottom:12px}
+.writing-genius .wg-shared-session .question-card{
+ background:var(--vocab-card,#fff);border:2px solid var(--vocab-border,#c9f1f4);
+ border-radius:23px;padding:clamp(17px,4vw,27px);box-shadow:0 8px 23px rgba(34,106,116,.09)
+}
+.writing-genius .wg-shared-session .question-card .prompt{
+ text-align:center;font-size:clamp(1.5rem,5.6vw,2.35rem);
+ line-height:1.45;letter-spacing:-.025em;font-weight:900;
+ margin:0 0 17px;color:var(--vocab-heading,#244f56);white-space:pre-wrap
+}
+/* Word Genius hides context in its quick vocabulary questions; writing needs its
+   original textbook vocabulary hints, which the shared renderer owns. */
+.writing-genius .wg-shared-session .vocab-question-wrap .context{
+ display:grid;gap:10px;margin:0 0 18px
+}
+.writing-genius .wg-shared-session .context-block{border:0;padding:0;background:transparent}
+.writing-genius .wg-shared-session .context-label{
+ color:var(--cyan-strong,#25b8c4);font-size:.74rem;font-weight:900;margin:0 0 8px
+}
+.writing-genius .wg-shared-session .context-list.compact{
+ display:flex;justify-content:center;flex-wrap:wrap;gap:8px
+}
+.writing-genius .wg-shared-session .context-item{
+ background:var(--vocab-track,#e9fbfc);border:1px solid var(--vocab-border,#c9f1f4);
+ border-radius:12px;padding:9px 13px;color:var(--vocab-heading,#244f56);font-weight:800
+}
+.writing-genius .wg-shared-session .question-card [data-answer]::before{
+ content:'내 문장 · My sentence';display:block;font-weight:850;font-size:.82rem;
+ margin:0 0 8px;color:var(--vocab-heading,#244f56)
+}
+.writing-genius .wg-shared-session textarea.answer[data-write]{
+ width:100%;min-height:136px;max-height:35vh;resize:vertical;
+ border:2px solid var(--vocab-border,#c9f1f4);border-radius:17px;
+ padding:15px 16px;background:var(--vocab-card,#fff);color:var(--ink,#173f46);
+ font:700 clamp(1rem,3.4vw,1.14rem)/1.7 Poppins,system-ui,sans-serif
+}
+.writing-genius .wg-shared-session textarea.answer[data-write]:focus{
+ outline:3px solid var(--cyan-strong,#25b8c4);outline-offset:2px
+}
+.writing-genius .wg-shared-session .feedback[data-feedback]{
+ margin-top:13px;border-radius:13px;padding:13px 15px;font-size:.87rem;
+ font-weight:800;line-height:1.6
+}
+.writing-genius .wg-shared-session .feedback[data-feedback].show{display:block}
+.writing-genius .wg-shared-session .feedback.ok{background:#e9f9ef;color:#276a47}
+.writing-genius .wg-shared-session .feedback.bad{background:#fff0f0;color:#943e46}
+.writing-genius .wg-shared-session .wg-question-detail{
+ margin:10px 3px 13px;font-size:.78rem;text-align:center
+}
+.writing-genius .wg-shared-session .vocab-answer-note{
+ margin:14px 0;padding:14px 16px;border-radius:16px;
+ background:var(--vocab-card,#fff);border:1px solid var(--vocab-border,#c9f1f4)
+}
+.writing-genius .wg-shared-session .sp-feedback[hidden]{display:none!important}
+.writing-genius .wg-shared-session .sp-compare{
+ background:var(--vocab-card,#fff);border-color:var(--vocab-border,#c9f1f4)
+}
+.writing-genius .wg-shared-session .wg-next-actions{flex:1;display:flex;gap:10px}
+.writing-genius .wg-shared-session .wg-next-actions[hidden],
+.writing-genius .wg-shared-session #spCompareBtn[hidden],
+.writing-genius .wg-shared-session #spRetryBtn[hidden]{display:none!important}
+.writing-genius .wg-shared-session .wg-next-actions .vocab-action{min-width:0}
+.writing-genius .wg-shared-session .vocab-action:focus-visible{
+ outline:3px solid var(--cyan-strong,#25b8c4);outline-offset:2px
+}
+.writing-genius .wg-shared-session #spRoundMessage{margin:10px auto;font-size:.81rem}
+.writing-genius .wg-shared-session #spRoundSave{text-align:center;font-size:.72rem}
+@media(max-width:540px){
+ .writing-genius .wg-shared-session .vocab-session-main{padding:15px 12px 25px}
+ .writing-genius .wg-shared-session .wg-next-actions{gap:7px}
+ .writing-genius .wg-shared-session .vocab-action-row{gap:7px}
+ .writing-genius .wg-shared-session .vocab-action{font-size:.78rem}
+ .writing-genius .wg-shared-session .question-card .prompt{font-size:clamp(1.35rem,5.3vw,2rem)}
+ .writing-genius .wg-shared-session textarea.answer[data-write]{min-height:115px}
+}
+
+/* v1.12: textbook selection uses the same card assets as the other Genius apps. */
+.writing-genius .sp-book-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px;margin:13px 0 18px}
+.writing-genius .sp-book-tab{display:flex;align-items:center;justify-content:center;min-height:70px;padding:13px 15px;text-align:center;border:2px solid var(--vocab-border,#c9f1f4);border-radius:17px;background:var(--vocab-card,#fff);font:900 clamp(.9rem,2.7vw,1.06rem)/1.35 Poppins,system-ui,sans-serif;color:var(--vocab-heading,#244f56);cursor:pointer;overflow-wrap:anywhere}
+.writing-genius .sp-book-tab.is-current{border-color:var(--pink,#ff0a8a);background:var(--vocab-track,#e9fbfc);color:var(--vocab-heading,#244f56);box-shadow:0 0 0 2px color-mix(in srgb,var(--pink,#ff0a8a) 14%,transparent)}
+.writing-genius #spBook[hidden],.writing-genius #spTaskDetail[hidden],.writing-genius #spSourceNote[hidden],.writing-genius .wg-home-practice-info[hidden]{display:none!important}
+.writing-genius .wg-shared-session .sp-feedback{scroll-margin-top:22px}
+.writing-genius .wg-shared-session #spFeedback{font-size:.9rem;line-height:1.5}
+@media(max-width:540px){.writing-genius .sp-book-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.writing-genius .sp-book-tab{min-height:65px;padding:11px 9px;font-size:.84rem}}
+
+/* Word Genius is the source of truth for the Writing Genius unit selector. */
+.writing-genius #spPicker.vocab-home-card{width:100%;max-width:none;margin:18px auto 0;border:4px solid #bfecef}
+.writing-genius #spPicker .vocab-book-picker{margin:8px 0 0;padding:14px;border:3px solid #c9f1f4;border-radius:18px;background:#f8fcfc}
+.writing-genius #spPicker .vocab-book-choices{display:flex;gap:9px;flex-wrap:wrap}
+.writing-genius #spPicker .vocab-book-choice{flex:1 1 180px;min-height:46px;border:3px solid #c9f1f4;border-radius:14px;background:#fff;color:var(--ink);padding:10px 13px;font:800 .88rem Poppins,sans-serif;cursor:pointer}
+.writing-genius #spPicker .vocab-book-choice.is-active{border-color:var(--pink);background:#fff3f9;color:var(--pink-dark)}
+.writing-genius #spPicker .sp-units{margin-top:24px}
+.writing-genius #spPicker .vocab-unit-summary{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:26px}
+.writing-genius #spPicker .vocab-unit-summary h2{min-width:0;flex:1 1 auto;margin:0!important;color:#244f56!important;font-size:clamp(1.05rem,2.7vw,1.35rem)!important}
+.writing-genius #spPicker .vocab-unit-summary .vocab-word-card{flex:0 0 auto;min-width:210px;margin:0}
+.writing-genius #spPicker .sp-writing-skills{grid-template-columns:minmax(0,1fr);max-width:350px}
+.writing-genius #spPicker .sp-writing-skills::before{display:none}
+.writing-genius #spPicker .sp-writing-skills .vocab-skill-card{width:100%}
+.writing-genius #spPicker .vocab-achievements{margin-top:30px!important;padding-top:24px;border-top:2px solid #e7f2f3}
+.writing-genius #spPicker #spAiQuotaPicker{margin-top:15px;text-align:center}
+.writing-genius #spPicker .sp-sentence-modal{width:min(600px,calc(100% - 24px));max-height:80vh;border:3px solid #c9f1f4;border-radius:23px;padding:22px;background:#fff;color:#315e64}
+.writing-genius #spPicker .sp-sentence-modal::backdrop{background:#132d3588}
+.writing-genius .sp-sentence-modal-row{padding:10px 0;border-bottom:1px solid #dff2f4}
+.writing-genius .sp-sentence-modal-row strong,.writing-genius .sp-sentence-modal-row span{display:block;line-height:1.5}
+.writing-genius .sp-sentence-modal-row span{color:#789095;font-size:.85rem}
+@media(max-width:560px){.writing-genius #spPicker .vocab-unit-summary{flex-direction:column;align-items:stretch;gap:12px}.writing-genius #spPicker .vocab-unit-summary .vocab-word-card{width:100%}.writing-genius #spPicker .sp-writing-skills{max-width:none}.writing-genius #spPicker .vocab-book-choice{flex-basis:120px}}
+
+/* Do not override Word Genius's shared unit button and golden-unit design. */
+.writing-genius .wg-page{width:min(920px,100%)}
+.writing-genius #spPicker .vocab-unit-selector{margin-top:24px}
+
+/* Writing Genius home: match the Word/Sentence Genius book-card treatment. */
+/* The writing portfolio lives inside #wgHome; do not hide its header or entries. */
+.writing-genius #wgHome .wg-mode-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0 24px}
+.writing-genius #wgHome .wg-mode.vocab-front-book-card{
+ display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+ position:relative;gap:14px;min-height:146px;padding:20px;
+ border:3px solid var(--vocab-border,#c9f1f4);border-radius:23px;
+ background:var(--vocab-card,#fff);box-shadow:0 9px 26px rgba(34,106,116,.09);
+ text-align:left;color:var(--ink,#173f46)
+}
+.writing-genius #wgHome .wg-mode:nth-child(2){border-color:var(--vocab-border,#c9f1f4)}
+.writing-genius #wgHome .wg-mode-icon,
+.writing-genius #wgHome .wg-mode:nth-child(2) .wg-mode-icon,
+.writing-genius #wgHome .wg-mode:nth-child(3) .wg-mode-icon{
+ display:grid;place-items:center;width:52px;height:52px;flex:0 0 52px;
+ background:transparent!important;border:0;border-radius:0;box-shadow:none
+}
+.writing-genius #wgHome .wg-mode:nth-child(1) .wg-mode-icon{color:var(--cyan-strong,#25b8c4)}
+.writing-genius #wgHome .wg-mode:nth-child(2) .wg-mode-icon{color:var(--pink,#e85198)}
+.writing-genius #wgHome .wg-mode:nth-child(3) .wg-mode-icon{color:#ba821b}
+.writing-genius #wgHome .wg-mode-icon svg{width:43px;height:43px;fill:none;stroke:currentColor;stroke-width:3.5}
+.writing-genius #wgHome .wg-mode-copy strong{font-size:clamp(1.05rem,2.3vw,1.36rem);font-weight:900}
+.writing-genius #wgHome .wg-mode-copy small{display:none}
+.writing-genius #wgHome .wg-mode .vocab-front-arrow{
+ position:absolute;top:50%;right:18px;transform:translateY(-50%);
+ font-size:1.8rem;color:var(--cyan-strong,#25b8c4)
+}
+@media(max-width:700px){
+ .writing-genius #wgHome .wg-mode-grid{grid-template-columns:1fr;gap:12px}
+ .writing-genius #wgHome .wg-mode.vocab-front-book-card{min-height:93px;flex-direction:row;justify-content:flex-start;align-items:center;gap:16px;padding:15px 19px;border-radius:22px}
+ .writing-genius #wgHome .wg-mode-icon{width:52px;height:52px;flex-basis:52px}
+ .writing-genius #wgHome .wg-mode-copy{padding-right:22px}
+}
+
+/* Word Genius front-page shell: one white panel around missions, activity cards and achievements. */
+.writing-genius #wgHome{
+ width:100%;max-width:none;
+ background:var(--vocab-card,#fff);
+ border:4px solid var(--vocab-border,#c9f1f4);
+ border-radius:36px;
+ padding:clamp(22px,5vw,55px);
+ box-shadow:0 15px 40px rgba(34,106,116,.09);
+ box-sizing:border-box;
+}
+.writing-genius #wgHome[hidden]{display:none!important}
+.writing-genius #wgHome .wg-mode-grid{margin-top:28px;margin-bottom:26px}
+.writing-genius #wgHome .wg-home-achievements{
+ margin-top:28px!important;
+ padding-top:23px;
+ border-top:2px solid #e2f0f2;
+}
+@media(max-width:700px){
+ .writing-genius #wgHome{border-radius:32px;padding:22px 17px 26px}
+ .writing-genius #wgHome .wg-mode-grid{margin-top:20px;margin-bottom:22px}
+}
+
+/* Daily diary: reference examples, AI feedback and complete speaking practice. */
+.writing-genius .wg-diary-guide,.writing-genius .wg-diary-review{
+ margin:16px 0;padding:18px;border:3px solid var(--vocab-border,#c9f1f4);
+ border-radius:23px;background:var(--vocab-card,#fff);color:var(--ink,#244f56);
+}
+.writing-genius .wg-diary-guide[hidden],.writing-genius .wg-diary-review[hidden]{display:none!important}
+.writing-genius .wg-diary-guide-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.writing-genius .wg-diary-guide p,.writing-genius .wg-diary-speaking p{margin:10px 0 0;line-height:1.65;color:var(--vocab-muted,#637d82)}
+.writing-genius .wg-diary-dialog{
+ width:min(650px,calc(100% - 28px));max-height:80dvh;overflow:auto;border:3px solid #bfecef;
+ border-radius:24px;padding:22px;background:var(--vocab-card,#fff);color:var(--ink,#244f56);
+}
+.writing-genius .wg-diary-dialog::backdrop{background:rgba(14,33,42,.65)}
+.writing-genius .wg-diary-dialog-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.writing-genius .wg-diary-dialog-top strong{font-size:1.1rem}
+.writing-genius .wg-diary-example{padding:15px;margin:12px 0;border:2px solid #d8eef0;border-radius:18px;background:var(--vocab-card,#fff)}
+.writing-genius .wg-diary-example h3{margin:0 0 8px;color:var(--cyan-strong,#25b8c4)}
+.writing-genius .wg-diary-example p{margin:0;line-height:1.9;white-space:pre-wrap}
+.writing-genius .wg-diary-example-hint{font-size:.85rem;color:var(--vocab-muted,#627e84)}
+.writing-genius .wg-diary-review h3{font-size:1.12rem;margin:0 0 12px}
+.writing-genius .wg-diary-praise{font-weight:800;line-height:1.6}
+.writing-genius .wg-diary-success{color:#149378;font-weight:800}
+.writing-genius .wg-diary-improvement{border:2px solid #d8eef0;border-radius:15px;padding:13px;margin:12px 0}
+.writing-genius .wg-diary-improvement strong,.writing-genius .wg-diary-improvement p,.writing-genius .wg-diary-improvement small{display:block;line-height:1.6}
+.writing-genius .wg-diary-improvement p{color:#159caa;font-weight:800;margin:7px 0}
+.writing-genius .wg-diary-expression{padding:8px 0;border-bottom:1px solid #e8f2f3}
+.writing-genius .wg-diary-tip{padding:12px;border-radius:12px;background:#effafa}
+.writing-genius .wg-diary-speaking{border-top:2px solid #e1eef0;padding-top:18px;margin-top:22px}
+.writing-genius .wg-diary-speech-buttons{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.writing-genius .wg-diary-transcript{min-height:46px;margin-top:10px;padding:12px;background:#f4fafb;border:2px solid #dceef0;border-radius:13px;line-height:1.6;white-space:pre-wrap}
+@media(max-width:560px){.writing-genius .wg-diary-guide,.writing-genius .wg-diary-review{padding:14px}.writing-genius .wg-diary-speech-buttons .wg-button{flex:1 1 100%}}
+
+.writing-genius .wg-diary-review-status{margin:12px 0;padding:13px 16px;border:2px solid #99dbe0;border-radius:14px;background:#effcfc;color:#196d76;font-weight:800;line-height:1.55}
+.writing-genius .wg-diary-review-status.is-error{border-color:#e69aa9;background:#fff1f4;color:#a02f53}
+.writing-genius .wg-diary-review-status[hidden]{display:none!important}
+
+/* Diary wizard: each step is a separate screen within the existing editor. */
+.writing-genius .wg-diary-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 24px}
+.writing-genius .wg-diary-steps[hidden],.writing-genius .wg-diary-navigation[hidden],
+.writing-genius .wg-diary-correction[hidden],.writing-genius .wg-diary-speaking[hidden],
+.writing-genius #wgPaperScreen[hidden]{display:none!important}
+.writing-genius .wg-diary-steps span{padding:11px 4px;text-align:center;border:2px solid #d2eff1;border-radius:12px;color:#648287;background:#fff;font-weight:800;font-size:.76rem}
+.writing-genius .wg-diary-steps span.is-current{background:#e7fbfc;color:#147b83;border-color:#49c3cc}
+.writing-genius .wg-diary-navigation{display:flex;justify-content:space-between;gap:12px;margin:22px 0}
+.writing-genius .wg-diary-correction{padding:16px;border:2px solid #d2eef0;border-radius:18px;margin:14px 0}
+.writing-genius .wg-diary-correction input{width:100%;box-sizing:border-box;border:2px solid #bde8eb;border-radius:13px;padding:15px;font-size:1rem;margin:10px 0}
+.writing-genius .wg-diary-correction-actions{display:flex;gap:10px;flex-wrap:wrap}
+.writing-genius .wg-diary-correction-actions img,.writing-genius .wg-diary-speech-buttons img{width:22px;height:22px;vertical-align:middle;margin-right:7px}
+.writing-genius .wg-diary-review[hidden],.writing-genius #wgDiaryGuide[hidden],.writing-genius #wgPromptRow[hidden]{display:none!important}
+@media(max-width:560px){.writing-genius .wg-diary-steps span{font-size:.67rem;padding:8px 1px}.writing-genius .wg-diary-navigation .wg-button{flex:1}}
+
+/* Compact diary screens; no duplicated editor title/date chrome. */
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-editor-top{display:none!important}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-editor-nav{margin-bottom:8px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-steps{margin:0 0 12px;gap:5px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-steps span{padding:7px 2px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-review{margin:8px 0;padding:13px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-review h3{margin:0 0 8px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-guide{margin:8px 0;padding:13px}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-guide>p{display:none}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-submit-note{display:none}
+.writing-genius #wgDiaryReview:has(#wgDiaryCorrection:not([hidden])) #wgDiaryFeedback{display:none!important}
+.writing-genius #wgDiaryReview:has(#wgDiarySpeaking:not([hidden])) #wgDiaryFeedback{display:none!important}
+
+/* Shared-renderer diary rebuild: compact Word Genius question-card surfaces. */
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])){--diary-pink:#e75c9d;--diary-cyan:#c5eef1}
+.writing-genius #wgEditor:has(#wgDiarySteps:not([hidden])) .wg-diary-steps span.is-current{color:var(--diary-pink);border-color:var(--diary-cyan);background:#fff6fa}
+.writing-genius #wgEditor .wg-diary-question-head{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--diary-pink);font-weight:900}
+.writing-genius #wgEditor .wg-diary-question-prompt{font-size:1rem;line-height:1.5;white-space:pre-wrap;margin:12px 0;color:#385b60}
+.writing-genius #wgEditor #wgDiaryCorrection,.writing-genius #wgEditor #wgDiarySpeaking{border:3px solid #c5eef1;border-radius:22px;padding:18px;background:#fff}
+.writing-genius #wgEditor .wg-diary-question-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.writing-genius #wgEditor .wg-diary-question-actions .wg-button{min-height:45px}
+.writing-genius #wgEditor .wg-diary-full-text{white-space:pre-wrap;line-height:1.8;color:#30565c}
+.writing-genius #wgEditor .wg-diary-speaking .question-card .speaking-mic{width:88px;height:88px}
+.writing-genius #wgEditor #wgDiaryCorrection .question-card,.writing-genius #wgEditor #wgDiarySpeaking .question-card{border:0;box-shadow:none;background:transparent;padding:0}
+.writing-genius #wgEditor #wgDiaryCorrection .answer{min-height:100px;border:2px solid #c5eef1}
+.writing-genius #wgEditor .wg-diary-review{border-color:#c5eef1}
+.writing-genius #wgEditor .wg-diary-praise,.writing-genius #wgEditor .wg-diary-success{color:var(--diary-pink)}
+
+/* Version appears below the entire Writing Genius page, not above the cards. */
+.writing-genius .wg-version-row{display:flex;justify-content:center;align-items:center;gap:7px;margin:24px auto 0;text-align:center}
+
+/* Unified diary workspace shell, matching Word Genius' contained white layout. */
+.writing-genius #wgEditor{
+ width:100%;box-sizing:border-box;
+ background:var(--vocab-card,#fff);
+ border:4px solid var(--vocab-border,#c5eef1);
+ border-radius:34px;
+ padding:clamp(18px,4vw,42px);
+ box-shadow:0 14px 38px rgba(31,100,112,.10);
+ margin:12px auto 22px;
+}
+.writing-genius #wgEditor[hidden]{display:none!important}
+.writing-genius #wgEditor .wg-diary-steps{
+ padding:10px;border-radius:19px;background:#f6fcfc;
+ border:1px solid #d1eff0;
+}
+.writing-genius #wgEditor .wg-diary-review{
+ border:0;border-radius:0;padding:4px 0;background:transparent;
+}
+.writing-genius #wgEditor #wgDiaryCorrection,
+.writing-genius #wgEditor #wgDiarySpeaking{
+ background:#fff;border:2px solid #c5eef1;box-shadow:none;
+}
+@media(max-width:680px){
+ .writing-genius #wgEditor{border-radius:26px;padding:17px 13px 23px;border-width:3px}
+ .writing-genius #wgEditor .wg-diary-steps{padding:6px}
+}
+
+/* New diary flow owns the entire editor surface. Legacy editor controls remain for topic writing only. */
+.writing-genius #wgEditor:has(#wgDiaryFlow:not([hidden])) > :not(#wgDiaryFlow){display:none!important}
+.writing-genius #wgDiaryFlow[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow{display:block;min-width:0}
+.writing-genius #wgDiaryFlow .wg-diary-flow-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;color:#e75c9d}
+.writing-genius #wgDiaryFlow .wg-diary-flow-stage{border:2px solid #c5eef1;border-radius:22px;background:#fff;padding:clamp(16px,3vw,30px);min-height:210px}
+.writing-genius #wgDiaryFlow .df-heading{font-size:clamp(1.2rem,3vw,1.6rem);color:#e75c9d;margin:0 0 17px}
+.writing-genius #wgDiaryFlow .df-muted{color:#55787e;font-size:.9rem;line-height:1.6}
+.writing-genius #wgDiaryFlow .df-praise{color:#e75c9d;font-weight:750}
+.writing-genius #wgDiaryFlow .df-input,.writing-genius #wgDiaryFlow .df-textarea{width:100%;box-sizing:border-box;border:2px solid #c5eef1;border-radius:15px;padding:14px;font:inherit;color:#244f56;background:#fff}
+.writing-genius #wgDiaryFlow .df-textarea{min-height:290px;line-height:1.8;resize:vertical}
+.writing-genius #wgDiaryFlow .df-count{display:block;text-align:right;color:#e75c9d;margin-bottom:9px;font-weight:850}
+.writing-genius #wgDiaryFlow .df-example{padding:14px;margin:10px 0;border:2px solid #c5eef1;border-radius:15px}
+.writing-genius #wgDiaryFlow .df-example p{line-height:1.8;margin:8px 0 0}
+.writing-genius #wgDiaryFlow .df-original{color:#667d82}
+.writing-genius #wgDiaryFlow .df-hint{color:#405c62}
+.writing-genius #wgDiaryFlow .df-target{display:block;font-size:1.1rem;font-weight:850;color:#e75c9d;margin:14px 0}
+.writing-genius #wgDiaryFlow .df-question-host .answer{border:2px solid #c5eef1}
+.writing-genius #wgDiaryFlow .df-question-host .speaking-mic{width:88px;height:88px}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:16px}
+.writing-genius #wgDiaryFlow .wg-diary-flow-message{font-size:.95rem;color:#52747b;margin-top:9px}
+.writing-genius #wgDiaryFlow .wg-diary-flow-message.is-error{color:#b13c68}
+@media(max-width:560px){.writing-genius #wgDiaryFlow .wg-diary-flow-stage{padding:14px}.writing-genius #wgDiaryFlow .wg-diary-flow-actions .wg-button{min-height:46px}}
+
+/* Diary Review: complete original → suggested English → Korean cards. */
+.writing-genius #wgDiaryFlow .df-review-group{margin:22px 0}
+.writing-genius #wgDiaryFlow .df-review-heading{font-size:1.03rem;color:#e75c9d;margin:0 0 12px}
+.writing-genius #wgDiaryFlow .df-review-item{border:2px solid #c5eef1;border-radius:18px;padding:15px 17px;margin:10px 0;background:#fff}
+.writing-genius #wgDiaryFlow .df-review-label{display:block;font-size:.72rem;font-weight:850;color:#649099;letter-spacing:.035em}
+.writing-genius #wgDiaryFlow .df-review-original{color:#59727a;margin:5px 0 14px;font-size:1rem}
+.writing-genius #wgDiaryFlow .df-review-better{color:#e75c9d;font-weight:850;font-size:1.1rem;margin:5px 0 10px}
+.writing-genius #wgDiaryFlow .df-review-korean{color:#274f56;margin:8px 0;line-height:1.55}
+.writing-genius #wgDiaryFlow .df-review-explanation{font-size:.83rem;color:#6b7f85;margin:9px 0 0}
+.writing-genius #wgDiaryFlow .df-review-tip{border-radius:14px;padding:12px;background:#f1fbfc;color:#476e74}
+/* Reuse the existing Writing Genius Sentence Practice renderer presentation, not a diary replica. */
+.writing-genius #wgDiaryFlow .sp-shared-question.question-card{background:transparent;border:0;box-shadow:none;padding:0;margin:0;max-width:100%;min-width:0;text-align:left;font-family:inherit}
+.writing-genius #wgDiaryFlow .sp-shared-question .prompt{font-size:clamp(.97rem,3.5vw,1.18rem);line-height:1.55;color:var(--vocab-heading,#244f56);font-weight:900;margin:9px 0 16px}
+.writing-genius #wgDiaryFlow .sp-shared-question .context{display:grid;gap:13px;margin:0 0 18px}
+.writing-genius #wgDiaryFlow .sp-shared-question .context-block{margin:0;min-width:0}
+.writing-genius #wgDiaryFlow .sp-shared-question .context-label{color:var(--cyan-strong,#25b8c4);font-size:.73rem;font-weight:900;margin-bottom:7px}
+.writing-genius #wgDiaryFlow .sp-shared-question .context-value{color:var(--vocab-heading,#244f56);font-size:clamp(1.04rem,3.7vw,1.27rem);font-weight:800;line-height:1.75;overflow-wrap:anywhere;white-space:pre-wrap;background:var(--vocab-track,#e9fbfc);border-radius:14px;padding:12px 14px}
+.writing-genius #wgDiaryFlow .sp-shared-question [data-answer]{display:block;margin:0}
+.writing-genius #wgDiaryFlow .sp-shared-question [data-answer]::before{content:'내 문장 · My sentence';display:block;font-size:.84rem;font-weight:850;color:var(--vocab-heading,#244f56);margin-bottom:8px}
+.writing-genius #wgDiaryFlow .sp-shared-question textarea.answer[data-write]{width:100%;min-height:126px;resize:vertical;border:2px solid #c5eef1;border-radius:18px;background:#fff;color:var(--ink,#173f46);font:650 clamp(1rem,3.4vw,1.12rem)/1.8 Poppins,system-ui,sans-serif;padding:15px 16px;box-sizing:border-box}
+.writing-genius #wgDiaryFlow .sp-shared-question .feedback[data-feedback]{display:none}
+
+/* Diary question: only target, listen, mode controls and canonical renderer answer. */
+.writing-genius #wgDiaryFlow .df-mode-buttons{display:flex;justify-content:center;gap:14px;margin:18px auto 22px;flex-wrap:wrap}
+.writing-genius #wgDiaryFlow .df-mode-button{min-width:138px;min-height:60px;padding:12px 22px;border:3px solid #bcebef;border-radius:19px;background:#fff;color:#e75c9d;font:900 1.13rem Poppins,system-ui,sans-serif;cursor:pointer}
+.writing-genius #wgDiaryFlow .df-mode-button.is-active{background:#fff1f7;border-color:#85d6df}
+.writing-genius #wgDiaryFlow .df-listen{display:block;margin:4px auto 8px;border:2px solid #c5eef1;background:#fff;color:#e75c9d}
+.writing-genius #wgDiaryFlow .df-target{text-align:center;font-size:clamp(1.25rem,4.3vw,1.75rem);line-height:1.5;margin:8px 0 16px}
+.writing-genius #wgDiaryFlow .df-question-host .prompt:empty,.writing-genius #wgDiaryFlow .df-question-host .context:empty{display:none}
+
+.writing-genius #wgDiaryFlow .df-listen{display:flex;align-items:center;justify-content:center;gap:9px;min-width:118px;min-height:50px}
+.writing-genius #wgDiaryFlow .df-listen .df-headphones{width:26px;height:26px}
+.writing-genius #wgDiaryFlow .df-listen.is-loading .df-headphones{animation:wg-headphones-pulse .7s ease-in-out infinite alternate}
+.writing-genius #wgDiaryFlow .df-listen.is-loading .df-listen-label::after{content:'…'}
+@keyframes wg-headphones-pulse{from{opacity:.4;transform:scale(.9)}to{opacity:1;transform:scale(1.09)}}
+.writing-genius #wgDiaryFlow .df-record-fallback{display:block;margin:12px auto;min-width:100px;min-height:100px;border:3px solid #bdebef;border-radius:999px;background:#fff url('/shared/svgs/mic.svg') center 24px/37px 37px no-repeat;color:#e75c9d;font-weight:850;padding:64px 9px 12px;cursor:pointer}
+.writing-genius #wgDiaryFlow .df-record-fallback.is-recording{background-color:#ffeff6;border-color:#e75c9d;animation:wg-headphones-pulse .7s ease-in-out infinite alternate}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-listen.is-loading .df-headphones,.writing-genius #wgDiaryFlow .df-record-fallback.is-recording{animation:none}}
+
+/* One shared Speak/Write mode toggle: Speak is the default. */
+.writing-genius #wgDiaryFlow .df-mode-buttons{display:flex;justify-content:center;margin:18px auto 22px}
+.writing-genius #wgDiaryFlow .df-mode-toggle{display:grid;grid-template-columns:1fr 1fr;min-width:280px;max-width:380px;width:min(100%,380px);min-height:64px;padding:5px;align-items:stretch;gap:4px;border:3px solid #bcebef;border-radius:20px;background:#fff;color:#e75c9d;cursor:pointer;font:900 1.08rem Poppins,system-ui,sans-serif}
+.writing-genius #wgDiaryFlow .df-mode-toggle span{display:grid;place-items:center;border-radius:13px;transition:background .12s ease}
+.writing-genius #wgDiaryFlow .df-mode-toggle.is-speaking .df-toggle-speak,.writing-genius #wgDiaryFlow .df-mode-toggle.is-writing .df-toggle-write{background:#fff0f7;box-shadow:inset 0 0 0 2px #e75c9d}
+.writing-genius #wgDiaryFlow .df-mode-toggle:focus-visible{outline:3px solid #e75c9d;outline-offset:3px}
+
+/* Review speaking/writing prompt: Korean meaning is secondary to the English target. */
+.writing-genius #wgDiaryFlow .df-target-korean{
+  margin:-10px auto 18px;
+  max-width:90%;
+  text-align:center;
+  color:#819096;
+  font-size:clamp(.78rem,2.5vw,.93rem);
+  font-weight:600;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+
+/* Diary review → speaking transition and scrolling teleprompter. */
+.writing-genius #wgDiaryFlow .df-speak-splash{text-align:center;min-height:245px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;animation:df-splash-in .38s ease-out}
+.writing-genius #wgDiaryFlow .df-splash-icon{font-size:3.6rem}
+.writing-genius #wgDiaryFlow .df-speak-splash h2{font-size:clamp(1.7rem,5vw,2.5rem);color:#e75c9d;margin:0}
+.writing-genius #wgDiaryFlow .df-speak-splash p{font-weight:800;color:#2f6670;margin:0}
+.writing-genius #wgDiaryFlow .df-speak-splash small{color:#76868b;font-size:.84rem}
+.writing-genius #wgDiaryFlow .df-teleprompter{min-height:330px;padding:22px 12px 8px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.writing-genius #wgDiaryFlow .df-tele-line{margin:0;text-align:center;line-height:1.46;overflow-wrap:anywhere;transition:opacity .4s,transform .4s,color .4s}
+.writing-genius #wgDiaryFlow .df-tele-active{font-size:clamp(1.3rem,4.4vw,1.95rem);font-weight:900;color:#e75c9d;animation:df-line-arrive .42s ease-out}
+.writing-genius #wgDiaryFlow .df-tele-done{font-size:clamp(.85rem,2.6vw,1.05rem);color:#9ca8ac;opacity:.55;transform:translateY(-4px)}
+.writing-genius #wgDiaryFlow .df-tele-next{font-size:clamp(.96rem,3vw,1.18rem);font-weight:750;color:#8f9da2}
+.writing-genius #wgDiaryFlow .df-tele-next-1{opacity:.72}
+.writing-genius #wgDiaryFlow .df-tele-next-2{opacity:.53}
+.writing-genius #wgDiaryFlow .df-tele-next-3{opacity:.36}
+.writing-genius #wgDiaryFlow .df-tele-next-4{opacity:.22}
+.writing-genius #wgDiaryFlow .df-tele-advance .df-tele-active{color:#9ca8ac;opacity:.45;transform:translateY(-18px)}
+.writing-genius #wgDiaryFlow .df-speech-hint{text-align:center;color:#778c93;font-size:.82rem;font-weight:700;margin:12px 0}
+.writing-genius #wgDiaryFlow .df-question-host:has(.df-tele-mic){margin:18px auto 36px}.writing-genius #wgDiaryFlow .df-tele-mic{margin:0 auto}
+@keyframes df-line-arrive{from{opacity:.35;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes df-splash-in{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-tele-line,.writing-genius #wgDiaryFlow .df-speak-splash{animation:none;transition:none}}
+
+/* Keep diary flow action controls in view, like shared question renderer controls. */
+.writing-genius #wgDiaryFlow{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions:not(:empty){
+ position:fixed;left:0;right:0;bottom:0;z-index:80;
+ display:flex;align-items:center;justify-content:center;gap:12px;
+ margin:0;padding:12px max(16px,env(safe-area-inset-left,0px)) calc(12px + env(safe-area-inset-bottom,0px));
+ background:rgba(255,255,255,.97);border-top:2px solid #c5eef1;
+ box-shadow:0 -8px 25px rgba(20,70,80,.08);box-sizing:border-box;
+}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions:empty{display:none}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .wg-button{min-height:48px;min-width:110px;max-width:270px;flex:1 1 0;margin:0}
+@media(max-width:560px){.writing-genius #wgDiaryFlow .wg-diary-flow-actions:not(:empty){gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}.writing-genius #wgDiaryFlow .wg-diary-flow-actions .wg-button{min-width:0;font-size:.92rem;padding:9px 8px}}
+
+.writing-genius #wgDiaryFlow .df-splash-mic{display:block;width:68px;height:68px;object-fit:contain;margin:auto;filter:invert(40%) sepia(82%) saturate(1480%) hue-rotate(295deg) brightness(99%) contrast(89%)}
+
+.writing-genius #wgDiaryFlow .df-count{display:block;text-align:right;margin:10px 2px 0;color:#e75c9d;font-weight:850}
+.writing-genius #wgDiaryFlow .df-count.is-invalid{color:#d72e42}
+
+/* Compact AI diary review — selection is the student's final say. */
+.writing-genius #wgDiaryFlow .df-review-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:10px 0}
+.writing-genius #wgDiaryFlow .df-review-top h3{margin:0;color:#e75c9d;font-size:1.05rem}
+.writing-genius #wgDiaryFlow .df-review-progress{color:#718c94;font-size:.82rem;font-weight:800}
+.writing-genius #wgDiaryFlow .df-review-praise{color:#cb518e;font-size:.92rem;line-height:1.55;margin:0 0 14px}
+.writing-genius #wgDiaryFlow .df-review-compact{padding:12px 15px;margin:9px 0;border-radius:16px}
+.writing-genius #wgDiaryFlow .df-review-card-head{display:flex;justify-content:space-between;gap:8px;align-items:center;color:#75949a;font-size:.7rem;font-weight:850}
+.writing-genius #wgDiaryFlow .df-review-kind{background:#f0fafb;padding:3px 8px;border-radius:99px}
+.writing-genius #wgDiaryFlow .df-review-compact .df-review-original{font-size:.87rem;margin:7px 0 5px;line-height:1.45;color:#7b8a8d}
+.writing-genius #wgDiaryFlow .df-review-compact .df-review-better{font-size:1.03rem;margin:5px 0;line-height:1.5;color:#365d65;font-weight:800}
+.writing-genius #wgDiaryFlow .df-diff{background:#ffe5f1;color:#e75c9d;padding:0 2px;border-radius:4px}
+.writing-genius #wgDiaryFlow .df-inline-note{font-size:.68rem;color:#bf6a94;font-weight:700;white-space:nowrap}
+.writing-genius #wgDiaryFlow .df-review-compact .df-review-korean{font-size:.81rem;color:#839198;margin:4px 0 6px}
+.writing-genius #wgDiaryFlow .df-review-compact .df-review-explanation{font-size:.75rem;margin:4px 0 8px}
+.writing-genius #wgDiaryFlow .df-choice-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.writing-genius #wgDiaryFlow .df-choice-button,.writing-genius #wgDiaryFlow .df-change-button{border:1.5px solid #bde8eb;background:#fff;border-radius:11px;color:#56757c;font-weight:800;padding:8px 11px;cursor:pointer;font-size:.77rem;min-height:39px}
+.writing-genius #wgDiaryFlow .df-choice-button.is-chosen{color:#ba427d;border-color:#e75c9d;background:#fff0f7}
+.writing-genius #wgDiaryFlow .df-change-button{margin-top:8px;color:#ba427d}
+.writing-genius #wgDiaryFlow .df-review-revised{color:#bf477f;font-weight:800;font-size:.88rem;margin:7px 0}
+.writing-genius #wgDiaryFlow .df-clarify-box{display:grid;gap:8px;margin:10px 0}
+.writing-genius #wgDiaryFlow .df-clarify-input{box-sizing:border-box;width:100%;min-height:74px;border:2px solid #c5eef1;border-radius:11px;padding:10px;font:inherit;font-size:.9rem}
+.writing-genius #wgDiaryFlow .df-expression-line{display:flex;flex-wrap:wrap;gap:5px 12px;border-bottom:1px solid #e5f2f3;padding:8px 0;font-size:.85rem}
+.writing-genius #wgDiaryFlow .df-expression-line strong{color:#bd4c86}
+.writing-genius #wgDiaryFlow .df-expression-line span{color:#849196;font-size:.81rem}
+
+/* Diary topic picker */
+.writing-genius #wgDiaryFlow .df-topic-picker{position:relative;margin:0 0 12px}
+.writing-genius #wgDiaryFlow .df-topic-trigger{width:100%;text-align:left;min-height:58px;padding:13px 48px 13px 16px;border:2px solid #c5eef1;border-radius:15px;background:#fff;color:#315e64;font:750 1rem Poppins,system-ui,sans-serif;cursor:pointer;position:relative}
+.writing-genius #wgDiaryFlow .df-topic-trigger::after{content:'⌄';position:absolute;right:16px;top:50%;transform:translateY(-50%);color:#e75c9d;font-size:1.35rem}
+.writing-genius #wgDiaryFlow .df-topic-menu:not([hidden]){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:9px;padding:9px;border:2px solid #c5eef1;border-radius:15px;background:#fff;max-height:360px;overflow-y:auto}
+.writing-genius #wgDiaryFlow .df-topic-menu[hidden],.writing-genius #wgDiaryFlow .df-topic-example[hidden],.writing-genius #wgDiaryFlow .df-input[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow .df-topic-option{min-height:48px;padding:9px 10px;text-align:left;border:1.5px solid #d4edf0;border-radius:11px;background:#fff;color:#426770;font:750 .82rem Poppins,system-ui,sans-serif;cursor:pointer}
+.writing-genius #wgDiaryFlow .df-topic-option.is-selected{background:#fff0f7;border-color:#e75c9d;color:#b9427c}
+.writing-genius #wgDiaryFlow .df-topic-guide{margin:13px 0 18px}
+.writing-genius #wgDiaryFlow .df-topic-example{margin-top:12px}
+@media(max-width:450px){.writing-genius #wgDiaryFlow .df-topic-menu:not([hidden]){grid-template-columns:1fr}}
+
+/* AI Willi diary-review transition: brand SVG, no emoji or artificial delay. */
+.writing-genius #wgDiaryFlow .df-ai-loading{min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:24px 10px;box-sizing:border-box}
+.writing-genius #wgDiaryFlow .df-ai-orbit{width:180px;max-width:75%;filter:drop-shadow(0 12px 15px rgba(47,172,182,.12))}
+.writing-genius #wgDiaryFlow .df-ai-orbit svg{width:100%;height:auto;overflow:visible}
+.writing-genius #wgDiaryFlow .df-ai-ring{stroke:#dcf3f5;stroke-width:5}
+.writing-genius #wgDiaryFlow .df-ai-ring-active{stroke:#49cad4;stroke-width:5;stroke-linecap:round;stroke-dasharray:75 384;transform-origin:90px 90px;animation:df-ai-spin 2s linear infinite}
+.writing-genius #wgDiaryFlow .df-ai-paper{fill:#fff;stroke:#53c7d0;stroke-width:5;stroke-linejoin:round}
+.writing-genius #wgDiaryFlow .df-ai-lines{stroke:#e75c9d;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;animation:df-ai-read 1.5s ease-in-out infinite alternate}
+.writing-genius #wgDiaryFlow .df-ai-tick{stroke:#53c7d0;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.writing-genius #wgDiaryFlow .df-ai-loading h2{font-weight:900;font-size:clamp(1.6rem,5vw,2.2rem);color:#e75c9d;margin:0}
+.writing-genius #wgDiaryFlow .df-ai-loading p{color:#466c75;font-weight:800;font-size:1.02rem;margin:0}
+.writing-genius #wgDiaryFlow .df-ai-loading-dots{display:flex;gap:8px;margin-top:14px}
+.writing-genius #wgDiaryFlow .df-ai-loading-dots i{width:9px;height:9px;border-radius:50%;background:#53c7d0;animation:df-ai-dot 1s infinite alternate}
+.writing-genius #wgDiaryFlow .df-ai-loading-dots i:nth-child(2){animation-delay:.22s}
+.writing-genius #wgDiaryFlow .df-ai-loading-dots i:nth-child(3){animation-delay:.44s}
+@keyframes df-ai-spin{to{transform:rotate(360deg)}}
+@keyframes df-ai-read{to{stroke:#53c7d0;opacity:.6}}
+@keyframes df-ai-dot{to{transform:translateY(-8px);opacity:.3}}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-ai-ring-active,.writing-genius #wgDiaryFlow .df-ai-lines,.writing-genius #wgDiaryFlow .df-ai-loading-dots i{animation:none}}
+
+.writing-genius #wgDiaryFlow .df-ai-robot{transform-origin:90px 90px;animation:df-ai-robot-bob 1.8s ease-in-out infinite}
+.writing-genius #wgDiaryFlow .df-ai-robot-eyes{animation:df-ai-robot-blink 3.2s ease-in-out infinite;transform-origin:90px 86px}
+@keyframes df-ai-robot-bob{50%{transform:translateY(-5px)}}
+@keyframes df-ai-robot-blink{0%,43%,49%,100%{transform:scaleY(1)}46%{transform:scaleY(.12)}}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-ai-robot,.writing-genius #wgDiaryFlow .df-ai-robot-eyes{animation:none}}
+
+/* Teacher diary message on completed student diary. */
+.writing-genius #wgDiaryFlow .df-teacher-feedback{margin:18px 0;padding:17px;border:2px solid #c5e9ee;border-radius:15px;background:#f7fcfd;color:#365b64;text-align:left}
+.writing-genius #wgDiaryFlow .df-teacher-feedback h3{font-size:1rem;color:#cc508a;margin:0 0 8px}
+.writing-genius #wgDiaryFlow .df-teacher-feedback p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;margin:6px 0}
+.writing-genius #wgDiaryFlow .df-teacher-feedback strong{display:block;margin-top:9px;color:#cf6692}
+
+/* Teacher message and tap-to-claim diary bonus. */
+.writing-genius #wgDiaryFlow .df-teacher-feedback{display:grid;gap:10px}
+.writing-genius #wgDiaryFlow .df-teacher-alert,.writing-genius #wgDiaryFlow .df-bonus-claim{display:flex;align-items:center;gap:12px;text-align:left;width:100%;min-height:56px;border:2px solid #b9e9ed;border-radius:14px;background:#fff;padding:12px 16px;color:#2d7580;font:800 .91rem Poppins,system-ui,sans-serif;cursor:pointer}
+.writing-genius #wgDiaryFlow .df-teacher-alert{border-color:#ebc5dc;color:#bb4d84;background:#fff7fb}
+.writing-genius #wgDiaryFlow .df-teacher-message{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border-radius:11px;padding:13px;margin:0!important;line-height:1.7}
+.writing-genius #wgDiaryFlow .df-teacher-message[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow .df-bonus-claim svg{width:34px;height:34px;flex:none;color:#e7b22c}
+.writing-genius #wgDiaryFlow .df-bonus-claim.is-claiming svg{animation:df-bonus-spin .75s linear infinite}
+.writing-genius #wgDiaryFlow .df-bonus-reveal{display:block;text-align:center;font-size:clamp(2rem,8vw,3.2rem);font-weight:900;color:#e7aa20;animation:df-bonus-pop .75s cubic-bezier(.2,1.5,.4,1) both}
+.writing-genius #wgDiaryFlow .df-bonus-result{text-align:center;color:#47777c;font-weight:800}
+@keyframes df-bonus-pop{0%{transform:scale(.15) rotate(-18deg);opacity:0}65%{transform:scale(1.28) rotate(7deg);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes df-bonus-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-bonus-reveal,.writing-genius #wgDiaryFlow .df-bonus-claim.is-claiming svg{animation:none}}
+
+.wg-reward-demo-layer{position:fixed;inset:0;z-index:99999;background:#20333bc9;display:grid;place-items:center;padding:16px}
+.wg-reward-demo{position:relative;width:min(500px,100%);background:#fff;border:3px solid #bde9ed;border-radius:24px;padding:25px 20px;text-align:center;font-family:Poppins,system-ui,sans-serif;box-shadow:0 18px 60px #1a353666}
+.wg-reward-demo h2{color:#dc5898;margin:12px 0 20px}
+.wg-reward-demo small{color:#68858b;font-weight:800}
+.wg-reward-demo button:not(.wg-demo-close){display:flex;width:100%;align-items:center;justify-content:center;gap:10px;border:2px solid #b8e9ee;border-radius:13px;background:#f4fcfd;padding:13px;margin:12px 0;color:#326c76;font:800 .9rem Poppins,system-ui;cursor:pointer}
+.wg-reward-demo .wg-demo-close{position:absolute;right:10px;top:10px;border:0;background:#fff;font-size:1.7rem;color:#53747c}
+.wg-reward-demo .wg-demo-claim svg{width:31px;height:31px;color:#daa71f}
+.wg-reward-demo .wg-demo-message-body{white-space:pre-wrap;text-align:left;background:#fff3f9;border-radius:12px;padding:14px}
+.wg-reward-demo [hidden]{display:none!important}
+.wg-reward-demo .wg-demo-result{font-size:2.4rem;font-weight:900;color:#dca416}
+.wg-reward-demo .wg-demo-result.is-playing{animation:wg-demo-pop .7s cubic-bezier(.17,1.5,.35,1) both}
+@keyframes wg-demo-pop{0%{opacity:0;transform:scale(.15) rotate(-12deg)}70%{opacity:1;transform:scale(1.25)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.wg-reward-demo .wg-demo-result.is-playing{animation:none}}
+
+/* Topic-writing idea shuffle, using the diary flow rather than a separate editor. */
+.writing-genius #wgDiaryFlow .df-random-topic{display:inline-flex;align-items:center;justify-content:center;min-height:45px;margin:0 0 13px;padding:10px 17px;border:2px solid #eea6cf;border-radius:13px;background:#fff2f9;color:#b63a7d;font:800 .88rem Poppins,system-ui,sans-serif;cursor:pointer}
+.writing-genius #wgDiaryFlow .df-random-topic.is-spinning{animation:wg-topic-shuffle .24s ease-in-out infinite alternate}
+.writing-genius #wgDiaryFlow .df-topic-example p{white-space:pre-line;line-height:1.8}
+@keyframes wg-topic-shuffle{from{transform:rotate(-2deg) scale(.98)}to{transform:rotate(2deg) scale(1.04)}}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-random-topic.is-spinning{animation:none}}
+
+.writing-genius #wgDiaryFlow .df-topic-write-guide,.writing-genius #wgDiaryFlow .df-topic-structure-tip{border:1.5px solid #bce8ed;background:#f5fcfd;border-radius:14px;padding:13px 16px;color:#4c7580;font-size:.84rem;line-height:1.6;margin:0 0 16px}
+.writing-genius #wgDiaryFlow .df-topic-structure-tip strong{color:#c04b88}.writing-genius #wgDiaryFlow .df-topic-structure-tip p{margin:6px 0 0}
+
+/* Topic Draft 2: editable composition sections and visible AI corrections. */
+.writing-genius #wgDiaryFlow .df-revision-preview{border:1.5px solid #bfe6ec;border-radius:15px;background:#fcfefe;padding:14px 17px;margin:14px 0 20px}
+.writing-genius #wgDiaryFlow .df-revision-preview h3{font-size:.97rem;color:#2d7480;margin:0 0 9px}
+.writing-genius #wgDiaryFlow .df-revision-paper{font-size:1rem;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere;color:#36575e}
+.writing-genius #wgDiaryFlow .df-revision-changed{background:#fff0f7;color:#d23f8b;border-radius:5px;padding:2px 3px;font-weight:800}
+.writing-genius #wgDiaryFlow .df-revision-section{border:1.5px solid #c6e9ec;border-radius:15px;padding:15px;margin:15px 0;background:#fff}
+.writing-genius #wgDiaryFlow .df-revision-section.needs-work{border:2px solid #e895c4;background:#fff8fc}
+.writing-genius #wgDiaryFlow .df-revision-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.writing-genius #wgDiaryFlow .df-revision-section h3{margin:0;color:#277b86;font-size:1.03rem}
+.writing-genius #wgDiaryFlow .df-revision-needs{color:#bd437e;background:#ffe5f2;border-radius:99px;font-weight:800;padding:5px 10px;font-size:.75rem}
+.writing-genius #wgDiaryFlow .df-revision-prompt{color:#a73d75;margin:10px 0;line-height:1.6;font-size:.88rem}
+.writing-genius #wgDiaryFlow .df-revision-input{display:block;box-sizing:border-box;width:100%;min-height:115px;resize:vertical;border:1.5px solid #bde4e9;border-radius:11px;padding:12px 14px;background:white;color:#35565b;font:500 1rem/1.7 Poppins,system-ui,sans-serif;margin:12px 0}
+.writing-genius #wgDiaryFlow .df-revision-input:focus{outline:2px solid #64ccd5;outline-offset:1px}
+.writing-genius #wgDiaryFlow .df-revision-starter{border:1px solid #e8adce;border-radius:10px;background:#fff3fa;color:#b83b7f;padding:10px 13px;text-align:left;font:700 .83rem Poppins,system-ui,sans-serif;cursor:pointer}
+
+/* Conditional, topic-specific AI structure example, shown only when a section needs help. */
+.writing-genius #wgDiaryFlow .df-revision-example{margin:8px 0 13px;padding:10px 12px;border-left:3px solid #e895c4;background:#fff5fa;color:#94436c;font-size:.9rem;line-height:1.6;border-radius:7px}
+
+.writing-genius #wgDiaryFlow .df-revision-expressions{border:1.5px solid #bfe6ea;border-radius:15px;padding:15px;margin:15px 0;background:#f8fdfe}
+.writing-genius #wgDiaryFlow .df-revision-expressions h3{color:#bd4587;margin:0 0 6px;font-size:1.05rem}
+.writing-genius #wgDiaryFlow .df-revision-expression{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #d9eff1}
+.writing-genius #wgDiaryFlow .df-revision-expression strong{color:#325962;flex:1 1 180px}
+.writing-genius #wgDiaryFlow .df-revision-expression small{color:#69858b;flex:1 1 140px}
+.writing-genius #wgDiaryFlow .df-expression-line .df-revision-starter{margin-left:auto}
+.writing-genius #wgDiaryFlow .df-revision-starter:disabled{opacity:.55;cursor:default}
+
+.writing-genius #wgDiaryFlow .df-topic-rubric{width:100%;box-sizing:border-box;margin:14px auto;padding:16px;border:2px solid #bfe8ed;border-radius:17px;background:#fff}
+.writing-genius #wgDiaryFlow .df-topic-rubric h3{margin:0 0 12px;color:#cb4c8d;font-size:1.2rem}
+.writing-genius #wgDiaryFlow .df-topic-rubric-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 0;border-top:1px solid #e3f1f2;color:#48666c;font-size:.89rem}
+.writing-genius #wgDiaryFlow .df-topic-rubric-row strong{white-space:nowrap;color:#7b9297}
+.writing-genius #wgDiaryFlow .df-topic-rubric-row.is-earned strong{color:#cf8a19}
+
+.writing-genius #wgDiaryFlow .df-topic-rubric-table{width:100%;border-collapse:collapse;font-size:.89rem;table-layout:auto}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table th,.writing-genius #wgDiaryFlow .df-topic-rubric-table td{padding:12px 6px;border-top:1px solid #e2eff0;text-align:left;vertical-align:middle}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table th:nth-child(n+2),.writing-genius #wgDiaryFlow .df-topic-rubric-table td:nth-child(n+2){text-align:center;white-space:nowrap}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table thead th{color:#64838a;font-size:.8rem}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table .df-rubric-stars{color:#c8cfd1;font-size:1.2rem;letter-spacing:1px}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table .is-earned .df-rubric-stars{color:#f5ad19}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table .is-earned .df-rubric-points{font-weight:800;color:#d64e90}
+.writing-genius #wgDiaryFlow .df-topic-rubric-table .df-rubric-total{background:#f2fbfb;color:#2b6871;font-weight:900}
+
+/* Random Topic jackpot button */
+.writing-genius #wgDiaryFlow .df-random-topic{border:2px solid #24b5c5;background:#fff;color:#df4d95;box-shadow:0 2px 0 rgba(36,181,197,.12)}
+.writing-genius .df-random-topic:focus-visible{outline:3px solid #81dfe7;outline-offset:3px}
+.writing-genius #wgDiaryFlow .df-random-topic.is-spinning{background:#f1fcfd;color:#df4d95;border-color:#24b5c5}
+
+/* Student writing portfolio: same white/cyan/pink palette as the mode cards. */
+.wg-portfolio-button{display:flex;align-items:center;gap:13px;width:100%;padding:14px 18px;margin:-10px 0 24px;border:2px solid var(--pink,#ff0a8a);border-radius:18px;background:var(--vocab-card,#fff);color:var(--pink,#e93186);text-align:left;cursor:pointer;box-shadow:0 5px 18px rgba(34,106,116,.06)}
+.wg-portfolio-button svg{width:34px;height:34px;flex:none;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.wg-portfolio-button span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:2px}
+.wg-portfolio-button strong{font:900 1rem Poppins,system-ui,sans-serif}
+.wg-portfolio-button small{font:600 .77rem Poppins,system-ui,sans-serif;color:var(--vocab-muted,#6f8190)}
+.wg-portfolio-button .wg-portfolio-arrow{font-size:1.6rem;color:var(--cyan-strong,#25b8c4)}
+.wg-portfolio-button:hover,.wg-portfolio-button:focus-visible{outline:2px solid var(--cyan-strong,#25b8c4);outline-offset:2px}
+.wg-portfolio{margin:4px 0 22px}.wg-portfolio>.vocab-screen-back{margin-bottom:18px}
+.wg-portfolio .wg-library-head{align-items:center;flex-wrap:wrap}
+.wg-portfolio .wg-library{max-height:none}
+@media(max-width:680px){.wg-portfolio-button{margin:0 0 18px}}
+
+/* Writing diary: one-tap access to saved drafts above the fixed Next action. */
+.writing-genius #wgDiaryFlow{padding-bottom:calc(158px + env(safe-area-inset-bottom,0px))}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions:not(:empty){flex-wrap:wrap;row-gap:8px}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-saved-writings{order:-1;flex:0 0 100%;max-width:440px;min-height:38px;border:2px solid #bfe8ed;background:#fff;color:#27646b;font-weight:800;font-size:.88rem}
+@media(max-width:560px){.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-saved-writings{min-height:38px;font-size:.85rem}}
+
+/* Keep the diary's final speech/typing choice visible directly above its script. */
+.writing-genius #wgDiaryFlow .df-tele-mode-switch{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px!important;max-width:430px;margin:4px auto 8px!important}
+.writing-genius #wgDiaryFlow .df-tele-mode-switch .wg-button{min-width:0;min-height:48px;font-weight:900;border:2px solid #bfe8ed;border-radius:14px}
+.writing-genius #wgDiaryFlow .df-tele-mode-switch .wg-button.wg-primary{background:#04b6c4;color:white;border-color:#04b6c4}
+.writing-genius #wgDiaryFlow .df-teleprompter{min-height:0;padding:16px 8px 12px}
+.writing-genius #wgDiaryFlow .df-tele-type-area{max-width:520px;margin:16px auto!important}
+.writing-genius #wgDiaryFlow .df-tele-type-area textarea{width:100%;min-height:86px;box-sizing:border-box;font-size:1.05rem}
+.writing-genius #wgDiaryFlow .df-tele-speech-controls[hidden]{display:none!important}
+/* Canonical Free Talking AI Willi vector in Writing Genius review loader. */
+.writing-genius #wgDiaryFlow .df-ai-orbit{width:190px;max-width:78%;animation:df-ai-robot-bob 1.8s ease-in-out infinite}
+.writing-genius #wgDiaryFlow .df-ai-orbit .aw-svg{display:block;width:100%;height:auto}
+.writing-genius #wgDiaryFlow .df-ai-orbit .aw-mouth-wave,.writing-genius #wgDiaryFlow .df-ai-orbit .aw-eyes-mood,.writing-genius #wgDiaryFlow .df-ai-orbit .aw-cat-details,.writing-genius #wgDiaryFlow .df-ai-orbit .aw-electric{display:none}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-ai-orbit{animation:none}}
+
+/* Modal for the current student's unfinished Writing Genius drafts. */
+.writing-genius #wgDiaryFlow .df-saved-dialog{width:min(540px,calc(100% - 24px));max-height:min(78dvh,760px);border:3px solid #c5eef1;border-radius:23px;background:#fff;color:#27545b;padding:18px;box-sizing:border-box;box-shadow:0 18px 55px #173f4633}
+.writing-genius #wgDiaryFlow .df-saved-dialog::backdrop{background:rgba(14,38,45,.55)}
+.writing-genius #wgDiaryFlow .df-saved-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.writing-genius #wgDiaryFlow .df-saved-header h2{font-size:1.25rem;color:#e75c9d;margin:0}
+.writing-genius #wgDiaryFlow .df-saved-close{border:0;background:#ecf9fa;border-radius:12px;padding:10px 12px;color:#315d64;font-weight:900;cursor:pointer}
+.writing-genius #wgDiaryFlow .df-saved-description{font-size:.88rem;margin:10px 0 15px;color:#638088}
+.writing-genius #wgDiaryFlow .df-saved-list{display:grid;gap:10px;overflow-y:auto;max-height:60dvh}
+.writing-genius #wgDiaryFlow .df-saved-item{display:flex;flex-direction:column;align-items:flex-start;gap:5px;width:100%;padding:14px;text-align:left;border:2px solid #c5eef1;border-radius:15px;background:white;color:#24545b;cursor:pointer}
+.writing-genius #wgDiaryFlow .df-saved-item strong{font-size:1rem;color:#28575e}
+.writing-genius #wgDiaryFlow .df-saved-item small{font-size:.78rem;color:#69848a}
+.writing-genius #wgDiaryFlow .df-saved-excerpt{font-size:.86rem;color:#526e75;overflow-wrap:anywhere}
+.writing-genius #wgDiaryFlow .df-saved-current{color:#e75c9d;font-size:.8rem;font-weight:900}
+.writing-genius #wgDiaryFlow .df-saved-error{color:#a83254}
+
+/* Explicit Korean instructions for both diary correction practice and final teleprompter. */
+.writing-genius #wgDiaryFlow .df-task-instruction{max-width:570px;margin:14px auto 18px;padding:13px 16px;border-radius:15px;background:#f0fafb;border:2px solid #c5eef1;color:#255861;text-align:center;font-weight:850;font-size:clamp(.91rem,2.7vw,1.06rem);line-height:1.6;overflow-wrap:anywhere}
+.writing-genius #wgDiaryFlow .df-tele-mode-switch+.df-task-instruction{margin-top:10px;margin-bottom:6px}
+
+/* Position writing immediately after the target sentence in both Diary and Topic flows. */
+.writing-genius #wgDiaryFlow .df-target{margin:14px auto 5px}
+.writing-genius #wgDiaryFlow .df-target-korean{margin:0 auto 8px}
+.writing-genius #wgDiaryFlow .df-task-instruction{margin:10px auto 12px}
+.writing-genius #wgDiaryFlow .df-question-host{margin:8px auto 12px;max-width:570px}
+.writing-genius #wgDiaryFlow .df-teleprompter{min-height:0;padding:10px 8px 4px;gap:0}
+.writing-genius #wgDiaryFlow .df-tele-type-area{margin:6px auto 10px!important}
+.writing-genius #wgDiaryFlow .df-tele-type-area textarea{min-height:104px}
+.writing-genius #wgDiaryFlow .df-tele-speech-controls{margin:6px auto 10px}
+.writing-genius #wgDiaryFlow .df-tele-upcoming{display:flex;flex-direction:column;gap:12px;max-width:570px;margin:20px auto 0;text-align:center}
+.writing-genius #wgDiaryFlow .df-tele-upcoming .df-tele-line{margin:0}
+
+/* Keep the destructive shortcut away from primary confirmation. */
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-skip-action{order:1;flex:0 0 auto!important;width:auto!important;min-width:0!important;max-width:108px!important;min-height:40px!important;padding:8px 11px!important;font-size:.78rem!important;font-weight:700;background:#fff;color:#607b80;border:2px solid #c5eef1}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-confirm-action{order:2;flex:1 1 180px;max-width:340px;min-height:52px}
+.writing-genius #wgDiaryFlow .df-listen{border:2px solid #55cdd5;background:#fff;color:#e75c9d;font-weight:850}
+.writing-genius #wgDiaryFlow .df-listen-label{color:#e75c9d}
+.writing-genius #wgDiaryFlow .df-listen .df-headphones{filter:invert(48%) sepia(78%) saturate(1712%) hue-rotate(294deg) brightness(95%) contrast(89%)}
+/* Exact character differences: missing punctuation in reference, extra/wrong text in answer. */
+.writing-genius #wgDiaryFlow .df-writing-diff{width:100%;max-width:570px;box-sizing:border-box;margin:10px auto;padding:13px 15px;border:2px solid #f2bdd2;border-radius:14px;background:#fff8fb;color:#284f56}
+.writing-genius #wgDiaryFlow .df-writing-diff[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow .df-diff-title{margin:0 0 10px;font-size:.9rem;font-weight:850;color:#ad4066}
+.writing-genius #wgDiaryFlow .df-diff-row{margin:8px 0}
+.writing-genius #wgDiaryFlow .df-diff-row strong{display:block;font-size:.79rem;margin-bottom:4px;color:#516d73}
+.writing-genius #wgDiaryFlow .df-diff-line{font-size:1.04rem;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;font-weight:700}
+.writing-genius #wgDiaryFlow .df-diff-mark{background:#ffe59a;color:#953c17;border-radius:3px;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+
+/* Editable inline typo highlighting: mirror under a real accessible textarea. */
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap{position:relative;width:100%;min-width:0;isolation:isolate}
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap .df-edit-highlight-mirror{position:absolute;inset:0;box-sizing:border-box;overflow:hidden;pointer-events:none;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;color:var(--ink,#173f46);z-index:1}
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap.is-diff-active textarea{position:relative;z-index:2;color:transparent!important;-webkit-text-fill-color:transparent!important;caret-color:#165861!important;background:transparent!important}
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap .df-edit-wrong{background:#ffe59a;color:#953c17;border-radius:2px;text-decoration:underline;text-decoration-color:#bc5b28;text-underline-offset:3px}
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap .df-edit-missing{display:inline;position:relative;width:0;color:transparent}
+.writing-genius #wgDiaryFlow .df-edit-highlight-wrap .df-edit-missing::before{content:'';position:absolute;left:0;top:0;height:1.15em;border-left:3px solid #e75c9d}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-confirm-action{background:#fff!important;color:#e75c9d!important;border:2px solid #55cdd5!important;box-shadow:none}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .df-confirm-action:hover{background:#fff6fa!important}
+
+/* Unified sentence-review wizard and full-passage final practice */
+.writing-genius #wgDiaryFlow .df-review-decision-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.writing-genius #wgDiaryFlow .df-review-decision-buttons .wg-button{min-width:0;min-height:50px;border:2px solid #bfe8ed;background:white;color:#df5899;font-weight:850}
+.writing-genius #wgDiaryFlow .df-review-decision-buttons .wg-button:first-child{background:#fff0f7;border-color:#e75c9d}
+.writing-genius #wgDiaryFlow .df-review-custom{margin:14px 0;display:grid;gap:10px}
+.writing-genius #wgDiaryFlow .df-review-custom textarea{width:100%;min-height:110px;box-sizing:border-box}
+.writing-genius #wgDiaryFlow .df-expression-select{display:grid;gap:10px}
+.writing-genius #wgDiaryFlow .df-expression-select .df-revision-input[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow .df-expression-select .df-revision-input{width:100%;min-height:92px;box-sizing:border-box}
+.writing-genius #wgDiaryFlow .df-final-passage{min-height:280px;line-height:1.85}
+.writing-genius #wgDiaryFlow .df-final-script{white-space:pre-wrap;overflow-wrap:anywhere;padding:20px 18px;border:2px solid #bfe8ed;border-radius:20px;color:#26525c;background:white;font-size:clamp(1rem,3.7vw,1.22rem);font-weight:700;line-height:1.9;max-height:45vh;overflow-y:auto}
+.writing-genius #wgDiaryFlow .df-final-type,.writing-genius #wgDiaryFlow .df-final-speak{margin:14px auto;width:100%;max-width:660px}
+.writing-genius #wgDiaryFlow .df-final-type[hidden],.writing-genius #wgDiaryFlow .df-final-speak[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow .df-final-type textarea{width:100%;min-height:180px;max-height:35vh}
+.writing-genius #wgDiaryFlow .df-final-speak .df-question-host{margin:18px auto}
+.writing-genius #wgDiaryFlow .df-second-review-button{flex:0 0 auto!important;max-width:220px}
+@media(max-width:560px){.writing-genius #wgDiaryFlow .df-review-decision-buttons{gap:7px}.writing-genius #wgDiaryFlow .df-review-decision-buttons .wg-button{padding:9px 6px;font-size:.86rem}}
+
+/* Final teleprompter: current line remains legible, completed lines de-emphasized. */
+.writing-genius #wgDiaryFlow .df-final-teleprompter{scroll-behavior:smooth;text-align:center;padding:16px 18px}
+.writing-genius #wgDiaryFlow .df-final-tele-line{font-size:clamp(1.07rem,4.3vw,1.5rem);line-height:1.8;margin:12px auto;padding:8px 10px;border-radius:12px;opacity:.48;transition:opacity .22s ease,color .22s ease,background .22s ease}
+.writing-genius #wgDiaryFlow .df-final-tele-line.is-current{opacity:1;color:#e75c9d;background:#fff0f7;font-weight:900}
+.writing-genius #wgDiaryFlow .df-final-tele-line.is-complete{opacity:.65;color:#2d8b92}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-final-teleprompter{scroll-behavior:auto}.writing-genius #wgDiaryFlow .df-final-tele-line{transition:none}}
+
+/* Final typing: compact single-line input directly below the current target. */
+.writing-genius #wgDiaryFlow .df-final-teleprompter.is-writing-mode{max-height:none;overflow:visible;padding:10px 14px}
+.writing-genius #wgDiaryFlow .df-final-teleprompter.is-writing-mode .df-final-tele-line:not(.is-current){display:none}
+.writing-genius #wgDiaryFlow .df-final-teleprompter.is-writing-mode .df-final-tele-line.is-current{margin:4px auto;padding:12px 8px;opacity:1}
+.writing-genius #wgDiaryFlow .df-final-type{margin:8px auto;display:flex;flex-direction:column;gap:9px}
+.writing-genius #wgDiaryFlow .df-final-type .df-writing-progress{margin:0;color:#526c73;font-weight:700}
+.writing-genius #wgDiaryFlow .df-final-type .df-writing-current-line{display:none}
+.writing-genius #wgDiaryFlow .df-final-type .df-writing-line-input{width:100%;height:auto;min-height:64px;max-height:110px;resize:none;box-sizing:border-box;padding:12px 15px;font-size:1.02rem;line-height:1.5}
+.writing-genius #wgDiaryFlow .df-final-type .df-typing-line-confirm{align-self:flex-end;min-height:42px;padding:7px 24px;background:#fff;border:2px solid #55cdd5;color:#e75c9d;font-weight:850}
+.writing-genius #wgDiaryFlow .df-final-type [hidden]{display:none!important}
+
+/* Final speech is ONE LINE AT A TIME; keep the target fixed above the mic.
+   Writing mode retains its existing independent line-by-line appearance. */
+.writing-genius #wgDiaryFlow .df-final-teleprompter:not(.is-writing-mode){
+ max-height:none;overflow:visible;scroll-behavior:auto;padding:12px 16px;
+}
+.writing-genius #wgDiaryFlow .df-final-teleprompter:not(.is-writing-mode) .df-final-tele-line:not(.is-current){display:none}
+.writing-genius #wgDiaryFlow .df-final-teleprompter:not(.is-writing-mode) .df-final-tele-line.is-current{
+ margin:4px auto;opacity:1;font-size:clamp(1.25rem,5vw,1.7rem);
+}
+.writing-genius #wgDiaryFlow .df-speech-next[hidden]{display:none!important}
+.writing-genius #wgDiaryFlow .df-speech-next{margin:0 auto 10px;display:block}
+
+/* Saved writing library: standalone read-only document viewer. */
+.writing-genius #wgViewer[hidden]{display:none!important}
+.wg-viewer{max-width:850px;margin:4px auto 30px}
+.wg-viewer>.vocab-screen-back{margin:8px 0 18px}
+.wg-viewer-paper{background:var(--vocab-card,#fff);border:2px solid var(--vocab-border,#c9f1f4);border-radius:24px;padding:clamp(22px,4vw,42px);box-shadow:0 10px 30px rgba(20,80,95,.05);color:var(--ink,#173f46)}
+.wg-viewer-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid var(--vocab-border,#c9f1f4);padding-bottom:20px}
+.wg-viewer-eyebrow{margin:0 0 8px;font-size:.72rem;font-weight:800;letter-spacing:.08em;color:var(--pink,#e93186)}
+.wg-viewer-header h2{font-size:clamp(1.3rem,3vw,2rem);line-height:1.35;overflow-wrap:anywhere;margin:0 0 8px}
+.wg-viewer-meta{color:var(--vocab-muted,#6f8190);font-size:.82rem;margin:0}
+.wg-viewer-header .wg-status-pill{flex-shrink:0}
+.wg-viewer-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:1.05rem;line-height:1.9;min-height:180px;padding-top:24px;user-select:text}
+.wg-viewer-body.is-empty{color:var(--vocab-muted,#6f8190);font-style:italic}
+@media(max-width:600px){.wg-viewer-header{flex-direction:column;gap:10px}.wg-viewer-body{font-size:1rem;line-height:1.8}}
+
+/* Archive reader edit controls. Viewing remains read-only until explicitly selected. */
+.writing-genius #wgViewerEditForm[hidden],.writing-genius #wgViewerDocument[hidden]{display:none!important}
+.wg-viewer-edit-button{margin-top:12px}
+.wg-viewer-edit-form{display:grid;gap:12px;padding-top:22px}
+.wg-viewer-edit-form label{font-weight:800;color:var(--ink,#173f46);font-size:.87rem}
+.wg-viewer-edit-form input,.wg-viewer-edit-form textarea{width:100%;box-sizing:border-box;border:2px solid var(--vocab-border,#c9f1f4);border-radius:14px;background:var(--vocab-card,#fff);color:var(--ink,#173f46);font:500 1rem/1.7 Poppins,system-ui,sans-serif;padding:12px 16px}
+.wg-viewer-edit-form textarea{min-height:260px;resize:vertical;white-space:pre-wrap}
+.wg-viewer-edit-form input:focus-visible,.wg-viewer-edit-form textarea:focus-visible{outline:2px solid var(--cyan-strong,#25b8c4);outline-offset:2px}
+.wg-viewer-edit-form #wgViewerEditStatus{font-size:.82rem;color:var(--vocab-muted,#6f8190);margin:2px 0;min-height:1em}
+.wg-viewer-edit-actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:600px){.wg-viewer-edit-actions>.wg-button{flex:1}}

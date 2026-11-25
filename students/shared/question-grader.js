@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage,classifyVocabSemanticNearMatch} from './ai-willi.js?v=1.0.3';
 
-export const GRADER_VERSION='2.4.1';
+export const GRADER_VERSION='2.4.4';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -264,6 +264,20 @@ function correctionArrayEquivalent(referenceAnswers,studentAnswers,{requireLabel
   return true;
 }
 
+// A lowercase L and capital I are nearly indistinguishable in many student fonts.
+// Accept this confusion ONLY when the complete answer otherwise exactly matches a
+// written target containing the English pronoun I. Never use fuzzy string matching.
+function writtenPronounILookalike(question,response){
+  if(question?.form!==FORMS.write||typeof response!=='string')return false;
+  // Restrict the exception to a lowercase L standing alone, never to the
+  // letter L inside a word or to uppercase L in a name/grade/label.
+  if(!/\bl\b/.test(response))return false;
+  const corrected=normExact(response.replace(/\bl\b/g,'I'));
+  return (question.answer||[]).some(answer=>
+    /\bI\b/.test(String(answer))&&words(answer).length>=3&&corrected===normExact(answer)
+  );
+}
+
 function checkConstraints(question,response,policy){
   const c=policy.constraints||{},parts=Array.isArray(response)?response:[response],text=parts.join('\n');
   if(c.wordCount&&words(text).length!==Number(c.wordCount))return{ok:false,message:`${c.wordCount}단어로 써야 합니다.`};
@@ -294,9 +308,18 @@ function exact(question,response,policy){
 
 export async function gradeQuestion(question,response,options={}){
   const policy=resolveQuestionGradingPolicy(question);
+  // A written answer identical to the published model answer (ignoring case and
+  // terminal punctuation) must not fail an inconsistent generated constraint.
+  // Use normBasic rather than normExact here: contractions must NOT be expanded,
+  // so an explicit no-contractions instruction remains enforceable.
+  if(question?.form===FORMS.write&&typeof response==='string'&&
+     (question.answer||[]).some(answer=>normBasic(answer)===normBasic(response))){
+    return stamp({correct:true,message:'',correctAnswer:question.answer,method:'canonical_exact',gradingPolicy:policy});
+  }
   const constraint=checkConstraints(question,response,policy);
   if(!constraint.ok)return stamp({correct:false,message:constraint.message,correctAnswer:question.answer,method:'constraint',gradingPolicy:policy});
   if(exact(question,response,policy))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy});
+  if(writtenPronounILookalike(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'pronoun_i_lookalike',gradingPolicy:policy});
   if(missingTargetSpacesEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_missing_space',gradingPolicy:policy});
   if(slashAlternativeEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_slash_alternative',gradingPolicy:policy});
   if(possessivePlaceholderEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_possessive_placeholder',gradingPolicy:policy});

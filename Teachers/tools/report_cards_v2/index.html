@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Willena Report Cards</title><link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/Teachers/tools/test_input/report-card.css">
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#122c3e;background:#f0f6f9}*{box-sizing:border-box}
+body{margin:0}header.app-header{background:#064569;color:white;padding:18px clamp(16px,4vw,50px);display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+.brand{font-size:23px;font-weight:800}.subtitle{font-size:12px;opacity:.85;font-weight:400}
+main{max-width:1600px;margin:24px auto;padding:0 18px;display:grid;grid-template-columns:300px 1fr;gap:20px}
+.panel{background:white;border:1px solid #dce9ef;border-radius:16px;box-shadow:0 4px 20px #083b5110;padding:19px}
+h2{margin:0 0 14px;font-size:19px}h3{margin:0 0 12px;font-size:15px}
+label{display:block;font-size:12px;color:#537082;font-weight:700;margin:13px 0 5px}
+select,input,textarea{width:100%;border:1px solid #cbdde5;border-radius:9px;padding:11px;background:white;color:#163747;font:inherit}
+textarea{min-height:120px;resize:vertical}button{border:0;border-radius:9px;background:#087f98;color:white;cursor:pointer;font-weight:700;padding:11px 14px}
+button.secondary{background:#edf5f8;color:#064569}button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row>*{flex:0 0 auto}
+.muted{color:#557083;font-size:13px}.tag{background:#dff5f5;color:#006c75;padding:4px 9px;border-radius:50px;font-size:12px;font-weight:700}
+.student-list{max-height:54vh;overflow:auto}.student{width:100%;text-align:left;display:flex;justify-content:space-between;background:white;color:#143448;border:1px solid #e1ebf0;margin-bottom:6px}.student.active{background:#e1f5f8;border-color:#41b7cd}
+.content{min-width:0}.cards{overflow:auto;background:#dce7ed;border-radius:12px;padding:18px;display:flex;justify-content:center;min-height:250px}
+#paper{width:210mm;flex-shrink:0;background:#fff;box-shadow:0 6px 22px #0b2e4233}#paper .rc-page{box-shadow:none}
+.toolrow{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-bottom:14px}.toolrow>div{flex:1;min-width:135px}
+.status{margin-top:12px;border-radius:8px;background:#eff6f9;padding:10px;font-size:13px;white-space:pre-wrap}
+@media(max-width:1000px){main{grid-template-columns:1fr}.student-list{max-height:180px}.cards{justify-content:flex-start}}
+@media print{.app-header,main>.panel,.toolrow,#message{display:none!important}main{display:block;padding:0;margin:0}.content{width:100%}.cards{padding:0;background:white;display:block}#paper{box-shadow:none;width:auto}.rc-page{break-after:page}}
+.rc-library{display:grid;gap:9mm;justify-items:center}.rc-lib-item{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}.rc-gauge{width:120px;height:90px;position:relative}.rc-gauge svg{width:100%;height:100%;display:block}.rc-gauge .grade-text{position:absolute;left:0;right:0;bottom:0;font-weight:900;font-size:22px;color:var(--rc-text);text-align:center}
+</style></head>
+<body><header class="app-header"><div><div class="brand">WILLENA · Report Cards</div><div class="subtitle">New report-card studio · original Willena PDF design</div></div><span class="tag" id="mode">Read-only prototype</span></header>
+<main>
+<aside class="panel"><h2>Reports</h2><label for="period">Report period</label><select id="period"><option value="2026-10">October 2026</option></select>
+<div class="row" style="margin-top:12px"><button id="load">Load Google Sheet</button><button class="secondary" id="retry">Refresh</button></div>
+<p class="muted">The Google Sheets reader must be configured on the Teachers backend. Existing student data is never changed here.</p>
+<label for="search">Find student</label><input id="search" placeholder="Name or Korean name">
+<label for="klass">Class</label><select id="klass"><option value="">All classes</option></select>
+<p class="muted" id="counts">No records loaded</p><div class="student-list" id="students"></div>
+</aside>
+<section class="content">
+<div class="panel" style="margin-bottom:16px"><div class="toolrow"><div><h2 style="margin-bottom:4px">Report-card preview</h2><div id="selection" class="muted">Choose a student to preview</div></div>
+<button id="print" disabled class="secondary">Print</button><button id="pdf" disabled>Export PDF</button><button id="classpdf" disabled class="secondary">Export Class PDFs</button></div>
+<div class="row"><label style="margin:0" for="totalMode">Score calculation</label><select id="totalMode" style="width:auto"><option value="weighted">Weighted total</option><option value="average">Average of skills</option></select></div>
+<label for="comment">Teacher comment (preview only)</label><textarea id="comment" placeholder="Write a Korean comment. This draft does not save comments to the database."></textarea>
+<div id="message" class="status">Ready to load October 2026.</div></div>
+<div class="cards"><div id="paper"></div></div>
+</section></main>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+<script type="module" src="./app.js"></script>
+</body></html>

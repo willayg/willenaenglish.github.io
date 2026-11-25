@@ -1,0 +1,28 @@
+/* Word Genius teacher drawer: verified unit progress and golden achievements. */
+.wg-mastery-summary{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:15px}
+.wg-mastery-summary>span{background:#f5fafb;border:1px solid #d9e8ed;border-radius:12px;padding:9px 12px;font:600 12px/1.4 Poppins,sans-serif;color:#52636e}
+.wg-mastery-summary b{font-size:16px;color:#233b45;margin-right:3px}
+.wg-mastery-summary .wg-mastery-goldcount{background:#fff8e0;border-color:#e9cd7d;color:#795314}
+.wg-mastery-summary .wg-mastery-goldcount b{color:#97700e}
+.wg-mastery-book{border:1px solid #dfe9ee;border-radius:17px;background:#fff;overflow:hidden;margin:0 0 14px}
+.wg-mastery-bookhead{background:#f5f9fb;border-bottom:1px solid #e4ebee;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px}
+.wg-mastery-bookhead strong{font:700 14px/1.4 Poppins,sans-serif;color:#243c4b}
+.wg-mastery-bookhead span{white-space:nowrap;font:700 11px/1.4 Poppins,sans-serif;color:#647b86}
+.wg-mastery-unitlist{padding:9px;display:grid;gap:8px}
+.wg-mastery-unit{border:1px solid #e2e8ed;background:#fff;border-radius:12px;padding:12px 13px}
+.wg-mastery-unithead{display:flex;justify-content:space-between;align-items:flex-start;gap:9px}
+.wg-mastery-title strong{display:block;font:700 13px/1.4 Poppins,sans-serif;color:#2b3e4a}
+.wg-mastery-title small{display:block;font:500 11px/1.4 Poppins,sans-serif;color:#81919d;margin-top:3px}
+.wg-mastery-pill{white-space:normal;max-width:52%;text-align:center;flex-shrink:0;border-radius:22px;padding:5px 9px;background:#eaf1f4;border:1px solid #d7e2e8;color:#607985;font:700 10px/1.3 Poppins,sans-serif}
+.wg-mastery-gold{border:1.5px solid #e4bd58;background:linear-gradient(130deg,#fffdfa,#fff4cd)}
+.wg-mastery-gold .wg-mastery-pill{background:#ffe6a0;border-color:#e8b84a;color:#815600}
+.wg-mastery-complete{border-color:#9ed8cc;background:#f8fffd}
+.wg-mastery-complete .wg-mastery-pill{background:#d7f3e9;border-color:#aedfca;color:#267959}
+.wg-mastery-skills{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.wg-mastery-skill{padding:5px 8px;border:1px solid #e4ebee;background:#fff;border-radius:8px;color:#687985;font:500 11px/1.35 Poppins,sans-serif}
+.wg-mastery-skill b{color:#293d4c;font-weight:700}
+.wg-mastery-earned{margin-top:8px;font:600 10px/1.3 Poppins,sans-serif;color:#956f18}
+.wg-mastery-loading,.wg-mastery-error,.wg-mastery-empty{padding:17px;background:#f5f9fa;border-radius:12px;font-size:13px;color:#6d8190}
+.wg-mastery-error{color:#a83d50;background:#fff5f6}
+.wg-mastery-note{font:400 11px/1.5 Poppins,sans-serif;color:#788996;margin:10px 0 0}
+@media(max-width:560px){.wg-mastery-bookhead{align-items:flex-start;flex-direction:column}.wg-mastery-unithead{flex-direction:column}.wg-mastery-pill{max-width:none}}

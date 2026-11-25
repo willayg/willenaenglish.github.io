@@ -1,0 +1,143 @@
+.gf-hw-loading{padding:22px;color:#73838d}.gf-hw-error{color:#bb3c54;padding:10px 0}
+.gf-hw-form{display:grid;gap:17px}
+.gf-hw-form-grid{display:grid;grid-template-columns:1.2fr 1.1fr 1fr;gap:14px}
+.gf-hw-form-grid label{display:grid;gap:7px;font-size:12px;font-weight:800;color:var(--ink,#343343)}
+.gf-hw-form-grid .control{width:100%;min-width:0}
+.gf-hw-picker-top,.gf-hw-footer,.gf-hw-toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.gf-hw-picker-top strong{display:block;font-size:16px}
+.gf-hw-picker-top small{display:block;font-size:12px;color:#7d8390;margin-top:4px}
+.gf-hw-picker-top span{color:#3895a0;font-size:13px;font-weight:800}
+.gf-hw-modules{display:grid;gap:12px;max-height:540px;overflow:auto}
+.gf-hw-module{min-width:0;border:1px solid #e4e9ee;border-radius:16px;background:#fff;padding:15px}
+.gf-hw-module legend{font-weight:800;padding:0 6px}
+.gf-hw-module legend small{font-size:11px;font-weight:500;color:#7d8390}
+.gf-hw-all{display:flex;align-items:center;gap:9px;color:#2f919d;font-weight:800;font-size:12px;margin:5px 0 11px}
+.gf-hw-levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:9px}
+.gf-hw-levels label{display:flex;gap:9px;align-items:center;padding:10px;background:#f6f9fb;border-radius:10px;font-size:12px;cursor:pointer}
+.gf-hw-footer{flex-wrap:wrap}
+.gf-hw-toolbar{margin-bottom:14px}
+.gf-hw-groups{display:grid;gap:15px}
+.gf-hw-group{border:1px solid #e0e7ec;border-radius:18px;padding:17px;background:#fff}
+.gf-hw-group>header{margin-bottom:13px}
+.gf-hw-group>header strong,.gf-hw-group>header small{display:block}
+.gf-hw-group>header small{font-size:12px;margin-top:6px;color:#7d8390}
+.gf-hw-group-items{display:grid;gap:8px}
+.gf-hw-assignment{border:1px solid #e3eaf0;border-radius:12px;overflow:hidden}
+.gf-hw-row{background:#f9fbfd;border:0;width:100%;padding:13px;display:flex;justify-content:space-between;align-items:center;gap:14px;text-align:left;cursor:pointer;color:#35434c;font:inherit}
+.gf-hw-row b,.gf-hw-row small{display:block}
+.gf-hw-row small{font-size:11px;margin-top:4px;color:#7b8990}
+.gf-hw-row>span:last-child{color:#338997;font-size:12px;font-weight:700;white-space:nowrap}
+.gf-hw-progress-summary{padding:12px 13px;font-weight:800;font-size:12px}
+.gf-hw-students{padding:0 13px 13px}
+.gf-hw-student{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;padding:9px 0;border-top:1px solid #e7eaee;font-size:12px}
+.gf-hw-student>strong{color:#926a36}
+.gf-hw-student>strong.gf-hw-done{color:#278d5b}
+.gf-hw-group-actions{display:flex;justify-content:flex-end;margin-top:12px}
+@media(max-width:640px){.gf-hw-form-grid{grid-template-columns:1fr}.gf-hw-student{grid-template-columns:1fr auto}.gf-hw-student>span:nth-child(2){display:none}}
+
+/* Keep assignment controls visible while teachers scroll a long grammar catalog. */
+#uaGrammarHomework .gf-hw-form{min-width:0}
+#uaGrammarHomework .gf-hw-footer{
+ position:sticky;top:80px;z-index:15;display:flex;align-items:center;
+ gap:12px;flex-wrap:wrap;min-width:0;padding:13px 16px;
+ border:1.5px solid #b4dee6;border-radius:15px;background:rgba(255,255,255,.98);
+ box-shadow:0 5px 18px rgba(34,64,81,.12);
+}
+#uaGrammarHomework .gf-hw-footer #gfHwSubmit{flex-shrink:0;min-width:190px}
+#uaGrammarHomework .gf-hw-footer #gfHwMessage{flex:1;min-width:190px;font-size:12px;font-weight:600;line-height:1.45;color:#3b6874}
+#uaGrammarHomework .gf-hw-footer #gfHwMessage.gf-hw-error{color:#bb3c54;padding:0}
+#uaGrammarHomework .gf-hw-footer .gf-hw-view{flex-shrink:0}
+#uaGrammarHomework .gf-hw-footer [hidden]{display:none!important}
+#uaGrammarHomework .gf-hw-modules{min-height:0;max-height:min(56vh,590px);overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+@media(max-width:640px){
+ #uaGrammarHomework .gf-hw-footer{top:70px;padding:10px;gap:9px}
+ #uaGrammarHomework .gf-hw-footer #gfHwSubmit{flex:1;min-width:0}
+ #uaGrammarHomework .gf-hw-footer #gfHwMessage{min-width:100%;flex-basis:100%}
+ #uaGrammarHomework .gf-hw-modules{max-height:58vh}
+}
+
+/* Dashboard .panel normally clips overflow; allow this workspace's sticky controls to follow the page scroll. */
+#view-assignments #universalAssignments{overflow:visible}
+
+/* Grammar Genius student-first homework tracking */
+.gf-hw-toolbar{flex-wrap:wrap;gap:10px}
+.gf-hw-view-tabs{display:inline-flex;gap:3px;padding:4px;border:1px solid #dce9ee;background:#eef5f7;border-radius:13px}
+.gf-hw-view-tab{border:0;border-radius:9px;background:transparent;color:#627480;padding:9px 14px;font:700 12px/1.3 Poppins,sans-serif;cursor:pointer}
+.gf-hw-view-tab.active{background:#fff;color:#178c98;box-shadow:0 2px 8px rgba(35,81,96,.09)}
+.gf-hw-view-tab:focus-visible,.gf-hw-student-toggle:focus-visible{outline:3px solid #4fbbc8;outline-offset:2px}
+.gf-hw-student-summary{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.gf-hw-student-summary>span{border:1px solid #ddeaf0;background:#f7fafc;border-radius:12px;padding:10px 13px;font-size:12px;font-weight:600;color:#69818c}
+.gf-hw-student-summary b{font-size:16px;color:#244650;margin-right:3px}
+.gf-hw-student-summary .gf-hw-summary-percent{background:#effdff;border-color:#b6e6e9;color:#277e89}
+.gf-hw-student-filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:15px}
+.gf-hw-student-filters label{display:grid;gap:5px;min-width:min(200px,100%);flex:1;font-size:12px;font-weight:700;color:#607784}
+.gf-hw-student-filters .control{width:100%;min-width:0}
+.gf-hw-student-cards{display:grid;gap:11px}
+.gf-hw-student-card{background:#fff;border:1.5px solid #deeaf0;border-radius:17px;padding:0;overflow:hidden}
+.gf-hw-student-card.is-expanded{border-color:#7bc9d0;box-shadow:0 6px 20px rgba(35,95,105,.08)}
+.gf-hw-student-toggle{display:flex;width:100%;gap:13px;align-items:center;padding:17px 18px;border:0;background:transparent;cursor:pointer;text-align:left;color:#243e4a;font:inherit}
+.gf-hw-student-main{display:grid;gap:4px;flex:1;min-width:0}
+.gf-hw-student-main strong{font-size:15px;font-weight:800}
+.gf-hw-student-main small{font-size:12px;font-weight:600;color:#7b8c98}
+.gf-hw-student-note{font-size:11px;font-weight:600;color:#437a84}
+.gf-hw-student-completion{display:grid;gap:2px;text-align:right;flex:0 0 auto}
+.gf-hw-student-completion b{font-size:22px;font-weight:800;color:#187f8b}
+.gf-hw-student-completion small{font-size:11px;font-weight:600;color:#798c94}
+.gf-hw-student-chevron{flex:0 0 20px;text-align:right;font-size:22px;color:#4ba9b6}
+.gf-hw-student-bar{height:6px;margin:0 18px 13px;border-radius:50px;background:#e6f2f4;overflow:hidden}
+.gf-hw-student-bar>i{display:block;height:100%;border-radius:50px;background:#52bec6}
+.gf-hw-student-detail{padding:8px 17px 17px;background:#f9fcfd;border-top:1px solid #e7edf1}
+.gf-hw-task-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;font-weight:800;color:#516a77;margin:6px 0 11px}
+.gf-hw-task{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:12px 13px;margin:7px 0;border:1px solid #e3eaf0;border-radius:12px;background:white}
+.gf-hw-task-titles{display:grid;gap:3px;min-width:0}
+.gf-hw-task-titles strong{font-size:13px;font-weight:800;color:#294451}
+.gf-hw-task-titles span{font-size:12px;color:#5c737e}
+.gf-hw-task-titles small{font-size:11px;color:#92a1a8}
+.gf-hw-task-score{display:grid;text-align:right;gap:5px;flex:none;min-width:95px}
+.gf-hw-task-score b{font-size:12px;color:#397b86}
+.gf-hw-task-score span{font-size:11px;color:#7b8992}
+.gf-hw-task-done{border-color:#b2e3c7;background:#f6fffa}
+.gf-hw-task-done .gf-hw-task-score b{color:#248253}
+.gf-hw-task-overdue .gf-hw-task-score b{color:#be5a51}
+.gf-hw-empty-students{padding:30px 16px;text-align:center;border:1px dashed #d3e2e8;border-radius:16px;color:#718591}
+@media(max-width:620px){
+ .gf-hw-toolbar{align-items:stretch}
+ .gf-hw-view-tabs{flex:1;justify-content:center}
+ .gf-hw-view-tab{flex:1}
+ .gf-hw-student-toggle{padding:14px 12px;gap:8px}
+ .gf-hw-student-completion b{font-size:18px}
+ .gf-hw-student-completion small{font-size:10px}
+ .gf-hw-task{align-items:flex-start;gap:8px}
+ .gf-hw-task-score{min-width:80px}
+ .gf-hw-student-detail{padding:8px}
+}
+
+/* Book-based Grammar Genius assignment UI reuses the Foundations and Genius card tokens. */
+.gb-book-tabs{margin:0 0 16px;display:flex;gap:8px}
+.gb-mode-row{display:flex;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid #dce9ec;border-radius:11px;background:#fff}
+.gb-mode-row label{display:flex;align-items:center;gap:6px;font-size:13px;color:#36535e;font-weight:650}
+.gb-chapter-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:9px}
+.gb-chapter{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #dce9ec;border-radius:11px;padding:12px;font-size:13px;color:#2d4651;cursor:pointer}
+.gb-chapter:has(input:checked){background:#f3fdfe;border-color:#6ccbd5}
+.gb-select-head{display:flex;justify-content:space-between;align-items:center}
+.gb-select-head label{display:flex;align-items:center;gap:6px;font-size:13px}
+.gb-manage-actions{display:flex;justify-content:flex-end;align-items:center;gap:9px;margin-top:12px}
+.gb-manage-actions button{font:inherit;font-size:13px;padding:8px 12px;border:1px solid #9bdde3;border-radius:8px;background:#fff;color:#bb3f7b;cursor:pointer}
+.gb-manage-actions button[data-gb-delete]{font-size:19px;padding:4px 11px}
+.gb-edit-modal{border:2px solid #89dce4;border-radius:17px;padding:20px;width:min(540px,calc(100vw - 30px));max-height:90vh;overflow:auto;background:#fff;color:#2e4550}
+.gb-edit-modal::backdrop{background:#112c3b77}
+.gb-edit-modal h3{margin:0;font-size:20px}
+.gb-edit-modal form>label{display:grid;gap:5px;font-size:13px;font-weight:700}
+.gb-edit-modal .gf-hw-form{gap:13px}
+@media(max-width:640px){.gb-chapter-list{grid-template-columns:1fr}.gb-mode-row{gap:8px}.gb-form .gf-hw-form-grid{grid-template-columns:1fr}.gb-book-tabs{flex-wrap:wrap}}
+
+/* Textbook homework: same compact stacked fields used by other Assign forms. */
+#gbHwForm.ua-genius-assign{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;gap:15px;padding:20px;background:#fff;border:1px solid #e1e9ed;border-radius:16px}
+#gbHwForm>h3{margin:0;font-size:18px;color:#313846}
+#gbHwForm>label{display:grid;gap:7px;font-size:13px;font-weight:750;color:#343343}
+#gbHwForm select.control,#gbHwForm input.control{width:100%;min-width:0;min-height:44px;box-sizing:border-box}
+#gbHwForm #gbHwBookContent{display:grid;gap:12px}
+#gbHwForm #gbHwBookContent[hidden]{display:none}
+#gbHwForm .ua-note{margin:0;color:#75838b;font-size:12px}
+#gbHwForm .gf-hw-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:640px){#gbHwForm .gf-hw-form-grid{grid-template-columns:1fr}}

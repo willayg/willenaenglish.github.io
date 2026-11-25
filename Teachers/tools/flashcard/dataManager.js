@@ -1,16 +1,13 @@
 export class DataManager {
     constructor() {
-        this.supabaseProxyUrl = '/.netlify/functions/supabase_proxy';
+        this.supabaseProxyUrl = '/.netlify/functions/supabase_auth?action=save_worksheet';
         this.localStorageKey = 'flashcard_settings';
+        this.workerUrl = window.WILLENA_WORKSHEET_ASSETS_URL || 'https://worksheet-assets.willenaenglish.com';
     }
 
-    // Settings management (local storage)
     saveSettings(settings) {
-        try {
-            localStorage.setItem(this.localStorageKey, JSON.stringify(settings));
-        } catch (error) {
-            console.error('Error saving settings:', error);
-        }
+        try { localStorage.setItem(this.localStorageKey, JSON.stringify(settings)); }
+        catch (error) { console.error('Error saving settings:', error); }
     }
 
     loadSettings() {
@@ -23,118 +20,158 @@ export class DataManager {
         }
     }
 
-    // Flashcard data management (Supabase)
-    async saveFlashcards(data) {
-        try {
-            // Prepare data for saving
-            const worksheet = {
-                worksheet_type: 'flashcard',
-                title: data.title || 'Untitled Flashcard Set',
-                passage_text: data.wordList || '',
-                words: data.cards.map(card => card.english),
-                layout: 'flashcard',
-                settings: {
-                    font: data.font || 'Poppins',
-                    fontSize: data.fontSize || 18,
-                    layout: data.layout || '4-card',
-                    cardSize: data.cardSize || 200,
-                    showKorean: data.showKorean || false,
-                    imageOnly: data.imageOnly || false
-                },
-                book: '',
-                unit: '',
-                language_point: '',
-                notes: `Flashcard set with ${data.cards.length} cards`,
-                imageData: await this.prepareImageData(data.cards)
-            };
+    getAccessToken() {
+        try { return localStorage.getItem('sb_access_token') || ''; }
+        catch (_) { return ''; }
+    }
 
-            const response = await fetch(`${this.supabaseProxyUrl}/save_worksheet`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(worksheet)
-            });
+    async transformWorksheet(worksheet) {
+        const headers = { 'Content-Type': 'application/json' };
+        const token = this.getAccessToken();
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const response = await fetch(this.workerUrl, {
+            method: 'POST',
+            credentials: 'include',
+            headers,
+            body: JSON.stringify({ action: 'transform_worksheet', dry_run: false, worksheet })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) throw new Error(result.error || 'Image upload failed');
+        if (this.containsEmbeddedImage(result.worksheet)) throw new Error('Embedded images remain after processing');
+        return result.worksheet;
+    }
 
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.error || 'Failed to save flashcards');
-            }
-
-            return result;
-        } catch (error) {
-            console.error('Error saving flashcards:', error);
-            throw error;
+    containsEmbeddedImage(value) {
+        if (typeof value === 'string') {
+            if (/data:image\//i.test(value)) return true;
+            try { return this.containsEmbeddedImage(JSON.parse(value)); } catch (_) { return false; }
         }
+        if (!value || typeof value !== 'object') return false;
+        return Array.isArray(value)
+            ? value.some(item => this.containsEmbeddedImage(item))
+            : Object.values(value).some(item => this.containsEmbeddedImage(item));
+    }
+
+    async saveFlashcards(data) {
+        const cards = Array.isArray(data.cards) ? data.cards : [];
+        const imageMap = {
+            cards: cards.map((card, index) => ({
+                card_index: index,
+                word: card.english || '',
+                korean: card.korean || '',
+                image: card.imageUrl || null
+            }))
+        };
+        const settings = {
+            font: data.font || data.settings?.font || 'Poppins',
+            fontSize: data.fontSize || data.settings?.fontSize || 18,
+            layout: data.layout || data.settings?.layout || '4-card',
+            cardSize: data.cardSize || data.settings?.cardSize || 200,
+            showKorean: data.showKorean ?? data.settings?.showKorean ?? false,
+            imageOnly: data.imageOnly ?? data.settings?.imageOnly ?? false,
+            imageZoom: data.imageZoom || data.settings?.imageZoom || 1
+        };
+        let worksheet = {
+            worksheet_type: 'flashcard',
+            title: data.title || 'Untitled Flashcard Set',
+            passage_text: data.wordList || '',
+            words: cards.map(card => card.english || '').filter(Boolean),
+            layout: 'flashcard',
+            settings: JSON.stringify(settings),
+            images: JSON.stringify(imageMap),
+            book: data.book || '',
+            unit: data.unit || '',
+            language_point: data.language_point || '',
+            notes: `Flashcard set with ${cards.length} cards`,
+            username: localStorage.getItem('username') || ((localStorage.getItem('userEmail') || '').split('@')[0]) || ''
+        };
+        if (data.user_id) worksheet.user_id = data.user_id;
+
+        worksheet = await this.transformWorksheet(worksheet);
+        const api = window.WillenaAPI?.fetch ? window.WillenaAPI.fetch.bind(window.WillenaAPI) : fetch;
+        const response = await api(this.supabaseProxyUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(worksheet)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.success) throw new Error(result.error || 'Failed to save flashcards');
+        return result;
     }
 
     async loadFlashcards() {
-        try {
-            // Open the worksheet manager for loading
-            const managerWindow = window.open(
-                '../../worksheet_manager.html?mode=load', 
-                'WorksheetManager', 
-                'width=800,height=700'
-            );
+        const managerWindow = window.open(
+            '../../worksheet_manager.html?mode=load&type=flashcard',
+            'WorksheetManager',
+            'width=1000,height=700,resizable=yes,scrollbars=yes'
+        );
+        return new Promise(resolve => {
+            const messageHandler = event => {
+                if (event.source !== managerWindow) return;
+                if (event.data?.type === 'worksheet_selected') {
+                    window.removeEventListener('message', messageHandler);
+                    resolve(this.parseLoadedWorksheet(event.data.worksheet));
+                } else if (event.data?.type === 'cancelled') {
+                    window.removeEventListener('message', messageHandler);
+                    resolve(null);
+                }
+            };
+            window.addEventListener('message', messageHandler);
+            const timer = setInterval(() => {
+                if (managerWindow?.closed) {
+                    clearInterval(timer);
+                    window.removeEventListener('message', messageHandler);
+                    resolve(null);
+                }
+            }, 500);
+        });
+    }
 
-            // Return a promise that resolves when a worksheet is selected
-            return new Promise((resolve, reject) => {
-                // Set up a message listener for when the manager window sends data
-                const messageHandler = (event) => {
-                    if (event.source === managerWindow) {
-                        window.removeEventListener('message', messageHandler);
-                        
-                        if (event.data.type === 'worksheet_selected') {
-                            const worksheetData = event.data.worksheet;
-                            resolve(this.parseLoadedWorksheet(worksheetData));
-                        } else if (event.data.type === 'cancelled') {
-                            resolve(null);
-                        }
-                    }
-                };
+    parseJsonObject(value) {
+        if (!value) return {};
+        if (typeof value === 'object') return value;
+        try { return JSON.parse(value); } catch (_) { return {}; }
+    }
 
-                window.addEventListener('message', messageHandler);
-
-                // Clean up if window is closed
-                const checkClosed = setInterval(() => {
-                    if (managerWindow.closed) {
-                        clearInterval(checkClosed);
-                        window.removeEventListener('message', messageHandler);
-                        resolve(null);
-                    }
-                }, 500);
-            });
-        } catch (error) {
-            console.error('Error loading flashcards:', error);
-            throw error;
-        }
+    resolveImage(value) {
+        if (!value) return null;
+        if (typeof value === 'string') return value;
+        if (value.url) return value.url;
+        if (value.data && (value.src === 'data' || value.src === 'url')) return value.data;
+        if (value.image) return this.resolveImage(value.image);
+        return null;
     }
 
     parseLoadedWorksheet(worksheetData) {
         try {
-            const cards = [];
-            
-            // Parse words and create cards
-            if (worksheetData.words && Array.isArray(worksheetData.words)) {
-                worksheetData.words.forEach(word => {
-                    cards.push({
-                        english: word,
-                        korean: '',
-                        image: null,
-                        imageUrl: null
-                    });
-                });
-            }
+            const words = Array.isArray(worksheetData.words)
+                ? worksheetData.words
+                : String(worksheetData.words || worksheetData.passage_text || '').split('\n').map(v => v.trim()).filter(Boolean);
+            const cards = words.map(word => ({ english: word, korean: '', image: null, imageUrl: null }));
+            const images = this.parseJsonObject(worksheetData.images);
+            const legacyImageData = this.parseJsonObject(worksheetData.image_data || worksheetData.imageData);
 
-            // Restore images if available
-            if (worksheetData.imageData) {
-                this.restoreImagesFromData(cards, worksheetData.imageData);
+            if (Array.isArray(images.cards)) {
+                images.cards.forEach((saved, index) => {
+                    const target = Number.isInteger(saved.card_index) ? saved.card_index : index;
+                    if (!cards[target]) return;
+                    cards[target].english = saved.word || cards[target].english;
+                    cards[target].korean = saved.korean || '';
+                    cards[target].imageUrl = this.resolveImage(saved.image || saved.imageUrl || saved.src);
+                });
+            } else {
+                cards.forEach(card => {
+                    const saved = images[card.english] || legacyImageData[card.english];
+                    if (saved) card.imageUrl = this.resolveImage(saved);
+                });
             }
 
             return {
                 title: worksheetData.title || '',
-                wordList: worksheetData.passage_text || worksheetData.words?.join('\n') || '',
-                cards: cards,
-                settings: worksheetData.settings || {}
+                wordList: worksheetData.passage_text || words.join('\n'),
+                cards,
+                settings: this.parseJsonObject(worksheetData.settings),
+                user_id: worksheetData.user_id || null
             };
         } catch (error) {
             console.error('Error parsing loaded worksheet:', error);
@@ -142,238 +179,73 @@ export class DataManager {
         }
     }
 
-    async prepareImageData(cards) {
-        const imageData = {};
-        
-        for (const card of cards) {
-            if (card.imageUrl) {
-                try {
-                    // If it's a data URL, store directly
-                    if (card.imageUrl.startsWith('data:')) {
-                        imageData[card.english] = {
-                            src: 'data',
-                            data: card.imageUrl
-                        };
-                    } else {
-                        // For external URLs, store the URL
-                        imageData[card.english] = {
-                            src: 'url',
-                            data: card.imageUrl
-                        };
-                    }
-                } catch (error) {
-                    console.error(`Error preparing image data for ${card.english}:`, error);
-                }
-            }
-        }
-        
-        return imageData;
-    }
-
-    restoreImagesFromData(cards, imageData) {
-        if (!imageData) return;
-        
-        cards.forEach(card => {
-            const savedImage = imageData[card.english];
-            if (savedImage) {
-                if (savedImage.src === 'data' || savedImage.src === 'url') {
-                    card.imageUrl = savedImage.data;
-                }
-            }
-        });
-    }
-
-    // Export/Import functionality
     exportToJSON(data) {
-        const exportData = {
-            title: data.title,
-            wordList: data.wordList,
-            cards: data.cards,
-            settings: data.settings,
-            exportDate: new Date().toISOString(),
-            version: '1.0'
-        };
-        
-        return JSON.stringify(exportData, null, 2);
+        return JSON.stringify({ ...data, exportDate: new Date().toISOString(), version: '2.0' }, null, 2);
     }
 
     async exportToFile(data, filename = null) {
-        try {
-            const jsonData = this.exportToJSON(data);
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename || `flashcards_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error('Error exporting to file:', error);
-            throw error;
-        }
+        const blob = new Blob([this.exportToJSON(data)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename || `flashcards_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
     }
 
     async importFromFile(file) {
-        try {
-            const text = await this.readFileAsText(file);
-            const data = JSON.parse(text);
-            
-            // Validate imported data
-            if (!this.validateImportedData(data)) {
-                throw new Error('Invalid file format');
-            }
-            
-            return data;
-        } catch (error) {
-            console.error('Error importing from file:', error);
-            throw error;
-        }
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (!data || !Array.isArray(data.cards)) throw new Error('Invalid file format');
+        return data;
     }
 
-    readFileAsText(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = e => resolve(e.target.result);
-            reader.onerror = reject;
-            reader.readAsText(file);
-        });
-    }
-
-    validateImportedData(data) {
-        return data && 
-               typeof data === 'object' && 
-               Array.isArray(data.cards) &&
-               data.cards.every(card => 
-                   typeof card === 'object' && 
-                   typeof card.english === 'string'
-               );
-    }
-
-    // Auto-save functionality
     enableAutoSave(app, intervalMs = 30000) {
-        this.autoSaveInterval = setInterval(() => {
-            try {
-                const settings = app.getSettings();
-                this.saveSettings(settings);
-            } catch (error) {
-                console.error('Auto-save error:', error);
-            }
-        }, intervalMs);
+        this.autoSaveInterval = setInterval(() => this.saveSettings(app.getSettings()), intervalMs);
     }
 
     disableAutoSave() {
-        if (this.autoSaveInterval) {
-            clearInterval(this.autoSaveInterval);
-            this.autoSaveInterval = null;
-        }
+        if (this.autoSaveInterval) clearInterval(this.autoSaveInterval);
+        this.autoSaveInterval = null;
     }
 
-    // Recent files management
     addToRecentFiles(worksheetData) {
-        try {
-            const recent = this.getRecentFiles();
-            const newItem = {
-                id: worksheetData.id || Date.now(),
-                title: worksheetData.title,
-                date: new Date().toISOString(),
-                cardCount: worksheetData.cards?.length || 0
-            };
-            
-            // Remove duplicates and add to front
-            const filtered = recent.filter(item => item.id !== newItem.id);
-            filtered.unshift(newItem);
-            
-            // Keep only last 10
-            const limited = filtered.slice(0, 10);
-            
-            localStorage.setItem('flashcard_recent', JSON.stringify(limited));
-        } catch (error) {
-            console.error('Error adding to recent files:', error);
-        }
+        const recent = this.getRecentFiles().filter(item => item.id !== worksheetData.id);
+        recent.unshift({ id: worksheetData.id || Date.now(), title: worksheetData.title, date: new Date().toISOString(), cardCount: worksheetData.cards?.length || 0 });
+        localStorage.setItem('flashcard_recent', JSON.stringify(recent.slice(0, 10)));
     }
 
     getRecentFiles() {
-        try {
-            const stored = localStorage.getItem('flashcard_recent');
-            return stored ? JSON.parse(stored) : [];
-        } catch (error) {
-            console.error('Error getting recent files:', error);
-            return [];
-        }
+        try { return JSON.parse(localStorage.getItem('flashcard_recent') || '[]'); }
+        catch (_) { return []; }
     }
 
-    clearRecentFiles() {
-        try {
-            localStorage.removeItem('flashcard_recent');
-        } catch (error) {
-            console.error('Error clearing recent files:', error);
-        }
-    }
+    clearRecentFiles() { localStorage.removeItem('flashcard_recent'); }
 
-    // Backup and restore
     createBackup() {
-        try {
-            const backup = {
-                settings: this.loadSettings(),
-                recent: this.getRecentFiles(),
-                timestamp: new Date().toISOString()
-            };
-            
-            localStorage.setItem('flashcard_backup', JSON.stringify(backup));
-            return backup;
-        } catch (error) {
-            console.error('Error creating backup:', error);
-            return null;
-        }
+        const backup = { settings: this.loadSettings(), recent: this.getRecentFiles(), timestamp: new Date().toISOString() };
+        localStorage.setItem('flashcard_backup', JSON.stringify(backup));
+        return backup;
     }
 
     restoreBackup() {
         try {
-            const backup = localStorage.getItem('flashcard_backup');
-            if (backup) {
-                const data = JSON.parse(backup);
-                
-                if (data.settings) {
-                    this.saveSettings(data.settings);
-                }
-                
-                if (data.recent) {
-                    localStorage.setItem('flashcard_recent', JSON.stringify(data.recent));
-                }
-                
-                return true;
-            }
-        } catch (error) {
-            console.error('Error restoring backup:', error);
-        }
-        return false;
+            const backup = JSON.parse(localStorage.getItem('flashcard_backup') || 'null');
+            if (!backup) return false;
+            if (backup.settings) this.saveSettings(backup.settings);
+            if (backup.recent) localStorage.setItem('flashcard_recent', JSON.stringify(backup.recent));
+            return true;
+        } catch (_) { return false; }
     }
 
-    // Get usage statistics
     getUsageStats() {
-        try {
-            const stats = localStorage.getItem('flashcard_stats');
-            return stats ? JSON.parse(stats) : {
-                cardsCreated: 0,
-                sessionsStarted: 0,
-                lastUsed: null
-            };
-        } catch (error) {
-            console.error('Error getting usage stats:', error);
-            return { cardsCreated: 0, sessionsStarted: 0, lastUsed: null };
-        }
+        try { return JSON.parse(localStorage.getItem('flashcard_stats') || '{}'); }
+        catch (_) { return {}; }
     }
 
     updateUsageStats(update) {
-        try {
-            const current = this.getUsageStats();
-            const updated = { ...current, ...update, lastUsed: new Date().toISOString() };
-            localStorage.setItem('flashcard_stats', JSON.stringify(updated));
-        } catch (error) {
-            console.error('Error updating usage stats:', error);
-        }
+        localStorage.setItem('flashcard_stats', JSON.stringify({ ...this.getUsageStats(), ...update, lastUsed: new Date().toISOString() }));
     }
 }

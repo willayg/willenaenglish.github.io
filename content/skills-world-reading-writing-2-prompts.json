@@ -1,0 +1,245 @@
+{
+  "book": "Oxford Skills World Reading with Writing 2",
+  "prompts": [
+    {
+      "id": "skillsworld2-u1-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 1,
+      "title": "My Favorite Picture",
+      "prompt": "Write about \"My Favorite Picture\" using Level 2 language. Writing focus: conversation.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u1-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 1,
+      "title": "More About My Favorite Picture",
+      "prompt": "Write about \"My Favorite Picture\" using Level 2 language. Writing focus: conversation.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u2-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 2,
+      "title": "Let's Make Something",
+      "prompt": "Write about \"Let's Make Something\" using Level 2 language. Writing focus: names and capital letters.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u2-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 2,
+      "title": "More About Let's Make Something",
+      "prompt": "Write about \"Let's Make Something\" using Level 2 language. Writing focus: names and capital letters.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u3-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 3,
+      "title": "A Shopping Trip",
+      "prompt": "Write about \"A Shopping Trip\" using Level 2 language. Writing focus: email.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u3-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 3,
+      "title": "More About A Shopping Trip",
+      "prompt": "Write about \"A Shopping Trip\" using Level 2 language. Writing focus: email.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u4-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 4,
+      "title": "Write an Email to a Friend",
+      "prompt": "Write about \"Write an Email to a Friend\" using Level 2 language. Writing focus: description words.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u4-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 4,
+      "title": "More About Write an Email to a Friend",
+      "prompt": "Write about \"Write an Email to a Friend\" using Level 2 language. Writing focus: description words.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u5-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 5,
+      "title": "My Funniest Game",
+      "prompt": "Write about \"My Funniest Game\" using Level 2 language. Writing focus: story.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u5-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 5,
+      "title": "More About My Funniest Game",
+      "prompt": "Write about \"My Funniest Game\" using Level 2 language. Writing focus: story.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u6-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 6,
+      "title": "A Day at the Playground",
+      "prompt": "Write about \"A Day at the Playground\" using Level 2 language. Writing focus: character and setting.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u6-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 6,
+      "title": "More About A Day at the Playground",
+      "prompt": "Write about \"A Day at the Playground\" using Level 2 language. Writing focus: character and setting.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u7-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 7,
+      "title": "A Hero in My Town",
+      "prompt": "Write about \"A Hero in My Town\" using Level 2 language. Writing focus: paragraph.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u7-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 7,
+      "title": "More About A Hero in My Town",
+      "prompt": "Write about \"A Hero in My Town\" using Level 2 language. Writing focus: paragraph.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u8-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 8,
+      "title": "Someone Who Helps Animals",
+      "prompt": "Write about \"Someone Who Helps Animals\" using Level 2 language. Writing focus: in to show location.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u8-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 8,
+      "title": "More About Someone Who Helps Animals",
+      "prompt": "Write about \"Someone Who Helps Animals\" using Level 2 language. Writing focus: in to show location.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u9-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 9,
+      "title": "My Favorite Food",
+      "prompt": "Write about \"My Favorite Food\" using Level 2 language. Writing focus: opinion.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u9-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 9,
+      "title": "More About My Favorite Food",
+      "prompt": "Write about \"My Favorite Food\" using Level 2 language. Writing focus: opinion.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u10-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 10,
+      "title": "Food I Like and Dislike",
+      "prompt": "Write about \"Food I Like and Dislike\" using Level 2 language. Writing focus: and and but.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u10-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 10,
+      "title": "More About Food I Like and Dislike",
+      "prompt": "Write about \"Food I Like and Dislike\" using Level 2 language. Writing focus: and and but.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u11-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 11,
+      "title": "My School Day",
+      "prompt": "Write about \"My School Day\" using Level 2 language. Writing focus: schedule.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u11-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 11,
+      "title": "More About My School Day",
+      "prompt": "Write about \"My School Day\" using Level 2 language. Writing focus: schedule.",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u12-w1",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 12,
+      "title": "My Weekend Schedule",
+      "prompt": "Write about \"My Weekend Schedule\" using Level 2 language. Writing focus: a.m. and p.m..",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    },
+    {
+      "id": "skillsworld2-u12-w2",
+      "book_key": "book:skills_world:reading_writing:2",
+      "unit": 12,
+      "title": "More About My Weekend Schedule",
+      "prompt": "Write about \"My Weekend Schedule\" using Level 2 language. Writing focus: a.m. and p.m..",
+      "min_sentences": 6,
+      "max_sentences": 30,
+      "source": "Original Willena unit-aligned writing task"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17252c">
+<title>Sergeant Steve — Character Design Lab</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;background:#ecf3f1;color:#213a40}*{box-sizing:border-box}body{margin:0}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px max(16px,calc((100vw - 1350px)/2));background:#192c2f;color:white;flex-wrap:wrap}
+h1{font-size:clamp(20px,3vw,29px);margin:0}header p{font-size:12px;color:#bdd0cf;margin:5px 0 0}
+a{color:inherit}.back{font-size:13px;border:1px solid #627b7c;padding:9px 12px;border-radius:10px;text-decoration:none}
+main{max-width:1350px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:15px}
+.stage{background:repeating-conic-gradient(#cbd3d1 0 25%,#eef1f0 0 50%) 50%/26px 26px;border-radius:19px;min-height:610px;height:min(78vh,820px);overflow:hidden;display:grid;place-items:center;position:relative;transition:background .15s}
+.stage.dark{background:radial-gradient(circle at center,#4c5a50,#121c20 75%)}.stage.white{background:#fff}.stage.olive{background:#6c7556}
+.stage:after{content:"DESIGN PREVIEW · NOT LIVE IN STUDENT APP";position:absolute;left:16px;bottom:12px;font-size:10px;letter-spacing:.09em;color:#81959a;pointer-events:none}
+.figure{width:100%;height:100%;display:grid;place-items:center;overflow:visible;position:relative;--speed:1}
+.figure svg{display:block;width:100%;height:100%;max-width:95%;max-height:96%;overflow:visible;filter:drop-shadow(0 12px 10px #0003)}
+.figure.portrait svg{height:200%;max-height:none;transform:translateY(36%);width:100%;max-width:none}
+.figure svg #steve-head,.figure svg #steve-hat,.figure svg #steve-left-arm,.figure svg #steve-right-arm,.figure svg #steve-whistle{transform-box:fill-box;transition:transform .3s}
+.figure #steve-head{transform-origin:50% 75%}.figure #steve-hat{transform-origin:50% 75%}
+.figure #steve-left-arm,.figure #steve-right-arm{transform-origin:50% 20%}
+.figure #steve-pupil-left,.figure #steve-pupil-right,.figure #steve-brow-left,.figure #steve-brow-right{transition:transform .18s;transform-box:fill-box;transform-origin:center}
+.figure[data-pose="thinking"] #steve-head{transform:rotate(-9deg) translateX(-5px)}
+.figure[data-pose="thinking"] #steve-pupil-left,.figure[data-pose="thinking"] #steve-pupil-right{transform:translate(-8px,-6px)}
+.figure[data-pose="listening"] #steve-head{transform:rotate(5deg) translateY(5px)}
+.figure[data-pose="listening"] #steve-pupil-left,.figure[data-pose="listening"] #steve-pupil-right{transform:translate(5px,2px)}
+.figure[data-pose="surprised"] #steve-brow-left,.figure[data-pose="surprised"] #steve-brow-right{transform:translateY(-16px)}
+.figure[data-pose="surprised"] #steve-head{transform:translateY(-11px)}
+.figure[data-pose="happy"] #steve-brow-left,.figure[data-pose="happy"] #steve-brow-right{transform:translateY(8px) rotate(7deg)}
+.figure[data-pose="happy"] #steve-head{transform:rotate(4deg)}
+.figure[data-pose="shouting"] #steve-head{transform:translateY(-7px) rotate(-3deg)}
+.figure[data-pose="shouting"] #steve-brow-left,.figure[data-pose="shouting"] #steve-brow-right{transform:translateY(7px)}
+.figure[data-pose="salute"] #steve-right-arm{transform:translate(-70px,-62px) rotate(-72deg)}
+.figure[data-pose="speaking"] #steve-talk-mouth,.figure[data-pose="shouting"] #steve-talk-mouth{visibility:visible}
+.figure[data-pose="speaking"] #steve-rest-mouth,.figure[data-pose="shouting"] #steve-rest-mouth{visibility:hidden}
+.figure .steve-expression-mouth{display:none}.figure[data-pose="shouting"] .steve-expression-mouth,.figure[data-pose="speaking"] .steve-expression-mouth{display:block}
+.figure[data-pose="happy"] .steve-happy-mouth{display:block}.figure .steve-happy-mouth{display:none}
+.figure[data-pose="surprised"] .steve-surprised-mouth{display:block}.figure .steve-surprised-mouth{display:none}
+.figure.is-animated[data-pose="idle"] #steve-head{animation:steveBreathe calc(3.6s / var(--speed)) ease-in-out infinite}
+.figure.is-animated[data-pose="listening"] #steve-head{animation:steveListen calc(2.2s / var(--speed)) ease-in-out infinite}
+.figure.is-animated[data-pose="thinking"] #steve-head{animation:steveThink calc(2.9s / var(--speed)) ease-in-out infinite}
+.figure.is-animated[data-pose="speaking"] .steve-expression-mouth{animation:steveMouth calc(.36s / var(--speed)) ease-in-out infinite}
+.figure.is-animated[data-pose="shouting"] #steve-head{animation:steveShout calc(.24s / var(--speed)) linear infinite}
+.figure.is-animated[data-pose="shouting"] .steve-expression-mouth{animation:steveMouth calc(.3s / var(--speed)) ease-in-out infinite}
+.figure.is-animated[data-pose="happy"] #steve-head{animation:steveHappy calc(.8s / var(--speed)) ease-in-out infinite alternate}
+.figure.is-animated[data-pose="salute"] #steve-right-arm{animation:steveSalute calc(1.1s / var(--speed)) ease-in-out infinite alternate}
+.figure.is-animated .steve-blink{animation:steveBlink calc(5.2s / var(--speed)) infinite;transform-box:fill-box;transform-origin:center}
+@keyframes steveBreathe{50%{transform:translateY(4px)}}@keyframes steveListen{50%{transform:rotate(7deg) translateY(7px)}}@keyframes steveThink{50%{transform:rotate(-14deg) translateX(-6px)}}@keyframes steveShout{50%{transform:translateY(-10px) rotate(1deg)}}@keyframes steveMouth{50%{transform:scaleY(.67)}}@keyframes steveHappy{to{transform:translateY(-8px) rotate(5deg)}}@keyframes steveSalute{to{transform:translate(-65px,-68px) rotate(-68deg)}}@keyframes steveBlink{0%,89%,92%,100%{transform:scaleY(1)}90%,91%{transform:scaleY(.1)}}
+.panel{background:#fff;border:1px solid #d4e2e0;border-radius:16px;padding:17px;max-height:820px;overflow:auto;min-width:0}
+h2{font-size:14px;margin:7px 0 12px}h3{font-size:13px;margin:19px 0 8px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+button,select,input,textarea{font:inherit}button{cursor:pointer;min-height:39px;background:#f4f8f7;border:1px solid #c8dbd8;border-radius:10px;color:#294b4c;font-size:13px;font-weight:650;padding:8px}
+button[aria-pressed="true"],button.active{background:#c8f0e3;border-color:#2b997c;color:#155748}
+button:hover{border-color:#328e8d}button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #5ed6b7}
+select,input[type="range"],textarea{width:100%}select{border:1px solid #c8dbd8;border-radius:9px;padding:9px;background:white}
+label{display:block;font-size:12px;font-weight:650;margin:12px 0 6px}.row{display:flex;align-items:center;gap:8px}.row>*{flex:1}
+textarea{min-height:130px;resize:vertical;border:1px solid #c8dbd8;border-radius:8px;padding:9px;font:11px/1.5 ui-monospace,monospace}
+.note{font-size:12px;color:#647e80;line-height:1.5}.status{min-height:24px;color:#117962;font-size:12px;margin-top:12px}
+details{margin-top:18px;border-top:1px solid #e1eae7;padding-top:11px}summary{cursor:pointer;font-weight:700;font-size:13px}
+@media(max-width:850px){main{grid-template-columns:1fr}.stage{min-height:390px;height:57dvh}.panel{max-height:none}.figure.portrait svg{height:200%}}@media(prefers-reduced-motion:reduce){.figure *{animation:none!important}}
+</style></head>
+<body><header><div><h1>Sergeant Steve · Character Lab</h1><p>Full-body SVG master · expressions, gestures and transparency · design-only sandbox</p></div><a class="back" href="/Teachers/tools/character-lab/">← Character Lab</a></header>
+<main><div class="stage" id="stage"><div class="figure is-animated" id="figure" data-pose="idle" aria-label="Sergeant Steve expression preview"></div></div>
+<aside class="panel"><h2>Expressions & movement</h2><div class="grid" id="poses">
+<button type="button" data-pose="idle" aria-pressed="true">😠 Idle / Stern</button><button type="button" data-pose="speaking">🗣️ Speaking</button>
+<button type="button" data-pose="shouting">📣 Drill shout</button><button type="button" data-pose="listening">👂 Listening</button>
+<button type="button" data-pose="thinking">🤔 Thinking</button><button type="button" data-pose="surprised">❗ Surprised</button>
+<button type="button" data-pose="happy">⭐ Proud</button><button type="button" data-pose="salute">🫡 Salute</button>
+</div><h3>Preview controls</h3><div class="grid"><button id="animate" aria-pressed="true">Pause animation</button><button id="reset">Reset pose</button></div>
+<label for="frame">Framing</label><select id="frame"><option value="full">Full body</option><option value="portrait">Portrait / menu crop</option></select>
+<label for="background">Background / transparency test</label><select id="background"><option value="checker">Checkerboard</option><option value="dark">Dark</option><option value="white">White</option><option value="olive">Olive</option></select>
+<label for="speed">Motion speed <span id="speedLabel">1.0×</span></label><input id="speed" type="range" min=".3" max="2.5" step=".1" value="1">
+<p class="note">This previews the exact editable Sergeant Steve SVG. The background belongs to the viewer, not the asset. None of these experiments affects Free Talking or students.</p>
+<div class="grid"><button id="export">Download current SVG</button><button id="copy">Copy SVG code</button></div>
+<details><summary>SVG editor · local preview</summary><p class="note">Paste a revised SVG and click Apply. Changes remain only in this browser unless published to GitHub.</p><textarea id="source" spellcheck="false" placeholder="Paste complete SVG artwork here"></textarea><div class="grid"><button id="apply">Apply SVG preview</button><button id="restore">Restore published master</button></div></details>
+<div class="status" id="status" role="status"></div>
+</aside></main>
+<script>
+(()=>{'use strict';
+const path='./sergeant-steve.svg',figure=document.getElementById('figure'),stage=document.getElementById('stage'),status=document.getElementById('status');let master='',current='',animated=true;
+const say=s=>status.textContent=s;
+function sanitize(source){
+ const doc=new DOMParser().parseFromString(source,'image/svg+xml');
+ if(doc.querySelector('parsererror')||doc.documentElement.localName!=='svg')throw Error('Not valid SVG markup');
+ const svg=doc.documentElement;
+ svg.querySelectorAll('script,foreignObject,iframe,object,embed').forEach(e=>e.remove());
+ svg.querySelectorAll('*').forEach(e=>{for(const attr of [...e.attributes]){if(/^on/i.test(attr.name)||/^(href|xlink:href)$/i.test(attr.name)&&!/^(#|data:image\/)/.test(attr.value)||/url\(\s*['"]?https?:/i.test(attr.value))e.removeAttribute(attr.name)}});
+ svg.removeAttribute('onload');return new XMLSerializer().serializeToString(svg)
+}
+function addExpressionArtwork(svg){
+ const ns='http://www.w3.org/2000/svg',head=svg.querySelector('#steve-head');if(!head)return;
+ const add=(cls,d,fill,stroke)=>{const e=document.createElementNS(ns,'path');e.setAttribute('class',cls);e.setAttribute('d',d);e.setAttribute('fill',fill);e.setAttribute('stroke',stroke);e.setAttribute('stroke-width','6');e.setAttribute('stroke-linejoin','round');head.append(e)};
+ add('steve-expression-mouth','M408 350 Q442 341 484 349 Q490 388 448 393 Q413 389 408 350Z','#421d19','#171010');
+ add('steve-happy-mouth','M396 353 Q445 386 497 352 Q475 405 442 393 Q420 385 396 353Z','#fff','#21150f');
+ add('steve-surprised-mouth','M434 347 Q450 337 463 347 Q477 370 455 390 Q433 389 434 347Z','#3b181a','#21110c');
+ // The original eyes are individually controllable and receive subtle blink animation.
+ svg.querySelectorAll('#steve-eye-left,#steve-eye-right').forEach(e=>e.classList.add('steve-blink'));
+}
+function mount(source){current=sanitize(source);const template=document.createElement('template');template.innerHTML=current;const svg=template.content.querySelector('svg');if(!svg)throw Error('SVG missing');addExpressionArtwork(svg);figure.replaceChildren(svg);say('SVG ready · design-only preview')}
+document.querySelectorAll('[data-pose]').forEach(b=>b.onclick=()=>{figure.dataset.pose=b.dataset.pose;document.querySelectorAll('[data-pose]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));say('Preview: '+b.textContent.trim())});
+document.getElementById('animate').onclick=e=>{animated=!animated;figure.classList.toggle('is-animated',animated);e.currentTarget.setAttribute('aria-pressed',String(animated));e.currentTarget.textContent=animated?'Pause animation':'Play animation'};
+document.getElementById('reset').onclick=()=>document.querySelector('[data-pose="idle"]').click();
+document.getElementById('frame').onchange=e=>figure.classList.toggle('portrait',e.target.value==='portrait');
+document.getElementById('background').onchange=e=>{stage.className='stage';if(e.target.value!=='checker')stage.classList.add(e.target.value)};
+document.getElementById('speed').oninput=e=>{figure.style.setProperty('--speed',e.target.value);document.getElementById('speedLabel').textContent=Number(e.target.value).toFixed(1)+'×'};
+document.getElementById('export').onclick=()=>{if(!current)return;const a=document.createElement('a'),url=URL.createObjectURL(new Blob([current],{type:'image/svg+xml'}));a.href=url;a.download='sergeant-steve-master.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+document.getElementById('copy').onclick=async()=>{try{await navigator.clipboard.writeText(current);say('SVG copied')}catch{say('Clipboard unavailable; use the SVG editor box')}};
+document.getElementById('apply').onclick=()=>{try{mount(document.getElementById('source').value)}catch(e){say(e.message)}};
+document.getElementById('restore').onclick=()=>{if(master){mount(master);document.getElementById('source').value=master}};
+fetch(path,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('SVG HTTP '+r.status);return r.text()}).then(s=>{master=s;mount(s)}).catch(e=>say('Could not load master SVG: '+e.message));
+})();
+</script></body></html>

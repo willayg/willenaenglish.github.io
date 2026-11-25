@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>Willena Vocabulary Study</title>
+<script>try{const q=new URLSearchParams(location.search);if(q.get('assignment_id')||q.get('homework'))document.documentElement.classList.add('vocab-focused-boot')}catch(_){}</script>
 <link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,14 +15,19 @@
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./vocab-study.css?v=20260927-v0100">
-<link rel="stylesheet" href="./theme-pips.css?v=20260927-v0005">
+<link rel="stylesheet" href="./vocab-study.css?v=20261111-word-fragments5">
+<link rel="stylesheet" href="/students/shared/speaking-grades-guide.css?v=20261112-energy4">
+<link rel="stylesheet" href="/students/shared/speaking-best-progress.css?v=20261112-best1">
+<link rel="stylesheet" href="./theme-pips.css?v=20261101-footer1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="./auth-guard.js?v=20260925-v0004"></script>
-<script type="module" src="/students/components/student-header.js?v=20260927-vocabtheme1"></script>
+<script type="module" src="/students/components/student-header.js?v=20261116-p4-visible-scenery2"></script>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
+
+<link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261105-overdue-missions1">
+<style>.app-mission-basket-slot .dashboard-mission-basket{width:100%;max-width:none;margin:12px 0 20px}.app-mission-basket-slot:empty{display:none}</style>
 </head>
 <body>
 <div class="study-app">
@@ -42,6 +48,7 @@
       <button type="button" onclick="location.reload()">다시 불러오기</button>
     </section>
     <section id="vocabFrontMenu" class="vocab-front-menu">
+      <section id="appMissionBasket" class="app-mission-basket-slot"></section>
       <section id="vocabAdminPicker" class="vocab-admin" hidden>
         <span class="eyebrow">ADMIN PREVIEW</span>
         <select id="vocabAdminBookSelect" aria-label="Choose book">
@@ -49,9 +56,9 @@
         </select>
       </section>
 
-      <button id="vocabFrontWordTestCard" class="vocab-front-wordtest" type="button" hidden>
+      <button style="display:none!important" id="vocabFrontWordTestCard" class="vocab-front-wordtest" type="button" hidden>
         <span class="vocab-front-card-main">          <span class="vocab-front-card-copy">
-              <strong>워드 테스트 연습</strong>
+              <strong>숙제 / Homework</strong>
             <small id="vocabFrontWordTestMeta"></small>
           </span>
         </span>
@@ -70,7 +77,7 @@
         <div id="vocabFrontBookList" class="vocab-front-book-list"></div>
       </section>
 
-      <section id="vocabFrontAchievements" class="vocab-front-achievements" hidden aria-label="Vocabulary achievements">
+      <section id="vocabFrontAchievements" data-shared-achievements class="vocab-front-achievements" hidden aria-label="Vocabulary achievements">
         <div class="vocab-front-achievement">
           <img src="/shared/svgs/streak.svg?v=20260927-icons1" alt="" aria-hidden="true">
           <div><strong id="vocabFrontStreakCurrent">0</strong><small>연속 학습</small></div>
@@ -81,7 +88,7 @@
         </div>
         <div class="vocab-front-achievement vocab-front-achievement-gold">
           <img src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="" aria-hidden="true">
-          <div><strong id="vocabFrontGoldenCount">0</strong><small>gold units</small></div>
+          <div><strong id="vocabFrontGoldenCount">0</strong><small>gold</small></div>
         </div>
       </section>
     </section>
@@ -147,7 +154,7 @@
         </div>
         <div class="vocab-motivation-stat vocab-motivation-gold">
           <img class="vocab-motivation-icon" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="" aria-hidden="true">
-          <div><strong id="vocabGoldenCount">0</strong><small>gold units</small></div>
+          <div><strong id="vocabGoldenCount">0</strong><small>gold</small></div>
         </div>
       </section>
     </section>
@@ -155,9 +162,10 @@
     <section id="vocabWordTestScreen" class="vocab-home-card vocab-subscreen" hidden>
       <div class="vocab-subscreen-head">
         <button id="vocabWordTestBack" class="vocab-screen-back" type="button">← 홈</button>
-        <span>워드 테스트 연습</span>
+        <span>숙제 / Homework</span>
       </div>
 
+      <div id="vocabFocusedHomeworkToolbar" class="vocab-focused-toolbar" hidden></div>
       <section id="vocabTeacherPractice" class="vocab-teacher-practice" hidden aria-label="Word Test Study">
         <div id="vocabTeacherPracticeList" class="vocab-teacher-practice-list"></div>
       </section>
@@ -184,16 +192,17 @@
       </section>
     </section>
 
-    <div class="vocab-version">v1.00</div>
+    <div class="vocab-version">v1.19</div>
   </main>
 
   <section id="vocabLoading" class="vocab-loading" hidden aria-hidden="true" aria-live="polite">
     <div class="vocab-loading-card">
       <div class="vocab-loading-logo" aria-hidden="true"></div>
       <div class="vocab-loading-sweep" aria-hidden="true"></div>
-      <strong id="vocabLoadingText">불러오는 중...</strong>
+      <strong id="vocabLoadingText">숙제를 불러오는 중...</strong><small class="vocab-loading-subtext">선택한 숙제로 이동하고 있어요 · Opening your homework</small>
     </div>
   </section>
+  <script>if(document.documentElement.classList.contains('vocab-focused-boot')){const overlay=document.getElementById('vocabLoading');overlay.hidden=false;overlay.setAttribute('aria-hidden','false')}</script>
 
   <section id="vocabWordModal" class="vocab-word-modal" hidden aria-hidden="true">
     <div class="vocab-word-modal-card" role="dialog" aria-modal="true" aria-labelledby="vocabWordModalTitle">
@@ -216,7 +225,7 @@
           <strong id="vocabStudyTitle">단어 공부</strong>
           <small id="vocabStudyProgress">1 / 12</small>
         </div>
-        <span aria-hidden="true"></span>
+        <button id="vocabSessionHome" class="vocab-session-home" type="button" aria-label="단어 지니어스 홈으로 바로 가기">⌂ 홈</button>
       </div>
       <div class="vocab-progress-track"><div id="vocabProgressFill" class="vocab-progress-fill"></div></div>
     </header>
@@ -239,9 +248,9 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
-<script type="module" src="./theme-pips.js?v=20260927-v0001"></script>
+<script type="module" src="./theme-pips.js?v=20261101-footer1"></script>
 <script type="module">
-import('./vocab-study.js?v=20260927-v0108').catch(error=>{
+import('./vocab-study.js?v=20261124-mic-wait-tone1').catch(error=>{
   console.error('[Vocab Study] module load',error);
   const panel=document.getElementById('vocabStartupError');
   if(panel){panel.hidden=false;panel.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}
@@ -249,5 +258,11 @@ import('./vocab-study.js?v=20260927-v0108').catch(error=>{
   if(loader){loader.hidden=true;loader.setAttribute('aria-hidden','true');}
 });
 </script>
+
+<script src="/students/components/mission-basket.js?v=20261112-conversation-route4"></script>
+<script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('appMissionBasket');if(el)window.WillenaMissionBasket?.mount(el,{app:'Word Genius'})});</script>
+<script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
+<script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
 </body>
 </html>

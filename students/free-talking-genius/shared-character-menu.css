@@ -1,0 +1,310 @@
+/* One character-menu presentation for Speaking and native Free Talking V2.
+   Markup and Willo SVG are provided by shared-menu-ui.js.
+   Both modes load this exact stylesheet, last in their style cascade. */
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter.ft-character-screen{
+ width:100%; min-height:0; padding:0;
+ display:flex;align-items:center;justify-content:center;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter.ft-character-screen[hidden]{display:none!important}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-panel{
+ width:min(620px,100%);max-width:100%;padding:clamp(18px,3vw,30px);
+ display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2vw,18px);
+ border-radius:26px;text-align:center;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-panel h2{
+ margin:0;color:#285f68;font-size:clamp(22px,3.2vw,30px);line-height:1.25;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-options{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:clamp(12px,2.5vw,23px);width:100%;margin:5px 0 0;justify-items:stretch;align-items:start;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-option,
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-option[aria-pressed="true"]{
+ display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+ gap:10px;min-width:0;width:100%;min-height:0;padding:5px 3px;
+ border:0;border-radius:18px;box-shadow:none;background:transparent;
+ color:#32636c;transform:none;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-symbol{
+ width:clamp(82px,10vw,132px);height:clamp(82px,10vw,132px);
+ flex:0 0 auto;display:grid;place-items:center;padding:0;
+ box-sizing:border-box;border:9px solid #b0e7ec;outline:3px solid #dcf5f6;
+ border-radius:50%;background:#fff;color:#56afb9;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-lili .ft-character-symbol{
+ border-color:#f2c0dc;outline-color:#fceaf4;background:#fff;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-symbol svg{
+ display:block;width:100%;height:100%;max-width:100%;max-height:100%;overflow:visible;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-option strong{
+ font-size:clamp(14px,1.9vw,19px);font-weight:900;line-height:1.3;white-space:normal;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-willi strong{color:#4699a4}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-lili strong{color:#d77eac}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-option[aria-pressed="true"] .ft-character-symbol{
+ transform:scale(1.045);box-shadow:0 0 0 5px #7fcbd588;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-lili[aria-pressed="true"] .ft-character-symbol{
+ box-shadow:0 0 0 5px #e9a8ca88;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-start-container{
+ width:min(600px,100%);padding:12px;border:2px solid #d3eff1;
+ border-radius:18px;background:#f7fdfd;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-continue{
+ display:block;width:100%;min-height:55px;margin:0;
+ background:#fff;border:3px solid #a6e5eb;border-radius:14px;
+ color:#c74b93;font:900 18px Poppins,Arial,sans-serif;
+}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-continue:disabled{opacity:.42}
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-willi .ft-character-symbol,
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-lili .ft-character-symbol,
+:is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-option[aria-pressed="true"] .ft-character-symbol{
+ background:#fff;
+}
+@media(max-width:700px){
+ :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-options{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;
+ }
+ :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-symbol{
+  width:clamp(100px,27vw,136px);height:clamp(100px,27vw,136px);
+ }
+ :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-panel{padding:18px 12px;gap:13px}
+ :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-option strong{font-size:clamp(14px,3.8vw,19px)}
+}
+@media(max-width:370px){
+ :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-symbol{width:98px;height:98px}
+ :is(.free-talking-genius, #ftReleaseIntro.free-talking-genius) #ftCharacter .ft-character-panel{padding:14px 8px}
+}
+
+/* The release host must not impose an independent full-screen menu design.
+   Both activities' actual menu, title, portraits and Start button are styled
+   by the exact same rules above. Keep the native host merely as a viewport. */
+#ftReleaseIntro.free-talking-genius{
+ width:100%;margin:0;
+ background:transparent;
+ display:flex;align-items:center;justify-content:flex-start;
+ flex-direction:column;gap:0;
+}
+#ftReleaseIntro.free-talking-genius #ftReleaseNativeMenu{
+ display:block;width:100%;max-width:100%;margin:0 auto;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter{
+ min-height:0;padding:0;width:100%;margin:0;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-panel{
+ width:min(620px,100%);max-width:100%;margin:0 auto;
+ padding:clamp(18px,3vw,30px);gap:clamp(12px,2vw,18px);
+}
+/* Speaking and Free Talking have identical 2-column/4-column rules. */
+@media(max-width:700px){
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-panel{
+  padding:18px 12px;gap:13px;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-symbol{
+  width:clamp(100px,27vw,136px);height:clamp(100px,27vw,136px);
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option{
+  border:0;min-height:0;padding:5px 3px;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter h2{
+  font-size:clamp(22px,3.2vw,30px);
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-continue{
+  min-height:55px;
+ }
+}
+
+/* Dusk is a Free Talking-only unlockable; never show it in Speaking's picker. */
+.free-talking-genius #ftCharacter .ft-character-dusk[hidden]{display:none!important}
+
+/* Single authoritative responsive geometry. Legacy V1 rules use high-specificity
+   selectors and sometimes load after initial paint; lock the menu to a strict
+   grid and stop the portraits/names overflowing into adjacent cells. */
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options,
+.free-talking-genius #ftCharacter .ft-character-options{
+ display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ grid-auto-flow:row!important;
+ justify-items:stretch!important;align-items:start!important;
+ gap:16px!important;width:100%!important;min-width:0!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option,
+.free-talking-genius #ftCharacter .ft-character-option{
+ position:relative!important;inset:auto!important;float:none!important;
+ display:flex!important;flex-direction:column!important;
+ justify-content:flex-start!important;align-items:center!important;
+ flex-wrap:nowrap!important;gap:9px!important;
+ box-sizing:border-box!important;min-width:0!important;max-width:100%!important;
+ width:100%!important;height:auto!important;min-height:0!important;
+ padding:6px 3px!important;margin:0!important;
+ border:0!important;background:transparent!important;box-shadow:none!important;
+ transform:none!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol{
+ position:relative!important;inset:auto!important;
+ display:grid!important;place-items:center!important;
+ flex:none!important;box-sizing:border-box!important;
+ width:min(100%,116px)!important;height:auto!important;aspect-ratio:1!important;
+ margin:0 auto!important;transform:none!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option strong,
+.free-talking-genius #ftCharacter .ft-character-option strong{
+ display:block!important;position:static!important;float:none!important;
+ width:100%!important;max-width:100%!important;
+ min-width:0!important;margin:0!important;padding:0!important;
+ text-align:center!important;white-space:normal!important;
+ overflow-wrap:break-word!important;font-size:clamp(14px,2vw,18px)!important;
+ line-height:1.25!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option small,
+.free-talking-genius #ftCharacter .ft-character-option small{
+ position:static!important;display:block!important;
+ max-width:100%!important;text-align:center!important;
+ font-size:11px!important;line-height:1.3!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk[hidden],
+.free-talking-genius #ftCharacter .ft-character-dusk[hidden]{display:none!important}
+@media(max-width:700px){
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-panel,
+ .free-talking-genius #ftCharacter .ft-character-panel{
+  box-sizing:border-box!important;width:100%!important;max-width:620px!important;
+  padding:18px 12px!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-options,
+ .free-talking-genius #ftCharacter .ft-character-options{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:18px 10px!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol,
+ .free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol{
+  width:min(100%,112px)!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-option strong,
+ .free-talking-genius #ftCharacter .ft-character-option strong{
+  font-size:clamp(14px,3.6vw,17px)!important;
+ }
+ #ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk:not([hidden]),
+ .free-talking-genius #ftCharacter .ft-character-dusk:not([hidden]){
+  grid-column:1/-1!important;justify-self:center!important;
+  width:min(100%,170px)!important;
+ }
+}
+
+/* Locked Steve: EXACT same locked circle treatment and ? as Dusk.
+   Filter the entire symbol, not its <img>, so the ring/portrait dim together.
+   Make locked the fallback until authoritative points explicitly unlock him. */
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve:not(.ft-steve-is-unlocked) .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-steve:not(.ft-steve-is-unlocked) .ft-character-symbol{
+  filter:grayscale(1) brightness(.38) contrast(1.2)!important;
+  opacity:.72!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve:not(.ft-steve-is-unlocked) .ft-character-symbol::after,
+.free-talking-genius #ftCharacter .ft-character-steve:not(.ft-steve-is-unlocked) .ft-character-symbol::after{
+  content:'?'!important;position:absolute!important;inset:0!important;
+  display:grid!important;place-items:center!important;
+  font-size:clamp(27px,5vw,42px)!important;font-weight:800!important;
+  color:#e8e4f5!important;text-shadow:0 2px 16px #0b1029,0 0 12px #0b1029!important;
+  pointer-events:none!important;z-index:3!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve:not(.ft-steve-is-unlocked) strong,
+.free-talking-genius #ftCharacter .ft-character-steve:not(.ft-steve-is-unlocked) strong{
+  color:#9794a5!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-unlocked .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-unlocked .ft-character-symbol{
+  filter:none!important;opacity:1!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-unlocked .ft-character-symbol::after,
+.free-talking-genius #ftCharacter .ft-character-steve.ft-steve-is-unlocked .ft-character-symbol::after{
+  content:none!important;display:none!important;
+}
+
+/* Locked Dusk: preserve the exact artwork, but obscure it until earned. */
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked .ft-character-symbol{
+  filter:grayscale(1) brightness(.38) contrast(1.2)!important;
+  opacity:.72!important;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked .ft-character-symbol::after,
+.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked .ft-character-symbol::after{
+  content:'?';position:absolute;inset:0;display:grid;place-items:center;
+  font-size:clamp(27px,5vw,42px);font-weight:800;color:#e8e4f5;
+  text-shadow:0 2px 16px #0b1029,0 0 12px #0b1029;pointer-events:none;
+}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked strong,
+.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked strong{color:#9794a5!important}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked,
+.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-locked{cursor:pointer!important}
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-dusk-lock[hidden],
+.free-talking-genius #ftCharacter .ft-dusk-lock[hidden]{display:none!important}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-dialog[hidden]{display:none!important}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-dialog{
+ position:fixed;inset:0;z-index:2147480000;display:grid;place-items:center;
+ padding:20px;box-sizing:border-box;background:rgba(13,14,32,.78);
+ backdrop-filter:blur(5px);
+}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-panel{
+ box-sizing:border-box;width:min(100%,340px);padding:30px 22px 24px;
+ border:1px solid rgba(205,188,250,.5);border-radius:22px;
+ background:#24223a;color:#fff;text-align:center;
+ box-shadow:0 22px 70px rgba(0,0,0,.5);
+}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-icon{
+ display:block;font-size:38px;color:#c2a6ff;margin-bottom:8px;
+}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-panel h3{
+ margin:0 0 12px;font-size:23px;color:#fff;
+}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-panel p{
+ margin:0 0 22px;line-height:1.6;color:#e4e0ef;font-size:15px;
+}
+.free-talking-genius #ftCharacter .ft-dusk-unlock-close{
+ border:0;border-radius:12px;background:#c3a6ff;color:#201b32;
+ font-size:16px;font-weight:700;min-width:130px;min-height:45px;cursor:pointer;
+}
+
+/* Dusk shares the same one-tap selection ring as Bunny Fox, Pigfish and Willo.
+   Its transparent portrait stylesheet previously forced box-shadow:none!important,
+   which suppressed the normal selected-state highlight. */
+#ftReleaseIntro.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-unlocked[aria-pressed="true"] .ft-character-symbol,
+.free-talking-genius #ftCharacter .ft-character-dusk.ft-dusk-is-unlocked[aria-pressed="true"] .ft-character-symbol{
+  box-shadow:0 0 0 5px #7fcbd588!important;
+  transform:scale(1.045)!important;
+}
+
+/* Steve is intentionally absent from Structured Speaking. The shared menu creates him hidden;
+   this specificity defeats legacy !important flex rules in both app layouts. */
+#ftCharacter .ft-character-steve[hidden]{display:none!important}
+
+/* Shared picker is the single source of truth for Dusk and Steve unlocks. */
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve .ft-character-symbol{
+ position:relative!important;isolation:isolate!important;overflow:hidden!important;
+ background:#fff!important;border:9px solid #59c9c8!important;outline:3px solid #d7f5f3!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve .ft-character-symbol::before{
+ content:none!important;display:none!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve .ft-steve-portrait{
+ display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;
+ position:relative!important;z-index:1!important;transform:none!important;filter:none!important;opacity:1!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve .ft-steve-locked-mark{
+ position:absolute!important;inset:0!important;z-index:3!important;display:grid!important;place-items:center!important;
+ font-size:clamp(27px,5vw,42px)!important;font-weight:800!important;color:#e8e4f5!important;
+ text-shadow:0 2px 16px #0b1029,0 0 12px #0b1029!important;pointer-events:none!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve .ft-steve-locked-mark[hidden]{
+ display:none!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve:not(.ft-steve-is-unlocked) .ft-character-symbol{
+ filter:grayscale(1) brightness(.38) contrast(1.2)!important;opacity:.72!important;
+}
+:is(#ftReleaseIntro.free-talking-genius,.free-talking-genius) #ftCharacter .ft-character-steve.ft-steve-is-unlocked .ft-character-symbol{
+ filter:none!important;opacity:1!important;
+}

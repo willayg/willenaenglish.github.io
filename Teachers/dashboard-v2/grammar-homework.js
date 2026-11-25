@@ -1,0 +1,197 @@
+/* Grammar Genius homework. Existing stage progress remains the sole scoring source. */
+(()=>{'use strict';
+const OP='https://fiieuiktlsivwfgyivai.supabase.co',KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const CATALOG='https://gxwfsqxyuufqtitspfqg.supabase.co/functions/v1/grammar-foundations-catalog';
+const EDGE=OP+'/functions/v1/grammar-foundations-teacher-v1';
+const $=(s,r=document)=>r.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const state={catalog:null,classes:null,items:[],mode:'manage',filter:'current',manageView:'batches',studentRows:[],studentSearch:'',studentClass:'',expandedStudentId:'',loading:false,details:new Map()};
+const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+async function refreshToken(){const r=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh'):fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include'}));const d=await r.json();if(!r.ok||!d.access_token)throw Error('Please sign in again');window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');return d.access_token}
+async function request(url,options={}){
+ let access=token()||await refreshToken();
+ async function run(t){return fetch(url,{...options,headers:{apikey:KEY,Authorization:'Bearer '+t,...options.headers},cache:'no-store'})}
+ let r=await run(access);if(r.status===401){access=await refreshToken();r=await run(access)}
+ const body=await r.json().catch(()=>({}));if(!r.ok)throw Error(body?.message||body?.error||'Request failed ('+r.status+')');return body;
+}
+const table=(q='',options={})=>request(OP+'/rest/v1/grammar_foundation_homework'+q,options);
+const api=(path,opts)=>request(OP+'/rest/v1/'+path,opts);
+const title=m=>m.koreanTitle||m.title||m.englishTitle||m.id;
+const stitle=s=>s.koreanTitle||s.title||s.englishTitle||'Level '+s.number;
+function message(t,warning=false){const node=$('#gfHwMessage');if(node){node.textContent=t;node.classList.toggle('gf-hw-error',warning)}}
+async function catalog(){if(state.catalog)return state.catalog;const r=await fetch(CATALOG+'?_='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('Grammar catalog unavailable');const d=await r.json();state.catalog=Array.isArray(d.sets)?d.sets:[];return state.catalog}
+async function classes(){
+ if(state.classes)return state.classes;
+ try{const d=await request(EDGE+'?action=students&_='+Date.now());const c=[...new Set((d.students||[]).filter(s=>s.class).map(s=>String(s.class)))];if(c.length)return state.classes=[...new Set([...c,'Test'])].sort()}catch(e){console.warn('[Grammar homework] student class lookup',e)}
+ const rows=await api('classes?select=name&status=eq.active&order=sort_order.asc');
+ state.classes=[...new Set([...rows.map(c=>c.name).filter(Boolean),'Test'])];return state.classes;
+}
+function root(){return $('#gfLegacyHomework')}
+async function mount(sub){
+ state.mode=sub;state.details.clear();const el=root();if(!el)return;
+ el.innerHTML='<div class="gf-hw-loading">Loading Grammar Genius homework…</div>';
+ try{if(sub==='create')await renderCreate();else await renderManage()}catch(e){if(root())root().innerHTML='<div class="gf-hw-error">Could not load assignments: '+esc(e.message)+'</div>'}
+}
+async function renderCreate(){
+ const [mods,names]=await Promise.all([catalog(),classes()]);const el=root();if(!el||state.mode!=='create')return;
+ el.innerHTML='<form id="gfHwForm" class="gf-hw-form"><div class="gf-hw-form-grid"><label>Class<select required id="gfHwClass" class="control"><option value="">Choose class</option>'+names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('')+'</select></label><label>Completion requirement<select id="gfHwGoal" class="control"><option value="80">Pass · 80%</option><option value="100">Gold · 100%</option></select></label><label>Due date<input required type="date" id="gfHwDue" class="control"></label></div><div class="gf-hw-picker-top"><div><strong>Select grammar points and levels</strong><small>Each selected level becomes a separate student homework item.</small></div><span id="gfHwSelected">0 selected</span></div><div class="gf-hw-modules">'+mods.map(m=>'<fieldset class="gf-hw-module"><legend>'+esc(title(m))+' <small>'+esc(m.englishTitle||'')+'</small></legend><label class="gf-hw-all"><input type="checkbox" data-all="'+esc(m.id)+'"> All levels</label><div class="gf-hw-levels">'+(m.stages||[]).map(s=>'<label><input type="checkbox" data-stage="'+esc(s.id)+'" data-module="'+esc(m.id)+'"><span>Level '+esc(s.number)+' · '+esc(stitle(s))+'</span></label>').join('')+'</div></fieldset>').join('')+'</div><div class="gf-hw-pre-assignment"><div id="gfHwPreviewReport" aria-live="polite"></div></div><div class="gf-hw-footer"><button type="submit" id="gfHwSubmit" class="control ua-primary">Assign selected missions →</button><button type="button" class="control gf-hw-view" id="gfHwView" hidden>View assignments →</button><span id="gfHwMessage" role="status" aria-live="polite"></span></div></form>';
+ const d=new Date(Date.now()+7*864e5);$('#gfHwDue',el).value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ let previewSeq=0,previewTimer=null;
+ const schedulePreview=()=>{const stamp=++previewSeq;clearTimeout(previewTimer);const host=$('#gfHwPreviewReport',el);if(!$('#gfHwClass',el).value||!el.querySelector('[data-stage]:checked')){host.replaceChildren();return}host.textContent='Loading class progress…';previewTimer=setTimeout(()=>void loadPreview(stamp),220)};
+ const count=()=>{const n=el.querySelectorAll('[data-stage]:checked').length;$('#gfHwSelected',el).textContent=n+' selected';const button=$('#gfHwSubmit',el);button.textContent=n?'Assign Mission · '+n+' level'+(n===1?'':'s')+' →':'Select levels for mission';button.disabled=!n||state.loading;if(n)$('#gfHwView',el).hidden=true};count();
+ $('#gfHwView',el).onclick=()=>document.querySelector('#universalAssignments [data-ua-sub="manage"]')?.click();
+ el.querySelectorAll('[data-all]').forEach(x=>x.onchange=()=>{el.querySelectorAll('[data-module="'+CSS.escape(x.dataset.all)+'"]').forEach(y=>y.checked=x.checked);count();schedulePreview()});
+ el.querySelectorAll('[data-stage]').forEach(x=>x.onchange=()=>{const all=el.querySelector('[data-all="'+CSS.escape(x.dataset.module)+'"]');const children=[...el.querySelectorAll('[data-module="'+CSS.escape(x.dataset.module)+'"]')];if(all)all.checked=children.every(c=>c.checked);count();schedulePreview()});
+ $('#gfHwClass',el).addEventListener('change',schedulePreview);
+ async function loadPreview(stamp){
+  const host=$('#gfHwPreviewReport',el);
+  const klass=$('#gfHwClass',el).value,stages=[...el.querySelectorAll('[data-stage]:checked')].map(x=>String(x.dataset.stage));
+  if(!klass||!stages.length){host.replaceChildren();return}
+  host.textContent='Checking previous student results…';
+  try{
+   const all=await table('?select=id,class_name,stage_id,created_at&class_name=eq.'+encodeURIComponent(klass)+'&order=created_at.desc&limit=1000');
+   const chosen=new Map();
+   (all||[]).filter(a=>stages.includes(String(a.stage_id))).forEach(a=>{if(!chosen.has(String(a.stage_id)))chosen.set(String(a.stage_id),a.id)});
+   const ids=[...chosen.values()];
+   const data=ids.length?await request(OP+'/rest/v1/rpc/gf_hw_progress_batch_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_ids:ids})}):[];
+   const people=new Map();
+   (Array.isArray(data)?data:[]).forEach(a=>(a.students||[]).forEach(st=>{
+    const name=String(st.name||st.korean_name||'').trim();
+    if(!name)return;
+    const pct=Number(st.percent);
+    if(!Number.isFinite(pct))return;
+    const prev=people.get(name)||{name,total:0,count:0};prev.total+=Math.min(100,Math.max(0,pct));prev.count++;people.set(name,prev)
+   }));
+   if(stamp!==previewSeq||!host.isConnected)return;
+   window.WillenaGeniusHomeworkCard?.classReadiness(host,[...people.values()].map(p=>({name:p.name,percent:p.total/p.count})),
+    'Previous Grammar Foundations results for selected levels; not a new assessment.');
+  }catch(error){if(stamp===previewSeq)host.textContent='Previous progress unavailable: '+error.message}
+ }
+ $('#gfHwForm',el).onsubmit=submit;
+}
+async function submit(e){
+ e.preventDefault();if(state.loading)return;
+ const el=root(),names=await catalog(),klass=$('#gfHwClass',el).value,goal=Number($('#gfHwGoal',el).value),date=$('#gfHwDue',el).value;
+ const chosen=[...el.querySelectorAll('[data-stage]:checked')].map(input=>{const m=names.find(x=>String(x.id)===input.dataset.module),s=m?.stages?.find(x=>String(x.id)===input.dataset.stage);return m&&s?{m,s}:null}).filter(Boolean);
+ if(!klass||!date||!chosen.length){message('Choose a class, due date, and at least one level.',true);return}
+ state.loading=true;$('#gfHwSubmit',el).disabled=true;message('Creating '+chosen.length+' level assignments…');
+ try{
+  const batch=crypto.randomUUID(),due_at=new Date(date+'T23:59:59').toISOString();
+  const creator=jwtUserId(token());if(!creator)throw Error('Teacher session is unavailable');
+  const rows=chosen.map(({m,s})=>({batch_id:batch,class_name:klass,module_id:String(m.id),stage_id:String(s.id),module_title:title(m),stage_title:stitle(s),completion_percent:goal,due_at,created_by:creator}));
+  await table('',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(rows)});
+  const confirmed=await table('?select=id&batch_id=eq.'+encodeURIComponent(batch)+'&limit='+rows.length);
+  if(!Array.isArray(confirmed)||confirmed.length!==rows.length)throw Error('The server did not confirm all '+rows.length+' items. Please check Manage Homework before retrying.');
+  message('Assigned '+confirmed.length+' separate homework item'+(confirmed.length===1?'':'s')+' to '+klass+'.');
+  window.dispatchEvent(new CustomEvent('willena:assignment-created',{detail:{message:confirmed.length+' Grammar Genius items · '+klass}}));
+  el.querySelectorAll('[data-stage],[data-all]').forEach(x=>x.checked=false);
+  $('#gfHwSelected',el).textContent='0 selected';
+  $('#gfHwView',el).hidden=false;
+ }catch(error){message('Could not assign: '+error.message,true)}finally{state.loading=false;const selected=el.querySelectorAll('[data-stage]:checked').length;$('#gfHwSubmit',el).disabled=!selected;$('#gfHwSubmit',el).textContent=selected?'Assign Mission · '+selected+' level'+(selected===1?'':'s')+' →':'Select levels for mission'}
+}
+function jwtUserId(t){try{const part=t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(atob(part)).sub||''}catch{return''}}
+
+async function renderManage(){
+ const el=root();if(!el)return;
+ const history=state.filter==='history';
+ const [assignments,overview]=await Promise.all([
+   table('?select=*&order=created_at.desc&limit=1000'),
+   request(OP+'/rest/v1/rpc/gf_hw_student_overview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_history:history})})
+ ]);
+ if(!root()||state.mode!=='manage'||history!==(state.filter==='history'))return;
+ if(!Array.isArray(overview?.rows))throw Error('Student homework summary unavailable');
+ state.items=Array.isArray(assignments)?assignments:[];
+ state.studentRows=overview.rows;
+ paintManage();
+}
+function paintManage(){
+ const el=root();if(!el)return;
+ const history=state.filter==='history';
+ const status='<div class="assignment-status-tabs"><button type="button" class="assignment-status-tab'+(!history?' active':'')+'" data-gf-filter="current">Current</button><button type="button" class="assignment-status-tab'+(history?' active':'')+'" data-gf-filter="history">History</button></div>';
+ const view='<div class="gf-hw-view-tabs" role="group" aria-label="Homework display"><button type="button" class="gf-hw-view-tab'+(state.manageView==='students'?' active':'')+'" data-gf-view="students">By student</button><button type="button" class="gf-hw-view-tab'+(state.manageView==='batches'?' active':'')+'" data-gf-view="batches">By assignment</button></div>';
+ el.innerHTML='<div class="gf-hw-toolbar">'+status+view+'<button class="control" id="gfHwRefresh" type="button">Refresh</button></div><div id="gfHwManageBody"></div>';
+ el.querySelectorAll('[data-gf-filter]').forEach(b=>b.onclick=()=>{if(state.filter===b.dataset.gfFilter)return;state.filter=b.dataset.gfFilter;state.expandedStudentId='';void mount('manage')});
+ el.querySelectorAll('[data-gf-view]').forEach(b=>b.onclick=()=>{if(state.manageView===b.dataset.gfView)return;state.manageView=b.dataset.gfView;paintManage()});
+ $('#gfHwRefresh',el).onclick=()=>mount('manage');
+ if(state.manageView==='students'){paintStudentView();return}
+ paintBatchView();
+}
+function paintStudentView(){
+ const el=$('#gfHwManageBody');if(!el)return;
+ const studentRenderer=window.WillenaGrammarHomeworkStudentCards;
+ if(!studentRenderer){el.innerHTML='<div class="gf-hw-error">Student homework view is unavailable. Please refresh the dashboard.</div>';return}
+ el.innerHTML=studentRenderer.render(state.studentRows,{history:state.filter==='history',expandedId:state.expandedStudentId,search:state.studentSearch,className:state.studentClass});
+ const classSelect=$('#gfHwStudentClass',el),search=$('#gfHwStudentSearch',el);
+ if(classSelect)classSelect.onchange=()=>{state.studentClass=classSelect.value;state.expandedStudentId='';paintStudentView()};
+ if(search)search.oninput=()=>{const pos=search.selectionStart;state.studentSearch=search.value;paintStudentView();const again=$('#gfHwStudentSearch',el);if(again){again.focus();try{again.setSelectionRange(pos,pos)}catch{}}};
+ el.querySelectorAll('[data-gf-student]').forEach(btn=>btn.onclick=()=>{
+   const id=btn.dataset.gfStudent;
+   state.expandedStudentId=state.expandedStudentId===id?'':id;
+   paintStudentView();
+   el.querySelectorAll('[data-gf-student]').forEach(next=>{if(next.dataset.gfStudent===id)next.focus({preventScroll:true})});
+ });
+}
+function grammarStudentPanel(shared,data){
+ const all=Array.isArray(data?.students)?data.students:[];
+ const total=Number(data?.total)||0,done=Number(data?.completed)||0;
+ const students=all.map(st=>({
+  id:st.student_id||st.id||'',name:st.name||st.korean_name||'Student',
+  percent:st.percent!==null&&st.percent!==undefined&&st.percent!==''&&Number.isFinite(Number(st.percent))?Number(st.percent):(st.complete===true?100:null)
+ }));
+ return shared.progressPanel({students,average:total>0?100*done/total:null,completed:done,
+  notStarted:all.filter(st=>!st.attempts&&!st.complete).length,label:'Class progress',summary:done+'/'+total+' students completed'});
+}
+async function paintBatchView(){
+ const el=$('#gfHwManageBody');if(!el)return;
+ const entries=state.items.filter(a=>state.filter==='history'?!a.active:a.active);
+ const shared=window.WillenaGeniusHomeworkCard;
+ if(!shared){el.innerHTML='<div class="gf-hw-error">Shared homework cards unavailable.</div>';return}
+ el.innerHTML='<div class="ua-genius-manage-list">'+shared.groupByDate(entries,a=>shared.card({
+  id:a.id,className:a.class_name,qrUrl:'https://students.willenaenglish.com/students/grammar-foundations/?homework='+encodeURIComponent(a.id),
+  task:[a.module_title,a.stage_title].filter(Boolean).join(' · '),
+  dueAt:a.due_at,createdBy:a.created_by,progressLabel:'Student progress',
+  body:'<div id="gfHwDetail-'+esc(a.id)+'" class="gf-hw-students"></div>'
+ }))+'</div>';
+ void shared.hydrateTeachers(el);
+ const cards=[...el.querySelectorAll('.genius-homework-card')];
+ // Batch existing authorized per-assignment results; use original RPCs on failure.
+ if(entries.length){
+  try{
+   const batch=await request(OP+'/rest/v1/rpc/gf_hw_progress_batch_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_ids:entries.map(a=>a.id)})});
+   if(!Array.isArray(batch))throw Error('Invalid batch response');
+   const lookup=new Map(batch.map(data=>[String(data.assignment_id),data]));
+   for(const a of entries){
+    const card=cards.find(c=>c.dataset.geniusCard===String(a.id));
+    if(!card||!card.isConnected)continue;
+    const data=lookup.get(String(a.id));if(!data)continue;
+    const total=Number(data.total)||0,done=Number(data.completed)||0;
+    shared.updateRing(a.id,total>0?100*done/total:null,el);
+    const detail=card.querySelector('#gfHwDetail-'+CSS.escape(String(a.id)));
+    if(detail)detail.innerHTML=grammarStudentPanel(shared,data);
+   }
+   return;
+  }catch(error){console.warn('Grammar batch unavailable, falling back',error);}
+ }
+ // Class progress is calculated from each assignment's actual pass records.
+ let index=0;
+ async function work(){
+  while(index<entries.length){
+   const a=entries[index++],card=cards.find(c=>c.dataset.geniusCard===String(a.id));
+   if(!card||!card.isConnected)return;
+   try{
+    const data=await request(OP+'/rest/v1/rpc/gf_hw_progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_id:a.id})});
+    if(!card.isConnected)return;
+    const total=Number(data.total)||0,done=Number(data.completed)||0;
+    shared.updateRing(a.id,total>0?100*done/total:null,el);
+    const detail=card.querySelector('#gfHwDetail-'+CSS.escape(String(a.id)));
+    if(detail){
+     detail.innerHTML=grammarStudentPanel(shared,data);
+    }
+   }catch(e){
+    const detail=card.querySelector('.ghc-content');if(detail)detail.textContent='Unable to load progress: '+e.message;
+   }
+  }
+ }
+ void Promise.all(Array.from({length:Math.min(4,entries.length)},work));
+}
+window.addEventListener('ua:grammar-foundations-mounted',e=>{void mount(e.detail?.sub||'manage')});
+})();

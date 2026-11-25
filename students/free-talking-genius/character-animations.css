@@ -1,0 +1,430 @@
+/* Exact demo animations (unmodified keyframes and character rules). */
+#ftTurnCircle .bf-actor {position:absolute;z-index:3;top:50%;left:50%;width:clamp(185px,28vw,245px);height:clamp(185px,28vw,245px);transform:translate(-50%,-50%);pointer-events:none;display:block}
+.bf-svg {width:100%;height:100%;overflow:visible}
+.bf-svg g{transform-box:view-box}
+.bf-ear-left{transform-origin:158px 254px;animation:bfEarLeft 5.3s ease-in-out infinite}
+.bf-ear-right{transform-origin:456px 260px;animation:bfEarRight 6.1s ease-in-out infinite}
+.bf-tail{transform-origin:515px 715px;animation:bfTail 3.6s ease-in-out infinite}
+.bf-body{transform-origin:342px 743px;animation:bfBreathe 3.25s ease-in-out infinite}
+.bf-head{transform-origin:301px 478px;animation:bfHead 5s ease-in-out infinite}
+.bf-eyes{transform-origin:300px 330px;animation:bfBlink 5.2s infinite}
+.bf-talk-mouth {opacity:0}.bf-blush{opacity:0;transition:opacity .2s}
+@keyframes bfEarLeft {0%,77%,100%{transform:rotate(0)}81%{transform:rotate(-7deg)}86%{transform:rotate(3deg)}}
+@keyframes bfEarRight {0%,73%,100%{transform:rotate(0)}78%{transform:rotate(6deg)}85%{transform:rotate(-3deg)}}
+@keyframes bfTail{0%,100%{transform:rotate(-2deg)}45%{transform:rotate(5deg)}73%{transform:rotate(-5deg)}}
+@keyframes bfBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.013,.989)}}
+@keyframes bfHead{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1deg) translateY(-3px)}}
+@keyframes bfBlink{0%,27%,29%,74%,76%,100%{transform:scaleY(1)}28%,75%{transform:scaleY(.07)}}
+@keyframes bfListen{0%,100%{transform:rotate(-8deg) translate(-3px,-6px)}50%{transform:rotate(-5deg) translate(1px,-4px)}}
+@keyframes bfThink{0%,100%{transform:rotate(9deg) translateY(-2px)}50%{transform:rotate(11deg) translateY(1px)}}
+@keyframes bfJump{0%,100%{transform:translateY(0)}30%{transform:translateY(-25px)}55%{transform:translateY(0)}75%{transform:translateY(-12px)}}
+@keyframes bfTalk{0%,100%{transform:scaleY(.3)}25%{transform:scaleY(1.5)}55%{transform:scaleY(.5)}80%{transform:scaleY(1.8)}}
+.bf-actor[data-state="listening"] .bf-head{animation:bfListen 2.1s ease-in-out infinite}
+.bf-actor[data-state="thinking"] .bf-head{animation:bfThink 2.6s ease-in-out infinite}
+.bf-actor[data-state="speaking"] .bf-talk-mouth{opacity:1}
+.bf-actor[data-state="speaking"] .bf-rest-mouth{opacity:0}
+.bf-actor[data-state="speaking"] .bf-talk-mouth ellipse{transform-box:fill-box;transform-origin:center;animation:bfTalk .5s infinite}
+.bf-actor[data-state="celebrating"] .bf-svg{animation:bfJump 1.1s}
+.bf-actor[data-state="celebrating"] .bf-blush{opacity:.7}
+.pf-svg{overflow:visible}
+.pf-svg .pf-tail{transform-origin:768px 557px;animation:pfWag 2.7s ease-in-out infinite}
+.pf-svg .pf-fins{animation:none!important}
+.pf-svg .pf-front-fin{transform-origin:549px 585px;animation:pfFin 2.2s ease-in-out infinite}
+.pf-svg .pf-float{animation:pfSwim 3.4s ease-in-out infinite}
+.pf-svg .pf-eyes{transform-origin:215px 397px;animation:pfBlink 5.4s infinite}
+.pf-svg .pf-talk-mouth {opacity:0}
+.pf-svg .pf-rest-mouth{opacity:1}
+.bf-actor[data-state="speaking"] .pf-svg .pf-talk-mouth{opacity:1}
+.bf-actor[data-state="speaking"] .pf-svg .pf-rest-mouth{opacity:0}
+.bf-actor[data-state="speaking"] .pf-svg .pf-talk-mouth{transform-origin:175px 649px;animation:pfTalk .35s ease-in-out infinite}
+.bf-actor[data-state="listening"] .pf-svg .pf-float{animation:pfListen 2.1s ease-in-out infinite}
+.bf-actor[data-state="thinking"] .pf-svg .pf-float{animation:pfThink 2.5s ease-in-out infinite}
+.bf-actor[data-state="celebrating"] .pf-svg{animation:pfCelebrate 1.1s ease-in-out}
+@keyframes pfSwim{0%,100%{transform:translateY(2px) rotate(-.4deg)}50%{transform:translateY(-6px) rotate(.4deg)}}
+@keyframes pfWag{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(4deg)}}
+@keyframes pfFin{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(3deg)}}
+@keyframes pfBlink{0%,33%,35%,82%,84%,100%{transform:scaleY(1)}34%,83%{transform:scaleY(.08)}}
+@keyframes pfTalk{0%,100%{transform:scaleY(.45)}42%{transform:scaleY(1.4)}72%{transform:scaleY(.7)}}
+@keyframes pfListen{0%,100%{transform:rotate(-5deg) translateY(-4px)}50%{transform:rotate(-2deg) translateY(1px)}}
+@keyframes pfThink{0%,100%{transform:rotate(3deg)}50%{transform:rotate(7deg) translateY(-4px)}}
+@keyframes pfCelebrate{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-20px) rotate(-7deg)}65%{transform:translateY(-7px) rotate(7deg)}}
+@media(prefers-reduced-motion:reduce){.pf-svg *{animation:none!important}}
+
+/* Integration wrapper: same animations, no visible circle or extra ring. */
+.free-talking-genius #ftTurnCircle .bf-actor{position:absolute;z-index:3;top:50%;left:50%;width:100%;height:100%;transform:translate(-50%,-50%);pointer-events:none;display:block;filter:drop-shadow(0 0 8px rgba(108,229,240,.65)) drop-shadow(0 0 18px rgba(151,244,249,.48))}
+.free-talking-genius #ftTurnCircle[data-phase="student"] .bf-actor,.free-talking-genius #ftTurnCircle[data-listening="true"] .bf-actor{filter:drop-shadow(0 0 10px rgba(92,227,238,.85)) drop-shadow(0 0 23px rgba(137,241,248,.65))}
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle,
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle{
+ border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;background-image:none!important;overflow:visible!important;animation:none!important;isolation:isolate;width:clamp(205px,35vw,255px)!important;height:clamp(205px,35vw,255px)!important;
+}
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle::before,
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle::after,
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle::before,
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle::after{content:none!important;display:none!important}
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle :is(.ft-circle-glow,.ft-orbit-visual,.ft-circle-start,.ft-circle-ai,.ft-circle-mic,.ft-circle-thinking,.ft-circle-score,.ft-record-countdown),
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle :is(.ft-circle-glow,.ft-orbit-visual,.ft-circle-start,.ft-circle-ai,.ft-circle-mic,.ft-circle-thinking,.ft-circle-score,.ft-record-countdown){display:none!important}
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle:focus-visible,
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle:focus-visible{outline:0!important}
+.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle:focus-visible .bf-actor,
+.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle:focus-visible .bf-actor{filter:drop-shadow(0 0 13px rgba(100,232,241,.95))!important}
+.free-talking-genius .ft-character-symbol:has(.bf-svg){display:block;width:min(100%,95px);height:95px;overflow:visible}
+.free-talking-genius .ft-character-symbol .bf-svg{width:100%;height:100%}
+@media(max-width:600px){.free-talking-genius #ftSession[data-character="bunny-v3"] #ftTurnCircle,.free-talking-genius #ftSession[data-character="pigfish"] #ftTurnCircle{width:220px!important;height:220px!important}}
+@media(prefers-reduced-motion:reduce){.free-talking-genius .bf-svg *{animation:none!important}}
+
+/* Selection portraits retain exact character SVGs without round masks. */
+.free-talking-genius #ftCharacter .ft-character-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.free-talking-genius #ftCharacter .ft-character-option{min-height:170px;padding:13px 8px}
+.free-talking-genius #ftCharacter .ft-character-symbol{width:110px;height:110px;max-width:100%;border:0;outline:0;border-radius:0;background:transparent;overflow:visible}
+.free-talking-genius #ftCharacter .ft-character-symbol .bf-svg{display:block;width:100%;height:100%;overflow:visible}
+.free-talking-genius #ftCharacter .ft-willi-portrait{border:0;outline:0}
+.free-talking-genius #ftCharacter .ft-willi-portrait svg{width:90px;height:90px;max-width:100%}
+@media(max-width:620px){.free-talking-genius #ftCharacter .ft-character-options{gap:6px}.free-talking-genius #ftCharacter .ft-character-option{min-height:145px;padding:8px 4px;font-size:12px}.free-talking-genius #ftCharacter .ft-character-symbol{width:85px;height:85px}}
+
+/* Keep Willi's original circle entirely untouched. */
+.free-talking-genius #ftTurnCircle .bf-actor[hidden]{display:none!important}
+
+/* Wider desktop character panel; readable stacked cards on phones. */
+@media(min-width:701px){
+ .free-talking-genius #ftCharacter .ft-character-panel{
+  width:min(920px,100%)!important;
+  max-width:none!important;
+ }
+ .free-talking-genius #ftCharacter .ft-character-options{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:20px;
+ }
+ .free-talking-genius #ftCharacter .ft-character-option{
+  min-height:205px;
+ }
+}
+@media(max-width:700px){
+ .free-talking-genius #ftCharacter{
+  padding:18px 12px!important;
+ }
+ .free-talking-genius #ftCharacter .ft-character-panel{
+  width:100%!important;
+  padding:22px 16px!important;
+  gap:12px;
+ }
+ .free-talking-genius #ftCharacter .ft-character-options{
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:11px!important;
+  margin:8px 0!important;
+ }
+ .free-talking-genius #ftCharacter .ft-character-option{
+  min-height:110px!important;
+  display:flex!important;
+  flex-direction:row!important;
+  justify-content:flex-start!important;
+  align-items:center!important;
+  gap:18px!important;
+  padding:10px 20px!important;
+  border-radius:20px!important;
+ }
+ .free-talking-genius #ftCharacter .ft-character-symbol{
+  width:94px!important;height:94px!important;
+  min-width:94px!important;max-width:94px!important;
+  flex:0 0 94px!important;
+ }
+ .free-talking-genius #ftCharacter .ft-character-option strong{
+  font-size:clamp(19px,5vw,25px)!important;
+  text-align:left;
+ }
+ .free-talking-genius #ftCharacter .ft-character-start-container{
+  width:100%;
+ }
+}
+
+/* AI Willi: the portrait SVG owns all its rings. Disable the legacy
+   border/outline on its wrapper, which drew an off-centre extra circle. */
+.free-talking-genius #ftCharacter .ft-character-option .ft-willi-portrait,
+.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"] .ft-willi-portrait{
+ display:grid!important;place-items:center!important;
+ box-sizing:border-box!important;
+ padding:0!important;
+ border:0!important;outline:0!important;box-shadow:none!important;
+ border-radius:0!important;background:transparent!important;
+ transform:none!important;
+}
+.free-talking-genius #ftCharacter .ft-willi-portrait svg{
+ display:block!important;
+ width:100%!important;height:100%!important;
+ max-width:100%!important;
+ margin:0!important;padding:0!important;
+ transform:none!important;transform-origin:center center!important;
+}
+
+/* Identical round selection halo to the other character portraits.
+   Only the portrait circle highlights; no full button/background highlight. */
+.free-talking-genius #ftCharacter .ft-character-willi[aria-pressed="true"] .ft-willi-portrait{
+ border-radius:50%!important;
+ transform:scale(1.045)!important;
+ box-shadow:0 0 0 5px #7fcbd588!important;
+}
+
+/* Character selection: circles are BACKDROP layers, not borders drawn over art. */
+.free-talking-genius #ftCharacter .ft-character-option{
+ -webkit-tap-highlight-color:transparent!important;
+ touch-action:manipulation;
+ -webkit-appearance:none;
+ appearance:none;
+}
+.free-talking-genius #ftCharacter .ft-character-option:active{
+ background:#fff!important;
+}
+.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol:has(.bf-svg){
+ position:relative!important;
+ isolation:isolate!important;
+ border:0!important;outline:0!important;box-shadow:none!important;
+ border-radius:50%!important;background:transparent!important;
+ overflow:visible!important;
+ -webkit-tap-highlight-color:transparent!important;
+}
+.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol:has(.bf-svg)::before{
+ content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+ box-sizing:border-box;border-radius:50%;
+ background:#e8f9fb;border:8px solid #aee8ed;
+}
+.free-talking-genius #ftCharacter .ft-character-lili .ft-character-symbol::before{
+ background:#fff1f8!important;border-color:#f1bedb!important;
+}
+.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol .bf-svg{
+ position:relative!important;z-index:1!important;
+ display:block;overflow:visible!important;
+}
+.free-talking-genius #ftCharacter .ft-character-option[aria-pressed="true"] .ft-character-symbol:has(.bf-svg){
+ box-shadow:0 0 0 5px #7fcbd588!important;
+ transform:scale(1.045)!important;
+}
+.free-talking-genius #ftCharacter .ft-character-lili[aria-pressed="true"] .ft-character-symbol:has(.bf-svg){
+ box-shadow:0 0 0 5px #e9a8ca88!important;
+}
+
+/* AI Willy robot head: separate from Willo's original voice-circle and the two unchanged animals. */
+.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle{border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;background-image:none!important;overflow:visible!important;animation:none!important;isolation:isolate;width:clamp(205px,35vw,255px)!important;height:clamp(205px,35vw,255px)!important}
+.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle::before,.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle::after{display:none!important;content:none!important}
+.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle :is(.ft-circle-glow,.ft-orbit-visual,.ft-circle-start,.ft-circle-ai,.ft-circle-mic,.ft-circle-thinking,.ft-circle-score,.ft-record-countdown){display:none!important}
+.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle .bf-actor{width:clamp(200px,31vw,245px);height:clamp(200px,31vw,245px)}
+.free-talking-genius #ftCharacter .ft-character-option .ft-character-symbol:has(.aw-svg){background:transparent!important;box-shadow:none!important}
+.free-talking-genius .aw-svg{width:100%;height:100%;overflow:visible}
+.free-talking-genius #ftSession[data-character="willy"] .aw-head{transform-origin:250px 430px;animation:awNod 3.8s ease-in-out infinite}
+.free-talking-genius #ftSession[data-character="willy"] .bf-actor[data-state="speaking"] .aw-head{animation:awNod .75s ease-in-out infinite}
+@keyframes awNod{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(2deg) translateY(-4px)}}
+@media(max-width:600px){.free-talking-genius #ftSession[data-character="willy"] #ftTurnCircle{width:220px!important;height:220px!important}}
+@media(prefers-reduced-motion:reduce){.free-talking-genius .aw-head{animation:none!important}}
+
+/* AI Willy: cyan equalizer mouth only while AI audio is actually speaking. */
+.aw-mouth-wave{opacity:0;transition:opacity .12s}
+.bf-actor[data-state="speaking"] .aw-mouth-wave{opacity:1}
+.bf-actor[data-state="speaking"] .aw-mouth-wave .aw-bar{transform-origin:center;transform-box:fill-box;animation:awMouth .45s ease-in-out infinite alternate}
+.bf-actor[data-state="speaking"] .aw-bar-2,.bf-actor[data-state="speaking"] .aw-bar-4{animation-delay:-.18s}
+.bf-actor[data-state="speaking"] .aw-bar-3{animation-delay:-.31s}
+.bf-actor[data-state="speaking"] .aw-bar-5{animation-delay:-.08s}
+@keyframes awMouth{0%{transform:scaleY(.3);opacity:.7}55%{transform:scaleY(1.4);opacity:1}100%{transform:scaleY(.65);opacity:.85}}
+@media(prefers-reduced-motion:reduce){.bf-actor[data-state="speaking"] .aw-mouth-wave .aw-bar{animation:none!important}}
+
+/* Exact studio robot SVG; animate its five blue equalizer bars only when audio is playing. */
+.free-talking-genius .aw-svg .aw-mouth-wave{opacity:0;transition:opacity .14s;filter:drop-shadow(0 0 5px #45cfff)}
+
+.free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-mouth-wave{opacity:1}
+
+.free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar{animation:awMouth .37s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+.free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar-2,.free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar-4{animation-delay:-.15s}
+.free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar-3{animation-delay:-.24s}
+.free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar-5{animation-delay:-.09s}
+@media(prefers-reduced-motion:reduce){.free-talking-genius .bf-actor[data-state="speaking"] .aw-svg .aw-bar{animation:none!important}}
+
+/* Canonical robot mouth contract: NEVER render a static idle smile, even if
+   an older SVG was temporarily served by a browser's asset cache. */
+.aw-svg .aw-idle-mouth{display:none!important}
+
+/* Shared AI Willy mood states. Same SVG, no alternate character drawings.
+   Idle face has NO mouth; mouth-wave remains speech-only. */
+.aw-svg .aw-eyes-mood{display:none}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-svg .aw-eyes-default,
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-eyes-default,
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-svg .aw-eyes-default,
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-svg .aw-eyes-default{display:none}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-svg .aw-eyes-happy,
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-eyes-surprised,
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-svg .aw-eyes-sad,
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-svg .aw-eyes-angry{display:inline}
+.aw-svg .aw-ear-left,.aw-svg .aw-ear-right,.aw-svg .aw-antenna{transition:transform .24s ease;transform-box:view-box}
+.aw-svg .aw-ear-left{transform-origin:237px 340px}
+.aw-svg .aw-ear-right{transform-origin:562px 340px}
+.aw-svg .aw-antenna{transform-origin:401px 205px}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-ear-left{transform:rotate(-7deg)}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-ear-right{transform:rotate(7deg)}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-antenna{transform:rotate(3deg)}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-ear-left{transform:rotate(-15deg)}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-ear-right{transform:rotate(15deg)}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-antenna{transform:translateY(-6px)}
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-ear-left{transform:rotate(9deg)}
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-ear-right{transform:rotate(-9deg)}
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-antenna{transform:rotate(-5deg)}
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-ear-left{transform:rotate(12deg)}
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-ear-right{transform:rotate(-12deg)}
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-antenna{transform:rotate(8deg)}
+@media(prefers-reduced-motion:reduce){.aw-svg .aw-ear-left,.aw-svg .aw-ear-right,.aw-svg .aw-antenna{transition:none}}
+
+/* Living motion for the CANONICAL robot head; no extra SVG copies or mouths.
+   Compatible with the shared character actor in both speaking activities. */
+.bf-actor[data-state="speaking"] .aw-svg .aw-eyes-default{transform-box:view-box;transform-origin:400px 319px;animation:awWilliBlink 6.4s ease-in-out infinite}
+@keyframes awWilliBlink{0%,43%,46%,100%{transform:scaleY(1)}44.5%{transform:scaleY(.10)}}
+.bf-actor[data-state="speaking"][data-mood="happy"] .aw-svg .aw-eyes-happy,
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-eyes-surprised,
+.bf-actor[data-state="speaking"][data-mood="sad"] .aw-svg .aw-eyes-sad,
+.bf-actor[data-state="speaking"][data-mood="angry"] .aw-svg .aw-eyes-angry{animation:awWilliReact .28s ease-out both;transform-box:view-box;transform-origin:400px 320px}
+@keyframes awWilliReact{from{opacity:.4;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+.bf-actor[data-state="speaking"] .aw-svg .aw-ear-left{animation:awWilliEarLeft .65s ease-in-out infinite alternate}
+.bf-actor[data-state="speaking"] .aw-svg .aw-ear-right{animation:awWilliEarRight .72s ease-in-out infinite alternate}
+.bf-actor[data-state="speaking"] .aw-svg .aw-antenna{animation:awWilliAntenna .8s ease-in-out infinite alternate}
+@keyframes awWilliEarLeft{from{transform:rotate(-5deg)}to{transform:rotate(7deg)}}
+@keyframes awWilliEarRight{from{transform:rotate(6deg)}to{transform:rotate(-5deg)}}
+@keyframes awWilliAntenna{from{transform:rotate(-4deg) translateY(0)}to{transform:rotate(5deg) translateY(-4px)}}
+@media(prefers-reduced-motion:reduce){
+ .bf-actor[data-state="speaking"] .aw-svg .aw-eyes-default,.bf-actor[data-state="speaking"] .aw-svg .aw-eyes-mood,
+ .bf-actor[data-state="speaking"] .aw-svg .aw-ear-left,
+ .bf-actor[data-state="speaking"] .aw-svg .aw-ear-right,
+ .bf-actor[data-state="speaking"] .aw-svg .aw-antenna{animation:none!important}
+}
+
+/* Static whenever not speaking: no blinking, ear/antenna motion or mood face.
+   Never show a smile in ANY state or character-menu portrait. */
+.aw-svg .aw-idle-mouth{display:none!important}
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-mouth-wave,
+.ft-character-symbol .aw-svg .aw-mouth-wave,
+#ftResultMascot:not([data-state="speaking"]) .aw-svg .aw-mouth-wave{display:none!important}
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-ear-left,
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-ear-right,
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-antenna,
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-eyes-default{
+ animation:none!important;transform:none!important;transition:none!important
+}
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-eyes-mood{display:none!important}
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-eyes-default{display:inline!important}
+
+/* AI Willi FX v3: one shared head SVG, one speech state, zero permanent mouths. */
+.aw-svg .aw-cat-details,.aw-svg .aw-electric{display:none}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-electric{display:inline}
+.bf-actor[data-state="speaking"][data-mood="cat"] .aw-svg .aw-cat-details,
+.bf-actor[data-state="speaking"][data-mood="cat"] .aw-svg .aw-eyes-cat{display:inline}
+.bf-actor[data-state="speaking"][data-mood="cat"] .aw-svg .aw-eyes-default{display:none}
+.bf-actor[data-state="speaking"] .aw-svg .aw-head-motion{
+ transform-box:view-box;transform-origin:400px 340px;
+ animation:awHeadShiver 1.8s ease-in-out infinite;
+ filter:drop-shadow(0 0 5px #42d5ff88)
+}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-antenna{
+ animation:awWilliAntenna .8s ease-in-out infinite alternate,awElectricGlow .45s ease-in-out infinite alternate
+}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-electric .aw-spark{
+ animation:awSparkFlash .52s steps(2,end) infinite;
+ filter:drop-shadow(0 0 5px #53edff)
+}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-spark-2{animation-delay:-.18s}
+.bf-actor[data-state="speaking"][data-mood="surprised"] .aw-svg .aw-spark-3{animation-delay:-.37s}
+.bf-actor[data-state="speaking"] .aw-svg .aw-eyes-cat{
+ animation:awCatBlink 1.6s ease-in-out infinite;
+ transform-box:fill-box;transform-origin:center
+}
+@keyframes awHeadShiver{
+ 0%,100%{transform:translate(0,0) rotate(0deg)}
+ 18%{transform:translate(-2px,-1px) rotate(-1.7deg)}
+ 30%{transform:translate(2px,0) rotate(1.7deg)}
+ 44%,70%{transform:translate(0,-2px) rotate(0deg)}
+ 82%{transform:translate(2px,1px) rotate(1deg)}
+}
+@keyframes awElectricGlow{from{filter:drop-shadow(0 0 0 transparent)}to{filter:drop-shadow(0 0 9px #4bdeff)}}
+@keyframes awSparkFlash{0%,39%,70%,100%{opacity:0}40%,69%{opacity:1}}
+@keyframes awCatBlink{0%,44%,56%,100%{transform:scaleY(1)}49%{transform:scaleY(.12)}}
+.bf-actor:not([data-state="speaking"]) .aw-svg .aw-head-motion{
+ animation:none!important;filter:none!important;transform:none!important
+}
+@media(prefers-reduced-motion:reduce){
+ .bf-actor[data-state="speaking"] .aw-svg .aw-head-motion,
+ .bf-actor[data-state="speaking"] .aw-svg .aw-antenna,
+ .bf-actor[data-state="speaking"] .aw-svg .aw-electric .aw-spark,
+ .bf-actor[data-state="speaking"] .aw-svg .aw-eyes-cat{
+  animation:none!important;filter:none!important
+ }
+}
+
+/* Result card is the SAME actor: equalizer only for spoken evaluation feedback. */
+#ftResultMascot.bf-actor[data-state="speaking"] .aw-svg .aw-mouth-wave{display:inline!important}
+
+/* One shared structured-Speaking circle for the four illustrated characters.
+   The actual #ftTurnCircle stays the single listening/recording button.
+   A permanent cyan ring is independent of phase, focus and microphone state. */
+.free-talking-genius #ftSession:is(
+ [data-character="bunny-v3"],[data-character="pigfish"],
+ [data-character="dusk"],[data-character="steve"]
+) #ftTurnCircle,
+.free-talking-genius #ftSession:is(
+ [data-character="bunny-v3"],[data-character="pigfish"],
+ [data-character="dusk"],[data-character="steve"]
+) #ftTurnCircle:is(:hover,:active,:focus,:focus-visible,[data-phase="ready"],[data-phase="ai"],[data-phase="student"],[data-phase="thinking"]){
+ width:clamp(205px,35vw,255px)!important;
+ height:clamp(205px,35vw,255px)!important;
+ border:9px solid #54c1cb!important;
+ outline:0!important;
+ border-radius:50%!important;
+ background:#fff!important;background-image:none!important;
+ box-shadow:none!important;
+ position:relative!important;
+ overflow:visible!important;
+ isolation:isolate;
+ animation:none!important;
+ -webkit-appearance:none!important;appearance:none!important;
+ -webkit-tap-highlight-color:transparent!important;
+ user-select:none!important;-webkit-user-select:none!important;
+}
+.free-talking-genius #ftSession:is(
+ [data-character="bunny-v3"],[data-character="pigfish"],
+ [data-character="dusk"],[data-character="steve"]
+) #ftTurnCircle::before{content:none!important;display:none!important}
+.free-talking-genius #ftSession:is(
+ [data-character="bunny-v3"],[data-character="pigfish"],
+ [data-character="dusk"],[data-character="steve"]
+) #ftTurnCircle .bf-actor{
+ position:absolute!important;top:50%!important;left:50%!important;
+ width:81%!important;height:81%!important;
+ transform:translate(-50%,-50%)!important;
+ pointer-events:none!important;
+ filter:none!important;
+}
+@media(max-width:600px){
+ .free-talking-genius #ftSession:is(
+  [data-character="bunny-v3"],[data-character="pigfish"],
+  [data-character="dusk"],[data-character="steve"]
+ ) #ftTurnCircle{width:220px!important;height:220px!important}
+}
+/* All non-Willo portraits hide the old internal orbit and record decorations,
+   leaving the outside ring as the single permanent circle. */
+.free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle :is(
+ .ft-circle-glow,.ft-orbit-visual,.ft-circle-start,.ft-circle-ai,
+ .ft-circle-mic,.ft-circle-thinking,.ft-circle-score,.ft-record-countdown
+){display:none!important}
+/* Same outer-button action; Dusk and Steve keep the existing accessible
+   #ftTurnCircle click handler while presenting its label below the portrait. */
+.free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle{
+ margin-bottom:70px!important;
+}
+.free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle::after{
+ content:"눌러서 듣기"!important;
+ display:flex!important;justify-content:center!important;align-items:center!important;
+ position:absolute!important;top:calc(100% + 20px)!important;left:50%!important;
+ transform:translateX(-50%)!important;
+ width:190px!important;height:52px!important;box-sizing:border-box!important;
+ border:5px solid #e9a8c9!important;border-radius:24px!important;
+ background:#fff!important;color:#697f85!important;
+ font:850 16px/1.25 Poppins,system-ui,sans-serif!important;
+ pointer-events:auto!important;white-space:nowrap;
+}
+.free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle[data-phase="student"]::after{
+ content:"눌러서 말하기"!important;border-color:#91dce5!important;
+}
+.free-talking-genius #ftSession:is([data-character="dusk"],[data-character="steve"]) #ftTurnCircle[data-ai-recording="true"]::after{
+ content:"녹음 끝내기"!important;border-color:#e9a8c9!important;
+}

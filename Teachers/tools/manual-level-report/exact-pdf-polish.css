@@ -1,0 +1,129 @@
+/* PDF-export-only refinements. This file does not affect the live student/admin report. */
+.willena-pdf-stage,.willena-pdf-page{background:#fff!important}
+.willena-pdf-brand-logo-wrap{position:absolute!important;left:-2px!important;top:0!important;width:120px!important;height:46px!important;overflow:hidden!important}
+.willena-pdf-brand-logo{position:absolute!important;left:-24px!important;top:-42px!important;display:block!important;width:169px!important;height:auto!important;max-width:none!important}
+.willena-pdf-subbrand{position:absolute!important;left:-2px!important;top:50px!important;margin:0!important}
+
+/* Page 1: increase separation between the major groups without changing their order. */
+.willena-pdf-page:nth-child(1) .willena-pdf-title-line{margin-bottom:38px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-hero-label{margin:18px 0!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-orbit{
+  position:relative!important;
+  width:196px!important;
+  height:196px!important;
+  margin:0 auto 24px!important;
+  box-shadow:none!important;
+}
+.willena-pdf-page:nth-child(1) .willena-pdf-orbit:before,
+.willena-pdf-page:nth-child(1) .willena-pdf-orbit:after{
+  content:"";
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+}
+.willena-pdf-page:nth-child(1) .willena-pdf-orbit:before{
+  inset:-18px;
+  border:3px solid rgba(242,10,135,.13);
+}
+.willena-pdf-page:nth-child(1) .willena-pdf-orbit:after{
+  inset:-32px;
+  border:3px solid rgba(47,182,193,.17);
+}
+.willena-pdf-page:nth-child(1) .willena-pdf-hjourney{height:136px!important;margin:10px 26px 30px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-placement-pips{margin-top:16px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-placement-scale{margin-bottom:24px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-one-card{margin:0 14px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-card-full{
+  height:400px!important;
+  padding:48px 38px 30px!important;
+  border-radius:34px!important;
+}
+.willena-pdf-page:nth-child(1) .willena-pdf-card-full p{color:#526a72!important;text-align:left!important;font-size:12.5px!important;line-height:1.52!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-summary-section{display:block!important;margin-top:6px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-summary-section:first-child{margin-top:0!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-summary-section strong{color:#294f58!important;font-weight:800!important;margin-right:7px!important}
+
+/* Keep the current-level label fully above the journey circle. */
+.willena-pdf-hnode.current:before{
+  top:-42px!important;
+  bottom:auto!important;
+  left:50%!important;
+  transform:translateX(-50%)!important;
+  line-height:1!important;
+}
+.willena-pdf-hnode.current:after{
+  top:-21px!important;
+  bottom:auto!important;
+  left:50%!important;
+  height:18px!important;
+}
+
+/* Remove the result-explanation section from page 2 only. */
+.willena-pdf-page:nth-child(2) .willena-pdf-result{display:none!important}
+
+/* Page 3: fit all three nearby levels while keeping each report section readable. */
+.willena-pdf-page:nth-child(3) .willena-pdf-heading{margin:3px 0 24px!important}
+.willena-pdf-page:nth-child(3) .willena-pdf-subtitle{margin:-16px 0 30px!important}
+.willena-pdf-page:nth-child(3) .willena-pdf-vjourney{
+  display:grid!important;
+  gap:25px!important;
+  margin:0 8px!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-vrow{
+  display:block!important;
+  min-height:0!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-vcard{
+  min-height:0!important;
+  padding:29px 28px 20px!important;
+  border-radius:25px!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-vcard h3{
+  margin:0 0 10px!important;
+  font-size:17px!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-vcard p{
+  max-width:none!important;
+  text-align:left!important;
+  font-size:9px!important;
+  line-height:1.42!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-summary-section{
+  display:block!important;
+  margin-top:3px!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-summary-section:first-child{margin-top:0!important}
+.willena-pdf-page:nth-child(3) .willena-pdf-summary-section strong{
+  color:#546d74!important;
+  font-weight:800!important;
+  margin-right:5px!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-vbadge{
+  left:25px!important;
+  padding:7px 19px!important;
+  font-size:10px!important;
+}
+
+/* Page 4: Levels 11 and 12 add two rows, so use the page width and tighten the timeline. */
+.willena-pdf-page:nth-child(4) .willena-pdf-heading{margin:3px 0 24px!important}
+.willena-pdf-page:nth-child(4) .willena-pdf-subtitle{margin:-16px 0 24px!important}
+.willena-pdf-page:nth-child(4) .willena-pdf-other{margin:0 12px 0 22px!important}
+.willena-pdf-page:nth-child(4) .willena-pdf-other-row{
+  grid-template-columns:66px 1fr!important;
+  gap:18px!important;
+  min-height:68px!important;
+}
+.willena-pdf-page:nth-child(4) .willena-pdf-other-line{left:25px!important;top:44px!important}
+.willena-pdf-page:nth-child(4) .willena-pdf-other-marker{
+  width:44px!important;
+  height:44px!important;
+  font-size:11px!important;
+}
+.willena-pdf-page:nth-child(4) .willena-pdf-other-card{
+  height:56px!important;
+  padding:10px 18px!important;
+  border-radius:18px!important;
+}
+.willena-pdf-page:nth-child(4) .willena-pdf-other-card h3{font-size:12px!important;margin-right:12px!important}
+.willena-pdf-page:nth-child(4) .willena-pdf-other-card p{font-size:8.5px!important;line-height:1.35!important}
+.willena-pdf-page:nth-child(4) .willena-pdf-gap{height:18px!important}

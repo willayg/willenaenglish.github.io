@@ -1,0 +1,154 @@
+/* Assignment manager — matches dashboard panels and Naesin controls. */
+#view-assignments .page-head{margin-bottom:18px}
+#universalAssignments{padding:26px 28px;border-radius:22px}
+.ua-topline,.ua-section-heading,.ua-actions{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.ua-topline{margin-bottom:22px;align-items:flex-start}
+.ua-eyebrow,.ua-card-kicker{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--cyan,#4fb9c8)}
+.ua-topline h2{margin:5px 0;font-size:24px;color:var(--ink,#343343);line-height:1.2}
+.ua-topline p,.ua-actions p{margin:0;color:var(--muted,#7d8390);font-size:13px}
+.ua-workspace-status,.ua-section-count{white-space:nowrap;font-size:12px;font-weight:700;color:var(--muted,#7d8390);background:#f4f7fa;border-radius:40px;padding:7px 12px}
+.ua-app-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:24px}
+.ua-app-tab{display:flex;align-items:center;gap:12px;min-width:0;text-align:left;padding:16px 14px;cursor:pointer;border:2px solid var(--line,#e7e9ef);background:#fff;border-radius:18px;color:var(--ink,#343343);font:inherit;transition:border-color .15s,background .15s}
+.ua-app-tab:hover{border-color:var(--cyan,#4fb9c8)}
+.ua-app-tab.active{border-color:var(--cyan,#4fb9c8);background:#edfafd;box-shadow:0 3px 14px rgba(79,185,200,.08)}
+.ua-app-tab:focus-visible,.ua-assign:focus-visible{outline:3px solid var(--blue,#667fe0);outline-offset:3px}
+.ua-app-icon{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:13px;background:#f2f5f8;color:var(--cyan,#4fb9c8);font-weight:800;font-size:19px}
+.ua-app-tab.active .ua-app-icon{background:#d8f3f6}
+.ua-app-label{display:grid;gap:4px;min-width:0}
+.ua-app-label b{font-size:13px;line-height:1.25}
+.ua-app-label small{font-size:11px;color:var(--muted,#7d8390)}
+.ua-workspace{border:1px solid var(--line,#e7e9ef);border-radius:20px;padding:24px;background:#fbfcfd}
+.ua-section-heading{margin-bottom:20px}
+.ua-section-heading h3{margin:4px 0 0;font-size:21px;color:var(--ink,#343343)}
+.ua-actions{margin-bottom:18px}
+.ua-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.ua-card{display:flex;flex-direction:column;gap:8px;min-width:0;border:1px solid #e5eaf0;border-radius:18px;padding:19px;background:#fff;box-shadow:0 3px 12px rgba(40,40,60,.035)}
+.ua-card-top{display:flex;justify-content:space-between;align-items:center}
+.ua-card-dot{width:9px;height:9px;border-radius:50%;background:var(--cyan,#4fb9c8)}
+.ua-card strong{font-size:18px;color:var(--ink,#343343)}
+.ua-card-sub{font-size:13px;font-weight:600}
+.ua-card small{color:var(--muted,#7d8390);line-height:1.4;min-height:34px}
+.ua-assign,.ua-primary{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#eafafa!important;border:2px solid var(--cyan,#4fb9c8)!important;color:#297c87!important;font-weight:800!important;border-radius:12px!important;padding:11px 14px!important}
+.ua-assign{margin-top:auto;width:100%}
+.ua-feature{display:flex;align-items:flex-start;gap:24px;background:#fff;border:1px solid #e6eaf0;border-radius:18px;padding:26px}
+.ua-feature-symbol{display:grid;place-items:center;width:72px;height:72px;flex:0 0 72px;border-radius:19px;background:#e8f8fb;color:#3996a4;font-size:30px;font-weight:800}
+.ua-feature-copy h4{font-size:20px;margin:0 0 8px;color:var(--ink,#343343)}
+.ua-feature-copy p{font-size:14px;line-height:1.65;color:var(--muted,#7d8390);max-width:560px;margin:0 0 20px}
+.ua-coming-label{display:inline-block;font-size:11px;font-weight:800;color:#806926;background:#fff4d8;border-radius:20px;padding:5px 10px;margin-bottom:12px}
+.ua-unavailable .ua-feature-symbol{background:#f3f4f7;color:#86919b}
+.ua-empty{text-align:center;padding:36px 12px;color:var(--muted,#7d8390)}
+.ua-empty-icon{font-size:32px;margin-bottom:8px}
+.ua-empty b{display:block;color:var(--ink,#343343)}
+.ua-empty p{margin:6px 0;font-size:13px}
+@media(max-width:980px){.ua-app-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#universalAssignments{padding:16px}.ua-workspace{padding:15px}.ua-topline{display:block}.ua-workspace-status{display:none}.ua-app-tabs{gap:8px}.ua-app-tab{padding:12px 9px;gap:8px}.ua-app-icon{width:34px;height:34px;flex-basis:34px;font-size:16px}.ua-app-label b{font-size:12px}.ua-app-label small{font-size:10px}.ua-feature{gap:14px;padding:17px}.ua-feature-symbol{width:45px;height:45px;flex-basis:45px;font-size:21px}.ua-actions{align-items:flex-start;flex-wrap:wrap}.ua-section-count{white-space:normal}}
+
+/* Preserve the existing Word Genius tracker inside the unified workspace. */
+.ua-word-actions{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:20px;padding:18px 20px;border:1px solid #e5eaf0;border-radius:16px;background:#fff}
+.ua-word-actions h4{margin:0 0 5px;font-size:18px;color:var(--ink,#343343)}
+.ua-word-actions p{margin:0;color:var(--muted,#7d8390);font-size:13px;line-height:1.55}
+.ua-word-actions .ua-primary{white-space:nowrap;text-decoration:none}
+#universalAssignments .ua-mounted-word{display:block!important}
+#universalAssignments .ua-mounted-word>.page-head{margin-bottom:18px}
+#universalAssignments #assignmentWorkspace{width:100%}
+@media(max-width:600px){.ua-word-actions .ua-primary{width:100%}}
+
+.ua-catalog{background:#fff;border:1px solid #e3e9ed;border-radius:18px;padding:22px;margin-bottom:20px}
+.ua-catalog-fields{display:grid;grid-template-columns:2fr 1fr 1fr;gap:13px}
+.ua-catalog-fields>label{display:grid;gap:7px;font-size:12px;font-weight:800;color:var(--ink)}
+.ua-catalog-fields select,.ua-catalog-fields input{min-width:0;width:100%}
+.ua-catalog-units,.ua-catalog-modes{padding:16px 0;border-bottom:1px solid #e7e9ef}
+.ua-catalog-units>strong,.ua-catalog-modes>strong{display:block;margin-bottom:10px}
+#uaUnitList{display:flex;flex-wrap:wrap;gap:9px}
+.ua-unit-chip{display:flex;gap:7px;align-items:center;background:#f5f8fa;border:1px solid #e1e8eb;border-radius:11px;padding:10px;font-size:12px;cursor:pointer}
+.ua-unit-chip:has(input:checked){border-color:var(--cyan);background:#eaf9fc}
+.ua-catalog-modes{display:flex;gap:16px;flex-wrap:wrap}
+.ua-catalog-modes>strong{flex-basis:100%;margin-bottom:0}
+.ua-catalog-modes label{display:flex;gap:7px;align-items:center}
+.ua-catalog-footer{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-top:17px}
+#uaCatalogMessage{font-size:13px;color:var(--muted)}
+@media(max-width:720px){.ua-catalog-fields{grid-template-columns:1fr}.ua-catalog-footer{flex-wrap:wrap}}
+
+.assignment-unit-group{border:1px solid #dce6e8;border-radius:17px;background:#f8fbfc;padding:15px;margin-bottom:12px}
+.assignment-unit-group-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.assignment-unit-group-header strong{font-size:15px;color:#173f46}
+.assignment-unit-group-header small{font-size:12px;color:#71848b}
+.assignment-unit-group-items{display:grid;gap:9px}
+.assignment-unit-group-items .assignment-card{margin:0}
+
+.ua-subtabs{display:flex;gap:6px;padding:5px;background:#f1f5f7;border:1px solid #e0e8eb;border-radius:14px;margin:0 0 20px}
+.ua-subtab{flex:1;border:0;border-radius:10px;background:transparent;color:#6d7c86;font:700 13px Poppins,sans-serif;padding:12px 16px;cursor:pointer}
+.ua-subtab.active{background:#fff;color:#287f89;box-shadow:0 2px 8px rgba(30,55,65,.09)}
+.ua-subtab:focus-visible{outline:3px solid #667fe0;outline-offset:2px}
+.ua-catalog-host .ua-catalog{margin-bottom:0}
+@media(max-width:600px){.ua-subtab{font-size:12px;padding:12px 8px}}
+
+
+/* Word Genius: live, read-only vocabulary preview for selected assignment units. */
+.ua-catalog-preview{padding:17px 0 19px;border-bottom:1px solid #e7e9ef}
+.ua-preview-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+.ua-preview-heading>div{display:grid;gap:4px}
+.ua-preview-heading strong{font-size:15px;color:var(--ink,#343343)}
+.ua-preview-heading small{font-size:12px;font-weight:700;color:#71858e}
+.ua-preview-toggle.control{flex:0 0 auto;padding:8px 12px;font-size:12px;cursor:pointer}
+.ua-preview-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px;max-height:390px;overflow:auto;padding:2px 3px 3px 1px;overscroll-behavior:contain}
+.ua-preview-body[hidden]{display:none}
+.ua-preview-unit{min-width:0;border:1px solid #dce8ed;border-radius:13px;background:#fafcfd;overflow:hidden}
+.ua-preview-unit-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 13px;background:#edf8fa;border-bottom:1px solid #dce8ed}
+.ua-preview-unit-head strong{font-size:12px;line-height:1.4;color:#265b64}
+.ua-preview-unit-head span{flex:0 0 auto;font-size:11px;font-weight:800;color:#398a96;white-space:nowrap}
+.ua-preview-word-list{margin:0;padding:5px 12px 5px 39px;list-style:none;counter-reset:wordnum}
+.ua-preview-word-list li{counter-increment:wordnum;display:grid;position:relative;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid #e8edf1;font-size:12px;line-height:1.5}
+.ua-preview-word-list li:last-child{border-bottom:0}
+.ua-preview-word-list li::before{content:counter(wordnum) '.';position:absolute;left:-27px;color:#7d929a;font-size:11px;font-weight:700}
+.ua-preview-en{font-weight:800;color:#264e59;overflow-wrap:anywhere}
+.ua-preview-ko{font-weight:600;color:#536a73;overflow-wrap:anywhere}
+.ua-preview-empty,.ua-preview-error{grid-column:1/-1;margin:0;padding:15px;border:1px dashed #d3e1e6;border-radius:12px;background:#f8fbfc;color:#6c7c86;font-size:13px;line-height:1.55}
+.ua-preview-error{border-color:#e5b4b4;color:#a24c4c;background:#fff9f9}
+.ua-preview-error .control{margin-left:8px}
+@media(max-width:600px){
+ .ua-preview-body{grid-template-columns:minmax(0,1fr);max-height:360px}
+ .ua-preview-heading{align-items:flex-start}
+ .ua-preview-heading strong{font-size:14px}
+ .ua-preview-word-list li{gap:8px}
+}
+
+/* Compact assignment app switcher: one horizontal strip, no card grid. */
+#view-assignments #universalAssignments{padding:14px 18px}
+#view-assignments .ua-app-tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin:0 0 14px;padding:2px 2px 6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+#view-assignments .ua-app-tab{display:inline-flex;flex:0 0 auto;min-width:0;width:auto;padding:8px 12px;gap:7px;border-width:1px;border-radius:10px;box-shadow:none}
+#view-assignments .ua-app-icon{width:23px;height:23px;flex:0 0 23px;border-radius:5px;font-size:12px}
+#view-assignments .ua-app-label{display:block}
+#view-assignments .ua-app-label b{font-size:12px;white-space:nowrap}
+#view-assignments .ua-app-label small,#view-assignments .ua-topline{display:none!important}
+#view-assignments .ua-workspace{padding:14px;border-radius:12px}
+#view-assignments #uaProgress{overflow-x:auto}
+#view-assignments .ua-progress-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media(max-width:600px){#view-assignments #universalAssignments{padding:10px}#view-assignments .ua-app-tab{padding:7px 9px}#view-assignments .ua-workspace{padding:10px}}
+
+/* 내신 assignment ownership filters */
+#view-assignments .ua-scope-tabs{display:flex;gap:6px;margin:0 0 14px;border-bottom:1px solid #dbe8ec;padding-bottom:9px}
+#view-assignments .ua-scope-tabs button{border:1px solid #cbdfe4;border-radius:9px;background:white;padding:7px 18px;font:700 13px inherit;color:#3a6370;cursor:pointer}
+#view-assignments .ua-scope-tabs button.active{background:#e4f7fa;border-color:#52b5c3;color:#146677}
+
+/* Cross-app homework cards, collapsible detail and action controls */
+#view-assignments .ua-homework-cards{display:grid;gap:9px}
+#view-assignments .ua-homework-card{display:flex;flex-wrap:wrap;align-items:center;gap:8px;border:1px solid #dce8ea;border-radius:12px;background:#fff;padding:10px}
+#view-assignments .ua-homework-detail{flex:1 1 280px;min-width:0;text-align:left;border:0;background:transparent;color:#344b56;cursor:pointer;display:grid;gap:5px;padding:5px}
+#view-assignments .ua-homework-detail span{font-size:13px;line-height:1.4}
+#view-assignments .ua-homework-detail small{font-size:11px;color:#6d858d}
+#view-assignments .ua-homework-detail strong{font-size:12px;color:#28838c}
+#view-assignments .ua-homework-expanded{order:3;flex-basis:100%;padding:10px;background:#f2f8fa;border-radius:8px;color:#466a72;font-size:12px}
+#view-assignments .ua-homework-expanded[hidden]{display:none}
+#view-assignments .ua-homework-actions{display:flex;gap:6px;margin-left:auto}
+#view-assignments .ua-homework-actions button{width:36px;height:36px;background:white;border:1px solid #bfd8de;border-radius:9px;color:#2b8085;font-size:19px;font-weight:700;cursor:pointer}
+#view-assignments .ua-homework-actions button:nth-child(2){color:#b6534f;border-color:#e5c9c9}
+#view-assignments .ua-homework-actions button:disabled{opacity:.35;cursor:not-allowed}
+
+/* Multi-select homework completion */
+#view-assignments .ua-bulk-select{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#476b76;white-space:nowrap}
+#view-assignments .ua-bulk-select input,#view-assignments .ua-homework-checkbox input{width:19px;height:19px;accent-color:#268c99;cursor:pointer}
+#view-assignments .ua-bulk-complete{font-weight:700;background:#e4f8f9;border-color:#5bb9c2}
+#view-assignments .ua-bulk-complete:disabled{opacity:.45;cursor:not-allowed}
+#view-assignments .ua-homework-checkbox{display:inline-flex;align-items:center;padding:8px}
+#view-assignments .ua-toolbar{flex-wrap:wrap}

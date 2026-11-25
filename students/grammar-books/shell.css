@@ -1,0 +1,110 @@
+/* Textbook Grammar Genius shell: reuse Word Genius layout and shared theme. */
+.grammar-book-shell{min-height:100vh;display:flex;flex-direction:column}
+.grammar-book-shell .vocab-page{flex:1;width:100%}
+.grammar-book-shell .vocab-front-menu{max-width:920px;margin:0 auto}
+.grammar-empty-card{margin:14px auto 28px;min-height:250px;border:2px solid var(--vocab-border,#c9f1f4);border-radius:22px;background:var(--vocab-card,#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;color:var(--vocab-heading,#244f56);box-shadow:0 8px 22px rgba(31,91,100,.06)}
+.grammar-empty-icon{width:70px;height:70px;color:var(--pink,#ff0a8a)}
+.grammar-empty-icon svg{width:100%;height:100%}
+.grammar-empty-card strong{font-size:1.4rem;font-weight:900}
+.grammar-empty-card p{margin:0;color:var(--muted,#6f8190);font-size:.91rem}
+.grammar-shell-version{text-align:center;padding:10px 12px 60px;color:var(--muted,#6f8190);font-size:11px}
+.grammar-book-shell .vocab-theme-footer{margin-top:auto}
+
+/* Reuse Word Genius book card and shared mission basket proportions. */
+.grammar-book-shell .app-mission-basket-slot .dashboard-mission-basket{width:100%;max-width:none;margin:12px 0 20px}
+.grammar-book-shell .app-mission-basket-slot:empty{display:none}
+.grammar-book-shell [hidden]{display:none!important}
+.grammar-book-shell .grammar-book-title{font-size:clamp(20px,4vw,28px);color:var(--vocab-heading,#244f56);margin:20px 0 0}
+.grammar-book-shell .vocab-front-empty{padding:20px;text-align:center;color:var(--muted,#6f8190)}
+
+/* Cards, unit strip, skill journey and golden-unit styles come exclusively from /students/vocab-study/vocab-study.css and /students/study-v2/v2.css. */
+.grammar-progress-track{height:9px;border-radius:99px;overflow:hidden;background:var(--vocab-track,#dff3f5);margin:17px 0}
+.grammar-progress-fill{height:100%;width:0;background:var(--pink,#ff0a8a);transition:width .2s}
+.grammar-question-card{padding:clamp(16px,4vw,28px)}.grammar-action-bar{margin:20px auto 35px;display:flex;justify-content:center}
+.grammar-primary,.grammar-secondary{padding:13px 28px;border:2px solid var(--cyan,#66d6df);border-radius:14px;background:var(--vocab-card,#fff);color:var(--pink,#ff0a8a);font:850 16px Poppins,sans-serif;cursor:pointer;min-height:51px}
+.grammar-primary:disabled{opacity:.45;cursor:default}.grammar-secondary{color:var(--vocab-heading,#244f56)}
+.grammar-result-card{text-align:center;margin:25px 0 50px;padding:35px 20px}.grammar-result-card h2{font-size:38px;margin:15px 0}.grammar-result-card>strong{color:var(--pink,#ff0a8a);font-size:24px}
+.grammar-result-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:25px}
+
+
+/* Word Genius vocab-session CSS owns the fixed screen, scrolling content, and persistent footer. */
+
+/* Text size adjustment for Grammar Books only; shared renderer remains unchanged. */
+#grammarRound .willena-question-renderer .prompt{font-size:clamp(17px,2.8vw,23px)!important;line-height:1.5!important;font-weight:750!important;white-space:pre-line}
+#grammarRound .willena-question-renderer .choices{grid-template-columns:1fr!important}
+#grammarRound .willena-question-renderer .choice{font-size:clamp(15px,2vw,18px)!important;line-height:1.4!important;min-height:54px}
+#grammarRound .willena-question-renderer .context{font-size:15px!important}
+#grammarRound .willena-question-renderer .prompt .u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+
+/* Grammar exam questions need textbook-style left alignment rather than Word Genius's centered single-word prompt. */
+#grammarRound .vocab-question-wrap .willena-question-renderer .prompt{
+  width:100%;
+  box-sizing:border-box;
+  margin:0 0 18px;
+  text-align:left!important;
+  white-space:pre-line;
+  overflow-wrap:anywhere;
+  line-height:1.65!important;
+  letter-spacing:normal;
+}
+#grammarRound .vocab-question-wrap .willena-question-renderer .choices{
+  width:100%;
+  justify-items:stretch;
+  gap:10px;
+}
+#grammarRound .vocab-question-wrap .willena-question-renderer .choice{
+  text-align:left!important;
+  padding:13px 16px;
+}
+@media(max-width:600px){
+  #grammarRound .vocab-question-wrap .willena-question-renderer .prompt{
+    margin-bottom:16px;
+    line-height:1.55!important;
+  }
+}
+
+/* Only the explainer dialog is app-specific. Unit strip and activity cards inherit Word Genius unchanged. */
+.grammar-guide-dialog{border:2px solid var(--cyan,#66d6df);border-radius:24px;width:min(560px,calc(100vw - 32px));max-height:80dvh;padding:0;color:var(--ink,#173f46);background:var(--vocab-card,#fff)}
+.grammar-guide-dialog::backdrop{background:rgba(14,40,47,.55)}
+.grammar-guide-inner{padding:24px;line-height:1.75}
+.grammar-guide-inner h2{font-size:22px;margin:10px 0 15px}
+#grammarGuideContent{white-space:pre-line;font-size:16px}
+#grammarGuideClose{float:right}
+
+/* Reuse Word Genius's fixed completion session and vocab-finish / reward animation. */
+.grammar-book-shell #grammarResult.grammar-complete-session{display:flex;flex-direction:column;z-index:10001}
+.grammar-book-shell #grammarResult .vocab-session-main{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow-y:auto}
+.grammar-book-shell #grammarResult .vocab-finish{width:min(620px,100%)}
+.grammar-book-shell #grammarResult .vocab-finish-stats strong{font-size:clamp(1.05rem,4vw,1.45rem)}
+.grammar-book-shell #grammarResult .vocab-finish-actions{display:flex;flex-wrap:wrap}
+
+/* Shared-question feedback: show the Korean grammar explanation for every answer. */
+.grammar-book-explanation{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:rgba(38,156,165,.08);color:#245b64;font-size:13px;line-height:1.65;font-weight:650;white-space:pre-wrap}
+
+
+/* Focused assignment matches Word Genius Style A, without normal-unit distractions. */
+.grammar-book-shell .grammar-focused-homework .vocab-unit-selector{display:none!important}
+.grammar-book-shell .grammar-focused-toolbar{
+ display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+ padding:16px 18px;margin:7px 0 21px;border:2.5px solid #b8e9ed;
+ border-radius:22px;background:var(--vocab-card,#fff);
+ box-shadow:0 9px 27px rgba(30,121,132,.07)
+}
+.grammar-book-shell .grammar-focused-label{
+ display:inline-flex;align-items:center;gap:8px;color:#267e87;
+ font-size:.84rem;font-weight:900;letter-spacing:.01em
+}
+.grammar-book-shell .grammar-focused-label::before{
+ content:'✓';display:inline-grid;place-items:center;width:23px;height:23px;
+ border:1.5px solid #96dce3;border-radius:50%;background:#e8f8f9;color:#267e87
+}
+.grammar-book-shell .grammar-view-all{
+ border:1.5px solid #b6e8ed;border-radius:999px;background:#fff;color:#267e87;
+ font:800 .74rem Poppins,system-ui,sans-serif;padding:10px 15px;cursor:pointer
+}
+.grammar-book-shell .grammar-view-all:focus-visible{outline:3px solid #267e87;outline-offset:2px}
+@media(max-width:600px){.grammar-book-shell .grammar-focused-toolbar{padding:13px 12px;border-radius:18px}}
+
+/* Homework mode must override inherited layout rules even when hidden is toggled. */
+.grammar-book-shell .grammar-focused-homework .vocab-unit-selector,
+.grammar-book-shell .vocab-unit-selector[hidden]{display:none!important}

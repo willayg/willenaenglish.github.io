@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Reading Bee Voting</title>
+  <script src="/js/api-config.js?v=20260108"></script>
+  <style>
+    :root{--ink:#223047;--muted:#708096;--line:#dce5ee;--cyan:#dff8fb;--pink:#ffe8f2;--paper:#f5f8fb;--gold:#fff5c7}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--paper);color:var(--ink)}
+    .shell{max-width:980px;margin:0 auto;padding:28px 20px 90px}.top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px}
+    .title h1{margin:0;font-size:clamp(28px,4vw,42px);letter-spacing:-.04em}.title p{margin:6px 0 0;color:var(--muted)}
+    #burger-menu-mount{min-width:42px}.panel{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 12px 30px rgba(43,66,89,.08);margin:18px 0}
+    .section-title{font-size:19px;font-weight:800;margin:0 0 14px}.award-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .award{border:2px solid var(--line);border-radius:16px;padding:15px;background:#fff;transition:.15s ease}.award:focus-within{border-color:#92dfe8;box-shadow:0 0 0 4px rgba(146,223,232,.18)}
+    .award.podium{background:linear-gradient(145deg,#fff,var(--gold))}.award.special:nth-child(even){background:linear-gradient(145deg,#fff,var(--cyan))}.award.special:nth-child(odd){background:linear-gradient(145deg,#fff,var(--pink))}
+    .award label{display:flex;gap:9px;align-items:center;font-weight:800;margin-bottom:8px}.icon{font-size:22px}.desc{font-size:12px;color:var(--muted);font-weight:500;margin-left:auto}
+    input{width:100%;border:1px solid #cbd6e2;background:#fff;border-radius:11px;padding:12px 13px;font:inherit;color:inherit;outline:none} input::placeholder{color:#a2adba}
+    .actions{position:fixed;left:0;right:0;bottom:0;background:rgba(245,248,251,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:12px 20px;z-index:20}
+    .actions-inner{max-width:980px;margin:auto;display:flex;align-items:center;gap:12px}.status{color:var(--muted);font-size:14px;flex:1}
+    button{border:0;border-radius:12px;padding:12px 18px;font:inherit;font-weight:800;cursor:pointer}.save{background:#24364b;color:#fff;min-width:150px}.save:disabled{opacity:.5;cursor:wait}
+    .admin-only{display:none}.results-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.pill{background:var(--cyan);border:1px solid #bcecf1;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px}
+    .result-row{display:grid;grid-template-columns:minmax(180px,1.2fr) minmax(0,2fr);gap:14px;padding:13px 0;border-top:1px solid #edf1f5}.result-row:first-child{border-top:0}
+    .result-award{font-weight:800}.leaders{display:flex;flex-wrap:wrap;gap:7px}.leader{background:#f4f7fa;border:1px solid #dce5ee;border-radius:999px;padding:6px 10px;font-size:13px}.leader b{margin-left:5px}
+    .empty{color:var(--muted);font-size:14px}.notice{display:none;margin-bottom:14px;padding:12px 14px;border-radius:12px;background:#fff4d5;border:1px solid #f0d78a}
+    @media(max-width:720px){.shell{padding:18px 12px 90px}.award-grid{grid-template-columns:1fr}.panel{padding:15px;border-radius:18px}.top{align-items:flex-start}.desc{display:none}.result-row{grid-template-columns:1fr;gap:7px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <div class="title"><h1>🏆 Reading Bee Voting</h1><p>Enter one student for each award. You can come back and change your vote.</p></div>
+      <div id="burger-menu-mount"></div>
+    </div>
+    <div id="notice" class="notice"></div>
+
+    <section class="panel">
+      <h2 class="section-title">🏅 Overall Awards</h2>
+      <div id="podiumGrid" class="award-grid"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="section-title">🌟 Special Awards</h2>
+      <div id="specialGrid" class="award-grid"></div>
+    </section>
+
+    <section id="resultsPanel" class="panel admin-only">
+      <div class="results-head">
+        <h2 class="section-title" style="margin:0">Voting Results</h2>
+        <span id="voterCount" class="pill">0 teachers voted</span>
+      </div>
+      <div id="results" style="margin-top:12px"></div>
+    </section>
+  </main>
+
+  <div class="actions">
+    <div class="actions-inner"><div id="status" class="status">Loading your votes…</div><button id="saveBtn" class="save" disabled>Save Votes</button></div>
+  </div>
+
+  <script type="module">
+    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260901-class-order';
+    async function ensureBurgerMenuTemplate(){
+      if(document.getElementById('burger-menu-template')) return;
+      const r=await fetch('/components/burger-menu.html?v=20260901-class-order');
+      const d=document.createElement('div'); d.innerHTML=await r.text(); document.body.appendChild(d.firstElementChild);
+    }
+    await ensureBurgerMenuTemplate(); insertBurgerMenu('#burger-menu-mount');
+  </script>
+  <script>
+const AWARDS = [
+  {key:'champion', icon:'🏆', title:'Reading Bee Champion', desc:'Overall champion', group:'podium'},
+  {key:'second_place', icon:'🥈', title:'2nd Place', desc:'Runner-up', group:'podium'},
+  {key:'third_place', icon:'🥉', title:'3rd Place', desc:'Third place', group:'podium'},
+  {key:'best_fluency', icon:'🌟', title:'Best Fluency', desc:'Natural & smooth', group:'special'},
+  {key:'best_expression', icon:'🌟', title:'Best Expression', desc:'Intonation & emotion', group:'special'},
+  {key:'best_pronunciation', icon:'🌟', title:'Best Pronunciation', desc:'Accuracy', group:'special'},
+  {key:'best_comprehension', icon:'🌟', title:'Best Comprehension', desc:'Understanding', group:'special'},
+  {key:'most_improved', icon:'🌟', title:'Most Improved Reader', desc:'Biggest growth', group:'special'},
+  {key:'most_confident', icon:'🌟', title:'Most Confident Reader', desc:'Confidence', group:'special'},
+  {key:'best_storyteller', icon:'🌟', title:'Best Storyteller', desc:'Engaging delivery', group:'special'},
+  {key:'best_character_voice', icon:'🌟', title:'Best Character Voice', desc:'Character voices', group:'special'}
+];
+
+const SUPABASE_URL='https://fiieuiktlsivwfgyivai.supabase.co';
+const SUPABASE_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const $=s=>document.querySelector(s);
+const statusEl=$('#status'), saveBtn=$('#saveBtn'), notice=$('#notice');
+
+function renderCards(){
+  for(const a of AWARDS){
+    const host=a.group==='podium'?$('#podiumGrid'):$('#specialGrid');
+    const card=document.createElement('div'); card.className='award '+a.group;
+    card.innerHTML='<label for="vote-'+a.key+'"><span class="icon">'+a.icon+'</span><span>'+a.title+'</span><span class="desc">'+a.desc+'</span></label><input id="vote-'+a.key+'" data-award="'+a.key+'" maxlength="80" autocomplete="off" placeholder="Student name">';
+    host.appendChild(card);
+  }
+}
+function getVotes(){return Object.fromEntries(AWARDS.map(a=>[a.key,document.querySelector('[data-award="'+a.key+'"]').value.trim()]));}
+function setVotes(v={}){for(const a of AWARDS) document.querySelector('[data-award="'+a.key+'"]').value=v[a.key]||'';}
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));}
+function token(){try{return localStorage.getItem('sb_access_token')||''}catch{return ''}}
+function userIdFromToken(t){try{const p=t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(atob(p)).sub||''}catch{return ''}}
+async function sb(path,opts={}){
+  const t=token();
+  if(!t) throw new Error('Your teacher login token is missing. Please log out and back in once.');
+  const headers={apikey:SUPABASE_KEY,Authorization:'Bearer '+t,'Content-Type':'application/json',...(opts.headers||{})};
+  return fetch(SUPABASE_URL+'/rest/v1'+path,{...opts,headers});
+}
+function renderResults(results={}){
+  const host=$('#results'); host.innerHTML='';
+  for(const a of AWARDS){
+    const row=document.createElement('div'); row.className='result-row';
+    const leaders=results[a.key]||[];
+    row.innerHTML='<div class="result-award">'+a.icon+' '+a.title+'</div><div class="leaders">'+(leaders.length?leaders.map((x,i)=>'<span class="leader">'+(i===0?'🏅 ':'')+escapeHtml(x.name)+' <b>×'+x.count+'</b></span>').join(''):'<span class="empty">No votes yet</span>')+'</div>';
+    host.appendChild(row);
+  }
+}
+function tally(rows){
+  const out={}; for(const a of AWARDS) out[a.key]=new Map();
+  for(const r of rows||[]){if(!out[r.award_key])continue;const n=String(r.student_name||'').trim();if(!n)continue;const k=n.toLowerCase();const c=out[r.award_key].get(k)||{name:n,count:0};c.count++;out[r.award_key].set(k,c);}
+  const final={}; for(const a of AWARDS) final[a.key]=Array.from(out[a.key].values()).sort((x,y)=>y.count-x.count||x.name.localeCompare(y.name));
+  return final;
+}
+async function load(){
+  renderCards();
+  try{
+    const uid=userIdFromToken(token()); if(!uid) throw new Error('Could not read your teacher session. Please log out and back in once.');
+    const pr=await sb('/profiles?id=eq.'+encodeURIComponent(uid)+'&select=id,role,approved&limit=1');
+    const profiles=await pr.json(); const profile=profiles[0];
+    if(!pr.ok||!profile||profile.approved===false||!['teacher','admin'].includes(String(profile.role||'').toLowerCase())) throw new Error('Teacher access required.');
+    const isAdmin=String(profile.role).toLowerCase()==='admin';
+    const vr=await sb('/reading_bee_votes?select=teacher_id,award_key,student_name,updated_at'+(isAdmin?'':'&teacher_id=eq.'+encodeURIComponent(uid)));
+    const rows=await vr.json(); if(!vr.ok) throw new Error(rows.message||'Could not load votes.');
+    const mine=(rows||[]).filter(r=>String(r.teacher_id)===String(uid));
+    setVotes(Object.fromEntries(mine.map(r=>[r.award_key,r.student_name])));
+    if(isAdmin){
+      $('#resultsPanel').style.display='block';
+      $('#voterCount').textContent=new Set(rows.map(r=>r.teacher_id)).size+' teachers voted';
+      renderResults(tally(rows));
+    }
+    statusEl.textContent='Your votes are ready.'; saveBtn.disabled=false;
+  }catch(e){notice.style.display='block';notice.textContent=e.message;statusEl.textContent='Voting could not be loaded.';}
+}
+saveBtn.addEventListener('click',async()=>{
+  saveBtn.disabled=true; statusEl.textContent='Saving…'; notice.style.display='none';
+  try{
+    const uid=userIdFromToken(token()); if(!uid) throw new Error('Teacher session missing.');
+    const votes=getVotes(), upserts=[], clears=[];
+    for(const a of AWARDS){const n=(votes[a.key]||'').trim();if(n)upserts.push({teacher_id:uid,award_key:a.key,student_name:n,updated_at:new Date().toISOString()});else clears.push(a.key);}
+    if(upserts.length){
+      const r=await sb('/reading_bee_votes?on_conflict=teacher_id,award_key',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(upserts)});
+      if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Could not save votes.');}
+    }
+    if(clears.length){
+      const list=clears.map(k=>'"'+k+'"').join(',');
+      const r=await sb('/reading_bee_votes?teacher_id=eq.'+encodeURIComponent(uid)+'&award_key=in.('+encodeURIComponent(list)+')',{method:'DELETE',headers:{Prefer:'return=minimal'}});
+      if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||'Could not clear votes.');}
+    }
+    statusEl.textContent='✓ Votes saved';
+    setTimeout(()=>statusEl.textContent='You can change your votes anytime.',1800);
+  }catch(e){notice.style.display='block';notice.textContent=e.message;statusEl.textContent='Save failed';}
+  finally{saveBtn.disabled=false;}
+});
+load();
+</script>
+</body>
+</html>

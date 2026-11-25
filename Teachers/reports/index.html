@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>월간 학습 성적표 | Willena Teachers</title>
+<script src="/js/api-config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;color:#1b303c;background:#e8edf0;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}button,select,input,textarea{font:inherit}button,select,input{min-height:42px}button{cursor:pointer}
+.toolbar{background:#fff;border-bottom:1px solid #dce4e7;padding:13px clamp(12px,3vw,32px);display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.toolbar label{display:flex;flex-direction:column;gap:5px;color:#526976;font-size:12px;font-weight:700}
+.toolbar select,.toolbar input{border:1px solid #c6d6dc;border-radius:8px;padding:8px 11px;background:white;color:#193745;min-width:130px}
+.toolbar button,.toolbar a{border:1px solid #a6c2c8;background:#f4faf9;color:#225468;padding:11px 15px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px}
+.toolbar button.primary{background:#2d766c;color:#fff;border-color:#2d766c}.toolbar .spacer{flex:1}
+#notice{max-width:900px;margin:15px auto;padding:10px 14px;border-radius:7px;background:#eaf5f3;color:#245349;font-size:13px}#notice.error{background:#fff0eb;color:#8f3327}
+.paper-stage{max-width:850px;margin:26px auto 56px;padding:20px 21px 18px;background:#f0ece2;border-radius:20px;box-shadow:0 14px 42px #23333d18}
+.page{position:relative;background:#faf9f5;border:1px solid #e7e3d9;padding:42px 48px 40px;box-shadow:0 2px 10px #242e2a09;min-height:800px}
+.page:before{content:"";display:block;border-top:2px dashed #a8aaa4;margin:0 0 32px}
+.page:after{content:"";display:block;border-bottom:2px dashed #a8aaa4;margin:28px 0 0}
+.report-head{text-align:center;padding:0 0 18px}.report-head .brand{font:600 14px system-ui,sans-serif;letter-spacing:.29em;color:#223b46;margin-bottom:20px;padding-left:.29em}
+.report-head .period{color:#8c9491;font-size:13px}.report-head h1{margin:16px 0 1px;font-size:42px;letter-spacing:-1.4px;color:#192f3d;font-weight:800}
+.report-head small{font-size:14px;color:#8b9694}
+.hero{text-align:center;padding:24px 8px 27px;border-bottom:1px dashed #bcbdb6;margin:0 0 24px}
+.hero small{font-size:13px;color:#89948f}.hero strong{display:block;font-size:43px;color:#1b4037;margin:5px 0 15px;letter-spacing:-1px;line-height:1.35}
+.hero .bar{max-width:430px;margin:0 auto 11px;height:16px}.hero .meta{justify-content:center!important;font-size:12px}
+h2{font-size:16px;margin:28px 0 12px;letter-spacing:-.3px;font-weight:800}
+.skill{padding:15px 0;border-bottom:1px dashed #d5d7d1;break-inside:avoid}
+.skill-head{display:flex;justify-content:space-between;align-items:center;gap:15px;font-size:15px;font-weight:600}
+.skill-head strong{font-variant-numeric:tabular-nums;font-weight:800}
+.bar{display:flex;gap:2px;height:12px;margin:10px 0 7px;border-radius:3px;overflow:hidden;background:#dadcd9}
+.bar span{display:block;min-width:0}.green{background:#548d80}.orange{background:#dba35c}.red{background:#aeb5b5}
+.meta{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#74817e}.meta .needs{color:#738082}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:20px 0 11px;justify-content:center;font-size:11px;color:#667572}
+.legend span{display:inline-flex;align-items:center;gap:5px}.legend i{display:inline-block;width:9px;height:9px;border-radius:2px}
+.lines{margin:7px 0 20px}.line{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px dashed #d5d7d1;font-size:14px}.line b{font-variant-numeric:tabular-nums}
+.achievements{padding-top:0}
+.summary-block{padding-top:4px;border-top:1px solid #d8d9d3;margin-top:28px}
+.summary-block h2{margin-top:16px}.summary-footnote{font-size:11px;line-height:1.65;color:#87918e;margin:9px 0 4px}
+.stamp-wrap{text-align:center;margin:22px auto 10px}.stamp{display:inline-block;border:2px solid #648f83;color:#648f83;font-weight:800;padding:8px 15px;transform:rotate(-6deg);font-size:14px}
+.comment{margin-top:28px;padding:20px 0 14px;border-top:1px solid #d8d9d3;border-bottom:1px solid #d8d9d3}
+.comment label{display:block;font-size:14px;color:#667472;margin-bottom:10px}
+.comment textarea{width:100%;min-height:92px;resize:vertical;background:transparent;color:#253b42;padding:11px;border:1px solid #d7dcd5;border-radius:3px;font-size:13px;line-height:1.65}
+.footer{font-size:11px;color:#949c9a;text-align:center;padding-top:21px}.empty{padding:19px;text-align:center;color:#74847c}
+@media(max-width:700px){.toolbar label{flex:1 1 130px}.toolbar .spacer{display:none}.paper-stage{margin:12px 6px;padding:11px;border-radius:12px}.page{padding:26px 19px}.report-head h1{font-size:36px}.hero strong{font-size:37px}.meta{font-size:10px}.legend{gap:9px}}
+@media print{@page{size:A4;margin:9mm}html,body{background:#fff!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.toolbar,#notice,.screen-only{display:none!important}.paper-stage{background:#f0ece2!important;max-width:none;margin:0;padding:6mm;box-shadow:none;border-radius:0}.page{background:#faf9f5!important;box-shadow:none;border:1px solid #e7e3d9;padding:8mm 10mm;min-height:0}.skill{padding:10px 0}.bar span{print-color-adjust:exact;-webkit-print-color-adjust:exact}.comment textarea{border:0;padding:0;resize:none;overflow:visible;min-height:70px}.report-head{padding-bottom:7px}.hero{padding:12px 0 17px}.line{padding:9px 0}h2{margin-top:16px}.stamp-wrap{margin-top:12px}}
+</style></head>
+<body>
+<div class="toolbar">
+ <a href="/Teachers/">← 교사 대시보드</a>
+ <label>학습 월<input type="month" id="month"></label>
+ <label>반 선택<select id="class"><option value="">전체 반</option></select></label>
+ <label>학생 선택<select id="student" disabled><option>먼저 데이터를 불러오세요</option></select></label>
+ <button id="reload" type="button">새로고침</button><span class="spacer"></span>
+ <button id="print" type="button" class="primary" disabled>성적표 인쇄 / PDF</button>
+</div>
+<div id="notice" role="status">교사 로그인 확인 중…</div>
+<div class="paper-stage" id="paper" hidden>
+<main class="page">
+ <header class="report-head"><div class="brand">WILLENA</div><div class="period" id="dateHeading"></div><h1 id="studentName"></h1><small id="classHeading"></small></header>
+ <section class="hero" id="hero"><small>이번 달 해결한 학습 과제</small><strong id="headline"></strong><div class="bar" id="heroBar"></div><div id="heroLabel" class="meta"></div></section>
+ <section id="skillSection"><h2>영역별 학습 기록</h2><div id="skills"></div><div class="legend"><span><i class="green"></i>정답</span><span><i class="orange"></i>연습 후 해결</span><span><i class="red"></i>추가 연습 필요</span></div></section>
+ <section id="otherSection" class="achievements"><h2>그 밖의 학습 활동</h2><div class="lines" id="other"></div></section>
+ <section class="summary-block"><h2>학습 활동 요약</h2><div class="lines" id="overview"></div><div class="summary-footnote">학습한 과제는 동일한 과제를 여러 번 시도해도 하나로 계산합니다.</div></section>
+ <div class="stamp-wrap"><div class="stamp">월간 학습 기록</div></div>
+ <section class="comment"><label for="comment">선생님 의견</label><textarea id="comment" placeholder="담당 선생님의 평가를 입력하세요. (현재 페이지에서만 유지됩니다)"></textarea><div class="screen-only" style="font-size:11px;color:#788780;margin-top:7px">교사 의견은 서버에 저장되지 않습니다. 인쇄 전에 입력하세요.</div></section>
+ <footer class="footer" id="footer"></footer>
+</main></div>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const skillNames={vocabulary:'어휘 이해',spelling:'철자 쓰기',speaking:'단어 말하기',sentence_coach:'문장 말하기 연습',sentence_speaking:'문장 말하기',sentence_unscramble:'문장 배열'};
+const skillOrder=['vocabulary','speaking','spelling','sentence_coach','sentence_speaking','sentence_unscramble'];
+const examSkillNames={reading:'독해',communication:'의사소통',grammar:'문법',constructed_response:'서술형',vocab_test:'어휘 평가',vocabulary:'어휘 학습',sentences:'문장 배열'};
+const examSkillOrder=['reading','communication','grammar','constructed_response','vocab_test','vocabulary','sentences'];
+const num=x=>Math.max(0,Number(x)||0);
+const endpoint='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/teacher-student-report';
+const key='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+let all=[],dataReady=false,request=0,notes=new Map(),activeStudent='';
+function status(msg,error=false){$('notice').textContent=msg;$('notice').classList.toggle('error',error);$('notice').hidden=!msg;}
+function valid(token){if(!token||token.split('.').length!==3)return false;try{const c=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return Number(c.exp)*1000>Date.now()+30000;}catch{return false;}}
+async function teacherToken(){
+ let token=window.WillenaAPI?.getLocalAccessToken?.()||'';
+ if(valid(token))return token;
+ const f=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
+ const r=await f('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'});
+ const j=await r.json().catch(()=>({}));
+ if(!r.ok||!valid(j.access_token))throw new Error('교사 로그인 후 이용할 수 있습니다.');
+ window.WillenaAPI?.setLocalTokens?.(j.access_token,j.refresh_token||'');
+ return j.access_token;
+}
+function monthRange(){
+ const m=$('month').value;if(!/^\d{4}-\d{2}$/.test(m))throw new Error('학습 월을 선택하세요.');
+ const [y,mo]=m.split('-').map(Number);if(mo<1||mo>12)throw new Error('잘못된 월입니다.');
+ const last=new Date(Date.UTC(y,mo,0)).getUTCDate();
+ return {start:m+'-01',end:m+'-'+String(last).padStart(2,'0')};
+}
+function line(label,value){return '<div class="line"><span>'+escape(label)+'</span><b>'+escape(value)+'</b></div>';}
+function barSegments(first,fixed,pending,verified=0){
+ const green=first+verified;
+ return (green?'<span class="green" style="flex:'+green+'"></span>':'')+
+ (fixed?'<span class="orange" style="flex:'+fixed+'"></span>':'')+
+ (pending?'<span class="red" style="flex:'+pending+'"></span>':'');
+}
+function bar(first,fixed,pending,verified=0){
+ return '<div class="bar" role="img" aria-label="정답 '+(first+verified)+', 연습 후 해결 '+fixed+', 추가 연습 필요 '+pending+'">'+barSegments(first,fixed,pending,verified)+'</div>';
+}
+function skillRow(v,names=skillNames){
+ const first=num(v.first),fixed=num(v.fixed),pending=num(v.pending),verified=num(v.verified),total=first+fixed+pending+verified;
+ return '<div class="skill"><div class="skill-head"><span>'+escape(names[v.skill]||v.skill)+'</span><strong>'+(first+fixed+verified)+'/'+total+'</strong></div>'+
+ bar(first,fixed,pending,verified)+'<div class="meta"><span>정답 '+(first+verified)+' · 연습 후 '+fixed+'</span><span class="'+(pending?'needs':'')+'">'+(pending?'추가 연습 '+pending:'모두 해결')+'</span></div></div>';
+}
+function choose(){
+ const saved=activeStudent;$('student').innerHTML='';
+ const cls=$('class').value;const subset=all.filter(s=>!cls||s.class_name===cls);
+ subset.forEach(s=>{const o=document.createElement('option');o.value=s.student_id;o.textContent=(s.korean_name||s.name)+' · '+s.name;$('student').append(o);});
+ if(subset.some(s=>s.student_id===saved))$('student').value=saved;
+ activeStudent=$('student').value||'';$('student').disabled=!subset.length;render();
+}
+function render(){
+ const s=all.find(x=>x.student_id===$('student').value);
+ $('paper').hidden=!s;$('print').disabled=!s;
+ if(!s)return;
+ const {start,end}=monthRange();
+ $('dateHeading').textContent=start.slice(0,4)+'년 '+Number(start.slice(5,7))+'월 · 월간 학습 기록';
+ $('studentName').textContent=s.korean_name||s.name;
+ $('classHeading').textContent=s.class_name+'반'+(s.grade?' · '+s.grade:'');
+ let exam=num(s.exam_tasks)>0&&num(s.tasks)===0;
+ const task=exam?num(s.exam_tasks):num(s.tasks);
+ const first=exam?num(s.exam_first):num(s.first),fixed=exam?num(s.exam_fixed):num(s.fixed),pending=exam?num(s.exam_pending):num(s.pending),verified=exam?0:num(s.verified);
+ const overview=[['학습한 날',num(s.days)+'일'],['학습 단원',num(s.units)+'개'],['학습 세션',num(s.sessions)+'회'],['학습한 과제',task+'개']];
+ // Exam preparation is stored separately; never display zero study days as no activity.
+ if(exam){overview.splice(0,3,['학습 영역',num(s.exam_areas)+'개']);}
+ $('overview').innerHTML=overview.map(([label,val])=>line(label,val)).join('');
+ const skills=(Array.isArray(s.skills)?s.skills:[]).filter(x=>num(x.n)).sort((a,b)=>skillOrder.indexOf(a.skill)-skillOrder.indexOf(b.skill));
+ const examSkills=(Array.isArray(s.exam_skills)?s.exam_skills:[]).filter(x=>num(x.n))
+  .sort((a,b)=>examSkillOrder.indexOf(a.skill)-examSkillOrder.indexOf(b.skill));
+ if(exam){
+  $('skills').innerHTML=examSkills.length?examSkills.map(v=>skillRow(v,examSkillNames)).join(''):
+   skillRow({skill:'내신 문제 풀이',first,fixed,pending}, {'내신 문제 풀이':'내신 문제 풀이'});
+ }else {
+  $('skills').innerHTML=skills.length?skills.map(v=>skillRow(v)).join(''):'<p class="empty">이 기간의 학습 기록이 없습니다.</p>';
+  if(examSkills.length) $('skills').innerHTML+='<h2>내신 학습 기록</h2>'+examSkills.map(v=>skillRow(v,examSkillNames)).join('');
+ }
+ $('skillSection').hidden=!skills.length&&!examSkills.length&&!exam;
+ const extra=[['완성한 글',s.writings,'편'],['작성 중인 글',s.writing_drafts,'편'],
+ ['문법 학습 완료',s.grammar,'회'],['문법 기초 연습',s.grammar_practice,'회']];
+ extra.push(['자유 대화 참여',s.free_talking_started,'회'],['자유 대화 발화',s.free_talking_turns,'회'],
+ ['자유 대화 완료',s.conversations,'회'],['퍼즐 활동',s.puzzles,'회']);
+ if(!exam&&num(s.exam_tasks))extra.push(['내신 학습 문제',s.exam_tasks,'개']);
+ const rendered=extra.filter(v=>num(v[1])>0);
+ $('other').innerHTML=rendered.map(v=>line(v[0],num(v[1])+v[2])).join('');
+ $('otherSection').hidden=!rendered.length;
+ $('headline').textContent=(first+fixed+verified)+'개';
+ $('heroBar').innerHTML=barSegments(first,fixed,pending,verified);
+ $('heroBar').setAttribute('role','img');
+ $('heroBar').setAttribute('aria-label','정답 '+(first+verified)+', 연습 후 해결 '+fixed+', 추가 연습 필요 '+pending);
+ $('heroLabel').textContent='정답 '+(first+verified)+' · 연습 후 '+fixed+' · 추가 연습 '+pending;
+ $('hero').hidden=task===0;
+ $('footer').textContent=start+' ~ '+end+' · 윌레나 원어민 영어학원';
+ $('comment').value=notes.get(s.student_id+'|'+start)||'';
+}
+async function load(){
+ const sequence=++request;dataReady=false;$('reload').disabled=true;$('paper').hidden=true;$('print').disabled=true;status('교사 인증 및 학습 기록 불러오는 중…');
+ try{
+  const token=await teacherToken();const range=monthRange();
+  const resp=await fetch(endpoint,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+token},body:JSON.stringify({...range})});
+  const body=await resp.json().catch(()=>({}));
+  if(!resp.ok||body.success!==true)throw new Error(body.error||'학습 기록을 불러오지 못했습니다.');
+  if(sequence!==request)return;
+  all=Array.isArray(body.students)?body.students:[];dataReady=true;
+  const prior=$('class').value;const classes=[...new Set(all.map(x=>x.class_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  $('class').innerHTML='<option value="">전체 반</option>';
+  classes.forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;$('class').append(o);});
+  if(classes.includes(prior))$('class').value=prior;
+  choose();status(all.length?all.length+'명 학생 기록을 불러왔습니다.':'활성 학생이 없습니다.');
+ }catch(e){if(sequence===request){status(e.message||'오류가 발생했습니다.',true);$('student').disabled=true;}}
+ finally{if(sequence===request)$('reload').disabled=false;}
+}
+const now=new Date();const korea=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit'}).formatToParts(now);
+$('month').value=korea.find(x=>x.type==='year').value+'-'+korea.find(x=>x.type==='month').value;
+$('month').addEventListener('change',load);$('reload').addEventListener('click',load);$('class').addEventListener('change',choose);
+$('student').addEventListener('change',()=>{activeStudent=$('student').value;render()});
+$('comment').addEventListener('input',()=>{if(activeStudent)notes.set(activeStudent+'|'+monthRange().start,$('comment').value)});
+$('print').addEventListener('click',()=>{if(dataReady)window.print()});
+load();
+})();
+</script>
+</body></html>

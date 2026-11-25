@@ -222,15 +222,54 @@ export class QuestionRenderer{
       recognition.interimResults=false;
       recognition.maxAlternatives=5;
       recognition.continuous=false;
-      const setListening=on=>{
-        mic?.classList.toggle('is-listening',!!on);
-        if(status)status.textContent=on?'듣고 있어요… 영어로 말해 보세요.':'마이크를 누르고 영어로 말해 보세요.';
+      // Safari may end recognition immediately without ever reaching audio capture.
+      // Keep startup distinct from active listening and preserve actionable errors.
+      let phase='idle',lastError='',hasResult=false,startedAt=0,requestedAt=0,readySent=false;
+      const setPhase=(next,message)=>{
+        phase=next;
+        mic?.classList.toggle('is-listening',next==='listening');
+        mic?.classList.toggle('is-starting',next==='starting');
+        mic?.setAttribute('aria-busy',next==='starting'?'true':'false');
+        if(status){
+          status.textContent=message;
+          if(this.onSpeechReady)status.dataset.speechPhase=next;
+        }
       };
-      recognition.onstart=()=>setListening(true);
-      recognition.onend=()=>setListening(false);
+      const notifyReady=source=>{
+        if(!this.onSpeechReady||readySent||!requestedAt||phase==='idle'||this.disabled)return;
+        readySent=true;
+        setPhase('listening','지금 말하세요!');
+        try{this.onSpeechReady({duration_ms:Math.max(0,Date.now()-requestedAt),source})}catch(_){}
+      };
+      const supportsAudioStart='onaudiostart' in recognition;
+      recognition.addEventListener?.('audiostart',()=>notifyReady('audio_start'));
+      const readyMessage='마이크를 누르고 영어로 말해 보세요.';
+      const retryMessage='마이크가 시작되지 않았어요. 다시 눌러 주세요. 계속 안 되면 Safari를 새로고침해 주세요.';
+      recognition.onstart=()=>{
+        startedAt=Date.now();
+        lastError='';
+        if(this.onSpeechReady){if(!supportsAudioStart)notifyReady('service_start_fallback');}
+        else setPhase('listening','듣고 있어요… 영어로 말해 보세요.');
+      };
+      recognition.onend=()=>{
+        if(phase==='idle')return;
+        const wasStarting=phase==='starting';
+        const endedQuickly=!hasResult&&startedAt&&Date.now()-startedAt<900;
+        setPhase('idle',lastError||((wasStarting||endedQuickly)?retryMessage:readyMessage));
+        if(wasStarting||endedQuickly)console.warn('[Willena speech] recognition ended before usable audio',{wasStarting,endedQuickly});
+      };
       recognition.onerror=e=>{
-        setListening(false);
-        if(status)status.textContent=e?.error==='not-allowed'?'마이크 권한이 필요해요.':'잘 듣지 못했어요. 다시 눌러 말해 보세요.';
+        const code=String(e?.error||'unknown');
+        const denied=(code==='not-allowed');
+        const serviceDenied=(code==='service-not-allowed');
+        lastError=serviceDenied
+          ?'Safari 음성 인식 서비스를 사용할 수 없어요. 마이크 허용과는 별개예요. Safari에서 다시 열거나 선생님에게 알려 주세요. (SR-SERVICE)'
+          :denied
+            ?'Safari가 음성 인식을 거부했어요. 사이트의 마이크 및 iPhone 음성 인식 설정을 확인해 주세요. (SR-DENIED)'
+            :(code==='no-speech'?'목소리를 듣지 못했어요. 다시 눌러 말해 보세요.'
+              :('음성 인식이 중단됐어요. 다시 눌러 주세요. (SR-'+code.toUpperCase()+')'));
+        setPhase('idle',lastError);
+        console.warn('[Willena speech] recognition error',{code,phase,elapsedMs:startedAt?Date.now()-startedAt:0,userAgent:navigator.userAgent});
       };
       recognition.onresult=e=>{
         const result=e?.results?.[0];
@@ -242,6 +281,7 @@ export class QuestionRenderer{
           }
         }
         const value=alternatives[0]||'';
+        if(value)hasResult=true;
         this.state.speakingTranscript=value;
         this.state.speakingAlternatives=alternatives;
         if(transcript){
@@ -250,18 +290,29 @@ export class QuestionRenderer{
         }
         if(status)status.textContent=value?'이렇게 들었어요.':'잘 듣지 못했어요. 다시 말해 보세요.';
         this.emit();
+        if(value&&typeof this.onSpeechResult==='function')this.onSpeechResult(alternatives);
       };
       mic?.addEventListener('click',()=>{
         if(this.disabled)return;
+        if(phase==='starting')return; // Prevent duplicate taps while Safari initializes.
+        if(phase==='listening'){
+          try{recognition.stop()}catch(error){console.warn('[Willena speech] stop failed',error?.name||error)}
+          return;
+        }
+        this.state.speakingTranscript='';
+        this.state.speakingAlternatives=[];
+        if(transcript){transcript.hidden=true;transcript.textContent=''}
+        lastError='';hasResult=false;startedAt=0;readySent=false;requestedAt=Date.now();
+        setPhase('starting',this.onSpeechReady?'잠시만요! 마이크 연결 중…':'마이크 연결 중…');
+        try{this.onSpeechStartRequest?.()}catch(_){}
         try{
-          if(mic.classList.contains('is-listening'))recognition.stop();
-          else{
-            this.state.speakingTranscript='';
-            this.state.speakingAlternatives=[];
-            if(transcript){transcript.hidden=true;transcript.textContent=''}
-            recognition.start();
-          }
-        }catch{}
+          // Must happen synchronously in the user's tap handler on iOS Safari.
+          recognition.start();
+        }catch(error){
+          lastError=retryMessage;
+          setPhase('idle',lastError);
+          console.warn('[Willena speech] start failed',error?.name||error);
+        }
       });
       return;
     }
@@ -362,10 +413,36 @@ export class QuestionRenderer{
         animation:speakingMicPulse .72s ease-in-out infinite alternate
       }
       .speaking-mic:disabled{opacity:.45;cursor:default}
+      @keyframes vocabMicConnectingSpin{to{transform:rotate(360deg)}}
+      .vocab-speech-cues .speaking-mic.is-starting{opacity:1;border-color:#e0a33c;color:#c58517;background:#fff9eb;animation:none;transform:none;cursor:wait}
+      .vocab-speech-cues .speaking-mic.is-starting .speaking-mic-icon{
+        box-sizing:border-box;width:44px;height:44px;background:none;
+        -webkit-mask:none;mask:none;border:5px solid #f4dfb4;border-top-color:#b87910;
+        border-radius:50%;animation:vocabMicConnectingSpin .75s linear infinite;
+      }
+      .vocab-speech-cues .speaking-status[data-speech-phase=starting]{font-size:1.3rem;color:#a76b0e;font-weight:900}
+      .vocab-speech-cues .speaking-status[data-speech-phase=listening]{font-size:1.2rem;color:#d31668;font-weight:900}
+      .vocab-speech-cues .speaking-status[data-speech-phase=checking]{font-size:1.06rem;color:#a14d92;font-weight:850}
       .speaking-status{color:#607b80;font:750 .9rem Poppins,system-ui,sans-serif;text-align:center}
       .speaking-transcript{
         min-width:min(100%,360px);padding:12px 16px;border:1px solid #ddd8f5;border-radius:14px;background:#faf9ff;
         color:#443b72;font:800 1rem Poppins,system-ui,sans-serif;text-align:center
+      }
+      /* Shared live STT preview: colour the recognized text AND its chip.
+         Grading remains in the app; this only displays its verdict. */
+      .speaking-transcript[data-accepted="true"],
+      .speaking-transcript[data-accepted="green"]{
+        color:#168345!important;background:#ebfff2!important;border-color:#77c99a!important;
+      }
+      .speaking-transcript[data-accepted="lime"]{
+        color:#537c0c!important;background:#f0fbd7!important;border-color:#a5d648!important;
+      }
+      .speaking-transcript[data-accepted="yellow"]{
+        color:#89630b!important;background:#fff8da!important;border-color:#f3c94b!important;
+      }
+      .speaking-transcript[data-accepted="red"],
+      .speaking-transcript[data-accepted="false"]{
+        color:#cf304c!important;background:#fff0f2!important;border-color:#efa4ae!important;
       }
       .speaking-transcript[hidden]{display:none}
       @media(max-width:560px){.speaking-mic{width:88px;height:88px}}

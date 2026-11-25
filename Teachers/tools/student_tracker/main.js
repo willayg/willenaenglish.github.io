@@ -1,6 +1,5 @@
 // Access control: require teacher login and approval
 let userRole = null;
-let teacherUserId = null;
 let userRoleReadyResolve;
 const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve; });
 (async function() {
@@ -14,14 +13,13 @@ const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve;
       location.href = `/Teachers/login.html?redirect=${redirect}`;
       return;
     }
-    teacherUserId = whoJson.user_id;
     const roleRes = await (window.WillenaAPI
       ? window.WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=get_role&user_id=${encodeURIComponent(whoJson.user_id)}`)
       : fetch(`/.netlify/functions/supabase_auth?action=get_role&user_id=${encodeURIComponent(whoJson.user_id)}`, { credentials: 'include' }));
     const roleJson = await roleRes.json().catch(() => ({}));
     const role = String(roleJson?.role || '').toLowerCase();
     if (!['teacher','admin'].includes(role)) {
-      location.href = '/Teachers/profile.html';
+      location.href = '/Teachers/access-student.html?next=' + encodeURIComponent(location.pathname + location.search);
       return;
     }
     userRole = role;
@@ -93,25 +91,10 @@ async function fetchJsonWithLog(url, label, options = {}) {
 
 const API = {
   classes: () => fetchJsonWithLog(`${FN('progress_teacher_summary')}?action=classes_list`, 'classes_list'),
-  leaderboard: async (cls, tf) => {
-    const safeClass = encodeURIComponent(cls);
-    const safeTf = encodeURIComponent(tf);
-    const matchUrl = `${FN('progress_summary')}?section=leaderboard_stars_teacher_class&class=${safeClass}&timeframe=${safeTf}${teacherUserId ? `&user_id=${encodeURIComponent(teacherUserId)}` : ''}`;
-    const legacyUrl = `${FN('progress_teacher_summary')}?action=leaderboard&class=${safeClass}&timeframe=${safeTf}`;
-
-    // Prefer the progress-summary parity endpoint when available, but never block UI on it.
-    try {
-      const matched = await fetchJsonWithLog(matchUrl, `leaderboard parity (${cls} - ${tf})`);
-      if (matched && matched.success && Array.isArray(matched.leaderboard)) {
-        return matched;
-      }
-      console.warn('[student_tracker] parity leaderboard unavailable; falling back to legacy endpoint');
-    } catch (err) {
-      console.warn('[student_tracker] parity leaderboard failed; falling back to legacy endpoint', err);
-    }
-
-    return fetchJsonWithLog(legacyUrl, `leaderboard legacy (${cls} - ${tf})`);
-  },
+  leaderboard: (cls, tf) => fetchJsonWithLog(
+    `${FN('progress_teacher_summary')}?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`,
+    `leaderboard (${cls} - ${tf})`
+  ),
   student: (uid, tf) => fetchJsonWithLog(
     `${FN('progress_teacher_summary')}?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`,
     `student_details (${uid} - ${tf})`

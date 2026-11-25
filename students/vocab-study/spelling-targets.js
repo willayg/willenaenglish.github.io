@@ -25,3 +25,14 @@ export function getSpellingTarget(raw){
 
   return text;
 }
+
+// Keyboard typography is irrelevant, but spelling still requires the apostrophe.
+export function normalizeSpellingAnswer(value){
+  return tidy(String(value??'').normalize('NFKC')).toLowerCase()
+    .replace(/[’‘ʼ＇]/g,"'");
+}
+
+export function matchesSpellingTarget(answer,target){
+  const wanted=normalizeSpellingAnswer(target);
+  return !!wanted&&normalizeSpellingAnswer(answer)===wanted;
+}

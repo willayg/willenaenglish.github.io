@@ -45,7 +45,7 @@ export function detectForm(row){
   const mode=String(row?.answer_mode||'').toLowerCase();
   const choices=Array.isArray(row?.choices)?row.choices.filter(Boolean):[];
   const answers=expandedAnswers(row).answers;
-  if(choices.length)return mode==='multi_select'?FORMS.multi:FORMS.choice;
+  if(choices.length)return (mode==='multi_select'||mode==='multiple_choice')?FORMS.multi:FORMS.choice;
   if(mode==='text'||row?.correct_text!=null){
     const parsed=answers.map(parseCorrection);
     if(answers.length&&parsed.every(Boolean)){

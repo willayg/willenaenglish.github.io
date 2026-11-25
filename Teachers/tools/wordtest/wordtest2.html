@@ -7,6 +7,7 @@
     <!-- API gateway for CF Pages routing - MUST load before api-config.js -->
     <script src="/students/api-gateway.js?v=20260116"></script>
     <script src="/js/api-config.js?v=20260110"></script>
+    <link rel="stylesheet" href="./assignment-word-test.css?v=20260926-v4">
     <!-- Shared Image Picker Modal (loaded as regular script for inline handlers) -->
     <script src="/Teachers/tools/shared/image-picker-modal.js?v=20260110"></script>
     <script>
@@ -40,7 +41,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Preload critical Google Fonts -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@400;600&family=Luckiest+Guy&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20010">
+    <link rel="stylesheet" href="styles/shell-p1.css?v=20010">
     <!-- Load all custom fonts for worksheet title styles -->
     <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@400;600&family=Luckiest+Guy&family=Pacifico&family=Permanent+Marker&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -116,10 +118,18 @@
         <div class="app-card">
             <!-- Header -->
             <div class="header">
-        <div class="logo">
-          <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
-        </div>
-        <h1>Word Builder</h1>
+                <div class="header-left">
+                    <div class="logo">
+                        <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
+                    </div>
+                </div>
+                <div class="header-title">
+                    <h1>Word Builder</h1>
+                    <div id="wordBuilderRevision">v2.00.20</div>
+                </div>
+                <div class="header-right">
+                    <div id="burger-menu-mount" class="burger-menu-dark"></div>
+                </div>
             </div>
 
             <!-- Top Action Bar -->
@@ -127,17 +137,16 @@
                 <span class="action-link" id="newBtn">New</span>
                 <span class="action-link" id="loadBtn">Load</span>
                 <span class="action-link" id="saveBtn">Save</span>
+                <span class="action-link" id="assignWordTestBtn">Assign Word Test</span>
                 <span class="action-link" id="printBtn">Print</span>
                 <span class="action-link" id="pdfBtn">PDF</span>
                 <span class="action-link" id="moreBtn" style="position:relative;left:-10px;">More</span>
                   <span class="action-link" id="buildGameBtn">Build a Game</span>
-                  <span class="action-link" id="assignHomeworkBtn">Assign Homework</span>
                 <script>
-                // Word Builder handoff logic: open game builder with the current worksheet payload.
+                // Word Builder handoff logic: Build a Game remains separate from Word Test assignment.
                 document.addEventListener('DOMContentLoaded', function() {
                   const buildGameBtn = document.getElementById('buildGameBtn');
-                  const assignHomeworkBtn = document.getElementById('assignHomeworkBtn');
-                  function openGameBuilder(openHomework) {
+                  function openGameBuilder() {
                     const ta = document.getElementById('wordListTextarea');
                     const wordList = ta?.value.trim();
                     const title = document.getElementById('titleInput')?.value.trim();
@@ -163,17 +172,12 @@
                       unit
                     };
                     try { localStorage.setItem('gameBuilderWordList', JSON.stringify(payload)); } catch (e) {}
-                    try {
-                      if (openHomework) localStorage.setItem('gameBuilderOpenHomeworkAssignment', '1');
-                      else localStorage.removeItem('gameBuilderOpenHomeworkAssignment');
-                    } catch (e) {}
+                    try { localStorage.removeItem('gameBuilderOpenHomeworkAssignment'); } catch (e) {}
                     window.open('/Teachers/tools/game-builder/index.html', '_blank');
                   }
-                  if (buildGameBtn) buildGameBtn.addEventListener('click', function() { openGameBuilder(false); });
-                  if (assignHomeworkBtn) assignHomeworkBtn.addEventListener('click', function() { openGameBuilder(true); });
+                  if (buildGameBtn) buildGameBtn.addEventListener('click', openGameBuilder);
                 });
                 </script>
-                <div id="burger-menu-mount" class="burger-menu-dark" style="display:inline-block;vertical-align:middle;margin-right:12px;"></div>
                 <script>
                 // New button logic: reload page to fully reset worksheet
                 document.addEventListener('DOMContentLoaded', function() {
@@ -289,8 +293,7 @@
                           </style>
                         </head>
                         <body>
-                          ${previewArea.outerHTML}
-                        </body>
+                          ${previewArea.outerHTML}</body>
                         </html>
                       `);
 
@@ -634,7 +637,8 @@
       }
     };
     </script>
-    <script type="module" src="wordtest.js?v=20260110c"></script>
+    <script src="./assignment-word-test.js?v=20260930-v7"></script>
+    <script type="module" src="wordtest.js?v=20260926-book1"></script>
     <script>
     // Click event for image search using shared image picker modal
     document.addEventListener('DOMContentLoaded', function() {
@@ -668,29 +672,14 @@
               filter: filter,
               context: { word: word, index: dataIndex, targetElement: zone },
               onSelect: function(imageUrl, ctx) {
-                var target = ctx && ctx.targetElement ? ctx.targetElement : zone;
-                // Persist into module state so it survives resize/rebuilds
                 if (window.wordtestSetSelectedImage) {
                   try { window.wordtestSetSelectedImage(ctx.word, ctx.index, imageUrl); } catch (ex) {}
                 }
-
-                // Update DOM in-place (ensure only one <img>)
-                var container = target.querySelector('div') || target;
-                try {
-                  container.querySelectorAll('img').forEach(function(n){ n.remove(); });
-                } catch (_) {}
-                var newImg = document.createElement('img');
-                newImg.src = imageUrl;
-                newImg.alt = (ctx && ctx.word) ? ctx.word : 'Image';
-                newImg.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;';
-                container.appendChild(newImg);
-
-                // Also mirror to savedImageData for compatibility
-                try {
-                  var key = (ctx.word || '').toLowerCase() + '_' + String(ctx.index);
-                  window.savedImageData = window.savedImageData || {};
-                  window.savedImageData[key] = { src: imageUrl, word: ctx.word, index: Number(ctx.index) };
-                } catch (_) {}
+                // Re-render from the authoritative image state. This prevents old
+                // emoji/alternative DOM from surviving underneath the new image.
+                if (typeof window.updateWordtestPreview === 'function') {
+                  window.updateWordtestPreview();
+                }
               }
             });
           }
@@ -756,25 +745,12 @@
                   filter: filter,
                   context: { word: word, index: dataIndex, targetElement: card },
                   onSelect: function(imageUrl, ctx) {
-                    // Find the image element to update
-                    let imgEl = ctx.targetElement.querySelector('img');
-                    if (imgEl) {
-                      imgEl.src = imageUrl;
-                    } else {
-                      // Look for image drop zone or container
-                      const zone = ctx.targetElement.closest('.image-drop-zone') || ctx.targetElement.querySelector('.image-drop-zone');
-                      if (zone) {
-                        const innerImg = zone.querySelector('img');
-                        if (innerImg) {
-                          innerImg.src = imageUrl;
-                        } else {
-                          const container = zone.querySelector('div') || zone;
-                          container.innerHTML = '<img src="' + imageUrl + '" style="display:block;width:100%;height:100%;object-fit:cover;" alt="' + ctx.word + '">';
-                        }
-                      }
+                    if (window.wordtestSetSelectedImage) {
+                      try { window.wordtestSetSelectedImage(ctx.word, ctx.index, imageUrl); } catch (ex) {}
                     }
-                    // Trigger preview update if available
-                    if (window.updatePreview) window.updatePreview();
+                    if (typeof window.updateWordtestPreview === 'function') {
+                      window.updateWordtestPreview();
+                    }
                   }
                 });
               } else if (typeof window.ensureSharedImagePicker === 'function') {
@@ -786,11 +762,12 @@
                       filter: filter,
                       context: { word: word, index: dataIndex, targetElement: card },
                       onSelect: function(imageUrl, ctx) {
-                        let imgEl = ctx.targetElement.querySelector('img');
-                        if (imgEl) {
-                          imgEl.src = imageUrl;
+                        if (window.wordtestSetSelectedImage) {
+                          try { window.wordtestSetSelectedImage(ctx.word, ctx.index, imageUrl); } catch (ex) {}
                         }
-                        if (window.updatePreview) window.updatePreview();
+                        if (typeof window.updateWordtestPreview === 'function') {
+                          window.updateWordtestPreview();
+                        }
                       }
                     });
                   }

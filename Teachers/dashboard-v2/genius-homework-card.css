@@ -1,0 +1,57 @@
+/* Shared compact cards for Word, Sentence, Writing and Puzzles only. */
+.genius-homework-card{box-sizing:border-box;background:#fff;border:1px solid #d7e8e9;border-radius:17px;padding:17px 20px;margin:0 0 12px;color:#33434a;font:inherit;box-shadow:none}
+.ghc-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;min-width:0}
+.ghc-class{font-size:20px;font-weight:800;color:#124b51}
+.ghc-day{font-size:14px;font-weight:800;color:#a45382;white-space:nowrap}
+.ghc-task{font-size:16px;font-weight:650;line-height:1.4;color:#3b4c55;margin-top:6px;overflow-wrap:anywhere}
+.ghc-teacher{font-size:13px;color:#73858c;margin-top:5px}
+.ghc-meter{height:6px;background:#e9f1f2;border-radius:12px;margin:13px 0 0;overflow:hidden}
+.ghc-meter span{display:block;height:100%;background:#269ba4;border-radius:12px}
+.ghc-details{margin-top:13px;border-top:1px solid #e6eeee}
+.ghc-details>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;padding-top:12px;cursor:pointer;color:#277e85;font-size:14px;font-weight:750}
+.ghc-details>summary::-webkit-details-marker{display:none}
+.ghc-chevron{transition:transform .15s ease}
+.ghc-details[open] .ghc-chevron{transform:rotate(180deg)}
+.ghc-content{margin-top:12px;font-size:14px;overflow-wrap:anywhere}
+.ghc-content .control{max-width:100%}
+.ua-genius-manage-list{gap:12px!important}
+.ua-genius-manage{max-width:100%}
+.ua-genius-manage-toolbar{gap:8px!important}
+.ua-genius-manage-toolbar>.control{min-height:43px!important}
+.ua-genius-current-history{min-height:43px!important}
+.ua-genius-current-history button{padding:8px 13px!important}
+.ua-genius-manage>h3{font-size:22px!important}
+.ua-genius-manage>p{margin-bottom:15px!important}
+@media(max-width:600px){.genius-homework-card{padding:14px 15px}.ghc-class{font-size:18px}.ghc-task{font-size:15px}.ua-genius-manage-toolbar>.control:first-child{width:auto}}
+
+.ghc-load-action[hidden]{display:none!important}
+
+/* Small ring on the card's right edge, separate from the expanded details. */
+.genius-homework-card{position:relative;padding-right:95px}
+.ghc-ring{position:absolute;right:17px;top:58px;width:62px;height:62px;border-radius:50%;box-sizing:border-box;background:conic-gradient(#279ca5 var(--ghc-pct,0%),#e6f1f2 0);display:grid;place-items:center}
+.ghc-ring:before{content:"";position:absolute;inset:7px;background:#fff;border-radius:50%}
+.ghc-ring span{position:relative;font-weight:800;font-size:14px;color:#2c6870}
+.ghc-ring:not(.has-data) span{color:#87979d}
+@media(max-width:600px){.genius-homework-card{padding-right:82px}.ghc-ring{width:54px;height:54px;right:12px;top:59px}.ghc-ring:before{inset:6px}.ghc-ring span{font-size:12px}}
+
+/* Shared Word Genius-style progress detail across Genius homework cards and My/All. */
+.ghc-progress-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:#6d8088;margin:8px 0 12px}
+.ghc-progress-summary b{font-weight:800;color:#227c84}
+.ghc-progress-track,.ghc-student-track{display:block;height:10px;overflow:hidden;background:#e7eff0;border-radius:999px}
+.ghc-progress-track{margin-bottom:13px}
+.ghc-progress-track>i,.ghc-student-track>i{display:block;width:0;height:100%;border-radius:inherit;background:#2b9da6}
+.ghc-student-list{display:grid;gap:12px;padding:4px 0 13px}
+.ghc-student-row{display:grid;grid-template-columns:minmax(95px,1fr) minmax(75px,2fr) minmax(38px,auto);gap:12px;align-items:center;font-size:13px;min-height:27px}
+.ghc-student-name{overflow-wrap:anywhere;color:#42545c}
+.ghc-student-pct{text-align:right;font-weight:800;color:#3a5059;font-variant-numeric:tabular-nums}
+.ghc-progress-modes{font-size:12px;color:#748891;margin:5px 0 12px;overflow-wrap:anywhere}
+.genius-homework-card>.ghc-details .ghc-content{margin-right:0}
+@media(max-width:600px){.ghc-student-row{grid-template-columns:minmax(70px,1fr) minmax(70px,2fr) 42px;gap:8px}.ghc-progress-summary{font-size:12px}}
+
+/* My/All overview uses the same shared homework detail spacing as the Word cards. */
+.ua-overview-genius-card .ua-group-body .ua-homework-card{border:1px solid #dce8e9;border-radius:14px;background:#fff;box-shadow:none}
+.ua-overview-genius-card .ua-homework-expanded.ghc-overview-expanded{background:#fff;border:0;border-top:1px solid #e6eeee;margin:0 12px;padding:12px 6px 14px;max-width:none}
+.ua-overview-genius-card .ghc-overview-expanded .ghc-overview-detail{font-size:12px;color:#6a818a;margin:0 0 12px;line-height:1.5}
+.ua-overview-genius-card .ghc-overview-expanded .ghc-student-list{padding:2px 0 6px}
+.ghc-student-note{color:#6e818a;font-size:12px;overflow-wrap:anywhere}
+.ua-overview-genius-card .ua-homework-detail{background:#fff}

@@ -1,0 +1,186 @@
+/* Complete mobile layout used by Auto and explicit Mobile mode.
+   Kept separate so the existing desktop stylesheet remains untouched. */
+body[data-wordtest-layout="mobile"] {
+  max-width: 100%;
+  min-width: 0 !important;
+  overflow-x: hidden;
+}
+
+body[data-wordtest-layout="mobile"] .container {
+  max-width: 100%;
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+body[data-wordtest-layout="mobile"] .app-card {
+  width: 100%;
+  border-radius: 10px;
+}
+
+body[data-wordtest-layout="mobile"] .header {
+  min-height: 48px;
+}
+
+body[data-wordtest-layout="mobile"] .logo-img {
+  height: 40px;
+}
+
+body[data-wordtest-layout="mobile"] .header h1 {
+  font-size: 1.1rem;
+}
+
+body[data-wordtest-layout="mobile"] .top-actions {
+  position: relative;
+  top: auto;
+  gap: 4px;
+  padding: 4px 8px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+body[data-wordtest-layout="mobile"] .top-actions .action-link {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+body[data-wordtest-layout="mobile"] #moreBtn {
+  margin-left: 0;
+  left: 0 !important;
+}
+
+body[data-wordtest-layout="mobile"] #burger-menu-mount {
+  position: static;
+  transform: none;
+  flex: 0 0 auto;
+  margin-right: 0 !important;
+}
+
+body[data-wordtest-layout="mobile"] .floating-toolbar {
+  position: relative;
+  top: auto;
+  gap: 8px;
+  padding: 8px;
+  align-items: stretch;
+}
+
+body[data-wordtest-layout="mobile"] .floating-toolbar > * {
+  max-width: 100%;
+}
+
+body[data-wordtest-layout="mobile"] .toolbar-select,
+body[data-wordtest-layout="mobile"] .layout-select,
+body[data-wordtest-layout="mobile"] .test-mode-select,
+body[data-wordtest-layout="mobile"] .picture-mode-select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body[data-wordtest-layout="mobile"] .layout-group,
+body[data-wordtest-layout="mobile"] .slider-group {
+  flex: 1 1 145px;
+  min-width: 0;
+}
+
+body[data-wordtest-layout="mobile"] .layout-group .layout-select {
+  width: 100%;
+}
+
+body[data-wordtest-layout="mobile"] .slider-group .slider {
+  min-width: 70px;
+  width: 100%;
+}
+
+body[data-wordtest-layout="mobile"] .main-content {
+  display: flex;
+  flex-direction: column !important;
+  min-height: 0;
+  width: 100%;
+}
+
+body[data-wordtest-layout="mobile"] .sidebar {
+  width: 100%;
+  flex: none;
+  padding: 16px;
+  border-right: 0;
+  border-bottom: 1px solid #e1e8ed;
+  box-sizing: border-box;
+}
+
+body[data-wordtest-layout="mobile"] .button-group > button {
+  flex: 1 1 0;
+}
+
+body[data-wordtest-layout="mobile"] .preview-area {
+  display: block;
+  width: 100%;
+  min-width: 0 !important;
+  max-width: none;
+  padding: 12px 6px;
+  box-sizing: border-box;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body[data-wordtest-layout="mobile"] .worksheet-preview {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+body[data-wordtest-layout="mobile"] .worksheet-preview table {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: fixed;
+}
+
+body[data-wordtest-layout="mobile"] .worksheet-preview table[style*="width:100%"] {
+  min-width: 0 !important;
+}
+
+body[data-wordtest-layout="mobile"] .worksheet-preview table th,
+body[data-wordtest-layout="mobile"] .worksheet-preview table td {
+  padding: 9px 4px;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+body[data-wordtest-layout="mobile"] .worksheet-preview table colgroup col,
+body[data-wordtest-layout="mobile"] .worksheet-preview table td[style*="text-align:center"] {
+  min-width: 0;
+}
+
+/* These formats need internal horizontal space; only their preview scrolls. */
+body[data-wordtest-layout="mobile"] .worksheet-preview .matching-container,
+body[data-wordtest-layout="mobile"] .worksheet-preview .eng-kor-matching,
+body[data-wordtest-layout="mobile"] .worksheet-preview .image-grid,
+body[data-wordtest-layout="mobile"] .picture-matching-grid {
+  min-width: 650px;
+}
+
+@media (max-width: 520px) {
+  body[data-wordtest-layout="mobile"] .container {
+    padding: 0;
+  }
+
+  body[data-wordtest-layout="mobile"] .app-card {
+    border-radius: 0;
+  }
+
+  body[data-wordtest-layout="mobile"] .sidebar {
+    padding: 12px;
+  }
+
+  body[data-wordtest-layout="mobile"] .preview-area {
+    padding: 8px 2px;
+  }
+
+  body[data-wordtest-layout="mobile"] .worksheet-preview table th,
+  body[data-wordtest-layout="mobile"] .worksheet-preview table td {
+    padding: 8px 3px;
+    font-size: 0.9em;
+  }
+}

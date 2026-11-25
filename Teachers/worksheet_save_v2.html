@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Save Worksheet</title>
+  <script src="/students/api-gateway.js?v=20260116"></script>
+  <script src="/js/api-config.js?v=20260113b"></script>
+  <style>
+    body{font-family:Arial,sans-serif;background:#f7fafc;margin:0;padding:24px;color:#1f2937}
+    .card{max-width:560px;margin:auto;background:#fff;border-radius:14px;padding:22px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+    h1{font-size:22px;margin:0 0 18px}.field{margin-bottom:12px}label{display:block;font-weight:700;margin-bottom:5px}
+    input,textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit}
+    textarea{min-height:80px}.actions{display:flex;gap:10px;margin-top:18px}button{padding:10px 16px;border:0;border-radius:8px;cursor:pointer;font-weight:700}
+    #saveBtn{background:#2563eb;color:#fff}.secondary{background:#e5e7eb}.status{margin-top:14px;min-height:20px;font-size:14px}.error{color:#b91c1c}.ok{color:#166534}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Save Worksheet</h1>
+    <form id="saveForm">
+      <div class="field"><label for="title">Title</label><input id="title" required></div>
+      <div class="field"><label for="book">Book</label><input id="book"></div>
+      <div class="field"><label for="unit">Unit</label><input id="unit"></div>
+      <div class="field"><label for="languagePoint">Language Point</label><input id="languagePoint"></div>
+      <div class="field"><label for="notes">Notes</label><textarea id="notes"></textarea></div>
+      <div class="actions"><button id="saveBtn" type="submit">Save</button><button class="secondary" type="button" onclick="window.close()">Cancel</button></div>
+      <div id="status" class="status"></div>
+    </form>
+  </div>
+<script>
+(function(){
+  'use strict';
+  const WORKER_URL = window.WILLENA_WORKSHEET_ASSETS_URL || 'https://worksheet-assets.willenaenglish.com';
+  const statusEl = document.getElementById('status');
+  const saveBtn = document.getElementById('saveBtn');
+
+  function setStatus(message, type){ statusEl.textContent = message || ''; statusEl.className = 'status ' + (type || ''); }
+  function hasEmbedded(value){
+    if (typeof value === 'string') {
+      if (/data:image\//i.test(value)) return true;
+      try { return hasEmbedded(JSON.parse(value)); } catch (_) { return false; }
+    }
+    if (!value || typeof value !== 'object') return false;
+    return Array.isArray(value) ? value.some(hasEmbedded) : Object.values(value).some(hasEmbedded);
+  }
+  function token(){
+    try { return localStorage.getItem('sb_access_token') || ''; } catch (_) { return ''; }
+  }
+  async function transformWorksheet(worksheet){
+    const headers = {'Content-Type':'application/json'};
+    const access = token();
+    if (access) headers.Authorization = 'Bearer ' + access;
+    const response = await fetch(WORKER_URL, {
+      method:'POST', credentials:'include', headers,
+      body:JSON.stringify({action:'transform_worksheet', dry_run:false, worksheet})
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) throw new Error(result.error || 'Image upload failed');
+    if (['images','settings','image_data'].some(field => hasEmbedded(result.worksheet && result.worksheet[field]))) {
+      throw new Error('Save blocked because embedded images remain');
+    }
+    return result.worksheet;
+  }
+  async function existingWorksheetId(worksheet){
+    if (!worksheet.username || !worksheet.title) return null;
+    const response = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=list_worksheets&fields=user_id,title,username');
+    const result = await response.json();
+    if (!result.success || !Array.isArray(result.data)) return null;
+    const found = result.data.find(item => item.title === worksheet.title && item.username === worksheet.username);
+    return found ? found.user_id : null;
+  }
+  function normaliseWords(worksheet){
+    if (typeof worksheet.words === 'string') worksheet.words = worksheet.words.split('\n').map(v=>v.trim()).filter(Boolean);
+    else if (Array.isArray(worksheet.words)) worksheet.words = worksheet.words.map(v=>typeof v === 'string' ? v.trim() : '').filter(Boolean);
+    else worksheet.words = [];
+  }
+
+  try {
+    const source = window.opener && typeof window.opener.getCurrentWorksheetData === 'function' ? window.opener.getCurrentWorksheetData() : null;
+    if (!source) throw new Error('The worksheet editor did not provide worksheet data');
+    document.getElementById('title').value = source.title || '';
+    const meta = (window.opener && window.opener._loadedWorksheetMeta) || {};
+    document.getElementById('book').value = source.book || meta.book || '';
+    document.getElementById('unit').value = source.unit || meta.unit || '';
+    document.getElementById('languagePoint').value = source.language_point || meta.language_point || '';
+    document.getElementById('notes').value = source.notes || meta.notes || '';
+  } catch (error) { setStatus(error.message, 'error'); saveBtn.disabled = true; }
+
+  document.getElementById('saveForm').addEventListener('submit', async function(event){
+    event.preventDefault();
+    saveBtn.disabled = true;
+    setStatus('Preparing images…');
+    try {
+      let worksheet = window.opener.getCurrentWorksheetData();
+      worksheet.title = document.getElementById('title').value.trim();
+      worksheet.book = document.getElementById('book').value.trim();
+      worksheet.unit = document.getElementById('unit').value.trim();
+      worksheet.language_point = document.getElementById('languagePoint').value.trim();
+      worksheet.notes = document.getElementById('notes').value.trim();
+      worksheet.username = localStorage.getItem('username') || ((localStorage.getItem('userEmail') || '').split('@')[0]) || '';
+      normaliseWords(worksheet);
+
+      const duplicateId = await existingWorksheetId(worksheet);
+      if (duplicateId && duplicateId !== worksheet.user_id) {
+        if (!confirm('You already have a worksheet with this title. Overwrite it?')) { saveBtn.disabled = false; setStatus(''); return; }
+        worksheet.user_id = duplicateId;
+      }
+
+      worksheet = await transformWorksheet(worksheet);
+      setStatus('Saving worksheet…');
+      const response = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=save_worksheet', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(worksheet)
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || 'Worksheet save failed');
+      setStatus('Saved.', 'ok');
+      setTimeout(() => window.close(), 500);
+    } catch (error) {
+      console.error('[worksheet-save-v2]', error);
+      setStatus(error.message || 'Save failed', 'error');
+      saveBtn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

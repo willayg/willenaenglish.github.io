@@ -9,6 +9,7 @@
   <script src="/js/api-config.js?v=20260329a"></script>
   <script src="/Teachers/tools/shared/homework-assignment.js?v=20260322a"></script>
   <link rel="stylesheet" href="styles.css?v=20260329g" />
+  <link rel="stylesheet" href="mobile.css?v=20260727a" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <!-- Auth guard: redirect unauthenticated users to login with return path -->
   <script>
@@ -29,7 +30,7 @@
       } catch(e){ console.warn('[game-builder] auth guard error', e); }
     })();
   </script>
-  <script type="module" src="main.js?v=20260329s"></script>
+  <script type="module" src="main.js?v=20260727a"></script>
   <script>
     // Public base URL for R2-hosted images. IMPORTANT: For Cloudflare public buckets the domain already maps to the bucket.
     // Do NOT append the bucket name again. (Previously we had '/images' here which caused 404s like /images/words/...)

@@ -1,0 +1,1231 @@
+/* Live, read-only Naesin homework outcomes. Distinguishes completion from accuracy. */
+(()=>{'use strict';
+const expandedHomeworkGroups=new Set();
+const expandedAssignmentDates=new Set();
+let assignmentDatesInitialized=false;
+const assignedDateKey=value=>{const d=new Date(value);return Number.isNaN(d.getTime())?'unknown':new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d).replace(/\//g,'-');};
+const assignedDateLabel=key=>key==='unknown'?'Date unavailable':new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',day:'numeric',month:'long',year:'numeric'}).format(new Date(key+'T12:00:00Z'));
+const assignmentDateStyle=document.createElement('style');
+assignmentDateStyle.textContent='.ua-date-groups{display:grid;gap:12px;margin:12px 0}.ua-date-card{background:#fff;border:1px solid #dce8eb;border-radius:12px;overflow:hidden}.ua-date-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;padding:15px 18px;border:0;background:#f8fcfd;color:#234456;cursor:pointer}.ua-date-toggle:hover{background:#edf8fa}.ua-date-toggle>span:first-child{display:flex;flex-direction:column;gap:3px}.ua-date-toggle small{font-size:12px;color:#647d88;font-weight:400}.ua-date-chevron{font-size:19px;color:#367f8a}.ua-date-body[hidden]{display:none}.ua-date-body .ua-progress-table-wrap{margin:0;border-radius:0}';
+assignmentDateStyle.textContent += '.ua-simple-date-divider{display:flex;align-items:center;gap:14px;font-size:14px;font-weight:700;color:#56717b;margin:24px 0 12px}.ua-simple-date-divider:after{content:"";height:1px;background:#cfdee3;flex:1}.ua-simple-date-divider:first-child{margin-top:8px}';
+assignmentDateStyle.textContent += '.ua-group-top{display:flex;align-items:center;gap:8px}.ua-group-top>.ua-group-heading{flex:1;min-width:0}.ua-group-select{display:flex;align-items:center;padding:12px 0 12px 14px;cursor:pointer}.ua-group-select input{width:19px;height:19px;accent-color:#2a9eaa;cursor:pointer}';
+const assignmentCardStyle=document.createElement('link');
+assignmentCardStyle.rel='stylesheet';
+assignmentCardStyle.href='/Teachers/dashboard-v2/genius-homework-card.css?v=20261104-shared-progress3';
+document.head.appendChild(assignmentCardStyle);
+assignmentDateStyle.textContent += '.ua-overview-genius-card{width:100%;margin:0;min-height:210px;overflow:hidden;position:relative;border:2.5px solid #e7a2c5;border-radius:17px;padding:17px 95px 17px 20px;background:#fff;box-sizing:border-box}.ua-overview-heading{display:flex;align-items:center;gap:10px;min-height:30px}.ua-overview-heading>.ghc-class{flex:1;min-width:0}.ua-overview-genius-card .ghc-task{margin-top:10px}.ua-overview-genius-card .ghc-teacher{margin-bottom:23px}.ua-overview-genius-card .ghc-ring{top:65px}.ua-overview-genius-card>.ghc-details{margin-right:-75px}.ua-overview-progress-toggle{font:inherit;font-size:14px;font-weight:750;color:#277e85;border:0;background:transparent;cursor:pointer;display:flex;justify-content:space-between;width:100%;padding:12px 0 0;text-align:left}.ua-overview-genius-card .ua-group-body{padding:14px 0 0;margin-right:-75px}.ua-overview-genius-card .ua-group-select{padding:0;flex:none}.ua-overview-genius-card .ghc-day{margin-left:auto}.ua-overview-genius-card .ua-homework-card{width:100%}@media(max-width:600px){.ua-overview-genius-card{padding:14px 82px 14px 15px;min-height:200px}.ua-overview-genius-card .ghc-ring{top:65px}.ua-overview-genius-card>.ghc-details,.ua-overview-genius-card .ua-group-body{margin-right:-67px}}';
+assignmentDateStyle.textContent += '.ua-toolbar .ua-bulk-icon{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;width:56px;height:46px;min-width:56px;min-height:46px;padding:7px;border-radius:12px;background:#fff;line-height:1;border:1.5px solid #a9d7dc;color:#26868f;cursor:pointer}.ua-toolbar .ua-bulk-delete{border-color:#e2b4c7;color:#b25b74}.ua-toolbar .ua-bulk-icon svg{flex:none}.ua-toolbar .ua-bulk-count{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}.ua-toolbar .ua-bulk-icon:disabled{opacity:.4;cursor:not-allowed}.ua-toolbar .ua-bulk-icon:focus-visible{outline:3px solid #2899a5;outline-offset:2px}';
+assignmentDateStyle.textContent += '.ua-overview-filters{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0 12px}.ua-overview-filters label{display:flex;flex:1 1 200px;min-width:0;flex-direction:column;gap:5px;font-size:12px;font-weight:750;color:#54737d}.ua-overview-filters select{width:100%;max-width:100%;background:#fff;box-sizing:border-box;min-height:42px}\n';
+assignmentDateStyle.textContent += '.ua-naesin-qr{margin:8px 0 8px 12px;vertical-align:middle}';
+assignmentDateStyle.textContent += '.ua-overview-genius-card .ghc-app-label{font-size:14px;font-weight:850;color:#227e87;margin:10px 0 2px;line-height:1.5;overflow-wrap:anywhere}.ua-overview-genius-card .ghc-app-label+.ghc-task{margin-top:2px}';
+assignmentDateStyle.textContent += '.ua-overview-genius-card .ua-single-assignment-detail{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:8px 0 0!important;margin:0!important;min-height:0!important}.ua-overview-open-details{appearance:none;background:#fff;border:1px solid #d9e7ea;border-radius:12px;padding:10px 14px;font:inherit;font-size:13px;color:#2b5963;cursor:pointer;min-height:43px}.ua-overview-open-details:hover{border-color:#9ad6dd;background:#f6fcfc}.ua-overview-open-details:focus-visible{outline:3px solid #2a9ca5;outline-offset:2px}.ua-single-assignment-detail .ua-homework-expanded{margin:10px 0 0!important;padding:12px 0!important}.ua-single-assignment-detail .ua-homework-actions,.ua-single-assignment-detail .ua-delete-area{margin-top:8px}';
+document.head.appendChild(assignmentDateStyle);
+const ROOT='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
+const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=x=>x?new Date(x).toLocaleDateString('ko-KR'):'—';
+const dday=x=>{
+ if(!x)return 'No deadline';
+ const due=new Date(x);if(Number.isNaN(due.getTime()))return 'No deadline';
+ const today=new Date();
+ const day=Date.UTC(today.getFullYear(),today.getMonth(),today.getDate());
+ const target=Date.UTC(due.getFullYear(),due.getMonth(),due.getDate());
+ const offset=Math.round((target-day)/86400000);
+ return offset===0?'D-Day':offset>0?'D-'+offset:'D+'+Math.abs(offset);
+};
+const id=x=>String(x||'');
+function sharedHomeworkGroupStart({key,title,sub,label,average=null,checkbox='',overviewStyle=false,due='',teacher='',apps=[]}) {
+ if(overviewStyle){
+  return window.WillenaGeniusHomeworkCard.groupCardStart({
+    key,title,task:sub,teacher,dueLabel:due,checkbox,progressPercent:average,apps
+  });
+
+ }
+ return '<div class="ua-group" data-ua-group="'+esc(key)+'"><div class="ua-group-top">'+checkbox+'<button type="button" class="ua-group-heading" data-ua-group-toggle="'+esc(key)+'" aria-expanded="false"><span><b>'+esc(title)+'</b><small>'+esc(sub)+'</small></span><strong>'+esc(label)+' ▾</strong></button></div>'+
+ (average===null?'':'<div class="ua-group-meter" role="progressbar" aria-label="Tracked question completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+average+'"><i style="width:'+average+'%"></i></div>')+
+ '<div class="ua-group-body" hidden>';
+}
+function attachHomeworkGroupToggles(host){
+ host.querySelectorAll('[data-ua-group-toggle]').forEach(button=>{
+  const key=button.dataset.uaGroupToggle,body=button.closest('.ua-group')?.querySelector('.ua-group-body');
+  if(!body)return;
+  body.hidden=!expandedHomeworkGroups.has(key);
+  button.setAttribute('aria-expanded',String(!body.hidden));
+  button.onclick=()=>{body.hidden=!body.hidden;button.setAttribute('aria-expanded',String(!body.hidden));if(body.hidden)expandedHomeworkGroups.delete(key);else expandedHomeworkGroups.add(key)};
+ });
+}
+
+let loading=false,selected='',all=[],scope='my',currentTeacherId='',teacherNames=new Map();
+const access=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+async function get(path,options={}){
+ let token=access();if(!token)throw Error('Teacher login required');
+ const send=t=>fetch(ROOT+path,{...options,headers:{apikey:KEY,Authorization:'Bearer '+t,...(options.headers||{})},cache:'no-store',credentials:'omit'});
+ let response=await send(token);
+ if(response.status===401){
+   try{const r=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'}):fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'}));const d=await r.json();if(d?.access_token){window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');response=await send(d.access_token)}}catch(_){}
+ }
+ const body=await response.json().catch(()=>null);
+ if(!response.ok)throw Error(body?.message||body?.error||'Request failed '+response.status);
+ if(['PATCH','DELETE','PUT'].includes(String(options.method||'GET').toUpperCase()) || (String(options.method||'GET').toUpperCase()==='POST'&&!path.startsWith('rpc/')))invalidateOverviewCache(true);
+ return body;
+}
+async function teacherIdentity(){
+ // Dashboard session restoration can finish shortly after the Assignments tab
+ // first mounts. Retry verification briefly, but never bypass auth.
+ for(let attempt=0;attempt<4;attempt++){
+  const token=access();
+  if(token){
+   try{
+    const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/auth/v1/user',{headers:{apikey:KEY,Authorization:'Bearer '+token},cache:'no-store'});
+    if(response.ok){
+     const me=await response.json();
+     if(me?.id)return id(me.id);
+    }else if(response.status===401&&attempt===0){
+     // The existing shared API client owns token refresh; use it when available.
+     try{
+      const refresh=await window.WillenaAPI?.fetch?.('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'});
+      if(refresh?.ok){
+       const data=await refresh.json();
+       if(data?.access_token)window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');
+      }
+     }catch(_){}
+    }else if(response.status!==401)throw Error('Could not verify current teacher');
+   }catch(error){if(attempt===3)throw error}
+  }
+  if(attempt<3)await new Promise(resolve=>setTimeout(resolve,250*(attempt+1)));
+ }
+ throw Error('Could not verify current teacher');
+}
+async function load(){
+ if(loading)return;const host=document.querySelector('#uaProgress');if(!host)return;
+ loading=true;host.textContent='Loading homework results…';
+ try{
+  let groups=window.NaesinV2Data?.getCachedGroups?.()||[];
+  if(!groups.length){await window.NaesinV2Data?.loadGroups?.();groups=window.NaesinV2Data?.getCachedGroups?.()||[]}
+  const ids=groups.map(x=>id((x.group||x).id)).filter(Boolean);
+  if(!ids.length){host.textContent='No exam groups loaded. Refresh exams first.';return}
+  currentTeacherId=await teacherIdentity();
+  const tasks=await get('test_prep_tasks?select=id,created_at,created_by,group_id,plan_id,student_id,lesson,practice_type,title,target_count,due_at,active,completed_at&group_id=in.('+ids.join(',')+')&order=created_at.desc&limit=1000');
+  const creators=[...new Set(tasks.map(t=>id(t.created_by)).filter(Boolean))];
+  teacherNames=new Map();
+  if(creators.length){
+   try{
+    const profiles=await get('profiles?select=id,name,username&id=in.('+creators.join(',')+')');
+    profiles.forEach(p=>teacherNames.set(id(p.id),p.name||p.username||'Unknown teacher'));
+   }catch(e){console.warn('Teacher names unavailable',e)}
+  }
+  const data=await get('rpc/test_prep_assignment_results_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_group_id:null})});
+  if(!Array.isArray(data))throw Error('Invalid assignment results response');
+  const resultMap=new Map(data.map(r=>[id(r.task_id),r]));
+  const names=new Map();
+  groups.forEach(item=>(item.members||[]).forEach(m=>{const p=m.student||{};names.set(id(p.id||m.student_id),p.name||p.username||p.korean_name||'Student')}));
+  const taskStudentIds=[...new Set(tasks.map(t=>id(t.student_id)).filter(Boolean))];
+  for(let i=0;i<taskStudentIds.length;i+=150){
+    try{
+      const profiles=await get('profiles?select=id,name,username,korean_name&id=in.('+taskStudentIds.slice(i,i+150).join(',')+')');
+      profiles.forEach(p=>names.set(id(p.id),p.name||p.username||p.korean_name||'Student'));
+    }catch(error){console.warn('[내신 names] English name lookup unavailable',error);break}
+  }
+  all=tasks.map(t=>{
+   const result=resultMap.get(id(t.id));
+   const done=result?Number(result.done)||0:0,target=Math.max(1,Number(t.target_count)||10);
+   return {...t,name:names.get(id(t.student_id))||id(t.student_id).slice(0,8),done,target,
+    attempted:result?Number(result.attempted)||0:0,correct:result?Number(result.correct)||0:0,wrong:result?Number(result.wrong)||0:0,
+    unresolved:result?Number(result.unresolved)||0:0,retries:result?Number(result.retries)||0:0,
+    accuracy:result?.accuracy_percent??null,verified:!!result,complete:done>=target&&(Number(result?.unresolved)||0)===0};
+  });
+  render();
+ }catch(e){host.innerHTML='<p class="empty">Could not load assignment results: '+esc(e.message)+'</p>'}
+ finally{loading=false}
+}
+function render(){
+ const host=document.querySelector('#uaProgress');if(!host)return;
+ const groups=window.NaesinV2Data?.getCachedGroups?.()||[],options=groups.map(x=>x.group||x);
+ const rows=all.filter(t=>(scope==='all'||(t.active&&currentTeacherId&&id(t.created_by)===currentTeacherId))&&(!selected||id(t.group_id)===selected));
+ const completed=rows.filter(t=>t.complete).length;
+ const byDate=new Map();rows.forEach(t=>{const key=assignedDateKey(t.created_at);if(!byDate.has(key))byDate.set(key,[]);byDate.get(key).push(t)});
+ const dateGroups=[...byDate.entries()].sort((a,b)=>b[0].localeCompare(a[0]));
+ if(!assignmentDatesInitialized&&dateGroups.length){expandedAssignmentDates.add(dateGroups[0][0]);assignmentDatesInitialized=true;}
+ host.innerHTML='<div class="ua-scope-tabs" role="tablist" aria-label="Assignment ownership"><button type="button" role="tab" data-ua-scope="my" aria-selected="'+(scope==='my')+'" class="'+(scope==='my'?'active':'')+'">My</button><button type="button" role="tab" data-ua-scope="all" aria-selected="'+(scope==='all')+'" class="'+(scope==='all'?'active':'')+'">All</button></div><div class="ua-toolbar"><strong>내신 homework results</strong><select class="control" id="uaGroupFilter"><option value="">All exams</option>'+
+ options.map(g=>'<option value="'+esc(g.id)+'" '+(id(g.id)===selected?'selected':'')+'>'+esc(g.school||'')+' · '+esc(g.book_label||'')+'</option>').join('')+
+ '</select><button class="control" id="uaProgressRefresh">Refresh results</button></div>'+
+ '<p class="ua-tracker-summary">'+rows.length+' assignments · '+completed+' completed · '+(scope==='my'?'Current teacher · active assignments':'All teachers · active and inactive assignments')+' · Completion is not a score</p>'+
+ '<div class="ua-homework-cards">'+dateGroups.map(([date,items])=>{
+   const studentMap=new Map();
+   items.forEach(t=>{const studentKey=id(t.student_id)||'unknown:'+t.name;if(!studentMap.has(studentKey))studentMap.set(studentKey,{name:t.name,items:[]});studentMap.get(studentKey).items.push(t)});
+   return '<section class="ua-naesin-date"><div class="ua-simple-date-divider"><span>'+esc(assignedDateLabel(date))+'</span></div>'+
+    [...studentMap.entries()].sort((a,b)=>a[1].name.localeCompare(b[1].name,'ko')).map(([studentId,student])=>{
+     const completedCount=student.items.filter(t=>t.complete).length;
+     const percentage=Math.round(100*student.items.reduce((sum,t)=>sum+Math.min(1,t.done/t.target),0)/student.items.length);
+     return sharedHomeworkGroupStart({key:'naesin:'+date+':'+studentId,title:student.name,sub:student.items.length+' assignments · '+completedCount+' completed',label:percentage+'% complete',average:percentage,overviewStyle:true,teacher:'내신 homework'})+
+      student.items.map(t=>{
+       const pct=Math.min(100,Math.round(t.done/t.target*100));
+       return '<article class="ua-homework-card"><button class="ua-homework-detail" type="button" data-naesin-detail="'+esc(t.id)+'" aria-expanded="false"><span><b>'+esc(t.lesson||'Lesson')+'</b> · '+esc(t.practice_type||'Practice')+'</span><small>'+esc(teacherNames.get(id(t.created_by))||'Unknown')+' · '+esc(dday(t.due_at))+'</small><strong>'+t.done+'/'+t.target+' correct · '+pct+'% ▾</strong></button>'+
+        '<button type="button" class="ghc-qr-trigger ua-naesin-qr" data-ghc-qr="https://students.willenaenglish.com/students/test-prep-v2/?homework='+encodeURIComponent(t.id)+'" data-ghc-qr-title="'+esc(t.name||t.lesson||'내신 homework')+'" data-ghc-qr-task="'+esc((t.lesson||'Lesson')+' · '+(t.practice_type||'Practice'))+'" aria-label="Show homework QR code" title="Show homework QR code"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="8" height="8"/><rect x="14" y="2" width="8" height="8"/><rect x="2" y="14" width="8" height="8"/><path d="M14 14h3v3h-3zM21 14v4h-3M14 21h4"/></svg></button>'+
+        '<div class="ua-homework-expanded" hidden><p>First-try accuracy: '+(t.verified&&t.done?esc(t.accuracy)+'%':'—')+' · Correct: '+t.correct+' · Wrong: '+t.wrong+' · 오답 remaining: '+t.unresolved+' · Retries: '+t.retries+'</p><div class="ua-track"><i style="width:'+pct+'%"></i></div></div></article>';
+      }).join('')+'</div></div>';
+    }).join('')+'</section>';
+  }).join('')+'</div>'+(rows.length?'':'<p class="empty">No assignments found.</p>')+
+ '<p class="ua-note">Completion counts distinct questions answered correctly, including successful retries. Accuracy records first attempts separately. 오답 remaining must reach zero to pass.</p>';
+ attachHomeworkGroupToggles(host);
+ host.querySelectorAll('[data-naesin-detail]').forEach(button=>button.onclick=()=>{
+  const body=button.closest('.ua-homework-card')?.querySelector('.ua-homework-expanded');
+  if(!body)return;
+  body.hidden=!body.hidden;
+  button.setAttribute('aria-expanded',String(!body.hidden));
+ });
+ host.querySelectorAll('[data-ua-scope]').forEach(b=>b.onclick=()=>{scope=b.dataset.uaScope;render()});
+ host.querySelector('#uaGroupFilter').onchange=e=>{selected=e.target.value;render()};
+ host.querySelector('#uaProgressRefresh').onclick=load;
+}
+let overviewStage='active';
+const overviewSelections=new Set();
+const wordCompletionCache=new Map();
+const wordCompletionPending=new Map();
+const overviewFilters={my:{className:'',assignment:'',teacherId:''},all:{className:'',assignment:'',teacherId:''}};
+const homeworkKey=row=>row._table+':'+row.id;
+async function changeHomework(row){
+ const table=row._table;
+ if(!['homework_assignments','grammar_foundation_homework','sentence_genius_homework','test_prep_tasks'].includes(table))throw Error('This app does not support changes here yet');
+ if(table==='homework_assignments'){
+  const changed=await window.WillenaHomeworkSelection.cancelAssignment(table,row.id);
+  row.isActive=false;row.active=false;Object.assign(row,changed);
+  overviewSelections.delete(homeworkKey(row));return;
+ }
+ const update={active:false};
+ if(table==='grammar_foundation_homework')update.closed_at=new Date().toISOString();
+ if(table==='test_prep_tasks')update.completed_at=new Date().toISOString();
+ const changed=await get(table+'?id=eq.'+encodeURIComponent(row.id),{
+  method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(update)
+ });
+ if(!Array.isArray(changed)||changed.length!==1)throw Error('Assignment was not updated; check teacher permissions');
+ row.isActive=false;
+ row.active=false;
+ Object.assign(row,changed[0]);
+ overviewSelections.delete(homeworkKey(row));
+}
+async function deleteHomework(row){
+ const table=row._table;
+ // Where hard deletes are unsupported by RLS, remove the assignment
+ // from students' active workload without destroying attempt history.
+ if(!['homework_assignments','grammar_foundation_homework','sentence_genius_homework','test_prep_tasks'].includes(table))throw Error('Unsupported homework type');
+ if(table==='homework_assignments'||table==='test_prep_tasks'){
+  const result=await get(table+'?id=eq.'+encodeURIComponent(row.id),{method:'DELETE',headers:{Prefer:'return=representation'}});
+  if(!Array.isArray(result)||result.length!==1)throw Error('Could not delete assignment; check permissions');
+  return;
+ }
+ const update={active:false};
+ if(table==='grammar_foundation_homework')update.closed_at=new Date().toISOString();
+ const updated=await get(table+'?id=eq.'+encodeURIComponent(row.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(update)});
+ if(!Array.isArray(updated)||updated.length!==1)throw Error('Could not remove assignment; check permissions');
+}
+
+const editDate=v=>{if(!v)return'';const d=new Date(v);if(!Number.isFinite(d.getTime()))return'';return new Date(d.getTime()+9*3600000).toISOString().slice(0,16)};
+const fromEditDate=v=>v?new Date(v+':00+09:00').toISOString():null;
+async function editHomework(row,teacher,afterSave){
+ if(String(row.created_by)!==String(teacher))return;
+ const table=row._table;
+ const supported=['homework_assignments','grammar_foundation_homework','sentence_genius_homework','test_prep_tasks'];
+ if(!supported.includes(table))return;
+ const detailRows=await get(table+'?id=eq.'+encodeURIComponent(row.id)+'&select=*');
+ const original=detailRows?.[0];if(!original)throw Error('Assignment not found.');
+ const fieldClass=table==='homework_assignments'?'class':table==='test_prep_tasks'?null:'class_name';
+ const dialog=document.createElement('dialog');
+ dialog.className='ua-edit-modal';
+ dialog.style.cssText='border:0;border-radius:24px;padding:0;width:min(94vw,560px);max-height:90vh;box-shadow:0 20px 60px #25394744;color:#313846';
+ const backdropStyle=document.createElement('style');
+ backdropStyle.textContent='.ua-edit-modal::backdrop{background:#182a38a8}.ua-edit-modal label{display:grid;gap:6px;font-weight:700;font-size:13px}.ua-edit-modal input,.ua-edit-modal textarea,.ua-edit-modal select{width:100%;min-width:0;padding:12px;border:1px solid #cbdadd;border-radius:12px;font:inherit;background:#fff;color:#293747;box-sizing:border-box}.ua-edit-modal form{display:grid;gap:14px;padding:24px}.ua-edit-modal menu{display:flex;justify-content:flex-end;gap:10px;margin:0;padding:10px 0 0}.ua-edit-modal button{cursor:pointer;border-radius:12px;padding:11px 15px;border:1px solid #afd1d5;background:#fff;font:inherit}.ua-edit-modal button[type=submit]{background:#e7f9fa;color:#247f88;font-weight:800}';
+ const form=document.createElement('form');form.method='dialog';
+ const title=document.createElement('h2');title.textContent='Edit assignment';title.style.margin='0';
+ form.append(title);
+ const add=(name,value,type='text',options=null)=>{
+  const label=document.createElement('label');label.textContent=name;
+  const node=options?document.createElement('select'):type==='textarea'?document.createElement('textarea'):document.createElement('input');
+  if(node.tagName==='INPUT')node.type=type;
+  if(options){options.forEach(x=>{const option=document.createElement('option');option.value=x;option.textContent=x;node.append(option)})}
+  node.value=value??'';node.dataset.field=name;label.append(node);form.append(label);return node;
+ };
+ let classInput=null;
+ if(fieldClass){
+  const all=await get('classes?select=name&order=name.asc&limit=300').catch(()=>[]);
+  const names=[...new Set([original[fieldClass],'Test',...all.map(x=>x.name)].filter(Boolean))];
+  classInput=add('Class',original[fieldClass],'text',names);
+ }else{
+  const note=document.createElement('p');note.textContent='내신 homework is assigned to an individual student. Reassignment to a different class requires a new assignment.';note.style.fontSize='13px';form.append(note);
+ }
+ const titleInput=('title'in original)?add('Title',original.title):null;
+ let contentInput=null;
+ if(table==='homework_assignments')contentInput=add('Instructions / content',original.list_meta?.prompt_text||original.description||'','textarea');
+ if(table==='grammar_foundation_homework'){
+  const select=add('Completion requirement',String(original.completion_percent||80),'text',['80','100']);contentInput=select;
+ }else if(table==='sentence_genius_homework'){
+  const note=document.createElement('p');note.textContent='Sentence content stays linked to its original book and unit. Change the title, class or deadline here; assign a new task to change the sentence set.';note.style.fontSize='13px';form.append(note);
+ }else if(table==='test_prep_tasks'){
+  contentInput=add('Number of questions',String(original.target_count||10),'number');
+ }
+ const startInput=('start_at'in original)?add('Available from',editDate(original.start_at),'datetime-local'):null;
+ const dueInput=add('Due date',editDate(original.due_at),'datetime-local');
+ dueInput.required=true;
+ const recurrenceTable=table==='homework_assignments'?'homework_recurring_schedules':'homework_recurring_app_schedules';
+ const scheduleFilter=table==='homework_assignments'?'source_assignment_id=eq.'+encodeURIComponent(row.id):'source_table=eq.'+encodeURIComponent(table)+'&source_id=eq.'+encodeURIComponent(row.id);
+ const scheduleRows=await get(recurrenceTable+'?select=*&'+scheduleFilter).catch(()=>[]);
+ const currentSchedule=scheduleRows[0]||null;
+ const repeatInput=add('Repeat',currentSchedule?(currentSchedule.active?currentSchedule.cadence:'paused'):'none','text',['none','daily','weekly','paused']);
+ if(!currentSchedule)repeatInput.querySelector('option[value="paused"]')?.remove();
+ const status=document.createElement('p');status.setAttribute('role','status');status.style.cssText='font-size:13px;color:#ad5151;margin:0';
+ const menu=document.createElement('menu');const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';cancel.onclick=()=>dialog.close();const save=document.createElement('button');save.type='submit';save.textContent='Save changes';menu.append(cancel,save);form.append(status,menu);dialog.append(backdropStyle,form);document.body.append(dialog);
+ dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const due=fromEditDate(dueInput.value);const start=startInput?fromEditDate(startInput.value):null;
+  if(!due||start&&new Date(start)>new Date(due)){status.textContent='Please check the availability and due dates.';return}
+  const updates={due_at:due};
+  if(classInput)updates[fieldClass]=classInput.value;
+  if(titleInput)updates.title=titleInput.value.trim();
+  if(startInput)updates.start_at=start;
+  if(table==='homework_assignments'){
+   updates.description=contentInput.value;
+   updates.list_meta={...(original.list_meta||{}),prompt_text:contentInput.value};
+   if(original.list_meta?.creative_type==='writing_genius'&&original.list_meta?.kind==='topic'&&!contentInput.value.trim()){status.textContent='Add a topic or writing instructions.';return}
+  }else if(table==='grammar_foundation_homework')updates.completion_percent=Number(contentInput.value);
+  else if(table==='test_prep_tasks')updates.target_count=Math.max(1,Math.min(500,Number(contentInput.value)||10));
+  if(classInput&&!classInput.value){status.textContent='Select a class.';return}
+  if(titleInput&&!updates.title){status.textContent='Enter a title.';return}
+  save.disabled=true;status.textContent='Saving…';
+  try{
+   const changed=await get(table+'?id=eq.'+encodeURIComponent(row.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(updates)});
+   if(!Array.isArray(changed)||changed.length!==1)throw Error('Update was not saved. Check teacher permissions.');
+   const repeat=repeatInput.value;
+   if(repeat==='none'||repeat==='paused'){
+    if(currentSchedule)await get(recurrenceTable+'?id=eq.'+encodeURIComponent(currentSchedule.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({active:false})});
+   }else{
+    const days=repeat==='daily'?1:7;
+    const nextDue=new Date(new Date(due).getTime()+days*86400000).toISOString();
+    const fields={cadence:repeat,interval_days:days,next_due_at:nextDue,active:true};
+    if(currentSchedule){
+     await get(recurrenceTable+'?id=eq.'+encodeURIComponent(currentSchedule.id),{method:'PATCH',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify(fields)});
+    }else{
+     const identity=await teacherIdentity();
+     const template=table==='homework_assignments'?{source_assignment_id:row.id,created_by:identity}:{source_table:table,source_id:row.id,created_by:identity};
+     await get(recurrenceTable,{method:'POST',headers:{'Content-Type':'application/json',Prefer:'return=representation'},body:JSON.stringify({...template,...fields})});
+    }
+   }
+   Object.assign(row,changed[0]);dialog.close();afterSave();
+  }catch(err){status.textContent=err.message;save.disabled=false}
+ });
+}
+// Pass 1: shared 60-second read cache for the My/All assignment overview.
+const overviewReadCache=new Map();
+const OVERVIEW_CACHE_MS=60000;
+const OVERVIEW_CACHE_MAX=32;
+const overviewPerf={loads:0,cacheHits:0,cacheMisses:0,lastLoadMs:null,lastCompletedAt:null};
+let overviewGeneration=0;
+const ASSIGNMENT_INVALIDATION_KEY='willena:assignments:changed:v1';
+function invalidateOverviewCache(broadcast=false){
+ overviewReadCache.clear();
+ wordCompletionCache.clear();
+ overviewGeneration++;
+ if(broadcast){
+  try{localStorage.setItem(ASSIGNMENT_INVALIDATION_KEY,String(Date.now()));}catch(_){}
+ }
+}
+window.addEventListener('storage',event=>{
+ if(event.key===ASSIGNMENT_INVALIDATION_KEY)invalidateOverviewCache();
+});
+function overviewCachePrune(){
+ const now=Date.now();
+ for(const [key,item] of overviewReadCache)if(item.expires<=now)overviewReadCache.delete(key);
+ while(overviewReadCache.size>=OVERVIEW_CACHE_MAX)overviewReadCache.delete(overviewReadCache.keys().next().value);
+}
+// Read-only, in-memory diagnostics. No student content or tokens are reported.
+window.WillenaAssignmentPerformance=Object.freeze({getSummary:()=>({...overviewPerf,cacheEntries:overviewReadCache.size,ttlSeconds:OVERVIEW_CACHE_MS/1000})});
+function overviewGet(path,options={}){
+ const method=String(options.method||'GET').toUpperCase();
+ // Only cache reads. Never cache a new write endpoint that may be added later.
+ const isRead=method==='GET'||(method==='POST'&&/^rpc\/(teacher_homework_class_progress_v1|teacher_word_homework_class_progress_v1|teacher_creative_writing_progress_v1|teacher_writing_sentence_homework_progress_v1|teacher_puzzle_homework_progress_v1|teacher_sentence_genius_homework_progress_v1|test_prep_assignment_results_v1)$/.test(path));
+ if(!isRead)return get(path,options);
+ const token=access();
+ if(!token)return get(path,options);
+ const key=[token.split('.')[1]||token,method,path,options.body||''].join('|');
+ const existing=overviewReadCache.get(key);
+ if(existing&&existing.expires>Date.now()){overviewPerf.cacheHits++;return existing.promise;}
+ overviewPerf.cacheMisses++;
+ overviewCachePrune();
+ const entry={expires:Date.now()+OVERVIEW_CACHE_MS,promise:get(path,options)};
+ overviewReadCache.set(key,entry);
+ entry.promise.catch(()=>{if(overviewReadCache.get(key)===entry)overviewReadCache.delete(key)});
+ return entry.promise;
+}
+window.addEventListener('ua:assignments-changed',()=>invalidateOverviewCache(true));
+window.addEventListener('willena:assignment-created',()=>invalidateOverviewCache(true));
+async function loadOverview(scopeName='my',force=false,options={}){
+ const snapshotOnly=options.snapshotOnly===true;
+ const classMission=String(options.className||'').trim();
+ const classMissionStage=options.stage==='history'?'history':'active';
+ const host=snapshotOnly?document.body:classMission?document.querySelector('#uaClassMissions'):document.querySelector('#uaOverview');
+ if(!host)return;
+ const loadStarted=performance.now();
+ overviewPerf.loads++;
+ if(force)invalidateOverviewCache();
+ const generation=snapshotOnly?overviewGeneration:++overviewGeneration;
+ if(!snapshotOnly)host.textContent='Loading assignments across apps…';
+ try{
+  const teacher=await teacherIdentity();
+  if(!snapshotOnly)overviewSelections.clear();
+  const sources=[
+   {app:'Word Genius',table:'homework_assignments',select:'id,created_by,class,title,status,active,created_at,due_at,ended_at,list_key,list_meta,source_type',label:r=>r.title||r.class||'Vocabulary homework',isActive:r=>r.active!==false&&!['ended','archived','closed','completed','cancelled'].includes(r.status)},
+   {app:'Grammar Genius',table:'grammar_foundation_homework',select:'id,created_by,class_name,module_title,stage_title,active,created_at,due_at,closed_at',label:r=>[r.module_title,r.stage_title].filter(Boolean).join(' · '),isActive:r=>r.active!==false},
+   {app:'Sentence Genius',table:'sentence_genius_homework',select:'id,created_by,class_name,title,book_title,unit_label,active,created_at,due_at',label:r=>r.title||r.book_title||'Sentence homework',isActive:r=>r.active!==false},
+   {app:'내신',table:'test_prep_tasks',select:'id,created_by,title,lesson,practice_type,active,created_at,due_at,completed_at,student_id,target_count',label:r=>r.title||[r.lesson,r.practice_type].filter(Boolean).join(' · '),isActive:r=>r.active!==false}
+  ];
+  const fetched=await Promise.allSettled(sources.map(async source=>{
+   const rows=await overviewGet(source.table+'?select='+encodeURIComponent(source.select)+'&order=created_at.desc&limit=1000');
+   return rows.map(row=>{
+    let app=source.app;
+    if(source.table==='homework_assignments'){
+     const meta=row.list_meta&&typeof row.list_meta==='object'?row.list_meta:{};
+     const kind=String(meta.creative_type||meta.app||'').toLowerCase();
+     const key=String(row.list_key||'').toLowerCase();
+     const sourceKind=String(row.source_type||'').toLowerCase();
+     if(kind.includes('writing')||key.startsWith('writing_genius:'))app='Writing Genius';
+     else if(kind.includes('puzzle')||key.startsWith('puzzles:'))app='Puzzles';
+     else if(kind.includes('sentence')||sourceKind==='sentence_genius')app='Sentence Genius';
+     else if(sourceKind==='grammar_books')app='Grammar Genius';
+     else if(kind==='free_talking_genius'||key.startsWith('free_talking:'))app='Free Talking Genius';
+    }
+    return {...row,_table:source.table,app,label:source.label(row),isActive:source.isActive(row)};
+   });
+  }));
+  const errors=[],rows=[];
+  fetched.forEach((result,index)=>{if(result.status==='fulfilled')rows.push(...result.value);else errors.push(sources[index].app+': '+result.reason.message)});
+  // Resolve per-student assignments to the actual student profile and class.
+  const studentIds=[...new Set(rows.map(r=>id(r.student_id)).filter(Boolean))];
+  let students=new Map();
+  if(studentIds.length)try{
+   const profiles=await overviewGet('profiles?select=id,name,username,korean_name,class&id=in.('+studentIds.join(',')+')');
+   students=new Map(profiles.map(p=>[id(p.id),p]));
+  }catch(e){errors.push('Student names: '+e.message)}
+  const creators=[...new Set(rows.map(r=>id(r.created_by)).filter(Boolean))];
+  let authors=new Map();
+  if(creators.length)try{
+   const profiles=await overviewGet('profiles?select=id,name,username&id=in.('+creators.join(',')+')');
+   authors=new Map(profiles.map(p=>[id(p.id),p.name||p.username||'Unknown']));
+  }catch(e){errors.push('Teacher names: '+e.message)}
+  // Fetch only progress families represented in the result set. Run in
+  // controlled parallel batches so one slow RPC doesn't hold up every other RPC.
+  const hasApp=app=>rows.some(row=>row.app===app);
+  const hasWritingSentence=rows.some(row=>row.app==='Writing Genius'&&row.list_key==='writing_genius:sentence');
+  const jobs=[
+   {name:'Class progress',enabled:hasApp('Grammar Genius'),path:'rpc/teacher_homework_class_progress_v1',body:'{}'},
+   {name:'Grammar book progress',enabled:rows.some(row=>row.source_type==='grammar_books'),path:'rpc/teacher_grammar_book_homework_progress_v1',body:'{}'},
+   {name:'Word class activity',enabled:hasApp('Word Genius'),path:'rpc/teacher_word_homework_class_progress_v1',body:'{}'},
+   {name:'Free Talking speaking progress',enabled:hasApp('Free Talking Genius'),path:'rpc/teacher_free_talking_mission_progress_v1',body:JSON.stringify({p_assignment_id:null})},
+   {name:'Free Talking conversation progress',enabled:rows.some(row=>row.app==='Free Talking Genius'&&row.list_meta?.mission_mode==='conversation'),path:'rpc/teacher_free_talking_conversation_mission_progress_v1',body:JSON.stringify({p_assignment_id:null})},
+   {name:'Writing progress',enabled:rows.some(row=>row.app==='Writing Genius'&&row.list_key!=='writing_genius:sentence'),path:'rpc/teacher_creative_writing_progress_v1',body:'{}'},
+   {name:'Sentence writing progress',enabled:hasWritingSentence,path:'rpc/teacher_writing_sentence_homework_progress_v1',body:'{}'},
+   {name:'Puzzle progress',enabled:hasApp('Puzzles'),path:'rpc/teacher_puzzle_homework_progress_v1',body:'{}'},
+   {name:'Sentence Genius progress',enabled:hasApp('Sentence Genius'),path:'rpc/teacher_sentence_genius_homework_progress_v1',body:'{}'},
+   {name:'내신 progress',enabled:hasApp('내신'),path:'rpc/test_prep_assignment_results_v1',body:JSON.stringify({p_group_id:null})}
+  ];
+  const outputs=new Map();
+  const enabled=jobs.filter(job=>job.enabled);
+  let nextJob=0;
+  await Promise.all(Array.from({length:Math.min(3,enabled.length)},async()=>{
+   while(nextJob<enabled.length){
+    const job=enabled[nextJob++];
+    try{
+     const result=await overviewGet(job.path,{method:'POST',headers:{'Content-Type':'application/json'},body:job.body});
+     outputs.set(job.name,Array.isArray(result)?result:[]);
+    }catch(error){errors.push(job.name+': '+error.message)}
+   }
+  }));
+  // Emit verified student completion events for the shared Assignments unread dot.
+  // This is deliberately keyed by assignment + student ID, never a display name.
+  const assignmentById=new Map(rows.map(row=>[id(row.id),row]));
+  const completionEvents=[];
+  for(const [source,records] of outputs){
+   for(const record of records){
+    const assignmentId=id(record.assignment_id||record.task_id||record.id);
+    const task=assignmentById.get(assignmentId);
+    if(!assignmentId||!task)continue;
+    const students=[...(Array.isArray(record.student_rows)?record.student_rows:[]),...(Array.isArray(record.students)?record.students:[])];
+    for(const st of students){
+     const studentId=id(st.student_id||st.id);
+     if(!studentId)continue;
+     const status=String(st.status||'').toLowerCase();
+     const isVerified=st.complete===true||st.completed===true||status==='complete'||status==='completed';
+     if(!isVerified)continue;
+     completionEvents.push({key:task.app+'|'+assignmentId+'|'+studentId,studentId,assignmentId,app:task.app,
+      className:String(task.class||task.class_name||record.class||''),assignment:String(task.label||task.title||'Homework'),source,completedAt:st.completed_at||st.last_activity||st.updated_at||null});
+    }
+   }
+  }
+  const resultStudentIds=[...new Set([...outputs.values()].flatMap(records=>records.flatMap(record=>[...(Array.isArray(record.student_rows)?record.student_rows:[]),...(Array.isArray(record.students)?record.students:[])].map(s=>id(s.student_id||s.id)))).filter(Boolean))];
+  const missingIds=resultStudentIds.filter(studentId=>!students.has(studentId));
+  if(missingIds.length){
+    for(let i=0;i<missingIds.length;i+=150){
+      try{
+        const found=await overviewGet('profiles?select=id,name,username,korean_name,class&id=in.('+missingIds.slice(i,i+150).join(',')+')');
+        found.forEach(profile=>students.set(id(profile.id),profile));
+      }catch(error){errors.push('Student display names: '+error.message);break}
+    }
+  }
+  // Disambiguate duplicate English names within a class, not across classes.
+  // Use stable profile IDs for lookup; never infer identity from a display name.
+  const studentNames=students;
+  const duplicateNameCounts=new Map();
+  for(const profile of studentNames.values()){
+    const name=String(profile?.name||profile?.username||'').trim().toLocaleLowerCase();
+    const cls=String(profile?.class||profile?.class_name||'').trim().toLocaleLowerCase();
+    if(!name)continue;
+    const key=cls+'|'+name;
+    duplicateNameCounts.set(key,(duplicateNameCounts.get(key)||0)+1);
+  }
+  const displayStudentName=(studentId,fallback='Student')=>{
+    const profile=studentNames.get(id(studentId));
+    const name=String(profile?.name||profile?.username||fallback||'Student').trim();
+    if(!profile)return name;
+    const cls=String(profile.class||profile.class_name||'').trim().toLocaleLowerCase();
+    if((duplicateNameCounts.get(cls+'|'+name.toLocaleLowerCase())||0)<2)return name;
+    const secondary=[profile.korean_name,profile.username].map(v=>String(v||'').trim())
+      .find(v=>v&&v.toLocaleLowerCase()!==name.toLocaleLowerCase());
+    return name+' ('+(secondary||id(studentId).slice(0,6))+')';
+  };
+  // Use the shared duplicate-name rule in the notification inbox too.
+  window.dispatchEvent(new CustomEvent('willena:homework-completion-snapshot',{
+   detail:{completions:completionEvents.map(item=>({...item,studentName:displayStudentName(item.studentId)}))}
+  }));
+  const asMap=(name,key='id')=>new Map((outputs.get(name)||[]).map(item=>[id(item[key]),item]));
+  const classProgress=asMap('Class progress');
+  const grammarBookProgress=asMap('Grammar book progress');
+  const wordClassProgress=asMap('Word class activity');
+  const freeTalkingProgress=asMap('Free Talking speaking progress','assignment_id');
+  for(const [assignmentId,progress] of asMap('Free Talking conversation progress','assignment_id'))freeTalkingProgress.set(assignmentId,progress);
+  const writingProgress=asMap('Writing progress');
+  const writingSentenceProgress=asMap('Sentence writing progress');
+  const puzzleProgress=asMap('Puzzle progress');
+  const sentenceGeniusProgress=asMap('Sentence Genius progress');
+  const progress=asMap('내신 progress','task_id');
+  if(generation!==overviewGeneration||!host.isConnected)return;
+  // Match Word Genius's existing teacher-card calculation, including split workloads.
+  // Do not confuse correct/attempted (accuracy) with required homework completion.
+  function wordStudentPercent(st,assignment){
+    const modes=Array.isArray(assignment?.list_meta?.required_modes)&&assignment.list_meta.required_modes.length
+      ?assignment.list_meta.required_modes:(assignment?.required_modes||[]);
+    if(!modes.length)return null;
+    const split=assignment?.list_meta?.workload_mode==='split';
+    const percents=modes.map(mode=>{
+      const raw=st?.modes?.[mode]||{};
+      const target=assignment?.list_meta?.mode_target_ids?.[mode];
+      const total=split&&Array.isArray(target)?target.length:Number(raw.total)||0;
+      const clean=Math.max(0,Math.min(total,Number(raw.clean)||0));
+      return total>0?100*clean/total:0;
+    });
+    return Math.max(0,Math.min(100,Math.round(percents.reduce((a,b)=>a+b,0)/percents.length)));
+  }
+  function writingDraftStage(st){
+    const stages={not_started:'Not started',started:'Draft opened',writing:'Writing draft',reviewed:'AI review done',speaking_done:'Speaking recorded',completed:'Completed'};
+    return stages[String(st?.stage||'')]||(st?.completed?'Completed':'Not started');
+  }
+  function overviewStudentProgress(records,{kind='completion'}={}){
+    if(!Array.isArray(records)||!records.length)return '';
+    const rows=records.map(st=>{
+      const person=studentNames.get(id(st.student_id));
+      const name=esc(displayStudentName(st.student_id,st.name||person?.korean_name||'Student'));
+      let percentage=null,note='';
+      if(kind==='grammar'){
+        const done=Number(st.done),total=Number(st.total);
+        if(Number.isFinite(done)&&Number.isFinite(total)&&total>0){
+          percentage=Math.max(0,Math.min(100,Math.round(100*done/total)));
+        }else note=st.passed?'Passed':'Not passed';
+      }else if(kind==='word'){
+        note=(Number(st.solved)||0)+' correct / '+(Number(st.attempted)||0)+' attempted';
+      }else if(kind==='word-completion'){
+        percentage=wordStudentPercent(st,wordCompletionCache.get(id(st.assignment_id))?.assignment);
+        note=percentage===null?'Progress unavailable':'Required homework modes';
+      }else if(kind==='writing-draft'){
+        percentage=st.completed?100:0;
+        note=writingDraftStage(st);
+      }else if(kind==='writing-sentence'){
+        const done=Number(st.checked),total=Number(st.total);
+        if(Number.isFinite(done)&&Number.isFinite(total)&&total>0){
+          percentage=Math.max(0,Math.min(100,Math.round(100*done/total)));
+        }else note='No verified questions';
+      }else{
+        percentage=st.completed?100:0;
+        note=st.completed?'Completed':'Not completed';
+      }
+      if(kind==='writing-draft'){
+        const body=String(st.draft_body||'').trim();
+        const preview=!st.completed&&body
+          ?'<details class="ua-writing-draft-preview" style="margin:3px 0 9px 16px;padding:8px 12px;border:1px solid #cde6e8;border-radius:10px"><summary style="cursor:pointer;color:#25838b">View saved draft'+(st.draft_title?' · '+esc(st.draft_title):'')+'</summary><div style="white-space:pre-wrap;overflow-wrap:anywhere;margin-top:8px">'+esc(body)+'</div></details>'
+          :'';
+        return '<div class="ghc-student-row"><span class="ghc-student-name">'+name+'</span><span class="ghc-student-note">'+esc(note)+'</span><strong class="ghc-student-pct">'+(st.completed?'100%':'—')+'</strong></div>'+preview;
+      }
+      return '<div class="ghc-student-row"><span class="ghc-student-name">'+name+'</span>'+
+       (percentage===null?'<span class="ghc-student-note">'+esc(note)+'</span>':
+       '<span class="ghc-student-track" role="progressbar" aria-label="'+name+' progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+percentage+'"><i style="width:'+percentage+'%"></i></span>')+
+       '<strong class="ghc-student-pct">'+(percentage===null?'—':percentage+'%')+'</strong></div>';
+    }).join('');
+    return '<div class="ghc-student-list">'+rows+'</div>';
+  }
+  // Shared Jelly Time: same RPC and four-part reward key as Curriculum Progress.
+  // An assignment with multiple or unknown units deliberately gets no checkbox.
+  const missionJellyCache=new Map(),missionJellyPending=new Map();
+  const grammarChapterTargets=new Map(),grammarChapterPending=new Set();
+
+  function missionRewardTarget(row){
+   const m=row.list_meta||{},uuid=/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i;
+   if(row.app==='Grammar Genius'&&row.source_type==='grammar_books'&&grammarChapterTargets.has(id(row.id)))return grammarChapterTargets.get(id(row.id));
+   const book=row.book_id||m.source_book_id||m.book_id;
+   const units=Array.isArray(m.source_unit_ids)?m.source_unit_ids:(m.source_unit_id?[m.source_unit_id]:(m.unit_id?[m.unit_id]:[]));
+   const unit=row.unit_id||(units.length===1?units[0]:null);
+   const app=row.app==='Word Genius'?'word':row.app==='Sentence Genius'?'sentence':row.app==='Writing Genius'?'writing':row.app==='Puzzles'?'puzzles':row.app==='Grammar Genius'?'grammar':row.app==='Free Talking Genius'?(m.mission_mode==='conversation'?'freeconversation':'talking'):null;
+   return book&&unit&&app&&uuid.test(String(book))&&uuid.test(String(unit))?{book:String(book),unit:String(unit),app}:null;
+  }
+  function missionRewardKey(row){const t=missionRewardTarget(row);return t?[String(row.class||row.class_name||classMission).toLowerCase(),t.book,t.unit,t.app].join(':'):null}
+  async function missionJellyLoad(row){
+   const t=missionRewardTarget(row),key=missionRewardKey(row);if(!key)return null;
+   if(missionJellyCache.has(key))return missionJellyCache.get(key);
+   if(missionJellyPending.has(key))return missionJellyPending.get(key);
+   const task=get('rpc/teacher_unit_jelly_get_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_class:row.class||row.class_name||classMission,p_book_id:t.book,p_unit_id:t.unit,p_app:t.app})})
+    .then(result=>{const values=new Set((Array.isArray(result)?result:[]).map(x=>id(x.student_id)));missionJellyCache.set(key,values);return values})
+    .finally(()=>missionJellyPending.delete(key));
+   missionJellyPending.set(key,task);return task;
+  }
+  function missionQrUrl(row){
+   const hw=encodeURIComponent(row.id),m=row.list_meta||{};
+   const paths={
+    'Sentence Genius':'/students/sentence-genius/?homework=',
+    'Grammar Genius':row.source_type==='grammar_books'?'/students/grammar-genius/?homework=':'/students/grammar-foundations/?homework=',
+    'Writing Genius':'/students/writing-genius/?homework=',
+    'Puzzles':'/students/wordsearch/?homework=',
+    'Free Talking Genius':m.mission_mode==='conversation'?'/students/free-talking-hybrid-lab/?release=1&book='+encodeURIComponent(m.book_id||'')+'&unit='+encodeURIComponent(m.unit_id||'')+'&homework=':'/students/free-talking-genius/?book='+encodeURIComponent(m.book_id||'')+'&unit='+encodeURIComponent(m.unit_number||'')+'&homework=',
+    '내신':'/students/test-prep-v2/?homework='
+   };
+   if(row.app==='Word Genius')return 'https://students.willenaenglish.com/students/vocab-study/?open=wordtest&assignment_id='+hw;
+   const path=paths[row.app];return path?'https://students.willenaenglish.com'+path+hw+(row.app==='Puzzles'?'&mode='+encodeURIComponent(m.kind||'boggle'):''):null;
+  }
+  function missionJellyMarkup(){return '';}
+    assignmentDateStyle.textContent+='.cc-mission-cards .ghc-student-row{grid-template-columns:minmax(110px,1fr) minmax(120px,2fr) 48px 44px;gap:12px;min-height:33px}.cc-mission-cards .ghc-student-name{min-width:0}.cc-mission-cards .ghc-student-pct{text-align:right}.cc-mission-jelly{display:flex;justify-content:flex-end;align-items:center;gap:7px;min-width:44px;white-space:nowrap;cursor:pointer}.cc-mission-jelly[hidden]{display:none!important}.cc-mission-jelly svg{flex:none}.cc-mission-jelly input{width:16px;height:16px;margin:0;accent-color:#168b62;cursor:pointer}.cc-mission-jelly input:disabled{cursor:wait;opacity:.5}@media(max-width:600px){.cc-mission-cards .ghc-student-row{grid-template-columns:minmax(65px,1fr) minmax(60px,1.8fr) 39px 41px;gap:6px}.cc-mission-jelly{gap:5px;min-width:41px}.cc-mission-jelly svg{width:15px;height:15px}}';
+  // All Classes > Current Missions consumes the same sources and progress maps
+  // as My / All, while presenting each mission in a simple expandable card.
+   const nameFor=st=>displayStudentName(st.student_id||st.id,st.name||'Student');
+   const round=n=>Math.max(0,Math.min(100,Math.round(Number(n)||0)));
+   const bar=(name,pct,note='')=>'<div class="cc-mission-student"><span>'+esc(name)+'</span>'+
+    (pct===null?'<small>'+esc(note||'Progress unavailable')+'</small>':
+    '<div class="cc-mission-track"><i style="width:'+round(pct)+'%"></i></div><strong>'+round(pct)+'%</strong>')+'</div>';
+   const unique=list=>[...new Map(list.filter(x=>x.student_id).map(x=>[id(x.student_id),x])).values()];
+   function progressFor(r){
+    const assignId=id(r.id);
+    let list=[],note='';
+    if(r.app==='Free Talking Genius'){
+     const p=freeTalkingProgress.get(assignId);
+     if(p?.students?.length)list=p.students.map(st=>({student_id:st.student_id,name:nameFor(st),pct:round(st.percent),done:st.complete===true}));
+     else note='Speaking or conversation progress has not been reported';
+    }else if(r.app==='Grammar Genius'){
+     const p=(r.source_type==='grammar_books'?grammarBookProgress:classProgress).get(assignId);
+     if(p?.student_rows?.length)list=p.student_rows.map(st=>({student_id:st.student_id,name:nameFor(st),pct:Number(st.total)>0?round(100*Number(st.done||0)/Number(st.total)):st.passed===true?100:0,done:st.passed===true||(Number(st.total)>0&&Number(st.done)>=Number(st.total))}));
+     else note='Verified grammar progress unavailable';
+    }else if(r.app==='Word Genius'){
+     const p=wordCompletionCache.get(assignId);
+     if(p?.students?.length)list=p.students.map(st=>{
+      const pct=wordStudentPercent(st,{...p.assignment,list_meta:r.list_meta||{}});
+      return {student_id:st.student_id,name:nameFor(st),pct,done:st.status==='complete'||pct===100};
+     });
+     else note=p?.error?'Word Genius progress unavailable':'Loading Word Genius progress…';
+    }else if(r.app==='Writing Genius'){
+     const p=(r.list_key==='writing_genius:sentence'?writingSentenceProgress:writingProgress).get(assignId);
+     if(p?.student_rows?.length)list=p.student_rows.map(st=>{
+      const pct=r.list_key==='writing_genius:sentence'?(Number(st.total)>0?round(100*Number(st.checked||0)/Number(st.total)):null):(st.completed===true?100:st.stage==='not_started'?0:null);
+      return {student_id:st.student_id||st.id,name:nameFor(st),pct,done:st.completed===true};
+     });
+     else note='Writing submission progress unavailable';
+    }else if(r.app==='Puzzles'){
+     const p=puzzleProgress.get(assignId);
+     if(p?.student_rows?.length)list=p.student_rows.map(st=>({student_id:st.student_id||st.id,name:nameFor(st),pct:st.completed===true?100:0,done:st.completed===true}));
+     else note='Puzzle completion progress unavailable';
+    }else if(r.app==='Sentence Genius'){
+     const p=sentenceGeniusProgress.get(assignId);
+     if(p?.student_rows?.length)list=p.student_rows.map(st=>({student_id:st.student_id||st.id,name:nameFor(st),pct:Number(st.total)>0?round(100*Number(st.done||0)/Number(st.total)):null,done:st.completed===true}));
+     else note='Sentence Genius progress unavailable';
+    }else if(r.app==='내신'){
+     const p=progress.get(assignId);
+     if(p&&r.student_id)list=[{student_id:r.student_id,name:displayStudentName(r.student_id),pct:Number(r.target_count)>0?round(100*Number(p.done||0)/Number(r.target_count)):null,done:Number(r.target_count)>0&&Number(p.done)>=Number(r.target_count)&&!Number(p.unresolved||0)}];
+     else note='Exam progress unavailable';
+    }else note='Verified progress for this app is not available here';
+    list=unique(list);
+    const done=list.filter(st=>st.done).length;
+    const started=list.filter(st=>Number(st.pct)>0).length;
+    return {list,done,started,note};
+   }
+
+  function renderClassMissions(){
+   if(generation!==overviewGeneration||!host.isConnected)return;
+   const now=Date.now();
+   const className=classMission.toLowerCase();
+   const rowClass=r=>String(r.class||r.class_name||students.get(id(r.student_id))?.class||'').trim().toLowerCase();
+   const current=rows.filter(r=>rowClass(r)===className&&(classMissionStage==='history'?(!r.isActive||(r.due_at&&Date.parse(r.due_at)<now)):(r.isActive&&(!r.due_at||Date.parse(r.due_at)>=now))))
+    .sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+   const isHistory=classMissionStage==='history';
+   const sectionTitle=isHistory?'Past missions':'Current missions';
+   const sectionNote=isHistory?'Completed, closed and past-due assignments':'Active assignments';
+   const cardApi=window.WillenaGeniusHomeworkCard;
+   host.innerHTML='<div class="cc-mission-toolbar"><div><strong>'+sectionTitle+'</strong><small>All teachers · '+esc(classMission)+' · '+sectionNote+'</small></div><button type="button" class="cc-btn" id="ccMissionRefresh">Refresh</button></div>'+
+    (errors.length?'<p class="cc-helper">Some progress sources unavailable: '+esc(errors.join('; '))+'</p>':'')+
+    (current.length?'<div class="cc-mission-cards">'+current.map(r=>{
+     const p=progressFor(r);
+     const teacherName=authors.get(id(r.created_by))||'Teacher unavailable';
+     const appName=r.app==='Free Talking Genius'?(r.list_meta?.mission_mode==='conversation'?'Free Talking Genius · AI Conversation':'Free Talking Genius · Speaking'):r.app;
+     const known=p.list.filter(st=>st.pct!==null&&Number.isFinite(Number(st.pct)));
+     const average=known.length?Math.round(known.reduce((sum,st)=>sum+Number(st.pct),0)/known.length):null;
+     const progressRows=p.list.map(st=>({name:st.name,id:st.student_id,percent:st.pct,rewardHtml:missionJellyMarkup(st,r)}));
+     const notStarted=p.list.filter(st=>st.pct===0&&!st.done).length;
+     const body=p.list.length?
+      cardApi.progressPanel({students:progressRows,average,completed:p.done,notStarted,label:appName+' · Student progress'}):
+      '<p class="cc-helper">'+esc(p.note||'No verified student progress available yet.')+'</p>';
+     return cardApi.card({id:'class-mission-'+id(r.id),className:classMission,qrUrl:missionQrUrl(r),
+      task:appName+' · '+(r.label||'Mission'),dueAt:r.due_at,teacher:teacherName,
+      createdBy:id(r.created_by),progressLabel:'Student progress',progressPercent:average,body});
+    }).join('')+'</div>':'<div class="cc-empty">'+(isHistory?'No past missions for this class.':'No current missions for this class.')+'</div>');
+   for(const r of current){
+    const p=progressFor(r),known=p.list.filter(st=>st.pct!==null&&Number.isFinite(Number(st.pct)));
+    const average=known.length?Math.round(known.reduce((sum,st)=>sum+Number(st.pct),0)/known.length):null;
+    cardApi?.updateRing?.('class-mission-'+id(r.id),average,host);
+   }
+   // Resolve chapter-scoped Grammar rewards before rendering their Gold slots.
+   for(const r of current){
+    if(r.app!=='Grammar Genius'||r.source_type!=='grammar_books')continue;
+    const key=id(r.id),meta=r.list_meta||{},book=meta.source_book_id;
+    const chapter=Number(meta.chapter);
+    if(grammarChapterTargets.has(key)||grammarChapterPending.has(key)||!book||!Number.isInteger(chapter)||chapter<1)continue;
+    const resolve=cardApi?.grammarChapterRewardId;
+    if(typeof resolve!=='function')continue;
+    grammarChapterPending.add(key);
+    void Promise.resolve(resolve(book,chapter)).then(unit=>{
+     grammarChapterTargets.set(key,{book:String(book),unit:String(unit),app:'grammar',chapter:true});
+     if(host.isConnected&&generation===overviewGeneration)renderClassMissions();
+    }).catch(error=>console.warn('[Current Missions] Grammar chapter reward identity',error))
+     .finally(()=>grammarChapterPending.delete(key));
+   }
+   const byId=new Map(current.map(row=>[id(row.id),row]));
+   for(const r of current){
+    const target=missionRewardTarget(r);
+    if(!target)continue;
+    // Progress percentages are assignment-specific, NOT evidence of a Golden Unit.
+    // Keep every Gold control hidden unless the canonical curriculum rule confirms it.
+    void (async()=>{
+     const verify=window.WillenaGoldEligibility;
+     if(!target.chapter&&typeof verify!=='function')return;
+     const eligible=new Set((target.chapter
+      ?progressFor(r).list.filter(st=>st.done===true&&Number(st.pct)===100).map(st=>String(st.student_id))
+      :(await verify({className:classMission,bookId:target.book,unitId:target.unit,app:target.app})).map(String)));
+     if(!host.isConnected||generation!==overviewGeneration)return;
+     const values=await missionJellyLoad(r);
+     if(!host.isConnected||generation!==overviewGeneration)return;
+     host.querySelectorAll('[data-mission-jelly-assignment]').forEach(box=>{
+      if(box.dataset.missionJellyAssignment!==id(r.id))return;
+      const gold=false;
+      const label=box.closest('.cc-mission-jelly');
+      if(label)label.hidden=!gold;
+      box.checked=gold&&values.has(box.dataset.missionJellyStudent);
+      box.disabled=!gold;
+     });
+    })().catch(error=>console.warn('[Current Missions] Gold eligibility unavailable',error));
+   }
+   host.querySelectorAll('[data-mission-jelly-student]').forEach(box=>box.addEventListener('change',async()=>{
+    const row=byId.get(box.dataset.missionJellyAssignment),t=row&&missionRewardTarget(row),key=box.dataset.missionJellyKey,studentId=box.dataset.missionJellyStudent;
+    if(!t)return;
+    const given=box.checked;
+    if(!given&&!confirm('Clear Jelly Time for this student? This means the reward can be given again.')){box.checked=true;return}
+    box.disabled=true;
+    try{
+     await get('rpc/teacher_unit_jelly_set_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_student_id:studentId,p_book_id:t.book,p_unit_id:t.unit,p_app:t.app,p_given:given})});
+     missionJellyCache.delete(key);
+     const values=await missionJellyLoad(row);
+     host.querySelectorAll('[data-mission-jelly-key]').forEach(other=>{if(other.dataset.missionJellyKey===key&&other.dataset.missionJellyStudent===studentId){other.checked=values.has(studentId);other.disabled=false}});
+     window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId:t.book,unitId:t.unit,app:t.app,given}}));
+    }catch(error){box.checked=!given;box.disabled=false;alert('Jelly Time could not be saved: '+error.message)}
+   }));
+   host.querySelector('#ccMissionRefresh')?.addEventListener('click',()=>loadOverview('all',true,{className:classMission,stage:classMissionStage}));
+  }
+  function renderOverview(){
+   const now=Date.now();
+   const overdue=r=>r.due_at&&Date.parse(r.due_at)<now;
+   const finished=r=>!r.isActive||overdue(r);
+   const owned=rows.filter(r=>scopeName==='all'||id(r.created_by)===teacher);
+   const filter=overviewFilters[scopeName]||overviewFilters.my;
+   const teacherOptions=[...new Map(owned.filter(r=>id(r.created_by)).map(r=>{
+     const key=id(r.created_by);
+     return [key,{id:key,name:authors.get(key)||'Unknown teacher'}];
+   })).values()].sort((a,b)=>a.name.localeCompare(b.name,'en')||a.id.localeCompare(b.id));
+   if(filter.teacherId&&!teacherOptions.some(row=>row.id===filter.teacherId))filter.teacherId='';
+   const teacherRows=filter.teacherId?owned.filter(r=>id(r.created_by)===filter.teacherId):owned;
+   const active=teacherRows.filter(r=>!finished(r));
+   const complete=teacherRows.filter(finished);
+   const stageRows=overviewStage==='complete'?complete:active;
+   const rowClass=row=>String(row._overviewClass||row.class||row.class_name||students.get(id(row.student_id))?.class||'').trim();
+   const classOptions=[...new Set(stageRows.map(rowClass).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+   if(filter.className&&!classOptions.includes(filter.className))filter.className='';
+   const byClass=stageRows.filter(row=>!filter.className||rowClass(row)===filter.className);
+   const nameOf=row=>String(row.app||'Homework')+' · '+String(row.label||'Assignment');
+   const assignmentOptions=[...new Set(byClass.map(nameOf))].sort((a,b)=>a.localeCompare(b));
+   if(filter.assignment&&!assignmentOptions.includes(filter.assignment))filter.assignment='';
+   const visible=byClass.filter(row=>!filter.assignment||nameOf(row)===filter.assignment)
+    .sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+   // Group per-student homework by student and class-wide homework by class.
+   // Only include verified question progress in aggregate percentages.
+   const groupOf=row=>{
+    const person=students.get(id(row.student_id));
+    const day=assignedDateKey(row.created_at);
+     return row.student_id
+      ? {key:day+':student:'+id(row.student_id),title:person?(person.name||person.username||person.korean_name||'Student'):'Student name unavailable',sub:person?.class||'Student homework'}
+      : {key:day+':class:'+String(row.class||row.class_name||'Unassigned'),title:String(row.class||row.class_name||'Unassigned class'),sub:'Class homework'};
+   };
+   const grouping=new Map();
+   visible.forEach(row=>{const group=groupOf(row);if(!grouping.has(group.key))grouping.set(group.key,{...group,items:[]});grouping.get(group.key).items.push(row)});
+   visible.splice(0,visible.length,...[...grouping.values()].flatMap(g=>g.items));
+   const groups=[...grouping.values()];
+   const groupByKey=new Map(groups.map(g=>[g.key,g]));
+   const groupHeader=(g)=>{
+    // Only completed homework or corrected-question evidence contributes to the aggregate.
+    // Apps without validated completion data remain explicitly untracked.
+    const fractions=g.items.map(row=>{
+     const outcome=progress.get(id(row.id)),target=Number(row.target_count)||0;
+     if(row.app==='내신'&&outcome&&target>0)return Math.min(1,(Number(outcome.done)||0)/target);
+     if(row.app==='Grammar Genius'){
+      const x=row.source_type==='grammar_books'?grammarBookProgress.get(id(row.id)):classProgress.get(id(row.id));
+      if(!x||!(Number(x.students)>0))return null;
+      if(row.source_type!=='grammar_books')return Number(x.passed)/Number(x.students);
+      const studentRows=Array.isArray(x.student_rows)?x.student_rows:[];
+      return studentRows.length?studentRows.reduce((sum,st)=>sum+(Number(st.total)>0?Math.min(Number(st.done)||0,Number(st.total))/Number(st.total):0),0)/studentRows.length:null;
+     }
+     if(row.app==='Writing Genius'){
+      const x=row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id));return x&&Number(x.students)>0?(row.list_key==='writing_genius:sentence'?Number(x.progress_percent||0)/100:Number(x.completed)/Number(x.students)):null;
+     }
+     if(row.app==='Puzzles'){
+      const x=puzzleProgress.get(id(row.id));return x&&Number(x.students)>0?Number(x.completed)/Number(x.students):null;
+     }
+     if(row.app==='Free Talking Genius'){
+      const p=freeTalkingProgress.get(id(row.id)),list=p?.students||[];
+      return list.length?list.reduce((sum,st)=>sum+Number(st.percent||0),0)/list.length/100:null;
+     }
+     if(row.app==='Word Genius'){
+      const data=wordCompletionCache.get(id(row.id));
+      const students=data?.students||[];
+      if(!students.length)return null;
+      const values=students.map(st=>wordStudentPercent(st,{...data.assignment,list_meta:row.list_meta||{}})).filter(Number.isFinite);
+      return values.length?values.reduce((a,b)=>a+b,0)/values.length/100:null;
+     }
+     return null;
+    }).filter(x=>x!==null);
+    const average=fractions.length?Math.round(100*fractions.reduce((a,b)=>a+b,0)/fractions.length):null;
+    const label=average===null?'Progress not available':average+'% · '+fractions.length+'/'+g.items.length+' tracked';
+     const eligible=g.items.filter(row=>id(row.created_by)===teacher);
+     const selected=eligible.filter(row=>overviewSelections.has(homeworkKey(row))).length;
+     const groupSelect=eligible.length?'<label class="ua-group-select"><input type="checkbox" data-ua-select-group="'+esc(g.key)+'" aria-label="Select all homework for '+esc(g.title)+'" '+(selected===eligible.length?'checked':'')+'></label>':'';
+    const dueDates=g.items.map(row=>row.due_at).filter(Boolean).sort();
+    const dueLabel=dueDates.length?(new Set(dueDates.map(x=>assignedDateKey(x))).size===1?dday(dueDates[0]):'Next '+dday(dueDates[0])):'';
+    const teacherLabels=[...new Set(g.items.map(row=>authors.get(id(row.created_by))||'Unknown'))];
+    const appNames=[...new Set(g.items.map(row=>String(row.app||'Homework')))];
+    const shell=sharedHomeworkGroupStart({key:g.key,title:g.title,sub:g.items.length+' assignment'+(g.items.length===1?'':'s')+' · '+g.sub,label,average,checkbox:groupSelect,overviewStyle:true,due:dueLabel,teacher:teacherLabels.length===1?teacherLabels[0]+' Teacher':teacherLabels.length+' teachers',apps:appNames});
+    // Show the same verified progress panel as Word Genius without requiring
+    // a second assignment-detail click. Keep existing detail/actions below it.
+    if(g.items.length===1&&g.items[0].app==='Word Genius'){
+      const row=g.items[0],data=wordCompletionCache.get(id(row.id));
+      if(data?.students?.length){
+        const items=data.students.map(st=>{
+          const pct=wordStudentPercent(st,{...data.assignment,list_meta:row.list_meta||{}});
+          return {name:displayStudentName(st.student_id,st.name||st.korean_name||'Student'),percent:pct,status:st.status};
+        });
+        const completed=items.filter(x=>x.status==='complete').length;
+        const notStarted=items.filter(x=>x.status==='not_started').length;
+        return shell+window.WillenaGeniusHomeworkCard.progressPanel({students:items,average,completed,notStarted});
+      }
+    }
+    if(g.items.length===1&&g.items[0].app==='Free Talking Genius'){
+      const p=freeTalkingProgress.get(id(g.items[0].id)),items=p?.students||[];
+      if(items.length){
+       const avg=Math.round(items.reduce((sum,st)=>sum+Number(st.percent||0),0)/items.length);
+       return shell+window.WillenaGeniusHomeworkCard.progressPanel({students:items.map(st=>({name:displayStudentName(st.student_id,st.name),percent:st.percent})),average:avg,completed:items.filter(st=>st.complete).length,notStarted:items.filter(st=>!st.passed).length,label:'Speaking · 8 questions'});
+      }
+     }
+    if(g.items.length===1&&g.items[0].app==='Writing Genius'&&g.items[0].list_key!=='writing_genius:sentence'){
+      const record=writingProgress.get(id(g.items[0].id));
+      if(record?.student_rows?.length){
+        return shell+'<div class="ghc-student-list" style="padding:12px 16px"><strong style="display:block;margin-bottom:8px">Student draft stages · '+Number(record.completed||0)+'/'+Number(record.students||0)+' completed</strong>'+overviewStudentProgress(record.student_rows,{kind:'writing-draft'})+'</div>';
+      }
+    }
+    return shell;
+   };
+   const selectable=visible.filter(r=>id(r.created_by)===teacher);
+   const checked=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
+   host.innerHTML='<div class="ua-scope-tabs" role="tablist" aria-label="Homework status"><button type="button" class="'+(overviewStage==='active'?'active':'')+'" data-ua-stage="active">Active ('+active.length+')</button><button type="button" class="'+(overviewStage==='complete'?'active':'')+'" data-ua-stage="complete">History ('+complete.length+')</button></div>'+
+     '<div class="ua-overview-filters"><label>Class<select class="control" id="uaOverviewClassFilter" aria-label="Filter homework by class"><option value="">All classes</option>'+classOptions.map(name=>'<option value="'+esc(name)+'"'+(filter.className===name?' selected':'')+'>'+esc(name)+'</option>').join('')+'</select></label>'+
+     '<label>Assignment<select class="control" id="uaOverviewAssignmentFilter" aria-label="Filter homework by assignment"><option value="">All assignments</option>'+assignmentOptions.map(name=>'<option value="'+esc(name)+'"'+(filter.assignment===name?' selected':'')+'>'+esc(name)+'</option>').join('')+'</select></label>'+
+     (scopeName==='all'?'<label>Teacher<select class="control" id="uaOverviewTeacherFilter" aria-label="Filter homework by teacher"><option value="">All teachers</option>'+teacherOptions.map(row=>'<option value="'+esc(row.id)+'"'+(filter.teacherId===row.id?' selected':'')+'>'+esc(row.name)+'</option>').join('')+'</select></label>':'')+'</div>'+
+     '<div class="ua-toolbar"><strong>'+(scopeName==='my'?'My homework':'All teachers’ homework')+'</strong>'+
+     '<label class="ua-bulk-select"><input type="checkbox" id="uaSelectAll" '+(selectable.length&&checked===selectable.length?'checked':'')+' '+(!selectable.length?'disabled':'')+'> Select all</label>'+
+      (overviewStage==='active'?'<button type="button" class="control ua-bulk-icon ua-bulk-complete" id="uaCompleteSelected" title="Complete selected" aria-label="Complete '+checked+' selected assignments" '+(!checked?'disabled':'')+'>'+window.WillenaHomeworkSelection.icons.complete+'<span class="ua-bulk-count">'+checked+'</span></button>':'')+
+     '<button type="button" class="control ua-bulk-icon ua-bulk-delete" id="uaDeleteSelected" title="Delete selected" aria-label="Delete '+checked+' selected assignments" '+(!checked?'disabled':'')+'>'+window.WillenaHomeworkSelection.icons.cancel+'<span class="ua-bulk-count">'+checked+'</span></button>'+ 
+     '<button type="button" class="control" id="uaOverviewRefresh">Refresh</button></div>'+
+     (errors.length?'<p class="ua-note" style="color:#b04b40">Some sources unavailable: '+esc(errors.join('; '))+'</p>':'')+
+     '<p id="uaBulkStatus" class="ua-note" role="status" aria-live="polite" hidden></p>'+
+     '<div class="ua-homework-cards">'+visible.map((row,i)=>{
+      const thisGroup=groupOf(row),previous=i?groupOf(visible[i-1]):null;
+      const open=!previous||previous.key!==thisGroup.key;
+      const day=assignedDateKey(row.created_at);
+       const priorDay=i?assignedDateKey(visible[i-1].created_at):null;
+       const divider=day!==priorDay?'<div class="ua-simple-date-divider" role="heading" aria-level="4"><span>'+esc(assignedDateLabel(day))+'</span></div>':'';
+       const prefix=(open&&i?'</div></div>':'')+divider+(open?groupHeader(groupByKey.get(thisGroup.key)):'');
+      const result=progress.get(id(row.id));
+      const done=result?Number(result.done)||0:0;
+      const target=Number(row.target_count)||0;
+      const pct=target?(done>=target&&(Number(result?.unresolved)||0)>0?99:Math.min(100,Math.round(done/target*100))):null;
+      const grammarResult=row.source_type==='grammar_books'?grammarBookProgress.get(id(row.id)):classProgress.get(id(row.id));
+      const verifiedGrammarRows=Array.isArray(grammarResult?.student_rows)?grammarResult.student_rows:[];
+      const verifiedGrammarPct=verifiedGrammarRows.length&&row.source_type==='grammar_books'
+       ?Math.round(verifiedGrammarRows.reduce((sum,st)=>sum+(Number(st.total)>0?100*Math.min(Number(st.done)||0,Number(st.total))/Number(st.total):0),0)/verifiedGrammarRows.length)
+       :null;
+      const ftStudents=freeTalkingProgress.get(id(row.id))?.students||[];
+      const visiblePct=row.app==='Free Talking Genius'&&ftStudents.length?Math.round(ftStudents.reduce((sum,st)=>sum+Number(st.percent||0),0)/ftStudents.length):row.app==='Grammar Genius'&&Number(grammarResult?.students)>0
+       ?(row.source_type==='grammar_books'?verifiedGrammarPct:Math.round(100*Number(grammarResult.passed)/Number(grammarResult.students))):pct;
+      const wordResult=row.app==='Word Genius'?wordClassProgress.get(id(row.id)):null;
+      const freeTalkingResult=row.app==='Free Talking Genius'?freeTalkingProgress.get(id(row.id)):null;
+      const writingResult=row.app==='Writing Genius'?(row.list_key==='writing_genius:sentence'?writingSentenceProgress.get(id(row.id)):writingProgress.get(id(row.id))):null;
+      const puzzleResult=row.app==='Puzzles'?puzzleProgress.get(id(row.id)):null;
+      const detail=result?'Correct '+done+'/'+target+' · Attempted '+(result.attempted??'—')+' · First-try accuracy '+(result.accuracy_percent??'—')+'% · 오답 remaining '+(result.unresolved??'—')
+        :grammarResult?grammarResult.passed+'/'+grammarResult.students+' students passed'
+        :wordResult?wordResult.started+'/'+wordResult.students+' students attempted (not a pass rate)'
+        :writingResult?(row.list_key==='writing_genius:sentence'?Number(writingResult.checked||0)+'/'+Number(writingResult.total_questions||0)+' questions checked · '+Number(writingResult.progress_percent||0)+'%':writingResult.completed+'/'+writingResult.students+' submitted')
+        :freeTalkingResult?(freeTalkingResult.students||[]).filter(st=>st.complete).length+'/'+(freeTalkingResult.students||[]).length+' students completed 8 speaking questions'
+        :puzzleResult?puzzleResult.completed+'/'+puzzleResult.students+' completed puzzles'
+        :'Completion data not available for this app';
+      const status=!row.isActive?(row.status==='cancelled'?'Removed':'Closed'):overdue(row)?'Past due':'Active';
+      const ownedByMe=id(row.created_by)===teacher;
+      const isSingle=groupByKey.get(thisGroup.key)?.items.length===1;
+      const detailTrigger=isSingle
+       ?'<button type="button" class="ua-overview-open-details" data-ua-detail="'+i+'" aria-expanded="false" aria-controls="uaExpanded'+i+'">Open details</button>'
+       :'<button type="button" class="ua-homework-detail" data-ua-detail="'+i+'" aria-expanded="false"><span><b>'+esc(row.app)+'</b> · '+esc(row.label||'Homework')+'</span><small>'+esc((()=>{const student=students.get(id(row.student_id));return student?[(student.name||student.username||student.korean_name),student.class||''].filter(Boolean).join(' · '):(row.class||row.class_name||'Student name unavailable');})())+' · '+esc(authors.get(id(row.created_by))||'Unknown')+' · '+esc(dday(row.due_at))+'</small><strong>'+esc(status)+(visiblePct===null?'':' · '+visiblePct+'%')+' ▾</strong></button>';
+      return prefix+'<article class="ua-homework-card'+(isSingle?' ua-single-assignment-detail':'')+'" data-ua-card="'+i+'">'+detailTrigger+
+        '<div class="ua-homework-expanded ghc-overview-expanded" id="uaExpanded'+i+'" hidden><p class="ghc-overview-detail">'+esc(detail)+'</p>'+
+        (grammarResult?.student_rows?overviewStudentProgress(grammarResult.student_rows,{kind:'grammar'}):'')+
+        (freeTalkingResult?.students&&!(isSingle&&row.app==='Free Talking Genius')?window.WillenaGeniusHomeworkCard.progressPanel({students:freeTalkingResult.students.map(st=>({name:displayStudentName(st.student_id,st.name),percent:st.percent})),average:ftStudents.length?Math.round(ftStudents.reduce((sum,st)=>sum+Number(st.percent||0),0)/ftStudents.length):null,completed:ftStudents.filter(st=>st.complete).length,notStarted:ftStudents.filter(st=>!st.passed).length,label:'Speaking · 8 questions'}):'')+
+        // A single Word Genius assignment already has the shared student bars
+        // above. Keep the nested chart only for multi-assignment groups.
+        ((groupByKey.get(thisGroup.key)?.items.length===1&&row.app==='Word Genius')?'':(wordResult?.student_rows
+          ?(wordCompletionCache.has(id(row.id))
+             ?overviewStudentProgress((wordCompletionCache.get(id(row.id))?.students||[]).map(st=>({...st,assignment_id:id(row.id)})),{kind:'word-completion'})
+             :'<div class="ghc-student-list" data-word-pending="'+esc(row.id)+'"><small>Loading verified homework completion…</small></div>')
+          :''))+
+        (writingResult?.student_rows&&!(isSingle&&row.app==='Writing Genius'&&row.list_key!=='writing_genius:sentence')?overviewStudentProgress(writingResult.student_rows,{kind:row.list_key==='writing_genius:sentence'?'writing-sentence':'writing-draft'}):'')+
+        (puzzleResult?.student_rows?overviewStudentProgress(puzzleResult.student_rows,{kind:'completion'}):'')+'</div>'+
+        (ownedByMe?'<div class="ua-delete-area"><button type="button" class="control" data-ua-edit="'+i+'" style="border:1px solid #afd1d5;color:#247f88;background:#fff;padding:6px 12px;font-size:12px">Edit</button></div>':'')+
+        (ownedByMe?'<div class="ua-homework-actions"><label class="ua-homework-checkbox"><input type="checkbox" data-ua-select="'+i+'" aria-label="Select homework" '+(overviewSelections.has(homeworkKey(row))?'checked':'')+'></label>'+(overviewStage==='active'?'<button type="button" data-ua-complete="'+i+'" aria-label="Mark homework complete" title="Complete">✓</button>':'')+'</div>':'')+'</article>';
+     }).join('')+(visible.length?'</div></div>':'')+'</div>'+(visible.length?'':'<p class="ua-empty">No homework in this section.</p>')+
+     '<p class="ua-note">Past-due homework appears in Complete automatically. ✓ closes one assignment; check boxes and Complete selected close several. Student attempts and results remain preserved.</p>';
+   attachHomeworkGroupToggles(host);
+   // Load exact Word Genius homework mastery only for visible class cards.
+   // This avoids multiplying expensive cell-pass checks across all assignments.
+   let wordObserver=null;
+   let refreshRequested=false;
+   const rerenderWhenReady=()=>{
+     if(refreshRequested)return;
+     refreshRequested=true;
+     requestAnimationFrame(()=>{
+       refreshRequested=false;
+       if(generation!==overviewGeneration||!host.isConnected)return;
+       wordObserver?.disconnect();
+       renderOverview();
+     });
+   };
+   const fetchWord=(row)=>{
+     const key=id(row.id);
+     if(wordCompletionCache.has(key))return;
+     if(wordCompletionPending.has(key))return;
+     const task=get('rpc/teacher_vocab_assignment_progress_v1',{
+       method:'POST',headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({p_assignment_id:key})
+     }).then(data=>{
+       if(data?.success&&Array.isArray(data.students)){
+         wordCompletionCache.set(key,{assignment:{...(data.assignment||{}),list_meta:row.list_meta||{}},students:data.students});
+       }else{
+         wordCompletionCache.set(key,{assignment:{},students:[],error:'No verified completion data returned'});
+       }
+     }).catch(error=>{
+       console.warn('[Homework overview] Word Genius completion unavailable',key,error);
+       wordCompletionCache.set(key,{assignment:{},students:[],error:String(error?.message||error)});
+     }).finally(()=>{wordCompletionPending.delete(key);rerenderWhenReady()});
+     wordCompletionPending.set(key,task);
+   };
+   const requestGroupWords=group=>{
+     const key=group?.dataset.uaGroup;
+     const items=groupByKey.get(key)?.items||[];
+     items.filter(row=>row.app==='Word Genius').forEach(fetchWord);
+   };
+   if(typeof IntersectionObserver==='function'){
+     wordObserver=new IntersectionObserver(entries=>{
+       for(const entry of entries)if(entry.isIntersecting){
+         requestGroupWords(entry.target);
+         wordObserver.unobserve(entry.target);
+       }
+     },{rootMargin:'120px 0px'});
+     host.querySelectorAll('.ua-group[data-ua-group]').forEach(group=>{
+       if((groupByKey.get(group.dataset.uaGroup)?.items||[]).some(row=>row.app==='Word Genius'))wordObserver.observe(group);
+     });
+   }else{
+     host.querySelectorAll('.ua-group[data-ua-group]').forEach(group=>requestGroupWords(group));
+   }
+
+   host.querySelector('#uaOverviewClassFilter').onchange=event=>{filter.className=event.target.value;filter.assignment='';overviewSelections.clear();renderOverview()};
+   host.querySelector('#uaOverviewAssignmentFilter').onchange=event=>{filter.assignment=event.target.value;overviewSelections.clear();renderOverview()};
+   const teacherFilter=host.querySelector('#uaOverviewTeacherFilter');
+   if(teacherFilter)teacherFilter.onchange=event=>{
+     filter.teacherId=event.target.value;
+     filter.className='';filter.assignment='';
+     overviewSelections.clear();renderOverview();
+   };
+   host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName,true);
+   host.querySelectorAll('[data-ua-stage]').forEach(button=>button.onclick=()=>{overviewStage=button.dataset.uaStage;overviewSelections.clear();renderOverview()});
+   host.querySelectorAll('[data-ua-detail]').forEach(button=>button.onclick=()=>{
+    const index=Number(button.dataset.uaDetail);
+    const panel=host.querySelector('#uaExpanded'+index);
+    if(!panel)return;
+    panel.hidden=!panel.hidden;
+    button.setAttribute('aria-expanded',String(!panel.hidden));
+   });
+      function updateSelectionUI(){
+    const selectedCount=selectable.filter(r=>overviewSelections.has(homeworkKey(r))).length;
+    const bulk=host.querySelector('#uaCompleteSelected');
+    if(bulk){bulk.disabled=selectedCount===0;bulk.setAttribute('aria-label','Complete '+selectedCount+' selected assignments');const count=bulk.querySelector('.ua-bulk-count');if(count)count.textContent=selectedCount;}
+    const deleteBulk=host.querySelector('#uaDeleteSelected');if(deleteBulk){deleteBulk.disabled=selectedCount===0;deleteBulk.setAttribute('aria-label','Delete '+selectedCount+' selected assignments');const count=deleteBulk.querySelector('.ua-bulk-count');if(count)count.textContent=selectedCount;}
+    host.querySelectorAll('[data-ua-select-group]').forEach(box=>{
+     const eligible=(groupByKey.get(box.dataset.uaSelectGroup)?.items||[]).filter(row=>id(row.created_by)===teacher);
+     const count=eligible.filter(row=>overviewSelections.has(homeworkKey(row))).length;
+     box.checked=eligible.length>0&&count===eligible.length;
+     box.indeterminate=count>0&&count<eligible.length;
+    });
+    const allBox=host.querySelector('#uaSelectAll');
+    if(allBox){allBox.checked=selectable.length>0&&selectedCount===selectable.length;allBox.indeterminate=selectedCount>0&&selectedCount<selectable.length;}
+   }
+   host.querySelectorAll('[data-ua-select-group]').forEach(box=>box.onchange=()=>{
+     (groupByKey.get(box.dataset.uaSelectGroup)?.items||[]).filter(row=>id(row.created_by)===teacher).forEach(row=>{
+      if(box.checked)overviewSelections.add(homeworkKey(row));else overviewSelections.delete(homeworkKey(row));
+     });
+     host.querySelectorAll('[data-ua-select]').forEach(child=>{
+      child.checked=overviewSelections.has(homeworkKey(visible[Number(child.dataset.uaSelect)]));
+     });
+     updateSelectionUI();
+    });
+    host.querySelectorAll('[data-ua-select]').forEach(box=>box.onchange=()=>{
+    const row=visible[Number(box.dataset.uaSelect)];
+    if(box.checked)overviewSelections.add(homeworkKey(row));else overviewSelections.delete(homeworkKey(row));
+    updateSelectionUI();
+   });
+   const selectAll=host.querySelector('#uaSelectAll');
+   if(selectAll)selectAll.onchange=()=>{
+    selectable.forEach(row=>{if(selectAll.checked)overviewSelections.add(homeworkKey(row));else overviewSelections.delete(homeworkKey(row))});
+    host.querySelectorAll('[data-ua-select]').forEach(box=>box.checked=selectAll.checked);
+    updateSelectionUI();
+   };
+   async function completeRows(items){
+    if(!items.length)return;
+    if(!confirm('Mark '+items.length+' homework assignment'+(items.length===1?'':'s')+' complete?'))return;
+    const controls=host.querySelectorAll('[data-ua-complete],#uaCompleteSelected,[data-ua-select],#uaSelectAll');
+    controls.forEach(el=>el.disabled=true);
+    const notice=host.querySelector('#uaBulkStatus');notice.hidden=false;notice.textContent='Completing '+items.length+' assignments…';
+    let success=0,failed=[];
+    // Small parallel batches avoid overwhelming the REST API.
+    for(let i=0;i<items.length;i+=5){
+     const results=await Promise.allSettled(items.slice(i,i+5).map(changeHomework));
+     results.forEach((r,j)=>{if(r.status==='fulfilled')success++;else failed.push(items[i+j].label+': '+r.reason.message)});
+    }
+    renderOverview();
+    const status=host.querySelector('#uaBulkStatus');
+    if(status){status.hidden=false;status.textContent=success+' completed.'+(failed.length?' '+failed.length+' failed: '+failed.slice(0,3).join('; '):'');}
+   }
+   host.querySelectorAll('[data-ua-edit]').forEach(button=>button.onclick=async()=>{
+     const row=visible[Number(button.dataset.uaEdit)];if(!row)return;
+     button.disabled=true;
+     try{await editHomework(row,teacher,()=>renderOverview())}
+     catch(err){const n=host.querySelector('#uaBulkStatus');n.hidden=false;n.textContent='Edit unavailable: '+err.message}
+     finally{button.disabled=false}
+   });
+   const bulkDelete=host.querySelector('#uaDeleteSelected');
+   if(bulkDelete)bulkDelete.onclick=async()=>{
+     const chosen=selectable.filter(row=>overviewSelections.has(homeworkKey(row)));
+     if(!chosen.length)return;
+     if(!confirm('Delete/remove '+chosen.length+' selected assignment'+(chosen.length===1?'':'s')+'? This cannot be undone for deletable records.'))return;
+     bulkDelete.disabled=true;
+     let succeeded=0;const failed=[];
+     for(const row of chosen){
+       try{await deleteHomework(row);const index=rows.indexOf(row);if(index!==-1)rows.splice(index,1);overviewSelections.delete(homeworkKey(row));succeeded++}
+       catch(e){failed.push((row.label||row.id)+': '+e.message)}
+     }
+     renderOverview();const status=host.querySelector('#uaBulkStatus');if(status){status.hidden=false;status.textContent=succeeded+' removed.'+(failed.length?' '+failed.length+' failed: '+failed.slice(0,2).join('; '):'')}
+   };
+   host.querySelectorAll('[data-ua-delete]').forEach(button=>button.onclick=async()=>{
+    const row=visible[Number(button.dataset.uaDelete)];
+    if(!row||id(row.created_by)!==teacher)return;
+    const soft=['grammar_foundation_homework','sentence_genius_homework'].includes(row._table);
+    const action=soft?'Remove':'Delete';
+    if(!confirm(action+' "'+row.label+'" from '+(row.class||row.class_name||'this class')+'? '+(soft?'It will disappear from active homework; recorded work is retained.':'This cannot be undone.')))return;
+    button.disabled=true;
+    const status=host.querySelector('#uaBulkStatus');status.hidden=false;status.textContent=action+' in progress…';
+    try{
+      await deleteHomework(row);
+      const index=rows.indexOf(row);if(index!==-1)rows.splice(index,1);
+      overviewSelections.delete(homeworkKey(row));renderOverview();
+      const msg=host.querySelector('#uaBulkStatus');if(msg){msg.hidden=false;msg.textContent=soft?'Assignment removed from active homework.':'Assignment deleted.'}
+    }catch(error){button.disabled=false;status.textContent=action+' failed: '+error.message}
+   });
+   host.querySelectorAll('[data-ua-complete]').forEach(button=>button.onclick=()=>{
+    const row=visible[Number(button.dataset.uaComplete)];
+    completeRows([row]);
+   });
+   const bulk=host.querySelector('#uaCompleteSelected');
+   if(bulk)bulk.onclick=()=>completeRows(selectable.filter(row=>overviewSelections.has(homeworkKey(row))));
+  }
+  if(classMission||snapshotOnly){
+   // Fetch exact Word Genius homework mastery for just this class, rather
+   // than estimating progress from raw attempts or scanning every assignment.
+   const target=rows.filter(r=>r.app==='Word Genius'&&r.isActive&&(snapshotOnly||String(r.class||r.class_name||'').toLowerCase()===classMission.toLowerCase())&&!wordCompletionCache.has(id(r.id)));
+   let cursor=0;
+   await Promise.all(Array.from({length:Math.min(3,target.length)},async()=>{
+    while(cursor<target.length){
+     const row=target[cursor++];
+     try{
+      const data=await get('rpc/teacher_vocab_assignment_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_id:id(row.id)})});
+      wordCompletionCache.set(id(row.id),{assignment:{...(data?.assignment||{}),list_meta:row.list_meta||{}},students:Array.isArray(data?.students)?data.students:[],error:data?.success?null:'Progress unavailable'});
+     }catch(error){wordCompletionCache.set(id(row.id),{assignment:{},students:[],error:String(error.message||error)})}
+    }
+   }));
+   if(!snapshotOnly)renderClassMissions();
+  }else renderOverview();
+  if(snapshotOnly||classMission){
+   const active=rows.filter(r=>r.isActive&&(!r.due_at||Date.parse(r.due_at)>=Date.now()));
+   const completions=[];
+   for(const mission of active){
+    const className=String(mission.class||mission.class_name||students.get(id(mission.student_id))?.class||'').trim();
+    if(!className)continue;
+    const progress=progressFor(mission);
+    for(const student of progress.list){if(student.done&&student.student_id)completions.push({key:mission.app+'|'+id(mission.id)+'|'+id(student.student_id),assignmentId:id(mission.id),studentId:id(student.student_id),studentName:student.name,app:mission.app,className,createdBy:id(mission.created_by),title:mission.label||'Homework'});}
+   }
+   window.WillenaHomeworkNotifications?.receive(completions,{complete:snapshotOnly,errors});
+  }
+  overviewPerf.lastLoadMs=Math.round(performance.now()-loadStarted);
+  overviewPerf.lastCompletedAt=new Date().toISOString();
+ }catch(e){if(!snapshotOnly&&generation===overviewGeneration&&host.isConnected)host.innerHTML='<p class="ua-empty">Could not load homework: '+esc(e.message)+'</p>';console.warn('[Homework tracker]',e)}
+}
+async function loadCalendar(){
+ const host=document.querySelector('#uaCalendar');if(!host)return;
+ host.textContent='Loading assignment calendar…';
+ const sources=[
+  ['homework_assignments','id,title,class,due_at,created_by,list_key,list_meta'],
+  ['grammar_foundation_homework','id,module_title,stage_title,class_name,due_at,created_by'],
+  ['sentence_genius_homework','id,title,class_name,due_at,created_by'],
+  ['test_prep_tasks','id,title,lesson,practice_type,student_id,due_at,created_by']
+ ];
+ let month=new Date();month.setDate(1);
+ const entries=[],errors=[];
+ const settled=await Promise.allSettled(sources.map(async ([table,fields])=>{
+  const data=await get(table+'?select='+encodeURIComponent(fields)+'&due_at=not.is.null&order=due_at.asc&limit=1000');
+  return data.map(x=>{
+   let app=table==='test_prep_tasks'?'내신':table==='grammar_foundation_homework'?'Grammar Genius':table==='sentence_genius_homework'?'Sentence Genius':'Word Genius';
+   if(table==='homework_assignments'){
+    const tag=String(x.list_meta?.creative_type||x.list_meta?.app||x.list_key||'').toLowerCase();
+    if(tag.includes('writing'))app='Writing Genius';else if(tag.includes('puzzle'))app='Puzzles';else if(tag.includes('sentence'))app='Sentence Genius';
+   }
+   return {...x,app,label:x.title||x.module_title||x.lesson||'Homework',className:x.class||x.class_name||'',at:x.due_at};
+  });
+ }));
+ settled.forEach((r,i)=>{if(r.status==='fulfilled')entries.push(...r.value);else errors.push(sources[i][0])});
+ const templates=[];
+ for(const [table,foreignKey] of [['homework_recurring_schedules','source_assignment_id'],['homework_recurring_app_schedules','source_id']]){
+  try{
+   const list=await get(table+'?select=id,'+foreignKey+',next_due_at,interval_days,active&active=eq.true');
+   for(const item of list){
+    const source=entries.find(x=>id(x.id)===id(item[foreignKey]));
+    if(source)templates.push({source,first:new Date(item.next_due_at),days:Number(item.interval_days)||7,id:item.id});
+   }
+  }catch(_){}
+ }
+ const dateKey=x=>{const d=new Date(x);return Number.isNaN(d.getTime())?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+ const assignmentsForDate=key=>{
+  const found=entries.filter(x=>dateKey(x.at)===key);
+  const target=new Date(key+'T12:00:00');
+  for(const rule of templates){
+   const first=new Date(rule.first.getFullYear(),rule.first.getMonth(),rule.first.getDate(),12);
+   const delta=Math.round((target-first)/86400000);
+   if(delta>=0&&delta%(rule.days)===0){
+    found.push({...rule.source,id:'repeat:'+rule.id+':'+key,at:key+'T23:59:59',label:rule.source.label+' ↻'});
+   }
+  }
+  return found;
+ };
+ function renderCalendar(){
+  const year=month.getFullYear(),m=month.getMonth(),days=new Date(year,m+1,0).getDate();
+  const first=new Date(year,m,1).getDay();
+  const today=dateKey(new Date());
+  let cells='';
+  for(let i=0;i<first;i++)cells+='<div class="ua-calendar-empty"></div>';
+  for(let n=1;n<=days;n++){
+   const key=year+'-'+String(m+1).padStart(2,'0')+'-'+String(n).padStart(2,'0');
+   const matches=assignmentsForDate(key);
+   cells+='<button type="button" class="ua-calendar-day'+(key===today?' is-today':'')+'" data-cal-date="'+key+'"><b>'+n+'</b>'+(matches.length?'<span>'+matches.length+' homework</span>':'')+'</button>';
+  }
+  host.innerHTML='<div class="ua-calendar-toolbar"><button class="control" type="button" id="calPrev">‹</button><strong>'+year+' · '+String(m+1).padStart(2,'0')+'</strong><button class="control" type="button" id="calNext">›</button><button class="control" type="button" id="calToday">Today</button></div>'+
+   (errors.length?'<p class="ua-note">Some sources unavailable: '+esc(errors.join(', '))+'</p>':'')+
+   '<div class="ua-calendar-grid">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<div class="ua-calendar-weekday">'+d+'</div>').join('')+cells+'</div><div id="uaCalendarDay" class="ua-calendar-results"><p>Select a day to see its assignments.</p></div>';
+  host.querySelector('#calPrev').onclick=()=>{month.setMonth(month.getMonth()-1);renderCalendar()};
+  host.querySelector('#calNext').onclick=()=>{month.setMonth(month.getMonth()+1);renderCalendar()};
+  host.querySelector('#calToday').onclick=()=>{month=new Date();month.setDate(1);renderCalendar()};
+  host.querySelectorAll('[data-cal-date]').forEach(b=>b.onclick=()=>{
+   host.querySelectorAll('[data-cal-date]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
+   const matches=assignmentsForDate(b.dataset.calDate);
+   host.querySelector('#uaCalendarDay').innerHTML='<h4>'+esc(b.dataset.calDate)+' · '+matches.length+' assignments</h4>'+
+    (matches.length?matches.map(x=>'<article class="ua-calendar-item"><b>'+esc(x.app)+' · '+esc(x.label)+'</b><small>'+esc(x.className)+' · '+esc(dday(x.at))+'</small></article>').join(''):'<p>No assignments on this date.</p>');
+  });
+ }
+ renderCalendar();
+}
+// Lightweight notification check while the teacher is using the new All Classes planner.
+// Reuses the existing verified conversation mission RPC; this does not alter homework.
+let notificationPollInFlight=false;
+async function pollNotifications(){
+ if(notificationPollInFlight)return;
+ notificationPollInFlight=true;
+ try{
+  const [assignments,progress,tests]=await Promise.all([
+   get('homework_assignments?select=id,title,class,list_meta&list_meta->>mission_mode=eq.conversation&order=created_at.desc&limit=300'),
+   get('rpc/teacher_free_talking_conversation_mission_progress_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_assignment_id:null})}),
+   get('teacher_homework_notification_tests?select=id,student_id,assignment_id,class_name,app_name,assignment_title,created_at&order=created_at.desc&limit=100').catch(error=>{console.warn('[Homework Notifications] Test events unavailable:',error.message);return []})
+  ]);
+  const byId=new Map((assignments||[]).map(a=>[id(a.id),a]));
+  const completions=[];
+  for(const assignment of (Array.isArray(progress)?progress:[])){
+   const a=byId.get(id(assignment.assignment_id));if(!a)continue;
+   for(const student of assignment.students||[]){
+    if(student.complete!==true)continue;
+    const studentId=id(student.student_id);if(!studentId)continue;
+    completions.push({key:'Free Talking Genius|'+id(a.id)+'|'+studentId,studentId,assignmentId:id(a.id),studentName:student.name,
+     className:a.class||assignment.class||'',assignment:a.title||'AI Conversation',app:'Free Talking Genius',
+     completedAt:student.last_activity||null,source:'Free Talking conversation progress'});
+   }
+  }
+  // Synthetic staff-only test events never change student learning data.
+  const testIds=[...new Set((tests||[]).map(t=>id(t.student_id)).filter(Boolean))];
+  const testProfiles=testIds.length?await get('profiles?select=id,name,username&id=in.('+testIds.join(',')+')').catch(()=>[]):[];
+  const testNames=new Map(testProfiles.map(p=>[id(p.id),p.name||p.username||'Test student']));
+  for(const test of tests||[]){
+   completions.push({key:'TEST|'+id(test.id),studentId:id(test.student_id),assignmentId:id(test.assignment_id),
+    studentName:testNames.get(id(test.student_id))||'Test student',
+    className:test.class_name,assignment:test.assignment_title,app:'TEST · '+test.app_name,
+    completedAt:test.created_at,source:'Staff notification test'});
+  }
+  window.dispatchEvent(new CustomEvent('willena:homework-completion-snapshot',{detail:{completions}}));
+ }catch(error){console.warn('[Homework Notifications] Read unavailable:',error.message)}
+ finally{notificationPollInFlight=false}
+}
+window.UniversalAssignmentTracker={load,loadOverview,loadCalendar,pollNotifications,loadClassMissions:(className,stage='active')=>loadOverview('all',false,{className,stage}),loadCompletionSnapshot:()=>loadOverview('all',false,{snapshotOnly:true}),notificationRequest:get,notificationIdentity:teacherIdentity};
+})();

@@ -1,0 +1,137 @@
+#view-assignments .page-head{align-items:flex-start}
+.assignment-status-tabs{display:flex;border:1px solid #d8e2e5;border-radius:10px;overflow:hidden;background:#fff}
+.assignment-status-tab{border:0;background:#fff;color:#60757b;padding:9px 13px;font:700 12px Poppins,sans-serif;cursor:pointer}
+.assignment-status-tab.active{background:#173f46;color:#fff}
+.assignment-list{display:grid;gap:12px}
+.assignment-card{width:100%;text-align:left;border:1px solid #dce6e8;border-radius:16px;background:#fff;padding:16px 18px;cursor:pointer;box-shadow:0 4px 14px rgba(27,62,69,.05);transition:.16s ease}
+.assignment-card:hover{transform:translateY(-1px);border-color:#b8d4d9;box-shadow:0 8px 20px rgba(27,62,69,.08)}
+.assignment-card-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.assignment-card-head strong{display:block;color:#173f46;font-size:15px}
+.assignment-card-head span:not(.assignment-state){display:block;color:#7c8f93;font-size:12px;margin-top:4px}
+.assignment-state{flex:0 0 auto;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.assignment-state.is-current{background:#e9f8f2;color:#2d7655}
+.assignment-state.is-history{background:#eef1f2;color:#68797d}
+.assignment-card-meta{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;color:#829397;font-size:11px}
+.assignment-card-meta b{color:#52676c}
+.assignment-detail{display:grid;gap:16px}
+.assignment-detail[hidden]{display:none!important}
+.assignment-detail-head{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}
+.assignment-detail-head h2{margin:0;color:#173f46;font-size:20px}
+.assignment-detail-head p{margin:3px 0 0;color:#7d9094;font-size:12px}
+.assignment-back{border:0;background:transparent;color:#2d727e;font:800 12px Poppins,sans-serif;cursor:pointer;padding:8px 0}
+.assignment-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.assignment-kpi{border:1px solid #dce7e9;border-radius:14px;background:#fff;padding:13px 14px}
+.assignment-kpi strong{display:block;color:#173f46;font-size:18px}
+.assignment-kpi span{display:block;color:#829397;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.assignment-matrix-wrap,.assignment-word-table-wrap{overflow:auto;border:1px solid #dce7e9;border-radius:14px;background:#fff}
+.assignment-matrix,.assignment-word-table{width:100%;border-collapse:collapse;min-width:720px}
+.assignment-matrix th,.assignment-matrix td,.assignment-word-table th,.assignment-word-table td{padding:11px 12px;border-bottom:1px solid #edf1f2;text-align:left;vertical-align:middle}
+.assignment-matrix th,.assignment-word-table th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#789095;background:#f8fbfb;position:sticky;top:0;z-index:1}
+.assignment-matrix td{font-size:12px;color:#52676c}
+.assignment-matrix td strong,.assignment-word-table td strong{display:block;color:#173f46}
+.assignment-matrix td small,.assignment-word-table td small{display:block;color:#8b9a9d;font-size:10px;margin-top:2px}
+.assignment-student-row{cursor:pointer}
+.assignment-student-row:hover{background:#f8fbfc}
+.assignment-pct{display:inline-block;min-width:40px;font-weight:900}
+.assignment-pct.is-complete{color:#2c7b54}
+.assignment-pct.is-progress{color:#b36b2d}
+.assignment-pct.is-zero{color:#98a5a8}
+.assignment-status{display:inline-block;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:800;white-space:nowrap}
+.assignment-status.complete{background:#e8f7ef;color:#28714d}
+.assignment-status.in_progress{background:#fff1df;color:#9b5d22}
+.assignment-status.not_started{background:#eff2f3;color:#748589}
+.assignment-student-detail{border:1px solid #d9e7ea;border-radius:16px;background:#f9fcfc;padding:14px}
+.assignment-student-detail[hidden]{display:none!important}
+.assignment-student-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:12px}
+.assignment-student-head h3{margin:0;color:#173f46;font-size:17px}
+.assignment-student-head p{margin:3px 0 0;color:#789095;font-size:11px}
+.assignment-student-close{border:0;background:transparent;color:#748589;font-size:22px;cursor:pointer;line-height:1}
+.assignment-word-table{min-width:640px}
+.assignment-word-table td{font-size:11px;color:#61767b}
+.word-state{display:inline-block;font-size:10px;font-weight:900;border-radius:999px;padding:4px 7px}
+.word-state.clean{background:#e8f7ef;color:#28714d}
+.word-state.needs-work{background:#fff0e1;color:#a15e22}
+.word-state.not-started{background:#eef2f3;color:#7d8c90}
+.assignment-word-table tr.fully-clean td:first-child{border-left:3px solid #62b388}
+.assignment-word-table tr.started:not(.fully-clean) td:first-child{border-left:3px solid #e2a15f}
+@media(max-width:760px){
+  #view-assignments .page-head{display:block}
+  #view-assignments .filters{margin-top:12px}
+  .assignment-detail-head{grid-template-columns:1fr auto}
+  .assignment-detail-head .assignment-back{grid-column:1/-1;justify-self:start}
+  .assignment-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .assignment-card-head{display:block}
+  .assignment-state{display:inline-block;margin-top:8px}
+}
+
+/* Assignment management controls */
+.assignment-detail-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.assignment-cancel-btn{border-color:#e8b56b!important;color:#9a5b18!important;background:#fffaf2!important}
+.assignment-delete-btn{border-color:#efb2b2!important;color:#a73838!important;background:#fff7f7!important}
+.assignment-manage-panel{
+  border:1px solid #d9e7ea;border-radius:16px;background:#f8fbfb;padding:14px 16px
+}
+.assignment-manage-panel[hidden]{display:none!important}
+.assignment-edit-form{display:grid;gap:12px}
+.assignment-edit-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.assignment-edit-form label>span,.assignment-edit-modes legend{
+  display:block;margin-bottom:5px;color:#61777c;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em
+}
+.assignment-edit-form input[type="text"],.assignment-edit-form input[type="date"]{
+  width:100%;box-sizing:border-box;border:1px solid #cbdcdf;border-radius:10px;background:#fff;padding:10px 11px;color:#173f46;font:inherit
+}
+.assignment-edit-modes{margin:0;padding:0;border:0}
+.assignment-edit-modes label{display:inline-flex;align-items:center;gap:6px;margin-right:16px;color:#52676c;font-size:12px;font-weight:700}
+.assignment-edit-note{min-height:18px;color:#a05f27;font-size:11px;font-weight:700}
+.assignment-edit-actions{display:flex;justify-content:flex-end;gap:8px}
+.assignment-save-btn{border-color:#bfecef!important;color:#237783!important;background:#f7fefe!important}
+@media(max-width:760px){
+  .assignment-detail-actions{grid-column:1/-1;justify-content:flex-start}
+  .assignment-edit-grid{grid-template-columns:1fr}
+}
+
+/* Pass 4: assignment targeting + reactivation */
+.assignment-reactivate-btn{border-color:#bfecef!important;color:#237783!important;background:#f7fefe!important}
+.assignment-edit-target{margin:0;padding:0;border:0}
+.assignment-edit-target>legend{
+  display:block;margin-bottom:5px;color:#61777c;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em
+}
+.assignment-edit-target>label{
+  display:inline-flex;align-items:center;gap:6px;margin:0 16px 8px 0;color:#52676c;font-size:12px;font-weight:700
+}
+.assignment-student-picker{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;
+  max-height:220px;overflow:auto;padding:8px;border:1px solid #d9e7ea;border-radius:12px;background:#fff
+}
+.assignment-student-picker[hidden]{display:none!important}
+.assignment-student-check{
+  display:flex!important;align-items:center;gap:8px;margin:0!important;padding:8px 9px;border:1px solid #e1eaec;border-radius:10px;
+  background:#fbfdfd;text-transform:none!important;letter-spacing:0!important
+}
+.assignment-student-check:has(input:checked){border-color:#ee9abb;background:#fff8fb}
+.assignment-student-check span{margin:0!important;color:#425f65!important;font-size:11px!important;font-weight:700!important;text-transform:none!important;letter-spacing:0!important}
+.assignment-edit-loading{padding:8px;color:#7b8e92;font-size:11px}
+@media(max-width:760px){
+  .assignment-student-picker{grid-template-columns:1fr}
+}
+
+/* Split workload management */
+.assignment-edit-workload{margin:0;padding:10px 12px;border:1px solid #d9e7ea;border-radius:12px;background:#fff}
+.assignment-edit-workload>legend{padding:0 5px;color:#61777c;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.assignment-edit-workload>label{display:flex;align-items:center;gap:7px;margin:7px 12px 7px 0;color:#52676c;font-size:12px;font-weight:700}
+.assignment-workload-summary{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.assignment-workload-summary span{padding:6px 8px;border:1px solid #e1eaec;border-radius:9px;background:#f8fbfb;color:#60777c;font-size:10px}
+.assignment-workload-summary b{color:#244f57}
+.assignment-reshuffle-btn{margin-top:9px}
+
+/* History recovery controls: scoped to Word Genius assignments only. */
+#assignmentList .assignment-restore-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;margin:0 0 14px;background:#fff;border:2px solid #aee5eb;border-radius:15px}
+#assignmentList .assignment-restore-toolbar label,
+#assignmentList .assignment-history-select{display:inline-flex;align-items:center;gap:8px;color:#2a5260;font-size:13px;font-weight:750;cursor:pointer}
+#assignmentList .assignment-restore-toolbar input,
+#assignmentList .assignment-history-select input{width:18px;height:18px;accent-color:#23b3c2}
+#assignmentList #assignmentRestoreSelected{font-weight:800;background:#e9fbfc;border:2px solid #82d4dc;color:#176b77;border-radius:10px;padding:8px 14px}
+#assignmentList #assignmentRestoreSelected:disabled{opacity:.42;cursor:not-allowed}
+#assignmentList #assignmentRestoreStatus{font-size:12px;color:#506f7b}
+#assignmentList .assignment-history-item{position:relative;margin-bottom:12px}
+#assignmentList .assignment-history-select{display:flex;width:max-content;margin:0 0 6px 10px}

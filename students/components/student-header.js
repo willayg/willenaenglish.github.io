@@ -1,3 +1,5 @@
+import {mountStudentInbox} from './student-inbox.js?v=20261101-menu-prominent1';
+import {checkStudentCharacterUnlocks} from './student-character-unlocks.js?v=20261116-p4-visible-scenery2';
 // Student session repair bootstrap.
 if (typeof window !== 'undefined' && window.location.hostname === 'students.willenaenglish.com') {
   import('/students/auth-refresh.js?v=20260726a')
@@ -48,6 +50,9 @@ class StudentHeader extends HTMLElement {
       if (typeof total === 'number') {
         this._points = total;
         this.refresh();
+        // Check the authoritative ledger after a points award in ANY Genius app.
+        this._scheduleOverviewRefresh();
+        setTimeout(()=>void this._fetchOverview(),1600);
       }
     } catch {}
   };
@@ -57,6 +62,8 @@ class StudentHeader extends HTMLElement {
       if (typeof this._points === 'number') {
         this._points += delta;
         this.refresh();
+        this._scheduleOverviewRefresh();
+        setTimeout(()=>void this._fetchOverview(),1600);
       }
     } catch {}
   };
@@ -82,8 +89,6 @@ class StudentHeader extends HTMLElement {
   this._points = null;
   this._stars = null;
   this._fetchingOverview = false;
-  // Mission modal guard so we attempt only once per component lifecycle
-  this._missionChecked = false;
   }
 
   attributeChangedCallback() {
@@ -111,14 +116,16 @@ class StudentHeader extends HTMLElement {
     if ((this._points == null || this._stars == null) && !this._fetchingOverview) {
       this._fetchOverview();
     }
-  // Defer mission modal check a tick to avoid blocking initial paint
-  try { setTimeout(() => this._maybeShowMissionModal(), 0); } catch {}
+  // Retired: the mission basket is the only entry point for outstanding missions.
+  // Do not auto-open the legacy "You Have A Mission" popup.
     this._ensureAudioDefaults();
     this._ensureMusicAudio();
     this._syncMusicPlaybackWithPreference();
   }
 
   disconnectedCallback() {
+    this._cleanupDocClick?.();
+    this._cleanupDocClick = null;
     window.removeEventListener("storage", this._onStorage);
   window.removeEventListener('auth:changed', this._onAuthChanged);
   window.removeEventListener('points:update', this._onPointsUpdate);
@@ -284,6 +291,11 @@ class StudentHeader extends HTMLElement {
           }
         } catch {}
         this.refresh();
+        // The first overview request may have completed before whoami
+        // supplied the student ID. Re-check once authenticated identity exists.
+        // A simultaneous first-load fetch may still be running here.
+        // Follow it with a fresh authoritative overview after hydration.
+        setTimeout(()=>{if(this.isConnected)void this._fetchOverview()},800);
       }
     } catch {
       // ignore fetch errors; keep any existing values
@@ -329,153 +341,14 @@ class StudentHeader extends HTMLElement {
     this._starsSyncStopTimer = setTimeout(() => this._stopAuthoritativeStarsSync(), maxDurationMs + 250);
   }
 
-  // --- Mission Modal (homework alert) ---
-  _shouldSuppressGameInterrupt() {
-    try {
-      // Never interrupt active gameplay. Heuristics for the English Arcade page.
-      const isArcade = /\/Games\/english_arcade\//i.test(location.pathname);
-      if (!isArcade) return false;
-      const qs = new URLSearchParams(location.search);
-      // Don't suppress if just landing via openHomework (that's intended entry point)
-      if (qs.get('openHomework') === '1') return false;
-      // If autostart is active, allow modal first (it won't re-show once dismissed)
-      if (qs.get('autostart') === '1') return false;
-      // Known game runtime flags if exposed
-      if (window.WordArcade) {
-        try {
-          if (typeof window.WordArcade.isInGame === 'function' && window.WordArcade.isInGame()) return true;
-          if (window.WordArcade.isPlaying === true) return true;
-        } catch {}
-      }
-      // DOM heuristic: if opening menu is hidden and gameArea populated, assume a game is active
-      const opening = document.getElementById('openingButtons');
-      const gameArea = document.getElementById('gameArea');
-      const openingHidden = opening ? (getComputedStyle(opening).display === 'none') : false;
-      const gameBusy = gameArea ? gameArea.childElementCount > 0 : false;
-      return openingHidden && gameBusy;
-    } catch { return false; }
-  }
-
+  // --- Shared homework mission popup ---
   async _maybeShowMissionModal() {
     try {
-      if (this._missionChecked) return; this._missionChecked = true;
-      // Once per session
-      if (sessionStorage.getItem('missionModalShown') === '1') return;
-      // Skip login page entirely
-      if (/\/students\/login\.html$/i.test(location.pathname)) return;
-      // If another aria-modal is present, delay briefly and try once more
-      const existingModal = document.querySelector('[aria-modal="true"], .modal[role="dialog"]');
-      if (existingModal) {
-        // Wait briefly for other modals to dismiss, then give up for this session if still present
-        setTimeout(() => {
-          if (!document.querySelector('[aria-modal="true"], .modal[role="dialog"]') && !document.getElementById('missionModalGlobal')) {
-            this._missionChecked = false; // allow retry
-            this._maybeShowMissionModal();
-          }
-        }, 1000);
-        return;
-      }
-      // Never interrupt games (but allow on opening screen even if on Arcade page)
-      if (this._shouldSuppressGameInterrupt()) return;
-
-      // Small shared cache to avoid duplicate fetches across pages
-      const cacheKey = '__HAS_HW_CACHE';
-      let hasHw = null;
-      const now = Date.now();
-      // Skip cache entirely - always check fresh to ensure accurate incomplete status
-      if (hasHw == null) {
-        // Defer to idle if available to minimize main thread contention
-        await new Promise((res) => {
-          try { (window.requestIdleCallback || window.requestAnimationFrame)(() => res()); }
-          catch { setTimeout(res, 0); }
-        });
-          const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=list_assignments&mode=student&_=${Date.now()}`);
-          if (!resp.ok) return;
-          const data = await resp.json().catch(() => ({}));
-          // If assignments exist, check per-assignment progress for this user to determine incompletes.
-          if (data && data.success && Array.isArray(data.assignments) && data.assignments.length) {
-            const assignments = data.assignments || [];
-            // Ensure we have a user id to match progress rows. Try hydrated uid then whoami fallback.
-            let uid = this._uid || null;
-            if (!uid) {
-              try {
-                const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
-                if (who.ok) {
-                  const wj = await who.json().catch(() => ({}));
-                  if (wj && wj.success && wj.user_id) uid = wj.user_id;
-                }
-              } catch {}
-            }
-            // Check progress for each assignment. Conservative approach: if any assignment appears incomplete, treat as hasHw.
-            let incomplete = 0;
-            try {
-              await Promise.all(assignments.map(async (a) => {
-                try {
-                  const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}&_=${Date.now()}`);
-                  if (!pr.ok) { incomplete++; return; }
-                  const pj = await pr.json().catch(() => ({}));
-                  if (pr.ok && pj && pj.success && Array.isArray(pj.progress)) {
-                    let studentProgress = null;
-                    if (uid) studentProgress = pj.progress.find(p => String(p.user_id) === String(uid)) || null;
-                    if (!studentProgress && pj.progress.length === 1) studentProgress = pj.progress[0];
-                    if (studentProgress) {
-                      let completionPct = 0;
-                      if (typeof studentProgress.completion === 'number') completionPct = studentProgress.completion;
-                      else if (typeof studentProgress.completion_pct === 'number') completionPct = studentProgress.completion_pct;
-                      else if (typeof studentProgress.modes_attempted === 'number' && typeof studentProgress.modes_total === 'number' && studentProgress.modes_total > 0) {
-                        completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
-                      }
-                      completionPct = Math.max(0, Math.min(100, completionPct));
-                      // If stars_required is set, override completion % to be star-based
-                      if (pj.stars_required && typeof studentProgress.stars === 'number') {
-                        completionPct = Math.round((studentProgress.stars / pj.stars_required) * 100);
-                      }
-                      if (completionPct < 100) incomplete++;
-                    } else {
-                      // No student row => treat as incomplete
-                      incomplete++;
-                    }
-                  } else {
-                    incomplete++;
-                  }
-                } catch (e) { incomplete++; }
-              }));
-            } catch (e) { incomplete = assignments.length; }
-            hasHw = incomplete > 0;
-          } else {
-            hasHw = false;
-          }
-          try { window[cacheKey] = { t: now, v: hasHw }; } catch {}
-      }
-      if (!hasHw) return;
-
-      // Build fullscreen modal
-      if (document.getElementById('missionModalGlobal')) return; // already present
-      const overlay = document.createElement('div');
-      overlay.id = 'missionModalGlobal';
-      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:26px;';
-      const panel = document.createElement('div');
-      panel.style.cssText = 'background:#fff;border-radius:24px;max-width:520px;width:100%;padding:36px 32px 28px;border:2px solid #93cbcf;box-shadow:0 16px 60px rgba(0,0,0,.18);text-align:center;font-family:"Poppins",system-ui,Arial,sans-serif;';
-      panel.innerHTML = `
-        <h2 style="margin:0 0 12px;font-size:2.2rem;font-weight:800;color:#ff6fa9;letter-spacing:.4px;font-family:'Poppins',system-ui,Arial,sans-serif;">You Have A Mission</h2>
-        <img src="/Games/english_arcade/assets/Images/icons/rocket.svg" alt="rocket" style="width:72px;height:72px;margin:0 auto 14px;display:block;" />
-        <div style="display:flex;gap:18px;align-items:center;justify-content:center;margin-top:12px;flex-wrap:wrap;">
-          <a id="missionDoNowBtn" href="#" style="display:inline-block;font-size:1.05rem;font-weight:800;color:#555;background:#fff;border:2px solid #ff6fa9;padding:14px 26px;border-radius:16px;text-decoration:none;min-width:260px;font-family:'Poppins',system-ui,Arial,sans-serif;box-shadow:0 6px 16px rgba(255,111,169,0.12);transition:transform .16s ease, box-shadow .16s ease;">숙제 시작하기</a>
-          <button id="missionDismissBtn" type="button" style="background:#fff;border:2px solid #e2e8f0;color:#334155;font-weight:700;padding:10px 16px;border-radius:12px;cursor:pointer;font-family:'Poppins',system-ui,Arial,sans-serif;margin-top:18px;">Not Now</button>
-        </div>`;
-      overlay.appendChild(panel);
-      document.body.appendChild(overlay);
-
-      const finish = () => { try { overlay.remove(); } catch {} sessionStorage.setItem('missionModalShown','1'); };
-      // Do NOT close modal when clicking the backdrop; require explicit button action
-      // overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(); });
-      panel.querySelector('#missionDismissBtn')?.addEventListener('click', finish);
-      panel.querySelector('#missionDoNowBtn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        sessionStorage.setItem('missionModalShown','1');
-        window.location.href = '/Games/english_arcade/index.html?openHomework=1';
-      });
-    } catch {}
+      const mission = await import('/students/components/homework-mission.js?v=20261105-pass2-qr2');
+      await mission.showHomeworkMission();
+    } catch (error) {
+      console.debug('[student-header] homework mission unavailable', error);
+    }
   }
 
   _fetchOverview() {
@@ -488,6 +361,18 @@ class StudentHeader extends HTMLElement {
         if (ov && typeof ov.points === 'number' && ov.points !== this._points) { this._points = ov.points; changed = true; }
         if (ov && typeof ov.stars === 'number' && ov.stars !== this._stars) { this._stars = ov.stars; changed = true; }
         if (changed) this.refresh();
+        // Publish the same authenticated overview to every shared character
+        // menu in this page; never let a stale iframe points fetch relock Steve.
+        if(ov&&Number.isFinite(Number(ov.points))&&this._uid){
+          window.dispatchEvent(new CustomEvent('willena:verified-student-points',{
+            detail:{userId:this._uid,points:Number(ov.points)}
+          }));
+        }
+        // Header exists on every Genius app. The server independently verifies
+        // both the points threshold and that celebration was not already claimed.
+        if(ov && Number.isFinite(ov.points) && ov.points>=100){
+          void checkStudentCharacterUnlocks(ov.points,this._uid);
+        }
         return ov || null;
       })
       .catch(() => null)
@@ -531,6 +416,10 @@ class StudentHeader extends HTMLElement {
   }
 
   render() {
+    // The header is re-rendered after points/stars/profile refreshes.
+    // Remove the old document listener before replacing the shadow DOM.
+    this._cleanupDocClick?.();
+    this._cleanupDocClick = null;
     // Try established identity sources; if none, fall back to guest cookie
     let cookieGuestName = null;
     try {
@@ -564,7 +453,8 @@ class StudentHeader extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
-        :host { display:block; }
+        :host { display:block; position:relative; z-index:2147483000; isolation:isolate; }
+/* Keep the complete header (not only its shadow dropdown) above theme controls. */
   header { position:sticky; top:0; left:0; right:0; background:var(--student-header-bg,#fff); border-bottom:1px solid var(--student-header-border,#e6eaef); padding:10px 12px 8px; z-index:10; min-width:0; width:100%; box-sizing:border-box; margin:0; }
   .top { display:flex; flex-direction:row; align-items:center; gap:10px; font-family: 'Poppins', system-ui, Segoe UI, Arial, sans-serif; justify-content: center; min-width:0; }
   .title { font-weight:800; color:var(--student-header-title,var(--pri,#19777e)); text-align:center; }
@@ -603,7 +493,7 @@ class StudentHeader extends HTMLElement {
     max-width: 320px; /* cap width for readability */
     padding: 8px;
     display: block; /* allow animation control via visibility/opacity */
-    z-index: 1000;
+    z-index: 2147483001;
     overflow-x: hidden; /* prevent horizontal scrollbar */
     overflow-y: auto; /* allow vertical scroll if many items */
     /* Animation base state */
@@ -734,22 +624,16 @@ class StudentHeader extends HTMLElement {
           <div class="menu-anchor">
             <button class="avatar avatar-btn" id="avatarBtn" part="avatar" aria-haspopup="menu" aria-expanded="false" title="Account">${avatar}</button>
             <div class="dropdown" id="avatarMenu" role="menu" aria-label="Account menu">
-              <a class="dd-item" role="menuitem" href="/students/dashboard/" data-i18n="Dashboard">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z" fill="#19777e"/></svg>
-                Dashboard
-              </a>
-              <a class="dd-item" role="menuitem" href="/Games/english_arcade/index.html" data-i18n="English Arcade">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><circle cx="12" cy="12" r="10" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">E</text></svg>
-                English Arcade
-              </a>
-              <a class="dd-item" role="menuitem" href="/Games/english_arcade/emoji-match.html?autostart=1" data-i18n="Emoji Match">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><circle cx="12" cy="12" r="10" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">:)</text></svg>
-                Emoji Match
-              </a>
-              <a class="dd-item" role="menuitem" href="/playzone.html" data-i18n="More Games">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M20 6h-2.18c.09-.3.18-.58.18-.9a2.5 2.5 0 00-5-1.45A2.5 2.5 0 005 5.1a2.5 2.5 0 00-5 1.45c0 .32.09.6.18.9H2a2 2 0 00-2 2v12c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5-2c.83 0 1.5.67 1.5 1.5S15.83 7 15 7s-1.5-.67-1.5-1.5S14.17 4 15 4zm-4 0c.83 0 1.5.67 1.5 1.5S11.83 7 11 7s-1.5-.67-1.5-1.5S10.17 4 11 4zm3.5 9.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z" fill="#19777e"/></svg>
-                More Games
-              </a>
+              <a class="dd-item" role="menuitem" href="/students/dashboard/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">⌂</span>Home</a>
+              <a class="dd-item" role="menuitem" href="/students/vocab-study/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">★</span>Word Genius</a>
+              <a class="dd-item" role="menuitem" href="/students/sentence-genius/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">✎</span>Sentence Genius</a>
+              <a class="dd-item" role="menuitem" href="/students/free-talking-genius/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">◉</span>Free Talking Genius</a>
+              <a class="dd-item" role="menuitem" href="/students/grammar-books/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">◇</span>Grammar Genius</a>
+              <a class="dd-item" role="menuitem" href="/students/writing-genius/"><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;margin-right:4px"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>Writing Genius</a>
+              <a class="dd-item" role="menuitem" href="/students/wordsearch/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">▧</span>Puzzles</a>
+              <a class="dd-item" role="menuitem" href="/Games/english_arcade/index.html"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">▶</span>English Arcade</a>
+              <a class="dd-item" role="menuitem" href="/students/grammar-foundations/?path=naesin"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">◇</span>Grammar Genius 내신</a>
+              <a class="dd-item" role="menuitem" href="/students/test-prep-v2/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">✓</span>내신 명중</a>
               <a class="dd-item" role="menuitem" href="/students/profile.html" data-i18n="Profile">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M12 12c2.7 0 8 1.34 8 4v4H4v-4c0-2.66 5.3-4 8-4zm0-2a4 4 0 100-8 4 4 0 000 8z" fill="#19777e"/></svg>
                 Profile
@@ -941,7 +825,7 @@ class StudentHeader extends HTMLElement {
         }
       } catch {}
   // Ensure mission modal will show again after logout
-  try { sessionStorage.removeItem('missionModalShown'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
+  try { sessionStorage.removeItem('missionModalShownV3'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
       try { await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST' }); } catch {}
       // Let other parts of the app know auth changed before redirecting
       try { window.dispatchEvent(new Event('auth:changed')); } catch {}
@@ -999,6 +883,7 @@ class StudentHeader extends HTMLElement {
         ta.focus();
       });
     }
+    queueMicrotask(()=>{if(this.isConnected)mountStudentInbox(this)});
   }
 }
 

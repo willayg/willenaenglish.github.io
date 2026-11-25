@@ -1,0 +1,104 @@
+/* Admin V2 intentionally inherits the Teacher dashboard shell and component language. */
+.admin-v2-placeholder{min-height:240px}
+.admin-v2-placeholder .empty{min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px}
+.admin-v2-placeholder .empty strong{font-size:1rem;color:var(--ink)}
+.admin-v2-placeholder .empty span{font-size:.76rem;color:var(--muted)}
+.admin-v2-boot{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted);font-size:.78rem;font-weight:700}
+.admin-v2-boot img{width:170px;max-height:72px;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(79,185,200,.18))}
+.admin-v2-boot.hidden{display:none}
+.admin-v2-rev{position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none}
+.rail .nav-icon svg{stroke:currentColor;stroke-width:2.2;fill:none}
+
+/* Student directory keeps the same outlined cards/controls as Teacher Students. */
+#view-students .student-list{padding:11px;background:#f6fafb}
+#view-students .student-row{grid-template-columns:minmax(170px,1.3fr) minmax(110px,.75fr) minmax(90px,.6fr) minmax(150px,1fr);border:1.5px solid #c7e5e9;border-radius:15px;margin-bottom:9px;background:#fff}
+#view-students .student-row:last-child{margin-bottom:0}
+.admin-student-main{min-width:0}.admin-student-main .student-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-student-meta{font-size:.67rem;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-student-cell b{display:block;font-size:.76rem}.admin-student-cell span{display:block;font-size:.65rem;color:var(--muted);margin-top:2px}
+.admin-pill{display:inline-flex;align-items:center;padding:5px 8px;border:1px solid #d2e9ed;background:#fff;border-radius:999px;font-size:.67rem;font-weight:700;color:#42646a}
+.admin-pill.pending{border-color:#f0d9ad;background:#fff9ee;color:#94611c}
+.admin-primary{background:#fff!important;border:1.6px solid #58c3d2!important;color:#267985!important;font-weight:800!important}
+.admin-primary:hover{background:#f2fbfc!important}
+
+/* Drawer uses the Teacher drawer container and cards. */
+.admin-profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.admin-profile-field{background:#fff;border:1.4px solid #d2e9ed;border-radius:13px;padding:11px}.admin-profile-field.full{grid-column:1/-1}.admin-profile-field small{display:block;color:var(--muted);font-size:.63rem;font-weight:700;margin-bottom:3px}.admin-profile-field b{display:block;font-size:.8rem;overflow-wrap:anywhere}.admin-drawer-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.admin-drawer-actions button{min-height:38px;padding:8px 12px;border-radius:11px;border:1.4px solid #9fdce3;background:#fff;color:#267985;font-weight:800;cursor:pointer}.admin-drawer-actions button:hover{background:#f2fbfc}.admin-drawer-actions button.danger{border-color:#efb4c7;color:#a94869;background:#fff7f9}
+
+/* Add student drawer */
+.admin-add-drawer{position:fixed;right:0;top:0;bottom:0;width:min(720px,96vw);z-index:181;background:#f7f8fa;box-shadow:-18px 0 50px rgba(30,30,42,.18);transform:translateX(105%);transition:.22s;display:flex;flex-direction:column}.admin-add-drawer.open{transform:none}.admin-add-backdrop{position:fixed;inset:0;z-index:180;background:rgba(30,30,42,.36);opacity:0;pointer-events:none;transition:.2s}.admin-add-backdrop.open{opacity:1;pointer-events:auto}.admin-add-head{background:var(--shell);color:#fff;padding:18px 20px;display:flex;align-items:center;gap:12px}.admin-add-head>div{flex:1}.admin-add-head h2{margin:0;font-size:1.08rem}.admin-add-head p{margin:3px 0 0;font-size:.7rem;opacity:.72}.admin-add-head button{border:0;background:rgba(255,255,255,.12);color:#fff;width:38px;height:38px;border-radius:12px;font-size:1.1rem;cursor:pointer}.admin-add-body{padding:16px;overflow:auto;flex:1}.admin-add-form{display:block;width:100%}.admin-add-form>.detail{width:100%;max-width:none;margin:0}.admin-add-form .admin-form-grid{width:100%}.admin-add-form .full{grid-column:1/-1}.admin-add-foot{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:10px;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--line);backdrop-filter:blur(8px)}.admin-add-foot button{min-height:44px;padding:10px 18px;border-radius:12px;font-weight:800;cursor:pointer}.admin-add-foot .cancel{background:#fff;border:1.5px solid #d7dde2;color:#596171}.admin-add-foot .cancel:hover{background:#f4f6f8}.admin-add-foot .create{background:#2b7f89;border:1.5px solid #2b7f89;color:#fff;box-shadow:0 4px 12px rgba(43,127,137,.16)}.admin-add-foot .create:hover{background:#236d76}.admin-add-foot .create:disabled{opacity:.55;cursor:wait;box-shadow:none}.admin-add-error{min-height:18px;margin:10px 0 0;color:#a94869;font-size:.72rem;font-weight:700}
+
+/* Shared-looking Admin V2 modal layer. */
+.admin-modal-bg{position:fixed;inset:0;z-index:200;background:rgba(30,30,42,.38);display:grid;place-items:center;padding:18px}.admin-modal{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border:1.6px solid #b8e1e6;border-radius:20px;box-shadow:0 24px 60px rgba(30,30,42,.22)}
+.admin-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}.admin-modal-head h2{margin:0;font-size:1rem}.admin-modal-head button{border:0;background:#f1f3f6;width:34px;height:34px;border-radius:10px;font-size:1.15rem;cursor:pointer}
+.admin-modal-body{padding:18px}.admin-modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 18px 18px}.admin-modal-foot button{min-height:40px;padding:9px 14px;border:1.4px solid #9fdce3;border-radius:11px;background:#fff;color:#267985;font-weight:800;cursor:pointer}.admin-modal-foot button.secondary{border-color:#d9e0e4;color:#596171}.admin-modal-foot button.danger{border-color:#efb4c7;color:#a94869;background:#fff5f7}.admin-modal-foot button:disabled{opacity:.5;cursor:wait}
+.admin-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-form-field{display:grid;gap:5px}.admin-form-field span{font-size:.68rem;color:var(--muted);font-weight:700}.admin-form-field input,.admin-form-field select{width:100%;min-height:42px;padding:9px 11px;border:1.5px solid #c7e5e9;border-radius:11px;background:#fff;color:var(--ink)}.admin-form-field input:focus,.admin-form-field select:focus{outline:none;border-color:#58c3d2;box-shadow:0 0 0 3px rgba(79,185,200,.10)}
+.admin-form-note{margin:12px 0 0;color:var(--muted);font-size:.7rem;line-height:1.5}.admin-modal-error{min-height:18px;margin-top:10px;color:#a94869;font-size:.72rem;font-weight:700}.admin-danger-copy{margin:0 0 14px;color:#7d4658;font-size:.78rem;line-height:1.55}.admin-confirm{display:flex;align-items:center;gap:8px;font-size:.75rem;font-weight:700}.admin-confirm input{width:18px;height:18px}
+.admin-toast{position:fixed;left:50%;bottom:24px;z-index:400;transform:translate(-50%,18px);opacity:0;pointer-events:none;background:#37434d;color:#fff;border-radius:12px;padding:11px 15px;font-size:.75rem;font-weight:700;box-shadow:0 12px 30px rgba(30,30,42,.22);transition:.18s}.admin-toast.show{opacity:1;transform:translate(-50%,0)}.admin-toast.error{background:#8d3d4b}
+
+/* P4/P5 Classes */
+#view-classes .class-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-class-toolbar{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.admin-class-card{position:relative}.admin-class-card .class-meta{margin-top:10px;font-size:.7rem;color:var(--muted);line-height:1.5}.admin-class-card .book-chip{display:inline-flex;align-items:center;gap:4px;margin:3px 4px 0 0;padding:4px 7px;border:1px solid #d2e9ed;border-radius:999px;background:#fff;font-size:.62rem;color:#42646a}.admin-class-card .book-chip small{font-size:.54rem;opacity:.7}.admin-class-card .class-link{cursor:pointer}.admin-class-drawer{position:fixed;right:0;top:0;bottom:0;width:min(640px,96vw);z-index:191;background:#f7f8fa;box-shadow:-18px 0 50px rgba(30,30,42,.18);transform:translateX(105%);transition:.22s;display:flex;flex-direction:column}.admin-class-drawer.open{transform:none}.admin-class-backdrop{position:fixed;inset:0;z-index:190;background:rgba(30,30,42,.36);opacity:0;pointer-events:none;transition:.2s}.admin-class-backdrop.open{opacity:1;pointer-events:auto}.admin-class-head{background:var(--shell);color:#fff;padding:18px 20px;display:flex;gap:12px;align-items:center}.admin-class-head>div{flex:1}.admin-class-head h2{margin:0;font-size:1.08rem}.admin-class-head p{margin:3px 0 0;font-size:.7rem;opacity:.72}.admin-class-head button{border:0;background:rgba(255,255,255,.12);color:#fff;width:38px;height:38px;border-radius:12px;font-size:1.1rem}.admin-class-body{padding:16px;overflow:auto;flex:1}.admin-class-section{background:#fff;border:1.5px solid #c7e5e9;border-radius:16px;padding:14px;margin-bottom:12px}.admin-class-section h3{margin:0 0 12px;font-size:.9rem}.admin-class-roster{display:grid;gap:7px}.admin-class-roster>div{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid #edf0f2;border-radius:10px}.admin-class-roster b{font-size:.74rem}.admin-class-roster span{font-size:.65rem;color:var(--muted)}.admin-book-grid{display:grid;grid-template-columns:1fr;gap:10px}.admin-book-picker{position:relative}.admin-book-suggestions{display:none;position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:6;background:#fff;border:1px solid #c7e5e9;border-radius:12px;box-shadow:0 12px 28px rgba(30,30,42,.14);max-height:230px;overflow:auto}.admin-book-suggestions.show{display:block}.admin-book-suggestions button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #eef1f3;background:#fff;padding:9px 10px}.admin-book-suggestions button:last-child{border-bottom:0}.admin-book-suggestions b{display:block;font-size:.72rem}.admin-book-suggestions span{display:block;font-size:.62rem;color:var(--muted);margin-top:2px}.admin-book-status{min-height:16px;margin-top:4px;font-size:.61rem;color:var(--muted)}.admin-class-save{margin-top:12px;min-height:42px;padding:9px 14px;border:1.5px solid #2b7f89;border-radius:11px;background:#2b7f89;color:#fff;font-weight:800;cursor:pointer}
+#classGridV2.class-order-editing{display:flex!important;flex-direction:column;gap:8px}.class-order-editing .admin-class-card{display:grid!important;grid-template-columns:48px minmax(0,1fr) auto;gap:10px;align-items:center;min-height:64px;padding:10px 12px!important;cursor:grab!important}.class-order-editing .admin-class-card .class-order-handle{display:grid}.class-order-editing .admin-class-card .class-top{grid-column:2}.class-order-editing .admin-class-card .class-count{display:none}.class-order-editing .admin-class-card .class-meta,.class-order-editing .admin-class-card .class-stats,.class-order-editing .admin-class-card .class-link{display:none}.class-order-handle{display:none;width:40px;height:40px;border:0;border-radius:10px;background:#eef5f6;color:#2b7f89;place-items:center;font-size:22px;touch-action:none;cursor:grab}.class-order-editing .admin-class-card.dragging{opacity:.72;transform:scale(.99)}.class-order-placeholder{min-height:64px;border:2px dashed #83cfda;border-radius:16px;background:rgba(79,185,200,.06)}.class-order-status{font-size:.7rem;color:var(--muted);align-self:center;margin-right:auto}.class-order-toolbar-button[hidden]{display:none!important}
+
+/* P4 Level Tests wrapper tweaks around the existing admin component */
+#view-level-tests .level-test-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.level-test-toolbar .search{flex:1;min-width:220px}.level-test-toolbar input{width:100%;min-height:42px;padding:9px 12px;border:1.6px solid #9fdce3;border-radius:13px;background:#fff}.level-test-toolbar .btn{min-height:42px;padding:9px 12px;border:1.6px solid #9fdce3;border-radius:13px;background:#fff;color:#267985;font-weight:800}.level-test-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.level-test-filters button{border:1.3px solid #d7e7ea;background:#fff;border-radius:999px;padding:7px 10px;font-size:.68rem;font-weight:700;color:#596171}.level-test-filters button.active{border-color:#58c3d2;background:#eefafb;color:#267985}.level-test-table-wrap{overflow:auto}.level-test-table{width:100%;border-collapse:collapse}.level-test-table th,.level-test-table td{padding:11px 12px;border-bottom:1px solid #eef1f3;text-align:left;font-size:.7rem}.level-test-table th{font-size:.63rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}.level-test-table tr{cursor:pointer}.level-test-table tbody tr:hover{background:#fbfeff}
+
+/* 1.15: corrected compact responsive layout for six-column level-test rows. */
+@media(max-width:900px){
+  #view-level-tests .level-test-toolbar>*{width:auto}
+  #view-level-tests .level-test-toolbar .search{flex:1 1 360px;min-width:220px}
+  #view-level-tests .level-test-toolbar #levelTestRefresh{flex:0 0 auto;width:auto;padding-inline:18px}
+  #view-level-tests .level-test-filters{display:flex;grid-template-columns:none;gap:6px}
+  #view-level-tests .level-test-table,#view-level-tests .level-test-table tbody{display:block}
+  #view-level-tests .level-test-table thead{display:none}
+  #view-level-tests .level-test-table tbody{padding:6px}
+  #view-level-tests .level-test-table tbody tr{--swipe-x:0px;position:relative;display:grid;grid-template-columns:34px minmax(0,1fr) auto;grid-template-rows:auto auto auto;gap:4px 10px;align-items:center;min-height:0;margin:0 0 6px;padding:10px 12px;border:1px solid #e7eef0;border-radius:13px;background:#fff;transform:translateX(var(--swipe-x));touch-action:pan-y}
+  #view-level-tests .level-test-table tbody tr:last-child{margin-bottom:0}
+  #view-level-tests .level-test-table td{display:block!important;padding:0!important;border:0!important;min-width:0}
+  #view-level-tests .level-test-table td:nth-child(1){grid-column:1;grid-row:1/4;align-self:center}
+  #view-level-tests .level-test-table td:nth-child(2){grid-column:2;grid-row:1/3;align-self:center}
+  #view-level-tests .level-test-table td:nth-child(3){grid-column:3;grid-row:1;text-align:right;color:var(--muted);font-size:.66rem;white-space:nowrap}
+  #view-level-tests .level-test-table td:nth-child(4){grid-column:3;grid-row:2;text-align:right}
+  #view-level-tests .level-test-table td:nth-child(5){grid-column:2;grid-row:3;align-self:end}
+  #view-level-tests .level-test-table td:nth-child(6){grid-column:3;grid-row:3;text-align:right;align-self:end}
+  #view-level-tests .level-test-person{min-width:0;align-items:center;gap:8px}
+  #view-level-tests .level-test-person .ava{width:34px;height:34px;border-radius:10px;flex:0 0 34px}
+  #view-level-tests .level-test-person>div{min-width:0}
+  #view-level-tests .level-test-person b{font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;display:inline-block;vertical-align:middle}
+  #view-level-tests .level-test-person .mut{font-size:.62rem;margin-top:1px}
+  #view-level-tests .level-test-new{padding:2px 6px;margin-left:5px;font-size:.56rem}
+  #view-level-tests .level-test-source,#view-level-tests .level-test-status{padding:4px 7px;font-size:.61rem}
+  #view-level-tests .level-test-level{font-size:.82rem}
+}
+
+@media(max-width:520px){
+  #view-level-tests .level-test-toolbar .search{flex-basis:100%}
+  #view-level-tests .level-test-toolbar #levelTestRefresh{width:100%}
+  #view-level-tests .level-test-table tbody tr{grid-template-columns:30px minmax(0,1fr) auto;padding:9px 10px}
+  #view-level-tests .level-test-person .ava{display:none}
+  #view-level-tests .level-test-person b{max-width:150px}
+}
+
+@media(max-width:980px){#view-students .student-row{grid-template-columns:minmax(150px,1.2fr) minmax(100px,.7fr) minmax(90px,.55fr)}#view-students .admin-student-school{display:none}#view-classes .class-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.admin-v2-placeholder,.admin-v2-placeholder .empty{min-height:190px}.admin-v2-rev{bottom:68px}#view-students .student-row{grid-template-columns:minmax(0,1fr) auto}.admin-student-grade,.admin-student-school{display:none}.admin-profile-grid,.admin-form-grid{grid-template-columns:1fr}.admin-profile-field.full{grid-column:auto}.admin-toast{bottom:76px;max-width:calc(100vw - 24px);white-space:nowrap}.admin-add-drawer,.admin-class-drawer{top:auto;left:0;width:100%;height:min(88vh,760px);border-radius:22px 22px 0 0;transform:translateY(105%)}.admin-add-drawer.open,.admin-class-drawer.open{transform:none}.admin-add-head,.admin-class-head{border-radius:22px 22px 0 0}#view-classes .class-grid{grid-template-columns:1fr}}
+
+/* Keep the class book drawer's close controls reachable on mobile and desktop. */
+.admin-class-form-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.admin-class-form-actions .admin-class-save{margin-top:0}
+.admin-class-cancel{min-height:42px;padding:9px 14px;border:1.5px solid #b9d9de;border-radius:11px;background:#fff;color:#2b7f89;font-weight:800;cursor:pointer}
+.admin-class-drawer{max-height:100dvh;min-height:0}
+.admin-class-drawer .admin-class-head{flex:0 0 auto;min-height:62px;position:relative;z-index:2}
+.admin-class-drawer .admin-class-body{min-height:0;overscroll-behavior:contain;overflow-y:auto}
+#classDrawerCloseV2{cursor:pointer;flex:0 0 40px;min-height:40px;touch-action:manipulation}
+@media(max-width:700px){.admin-class-drawer{height:min(88dvh,760px);max-height:calc(100dvh - env(safe-area-inset-top,0px));bottom:0;top:auto}.admin-class-drawer .admin-class-head{position:sticky;top:0;background:var(--shell);z-index:3}.admin-class-form-actions{position:relative}}
+
+
+/* Keep top-right drawer close controls centered, visible and easy to tap. */
+body :is(#closeStudentDrawer,#closeAddStudentDrawer,#enqClose,#classDrawerCloseV2,[data-close-level-test],#bwClose) {
+  display:inline-flex;align-items:center;justify-content:center;
+  flex:0 0 40px;width:40px;height:40px;min-width:40px;min-height:40px;
+  padding:0;line-height:1;font-size:24px;font-weight:400;
+  border-radius:10px;cursor:pointer;touch-action:manipulation;
+}
+body :is(#closeStudentDrawer,#closeAddStudentDrawer,#enqClose,#classDrawerCloseV2,[data-close-level-test],#bwClose):focus-visible {
+  outline:3px solid #55c7d4;outline-offset:2px;
+}

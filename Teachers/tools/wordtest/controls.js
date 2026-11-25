@@ -1,5 +1,5 @@
-import { state } from './state.js';
-import { updatePreview, updatePreviewStyles } from './preview.js';
+import { state } from './state.js?v=20260923-imgstate2';
+import { updatePreview, updatePreviewStyles } from './preview.js?v=20260923-imgstate2';
 import {
     updateFont as uiUpdateFont,
     updateFontSize as uiUpdateFontSize,
@@ -8,7 +8,7 @@ import {
     updateImageGap as uiUpdateImageGap,
     updateImageSize as uiUpdateImageSize,
     updateLayout as uiUpdateLayout
-} from './ui.js';
+} from './ui.js?v=20260923-imgstate2';
 
 const currentSettings = state.currentSettings;
 

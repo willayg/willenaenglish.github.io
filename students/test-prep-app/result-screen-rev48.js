@@ -8,7 +8,7 @@ let active=false,current=null,originalComplete=null,saving=false,patched=false;
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]))}
 function selection(){return window.WillenaAssignedTestPrep?.selection||null}
-function snapshotSelection(){const s=selection();if(!s?.plan||!s?.lesson)return null;return{plan:s.plan,lesson:s.lesson,section:String(s.section||'').toLowerCase(),unitId:s.unitId,bookId:s.bookId,reviewMode:!!s.reviewMode,reviewIds:Array.isArray(s.reviewIds)?[...s.reviewIds]:[]}}
+function snapshotSelection(){const s=selection();if(!s?.plan||!s?.lesson)return null;return{plan:s.plan,lesson:s.lesson,section:String(s.section||'').toLowerCase(),unitId:s.unitId,bookId:s.bookId,reviewMode:!!s.reviewMode,homeworkTaskId:s.homeworkTaskId||null,reviewIds:Array.isArray(s.reviewIds)?[...s.reviewIds]:[]}}
 function ownsSelection(s=snapshotSelection()){return!!s&&OWNED.has(String(s.section||'').toLowerCase())}
 function review48Active(){return window.__WillenaReviewV48Active===true}
 
@@ -42,7 +42,7 @@ function settleSave(p){Promise.resolve(p).then(finishSave).catch(e=>{console.err
 function retrySave(){if(!current||!originalComplete||saving)return;const b=$('#tpResult48 [data-tp48r-retry-save]');if(b)b.hidden=true;saving=true;setStatus('기록 다시 저장 중...');let p;try{p=originalComplete(...current.args)}catch(e){finishSave(null);return}settleSave(p)}
 function patchAuth(){
  if(patched)return true;const auth=window.WillenaTestPrepAuth;if(!auth?.completeSession)return false;originalComplete=auth.completeSession.bind(auth);
- auth.completeSession=function(correctCount,questionCount,wrongIds){const snap=snapshotSelection(),hadSession=!!auth.state?.session,shouldShow=!review48Active()&&hadSession&&(Number(questionCount)||0)>0&&ownsSelection(snap);if(shouldShow)showResult(correctCount,questionCount,wrongIds,snap);let p;try{p=originalComplete(correctCount,questionCount,wrongIds)}catch(e){if(shouldShow)finishSave(null);throw e}if(shouldShow)settleSave(p);return p};
+ auth.completeSession=function(correctCount,questionCount,wrongIds){const snap=snapshotSelection(),hadSession=!!auth.state?.session,shouldShow=!snap?.homeworkTaskId&&!review48Active()&&hadSession&&(Number(questionCount)||0)>0&&ownsSelection(snap);if(shouldShow)showResult(correctCount,questionCount,wrongIds,snap);let p;try{p=originalComplete(correctCount,questionCount,wrongIds)}catch(e){if(shouldShow)finishSave(null);throw e}if(shouldShow)settleSave(p);return p};
  auth.__result48Owner=true;patched=true;return true
 }
 function boot(){ensureSurface();if(!patchAuth()){let n=0;const t=setInterval(()=>{if(patchAuth()||++n>200)clearInterval(t)},25)}window.addEventListener('popstate',()=>{if(active)hideResult()})}

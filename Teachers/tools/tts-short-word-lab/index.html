@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TTS Short Word Lab</title>
+  <script src="/js/api-config.js"></script>
+  <style>
+    :root{
+      --bg:#f7fbfc;
+      --card:#fff;
+      --ink:#17252d;
+      --muted:#63757e;
+      --cyan:#bceff2;
+      --cyan-strong:#58d6de;
+      --pink:#ffb6cf;
+      --pink-strong:#ff6fa4;
+      --line:#d9e6ea;
+      --shadow:0 10px 28px rgba(23,37,45,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    main{width:min(980px,calc(100% - 28px));margin:28px auto 56px}
+    .hero{background:linear-gradient(135deg,#fff 0%,#f7ffff 52%,#fff8fb 100%);border:3px solid var(--cyan);border-radius:24px;padding:24px;box-shadow:var(--shadow)}
+    h1{margin:0 0 8px;font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.03em}
+    .sub{margin:0;color:var(--muted);max-width:720px}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    button{font:inherit;font-weight:800;border-radius:14px;border:3px solid transparent;padding:11px 15px;background:white;color:var(--ink);cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+    button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(23,37,45,.09)}
+    button:active{transform:translateY(0)}
+    button:disabled{opacity:.5;cursor:wait;transform:none;box-shadow:none}
+    .openai{border-color:var(--pink)}
+    .openai:hover{border-color:var(--pink-strong)}
+    .eleven{border-color:var(--cyan)}
+    .eleven:hover{border-color:var(--cyan-strong)}
+    .primary{background:#fff5f9;border-color:var(--pink-strong)}
+    .meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:15px;color:var(--muted);font-size:13px}
+    .pill{background:#fff;border:1px solid var(--line);padding:5px 9px;border-radius:999px}
+    .grid{display:grid;gap:12px;margin-top:18px}
+    .word-card{display:grid;grid-template-columns:minmax(110px,1fr) minmax(160px,1fr) minmax(160px,1fr);gap:12px;align-items:center;background:var(--card);border:3px solid var(--cyan);border-radius:18px;padding:13px 14px;box-shadow:0 5px 14px rgba(23,37,45,.04)}
+    .word-card:nth-child(even){border-color:var(--pink)}
+    .word{font-size:26px;font-weight:900;letter-spacing:-.02em}
+    .source{display:flex;flex-direction:column;gap:6px}
+    .source button{width:100%}
+    .status{min-height:18px;color:var(--muted);font-size:12px;text-align:center}
+    .ok{color:#26754b}.err{color:#b33a3a}
+    .note{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 16px;color:var(--muted);font-size:13px}
+    @media(max-width:680px){
+      main{width:min(100% - 18px,980px);margin-top:12px}
+      .hero{padding:18px;border-radius:20px}
+      .word-card{grid-template-columns:1fr 1fr}
+      .word{grid-column:1/-1;text-align:center}
+      button{padding:12px 9px}
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <h1>TTS Short Word Lab</h1>
+    <p class="sub">Side-by-side test for awkward short vocabulary. OpenAI uses <strong>gpt-4o-mini-tts</strong> with the <strong>Coral</strong> voice and a warm, clear American-English pronunciation instruction.</p>
+    <div class="controls">
+      <button class="primary" id="playAllOpenAI">▶ Play all OpenAI</button>
+      <button class="eleven" id="playAllEleven">▶ Play all ElevenLabs</button>
+      <button id="stopBtn">■ Stop</button>
+    </div>
+    <div class="meta">
+      <span class="pill">OpenAI voice: Coral</span>
+      <span class="pill">Model: gpt-4o-mini-tts</span>
+      <span class="pill">14 short-word stress tests</span>
+      <span class="pill">Audio is AI-generated</span>
+    </div>
+  </section>
+
+  <section id="grid" class="grid" aria-label="TTS comparison"></section>
+
+  <div class="note">
+    OpenAI prompt: “Pronounce this English vocabulary item once, clearly and naturally. Warm and friendly tone. Neutral American English. Slightly slower than normal conversation. Do not add any other words or sounds.”
+    Audio is cached only in this page session, so replaying a generated clip does not call the API again.
+  </div>
+</main>
+
+<script>
+(() => {
+  const WORDS = ['new','flu','cook','root','cut','hit','pup','tail','them','then','full','pull','ship','sheep'];
+  const OPENAI_INSTRUCTIONS = 'Pronounce this English vocabulary item once, clearly and naturally. Warm and friendly tone. Neutral American English. Slightly slower than normal conversation. Do not add any other words or sounds.';
+  const openaiCache = new Map();
+  const elevenCache = new Map();
+  let currentAudio = null;
+  let stopSequence = false;
+
+  const grid = document.getElementById('grid');
+
+  function card(word) {
+    const el = document.createElement('article');
+    el.className = 'word-card';
+    el.innerHTML = `
+      <div class="word">${word}</div>
+      <div class="source">
+        <button class="openai" data-provider="openai" data-word="${word}">OpenAI · Coral</button>
+        <div class="status" id="status-openai-${word}"></div>
+      </div>
+      <div class="source">
+        <button class="eleven" data-provider="eleven" data-word="${word}">ElevenLabs</button>
+        <div class="status" id="status-eleven-${word}"></div>
+      </div>
+    `;
+    return el;
+  }
+
+  WORDS.forEach(w => grid.appendChild(card(w)));
+
+  function status(provider, word, message, cls='') {
+    const el = document.getElementById(`status-${provider}-${word}`);
+    if (!el) return;
+    el.textContent = message || '';
+    el.className = 'status ' + cls;
+  }
+
+  function setBusy(provider, word, busy) {
+    const btn = document.querySelector(`button[data-provider="${provider}"][data-word="${word}"]`);
+    if (btn) btn.disabled = busy;
+  }
+
+  function playDataUrl(url) {
+    return new Promise((resolve, reject) => {
+      if (currentAudio) {
+        try { currentAudio.pause(); } catch {}
+      }
+      const audio = new Audio(url);
+      currentAudio = audio;
+      audio.onended = () => { if (currentAudio === audio) currentAudio = null; resolve(); };
+      audio.onerror = () => { if (currentAudio === audio) currentAudio = null; reject(new Error('Audio playback failed')); };
+      audio.play().catch(reject);
+    });
+  }
+
+  async function getOpenAI(word) {
+    if (openaiCache.has(word)) return openaiCache.get(word);
+    status('openai', word, 'Generating…');
+    setBusy('openai', word, true);
+    try {
+      const res = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          endpoint: 'audio/speech',
+          payload: {
+            model: 'gpt-4o-mini-tts',
+            voice: 'coral',
+            input: word,
+            instructions: OPENAI_INSTRUCTIONS,
+            response_format: 'mp3'
+          }
+        })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.data) throw new Error(json?.error?.message || json?.error || 'OpenAI TTS failed');
+      const url = 'data:audio/mpeg;base64,' + json.data;
+      openaiCache.set(word, url);
+      status('openai', word, 'Ready', 'ok');
+      return url;
+    } catch (e) {
+      status('openai', word, e.message || 'Failed', 'err');
+      throw e;
+    } finally {
+      setBusy('openai', word, false);
+    }
+  }
+
+  async function getEleven(word) {
+    if (elevenCache.has(word)) return elevenCache.get(word);
+    status('eleven', word, 'Generating…');
+    setBusy('eleven', word, true);
+    try {
+      const res = await WillenaAPI.fetch('/.netlify/functions/eleven_labs_proxy', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ text: word })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.audio) throw new Error(json?.details || json?.error || 'ElevenLabs TTS failed');
+      const url = 'data:audio/mpeg;base64,' + json.audio;
+      elevenCache.set(word, url);
+      status('eleven', word, 'Ready', 'ok');
+      return url;
+    } catch (e) {
+      status('eleven', word, e.message || 'Failed', 'err');
+      throw e;
+    } finally {
+      setBusy('eleven', word, false);
+    }
+  }
+
+  async function play(provider, word) {
+    try {
+      const url = provider === 'openai' ? await getOpenAI(word) : await getEleven(word);
+      status(provider, word, 'Playing…', 'ok');
+      await playDataUrl(url);
+      status(provider, word, 'Ready', 'ok');
+    } catch (e) {
+      console.error('[TTS lab]', provider, word, e);
+    }
+  }
+
+  grid.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-provider]');
+    if (!btn) return;
+    stopSequence = true;
+    play(btn.dataset.provider, btn.dataset.word);
+  });
+
+  async function playAll(provider) {
+    stopSequence = false;
+    for (const word of WORDS) {
+      if (stopSequence) break;
+      await play(provider, word);
+      if (stopSequence) break;
+      await new Promise(r => setTimeout(r, 220));
+    }
+  }
+
+  document.getElementById('playAllOpenAI').addEventListener('click', () => playAll('openai'));
+  document.getElementById('playAllEleven').addEventListener('click', () => playAll('eleven'));
+  document.getElementById('stopBtn').addEventListener('click', () => {
+    stopSequence = true;
+    if (currentAudio) {
+      try { currentAudio.pause(); currentAudio.currentTime = 0; } catch {}
+      currentAudio = null;
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -12,7 +12,37 @@ const DOT='\uE000';
 function protectSentenceDots(value){let s=String(value||'');s=s.replace(/\b(Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)\./gi,(_,a)=>`${a}${DOT}`);s=s.replace(/\b(e\.g|i\.e|a\.m|p\.m|U\.S|U\.K)\./gi,m=>m.replace(/\./g,DOT));s=s.replace(/(\d)\.(\d)/g,`$1${DOT}$2`);return s}
 function restoreSentenceDots(value){return String(value||'').split(DOT).join('.')}
 function splitSentences(body,title,passageId,translations=[]){const out=[];let sentenceIndex=0;for(let line of String(body||'').split(/\n+/).map(x=>x.trim()).filter(Boolean)){if(/^(Situation\s+\d+|D-?\d+|D-Day)$/i.test(line)||/^What will happen next\?/i.test(line)||/^(Dear\s+.+,|Hi\s+.+,|Love,?|Best,?|Your friend,?|Uncle Jay|Amy|Minji)$/i.test(line))continue;line=line.replace(/^(D-?\d+|D-Day)\s+/i,'');let speaker='';const m=line.match(/^([A-Za-z][A-Za-z .'-]{0,24}):\s*(.+)$/);if(m){speaker=m[1];line=m[2]}const safe=protectSentenceDots(line),parts=safe.match(/[^.!?]+[.!?]+(?:["'”’])?|[^.!?]+$/g)||[];parts.map(x=>restoreSentenceDots(x.trim())).filter(x=>x&&/[A-Za-z]/.test(x)).forEach((text,i)=>{out.push({text,ko:String(translations[sentenceIndex]||''),speaker,passageTitle:title,passageId,partIndex:i,sentenceIndex});sentenceIndex++})}return out}
-async function loadItems(unitId){const rows=await get(`/rest/v1/passages?select=id,title,body,source_key,metadata&status=eq.published&metadata-%3E%3Eunit_id=eq.${encodeURIComponent(unitId)}&order=source_key.asc`);return(rows||[]).flatMap(p=>splitSentences(p.body,p.title,p.id,Array.isArray(p.metadata?.sentence_translations_ko)?p.metadata.sentence_translations_ko:[]))}
+function isYbmLineAlignedPassage(p){return /^middle1-ybm-kimeunhyeong:/i.test(String(p?.source_key||''))}
+function fromLegacyPassage(p){return splitSentences(p.body,p.title,p.id,Array.isArray(p.metadata?.sentence_translations_ko)?p.metadata.sentence_translations_ko:[])}
+async function loadItems(unitId){
+  const rows=await get(`/rest/v1/passages?select=id,title,body,source_key,metadata&status=eq.published&metadata-%3E%3Eunit_id=eq.${encodeURIComponent(unitId)}&order=source_key.asc`);
+  const passages=rows||[];
+  if(!passages.some(isYbmLineAlignedPassage))return passages.flatMap(fromLegacyPassage);
+  // YBM translations are aligned with complete source lines, not every punctuation mark.
+  // Reuse the canonical V2 sentence source so both student activities display the same pairs.
+  const select=encodeURIComponent('passage_id,passage_title,passage_source_key,sentence_order,sentence_text,translation_ko,speaker');
+  const aligned=await get(`/rest/v1/test_prep_sentence_items_v2?select=${select}&unit_id=eq.${encodeURIComponent(unitId)}&order=passage_source_key.asc,sentence_order.asc`);
+  const byPassage=new Map();
+  for(const row of aligned||[]){
+    const key=String(row.passage_id||'');
+    if(!byPassage.has(key))byPassage.set(key,[]);
+    byPassage.get(key).push(row);
+  }
+  return passages.flatMap(p=>{
+    if(!isYbmLineAlignedPassage(p))return fromLegacyPassage(p);
+    const sentenceRows=byPassage.get(String(p.id))||[];
+    if(!sentenceRows.length)throw new Error(`No canonical YBM sentences for ${p.source_key}`);
+    return sentenceRows.map(row=>({
+      text:String(row.sentence_text||'').trim(),
+      ko:String(row.translation_ko||'').trim(),
+      speaker:String(row.speaker||'').trim(),
+      passageTitle:String(row.passage_title||p.title||'본문'),
+      passageId:String(row.passage_id||p.id),
+      partIndex:0,
+      sentenceIndex:(Number(row.sentence_order)||1)-1
+    })).filter(q=>q.text);
+  });
+}
 function uid(q){const s=`${q.passageId}|${q.partIndex}|${q.text}`;let h1=2166136261,h2=2246822519,h3=3266489917,h4=668265263;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,16777619);h2=Math.imul(h2^c,1597334677);h3=Math.imul(h3^c,374761393);h4=Math.imul(h4^c,1103515245)}const hex=n=>(n>>>0).toString(16).padStart(8,'0');const x=hex(h1)+hex(h2)+hex(h3)+hex(h4);return`${x.slice(0,8)}-${x.slice(8,12)}-4${x.slice(13,16)}-a${x.slice(17,20)}-${x.slice(20,32)}`}
 function shuffledIndexes(n){const a=[...Array(n).keys()];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}if(n>1&&a.every((v,i)=>v===i))[a[0],a[1]]=[a[1],a[0]];return a}
 const tokens=text=>String(text).trim().split(/\s+/).filter(Boolean);

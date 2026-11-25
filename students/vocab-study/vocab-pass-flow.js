@@ -30,3 +30,31 @@ export function uniquePassedCount(results){
 export function wrongAttemptCount(results){
   return (Array.isArray(results)?results:[]).filter(result=>result&&!result.correct).length;
 }
+
+/**
+ * Shared missed-only retry tracker for Word/Grammar-style question rounds.
+ * Correct answers are never requeued. A wrong answer reappears at most once
+ * in the next retry round; a second mistake remains eligible for the next.
+ */
+export function createMissedOnlyRetry({idOf=item=>item?.id}={}){
+  const missed=new Map();
+  let round=[];
+  return {
+    begin(items){round=[...(items||[])];missed.clear();return [...round];},
+    record(item,correct){
+      if(!item)return;
+      const key=String(idOf(item)??'');
+      if(!key)return;
+      if(correct)missed.delete(key);
+      else missed.set(key,item);
+    },
+    get pendingCount(){return missed.size;},
+    get pending(){return [...missed.values()];},
+    retry(){
+      round=[...missed.values()];
+      missed.clear();
+      return [...round];
+    },
+    reset(){round=[];missed.clear();}
+  };
+}

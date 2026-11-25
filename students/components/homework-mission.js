@@ -1,0 +1,304 @@
+const MISSION_SESSION_KEY = 'missionModalShownV3';
+
+function apiFetch(url, options) {
+  if (window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function') {
+    return window.WillenaAPI.fetch(url, options);
+  }
+  return fetch(url, { credentials: 'include', ...(options || {}) });
+}
+
+// Sentence Genius assignments live in the authenticated operational homework
+// table, not the older wordlist homework API. Read only this student's rows.
+async function sentenceGeniusMissions() {
+  const key='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+  const endpoint='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/sg_homework_student_v2';
+  const getToken=async refresh=>{
+    const current=window.WillenaAPI?.getLocalAccessToken?.();
+    if(current&&!refresh)return current;
+    const response=await apiFetch('/.netlify/functions/supabase_auth?action=refresh',{cache:'no-store'});
+    if(!response.ok)throw Error('Student session expired');
+    const body=await response.json().catch(()=>({}));
+    if(!body.access_token)throw Error('No student access token');
+    window.WillenaAPI?.setLocalTokens?.(body.access_token,body.refresh_token||'');
+    return body.access_token;
+  };
+  const query=token=>fetch(endpoint,{
+    method:'POST',cache:'no-store',credentials:'omit',
+    headers:{apikey:key,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+    body:'{}'
+  });
+  let response=await query(await getToken(false));
+  if(response.status===401)response=await query(await getToken(true));
+  if(!response.ok)throw Error('Sentence Genius homework unavailable: '+response.status);
+  const data=await response.json().catch(()=>({}));
+  if(data.success!==true||!Array.isArray(data.assignments))return [];
+  return data.assignments.map(row=>({
+    ...row,source_type:'sentence_genius',
+    list_meta:{source_book_id:row.book_id,source_unit_id:row.unit_id}
+  }));
+}
+
+function sourceType(a){
+ const creative=String(a?.list_meta?.creative_type||a?.list_meta?.app||'').trim().toLowerCase();
+ if(creative==='writing_genius'||creative==='puzzles')return creative;
+ return String(a?.source_type||a?.list_meta?.source_type||'').trim().toLowerCase()||'unknown';
+}
+function destinationFor(a){
+ const source=sourceType(a);
+ if(a?.list_meta?.source_app==='free_talking_genius'||String(a?.list_key||'').startsWith('free_talking:')||String(a?.list_key||'').startsWith('free_talking_conversation:')){
+  const meta=a.list_meta||{},live=meta.mission_mode==='conversation',q=new URLSearchParams();
+  q.set('book',String(meta.book_id||''));
+  q.set('unit',String(live?meta.unit_id:meta.unit_number||''));
+  q.set('homework',String(a.id));
+  if(live)q.set('release','1');
+  return {app:live?'Free Talking · AI Conversation':'Free Talking · Speaking',href:(live?'/students/free-talking-hybrid-lab/':'/students/free-talking-genius/')+'?'+q,buttonLabel:live?'AI 자유 대화 숙제 시작하기':'말하기 숙제 시작하기'};
+ }
+ if(source==='writing_genius')return {app:'Writing Genius',href:'/students/writing-genius/?homework='+encodeURIComponent(a.id),buttonLabel:'Writing Genius에서 숙제 시작하기'};
+ if(source==='puzzles')return {app:'Puzzles',href:'/students/wordsearch/?homework='+encodeURIComponent(a.id)+'&mode='+encodeURIComponent(a.list_meta?.kind||'boggle'),buttonLabel:'Puzzles에서 숙제 시작하기'};
+ if(source==='sentence_genius'){
+  const meta=a?.list_meta||{},q=new URLSearchParams(),book=meta.source_book_id||a.book_id,unit=meta.source_unit_id||a.unit_id;
+  if(book)q.set('book',book);if(unit)q.set('unit',unit);if(a.id)q.set('homework',a.id);
+  return {app:'Sentence Genius',href:'/students/sentence-genius/'+(q.size?'?'+q:''),buttonLabel:'Sentence Genius에서 숙제 시작하기'};
+ }
+ if(source==='vocab_study')return {app:'Word Genius',href:'/students/vocab-study/?open=wordtest&assignment_id='+encodeURIComponent(a.id),buttonLabel:'Word Genius에서 숙제 시작하기'};
+ if(['english_arcade','arcade','saved_game','grammar','phonics'].includes(source))return {app:'English Arcade',href:'/Games/english_arcade/index.html?openHomework=1',buttonLabel:'English Arcade에서 숙제 시작하기'};
+ // A generic wordlist is not proof of an Arcade assignment.
+ return null;
+}
+
+function modalIsActuallyVisible(node) {
+  if (!node) return false;
+  if (node.closest('[aria-hidden="true"]')) return false;
+  const style = getComputedStyle(node);
+  if (style.display === 'none' || style.visibility === 'hidden') return false;
+  return true;
+}
+
+function hasVisibleModal() {
+  return [...document.querySelectorAll('[aria-modal="true"], .modal[role="dialog"]')]
+    .some((node) => node.id !== 'missionModalGlobal' && modalIsActuallyVisible(node));
+}
+
+function shouldSuppressForActivity() {
+  try {
+    const path = location.pathname;
+
+    // Sentence Genius displays its own assignment cards; never interrupt exercises.
+    if (/\/students\/sentence-genius\//i.test(path)) return true;
+
+    if (/\/students\/vocab-study\//i.test(path) && document.body?.classList?.contains('vocab-session-open')) {
+      return true;
+    }
+
+    if (!/\/Games\/english_arcade\//i.test(path)) return false;
+
+    const params = new URLSearchParams(location.search);
+    if (params.get('openHomework') === '1') return false;
+    if (params.get('autostart') === '1') return false;
+
+    if (window.WordArcade) {
+      try {
+        if (typeof window.WordArcade.isInGame === 'function' && window.WordArcade.isInGame()) return true;
+        if (window.WordArcade.isPlaying === true) return true;
+      } catch {}
+    }
+
+    const opening = document.getElementById('openingButtons');
+    const gameArea = document.getElementById('gameArea');
+    const openingHidden = opening ? getComputedStyle(opening).display === 'none' : false;
+    const gameBusy = gameArea ? gameArea.childElementCount > 0 : false;
+    return openingHidden && gameBusy;
+  } catch {
+    return false;
+  }
+}
+
+async function currentStudentId() {
+  try {
+    const response = await apiFetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now(), { cache: 'no-store' });
+    if (!response.ok) return null;
+    const data = await response.json().catch(() => ({}));
+    return data?.success ? (data.user_id || data.id || null) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function assignmentIsComplete(assignment, uid) {
+ if(assignment?.list_meta?.source_app==='free_talking_genius'&&assignment.list_meta?.mission_mode==='conversation'){
+  try{
+   const jwt=window.WillenaAPI?.getLocalAccessToken?.();
+   if(!jwt||!uid)return false;
+   const m=assignment.list_meta;
+   const query=new URLSearchParams({select:'contributions',student_id:'eq.'+uid,book_id:'eq.'+m.book_id,unit_id:'eq.'+m.unit_id,limit:'1'});
+   const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/free_talking_conversation_progress?'+query,{headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+jwt},cache:'no-store'});
+   if(!response.ok)return false;
+   const rows=await response.json();
+   return Array.isArray(rows)&&Number(rows[0]?.contributions||0)>=8;
+  }catch{return false}
+ }
+  if(['writing_genius','puzzles'].includes(sourceType(assignment))){
+   try{
+    const jwt=window.WillenaAPI?.getLocalAccessToken?.();
+    if(!jwt)return false;
+    const kind=String(assignment.list_meta?.kind||'');
+    const endpoint=sourceType(assignment)==='puzzles'
+      ? 'puzzle_homework_completions?select=assignment_id&assignment_id=eq.'+encodeURIComponent(assignment.id)+'&limit=1'
+      :kind==='sentence'
+      ? 'writing_genius_sentence_sessions?select=id&assignment_id=eq.'+encodeURIComponent(assignment.id)+'&status=eq.completed&limit=1'
+      : 'writing_genius_entries?select=id&prompt_key=eq.'+encodeURIComponent('homework-'+assignment.id)+'&status=eq.submitted&limit=1';
+    const res=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/'+endpoint,{headers:{apikey:'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e',Authorization:'Bearer '+jwt},cache:'no-store'});
+    if(!res.ok)return false;const rows=await res.json();return Array.isArray(rows)&&rows.length>0;
+   }catch{return false}
+  }
+  if(sourceType(assignment)==='sentence_genius'){
+    const total=Number(assignment.total)||0;
+    return total>0&&Number(assignment.done)>=total;
+  }
+  try {
+    const response = await apiFetch(
+      '/.netlify/functions/homework_api?action=assignment_progress&assignment_id=' +
+      encodeURIComponent(assignment.id) + '&_=' + Date.now(),
+      { cache: 'no-store' }
+    );
+
+    // Preserve the old mission behavior: if progress cannot be resolved,
+    // an active assignment should still surface as homework rather than disappear.
+    if (!response.ok) return false;
+
+    const data = await response.json().catch(() => ({}));
+    if (!data?.success || !Array.isArray(data.progress)) return false;
+
+    let row = uid ? data.progress.find((item) => String(item.user_id) === String(uid)) : null;
+    if (!row && data.progress.length === 1) row = data.progress[0];
+    if (!row) return false;
+
+    let completion = 0;
+    if (typeof row.completion === 'number') completion = row.completion;
+    else if (typeof row.completion_pct === 'number') completion = row.completion_pct;
+    else if (typeof row.modes_attempted === 'number' && typeof row.modes_total === 'number' && row.modes_total > 0) {
+      completion = Math.round((row.modes_attempted / row.modes_total) * 100);
+    }
+
+    if (data.stars_required && typeof row.stars === 'number') {
+      completion = Math.round((row.stars / data.stars_required) * 100);
+    }
+
+    return Math.max(0, Math.min(100, completion)) >= 100;
+  } catch {
+    return false;
+  }
+}
+
+function renderMission(assignment, destination) {
+  if (document.getElementById('missionModalGlobal')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'missionModalGlobal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:26px;';
+
+  const panel = document.createElement('div');
+  panel.style.cssText = 'background:#fff;border-radius:24px;max-width:520px;width:100%;padding:36px 32px 28px;border:2px solid #93cbcf;box-shadow:0 16px 60px rgba(0,0,0,.18);text-align:center;font-family:"Poppins",system-ui,Arial,sans-serif;';
+  panel.innerHTML = `
+    <h2 style="margin:0 0 12px;font-size:2.2rem;font-weight:800;color:#ff6fa9;letter-spacing:.4px;">You Have A Mission</h2>
+    <img src="/Games/english_arcade/assets/Images/icons/rocket.svg" alt="rocket" style="width:72px;height:72px;margin:0 auto 14px;display:block;">
+    <div id="missionAssignmentLabel" style="margin:0 auto 14px;max-width:390px;color:#475569;font-weight:700;line-height:1.35;"></div>
+    <div style="display:flex;gap:18px;align-items:center;justify-content:center;margin-top:12px;flex-wrap:wrap;">
+      <a id="missionDoNowBtn" href="#" style="display:inline-block;font-size:1.05rem;font-weight:800;color:#555;background:#fff;border:2px solid #ff6fa9;padding:14px 26px;border-radius:16px;text-decoration:none;min-width:260px;box-shadow:0 6px 16px rgba(255,111,169,.12);"></a>
+      <button id="missionDismissBtn" type="button" style="background:#fff;border:2px solid #e2e8f0;color:#334155;font-weight:700;padding:10px 16px;border-radius:12px;cursor:pointer;margin-top:18px;">Not Now</button>
+    </div>
+  `;
+
+  panel.querySelector('#missionAssignmentLabel').textContent =
+    destination.app + ' · ' + (assignment.title || assignment.list_title || 'Homework');
+  panel.querySelector('#missionDoNowBtn').textContent = destination.buttonLabel;
+
+  const finish = () => {
+    try { overlay.remove(); } catch {}
+    try { sessionStorage.setItem(MISSION_SESSION_KEY, '1'); } catch {}
+  };
+
+  panel.querySelector('#missionDismissBtn')?.addEventListener('click', finish);
+  panel.querySelector('#missionDoNowBtn')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    try { sessionStorage.setItem(MISSION_SESSION_KEY, '1'); } catch {}
+    location.href = destination.href;
+  });
+
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+}
+
+let checkInFlight = null;
+
+export async function showHomeworkMission() {
+  // Retired intentionally: use Mission Basket for pending assignments instead.
+  return;
+  if (checkInFlight) return checkInFlight;
+
+  checkInFlight = (async () => {
+    try {
+      if (/\/students\/(?:login|signin)\.html$/i.test(location.pathname)) return;
+      if (sessionStorage.getItem(MISSION_SESSION_KEY) === '1') return;
+      if (shouldSuppressForActivity()) return;
+
+      if (hasVisibleModal()) {
+        setTimeout(() => {
+          if (!hasVisibleModal()) showHomeworkMission();
+        }, 800);
+        return;
+      }
+
+      await new Promise((resolve) => {
+        try { (window.requestIdleCallback || window.requestAnimationFrame)(() => resolve()); }
+        catch { setTimeout(resolve, 0); }
+      });
+
+      // Failure in one homework service must not hide assignments from the other.
+      const sources=await Promise.allSettled([
+        apiFetch('/.netlify/functions/homework_api?action=list_assignments&mode=student&_='+Date.now(),
+          {cache:'no-store'}).then(async response=>{
+          if(!response.ok)return [];
+          const data=await response.json().catch(()=>({}));
+          return data?.success&&Array.isArray(data.assignments)?data.assignments:[];
+        }),
+        sentenceGeniusMissions()
+      ]);
+      const legacy=sources[0].status==='fulfilled'?sources[0].value:[];
+      const sentence=sources[1].status==='fulfilled'?sources[1].value:[];
+      const byId=new Map();
+      for(const assignment of [...legacy,...sentence]){
+        if(destinationFor(assignment))byId.set(sourceType(assignment)+':'+assignment.id,assignment);
+      }
+      const assignments=[...byId.values()].sort((a,b)=>
+        new Date(a?.due_at||0).getTime()-new Date(b?.due_at||0).getTime());
+      if(!assignments.length)return;
+
+      const uid = await currentStudentId();
+
+      for (const assignment of assignments) {
+        const destination = destinationFor(assignment);
+        if (!destination) continue;
+        const complete = await assignmentIsComplete(assignment, uid);
+        if (!complete) {
+          renderMission(assignment, destination);
+          return;
+        }
+      }
+    } catch (error) {
+      console.debug('[homework-mission] check failed', error);
+    } finally {
+      checkInFlight = null;
+    }
+  })();
+
+  return checkInFlight;
+}
+
+export function resetHomeworkMissionSession() {
+  try { sessionStorage.removeItem(MISSION_SESSION_KEY); } catch {}
+}
+
+if (typeof window !== 'undefined') {
+  window.WillenaHomeworkMission = { show: showHomeworkMission, reset: resetHomeworkMissionSession };
+}

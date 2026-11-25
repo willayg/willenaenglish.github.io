@@ -1,55 +1,58 @@
 // Overlay animation for tool cards with delay
 window.addEventListener('DOMContentLoaded', function() {
+  const managerHref = '/Teachers/tools/manage_teachers.html';
+  const contentArea = document.querySelector('.content-area');
+  let managerLink = null;
+
+  // Replace any older/broken teacher-account button already present.
+  document.querySelectorAll('a, button').forEach(function(element) {
+    const label = (element.textContent || '').trim().toLowerCase();
+    if (label.includes('create teacher account') || label === 'create teacher' || label === 'manage teachers') {
+      if (element.tagName === 'A') {
+        element.setAttribute('href', managerHref);
+        managerLink = element;
+      } else {
+        element.onclick = function() { window.location.href = managerHref; };
+      }
+
+      const title = element.querySelector('.tool-title');
+      if (title) title.textContent = 'Manage Teachers';
+      else element.textContent = 'Manage Teachers';
+
+      const overlay = element.querySelector('.tool-overlay');
+      if (overlay) overlay.textContent = 'Create, approve, disable, reset, or remove teacher accounts.';
+    }
+  });
+
+  // The current dashboard has no teacher-management card, so add one for admins.
+  const role = String(localStorage.getItem('userRole') || '').toLowerCase();
+  if (!managerLink && role === 'admin' && contentArea) {
+    managerLink = document.createElement('a');
+    managerLink.className = 'tool-card';
+    managerLink.dataset.tags = 'all planning admin';
+    managerLink.href = managerHref;
+    managerLink.innerHTML = [
+      '<div class="tool-title">Manage Teachers</div>',
+      '<img src="tools/assets/icons/lesson.png" alt="Manage Teachers" style="height:8em;margin:0.7em 0 0.5em 0;">',
+      '<div class="tool-overlay">Create, approve, disable, reset, or remove teacher accounts.</div>'
+    ].join('');
+    contentArea.appendChild(managerLink);
+  }
+
   document.querySelectorAll('.tool-card').forEach(function(card) {
     let timer = null;
     const overlay = card.querySelector('.tool-overlay');
+    if (!overlay) return;
     card.addEventListener('mouseenter', function() {
       timer = setTimeout(function() {
-        if (!overlay) return;
         overlay.style.opacity = '1';
         overlay.style.pointerEvents = 'auto';
       }, 200);
     });
     card.addEventListener('mouseleave', function() {
       if (timer) clearTimeout(timer);
-      if (!overlay) return;
       overlay.style.opacity = '0';
       overlay.style.pointerEvents = 'none';
     });
   });
-
-  // Admin-only shortcut into the staging control room.
-  // The shared burger menu is mounted asynchronously, so wait for both the
-  // authenticated role and the menu DOM rather than relying on page timing.
-  let attempts = 0;
-  function addControlRoomToBurger() {
-    attempts += 1;
-    let role = '';
-    try {
-      role = String(localStorage.getItem('userRole') || localStorage.getItem('role') || '').trim().toLowerCase();
-    } catch (e) {}
-
-    const dropdown = document.querySelector('.burger-dropdown');
-    if (role === 'admin' && dropdown) {
-      if (!dropdown.querySelector('a[href="/Teachers/tools/control-room/"]')) {
-        const link = document.createElement('a');
-        link.href = '/Teachers/tools/control-room/';
-        link.textContent = 'Staging Control Room';
-        link.setAttribute('data-admin-only', '');
-        link.style.display = 'block';
-
-        const firstAdmin = dropdown.querySelector('[data-admin-only]');
-        if (firstAdmin) dropdown.insertBefore(link, firstAdmin);
-        else {
-          const feedback = dropdown.querySelector('#feedbackMenuBtn');
-          if (feedback) dropdown.insertBefore(link, feedback);
-          else dropdown.appendChild(link);
-        }
-      }
-      return;
-    }
-
-    if (attempts < 40) setTimeout(addControlRoomToBurger, 150);
-  }
-  addControlRoomToBurger();
 });

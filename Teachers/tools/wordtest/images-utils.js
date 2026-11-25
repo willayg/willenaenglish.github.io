@@ -1,14 +1,5 @@
 // Utilities extracted from images.js to reduce file size without changing behavior
 
-// Simple emoji map for fallback
-export const emojiMap = {
-	apple: "🍎", dog: "🐶", cat: "🐱", book: "📚", car: "🚗",
-	house: "🏠", tree: "🌳", sun: "☀️", moon: "🌙", star: "⭐",
-	water: "💧", fire: "🔥", flower: "🌸", fish: "🐠", bird: "🐦",
-	food: "🍎", eat: "🍽️", drink: "🥤", sleep: "😴", run: "🏃",
-	walk: "🚶", happy: "😊", sad: "😢", big: "🔍", small: "🔎"
-};
-
 // Helper function to get placeholder image
 export function getPlaceholderImage(index, label = null, currentSettings = { imageSize: 50 }) {
 	const displayLabel = label || `Image ${index + 1}`;
@@ -107,7 +98,6 @@ export function hideImageLoadingSpinner(word, index) {
 }
 
 export default {
-	emojiMap,
 	getPlaceholderImage,
 	getPixabaySearchUrl,
 	renderImage,

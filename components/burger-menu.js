@@ -1,3 +1,48 @@
+// Shared teacher-domain role guard.
+// Any authenticated student who reaches a teacher page is returned to the student app.
+if (typeof window !== 'undefined' && window.location.hostname === 'teachers.willenaenglish.com') {
+  const teacherPath = window.location.pathname || '';
+  const isPublicTeacherAuthPage = /^\/Teachers\/(?:login|signup)(?:\.html)?\/?$/i.test(teacherPath);
+  const isMainTeacherDashboard = /^\/Teachers(?:\/index\.html|\/)?$/i.test(teacherPath);
+  if (!isPublicTeacherAuthPage && !isMainTeacherDashboard && !window.__willenaTeacherRoleGuardPromise) {
+    window.__willenaTeacherRoleGuardPromise = (async () => {
+      const studentMismatch = '/Teachers/access-student.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+      try {
+        const api = window.WillenaAPI?.fetch
+          ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
+          : (url, options = {}) => fetch(url, { credentials: 'include', ...options });
+        const whoRes = await api('/.netlify/functions/supabase_auth?action=whoami', { cache: 'no-store' });
+        const who = await whoRes.json().catch(() => ({}));
+        if (!whoRes.ok || !who?.success || !who?.user_id) {
+          const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.replace('/Teachers/login.html?redirect=' + redirect);
+          return false;
+        }
+        const roleRes = await api('/.netlify/functions/supabase_auth?action=get_role&user_id=' + encodeURIComponent(who.user_id), { cache: 'no-store' });
+        const roleData = await roleRes.json().catch(() => ({}));
+        const role = String(roleData?.role || '').toLowerCase();
+        if (!['teacher', 'admin'].includes(role)) {
+          window.location.replace(studentMismatch);
+          return false;
+        }
+        return true;
+      } catch {
+        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.replace('/Teachers/login.html?redirect=' + redirect);
+        return false;
+      }
+    })();
+  }
+}
+
+// Teacher-only session repair bootstrap.
+// This shared component is loaded by the teacher dashboard and most teacher tools.
+if (typeof window !== 'undefined' && window.location.hostname === 'teachers.willenaenglish.com') {
+  import('/Teachers/auth-refresh.js?v=20260726b')
+    .then((mod) => mod.ensureAuthRefresh())
+    .catch((error) => console.debug('[teacher-session] bootstrap failed', error));
+}
+
 // Burger menu component loader
 // Usage: import this file and call insertBurgerMenu() after DOMContentLoaded
 
@@ -18,8 +63,9 @@ export function insertBurgerMenu(targetSelector = 'body') {
     fallback.id = 'burger-menu-template';
     fallback.innerHTML = `
       <style>
-        .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; display: flex; align-items: stretch; border-radius: 12px; overflow: visible; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.22); }
-        .burger-user-label { display: none; max-width: 140px; padding: 0 12px; background: rgba(255,255,255,0.96); color: #334155; border: 1px solid rgba(15, 23, 42, 0.08); border-right: none; border-radius: 12px 0 0 12px; font-size: 12px; font-weight: 700; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12); }
+        .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: stretch; width: max-content; max-width: calc(100vw - 20px); border-radius: 12px; overflow: visible; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.22); isolation: isolate; }
+        .burger-menu.burger-menu--embedded { position: relative !important; top: auto !important; right: auto !important; margin: 0 !important; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.14); }
+        .burger-user-label { display: none; flex: 0 1 auto; height: 38px; box-sizing: border-box; max-width: 140px; padding: 0 12px; background: rgba(255,255,255,0.96); color: #334155; border: 1px solid rgba(15, 23, 42, 0.08); border-right: none; border-radius: 12px 0 0 12px; font-size: 12px; font-weight: 700; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12); }
         .burger-btn, .hw-notif-btn { width: 42px; height: 38px; border: none; background: linear-gradient(180deg, #19d2df 0%, #00b4c6 100%); color: white; cursor: pointer; font-size: 16px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
         .hw-notif-btn { border-radius: 0; }
         .burger-btn { border-left: 1px solid rgba(255,255,255,0.35); border-radius: 0 12px 12px 0; }
@@ -28,6 +74,9 @@ export function insertBurgerMenu(targetSelector = 'body') {
         .burger-dropdown a { display: block; padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; }
         .burger-dropdown a:hover { background: #f1f1f1; }
         .burger-dropdown a:last-child { border-bottom: none; }
+        .burger-menu > .hw-notif-wrap, .burger-menu > .burger-dropdown-wrap { flex: 0 0 auto; width: auto; height: auto; }
+        .burger-menu > .burger-user-label { flex-shrink: 1; }
+        .burger-menu .burger-btn, .burger-menu .hw-notif-btn { display: inline-flex !important; width: 42px !important; height: 38px !important; max-width: none !important; margin: 0 !important; }
         .hw-notif-wrap { position: relative; z-index: 10002; }
         .hw-notif-badge { display: none; position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; align-items: center; justify-content: center; padding: 0 3px; pointer-events: none; z-index: 10003; }
         .hw-notif-panel { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 320px; max-height: 480px; overflow-y: auto; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); z-index: 10000; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
@@ -82,7 +131,7 @@ export function insertBurgerMenu(targetSelector = 'body') {
         .hw-status-done-badge, .hw-status-pending-badge { flex-shrink: 0; border-radius: 999px; padding: 4px 8px; font-size: 11px; font-weight: 700; }
         .hw-status-done-badge { background: #eef2f7; color: #374151; }
         .hw-status-pending-badge { background: #f3f4f6; color: #6b7280; }
-        @media (max-width: 700px) { .burger-btn, .hw-notif-btn { width: 40px; height: 36px; } .burger-user-label { max-width: 100px; padding: 0 10px; font-size: 11px; } .hw-status-modal-backdrop { padding: 12px; } .hw-status-lists { grid-template-columns: 1fr; } .hw-status-list + .hw-status-list { border-left: none; border-top: 1px solid #eef2f7; } .hw-notif-footer { flex-direction: column; } .hw-status-toolbar { align-items: stretch; } .hw-status-toolbar-select { width: 100%; } .hw-status-summary { margin-left: 0; width: 100%; white-space: normal; } }
+        @media (max-width: 700px) { .burger-menu { flex-direction: row !important; flex-wrap: nowrap !important; gap: 0 !important; } .burger-menu > .hw-notif-wrap, .burger-menu > .burger-dropdown-wrap { flex: 0 0 auto; width: auto; height: auto; } .burger-menu .burger-btn, .burger-menu .hw-notif-btn { width: 40px !important; height: 36px !important; } .burger-user-label { height: 36px; max-width: 100px; padding: 0 10px; font-size: 11px; } .hw-status-modal-backdrop { padding: 12px; } .hw-status-lists { grid-template-columns: 1fr; } .hw-status-list + .hw-status-list { border-left: none; border-top: 1px solid #eef2f7; } .hw-notif-footer { flex-direction: column; } .hw-status-toolbar { align-items: stretch; } .hw-status-toolbar-select { width: 100%; } .hw-status-summary { margin-left: 0; width: 100%; white-space: normal; } }
       </style>
       <div class="burger-menu">
         <div class="burger-user-label" id="burgerUserLabel"></div>
@@ -123,7 +172,7 @@ export function insertBurgerMenu(targetSelector = 'body') {
             <a href="/Teachers/tools/planner/planner.html">Planner</a>
             <a href="/Teachers/tools/game-builder/index.html">Game Builder</a>
             <a href="/Teachers/tools/survey_builder/survey_builder.html">Survey Builder</a>
-            <a href="/Teachers/tools/reading/reading.html">Reading</a>
+            <a href="/Teachers/tools/reading/reading.html">Reading</a>\n          <a href="/Teachers/tools/reading-bee-vote/index.html">Reading Bee Voting</a>
             <a href="/Teachers/tools/flashcard/flashcard.html">Flashcards</a>
             <a href="/Teachers/tools/grid_game/grid_game.html">Grid Game</a>
             <a href="/Teachers/tools/puzzles/wordsearch.html">Word Search</a>
@@ -147,7 +196,11 @@ export function insertBurgerMenu(targetSelector = 'body') {
 
   // Insert at the top of the target element
   const target = document.querySelector(targetSelector) || document.body;
-  if (target) target.insertBefore(wrapper, target.firstChild);
+  if (target) {
+    target.insertBefore(wrapper, target.firstChild);
+    const menu = wrapper.querySelector('.burger-menu');
+    if (menu && target !== document.body) menu.classList.add('burger-menu--embedded');
+  }
 
   // Dropdown logic
   const burgerBtn = wrapper.querySelector('.burger-btn');
@@ -232,13 +285,18 @@ export function insertBurgerMenu(targetSelector = 'body') {
         localStorage.removeItem('username');
         localStorage.removeItem('userEmail');
       } catch {}
+      try { window.WillenaAPI?.clearLocalTokens?.(); } catch {}
       try { await window.WillenaAPI?.fetch?.('/.netlify/functions/supabase_auth?action=logout', { method: 'POST' }); } catch {}
       const redirect = encodeURIComponent(location.pathname + location.search);
       window.location.href = '/Teachers/login.html?redirect=' + redirect;
     };
   }
 
-  initNotificationBell(wrapper);
+  // The main Teachers dashboard uses the newer per-teacher unread homework
+  // state. Do not also start this legacy token-based bell and its polling.
+  if (!/^\/Teachers\/(?:index\.html)?\/?$/i.test(location.pathname)) {
+    initNotificationBell(wrapper);
+  }
 }
 
 // ── Notification Bell ──────────────────────────────────────────────────

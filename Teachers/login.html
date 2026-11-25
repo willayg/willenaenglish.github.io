@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=willena-logo-20261111">
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Login - Willena English</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -221,9 +222,7 @@
   <script src="/js/api-config.js?v=20260108"></script>
   
   <script type="module">
-    import { ensureAuthRefresh } from '/Teachers/auth-refresh.js';
-
-    ensureAuthRefresh();
+    import { ensureAuthRefresh } from '/Teachers/auth-refresh.js?v=20261021-sessionfix1';
 
     // Use WillenaAPI to get correct endpoint (Cloudflare worker on custom domains)
     const AUTH_URL = window.WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth');
@@ -293,11 +292,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      // The admin level-test API is hosted on workers.dev, so the shared
-      // .willenaenglish.com cookie cannot accompany that cross-domain request.
-      // Keep the Supabase access token as the existing API wrapper's fallback.
-      if (result.access_token && window.WillenaAPI?.setLocalTokens) {
-        window.WillenaAPI.setLocalTokens(result.access_token);
+      if (result.access_token) {
+        window.WillenaAPI?.setLocalTokens?.(result.access_token, result.refresh_token || '');
       }
       return result.user;
     }
@@ -351,13 +347,19 @@
 
         const normalizedRole = String(role || '').toLowerCase();
         if (!['teacher', 'admin'].includes(normalizedRole)) {
+          localStorage.removeItem('userId');
+          localStorage.removeItem('profile_id');
+          localStorage.removeItem('userRole');
           throw new Error('Teacher access only. Please use the student login page.');
         }
         
-        // Store user data
+        // Store teacher identity only after the active auth session is confirmed.
         localStorage.setItem('userId', user.id);
         localStorage.setItem('profile_id', profileId);
         localStorage.setItem('userRole', normalizedRole);
+
+        // Start token refresh only for a confirmed teacher/admin session.
+        ensureAuthRefresh();
         
         showMessage(`Welcome back! Redirecting...`, 'success');
         
@@ -395,14 +397,40 @@
           console.warn('⚠ Auth service missing environment variables');
         }
         if (debugData.session && debugData.session.user && debugData.session.user.id) {
-          // Already logged in, perform quick redirect
-          const params = new URLSearchParams(location.search);
-          const redirect = params.get('redirect');
-          if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
-            window.location.replace(redirect);
+          const activeUserId = debugData.session.user.id;
+          let activeRole = '';
+
+          try {
+            activeRole = String(await getUserRole(activeUserId) || '').toLowerCase();
+          } catch (roleError) {
+            console.warn('Could not resolve active session role:', roleError);
+          }
+
+          if (['teacher', 'admin'].includes(activeRole)) {
+            const profileId = await getProfileId(activeUserId).catch(() => activeUserId);
+            localStorage.setItem('userId', activeUserId);
+            localStorage.setItem('profile_id', profileId);
+            localStorage.setItem('userRole', activeRole);
+
+            ensureAuthRefresh();
+
+            const params = new URLSearchParams(location.search);
+            const redirect = params.get('redirect');
+            if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
+              window.location.replace(redirect);
+            } else {
+              window.location.replace(
+                activeRole === 'admin'
+                  ? '/Teachers/tools/feedback-admin.html'
+                  : '/Teachers/index.html'
+              );
+            }
           } else {
-            // Already logged in and no specific redirect: go to Teacher dashboard
-            window.location.replace('/Teachers/index.html');
+            // Student cookie session: clear stale teacher browser state and stay on login.
+            localStorage.removeItem('userId');
+            localStorage.removeItem('profile_id');
+            localStorage.removeItem('userRole');
+            console.info('Non-teacher session detected; staying on Teacher Login.');
           }
         }
       } catch (error) {

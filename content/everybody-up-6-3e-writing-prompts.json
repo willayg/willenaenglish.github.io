@@ -1,0 +1,245 @@
+{
+  "book": "Everybody Up 6 (3rd Edition)",
+  "prompts": [
+    {
+      "id": "eu3e6-u1-w1",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 1,
+      "title": "Giving Directions",
+      "prompt": "Write about \"Giving Directions\" using vocabulary and ideas from Everybody Up 6 Unit 1.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u1-w2",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 1,
+      "title": "A Trip Across Town",
+      "prompt": "Write about \"A Trip Across Town\" using vocabulary and ideas from Everybody Up 6 Unit 1.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u1-w3",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 1,
+      "title": "My Favorite Way to Travel",
+      "prompt": "Write about \"My Favorite Way to Travel\" using vocabulary and ideas from Everybody Up 6 Unit 1.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u2-w1",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 2,
+      "title": "Helping Our Community",
+      "prompt": "Write about \"Helping Our Community\" using vocabulary and ideas from Everybody Up 6 Unit 2.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u2-w2",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 2,
+      "title": "A Volunteer Project",
+      "prompt": "Write about \"A Volunteer Project\" using vocabulary and ideas from Everybody Up 6 Unit 2.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u2-w3",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 2,
+      "title": "How to Be Responsible",
+      "prompt": "Write about \"How to Be Responsible\" using vocabulary and ideas from Everybody Up 6 Unit 2.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u3-w1",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 3,
+      "title": "My Favorite Technology",
+      "prompt": "Write about \"My Favorite Technology\" using vocabulary and ideas from Everybody Up 6 Unit 3.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u3-w2",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 3,
+      "title": "How I Use My Smartphone",
+      "prompt": "Write about \"How I Use My Smartphone\" using vocabulary and ideas from Everybody Up 6 Unit 3.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u3-w3",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 3,
+      "title": "Internet Safety Tips",
+      "prompt": "Write about \"Internet Safety Tips\" using vocabulary and ideas from Everybody Up 6 Unit 3.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u4-w1",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 4,
+      "title": "My Healthy Routine",
+      "prompt": "Write about \"My Healthy Routine\" using vocabulary and ideas from Everybody Up 6 Unit 4.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u4-w2",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 4,
+      "title": "Good and Bad Habits",
+      "prompt": "Write about \"Good and Bad Habits\" using vocabulary and ideas from Everybody Up 6 Unit 4.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u4-w3",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 4,
+      "title": "Advice for a Friend",
+      "prompt": "Write about \"Advice for a Friend\" using vocabulary and ideas from Everybody Up 6 Unit 4.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u5-w1",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 5,
+      "title": "My Favorite Place in Town",
+      "prompt": "Write about \"My Favorite Place in Town\" using vocabulary and ideas from Everybody Up 6 Unit 5.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u5-w2",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 5,
+      "title": "A New Community Center",
+      "prompt": "Write about \"A New Community Center\" using vocabulary and ideas from Everybody Up 6 Unit 5.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u5-w3",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 5,
+      "title": "A Day at the Museum",
+      "prompt": "Write about \"A Day at the Museum\" using vocabulary and ideas from Everybody Up 6 Unit 5.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u6-w1",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 6,
+      "title": "Save Our Planet",
+      "prompt": "Write about \"Save Our Planet\" using vocabulary and ideas from Everybody Up 6 Unit 6.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u6-w2",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 6,
+      "title": "Our School Recycling Plan",
+      "prompt": "Write about \"Our School Recycling Plan\" using vocabulary and ideas from Everybody Up 6 Unit 6.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u6-w3",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 6,
+      "title": "How to Save Energy",
+      "prompt": "Write about \"How to Save Energy\" using vocabulary and ideas from Everybody Up 6 Unit 6.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u7-w1",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 7,
+      "title": "Design an Advertisement",
+      "prompt": "Write about \"Design an Advertisement\" using vocabulary and ideas from Everybody Up 6 Unit 7.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u7-w2",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 7,
+      "title": "My Favorite Product",
+      "prompt": "Write about \"My Favorite Product\" using vocabulary and ideas from Everybody Up 6 Unit 7.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u7-w3",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 7,
+      "title": "A Poster for Our School",
+      "prompt": "Write about \"A Poster for Our School\" using vocabulary and ideas from Everybody Up 6 Unit 7.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u8-w1",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 8,
+      "title": "Communication Then and Now",
+      "prompt": "Write about \"Communication Then and Now\" using vocabulary and ideas from Everybody Up 6 Unit 8.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u8-w2",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 8,
+      "title": "A Helpful Website",
+      "prompt": "Write about \"A Helpful Website\" using vocabulary and ideas from Everybody Up 6 Unit 8.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    },
+    {
+      "id": "eu3e6-u8-w3",
+      "book_key": "book:everybody_up_3e:6",
+      "unit": 8,
+      "title": "Writing a Good Message",
+      "prompt": "Write about \"Writing a Good Message\" using vocabulary and ideas from Everybody Up 6 Unit 8.",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt"
+    }
+  ]
+}

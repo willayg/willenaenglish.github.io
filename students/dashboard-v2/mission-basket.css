@@ -1,0 +1,183 @@
+/* Dashboard mission basket — matches theme-selector and card visual language. */
+.dashboard-mission-basket{position:relative;z-index:2;max-width:980px;margin:18px auto 22px;padding:0 16px;font-family:Poppins,system-ui,sans-serif;color:#20535c}
+.dashboard-mission-basket .dm-head{background:linear-gradient(120deg,#f4ffff,#e5f8f7);border:2px solid #9ddcdb;border-radius:23px;box-shadow:0 5px 18px rgba(30,113,120,.09)}
+.dashboard-mission-basket .dm-toggle{width:100%;min-height:78px;display:flex;align-items:center;gap:12px;padding:13px 17px;background:transparent;border:0;color:inherit;text-align:left;cursor:pointer}
+.dashboard-mission-basket .dm-toggle strong{font-size:clamp(20px,4.5vw,27px);font-weight:900;letter-spacing:-.035em}
+.dashboard-mission-basket .dm-count{margin-left:auto;white-space:nowrap;font-weight:800;font-size:13px;background:white;border:1px solid #c9ecec;border-radius:999px;padding:7px 10px}
+.dashboard-mission-basket .dm-arrow{font-size:23px;color:#138a91}
+.dashboard-mission-basket .dm-body{padding:12px 4px 4px}
+.dashboard-mission-basket .dm-tabs{display:flex;gap:8px;margin:0 3px 12px}
+.dashboard-mission-basket .dm-tabs button{flex:1;min-height:45px;border-radius:13px;border:1px solid #bedcde;background:#f8fcfc;color:#527a80;font-weight:800;cursor:pointer}
+.dashboard-mission-basket .dm-tabs button[aria-pressed=true]{background:#dcf5f3;border-color:#51aaa9;color:#116b70}
+.dashboard-mission-basket .dm-tabs span{font-weight:800;margin-left:4px}
+.dashboard-mission-basket .dm-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:10px}
+.dashboard-mission-basket .dm-item{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:15px 45px 15px 16px;min-height:104px;background:#fff;border:1.5px solid #c5e5e5;border-radius:17px;text-decoration:none;color:#225964;box-shadow:0 3px 9px rgba(28,101,106,.055)}
+.dashboard-mission-basket .dm-item:focus-visible,.dashboard-mission-basket button:focus-visible{outline:3px solid #e8b644;outline-offset:2px}
+.dashboard-mission-basket .dm-app{font-size:11px;letter-spacing:.02em;font-weight:900;color:#13818a}
+.dashboard-mission-basket .dm-item strong{font-size:16px;font-weight:900;line-height:1.38}
+.dashboard-mission-basket .dm-item small{font-size:11px;color:#607e87;line-height:1.35}
+.dashboard-mission-basket .dm-action{position:absolute;right:14px;top:calc(50% - 14px);font-size:23px;color:#15898d}
+.dashboard-mission-basket .dm-done{background:#fff9e4;border-color:#edce78}
+.dashboard-mission-basket .dm-done .dm-app,.dashboard-mission-basket .dm-done .dm-action{color:#ad8413}
+.dashboard-mission-basket .dm-empty,.dashboard-mission-basket .dm-loading{text-align:center;margin:10px 0;padding:24px;border:1px dashed #b6dadb;border-radius:17px;background:#f5ffff;font-weight:700;color:#64858c}
+html[data-dashboard-theme=dark] .dashboard-mission-basket,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket{color:#ddfbfb}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-head,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-head{background:#1f333e;border-color:#38878a}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-item,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-item{background:#233743;color:#f0fafa;border-color:#3d8186}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button{background:#1e333d;color:#bce8e8;border-color:#3b7179}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button[aria-pressed=true],html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button[aria-pressed=true]{background:#215963}
+@media(max-width:560px){.dashboard-mission-basket{margin:12px auto 16px;padding:0 10px}.dashboard-mission-basket .dm-toggle{min-height:68px;padding:10px 12px}.dashboard-mission-basket .dm-item{min-height:94px}}
+
+/* rev1.17: clean white mission basket background */
+.dashboard-mission-basket .dm-head{background:#fff}
+
+/* Rev1.18: pastel basket, white cards across dashboard themes */
+.dashboard-mission-basket .dm-head{background:#fff!important;border:3px solid #8bdde3;border-radius:26px;box-shadow:0 6px 0 #f7afd0,0 12px 22px rgba(21,121,137,.08)}
+.dashboard-mission-basket .dm-toggle strong{color:#e45c9e}
+.dashboard-mission-basket .dm-count{color:#168d9b;border:2px solid #b9eaf0;background:#fff}
+.dashboard-mission-basket .dm-arrow{color:#e45c9e}
+.dashboard-mission-basket .dm-body{background:linear-gradient(145deg,#e8fbfc,#fff1f8);border:2px solid #a0e1e6;border-top:0;border-radius:0 0 24px 24px;padding:18px 12px 14px;margin:4px 8px 0;box-shadow:inset 0 1px 0 white}
+.dashboard-mission-basket .dm-tabs button{background:#fff;border:2px solid #a5e6e9;color:#208a96}
+.dashboard-mission-basket .dm-tabs button[aria-pressed=true]{background:#ffe3f1;border-color:#ee8fbd;color:#b83980}
+.dashboard-mission-basket .dm-item,.dashboard-mission-basket .dm-done{background:#fff!important;border:2px solid #a5e5ea!important;color:#245b66!important;box-shadow:0 4px 0 rgba(94,202,216,.15)}
+.dashboard-mission-basket .dm-item:nth-child(even){border-color:#f1afd0!important;box-shadow:0 4px 0 rgba(238,144,187,.14)}
+.dashboard-mission-basket .dm-app{color:#e45898}
+.dashboard-mission-basket .dm-item strong{color:#225964}
+.dashboard-mission-basket .dm-action{color:#13a0af}
+.dashboard-mission-basket .dm-done .dm-app,.dashboard-mission-basket .dm-done .dm-action{color:#b38c21}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-head,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-head{background:#fff!important}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-item,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-item{background:#fff!important;color:#225964!important}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button{background:#fff;color:#208a96}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button[aria-pressed=true],html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button[aria-pressed=true]{background:#ffe3f1;color:#b83980}
+
+/* rev1.19 — a single continuous basket outline enclosing header, tabs and cards */
+.dashboard-mission-basket{
+  box-sizing:border-box;
+  width:calc(100% - 32px);
+  max-width:948px;
+  margin:18px auto 22px;
+  padding:14px;
+  border:3px solid #80d4dc;
+  border-radius:30px;
+  background:#fff;
+  box-shadow:0 9px 24px rgba(27,137,146,.09);
+}
+.dashboard-mission-basket .dm-head{
+  border:0!important;
+  border-radius:20px!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+.dashboard-mission-basket .dm-toggle{padding:9px 13px;min-height:67px}
+.dashboard-mission-basket .dm-body{
+  margin:0;
+  padding:14px 1px 1px;
+  border:0;
+  border-radius:0;
+  background:#fff;
+  box-shadow:none;
+}
+.dashboard-mission-basket .dm-tabs{margin:0 0 13px}
+.dashboard-mission-basket .dm-items{gap:12px}
+@media(max-width:560px){
+  .dashboard-mission-basket{width:calc(100% - 20px);margin:12px auto 16px;padding:10px;border-radius:26px}
+  .dashboard-mission-basket .dm-toggle{padding:8px;min-height:62px}
+  .dashboard-mission-basket .dm-body{padding-top:10px}
+}
+
+/* rev1.21 — archived mission medal gallery */
+.dashboard-mission-basket .dm-tabs button[aria-pressed="true"]{font-weight:900}
+.dashboard-mission-basket .dm-items:has(.dm-medal){grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:14px}
+.dashboard-mission-basket .dm-medal{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;text-align:center;min-width:0;padding:20px 12px 18px;background:#fff;border:2px solid #efd388;border-radius:19px;text-decoration:none;color:#755315;box-shadow:0 4px 0 rgba(209,166,66,.15)}
+.dashboard-mission-basket .dm-medal-svg{display:block;width:92px;height:107px}
+.dashboard-mission-basket .dm-medal-svg svg{width:100%;height:100%;filter:drop-shadow(0 4px 3px rgba(128,85,13,.12))}
+.dashboard-mission-basket .dm-medal strong{font-size:13px;line-height:1.4;font-weight:900;color:#815e1d;overflow-wrap:anywhere}
+.dashboard-mission-basket .dm-medal small{font-size:11px;font-weight:800;color:#bc8120}
+.dashboard-mission-basket .dm-teacher{font-size:12px!important;font-weight:800;color:#cc4d8c!important;margin-top:3px}
+.dashboard-mission-basket .dm-medal:focus-visible{outline:3px solid #2abcc6;outline-offset:3px}
+@media(max-width:560px){.dashboard-mission-basket .dm-items:has(.dm-medal){grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.dashboard-mission-basket .dm-medal{padding:15px 8px}.dashboard-mission-basket .dm-medal-svg{width:76px;height:91px}}
+
+/* rev1.23 gold collection and replayable medal touch */
+.dashboard-mission-basket .dm-medal{font-family:inherit;cursor:pointer;width:100%}
+.dashboard-mission-basket .dm-done{cursor:pointer}
+.dashboard-mission-basket .dm-gold-collect{animation:dmCollect .64s cubic-bezier(.2,.8,.2,1) forwards;pointer-events:none}
+.dashboard-mission-basket .dm-medal-shine .dm-medal-svg{animation:dmMedalPop .47s cubic-bezier(.15,.85,.2,1.25)}
+@keyframes dmCollect{0%{transform:scale(1);opacity:1}45%{transform:scale(1.055);opacity:1}100%{transform:scale(.48);opacity:0}}
+@keyframes dmMedalPop{0%{transform:scale(1) rotate(0)}40%{transform:scale(1.14) rotate(-8deg)}75%{transform:scale(1.05) rotate(6deg)}100%{transform:scale(1) rotate(0)}}
+.dm-gold-particles{position:fixed;z-index:2147483000;width:0;height:0;pointer-events:none}
+.dm-gold-particles span{position:absolute;left:0;top:0;color:#edb62d;font-size:23px;text-shadow:0 1px 1px #fff4b8;animation:dmParticle .64s ease-out both}
+@keyframes dmParticle{0%{transform:rotate(var(--a)) translateX(0) scale(.5);opacity:1}100%{transform:rotate(var(--a)) translateX(120px) scale(.95);opacity:0}}
+@media(prefers-reduced-motion:reduce){.dashboard-mission-basket .dm-gold-collect,.dashboard-mission-basket .dm-medal-shine .dm-medal-svg,.dm-gold-particles span{animation:none!important}}
+
+/* Completion must override the white-card and alternating-border theme rules. */
+.dashboard-mission-basket .dm-item.dm-done,
+html[data-dashboard-theme] .dashboard-mission-basket .dm-item.dm-done{
+ background:linear-gradient(135deg,#fff9df,#ffedac)!important;
+ border-color:#e3bd50!important;
+ box-shadow:0 4px 0 rgba(190,142,30,.22);
+}
+.dashboard-mission-basket .dm-progress-copy{font-size:12px;font-weight:900;color:#16848c;margin-top:8px}
+.dashboard-mission-basket .dm-progress{display:block;width:100%;height:9px;overflow:hidden;border-radius:999px;background:#e4f3f4}
+.dashboard-mission-basket .dm-progress>span{display:block;height:100%;border-radius:inherit;background:#29b6c2;transition:width .25s ease}
+.dashboard-mission-basket .dm-done .dm-progress-copy{color:#9c7416}
+.dashboard-mission-basket .dm-done .dm-progress{background:#f3dfa5}
+.dashboard-mission-basket .dm-done .dm-progress>span{background:#d5a52f}
+
+/* rev1.24: collected medal makes the medal box tab swell briefly */
+.dashboard-mission-basket .dm-tabs .dm-tab-grow{animation:dmTabGrow .6s cubic-bezier(.2,.8,.25,1.2)}
+@keyframes dmTabGrow{0%,100%{transform:scale(1)}40%{transform:scale(1.085);box-shadow:0 0 0 5px rgba(245,171,207,.4)}75%{transform:scale(1.035)}}
+@media(prefers-reduced-motion:reduce){.dashboard-mission-basket .dm-tabs .dm-tab-grow{animation:none}}
+
+/* rev1.26: clear medal-box bounce on successful gold collection */
+.dashboard-mission-basket .dm-tabs [data-tab="archive"].dm-tab-grow{
+ transform-origin:center center;
+ animation:dmMedalTabBounce .8s cubic-bezier(.22,.85,.3,1) both;
+ position:relative;
+ z-index:1;
+}
+@keyframes dmMedalTabBounce{
+ 0%,100%{transform:translateY(0) scale(1)}
+ 20%{transform:translateY(-7px) scale(1.16)}
+ 44%{transform:translateY(2px) scale(.97)}
+ 65%{transform:translateY(-3px) scale(1.07)}
+ 82%{transform:translateY(1px) scale(.99)}
+}
+@media(prefers-reduced-motion:reduce){.dashboard-mission-basket .dm-tabs [data-tab="archive"].dm-tab-grow{animation:none}}
+
+/* rev1.27 — compact Word Genius-style circular progress rings */
+.dashboard-mission-basket .dm-item{padding-right:84px;min-height:112px}
+.dashboard-mission-basket .dm-progress-ring{
+ position:absolute;right:15px;top:50%;transform:translateY(-50%);
+ width:56px;height:56px;border-radius:50%;
+ display:grid;place-items:center;flex:none;
+ background:conic-gradient(#ec5d9b calc(var(--dm-pct)*1%),#e0f3f4 0);
+ color:#265661;
+}
+.dashboard-mission-basket .dm-progress-ring::before{
+ content:"";position:absolute;inset:6px;border-radius:50%;background:#fff;
+}
+.dashboard-mission-basket .dm-progress-ring>span{position:relative;z-index:1;font-size:12px;font-weight:900;line-height:1}
+.dashboard-mission-basket .dm-item .dm-action{display:none}
+.dashboard-mission-basket .dm-item.dm-done .dm-progress-ring{
+ background:conic-gradient(#d9ab34 calc(var(--dm-pct)*1%),#f7e8b8 0);color:#946b0a;
+}
+@media(max-width:560px){.dashboard-mission-basket .dm-item{padding-right:68px}.dashboard-mission-basket .dm-progress-ring{width:49px;height:49px;right:10px}.dashboard-mission-basket .dm-progress-ring::before{inset:5px}.dashboard-mission-basket .dm-progress-ring>span{font-size:11px}}
+
+/* Three clear tabs for active missions, overdue missions and earned medals. */
+.dashboard-mission-basket .dm-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.dashboard-mission-basket .dm-tabs button{min-width:0;padding:8px 5px;font-size:clamp(11px,2.8vw,14px);line-height:1.3;white-space:normal}
+.dashboard-mission-basket .dm-tabs [data-tab="overdue"][aria-pressed="true"]{background:#fff1f6;border-color:#eaa9c7;color:#a54f76}
+.dashboard-mission-basket .dm-tabs [data-tab="overdue"] span{white-space:nowrap}
+@media(max-width:380px){.dashboard-mission-basket .dm-tabs{gap:4px}.dashboard-mission-basket .dm-tabs button{font-size:11px;padding:7px 2px}}
+
+
+/* Pending-mission indicator: pulse only the existing number pill, never the whole basket. */
+.dashboard-mission-basket .dm-count.dm-count-pending{
+ animation:dmCountPinkPulse 2.2s ease-in-out infinite;
+}
+@keyframes dmCountPinkPulse{
+ 0%,100%{box-shadow:0 0 0 0 rgba(247,89,164,0),0 0 0 rgba(247,89,164,0);border-color:#b9eaf0}
+ 50%{box-shadow:0 0 0 5px rgba(247,89,164,.12),0 0 18px 5px rgba(247,89,164,.42);border-color:#f47cad}
+}
+@media(prefers-reduced-motion:reduce){
+ .dashboard-mission-basket .dm-count.dm-count-pending{animation:none}
+}

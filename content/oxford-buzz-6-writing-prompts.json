@@ -1,0 +1,352 @@
+{
+  "schema_version": 1,
+  "book": "Oxford Buzz 6",
+  "source_key": "book:oxford_buzz:6",
+  "note": "Original prompts; content bank only. Live Writing Genius ingestion not verified.",
+  "prompts": [
+    {
+      "id": "buzz6-u1-w1",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 1,
+      "title": "A Day in the City",
+      "prompt": "Describe a trip through a city. Say where you went, what you saw, and whether you have visited before.",
+      "grammar_focus": "present perfect: for, since, ever, never",
+      "hints_ko": [
+        "시작: Where did you travel?",
+        "중간: What places did you see?",
+        "끝: What have you done there before?"
+      ],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u1-w2",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 1,
+      "title": "My Favorite City",
+      "prompt": "Write about \"My Favorite City\" using vocabulary from Unit 1. Include examples of present perfect: for, since, ever, never.",
+      "grammar_focus": "present perfect: for, since, ever, never",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u1-w3",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 1,
+      "title": "A Train Journey",
+      "prompt": "Write about \"A Train Journey\" using vocabulary from Unit 1. Include examples of present perfect: for, since, ever, never.",
+      "grammar_focus": "present perfect: for, since, ever, never",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u2-w1",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 2,
+      "title": "A Weather Forecast",
+      "prompt": "Describe the weather today and predict what will happen tomorrow.",
+      "grammar_focus": "going to and will",
+      "hints_ko": [
+        "시작: What is the weather like now?",
+        "중간: What are you going to do?",
+        "끝: What do you think the weather will be like tomorrow?"
+      ],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u2-w2",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 2,
+      "title": "My Favorite Season",
+      "prompt": "Write about \"My Favorite Season\" using vocabulary from Unit 2. Include examples of going to and will.",
+      "grammar_focus": "going to and will",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u2-w3",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 2,
+      "title": "A Snowy Weekend",
+      "prompt": "Write about \"A Snowy Weekend\" using vocabulary from Unit 2. Include examples of going to and will.",
+      "grammar_focus": "going to and will",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u3-w1",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 3,
+      "title": "Our Green School",
+      "prompt": "Explain things your class has already done to help the environment and what you have not done yet.",
+      "grammar_focus": "present perfect: already, just, yet",
+      "hints_ko": [
+        "시작: What have you already recycled?",
+        "중간: What have you just finished?",
+        "끝: What haven't you done yet?"
+      ],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u3-w2",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 3,
+      "title": "An Environment Challenge",
+      "prompt": "Write about \"An Environment Challenge\" using vocabulary from Unit 3. Include examples of present perfect: already, just, yet.",
+      "grammar_focus": "present perfect: already, just, yet",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u3-w3",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 3,
+      "title": "A Recycling Idea",
+      "prompt": "Write about \"A Recycling Idea\" using vocabulary from Unit 3. Include examples of present perfect: already, just, yet.",
+      "grammar_focus": "present perfect: already, just, yet",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u4-w1",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 4,
+      "title": "The Surprise Performance",
+      "prompt": "Tell a short story about something unexpected happening during a play.",
+      "grammar_focus": "past progressive + simple past",
+      "hints_ko": [
+        "시작: Where were the actors?",
+        "중간: What were people doing?",
+        "끝: What happened suddenly?"
+      ],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u4-w2",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 4,
+      "title": "Behind the Curtain",
+      "prompt": "Write about \"Behind the Curtain\" using vocabulary from Unit 4. Include examples of past progressive + simple past.",
+      "grammar_focus": "past progressive + simple past",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u4-w3",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 4,
+      "title": "The Day the Lights Went Out",
+      "prompt": "Write about \"The Day the Lights Went Out\" using vocabulary from Unit 4. Include examples of past progressive + simple past.",
+      "grammar_focus": "past progressive + simple past",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u5-w1",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 5,
+      "title": "A Food From Another Country",
+      "prompt": "Explain how a favorite food is prepared or served.",
+      "grammar_focus": "simple present passive",
+      "hints_ko": [
+        "시작: What ingredients are used?",
+        "중간: How is it cooked?",
+        "끝: Where is it usually eaten?"
+      ],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u5-w2",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 5,
+      "title": "A Special Restaurant",
+      "prompt": "Write about \"A Special Restaurant\" using vocabulary from Unit 5. Include examples of simple present passive.",
+      "grammar_focus": "simple present passive",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u5-w3",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 5,
+      "title": "How We Make Lunch",
+      "prompt": "Write about \"How We Make Lunch\" using vocabulary from Unit 5. Include examples of simple present passive.",
+      "grammar_focus": "simple present passive",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u6-w1",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 6,
+      "title": "My Technology Tips",
+      "prompt": "Explain what happens when people use everyday apps and devices.",
+      "grammar_focus": "zero conditional",
+      "hints_ko": [
+        "시작: What happens if you click the icon?",
+        "중간: What happens if you forget your password?",
+        "끝: What happens if you save a file?"
+      ],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u6-w2",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 6,
+      "title": "A Helpful App",
+      "prompt": "Write about \"A Helpful App\" using vocabulary from Unit 6. Include examples of zero conditional.",
+      "grammar_focus": "zero conditional",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u6-w3",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 6,
+      "title": "A Day Without the Internet",
+      "prompt": "Write about \"A Day Without the Internet\" using vocabulary from Unit 6. Include examples of zero conditional.",
+      "grammar_focus": "zero conditional",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u7-w1",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 7,
+      "title": "The Camping Trip",
+      "prompt": "Write a plan for a camping trip and explain what you will do if something unexpected happens.",
+      "grammar_focus": "first conditional",
+      "hints_ko": [
+        "시작: What will you pack?",
+        "중간: What will you do if it rains?",
+        "끝: What will you do if you get lost?"
+      ],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u7-w2",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 7,
+      "title": "An Adventure on a Hill",
+      "prompt": "Write about \"An Adventure on a Hill\" using vocabulary from Unit 7. Include examples of first conditional.",
+      "grammar_focus": "first conditional",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u7-w3",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 7,
+      "title": "A Map to a Secret Place",
+      "prompt": "Write about \"A Map to a Secret Place\" using vocabulary from Unit 7. Include examples of first conditional.",
+      "grammar_focus": "first conditional",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u8-w1",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 8,
+      "title": "A Space Discovery",
+      "prompt": "Imagine that you discover a strange object in space and decide what it might be.",
+      "grammar_focus": "modals of possibility/certainty",
+      "hints_ko": [
+        "시작: What can you see through a telescope?",
+        "중간: What might the object be?",
+        "끝: What facts make you think that?"
+      ],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u8-w2",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 8,
+      "title": "Life on a Space Station",
+      "prompt": "Write about \"Life on a Space Station\" using vocabulary from Unit 8. Include examples of modals of possibility/certainty.",
+      "grammar_focus": "modals of possibility/certainty",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    },
+    {
+      "id": "buzz6-u8-w3",
+      "book_key": "book:oxford_buzz:6",
+      "unit": 8,
+      "title": "My New Planet",
+      "prompt": "Write about \"My New Planet\" using vocabulary from Unit 8. Include examples of modals of possibility/certainty.",
+      "grammar_focus": "modals of possibility/certainty",
+      "hints_ko": [],
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena writing prompt; not copied from Oxford",
+      "status": "ready_for_integration"
+    }
+  ]
+}

@@ -92,11 +92,11 @@
           if (result.user && result.user.id) {
             localStorage.setItem('userId', result.user.id);
           }
-          signupSuccess.textContent = 'Sign up successful! Redirecting to your profile...';
+          signupSuccess.textContent = 'Sign up successful! Redirecting to teacher login...';
           signupSuccess.style.display = 'block';
           signupForm.reset();
           setTimeout(() => {
-            window.location.href = '/Teachers/profile.html';
+            window.location.href = '/Teachers/login.html';
           }, 1200);
         } else if (result && result.error) {
           signupError.textContent = result.error;

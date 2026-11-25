@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
+<title>Grammar Genius · 교재</title>
+<link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
+<link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
+<link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
+<link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
+<link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
+<link rel="stylesheet" href="/students/test-prep-v2/question-renderer-accessibility.css?v=2.25.93">
+<link rel="stylesheet" href="/students/test-prep-v2/styles.css?v=2.21.2">
+<link rel="stylesheet" href="/students/test-prep-v2/card-style-v2.css?v=1.0.0">
+<link rel="stylesheet" href="/students/grammar-foundations/styles.css?v=1.00">
+<link rel="stylesheet" href="/students/grammar-foundations/ui-cleanup.css?v=1.00">
+<link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261105-overdue-missions1"><link rel="stylesheet" href="./shell.css?v=20261105-grammar-prompt-left1">
+<script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
+<script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
+<script type="module" src="/students/components/student-header.js?v=20261116-p4-visible-scenery2"></script><script src="/students/components/homework-deeplink-splash.js?v=20261105-pass2-displayfix1"></script>
+</head>
+<body>
+<div id="willenaHomeworkOpening" role="status" aria-live="polite" style="display:none"><div class="wh-card"><div class="wh-mark" aria-hidden="true"><svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="8" height="8"/><rect x="14" y="2" width="8" height="8"/><rect x="2" y="14" width="8" height="8"/><path d="M14 14h3v3h-3zM21 14v4h-3M14 21h4"/></svg></div><strong>숙제를 불러오는 중...</strong><small>Opening your homework</small><span class="wh-bar" aria-hidden="true"></span></div></div><div class="study-app grammar-book-shell">
+<student-header title="문법 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+<div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
+<button type="button" class="vocab-theme-pip" data-theme="cyan" aria-label="cyan 테마" title="cyan" aria-pressed="false"></button>
+<button type="button" class="vocab-theme-pip" data-theme="sunbeam" aria-label="sunbeam 테마" title="sunbeam" aria-pressed="false"></button>
+<button type="button" class="vocab-theme-pip" data-theme="pink" aria-label="pink 테마" title="pink" aria-pressed="false"></button>
+<button type="button" class="vocab-theme-pip" data-theme="paper" aria-label="paper 테마" title="paper" aria-pressed="false"></button>
+<button type="button" class="vocab-theme-pip" data-theme="dark" aria-label="dark 테마" title="dark" aria-pressed="false"></button>
+<button type="button" class="vocab-theme-pip" data-theme="cyberpunk" aria-label="cyberpunk 테마" title="cyberpunk" aria-pressed="false"></button>
+</div>
+<main class="vocab-page">
+<section id="grammarBooksHome" class="vocab-front-menu" aria-label="Grammar Genius books">
+  <section id="appMissionBasket" class="app-mission-basket-slot"></section>
+  <div class="vocab-front-divider" aria-hidden="true"></div>
+  <section class="vocab-front-books" aria-label="Your grammar books">
+    <div class="vocab-front-section-head"><div><span class="eyebrow">내 교재</span><strong>교재를 선택하세요</strong></div></div>
+    <div id="grammarBookList" class="vocab-front-book-list" aria-live="polite"><div class="vocab-front-empty">교재를 불러오는 중…</div></div>
+  </section>
+  <section id="grammarFrontAchievements" data-shared-achievements class="vocab-front-achievements" hidden aria-label="Student achievements">
+    <div class="vocab-front-achievement"><img src="/shared/svgs/streak.svg?v=20260927-icons1" alt="" aria-hidden="true"><div><strong>0</strong><small>연속 학습</small></div></div>
+    <div class="vocab-front-achievement"><img src="/shared/svgs/best-streak.svg?v=20260927-icons1" alt="" aria-hidden="true"><div><strong>0</strong><small>최고 연속</small></div></div>
+    <div class="vocab-front-achievement vocab-front-achievement-gold"><img src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="" aria-hidden="true"><div><strong>0</strong><small>gold</small></div></div>
+  </section>
+</section>
+<section id="grammarBookDetail" class="vocab-home-card vocab-subscreen" hidden>
+<div class="vocab-subscreen-head"><button id="grammarBookBack" class="vocab-screen-back" type="button">← 홈</button><span id="grammarBookTitle">교재 공부</span></div>
+<section id="grammarModePanel">
+  <div class="study-v2-units vocab-unit-selector"><div id="grammarUnitStrip" class="study-v2-unit-strip" aria-label="Grammar units"></div></div><div class="vocab-unit-summary"><h2 id="grammarUnitTitle"></h2><button class="vocab-word-card" id="grammarGuideOpen" type="button"><span>문법 설명 보기</span></button></div>
+  <section id="grammarModeCards" class="vocab-skill-grid" aria-label="Grammar unit skills"></section>
+  <section class="vocab-motivation vocab-achievements" hidden aria-label="Grammar achievements"><div class="vocab-motivation-stat vocab-motivation-gold"><img class="vocab-motivation-icon" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt=""><div><strong id="grammarGoldCount">0</strong><small>gold</small></div></div></section>
+  <p id="grammarNotReady" class="vocab-front-empty" hidden>학습 문제를 준비 중이에요.</p>
+</section>
+</section>
+<dialog id="grammarGuideDialog" class="grammar-guide-dialog" aria-labelledby="grammarGuideHeading"><div class="grammar-guide-inner"><button id="grammarGuideClose" class="vocab-screen-back" type="button" aria-label="닫기">✕</button><h2 id="grammarGuideHeading">문법 설명</h2><div id="grammarGuideContent"></div></div></dialog><section id="grammarQuestionEngineMount" hidden aria-hidden="true"></section>
+</main>
+<section id="grammarRound" class="vocab-session" hidden>
+<header class="vocab-session-top">
+ <div class="vocab-session-topline"><button id="grammarRoundBack" class="vocab-back" type="button" aria-label="모드 선택으로 돌아가기">←</button>
+ <div class="vocab-progress-copy"><strong id="grammarRoundTitle">Grammar Genius</strong><small id="grammarRoundCounter">1 / 8</small></div><button id="grammarSessionHome" class="vocab-session-home" type="button" aria-label="문법 지니어스 홈">⌂ 홈</button></div>
+ <div class="vocab-progress-track"><div id="grammarRoundProgress" class="vocab-progress-fill"></div></div>
+</header>
+<main class="vocab-session-main" data-willena-keyboard-safe>
+ <div class="vocab-question-wrap"><div class="gf-question-card willena-question-renderer" id="grammarSharedQuestionHost"></div></div>
+</main>
+<footer id="grammarQuestionBottom" class="vocab-session-bottom"><div class="vocab-action-row"><button id="grammarSkip" class="vocab-skip-action" type="button">Skip</button><button id="grammarCheck" class="vocab-action" type="button" disabled>Check Answer</button><button id="grammarNext" class="vocab-action" type="button" hidden>Next Question →</button></div></footer>
+</section>
+<section id="grammarResult" class="vocab-session grammar-complete-session" hidden aria-label="학습 완료">
+  <main id="grammarFinishMain" class="vocab-session-main"></main>
+</section>
+
+<footer class="grammar-shell-version">Grammar Genius · Books · v2.10</footer>
+</div>
+<script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
+<script src="/students/components/mission-basket.js?v=20261112-conversation-route4"></script>
+<script src="/students/components/student-achievements.js?v=20261103-grammar-gold1"></script><script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script><script type="module" src="./engine.js?v=1"></script><script type="module" src="./books.js?v=20261120-discard-unfinished1"></script>
+<script defer src="/students/components/live-presence.js?v=20261103-p3"></script>
+<script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
+</body></html>

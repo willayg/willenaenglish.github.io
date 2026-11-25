@@ -9,11 +9,12 @@ For these paths:
 
 there is exactly ONE question renderer implementation:
 
-`students/test-prep-v2/question-renderer.js`
+`shared/questions/question-renderer.js`
 
-`students/question-render-lab/` MUST import that exact module. It must never contain, copy, fork, inline, or reimplement question rendering code.
+`students/test-prep-v2/question-renderer.js` is a compatibility re-export.
+`students/question-render-lab/` MUST import this same implementation, directly or via the re-export. It must never contain, copy, fork, inline, or reimplement question rendering code.
 
-If rendering is wrong, fix the canonical renderer. If normalization is wrong, fix the canonical model/source adapter. Do not add a patch renderer.
+If rendering is wrong, fix `shared/questions/question-renderer.js`. If normalization is wrong, fix the canonical model/source adapter. Do not add a patch renderer.
 
 Do not create another renderer file for vocab, 서술형, 본문, 수행평가, 오답, grammar, communication, or reading.
 

@@ -1,0 +1,269 @@
+{
+  "book": "Oxford Buzz 4",
+  "prompts": [
+    {
+      "id": "buzz4-u1-w1",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 1,
+      "title": "My Healthy Week",
+      "prompt": "Write about \"My Healthy Week\". Use words from Buzz 4 Unit 1. Try to include frequency adverbs and healthy habits.",
+      "grammar_focus": "frequency adverbs and healthy habits",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u1-w2",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 1,
+      "title": "How I Stay Healthy",
+      "prompt": "Write about \"How I Stay Healthy\". Use words from Buzz 4 Unit 1. Try to include frequency adverbs and healthy habits.",
+      "grammar_focus": "frequency adverbs and healthy habits",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u1-w3",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 1,
+      "title": "My Favorite Sport",
+      "prompt": "Write about \"My Favorite Sport\". Use words from Buzz 4 Unit 1. Try to include frequency adverbs and healthy habits.",
+      "grammar_focus": "frequency adverbs and healthy habits",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u2-w1",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 2,
+      "title": "My Favorite Recipe",
+      "prompt": "Write about \"My Favorite Recipe\". Use words from Buzz 4 Unit 2. Try to include countable and uncountable nouns.",
+      "grammar_focus": "countable and uncountable nouns",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u2-w2",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 2,
+      "title": "Cooking With My Family",
+      "prompt": "Write about \"Cooking With My Family\". Use words from Buzz 4 Unit 2. Try to include countable and uncountable nouns.",
+      "grammar_focus": "countable and uncountable nouns",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u2-w3",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 2,
+      "title": "How to Make a Snack",
+      "prompt": "Write about \"How to Make a Snack\". Use words from Buzz 4 Unit 2. Try to include countable and uncountable nouns.",
+      "grammar_focus": "countable and uncountable nouns",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u3-w1",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 3,
+      "title": "Helping at Home",
+      "prompt": "Write about \"Helping at Home\". Use words from Buzz 4 Unit 3. Try to include regular simple past.",
+      "grammar_focus": "regular simple past",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u3-w2",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 3,
+      "title": "A Family Party",
+      "prompt": "Write about \"A Family Party\". Use words from Buzz 4 Unit 3. Try to include regular simple past.",
+      "grammar_focus": "regular simple past",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u3-w3",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 3,
+      "title": "My Weekend Chores",
+      "prompt": "Write about \"My Weekend Chores\". Use words from Buzz 4 Unit 3. Try to include regular simple past.",
+      "grammar_focus": "regular simple past",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u4-w1",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 4,
+      "title": "A Trip to the Past",
+      "prompt": "Write about \"A Trip to the Past\". Use words from Buzz 4 Unit 4. Try to include irregular simple past.",
+      "grammar_focus": "irregular simple past",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u4-w2",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 4,
+      "title": "An Old Object",
+      "prompt": "Write about \"An Old Object\". Use words from Buzz 4 Unit 4. Try to include irregular simple past.",
+      "grammar_focus": "irregular simple past",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u4-w3",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 4,
+      "title": "A Historical Town",
+      "prompt": "Write about \"A Historical Town\". Use words from Buzz 4 Unit 4. Try to include irregular simple past.",
+      "grammar_focus": "irregular simple past",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u5-w1",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 5,
+      "title": "Our School Rules",
+      "prompt": "Write about \"Our School Rules\". Use words from Buzz 4 Unit 5. Try to include school rules and must/mustn't.",
+      "grammar_focus": "school rules and must/mustn't",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u5-w2",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 5,
+      "title": "My Favorite Place at School",
+      "prompt": "Write about \"My Favorite Place at School\". Use words from Buzz 4 Unit 5. Try to include school rules and must/mustn't.",
+      "grammar_focus": "school rules and must/mustn't",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u5-w3",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 5,
+      "title": "A Kind Classmate",
+      "prompt": "Write about \"A Kind Classmate\". Use words from Buzz 4 Unit 5. Try to include school rules and must/mustn't.",
+      "grammar_focus": "school rules and must/mustn't",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u6-w1",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 6,
+      "title": "My Next Vacation",
+      "prompt": "Write about \"My Next Vacation\". Use words from Buzz 4 Unit 6. Try to include going to future plans.",
+      "grammar_focus": "going to future plans",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u6-w2",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 6,
+      "title": "What I Will Pack",
+      "prompt": "Write about \"What I Will Pack\". Use words from Buzz 4 Unit 6. Try to include going to future plans.",
+      "grammar_focus": "going to future plans",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u6-w3",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 6,
+      "title": "A Dream Camping Trip",
+      "prompt": "Write about \"A Dream Camping Trip\". Use words from Buzz 4 Unit 6. Try to include going to future plans.",
+      "grammar_focus": "going to future plans",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u7-w1",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 7,
+      "title": "My Favorite Wild Animal",
+      "prompt": "Write about \"My Favorite Wild Animal\". Use words from Buzz 4 Unit 7. Try to include comparatives and superlatives.",
+      "grammar_focus": "comparatives and superlatives",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u7-w2",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 7,
+      "title": "The Fastest Animals",
+      "prompt": "Write about \"The Fastest Animals\". Use words from Buzz 4 Unit 7. Try to include comparatives and superlatives.",
+      "grammar_focus": "comparatives and superlatives",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u7-w3",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 7,
+      "title": "A Rainforest Adventure",
+      "prompt": "Write about \"A Rainforest Adventure\". Use words from Buzz 4 Unit 7. Try to include comparatives and superlatives.",
+      "grammar_focus": "comparatives and superlatives",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u8-w1",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 8,
+      "title": "My Favorite TV Show",
+      "prompt": "Write about \"My Favorite TV Show\". Use words from Buzz 4 Unit 8. Try to include relative pronouns and present progressive.",
+      "grammar_focus": "relative pronouns and present progressive",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u8-w2",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 8,
+      "title": "A Fun Day at Home",
+      "prompt": "Write about \"A Fun Day at Home\". Use words from Buzz 4 Unit 8. Try to include relative pronouns and present progressive.",
+      "grammar_focus": "relative pronouns and present progressive",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    },
+    {
+      "id": "buzz4-u8-w3",
+      "book_key": "book:oxford_buzz:4",
+      "unit": 8,
+      "title": "Let's Make Something",
+      "prompt": "Write about \"Let's Make Something\". Use words from Buzz 4 Unit 8. Try to include relative pronouns and present progressive.",
+      "grammar_focus": "relative pronouns and present progressive",
+      "min_sentences": 8,
+      "max_sentences": 30,
+      "source": "Original Willena prompt"
+    }
+  ]
+}

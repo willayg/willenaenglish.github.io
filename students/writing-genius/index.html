@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Writing Genius v1.13.4 · 쓰기 지니어스</title>
+<link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
+<link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
+<link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
+<link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
+<link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
+<link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20261101-footer1">
+<link rel="stylesheet" href="./styles.css?v=20261120-writing-viewer-edit1">
+<script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
+<script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
+<script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
+<script type="module" src="/students/components/student-header.js?v=20261116-p4-visible-scenery2"></script>
+
+<link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261105-overdue-missions1">
+<style>.app-mission-basket-slot .dashboard-mission-basket{width:100%;max-width:none;margin:12px 0 20px}.app-mission-basket-slot:empty{display:none}</style>
+<style>.sp-homework-banner{margin:10px;padding:10px 14px;border:2px solid #f1a6cd;background:#fff4fa;border-radius:12px;color:#b13e81;font-weight:800}.sp-history-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #dce9eb;padding:9px 2px;font-size:12px}.sp-history-entry button{flex-shrink:0}.sp-saved{margin-top:16px;padding:14px;border:1px solid #b5e2e7;border-radius:14px;background:#fff}.sp-saved strong{display:block;margin-bottom:8px}</style><script src="/students/components/homework-deeplink-splash.js?v=20261105-pass2-displayfix1"></script>
+</head><body>
+<div id="willenaHomeworkOpening" role="status" aria-live="polite" style="display:none"><div class="wh-card"><div class="wh-mark" aria-hidden="true"><svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="8" height="8"/><rect x="14" y="2" width="8" height="8"/><rect x="2" y="14" width="8" height="8"/><path d="M14 14h3v3h-3zM21 14v4h-3M14 21h4"/></svg></div><strong>숙제를 불러오는 중...</strong><small>Opening your homework</small><span class="wh-bar" aria-hidden="true"></span></div></div>
+<div class="study-app writing-genius">
+  <student-header title="쓰기 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+  <div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
+    <button class="vocab-theme-pip" type="button" data-theme="cyan" aria-label="Cyan 테마"></button>
+    <button class="vocab-theme-pip" type="button" data-theme="sunbeam" aria-label="Sunbeam 테마"></button>
+    <button class="vocab-theme-pip" type="button" data-theme="pink" aria-label="Pink 테마"></button>
+    <button class="vocab-theme-pip" type="button" data-theme="paper" aria-label="Paper 테마"></button>
+    <button class="vocab-theme-pip" type="button" data-theme="dark" aria-label="Dark 테마"></button>
+    <button class="vocab-theme-pip" type="button" data-theme="cyberpunk" aria-label="Cyberpunk 테마"></button>
+  </div>
+  <main class="vocab-page wg-page">
+    <div id="wgNotice" class="wg-notice" role="status" aria-live="polite"></div>
+    <section id="wgHome" aria-label="Writing home" hidden>
+      <section id="appMissionBasket" class="app-mission-basket-slot"></section>
+      <div class="wg-mode-grid">
+        <button class="wg-mode vocab-front-book-card" type="button" data-start="sentence">
+          <span class="wg-mode-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="7" y="9" width="34" height="30" rx="7"/><path d="M14 20h20M14 28h14"/></svg></span>
+          <span class="wg-mode-copy"><strong>문장 연습</strong><small>단원의 문장을 완성하고 골드 유닛 받기</small></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="wg-mode vocab-front-book-card" type="button" data-start="diary">
+          <span class="wg-mode-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="8" y="10" width="32" height="30" rx="6"/><path d="M8 20h32M17 7v7M31 7v7M17 28h14"/></svg></span>
+          <span class="wg-mode-copy"><strong>오늘의 일기</strong><small>나의 하루</small></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="wg-mode vocab-front-book-card" type="button" data-start="topic">
+          <span class="wg-mode-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M13 36h22M18 29v-3a12 12 0 1 1 12 0v3Z"/><path d="M19 34h10M23 5v-2"/></svg></span>
+          <span class="wg-mode-copy"><strong>주제 글쓰기</strong><small>내 생각 표현하기</small></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
+        </button>
+      </div>
+      <div class="wg-home-practice-info" aria-label="문장 연습 규칙" hidden>
+        <div><strong>GOLD</strong><span>5문장만 있는 단원도 모두 맞히면 골드!</span></div>
+        <div><strong>AI 20</strong><span>AI Willi 하루 20회 · 저장된 정답은 차감 없음</span></div>
+      </div>
+      <button id="wgOpenLibrary" class="wg-portfolio-button" type="button" aria-controls="wgPortfolio" aria-expanded="false">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="5" width="20" height="23" rx="3"/><path d="M11 11h10M11 16h10M11 21h6"/></svg>
+        <span><strong>내 글 모음</strong><small>지난 일기와 글 다시 보기</small></span><span class="wg-portfolio-arrow" aria-hidden="true">›</span>
+      </button>
+      <section id="wgPortfolio" class="wg-portfolio" hidden aria-label="내 글 모음">
+      <button id="wgCloseLibrary" class="vocab-screen-back" type="button">← 글쓰기 메뉴</button>
+      <div class="wg-library-head">
+        <div><h2 class="wg-section-title">내가 쓴 글</h2><p id="wgSummary"></p></div>
+        <select id="wgHistoryFilter" aria-label="글 종류 선택"><option value="all">전체</option><option value="draft">임시 저장</option><option value="submitted">제출 완료</option></select>
+      </div>
+      <div id="wgLibrary" class="wg-library"></div>
+      </section>
+    </section>
+    <section id="wgViewer" class="wg-viewer" aria-label="Saved writing viewer" hidden>
+      <button id="wgViewerBack" class="vocab-screen-back" type="button">← 내 글 모음</button>
+      <article class="wg-viewer-paper">
+        <div class="wg-viewer-header">
+          <div>
+            <p class="wg-viewer-eyebrow">MY WRITING · 내가 쓴 글</p>
+            <h2 id="wgViewerTitle"></h2>
+            <p id="wgViewerMeta" class="wg-viewer-meta"></p>
+          </div>
+          <span id="wgViewerStatus" class="wg-status-pill"></span>
+        </div>
+        <div id="wgViewerDocument">
+          <div id="wgViewerBody" class="wg-viewer-body"></div>
+          <button id="wgViewerEdit" class="wg-button wg-secondary wg-viewer-edit-button" type="button">수정 · Edit</button>
+        </div>
+        <div id="wgViewerEditForm" class="wg-viewer-edit-form" hidden>
+          <label for="wgViewerEditTitle">제목 · Title</label>
+          <input id="wgViewerEditTitle" type="text" maxlength="120" autocomplete="off">
+          <label for="wgViewerEditBody">글 내용 · Writing</label>
+          <textarea id="wgViewerEditBody" rows="12" spellcheck="true"></textarea>
+          <p id="wgViewerEditStatus" role="status" aria-live="polite"></p>
+          <div class="wg-viewer-edit-actions">
+            <button id="wgViewerCancel" class="wg-button wg-secondary" type="button">취소 · Cancel</button>
+            <button id="wgViewerSave" class="wg-button wg-primary" type="button">수정 저장 · Save</button>
+          </div>
+        </div>
+      </article>
+    </section>
+    <section id="wgEditor" class="wg-editor" data-willena-keyboard-safe aria-label="Writing editor" hidden>
+      <section id="wgDiaryFlow" class="wg-diary-flow" hidden aria-label="Daily Diary">
+        <div class="wg-diary-flow-bar"><button id="dfExit" type="button" class="vocab-screen-back">← 글쓰기 메뉴</button><strong id="dfProgress"></strong></div>
+        <div id="dfStage" class="wg-diary-flow-stage"></div>
+        <div id="dfMessage" class="wg-diary-flow-message" role="status" aria-live="polite"></div>
+        <div id="dfActions" class="wg-diary-flow-actions"></div>
+      </section>
+      <div class="wg-editor-nav">
+        <button id="wgBack" class="vocab-screen-back" type="button">← 내 글</button>
+        <span id="wgSaveState" class="wg-save-state" aria-live="polite"></span>
+      </div>
+      <nav id="wgDiarySteps" class="wg-diary-steps" hidden aria-label="Diary steps"><span>1. Topic</span><span>2. Write</span><span>3. Review</span><span>4. Practise</span></nav>
+      <div class="wg-editor-top">
+        <div><span id="wgKind" class="wg-kind"></span><h2 id="wgHeading">글쓰기</h2></div>
+        <span id="wgDate" class="wg-date"></span>
+      </div>
+      <label class="wg-field"><span>제목 · Title</span>
+        <input id="wgTitle" type="text" maxlength="120" placeholder="제목을 지어 봐요" autocomplete="off">
+      </label>
+      <div id="wgPromptRow" class="wg-prompt-row">
+        <label class="wg-field"><span>아이디어 · Writing idea</span>
+          <select id="wgPromptSelect"></select>
+        </label>
+        <div id="wgPromptHelp" class="wg-prompt-help" aria-live="polite"></div>
+      </div>
+      <section id="wgDiaryGuide" class="wg-diary-guide" hidden>
+        <div class="wg-diary-guide-top"><strong>오늘의 영어 일기 · 6–30문장</strong><button id="wgDiaryExamplesOpen" class="wg-button wg-secondary" type="button">예시 일기 보기</button></div>
+        <p>하루에 일기 하나를 쓸 수 있어요. AI Willi의 피드백을 읽은 후 일기 전체를 영어로 말해야 제출할 수 있어요.</p>
+      </section>
+      <dialog id="wgDiaryExamples" class="wg-diary-dialog" aria-label="예시 영어 일기">
+        <div class="wg-diary-dialog-top"><strong>예시 일기 · Example Diaries</strong><button id="wgDiaryExamplesClose" type="button" class="wg-button wg-secondary">닫기</button></div>
+        <div id="wgDiaryExamplesList" class="wg-diary-example-list"></div>
+        <p class="wg-diary-example-hint">예시를 참고하되, 오늘 있었던 일을 자신의 영어로 써 보세요.</p>
+      </dialog>
+      <div id="wgPaperScreen">
+      <section class="wg-paper" aria-label="Write in English">
+        <div class="wg-paper-head"><span>MY WRITING</span><span id="wgCounts">0 words · 0 sentences</span></div>
+        <label for="wgBody" class="wg-visually-hidden">Write your English sentences</label>
+        <textarea id="wgBody" maxlength="12000" spellcheck="true" autocapitalize="sentences" autocomplete="off"
+          placeholder="Write your own English here…&#10;&#10;I like…"></textarea>
+      </section>
+      </div>
+      <section class="wg-help" aria-label="Writing help">
+        <button id="wgIdeasToggle" class="wg-help-toggle" type="button" aria-expanded="false">✦ 글쓰기 도움말 <span>보기</span></button>
+        <div id="wgIdeas" hidden>
+          <p>시작이 어렵다면 하나를 눌러 보세요.</p>
+          <div id="wgStarters" class="wg-starters"></div>
+          <div class="wg-checklist">
+            <label><input type="checkbox"> 문장을 대문자로 시작했나요?</label>
+            <label><input type="checkbox"> 마침표나 물음표를 썼나요?</label>
+            <label><input type="checkbox"> 내 생각을 더 자세히 설명했나요?</label>
+          </div>
+        </div>
+      </section>
+      <section id="wgDiaryReview" class="wg-diary-review" hidden aria-live="polite">
+        <h3>AI Willi의 일기 피드백</h3>
+        <div id="wgDiaryFeedback"></div>
+        <div id="wgDiaryCorrection" class="wg-diary-correction" hidden>
+          <div class="wg-diary-question-head"><strong id="wgDiaryQuestionCount"></strong><span id="wgDiaryQuestionLabel"></span></div>
+          <div id="wgDiaryCorrectionTarget" class="wg-diary-question-prompt"></div>
+          <div id="wgDiaryQuestionHost" class="question-card" data-willena-keyboard-safe></div>
+          <div class="wg-diary-question-actions">
+            <button id="wgDiaryModeWrite" class="wg-button wg-secondary" type="button">쓰기</button>
+            <button id="wgDiaryModeSpeak" class="wg-button wg-secondary" type="button">말하기</button>
+            <button id="wgDiaryCorrectionCheck" class="wg-button wg-primary" type="button">확인</button>
+          </div>
+          <p id="wgDiaryCorrectionStatus" role="status"></p>
+        </div>
+        <div id="wgDiarySpeaking" class="wg-diary-speaking" hidden>
+          <h3>일기 전체 말하기</h3>
+          <p id="wgDiaryFullText" class="wg-diary-full-text"></p>
+          <div id="wgDiaryFullSpeechHost" class="question-card"></div>
+          <button id="wgDiarySpeakCheck" class="wg-button wg-primary" type="button">완료</button>
+          <p id="wgDiarySpeechStatus" role="status"></p>
+        </div>
+      </section>
+      <p id="wgDiaryReviewStatus" class="wg-diary-review-status" role="status" aria-live="polite" hidden></p>
+      <div id="wgDiaryNavigation" class="wg-diary-navigation" hidden><button id="wgDiaryPrev" type="button" class="wg-button wg-secondary">이전</button><button id="wgDiaryNext" type="button" class="wg-button wg-primary">다음</button></div>
+      <div class="wg-submit-note">임시 저장은 나만 볼 수 있어요. 제출한 글은 선생님이 볼 수 있어요.</div>
+      <div class="wg-actions">
+        <button id="wgSave" type="button" class="wg-button wg-secondary">임시 저장</button>
+        <button id="wgSubmit" type="button" class="wg-button wg-primary">글 제출하기</button>
+      </div>
+      <div id="wgComplete" class="wg-complete" hidden>
+        <strong>잘했어요! 글을 제출했어요 ✓</strong>
+        <span>다른 표현도 마음껏 써 보세요.</span>
+        <button type="button" id="wgRevise" class="wg-button wg-secondary">다시 고쳐 쓰기</button>
+      </div>
+    </section>
+
+    <section id="wgPractice" class="wg-practice" aria-label="Sentence Practice" hidden>
+      <div class="wg-editor-nav" hidden>
+        <button id="spBack" class="vocab-screen-back" type="button">← 글쓰기 메뉴</button>
+        <span id="spSaveState" class="wg-save-state" role="status" aria-live="polite"></span>
+      </div>
+      <div id="spPicker" class="sp-picker vocab-home-card vocab-subscreen"><p id="spHomeworkBanner" class="sp-homework-banner" hidden></p>
+        <div class="vocab-subscreen-head"><button id="spBookBack" class="vocab-screen-back" type="button">← 홈</button><span>교재 공부</span></div>
+        <section class="vocab-book-picker"><div id="spBookTabs" class="vocab-book-choices" role="group" aria-label="교재 선택"></div><select id="spBook" hidden aria-label="교재"></select></section>
+        <div class="sp-units study-v2-units vocab-unit-selector"><div id="spUnitStrip" class="study-v2-unit-strip" aria-label="단원"></div><input id="spUnit" type="hidden" value=""></div>
+        <div class="vocab-unit-summary"><h2 id="spUnitTitle">Unit</h2><button id="spSentenceListOpen" class="vocab-word-card" type="button" disabled><span id="spSentenceCount">— 문장 보기</span></button></div>
+        <section class="vocab-skill-grid sp-writing-skills" aria-label="문장 만들기"><button type="button" id="spStart" class="vocab-skill-card vocab-skill-quiz" disabled><span id="spSkillRing" class="vocab-skill-ring" style="--progress:0"><span>0%</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">STEP 1</small><strong>문장 만들기</strong><span id="spSkillStars" class="vocab-card-stars">★ 0/5</span></span></button></section>
+        <section data-shared-achievements class="vocab-motivation vocab-achievements" aria-label="학습 현황">
+        <div class="vocab-motivation-stat"><img class="vocab-motivation-icon" src="/shared/svgs/streak.svg?v=20260927-icons1" alt=""><div><strong id="spStreakCurrent">0</strong><small>연속 학습</small></div></div>
+        <div class="vocab-motivation-stat"><img class="vocab-motivation-icon" src="/shared/svgs/best-streak.svg?v=20260927-icons1" alt=""><div><strong id="spStreakBest">0</strong><small>최고 연속</small></div></div>
+        <div class="vocab-motivation-stat vocab-motivation-gold"><img class="vocab-motivation-icon" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt=""><div><strong id="spGoldCount">0</strong><small>gold</small></div></div></section>
+        <p id="spAiQuotaPicker" class="sp-subtle" aria-live="polite"></p><p id="spSourceNote" hidden class="sp-subtle"></p>
+        <div id="spSaved" class="sp-saved" hidden><div id="spSessionList"></div></div>
+        <dialog id="spSentenceModal" class="sp-sentence-modal"><button id="spSentenceModalClose" class="vocab-screen-back" type="button">닫기</button><h2 id="spSentenceModalTitle">단원 문장</h2><div id="spSentenceModalList"></div></dialog>
+      </div>
+      <section id="spRound" class="vocab-session wg-shared-session" aria-label="Writing Genius sentence lesson" hidden>
+        <header class="vocab-session-top">
+          <div class="vocab-session-topline">
+            <button id="spRoundBack" class="vocab-back" type="button" aria-label="단원 선택으로 돌아가기">←</button>
+            <div class="vocab-progress-copy">
+              <strong id="spModeLabel">문장 만들기</strong>
+              <small id="spQuestionCount">1 / —</small>
+            </div>
+            <button id="spRoundHome" class="vocab-session-home" type="button" aria-label="Writing Genius 메인 메뉴로 돌아가기">⌂ 홈</button>
+          </div>
+          <div class="vocab-progress-track"><div id="spProgressBar" class="vocab-progress-fill"></div></div>
+        </header>
+        <main id="spSessionMain" class="vocab-session-main" data-willena-keyboard-safe>
+          <div class="vocab-question-wrap">
+            <p id="spAiQuotaRound" class="sp-subtle wg-round-quota" aria-live="polite">AI Willi 하루 20회 · 교재 정답은 무료</p>
+            <div id="spUnitName" class="vocab-instruction sp-unit-name"></div>
+            <div id="spQuestionHost" class="question-card" aria-label="영어 문장 만들기"></div>
+            <p id="spTaskDetail" class="sp-subtle wg-question-detail" hidden></p>
+            <div id="spFeedback" class="sp-feedback vocab-answer-note" hidden aria-live="polite">
+              <strong id="spGrade"></strong>
+              <p id="spGradeNote"></p>
+              <p id="spSuggestion"></p>
+              <p id="spMasteryNote" class="sp-mastery-note"></p>
+            </div>
+            <div id="spCompare" class="sp-compare" hidden>
+              <strong>교재 예문 · 또 다른 표현</strong>
+              <p id="spModel"></p>
+              <p id="spComparisonNote"></p>
+              <div class="sp-compare-caption">다른 표현도 맞을 수 있어요. AI 설명을 보고 고쳐 보세요.</div>
+            </div>
+            <div id="spRoundMessage" class="wg-notice" role="status" aria-live="polite"></div>
+            <div id="spRoundSave" class="wg-save-state" aria-live="polite"></div>
+          </div>
+        </main>
+        <footer class="vocab-session-bottom">
+          <div class="vocab-action-row wg-shared-actions">
+            <button id="spCompareBtn" class="vocab-action" type="button">Check Answer · 확인하기</button>
+            <div id="spNextActions" class="wg-next-actions" hidden aria-label="답 확인 후 다음 행동">
+              <button id="spRetryBtn" class="vocab-action" type="button" hidden>다시 써 보기</button>
+              <button id="spNextBtn" class="vocab-action is-next" type="button">다음</button>
+            </div>
+          </div>
+        </footer>
+      </section>
+      <div id="spDone" class="sp-done" hidden>
+        <div class="sp-done-star">✓</div>
+        <div id="spStarsEarned" class="sp-stars-earned" aria-label="Session stars">☆☆☆☆☆</div>
+        <h2>문장 연습 완료!</h2>
+        <p id="spScoreSummary">내 문장을 직접 만들고 고쳤어요.</p>
+        <div id="spGoldAward" class="sp-gold-award" hidden>
+          <img src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="">
+          <strong>GOLDEN UNIT!</strong>
+        </div>
+        <p id="spSyncStatus" class="sp-sync-status" aria-live="polite"></p>
+        <div class="sp-inline-actions">
+          <button id="spFinished" class="wg-button wg-primary" type="button">글쓰기 메뉴</button>
+        </div>
+      </div>
+      <div id="spMessage" class="wg-notice" role="status" aria-live="polite"></div>
+    </section>
+    <div class="wg-version-row" aria-label="Writing Genius version"><span>Writing Genius</span><strong>v1.13.4</strong></div>
+  </main>
+</div>
+<script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
+<script src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
+<script type="module" src="./app.js?v=20261120-writing-viewer-edit1"></script>
+
+<script src="/students/components/mission-basket.js?v=20261112-conversation-route4"></script>
+<script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('appMissionBasket');if(el)window.WillenaMissionBasket?.mount(el,{app:'Writing Genius'})});</script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const home=document.getElementById('wgHome'),ach=document.querySelector('#spPicker > .vocab-motivation');if(home&&ach){home.appendChild(ach);ach.classList.add('wg-home-achievements')}});</script>
+<script defer src="/students/components/live-presence.js?v=20261103-p3"></script>
+<script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
+</body></html>

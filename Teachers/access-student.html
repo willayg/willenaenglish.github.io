@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>교사용 페이지 - Willena English</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="/js/api-config.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .login-container {
+      background:white;
+      border-radius:16px;
+      box-shadow:0 20px 50px rgba(0,0,0,.1);
+      padding:40px;
+      width:100%;
+      max-width:400px;
+      position:relative;
+      overflow:hidden;
+    }
+    .login-container::before {
+      content:'';
+      position:absolute;
+      top:0;
+      left:0;
+      right:0;
+      height:4px;
+      background:linear-gradient(90deg,#667eea,#764ba2);
+    }
+    .logo {
+      text-align:center;
+      margin-bottom:32px;
+    }
+    .logo h1 {
+      color:#1a202c;
+      font-size:28px;
+      font-weight:600;
+      margin-bottom:8px;
+      line-height:1.35;
+    }
+    .logo p {
+      color:#718096;
+      font-size:14px;
+      line-height:1.6;
+    }
+    .account {
+      display:none;
+      padding:12px 16px;
+      border-radius:8px;
+      margin-bottom:20px;
+      font-size:14px;
+      text-align:center;
+      background:#edf2f7;
+      color:#4a5568;
+      border:1px solid #e2e8f0;
+      font-weight:500;
+    }
+    .action-btn {
+      width:100%;
+      padding:14px;
+      border-radius:8px;
+      font-size:16px;
+      font-weight:600;
+      cursor:pointer;
+      transition:all .2s;
+    }
+    .primary {
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:white;
+      border:none;
+      margin-bottom:12px;
+    }
+    .primary:hover { transform:translateY(-1px); box-shadow:0 10px 25px rgba(102,126,234,.3); }
+    .secondary {
+      background:white;
+      color:#4a5568;
+      border:2px solid #e2e8f0;
+    }
+    .secondary:hover { border-color:#cbd5e0; background:#f7fafc; }
+    .status {
+      min-height:20px;
+      margin-top:16px;
+      color:#718096;
+      font-size:13px;
+      text-align:center;
+    }
+    @media (max-width:480px) {
+      .login-container { padding:30px 20px; margin:10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">
+      <h1>학생 계정으로 로그인되어 있습니다</h1>
+      <p>교사용 페이지는 선생님 또는 관리자 계정으로만 이용할 수 있습니다.</p>
+    </div>
+
+    <div class="account" id="accountName"></div>
+
+    <button type="button" class="action-btn primary" id="studentBtn">학생 페이지로 이동</button>
+    <button type="button" class="action-btn secondary" id="teacherBtn">로그아웃하고 선생님 계정으로 로그인</button>
+
+    <div class="status" id="status"></div>
+  </div>
+
+<script>
+(function(){
+  const studentHome='https://students.willenaenglish.com/';
+  const params=new URLSearchParams(location.search);
+  const rawNext=params.get('next')||'/Teachers/index.html';
+  const next=(rawNext.startsWith('/Teachers/')&&!/^https?:/i.test(rawNext))?rawNext:'/Teachers/index.html';
+  const status=document.getElementById('status');
+
+  document.getElementById('studentBtn').onclick=()=>{location.href=studentHome};
+
+  document.getElementById('teacherBtn').onclick=async()=>{
+    status.textContent='로그아웃 중...';
+    try{
+      const api=window.WillenaAPI?.fetch
+        ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
+        : (url,options)=>fetch(url,{credentials:'include',...(options||{})});
+      await api('/.netlify/functions/supabase_auth?action=logout',{method:'POST'});
+    }catch{}
+    try{
+      ['userId','userRole','role','username','userEmail','name'].forEach(k=>localStorage.removeItem(k));
+      window.WillenaAPI?.clearLocalTokens?.();
+    }catch{}
+    location.replace('/Teachers/login.html?redirect='+encodeURIComponent(next));
+  };
+
+  (async()=>{
+    try{
+      const api=window.WillenaAPI?.fetch
+        ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
+        : (url,options)=>fetch(url,{credentials:'include',...(options||{})});
+      const r=await api('/.netlify/functions/supabase_auth?action=get_profile_name&_='+Date.now(),{cache:'no-store'});
+      const j=await r.json().catch(()=>({}));
+      const name=String(j?.name||j?.username||'').trim();
+      if(r.ok&&name){
+        const el=document.getElementById('accountName');
+        el.textContent='현재 로그인 계정: '+name;
+        el.style.display='block';
+      }
+    }catch{}
+  })();
+})();
+</script>
+</body>
+</html>

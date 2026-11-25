@@ -1,0 +1,22 @@
+/* Visitor level-test to regular student enrolment */
+#levelTestEnroll[hidden]{display:none!important}
+.level-test-drawer-actions #levelTestEnroll{border:1.5px solid #ef7fb4;background:#fff;color:#d83d88;font-weight:700}
+.level-test-drawer-actions #levelTestEnroll:hover:not(:disabled){background:#fff1f8}
+.visitor-enroll-backdrop{position:fixed;inset:0;z-index:99990;background:rgba(24,37,54,.42);display:flex;align-items:center;justify-content:center;padding:18px}
+.visitor-enroll-panel{background:#fff;color:#24324a;border-radius:18px;width:min(490px,100%);max-height:min(90vh,820px);overflow:auto;box-shadow:0 18px 65px #12263d38;font-family:Poppins,sans-serif}
+.visitor-enroll-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #e9eef4}
+.visitor-enroll-head h2{font-size:19px;margin:0;font-weight:700}
+.visitor-enroll-close{border:0;background:transparent;color:#66768a;font-size:26px;cursor:pointer}
+.visitor-enroll-form{padding:18px 22px 22px;display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.visitor-enroll-form .visitor-enroll-intro,.visitor-enroll-form .visitor-enroll-error,.visitor-enroll-actions{grid-column:1/-1}
+.visitor-enroll-intro{font-size:12px;line-height:1.6;color:#657489;margin:0 0 3px}
+.visitor-enroll-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#4e5d71}
+.visitor-enroll-form input,.visitor-enroll-form select{width:100%;min-width:0;height:41px;box-sizing:border-box;border:1px solid #cad8e3;border-radius:9px;padding:0 11px;background:#fff;color:#26364c;font:inherit;font-size:13px}
+.visitor-enroll-form input:focus,.visitor-enroll-form select:focus{outline:2px solid #8ed9e7;outline-offset:1px}
+.visitor-enroll-error{color:#b72d52;font-size:12px;margin:0}
+.visitor-enroll-error:empty{display:none}
+.visitor-enroll-actions{display:flex;justify-content:flex-end;gap:10px;padding-top:9px}
+.visitor-enroll-actions button{border:1px solid #d0dae4;border-radius:10px;padding:10px 17px;background:white;color:#425369;font:inherit;font-size:13px;cursor:pointer}
+.visitor-enroll-actions button.primary{border-color:#ef7fb4;background:#ef7fb4;color:#fff;font-weight:700}
+.visitor-enroll-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:500px){.visitor-enroll-panel{max-height:94vh}.visitor-enroll-form{grid-template-columns:1fr 1fr;padding:15px;gap:11px}.visitor-enroll-form label{grid-column:1/-1}.visitor-enroll-head{padding:14px 15px}}

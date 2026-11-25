@@ -1,0 +1,282 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Genius Live · Students</title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ed5ca6;--cyan:#76d8e1;--ink:#294653;--muted:#758d97;--line:#d9edf0}*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 90% 0%,#e1fbff,transparent 36%),radial-gradient(circle at 10% 0%,#ffeff7,transparent 35%),#f8fcfd;font:14px Poppins,Arial,sans-serif;color:var(--ink)}
+header{padding:17px 20px;background:#fff;border-bottom:2px solid #dcf2f6;display:flex;align-items:center;justify-content:space-between;gap:12px}header strong{font-size:23px;font-weight:800;letter-spacing:-.5px}header strong span{color:var(--pink)}main{max-width:940px;margin:25px auto;padding:0 16px}
+.card{background:white;border:2px solid var(--line);border-radius:20px;padding:24px;margin-bottom:18px;box-shadow:0 8px 25px #2557670b}.card.pink{border-color:#ffbedf}.row{display:flex;align-items:center;flex-wrap:wrap;gap:10px}.between{justify-content:space-between}.grid{display:grid;grid-template-columns:1.35fr .8fr;gap:16px}
+h1{font-size:clamp(27px,5vw,44px);margin:0 0 10px}h2{margin:0 0 12px;font-size:21px}.muted{color:var(--muted)}.small{font-size:12px}.pill{display:inline-block;padding:6px 11px;background:#e4f8fb;color:#378492;border-radius:30px;font-size:12px;font-weight:700}
+input,button{font:inherit}input{width:100%;padding:13px;border:2px solid #c7e9ef;border-radius:12px;background:#fff;font-size:17px}
+button{padding:12px 17px;font-weight:700;border-radius:12px;border:2px solid var(--cyan);background:white;color:#bd387d;cursor:pointer}button.primary{color:white;background:var(--pink);border-color:var(--pink)}button:disabled{opacity:.5;cursor:not-allowed}
+.pin{font-size:clamp(40px,6vw,65px);font-weight:800;color:#d94894;letter-spacing:8px}.question{white-space:pre-line;font-size:clamp(23px,3vw,35px);line-height:1.4;font-weight:800;margin:18px 0}.answers{display:grid;grid-template-columns:1fr 1fr;gap:11px}.answers:has(.answer:nth-child(5)) .answer:nth-child(5){grid-column:1 / -1}.answer{border:0;color:white;text-align:left;padding:19px 17px;min-height:100px;font-size:17px;display:flex;align-items:center;gap:12px}
+.answer:nth-child(4n+1){background:#eb6197}.answer:nth-child(4n+2){background:#3db5d1}.answer:nth-child(4n+3){background:#e9a746}.answer:nth-child(4n+4){background:#8978d2}.answer.chosen{outline:5px solid #2c6179;outline-offset:2px}.letter{width:32px;height:32px;flex:none;border:1px solid #fff9;border-radius:9px;display:grid;place-items:center}
+.timer{font-size:33px;color:var(--pink);font-weight:800;font-variant-numeric:tabular-nums}.bar{height:9px;border-radius:9px;overflow:hidden;background:#e4f1f3}.bar i{height:100%;display:block;background:linear-gradient(90deg,var(--cyan),var(--pink))}
+.notice{border:1px solid #f4dba5;background:#fff8e7;border-radius:12px;padding:13px;margin:12px 0}.notice.error{border-color:#f2b6cf;background:#fff0f5}.score{display:flex;justify-content:space-between;gap:9px;border-bottom:1px solid #e7eff0;padding:11px 0}.score:last-child{border:0}
+@media(max-width:700px){.grid,.answers{grid-template-columns:1fr}.card{padding:16px}.answer{min-height:77px}.pin{letter-spacing:5px}}
+.gl-countdown{min-height:75dvh;display:flex;flex-direction:column;justify-content:center;align-items:center;border-radius:18px;background:radial-gradient(circle,#1e5676,#0b1329 74%);color:#fff;text-align:center;padding:22px}
+.gl-countdown h1{font-size:clamp(20px,5vw,32px);color:#a4eaff}
+.gl-countdown .big{font-size:clamp(120px,32vw,260px);font-weight:900;line-height:1.1;text-shadow:0 0 38px #f254aa88}
+.gl-countdown .pulse{animation:gl-pulse .7s ease-out}
+@keyframes gl-pulse{from{transform:scale(1.25);opacity:.6}to{transform:scale(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){.gl-countdown .pulse{animation:none}}
+
+/* Immediate answer feedback and lightweight local confirmation animations. */
+.answer{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.answer.is-sending{outline:5px solid #2c6179;outline-offset:2px;filter:brightness(1.13)}
+.answer:focus-visible{outline:4px solid #183951;outline-offset:3px}
+/* During reveal, preserve the student's chosen-answer ring, but use colour fills to show the correct answer. */
+.answers .answer{transition:background-color .55s ease,color .55s ease,box-shadow .55s ease}
+.answers.is-revealed .answer:disabled{opacity:1}
+.answers.is-revealed .answer:not(.correct){background-color:#667487;color:#fff}
+.answers.is-revealed .answer.correct{background-color:#13854f;color:#fff;box-shadow:inset 0 0 0 3px #bdf5cf}
+.answers.is-revealed .answer.correct::after{content:"✓";display:grid;place-items:center;margin-left:auto;flex:none;width:36px;height:36px;border-radius:50%;background:#f0fff6;color:#08713d;font-size:23px;font-weight:900}
+.answers.is-revealed .answer.chosen,
+.answers.is-revealed .answer.chosen:focus-visible{outline:5px solid #2c6179;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.answers .answer{transition:none}}
+.gl-locked{position:fixed;inset:0;z-index:1000;background:radial-gradient(circle at 50% 24%,#334b84 0%,#121d40 56%,#080e22 100%);color:#fff;display:flex;align-items:center;justify-content:center;padding:clamp(16px,5vw,32px);text-align:center;overflow:auto}
+.gl-locked::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 4px,#ffffff09 4px 5px);pointer-events:none}
+.gl-lock-inner{position:relative;width:min(420px,100%);margin:auto}
+.gl-lock-kicker{font-size:12px;font-weight:800;letter-spacing:.15em;color:#a8dfea}
+.gl-lock-mascot{width:174px;height:174px;margin:24px auto 14px;border:5px solid #8be8f4;border-radius:30px;background:radial-gradient(circle,#ffffff 0%,#e5f9fc 100%);box-shadow:0 9px 0 #0a1534,0 17px 40px #0008;display:flex;align-items:center;justify-content:center}
+.gl-lock-mascot .gl-character-logo{width:148px!important;height:148px!important}
+.gl-lock-mascot .gl-character-logo svg{max-width:100%;max-height:100%}
+.gl-lock-emoji{font-size:100px;line-height:1}
+.gl-lock-team{font-size:13px;font-weight:800;color:#aee6f6;letter-spacing:.07em;margin-bottom:12px}
+.gl-lock-message{font-size:clamp(24px,6.5vw,36px);line-height:1.2;font-weight:800;margin:10px auto 22px;color:#fff;max-width:390px}
+.gl-lock-confirm{display:inline-flex;align-items:center;gap:9px;padding:10px 17px;border-radius:99px;background:#233e63;border:1px solid #74dfc6;color:#d6fff1;font-weight:800;font-size:13px;letter-spacing:.03em}
+.gl-lock-check{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#67dbb1;color:#102c36;font-size:15px;font-weight:900}
+.gl-lock-wait{font-size:13px;color:#bfd4eb;font-weight:600;margin:24px 0 0}
+.gl-lock-sweep{height:8px;max-width:270px;border-radius:9px;background:#ffffff24;margin:15px auto 0;overflow:hidden}
+.gl-lock-sweep i{display:block;height:100%;width:35%;border-radius:9px;background:linear-gradient(90deg,#ff7aaf,#ffe486,#81f1ef);animation:gl-sweep 1.6s linear infinite}
+.gl-locked.is-fresh .gl-lock-message{animation:gl-lock-pop .5s ease-out both}
+.gl-locked.is-fresh .gl-lock-mascot{animation:gl-lock-bounce .7s ease-out both}
+@keyframes gl-lock-pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes gl-lock-bounce{0%,100%{transform:translateY(0)}48%{transform:translateY(-12px)}75%{transform:translateY(4px)}}
+@keyframes gl-sweep{from{transform:translateX(-100%)}to{transform:translateX(290%)}}
+@media(prefers-reduced-motion:reduce){.gl-locked *,.gl-locked::before,.gl-locked::after{animation:none!important}}
+
+</style></head><body><header><strong>Genius <span>Live</span></strong><span class="pill">Willena Students</span></header><main><div id="message" class="notice" hidden></div><div id="app"></div></main>
+<script type="module">
+import {TEAM_CHARACTER_LOGOS,TEAM_CHARACTER_IDS,teamCharacterMarkup} from "./team-logo-art.js?v=20261117-20logos";
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const api=async(action,body={})=>{const r=await fetch("/api/genius-live",{method:"POST",credentials:"include",cache:"no-store",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,...body})});const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok){const e=new Error(d.error||"Game server error");e.status=r.status;throw e}return d};
+const teamName=n=>state?.teamNames?.[n]||["Pink Dragons","Blue Sharks","Green Tigers","Yellow Stars","Purple Panthers","Orange Foxes","Silver Wolves","Red Falcons"][n]||"Team";
+const linkPin=new URLSearchParams(location.search).get("pin")||"";
+const previousPin=sessionStorage.getItem("genius.live.student.pin")||"";
+let pin=linkPin||previousPin,state=null,working=false,last="",refreshing=false;
+let localAnswer=null;
+const LOCK_MESSAGES=[
+ "Did you get it right?",
+ "Hope you double-checked!",
+ "Feeling confident?",
+ "Was that your final answer?",
+ "Trust your instincts!",
+ "Too easy? We'll see!",
+ "Big brain move?",
+ "The suspense is killing me!",
+ "Your team is counting on you!",
+ "No changing your mind now!"
+];
+function notice(t,err=false){const m=$("#message");m.hidden=!t;m.className="notice"+(err?" error":"");m.textContent=t}
+function scores(){const teams=state.mode==="team";const list=teams?Array.from({length:state.teamCount},(_,i)=>{const members=state.players.filter(p=>p.team===i);const total=members.reduce((n,p)=>n+p.score,0);return{name:teamName(i),logo:teamLogo(i),score:members.length?total/members.length:0,count:members.length}}):state.players.map(p=>({name:p.name,score:p.score}));list.sort((a,b)=>b.score-a.score);return list.map((p,i)=>'<div class="score"><span>'+(i+1)+'. '+(teams?logoVisual(p.logo,26)+' ':'')+esc(p.name)+(teams?' <small class="muted">('+p.count+' players)</small>':"")+'</span><b>'+Math.round(p.score).toLocaleString()+(teams?" avg pts":" pts")+'</b></div>').join("")}
+function joinForm(){return '<div class="grid"><section class="card pink"><span class="pill">Classroom game</span><h1>Join Genius Live</h1><p class="muted">Ask your teacher for the six-digit game PIN.</p>'+
+ '<form id="joinForm"><label for="pinInput" style="font-weight:700">Game PIN</label><input id="pinInput" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required value="'+esc(pin)+'" placeholder="123456" style="margin:8px 0 15px"><button class="primary">Join Game</button></form>'+
+ '<p class="small muted">Your English name comes automatically from your Willena account.</p></section>'+
+ '<section class="card"><h2>How to play</h2><p>1. Sign into your Willena student account.</p><p>2. Enter the PIN.</p><p>3. Read the vocabulary question and tap your answer.</p><p>4. Earn points for correct, quick answers.</p><a href="/students/dashboard">Student Dashboard</a></section></div>'}
+const TEAM_EMOJIS=["🦊","🐉","🦈","🐯","⭐","🦁","🐺","🚀","⚡","🔥","🐼","🦅","🌙","👑"];
+function teamLogo(i){return state?.teamLogos?.[i]||TEAM_EMOJIS[i%TEAM_EMOJIS.length]}
+function logoVisual(code,size=30){return TEAM_CHARACTER_IDS.includes(code)?teamCharacterMarkup(code,size):'<span style="font-size:24px">'+esc(code||"⭐")+'</span>'}
+function attachLogoPickers(){
+ document.querySelectorAll("[data-select-logo]").forEach(button=>button.onclick=()=>{
+  const wrap=button.closest("[data-logo-wrap]");if(!wrap)return;
+  const value=button.dataset.selectLogo;
+  wrap.querySelector("[data-logo-value]").value=value;
+  wrap.querySelector("[data-logo-current]").innerHTML=logoVisual(value,33);
+  wrap.querySelector("details").open=false;
+ });
+}
+function logoPicker(current,id){
+ const selected=TEAM_CHARACTER_IDS.includes(current)||TEAM_EMOJIS.includes(current)?current:"🦊";
+ const options=TEAM_EMOJIS.map(code=>({id:code,name:code})).concat(TEAM_CHARACTER_LOGOS);
+ return '<div data-logo-wrap="'+esc(id)+'" style="position:relative;min-width:74px"><input type="hidden" id="'+esc(id)+'" data-logo-value value="'+esc(selected)+'"><details><summary style="cursor:pointer;display:grid;place-items:center;min-height:46px;min-width:70px;background:#fff;border:1px solid #b1dde4;border-radius:10px;list-style:none"><span data-logo-current>'+logoVisual(selected,35)+'</span></summary><div style="position:absolute;z-index:80;left:0;top:100%;display:grid;grid-template-columns:repeat(5,50px);gap:6px;width:min(285px,90vw);max-height:280px;overflow:auto;padding:9px;background:#fff;border:1px solid #b1dde4;border-radius:12px;box-shadow:0 8px 25px #1234">'+options.map(x=>'<button type="button" data-select-logo="'+esc(x.id)+'" title="'+esc(x.name)+'" aria-label="'+esc(x.name)+'" style="display:grid;place-items:center;width:50px;height:50px;padding:4px;font-size:24px">'+logoVisual(x.id,38)+'</button>').join("")+'</div></details></div>';
+}
+function lobby(){
+ const own=state.players.find(p=>p.id===state.myPlayerId),myTeam=own?.team??-1,teamMode=state.mode==="team";
+ const canCaptain=state.myCaptainTeams?.includes(myTeam);
+ const teams=Array.from({length:state.teamCount},(_,i)=>{
+  const count=state.players.filter(p=>p.team===i).length;
+  return '<div class="row between" style="padding:10px 0;border-bottom:1px solid #d8e9ee"><span style="font-weight:700;font-size:15px">'+logoVisual(teamLogo(i),30)+' '+esc(teamName(i))+' <small class="muted">('+count+' players'+(state.captains?.[i]?' · captain '+esc(state.captains[i]):'')+')</small></span><button data-join-team="'+i+'" '+(myTeam===i?"disabled":"")+'>'+(myTeam===i?"Joined":"Join team")+'</button></div>';
+ }).join("");
+ const maxTeams=state.maxTeams||8;
+ const create=state.teamCreation==="students"&&state.teamCount<maxTeams?'<section style="text-align:left;margin-top:22px;padding:16px;border:1px solid #c6e7ed;border-radius:14px"><h2 style="margin:0 0 10px">Create a new team</h2><p class="muted small">You become captain. Other students can join you.</p><div class="row">'+logoPicker("🦊","newTeamLogo")+'<input id="newTeamName" maxlength="24" placeholder="Your team name" style="flex:1;min-width:120px;padding:12px;border:1px solid #b1dde4;border-radius:10px"><button class="primary" id="createTeam">Create</button></div></section>':"";
+ const captainEditor=canCaptain?'<section style="text-align:left;margin-top:15px;padding:14px;border:1px solid #c6e7ed;border-radius:14px"><h2 style="margin:0 0 10px">Captain controls</h2><div class="row">'+logoPicker(teamLogo(myTeam),"captainTeamLogo")+'<input id="teamNameInput" maxlength="24" value="'+esc(teamName(myTeam))+'" style="flex:1;min-width:120px;padding:12px;border:1px solid #b1dde4;border-radius:10px"><button id="saveTeamName">Save</button></div></section>':"";
+ const teamControls=!teamMode?"":'<div style="margin:18px auto;max-width:650px;text-align:left"><h2>Choose your team</h2>'+(!state.teamCount?'<p class="muted">No teams yet. Create the first team!</p>':teams)+create+captainEditor+'</div>';
+ return '<section class="card pink" style="text-align:center"><span class="pill">Joined successfully · '+esc(state.className||"Class")+'</span><h1>Waiting for your teacher</h1><div class="pin">'+esc(pin)+'</div><p>You are playing as <b>'+esc(own?.name||"Student")+'</b>.</p><p class="muted">'+state.players.length+' players ready'+(teamMode&&myTeam>=0?" · "+logoVisual(teamLogo(myTeam),28)+" "+esc(teamName(myTeam)):"")+'</p>'+teamControls+'<div class="notice">The game will begin when your teacher presses Start.</div></section>';
+}
+let answerLockAnimatedKey="",answerLockFreshUntil=0,lastAnimatedRevealKey="";
+let lockSoundContext=null;
+function unlockLockSfx(){try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;if(!lockSoundContext)lockSoundContext=new Audio();if(lockSoundContext.state==="suspended")lockSoundContext.resume().catch(()=>{})}catch{}}
+function lockSfx(){
+ try{
+  const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
+  if(!lockSoundContext)lockSoundContext=new Audio();
+  const ctx=lockSoundContext;
+  if(ctx.state==="suspended")ctx.resume().catch(()=>{});
+  [74,81,86].forEach((m,i)=>{
+   const time=ctx.currentTime+i*.09,osc=ctx.createOscillator(),gain=ctx.createGain();
+   osc.type="square";osc.frequency.setValueAtTime(440*Math.pow(2,(m-69)/12),time);
+   osc.connect(gain);gain.connect(ctx.destination);
+   gain.gain.setValueAtTime(.0001,time);gain.gain.exponentialRampToValueAtTime(.032,time+.012);
+   gain.gain.exponentialRampToValueAtTime(.0001,time+.14);
+   osc.start(time);osc.stop(time+.15);
+  });
+ }catch{}
+}
+function answerMessage(){
+ const key=pin+":"+state.questionNumber;
+ if(localAnswer?.key===key&&localAnswer.message)return localAnswer.message;
+ // Stable fallback for refresh/reopen: never shuffle the text every polling cycle.
+ const source=String(state.myPlayerId||pin)+":"+state.questionNumber;
+ let hash=0;for(const char of source)hash=(hash*31+char.charCodeAt(0))>>>0;
+ return LOCK_MESSAGES[hash%LOCK_MESSAGES.length];
+}
+function answerLockView(fresh){
+ const player=state.players.find(p=>p.id===state.myPlayerId);
+ const team=state.mode==="team"&&Number.isInteger(player?.team)&&player.team>=0?player.team:-1;
+ const logo=team>=0?teamLogo(team):"willi";
+ const mascot=TEAM_CHARACTER_IDS.includes(logo)?teamCharacterMarkup(logo,148):'<span class="gl-lock-emoji" aria-hidden="true">'+esc(logo||"⭐")+'</span>';
+ return '<div class="gl-locked '+(fresh?"is-fresh":"")+'" role="status" aria-live="polite">'+
+ '<div class="gl-lock-inner"><div class="gl-lock-kicker">GENIUS LIVE · QUESTION '+state.questionNumber+' / '+state.total+'</div>'+
+ '<div class="gl-lock-mascot" aria-hidden="true">'+mascot+'</div>'+
+ '<div class="gl-lock-team">'+esc(team>=0?teamName(team):"GENIUS LIVE")+'</div>'+
+ '<h2 class="gl-lock-message">'+esc(answerMessage())+'</h2>'+
+ '<div class="gl-lock-confirm"><span class="gl-lock-check" aria-hidden="true">✓</span>ANSWER LOCKED!</div>'+
+ '<p class="gl-lock-wait">Waiting for the other players...</p>'+
+ '<div class="gl-lock-sweep" aria-hidden="true"><i></i></div></div></div>';
+}
+function showAnswerSending(choice){
+ // Make the response visible before any network request finishes.
+ document.querySelectorAll("[data-answer]").forEach(button=>{
+  const selected=Number(button.dataset.answer)===choice;
+  button.disabled=true;
+  button.classList.toggle("chosen",selected);
+  button.classList.toggle("is-sending",selected);
+  if(selected)button.setAttribute("aria-pressed","true");
+ });
+ const hint=$("#glAnswerHint");
+ if(hint){hint.textContent="Sending your answer...";hint.setAttribute("role","status");}
+}
+function confirmLocalAnswer(roundKey,choice){
+ if(localAnswer?.key!==roundKey)return;
+ localAnswer.choice=choice;localAnswer.status="confirmed";
+ answerLockAnimatedKey=roundKey;answerLockFreshUntil=Date.now()+1200;
+ lockSfx();last="";notice("");paint();
+}
+
+function quiz(){const q=state.question,roundKey=pin+":"+state.questionNumber,localDone=localAnswer?.key===roundKey&&localAnswer.status==="confirmed",done=state.myAnswer!==null||localDone,reveal=state.status==="reveal";return '<div class="grid"><section class="card pink"><div class="row between"><span class="pill">'+esc(q.book)+' · '+(q.skill==='Grammar Genius'?'Grammar':q.skill==='Sentence Genius'?'Sentence · Unit '+q.unit:'Vocabulary · Unit '+q.unit)+'</span><b>'+state.questionNumber+' / '+state.total+'</b></div>'+
+ '<div class="row between" style="margin:15px 0 8px"><div class="timer" id="timer">—</div><span class="small muted">'+state.answeredCount+' / '+state.players.length+' answered</span></div><div class="bar"><i id="timerBar"></i></div>'+
+ '<div class="question">'+esc(q.prompt)+'</div><div class="answers">'+q.options.map((s,i)=>'<button data-answer="'+i+'" class="answer '+(done&&state.myAnswer===i?"chosen ":"")+(reveal?(i===q.correct?"correct":"dim"):"")+'" '+(done||reveal||Date.now()>=Date.parse(state.deadline)?"disabled":"")+'><span class="letter">'+["A","B","C","D","E"][i]+'</span>'+esc(s)+'</button>').join("")+'</div>'+
+ (reveal?'<div class="notice"><b>'+esc(q.options[q.correct])+'</b> = '+esc(q.explanation)+'<p>You earned '+state.myPoints+' points this round.</p></div>':done?answerLockView(answerLockAnimatedKey===pin+":"+state.questionNumber&&Date.now()<answerLockFreshUntil):'<p class="muted small" id="glAnswerHint">Choose one answer before time runs out.</p>')+'</section>'+
+ '<section class="card"><h2>'+ (state.mode==="team"?"Team scores":"Leaderboard")+'</h2>'+scores()+'</section></div>'}
+function finish(){return '<div class="grid"><section class="card pink"><h1>Game complete!</h1><p>Great work playing '+state.total+' Genius Live questions.</p><h2>Results</h2>'+scores()+'<p><button class="primary" id="leave">Join another game</button></p></section><section class="card"><h2>Thanks for playing!</h2><p>Your live quiz score does not change your regular Genius points or homework.</p></section></div>'}
+function countdownView(){return '<section class="gl-countdown" role="status" aria-live="polite"><h1>Question '+state.questionNumber+' / '+state.total+'</h1><div class="big" id="glStudentCountdown">3</div><h2>GET READY!</h2></section>'}
+let lastCountdownPoll=0;
+function tickCountdown(){
+ if(!state||state.status!=="countdown")return;
+ const left=Math.max(0,Math.ceil((Date.parse(state.countdownUntil)-Date.now())/1000));
+ const el=document.querySelector("#glStudentCountdown"),digit=left||"GO!";
+ if(el&&el.textContent!==String(digit)){el.textContent=String(digit);el.classList.remove("pulse");void el.offsetWidth;el.classList.add("pulse")}
+ if(!left&&!working&&Date.now()-lastCountdownPoll>350){lastCountdownPoll=Date.now();refresh()}
+}
+function paint(){const key=state?state.status+"|"+state.questionNumber+"|"+state.answeredCount+"|"+state.players.length+"|"+state.myAnswer+"|"+state.myPoints+"|"+(state.teamNames||[]).join(",")+"|"+(state.teamLogos||[]).join(",")+"|"+(state.captains||[]).join(",")+"|"+state.players.map(p=>p.team+":"+p.score).join(","):"join";if(last===key)return;last=key;$("#app").innerHTML=!state?joinForm():state.status==="lobby"?lobby():state.status==="countdown"?countdownView():["question","reveal"].includes(state.status)?quiz():finish();
+ document.querySelectorAll("[data-join-team]").forEach(button=>button.onclick=()=>teamAction("choose_team",{team:Number(button.dataset.joinTeam)}));
+ const create=$("#createTeam");if(create)create.onclick=()=>teamAction("create_team",{name:$("#newTeamName").value,logo:$("#newTeamLogo").value});
+ const nameButton=$("#saveTeamName");if(nameButton)nameButton.onclick=()=>{const own=state.players.find(p=>p.id===state.myPlayerId);teamAction("edit_team",{team:own?.team,name:$("#teamNameInput").value,logo:$("#captainTeamLogo").value})};
+ attachLogoPickers();
+ const join=$("#joinForm");if(join)join.onsubmit=e=>{e.preventDefault();pin=$("#pinInput").value.trim();joinGame()};
+ document.querySelectorAll("[data-answer]").forEach(b=>b.onclick=()=>answer(Number(b.dataset.answer)));
+ const leave=$("#leave");if(leave)leave.onclick=()=>{pin="";state=null;localAnswer=null;last="";sessionStorage.removeItem("genius.live.student.pin");sessionStorage.removeItem("genius.live.student.joined");paint()};
+ // Animate the first reveal each round from the original option colours to grey/green.
+ // Repaints during an already revealed round should stay coloured without replaying the transition.
+ if(state?.status==="reveal"){
+  const grid=$("#app .answers");
+  if(grid){
+   const roundKey=pin+":"+state.questionNumber;
+   if(roundKey!==lastAnimatedRevealKey){
+    lastAnimatedRevealKey=roundKey;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+     if(grid.isConnected&&state?.status==="reveal"&&pin+":"+state.questionNumber===roundKey)grid.classList.add("is-revealed");
+    }));
+   }else grid.classList.add("is-revealed");
+  }
+ }
+ tick();tickCountdown()}
+async function teamAction(action,options){if(working)return;working=true;try{const next=await api(action,{pin,...options});state=next;last="";notice("");paint()}catch(e){notice(e.message,true)}finally{working=false}}
+async function joinGame(){if(working)return;working=true;notice("Joining…");try{state=await api("join",{pin});localAnswer=null;sessionStorage.setItem("genius.live.student.pin",pin);sessionStorage.setItem("genius.live.student.joined","1");last="";notice("");paint()}catch(e){notice(e.message,true);if(e.status===401){showLogin();const link=$("#message a");if(link)link.focus()}}finally{working=false}}
+function showLogin(){const link=document.createElement("a");link.href="/students/signin.html?next="+encodeURIComponent(location.pathname+location.search);link.textContent=" Sign in to Willena";$("#message").append(" · ",link)}
+async function refresh(){
+ if(!pin||working||refreshing)return;
+ refreshing=true;
+ try{
+  const fresh=await api("state",{pin});
+  // An older poll must not erase the immediate tap UI while a submission is pending.
+  if(working)return;
+  state=fresh;notice("");paint();
+ }catch(e){
+  if(working)return;
+  if(e.status===401){notice("Please sign in to your Willena account.",true);showLogin()}
+  else if(/not found|expired|cancelled|not joined/i.test(e.message)){
+   state=null;localAnswer=null;last="";
+   sessionStorage.removeItem("genius.live.student.pin");
+   sessionStorage.removeItem("genius.live.student.joined");
+   notice(e.message,true);paint();
+  }else notice(e.message,true);
+ }finally{refreshing=false}
+}
+
+async function answer(choice){
+ if(working||!state||state.myAnswer!==null||state.status!=="question")return;
+ const roundKey=pin+":"+state.questionNumber;
+ if(localAnswer?.key===roundKey)return;
+ unlockLockSfx();
+ localAnswer={key:roundKey,choice,status:"sending",message:LOCK_MESSAGES[Math.floor(Math.random()*LOCK_MESSAGES.length)]};
+ working=true;
+ showAnswerSending(choice);
+ const started=performance.now();
+ try{
+  const accepted=await api("answer",{pin,choice,questionIndex:state.questionNumber-1});
+  if(!accepted?.accepted)throw Error("Answer was not accepted.");
+  console.debug("[Genius Live] Answer acknowledgement",Math.round(performance.now()-started),"ms");
+  // Don't block the splash on a second /state request; normal polling catches up.
+  confirmLocalAnswer(roundKey,choice);
+ }catch(e){
+  // A lost acknowledgement does not necessarily mean the server lost the answer.
+  // Reconcile first to avoid suggesting a double-submit.
+  try{
+   const fresh=await api("state",{pin});
+   state=fresh;
+   if(fresh.pin===pin&&fresh.questionNumber===Number(roundKey.split(":").pop())&&fresh.myAnswer!==null){
+    confirmLocalAnswer(roundKey,fresh.myAnswer);
+    return;
+   }
+   if(fresh.status!=="question"){localAnswer=null;last="";paint();return;}
+  }catch{}
+  localAnswer=null;last="";paint();
+  notice(e.message||"Could not confirm your answer. Try again.",true);
+ }finally{working=false}
+}
+
+function tick(){if(!state||state.status!=="question")return;const rem=Math.max(0,Date.parse(state.deadline)-Date.now()),t=$("#timer"),b=$("#timerBar");if(t)t.textContent=Math.ceil(rem/1000)+"s";if(b)b.style.width=(100*rem/(state.seconds*1000))+"%";if(rem===0)document.querySelectorAll("[data-answer]").forEach(b=>b.disabled=true)}
+setInterval(()=>{if(pin&&state&&document.visibilityState==="visible")refresh()},1900);
+setInterval(tick,200);setInterval(tickCountdown,100);document.addEventListener("visibilitychange",()=>{if(!document.hidden&&pin)refresh()});
+paint();
+if(pin){
+ // A newly supplied classroom PIN always takes priority over any previously joined room.
+ const sameRoom=pin===previousPin&&sessionStorage.getItem("genius.live.student.joined")==="1";
+ if(linkPin&&!sameRoom){
+  sessionStorage.setItem("genius.live.student.pin",linkPin);
+  sessionStorage.removeItem("genius.live.student.joined");
+  joinGame();
+ }else if(sameRoom)refresh();
+}
+</script></body></html>

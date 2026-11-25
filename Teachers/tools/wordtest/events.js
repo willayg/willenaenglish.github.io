@@ -95,13 +95,13 @@ export function setupEventListeners(
     
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
-            window.open('/Teachers/worksheet_manager.html?mode=save', 'WorksheetManager', 'width=1200,height=700,resizable=yes,scrollbars=yes');
+            window.open('/Teachers/worksheet_manager.html?mode=save&type=wordtest', 'WorksheetManager', 'width=1200,height=700,resizable=yes,scrollbars=yes');
         });
     }
     
     if (loadBtn) {
         loadBtn.addEventListener('click', () => {
-            window.open('/Teachers/worksheet_manager.html?mode=load', 'WorksheetManager', 'width=1200,height=700,resizable=yes,scrollbars=yes');
+            window.open('/Teachers/worksheet_manager.html?mode=load&type=wordtest', 'WorksheetManager', 'width=1200,height=700,resizable=yes,scrollbars=yes');
         });
     }
 }
