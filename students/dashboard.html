@@ -65,7 +65,13 @@ html.leaderboard-only #learningUpgrade{display:none!important}
 #learningUpgrade .lu-cell small{font-size:9px;line-height:1.1}
 #learningUpgrade .lu-cell .lu-meter{height:4px}
 .lu-col{display:flex;flex-direction:column;align-items:center;justify-content:end;font-size:11px;line-height:1.2;gap:3px}
-.lu-col img{width:24px;height:24px;object-fit:contain}
+.lu-col img,.lu-col svg{width:30px;height:30px;object-fit:contain;display:block;flex:none}
+#learningUpgrade .lu-cell[data-state=idle]{background:#f2f5f6;color:#647e85;border-color:#dbe5e8}
+#learningUpgrade .lu-cell{min-height:38px}
+#luGrid[aria-busy=true]{pointer-events:none}
+#luStatus:empty{display:none}
+#learningUpgrade .lu-grid{transition:opacity .15s}
+
 #luStatus{font-size:12px;margin:8px 0}
 .lu-extra{display:flex;justify-content:space-between;background:#fff0f7;border:1px solid #efb4d3;border-radius:12px;padding:8px 12px;color:#a34d7d;text-decoration:none;font-size:12px}
 @media(prefers-color-scheme:dark){html:not(.light) #learningUpgrade .lu-map{color:#244c50;background:#f8fcfd}}
@@ -93,4 +99,4 @@ html.leaderboard-only #learningUpgrade{display:none!important}
 </style>
 <script type="module" src="/students/components/dashboard-inbox-bridge.js?v=20261101-settings-only3"></script><script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
-<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script><script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script><script type="module" src="/students/dashboard-v2/learning-upgrade.js?v=20261125-staging3"></script></body></html>
+<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script><script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script><script type="module" src="/students/dashboard-v2/learning-upgrade.js?v=20261125-staging4"></script></body></html>
