@@ -3,6 +3,7 @@ const by=id=>document.getElementById(id),hero=document.querySelector('.hero');
 const root=by('learningUpgrade');
 if(root&&!document.documentElement.classList.contains('leaderboard-only')){
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let starLaunching=false;
 let books=[],identity=null,loading=false,version=0,loaded=false,selectedBook='',lastMap=null;
 const api=async path=>{const r=await window.WillenaAPI.fetch(path,{cache:'no-store'});if(!r.ok)throw Error('Request failed');return r.json()};
 const profile=async()=>{if(identity)return identity;const who=await studentIdentity();const p=await signedInProfile(who.id);if(p.role!=='student'||!p.approved)throw Error('Student account required');return identity={...who,...p}};
@@ -53,6 +54,7 @@ function cell(label,p,url,state='unknown',tone='cyan',mission=false){
  return url?'<a'+attrs+' href="'+esc(url)+'">'+ring+'</a>':'<span'+attrs+'>'+ring+'</span>';
 }
 function render(book,units,wordGold,sentenceResults){
+if(starLaunching)return;
 lastMap={book,units,wordGold,sentenceResults};
 const missions=window.WillenaMissionBasket?.getMapMissions?.()||[];
 const names={word:'Word Genius',sentence:'Sentence Genius',grammar:'Grammar Genius Books',talk:'Free Talking Genius',writing:'Writing Genius',puzzles:'Puzzles'};
@@ -136,8 +138,7 @@ if(ticket!==version)return;extra=pendingExtra;render(book,units,gold,results);re
 async function load(){if(loading)return;loading=true;try{const p=await profile();books=await assignedBooks(p.className);if(!cacheKey){cacheKey='willena-learning-map-v4:'+p.id;restore()}if(!books.some(b=>String(b.id)===selectedBook))selectedBook=String(books[0]?.id||'');bookTabs();if(!books.length){by('luStatus').textContent='No assigned books.';return}await loadBook();loaded=true;}catch(e){by('luStatus').textContent='Curriculum unavailable. Try Refresh.';}finally{loading=false}}
 function view(map){by('luApps').setAttribute('aria-pressed',String(!map));by('luMapTab').setAttribute('aria-pressed',String(map));hero.hidden=map;by('luMap').hidden=!map;try{localStorage.setItem('willena-staging-dashboard-view',map?'map':'apps')}catch{}if(map&&!loaded)void load()}
 by('luApps').onclick=()=>view(false);by('luMapTab').onclick=()=>view(true);by('luBooks').onclick=e=>{const b=e.target.closest('[data-book]');if(!b)return;if(selectedBook===b.dataset.book)return;selectedBook=b.dataset.book;bookTabs();void loadBook()};
-window.addEventListener('willena:map-missions',()=>{if(lastMap){const {book,units,wordGold,sentenceResults}=lastMap;render(book,units,wordGold,sentenceResults)}});
-let starLaunching=false;
+window.addEventListener('willena:map-missions',()=>{if(!starLaunching&&lastMap){const {book,units,wordGold,sentenceResults}=lastMap;render(book,units,wordGold,sentenceResults)}});
 by('luGrid').addEventListener('click',event=>{
  const link=event.target.closest('a.lu-cell');
  if(!link||!link.querySelector('.lu-start-star')||event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
@@ -149,16 +150,16 @@ by('luGrid').addEventListener('click',event=>{
  const x=rect.left+rect.width/2,y=rect.top+rect.height/2;
  const burst=document.createElement('div');burst.className='lu-star-burst';burst.setAttribute('aria-hidden','true');
  const colors=['#f5c84d','#ffdf78','#28b7c4','#ed76ad','#ffffff'];
- link.querySelector('.lu-start-star').style.opacity='0';
+ by('luGrid').classList.add('lu-star-launching');link.classList.add('lu-star-shattered');link.querySelector('.lu-start-star').style.opacity='0';
  for(let i=0;i<100;i++){
   const p=document.createElement('span'),angle=i*2.39996323,d=20+Math.random()*Math.min(115,window.innerWidth*.28),size=3+Math.random()*8;
   p.style.cssText='left:'+x+'px;top:'+y+'px;width:'+size+'px;height:'+size+'px;background:'+colors[i%colors.length]+';';
   burst.appendChild(p);
   const dx=Math.cos(angle)*d,dy=Math.sin(angle)*d;
-  p.animate([{transform:'translate(-50%,-50%) scale(.5)',opacity:1},{transform:'translate('+dx*.65+'px,'+dy*.65+'px) rotate('+i*13+'deg) scale(1)',opacity:1,offset:.36},{transform:'translate('+dx+'px,'+(dy+20)+'px) rotate('+i*29+'deg) scale(.15)',opacity:0}],{duration:280+Math.random()*100,easing:'cubic-bezier(.16,.7,.4,1)',fill:'forwards'});
+  p.animate([{transform:'translate(-50%,-50%) scale(.5)',opacity:1},{transform:'translate('+dx*.65+'px,'+dy*.65+'px) rotate('+i*13+'deg) scale(1)',opacity:1,offset:.48},{transform:'translate('+dx+'px,'+(dy+20)+'px) rotate('+i*29+'deg) scale(.15)',opacity:0}],{duration:490+Math.random()*210,easing:'cubic-bezier(.16,.7,.4,1)',fill:'forwards'});
  }
  document.body.appendChild(burst);
- setTimeout(()=>{burst.remove();starLaunching=false;const star=link.querySelector('.lu-start-star');if(star)star.style.opacity='';window.location.assign(url)},390);
+ setTimeout(()=>{window.location.assign(url)},720);
 });
-let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){void energy();if(!by('luMap').hidden)void loadBook()}});
+let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){starLaunching=false;document.querySelectorAll('.lu-star-burst').forEach(el=>el.remove());by('luGrid').classList.remove('lu-star-launching');by('luGrid').querySelectorAll('.lu-star-shattered').forEach(el=>{el.classList.remove('lu-star-shattered');const star=el.querySelector('.lu-start-star');if(star)star.style.opacity=''});void energy();if(!by('luMap').hidden)void loadBook()}});
 }
