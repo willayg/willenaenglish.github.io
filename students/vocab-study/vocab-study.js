@@ -3192,6 +3192,8 @@ async function boot(){
       renderFrontMenu();
       setMainScreen('home');
       await startHistoryNavigation('home');
+      const mapParams=new URLSearchParams(location.search);
+      if(!deepLinkAssignmentId&&mapParams.get('book')&&mapParams.get('unit'))await openBookById(mapParams.get('book'),{unitId:mapParams.get('unit')});
 
       // The app is usable now. Do not block the whole UI on secondary
       // books or teacher Word Test hydration.
