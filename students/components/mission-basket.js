@@ -80,6 +80,10 @@ async function standardHomework(){
   }
   const entry=item('standard:'+a.id,app,a.title||a.list_title||'숙제',url,a.created_at||a.assigned_at||a.due_at,false,a.due_at?'기한 '+new Date(a.due_at).toLocaleDateString('ko-KR'):'');
   entry.teacherId=a.created_by||null;
+  const meta=a.list_meta||{};
+  entry.mapBook=meta.book_id||meta.source_book_id||a.book_id||(app==='Grammar Genius Books'?'1e3a2112-07be-45e2-a8fc-ce20011e0e57':null);
+  entry.mapUnit=meta.unit_id||a.unit_id||null;
+  entry.mapNumber=meta.unit_number||meta.chapter||a.unit_number||null;
   entry.teacherName=a.teacher_name||'';entry.dueAt=a.due_at||null;
   if(app==='Grammar Genius Books'){
    const required=Array.isArray(a.list_meta?.required_modes)?a.list_meta.required_modes:[];
@@ -173,6 +177,7 @@ async function grammarBookHomework(){
   const chapter=Number(meta.chapter)||1;
   const link='/students/grammar-books/?book='+encodeURIComponent(meta.source_book_id||'1e3a2112-07be-45e2-a8fc-ce20011e0e57')+'&unit='+chapter+'&homework='+encodeURIComponent(a.id);
   const mission=item('standard:'+a.id,'Grammar Genius Books',a.title||'Grammar homework',link,a.created_at||a.due_at,total>0&&finished===total,finished+'/'+total+' questions');
+  mission.mapBook=meta.source_book_id||'1e3a2112-07be-45e2-a8fc-ce20011e0e57';mission.mapNumber=chapter;
   mission.teacherId=a.created_by||null;mission.dueAt=a.due_at||null;mission.progress=total?Math.round(100*finished/total):0;
   return mission;
  });
@@ -207,6 +212,7 @@ async function sentences(){
    }
   }
   const entry=item('sentence:'+a.id,'Sentence Genius',a.title||a.unit_title||'문장 숙제','/students/sentence-genius/'+(query.size?'?'+query:''),a.created_at||a.assigned_at||a.due_at,total>0&&done>=total);
+  entry.mapBook=a.book_id;entry.mapUnit=a.unit_id;
   entry.teacherId=a.created_by||null;entry.teacherName=a.teacher_name||'';
   entry.dueAt=a.due_at||null;entry.progress=total>0?Math.min(100,Math.round(100*done/total)):0;
   return entry;
@@ -307,6 +313,7 @@ function render(){
  const open=unarchived.filter(x=>!missionPastDue(x));
  const archive=visible.filter(x=>state.archives.has(x.id)||x.archived);
  const displayed=state.tab==='archive'?archive:state.tab==='overdue'?overdue:open;
+ window.dispatchEvent(new Event('willena:map-missions'));
  const pending=open.filter(x=>!x.done).length;
  host.innerHTML='<div class="dm-head"><button class="dm-toggle" aria-expanded="'+(!state.collapsed)+'" type="button"><svg viewBox="0 0 48 48" width="35" height="35" aria-hidden="true"><path d="M8 19h32v20a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V19Z" fill="#DBF6F3" stroke="#16848C" stroke-width="2.5"/><path d="M6 14h36v7H6v-7Z" fill="#8BDFD7" stroke="#16848C" stroke-width="2.5"/><path d="m24 25 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7L24 25Z" fill="#EAB84B" stroke="#BA8D2D" stroke-width="1.2"/></svg><strong>미션 바구니</strong><span class="dm-count'+(pending>0?' dm-count-pending':'')+'">'+pending+'개 남음</span><span class="dm-arrow">'+(state.collapsed?'▸':'▾')+'</span></button></div>'+
  (state.collapsed?'':'<div class="dm-body"><div class="dm-tabs"><button type="button" data-tab="active" aria-pressed="'+(state.tab==='active')+'">진행 중 <span>'+open.length+'</span></button><button type="button" data-tab="overdue" aria-pressed="'+(state.tab==='overdue')+'">기한 지남 <span>'+overdue.length+'</span></button><button type="button" data-tab="archive" aria-pressed="'+(state.tab==='archive')+'">미션 메달 <span>'+archive.length+'</span></button></div><div class="dm-items">'+(displayed.length?displayed.map(x=>state.tab==='archive'?
@@ -516,7 +523,7 @@ async function recordGrammarBookRound(chapter,mode,correct,masteredIds){
   body:JSON.stringify({p_chapter:chapter,p_mode:mode,p_correct:correct,p_mastered_ids:masteredIds})
  });
 }
-window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits,getCompletedActivityDays,recordCompletedActivity,getStreakSnapshot,refreshStreakSnapshot,getGoldSnapshot,saveGoldSnapshot,getGrammarBookProgress,recordGrammarBookRound};
+window.WillenaMissionBasket={mount,refresh,getMapMissions:()=>state.items.filter(x=>!x.done&&!x.archived&&!state.archives.has(x.id)&&!missionPastDue(x)&&x.mapBook&&(x.mapUnit||x.mapNumber)).map(x=>({app:x.app,book:String(x.mapBook),unit:String(x.mapUnit||''),number:String(x.mapNumber||'')})),getAchievementMissions,getWritingGoldUnits,getCompletedActivityDays,recordCompletedActivity,getStreakSnapshot,refreshStreakSnapshot,getGoldSnapshot,saveGoldSnapshot,getGrammarBookProgress,recordGrammarBookRound};
 // Any student app may mount this shared widget on a chosen container.
 
 })();
