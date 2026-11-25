@@ -436,7 +436,7 @@ try{
 .cc-progress-segments{display:flex;width:100%;height:8px;border-radius:8px;overflow:hidden;background:#d8e0e4;flex:none}
 .cc-progress-segments i{height:100%;flex:none}
 .cc-progress-counts{display:flex;justify-content:space-between;width:100%;font-size:11px;line-height:1.2;font-variant-numeric:tabular-nums}
-.cc-progress-counts span:nth-child(1){color:#718995}.cc-progress-counts span:nth-child(2){color:#397e61}.cc-progress-counts span:nth-child(3){color:#176548}
+.cc-progress-counts span:nth-child(1){color:#176548}.cc-progress-counts span:nth-child(2){color:#397e61}.cc-progress-counts span:nth-child(3){color:#718995}
 @media(max-width:600px){.cc-cell.cc-breakdown{padding:7px 6px;min-height:70px;gap:5px}.cc-breakdown b{font-size:18px}.cc-progress-legend{font-size:11px;gap:6px 10px}}
 .cc-drilldown{border:1px solid #cce5e7;border-radius:17px;background:#fff;padding:20px;margin-top:18px}
 .cc-primary{background:#1b8994;color:white;border-color:#1b8994}.cc-primary:hover{background:#147987}
@@ -1550,7 +1550,7 @@ function ccProgressBreakdown(total,started,finished,average=null){
  const pct=n=>100*n/total;
  return '<b>'+Math.round(average===null?pct(done):average)+'%</b><span class="cc-progress-segments" aria-hidden="true">'+
   '<i class="cc-seg-done" style="width:'+pct(done)+'%"></i><i class="cc-seg-start" style="width:'+pct(active)+'%"></i><i class="cc-seg-wait" style="width:'+pct(waiting)+'%"></i></span>'+
-  '<span class="cc-progress-counts" aria-hidden="true"><span>'+waiting+'</span><span>'+active+'</span><span>'+done+'</span></span>';
+  '<span class="cc-progress-counts" aria-hidden="true"><span>'+done+'</span><span>'+active+'</span><span>'+waiting+'</span></span>';
 }
 function ccCompletionTone(complete,total,started){
  if(!(total>0))return 'cc-empty-cell';
@@ -1864,7 +1864,7 @@ function ccRenderDetail(){
  
  (curriculum.extraError?'<p class="cc-helper" role="alert">Grammar Genius progress could not be loaded ('+ccEscape(curriculum.extraError)+'). Refresh to retry; blank cells are not reliable.</p>':'')+
  (!curriculum.unitCache.has(book.book_id)?'<div class="cc-empty">Loading textbook units…</div>':!units.length?'<div class="cc-empty">No published or review units are available for this book.</div>':
- '<div class="cc-progress-legend"><span><i class="cc-seg-wait"></i>Not started</span><span><i class="cc-seg-start"></i>In progress</span><span><i class="cc-seg-done"></i>Finished</span></div><div class="cc-grid-scroll"><div class="cc-matrix"><div class="cc-matrix-head"><span>Unit</span>'+groups.map(g=>'<span>'+ccEscape(g.name)+'</span>').join('')+'</div>'+
+ '<div class="cc-progress-legend"><span><i class="cc-seg-done"></i>Finished</span><span><i class="cc-seg-start"></i>In progress</span><span><i class="cc-seg-wait"></i>Not started</span></div><div class="cc-grid-scroll"><div class="cc-matrix"><div class="cc-matrix-head"><span>Unit</span>'+groups.map(g=>'<span>'+ccEscape(g.name)+'</span>').join('')+'</div>'+
  units.map(u=>'<div class="cc-matrix-row"><div class="cc-unit-name"><strong>Unit '+ccEscape(u.unit_number)+'</strong><small>'+ccEscape(u.title||'')+'</small></div>'+
  groups.map(g=>{
   if(g.key==='puzzles'){
