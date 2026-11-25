@@ -12,7 +12,31 @@ html.leaderboard-only .sep,html.leaderboard-only .character-collection{display:n
 </style>
 <script>
 if(new URLSearchParams(location.search).get('leaderboard_only')==='1')document.documentElement.classList.add('leaderboard-only');
-</script></head><body><div class="page"><header class="header"><div class="header-left"><div class="header-metrics"><div class="points-pill stars-pill" id="headerStars">⭐ —</div><div class="points-pill" id="headerPoints">+ —</div></div></div><div class="header-identity"><strong id="headerName">Student</strong><span id="headerClass">Willena English</span></div><button class="avatar" type="button" aria-label="Open settings">S</button></header><section class="hero"><div class="path-stage" id="stage"><div class="parallax"><div class="layer far" id="far"></div><div class="layer mid" id="mid"></div><div class="layer near" id="near"></div></div><div class="path-layout">
+</script></head><body><div class="page"><header class="header"><div class="header-left"><div class="header-metrics"><div class="points-pill stars-pill" id="headerStars">⭐ —</div><div class="points-pill" id="headerPoints">+ —</div></div></div><div class="header-identity"><strong id="headerName">Student</strong><span id="headerClass">Willena English</span></div><button class="avatar" type="button" aria-label="Open settings">S</button></header><style>
+#learningUpgrade{margin:14px auto;max-width:760px;padding:0 10px;color:var(--text,#16464a);font:600 14px Poppins,system-ui,sans-serif}
+#learningUpgrade [hidden],.hero[hidden]{display:none!important}
+.lu-energy,.lu-map{background:var(--card-bg,#fff);border:1px solid #b9deda;border-radius:20px;padding:16px;margin:10px 0}
+.lu-energy{background:#fff7e5;color:#795516;border-color:#edd49b}
+.lu-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lu-meter{height:12px;border-radius:99px;background:#e9dcc0;overflow:hidden;margin:8px 0}
+.lu-meter i{display:block;height:100%;background:#e6aa30;border-radius:99px;transition:width .4s}
+.lu-tabs{display:flex;gap:6px;padding:4px;background:#e5eeee;border-radius:15px}
+.lu-tabs button{flex:1;border:0;border-radius:12px;padding:12px;background:transparent;color:#31565b;font:inherit;cursor:pointer}
+.lu-tabs button[aria-pressed=true]{background:#fff;color:#08795e;box-shadow:0 2px 8px #1232}
+.lu-grid{display:grid;grid-template-columns:minmax(65px,1fr) repeat(3,minmax(0,1fr));gap:6px;margin-top:14px;align-items:stretch}
+.lu-grid>*{min-width:0;overflow-wrap:anywhere;text-align:center}
+.lu-label,.lu-cell{border-radius:12px;padding:9px 4px;display:flex;flex-direction:column;justify-content:center;gap:5px;min-height:64px;text-decoration:none;color:#244c50;background:#f1f5f5}
+.lu-label{text-align:left;padding-left:8px}.lu-label small{font-weight:400}
+.lu-cell{border:1px solid #c5dcd7;background:#e6f5ed;color:#08795e}
+.lu-cell[data-state=gold]{background:#fff1ca;border-color:#ddbb62;color:#986d12}
+.lu-cell[data-state=unknown]{background:#f1f3f3;color:#687a7c;border-color:#dce4e4}
+.lu-cell strong{font-size:20px}.lu-cell small{font-size:10px}.lu-cell .lu-meter{height:5px;margin:0;background:#cbded6}.lu-cell .lu-meter i{background:currentColor}
+.lu-map select{max-width:100%;font:inherit;padding:8px;border:1px solid #b9deda;border-radius:8px}
+.lu-note{font-size:11px;font-weight:400}.lu-map h2{margin:0 0 8px;font-size:18px}
+@media(max-width:420px){#learningUpgrade{padding:0}.lu-map{padding:9px}.lu-grid{gap:4px;font-size:11px}.lu-cell strong{font-size:17px}}
+html.leaderboard-only #learningUpgrade{display:none!important}
+</style>
+<section id="learningUpgrade" aria-label="My learning"><div class="lu-energy"><div class="lu-head"><strong>Jelly Energy · 젤리 에너지</strong><strong id="luEnergyText">—</strong></div><div class="lu-meter" role="progressbar" aria-label="Jelly energy" id="luEnergyBar"><i style="width:0%"></i></div><div id="luEnergyNote" class="lu-note" role="status">Loading achievements…</div></div><div class="lu-tabs" role="group" aria-label="Dashboard view"><button type="button" id="luApps" aria-pressed="true">My Apps · 앱</button><button type="button" id="luMapTab" aria-pressed="false">Learning Map · 학습 지도</button></div><div class="lu-map" id="luMap" hidden><div class="lu-head"><h2>My curriculum</h2><button type="button" id="luRetry">Refresh</button></div><select id="luBooks" aria-label="Textbook" hidden></select><p id="luStatus" role="status">Loading curriculum…</p><div class="lu-grid" id="luGrid"></div><p class="lu-note">Gold · Completed unit / Green · Progress / Grey · Not verified</p></div></section><section class="hero"><div class="path-stage" id="stage"><div class="parallax"><div class="layer far" id="far"></div><div class="layer mid" id="mid"></div><div class="layer near" id="near"></div></div><div class="path-layout">
 <div class="node n1 cyan word-genius-node"><div class="node-card"><a class="node-link badge-link" href="/students/vocab-study/" aria-label="Word Genius"><img class="badge-icon word-genius-icon" src="/students/assets/icons/word-genius.svg?v=20260927-1" alt=""><span class="badge-label">WORD<br>GENIUS</span></a></div></div>
 <div class="node n2 pink sentence-genius-node"><div class="node-card"><a class="node-link badge-link" href="/students/sentence-genius/" aria-label="Sentence Genius"><img class="badge-icon sentence-genius-icon" src="/students/assets/icons/sentence-genius.svg?v=20261025-sentence-path-1" alt=""><span class="badge-label">SENTENCE<br>GENIUS</span></a></div></div>
 <div class="node n3 pink free-talking-node"><div class="node-card"><a class="node-link badge-link" href="/students/free-talking-genius/" aria-label="Free Talking Genius"><span class="badge-label free-talking-heading">FREE TALKING</span><img class="badge-icon free-talking-icon" src="/students/assets/icons/free-talking-bunny-fox.svg?v=20261108-1" alt=""><span class="badge-label free-talking-footer">GENIUS</span></a></div></div>
@@ -34,4 +58,4 @@ if(new URLSearchParams(location.search).get('leaderboard_only')==='1')document.d
 </style>
 <script type="module" src="/students/components/dashboard-inbox-bridge.js?v=20261101-settings-only3"></script><script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
-<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script></body></html>
+<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script><script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script><script type="module" src="/students/dashboard-v2/learning-upgrade.js?v=20261125-staging1"></script></body></html>
