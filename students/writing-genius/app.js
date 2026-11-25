@@ -716,6 +716,11 @@ async function bootstrap(){
       }catch(e){notice(e.message,true)}
     }
     if(homeworkId)return;
+    const mapParams=new URLSearchParams(location.search);
+    if(mapParams.get('book')&&mapParams.get('unit')){
+      show('practice');if(!(history.state?.[NAV]&&history.state.screen==='practice'))history.pushState(navState('practice'),'');
+      await practice.open(state.student,{bookId:mapParams.get('book'),unitId:mapParams.get('unit')});return;
+    }
     if(!history.state?.[NAV])history.replaceState(navState('home'),'');
     const route=history.state;
     if(route?.screen==='practice'){show('practice');await practice.open(state.student);return}
