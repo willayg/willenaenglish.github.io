@@ -40,7 +40,7 @@ let cacheKey='';
 const restore=()=>{try{const raw=JSON.parse(sessionStorage.getItem(cacheKey)||'null');if(!raw||Date.now()-raw.at>900000)return;for(const [k,m] of raw.maps||[])cache.set(k,{...m,gold:new Set(m.gold)});if(books.some(b=>String(b.id)===raw.selected))selectedBook=raw.selected;}catch{}};
 function remember(book,units,gold,results){cache.set(String(book.id),{book,units,gold,results,extra:{...extra}});try{sessionStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),selected:selectedBook,maps:[...cache].map(([k,m])=>[k,{...m,gold:[...m.gold]}])}));}catch{}}
 
-function cell(label,p,url,state='unknown',tone='cyan'){
+function cell(label,p,url,state='unknown',tone='cyan',mission=false){
  const value=p==null||p<0?null:Math.max(0,Math.min(100,p));
  const text=value===null||value===0?'':value+'%';
  const progress=value===null?0:value;
@@ -48,11 +48,13 @@ function cell(label,p,url,state='unknown',tone='cyan'){
  const ring='<svg class="lu-ring" viewBox="0 0 64 68" aria-hidden="true"><circle class="lu-ring-depth" cx="32" cy="32" r="30.5"/><circle class="lu-ring-track" cx="32" cy="32" r="27"/>'+
  (progress>0?'<circle class="lu-ring-progress" cx="32" cy="32" r="27" pathLength="100" stroke-dasharray="'+progress+' 100" transform="rotate(-90 32 32)"/>':'')+
  (gold?'<path class="lu-ring-star" d="M32 18l4.2 9 9.8 1.2-7.1 7 1.7 9.8-8.6-4.7-8.6 4.7 1.7-9.8-7.1-7 9.8-1.2z"/>':'<text x="32" y="33" dominant-baseline="middle" text-anchor="middle">'+esc(text)+'</text>')+'</svg>';
- const attrs=' class="lu-cell" data-state="'+state+'" aria-label="'+esc(gold?'100% · Completed':value===null?label:value+'%')+'"';
+ const attrs=' class="lu-cell" data-state="'+state+'" data-mission="'+mission+'" aria-label="'+esc((gold?'100% · Completed':value===null?label:value+'%')+(mission?' · Active mission':''))+'"';
  return url?'<a'+attrs+' href="'+esc(url)+'">'+ring+'</a>':'<span'+attrs+'>'+ring+'</span>';
 }
 function render(book,units,wordGold,sentenceResults){
 lastMap={book,units,wordGold,sentenceResults};
+const missions=window.WillenaMissionBasket?.getMapMissions?.()||[];
+const names={word:'Word Genius',sentence:'Sentence Genius',grammar:'Grammar Genius Books',talk:'Free Talking Genius',writing:'Writing Genius',puzzles:'Puzzles'};
 const q=u=>'?book='+encodeURIComponent(book.id)+'&unit='+encodeURIComponent(u.id);
 by('luGrid').innerHTML='<strong>Unit</strong>'+apps.map((a,i)=>'<strong class="lu-col">'+headerIcons[i]+esc(a.label)+'</strong>').join('')+units.map((u,i)=>{
 return '<div class="lu-label" title="'+esc(u.title)+'"><strong>'+esc(u.unit_number)+'</strong></div>'+apps.map((app,j)=>{
@@ -66,7 +68,8 @@ if(app.kind==='writing'){p=extra.writing?.[i]??null;url+=q(u);}
 if(app.kind==='puzzles'){url+=q(u);}
 if(p===-1)return cell('Unavailable',null,null,'unknown');
 if(p!==null&&state!=='gold'){state=p===100?'gold':p===0?'idle':'progress';label=p===100?'Done':p===0?'Start':'Continue';}
-return cell(label,p,url,state,'cyan');
+const mission=missions.some(m=>m.app===names[app.kind]&&m.book===String(book.id)&&(m.unit?m.unit===String(u.id):m.number===String(u.unit_number)));
+return cell(label,p,url,state,'cyan',mission);
 }).join('');
 }).join('');
 }
@@ -132,5 +135,6 @@ if(ticket!==version)return;extra=pendingExtra;render(book,units,gold,results);re
 async function load(){if(loading)return;loading=true;try{const p=await profile();books=await assignedBooks(p.className);if(!cacheKey){cacheKey='willena-learning-map-v4:'+p.id;restore()}if(!books.some(b=>String(b.id)===selectedBook))selectedBook=String(books[0]?.id||'');bookTabs();if(!books.length){by('luStatus').textContent='No assigned books.';return}await loadBook();loaded=true;}catch(e){by('luStatus').textContent='Curriculum unavailable. Try Refresh.';}finally{loading=false}}
 function view(map){by('luApps').setAttribute('aria-pressed',String(!map));by('luMapTab').setAttribute('aria-pressed',String(map));hero.hidden=map;by('luMap').hidden=!map;try{localStorage.setItem('willena-staging-dashboard-view',map?'map':'apps')}catch{}if(map&&!loaded)void load()}
 by('luApps').onclick=()=>view(false);by('luMapTab').onclick=()=>view(true);by('luBooks').onclick=e=>{const b=e.target.closest('[data-book]');if(!b)return;if(selectedBook===b.dataset.book)return;selectedBook=b.dataset.book;bookTabs();void loadBook()};
+window.addEventListener('willena:map-missions',()=>{if(lastMap){const {book,units,wordGold,sentenceResults}=lastMap;render(book,units,wordGold,sentenceResults)}});
 let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){void energy();if(!by('luMap').hidden)void loadBook()}});
 }
