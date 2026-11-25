@@ -45,9 +45,10 @@ function cell(label,p,url,state='unknown',tone='cyan',mission=false){
  const text=value===null||value===0?'':value+'%';
  const progress=value===null?0:value;
  const gold=state==='gold';
+ const starter=!gold&&progress===0&&Boolean(url);
  const ring='<svg class="lu-ring" viewBox="0 0 64 68" aria-hidden="true"><circle class="lu-ring-depth" cx="32" cy="32" r="30.5"/><circle class="lu-ring-track" cx="32" cy="32" r="27"/>'+
  (progress>0?'<circle class="lu-ring-progress" cx="32" cy="32" r="27" pathLength="100" stroke-dasharray="'+progress+' 100" transform="rotate(-90 32 32)"/>':'')+
- (gold?'<path class="lu-ring-star" d="M32 18l4.2 9 9.8 1.2-7.1 7 1.7 9.8-8.6-4.7-8.6 4.7 1.7-9.8-7.1-7 9.8-1.2z"/>':'<text x="32" y="33" dominant-baseline="middle" text-anchor="middle">'+esc(text)+'</text>')+'</svg>';
+ (gold?'<path class="lu-ring-star" d="M32 18l4.2 9 9.8 1.2-7.1 7 1.7 9.8-8.6-4.7-8.6 4.7 1.7-9.8-7.1-7 9.8-1.2z"/>':starter?'<path class="lu-start-star" d="M32 21l3.3 7 7.7 1-5.5 5.4 1.3 7.6-6.8-3.6-6.8 3.6 1.3-7.6-5.5-5.4 7.7-1z"/>':'<text x="32" y="33" dominant-baseline="middle" text-anchor="middle">'+esc(text)+'</text>')+'</svg>';
  const attrs=' class="lu-cell" data-state="'+state+'" data-mission="'+mission+'" aria-label="'+esc((gold?'100% · Completed':value===null?label:value+'%')+(mission?' · Active mission':''))+'"';
  return url?'<a'+attrs+' href="'+esc(url)+'">'+ring+'</a>':'<span'+attrs+'>'+ring+'</span>';
 }
@@ -136,5 +137,28 @@ async function load(){if(loading)return;loading=true;try{const p=await profile()
 function view(map){by('luApps').setAttribute('aria-pressed',String(!map));by('luMapTab').setAttribute('aria-pressed',String(map));hero.hidden=map;by('luMap').hidden=!map;try{localStorage.setItem('willena-staging-dashboard-view',map?'map':'apps')}catch{}if(map&&!loaded)void load()}
 by('luApps').onclick=()=>view(false);by('luMapTab').onclick=()=>view(true);by('luBooks').onclick=e=>{const b=e.target.closest('[data-book]');if(!b)return;if(selectedBook===b.dataset.book)return;selectedBook=b.dataset.book;bookTabs();void loadBook()};
 window.addEventListener('willena:map-missions',()=>{if(lastMap){const {book,units,wordGold,sentenceResults}=lastMap;render(book,units,wordGold,sentenceResults)}});
+let starLaunching=false;
+by('luGrid').addEventListener('click',event=>{
+ const link=event.target.closest('a.lu-cell');
+ if(!link||!link.querySelector('.lu-start-star')||event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||!Element.prototype.animate)return;
+ event.preventDefault();
+ if(starLaunching)return;
+ starLaunching=true;
+ const url=link.href,rect=link.querySelector('.lu-start-star').getBoundingClientRect();
+ const x=rect.left+rect.width/2,y=rect.top+rect.height/2;
+ const burst=document.createElement('div');burst.className='lu-star-burst';burst.setAttribute('aria-hidden','true');
+ const colors=['#f5c84d','#ffdf78','#28b7c4','#ed76ad','#ffffff'];
+ link.querySelector('.lu-start-star').style.opacity='0';
+ for(let i=0;i<100;i++){
+  const p=document.createElement('span'),angle=i*2.39996323,d=20+Math.random()*Math.min(115,window.innerWidth*.28),size=3+Math.random()*8;
+  p.style.cssText='left:'+x+'px;top:'+y+'px;width:'+size+'px;height:'+size+'px;background:'+colors[i%colors.length]+';';
+  burst.appendChild(p);
+  const dx=Math.cos(angle)*d,dy=Math.sin(angle)*d;
+  p.animate([{transform:'translate(-50%,-50%) scale(.5)',opacity:1},{transform:'translate('+dx*.65+'px,'+dy*.65+'px) rotate('+i*13+'deg) scale(1)',opacity:1,offset:.36},{transform:'translate('+dx+'px,'+(dy+20)+'px) rotate('+i*29+'deg) scale(.15)',opacity:0}],{duration:280+Math.random()*100,easing:'cubic-bezier(.16,.7,.4,1)',fill:'forwards'});
+ }
+ document.body.appendChild(burst);
+ setTimeout(()=>{burst.remove();starLaunching=false;const star=link.querySelector('.lu-start-star');if(star)star.style.opacity='';window.location.assign(url)},390);
+});
 let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){void energy();if(!by('luMap').hidden)void loadBook()}});
 }
