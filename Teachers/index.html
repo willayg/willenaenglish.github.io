@@ -425,6 +425,19 @@ try{
 .cc-progress-high{background:#95d4b0;color:#164a32;border-color:#71ba92}
 .cc-empty-cell{background:#fff;color:#8799a0;border-color:#e5ecef}.cc-unavailable{background:#f1f3f5;color:#849097;border-color:#dce1e5;cursor:default}.cc-unavailable:hover{filter:none;border-color:#dce1e5}.cc-selected{border-color:#188995;box-shadow:0 0 0 2px #b1e4e9}
 .cc-cell:hover{filter:brightness(.97);border-color:#53b5bf}
+.cc-progress-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 14px;padding:10px 8px;color:#66737a;font-size:12px}
+.cc-progress-legend span,.cc-progress-counts span{display:flex;align-items:center;gap:4px}
+.cc-progress-legend i{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.cc-seg-wait{background:#d8e0e4}.cc-seg-start{background:#a4d7bd}.cc-seg-done{background:#26805e}
+.cc-cell.cc-breakdown{min-height:78px;padding:8px 9px;gap:7px;box-sizing:border-box;min-width:0}
+.cc-breakdown b{font-size:21px;line-height:1.1;font-variant-numeric:tabular-nums}
+.cc-breakdown.cc-progress-low,.cc-breakdown.cc-progress-mid,.cc-breakdown.cc-progress-high{background:#ecf7f1;border-color:#bce0cf;color:#206b50}
+.cc-breakdown.cc-full{background:#fff3d6;border-color:#e7bc61;color:#a27314}
+.cc-progress-segments{display:flex;width:100%;height:8px;border-radius:8px;overflow:hidden;background:#d8e0e4;flex:none}
+.cc-progress-segments i{height:100%;flex:none}
+.cc-progress-counts{display:flex;justify-content:space-between;width:100%;font-size:11px;line-height:1.2;font-variant-numeric:tabular-nums}
+.cc-progress-counts span:nth-child(1){color:#718995}.cc-progress-counts span:nth-child(2){color:#397e61}.cc-progress-counts span:nth-child(3){color:#176548}
+@media(max-width:600px){.cc-cell.cc-breakdown{padding:7px 6px;min-height:70px;gap:5px}.cc-breakdown b{font-size:18px}.cc-progress-legend{font-size:11px;gap:6px 10px}}
 .cc-drilldown{border:1px solid #cce5e7;border-radius:17px;background:#fff;padding:20px;margin-top:18px}
 .cc-primary{background:#1b8994;color:white;border-color:#1b8994}.cc-primary:hover{background:#147987}
 .cc-student-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:11px;margin:18px 0}
@@ -1531,6 +1544,14 @@ function ccSkillData(book,unit,group){
  return {rows,touched,mastered,total:students.length};
 }
 
+function ccProgressBreakdown(total,started,finished){
+ const done=Math.min(total,Math.max(0,finished)),active=Math.min(total-done,Math.max(0,started-done)),waiting=total-done-active;
+ if(!total)return '<b>—</b><small>No students</small>';
+ const pct=n=>100*n/total;
+ return '<b>'+Math.round(pct(done))+'%</b><span class="cc-progress-segments" aria-hidden="true">'+
+  '<i class="cc-seg-done" style="width:'+pct(done)+'%"></i><i class="cc-seg-start" style="width:'+pct(active)+'%"></i><i class="cc-seg-wait" style="width:'+pct(waiting)+'%"></i></span>'+
+  '<span class="cc-progress-counts" aria-hidden="true"><span>'+waiting+'</span><span>'+active+'</span><span>'+done+'</span></span>';
+}
 function ccCompletionTone(complete,total,started){
  if(!(total>0))return 'cc-empty-cell';
  const pct=100*complete/total;
@@ -1805,7 +1826,7 @@ function ccRenderDetail(){
  
  (curriculum.extraError?'<p class="cc-helper" role="alert">Grammar Genius progress could not be loaded ('+ccEscape(curriculum.extraError)+'). Refresh to retry; blank cells are not reliable.</p>':'')+
  (!curriculum.unitCache.has(book.book_id)?'<div class="cc-empty">Loading textbook units…</div>':!units.length?'<div class="cc-empty">No published or review units are available for this book.</div>':
- '<div class="cc-grid-scroll"><div class="cc-matrix"><div class="cc-matrix-head"><span>Unit</span>'+groups.map(g=>'<span>'+ccEscape(g.name)+'</span>').join('')+'</div>'+
+ '<div class="cc-progress-legend"><span><i class="cc-seg-wait"></i>Not started</span><span><i class="cc-seg-start"></i>In progress</span><span><i class="cc-seg-done"></i>Finished</span></div><div class="cc-grid-scroll"><div class="cc-matrix"><div class="cc-matrix-head"><span>Unit</span>'+groups.map(g=>'<span>'+ccEscape(g.name)+'</span>').join('')+'</div>'+
  units.map(u=>'<div class="cc-matrix-row"><div class="cc-unit-name"><strong>Unit '+ccEscape(u.unit_number)+'</strong><small>'+ccEscape(u.title||'')+'</small></div>'+
  groups.map(g=>{
   if(g.key==='puzzles'){
@@ -1815,17 +1836,18 @@ function ccRenderDetail(){
    const available=ccSkillAvailability(book,u,g);
    const loaded=curriculum.puzzleDetail.has(ccPuzzleCacheKey(book,u));
    const bookRecords=curriculum.puzzleDetail.get(ccPuzzleCacheKey(book,u));
-   const active=Array.isArray(bookRecords)?bookRecords.filter(r=>Number(r.sessions||0)>0).length:0;
+   const rosterIds=new Set(students.map(s=>String(s.id)));
+   const active=Array.isArray(bookRecords)?new Set(bookRecords.filter(r=>rosterIds.has(String(r.student_id))&&Number(r.sessions||0)>0).map(r=>String(r.student_id))).size:0;
    const unavailable=available===false&&active===0;
    const unknown=loaded&&bookRecords===null;
    const state=unavailable?'cc-unavailable':active?ccCompletionTone(active,students.length,active):available===null||unknown?'cc-unknown':'cc-empty-cell';
    const count=Number(curriculum.availability.get(String(book.book_id))?.puzzles?.get('book')||0);
-   return '<button type="button" class="cc-cell '+state+
+   const showPuzzleBreakdown=!unavailable&&Array.isArray(bookRecords)&&(available!==null||active>0);
+   return '<button type="button" class="cc-cell '+state+(showPuzzleBreakdown?' cc-breakdown':'')+
     (selected?.id===u.id&&curriculum.selectedSkill===g.key?' cc-selected':'')+
     '" data-cc-unit="'+ccEscape(u.id)+'" data-cc-skill="puzzles"'+
     ' aria-label="Book-wide puzzles, '+(unavailable?'no usable textbook words':count+' usable book words, '+active+' students with completed games')+'"'+
-    (unavailable?' disabled':'')+'><b>'+(unavailable?'✕':active?active+'/'+students.length:!loaded?'…':unknown?'?':'—')+
-    '</b><small>'+(unavailable?'not available':active?'book-wide':unknown||available===null?'unknown':!loaded?'loading':'book words')+'</small></button>';
+    (unavailable?' disabled':'')+'>'+(showPuzzleBreakdown?ccProgressBreakdown(students.length,active,active)+'<small>book-wide</small>':'<b>'+(unavailable?'×':!loaded?'…':'?')+'</b><small>'+(unavailable?'Unavailable':!loaded?'loading':'unknown')+'</small>')+'</button>';
   }
   const progress=ccCellProgress(book,u,g,c.name);
   const actualStarted=progress.started.size,done=progress.finished.size;
@@ -1834,15 +1856,13 @@ function ccRenderDetail(){
   const state=unavailable?'cc-unavailable':
    actualStarted?(progress.verified?ccCompletionTone(done,progress.total,actualStarted):'cc-progress-low'):
    availability===null||!progress.verified?'cc-unknown':'cc-empty-cell';
-  const shown=progress.verified?done:actualStarted;
-  return '<button type="button" class="cc-cell '+state+
+  const showBreakdown=!unavailable&&progress.verified&&(availability!==null||actualStarted>0);
+  return '<button type="button" class="cc-cell '+state+(showBreakdown?' cc-breakdown':'')+
    (selected?.id===u.id&&curriculum.selectedSkill===g.key?' cc-selected':'')+
    '" data-cc-unit="'+ccEscape(u.id)+'" data-cc-skill="'+g.key+
    '" aria-label="Unit '+ccEscape(u.unit_number)+' '+g.name+', '+
-   (unavailable?'not available':availability===null?'content status unknown':progress.verified?done+' of '+progress.total+' completed, '+actualStarted+' started':actualStarted+' started; completion data unavailable')+'"'+
-   (unavailable?' disabled':'')+'><b>'+(unavailable?'✕':actualStarted?shown+'/'+progress.total:availability===null||!progress.verified?'?':'—')+
-   '</b><small>'+(unavailable?'not available':state==='cc-full'?'complete':done?'completed':actualStarted?'in progress':availability===null||!progress.verified?'unknown':'not started')+
-   '</small></button>';
+   (unavailable?'not available':showBreakdown?(progress.total-actualStarted)+' not started, '+(actualStarted-done)+' in progress, '+done+' finished out of '+progress.total:actualStarted+' started; completion data unavailable')+'"'+
+   (unavailable?' disabled':'')+'>'+(showBreakdown?ccProgressBreakdown(progress.total,actualStarted,done):'<b>'+(unavailable?'×':'?')+'</b><small>'+(unavailable?'Unavailable':'Unknown')+'</small>')+'</button>';
 }).join('')+'</div>').join('')+'</div></div>')+
  (selected&&curriculum.selectedSkill?ccRenderStudentDrilldown(book,selected,groups.find(g=>g.key===curriculum.selectedSkill)):'')+
  (inAssignments?'':ccWritingActivitySummary(c.name)));
