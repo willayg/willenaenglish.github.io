@@ -41,7 +41,15 @@ const restore=()=>{try{const raw=JSON.parse(sessionStorage.getItem(cacheKey)||'n
 function remember(book,units,gold,results){cache.set(String(book.id),{book,units,gold,results,extra:{...extra}});try{sessionStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),selected:selectedBook,maps:[...cache].map(([k,m])=>[k,{...m,gold:[...m.gold]}])}));}catch{}}
 
 function cell(label,p,url,state='unknown',tone='cyan'){
-return '<a class="lu-cell" data-state="'+state+'" data-tone="'+tone+'" href="'+esc(url)+'"><strong>'+esc(p==null?'—':p+'%')+'</strong><div class="lu-meter"><i style="width:'+Math.max(0,p||0)+'%"></i></div></a>';
+ const value=p==null||p<0?null:Math.max(0,Math.min(100,p));
+ const text=value===null?'—':value+'%';
+ const progress=value===null?0:value;
+ const gold=state==='gold';
+ const ring='<svg class="lu-ring" viewBox="0 0 64 68" aria-hidden="true"><circle class="lu-ring-depth" cx="32" cy="35" r="27"/><circle class="lu-ring-track" cx="32" cy="32" r="27"/>'+
+ (progress>0?'<circle class="lu-ring-progress" cx="32" cy="32" r="27" pathLength="100" stroke-dasharray="'+progress+' 100" transform="rotate(-90 32 32)"/>':'')+
+ (gold?'<path class="lu-ring-star" d="M32 18l4.2 9 9.8 1.2-7.1 7 1.7 9.8-8.6-4.7-8.6 4.7 1.7-9.8-7.1-7 9.8-1.2z"/>':'<text x="32" y="33" dominant-baseline="middle" text-anchor="middle">'+esc(text)+'</text>')+'</svg>';
+ const attrs=' class="lu-cell" data-state="'+state+'" aria-label="'+esc(gold?'100% · Completed':text+(value===null?' · '+label:''))+'"';
+ return url?'<a'+attrs+' href="'+esc(url)+'">'+ring+'</a>':'<span'+attrs+'>'+ring+'</span>';
 }
 function render(book,units,wordGold,sentenceResults){
 lastMap={book,units,wordGold,sentenceResults};
@@ -50,13 +58,13 @@ by('luGrid').innerHTML='<strong>Unit</strong>'+apps.map((a,i)=>'<strong class="l
 return '<div class="lu-label" title="'+esc(u.title)+'"><strong>'+esc(u.unit_number)+'</strong></div>'+apps.map((app,j)=>{
 let p=null, label='Open',state='unknown',url=app.path;
 if(app.kind==='word'){if(wordGold.has(String(u.id))){p=100;label='Gold';state='gold';}url+=q(u);}
-if(app.kind==='sentence'){p=sentenceResults[i];url+=q(u);label=p===100?'Gold':p===null?'Open':p===-1?'N/A':p===0?'Start':'Continue';state=p===100?'gold':p===null||p===-1?'unknown':'progress';if(p===-1)return '<span class="lu-cell" data-state="unknown"><strong>—</strong></span>';}
+if(app.kind==='sentence'){p=sentenceResults[i];url+=q(u);label=p===100?'Gold':p===null?'Open':p===-1?'N/A':p===0?'Start':'Continue';state=p===100?'gold':p===null||p===-1?'unknown':'progress';if(p===-1)return cell('Unavailable',null,null,'unknown');}
 if(app.kind==='word'&&p===null){p=extra.word?.[i]??null;}
 if(app.kind==='grammar'){p=extra.grammar?.[i]??null;url+='?book='+encodeURIComponent(book.id)+'&unit='+encodeURIComponent(u.unit_number);}
 if(app.kind==='talk'){p=extra.talk?.[i]??null;url+=q(u);}
 if(app.kind==='writing'){p=extra.writing?.[i]??null;url+=q(u);}
 if(app.kind==='puzzles'){url+=q(u);}
-if(p===-1)return '<span class="lu-cell" data-state="unknown"><strong>—</strong></span>';
+if(p===-1)return cell('Unavailable',null,null,'unknown');
 if(p!==null&&state!=='gold'){state=p===100?'gold':p===0?'idle':'progress';label=p===100?'Done':p===0?'Start':'Continue';}
 return cell(label,p,url,state,'cyan');
 }).join('');
