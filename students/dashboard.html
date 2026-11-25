@@ -114,8 +114,8 @@ html.leaderboard-only #learningUpgrade{display:none!important}
 #learningUpgrade a.lu-cell:focus-visible .lu-ring{outline:2px solid #28b7c4;outline-offset:2px;border-radius:50%}
 #learningUpgrade .lu-grid>strong:first-child{align-self:stretch}
 
-#learningUpgrade .lu-cell[data-mission=true] .lu-ring{filter:drop-shadow(0 0 2px rgba(237,118,173,.65));animation:luMissionGlow 2s ease-in-out infinite}
-@keyframes luMissionGlow{0%,100%{filter:drop-shadow(0 0 1px rgba(237,118,173,.45))}50%{filter:drop-shadow(0 0 3px rgba(237,118,173,.95))}}
+#learningUpgrade .lu-cell[data-mission=true] .lu-ring{filter:drop-shadow(0 0 2px rgba(237,118,173,.22));animation:luMissionGlow 2s ease-in-out infinite}
+@keyframes luMissionGlow{0%,100%{filter:drop-shadow(0 0 1px rgba(237,118,173,.15))}50%{filter:drop-shadow(0 0 3px rgba(237,118,173,.28))}}
 @media(prefers-reduced-motion:reduce){#learningUpgrade .lu-cell[data-mission=true] .lu-ring{animation:none}}
 #learningUpgrade .lu-cell[data-mission=true] .lu-ring text{fill:#d94f94}
 
@@ -126,7 +126,7 @@ html.leaderboard-only #learningUpgrade{display:none!important}
 .lu-star-burst{position:fixed;inset:0;pointer-events:none;z-index:99999;overflow:hidden}
 .lu-star-burst span{position:absolute;clip-path:polygon(50% 0%,65% 34%,100% 38%,74% 63%,81% 100%,50% 82%,19% 100%,26% 63%,0% 38%,35% 34%);will-change:transform,opacity}
 
-#learningUpgrade .lu-grid>.lu-cell[data-mission=true] .lu-ring-track{stroke:#ed76ad}
+#learningUpgrade .lu-grid>.lu-cell[data-mission=true] .lu-ring-track{stroke:#f9dfea}
 #learningUpgrade .lu-grid>.lu-cell[data-mission=true] .lu-ring-progress{stroke:#d94f94}
 </style>
 <section id="learningUpgrade" aria-label="My learning"><div class="lu-energy" id="luEnergyPanel"><button id="luEnergyToggle" type="button" aria-label="젤리 에너지 · Jelly Energy" aria-expanded="false" aria-controls="luEnergyDetails luEnergyNote"></button><div class="lu-head" id="luEnergyDetails"><strong class="lu-jelly-title"><svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true"><path d="M9 26C5 15 12 5 24 5s19 10 15 21c7 10 1 17-15 17S2 36 9 26Z" fill="#ed76ad" stroke="#d04f94" stroke-width="2"/><ellipse cx="17" cy="13" rx="6" ry="3" fill="#fff" opacity=".8"/><circle cx="17" cy="28" r="2.5" fill="#8e3565"/><circle cx="31" cy="28" r="2.5" fill="#8e3565"/></svg>Jelly Energy · 젤리 에너지</strong><strong id="luEnergyText">—</strong></div><div class="lu-meter" role="progressbar" aria-label="Jelly energy" id="luEnergyBar" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i></div><div id="luEnergyNote" class="lu-note" role="status">Loading achievements…</div></div><div class="lu-tabs" role="group" aria-label="Dashboard view"><button type="button" id="luApps" aria-pressed="true">앱</button><button type="button" id="luMapTab" aria-pressed="false">맵</button></div><div class="lu-map" id="luMap" hidden><div id="luBooks" class="lu-book-tabs" role="group" aria-label="Textbook"></div><p id="luStatus" role="status">Loading curriculum…</p><div class="lu-scroll" tabindex="0" aria-label="Swipe across learning apps"><div class="lu-grid" id="luGrid"></div></div></div></section><section class="hero"><div class="path-stage" id="stage"><div class="parallax"><div class="layer far" id="far"></div><div class="layer mid" id="mid"></div><div class="layer near" id="near"></div></div><div class="path-layout">
