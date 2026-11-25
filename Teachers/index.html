@@ -1544,11 +1544,11 @@ function ccSkillData(book,unit,group){
  return {rows,touched,mastered,total:students.length};
 }
 
-function ccProgressBreakdown(total,started,finished){
+function ccProgressBreakdown(total,started,finished,average=null){
  const done=Math.min(total,Math.max(0,finished)),active=Math.min(total-done,Math.max(0,started-done)),waiting=total-done-active;
  if(!total)return '<b>—</b><small>No students</small>';
  const pct=n=>100*n/total;
- return '<b>'+Math.round(pct(done))+'%</b><span class="cc-progress-segments" aria-hidden="true">'+
+ return '<b>'+Math.round(average===null?pct(done):average)+'%</b><span class="cc-progress-segments" aria-hidden="true">'+
   '<i class="cc-seg-done" style="width:'+pct(done)+'%"></i><i class="cc-seg-start" style="width:'+pct(active)+'%"></i><i class="cc-seg-wait" style="width:'+pct(waiting)+'%"></i></span>'+
   '<span class="cc-progress-counts" aria-hidden="true"><span>'+waiting+'</span><span>'+active+'</span><span>'+done+'</span></span>';
 }
@@ -1562,13 +1562,23 @@ function ccCompletionTone(complete,total,started){
  return 'cc-progress-low';
 }
 // Use the same complete-item requirements as student drilldown, not attempts.
+const ccCellProgressCache=new Map();
+const ccProgressRatio=(done,total)=>Number(total)>0?Math.max(0,Math.min(1,(Number(done)||0)/Number(total))):0;
 function ccCellProgress(book,unit,group,className){
+ const key=JSON.stringify([className,book.book_id,unit.id,group.key,book.catalog_level]);
+ if(ccCellProgressCache.has(key))return ccCellProgressCache.get(key);
+ const result=ccCalculateCellProgress(book,unit,group,className);
+ ccCellProgressCache.set(key,result);
+ return result;
+}
+function ccCalculateCellProgress(book,unit,group,className){
  const roster=ccClassStudents(className),ids=new Set(roster.map(s=>String(s.id)));
  const rows=(curriculum.data?.progress||[]).filter(r=>String(r.book_id)===String(book.book_id)&&String(r.unit_id)===String(unit.id)&&ids.has(String(r.student_id))&&group.skills.includes(r.skill));
  const started=new Set(rows.filter(r=>Number(r.attempts)>0||Number(r.attempted_content_count)>0).map(r=>String(r.student_id)));
  const finished=new Set(),catalog=curriculum.availability.get(String(book.book_id));
  const targetValue=catalog?.[group.key]?.get(group.key==='grammar'?String(unit.unit_number):String(unit.id));
  const target=typeof targetValue==='number'?targetValue:targetValue?.size||0;
+ const fractions=new Map();
  let verified=true;
  if(group.key==='word'){
   const required=ccRequiredSkills(book,group);
@@ -1580,6 +1590,8 @@ function ccCellProgress(book,unit,group,className){
    if(['vocabulary','spelling_coach','spelling_test','speaking'].some(key=>Number(r[key])>0))started.add(id);
    if(verified){
     if(required.every(key=>ccWordSkillMet(key,r,masteryTarget,required)))finished.add(id);
+    const fraction=required.reduce((sum,key)=>sum+(ccWordSkillMet(key,r,masteryTarget,required)?1:ccProgressRatio(r[key],masteryTarget)),0)/required.length;
+    fractions.set(id,Math.max(fractions.get(id)||0,fraction));
    }
   }
  }else if(group.key==='sentence'){
@@ -1592,7 +1604,11 @@ function ccCellProgress(book,unit,group,className){
    byStudent.set(id,skills);
    if(Number(r.done)>0)started.add(id);
   }
-  if(verified)for(const [id,skills] of byStudent)if(['sentence_coach','sentence_unscramble','sentence_speaking'].every(key=>Number(skills[key])>target*.9))finished.add(id);
+  if(verified)for(const [id,skills] of byStudent){
+   const keys=['sentence_coach','sentence_unscramble','sentence_speaking'];
+   if(keys.every(key=>Number(skills[key])>target*.9))finished.add(id);
+   fractions.set(id,keys.reduce((sum,key)=>sum+(Number(skills[key])>target*.9?1:ccProgressRatio(skills[key],target)),0)/keys.length);
+  }
  }else if(group.key==='writing'){
   verified=Boolean(curriculum.evidenceReady.writing);
   if(verified){
@@ -1602,18 +1618,40 @@ function ccCellProgress(book,unit,group,className){
     const id=String(r.student_id),all=exercises.get(id)||[];
     all.push(r);exercises.set(id,all);started.add(id);
    }
-   for(const [id,all] of exercises)if(all.length&&all.every(r=>r.completed===true))finished.add(id);
+   for(const [id,all] of exercises){
+    if(all.length&&all.every(r=>r.completed===true))finished.add(id);
+    const byExercise=new Map();
+    for(const r of all){
+     const key=String(r.exercise_type||'sentence'),fraction=r.completed===true?1:ccProgressRatio(r.answered,r.total);
+     byExercise.set(key,Math.max(byExercise.get(key)||0,fraction));
+    }
+    // The bulk snapshot describes recorded exercises, not unattempted stages.
+    if(byExercise.size)fractions.set(id,Math.min(.99,[...byExercise.values()].reduce((a,b)=>a+b,0)/byExercise.size));
+   }
   }
  }else if(['grammar','talking','freeconversation'].includes(group.key)){
   verified=group.key==='freeconversation'?Boolean(curriculum.evidenceReady.freeconversation):Boolean(curriculum.evidenceReady.extra);
   if(verified){
    const extra=ccExtraCompletion(book,unit,group,className);
    for(const id of extra.started)started.add(id);
-   for(const id of extra.finished)finished.add(id);
+   for(const id of extra.finished)if(ids.has(id))finished.add(id);
+   const modes=group.key==='grammar'?['choose','check','hunt']:[group.key==='talking'?'speaking':'conversation'];
+   const byStudent=new Map();
+   for(const r of extra.rows){
+    const id=String(r.student_id);
+    if(!ids.has(id)||!modes.includes(r.skill))continue;
+    const skills=byStudent.get(id)||new Map();
+    const fraction=ccProgressRatio(r.done,r.total);
+    skills.set(r.skill,Math.max(skills.get(r.skill)||0,fraction));
+    byStudent.set(id,skills);
+   }
+   for(const [id,skills] of byStudent)fractions.set(id,Math.min(.99,modes.reduce((sum,mode)=>sum+(skills.get(mode)||0),0)/modes.length));
   }
  }
- for(const id of finished)started.add(id);
- return {started,finished,total:roster.length,verified};
+ for(const id of started)if(!ids.has(id))started.delete(id);
+ for(const id of finished){started.add(id);fractions.set(id,1);}
+ const average=roster.length?100*[...fractions.values()].reduce((a,b)=>a+b,0)/roster.length:0;
+ return {started,finished,total:roster.length,verified,average};
 }
 
 function ccCoverage(book,unit){
@@ -1861,8 +1899,8 @@ function ccRenderDetail(){
    (selected?.id===u.id&&curriculum.selectedSkill===g.key?' cc-selected':'')+
    '" data-cc-unit="'+ccEscape(u.id)+'" data-cc-skill="'+g.key+
    '" aria-label="Unit '+ccEscape(u.unit_number)+' '+g.name+', '+
-   (unavailable?'not available':showBreakdown?(progress.total-actualStarted)+' not started, '+(actualStarted-done)+' in progress, '+done+' finished out of '+progress.total:actualStarted+' started; completion data unavailable')+'"'+
-   (unavailable?' disabled':'')+'>'+(showBreakdown?ccProgressBreakdown(progress.total,actualStarted,done):'<b>'+(unavailable?'×':'?')+'</b><small>'+(unavailable?'Unavailable':'Unknown')+'</small>')+'</button>';
+   (unavailable?'not available':showBreakdown?(progress.total-actualStarted)+' not started, '+(actualStarted-done)+' in progress, '+done+' finished out of '+progress.total+', '+Math.round(progress.average)+' percent average progress':actualStarted+' started; completion data unavailable')+'"'+
+   (unavailable?' disabled':'')+'>'+(showBreakdown?ccProgressBreakdown(progress.total,actualStarted,done,progress.average):'<b>'+(unavailable?'×':'?')+'</b><small>'+(unavailable?'Unavailable':'Unknown')+'</small>')+'</button>';
 }).join('')+'</div>').join('')+'</div></div>')+
  (selected&&curriculum.selectedSkill?ccRenderStudentDrilldown(book,selected,groups.find(g=>g.key===curriculum.selectedSkill)):'')+
  (inAssignments?'':ccWritingActivitySummary(c.name)));
@@ -2211,6 +2249,7 @@ async function loadClassOverview(force=false){
  curriculum.pending=true;ccHost().innerHTML='<div class="empty">Loading active class books and practice records…</div>';
  try{
   if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.availability.clear();curriculum.wordMasteryTotals.clear();curriculum.puzzleDetail.clear();curriculum.puzzlePending.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];curriculum.wordSnapshots=[];curriculum.evidenceReady={word:false,sentence:false,writing:false,extra:false,freeconversation:false};}
+  ccCellProgressCache.clear();
   curriculum.data=await ccRpc('teacher_curriculum_overview_v1');
   try{const rows=await ccRpc('teacher_curriculum_word_snapshot_overview_v1');if(!Array.isArray(rows))throw Error('Unexpected Word Genius snapshot response');curriculum.wordSnapshots=rows;curriculum.evidenceReady.word=true;}catch(e){console.warn('[Class Curriculum] Word Genius mastery:',e.message);curriculum.wordSnapshots=[];curriculum.evidenceReady.word=false;}
   try{const puzzle=await ccRpc('teacher_curriculum_puzzle_overview_v1');curriculum.puzzleOverview=Array.isArray(puzzle)?puzzle:[]}catch(e){console.warn('[Class Curriculum] Puzzle overview:',e.message);curriculum.puzzleOverview=[];}
@@ -2262,6 +2301,7 @@ async function loadClassOverview(force=false){
    try{curriculum.wordMasteryTotals.set(String(id),await ccLoadWordMasteryTotals(id))}
    catch(e){console.warn('[Class Curriculum] Word mastery targets:',e.message)}
   }));
+  ccCellProgressCache.clear();
   curriculum.loadedAt=Date.now();
   curriculum.refreshRequested=false;
   if(ccHost()?.id==='assignmentClassGrid'){
