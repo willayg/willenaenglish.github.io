@@ -99,13 +99,13 @@ html.leaderboard-only #learningUpgrade{display:none!important}
 #learningUpgrade .lu-grid>.lu-cell::before{content:"";position:absolute;z-index:0;left:calc(50% - 1px);right:calc(-50% - 5px);height:3px;top:calc(50% - 2px);background:#d3e9eb;border-radius:2px;pointer-events:none}
 #learningUpgrade .lu-grid>.lu-cell:nth-child(7n)::before{display:none}
 #learningUpgrade .lu-ring{width:64px;height:68px;display:block;position:relative;z-index:1;overflow:visible;transition:transform .13s ease;flex:none}
-#learningUpgrade .lu-ring-depth{fill:#b8cccf;stroke:#b8cccf;stroke-width:4.5}
+#learningUpgrade .lu-ring-depth{fill:none;stroke:#cbd5d8;stroke-width:1.8}
 #learningUpgrade .lu-ring-track{fill:#fff;stroke:#e0e9eb;stroke-width:4.5}
 #learningUpgrade .lu-ring-progress{fill:none;stroke:#27b7c4;stroke-width:4.5;stroke-linecap:round}
 #learningUpgrade .lu-ring text{fill:#91a4a7;font:800 13px Poppins,system-ui,sans-serif}
-#learningUpgrade .lu-cell[data-state=progress] .lu-ring-depth{fill:#80bfc5;stroke:#80bfc5}
+
 #learningUpgrade .lu-cell[data-state=progress] .lu-ring text{fill:#087f89}
-#learningUpgrade .lu-cell[data-state=gold] .lu-ring-depth{fill:#c69b36;stroke:#c69b36}
+
 #learningUpgrade .lu-cell[data-state=gold] .lu-ring-track{stroke:#e7b63e}
 #learningUpgrade .lu-cell[data-state=gold] .lu-ring-progress{stroke:#e7b63e}
 #learningUpgrade .lu-ring-star{fill:#efc34d;stroke:#b68b28;stroke-width:1}
@@ -136,7 +136,7 @@ html.leaderboard-only #learningUpgrade{display:none!important}
 </style>
 <script type="module" src="/students/components/dashboard-inbox-bridge.js?v=20261101-settings-only3"></script><script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
-<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script><script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script><script type="module" src="/students/dashboard-v2/learning-upgrade.js?v=20261126-connectedrings1"></script><script>
+<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script><script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script><script type="module" src="/students/dashboard-v2/learning-upgrade.js?v=20261126-concentric2"></script><script>
 (function(){
  const panel=document.getElementById('luEnergyPanel'),toggle=document.getElementById('luEnergyToggle');
  if(!panel||!toggle)return;
