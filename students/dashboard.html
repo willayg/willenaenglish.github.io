@@ -12,7 +12,124 @@ html.leaderboard-only .sep,html.leaderboard-only .character-collection{display:n
 </style>
 <script>
 if(new URLSearchParams(location.search).get('leaderboard_only')==='1')document.documentElement.classList.add('leaderboard-only');
-</script></head><body><div class="page"><header class="header"><div class="header-left"><div class="header-metrics"><div class="points-pill stars-pill" id="headerStars">⭐ —</div><div class="points-pill" id="headerPoints">+ —</div></div></div><div class="header-identity"><strong id="headerName">Student</strong><span id="headerClass">Willena English</span></div><button class="avatar" type="button" aria-label="Open settings">S</button></header><section class="hero"><div class="path-stage" id="stage"><div class="parallax"><div class="layer far" id="far"></div><div class="layer mid" id="mid"></div><div class="layer near" id="near"></div></div><div class="path-layout">
+</script></head><body><div class="page"><header class="header"><div class="header-left"><div class="header-metrics"><div class="points-pill stars-pill" id="headerStars">⭐ —</div><div class="points-pill" id="headerPoints">+ —</div></div></div><div class="header-identity"><strong id="headerName">Student</strong><span id="headerClass">Willena English</span></div><button class="avatar" type="button" aria-label="Open settings">S</button></header><style>
+#learningUpgrade{margin:14px auto;max-width:760px;padding:0 10px;color:var(--text,#16464a);font:600 14px Poppins,system-ui,sans-serif}
+#learningUpgrade [hidden],.hero[hidden]{display:none!important}
+.lu-energy,.lu-map{background:var(--card-bg,#fff);border:1px solid #b9deda;border-radius:20px;padding:16px;margin:10px 0}
+.lu-energy{background:#fff7e5;color:#795516;border-color:#edd49b}
+.lu-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lu-meter{height:12px;border-radius:99px;background:#e9dcc0;overflow:hidden;margin:8px 0}
+.lu-meter i{display:block;height:100%;background:#e6aa30;border-radius:99px;transition:width .4s}
+.lu-tabs{display:flex;gap:6px;padding:4px;background:#e5eeee;border-radius:15px}
+.lu-tabs button{flex:1;border:0;border-radius:12px;padding:12px;background:transparent;color:#31565b;font:inherit;font-size:20px;font-weight:800;cursor:pointer}
+.lu-tabs button[aria-pressed=true]{background:#fff;color:#08795e;box-shadow:0 2px 8px #1232}
+.lu-grid{display:grid;grid-template-columns:minmax(65px,1fr) repeat(3,minmax(0,1fr));gap:6px;margin-top:14px;align-items:stretch}
+.lu-grid>*{min-width:0;overflow-wrap:anywhere;text-align:center}
+.lu-label,.lu-cell{border-radius:12px;padding:9px 4px;display:flex;flex-direction:column;justify-content:center;gap:5px;min-height:64px;text-decoration:none;color:#244c50;background:#f1f5f5}
+.lu-label{text-align:left;padding-left:8px}.lu-label small{font-weight:400}
+.lu-cell{border:1px solid #c5dcd7;background:#e6f5ed;color:#08795e}
+.lu-cell[data-state=gold]{background:#fff1ca;border-color:#ddbb62;color:#986d12}
+.lu-cell[data-state=unknown]{background:#f1f3f3;color:#687a7c;border-color:#dce4e4}
+.lu-cell strong{font-size:20px}.lu-cell small{font-size:10px}.lu-cell .lu-meter{height:5px;margin:0;background:#cbded6}.lu-cell .lu-meter i{background:currentColor}
+.lu-map select{max-width:100%;font:inherit;padding:8px;border:1px solid #b9deda;border-radius:8px}
+.lu-note{font-size:11px;font-weight:400}.lu-map h2{margin:0 0 8px;font-size:18px}
+@media(max-width:420px){#learningUpgrade{padding:0}.lu-map{padding:9px}.lu-grid{gap:4px;font-size:11px}.lu-cell strong{font-size:17px}}
+html.leaderboard-only #learningUpgrade{display:none!important}
+.lu-scroll{overflow-x:auto;max-width:100%;overscroll-behavior-x:contain;scrollbar-width:thin;padding-bottom:5px}
+#learningUpgrade .lu-scroll .lu-grid{grid-template-columns:44px repeat(6,minmax(86px,1fr));min-width:590px;gap:5px}
+#learningUpgrade .lu-grid>:nth-child(7n+1){position:sticky;left:0;z-index:1;background:#e7f6f8;border-radius:9px;color:#267a83}
+.lu-swipe{text-align:center;font-size:10px;color:#64848c;margin:4px 0}
+#learningUpgrade .lu-energy{background:#fff0f7;color:#b34a83;border-color:#efb4d3}
+#learningUpgrade .lu-energy .lu-meter{background:#ffe0ef;height:14px;border:1px solid #efb4d3}
+#learningUpgrade .lu-energy .lu-meter i{background:#ed76ad}
+.lu-jelly-title{display:flex;align-items:center;gap:8px}
+#learningUpgrade .lu-cell[data-state=idle]{background:#f2f5f6;color:#647e85;border-color:#dbe5e8}
+
+#learningUpgrade .lu-map{border:2px solid #9bdce3;border-radius:24px;box-shadow:0 4px 12px #28b7c414}
+
+#learningUpgrade .lu-tabs{background:#e1f4f6;border:1px solid #9bdce3}
+#learningUpgrade .lu-tabs button[aria-pressed=true]{background:#fff;color:#207d89}
+.lu-book-tabs,.lu-group-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.lu-book-tabs button,.lu-group-tabs button,#luRetry{border:2px solid #bce6eb;border-radius:14px;background:#f1fcfd;color:#277e89;font:700 12px Poppins,system-ui,sans-serif;padding:7px 12px;cursor:pointer}
+.lu-book-tabs button[aria-pressed=true]{background:#fff;color:#ed76ad;border-color:#28b7c4}
+.lu-group-tabs button{border-color:#efc6dc;background:#fff5fa;color:#a34d7d;flex:1;padding:6px 4px}
+.lu-group-tabs button[aria-pressed=true]{background:#ed76ad;color:white;border-color:#ed76ad}
+#learningUpgrade .lu-grid{grid-template-columns:42px repeat(3,minmax(0,1fr));gap:5px;margin-top:8px}
+#learningUpgrade .lu-label,#learningUpgrade .lu-cell{min-height:42px;padding:5px 4px;gap:3px;border-radius:11px}
+#learningUpgrade .lu-label{text-align:center;background:#e7f6f8;color:#267a83;font-size:14px}
+#learningUpgrade .lu-cell{background:#e4f8fa;border-color:#a8dfe5;color:#237e8a}
+#learningUpgrade .lu-cell[data-tone=pink]{background:#fff0f7;border-color:#efb4d3;color:#b34a83}
+#learningUpgrade .lu-cell[data-state=unknown]{background:#f2f5f6;color:#647e85;border-color:#dbe5e8}
+#learningUpgrade .lu-cell[data-state=gold]{background:#fff1c7;border-color:#e2b758;color:#976b15}
+#learningUpgrade .lu-cell strong{font-size:17px;line-height:1.15}
+#learningUpgrade .lu-cell small{font-size:9px;line-height:1.1}
+#learningUpgrade .lu-cell .lu-meter{height:4px}
+.lu-col{display:flex;flex-direction:column;align-items:center;justify-content:end;font-size:11px;line-height:1.2;gap:3px}
+.lu-col img,.lu-col svg{width:30px;height:30px;object-fit:contain;display:block;flex:none}
+#learningUpgrade .lu-cell[data-state=idle]{background:#f2f5f6;color:#647e85;border-color:#dbe5e8}
+#learningUpgrade .lu-cell{min-height:38px}
+#luGrid[aria-busy=true]{pointer-events:none}
+#luStatus:empty{display:none}
+#learningUpgrade .lu-grid{transition:opacity .15s}
+
+#luStatus{font-size:12px;margin:8px 0}
+.lu-extra{display:flex;justify-content:space-between;background:#fff0f7;border:1px solid #efb4d3;border-radius:12px;padding:8px 12px;color:#a34d7d;text-decoration:none;font-size:12px}
+@media(prefers-color-scheme:dark){html:not(.light) #learningUpgrade .lu-map{color:#244c50;background:#f8fcfd}}
+
+
+#learningUpgrade .lu-energy{padding:3px 8px;border-radius:999px;transition:padding .22s ease,border-radius .22s ease;position:relative}
+#learningUpgrade .lu-energy.is-expanded{padding:12px 14px;border-radius:20px}
+#learningUpgrade .lu-energy .lu-head,#learningUpgrade .lu-energy #luEnergyNote{display:grid;grid-template-rows:0fr;opacity:0;overflow:hidden;transition:grid-template-rows .22s ease,opacity .18s ease;margin:0}
+#learningUpgrade .lu-energy .lu-head{display:flex;max-height:0;transition:max-height .22s ease,opacity .18s ease;align-items:center}
+#learningUpgrade .lu-energy #luEnergyNote{display:block;max-height:0;transition:max-height .22s ease,opacity .18s ease}
+#learningUpgrade .lu-energy.is-expanded .lu-head{max-height:48px;opacity:1}
+#learningUpgrade .lu-energy.is-expanded #luEnergyNote{max-height:50px;opacity:1}
+#learningUpgrade .lu-energy .lu-meter{margin:2px 0;height:12px;transition:height .22s ease,margin .22s ease}
+#learningUpgrade .lu-energy.is-expanded .lu-meter{height:16px;margin:8px 0}
+#luEnergyToggle{position:absolute;inset:0;border:0;border-radius:inherit;background:transparent;cursor:pointer;z-index:2;touch-action:manipulation}
+#luEnergyToggle:focus-visible{outline:2px solid #d04f94;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){#learningUpgrade .lu-energy,#learningUpgrade .lu-energy .lu-head,#learningUpgrade .lu-energy #luEnergyNote,#learningUpgrade .lu-energy .lu-meter{transition:none}}
+
+#learningUpgrade .lu-grid>strong:first-child{background:#fff;border:0;border-radius:0;align-self:stretch;display:flex;align-items:flex-end;justify-content:center;padding:0 0 5px;color:#267a83;font-size:12px;box-shadow:none}
+
+/* Learning map: connected progress rings, with a subtle raised rim. */
+#learningUpgrade .lu-scroll .lu-grid{grid-template-columns:44px repeat(6,minmax(78px,1fr));min-width:542px;column-gap:5px;row-gap:13px;align-items:center;margin-top:15px;padding-bottom:7px;isolation:isolate}
+#learningUpgrade .lu-grid>.lu-label{background:#fff;border:0;border-radius:0;box-shadow:none;min-height:64px;color:#267a83;z-index:3}
+#learningUpgrade .lu-grid>.lu-cell{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:68px;min-height:0;padding:0;gap:0;border:0;border-radius:0;background:transparent;box-shadow:none;color:#91a4a7;overflow:visible;isolation:auto;text-decoration:none;-webkit-tap-highlight-color:transparent}
+#learningUpgrade .lu-grid>.lu-cell::before{content:"";position:absolute;z-index:0;left:calc(50% - 1px);right:calc(-50% - 5px);height:3px;top:calc(50% - 2px);background:#d3e9eb;border-radius:2px;pointer-events:none}
+#learningUpgrade .lu-grid>.lu-cell:nth-child(7n)::before{display:none}
+#learningUpgrade .lu-ring{width:64px;height:68px;display:block;position:relative;z-index:1;overflow:visible;transition:transform .13s ease;flex:none}
+#learningUpgrade .lu-ring-depth{fill:#cbd5d8;stroke:#cbd5d8;stroke-width:1.8}
+#learningUpgrade .lu-ring-track{fill:#fff;stroke:#e0e9eb;stroke-width:4.5}
+#learningUpgrade .lu-ring-progress{fill:none;stroke:#27b7c4;stroke-width:4.5;stroke-linecap:round}
+#learningUpgrade .lu-ring text{fill:#91a4a7;font:800 13px Poppins,system-ui,sans-serif}
+
+#learningUpgrade .lu-cell[data-state=progress] .lu-ring text{fill:#d94f94}
+
+#learningUpgrade .lu-cell[data-state=gold] .lu-ring-track{stroke:#e7b63e}
+#learningUpgrade .lu-cell[data-state=gold] .lu-ring-progress{stroke:#e7b63e}
+#learningUpgrade .lu-ring-star{fill:#efc34d;stroke:#b68b28;stroke-width:1}
+#learningUpgrade a.lu-cell:active .lu-ring{transform:translateY(2px)}
+#learningUpgrade a.lu-cell:focus-visible{outline:0}
+#learningUpgrade a.lu-cell:focus-visible .lu-ring{outline:2px solid #28b7c4;outline-offset:2px;border-radius:50%}
+#learningUpgrade .lu-grid>strong:first-child{align-self:stretch}
+
+#learningUpgrade .lu-cell[data-mission=true] .lu-ring{filter:drop-shadow(0 0 2px rgba(237,118,173,.65));animation:luMissionGlow 2s ease-in-out infinite}
+@keyframes luMissionGlow{0%,100%{filter:drop-shadow(0 0 1px rgba(237,118,173,.45))}50%{filter:drop-shadow(0 0 3px rgba(237,118,173,.95))}}
+@media(prefers-reduced-motion:reduce){#learningUpgrade .lu-cell[data-mission=true] .lu-ring{animation:none}}
+#learningUpgrade .lu-cell[data-mission=true] .lu-ring text{fill:#d94f94}
+
+#learningUpgrade #luBooks button{background:#fff}
+
+#learningUpgrade .lu-start-star{fill:#e4f0f1;stroke:#a4c6ca;stroke-width:1.6;stroke-linejoin:round}
+#learningUpgrade .lu-cell[data-mission=true] .lu-start-star{fill:#fce6f1;stroke:#ed76ad}
+.lu-star-burst{position:fixed;inset:0;pointer-events:none;z-index:99999;overflow:hidden}
+.lu-star-burst span{position:absolute;clip-path:polygon(50% 0%,65% 34%,100% 38%,74% 63%,81% 100%,50% 82%,19% 100%,26% 63%,0% 38%,35% 34%);will-change:transform,opacity}
+
+#learningUpgrade .lu-grid>.lu-cell[data-mission=true] .lu-ring-track{stroke:#ed76ad}
+#learningUpgrade .lu-grid>.lu-cell[data-mission=true] .lu-ring-progress{stroke:#d94f94}
+</style>
+<section id="learningUpgrade" aria-label="My learning"><div class="lu-energy" id="luEnergyPanel"><button id="luEnergyToggle" type="button" aria-label="젤리 에너지 · Jelly Energy" aria-expanded="false" aria-controls="luEnergyDetails luEnergyNote"></button><div class="lu-head" id="luEnergyDetails"><strong class="lu-jelly-title"><svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true"><path d="M9 26C5 15 12 5 24 5s19 10 15 21c7 10 1 17-15 17S2 36 9 26Z" fill="#ed76ad" stroke="#d04f94" stroke-width="2"/><ellipse cx="17" cy="13" rx="6" ry="3" fill="#fff" opacity=".8"/><circle cx="17" cy="28" r="2.5" fill="#8e3565"/><circle cx="31" cy="28" r="2.5" fill="#8e3565"/></svg>Jelly Energy · 젤리 에너지</strong><strong id="luEnergyText">—</strong></div><div class="lu-meter" role="progressbar" aria-label="Jelly energy" id="luEnergyBar" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i></div><div id="luEnergyNote" class="lu-note" role="status">Loading achievements…</div></div><div class="lu-tabs" role="group" aria-label="Dashboard view"><button type="button" id="luApps" aria-pressed="true">앱</button><button type="button" id="luMapTab" aria-pressed="false">맵</button></div><div class="lu-map" id="luMap" hidden><div id="luBooks" class="lu-book-tabs" role="group" aria-label="Textbook"></div><p id="luStatus" role="status">Loading curriculum…</p><div class="lu-scroll" tabindex="0" aria-label="Swipe across learning apps"><div class="lu-grid" id="luGrid"></div></div></div></section><section class="hero"><div class="path-stage" id="stage"><div class="parallax"><div class="layer far" id="far"></div><div class="layer mid" id="mid"></div><div class="layer near" id="near"></div></div><div class="path-layout">
 <div class="node n1 cyan word-genius-node"><div class="node-card"><a class="node-link badge-link" href="/students/vocab-study/" aria-label="Word Genius"><img class="badge-icon word-genius-icon" src="/students/assets/icons/word-genius.svg?v=20260927-1" alt=""><span class="badge-label">WORD<br>GENIUS</span></a></div></div>
 <div class="node n2 pink sentence-genius-node"><div class="node-card"><a class="node-link badge-link" href="/students/sentence-genius/" aria-label="Sentence Genius"><img class="badge-icon sentence-genius-icon" src="/students/assets/icons/sentence-genius.svg?v=20261025-sentence-path-1" alt=""><span class="badge-label">SENTENCE<br>GENIUS</span></a></div></div>
 <div class="node n3 pink free-talking-node"><div class="node-card"><a class="node-link badge-link" href="/students/free-talking-genius/" aria-label="Free Talking Genius"><span class="badge-label free-talking-heading">FREE TALKING</span><img class="badge-icon free-talking-icon" src="/students/assets/icons/free-talking-bunny-fox.svg?v=20261108-1" alt=""><span class="badge-label free-talking-footer">GENIUS</span></a></div></div>
@@ -25,7 +142,7 @@ if(new URLSearchParams(location.search).get('leaderboard_only')==='1')document.d
 <div class="node n10 cyan listening-genius-node"><div class="node-card"><a class="node-link badge-link" href="/students/listening-genius/" aria-label="Listening Genius"><img class="badge-icon listening-genius-icon" src="/students/assets/icons/listening-genius.svg?v=20261112a" alt=""><span class="badge-label">LISTENING<br>GENIUS</span></a></div></div>
 <!-- Level Test dashboard shortcut temporarily hidden; /students/level-test/ remains accessible. -->
 </div>
-</div></div></section><section class="character-collection" aria-labelledby="collectionHeading"><h2 id="collectionHeading">My Characters</h2><p id="characterCollectionStatus" role="status">Loading character milestones…</p><div id="characterCollection" class="character-collection-grid" aria-label="Character collection"></div></section><section class="board-section"><div class="sep"></div><div class="board-head"><h3>Leaderboard</h3><span id="leaderClass">EVERYBODY · THIS MONTH</span></div><div class="board-card"><div class="tabs scope-tabs" role="tablist" aria-label="Leaderboard group"><button class="tab" type="button" role="tab" aria-selected="false" data-scope="class">My Class</button><button class="tab active" type="button" role="tab" aria-selected="true" data-scope="global">Everybody</button></div><div class="metric-tabs" role="tablist" aria-label="Leaderboard score type"><button class="metric-tab active" type="button" role="tab" aria-selected="true" data-metric="super" aria-label="Super Points" title="Super Points"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M18.4 2.8 7.7 17h7L12.8 29l11.5-16.2h-7.1l1.2-10Z" fill="#ffc928" stroke="#e39a00" stroke-width="1.2" stroke-linejoin="round"/></svg></button><button class="metric-tab" type="button" role="tab" aria-selected="false" data-metric="points" aria-label="Points" title="Points"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12.5" fill="#f7c948" stroke="#d99a12" stroke-width="2"/><circle cx="16" cy="16" r="8.2" fill="#ffd96d" stroke="#e3aa22" stroke-width="1.2"/><path d="M16 10.3v11.4M12.7 13.1c1-2.1 6.4-2 6.8.2.4 2.4-6.2 1.8-6.4 4.3-.2 2.2 5.8 2.8 6.8.3" fill="none" stroke="#a46b00" stroke-width="1.7" stroke-linecap="round"/></svg></button><button class="metric-tab" type="button" role="tab" aria-selected="false" data-metric="stars" aria-label="Stars" title="Stars"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 3.5 3.8 7.8 8.7 1.2-6.3 6.1 1.5 8.6-7.7-4.1-7.7 4.1 1.5-8.6-6.3-6.1 8.7-1.2L16 3.5Z" fill="#ffcf3a" stroke="#e3a711" stroke-width="1.4" stroke-linejoin="round"/></svg></button></div><div class="metric-caption" id="metricCaption">Super Points</div><div class="rows" id="leaderRows"><div class="loading">Loading leaderboard…</div></div><button class="more-button" id="leaderMore" type="button" hidden>More</button></div></section><section class="settings-entry"><button class="settings-button" id="openSettings" type="button">⚙ Settings</button></section><div class="footer-logo" role="img" aria-label="Willena English"></div><div class="dashboard-revision">rev1.28</div></div><div class="settings-modal" id="settingsModal" aria-hidden="true"><div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="settings-top"><h3 id="settingsTitle">Settings</h3><button class="modal-close" id="closeSettings" type="button" aria-label="Close settings">×</button></div><div class="profile-card"><div class="profile-avatar" id="profileAvatar">S</div><div class="profile-copy"><strong id="profileName">Student</strong><span>Willena English</span></div></div><div class="settings-group"><div class="setting-row"><div class="setting-copy"><strong>Profile</strong><span>Name, class and account information</span></div><button class="settings-action" id="profileEditBtn" type="button">Edit</button></div><div class="setting-row"><div class="setting-copy"><strong>Language</strong><span>Dashboard interface language</span></div><select class="setting-select" id="languageSelect"><option value="en">English</option><option value="ko">한국어</option></select></div></div><div class="settings-group" id="installAppSettings" hidden><div class="setting-row"><div class="setting-copy"><strong>Willena Students App</strong><span>Install the dashboard on your device</span></div><button class="settings-action" id="installWillenaApp" type="button">Install App</button></div></div><div class="settings-group"><div class="setting-row"><div class="setting-copy"><strong>Music</strong><span>Dashboard and activity music</span></div><label class="switch"><input id="musicToggle" type="checkbox"><span class="switch-track"></span></label></div><div class="setting-row"><div class="setting-copy"><strong>Dark mode</strong><span>Use the darker Willena theme</span></div><label class="switch"><input id="darkToggle" type="checkbox"><span class="switch-track"></span></label></div><div class="setting-row"><div class="setting-copy"><strong>Animations</strong><span>Border shine and bouncing background shapes</span></div><label class="switch"><input id="motionToggle" type="checkbox" checked><span class="switch-track"></span></label></div></div><button class="settings-action danger" id="logoutBig" type="button">Log out</button></div></div><script src="/students/dashboard-v2/leaderboard-details.js?v=20260901a"></script><script src="/students/dashboard-v2/app.js?v=20261116-p3-character-points1"></script><script src="/students/dashboard-v2/dashboard-shape-bounce.js?v=20260915p5d"></script><script src="/students/dashboard-v2/dashboard-theme-pips.js?v=20261101-footer2"></script><script src="/students/dashboard-v2/shared-header-menu.js?v=20261025-sg-homework1"></script><script src="/students/components/mission-basket.js?v=20261116-grammar-five-question-fix1"></script><script>document.addEventListener("DOMContentLoaded",function(){if(document.documentElement.classList.contains("leaderboard-only"))return;var h=document.querySelector(".header");if(!h)return;var el=document.createElement("section");el.id="dashboardMissionBasket";h.insertAdjacentElement("afterend",el);window.WillenaMissionBasket?.mount(el);});</script><style>
+</div></div></section><section class="character-collection" aria-labelledby="collectionHeading"><h2 id="collectionHeading">My Characters</h2><p id="characterCollectionStatus" role="status">Loading character milestones…</p><div id="characterCollection" class="character-collection-grid" aria-label="Character collection"></div></section><section class="board-section"><div class="sep"></div><div class="board-head"><h3>Leaderboard</h3><span id="leaderClass">EVERYBODY · THIS MONTH</span></div><div class="board-card"><div class="tabs scope-tabs" role="tablist" aria-label="Leaderboard group"><button class="tab" type="button" role="tab" aria-selected="false" data-scope="class">My Class</button><button class="tab active" type="button" role="tab" aria-selected="true" data-scope="global">Everybody</button></div><div class="metric-tabs" role="tablist" aria-label="Leaderboard score type"><button class="metric-tab active" type="button" role="tab" aria-selected="true" data-metric="super" aria-label="Super Points" title="Super Points"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M18.4 2.8 7.7 17h7L12.8 29l11.5-16.2h-7.1l1.2-10Z" fill="#ffc928" stroke="#e39a00" stroke-width="1.2" stroke-linejoin="round"/></svg></button><button class="metric-tab" type="button" role="tab" aria-selected="false" data-metric="points" aria-label="Points" title="Points"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12.5" fill="#f7c948" stroke="#d99a12" stroke-width="2"/><circle cx="16" cy="16" r="8.2" fill="#ffd96d" stroke="#e3aa22" stroke-width="1.2"/><path d="M16 10.3v11.4M12.7 13.1c1-2.1 6.4-2 6.8.2.4 2.4-6.2 1.8-6.4 4.3-.2 2.2 5.8 2.8 6.8.3" fill="none" stroke="#a46b00" stroke-width="1.7" stroke-linecap="round"/></svg></button><button class="metric-tab" type="button" role="tab" aria-selected="false" data-metric="stars" aria-label="Stars" title="Stars"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 3.5 3.8 7.8 8.7 1.2-6.3 6.1 1.5 8.6-7.7-4.1-7.7 4.1 1.5-8.6-6.3-6.1 8.7-1.2L16 3.5Z" fill="#ffcf3a" stroke="#e3a711" stroke-width="1.4" stroke-linejoin="round"/></svg></button></div><div class="metric-caption" id="metricCaption">Super Points</div><div class="rows" id="leaderRows"><div class="loading">Loading leaderboard…</div></div><button class="more-button" id="leaderMore" type="button" hidden>More</button></div></section><section class="settings-entry"><button class="settings-button" id="openSettings" type="button">⚙ Settings</button></section><div class="footer-logo" role="img" aria-label="Willena English"></div><div class="dashboard-revision">rev1.28</div></div><div class="settings-modal" id="settingsModal" aria-hidden="true"><div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="settings-top"><h3 id="settingsTitle">Settings</h3><button class="modal-close" id="closeSettings" type="button" aria-label="Close settings">×</button></div><div class="profile-card"><div class="profile-avatar" id="profileAvatar">S</div><div class="profile-copy"><strong id="profileName">Student</strong><span>Willena English</span></div></div><div class="settings-group"><div class="setting-row"><div class="setting-copy"><strong>Profile</strong><span>Name, class and account information</span></div><button class="settings-action" id="profileEditBtn" type="button">Edit</button></div><div class="setting-row"><div class="setting-copy"><strong>Language</strong><span>Dashboard interface language</span></div><select class="setting-select" id="languageSelect"><option value="en">English</option><option value="ko">한국어</option></select></div></div><div class="settings-group" id="installAppSettings" hidden><div class="setting-row"><div class="setting-copy"><strong>Willena Students App</strong><span>Install the dashboard on your device</span></div><button class="settings-action" id="installWillenaApp" type="button">Install App</button></div></div><div class="settings-group"><div class="setting-row"><div class="setting-copy"><strong>Music</strong><span>Dashboard and activity music</span></div><label class="switch"><input id="musicToggle" type="checkbox"><span class="switch-track"></span></label></div><div class="setting-row"><div class="setting-copy"><strong>Dark mode</strong><span>Use the darker Willena theme</span></div><label class="switch"><input id="darkToggle" type="checkbox"><span class="switch-track"></span></label></div><div class="setting-row"><div class="setting-copy"><strong>Animations</strong><span>Border shine and bouncing background shapes</span></div><label class="switch"><input id="motionToggle" type="checkbox" checked><span class="switch-track"></span></label></div></div><button class="settings-action danger" id="logoutBig" type="button">Log out</button></div></div><script src="/students/dashboard-v2/leaderboard-details.js?v=20260901a"></script><script src="/students/dashboard-v2/app.js?v=20261116-p3-character-points1"></script><script src="/students/dashboard-v2/dashboard-shape-bounce.js?v=20260915p5d"></script><script src="/students/dashboard-v2/dashboard-theme-pips.js?v=20261101-footer2"></script><script src="/students/dashboard-v2/shared-header-menu.js?v=20261025-sg-homework1"></script><script src="/students/components/mission-basket.js?v=20261126-mapmissions1"></script><script>document.addEventListener("DOMContentLoaded",function(){if(document.documentElement.classList.contains("leaderboard-only"))return;var h=document.querySelector(".header");if(!h)return;var el=document.createElement("section");el.id="dashboardMissionBasket";h.insertAdjacentElement("afterend",el);window.WillenaMissionBasket?.mount(el);});</script><style>
 #profileEditBtn{border:2px solid #9edce4!important;border-radius:14px!important;background:linear-gradient(135deg,#e5f9fb,#fff)!important;color:#247c88!important;font:800 14px Poppins,system-ui,sans-serif!important;padding:0 18px!important;min-height:43px!important;box-shadow:0 3px 10px #55bcca1b;transition:transform .15s,border-color .15s}
 #profileEditBtn:hover,#profileEditBtn:focus-visible{border-color:#39b6c5!important;transform:translateY(-1px);outline:none}
 .dashboard-teacher-message{border:2px solid #bfe8ec;border-radius:13px;background:white;color:#247c88;min-width:46px;min-height:43px;padding:7px 11px;font:900 15px Poppins,system-ui,sans-serif;cursor:pointer}
@@ -34,4 +151,15 @@ if(new URLSearchParams(location.search).get('leaderboard_only')==='1')document.d
 </style>
 <script type="module" src="/students/components/dashboard-inbox-bridge.js?v=20261101-settings-only3"></script><script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
-<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script></body></html>
+<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script><script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script><script type="module" src="/students/dashboard-v2/learning-upgrade.js?v=20261126-starburst2"></script><script>
+(function(){
+ const panel=document.getElementById('luEnergyPanel'),toggle=document.getElementById('luEnergyToggle');
+ if(!panel||!toggle)return;
+ let timer;
+ function collapse(){clearTimeout(timer);panel.classList.remove('is-expanded');toggle.setAttribute('aria-expanded','false');}
+ function expand(){clearTimeout(timer);panel.classList.add('is-expanded');toggle.setAttribute('aria-expanded','true');timer=setTimeout(collapse,4000);}
+ toggle.addEventListener('click',expand);
+ toggle.addEventListener('keydown',e=>{if(e.key==='Escape')collapse()});
+ window.addEventListener('pagehide',collapse);
+})();
+</script></body></html>
