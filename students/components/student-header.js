@@ -1,3 +1,4 @@
+import './avatar-renderer.js?v=20261127-originals1';
 import {mountStudentInbox} from './student-inbox.js?v=20261101-menu-prominent1';
 import {checkStudentCharacterUnlocks} from './student-character-unlocks.js?v=20261116-p4-visible-scenery2';
 // Student session repair bootstrap.
@@ -624,7 +625,7 @@ class StudentHeader extends HTMLElement {
           <slot name="actions"></slot>
           ${this.showHome ? `<a class="menu-item" id="homeBtn" part="home-button" href="${this.homeHref}">${this.homeLabel}</a>` : ""}
           <div class="menu-anchor">
-            <button class="avatar avatar-btn" id="avatarBtn" part="avatar" aria-haspopup="menu" aria-expanded="false" title="Account">${avatar}</button>
+            <button class="avatar avatar-btn" id="avatarBtn" part="avatar" aria-haspopup="menu" aria-expanded="false" title="Account"></button>
             <div class="dropdown" id="avatarMenu" role="menu" aria-label="Account menu">
               <a class="dd-item" role="menuitem" href="/students/dashboard/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">⌂</span>Home</a>
               <a class="dd-item" role="menuitem" href="/students/vocab-study/"><span aria-hidden="true" style="display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#19777e;font-weight:900;margin-right:4px">★</span>Word Genius</a>
@@ -734,6 +735,7 @@ class StudentHeader extends HTMLElement {
 
     // Avatar dropdown
     const avatarBtn = this.shadowRoot.getElementById('avatarBtn');
+    window.WillenaAvatar.render(avatarBtn,avatar);
     const avatarMenu = this.shadowRoot.getElementById('avatarMenu');
     const toggleMenu = (open) => {
       if (!avatarBtn || !avatarMenu) return;
@@ -783,7 +785,7 @@ class StudentHeader extends HTMLElement {
       avatarMenu.addEventListener('click', (e) => {
         const link = e.target.closest('a.dd-item[href]');
         if (!link || e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
-        if (!window.WillenaGeniusBoot?.switchApp?.(link.href, avatarBtn.textContent.trim())) return;
+        if (!window.WillenaGeniusBoot?.switchApp?.(link.href, window.WillenaAvatar.value(avatarBtn))) return;
         e.preventDefault();
         avatarMenu.classList.remove('open', 'opening', 'closing');
         avatarBtn.setAttribute('aria-expanded', 'false');
