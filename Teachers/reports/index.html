@@ -39,7 +39,14 @@ h2{font-size:16px;margin:28px 0 12px;letter-spacing:-.3px;font-weight:800}
 .summary-block h2{margin-top:16px}.summary-footnote{font-size:11px;line-height:1.65;color:#87918e;margin:9px 0 4px}
 .stamp-wrap{text-align:center;margin:22px auto 10px}.stamp{display:inline-block;border:2px solid #648f83;color:#648f83;font-weight:800;padding:8px 15px;transform:rotate(-6deg);font-size:14px}
 .comment{margin-top:28px;padding:20px 0 14px;border-top:1px solid #d8d9d3;border-bottom:1px solid #d8d9d3}
-.comment label{display:block;font-size:14px;color:#667472;margin-bottom:10px}
+.comment label{display:block;font-size:14px;color:#344f52;font-weight:800;margin:0}
+.comment-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.comment-heading button{border:1px solid #a6c2c8;background:#f4faf9;color:#225468;padding:7px 11px;border-radius:7px;font-size:12px;font-weight:700}
+.comment-heading button:disabled{opacity:.55;cursor:wait}
+.comment-note{font-size:11px;color:#788780;margin-top:7px;line-height:1.6}
+.comment-print{display:none;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.75;color:#253b42}
+.comment textarea{display:block}
+@media print{.comment{break-inside:avoid}.comment textarea{display:none!important}.comment-print{display:block!important}.comment-heading{margin-bottom:7px}}
 .comment textarea{width:100%;min-height:92px;resize:vertical;background:transparent;color:#253b42;padding:11px;border:1px solid #d7dcd5;border-radius:3px;font-size:13px;line-height:1.65}
 .footer{font-size:11px;color:#949c9a;text-align:center;padding-top:21px}.empty{padding:19px;text-align:center;color:#74847c}
 @media(max-width:700px){.toolbar label{flex:1 1 130px}.toolbar .spacer{display:none}.paper-stage{margin:12px 6px;padding:11px;border-radius:12px}.page{padding:26px 19px}.report-head h1{font-size:36px}.hero strong{font-size:37px}.meta{font-size:10px}.legend{gap:9px}}
@@ -63,7 +70,13 @@ h2{font-size:16px;margin:28px 0 12px;letter-spacing:-.3px;font-weight:800}
  <section id="otherSection" class="achievements"><h2>그 밖의 학습 활동</h2><div class="lines" id="other"></div></section>
  <section class="summary-block"><h2>학습 활동 요약</h2><div class="lines" id="overview"></div><div class="summary-footnote">학습한 과제는 동일한 과제를 여러 번 시도해도 하나로 계산합니다.</div></section>
  <div class="stamp-wrap"><div class="stamp">월간 학습 기록</div></div>
- <section class="comment"><label for="comment">선생님 의견</label><textarea id="comment" placeholder="담당 선생님의 평가를 입력하세요. (현재 페이지에서만 유지됩니다)"></textarea><div class="screen-only" style="font-size:11px;color:#788780;margin-top:7px">교사 의견은 서버에 저장되지 않습니다. 인쇄 전에 입력하세요.</div></section>
+ <section class="comment">
+ <div class="comment-heading"><label for="comment">AI Willi 학습 리포트</label><button id="generateComment" class="screen-only" type="button">AI 리포트 작성</button></div>
+ <textarea id="comment" placeholder="AI 리포트 작성 버튼을 눌러 이번 달 학습 기록을 분석하세요. 교사가 수정할 수 있습니다."></textarea>
+ <div id="commentPrint" class="comment-print"></div>
+ <div id="commentStatus" class="comment-note screen-only" role="status" aria-live="polite"></div>
+ <div class="comment-note">AI Willi가 학습 기록을 바탕으로 작성하며, 교사가 검토합니다.</div>
+</section>
  <footer class="footer" id="footer"></footer>
 </main></div>
 <script>
@@ -78,7 +91,8 @@ const examSkillOrder=['reading','communication','grammar','constructed_response'
 const num=x=>Math.max(0,Number(x)||0);
 const endpoint='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/teacher-student-report';
 const key='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-let all=[],dataReady=false,request=0,notes=new Map(),activeStudent='';
+let all=[],dataReady=false,request=0,notes=new Map(),activeStudent='',loadedStart='';
+const commentJobs=new Map(),commentErrors=new Map();
 function status(msg,error=false){$('notice').textContent=msg;$('notice').classList.toggle('error',error);$('notice').hidden=!msg;}
 function valid(token){if(!token||token.split('.').length!==3)return false;try{const c=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return Number(c.exp)*1000>Date.now()+30000;}catch{return false;}}
 async function teacherToken(){
@@ -160,7 +174,52 @@ function render(){
  $('heroLabel').textContent='정답 '+(first+verified)+' · 연습 후 '+fixed+' · 추가 연습 '+pending;
  $('hero').hidden=task===0;
  $('footer').textContent=start+' ~ '+end+' · 윌레나 원어민 영어학원';
- $('comment').value=notes.get(s.student_id+'|'+start)||'';
+ syncComment(s.student_id+'|'+start);
+}
+function currentCommentKey(){
+ if(!dataReady||!activeStudent||loadedStart!==monthRange().start)return '';
+ return activeStudent+'|'+loadedStart;
+}
+function syncComment(k){
+ const value=notes.get(k)||'';
+ $('comment').value=value;
+ $('commentPrint').textContent=value||'아직 작성된 리포트가 없습니다.';
+ $('generateComment').disabled=commentJobs.has(k);
+ $('generateComment').textContent=commentJobs.has(k)?'작성 중…':value?'다시 작성':'AI 리포트 작성';
+ $('commentStatus').textContent=commentJobs.has(k)?'이번 달 학습 기록을 분석하고 있습니다.':commentErrors.get(k)||'현재 페이지에서 유지됩니다. 인쇄 전에 내용을 확인하세요.';
+}
+function reportFacts(s){
+ const counts=keys=>Object.fromEntries(keys.map(k=>[k,num(s[k])]));
+ const rows=(list,names)=>Array.isArray(list)?list.filter(x=>num(x.n)>0).map(x=>({area:names[x.skill]||'기타',first:num(x.first),fixed:num(x.fixed),pending:num(x.pending),verified:num(x.verified)})):[];
+ return {
+  regular:counts(['days','units','sessions','tasks','first','fixed','pending','verified']),
+  skills:rows(s.skills,skillNames),
+  exam:counts(['exam_tasks','exam_first','exam_fixed','exam_pending','exam_areas']),
+  exam_skills:rows(s.exam_skills,examSkillNames),
+  extra:counts(['writings','writing_drafts','grammar','grammar_practice','free_talking_started','free_talking_turns','conversations','puzzles'])
+ };
+}
+async function generateComment(){
+ const k=currentCommentKey();const s=all.find(x=>x.student_id===activeStudent);
+ if(!k||!s||commentJobs.has(k))return;
+ const previous=notes.get(k)||'';
+ if(previous&&!window.confirm('현재 리포트를 새 AI 리포트로 바꾸시겠습니까?'))return;
+ const job={};commentJobs.set(k,job);commentErrors.delete(k);syncComment(k);
+ try{
+  const facts=reportFacts(s);
+  const token=await teacherToken();
+  if(typeof window.WillenaAPI?.fetch!=='function')throw new Error('AI 연결을 준비하지 못했습니다.');
+  const system='당신은 윌레나 영어학원의 AI Willi입니다. 주어진 한 달의 익명 온라인 학습 집계만 바탕으로 학부모에게 전달할 한국어 학습 리포트를 작성하세요. 따뜻하고 구체적인 존댓말로 2~4문장, 약 150~240자, 한 단락만 작성하세요. 실제 기록에 있는 노력과 성과를 먼저 언급하고, 근거가 있을 때 실천 가능한 다음 학습 목표 한 가지를 제안하세요. first는 첫 정답, fixed는 연습 후 해결, verified는 정답으로 확인되었으나 첫 시도 여부는 알 수 없음, pending은 추가 연습 필요입니다. 합산이나 수치를 언급할 경우 정확히 계산하세요. 단일 월 기록이므로 이전 달 대비 향상을 주장하지 마세요. 기록이 없는 활동은 미참여나 능력 부족으로 단정하지 마세요. 내신만 있는 경우 일반 학습일 0을 학습 부족으로 해석하지 마세요. 데이터가 적으면 기록이 제한적이라고 중립적으로 말하세요. 교실 태도, 출석, 성격, 발음 수준, 실력 향상을 지어내지 마세요. 제목, 마크다운, 이모지, 학생 이름, 서명 없이 본문만 반환하세요.';
+  const resp=await window.WillenaAPI.fetch('/.netlify/functions/openai_proxy',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({endpoint:'chat/completions',payload:{model:'gpt-5.6-luna',reasoning_effort:'low',max_completion_tokens:500,messages:[{role:'system',content:system},{role:'user',content:JSON.stringify(facts)}]}})});
+  const body=await resp.json().catch(()=>({}));
+  const data=body.data||body;
+  const result=data.choices?.[0]?.message?.content;
+  if(!resp.ok||data.error||typeof result!=='string'||!result.trim())throw new Error('AI 리포트 작성에 실패했습니다. 다시 시도해 주세요.');
+  if(commentJobs.get(k)!==job)return;
+  if((notes.get(k)||'')===previous)notes.set(k,result.trim());
+  else commentErrors.set(k,'수정한 내용을 유지했습니다. 다시 작성하려면 버튼을 눌러 주세요.');
+ }catch(e){commentErrors.set(k,'AI 리포트를 작성하지 못했습니다. 다시 시도해 주세요.');}
+ finally{if(commentJobs.get(k)===job)commentJobs.delete(k);if(currentCommentKey()===k)syncComment(k);}
 }
 async function load(){
  const sequence=++request;dataReady=false;$('reload').disabled=true;$('paper').hidden=true;$('print').disabled=true;status('교사 인증 및 학습 기록 불러오는 중…');
@@ -170,7 +229,7 @@ async function load(){
   const body=await resp.json().catch(()=>({}));
   if(!resp.ok||body.success!==true)throw new Error(body.error||'학습 기록을 불러오지 못했습니다.');
   if(sequence!==request)return;
-  all=Array.isArray(body.students)?body.students:[];dataReady=true;
+  all=Array.isArray(body.students)?body.students:[];loadedStart=range.start;dataReady=true;
   const prior=$('class').value;const classes=[...new Set(all.map(x=>x.class_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   $('class').innerHTML='<option value="">전체 반</option>';
   classes.forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;$('class').append(o);});
@@ -183,7 +242,8 @@ const now=new Date();const korea=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia
 $('month').value=korea.find(x=>x.type==='year').value+'-'+korea.find(x=>x.type==='month').value;
 $('month').addEventListener('change',load);$('reload').addEventListener('click',load);$('class').addEventListener('change',choose);
 $('student').addEventListener('change',()=>{activeStudent=$('student').value;render()});
-$('comment').addEventListener('input',()=>{if(activeStudent)notes.set(activeStudent+'|'+monthRange().start,$('comment').value)});
+$('generateComment').addEventListener('click',generateComment);
+$('comment').addEventListener('input',()=>{const k=currentCommentKey();if(!k)return;const value=$('comment').value;notes.set(k,value);$('commentPrint').textContent=value||'아직 작성된 리포트가 없습니다.';if(!commentJobs.has(k))$('generateComment').textContent=value?'다시 작성':'AI 리포트 작성';});
 $('print').addEventListener('click',()=>{if(dataReady)window.print()});
 load();
 })();
