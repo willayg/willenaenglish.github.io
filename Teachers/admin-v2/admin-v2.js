@@ -54,6 +54,7 @@ async function ensureLevelTests(){
 }
 function activateView(view){
   setView(view);
+  if(view==='monthly-reports'){const frame=$('#adminMonthlyReportsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src',frame.dataset.src);}
   if(view!=='enquiries')import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.closeEnquiriesDrawer()).catch(()=>{});
 
   if(view==='admissions'){
@@ -184,6 +185,6 @@ function boot(){
  import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiryBadge()).catch(e=>console.debug('[Enquiries] Badge unavailable',e));
  setInterval(()=>{if(!document.hidden)import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.refreshEnquiryBadge()).catch(()=>{})},60000);
  const initialView=new URLSearchParams(location.search).get('view');
- if(initialView==='enquiries'||initialView==='admissions')activateView(initialView);
+ if(['enquiries','admissions','monthly-reports'].includes(initialView))activateView(initialView);
 }
 boot();
