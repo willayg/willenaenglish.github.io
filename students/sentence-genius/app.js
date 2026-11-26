@@ -314,7 +314,7 @@ async function boot(){
     if(!deep&&earlyBooks.length){
       state.books=earlyBooks; screens.home(state.books);screens.notice('');
       await navigation.start();
-      // Keep the shared launch cover until homework and the other initial UI tasks settle.
+      bootStatus='ready';window.WillenaGeniusBoot?.finish('ready');
     }
     const homeworkResult=await homeworkTask;
     const base=bookResult.status==='fulfilled'?bookResult.value:[];
@@ -328,7 +328,7 @@ async function boot(){
     state.books=[...books.values()];
     screens.home(state.books);
     screens.homework(state.homework);
-    const achievementTask=refreshHomeAchievements();window.WillenaGeniusBoot?.track?.(achievementTask);
+    void refreshHomeAchievements();
     if(navigation.current().screen==='home')screens.notice(state.books.length?'':'현재 배정된 교재가 없습니다.');
     await navigation.start();
     // A homework mission may deep-link to an assigned book and unit. Verify
