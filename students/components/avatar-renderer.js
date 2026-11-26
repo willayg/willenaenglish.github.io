@@ -3,6 +3,7 @@
 (function(){
 'use strict';
 if(window.WillenaAvatar)return;
+const assetRoot=new URL('/students/assets/avatars/',document.currentScript?.src||location.href).href;
 const names=["Pilot Fox","Shadow Cat","Ribbon Bunny","Axolotl","Red Panda","Cyclops Alien","Purple Monster","Space Octopus","Fire Dragon","Snow Yeti","Happy Robot","Astronaut","Cat Bot","Builder Bot","Ice Knight","Mushroom","Griffin","Grumpy Dumpling","Strawberry Ninja","Cool Toast"];
 const animals=[["🐶","Dog"],["🐱","Cat"],["🐰","Bunny"],["🦊","Fox"],["🐻","Bear"],["🐼","Panda"],["🐨","Koala"],["🐯","Tiger"],["🦁","Lion"],["🐮","Cow"],["🐷","Pig"],["🐸","Frog"],["🐵","Monkey"],["🦄","Unicorn"],["🐔","Chicken"],["🐧","Penguin"],["🐦","Parrot"],["🐤","Chick"],["🦅","Eagle"],["🦉","Owl"],["🐺","Howling Wolf"],["🦝","Raccoon"],["🦙","Llama"],["🐴","Horse"],["🦓","Zebra"],["🦌","Deer"],["🐑","Sheep"],["🐐","Goat"],["🦒","Giraffe"],["🐘","Elephant"],["🦏","Rhino"],["🦛","Hippo"],["🐇","Rabbit"],["🦎","Lizard"],["🐍","Snake"],["🐢","Turtle"],["🐊","Crocodile"],["🐬","Dolphin"],["🐳","Spouting Whale"],["🐋","Whale"],["🦈","Shark"],["🐠","Clownfish"],["🐡","Pufferfish"],["🐙","Octopus"],["🦥","Sleepy Sloth"]];
 const classic=[["🐭","Mouse"],["🐹","Hamster"],["🦆","Duck"],["🦇","Bat"],["🦨","Skunk"],["🦡","Badger"],["🐗","Boar"],["🦬","Bison"],["🐪","Dromedary Camel"],["🐫","Bactrian Camel"],["🦔","Hedgehog"],["🐿️","Chipmunk"],["🦖","T-Rex"],["🦕","Sauropod"],["🐟","Fish"],["🦐","Shrimp"],["🦑","Squid"],["🦀","Crab"],["🦞","Lobster"],["🦋","Butterfly"],["🐌","Snail"],["🐛","Caterpillar"],["🐜","Ant"],["🐝","Bee"],["🐞","Ladybug"]];
@@ -32,7 +33,7 @@ function render(el,value){
  el.dataset.avatarValue=v;
  if(window.WillenaAvatarLab?.render(el,v))return;
  if(characterMap.has(v)){
-  const j=characters.findIndex(c=>c.id===v),art=document.createElement('span');art.setAttribute('aria-hidden','true');art.style.cssText='display:block;width:100%;height:100%;max-width:100%;max-height:100%;aspect-ratio:1;flex:none;border-radius:50%;background-image:url("/students/assets/avatars/free-talking-avatars.svg?v=1");background-repeat:no-repeat;background-size:300% 600%;background-position:'+((j%3)*50)+'% '+(Math.floor(j/3)*20)+'%;';el.dataset.avatarArt='1';el.style.padding='0';el.replaceChildren(art);return;
+  const j=characters.findIndex(c=>c.id===v),art=document.createElement('span');art.setAttribute('aria-hidden','true');art.style.cssText='display:block;width:100%;height:100%;max-width:100%;max-height:100%;aspect-ratio:1;flex:none;border-radius:50%;background-image:url("'+assetRoot+'free-talking-avatars.svg?v=1");background-repeat:no-repeat;background-size:300% 600%;background-position:'+((j%3)*50)+'% '+(Math.floor(j/3)*20)+'%;';el.dataset.avatarArt='1';el.style.padding='0';el.replaceChildren(art);return;
  }
  if(i<0){
    el.textContent=v;
@@ -43,7 +44,7 @@ function render(el,value){
  const src=animal?'willena-animals-v1.svg':'willena-originals.svg?v=1';
  const art=document.createElement('span');
  art.setAttribute('aria-hidden','true');
- art.style.cssText='display:block;width:100%;height:100%;max-width:100%;max-height:100%;aspect-ratio:1;flex:none;border-radius:50%;background-image:url("/students/assets/avatars/'+src+'");background-repeat:no-repeat;background-size:'+(cols*100)+'% '+(rows*100)+'%;background-position:'+((j%cols)*100/(cols-1))+'% '+(Math.floor(j/cols)*100/(rows-1))+'%;';
+ art.style.cssText='display:block;width:100%;height:100%;max-width:100%;max-height:100%;aspect-ratio:1;flex:none;border-radius:50%;background-image:url("'+assetRoot+src+'");background-repeat:no-repeat;background-size:'+(cols*100)+'% '+(rows*100)+'%;background-position:'+((j%cols)*100/(cols-1))+'% '+(Math.floor(j/cols)*100/(rows-1))+'%;';
  el.dataset.avatarArt='1';el.style.padding='0';el.replaceChildren(art);
 }
 function value(el){return el?.dataset.avatarValue||el?.textContent.trim()||''}
