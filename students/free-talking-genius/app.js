@@ -1594,4 +1594,4 @@ $('ftFinishHome').addEventListener('click',()=>{
 });
 $('ftRetrySync').addEventListener('click',()=>void renderFinish({percent:state.session.first_try_percent,stars:state.session.reward_stars,
  points:state.session.reward_points,reward_synced:state.session.reward_synced}));
-void startup();
+void startup().finally(()=>window.WillenaGeniusBoot?.finish?.('ready'));
