@@ -301,13 +301,52 @@ if(ticket!==version)return;extra=pendingExtra;render(book,units,gold,results);re
 async function load(){if(loading)return;loading=true;try{const p=await profile();books=await assignedBooks(p.className);if(!cacheKey){cacheKey='willena-learning-map-v4:'+p.id;restore()}if(!books.some(b=>String(b.id)===selectedBook))selectedBook=String(books[0]?.id||'');bookTabs();if(!books.length){by('luStatus').textContent='No assigned books.';return}await loadBook();loaded=true;}catch(e){by('luStatus').textContent='Curriculum unavailable. Try Refresh.';}finally{loading=false}}
 // Show the map guide once per student per browser, only when the map is visible.
 const mapLegend=by('luMapLegend');
-let legendInitialized=false,legendPending=null,legendInteracted=false,legendAutoClose=null;
+let legendInitialized=false,legendPending=null,legendInteracted=false,legendAutoClose=null,legendMotion=null,legendTarget=false;
 const legendSeenMemory=new Set();
 function cancelLegendAutoClose(){
  if(legendAutoClose!==null){clearTimeout(legendAutoClose);legendAutoClose=null;}
 }
-mapLegend?.querySelector('summary')?.addEventListener('click',()=>{legendInteracted=true;cancelLegendAutoClose()});
-window.addEventListener('pagehide',cancelLegendAutoClose);
+// Keep native details semantics, animating its measured height (including wrapped content).
+function setLegendOpen(open,animate=true){
+ if(!mapLegend)return;
+ const from=mapLegend.getBoundingClientRect().height;
+ const previous=legendMotion;
+ legendMotion=null;
+ if(previous)previous.cancel();
+ legendTarget=open;
+ const summary=mapLegend.querySelector('summary');
+ const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches||by('motionToggle')?.checked===false;
+ if(!animate||reduced||!from||!summary||typeof mapLegend.animate!=='function'||(!previous&&mapLegend.open===open)){
+  mapLegend.open=open;return;
+ }
+ let to;
+ if(open){
+  mapLegend.open=true;
+  to=mapLegend.getBoundingClientRect().height;
+ }else{
+  // Measure the real collapsed height, then retain the body until the slide finishes.
+  mapLegend.open=false;
+  to=mapLegend.getBoundingClientRect().height;
+  mapLegend.open=true;
+ }
+ if(Math.abs(from-to)<1){mapLegend.open=open;return}
+ try{
+  const motion=mapLegend.animate([{height:from+'px'},{height:to+'px'}],{duration:220,easing:'ease',fill:'both'});
+  legendMotion=motion;
+  motion.onfinish=()=>{
+   if(legendMotion!==motion)return;
+   legendMotion=null;mapLegend.open=open;motion.cancel();
+  };
+ }catch{mapLegend.open=open;}
+}
+mapLegend?.querySelector('summary')?.addEventListener('click',event=>{
+ event.preventDefault();legendInteracted=true;cancelLegendAutoClose();
+ setLegendOpen(!(legendMotion?legendTarget:mapLegend.open));
+});
+window.addEventListener('pagehide',()=>{
+ cancelLegendAutoClose();
+ if(legendMotion)setLegendOpen(legendTarget,false);
+});
 function initMapLegend(){
  if(!mapLegend||legendInitialized||legendPending||by('luMap').hidden)return;
  legendPending=profile().then(p=>{
@@ -316,10 +355,10 @@ function initMapLegend(){
   let seen=legendSeenMemory.has(key);
   try{seen=seen||localStorage.getItem(key)==='1'}catch{}
   if(!legendInteracted){
-   mapLegend.open=!seen;
+   setLegendOpen(!seen);
    if(!seen)legendAutoClose=setTimeout(()=>{
     legendAutoClose=null;
-    if(!legendInteracted)mapLegend.open=false;
+    if(!legendInteracted)setLegendOpen(false);
    },10000);
   }
   legendInitialized=true;legendSeenMemory.add(key);
@@ -417,5 +456,5 @@ hero?.addEventListener('click',event=>{
  try{showNeonPortal(link,x,y,{title,icon})}catch(error){console.warn('[App portal]',error)}
 });
 window.addEventListener('pagehide',clearMapLaunch);
-let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){clearMapLaunch();void energy();if(legendInitialized&&mapLegend)mapLegend.open=false;if(!by('luMap').hidden){initMapLegend();void loadBook(true)}}});
+let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){clearMapLaunch();void energy();if(legendInitialized&&mapLegend)setLegendOpen(false,false);if(!by('luMap').hidden){initMapLegend();void loadBook(true)}}});
 }
