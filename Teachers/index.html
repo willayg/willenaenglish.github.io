@@ -328,7 +328,33 @@ try{
 #drawerBg .drawer{width:min(820px,100vw);background:#f5f9fa}
 #drawerBg .drawer-head{padding:19px 24px;background:#304852;border-bottom:3px solid #24b7c7}
 #drawerBg .drawer-name{font-size:21px;letter-spacing:-.3px}
-#drawerBg .drawer-body{padding:20px;display:grid;gap:12px}
+#drawerBg .drawer-body{padding:20px;display:grid;gap:12px;align-content:start;min-height:0;overflow-y:auto}
+#drawerBg .drawer{display:flex;flex-direction:column}
+#drawerBg .drawer-head{flex:none}
+#drawerBg .rs-dr-books{color:#d0e1e5;font-size:11px;margin-top:5px}
+#rsDrawerTabs{display:flex;flex:none;gap:3px;background:#fff;border-bottom:1px solid #d9e8e9;padding:6px 10px;overflow-x:auto}
+#rsDrawerTabs button{flex:1;border:0;border-radius:7px;padding:11px 6px;background:white;color:#617a82;font-size:12px;font-weight:700;cursor:pointer}
+#rsDrawerTabs button.active{color:#187d86;background:#e0f3f4;box-shadow:inset 0 -2px #2ba7b0}
+.rs-dr-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.rs-dr-kpis>div{display:grid;gap:3px;text-align:center;padding:9px 4px;border:1px solid #e2eded;border-radius:10px;background:#fff}
+.rs-dr-kpis b{font-size:22px;color:#267f79}.rs-dr-kpis [data-tone="gold"] b{color:#b28d27}.rs-dr-kpis [data-tone="muted"] b{color:#83999e}
+.rs-dr-kpis small{font-size:10px;color:#647f86}
+.rs-dr-summary-head{display:flex;align-items:center;gap:12px}.rs-dr-summary-head>div{flex:1;min-width:0}
+.rs-drawer-ring{width:58px;height:58px;flex:none}.rs-dr-summary-head>.rs-drawer-ring{width:94px;height:94px}
+.rs-drawer-ring circle{fill:none;stroke-width:5}.rs-dr-track{stroke:#e4eeee}.rs-dr-fill{stroke:#2aa99c;stroke-linecap:round}
+.rs-drawer-ring text{fill:#287e83;font-size:15px;font-weight:800}.rs-drawer-ring.is-gold .rs-dr-fill{stroke:#d8b342}.rs-drawer-ring.is-gold text{fill:#a17e26}
+.rs-dr-link{margin-top:12px;width:100%;padding:9px;border:1px solid #b6dfe1;border-radius:9px;color:#197e87;background:#fff;font-weight:700;cursor:pointer}
+.rs-dr-mission{display:grid;gap:8px;background:white;border:1px solid #dbe8e9;border-radius:12px;padding:12px;margin-bottom:8px}.rs-dr-mission:last-child{margin-bottom:0}
+.rs-dr-mission-head{display:flex;align-items:center;gap:8px;justify-content:space-between}.rs-dr-mission-head>div{min-width:0;display:grid;gap:4px}
+.rs-dr-mission-head strong{color:#254956;font-size:13px;overflow-wrap:anywhere}.rs-dr-mission-head small,.rs-dr-note{font-size:11px;color:#718991}
+.rs-dr-skills{display:grid;grid-template-columns:repeat(auto-fit,minmax(75px,1fr));gap:8px;border-top:1px solid #edf2f3;padding-top:8px}
+.rs-dr-skills>div{display:grid;gap:4px}.rs-dr-skills small{font-size:10px;color:#667f86}.rs-dr-skills b{font-size:16px;color:#335c65}.rs-dr-skills b span{font-size:11px;color:#8aa0a5}
+.rs-dr-bar{height:5px;border-radius:8px;background:#e4eeee;overflow:hidden}.rs-dr-bar i{display:block;height:100%;border-radius:8px;background:#33a68f}.rs-dr-bar i.is-gold{background:#d8b746}
+.rs-dr-skill{display:grid;grid-template-columns:1fr auto;gap:5px;margin:10px 0;color:#385d65;font-size:12px}.rs-dr-skill .rs-dr-bar{grid-column:1/-1;height:7px}
+.rs-dr-attention{display:grid;gap:3px;border-left:3px solid #db8fb1;padding:7px 10px;margin:6px 0;color:#725263;font-size:12px}.rs-dr-attention small{color:#88757d}
+#rsDrawerMastery summary{cursor:pointer;color:#267f87;font-weight:700;font-size:12px}
+@media(max-width:480px){#rsDrawerTabs button{font-size:10px;padding:10px 4px}.rs-dr-summary-head>.rs-drawer-ring{width:75px;height:75px}.rs-dr-kpis small{font-size:9px}}
+#view-students .roster-student-card{content-visibility:auto;contain-intrinsic-size:auto 500px}
 #drawerBg .detail,#drawerBg .big-card{border:1px solid #dce8ec;border-radius:16px;padding:17px;box-shadow:none;background:#fff;margin:0}
 #drawerBg .detail h3,#drawerBg .big-card h3{font-size:14px;color:#1c5867}
 #drawerBg .rating-grid{gap:12px;margin:0}
@@ -745,8 +771,8 @@ try{
 <div class="wc-field"><label for="wcNotes">Notes</label><textarea id="wcNotes" maxlength="1200" placeholder="Details for staff"></textarea></div><section class="wc-recipients"><div class="wc-recipient-heading"><strong>Notify staff</strong><small>Choose who gets the notification on save and the event reminder. Only enabled devices receive pushes.</small></div><div class="wc-recipient-shortcuts"><button type="button" class="wc-button" data-wc-recipients="all">Everyone</button><button type="button" class="wc-button" data-wc-recipients="self">Just me</button><button type="button" class="wc-button" data-wc-recipients="none">Nobody</button></div><div id="wcRecipients" class="wc-recipient-list" aria-label="Notification recipients">Loading staff…</div><small id="wcRecipientSummary" class="wc-recipient-summary"></small><label class="wc-immediate-choice"><input id="wcNotifyStaff" type="checkbox" checked><span>Send push when event is saved</span></label></section><div class="wc-error" id="wcFormError" role="alert"></div></div>
 <div class="wc-dialog-actions"><button id="wcDelete" class="wc-button wc-delete" type="button" hidden>Delete</button><button class="wc-button" type="button" id="wcCancel">Cancel</button><button class="wc-button wc-primary" id="wcSave" type="submit">Save event</button></div></form></dialog>
 <div id="rosterAssignmentsOverlay" class="rs-assign-overlay" hidden><section class="rs-assign-dialog" role="dialog" aria-modal="true" aria-label="Student assignments"><div class="rs-assign-head"><div><h2 id="rosterAssignmentsTitle">Assignments</h2><p>Student mission history</p></div><button type="button" id="rosterAssignmentsClose" aria-label="Close assignments">×</button></div><div class="rs-assign-tabs"><button data-rs-assign-tab="current" class="active" type="button">Current</button><button data-rs-assign-tab="history" type="button">History</button></div><div id="rosterAssignmentsBody" class="rs-assign-body"></div></section></div>
-<div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.77</div>
+<div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div><div id="rsDrawerBooks" class="rs-dr-books"></div></div><button class="close" id="closeDrawer" aria-label="Close student details">×</button></div><nav id="rsDrawerTabs" role="tablist" aria-label="Student details"><button type="button" role="tab" data-rs-drawer-tab="Overview" aria-selected="false">Overview</button><button type="button" role="tab" data-rs-drawer-tab="Missions" aria-selected="false">Missions</button><button type="button" role="tab" data-rs-drawer-tab="Activity" aria-selected="false">Activity</button><button type="button" role="tab" data-rs-drawer-tab="Mistakes" aria-selected="false">Mistakes</button><button type="button" role="tab" data-rs-drawer-tab="History" aria-selected="false">History</button></nav><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.78</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -823,7 +849,7 @@ function endpoint(section,params={}){const q=new URLSearchParams({section,...par
 async function loadClasses(){try{const j=await api(endpoint('teacher_classes'));state.classes=j.classes||[];$('#classSelect').innerHTML='<option value="">Select class</option>'+state.classes.map(c=>`<option value="${esc(c.name)}">${esc(c.name)} (${c.student_count})</option>`).join('');const puzzleClass=$('#puzzleClass');if(puzzleClass)puzzleClass.innerHTML='<option value="">All classes</option>'+state.classes.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');if(state.classes.length){state.className=state.classes[0].name;$('#classSelect').value=state.className;await loadClass()}}catch(e){$('#classSelect').innerHTML='<option>Could not load classes</option>';$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load students.'}}
 
 const rosterAssignments={className:'',loading:false,error:'',items:[],history:[],request:0};
-const assignmentModeLabels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
+const assignmentModeLabels={quiz:'Quiz',spelling_coach:'Spelling Coach',spelling_test:'Spelling Test',speaking:'Speaking'};
 function homeworkRoute(action,params={}){return `${FN('homework_api')}?${new URLSearchParams({action,...params})}`}
 function currentHomework(a){return a.active!==false&&!a.ended_at&&!['ended','cancelled','completed','expired'].includes(String(a.status||'').toLowerCase())}
 function homeworkForStudent(a,id){const meta=a.list_meta||{};const ids=Array.isArray(meta.target_student_ids)?meta.target_student_ids:(Array.isArray(meta.target_students)?meta.target_students.map(s=>s.id||s.student_id):[]);return !ids.length||ids.map(String).includes(String(id))}
@@ -888,7 +914,7 @@ function homeworkSummary(id){
 }
 async function loadRosterAssignments(className){
   const request=++rosterAssignments.request;
-  Object.assign(rosterAssignments,{className,loading:true,error:'',items:[]});renderStudents();
+  Object.assign(rosterAssignments,{className,loading:true,error:'',items:[]});if(state.students.length)renderStudents();
   try{
     const data=await api(homeworkRoute('list_assignments',{class:className}));
     if(request!==rosterAssignments.request)return;
@@ -912,7 +938,7 @@ async function loadRosterAssignments(className){
     }catch(error){console.warn('[Teachers] Sentence Genius roster homework unavailable',error)}
   }catch(e){if(request!==rosterAssignments.request)return;rosterAssignments.error=e.message}
   if(request!==rosterAssignments.request)return;
-  rosterAssignments.loading=false;renderStudents();const box=$('#rosterDrawerAssignments');if(box)box.innerHTML=renderHomeworkDetails(window.rosterDrawerStudent);
+  rosterAssignments.loading=false;renderStudents();rsRefreshDrawerSummary();
 }
 function renderHomeworkCell(id){
   if(rosterAssignments.loading)return '<strong>Loading assignments…</strong>';
@@ -933,19 +959,37 @@ function renderHomeworkCell(id){
   }).join('');
   return overview+`<div class="roster-assignment-items">${items}</div>`;
 }
+function rsMissionApp(a){
+ const m=a.list_meta||{},t=String(m.creative_type||m.app||a.source_type||'').toLowerCase();
+ return ({vocab_study:'Word Genius',word_genius:'Word Genius',vocab_catalog:'Word Genius',sentence_genius:'Sentence Genius',grammar_books:'Grammar Genius',grammar_genius:'Grammar Genius',writing_genius:'Writing Genius',puzzles:'Puzzles',free_talking_genius:m.mission_mode==='conversation'?'Free Talking':'Speaking'})[t]||'Homework';
+}
+function rsRingPercent(p,complete=false){
+ const n=Number.isFinite(p)?Math.max(0,Math.min(100,Math.round(p))):null;
+ return '<svg class="rs-drawer-ring'+(complete?' is-gold':'')+'" viewBox="0 0 64 64" role="img" aria-label="'+(n==null?'Unknown progress':n+' percent')+'"><circle cx="32" cy="32" r="26" class="rs-dr-track"/>'+(n!=null&&n>0?'<circle cx="32" cy="32" r="26" pathLength="100" stroke-dasharray="'+n+' 100" transform="rotate(-90 32 32)" class="rs-dr-fill"/>':'')+'<text x="32" y="33" dominant-baseline="middle" text-anchor="middle">'+(n==null?'?':n+'%')+'</text></svg>';
+}
+function rsMissionCounts(id){
+ const h=homeworkSummary(id),active=h.known.filter(x=>x.result.started&&!x.result.complete).length,waiting=h.known.length-h.complete-active;
+ return '<div class="rs-dr-kpis">'+[[h.complete,'Completed','gold'],[active,'In progress','green'],[waiting,'Not started','muted']].map(([n,label,tone])=>'<div data-tone="'+tone+'"><b>'+n+'</b><small>'+label+'</small></div>').join('')+'</div>'+(h.unknown?'<small class="rs-dr-note">'+h.unknown+' mission(s) with unknown progress</small>':'');
+}
 function renderHomeworkDetails(id){
-  if(rosterAssignments.loading)return '<div class="empty">Loading assignments…</div>';
-  if(rosterAssignments.error)return '<div class="empty">Could not load assignments: '+esc(rosterAssignments.error)+'</div>';
-  const rows=studentHomework(id);
-  if(!rows.length)return '<div class="empty">No current assignment for this student.</div>';
-  return rows.map(({assignment:a,result:r})=>{
-    const overdue=a.due_at&&Date.parse(a.due_at)<Date.now()&&!r.complete;
-    const status=r.unknown?'Progress unavailable':r.complete?'Complete':r.started?'In progress':'Not started';
-    return `<div class="roster-assignment-detail"><div class="roster-assignment-head"><strong>${esc(a.title||a.list_title||'Assignment')}</strong><span>${status}${r.unknown?'':` · ${r.percent}%`}</span></div><small>${(a.list_meta?.creative_type||a.list_meta?.source_type)==='writing_genius'?'Writing Genius':(a.list_meta?.creative_type||a.list_meta?.source_type)==='puzzles'?'Puzzles':String(a.source_type||'').toLowerCase()==='vocab_study'?'Word Genius':String(a.source_type||'').toLowerCase()==='sentence_genius'?'Sentence Genius':'Homework'}${a.due_at?` · Due ${esc(fmtDate(a.due_at))}${overdue?' · Past due':''}`:''}</small>${r.unknown?'':`<div class="roster-progress"><i style="width:${r.percent}%"></i></div><div class="roster-sections">${r.sections.length?r.sections.map(s=>`<span><b>${esc(s.label)}</b> ${s.done}/${s.total} ${String(a.source_type||'').toLowerCase()==='sentence_genius'?'sentence steps mastered':'words completed'} · ${Math.max(0,s.total-s.done)} remaining</span>`).join(''):`<span>${esc(r.detail)}</span>`}</div>`}</div>`;
-  }).join('');
+ if(rosterAssignments.loading)return '<div class="empty">Loading assignments…</div>';
+ if(rosterAssignments.error)return '<div class="empty">Could not load assignments: '+esc(rosterAssignments.error)+'</div>';
+ const rows=studentHomework(id);
+ if(!rows.length)return '<div class="empty">No current assignment for this student.</div>';
+ return rows.map(({assignment:a,result:r})=>{
+  const overdue=a.due_at&&Date.parse(a.due_at)<Date.now()&&!r.complete;
+  const status=r.unknown?'Progress unavailable':r.complete?'Complete':r.started?'In progress':'Not started';
+  const sections=r.sections||[];
+  return '<article class="rs-dr-mission"><div class="rs-dr-mission-head"><div><strong>'+esc(a.title||a.list_title||'Assignment')+'</strong><small>'+esc(rsMissionApp(a))+(a.due_at?' · Due '+esc(fmtDate(a.due_at)):'')+(overdue?' · Past due':'')+'</small><small>'+esc(status)+'</small></div>'+rsRingPercent(r.unknown?null:r.percent,r.complete)+'</div>'+
+  (r.unknown?'':sections.length?'<div class="rs-dr-skills">'+sections.map(v=>{const pct=v.total>0?Math.max(0,Math.min(100,100*v.done/v.total)):0;return '<div><small>'+esc(v.label)+'</small><b>'+esc(v.done)+'<span>/'+esc(v.total)+'</span></b><div class="rs-dr-bar"><i class="'+(pct===100?'is-gold':'')+'" style="width:'+pct+'%"></i></div></div>'}).join('')+'</div>':r.detail?'<small class="rs-dr-note">'+esc(r.detail)+'</small>':'')+'</article>';
+ }).join('');
 }
 
-const rsSelectedBooks=new Map();
+const rsSelectedBooks=new Map(),rsClassCache=new Map(),rsCatalogCache=new Map();
+const rsCatalogMemo=(key,task,force=false)=>{const old=rsCatalogCache.get(key);if(!force&&old&&Date.now()-old.at<86400000)return old.promise;const promise=Promise.resolve().then(task);rsCatalogCache.set(key,{at:Date.now(),promise});promise.catch(()=>{if(rsCatalogCache.get(key)?.promise===promise)rsCatalogCache.delete(key)});return promise};
+const rsIndex=(rows,key)=>{const m=new Map();for(const row of rows){const k=key(row);if(!m.has(k))m.set(k,[]);m.get(k).push(row)}return m};
+const rsUnitKey=(id,bid,uid)=>[id,bid,uid].map(String).join('|');
+function rsIndexProgress(){const c=rosterCurriculum,key=r=>rsUnitKey(r.student_id,r.book_id,r.unit_id),byNumber=r=>rsUnitKey(r.student_id,r.book_id,Number(r.unit_number));c.index={word:rsIndex(c.word,key),sentences:rsIndex(c.sentences,key),extra:rsIndex(c.extra,byNumber),writing:rsIndex(c.writing,key),puzzles:rsIndex(c.puzzles,key),conversation:rsIndex((c.conversation||[]).flatMap(m=>(m.students||[]).map(r=>({...r,student_id:r.student_id||r.id,book_id:m.book_id,unit_id:m.unit_id}))),key)};}
 const rosterCurriculum={availability:new Map(),gold:new Map(),conversation:null,request:0,className:'',loading:false,error:'',books:[],units:new Map(),overview:null,word:[],extra:[],sentences:[],writing:[],writingEntries:[],puzzles:[],special:[],vocabTotals:new Map(),sentenceTotals:new Map()};
 // Keep Teacher progress denominators aligned with the sentences actually loaded
 // by students/sentence-genius/content.js. Other catalog sentence occurrences are
@@ -971,38 +1015,41 @@ async function rsCatalogTotals(bookId,table,field,filter){
  }
  return byUnit;
 }
-async function loadRosterCurriculum(className){
+async function loadRosterCurriculum(className,force=false){
  const request=++rosterCurriculum.request;
- rosterCurriculum.className=className;rosterCurriculum.loading=true;rosterCurriculum.error='';
- renderStudents();
+ const cached=rsClassCache.get(className);if(!force&&cached&&Date.now()-cached.at<45000){Object.assign(rosterCurriculum,cached.data,{request,className,loading:false,error:''});renderStudents();return;}
+ rosterCurriculum.className=className;rosterCurriculum.loading=true;rosterCurriculum.overview=null;rosterCurriculum.error='';
+ if(state.students.length)renderStudents();
  try{
-  const [overview,extra,sentences,writing,puzzles,supplement]=await Promise.all([
-   ccRpc('teacher_curriculum_overview_v1'),
+  const overviewTask=ccRpc('teacher_curriculum_overview_v1');
+  const detailTask=Promise.all([
    ccRpc('teacher_curriculum_extra_activity_v1'),
    ccRpc('teacher_curriculum_sentence_overview_v1'),
    ccRpc('teacher_curriculum_writing_overview_v1'),
    ccRpc('teacher_curriculum_puzzle_overview_v1'),
-   ccRpc('teacher_student_curriculum_supplement_v1',{p_class:className})
+   ccRpc('teacher_student_curriculum_supplement_v1',{p_class:className}),
+   ccFetchJellySummary(className,force).catch(()=>null),
+   ccRpc('teacher_free_talking_conversation_mission_progress_v1',{p_assignment_id:null}).catch(()=>null)
   ]);
+  detailTask.catch(()=>{});
+  const overview=await overviewTask;
   if(request!==rosterCurriculum.request)return;
   const c=(overview.classes||[]).find(c=>String(c.name).toLowerCase()===String(className).toLowerCase());
   const books=(overview.books||[]).filter(b=>b.class_id===c?.id);
-  const unitEntries=await Promise.all(books.map(async b=>{
-   try{return [String(b.book_id),await ccUnits(b.book_id)]}catch(e){console.warn('Students catalog units:',e);return [String(b.book_id),[]]}
+  const unitTask=Promise.all(books.map(async b=>{
+   try{return [String(b.book_id),await rsCatalogMemo('units:'+b.book_id,()=>ccUnits(b.book_id),force)]}catch(e){console.warn('Students catalog units:',e);return [String(b.book_id),[]]}
   }));
-  const [availability,goldSummary,conversation]=await Promise.all([
-   ccLoadPublishedAvailability(books.map(b=>String(b.book_id))).catch(()=>null),
-   ccFetchJellySummary(className).catch(()=>null),
-   ccRpc("teacher_free_talking_conversation_mission_progress_v1",{p_assignment_id:null}).catch(()=>null)
-  ]);
-  const counts=await Promise.all(books.map(async b=>{
+  const bookIds=books.map(b=>String(b.book_id)).sort();
+  const availabilityTask=rsCatalogMemo('availability:'+bookIds.join(','),()=>ccLoadPublishedAvailability(bookIds),force).catch(()=>null);
+  const countsTask=Promise.all(books.map(async b=>{
    const id=String(b.book_id);
    const [v,w]=await Promise.all([
-    rsCatalogTotals(id,'unit_vocab_targets','lexical_entry_id','&active=eq.true').catch(()=>null),
-    rsCatalogTotals(id,'source_content_occurrences','sentence_id','&sentence_id=not.is.null&status=in.(review,published)').catch(()=>null)
+    rsCatalogMemo('vocab:'+id,()=>rsCatalogTotals(id,'unit_vocab_targets','lexical_entry_id','&active=eq.true'),force).catch(()=>null),
+    rsCatalogMemo('sentences:'+id,()=>rsCatalogTotals(id,'source_content_occurrences','sentence_id','&sentence_id=not.is.null&status=in.(review,published)'),force).catch(()=>null)
    ]);
    return {id,v,w};
   }));
+  const [[extra,sentences,writing,puzzles,supplement,goldSummary,conversation],unitEntries,availability,counts]=await Promise.all([detailTask,unitTask,availabilityTask,countsTask]);
   if(request!==rosterCurriculum.request)return;
   const vocabTotals=new Map(),sentenceTotals=new Map();
   counts.forEach(({v,w})=>{
@@ -1018,6 +1065,7 @@ async function loadRosterCurriculum(className){
    special:Array.isArray(supplement?.special)?supplement.special:[],
    vocabTotals,sentenceTotals,availability:availability||new Map(),gold:new Map(Number(goldSummary?.rules_version)>=3?(goldSummary.students||[]).filter(r=>Array.isArray(r.verified_gold_keys)).map(r=>[String(r.student_id),new Set(r.verified_gold_keys)]):[]),conversation:Array.isArray(conversation)?conversation: null,loading:false,error:''
   });
+  rsIndexProgress();rsClassCache.set(className,{at:Date.now(),data:{...rosterCurriculum}});
  }catch(e){if(request!==rosterCurriculum.request)return;rosterCurriculum.loading=false;rosterCurriculum.error=e.message||'Could not load curriculum';console.warn('Student curriculum:',e)}
  if(request===rosterCurriculum.request)renderStudents();
 }
@@ -1027,8 +1075,8 @@ const rsApps=[
 ];
 function rsAppProgress(studentId,book,unit){
  const id=String(studentId),bid=String(book.book_id),uid=String(unit.id),number=Number(unit.unit_number);
- const present=(obj)=>String(obj.student_id)===id;
- const word=rosterCurriculum.word.find(r=>present(r)&&String(r.book_id)===bid&&String(r.unit_id)===uid);
+ const idx=rosterCurriculum.index,k=rsUnitKey(id,bid,uid),kn=rsUnitKey(id,bid,number);
+ const word=idx?.word.get(k)?.[0];
  const totalVocab=rosterCurriculum.vocabTotals.get(uid);
  const level=Number(book.catalog_level);
  const wordKeys=Number.isFinite(level)&&level>0&&level<3?
@@ -1037,23 +1085,23 @@ function rsAppProgress(studentId,book,unit){
  const wordParts=wordKeys.map(k=>k==='spelling_coach_passed_count'&&totalVocab>0&&Number(word?.spelling_test_passed_count||0)>=totalVocab?totalVocab:Number(word?.[k]||0));
  const wordHas=Boolean(word&&[word.vocabulary_passed_count,word.spelling_coach_passed_count,word.spelling_test_passed_count,word.speaking_passed_count].some(n=>Number(n)>0));
  const wordPct=totalVocab>0?Math.round(100*wordParts.reduce((a,v)=>a+Math.min(v,totalVocab),0)/(totalVocab*3)):null;
- const sentences=rosterCurriculum.sentences.filter(r=>present(r)&&String(r.book_id)===bid&&String(r.unit_id)===uid);
+ const sentences=idx?.sentences.get(k)||[];
  const sentenceTotal=rosterCurriculum.sentenceTotals.get(uid);
  const sentenceModes=['sentence_coach','sentence_unscramble','sentence_speaking'];
  const sentencePassed=sentenceModes.map(skill=>Math.max(0,...sentences.filter(r=>r.skill===skill).map(r=>Number(r.done||0))));
  const sentencePct=sentenceTotal>0?Math.round(100*sentencePassed.reduce((a,v)=>a+Math.min(v,sentenceTotal),0)/(sentenceTotal*3)):null;
- const grammar=rosterCurriculum.extra.filter(r=>present(r)&&String(r.book_id)===bid&&Number(r.unit_number)===number&&r.app==='grammar');
+ const grammar=(idx?.extra.get(kn)||[]).filter(r=>r.app==='grammar');
  const grammarModes=['choose','check','hunt'];
  const gParts=grammarModes.map(m=>Math.max(0,...grammar.filter(r=>r.skill===m).map(r=>Math.min(Math.max(0,Number(r.done)||0),Math.max(0,Number(r.total)||0)))));
  const gTotals=grammarModes.map(m=>Math.max(0,...grammar.filter(r=>r.skill===m).map(r=>Number(r.total)||0)));
  const gTotal=gTotals.reduce((a,b)=>a+b,0);
  const gPct=grammar.length&&gTotal>0?Math.round(100*gParts.reduce((a,b)=>a+b,0)/gTotal):null;
- const talking=rosterCurriculum.extra.filter(r=>present(r)&&String(r.book_id)===bid&&Number(r.unit_number)===number&&r.app==='talking'&&r.skill==='speaking');
+ const talking=(idx?.extra.get(kn)||[]).filter(r=>r.app==='talking'&&r.skill==='speaking');
  const bestTalk=talking.sort((a,b)=>Number(b.done||0)-Number(a.done||0))[0];
  const talkPct=bestTalk&&Number(bestTalk.total)>0?Math.round(100*Math.min(Number(bestTalk.done)||0,Number(bestTalk.total))/Number(bestTalk.total)):null;
- const writing=rosterCurriculum.writing.filter(r=>present(r)&&String(r.book_id)===bid&&String(r.unit_id)===uid);
+ const writing=idx?.writing.get(k)||[];
  const writingComplete=writing.length>0&&writing.every(r=>r.completed===true);
- const puzzle=rosterCurriculum.puzzles.find(r=>present(r)&&String(r.book_id)===bid&&String(r.unit_id)===uid);
+ const puzzle=idx?.puzzles.get(k)?.[0];
  const puzzleDone=Math.min(5,Number(puzzle?.completed_modes||0));
  const tracked=[
   {id:'word',percent:wordPct,started:wordHas,complete:wordPct!=null&&wordParts.every(v=>v/totalVocab>.9)},
@@ -1119,19 +1167,19 @@ function rsMapCellData(id,book,unit,app){
  const gold=Boolean(goldSet?.has('gold:'+goldKey+':'+book.book_id+':'+unit.id));
  let p=app.percent,started=app.started,detail=app.detail||'';
  if(key==='grammar'&&availability===true){
-  const rows=rosterCurriculum.extra.filter(r=>String(r.student_id)===String(id)&&String(r.book_id)===String(book.book_id)&&Number(r.unit_number)===Number(unit.unit_number)&&r.app==='grammar');
+  const rows=(rosterCurriculum.index?.extra.get(rsUnitKey(id,book.book_id,Number(unit.unit_number)))||[]).filter(r=>r.app==='grammar');
   const size=/^Grammar Ten/i.test(String(book.book_title||''))?8:5;
   p=Math.round(100*['choose','check','hunt'].reduce((sum,mode)=>sum+Math.min(size,Math.max(0,...rows.filter(r=>r.skill===mode).map(r=>Number(r.done)||0))),0)/(size*3));
  }
  if(key==='writing'){
-  const rows=rosterCurriculum.writing.filter(r=>String(r.student_id)===String(id)&&String(r.book_id)===String(book.book_id)&&String(r.unit_id)===String(unit.id));
+  const rows=rosterCurriculum.index?.writing.get(rsUnitKey(id,book.book_id,unit.id))||[];
   const vals=rows.filter(r=>Number(r.total)>0).map(r=>Math.min(1,Math.max(0,Number(r.answered)||0)/Number(r.total)));
   if(p!==100&&vals.length)p=Math.round(100*Math.max(...vals));
   if(!rows.length&&availability===true)p=0;
  }
  if(key==='freeconversation'){
   // Free conversation has separate evidence from structured speaking.
-  const rows=(rosterCurriculum.conversation||[]).filter(m=>String(m.book_id)===String(book.book_id)&&String(m.unit_id)===String(unit.id)).flatMap(m=>(m.students||[]).filter(r=>String(r.student_id||r.id)===String(id)));
+  const rows=rosterCurriculum.index?.conversation.get(rsUnitKey(id,book.book_id,unit.id))||[];
   const values=rows.map(r=>Number(r.completed_questions??r.contributions??(r.percent==null?NaN:Number(r.percent)*8/100))).filter(Number.isFinite);
   p=values.length?Math.round(100*Math.min(8,Math.max(0,...values))/8):null;
   started=values.some(v=>v>0);detail=rows.length?'Recorded conversation mission progress':'Free-practice conversation percentage not supplied by teacher overview';
@@ -1146,8 +1194,8 @@ function rsMapCellData(id,book,unit,app){
  const state=gold?'gold':p==null&&!started?'unknown':started||p>0?'progress':'idle';
  return {state,p,detail};
 }
-function rsMapRing(id,book,unit,app){
- const v=rsMapCellData(id,book,unit,app),mission=rsMapMission(id,book,unit,app.id)&&v.state!=='na';
+function rsMapRing(id,book,unit,app,v=rsMapCellData(id,book,unit,app)){
+ const mission=rsMapMission(id,book,unit,app.id)&&v.state!=='na';
  const label=v.state==='gold'?'Gold · Completed':v.state==='na'?'Unavailable':v.state==='unknown'?'Progress unknown':v.p==null?'In progress':v.p===0?'Not started':v.p+'%';
  const center='<text x="24" y="25" text-anchor="middle" dominant-baseline="middle">'+(v.state==='na'?'×':v.state==='unknown'?'?':v.p==null?'…':v.p+'%')+'</text>';
  const ring='<svg viewBox="0 0 48 48" aria-hidden="true"><circle class="rs-map-depth" cx="24" cy="24" r="21"/><circle class="rs-map-track" cx="24" cy="24" r="19"/>'+(v.p>0?'<circle class="rs-map-fill" cx="24" cy="24" r="19" pathLength="100" stroke-dasharray="'+v.p+' 100" transform="rotate(-90 24 24)"/>':'')+center+'</svg>';
@@ -1158,10 +1206,10 @@ function rsBookCard(studentId,book){
  const units=rosterCurriculum.units.get(String(book.book_id))||[];
  if(!units.length)return '<div class="roster-book"><strong class="roster-book-title">'+esc(book.book_title||'Textbook')+'</strong><small class="roster-app-no-data">No published unit catalogue available</small></div>';
  const lesson=String(book.current_unit||'').trim(),current=Number(lesson.match(/\d+/)?.[0]);
- const rows=units.map(u=>({u,apps:rsAppProgress(studentId,book,u)}));
- const gold=rows.reduce((n,{u,apps})=>n+apps.filter(a=>rsMapCellData(studentId,book,u,a).state==='gold').length,0);
+ const rows=units.map(u=>({u,apps:rsAppProgress(studentId,book,u).map(a=>({a,v:rsMapCellData(studentId,book,u,a)}))}));
+ const gold=rows.reduce((n,{apps})=>n+apps.filter(({v})=>v.state==='gold').length,0);
  return '<div class="roster-book rs-map-book"><div class="rs-map-scroll"><div class="rs-map-grid"><div class="rs-map-row rs-map-heading"><strong>Unit</strong>'+rsApps.map(([key,name])=>'<strong title="'+esc(name)+'">'+esc(rsMapNames[key])+'</strong>').join('')+'</div>'+
- rows.map(({u,apps})=>'<div class="rs-map-row'+(Number(u.unit_number)===current?' rs-map-current':'')+'"><strong title="'+esc(u.title||'')+'">'+esc(u.unit_number)+'</strong>'+apps.map(a=>rsMapRing(studentId,book,u,a)).join('')+'</div>').join('')+'</div></div>'+
+ rows.map(({u,apps})=>'<div class="rs-map-row'+(Number(u.unit_number)===current?' rs-map-current':'')+'"><strong title="'+esc(u.title||'')+'">'+esc(u.unit_number)+'</strong>'+apps.map(({a,v})=>rsMapRing(studentId,book,u,a,v)).join('')+'</div>').join('')+'</div></div>'+
  '<div class="rs-map-legend"><span><i style="background:#d9e5e6"></i>Not started</span><span><i style="background:#2aa88a"></i>Progress</span><span><i style="background:#dfb747"></i>Gold</span><span><i style="background:#e56ba6"></i>Mission</span><span>× No content · ? Unknown</span></div>'+
  '<div class="roster-book-footer"><span>'+gold+' Gold activities'+(rosterCurriculum.gold.has(String(studentId))?'':' · Gold check unavailable')+'</span><span>Class unit: '+esc(lesson||'Not set')+'</span></div></div>';
 }
@@ -1194,15 +1242,10 @@ function rsAssignmentsPanelRender(id,tab){
  (a.ended_at?' · Moved to history '+esc(fmtDate(a.ended_at)):'')+'</small></div>').join(''):
  '<div class="empty">No past assignments found for this student.</div>';
 }
-function rsOpenAssignments(id){
- const s=state.students.find(x=>String(x.user_id)===String(id));if(!s)return;
- window.rsAssignmentStudent=String(id);
- $('#rosterAssignmentsTitle').textContent=(s.name||'Student')+' · Assignments';
- $('#rosterAssignmentsOverlay').hidden=false;
- rsAssignmentsPanelRender(id,'current');
-}
+function rsOpenAssignments(id){openStudent(id,'Missions')}
 function rsCloseAssignments(){$('#rosterAssignmentsOverlay').hidden=true;window.rsAssignmentStudent=null}
 function renderStudents(){
+ if(!state.students.length&&state.rosterLoading)return;
  const query=($('#searchInput').value||'').trim().toLowerCase(),filter=$('#rosterAssignmentFilter')?.value||'all';
  const list=state.students.filter(s=>{
   if(query&&!String(s.name||'').toLowerCase().includes(query)&&!String(s.korean_name||'').toLowerCase().includes(query))return false;
@@ -1249,13 +1292,18 @@ function renderStudents(){
  $$('[data-rs-detail]').forEach(b=>b.onclick=e=>{e.stopPropagation();openStudent(b.dataset.rsDetail)});
 }
 
-async function loadClass(){
+async function loadClass(force=false){
+  force=force===true;
   const name=$('#classSelect').value;if(!name)return;
   const request=(state.rosterRequest||0)+1;state.rosterRequest=request;
-  state.className=name;state.days=Number($('#daysSelect').value)||30;state.students=[];
+  state.className=name;state.days=Number($('#daysSelect').value)||30;state.students=[];state.rosterLoading=true;
   ++rosterAssignments.request;Object.assign(rosterAssignments,{className:name,loading:true,error:'',items:[],history:[]});
   $('#studentList').innerHTML='<div class="empty">Loading students…</div>';$('#statusText').textContent='';
-  try{const j=await api(endpoint('teacher_class_insights',{class:name,days:String(state.days)}));if(state.rosterRequest!==request)return;state.students=j.students||[];renderStudents();void loadRosterCurriculum(name);await loadRosterAssignments(name)}catch(e){if(state.rosterRequest!==request)return;$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load student data.'}
+  if(force){curriculum.unitCache.clear();rsClassCache.delete(name);}
+  const rosterTask=api(endpoint('teacher_class_insights',{class:name,days:String(state.days)}));
+  void loadRosterCurriculum(name,force);
+  const assignmentTask=loadRosterAssignments(name);
+  try{const j=await rosterTask;if(state.rosterRequest!==request)return;state.students=j.students||[];state.rosterLoading=false;renderStudents();await assignmentTask}catch(e){if(state.rosterRequest!==request)return;state.rosterLoading=false;$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load student data.'}
 }
 
 function renderSkills(skills){if(!skills?.length)return'<div class="empty">No skill-level evidence yet.</div>';return skills.map(s=>`<div class="skill"><div><div class="skill-name">${esc(friendly(s.skill))}</div><div class="skill-meta">${esc(s.correct)}/${esc(s.attempts)} correct${typeof s.trend==='number'?` · ${s.trend>0?'+':''}${esc(s.trend)} pts trend`:''}</div></div><div class="skill-acc">${s.accuracy==null?'—':esc(s.accuracy)+'%'}</div></div>`).join('')}
@@ -1468,8 +1516,62 @@ async function loadArcadeInsights(force=false){
 }
 function habitReason(h){if(!h)return'No evidence';const parts=[`${h.active_days_7??0} active day${h.active_days_7===1?'':'s'} in the last 7`,`${h.current_streak??0}-day streak`,`${h.attempts??0} attempts`];if(h.days_since_last_study!=null)parts.push(h.days_since_last_study===0?'studied today':`last studied ${h.days_since_last_study} day${h.days_since_last_study===1?'':'s'} ago`);return parts.join(' · ')}
 function learningReason(l){if(!l||l.all_time_accuracy==null)return'No recorded question results';const recent=l.recent_accuracy==null?'—':`${l.recent_accuracy}%`;let t=`Recent ${recent} from ${l.recent_count??0} current questions · All time ${l.all_time_accuracy}% across ${l.all_time_attempts??0} attempts`;if(typeof l.trend==='number')t+=` · ${l.trend>0?'+':''}${l.trend} pts vs previous 14 days`;return t}
-function closeStudentDrawerDirect(){$('#drawerBg').classList.remove('open')}
-async function openStudent(id){window.rosterDrawerStudent=String(id);const base=state.students.find(s=>String(s.user_id)===String(id));$('#drawerName').textContent=base?.name||'Student';$('#drawerMeta').textContent=`${state.className} · Last ${state.days} days`;$('#drawerBody').innerHTML='<div class="empty">Loading student evidence…</div>';$('#drawerBg').classList.add('open');window.TeacherHistory?.pushDrawer?.('student',{studentId:id});try{const j=await api(endpoint('teacher_student_insights',{student_id:id,days:String(state.days)}));const s=j.student,h=s.habits||{},l=s.learning||{};if(!$('#drawerBg').classList.contains('open')||window.rosterDrawerStudent!==String(id))return;$('#drawerBody').innerHTML=`<div class="detail"><h3>Current assignments</h3><div id="rosterDrawerAssignments">${renderHomeworkDetails(id)}</div></div><div class="rating-grid"><div class="big-card"><h3>Recorded activity</h3><div class="big-rating">${esc(h.active_days_7??0)} active days / 7</div><div class="reason">${esc(habitReason(h))}</div><div class="statline"><span>${esc(h.active_days_30??0)} active days in last 30</span><span>${esc(h.completed_sessions??0)} sessions</span></div></div><div class="big-card"><h3>Recorded results</h3><div class="big-rating">${l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%'} recent accuracy</div><div class="reason">${esc(learningReason(l))}</div><div class="statline"><span>${l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%'} recent</span><span>${l.all_time_accuracy==null?'—':esc(l.all_time_accuracy)+'%'} all time</span><span>${esc(l.all_time_attempts??0)} attempts</span></div></div></div><div class="detail"><h3>Word Genius · Books &amp; Golden Units</h3><div id="wordGeniusStudentMastery" aria-live="polite">Loading unit mastery…</div></div><div class="detail"><h3>Skills</h3>${renderSkills(l.skills)}</div><div class="detail puzzle-student-detail"><h3>Puzzles</h3>${renderStudentPuzzles(s.puzzles)}</div><div class="detail"><h3>Recent mistakes</h3>${renderMistakes(s.recent_mistakes)}</div><div class="detail"><h3>Proof of work</h3>${renderProof(s.proof)}</div>`;window.dispatchEvent(new CustomEvent("teacher:student-insights-ready",{detail:{studentId:id}}))}catch(e){$('#drawerBody').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+const rsDrawerTabs=['Overview','Missions','Activity','Mistakes','History'];
+const rsDrawer={id:null,tab:'Overview',run:0,detail:null,pending:null,error:''};
+const rsDrawerCache=new Map();
+function closeStudentDrawerDirect(){$('#drawerBg').classList.remove('open');rsDrawer.run++;rsDrawer.id=null;window.rosterDrawerStudent=null}
+function rsRefreshDrawerSummary(){if(rsDrawer.id&&$('#drawerBg').classList.contains('open')&&['Overview','Missions','History'].includes(rsDrawer.tab))rsPaintDrawer()}
+function rsDrawerOverview(id){
+ if(rosterAssignments.loading)return '<div class="empty">Loading current missions…</div>';
+ if(rosterAssignments.error)return '<div class="empty">'+esc(rosterAssignments.error)+'</div>';
+ const h=homeworkSummary(id),skills=new Map();
+ for(const item of h.known)for(const v of item.result.sections||[]){const key=rsMissionApp(item.assignment)+' · '+v.label,old=skills.get(key)||{done:0,total:0,missing:0,units:0};old.done+=Number(v.done)||0;old.total+=Number(v.total)||0;old.units++;if(!v.done&&v.total>0)old.missing++;skills.set(key,old)}
+ const attention=[...skills].filter(([,v])=>v.missing>0).sort((a,b)=>b[1].missing-a[1].missing);
+ return '<div class="detail rs-dr-summary"><div class="rs-dr-summary-head">'+rsRingPercent(h.percent,h.rows.length>0&&h.complete===h.rows.length)+'<div><h3>Current missions</h3>'+rsMissionCounts(id)+'</div></div><button type="button" class="rs-dr-link" data-rs-drawer-jump="Missions">View all '+h.rows.length+' missions →</button></div>'+
+ '<div class="detail"><h3>Mission skills</h3>'+(skills.size?[...skills].map(([label,v])=>{const p=v.total?Math.round(100*v.done/v.total):null;return '<div class="rs-dr-skill"><span>'+esc(label)+'</span><b>'+(p==null?'—':p+'%')+'</b><div class="rs-dr-bar"><i class="'+(p===100?'is-gold':'')+'" style="width:'+(p||0)+'%"></i></div></div>'}).join(''):'<div class="empty">No recorded mission skill breakdown.</div>')+'</div>'+
+ (attention.length?'<div class="detail"><h3>Needs attention</h3>'+attention.slice(0,3).map(([label,v])=>'<div class="rs-dr-attention"><b>'+esc(label)+'</b><small>Not started in '+v.missing+' of '+v.units+' assigned activities.</small></div>').join('')+'</div>':'');
+}
+function rsDrawerHistory(id){
+ if(rosterAssignments.loading)return '<div class="empty">Loading mission history…</div>';
+ if(rosterAssignments.error)return '<div class="empty">'+esc(rosterAssignments.error)+'</div>';
+ const rows=(rosterAssignments.history||[]).filter(a=>homeworkForStudent(a,id));
+ return '<div class="detail"><h3>Mission history</h3>'+(rows.length?rows.map(a=>'<article class="rs-dr-mission"><div class="rs-dr-mission-head"><div><strong>'+esc(a.title||a.list_title||'Mission')+'</strong><small>'+esc(rsMissionApp(a))+(a.due_at?' · Due '+esc(fmtDate(a.due_at)):'')+'</small><small>'+esc(a.status||'Ended')+(a.ended_at?' · '+esc(fmtDate(a.ended_at)):'')+'</small></div></div></article>').join('')+'<small class="rs-dr-note">Assignment history; individual historical results are not provided by this source.</small>':'<div class="empty">No past assignments found.</div>')+'</div>';
+}
+function rsPaintDrawer(){
+ const id=rsDrawer.id,tab=rsDrawer.tab;if(!id)return;
+ const nav=$('#rsDrawerTabs');nav.querySelectorAll('button').forEach(b=>{b.setAttribute('aria-selected',String(b.dataset.rsDrawerTab===tab));b.classList.toggle('active',b.dataset.rsDrawerTab===tab)});
+ const host=$('#drawerBody');let html='';
+ if(tab==='Overview')html=rsDrawerOverview(id);
+ else if(tab==='Missions')html=(!rosterAssignments.loading&&!rosterAssignments.error?rsMissionCounts(id):'')+'<div class="detail rs-dr-missions"><h3>Current missions</h3><div id="rosterDrawerAssignments">'+renderHomeworkDetails(id)+'</div></div>';
+ else if(tab==='History')html=rsDrawerHistory(id);
+ else if(!rsDrawer.detail)html='<div class="empty">'+(rsDrawer.error?esc(rsDrawer.error)+' <button type="button" data-rs-drawer-retry>Retry</button>':'Loading student evidence…')+'</div>';
+ else{
+  const st=rsDrawer.detail,h=st.habits||{},l=st.learning||{};
+  if(tab==='Mistakes')html='<div class="detail"><h3>Recent mistakes</h3>'+renderMistakes(st.recent_mistakes)+'</div>';
+  else html='<div class="rating-grid"><div class="big-card"><h3>Recorded activity</h3><div class="big-rating">'+esc(h.active_days_7??0)+' active days / 7</div><div class="reason">'+esc(habitReason(h))+'</div><div class="statline"><span>'+esc(h.active_days_30??0)+' active days in last 30</span><span>'+esc(h.completed_sessions??0)+' sessions</span></div></div><div class="big-card"><h3>Recorded results</h3><div class="big-rating">'+(l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%')+' recent accuracy</div><div class="reason">'+esc(learningReason(l))+'</div></div></div><div class="detail"><h3>Skills</h3>'+renderSkills(l.skills)+'</div><div class="detail"><h3>Word Genius · Books &amp; Golden Units</h3><details id="rsDrawerMastery"><summary>View unit mastery</summary><div id="wordGeniusStudentMastery"></div></details></div><div class="detail"><h3>Puzzles</h3>'+renderStudentPuzzles(st.puzzles)+'</div><div class="detail"><h3>Proof of work</h3>'+renderProof(st.proof)+'</div>';
+ }
+ host.innerHTML=html;
+ host.querySelectorAll('[data-rs-drawer-jump]').forEach(b=>b.onclick=()=>rsSetDrawerTab(b.dataset.rsDrawerJump));
+ host.querySelector('[data-rs-drawer-retry]')?.addEventListener('click',()=>rsLoadDrawerEvidence(true));
+ const mastery=host.querySelector('#rsDrawerMastery');if(mastery)mastery.addEventListener('toggle',()=>{if(mastery.open&&!mastery.dataset.loaded){mastery.dataset.loaded='1';window.TeacherWordGeniusMastery?.show(id,mastery.querySelector('#wordGeniusStudentMastery'))}});
+}
+async function rsLoadDrawerEvidence(force=false){
+ const id=rsDrawer.id,run=rsDrawer.run,key=state.className+'|'+id+'|'+state.days;if(!id||rsDrawer.pending)return;
+ const cached=rsDrawerCache.get(key);if(!force&&cached&&Date.now()-cached.at<60000){rsDrawer.detail=cached.student;rsPaintDrawer();return}
+ rsDrawer.error='';rsPaintDrawer();
+ const task=api(endpoint('teacher_student_insights',{student_id:id,days:String(state.days)}));rsDrawer.pending=task;
+ try{const j=await task;if(!j.student)throw Error('Student evidence unavailable');if(run!==rsDrawer.run||id!==rsDrawer.id)return;rsDrawer.detail=j.student;rsDrawerCache.set(key,{at:Date.now(),student:j.student});}
+ catch(e){if(run!==rsDrawer.run)return;rsDrawer.error=e.message||'Could not load student evidence'}
+ finally{if(run===rsDrawer.run){rsDrawer.pending=null;if(['Activity','Mistakes'].includes(rsDrawer.tab))rsPaintDrawer()}}
+}
+function rsSetDrawerTab(tab){if(!rsDrawerTabs.includes(tab))return;rsDrawer.tab=tab;rsPaintDrawer();$('#drawerBody').scrollTop=0;if(['Activity','Mistakes'].includes(tab)&&!rsDrawer.detail)void rsLoadDrawerEvidence()}
+function openStudent(id,tab='Overview'){
+ id=String(id);if(!rsDrawerTabs.includes(tab))tab='Overview';const base=state.students.find(s=>String(s.user_id)===id);
+ Object.assign(rsDrawer,{id,tab,run:rsDrawer.run+1,detail:null,pending:null,error:''});window.rosterDrawerStudent=id;
+ $('#drawerName').textContent=base?.name||'Student';$('#drawerMeta').textContent=[base?.korean_name,state.className,'Last '+state.days+' days'].filter(Boolean).join(' · ');
+ $('#rsDrawerBooks').textContent=rosterCurriculum.className===state.className&&rosterCurriculum.overview?rosterCurriculum.books.map(b=>b.book_title||'Textbook').join(' · '):'';
+ $('#drawerBg').classList.add('open');window.TeacherHistory?.pushDrawer?.('student',{studentId:id});rsSetDrawerTab(tab);
+}
 
 /* Class Curriculum — read from staff-scoped operations RPC and shared content catalog. */
 const curriculum={
@@ -2465,11 +2567,12 @@ document.querySelectorAll('[data-students-tab]').forEach(btn=>btn.addEventListen
 try{openStudentsSubtab(sessionStorage.getItem(teacherStudentsTabKey)||'tracking')}catch{openStudentsSubtab('tracking')}
 const teacherViewKey='willena.teachers.activeView.v1';
 function switchView(v){if(v==='free-talking-genius'&&window.FreeTalkingGeniusTeacher?.openView){window.FreeTalkingGeniusTeacher.openView();return}if(!document.documentElement.classList.contains('willena-calendar-embed'))try{localStorage.setItem(teacherViewKey,v)}catch{};if(v==='genius-live'){const frame=$('#geniusLiveFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/genius-live/?embedded=1');}if(v==='achievement-tests'){const frame=$('#achievementTestsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src','/Teachers/tools/assessment_grid/');}$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='utilities'){window.WillenaUtilitiesTabs?.activate?.();}if(v==='assignments'){window.UniversalAssignments?.activate?.();window.UniversalAssignments?.refresh?.()}if(v==='sentence-genius'){window.SentenceGeniusTeacher?.openTeacher?.()}if(v==='staff-calendar')window.WillenaStaffCalendar?.open?.();if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='class-leaders')loadClassLeaders();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
+$('#rsDrawerTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>rsSetDrawerTab(b.dataset.rsDrawerTab));
 $('#rosterAssignmentsClose').onclick=rsCloseAssignments;
 $('#rosterAssignmentsOverlay').onclick=e=>{if(e.target.id==='rosterAssignmentsOverlay')rsCloseAssignments()};
 document.querySelectorAll('[data-rs-assign-tab]').forEach(b=>b.onclick=()=>{if(window.rsAssignmentStudent)rsAssignmentsPanelRender(window.rsAssignmentStudent,b.dataset.rsAssignTab)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#rosterAssignmentsOverlay').hidden)rsCloseAssignments()});
-$('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#rosterAssignmentFilter').onchange=renderStudents;$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#leaderScope').onchange=()=>loadTeacherLeaderboard(true);$('#leaderMetric').onchange=()=>loadTeacherLeaderboard(true);$('#leaderRefreshBtn').onclick=()=>loadTeacherLeaderboard(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+$('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=()=>loadClass(true);$('#searchInput').oninput=renderStudents;$('#rosterAssignmentFilter').onchange=renderStudents;$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#leaderScope').onchange=()=>loadTeacherLeaderboard(true);$('#leaderMetric').onchange=()=>loadTeacherLeaderboard(true);$('#leaderRefreshBtn').onclick=()=>loadTeacherLeaderboard(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 (async()=>{if(await auth()){loadClasses();let restored='students';try{restored=localStorage.getItem(teacherViewKey)||sessionStorage.getItem(teacherViewKey)||'students'}catch{};if(new URLSearchParams(location.search).get('view')==='staff-calendar')restored='staff-calendar';if(restored==='writing-genius')window.WritingGeniusTeacher?.openView?.();else if(document.getElementById('view-'+restored))switchView(restored)}})();
 </script>
