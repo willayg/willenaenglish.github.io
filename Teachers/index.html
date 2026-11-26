@@ -1112,7 +1112,7 @@ function rsMapMission(id,book,unit,app){
   const bid=String(m.book_id||m.source_book_id||a.book_id||'');
   if(bid!==String(book.book_id))return false;
   const ids=[m.unit_id,m.source_unit_id,a.unit_id,...(Array.isArray(m.source_unit_ids)?m.source_unit_ids:[]),...(Array.isArray(m.unit_ids)?m.unit_ids:[])].filter(Boolean).map(String);
-  return ids.includes(String(unit.id))||(!ids.length&&m.unit_number!=null&&String(m.unit_number)===String(unit.unit_number));
+  return ids.includes(String(unit.id))||(!ids.length&&(m.unit_number??m.chapter)!=null&&String(m.unit_number??m.chapter)===String(unit.unit_number));
  });
 }
 function rsMapCellData(id,book,unit,app){
