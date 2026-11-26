@@ -260,6 +260,42 @@ try{
 #view-students .roster-app-meter i{display:block;height:100%;border-radius:10px;background:#26b5c3}
 #view-students .roster-app-number{font-size:10px;text-align:right;font-weight:750;color:#207c89}
 #view-students .roster-app-no-data{font-size:10px;color:#8b9da3}
+#view-students #studentList.student-list{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+#view-students .rs-map-tabs{display:flex;gap:6px;flex-wrap:wrap}
+#view-students .rs-map-tabs button{border:1px solid #b4dfe5;border-radius:10px;padding:7px 9px;background:white;color:#417780;font:700 11px/1.3 inherit;cursor:pointer}
+#view-students .rs-map-tabs button[aria-pressed="true"]{border-color:#24a9b4;color:#ce6395;background:#f6fcfc;box-shadow:inset 0 0 0 1px #24a9b4}
+#view-students .rs-map-book{padding:8px;gap:10px}
+.rs-map-scroll{overflow-x:auto;overscroll-behavior-inline:contain}
+.rs-map-grid{display:grid;gap:4px;min-width:295px}
+.rs-map-row{display:grid;grid-template-columns:26px repeat(6,minmax(0,1fr));align-items:center;justify-items:center;gap:2px;position:relative;min-height:41px;border-radius:8px}
+.rs-map-row:not(.rs-map-heading):before{content:"";height:2px;background:#dfeded;position:absolute;left:38px;right:7%;top:50%;pointer-events:none}
+.rs-map-row>strong{color:#297681;font-size:11px;position:relative}
+.rs-map-row.rs-map-heading{min-height:25px}
+.rs-map-heading>strong{font-size:clamp(8px,1vw,11px);letter-spacing:-.3px}
+.rs-map-current{background:#e8f7f7;box-shadow:inset 2px 0 #27a7b0}
+.rs-map-ring{--ring:#2aa88a;--track:#dcebea;--ink:#25886f;display:grid;place-items:center;position:relative;background:none!important;padding:0!important;border:0!important;width:min(100%,46px);aspect-ratio:1;cursor:pointer;color:var(--ink);z-index:1}
+.rs-map-ring svg{width:100%;height:auto;overflow:visible}
+.rs-map-ring .rs-map-depth{fill:white;stroke:#d3e1e3;stroke-width:1.5}
+.rs-map-ring .rs-map-track{fill:none;stroke:var(--track);stroke-width:3.7}
+.rs-map-ring .rs-map-fill{fill:none;stroke:var(--ring);stroke-width:3.7;stroke-linecap:round}
+.rs-map-ring text{font:800 10px Poppins,sans-serif;fill:var(--ink)}
+.rs-map-ring .rs-map-star{fill:#f0f7f7;stroke:#acc8cb;stroke-width:1.5;stroke-linejoin:round}
+.rs-map-ring[data-state="gold"]{--ring:#d9ad37;--track:#f0e4b7;--ink:#a47a13}
+.rs-map-ring[data-state="gold"] .rs-map-star{fill:#e4bb43;stroke:#cda132}
+.rs-map-ring[data-state="gold"] .rs-map-depth{fill:#fff9e8;stroke:#e4d29b}
+.rs-map-ring[data-state="unknown"],.rs-map-ring[data-state="na"]{--ink:#91a3a9;--track:#e7edef}
+.rs-map-ring[data-state="na"] .rs-map-depth{fill:#f2f4f5}
+.rs-map-ring[data-mission="true"]{--ring:#e36aa2;--track:#f9e1ec;--ink:#cc508a}
+.rs-map-ring[data-mission="true"] .rs-map-depth{stroke:#edb1ce}
+.rs-map-ring[data-mission="true"][data-state="idle"] .rs-map-star{fill:#fce8f1;stroke:#df78a9}
+.rs-map-ring:focus-visible{outline:2px solid #25a7b2;outline-offset:2px;border-radius:50%}
+.rs-map-mission{position:absolute;top:-2px;left:50%;transform:translateX(-50%);background:#d45292;color:#fff;font-size:7px;font-weight:800;line-height:1.1;padding:2px 4px;border-radius:10px;white-space:nowrap;pointer-events:none}
+.rs-map-legend{display:flex;gap:6px 9px;flex-wrap:wrap;color:#657d85;font-size:9px}
+.rs-map-legend span{display:flex;align-items:center;gap:3px}.rs-map-legend i{display:inline-block;width:7px;height:7px;border-radius:50%}
+#rsMapDetail{max-width:min(420px,90vw);border:1px solid #afd8dc;border-radius:16px;padding:20px;color:#21434b;background:white;font-family:Poppins,sans-serif}
+#rsMapDetail::backdrop{background:#16384166}
+#rsMapDetail h3{font-size:16px;margin:0 0 12px}#rsMapDetail p{font-size:13px;line-height:1.5}#rsMapDetail>div{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+#rsMapDetail button{border:1px solid #b4dfe5;background:white;color:#137b8a;border-radius:9px;padding:8px;cursor:pointer}
 #view-students .roster-book-footer{display:flex;justify-content:space-between;align-items:center;color:#607984;font-size:10px}
 #view-students .roster-card-actions{display:flex;gap:8px;flex-wrap:wrap}
 #view-students .roster-card-actions button{border:1px solid #b4dfe5;background:white;color:#137b8a;border-radius:10px;padding:9px 11px;font-size:11px;font-weight:750;cursor:pointer}
@@ -291,7 +327,7 @@ try{
 #view-students .roster-student-metric small{color:#7c929b;font-size:10px}
 #view-students .roster-student-foot{display:flex;justify-content:space-between;gap:10px;align-items:center;padding-top:7px;margin-top:auto;border-top:1px solid #e7edef;font-size:11px;color:#65828d}
 #view-students .roster-student-open{font-weight:800;color:#137b8b}
-@media(max-width:800px){#view-students .roster-dashboard-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#view-students .roster-workspace-heading{align-items:flex-start}#view-students #studentList.student-list{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}}
+@media(max-width:800px){#view-students .roster-dashboard-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#view-students .roster-workspace-heading{align-items:flex-start}#view-students #studentList.student-list{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}}
 @media(max-width:520px){#view-students .roster-workspace{padding:12px}#view-students .roster-dashboard-summary{gap:7px}#view-students .roster-dashboard-summary>span{padding:10px}#view-students #studentList.student-list{grid-template-columns:1fr}#view-students .roster-readonly-note{display:none}}
 #drawerBg .drawer{width:min(820px,100vw);background:#f5f9fa}
 #drawerBg .drawer-head{padding:19px 24px;background:#304852;border-bottom:3px solid #24b7c7}
@@ -714,7 +750,7 @@ try{
 <div class="wc-dialog-actions"><button id="wcDelete" class="wc-button wc-delete" type="button" hidden>Delete</button><button class="wc-button" type="button" id="wcCancel">Cancel</button><button class="wc-button wc-primary" id="wcSave" type="submit">Save event</button></div></form></dialog>
 <div id="rosterAssignmentsOverlay" class="rs-assign-overlay" hidden><section class="rs-assign-dialog" role="dialog" aria-modal="true" aria-label="Student assignments"><div class="rs-assign-head"><div><h2 id="rosterAssignmentsTitle">Assignments</h2><p>Student mission history</p></div><button type="button" id="rosterAssignmentsClose" aria-label="Close assignments">×</button></div><div class="rs-assign-tabs"><button data-rs-assign-tab="current" class="active" type="button">Current</button><button data-rs-assign-tab="history" type="button">History</button></div><div id="rosterAssignmentsBody" class="rs-assign-body"></div></section></div>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.75</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.76</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -913,7 +949,8 @@ function renderHomeworkDetails(id){
   }).join('');
 }
 
-const rosterCurriculum={request:0,className:'',loading:false,error:'',books:[],units:new Map(),overview:null,word:[],extra:[],sentences:[],writing:[],writingEntries:[],puzzles:[],special:[],vocabTotals:new Map(),sentenceTotals:new Map()};
+const rsSelectedBooks=new Map();
+const rosterCurriculum={availability:new Map(),gold:new Map(),conversation:null,request:0,className:'',loading:false,error:'',books:[],units:new Map(),overview:null,word:[],extra:[],sentences:[],writing:[],writingEntries:[],puzzles:[],special:[],vocabTotals:new Map(),sentenceTotals:new Map()};
 // Keep Teacher progress denominators aligned with the sentences actually loaded
 // by students/sentence-genius/content.js. Other catalog sentence occurrences are
 // not playable Sentence Genius targets (notably Everybody Up page-4 drafts).
@@ -957,6 +994,11 @@ async function loadRosterCurriculum(className){
   const unitEntries=await Promise.all(books.map(async b=>{
    try{return [String(b.book_id),await ccUnits(b.book_id)]}catch(e){console.warn('Students catalog units:',e);return [String(b.book_id),[]]}
   }));
+  const [availability,goldSummary,conversation]=await Promise.all([
+   ccLoadPublishedAvailability(books.map(b=>String(b.book_id))).catch(()=>null),
+   ccFetchJellySummary(className).catch(()=>null),
+   ccRpc("teacher_free_talking_conversation_mission_progress_v1",{p_assignment_id:null}).catch(()=>null)
+  ]);
   const counts=await Promise.all(books.map(async b=>{
    const id=String(b.book_id);
    const [v,w]=await Promise.all([
@@ -978,7 +1020,7 @@ async function loadRosterCurriculum(className){
    puzzles:Array.isArray(puzzles)?puzzles:[],
    word:Array.isArray(supplement?.word)?supplement.word:[],
    special:Array.isArray(supplement?.special)?supplement.special:[],
-   vocabTotals,sentenceTotals,loading:false,error:''
+   vocabTotals,sentenceTotals,availability:availability||new Map(),gold:new Map(Number(goldSummary?.rules_version)>=3?(goldSummary.students||[]).filter(r=>Array.isArray(r.verified_gold_keys)).map(r=>[String(r.student_id),new Set(r.verified_gold_keys)]):[]),conversation:Array.isArray(conversation)?conversation: null,loading:false,error:''
   });
  }catch(e){if(request!==rosterCurriculum.request)return;rosterCurriculum.loading=false;rosterCurriculum.error=e.message||'Could not load curriculum';console.warn('Student curriculum:',e)}
  if(request===rosterCurriculum.request)renderStudents();
@@ -1052,24 +1094,91 @@ function rsBookCurrentUnit(studentId,book,units){
  if(complete.length)return units[Math.min(units.length-1,units.indexOf(complete[complete.length-1].unit)+1)];
  return units[0];
 }
-function rsAppBar(app){
- const value=Number.isFinite(app.percent)?Math.max(0,Math.min(100,app.percent)):null;
- return '<div class="roster-app-row"><span class="roster-app-label">'+esc(rsApps.find(x=>x[0]===app.id)?.[1]||app.id)+'</span>'+
- (value===null?'<span class="roster-app-no-data">'+esc(app.started?(app.detail||'In progress'):'Not started')+'</span>':'<span class="roster-app-meter"><i style="width:'+value+'%"></i></span>')+
- '<span class="roster-app-number">'+(value===null?'—':value+'%')+'</span></div>';
+const rsMapNames={word:'Words',sentence:'Sentences',grammar:'Grammar',talking:'Talking',writing:'Writing',puzzles:'Puzzles'};
+function rsMapAvailability(book,unit,app){
+ const data=rosterCurriculum.availability.get(String(book.book_id));
+ const key=app==='talking'?'freeconversation':app;
+ const entries=data?.[key];
+ const unitKey=app==='grammar'?String(unit.unit_number):app==='puzzles'?'book':String(unit.id);
+ if(entries instanceof Map&&entries.has(unitKey))return Number(entries.get(unitKey))>=(app==='puzzles'?6:1);
+ return null;
+}
+function rsMapMission(id,book,unit,app){
+ const apps={word:['vocab_study','vocab_catalog','word_genius'],sentence:['sentence_genius'],grammar:['grammar_books','grammar_genius','grammar_coursebook','grammar_books_homework','grammar_book'],talking:['free_talking_genius','free_talking','freeconversation'],writing:['writing_genius'],puzzles:['puzzles']};
+ return rosterAssignments.items.some(({assignment:a})=>{
+  if(!homeworkForStudent(a,id))return false;
+  const m=a.list_meta||{},types=[a.source_type,m.source_app,m.app,m.creative_type,m.source_type].map(v=>String(v||'').toLowerCase());
+  if(!types.some(t=>apps[app].includes(t)))return false;
+  const bid=String(m.book_id||m.source_book_id||a.book_id||'');
+  if(bid!==String(book.book_id))return false;
+  const ids=[m.unit_id,m.source_unit_id,a.unit_id,...(Array.isArray(m.source_unit_ids)?m.source_unit_ids:[]),...(Array.isArray(m.unit_ids)?m.unit_ids:[])].filter(Boolean).map(String);
+  return ids.includes(String(unit.id))||(!ids.length&&m.unit_number!=null&&String(m.unit_number)===String(unit.unit_number));
+ });
+}
+function rsMapCellData(id,book,unit,app){
+ const key=app.id,availability=rsMapAvailability(book,unit,key),goldKey=key==='talking'?'freeconversation':key;
+ const goldSet=rosterCurriculum.gold.get(String(id));
+ const gold=Boolean(goldSet?.has('gold:'+goldKey+':'+book.book_id+':'+unit.id));
+ let p=app.percent,started=app.started,detail=app.detail||'';
+ if(key==='grammar'&&availability===true){
+  const rows=rosterCurriculum.extra.filter(r=>String(r.student_id)===String(id)&&String(r.book_id)===String(book.book_id)&&Number(r.unit_number)===Number(unit.unit_number)&&r.app==='grammar');
+  const size=/^Grammar Ten/i.test(String(book.book_title||''))?8:5;
+  p=Math.round(100*['choose','check','hunt'].reduce((sum,mode)=>sum+Math.min(size,Math.max(0,...rows.filter(r=>r.skill===mode).map(r=>Number(r.done)||0))),0)/(size*3));
+ }
+ if(key==='writing'){
+  const rows=rosterCurriculum.writing.filter(r=>String(r.student_id)===String(id)&&String(r.book_id)===String(book.book_id)&&String(r.unit_id)===String(unit.id));
+  const vals=rows.filter(r=>Number(r.total)>0).map(r=>Math.min(1,Math.max(0,Number(r.answered)||0)/Number(r.total)));
+  if(p!==100&&vals.length)p=Math.round(100*Math.max(...vals));
+  if(!rows.length&&availability===true)p=0;
+ }
+ if(key==='talking'){
+  // The student learning map tracks free conversation, not structured speaking.
+  const rows=(rosterCurriculum.conversation||[]).filter(m=>String(m.book_id)===String(book.book_id)&&String(m.unit_id)===String(unit.id)).flatMap(m=>(m.students||[]).filter(r=>String(r.student_id||r.id)===String(id)));
+  const values=rows.map(r=>Number(r.completed_questions??r.contributions??(r.percent==null?NaN:Number(r.percent)*8/100))).filter(Number.isFinite);
+  p=values.length?Math.round(100*Math.min(8,Math.max(0,...values))/8):null;
+  started=values.some(v=>v>0);detail=rows.length?'Recorded conversation mission progress':'Free-practice conversation percentage not supplied by teacher overview';
+ }
+ if(gold){p=100;started=true}
+ if(key==='puzzles'&&availability!==true&&!started)p=null;
+ if(availability===false&&!started&&!gold)return {state:'na',p:null,detail:'No available content'};
+ if(p==null&&!started&&availability===true&&key!=='talking'&&key!=='word'&&key!=='sentence')p=0;
+ if(p!=null)p=Math.max(0,Math.min(100,Math.round(p)));
+ // Never infer Gold from a rounded percentage: use the same verified keys as students.
+ const state=gold?'gold':p==null&&!started?'unknown':started||p>0?'progress':'idle';
+ return {state,p,detail};
+}
+function rsMapRing(id,book,unit,app){
+ const v=rsMapCellData(id,book,unit,app),mission=rsMapMission(id,book,unit,app.id)&&v.state!=='na';
+ const label=v.state==='gold'?'Gold · Completed':v.state==='na'?'Unavailable':v.state==='unknown'?'Progress unknown':v.p==null?'In progress':v.p===0?'Not started':v.p+'%';
+ const star='<path class="rs-map-star" d="M24 13l3.3 7 7.7 1-5.5 5.4 1.3 7.6-6.8-3.6-6.8 3.6 1.3-7.6-5.5-5.4 7.7-1z"/>';
+ const center=v.state==='gold'||v.state==='idle'?star:'<text x="24" y="25" text-anchor="middle" dominant-baseline="middle">'+(v.state==='na'?'×':v.state==='unknown'?'?':v.p==null?'…':v.p+'%')+'</text>';
+ const ring='<svg viewBox="0 0 48 48" aria-hidden="true"><circle class="rs-map-depth" cx="24" cy="24" r="21"/><circle class="rs-map-track" cx="24" cy="24" r="19"/>'+(v.p>0?'<circle class="rs-map-fill" cx="24" cy="24" r="19" pathLength="100" stroke-dasharray="'+v.p+' 100" transform="rotate(-90 24 24)"/>':'')+center+'</svg>';
+ const title=rsMapNames[app.id]+' · Unit '+unit.unit_number+' · '+label+(mission?' · Active mission':'');
+ return '<button type="button" class="rs-map-ring" data-state="'+v.state+'" data-mission="'+mission+'" data-rs-ring="'+esc(id)+'" data-rs-ring-title="'+esc((book.book_title||'Textbook')+' · Unit '+unit.unit_number+' · '+rsMapNames[app.id])+'" data-rs-ring-detail="'+esc(label+(mission?' · Active mission':'')+(v.detail?' — '+v.detail:''))+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+ring+(mission?'<span class="rs-map-mission">Mission</span>':'')+'</button>';
 }
 function rsBookCard(studentId,book){
  const units=rosterCurriculum.units.get(String(book.book_id))||[];
  if(!units.length)return '<div class="roster-book"><strong class="roster-book-title">'+esc(book.book_title||'Textbook')+'</strong><small class="roster-app-no-data">No published unit catalogue available</small></div>';
- const focus=rsBookCurrentUnit(studentId,book,units),apps=rsAppProgress(studentId,book,focus);
- const complete=units.filter(u=>rsUnitState(studentId,book,u)==='complete').length;
- const lesson=String(book.current_unit||'').trim();
- return '<div class="roster-book"><div><div class="roster-book-title">'+esc(book.book_title||'Textbook')+'</div>'+
- '<div class="roster-book-sub">Unit '+esc(focus.unit_number)+' · '+esc(focus.title||'Current progress')+'</div></div>'+
- '<div class="roster-unit-strip" aria-label="'+complete+' of '+units.length+' tracked units completed">'+
- units.map(u=>{const st=rsUnitState(studentId,book,u);return '<i class="'+(st==='complete'?'rs-complete':st==='progress'?'rs-progress':'')+'" title="Unit '+esc(u.unit_number)+' · '+(st==='complete'?'Recorded skills complete':st==='progress'?'In progress':'Not started')+'"></i>'}).join('')+'</div>'+
- '<div>'+apps.map(rsAppBar).join('')+'</div>'+
- '<div class="roster-book-footer"><span>'+complete+' of '+units.length+' units verified complete</span><span>Class unit: '+esc(lesson||'Not set')+'</span></div></div>';
+ const lesson=String(book.current_unit||'').trim(),current=Number(lesson.match(/\d+/)?.[0]);
+ const rows=units.map(u=>({u,apps:rsAppProgress(studentId,book,u)}));
+ const gold=rows.reduce((n,{u,apps})=>n+apps.filter(a=>rsMapCellData(studentId,book,u,a).state==='gold').length,0);
+ return '<div class="roster-book rs-map-book"><div class="rs-map-scroll"><div class="rs-map-grid"><div class="rs-map-row rs-map-heading"><strong>Unit</strong>'+rsApps.map(([key,name])=>'<strong title="'+esc(name)+'">'+esc(rsMapNames[key])+'</strong>').join('')+'</div>'+
+ rows.map(({u,apps})=>'<div class="rs-map-row'+(Number(u.unit_number)===current?' rs-map-current':'')+'"><strong title="'+esc(u.title||'')+'">'+esc(u.unit_number)+'</strong>'+apps.map(a=>rsMapRing(studentId,book,u,a)).join('')+'</div>').join('')+'</div></div>'+
+ '<div class="rs-map-legend"><span><i style="background:#d9e5e6"></i>Not started</span><span><i style="background:#2aa88a"></i>Progress</span><span><i style="background:#dfb747"></i>Gold</span><span><i style="background:#e56ba6"></i>Mission</span><span>× No content · ? Unknown</span></div>'+
+ '<div class="roster-book-footer"><span>'+gold+' Gold activities'+(rosterCurriculum.gold.has(String(studentId))?'':' · Gold check unavailable')+'</span><span>Class unit: '+esc(lesson||'Not set')+'</span></div></div>';
+}
+function rsBookTabs(id,assigned){
+ const selected=assigned.find(b=>String(b.book_id)===rsSelectedBooks.get(id))||assigned[0];
+ if(!selected)return '<div class="roster-book">No textbooks assigned to this class</div>';
+ return '<div class="rs-map-tabs" aria-label="Textbooks">'+assigned.map(b=>'<button type="button" data-rs-book="'+esc(b.book_id)+'" data-rs-book-student="'+esc(id)+'" aria-pressed="'+(b===selected)+'">'+esc(b.book_title||'Textbook')+'</button>').join('')+'</div>'+rsBookCard(id,selected);
+}
+function rsOpenRing(button){
+ let dialog=document.getElementById('rsMapDetail');
+ if(!dialog){dialog=document.createElement('dialog');dialog.id='rsMapDetail';dialog.innerHTML='<h3></h3><p></p><div><button type="button" data-rs-ring-close>Close</button><button type="button" data-rs-ring-student>Full student details</button></div>';document.body.append(dialog);dialog.querySelector('[data-rs-ring-close]').onclick=()=>dialog.close();}
+ dialog.querySelector('h3').textContent=button.dataset.rsRingTitle;
+ dialog.querySelector('p').textContent=button.dataset.rsRingDetail;
+ dialog.querySelector('[data-rs-ring-student]').onclick=()=>{dialog.close();openStudent(button.dataset.rsRing)};
+ if(!dialog.open)dialog.showModal();
 }
 function rsAssignmentsPanelRender(id,tab){
  const target=$('#rosterAssignmentsBody');if(!target)return;
@@ -1120,7 +1229,7 @@ function renderStudents(){
   const isDuplicate=duplicates.get(name.trim().toLowerCase())>1;
   const ko=String(s.korean_name||'').trim(),secondary=ko|| (isDuplicate?'ID '+id.slice(0,6):state.className);
   const assigned=ready?rosterCurriculum.books:[];
-  const books=ready?(assigned.length?assigned.map(b=>rsBookCard(id,b)).join(''):'<div class="roster-book">No textbooks assigned to this class</div>'):
+  const books=ready?(assigned.length?rsBookTabs(id,assigned):'<div class="roster-book">No textbooks assigned to this class</div>'):
    '<div class="roster-book">'+esc(rosterCurriculum.error||'Loading textbook progress…')+'</div>';
   const special=ready?rosterCurriculum.special.find(x=>String(x.student_id)===id):null;
   const extras=[];
@@ -1136,6 +1245,8 @@ function renderStudents(){
    '<div class="roster-card-actions"><button type="button" data-rs-assignments="'+esc(id)+'">Assignments · Current / History</button><button type="button" data-rs-detail="'+esc(id)+'">Full student details</button></div></article>';
  }).join('');
  document.querySelectorAll('#studentList .roster-student-card').forEach(row=>{row.onclick=e=>{if(e.target.closest('button'))return;openStudent(row.dataset.id)};row.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openStudent(row.dataset.id)}}});
+ $$('[data-rs-book]').forEach(b=>b.onclick=e=>{e.stopPropagation();rsSelectedBooks.set(b.dataset.rsBookStudent,b.dataset.rsBook);const row=b.closest('.roster-student-card');const selected=rosterCurriculum.books.find(x=>String(x.book_id)===b.dataset.rsBook);if(!row||!selected)return;row.querySelectorAll('[data-rs-book]').forEach(tab=>tab.setAttribute('aria-pressed',String(tab===b)));const old=row.querySelector('.roster-book');if(old)old.outerHTML=rsBookCard(b.dataset.rsBookStudent,selected);row.querySelectorAll('[data-rs-ring]').forEach(r=>r.onclick=event=>{event.stopPropagation();rsOpenRing(r)});});
+ $$('[data-rs-ring]').forEach(b=>b.onclick=e=>{e.stopPropagation();rsOpenRing(b)});
  $$('[data-rs-assignments]').forEach(b=>b.onclick=e=>{e.stopPropagation();rsOpenAssignments(b.dataset.rsAssignments)});
  $$('[data-rs-detail]').forEach(b=>b.onclick=e=>{e.stopPropagation();openStudent(b.dataset.rsDetail)});
 }
