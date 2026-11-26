@@ -1728,13 +1728,27 @@ let ccRewardRequest=0;
 function ccRewardStudentName(student){
  return [student.english_name,student.englishName,student.name_en,student.name,student.student_name,student.korean_name].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(' · ')||'Student';
 }
+const ccJellySummaryCache=new Map();
+async function ccFetchJellySummary(className,force=false){
+ const cacheKey=String(className).trim().toLowerCase(),cached=ccJellySummaryCache.get(cacheKey);
+ if(!force&&cached&&Date.now()-cached.at<15000)return cached.promise;
+ const token=ccToken();if(!token)throw Error('Teacher login is unavailable. Sign in and refresh.');
+ const promise=(async()=>{
+  const res=await fetch(ccOp.replace('/rest/v1/','/functions/v1/')+'jelly-energy-v1',{method:'POST',headers:{'Content-Type':'application/json',apikey:ccOpKey,Authorization:'Bearer '+token,'x-catalog-key':ccCatalogKey},body:JSON.stringify({class_name:className}),cache:'no-store'});
+  const result=await res.json().catch(()=>({}));
+  if(!res.ok||!Array.isArray(result.students))throw Error(result.error||'Jelly Energy unavailable ('+res.status+')');
+  return result;
+ })();
+ ccJellySummaryCache.set(cacheKey,{at:Date.now(),promise});
+ try{return await promise}catch(e){if(ccJellySummaryCache.get(cacheKey)?.promise===promise)ccJellySummaryCache.delete(cacheKey);throw e}
+}
 async function ccLoadOutstandingRewards(className){
  const host=document.getElementById('ccOutstandingRewards');
  if(!host||curriculum.assignmentSubview!=='rewards')return;
  const run=++ccRewardRequest;
  const roster=ccClassStudents(className);
  const summaries=new Map(),errors=[];
- let loading=true,saving=false,ready=false;
+ let loading=true,saving=false,ready=false,ledgerVersion=0;
  const live=()=>run===ccRewardRequest&&curriculum.assignmentSubview==='rewards'&&curriculum.selectedClass===className&&host.isConnected;
  const owed=id=>summaries.get(id)?.owed??0;
  function people(){
@@ -1744,7 +1758,7 @@ async function ccLoadOutstandingRewards(className){
  function paint(){
   if(!live())return;
   if(!ready){
-   host.innerHTML='<div class="cc-reward-summary"><strong>'+(loading?'Checking Gold rewards…':'Jelly Energy unavailable')+'</strong><button class="cc-reward-refresh" type="button" id="ccRewardRefresh"'+(loading?' disabled':'')+'>Refresh</button></div>'+(errors.length?'<p class="cc-reward-error">'+ccEscape(errors[errors.length-1])+'</p>':'');
+   host.innerHTML='<div class="cc-reward-summary"><strong>'+(loading?'Checking Jelly Energy…':'Jelly Energy unavailable')+'</strong><button class="cc-reward-refresh" type="button" id="ccRewardRefresh"'+(loading?' disabled':'')+'>Refresh</button></div>'+(errors.length?'<p class="cc-reward-error">'+ccEscape(errors[errors.length-1])+'</p>':'');
    host.querySelector('#ccRewardRefresh')?.addEventListener('click',()=>ccLoadOutstandingRewards(className));
    return;
   }
@@ -1757,7 +1771,7 @@ async function ccLoadOutstandingRewards(className){
      '<div class="cc-reward-energy"><span class="cc-reward-energy-label">Energy until next jelly</span><div class="cc-reward-progress" role="progressbar" aria-label="Energy until next jelly" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+progress+'"><div class="cc-reward-progress-fill" style="width:'+progress+'%"></div></div></div>'+
      (due?'<div class="cc-reward-claims"><div class="cc-reward-owed"><label class="cc-reward-check" title="Give all owed jellies"><input type="checkbox" data-reward-student="'+ccEscape(id)+'" aria-label="Mark all owed jellies given to '+ccEscape(ccRewardStudentName(student))+'"'+disabled+'></label><span>Jellies owed: '+due+'</span></div><div class="cc-reward-claims-list">'+
      Array.from({length:due},(_,i)=>'<div class="cc-reward-entry"><span>Jelly '+(i+1)+'</span><label class="cc-reward-check" title="Mark one jelly given"><input type="checkbox" data-reward-single="'+ccEscape(id)+'" aria-label="Give one jelly to '+ccEscape(ccRewardStudentName(student))+'"'+disabled+'></label></div>').join('')+'</div></div>':'')+'</article>';
-   }).join('')+'</div></div>':'<div class="cc-reward-empty">'+(loading?'Checking Gold rewards…':'No jellies owed in this class.')+'</div>')+
+   }).join('')+'</div></div>':'<div class="cc-reward-empty">'+(loading?'Checking Jelly Energy…':'No jellies owed in this class.')+'</div>')+
    (errors.length?'<p class="cc-reward-error">'+ccEscape(errors[errors.length-1])+'</p>':'');
   host.querySelector('#ccRewardRefresh')?.addEventListener('click',()=>ccLoadOutstandingRewards(className));
   host.querySelectorAll('[data-reward-student]').forEach(box=>box.addEventListener('change',()=>{if(box.checked)void save(box.dataset.rewardStudent,owed(box.dataset.rewardStudent))}));
@@ -1768,6 +1782,14 @@ async function ccLoadOutstandingRewards(className){
   quantity=Math.min(quantity,owed(studentId));
   if(quantity<1)return;
   saving=true;paint();
+  if(ledgerVersion>=3){
+   try{
+    const result=await ccRpc('jelly_energy_redeem_v1',{p_student_id:studentId,p_quantity:quantity,p_request_id:crypto.randomUUID()});
+    if(Number(result?.redeemed)!==quantity)throw Error('Unexpected redemption response');
+   }catch(error){errors.push('Could not save jelly: '+(error.message||'Unknown error'));}
+   try{await loadSummary()}catch(error){ready=false;errors.push('Could not refresh rewards: '+(error.message||'Unknown error'));}
+   saving=false;paint();return;
+  }
   const tokens=summaries.get(studentId)?.eligible_tokens||[];
   let succeeded=0;
   for(const t of tokens){
@@ -1785,13 +1807,10 @@ async function ccLoadOutstandingRewards(className){
   saving=false;paint();
  }
  async function loadSummary(){
-  const token=ccToken();
-  if(!token)throw Error('Teacher login is unavailable. Sign in and refresh.');
-  const res=await fetch(ccOp.replace('/rest/v1/','/functions/v1/')+'jelly-energy-v1',{method:'POST',headers:{'Content-Type':'application/json',apikey:ccOpKey,Authorization:'Bearer '+token,'x-catalog-key':ccCatalogKey},body:JSON.stringify({class_name:className}),cache:'no-store'});
-  const result=await res.json().catch(()=>({}));
-  if(!res.ok||!Array.isArray(result.students))throw Error(result.error||'Jelly Energy unavailable ('+res.status+')');
+  const result=await ccFetchJellySummary(className,true);
+  ledgerVersion=Number(result.rules_version)||1;
   const next=new Map();
-  for(const row of result.students){if(!Number.isFinite(row.energy_percent)||!Number.isInteger(row.owed)||!Array.isArray(row.eligible_tokens))throw Error('Invalid reward summary');next.set(String(row.student_id),row);}
+  for(const row of result.students){if(!Number.isFinite(row.energy_percent)||!Number.isInteger(row.owed)||(ledgerVersion>=3?!Array.isArray(row.verified_gold_keys):!Array.isArray(row.eligible_tokens)))throw Error('Invalid reward summary');next.set(String(row.student_id),row);}
   if(!live())return;
   summaries.clear();for(const [id,row] of next)summaries.set(id,row);
   ready=true;
@@ -2057,7 +2076,7 @@ function ccSkillBar(name,passed,total,started){
 // Canonical Golden Unit eligibility for the mission reward controls.
 // Uses the same required-skill thresholds and evidence as Curriculum Progress.
 let goldOverviewPending=null;
-window.WillenaGoldEligibility=async function({className,bookId,unitId,app}={}){
+const ccLegacyGoldEligibility=async function({className,bookId,unitId,app}={}){
  // Management tabs can open before All Classes is visited. Load the
  // curriculum roster without changing the current tab or selected class.
  if(!curriculum.data){
@@ -2118,6 +2137,15 @@ window.WillenaGoldEligibility=async function({className,bookId,unitId,app}={}){
   }).map(student=>String(student.id));
  }
  return [];
+};
+window.WillenaGoldEligibility=async function(options={}){
+ const {className,bookId,unitId,app}=options;
+ if(!className||!bookId||!unitId||!app)return [];
+ const result=await ccFetchJellySummary(className);
+ if(Number(result.rules_version)<3)return ccLegacyGoldEligibility(options);
+ if(app==='puzzles')return [];
+ const key='gold:'+app+':'+bookId+':'+unitId;
+ return result.students.filter(row=>Array.isArray(row.verified_gold_keys)&&row.verified_gold_keys.includes(key)).map(row=>String(row.student_id));
 };
 function ccJellyControl(){return '';}
 function ccRenderStudentDrilldown(book,unit,group){
