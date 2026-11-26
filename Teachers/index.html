@@ -266,12 +266,12 @@ try{
 #view-students .rs-map-tabs button[aria-pressed="true"]{border-color:#24a9b4;color:#ce6395;background:#f6fcfc;box-shadow:inset 0 0 0 1px #24a9b4}
 #view-students .rs-map-book{padding:8px;gap:10px}
 .rs-map-scroll{overflow-x:auto;overscroll-behavior-inline:contain}
-.rs-map-grid{display:grid;gap:4px;min-width:295px}
-.rs-map-row{display:grid;grid-template-columns:26px repeat(6,minmax(0,1fr));align-items:center;justify-items:center;gap:2px;position:relative;min-height:41px;border-radius:8px}
+.rs-map-grid{display:grid;gap:4px;min-width:335px}
+.rs-map-row{display:grid;grid-template-columns:26px repeat(7,minmax(0,1fr));align-items:center;justify-items:center;gap:2px;position:relative;min-height:41px;border-radius:8px}
 .rs-map-row:not(.rs-map-heading):before{content:"";height:2px;background:#dfeded;position:absolute;left:38px;right:7%;top:50%;pointer-events:none}
 .rs-map-row>strong{color:#297681;font-size:11px;position:relative}
 .rs-map-row.rs-map-heading{min-height:25px}
-.rs-map-heading>strong{font-size:clamp(8px,1vw,11px);letter-spacing:-.3px}
+.rs-map-heading>strong{font-size:clamp(8px,1vw,11px);letter-spacing:-.3px;line-height:1.1;text-align:center;overflow-wrap:normal}
 .rs-map-current{background:#e8f7f7;box-shadow:inset 2px 0 #27a7b0}
 .rs-map-ring{--ring:#2aa88a;--track:#dcebea;--ink:#25886f;display:grid;place-items:center;position:relative;background:none!important;padding:0!important;border:0!important;width:min(100%,46px);aspect-ratio:1;cursor:pointer;color:var(--ink);z-index:1}
 .rs-map-ring svg{width:100%;height:auto;overflow:visible}
@@ -279,17 +279,13 @@ try{
 .rs-map-ring .rs-map-track{fill:none;stroke:var(--track);stroke-width:3.7}
 .rs-map-ring .rs-map-fill{fill:none;stroke:var(--ring);stroke-width:3.7;stroke-linecap:round}
 .rs-map-ring text{font:800 10px Poppins,sans-serif;fill:var(--ink)}
-.rs-map-ring .rs-map-star{fill:#f0f7f7;stroke:#acc8cb;stroke-width:1.5;stroke-linejoin:round}
 .rs-map-ring[data-state="gold"]{--ring:#d9ad37;--track:#f0e4b7;--ink:#a47a13}
-.rs-map-ring[data-state="gold"] .rs-map-star{fill:#e4bb43;stroke:#cda132}
 .rs-map-ring[data-state="gold"] .rs-map-depth{fill:#fff9e8;stroke:#e4d29b}
 .rs-map-ring[data-state="unknown"],.rs-map-ring[data-state="na"]{--ink:#91a3a9;--track:#e7edef}
 .rs-map-ring[data-state="na"] .rs-map-depth{fill:#f2f4f5}
-.rs-map-ring[data-mission="true"]{--ring:#e36aa2;--track:#f9e1ec;--ink:#cc508a}
-.rs-map-ring[data-mission="true"] .rs-map-depth{stroke:#edb1ce}
-.rs-map-ring[data-mission="true"][data-state="idle"] .rs-map-star{fill:#fce8f1;stroke:#df78a9}
+.rs-map-ring[data-mission="true"]:not([data-state="gold"]){--ring:#e36aa2;--track:#f9e1ec;--ink:#cc508a}
+.rs-map-ring[data-mission="true"]:not([data-state="gold"]) .rs-map-depth{stroke:#edb1ce}
 .rs-map-ring:focus-visible{outline:2px solid #25a7b2;outline-offset:2px;border-radius:50%}
-.rs-map-mission{position:absolute;top:-2px;left:50%;transform:translateX(-50%);background:#d45292;color:#fff;font-size:7px;font-weight:800;line-height:1.1;padding:2px 4px;border-radius:10px;white-space:nowrap;pointer-events:none}
 .rs-map-legend{display:flex;gap:6px 9px;flex-wrap:wrap;color:#657d85;font-size:9px}
 .rs-map-legend span{display:flex;align-items:center;gap:3px}.rs-map-legend i{display:inline-block;width:7px;height:7px;border-radius:50%}
 #rsMapDetail{max-width:min(420px,90vw);border:1px solid #afd8dc;border-radius:16px;padding:20px;color:#21434b;background:white;font-family:Poppins,sans-serif}
@@ -750,7 +746,7 @@ try{
 <div class="wc-dialog-actions"><button id="wcDelete" class="wc-button wc-delete" type="button" hidden>Delete</button><button class="wc-button" type="button" id="wcCancel">Cancel</button><button class="wc-button wc-primary" id="wcSave" type="submit">Save event</button></div></form></dialog>
 <div id="rosterAssignmentsOverlay" class="rs-assign-overlay" hidden><section class="rs-assign-dialog" role="dialog" aria-modal="true" aria-label="Student assignments"><div class="rs-assign-head"><div><h2 id="rosterAssignmentsTitle">Assignments</h2><p>Student mission history</p></div><button type="button" id="rosterAssignmentsClose" aria-label="Close assignments">×</button></div><div class="rs-assign-tabs"><button data-rs-assign-tab="current" class="active" type="button">Current</button><button data-rs-assign-tab="history" type="button">History</button></div><div id="rosterAssignmentsBody" class="rs-assign-body"></div></section></div>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.76</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.77</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -1027,7 +1023,7 @@ async function loadRosterCurriculum(className){
 }
 const rsApps=[
  ['word','Word Genius'],['sentence','Sentence Genius'],['grammar','Grammar Genius'],
- ['talking','Free Talking'],['writing','Writing Genius'],['puzzles','Puzzles']
+ ['talking','Speaking'],['freeconversation','Free Talking'],['writing','Writing Genius'],['puzzles','Puzzles']
 ];
 function rsAppProgress(studentId,book,unit){
  const id=String(studentId),bid=String(book.book_id),uid=String(unit.id),number=Number(unit.unit_number);
@@ -1063,7 +1059,8 @@ function rsAppProgress(studentId,book,unit){
   {id:'word',percent:wordPct,started:wordHas,complete:wordPct!=null&&wordParts.every(v=>v/totalVocab>.9)},
   {id:'sentence',percent:sentencePct,started:sentences.some(r=>Number(r.done)>0),complete:sentencePct!=null&&sentencePassed.every(v=>v/sentenceTotal>.9)},
   {id:'grammar',percent:gPct,started:grammar.length>0,complete:gTotal>0&&gTotals.every(v=>v>0)&&gParts.every((v,i)=>v/gTotals[i]>.9)},
-  {id:'talking',percent:talkPct,started:talking.length>0,complete:talking.some(r=>r.finished===true)},
+  {id:'talking',percent:talkPct,started:talking.some(r=>Number(r.done)>0||Number(r.attempts)>0||r.finished===true),complete:talking.some(r=>r.finished===true)},
+  {id:'freeconversation',percent:null,started:false,complete:false},
   {id:'writing',percent:writingComplete?100:null,started:writing.length>0,complete:writingComplete,detail:writing.length&&!writingComplete?'In progress':null},
   {id:'puzzles',percent:puzzle?Math.round(puzzleDone/5*100):0,started:puzzleDone>0,complete:puzzleDone===5}
  ];
@@ -1094,21 +1091,22 @@ function rsBookCurrentUnit(studentId,book,units){
  if(complete.length)return units[Math.min(units.length-1,units.indexOf(complete[complete.length-1].unit)+1)];
  return units[0];
 }
-const rsMapNames={word:'Words',sentence:'Sentences',grammar:'Grammar',talking:'Talking',writing:'Writing',puzzles:'Puzzles'};
+const rsMapNames={word:'Words',sentence:'Sentences',grammar:'Grammar',talking:'Speaking',freeconversation:'Free Talking',writing:'Writing',puzzles:'Puzzles'};
 function rsMapAvailability(book,unit,app){
  const data=rosterCurriculum.availability.get(String(book.book_id));
- const key=app==='talking'?'freeconversation':app;
+ const key=app;
  const entries=data?.[key];
  const unitKey=app==='grammar'?String(unit.unit_number):app==='puzzles'?'book':String(unit.id);
  if(entries instanceof Map&&entries.has(unitKey))return Number(entries.get(unitKey))>=(app==='puzzles'?6:1);
  return null;
 }
 function rsMapMission(id,book,unit,app){
- const apps={word:['vocab_study','vocab_catalog','word_genius'],sentence:['sentence_genius'],grammar:['grammar_books','grammar_genius','grammar_coursebook','grammar_books_homework','grammar_book'],talking:['free_talking_genius','free_talking','freeconversation'],writing:['writing_genius'],puzzles:['puzzles']};
+ const apps={word:['vocab_study','vocab_catalog','word_genius'],sentence:['sentence_genius'],grammar:['grammar_books','grammar_genius','grammar_coursebook','grammar_books_homework','grammar_book'],talking:['free_talking_genius','free_talking','freeconversation'],freeconversation:['free_talking_genius','free_talking','freeconversation'],writing:['writing_genius'],puzzles:['puzzles']};
  return rosterAssignments.items.some(({assignment:a})=>{
   if(!homeworkForStudent(a,id))return false;
   const m=a.list_meta||{},types=[a.source_type,m.source_app,m.app,m.creative_type,m.source_type].map(v=>String(v||'').toLowerCase());
   if(!types.some(t=>apps[app].includes(t)))return false;
+  if(app==='talking'||app==='freeconversation'){const conversation=String(m.mission_mode||'').toLowerCase()==='conversation'||types.includes('freeconversation')||(Array.isArray(m.required_modes)&&m.required_modes.includes('conversation'));if(conversation!==(app==='freeconversation'))return false;}
   const bid=String(m.book_id||m.source_book_id||a.book_id||'');
   if(bid!==String(book.book_id))return false;
   const ids=[m.unit_id,m.source_unit_id,a.unit_id,...(Array.isArray(m.source_unit_ids)?m.source_unit_ids:[]),...(Array.isArray(m.unit_ids)?m.unit_ids:[])].filter(Boolean).map(String);
@@ -1116,7 +1114,7 @@ function rsMapMission(id,book,unit,app){
  });
 }
 function rsMapCellData(id,book,unit,app){
- const key=app.id,availability=rsMapAvailability(book,unit,key),goldKey=key==='talking'?'freeconversation':key;
+ const key=app.id,availability=rsMapAvailability(book,unit,key),goldKey=key;
  const goldSet=rosterCurriculum.gold.get(String(id));
  const gold=Boolean(goldSet?.has('gold:'+goldKey+':'+book.book_id+':'+unit.id));
  let p=app.percent,started=app.started,detail=app.detail||'';
@@ -1131,8 +1129,8 @@ function rsMapCellData(id,book,unit,app){
   if(p!==100&&vals.length)p=Math.round(100*Math.max(...vals));
   if(!rows.length&&availability===true)p=0;
  }
- if(key==='talking'){
-  // The student learning map tracks free conversation, not structured speaking.
+ if(key==='freeconversation'){
+  // Free conversation has separate evidence from structured speaking.
   const rows=(rosterCurriculum.conversation||[]).filter(m=>String(m.book_id)===String(book.book_id)&&String(m.unit_id)===String(unit.id)).flatMap(m=>(m.students||[]).filter(r=>String(r.student_id||r.id)===String(id)));
   const values=rows.map(r=>Number(r.completed_questions??r.contributions??(r.percent==null?NaN:Number(r.percent)*8/100))).filter(Number.isFinite);
   p=values.length?Math.round(100*Math.min(8,Math.max(0,...values))/8):null;
@@ -1140,8 +1138,9 @@ function rsMapCellData(id,book,unit,app){
  }
  if(gold){p=100;started=true}
  if(key==='puzzles'&&availability!==true&&!started)p=null;
+ if(key==='talking'&&p==null&&!started&&availability===true)p=0;
  if(availability===false&&!started&&!gold)return {state:'na',p:null,detail:'No available content'};
- if(p==null&&!started&&availability===true&&key!=='talking'&&key!=='word'&&key!=='sentence')p=0;
+ if(p==null&&!started&&availability===true&&key!=='freeconversation'&&key!=='word'&&key!=='sentence')p=0;
  if(p!=null)p=Math.max(0,Math.min(100,Math.round(p)));
  // Never infer Gold from a rounded percentage: use the same verified keys as students.
  const state=gold?'gold':p==null&&!started?'unknown':started||p>0?'progress':'idle';
@@ -1150,11 +1149,10 @@ function rsMapCellData(id,book,unit,app){
 function rsMapRing(id,book,unit,app){
  const v=rsMapCellData(id,book,unit,app),mission=rsMapMission(id,book,unit,app.id)&&v.state!=='na';
  const label=v.state==='gold'?'Gold · Completed':v.state==='na'?'Unavailable':v.state==='unknown'?'Progress unknown':v.p==null?'In progress':v.p===0?'Not started':v.p+'%';
- const star='<path class="rs-map-star" d="M24 13l3.3 7 7.7 1-5.5 5.4 1.3 7.6-6.8-3.6-6.8 3.6 1.3-7.6-5.5-5.4 7.7-1z"/>';
- const center=v.state==='gold'||v.state==='idle'?star:'<text x="24" y="25" text-anchor="middle" dominant-baseline="middle">'+(v.state==='na'?'×':v.state==='unknown'?'?':v.p==null?'…':v.p+'%')+'</text>';
+ const center='<text x="24" y="25" text-anchor="middle" dominant-baseline="middle">'+(v.state==='na'?'×':v.state==='unknown'?'?':v.p==null?'…':v.p+'%')+'</text>';
  const ring='<svg viewBox="0 0 48 48" aria-hidden="true"><circle class="rs-map-depth" cx="24" cy="24" r="21"/><circle class="rs-map-track" cx="24" cy="24" r="19"/>'+(v.p>0?'<circle class="rs-map-fill" cx="24" cy="24" r="19" pathLength="100" stroke-dasharray="'+v.p+' 100" transform="rotate(-90 24 24)"/>':'')+center+'</svg>';
  const title=rsMapNames[app.id]+' · Unit '+unit.unit_number+' · '+label+(mission?' · Active mission':'');
- return '<button type="button" class="rs-map-ring" data-state="'+v.state+'" data-mission="'+mission+'" data-rs-ring="'+esc(id)+'" data-rs-ring-title="'+esc((book.book_title||'Textbook')+' · Unit '+unit.unit_number+' · '+rsMapNames[app.id])+'" data-rs-ring-detail="'+esc(label+(mission?' · Active mission':'')+(v.detail?' — '+v.detail:''))+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+ring+(mission?'<span class="rs-map-mission">Mission</span>':'')+'</button>';
+ return '<button type="button" class="rs-map-ring" data-state="'+v.state+'" data-mission="'+mission+'" data-rs-ring="'+esc(id)+'" data-rs-ring-title="'+esc((book.book_title||'Textbook')+' · Unit '+unit.unit_number+' · '+rsMapNames[app.id])+'" data-rs-ring-detail="'+esc(label+(mission?' · Active mission':'')+(v.detail?' — '+v.detail:''))+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+ring+'</button>';
 }
 function rsBookCard(studentId,book){
  const units=rosterCurriculum.units.get(String(book.book_id))||[];
