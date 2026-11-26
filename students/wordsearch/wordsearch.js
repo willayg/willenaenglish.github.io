@@ -1727,4 +1727,4 @@ crosswordEntry?.addEventListener('blur',()=>{
 updateSystemKeyboardSpace();
 setPuzzleControlsEnabled(false);
 setModeUI();
-boot();
+void boot().finally(()=>window.WillenaGeniusBoot?.finish?.('ready'));
