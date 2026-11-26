@@ -3,7 +3,7 @@
 (function(){
 'use strict';
 if(window.WillenaGeniusBoot)return;
-const version='20261126-guide1';
+const version='20261126-dropdown-portal1';
 const assets={
  '/students/vocab-study/':{
   entry:'/students/vocab-study/vocab-study.js?v=20261126-boot3',
@@ -30,7 +30,7 @@ function warm(destination){
   return true;
  }catch{return false}
 }
-// Only continue a real dashboard portal. Direct visits keep their normal UI.
+// Only continue a real portal handoff. Direct visits keep their normal UI.
 const KEY='willena:portal-handoff-v1';
 const pilot=Object.hasOwn(assets,location.pathname);
 const q=new URLSearchParams(location.search);
@@ -87,24 +87,64 @@ function startAuth(task){
  if(!authTask){authTask=Promise.resolve().then(task);authTask.catch(()=>{});}
  return authTask;
 }
+function buildPortal(path,data,className){
+ const el=document.createElement('div');el.className='lu-neon-portal '+className;el.setAttribute('role','status');
+ el.innerHTML='<div class="lu-neon-cover"></div><div class="lu-neon-intro"><div class="lu-neon-halo" aria-hidden="true"></div><div class="lu-neon-mission"></div><div class="lu-neon-icon" aria-hidden="true"><img class="lu-app-icon" alt=""></div><div class="lu-neon-name"></div><div class="lu-neon-book"></div><div class="lu-neon-unit"></div><div class="lu-neon-loading" aria-hidden="true"><i></i></div></div>';
+ const title=String(data.title||titles[path]||'').slice(0,100);
+ el.setAttribute('aria-label',title+' loading');
+ if(iconMarkup[path])el.querySelector('.lu-neon-icon').innerHTML=iconMarkup[path];else el.querySelector('.lu-app-icon').src=icons[path];
+ el.querySelector('.lu-neon-name').textContent=title;
+ for(const key of ['book','unit','mission']){const node=el.querySelector('.lu-neon-'+key);node.textContent=String(data[key]||'').slice(0,180);node.hidden=!node.textContent;}
+ return el;
+}
 function mountPortal(){
  if(!handoff||done||cover||!document.body)return;
- const el=document.createElement('div');el.className='lu-neon-portal lu-neon-continuation';el.setAttribute('role','status');
- el.innerHTML='<div class="lu-neon-cover"></div><div class="lu-neon-intro"><div class="lu-neon-halo" aria-hidden="true"></div><div class="lu-neon-mission"></div><div class="lu-neon-icon" aria-hidden="true"><img class="lu-app-icon" alt=""></div><div class="lu-neon-name"></div><div class="lu-neon-book"></div><div class="lu-neon-unit"></div><div class="lu-neon-loading" aria-hidden="true"><i></i></div></div>';
- const title=String(handoff.title||titles[location.pathname]).slice(0,100);
- el.setAttribute('aria-label',title+' loading');
- if(iconMarkup[location.pathname])el.querySelector('.lu-neon-icon').innerHTML=iconMarkup[location.pathname];else el.querySelector('.lu-app-icon').src=icons[location.pathname];
- el.querySelector('.lu-neon-name').textContent=title;
- for(const key of ['book','unit','mission']){const node=el.querySelector('.lu-neon-'+key);node.textContent=String(handoff[key]||'').slice(0,180);node.hidden=!node.textContent;}
- cover=el;document.body.append(el);
+ cover=buildPortal(location.pathname,handoff,'lu-neon-continuation');document.body.append(cover);
 }
-window.WillenaGeniusBoot={version,warm,handoffPortal,mountPortal,finish,track,trackMission,startAuth,getAuth:()=>authTask};
-if(!handoff)return;
-document.documentElement.classList.add('genius-portal-handoff');
-const style=document.createElement('style');
+let switchCover=null,switchTimer=0,switchSafety=0;
+function clearSwitch(){
+ clearTimeout(switchTimer);clearTimeout(switchSafety);
+ switchTimer=switchSafety=0;
+ if(switchCover)switchCover.remove();switchCover=null;
+}
+window.addEventListener('pagehide',clearSwitch);
+function switchApp(destination){
+ try{
+  const url=new URL(destination,location.href);
+  if(url.origin!==location.origin||!assets[url.pathname]||url.pathname===location.pathname&&url.search===location.search)return false;
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||document.getElementById('motionToggle')?.checked===false)return false;
+  if(switchCover)return true;
+  if(!document.body||document.querySelector('.lu-neon-portal'))return false;
+  ensurePortalStyle();
+  const el=buildPortal(url.pathname,{},'lu-neon-switch');
+  const rings=document.createElement('div');rings.className='lu-neon-rings';rings.setAttribute('aria-hidden','true');
+  el.style.setProperty('--lu-portal-x','50%');el.style.setProperty('--lu-portal-y','47%');
+  el.style.setProperty('--lu-portal-scale',String(Math.max(8,Math.hypot(innerWidth,innerHeight)/48)));
+  for(let i=0;i<3;i++){const ring=document.createElement('i');ring.style.setProperty('--lu-delay',(i*35)+'ms');rings.append(ring)}
+  el.insertBefore(rings,el.querySelector('.lu-neon-intro'));
+  switchCover=el;document.body.append(el);warm(url.href);
+  switchTimer=setTimeout(()=>{
+   try{handoffPortal(url.href);location.assign(url.href);
+    // A cancelled navigation must never leave a blocking overlay.
+    switchSafety=setTimeout(clearSwitch,2200);
+   }catch{clearSwitch();try{sessionStorage.removeItem(KEY)}catch{}}
+  },400);
+  return true;
+ }catch{clearSwitch();return false}
+}
+window.WillenaGeniusBoot={version,warm,handoffPortal,mountPortal,switchApp,finish,track,trackMission,startAuth,getAuth:()=>authTask};
+let portalStyle=null;
+function ensurePortalStyle(){
+ if(portalStyle?.isConnected)return;
+ const style=document.createElement('style');
 style.textContent=".lu-neon-portal{position:fixed;inset:0;z-index:99998;overflow:hidden;isolation:isolate;pointer-events:auto;color:#fff;font-family:Poppins,\"Noto Sans KR\",system-ui,sans-serif;touch-action:none}\n.lu-neon-cover{position:absolute;inset:0;background:linear-gradient(145deg,#ba347d 0%,#9b3986 36%,#087d9d 100%);opacity:0;animation:luNeonCover 480ms ease-out forwards}\n.lu-neon-rings{position:absolute;inset:0;pointer-events:none}\n.lu-neon-rings i{position:absolute;left:var(--lu-portal-x);top:var(--lu-portal-y);width:48px;height:48px;box-sizing:border-box;border:3px solid #ffc0e6;border-radius:50%;box-shadow:0 0 12px #7aebf5,inset 0 0 8px #7aebf5;opacity:0;animation:luNeonRing 560ms var(--lu-delay) cubic-bezier(.15,.65,.3,1) both}\n.lu-neon-rings i:nth-child(even){border-color:#8ff4ff;box-shadow:0 0 12px #ff95cd,inset 0 0 8px #ff95cd}\n.lu-neon-intro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:max(20px,env(safe-area-inset-top)) 22px max(20px,env(safe-area-inset-bottom));box-sizing:border-box;opacity:0;animation:luNeonArrive 320ms 480ms cubic-bezier(.2,.8,.3,1) both}\n.lu-neon-halo{position:absolute;left:50%;top:47%;width:min(110vw,560px);aspect-ratio:1;transform:translate(-50%,-50%);border:1px solid #ffc0e6;border-radius:50%;box-shadow:0 0 22px #7aebf577,inset 0 0 25px #7aebf555;opacity:.72;pointer-events:none}\n.lu-neon-halo::before,.lu-neon-halo::after{content:\"\";position:absolute;inset:9%;border:2px solid #8ff4ff;border-radius:50%}\n.lu-neon-halo::after{inset:18%;border:1px dashed #ffffff88}\n.lu-neon-icon{position:relative;width:clamp(76px,22vw,114px);height:clamp(76px,22vw,114px);display:grid;place-items:center;background:#fff;border:3px solid #b1f1f5;border-radius:50%;box-sizing:border-box;padding:12px;filter:drop-shadow(0 5px 9px #0003)}\n.lu-neon-icon .lu-app-icon{display:block;width:100%!important;height:100%!important;max-width:100%;max-height:100%;object-fit:contain;margin:0!important}\n.lu-neon-name{position:relative;font-size:clamp(28px,8vw,52px);max-width:570px;font-weight:900;letter-spacing:-.045em;line-height:1.02;color:#fff;text-shadow:0 3px 7px #0004;overflow-wrap:normal}\n.lu-neon-book{position:relative;font-size:clamp(12px,3.5vw,17px);font-weight:700;letter-spacing:.03em;color:#fff;max-width:95%;overflow-wrap:anywhere}\n.lu-neon-unit{position:relative;background:#ffffff24;border:1px solid #ffffff9c;border-radius:999px;padding:7px 19px;font-size:14px;font-weight:850;color:#fff}\n.lu-neon-mission{position:relative;font-size:13px;font-weight:850;letter-spacing:.12em;color:#fff;border-bottom:2px solid #8ff4ff;padding:3px 6px}\n.lu-neon-mission[hidden],.lu-neon-book[hidden],.lu-neon-unit[hidden]{display:none}\n.lu-neon-loading{position:absolute;bottom:max(9%,env(safe-area-inset-bottom));left:35%;width:30%;height:4px;border-radius:6px;background:#ffffff44;overflow:hidden}\n.lu-neon-loading i{display:block;width:45%;height:100%;background:#fff;border-radius:6px;animation:luNeonLoading .6s ease-in-out infinite alternate}\n@keyframes luNeonCover{0%,15%{opacity:0}100%{opacity:1}}\n@keyframes luNeonRing{0%{transform:translate(-50%,-50%) scale(.75);opacity:0}12%{opacity:.9}65%{opacity:.9}100%{transform:translate(-50%,-50%) scale(var(--lu-portal-scale));opacity:0}}\n@keyframes luNeonArrive{from{opacity:0;transform:scale(.83)}to{opacity:1;transform:scale(1)}}\n@keyframes luNeonLoading{to{transform:translateX(120%)}}\n@media(max-height:420px){.lu-neon-intro{gap:6px}.lu-neon-icon{width:64px;height:64px}.lu-neon-name{font-size:26px}.lu-neon-loading{bottom:5%}}\n@media(prefers-reduced-motion:reduce){.lu-neon-portal *{animation-duration:1ms!important;animation-delay:0ms!important}}"+
 '.lu-neon-continuation{z-index:2147483647!important;opacity:1;transition:opacity 220ms ease}.lu-neon-continuation .lu-neon-cover,.lu-neon-continuation .lu-neon-intro{opacity:1;animation:none;transform:none}.lu-neon-continuation.lu-neon-fade{opacity:0;pointer-events:none}html.genius-portal-handoff #vocabLoading:not([hidden]){visibility:hidden}';
-document.head.append(style);
+style.textContent+='.lu-neon-switch{z-index:2147483647!important}.lu-neon-switch .lu-neon-cover{animation-duration:170ms}.lu-neon-switch .lu-neon-intro{animation-duration:200ms;animation-delay:90ms}.lu-neon-switch .lu-neon-rings i{animation-duration:310ms}';
+ document.head.append(style);portalStyle=style;
+}
+if(!handoff)return;
+document.documentElement.classList.add('genius-portal-handoff');
+ensurePortalStyle();
 // The continuation is a bounded visual transition, not a startup gate.
 deadline=setTimeout(()=>release('timeout'),1800);
 window.addEventListener('pagehide',()=>{if(cover)cover.remove();cover=null;release('navigation')},{once:true});
