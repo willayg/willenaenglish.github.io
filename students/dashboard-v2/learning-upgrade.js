@@ -56,6 +56,74 @@ if(jellyDialog){
   by('luEnergyPanel')?.scrollIntoView({block:'center',behavior:'auto'});
  });
 }
+// Streak rewards come exclusively from the same authoritative jelly ledger.
+// Local storage remembers only which celebrations have been shown, not rewards.
+const streakDialog=by('luStreakCelebration'),streakSeenMemory=new Map();
+let streakQueue=[],streakContext=null;
+function streakSeen(id){
+ if(streakSeenMemory.has(id))return streakSeenMemory.get(id);
+ let keys=[];try{const saved=JSON.parse(localStorage.getItem('willena:streak-celebrations:v1:'+id)||'[]');if(Array.isArray(saved))keys=saved.filter(x=>typeof x==='string')}catch{}
+ const seen=new Set(keys);streakSeenMemory.set(id,seen);return seen;
+}
+function rememberStreak(id,key){
+ const seen=streakSeen(id);seen.add(key);
+ try{localStorage.setItem('willena:streak-celebrations:v1:'+id,JSON.stringify([...seen].slice(-150)))}catch{}
+}
+function nextStreakMilestone(days){
+ return [2,5,10,15,20].find(n=>n>days)||Math.floor(days/5)*5+5;
+}
+function flyStreakEnergy(from){
+ const target=by('luEnergyBar');
+ if(!target||!from||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||!Element.prototype.animate)return;
+ const box=target.getBoundingClientRect();if(!box.width||!box.height)return;
+ const x=box.left+box.width*.5,y=box.top+box.height*.5;
+ if(y<0||y>window.innerHeight)return;
+ for(let i=0;i<12;i++){
+  const particle=document.createElement('i');
+  const sx=from.x+Math.cos(i*2.4)*32,sy=from.y+Math.sin(i*2.4)*32;
+  particle.className='lu-streak-particle';particle.style.cssText='left:'+sx+'px;top:'+sy+'px;background:'+(['#f77db5','#ffb9e2','#fbd77b'][i%3]);
+  document.body.append(particle);
+  try{const anim=particle.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:'translate('+((x-sx)*.5)+'px,'+((y-sy)*.45-30)+'px) scale(1.15)',opacity:1,offset:.5},{transform:'translate('+(x-sx)+'px,'+(y-sy)+'px) scale(.2)',opacity:0}],{duration:480+i*18,easing:'cubic-bezier(.22,.7,.2,1)',fill:'forwards'});anim.onfinish=()=>particle.remove();}catch{}
+  setTimeout(()=>particle.remove(),800);
+ }
+}
+function showNextStreak(){
+ if(!streakDialog||streakDialog.open||jellyDialog?.open||!streakContext||!streakQueue.length||typeof streakDialog.showModal!=='function')return false;
+ const m=streakQueue[0],c=streakContext;
+ const tier=m.points>=300?'legendary':m.points>=150?'super':m.points>=100?'gold':'normal';
+ streakDialog.dataset.tier=tier;
+ by('luStreakTitle').textContent=({normal:'STREAK MILESTONE',gold:'GOLD STREAK',super:'SUPER STREAK',legendary:'LEGENDARY STREAK'})[tier];
+ by('luStreakDays').textContent=m.days;
+ by('luStreakGain').textContent='+'+m.points+'%';
+ by('luStreakNext').textContent='다음 목표 · '+nextStreakMilestone(m.days)+'일';
+ const note=by('luStreakJellyNote');note.textContent=c.delta>0?'새 젤리 +'+c.delta+'개 · 받을 젤리 '+c.owed+'개':'받을 젤리 '+c.owed+'개';
+ try{streakDialog.showModal()}catch(e){console.warn('[streak celebration]',e);return false}
+ streakQueue.shift();rememberStreak(c.id,m.key);
+ if(c.delta>0){rememberJellySeen(c.id,c.earned);c.delta=0}
+ return true;
+}
+if(streakDialog){
+ by('luStreakConfirm')?.addEventListener('click',()=>streakDialog.close());
+ streakDialog.addEventListener('close',()=>{
+  const x=window.innerWidth/2,y=window.innerHeight*.42;
+  flyStreakEnergy({x,y});
+  if(streakQueue.length)setTimeout(showNextStreak,700);
+ });
+ jellyDialog?.addEventListener('close',()=>showNextStreak());
+}
+function queueStreakMilestones(row,id,delta){
+ if(!streakDialog||typeof streakDialog.showModal!=='function'||!Array.isArray(row.streak_milestones))return false;
+ const seen=streakSeen(id);
+ if(streakContext?.id!==id)streakQueue=[];
+ const keys=new Set(streakQueue.map(m=>m.key));
+ for(const m of row.streak_milestones){
+  if(typeof m.key!=='string'||!/^streak:\d{4}-\d{2}-\d{2}$/.test(m.key)||!Number.isInteger(m.days)||m.days<2||![5,10,20,50,100,150,300].includes(m.points)||seen.has(m.key)||keys.has(m.key))continue;
+  streakQueue.push(m);keys.add(m.key);
+ }
+ if(!streakQueue.length)return false;
+ streakContext={id,delta,earned:row.earned,owed:row.owed};
+ return showNextStreak()||streakDialog.open||!!jellyDialog?.open;
+}
 function energy(){
  if(jellyEnergyPending)return jellyEnergyPending;
  lastJellyCheck=Date.now();
@@ -77,9 +145,12 @@ function energy(){
    // Existing unclaimed rewards are announced once, as are later increases.
    const seen=readJellySeen(p.id),baseline=Math.max(seen??row.given,row.given);
    const delta=Math.min(row.owed,Math.max(0,row.earned-baseline));
-   if(delta>0){
-    if(showJellyCelebration(delta,row.owed))rememberJellySeen(p.id,row.earned);
-   }else rememberJellySeen(p.id,row.earned);
+   const hasStreak=queueStreakMilestones(row,String(p.id),delta);
+   if(!hasStreak){
+    if(delta>0){
+     if(showJellyCelebration(delta,row.owed))rememberJellySeen(p.id,row.earned);
+    }else rememberJellySeen(p.id,row.earned);
+   }
   }catch(e){console.warn('[Jelly Energy]',e);}
  })().finally(()=>{jellyEnergyPending=null});
  return jellyEnergyPending;
