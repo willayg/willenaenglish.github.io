@@ -776,10 +776,14 @@ class StudentHeader extends HTMLElement {
       this._cleanupDocClick = () => document.removeEventListener('click', onDocClick, { capture: true });
       avatarBtn.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMenu(true); } });
       avatarMenu.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); toggleMenu(false); avatarBtn.focus(); } });
+      this.shadowRoot.getElementById('homeBtn')?.addEventListener('click', (e) => {
+        if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+        if (window.WillenaGeniusBoot?.switchApp?.(e.currentTarget.href)) e.preventDefault();
+      });
       avatarMenu.addEventListener('click', (e) => {
         const link = e.target.closest('a.dd-item[href]');
         if (!link || e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
-        if (!window.WillenaGeniusBoot?.switchApp?.(link.href)) return;
+        if (!window.WillenaGeniusBoot?.switchApp?.(link.href, avatarBtn.textContent.trim())) return;
         e.preventDefault();
         avatarMenu.classList.remove('open', 'opening', 'closing');
         avatarBtn.setAttribute('aria-expanded', 'false');
