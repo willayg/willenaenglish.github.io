@@ -1,4 +1,4 @@
-import './avatar-renderer.js?v=20261127-originals1';
+import './avatar-renderer.js?v=20261127-originals-only1';
 import {mountStudentInbox} from './student-inbox.js?v=20261101-menu-prominent1';
 import {checkStudentCharacterUnlocks} from './student-character-unlocks.js?v=20261116-p4-visible-scenery2';
 // Student session repair bootstrap.
