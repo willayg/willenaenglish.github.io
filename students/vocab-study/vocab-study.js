@@ -1823,8 +1823,8 @@ function renderHome(){
   setStatus(state.items.length?'준비됐어요.':'이 단원에는 사용할 수 있는 단어 문제가 없어요.');
   renderSkillProgress();
   renderMotivation();
-  loadSkillProgress();
-  loadMotivation(state.book.book_id);
+  const progressTask=loadSkillProgress(),motivationTask=loadMotivation(state.book.book_id);
+  window.WillenaGeniusBoot?.track(Promise.allSettled([progressTask,motivationTask]));
 }
 function updateProgress(){
   const total=Math.max(1,state.queue.length),current=Math.min(state.index+1,total);
@@ -3205,7 +3205,7 @@ async function boot(){
       bootLoaderReleased=true;
 
       hydrateSecondaryBooks(resolved.deferredAssignments,state.book.book_id);
-      background(async()=>{
+      const homeworkBoot=(async()=>{
         try{
           await loadTeacherAssignments({showLoader:false});
           renderFrontMenu();
@@ -3228,7 +3228,8 @@ async function boot(){
             endVocabLoading();
           }
         }
-      },'teacher word tests');
+      })();
+      window.WillenaGeniusBoot?.track(homeworkBoot);
     }
     startBtn.addEventListener('click',()=>{if(confirmGoldenPractice())startSession()});
     spellingPreviewBtn?.addEventListener('click',()=>{if(confirmGoldenPractice())openSpellingMenu()});
