@@ -7,21 +7,82 @@ let starLaunching=false;
 let books=[],identity=null,loading=false,version=0,loaded=false,selectedBook='',lastMap=null;
 const api=async path=>{const r=await window.WillenaAPI.fetch(path,{cache:'no-store'});if(!r.ok)throw Error('Request failed');return r.json()};
 const profile=async()=>{if(identity)return identity;const who=await studentIdentity();const p=await signedInProfile(who.id);if(p.role!=='student'||!p.approved)throw Error('Student account required');return identity={...who,...p}};
-async function energy(){
- try{
-  const p=await profile(), summary=await studentRead('jelly-energy-v1',{});
-  const row=summary?.students?.find(x=>String(x.student_id)===String(p.id));
-  if(!row||!Number.isFinite(row.energy_percent))throw Error('Jelly Energy unavailable');
-  const value=row.energy_percent;
-  by('luEnergyText').textContent=value+'%';
-  by('luEnergyBar').setAttribute('aria-valuenow',value);
-  by('luEnergyBar').firstElementChild.style.width=value+'%';
-  by('luEnergyNote').textContent=summary.gold_per_jelly+' gold units = 1 jelly';
- }catch(e){
-  console.warn('[Jelly Energy]',e);
-  by('luEnergyNote').textContent='Energy data unavailable';
- }
+// The backend remains the source of truth for available jellies.
+let jellyEnergyPending=null,lastJellyCheck=0;
+const jellySeenInMemory=new Map();
+const jellySeenKey=id=>'willena:jelly-energy:celebrated:v1:'+id;
+function readJellySeen(id){
+ try{const raw=localStorage.getItem(jellySeenKey(id));if(raw!==null&&/^\d+$/.test(raw))return Number(raw)}catch{}
+ return jellySeenInMemory.get(id);
 }
+function rememberJellySeen(id,n){
+ const value=Math.max(readJellySeen(id)??0,n);
+ jellySeenInMemory.set(id,value);
+ try{localStorage.setItem(jellySeenKey(id),String(value))}catch{}
+}
+function jellyIcon(face=0){
+ const eyes=face===1?'<path d="M13 28q4-5 8 0" fill="none" stroke="#8e3565" stroke-width="2.5" stroke-linecap="round"/><circle cx="31" cy="28" r="2.5" fill="#8e3565"/>':face===2?'<path d="M13 28q4-5 8 0m6 0q4-5 8 0m-15 5q4 4 8 0" fill="none" stroke="#8e3565" stroke-width="2.3" stroke-linecap="round"/>':'<circle cx="17" cy="28" r="2.5" fill="#8e3565"/><circle cx="31" cy="28" r="2.5" fill="#8e3565"/>';
+ return '<g><path d="M9 26C5 15 12 5 24 5s19 10 15 21c7 10 1 17-15 17S2 36 9 26Z" fill="#ed76ad" stroke="#d04f94" stroke-width="2.5"/><ellipse cx="17" cy="13" rx="6" ry="3" fill="#fff" opacity=".85"/>'+eyes+'</g>';
+}
+function renderJellyInventory(count){
+ const icons=by('luJellyIcons'),total=by('luJellyCount'),compact=by('luJellyCompact');
+ if(!icons||!total||!compact)return;
+ icons.innerHTML=Array.from({length:Math.max(1,Math.min(count,3))},(_,i)=>'<svg viewBox="0 0 48 48" aria-hidden="true">'+jellyIcon(i%3)+'</svg>').join('');
+ icons.classList.toggle('is-empty',count===0);
+ total.textContent=count+'개';total.classList.toggle('is-empty',count===0);
+ by('luJellyCompactCount').textContent=count+'개';compact.hidden=false;
+ by('luEnergyNote').setAttribute('aria-label','받을 젤리 '+count+'개');
+}
+function showJellyCelebration(delta,count){
+ const modal=by('luJellyCelebration');
+ if(!modal||modal.open||typeof modal.showModal!=='function')return false;
+ by('luJellyAwardCount').textContent='+'+delta;
+ by('luJellyJarCount').textContent='받을 젤리 '+count+'개';
+ const positions=[[32,75],[65,75],[99,75],[47,48],[84,48],[110,48]];
+ by('luJellyJarContents').innerHTML=positions.slice(0,Math.min(count,positions.length)).map(([x,y],i)=>'<g transform="translate('+x+' '+y+') scale(.72)">'+jellyIcon(i%3)+'</g>').join('');
+ const colors=['#ed76ad','#f7bf39','#42c7cf','#f69cc8'];
+ by('luJellyConfetti').innerHTML=Array.from({length:24},(_,i)=>{
+  const x=5+((i*37+7)%90),y=6+((i*23+11)%86),rotation=(i*53)%180-90;
+  return '<i style="left:'+x+'%;top:'+y+'%;background:'+colors[i%colors.length]+';--lu-spin:'+rotation+'deg;animation-delay:'+(i%6)*.06+'s"></i>';
+ }).join('');
+ try{modal.showModal();return true}catch(e){console.warn('[Jelly celebration]',e);return false}
+}
+const jellyDialog=by('luJellyCelebration');
+if(jellyDialog){
+ by('luJellyConfirm')?.addEventListener('click',()=>jellyDialog.close());
+ by('luJellyView')?.addEventListener('click',()=>{
+  jellyDialog.close();
+  by('luEnergyPanel')?.dispatchEvent(new Event('willena:show-jellies'));
+  by('luEnergyPanel')?.scrollIntoView({block:'center',behavior:'auto'});
+ });
+}
+function energy(){
+ if(jellyEnergyPending)return jellyEnergyPending;
+ lastJellyCheck=Date.now();
+ jellyEnergyPending=(async()=>{
+  try{
+   const p=await profile(),summary=await studentRead('jelly-energy-v1',{});
+   const row=summary?.students?.find(x=>String(x.student_id)===String(p.id));
+   if(!row||!Number.isFinite(row.energy_percent)||![row.earned,row.given,row.owed].every(n=>Number.isSafeInteger(n)&&n>=0))throw Error('Jelly Energy unavailable');
+   const value=row.energy_percent;
+   by('luEnergyText').textContent=value+'%';
+   by('luEnergyBar').setAttribute('aria-valuenow',value);
+   by('luEnergyBar').firstElementChild.style.width=value+'%';
+   renderJellyInventory(row.owed);
+   // On first use, already collected jellies are not announced again.
+   // Existing unclaimed rewards are announced once, as are later increases.
+   const seen=readJellySeen(p.id),baseline=Math.max(seen??row.given,row.given);
+   const delta=Math.min(row.owed,Math.max(0,row.earned-baseline));
+   if(delta>0){
+    if(showJellyCelebration(delta,row.owed))rememberJellySeen(p.id,row.earned);
+   }else rememberJellySeen(p.id,row.earned);
+  }catch(e){console.warn('[Jelly Energy]',e);}
+ })().finally(()=>{jellyEnergyPending=null});
+ return jellyEnergyPending;
+}
+document.addEventListener('visibilitychange',()=>{
+ if(document.visibilityState==='visible'&&Date.now()-lastJellyCheck>15000)void energy();
+});
 const apps=[
  {label:'Words',path:'/students/vocab-study/',kind:'word',icon:'word-genius.svg'},
  {label:'Sentences',path:'/students/sentence-genius/',kind:'sentence',icon:'sentence-genius.svg'},
