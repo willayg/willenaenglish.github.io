@@ -353,6 +353,11 @@ try{
 .rs-dr-skill{display:grid;grid-template-columns:1fr auto;gap:5px;margin:10px 0;color:#385d65;font-size:12px}.rs-dr-skill .rs-dr-bar{grid-column:1/-1;height:7px}
 .rs-dr-attention{display:grid;gap:3px;border-left:3px solid #db8fb1;padding:7px 10px;margin:6px 0;color:#725263;font-size:12px}.rs-dr-attention small{color:#88757d}
 #rsDrawerMastery summary{cursor:pointer;color:#267f87;font-weight:700;font-size:12px}
+.rs-activity-card{display:grid;gap:10px}.rs-ag-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.rs-ag-head h3{margin:0 0 3px}.rs-ag-head small{font-size:11px;font-weight:500;color:#718b92}.rs-ag-head>strong{font-size:23px;color:#217b83;text-align:right;white-space:nowrap}
+.rs-ag-toggle{display:flex;gap:4px;background:#f0f6f7;padding:3px;border-radius:9px}.rs-ag-toggle button{flex:1;border:0;border-radius:6px;padding:8px 4px;background:none;color:#68848b;font-size:11px;font-weight:700;cursor:pointer}.rs-ag-toggle button[aria-pressed="true"]{background:#fff;color:#197d87;box-shadow:0 1px 4px #2d626015}
+.rs-activity-svg{display:block;width:100%;height:auto}.rs-ag-axis{fill:#718c92;font:11px Poppins,sans-serif}.rs-ag-value{fill:#227b82;font:700 12px Poppins,sans-serif}
+.rs-ag-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.rs-ag-stats>div{background:white;border:1px solid #dce9ea;border-radius:11px;padding:11px 5px;text-align:center;display:grid;gap:4px}.rs-ag-stats small{font-size:10px;color:#6e878d}.rs-ag-stats b{font-size:20px;color:#247b83}
+#drawerBg .rs-dr-skill small{font-size:10px;color:#82979c}#drawerBg .detail>details>summary{cursor:pointer;color:#267f87;font-weight:700;font-size:12px}
 @media(max-width:480px){#rsDrawerTabs button{font-size:10px;padding:10px 4px}.rs-dr-summary-head>.rs-drawer-ring{width:75px;height:75px}.rs-dr-kpis small{font-size:9px}}
 #view-students .roster-student-card{content-visibility:auto;contain-intrinsic-size:auto 500px}
 #drawerBg .detail,#drawerBg .big-card{border:1px solid #dce8ec;border-radius:16px;padding:17px;box-shadow:none;background:#fff;margin:0}
@@ -772,7 +777,7 @@ try{
 <div class="wc-dialog-actions"><button id="wcDelete" class="wc-button wc-delete" type="button" hidden>Delete</button><button class="wc-button" type="button" id="wcCancel">Cancel</button><button class="wc-button wc-primary" id="wcSave" type="submit">Save event</button></div></form></dialog>
 <div id="rosterAssignmentsOverlay" class="rs-assign-overlay" hidden><section class="rs-assign-dialog" role="dialog" aria-modal="true" aria-label="Student assignments"><div class="rs-assign-head"><div><h2 id="rosterAssignmentsTitle">Assignments</h2><p>Student mission history</p></div><button type="button" id="rosterAssignmentsClose" aria-label="Close assignments">×</button></div><div class="rs-assign-tabs"><button data-rs-assign-tab="current" class="active" type="button">Current</button><button data-rs-assign-tab="history" type="button">History</button></div><div id="rosterAssignmentsBody" class="rs-assign-body"></div></section></div>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div><div id="rsDrawerBooks" class="rs-dr-books"></div></div><button class="close" id="closeDrawer" aria-label="Close student details">×</button></div><nav id="rsDrawerTabs" role="tablist" aria-label="Student details"><button type="button" role="tab" data-rs-drawer-tab="Overview" aria-selected="false">Overview</button><button type="button" role="tab" data-rs-drawer-tab="Missions" aria-selected="false">Missions</button><button type="button" role="tab" data-rs-drawer-tab="Activity" aria-selected="false">Activity</button><button type="button" role="tab" data-rs-drawer-tab="Mistakes" aria-selected="false">Mistakes</button><button type="button" role="tab" data-rs-drawer-tab="History" aria-selected="false">History</button></nav><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.78</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.79</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -1517,7 +1522,7 @@ async function loadArcadeInsights(force=false){
 function habitReason(h){if(!h)return'No evidence';const parts=[`${h.active_days_7??0} active day${h.active_days_7===1?'':'s'} in the last 7`,`${h.current_streak??0}-day streak`,`${h.attempts??0} attempts`];if(h.days_since_last_study!=null)parts.push(h.days_since_last_study===0?'studied today':`last studied ${h.days_since_last_study} day${h.days_since_last_study===1?'':'s'} ago`);return parts.join(' · ')}
 function learningReason(l){if(!l||l.all_time_accuracy==null)return'No recorded question results';const recent=l.recent_accuracy==null?'—':`${l.recent_accuracy}%`;let t=`Recent ${recent} from ${l.recent_count??0} current questions · All time ${l.all_time_accuracy}% across ${l.all_time_attempts??0} attempts`;if(typeof l.trend==='number')t+=` · ${l.trend>0?'+':''}${l.trend} pts vs previous 14 days`;return t}
 const rsDrawerTabs=['Overview','Missions','Activity','Mistakes','History'];
-const rsDrawer={id:null,tab:'Overview',run:0,detail:null,pending:null,error:''};
+const rsDrawer={id:null,tab:'Overview',run:0,detail:null,pending:null,error:'',period:'daily',metric:'sessions',graphData:new Map(),graphPending:new Map(),graphError:new Map()};
 const rsDrawerCache=new Map();
 function closeStudentDrawerDirect(){$('#drawerBg').classList.remove('open');rsDrawer.run++;rsDrawer.id=null;window.rosterDrawerStudent=null}
 function rsRefreshDrawerSummary(){if(rsDrawer.id&&$('#drawerBg').classList.contains('open')&&['Overview','Missions','History'].includes(rsDrawer.tab))rsPaintDrawer()}
@@ -1537,6 +1542,59 @@ function rsDrawerHistory(id){
  const rows=(rosterAssignments.history||[]).filter(a=>homeworkForStudent(a,id));
  return '<div class="detail"><h3>Mission history</h3>'+(rows.length?rows.map(a=>'<article class="rs-dr-mission"><div class="rs-dr-mission-head"><div><strong>'+esc(a.title||a.list_title||'Mission')+'</strong><small>'+esc(rsMissionApp(a))+(a.due_at?' · Due '+esc(fmtDate(a.due_at)):'')+'</small><small>'+esc(a.status||'Ended')+(a.ended_at?' · '+esc(fmtDate(a.ended_at)):'')+'</small></div></div></article>').join('')+'<small class="rs-dr-note">Assignment history; individual historical results are not provided by this source.</small>':'<div class="empty">No past assignments found.</div>')+'</div>';
 }
+const rsGraphPeriods={daily:{days:7,count:7,label:'Last 7 days'},weekly:{days:28,count:4,label:'Last 4 weeks'},monthly:{days:90,count:3,label:'Last 3 calendar months'}};
+function rsActivityBuckets(rows,period,today=new Date()){
+ const now=new Date(today.getTime()+9*3600000),end=now.toISOString().slice(0,10),dayMs=86400000,endMs=Date.parse(end+'T00:00:00Z');
+ const iso=ms=>new Date(ms).toISOString().slice(0,10),short=d=>d.slice(5).replace('-','/');
+ const spec=rsGraphPeriods[period]||rsGraphPeriods.daily;
+ const byDate=new Map();
+ for(const r of Array.isArray(rows)?rows:[]){const key=String(r.date||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(key))continue;byDate.set(key,{sessions:Math.max(0,Number(r.sessions)||0),attempts:Math.max(0,Number(r.attempts)||0)})}
+ const buckets=Array.from({length:spec.count},(_,i)=>{
+  let start,finish,label;
+  if(period==='monthly'){const month=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-(spec.count-1-i),1));start=month.getTime();finish=Math.min(endMs,Date.UTC(month.getUTCFullYear(),month.getUTCMonth()+1,1)-dayMs);label=month.toLocaleString('en',{month:'short',timeZone:'UTC'});}
+  else{const size=period==='weekly'?7:1;finish=endMs-(spec.count-1-i)*size*dayMs;start=finish-(size-1)*dayMs;label=period==='weekly'?short(iso(start))+'–'+short(iso(finish)):short(iso(start));}
+  let sessions=0,attempts=0,recorded=0;
+  for(let ms=start;ms<=finish;ms+=dayMs){const d=byDate.get(iso(ms));if(d){sessions+=d.sessions;attempts+=d.attempts;recorded++;}}
+  return {label,start:iso(start),end:iso(finish),sessions,attempts,recorded};
+ });
+ return buckets;
+}
+function rsGraphDays(period){const spec=rsGraphPeriods[period];return Math.max(Number(state.days)||30,spec.days);}
+function rsActivityGraph(rows,period,metric){
+ const data=rsActivityBuckets(rows,period),max=Math.max(1,...data.map(x=>x[metric])),step=Math.max(1,Math.ceil(max/4)),top=step*4;
+ const width=600,left=36,right=14,base=143,chartHeight=120,slot=(width-left-right)/data.length,barWidth=Math.min(55,slot*.57);
+ let svg='<svg class="rs-activity-svg" viewBox="0 0 600 168" role="img" aria-label="'+esc(rsGraphPeriods[period].label+' '+metric)+'">';
+ for(let i=0;i<=4;i++){const y=base-i*chartHeight/4;svg+='<line x1="'+left+'" y1="'+y+'" x2="'+(width-right)+'" y2="'+y+'" stroke="#e2eded"/><text x="'+(left-7)+'" y="'+(y+4)+'" text-anchor="end" class="rs-ag-axis">'+(step*i)+'</text>';}
+ for(let i=0;i<data.length;i++){const d=data[i],x=left+slot*(i+.5),v=d[metric],h=v/top*chartHeight;svg+='<g><title>'+esc(d.start+' to '+d.end+': '+v+' recorded '+metric)+'</title><rect x="'+(x-barWidth/2)+'" y="'+(base-Math.max(1,h))+'" width="'+barWidth+'" height="'+Math.max(1,h)+'" rx="4" fill="'+(v?'#2ca5ae':'#dbe8e9')+'"/>'+(v?'<text x="'+x+'" y="'+(base-h-5)+'" text-anchor="middle" class="rs-ag-value">'+v+'</text>':'')+'<text x="'+x+'" y="159" text-anchor="middle" class="rs-ag-axis">'+esc(d.label)+'</text></g>';}
+ return svg+'</svg>';
+}
+function rsDrawerActivity(st,h,l){
+ const period=rsDrawer.period,metric=rsDrawer.metric,days=rsGraphDays(period),baseDays=Number(state.days)||30;
+ const graphSource=days===baseDays?st:rsDrawer.graphData.get(days);
+ const busy=rsDrawer.graphPending.has(days),error=rsDrawer.graphError.get(days);
+ const choices=(items,selected,attr)=>'<div class="rs-ag-toggle">'+items.map(([key,label])=>'<button type="button" '+attr+'="'+key+'" aria-pressed="'+(selected===key)+'">'+label+'</button>').join('')+'</div>';
+ const summary=graphSource?rsActivityBuckets(graphSource.proof,period):null;
+ const total=summary?summary.reduce((n,r)=>n+r[metric],0):null;
+ const graph='<div class="detail rs-activity-card"><div class="rs-ag-head"><div><h3>Learning activity</h3><small>'+esc(rsGraphPeriods[period].label)+'</small></div><strong>'+(total===null?'—':total)+' <small>'+esc(metric)+'</small></strong></div>'+
+ choices([['daily','Daily'],['weekly','Weekly'],['monthly','Monthly']],period,'data-rs-graph-period')+
+ choices([['sessions','Sessions'],['attempts','Attempts']],metric,'data-rs-graph-metric')+
+ (graphSource?rsActivityGraph(graphSource.proof,period,metric):'<div class="empty">'+(error?esc(error)+' <button type="button" data-rs-graph-retry>Retry</button>':busy?'Loading activity…':'Loading activity…')+'</div>')+
+ '<small class="rs-dr-note">Based on recorded daily study evidence. Missing dates have no returned activity.</small></div>';
+ return graph+'<div class="rs-ag-stats"><div><small>Active days / 7</small><b>'+esc(h.active_days_7??0)+'/7</b></div><div><small>Recent accuracy</small><b>'+(l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%')+'</b></div><div><small>Current streak</small><b>'+esc(h.current_streak??0)+'d</b></div></div>'+
+ '<div class="detail"><h3>Skill accuracy</h3>'+((l.skills||[]).length?(l.skills||[]).map(v=>{const p=v.accuracy==null?null:Math.max(0,Math.min(100,Number(v.accuracy)||0));return '<div class="rs-dr-skill"><span>'+esc(friendly(v.skill))+' <small>'+esc(v.correct)+'/'+esc(v.attempts)+'</small></span><b>'+(p==null?'—':p+'%')+'</b><div class="rs-dr-bar"><i style="width:'+(p||0)+'%"></i></div></div>'}).join(''):'<div class="empty">No skill-level evidence yet.</div>')+'</div>'+
+ '<div class="detail"><details id="rsDrawerMastery"><summary>Word Genius · Books &amp; Golden Units</summary><div id="wordGeniusStudentMastery"></div></details></div><div class="detail"><details><summary>Puzzles</summary>'+renderStudentPuzzles(st.puzzles)+'</details></div><div class="detail"><details><summary>Detailed study records</summary>'+renderProof(st.proof)+'</details></div>';
+}
+async function rsLoadGraphRange(force=false){
+ const period=rsDrawer.period,days=rsGraphDays(period),baseDays=Number(state.days)||30,id=rsDrawer.id,run=rsDrawer.run;
+ if(!id||days===baseDays||(!force&&rsDrawer.graphData.has(days))||rsDrawer.graphPending.has(days))return;
+ const key=state.className+'|'+id+'|'+days,cached=rsDrawerCache.get(key);
+ if(!force&&cached&&Date.now()-cached.at<60000){rsDrawer.graphData.set(days,cached.student);rsPaintDrawer();return}
+ rsDrawer.graphError.delete(days);
+ const task=api(endpoint('teacher_student_insights',{student_id:id,days:String(days)}));rsDrawer.graphPending.set(days,task);rsPaintDrawer();
+ try{const j=await task;if(!j.student)throw Error('Activity unavailable');if(run!==rsDrawer.run)return;rsDrawer.graphData.set(days,j.student);rsDrawerCache.set(key,{at:Date.now(),student:j.student});}
+ catch(e){if(run===rsDrawer.run)rsDrawer.graphError.set(days,e.message||'Activity unavailable')}
+ finally{if(run===rsDrawer.run){rsDrawer.graphPending.delete(days);if(rsDrawer.tab==='Activity'&&rsGraphDays(rsDrawer.period)===days)rsPaintDrawer()}}
+}
 function rsPaintDrawer(){
  const id=rsDrawer.id,tab=rsDrawer.tab;if(!id)return;
  const nav=$('#rsDrawerTabs');nav.querySelectorAll('button').forEach(b=>{b.setAttribute('aria-selected',String(b.dataset.rsDrawerTab===tab));b.classList.toggle('active',b.dataset.rsDrawerTab===tab)});
@@ -1548,11 +1606,14 @@ function rsPaintDrawer(){
  else{
   const st=rsDrawer.detail,h=st.habits||{},l=st.learning||{};
   if(tab==='Mistakes')html='<div class="detail"><h3>Recent mistakes</h3>'+renderMistakes(st.recent_mistakes)+'</div>';
-  else html='<div class="rating-grid"><div class="big-card"><h3>Recorded activity</h3><div class="big-rating">'+esc(h.active_days_7??0)+' active days / 7</div><div class="reason">'+esc(habitReason(h))+'</div><div class="statline"><span>'+esc(h.active_days_30??0)+' active days in last 30</span><span>'+esc(h.completed_sessions??0)+' sessions</span></div></div><div class="big-card"><h3>Recorded results</h3><div class="big-rating">'+(l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%')+' recent accuracy</div><div class="reason">'+esc(learningReason(l))+'</div></div></div><div class="detail"><h3>Skills</h3>'+renderSkills(l.skills)+'</div><div class="detail"><h3>Word Genius · Books &amp; Golden Units</h3><details id="rsDrawerMastery"><summary>View unit mastery</summary><div id="wordGeniusStudentMastery"></div></details></div><div class="detail"><h3>Puzzles</h3>'+renderStudentPuzzles(st.puzzles)+'</div><div class="detail"><h3>Proof of work</h3>'+renderProof(st.proof)+'</div>';
+  else html=rsDrawerActivity(st,h,l);
  }
  host.innerHTML=html;
  host.querySelectorAll('[data-rs-drawer-jump]').forEach(b=>b.onclick=()=>rsSetDrawerTab(b.dataset.rsDrawerJump));
  host.querySelector('[data-rs-drawer-retry]')?.addEventListener('click',()=>rsLoadDrawerEvidence(true));
+ host.querySelectorAll('[data-rs-graph-period]').forEach(b=>b.onclick=()=>{rsDrawer.period=b.dataset.rsGraphPeriod;rsPaintDrawer();void rsLoadGraphRange()});
+ host.querySelectorAll('[data-rs-graph-metric]').forEach(b=>b.onclick=()=>{rsDrawer.metric=b.dataset.rsGraphMetric;rsPaintDrawer()});
+ host.querySelector('[data-rs-graph-retry]')?.addEventListener('click',()=>rsLoadGraphRange(true));
  const mastery=host.querySelector('#rsDrawerMastery');if(mastery)mastery.addEventListener('toggle',()=>{if(mastery.open&&!mastery.dataset.loaded){mastery.dataset.loaded='1';window.TeacherWordGeniusMastery?.show(id,mastery.querySelector('#wordGeniusStudentMastery'))}});
 }
 async function rsLoadDrawerEvidence(force=false){
@@ -1567,7 +1628,7 @@ async function rsLoadDrawerEvidence(force=false){
 function rsSetDrawerTab(tab){if(!rsDrawerTabs.includes(tab))return;rsDrawer.tab=tab;rsPaintDrawer();$('#drawerBody').scrollTop=0;if(['Activity','Mistakes'].includes(tab)&&!rsDrawer.detail)void rsLoadDrawerEvidence()}
 function openStudent(id,tab='Overview'){
  id=String(id);if(!rsDrawerTabs.includes(tab))tab='Overview';const base=state.students.find(s=>String(s.user_id)===id);
- Object.assign(rsDrawer,{id,tab,run:rsDrawer.run+1,detail:null,pending:null,error:''});window.rosterDrawerStudent=id;
+ Object.assign(rsDrawer,{id,tab,run:rsDrawer.run+1,detail:null,pending:null,error:'',period:'daily',metric:'sessions',graphData:new Map(),graphPending:new Map(),graphError:new Map()});window.rosterDrawerStudent=id;
  $('#drawerName').textContent=base?.name||'Student';$('#drawerMeta').textContent=[base?.korean_name,state.className,'Last '+state.days+' days'].filter(Boolean).join(' · ');
  $('#rsDrawerBooks').textContent=rosterCurriculum.className===state.className&&rosterCurriculum.overview?rosterCurriculum.books.map(b=>b.book_title||'Textbook').join(' · '):'';
  $('#drawerBg').classList.add('open');window.TeacherHistory?.pushDrawer?.('student',{studentId:id});rsSetDrawerTab(tab);
