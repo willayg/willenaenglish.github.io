@@ -3,7 +3,7 @@ const API="/api/live-presence";
 const MINI=new URLSearchParams(location.search).has("mini");
 const $=id=>document.getElementById(id);
 const CLASS_ORDER=["Brown","Stanford","Manchester","NY","Hawaii","Boston","Sydney","Berkeley","Chicago","Cambridge","Yale","Prince","Oxford","MIT","Pre"];
-const state={students:[],sessions:[],filter:"",appFilter:"",rosterOk:false,presenceOk:false,refreshing:false};
+const state={students:[],sessions:[],filter:"",appFilter:"",rosterOk:false,presenceOk:false,refreshing:false,expanded:new Set()};
 const clean=s=>String(s??"").trim();
 const time=()=>new Date().toLocaleTimeString("en-KR",{hour:"2-digit",minute:"2-digit"});
 function node(tag,className,text){const n=document.createElement(tag);if(className)n.className=className;if(text!==undefined)n.textContent=text;return n;}
@@ -36,6 +36,11 @@ async function loadPresence(){
  state.sessions=js.sessions;
  state.presenceOk=true;
 }
+const appNames={word:"Word Genius",grammar:"Grammar Genius",sentence:"Sentence Genius",writing:"Writing Genius",puzzles:"Puzzles",test_prep:"내신 명중",dashboard:"Dashboard",free_talking:"Free Talking Genius",freeconversation:"Free Talking Genius",speaking:"Speaking",other:"Other"};
+function activityDetails(session){
+ if(!session)return [];
+ return [["App",appNames[session.app]||clean(session.app)],["Textbook",clean(session.book)],["Unit",clean(session.unit)],["Skill",clean(session.activity)]].filter(([,v])=>v);
+}
 function render(){
  const selected=state.filter;
  const students=state.students.filter(s=>!selected||s.class===selected);
@@ -59,7 +64,7 @@ function render(){
   groups.get(s.class).push({...s,online,status});
  }
  for(const status of Object.keys(counts))$(status+"-count").textContent=state.presenceOk?counts[status]:"—";
- const root=$("classes");root.replaceChildren();
+ const root=$("classes"),focused=document.activeElement?.dataset?.presenceStudent;root.replaceChildren();
  if(!state.rosterOk){root.append(node("p","muted","Student roster unavailable."));return;}
  for(const cls of [...groups.keys()].sort(classOrder)){
   const people=groups.get(cls).sort((a,b)=>({active:0,idle:1,offline:2,unavailable:3}[a.status]-{active:0,idle:1,offline:2,unavailable:3}[b.status])||a.name.localeCompare(b.name));
@@ -74,18 +79,22 @@ function render(){
     const statusText=person.status==="active"?"● Active":person.status==="idle"?"● Idle":person.status==="unavailable"?"— Unavailable":"○ Offline";
     const cell=node("span","status-cell");
     cell.append(node("span","status "+person.status,statusText));row.append(cell);
-    const online=person.online;
-    const names={word:"Word Genius",grammar:"Grammar Genius",sentence:"Sentence Genius",writing:"Writing Genius",puzzles:"Puzzles",test_prep:"내신 명중",dashboard:"Dashboard"};
-    row.append(node("span","app-cell",online?(names[online.app]||clean(online.app)||"—"):"—"));
+    const online=state.presenceOk?person.online:null;
+    const details=activityDetails(online),expanded=state.expanded.has(person.id)&&!!online;
+    const appCell=node('span','app-cell');
+    if(online){const btn=node('button','presence-detail-toggle',appNames[online.app]||clean(online.app)||'Current activity');btn.type='button';btn.title=details.map(([k,v])=>k+': '+v).join('\n');btn.setAttribute('aria-expanded',String(expanded));btn.setAttribute('aria-label',person.name+' · '+btn.title+' · Show activity details');btn.addEventListener('click',()=>{if(state.expanded.has(person.id))state.expanded.delete(person.id);else state.expanded.add(person.id);render();});btn.dataset.presenceStudent=person.id;appCell.append(btn);}else appCell.textContent='—';
+    row.append(appCell);
     const activity=online?clean(online.activity):"";
     row.append(node("span","activity-cell",activity||"—"));
     const assigned=online?(online.assignment_match===true||online.entered_via_homework===true?"Yes":online.assignment_id?"Yes":"—"):"—";
     row.append(node("span","assigned-cell",assigned));
     grid.append(row);
+    if(expanded){const panel=node('div','presence-detail-panel');for(const [key,val] of details){const item=node('div','presence-detail-item');item.append(node('small','',key),node('strong','',val));panel.append(item);}if(details.length<4)panel.append(node('small','presence-detail-note','Some activity details are not reported by this app.'));grid.append(panel);}
   }
   root.append(grid);
  }
  if(!groups.size)root.append(node("p","muted",MINI?"No students online in this class right now.":state.appFilter?"No students currently online in 내신 명중.":"No students in this selection."));
+ if(focused)[...root.querySelectorAll('[data-presence-student]')].find(x=>x.dataset.presenceStudent===focused)?.focus({preventScroll:true});
 }
 // Load roster and presence independently. A slow auth check must never leave the page blank.
 let accessGranted=false;
