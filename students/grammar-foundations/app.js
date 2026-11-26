@@ -490,4 +490,4 @@ async function boot(){
     window.WillenaHomeworkDeepLinkSplash?.hide();
   }
 }
-void boot().finally(()=>window.WillenaGeniusBoot?.finish?.('ready'));
+boot();
