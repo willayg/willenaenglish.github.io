@@ -3,7 +3,7 @@
 (function(){
 'use strict';
 if(window.WillenaGeniusBoot)return;
-const version='20261126-home-logo2';
+const version='20261127-originals1';
 const assets={
  '/students/vocab-study/':{
   entry:'/students/vocab-study/vocab-study.js?v=20261126-boot3',
@@ -56,7 +56,7 @@ function handoffPortal(destination){
   if(u.origin!==location.origin||!supported(portalPath(u.pathname)))return;
   const p=document.querySelector('.lu-neon-portal');if(!p)return;
   const read=selector=>{const e=p.querySelector(selector);return e&&!e.hidden?e.textContent:''};
-  sessionStorage.setItem(KEY,JSON.stringify({path:portalPath(u.pathname)+u.search,at:Date.now(),title:read('.lu-neon-name'),book:read('.lu-neon-book'),unit:read('.lu-neon-unit'),mission:read('.lu-neon-mission'),avatar:portalPath(u.pathname)===profilePath?read('.lu-neon-avatar'):''}));
+  sessionStorage.setItem(KEY,JSON.stringify({path:portalPath(u.pathname)+u.search,at:Date.now(),title:read('.lu-neon-name'),book:read('.lu-neon-book'),unit:read('.lu-neon-unit'),mission:read('.lu-neon-mission'),avatar:portalPath(u.pathname)===profilePath?(window.WillenaAvatar?.value(p.querySelector('.lu-neon-avatar'))||read('.lu-neon-avatar')):''}));
  }catch{}
 }
 if(pilot){
@@ -108,7 +108,7 @@ function buildPortal(path,data,className){
   icon.innerHTML='<span class="lu-neon-willena" aria-hidden="true"></span>';
  }else if(profile){
   const av=document.createElement('span');av.className='lu-neon-avatar';
-  av.textContent=String(data.avatar||'🙂').slice(0,64);icon.replaceChildren(av);
+  const value=String(data.avatar||'🙂').slice(0,64);av.textContent=value;if(window.WillenaAvatar?.index(value)>=0){av.style.cssText='display:block;width:100%;height:100%;aspect-ratio:1';window.WillenaAvatar.render(av,value)}icon.replaceChildren(av);
  }else if(iconMarkup[path])icon.innerHTML=iconMarkup[path];else el.querySelector('.lu-app-icon').src=icons[path];
  const name=el.querySelector('.lu-neon-name');name.textContent=title;name.hidden=home;
  for(const key of ['book','unit','mission']){const node=el.querySelector('.lu-neon-'+key);node.textContent=String(data[key]||'').slice(0,180);node.hidden=!node.textContent;}
