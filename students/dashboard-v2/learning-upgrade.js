@@ -4,9 +4,9 @@ const root=by('learningUpgrade');
 if(root&&!document.documentElement.classList.contains('leaderboard-only')){
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let starLaunching=false;
-let books=[],identity=null,loading=false,version=0,loaded=false,selectedBook='',lastMap=null;
+let books=[],identity=null,identityPending=null,loading=false,version=0,loaded=false,selectedBook='',lastMap=null;
 const api=async path=>{const r=await window.WillenaAPI.fetch(path,{cache:'no-store'});if(!r.ok)throw Error('Request failed');return r.json()};
-const profile=async()=>{if(identity)return identity;const who=await studentIdentity();const p=await signedInProfile(who.id);if(p.role!=='student'||!p.approved)throw Error('Student account required');return identity={...who,...p}};
+const profile=async()=>{if(identity)return identity;if(identityPending)return identityPending;identityPending=(async()=>{const who=await studentIdentity();const p=await signedInProfile(who.id);if(p.role!=='student'||!p.approved)throw Error('Student account required');return identity={...who,...p}})().finally(()=>{identityPending=null});return identityPending};
 // The backend remains the source of truth for available jellies.
 let jellyEnergyPending=null,lastJellyCheck=0,jellyGoldKeys=null;
 const jellySeenInMemory=new Map();
@@ -116,10 +116,16 @@ async function contentRead(path){
 const safe=p=>p.catch(e=>{console.warn('[learning map]',e);return null});
 const pct=(n,d)=>Math.max(0,Math.min(100,Math.round(n*100/d)));
 let extra={};
-const cache=new Map();
+const cache=new Map(),catalogPending=new Map(),readPending=new Map();
 let cacheKey='';
+const catalogPrefix='willena-learning-catalog-v1:';
+const manualReload=performance.getEntriesByType?.('navigation')?.[0]?.type==='reload';
+if(manualReload)try{for(let i=sessionStorage.length-1;i>=0;i--){const k=sessionStorage.key(i);if(k?.startsWith(catalogPrefix))sessionStorage.removeItem(k)}}catch{}
+function catalogMemo(key,task){if(catalogPending.has(key))return catalogPending.get(key);try{const stored=JSON.parse(sessionStorage.getItem(catalogPrefix+key)||'null');if(stored&&Date.now()-stored.at<86400000)return Promise.resolve(stored.data)}catch{}const p=Promise.resolve().then(task).then(data=>{try{sessionStorage.setItem(catalogPrefix+key,JSON.stringify({at:Date.now(),data}))}catch{}return data}).finally(()=>catalogPending.delete(key));catalogPending.set(key,p);return p}
+function shortRead(key,task,force=false){const old=readPending.get(key);if(!force&&old&&Date.now()-old.at<30000)return old.promise;const promise=Promise.resolve().then(task);readPending.set(key,{at:Date.now(),promise});promise.catch(()=>{if(readPending.get(key)?.promise===promise)readPending.delete(key)});return promise}
+async function mapPool(tasks,limit=4){let cursor=0;await Promise.all(Array.from({length:Math.min(limit,tasks.length)},async()=>{while(cursor<tasks.length){const task=tasks[cursor++];await task()}}))}
 const restore=()=>{try{const raw=JSON.parse(sessionStorage.getItem(cacheKey)||'null');if(!raw||Date.now()-raw.at>900000)return;for(const [k,m] of raw.maps||[])cache.set(k,{...m,gold:new Set(m.gold)});if(books.some(b=>String(b.id)===raw.selected))selectedBook=raw.selected;}catch{}};
-function remember(book,units,gold,results){cache.set(String(book.id),{book,units,gold,results,extra:{...extra}});try{sessionStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),selected:selectedBook,maps:[...cache].map(([k,m])=>[k,{...m,gold:[...m.gold]}])}));}catch{}}
+function remember(book,units,gold,results){cache.set(String(book.id),{at:Date.now(),book,units,gold,results,extra:{...extra}});try{sessionStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),selected:selectedBook,maps:[...cache].map(([k,m])=>[k,{...m,gold:[...m.gold]}])}));}catch{}}
 
 function cell(label,p,url,state='unknown',tone='cyan',mission=false,launch=null){
  const value=p==null||p<0?null:Math.max(0,Math.min(100,p));
@@ -164,58 +170,60 @@ function bookTabs(){
 by('luBooks').innerHTML=books.map(b=>'<button type="button" data-book="'+esc(b.id)+'" aria-pressed="'+(String(b.id)===selectedBook)+'">'+esc(b.title)+'</button>').join('');
 }
 
-async function loadBook(){
+async function loadBook(force=false){
 const ticket=++version,book=books.find(x=>String(x.id)===selectedBook)||books[0];if(!book)return;
 const cached=cache.get(String(book.id));
-if(cached){extra=cached.extra;render(book,cached.units,cached.gold,cached.results);by('luStatus').textContent='Updating…';}else{by('luStatus').textContent='Loading unit progress…';by('luGrid').setAttribute('aria-busy','true');by('luGrid').style.opacity='.55';}
+if(cached){extra=cached.extra;render(book,cached.units,cached.gold,cached.results);if(!force&&!manualReload&&Date.now()-(cached.at||0)<30000){by('luStatus').textContent='';by('luGrid').removeAttribute('aria-busy');by('luGrid').style.opacity='';return}by('luStatus').textContent='Updating…';}else{lastMap=null;extra={};by('luGrid').innerHTML='';by('luStatus').textContent='Loading unit progress…';by('luGrid').setAttribute('aria-busy','true');by('luGrid').style.opacity='.55';}
 let pendingExtra={};
 try{
-const [units,words,mastery]=await Promise.all([loadUnits(book.id),api('/.netlify/functions/progress_summary?section=vocab_motivation').catch(()=>null),window.WillenaStudyProgress.getContentMastery(book.id).catch(()=>null)]);
-if(ticket!==version)return;
-const gold=new Set((words?.golden_units||[]).map(x=>String(x.unit_id)));
-const results=units.map((u,i)=>cached?.units[i]?.id===u.id?cached.results[i]:null);
 const bid=encodeURIComponent(book.id),uid=encodeURIComponent((await profile()).id);
-const [grammar,writing,rewards,targets,questions]=await Promise.all([
- safe(book.id===ten?window.WillenaMissionBasket.getGrammarBookProgress():courseKeys[book.id]?studentRead('rpc/get_grammar_coursebook_progress_v1',{}):Promise.resolve([])),
- safe(studentRead('writing_genius_sentence_sessions?select=unit_id,questions,responses&student_id=eq.'+uid+'&book_id=eq.'+bid+'&assignment_id=is.null&limit=1000')),
- safe(studentRead('rpc/wg_sentence_unit_rewards_v1',{})),
- safe(contentRead('unit_vocab_targets?select=unit_id,lexical_entry_id&active=eq.true&unit_id=in.('+units.map(u=>u.id).join(',')+')&limit=10000')),
- safe(contentRead('free_talking_questions?select=unit_id&book_id=eq.'+bid+'&is_published=eq.true&limit=1000'))
-]);
+if(ticket!==version)return;
+const unitsTask=catalogMemo('units:'+book.id,()=>loadUnits(book.id));
+const wordsTask=safe(shortRead(uid+':word-gold',()=>api('/.netlify/functions/progress_summary?section=vocab_motivation'),force));
+const masteryTask=safe(window.WillenaStudyProgress.getContentMastery(book.id));
+const grammarTask=safe(book.id===ten?window.WillenaMissionBasket.getGrammarBookProgress():courseKeys[book.id]?shortRead(uid+':grammar',()=>studentRead('rpc/get_grammar_coursebook_progress_v1',{}),force):Promise.resolve([]));
+const writingTask=safe(studentRead('writing_genius_sentence_sessions?select=unit_id,questions,responses&student_id=eq.'+uid+'&book_id=eq.'+bid+'&assignment_id=is.null&limit=1000'));
+const rewardsTask=safe(shortRead(uid+':writing-rewards',()=>studentRead('rpc/wg_sentence_unit_rewards_v1',{}),force));
+const questionsTask=safe(catalogMemo('talk-questions:'+book.id,()=>contentRead('free_talking_questions?select=unit_id&book_id=eq.'+bid+'&is_published=eq.true&limit=1000')));
+const units=await unitsTask;
+if(ticket!==version)return;
+const previous=new Map((cached?.units||[]).map((u,i)=>[String(u.id),i]));
+const fromCache=(u,key)=>{const i=previous.get(String(u.id));return i==null?null:cached?.extra?.[key]?.[i]??null};
+const results=units.map(u=>{const i=previous.get(String(u.id));return i==null?null:cached.results[i]??null});
+let gold=new Set(cached?.gold||[]);
+pendingExtra={word:units.map(u=>fromCache(u,'word')),talk:units.map(u=>fromCache(u,'talk')),grammar:units.map(u=>fromCache(u,'grammar')),writing:units.map(u=>fromCache(u,'writing'))};
+extra={...pendingExtra};render(book,units,gold,results);by('luGrid').style.opacity='';by('luStatus').textContent='Updating progress…';
+const targetsTask=units.length?safe(catalogMemo('word-targets:'+book.id+':'+units.map(u=>u.id).join(','),()=>contentRead('unit_vocab_targets?select=unit_id,lexical_entry_id&active=eq.true&unit_id=in.('+units.map(u=>u.id).join(',')+')&limit=10000'))):Promise.resolve([]);
+const [words,mastery,grammar,writing,rewards,targets,questions]=await Promise.all([wordsTask,masteryTask,grammarTask,writingTask,rewardsTask,targetsTask,questionsTask]);
+if(words)gold=new Set((words.golden_units||[]).map(x=>String(x.unit_id)));
 if(ticket!==version)return;
 pendingExtra.grammar=units.map(u=>{
  if(book.id!==ten&&!courseKeys[book.id])return -1;
- if(!Array.isArray(grammar))return null;
+ if(!Array.isArray(grammar))return fromCache(u,'grammar');
  const modes=['choose','check','hunt'],n=Number(u.unit_number),size=book.id===ten?8:5;
  return pct(modes.reduce((sum,mode)=>{const row=grammar.find(r=>Number(r.chapter_number)===n&&r.mode===mode&&(book.id===ten||r.book_key===courseKeys[book.id]));return sum+(book.id===ten&&n>=2?(row?.mastered_question_ids||[]).filter(id=>id.startsWith('gt2-c'+n+'-'+mode+'-')&&id.endsWith('-r2')).length:Math.min(size,Number(row?.best_correct)||0))},0),size*3);
 });
 pendingExtra.writing=units.map(u=>{
  if(Array.isArray(rewards)&&rewards.some(r=>String(r.book_id)===String(book.id)&&String(r.unit_id)===String(u.id)&&r.golden===true))return 100;
- if(!Array.isArray(writing))return null;
+ if(!Array.isArray(writing))return fromCache(u,'writing');
  const rows=writing.filter(r=>String(r.unit_id)===String(u.id));
  return rows.length?Math.max(...rows.map(r=>r.questions?.length?pct((r.responses||[]).slice(0,r.questions.length).filter(x=>x?.feedback?.grade==='correct').length,r.questions.length):0)):null;
 });
-pendingExtra.word=units.map(()=>null);pendingExtra.talk=units.map(()=>null);
-for(let i=0;i<units.length;i+=3){
- await Promise.all(units.slice(i,i+3).map(async(u,j)=>{
-  const k=i+j;
-  const ids=new Set((targets||[]).filter(r=>String(r.unit_id)===String(u.id)).map(r=>r.lexical_entry_id));
-  if(ids.size&&!gold.has(String(u.id))){
-   const snap=await safe(window.WillenaStudyProgress.getVocabSnapshot(book.id,u.id));
-   if(snap&&snap.vocabulary&&snap.spelling&&snap.speaking)pendingExtra.word[k]=pct((Number(snap.vocabulary.passed_count)||0)+(Number(snap.spelling.test_passed_count)||0)+(Number(snap.speaking.passed_count)||0),ids.size*3);
-  }
-  if(Array.isArray(questions)&&!questions.some(r=>String(r.unit_id)===String(u.id)))pendingExtra.talk[k]=-1;
-  else if(Array.isArray(questions)){
-   const data=await safe((async()=>{const t=window.WillenaAPI.getLocalAccessToken?.();if(!t)throw Error('No token');const r=await fetch('/api/free-talking-hybrid-lab',{method:'POST',cache:'no-store',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({action:'progress',book_id:book.id,unit_id:u.id})});if(!r.ok)throw Error('Conversation progress unavailable');return r.json()})());
-   if(data&&typeof data.contributions==='number')pendingExtra.talk[k]=pct(data.contributions,8);
-  }
- }));
- if(ticket!==version)return;
-}
-
-if(mastery?.success&&Array.isArray(mastery.items)){
-for(let i=0;i<units.length;i+=3){await Promise.all(units.slice(i,i+3).map(async(u,j)=>{try{const items=await loadSentences(book.id,u.id,u);if(!items.length){results[i+j]=-1;return}const passed=new Set(mastery.items.filter(x=>String(x.unit_id)===String(u.id)&&x.content_type==='sentence'&&Number(x.accuracy)>0).map(x=>x.skill+':'+x.content_id));const n=items.reduce((sum,x)=>sum+['sentence_coach','sentence_unscramble','sentence_speaking'].filter(k=>passed.has(k+':'+x.id)).length,0);results[i+j]=Math.round(n*100/(items.length*3));}catch{}}));if(ticket!==version)return;}
-}
+extra={...pendingExtra};render(book,units,gold,results);
+const targetMap=new Map();for(const r of targets||[]){const k=String(r.unit_id);if(!targetMap.has(k))targetMap.set(k,new Set());targetMap.get(k).add(r.lexical_entry_id)}
+const questionUnits=new Set((questions||[]).map(r=>String(r.unit_id)));
+const passedMap=new Map();for(const x of mastery?.items||[]){if(x.content_type!=='sentence'||Number(x.accuracy)<=0)continue;const k=String(x.unit_id);if(!passedMap.has(k))passedMap.set(k,new Set());passedMap.get(k).add(x.skill+':'+x.content_id)}
+const tasks=[];
+let paintQueued=false;
+function updateMap(){if(paintQueued)return;paintQueued=true;requestAnimationFrame(()=>{paintQueued=false;if(ticket===version){extra={...pendingExtra};render(book,units,gold,results)}})}
+units.forEach((u,i)=>{
+ const ids=targetMap.get(String(u.id));
+ if(ids?.size&&!gold.has(String(u.id)))tasks.push(async()=>{if(ticket!==version)return;const snap=await safe(window.WillenaStudyProgress.getVocabSnapshot(book.id,u.id));if(snap&&snap.vocabulary&&snap.spelling&&snap.speaking)pendingExtra.word[i]=pct((Number(snap.vocabulary.passed_count)||0)+(Number(snap.spelling.test_passed_count)||0)+(Number(snap.speaking.passed_count)||0),ids.size*3);updateMap()});
+ if(Array.isArray(questions)&&!questionUnits.has(String(u.id)))pendingExtra.talk[i]=-1;
+ else if(Array.isArray(questions))tasks.push(async()=>{if(ticket!==version)return;const data=await safe((async()=>{const t=window.WillenaAPI.getLocalAccessToken?.();if(!t)throw Error('No token');const r=await fetch('/api/free-talking-hybrid-lab',{method:'POST',cache:'no-store',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({action:'progress',book_id:book.id,unit_id:u.id})});if(!r.ok)throw Error('Conversation progress unavailable');return r.json()})());if(data&&typeof data.contributions==='number')pendingExtra.talk[i]=pct(data.contributions,8);updateMap()});
+ if(mastery?.success&&Array.isArray(mastery.items))tasks.push(async()=>{if(ticket!==version)return;try{const ids=await catalogMemo('sentence-ids:'+book.id+':'+u.id,async()=>(await loadSentences(book.id,u.id,u)).map(x=>x.id));if(!ids.length)results[i]=-1;else{const passed=passedMap.get(String(u.id))||new Set();const n=ids.reduce((sum,id)=>sum+['sentence_coach','sentence_unscramble','sentence_speaking'].filter(k=>passed.has(k+':'+id)).length,0);results[i]=Math.round(n*100/(ids.length*3))}updateMap()}catch{}});
+});
+await mapPool(tasks,4);
 if(ticket!==version)return;extra=pendingExtra;render(book,units,gold,results);remember(book,units,gold,results);by('luStatus').textContent=units.length?'':'No units available.';
 }catch(e){if(ticket===version)by('luStatus').textContent='Could not load progress. Try Refresh.';}finally{if(ticket===version){by('luGrid').removeAttribute('aria-busy');by('luGrid').style.opacity='';}}
 }
@@ -283,5 +291,5 @@ by('luGrid').addEventListener('click',event=>{
  }catch(error){console.warn('[Learning map animation]',error)}
 });
 window.addEventListener('pagehide',clearMapLaunch);
-let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){clearMapLaunch();void energy();if(!by('luMap').hidden)void loadBook()}});
+let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){clearMapLaunch();void energy();if(!by('luMap').hidden)void loadBook(true)}});
 }
