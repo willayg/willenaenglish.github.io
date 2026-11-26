@@ -10,7 +10,9 @@ const fields=[
  {key:'mouth',label:'Mouth',options:['Smile','Grin','Surprised','Serious','Smirk','Tongue','Fangs']},
  {key:'gear',label:'Accessory',options:['None','Glasses','Sunglasses','Headphones','Bow','Cap','Crown','Dragon horns','Electric antenna','Halo'],points:[0,0,0,0,0,0,500,1500,3000,5000]},
  {key:'bg',label:'Background',options:['Sky','Rose','Mint','Lavender','Peach','Sunshine','Midnight','Ocean','Forest','Cherry'],colors:['#d8ecff','#fce0ed','#d9f5e7','#e9dfff','#ffe7d1','#fff0b3','#273650','#aee8ee','#b9e2ab','#f9bac7']},
- {key:'pattern',label:'Pattern',options:['Plain','Stars','Dots','Lightning','Stripes','Bubbles','Sunburst']}
+ {key:'pattern',label:'Pattern',options:['Plain','Stars','Dots','Lightning','Stripes','Bubbles','Sunburst']},
+ {key:'beard',label:'Facial hair',options:['None']},
+ {key:'detail',label:'Face details',options:['None']}
 ];
 const additions={
  kind:[['Bear',200],['Dragon',1500],['Ghost',3000],['Astronaut',6000]],
@@ -19,17 +21,19 @@ const additions={
  ink:[['Silver',700,'#b8c8d7'],['Neon cyan',2000,'#22e0e9'],['Royal gold',3500,'#ffcf42']],
  eyes:[['Heart eyes',350],['Glowing eyes',1000],['Pixel eyes',2500],['Cosmic eyes',6000]],
  mouth:[['Cat smile',200],['Robot pixels',900],['Sparkle grin',2200]],
- gear:[['Wizard hat',1000],['Pirate hat',1800],['Ninja mask',2500],['Space helmet',4000],['Crystal tiara',6000],['Phoenix crown',10000]],
+ gear:[['Wizard hat',1000],['Pirate hat',1800],['Ninja mask',2500],['Space helmet',4000],['Crystal tiara',6000],['Phoenix crown',10000],['Eyepatch',40],['Bandana',60],['Top hat',120],['Flower crown',250],['Viking helmet',750],['Cyber visor',2000],['Royal mask',5000]],
  bg:[['Royal purple',600,'#49316e'],['Aurora',1800,'#1d676a'],['Nebula',3500,'#281b52'],['Molten gold',8000,'#d98824']],
- pattern:[['Hearts',300],['Snowflakes',750],['Fire',1500],['Galaxy',3500],['Crystals',6000],['Golden aura',10000]]
+ pattern:[['Hearts',300],['Snowflakes',750],['Fire',1500],['Galaxy',3500],['Crystals',6000],['Golden aura',10000],['Clouds',20],['Music notes',100],['Confetti',200],['Cherry blossoms',400]],
+ beard:[['Stubble',10],['Small moustache',20],['Goatee',40],['Full beard',60],['Curly moustache',100],['Long beard',150],['Viking beard',400],['Wizard beard',1000]],
+ detail:[['Freckles',10],['Rosy cheeks',20],['Whiskers',30],['Bandage',50],['Star cheek',75],['War paint',150],['Lightning mark',350],['Cyber circuits',1000]]
 };
-const starterUnlocks={"kind":[0,10,25,50,75,100,150],"body":[0,10,10,20,30,40,50,60,75,100,125,150],"hair":[0,10,20,30,40,50,75,100],"ink":[0,10,20,30,40,50,75,100,125],"eyes":[0,10,20,30,50,75,150],"mouth":[0,10,20,30,50,75,100],"gear":[0,10,20,50,75,100,500,1500,3000,5000],"bg":[0,10,20,30,40,50,75,100,125,150],"pattern":[0,10,20,40,50,75,100]};
+const starterUnlocks={"kind":[0,10,25,50,75,100,150],"body":[0,10,10,20,30,40,50,60,75,100,125,150],"hair":[0,10,20,30,40,50,75,100],"ink":[0,10,20,30,40,50,75,100,125],"eyes":[0,10,20,30,50,75,150],"mouth":[0,10,20,30,50,75,100],"gear":[0,10,20,50,75,100,500,1500,3000,5000],"bg":[0,10,20,30,40,50,75,100,125,150],"pattern":[0,10,20,40,50,75,100],"beard":[0],"detail":[0]};
 for(const f of fields){f.points=starterUnlocks[f.key].slice();if(f.points.length!==f.options.length)throw Error('Invalid avatar unlock table: '+f.key);for(const [label,points,color] of additions[f.key]||[]){f.options.push(label);f.points.push(points);if(f.colors)f.colors.push(color)}Object.freeze(f.options);Object.freeze(f.points);if(f.colors)Object.freeze(f.colors);Object.freeze(f)}
 Object.freeze(fields);
-const defaults=[0,0,0,0,0,0,0,0,0];
+const defaults=[0,0,0,0,0,0,0,0,0,0,0];
 const prefix='al1-';
-function encode(values){return Array.isArray(values)&&values.length===fields.length&&values.every((v,i)=>Number.isInteger(v)&&v>=0&&v<fields[i].options.length)?prefix+values.map(v=>v.toString(36)).join(''):null}
-function decode(value){if(typeof value!=='string'||!/^al1-[0-9a-z]{9}$/.test(value))return null;const v=Array.from(value.slice(prefix.length),x=>parseInt(x,36));return encode(v)===value?v:null}
+function encode(values){if(!Array.isArray(values)||![9,fields.length].includes(values.length))return null;const v=values.length===9?[...values,0,0]:values;if(!v.every((n,i)=>Number.isInteger(n)&&n>=0&&n<fields[i].options.length))return null;return prefix+(v[9]||v[10]?v:v.slice(0,9)).map(n=>n.toString(36)).join('')}
+function decode(value){if(typeof value!=='string'||!/^al1-(?:[0-9a-z]{9}|[0-9a-z]{11})$/.test(value))return null;const v=Array.from(value.slice(prefix.length),x=>parseInt(x,36));if(v.length===9)v.push(0,0);return encode(v)===value?v:null}
 function eligible(value,points){const v=decode(value);if(!v)return false;const threshold=Math.max(...v.map((n,i)=>fields[i].points[n]||0));return threshold===0||(Number.isFinite(points)&&points>=threshold)}
 const line='#293248';
 const path=(d,fill='none',stroke=line,width=3)=>'<path d="'+d+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+width+'" stroke-linecap="round" stroke-linejoin="round"/>';
@@ -39,7 +43,7 @@ const rect=(x,y,w,h,r,fill,stroke='none',width=0)=>'<rect x="'+x+'" y="'+y+'" wi
 const star=(x,y,r,fill)=>path(Array.from({length:10},(_,i)=>{const a=i*Math.PI/5-Math.PI/2,n=i%2?r*.43:r;return(i?'L':'M')+(x+Math.cos(a)*n).toFixed(1)+' '+(y+Math.sin(a)*n).toFixed(1)}).join(' ')+'Z',fill,'none',0);
 function svg(value){
  const v=decode(value);if(!v)return '';
- const [kind,body,hair,ink,eyes,mouth,gear,bg,pattern]=v;
+ const [kind,body,hair,ink,eyes,mouth,gear,bg,pattern,beard,detail]=v;
  const skin=fields[1].colors[body],accent=fields[3].colors[ink],back=fields[7].colors[bg];
  let s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" aria-hidden="true" style="display:block;width:100%;height:100%">';
  s+=rect(0,0,128,128,0,back);
@@ -57,6 +61,10 @@ function svg(value){
  if(pattern===10){s+=ellipse(64,64,72,26,'none','#ba9aff',5)+ellipse(64,64,62,37,'none','#85e5ff',3);for(const [x,y] of [[8,27],[106,16],[15,101],[112,96]])s+=star(x,y,6,'#fff1a2')}
  if(pattern===11){for(const [x,y] of [[9,29],[113,28],[8,97],[112,99]])s+=path('M'+x+' '+(y-13)+'l8 13 -8 13 -8 -13Z','#b8ecff','#fff',1)}
  if(pattern===12){s+=circle(64,64,58,'none','#ffdb46',8)+circle(64,64,48,'none','#fff1a2',3);for(const [x,y] of [[14,28],[114,28],[14,101],[114,101]])s+=star(x,y,9,'#ffde59')}
+ if(pattern===13){for(const [x,y] of [[10,22],[106,20],[8,95],[112,100]])s+=circle(x,y,9,'#fff')+circle(x+7,y-3,8,'#fff')+circle(x+13,y,7,'#fff')}
+ if(pattern===14){for(const [x,y] of [[10,18],[106,28],[12,100],[110,105]])s+=ellipse(x,y,5,3,'#fff')+path('M'+(x+4)+' '+y+'v-15l9 4','none','#fff',3)}
+ if(pattern===15){for(const [x,y,k] of [[9,12,0],[107,19,1],[15,53,2],[115,73,0],[13,105,1],[102,116,2],[18,78,0],[91,8,2]])s+=path('M'+x+' '+y+'l6 3 -3 7 -6 -3Z',['#ff6eaa','#ffde64','#68d7e6'][k],'none')}
+ if(pattern===16){for(const [x,y] of [[12,19],[106,13],[14,100],[111,93]]){for(let k=0;k<5;k++){const a=k*Math.PI*2/5;s+=circle(x+Math.cos(a)*5,y+Math.sin(a)*5,4,'#ff91b6')}s+=circle(x,y,2.5,'#fff0a5')}}
  s+='</g>';
  // Body and silhouette. Every piece is fixed artwork; no student-supplied SVG or URLs.
  if(kind===0)s+=path('M24 128V118Q27 99 47 96H81Q101 99 104 118V128Z',accent)+rect(54,87,20,21,8,skin,line,3)+ellipse(27,64,8,11,skin,line,3)+ellipse(101,64,8,11,skin,line,3)+rect(31,26,66,73,28,skin,line,3);
@@ -104,7 +112,27 @@ function svg(value){
  }
  if(kind===1||kind===2||kind===5)s+=path('M59 75Q64 71 69 75L64 79Z','#e8879d',line,1.5);
  if(kind===0||kind===4||kind===6)s+=ellipse(38,76,5,2.5,'#ed8ea0')+ellipse(90,76,5,2.5,'#ed8ea0');
+ // Face decoration and facial hair are independent of head accessories.
+ if(detail===1){for(const x of [34,40,46,82,88,94])s+=circle(x,73+((x%4)*1.4),1.8,'#a85f4e')}
+ if(detail===2)s+=ellipse(38,76,9,5,'#f18eaa')+ellipse(90,76,9,5,'#f18eaa');
+ if(detail===3)s+=path('M25 70l20 6M25 83l20-3M103 70l-20 6M103 83l-20-3','none',line,2);
+ if(detail===4)s+=rect(32,70,21,10,4,'#f6d6a5',line,1.3)+rect(39,70,7,10,2,'#fff0d5');
+ if(detail===5)s+=star(87,77,8,'#ffcb46');
+ if(detail===6)s+=path('M29 71l17 4-2 5-17-4ZM99 71l-17 4 2 5 17-4Z','#d85b71','none')+path('M30 82l14 3M98 82l-14 3','none','#d85b71',3);
+ if(detail===7)s+=path('M92 72l-10 9h7l-5 11 14-14h-7Z','#ffcc49',line,1.3);
+ if(detail===8)s+=path('M28 60h7v15h11M100 60h-7v15H82M35 82v9h14M93 82v9H79','none','#1ce1dc',2)+circle(46,75,2.5,'#1ce1dc')+circle(82,75,2.5,'#1ce1dc');
  const my=kind===3?76:85,mc=kind===3?'#a8e9ff':line;
+ const beardFill=beard===8?'#e9edf4':accent;
+ if(beard){s+='<g transform="translate(0 '+(my-85)+')">';
+  if(beard===1){for(const [x,y] of [[38,80],[41,87],[45,92],[49,96],[55,99],[61,100],[68,100],[75,97],[82,92],[87,86],[90,80]])s+=circle(x,y,1.5,beardFill)}
+  if(beard===3)s+=path('M53 96Q64 100 75 96L70 108L64 112L58 108Z',beardFill,line,2);
+  if(beard===4||beard===6||beard===7||beard===8){
+   const tip=beard===4?106:beard===6?119:beard===7?122:125;
+   s+=path('M32 75Q37 94 50 92Q64 102 78 92Q91 94 96 75Q100 99 85 106Q77 '+(tip-3)+' 64 '+tip+'Q51 '+(tip-3)+' 43 106Q28 99 32 75Z',beardFill,line,2.5);
+   if(beard===7)s+=path('M48 105l3 13M80 105l-3 13','none',line,2)+rect(46,112,10,4,2,'#edbd57',line,1)+rect(72,112,10,4,2,'#edbd57',line,1);
+   if(beard===8)s+=path('M49 104l9 14M79 104l-9 14','none','#b6c0d0',2);
+  }s+='</g>'}
+
  if(mouth===0)s+=path('M56 '+my+'q8 9 16 0','none',mc,2.8);
  if(mouth===1)s+=path('M53 '+(my-2)+'Q64 '+(my+3)+' 75 '+(my-2)+'Q73 '+(my+13)+' 64 '+(my+12)+'Q55 '+(my+13)+' 53 '+(my-2)+'Z','#fff',mc,2.5);
  if(mouth===2)s+=ellipse(64,my+2,5,6,mc);
@@ -115,6 +143,12 @@ function svg(value){
  if(mouth===7)s+=path('M54 '+my+'q5 8 10 2q5 6 10 -2','none',mc,3);
  if(mouth===8){for(let i=0;i<5;i++)s+=rect(52+i*5,my+(i===0||i===4?-2:2),4,4,0,mc)}
  if(mouth===9)s+=path('M52 '+my+'Q64 '+(my+6)+' 76 '+my+'Q75 '+(my+13)+' 64 '+(my+12)+'Q53 '+(my+13)+' 52 '+my+'Z','#fff',mc,2)+star(80,my-5,5,'#ffda53');
+ if([2,4,5,6,7,8].includes(beard)){
+  s+='<g transform="translate(0 '+(my-85)+')">';
+  if(beard===5)s+=path('M64 81Q53 70 43 79Q34 85 39 75Q29 81 38 88Q49 95 64 85Q79 95 90 88Q99 81 89 75Q94 85 85 79Q75 70 64 81Z',beardFill,line,2);
+  else s+=path('M64 81Q54 75 48 79Q45 82 42 83Q52 88 64 84Q76 88 86 83Q83 82 80 79Q74 75 64 81Z',beardFill,line,1.6);
+  s+='</g>';
+ }
  if(gear===1||gear===2){s+=path('M29 58H33M59 59H69M95 58h4','none',line,3)+rect(33,51,27,21,7,gear===2?line:'none',line,3)+rect(68,51,27,21,7,gear===2?line:'none',line,3);if(gear===2)s+=path('M37 56l9 9M72 56l9 9','none','#637c98',2)}
  if(gear===3)s+=path('M22 67V53Q22 22 64 22Q106 22 106 53V67','none',line,7)+rect(15,55,15,28,6,accent,line,3)+rect(98,55,15,28,6,accent,line,3);
  if(gear===4)s+=path('M81 32L73 21Q83 17 91 27Q99 17 109 21L101 32L109 43Q99 47 91 37Q83 47 73 43Z','#ed7eb4',line,2)+circle(91,32,5,'#f9b7d9',line,2);
@@ -129,6 +163,13 @@ function svg(value){
  if(gear===13)s+=circle(64,62,47,'none','#dce9f7',7)+circle(64,62,47,'none',line,2)+path('M27 43Q35 24 52 20','none','#fff',6)+rect(42,105,44,9,3,'#7ba7ca',line,2);
  if(gear===14)s+=path('M32 36L37 19L52 28L64 8L76 28L91 19L96 36Z','#a9c8ec',line,3)+path('M64 8L70 23L64 34L58 23Z','#eafaff',line,1.6)+circle(43,30,3,'#e1b4ff')+circle(85,30,3,'#e1b4ff');
  if(gear===15)s+=path('M33 40Q20 25 23 10Q38 15 48 29Q45 10 64 3Q83 10 80 29Q90 15 105 10Q108 25 95 40Z','#ff9a35',line,3)+path('M43 36Q52 25 64 17Q76 25 85 36Z','#ffe06a',line,2)+rect(35,35,58,7,3,'#e6aa27',line,2)+star(64,31,7,'#fff1a6');
+ if(gear===16)s+=path('M31 49L89 78','none',line,3)+rect(34,50,25,23,9,'#26354b',line,2);
+ if(gear===17)s+=path('M28 41Q64 30 100 41L99 51Q64 40 29 51Z','#e66b78',line,2)+path('M94 43l19-8-6 14 8 8-21-4Z','#e66b78',line,2);
+ if(gear===18)s+=rect(39,5,50,34,5,'#293248',line,2)+rect(39,28,50,8,1,'#a76fc3')+ellipse(64,39,39,7,'#293248',line,2);
+ if(gear===19){s+=path('M28 39Q64 18 100 39','none','#5aa37a',5);for(const [x,y] of [[35,35],[49,27],[64,25],[79,27],[93,35]]){for(let k=0;k<5;k++){const a=k*Math.PI*2/5;s+=circle(x+Math.cos(a)*4,y+Math.sin(a)*4,3.5,'#f39bbf')}s+=circle(x,y,3,'#ffdc65')}}
+ if(gear===20)s+=path('M35 37Q13 36 14 10Q25 28 42 26M93 37Q115 36 114 10Q103 28 86 26','#f2ddb7',line,3)+path('M28 44Q29 12 64 12Q99 12 100 44Z','#aebbc9',line,3)+rect(28,37,72,9,3,'#d7a34f',line,2)+rect(60,12,8,26,2,'#d7a34f',line,2);
+ if(gear===21)s+=rect(29,49,70,25,9,'#26344e',line,2)+rect(33,53,62,17,6,'#23e1ed')+path('M40 57l13 8M59 57l13 8','none','#b8fbff',3);
+ if(gear===22)s+=path('M29 50Q45 44 64 50Q83 44 99 50L94 73Q78 82 64 69Q50 82 34 73Z','#d4a341',line,2)+ellipse(47,61,10,7,'#293248')+ellipse(81,61,10,7,'#293248')+star(64,52,5,'#fff2b0');
  return s+'</svg>';
 }
 function render(el,value){if(!el||!decode(value))return false;const art=document.createElement('span');art.setAttribute('aria-hidden','true');art.style.cssText='display:block;width:100%;height:100%;aspect-ratio:1;max-width:100%;max-height:100%;border-radius:50%;overflow:hidden;flex:none';art.innerHTML=svg(value);el.dataset.avatarValue=value;el.dataset.avatarArt='1';el.style.padding='0';el.replaceChildren(art);return true}
@@ -144,8 +185,8 @@ function mount({modal,getSelected,getPoints,onChoose}){
  tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Customize avatar');
  controls.setAttribute('role','tabpanel');controls.id='al-option-panel';
  panel.append(top,preview,tabs,controls,note,use);grid.after(panel);
- const categories=[{"label":"Character","english":"Character","fields":[0,1]},{"label":"Hair","english":"Hair","fields":[2,3]},{"label":"Face","english":"Face","fields":[4,5]},{"label":"Accessories","english":"Accessories","fields":[6]},{"label":"Background","english":"Background","fields":[7,8]}];
- const labels=['Character','Skin / fur colour','Hair style','Hair / accent colour','Eyes','Mouth','Accessories','Background colour','Background pattern'];
+ const categories=[{"label":"Character","english":"Character","fields":[0,1]},{"label":"Hair","english":"Hair","fields":[2,3]},{"label":"Face","english":"Face","fields":[4,5,9,10]},{"label":"Accessories","english":"Accessories","fields":[6]},{"label":"Background","english":"Background","fields":[7,8]}];
+ const labels=['Character','Skin / fur colour','Hair style','Hair / accent colour','Eyes','Mouth','Accessories','Background colour','Background pattern','Facial hair','Face details'];
  const lockArt='<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
  let values=defaults.slice(),custom=null,category=0,tiles=[];
  function points(){const p=getPoints();return Number.isFinite(p)?p:NaN}
