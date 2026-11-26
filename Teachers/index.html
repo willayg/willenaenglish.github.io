@@ -1732,27 +1732,27 @@ async function ccLoadOutstandingRewards(className){
  const host=document.getElementById('ccOutstandingRewards');
  if(!host||curriculum.assignmentSubview!=='rewards')return;
  const run=++ccRewardRequest;
- const klass=(curriculum.data?.classes||[]).find(c=>c.name===className);
- const books=klass?ccBooks(klass):[];
  const roster=ccClassStudents(className);
- const studentById=new Map(roster.map(s=>[String(s.id),s]));
- const goldByStudent=new Map(),tokensByStudent=new Map(),redeemed=new Map(),errors=[];
- let checked=0,total=0,loading=true,saving=false;
+ const summaries=new Map(),errors=[];
+ let loading=true,saving=false,ready=false;
  const live=()=>run===ccRewardRequest&&curriculum.assignmentSubview==='rewards'&&curriculum.selectedClass===className&&host.isConnected;
- const goldCount=id=>goldByStudent.get(id)?.size||0;
- const claimed=id=>redeemed.get(id)||0;
- const owed=id=>Math.max(0,Math.floor(goldCount(id)/4)-claimed(id));
+ const owed=id=>summaries.get(id)?.owed??0;
  function people(){
   return roster
    .sort((a,b)=>ccRewardStudentName(a).localeCompare(ccRewardStudentName(b),'en'));
  }
  function paint(){
   if(!live())return;
-  const students=people(),pending=students.reduce((sum,s)=>sum+owed(String(s.id)),0);
+  if(!ready){
+   host.innerHTML='<div class="cc-reward-summary"><strong>'+(loading?'Checking Gold rewards…':'Jelly Energy unavailable')+'</strong><button class="cc-reward-refresh" type="button" id="ccRewardRefresh"'+(loading?' disabled':'')+'>Refresh</button></div>'+(errors.length?'<p class="cc-reward-error">'+ccEscape(errors[errors.length-1])+'</p>':'');
+   host.querySelector('#ccRewardRefresh')?.addEventListener('click',()=>ccLoadOutstandingRewards(className));
+   return;
+  }
+  const students=people().filter(s=>summaries.has(String(s.id))),pending=students.reduce((sum,s)=>sum+owed(String(s.id)),0);
   const disabled=loading||saving?' disabled':'';
   host.innerHTML='<div class="cc-reward-summary"><div><strong>'+pending+' Jelly Time'+(pending===1?'':'s')+' ready · '+students.filter(s=>owed(String(s.id))>0).length+' students</strong><small>Outstanding rewards'+(loading?' · Checking rewards…':saving?' · Saving…':'')+'</small></div><button class="cc-reward-refresh" type="button" id="ccRewardRefresh"'+(saving?' disabled':'')+'>Refresh</button></div>'+
    (students.length?'<div class="cc-reward-scroll"><div class="cc-reward-list" style="--reward-columns:'+Math.ceil(students.length/4)+'">'+students.map(student=>{
-    const id=String(student.id),due=owed(id),progress=(goldCount(id)%4)*25;
+    const id=String(student.id),due=owed(id),progress=summaries.get(id).energy_percent;
     return '<article class="cc-reward-student"><div class="cc-reward-name"><span>'+ccEscape(ccRewardStudentName(student))+'</span></div>'+
      '<div class="cc-reward-energy"><span class="cc-reward-energy-label">Energy until next jelly</span><div class="cc-reward-progress" role="progressbar" aria-label="Energy until next jelly" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+progress+'"><div class="cc-reward-progress-fill" style="width:'+progress+'%"></div></div></div>'+
      (due?'<div class="cc-reward-claims"><div class="cc-reward-owed"><label class="cc-reward-check" title="Give all owed jellies"><input type="checkbox" data-reward-student="'+ccEscape(id)+'" aria-label="Mark all owed jellies given to '+ccEscape(ccRewardStudentName(student))+'"'+disabled+'></label><span>Jellies owed: '+due+'</span></div><div class="cc-reward-claims-list">'+
@@ -1764,62 +1764,41 @@ async function ccLoadOutstandingRewards(className){
   host.querySelectorAll('[data-reward-single]').forEach(box=>box.addEventListener('change',()=>{if(box.checked)void save(box.dataset.rewardSingle,1)}));
  }
  async function save(studentId,quantity){
-  if(!live()||loading||saving||quantity<1)return;
+  if(!live()||!ready||loading||saving||quantity<1)return;
+  quantity=Math.min(quantity,owed(studentId));
+  if(quantity<1)return;
   saving=true;paint();
-  const tokens=tokensByStudent.get(studentId)||[];
+  const tokens=summaries.get(studentId)?.eligible_tokens||[];
   let succeeded=0;
   for(const t of tokens){
    if(succeeded>=quantity)break;
    if(t.given)continue;
    try{
     // The existing legacy ledger records one row per jelly, not per Gold.
-    await ccRpc('teacher_unit_jelly_set_v1',{p_student_id:studentId,p_book_id:t.bookId,p_unit_id:t.unitId,p_app:t.app,p_given:true});
+    await ccRpc('teacher_unit_jelly_set_v1',{p_student_id:studentId,p_book_id:t.book_id,p_unit_id:t.unit_id,p_app:t.app,p_given:true});
     t.given=true;succeeded++;
-    redeemed.set(studentId,claimed(studentId)+1);
-    window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId:t.bookId,unitId:t.unitId,app:t.app,given:true}}));
+    window.dispatchEvent(new CustomEvent('willena:jelly-changed',{detail:{studentId,bookId:t.book_id,unitId:t.unit_id,app:t.app,given:true}}));
    }catch(error){errors.push('Could not save jelly: '+(error.message||'Unknown error'));break}
   }
   if(succeeded<quantity)errors.push('Only '+succeeded+' of '+quantity+' jellies could be recorded. Refresh to verify.');
+  try{await loadSummary()}catch(error){ready=false;errors.push('Could not refresh rewards: '+(error.message||'Unknown error'));}
   saving=false;paint();
  }
- paint();
- try{
-  // Count ALL historical Jelly Times for the student, even from books no longer active.
-  const [history,unitGroups]=await Promise.all([
-   ccRpc('teacher_jelly_claim_counts_v1',{p_class:className}),
-   Promise.all(books.filter(b=>b.book_id).map(async book=>({book,units:await ccUnits(book.book_id)})))
-  ]);
+ async function loadSummary(){
+  const token=ccToken();
+  if(!token)throw Error('Teacher login is unavailable. Sign in and refresh.');
+  const res=await fetch(ccOp.replace('/rest/v1/','/functions/v1/')+'jelly-energy-v1',{method:'POST',headers:{'Content-Type':'application/json',apikey:ccOpKey,Authorization:'Bearer '+token,'x-catalog-key':ccCatalogKey},body:JSON.stringify({class_name:className}),cache:'no-store'});
+  const result=await res.json().catch(()=>({}));
+  if(!res.ok||!Array.isArray(result.students))throw Error(result.error||'Jelly Energy unavailable ('+res.status+')');
+  const next=new Map();
+  for(const row of result.students){if(!Number.isFinite(row.energy_percent)||!Number.isInteger(row.owed)||!Array.isArray(row.eligible_tokens))throw Error('Invalid reward summary');next.set(String(row.student_id),row);}
   if(!live())return;
-  for(const row of Array.isArray(history)?history:[])redeemed.set(String(row.student_id),Number(row.given_count)||0);
-  const tasks=unitGroups.flatMap(({book,units})=>units.flatMap(unit=>ccSkillGroups.map(group=>({book,unit,group}))));
-  total=tasks.length;
-  let cursor=0;
-  async function worker(){
-   while(live()&&cursor<tasks.length){
-    const {book,unit,group}=tasks[cursor++];
-    try{
-     const eligible=await window.WillenaGoldEligibility({className,bookId:book.book_id,unitId:unit.id,app:group.key});
-     if(!live())return;
-     if(eligible.length){
-      const given=await ccRpc('teacher_unit_jelly_get_v1',{p_class:className,p_book_id:book.book_id,p_unit_id:unit.id,p_app:group.key});
-      if(!live())return;
-      const givenIds=new Set((Array.isArray(given)?given:[]).map(row=>String(row.student_id)));
-      for(const studentId of eligible.map(String)){
-       if(!studentById.has(studentId))continue;
-       const key=[book.book_id,unit.id,group.key].join(':');
-       if(!goldByStudent.has(studentId))goldByStudent.set(studentId,new Set());
-       goldByStudent.get(studentId).add(key);
-       if(!tokensByStudent.has(studentId))tokensByStudent.set(studentId,[]);
-       tokensByStudent.get(studentId).push({bookId:book.book_id,unitId:unit.id,app:group.key,given:givenIds.has(studentId)});
-      }
-     }
-    }catch(error){errors.push(error.message||'Gold verification failed')}
-    checked++;if(checked%8===0||checked===total)paint();
-   }
-  }
-  await Promise.all(Array.from({length:Math.min(4,total)},()=>worker()));
-  loading=false;paint();
- }catch(error){errors.push(error.message||'Could not load rewards');loading=false;paint()}
+  summaries.clear();for(const [id,row] of next)summaries.set(id,row);
+  ready=true;
+ }
+ paint();
+ try{await loadSummary()}catch(error){ready=false;errors.push(error.message||'Could not load rewards')}
+ loading=false;paint();
 }
 
 function ccCurrentBook(){return curriculum.data?.books.find(b=>b.id===curriculum.selectedBook)}
