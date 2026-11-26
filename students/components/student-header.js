@@ -108,13 +108,15 @@ class StudentHeader extends HTMLElement {
   window.addEventListener('stars:refresh', this._onStarsRefresh);
   window.addEventListener('session:ended', this._onStarsRefresh);
   // Hydrate identity from server session and refresh on focus changes
-  this._hydrateProfile();
+  const profileReady=this._hydrateProfile();
+  window.WillenaGeniusBoot?.track?.(profileReady);
   window.addEventListener('focus', this._onFocus);
       window.addEventListener('wa:audio-settings-changed', this._onAudioEvent);
       document.addEventListener('pointerdown', this._onAnyUserGestureResumeMusic, true);
     // If points not yet known, fetch once to seed
     if ((this._points == null || this._stars == null) && !this._fetchingOverview) {
-      this._fetchOverview();
+      const overviewReady=this._fetchOverview();
+      window.WillenaGeniusBoot?.track?.(overviewReady);
     }
   // Retired: the mission basket is the only entry point for outstanding missions.
   // Do not auto-open the legacy "You Have A Mission" popup.
