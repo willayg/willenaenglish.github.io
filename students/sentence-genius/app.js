@@ -328,7 +328,7 @@ async function boot(){
     state.books=[...books.values()];
     screens.home(state.books);
     screens.homework(state.homework);
-    const achievementTask=refreshHomeAchievements();window.WillenaGeniusBoot?.track(achievementTask);
+    const achievementTask=refreshHomeAchievements();window.WillenaGeniusBoot?.track?.(achievementTask);
     if(navigation.current().screen==='home')screens.notice(state.books.length?'':'현재 배정된 교재가 없습니다.');
     await navigation.start();
     // A homework mission may deep-link to an assigned book and unit. Verify
