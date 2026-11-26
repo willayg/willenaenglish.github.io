@@ -24,8 +24,12 @@ h1{font-size:23px;letter-spacing:-.035em;margin:0 0 20px;font-weight:800}
 a:focus-visible{outline:3px solid #22bfc9;outline-offset:3px}
 @media(max-width:540px){main{padding:20px 16px 40px}.books{grid-template-columns:1fr;gap:12px}.book{min-height:77px;padding:17px 19px;font-size:18px}}
 </style>
+<link rel="modulepreload" href="./app.js?v=20261126-portal-rollout1">
+<script src="/students/components/genius-app-boot.js?v=20261126-all-apps1"></script>
 </head>
 <body>
+<script>window.WillenaGeniusBoot?.mountPortal?.();</script>
+
 <student-header title="Listening Genius" show-id="false" show-home="true" home-href="/students/dashboard" home-label="Home" show-points="true" show-logout="true"></student-header>
 <main>
 <h1>내 교재</h1>
@@ -33,6 +37,6 @@ a:focus-visible{outline:3px solid #22bfc9;outline-offset:3px}
 <div id="status" class="status" role="status">교재를 불러오는 중…</div>
 <div id="books" class="books"></div>
 </main>
-<script type="module" src="./app.js?v=20261112g"></script>
+<script type="module" src="./app.js?v=20261126-portal-rollout1"></script>
 </body>
 </html>
