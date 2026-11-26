@@ -299,7 +299,24 @@ if(ticket!==version)return;extra=pendingExtra;render(book,units,gold,results);re
 }catch(e){if(ticket===version)by('luStatus').textContent='Could not load progress. Try Refresh.';}finally{if(ticket===version){by('luGrid').removeAttribute('aria-busy');by('luGrid').style.opacity='';}}
 }
 async function load(){if(loading)return;loading=true;try{const p=await profile();books=await assignedBooks(p.className);if(!cacheKey){cacheKey='willena-learning-map-v4:'+p.id;restore()}if(!books.some(b=>String(b.id)===selectedBook))selectedBook=String(books[0]?.id||'');bookTabs();if(!books.length){by('luStatus').textContent='No assigned books.';return}await loadBook();loaded=true;}catch(e){by('luStatus').textContent='Curriculum unavailable. Try Refresh.';}finally{loading=false}}
-function view(map){by('luApps').setAttribute('aria-pressed',String(!map));by('luMapTab').setAttribute('aria-pressed',String(map));hero.hidden=map;by('luMap').hidden=!map;try{localStorage.setItem('willena-staging-dashboard-view',map?'map':'apps')}catch{}if(map&&!loaded)void load()}
+// Show the map guide once per student per browser, only when the map is visible.
+const mapLegend=by('luMapLegend');
+let legendInitialized=false,legendPending=null,legendInteracted=false;
+const legendSeenMemory=new Set();
+mapLegend?.querySelector('summary')?.addEventListener('click',()=>{legendInteracted=true});
+function initMapLegend(){
+ if(!mapLegend||legendInitialized||legendPending||by('luMap').hidden)return;
+ legendPending=profile().then(p=>{
+  if(by('luMap').hidden||legendInitialized)return;
+  const key='willena:map-legend:seen:v1:'+String(p.id);
+  let seen=legendSeenMemory.has(key);
+  try{seen=seen||localStorage.getItem(key)==='1'}catch{}
+  if(!legendInteracted)mapLegend.open=!seen;
+  legendInitialized=true;legendSeenMemory.add(key);
+  try{localStorage.setItem(key,'1')}catch{}
+ }).catch(()=>{}).finally(()=>{legendPending=null});
+}
+function view(map){by('luApps').setAttribute('aria-pressed',String(!map));by('luMapTab').setAttribute('aria-pressed',String(map));hero.hidden=map;by('luMap').hidden=!map;try{localStorage.setItem('willena-staging-dashboard-view',map?'map':'apps')}catch{}if(map){initMapLegend();if(!loaded)void load()}}
 by('luApps').onclick=()=>view(false);by('luMapTab').onclick=()=>view(true);by('luBooks').onclick=e=>{const b=e.target.closest('[data-book]');if(!b)return;if(selectedBook===b.dataset.book)return;selectedBook=b.dataset.book;bookTabs();void loadBook()};
 window.addEventListener('willena:map-missions',()=>{if(!starLaunching&&lastMap){const {book,units,wordGold,sentenceResults}=lastMap;render(book,units,wordGold,sentenceResults)}});
 const launchTitles={word:'Word Genius',sentence:'Sentence Genius',grammar:'Grammar Genius Books',talk:'Free Talking Genius',writing:'Writing Genius',puzzles:'Puzzles'};
@@ -390,5 +407,5 @@ hero?.addEventListener('click',event=>{
  try{showNeonPortal(link,x,y,{title,icon})}catch(error){console.warn('[App portal]',error)}
 });
 window.addEventListener('pagehide',clearMapLaunch);
-let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){clearMapLaunch();void energy();if(!by('luMap').hidden)void loadBook(true)}});
+let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){clearMapLaunch();void energy();if(legendInitialized&&mapLegend)mapLegend.open=false;if(!by('luMap').hidden){initMapLegend();void loadBook(true)}}});
 }
