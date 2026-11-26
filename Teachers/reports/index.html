@@ -272,7 +272,7 @@ const now=new Date();const korea=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia
 $('month').value=korea.find(x=>x.type==='year').value+'-'+korea.find(x=>x.type==='month').value;
 $('month').addEventListener('change',load);$('reload').addEventListener('click',load);$('class').addEventListener('change',choose);
 $('student').addEventListener('change',()=>{activeStudent=$('student').value;render()});
-$('generateComment').addEventListener('click',()=>generateComment(true));
+$('generateComment').addEventListener('click',()=>{const k=currentCommentKey();if(!k)return;commentErrors.delete(k);generateComment(notes.has(k));});
 $('print').addEventListener('click',()=>{if(dataReady&&notes.get(currentCommentKey())?.comment&&!commentJobs.has(currentCommentKey()))window.print()});
 load();
 })();
