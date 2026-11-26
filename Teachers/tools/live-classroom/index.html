@@ -40,6 +40,15 @@ body.embedded .toolbar{border-radius:12px;padding:11px}
 body.embedded footer{display:none}
 
 body.mini main{margin:0;padding:12px}body.mini .toolbar{padding:7px 10px;border:0;box-shadow:none;background:#f7fcfd}body.mini .toolbar label[for="app-filter"],body.mini #app-filter,body.mini #refresh,body.mini #last-refresh,body.mini .stats,body.mini footer{display:none!important}body.mini .toolbar .grow{display:none}body.mini .class-head{margin:12px 0 6px}body.mini .notice{margin:8px 0}body.mini .student{grid-template-columns:minmax(90px,1fr) minmax(100px,1fr) minmax(130px,2fr);gap:8px}body.mini .student>:nth-child(4),body.mini .student>:nth-child(5){display:none}body.mini .table-heading{grid-template-columns:minmax(90px,1fr) minmax(100px,1fr) minmax(130px,2fr)}@media(max-width:620px){body.mini .student{grid-template-columns:minmax(70px,1fr) minmax(66px,.7fr) minmax(90px,1.2fr);font-size:.75rem}}
+
+.presence-detail-toggle{max-width:100%;font:inherit;font-weight:650;color:#197e89;background:none;border:0;border-radius:6px;text-align:left;padding:3px 13px 3px 0;white-space:normal;overflow-wrap:anywhere;position:relative;line-height:1.35}
+.presence-detail-toggle:after{content:"";position:absolute;right:3px;top:45%;width:5px;height:5px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg)}
+.presence-detail-toggle[aria-expanded="true"]:after{transform:rotate(225deg)}
+.presence-detail-toggle:focus-visible{outline:2px solid #28a7b1;outline-offset:2px}
+.presence-detail-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:8px;padding:10px 14px;background:#f1fafb;border-bottom:1px solid #dce9ec}
+.presence-detail-item{display:grid;gap:2px;min-width:0}.presence-detail-item small{font-size:.65rem;color:#718a91}.presence-detail-item strong{font-size:.79rem;color:#285561;overflow-wrap:anywhere}
+.presence-detail-note{grid-column:1/-1;font-size:.68rem;color:#788e95}
+@media(max-width:620px){.presence-detail-panel{grid-template-columns:repeat(2,minmax(0,1fr));padding:9px}.presence-detail-item strong{font-size:.72rem}}
 </style>
 <script>if(new URLSearchParams(location.search).has('mini'))document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('mini'));
 if(new URLSearchParams(location.search).has('embedded'))document.addEventListener('DOMContentLoaded',()=>document.body.classList.add('embedded'));</script>
@@ -53,5 +62,5 @@ if(new URLSearchParams(location.search).has('embedded'))document.addEventListene
 <div id="classes"></div>
 <footer>Willena Live Classroom · Online status expires after 90 seconds · Updates while this page is open</footer>
 </main>
-<script type="module" src="./live-classroom.js?v=9-mini"></script>
+<script type="module" src="./live-classroom.js?v=10-activity-detail"></script>
 </body></html>
