@@ -240,24 +240,27 @@ function clearMapLaunch(){
  by('luGrid').classList.remove('lu-star-launching');
  by('luGrid').querySelectorAll('.lu-star-shattered').forEach(el=>{el.classList.remove('lu-star-shattered');const star=el.querySelector('.lu-start-star');if(star)star.style.opacity=''});
 }
-function showNeonPortal(link,x,y){
+function showNeonPortal(link,x,y,mainApp=null){
  const appIndex=apps.findIndex(a=>a.kind===link.dataset.launchApp);
- if(appIndex<0)return;
+ const title=mainApp?.title||launchTitles[link.dataset.launchApp];
+ const icon=mainApp?.icon||(appIndex>=0?headerIcons[appIndex]:'');
+ if(!title||!icon)return;
  const portal=document.createElement('div');
  portal.className='lu-neon-portal';
  portal.setAttribute('role','status');
- portal.setAttribute('aria-label',launchTitles[link.dataset.launchApp]+' loading');
+ portal.setAttribute('aria-label',title+' loading');
  const w=window.innerWidth,h=window.innerHeight;
  const scale=Math.max(12,Math.hypot(Math.max(x,w-x),Math.max(y,h-y))/24+2);
  portal.style.setProperty('--lu-portal-x',x+'px');
  portal.style.setProperty('--lu-portal-y',y+'px');
  portal.style.setProperty('--lu-portal-scale',String(scale));
- portal.innerHTML='<div class="lu-neon-cover"></div><div class="lu-neon-rings" aria-hidden="true">'+Array.from({length:5},(_,i)=>'<i style="--lu-delay:'+i*65+'ms"></i>').join('')+'</div><div class="lu-neon-intro"><div class="lu-neon-halo" aria-hidden="true"></div><div class="lu-neon-mission"></div><div class="lu-neon-icon" aria-hidden="true">'+headerIcons[appIndex]+'</div><div class="lu-neon-name"></div><div class="lu-neon-book"></div><div class="lu-neon-unit"></div><div class="lu-neon-loading" aria-hidden="true"><i></i></div></div>';
+ portal.innerHTML='<div class="lu-neon-cover"></div><div class="lu-neon-rings" aria-hidden="true">'+Array.from({length:5},(_,i)=>'<i style="--lu-delay:'+i*65+'ms"></i>').join('')+'</div><div class="lu-neon-intro"><div class="lu-neon-halo" aria-hidden="true"></div><div class="lu-neon-mission"></div><div class="lu-neon-icon" aria-hidden="true">'+icon+'</div><div class="lu-neon-name"></div><div class="lu-neon-book"></div><div class="lu-neon-unit"></div><div class="lu-neon-loading" aria-hidden="true"><i></i></div></div>';
  const mission=portal.querySelector('.lu-neon-mission');
- mission.textContent='미션';mission.hidden=link.dataset.mission!=='true';
- portal.querySelector('.lu-neon-name').textContent=launchTitles[link.dataset.launchApp].toUpperCase();
- portal.querySelector('.lu-neon-book').textContent=link.dataset.launchBook||'';
- portal.querySelector('.lu-neon-unit').textContent=link.dataset.launchUnit?'UNIT '+link.dataset.launchUnit:'WHOLE BOOK';
+ mission.textContent='미션';mission.hidden=!!mainApp||link.dataset.mission!=='true';
+ portal.querySelector('.lu-neon-name').textContent=title.toUpperCase();
+ const book=portal.querySelector('.lu-neon-book'),unit=portal.querySelector('.lu-neon-unit');
+ book.textContent=mainApp?'':link.dataset.launchBook||'';book.hidden=!!mainApp;
+ unit.textContent=mainApp?'':link.dataset.launchUnit?'UNIT '+link.dataset.launchUnit:'WHOLE BOOK';unit.hidden=!!mainApp;
  document.body.appendChild(portal);
 }
 by('luGrid').addEventListener('click',event=>{
@@ -289,6 +292,29 @@ by('luGrid').addEventListener('click',event=>{
   }
   portalTimer=setTimeout(()=>{try{showNeonPortal(link,x,y)}catch(error){console.warn('[Learning map portal]',error)}},star?200:0);
  }catch(error){console.warn('[Learning map animation]',error)}
+});
+// App home cards share the exact same portal; no textbook or unit is
+// invented before the student has selected one.
+hero?.addEventListener('click',event=>{
+ const link=event.target.closest('a.node-link[href]');
+ if(!link||event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||link.hasAttribute('download')||(link.target&&link.target!=='_self'))return;
+ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||by('motionToggle')?.checked===false)return;
+ const url=new URL(link.href,location.href);
+ if(url.origin!==location.origin)return;
+ const kind=apps.find(a=>url.pathname===a.path)?.kind;
+ const source=link.querySelector('img,svg');
+ const title=launchTitles[kind]||link.getAttribute('aria-label')||source?.getAttribute('alt')||'';
+ if(!title||!source)return;
+ const appIndex=apps.findIndex(a=>a.kind===kind);
+ const copy=source.cloneNode(true);
+ copy.setAttribute('class','lu-app-icon');copy.removeAttribute('id');copy.setAttribute('aria-hidden','true');
+ const icon=appIndex>=0?headerIcons[appIndex]:copy.outerHTML;
+ event.preventDefault();
+ if(starLaunching)return;
+ starLaunching=true;
+ const rect=source.getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2;
+ launchTimer=setTimeout(()=>{try{window.location.assign(url.href)}catch(error){clearMapLaunch();console.warn('[App portal launch]',error)}},1040);
+ try{showNeonPortal(link,x,y,{title,icon})}catch(error){console.warn('[App portal]',error)}
 });
 window.addEventListener('pagehide',clearMapLaunch);
 let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){clearMapLaunch();void energy();if(!by('luMap').hidden)void loadBook(true)}});
