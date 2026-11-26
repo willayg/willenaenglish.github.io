@@ -138,13 +138,13 @@ function mount({modal,getSelected,getPoints,onChoose}){
  const button=(cls,text)=>{const e=make('button',cls,text);e.type='button';return e};
  const toolbar=make('div','al-toolbar'),launch=button('al-launch','나만의 아바타 만들기'),tile=button('al-custom-tile','');tile.hidden=true;tile.setAttribute('aria-label','Select your custom avatar');toolbar.append(launch,tile);grid.before(toolbar);
  const panel=make('section','al-panel');panel.hidden=true;panel.setAttribute('aria-label','Avatar Lab');
- const top=make('div','al-top'),back=button('al-secondary','‹ 뒤로'),title=make('strong','','Avatar Lab'),random=button('al-secondary','랜덤');top.append(back,title,random);
- const preview=make('div','al-preview'),tabs=make('div','al-tabs'),controls=make('div','al-controls'),note=make('div','al-note'),use=button('al-use','아바타 사용하기');
- tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','아바타 꾸미기');
+ const top=make('div','al-top'),back=button('al-secondary','‹ Back'),title=make('strong','','Avatar Lab'),random=button('al-secondary','Random');top.append(back,title,random);
+ const preview=make('div','al-preview'),tabs=make('div','al-tabs'),controls=make('div','al-controls'),note=make('div','al-note'),use=button('al-use','Use this avatar');
+ tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Customize avatar');
  controls.setAttribute('role','tabpanel');controls.id='al-option-panel';
  panel.append(top,preview,tabs,controls,note,use);grid.after(panel);
- const categories=[{"label":"캐릭터","english":"Character","fields":[0,1]},{"label":"헤어","english":"Hair","fields":[2,3]},{"label":"표정","english":"Face","fields":[4,5]},{"label":"액세서리","english":"Accessories","fields":[6]},{"label":"배경","english":"Background","fields":[7,8]}];
- const labels=['캐릭터','피부 / 털 색상','헤어 스타일','헤어 / 포인트 색상','눈','입','액세서리','배경 색상','배경 무늬'];
+ const categories=[{"label":"Character","english":"Character","fields":[0,1]},{"label":"Hair","english":"Hair","fields":[2,3]},{"label":"Face","english":"Face","fields":[4,5]},{"label":"Accessories","english":"Accessories","fields":[6]},{"label":"Background","english":"Background","fields":[7,8]}];
+ const labels=['Character','Skin / fur colour','Hair style','Hair / accent colour','Eyes','Mouth','Accessories','Background colour','Background pattern'];
  const lockArt='<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
  let values=defaults.slice(),custom=null,category=0,tiles=[];
  function points(){const p=getPoints();return Number.isFinite(p)?p:NaN}
@@ -174,11 +174,11 @@ function mount({modal,getSelected,getPoints,onChoose}){
    const {b,art,meta,i,j,label}=t,f=fields[i],required=f.points[j]||0,locked=!allowed(i,j),chosen=values[i]===j;
    b.disabled=locked;b.dataset.locked=String(locked);b.classList.toggle('selected',chosen);b.setAttribute('aria-pressed',String(chosen));b.setAttribute('aria-label',label+(locked?' · '+required.toLocaleString()+' points required':''));
    const key=locked?'locked-'+required:required?'unlocked':'free';
-   if(meta.dataset.state!==key){meta.dataset.state=key;meta.replaceChildren();if(locked){const icon=make('span','al-lock-icon');icon.innerHTML=lockArt;meta.append(icon,make('span','',required.toLocaleString()+' P'))}else if(required){meta.textContent='획득 완료'}else{meta.textContent='';}}
+   if(meta.dataset.state!==key){meta.dataset.state=key;meta.replaceChildren();if(locked){const icon=make('span','al-lock-icon');icon.innerHTML=lockArt;meta.append(icon,make('span','',required.toLocaleString()+' P'))}else if(required){meta.textContent='Unlocked'}else{meta.textContent='';}}
    if(f.colors){if(t.code!==f.colors[j]){art.style.background=f.colors[j];art.classList.add('al-swatch');t.code=f.colors[j]}}
    else{const sample=values.slice();sample[i]=j;const sampleCode=encode(sample);if(t.code!==sampleCode){art.innerHTML=svg(sampleCode);t.code=sampleCode}}
   }
-  const ok=eligible(code,points());use.disabled=!ok;note.textContent=ok?'원하는 스타일을 골라 보세요!':'더 많은 포인트를 모아 잠금을 해제하세요.';
+  const ok=eligible(code,points());use.disabled=!ok;note.textContent=ok?'Choose your favourite style!':'Earn more points to unlock this feature.';
  }
  function chooseCustom(){if(!custom||!eligible(custom,points()))return;onChoose(custom);sync()}
  function sync(){const v=getSelected();if(decode(v))custom=v;tile.hidden=!custom;if(custom){if(tile.dataset.avatarValue!==custom)render(tile,custom);tile.classList.toggle('selected',v===custom);tile.disabled=!eligible(custom,points())}if(!panel.hidden)refresh()}
