@@ -758,15 +758,15 @@ async function rosterHomework(className){
     const progress=await rpc('sg_homework_progress_v1',{p_id:a.id});
     collected[i]={
       assignment:{id:'sg-'+a.id,title:a.title,source_type:'sentence_genius',
-        class:a.class_name,active:true,due_at:a.due_at,
-        list_meta:{required_modes:a.required_modes||[],target_count:(a.target_sentence_ids||[]).length}},
+        class:a.class_name,active:true,due_at:a.due_at,book_id:a.book_id,unit_id:a.unit_id,
+        list_meta:{book_id:a.book_id,unit_id:a.unit_id,target_student_ids:a.target_student_ids||[],required_modes:a.required_modes||[],target_count:(a.target_sentence_ids||[]).length}},
       progress:{students:progress.students||[]},error:''
     };
    }catch(error){
     collected[i]={
       assignment:{id:'sg-'+a.id,title:a.title,source_type:'sentence_genius',
-        class:a.class_name,active:true,due_at:a.due_at,
-        list_meta:{required_modes:a.required_modes||[],target_count:(a.target_sentence_ids||[]).length}},
+        class:a.class_name,active:true,due_at:a.due_at,book_id:a.book_id,unit_id:a.unit_id,
+        list_meta:{book_id:a.book_id,unit_id:a.unit_id,target_student_ids:a.target_student_ids||[],required_modes:a.required_modes||[],target_count:(a.target_sentence_ids||[]).length}},
       progress:null,error:error.message
     };
    }
