@@ -3,7 +3,7 @@
 (function(){
 'use strict';
 if(window.WillenaGeniusBoot)return;
-const version='20261126-smooth4';
+const version='20261126-all-apps1';
 const assets={
  '/students/vocab-study/':{
   entry:'/students/vocab-study/vocab-study.js?v=20261126-boot3',
@@ -12,6 +12,7 @@ const assets={
   entry:'/students/sentence-genius/app.js?v=20261126-boot3',
   css:['/students/sentence-genius/styles.css?v=20261111-accuracy7','/students/vocab-study/vocab-study.css?v=20261024-home-navigation4','/students/study/study.css?v=20260808-7','/students/study-v2/v2.css?v=20260814-daily1']}
 };
+Object.assign(assets,{"/students/grammar-books/":{"entry":"/students/grammar-books/books.js?v=20261126-portal-rollout1","css":["/students/study/study.css?v=20260808-7","/students/study/study-overrides.css?v=20260808-1","/students/study-v2/v2.css?v=20260814-daily1","/students/vocab-study/vocab-study.css?v=20261024-home-navigation4","/students/vocab-study/theme-pips.css?v=20261101-footer1","/students/test-prep-v2/question-renderer-accessibility.css?v=2.25.93"]},"/students/free-talking-genius/":{"entry":"/students/free-talking-genius/app.js?v=20261126-portal-rollout1","css":["/students/study/study.css?v=20260808-7","/students/study/study-overrides.css?v=20260808-1","/students/study-v2/v2.css?v=20260814-daily1","/students/vocab-study/vocab-study.css?v=20261024-home-navigation4","/students/vocab-study/theme-pips.css?v=20261101-footer1","/students/shared/willena-keyboard-safe.css?v=1.0.0"]},"/students/writing-genius/":{"entry":"/students/writing-genius/app.js?v=20261126-portal-rollout1","css":["/students/study/study.css?v=20260808-7","/students/study/study-overrides.css?v=20260808-1","/students/study-v2/v2.css?v=20260814-daily1","/students/shared/willena-keyboard-safe.css?v=1.0.0","/students/vocab-study/vocab-study.css?v=20261024-home-navigation4","/students/vocab-study/theme-pips.css?v=20261101-footer1"]},"/students/wordsearch/":{"entry":"/students/wordsearch/wordsearch.js?v=20261126-portal-rollout1","css":["/students/wordsearch/wordsearch.css?v=20261031-mix-face-fix1"]},"/students/grammar-foundations/":{"entry":"/students/grammar-foundations/app.js?v=20261126-portal-rollout1","css":["/students/grammar-foundations/../test-prep-v2/styles.css?v=2.21.2","/students/grammar-foundations/../test-prep-v2/card-style-v2.css?v=1.0.0","/students/grammar-foundations/../test-prep-v2/question-renderer-accessibility.css?v=2.25.93","/students/vocab-study/theme-pips.css?v=20261101-footer1","/students/grammar-foundations/../test-prep-v2/dark-mode.css?v=2.25.112","/students/grammar-foundations/../test-prep-v2/cyberpunk-mode.css?v=2.25.112"]},"/students/test-prep-v2/":{"entry":"/students/test-prep-v2/app.js?v=20261126-portal-rollout1","css":["/students/test-prep-v2/styles.css?v=2.21.3","/students/test-prep-v2/header-v2.css?v=20261031-menu-layer2","/students/test-prep-v2/card-style-v2.css?v=1.0.0","/students/test-prep-v2/card-theme-complement.css?v=2.25.86","/students/test-prep-v2/stats-display-v1.css?v=1.0.3","/students/test-prep-v2/loading-screen.css?v=2.16.0"]},"/students/listening-genius/":{"entry":"/students/listening-genius/app.js?v=20261126-portal-rollout1","css":[]},"/Games/english_arcade/index.html":{"entry":"/Games/english_arcade/main.js?v=20260329f","css":["/Games/english_arcade/style.css?v=20251115a","/students/theme.css"]}});
 const warmed=new Set();
 function hint(rel,url,as){
  const k=rel+'|'+url;if(warmed.has(k))return;
@@ -33,7 +34,10 @@ const KEY='willena:portal-handoff-v1';
 const pilot=Object.hasOwn(assets,location.pathname);
 const q=new URLSearchParams(location.search);
 const focused=!!(q.get('homework')||q.get('assignment_id'));
+const iconMarkup={"/students/grammar-books/":"<svg class=\"lu-app-icon\" viewBox=\"0 0 80 80\" aria-hidden=\"true\"><path d=\"M39 12c-10-8-25-2-25 10-9 5-9 18-1 23-4 11 3 21 14 21 5 6 13 5 13-2V20c0-4-1-6-1-8Z\" fill=\"#e9fbfc\" stroke=\"#28b7c4\" stroke-width=\"4\" stroke-linejoin=\"round\"/><path d=\"M41 12c10-8 25-2 25 10 9 5 9 18 1 23 4 11-3 21-14 21-5 6-13 5-13-2V20c0-4 1-6 1-8Z\" fill=\"#ffe7f3\" stroke=\"#ed61a7\" stroke-width=\"4\" stroke-linejoin=\"round\"/><path d=\"M25 24c9 0 12 6 12 13m-19 6c11-4 18 0 20 10M55 24c-9 0-12 6-12 13m19 6c-11-4-18 0-20 10\" fill=\"none\" stroke=\"#d04f94\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>","/students/free-talking-genius/":"<img class=\"lu-app-icon\" src=\"/students/assets/icons/free-talking-bunny-fox.svg?v=20261108-1\" alt=\"\">","/students/writing-genius/":"<svg class=\"lu-app-icon\" viewBox=\"0 0 80 80\" aria-hidden=\"true\"><path d=\"M17 12h36l11 11v43a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5V17a5 5 0 0 1 5-5Z\" fill=\"#fff\" stroke=\"#ff67ad\" stroke-width=\"4\" stroke-linejoin=\"round\"/><path d=\"M53 12v12h11M23 34h25M23 45h18\" fill=\"none\" stroke=\"#ff67ad\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"m38 61 22-22 7 7-22 22-10 3Z\" fill=\"#72dce3\" stroke=\"#267f89\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/></svg>","/students/wordsearch/":"<img class=\"lu-app-icon\" src=\"/students/shared/assets/puzzles.png?v=20260928-4\" alt=\"Puzzles\">","/students/grammar-foundations/":"<img class=\"lu-app-icon\" src=\"/students/assets/icons/grammar-foundation-logo.png?v=20260929-1\" alt=\"\">","/students/test-prep-v2/":"<img class=\"lu-app-icon\" src=\"/students/assets/icons/naesin-myeongjung-logo.png?v=20260929-1\" alt=\"\">","/students/listening-genius/":"<img class=\"lu-app-icon\" src=\"/students/assets/icons/listening-genius.svg?v=20261112a\" alt=\"\">","/Games/english_arcade/index.html":"<img class=\"lu-app-icon\" src=\"/Games/english_arcade/assets/Images/icons/word-arcade.svg\" alt=\"English Arcade\">"};
+const titles={"/students/grammar-books/":"GRAMMAR GENIUS BOOKS","/students/free-talking-genius/":"FREE TALKING GENIUS","/students/writing-genius/":"WRITING GENIUS","/students/wordsearch/":"PUZZLES","/students/grammar-foundations/":"GRAMMAR GENIUS 내신","/students/test-prep-v2/":"내신명중","/students/listening-genius/":"LISTENING GENIUS","/Games/english_arcade/index.html":"ENGLISH ARCADE"};
 const icons={'/students/vocab-study/':'/students/assets/icons/word-genius.svg?v=20260927-1','/students/sentence-genius/':'/students/assets/icons/sentence-genius.svg?v=20261025-sentence-path-1'};
+Object.assign(titles,{'/students/vocab-study/':'WORD GENIUS','/students/sentence-genius/':'SENTENCE GENIUS'});
 let handoff=null,cover=null,done=false,authTask=null,deadline=0,mission=null,started=performance.now();
 function handoffPortal(destination){
  try{
@@ -84,9 +88,9 @@ function mountPortal(){
  if(!handoff||done||cover||!document.body)return;
  const el=document.createElement('div');el.className='lu-neon-portal lu-neon-continuation';el.setAttribute('role','status');
  el.innerHTML='<div class="lu-neon-cover"></div><div class="lu-neon-intro"><div class="lu-neon-halo" aria-hidden="true"></div><div class="lu-neon-mission"></div><div class="lu-neon-icon" aria-hidden="true"><img class="lu-app-icon" alt=""></div><div class="lu-neon-name"></div><div class="lu-neon-book"></div><div class="lu-neon-unit"></div><div class="lu-neon-loading" aria-hidden="true"><i></i></div></div>';
- const title=location.pathname.includes('vocab-study')?'WORD GENIUS':'SENTENCE GENIUS';
+ const title=titles[location.pathname];
  el.setAttribute('aria-label',title+' loading');
- el.querySelector('.lu-app-icon').src=icons[location.pathname];
+ if(iconMarkup[location.pathname])el.querySelector('.lu-neon-icon').innerHTML=iconMarkup[location.pathname];else el.querySelector('.lu-app-icon').src=icons[location.pathname];
  el.querySelector('.lu-neon-name').textContent=title;
  for(const key of ['book','unit','mission']){const node=el.querySelector('.lu-neon-'+key);node.textContent=String(handoff[key]||'').slice(0,180);node.hidden=!node.textContent;}
  cover=el;document.body.append(el);
