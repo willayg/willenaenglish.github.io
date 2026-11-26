@@ -34,6 +34,7 @@ function warm(destination){
 const KEY='willena:portal-handoff-v1';
 function portalPath(path){
  if(['/students/dashboard','/students/dashboard/','/students/dashboard.html'].includes(path))return '/students/dashboard.html';
+ if(['/students/profile','/students/profile/','/students/profile.html'].includes(path))return '/students/profile.html';
  return path;
 }
 const homePath='/students/dashboard.html',profilePath='/students/profile.html';
