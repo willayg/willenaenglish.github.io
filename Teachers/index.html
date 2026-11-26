@@ -359,7 +359,28 @@ try{
 .rs-ag-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.rs-ag-stats>div{background:white;border:1px solid #dce9ea;border-radius:11px;padding:11px 5px;text-align:center;display:grid;gap:4px}.rs-ag-stats small{font-size:10px;color:#6e878d}.rs-ag-stats b{font-size:20px;color:#247b83}
 #drawerBg .rs-dr-skill small{font-size:10px;color:#82979c}#drawerBg .detail>details>summary{cursor:pointer;color:#267f87;font-weight:700;font-size:12px}
 @media(max-width:480px){#rsDrawerTabs button{font-size:10px;padding:10px 4px}.rs-dr-summary-head>.rs-drawer-ring{width:75px;height:75px}.rs-dr-kpis small{font-size:9px}}
-#view-students .roster-student-card{content-visibility:auto;contain-intrinsic-size:auto 500px}
+#view-students .roster-student-card{content-visibility:auto;contain-intrinsic-size:auto 200px}
+#view-students .roster-student-card[data-expanded="true"]{contain-intrinsic-size:auto 500px}
+#view-students .roster-student-card{cursor:default;align-self:start}
+#view-students .roster-student-card:hover{transform:none}
+#view-students .rs-card-toggle{width:100%;text-align:left;background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;align-items:center}
+#view-students .rs-card-toggle:focus-visible,.rs-pip-book:focus-visible{outline:2px solid #29a6b1;outline-offset:3px;border-radius:8px}
+.rs-card-toggle-right{display:flex;align-items:center;gap:9px;flex:none}
+.rs-card-chevron{width:8px;height:8px;display:inline-block;border-right:2px solid #65898f;border-bottom:2px solid #65898f;transform:rotate(45deg);margin:0 4px 4px}
+.rs-card-toggle[aria-expanded="true"] .rs-card-chevron{transform:rotate(225deg);margin-bottom:0}
+.rs-pip-books{display:grid;gap:6px}
+.rs-pip-book{display:grid;gap:5px;text-align:left;width:100%;border:1px solid #e0e9eb;background:#f9fcfc;border-radius:9px;padding:7px 9px;cursor:pointer;font:inherit}
+.rs-pip-book:hover{border-color:#85c8cd}
+.rs-pip-title{color:#38616b;font-size:11px;font-weight:750}
+.rs-pip-strip{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.rs-unit-pip{width:21px;height:17px;border-radius:5px;border:1px solid #d4dfe1;background:#e9eef0;color:#7a8d94;font-size:9px;font-weight:750;display:inline-grid;place-items:center;line-height:1}
+.rs-unit-pip[data-tone="progress"]{background:#a8dec9;color:#236b55;border-color:#79c7aa}
+.rs-unit-pip[data-tone="gold"]{background:#ebc75f;color:#795911;border-color:#d8ad3d}
+.rs-unit-pip[data-tone="unknown"]{background:white;border-style:dashed;color:#869a9e}
+.rs-unit-pip[data-tone="na"]{background:#f7f8f8;color:#aebcc0;border-color:#e8edef}
+.rs-expanded-map{display:grid;gap:9px;min-width:0}
+#view-students .roster-card-actions button{flex:1;padding:7px 8px;font-size:10px}
+
 #drawerBg .detail,#drawerBg .big-card{border:1px solid #dce8ec;border-radius:16px;padding:17px;box-shadow:none;background:#fff;margin:0}
 #drawerBg .detail h3,#drawerBg .big-card h3{font-size:14px;color:#1c5867}
 #drawerBg .rating-grid{gap:12px;margin:0}
@@ -777,7 +798,7 @@ try{
 <div class="wc-dialog-actions"><button id="wcDelete" class="wc-button wc-delete" type="button" hidden>Delete</button><button class="wc-button" type="button" id="wcCancel">Cancel</button><button class="wc-button wc-primary" id="wcSave" type="submit">Save event</button></div></form></dialog>
 <div id="rosterAssignmentsOverlay" class="rs-assign-overlay" hidden><section class="rs-assign-dialog" role="dialog" aria-modal="true" aria-label="Student assignments"><div class="rs-assign-head"><div><h2 id="rosterAssignmentsTitle">Assignments</h2><p>Student mission history</p></div><button type="button" id="rosterAssignmentsClose" aria-label="Close assignments">×</button></div><div class="rs-assign-tabs"><button data-rs-assign-tab="current" class="active" type="button">Current</button><button data-rs-assign-tab="history" type="button">History</button></div><div id="rosterAssignmentsBody" class="rs-assign-body"></div></section></div>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div><div id="rsDrawerBooks" class="rs-dr-books"></div></div><button class="close" id="closeDrawer" aria-label="Close student details">×</button></div><nav id="rsDrawerTabs" role="tablist" aria-label="Student details"><button type="button" role="tab" data-rs-drawer-tab="Overview" aria-selected="false">Overview</button><button type="button" role="tab" data-rs-drawer-tab="Missions" aria-selected="false">Missions</button><button type="button" role="tab" data-rs-drawer-tab="Activity" aria-selected="false">Activity</button><button type="button" role="tab" data-rs-drawer-tab="Mistakes" aria-selected="false">Mistakes</button><button type="button" role="tab" data-rs-drawer-tab="History" aria-selected="false">History</button></nav><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.79</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.80</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -990,7 +1011,8 @@ function renderHomeworkDetails(id){
  }).join('');
 }
 
-const rsSelectedBooks=new Map(),rsClassCache=new Map(),rsCatalogCache=new Map();
+const rsSelectedBooks=new Map(),rsExpandedStudents=new Set(),rsClassCache=new Map(),rsCatalogCache=new Map();
+const rsMapRowsCache=new WeakMap();
 const rsCatalogMemo=(key,task,force=false)=>{const old=rsCatalogCache.get(key);if(!force&&old&&Date.now()-old.at<86400000)return old.promise;const promise=Promise.resolve().then(task);rsCatalogCache.set(key,{at:Date.now(),promise});promise.catch(()=>{if(rsCatalogCache.get(key)?.promise===promise)rsCatalogCache.delete(key)});return promise};
 const rsIndex=(rows,key)=>{const m=new Map();for(const row of rows){const k=key(row);if(!m.has(k))m.set(k,[]);m.get(k).push(row)}return m};
 const rsUnitKey=(id,bid,uid)=>[id,bid,uid].map(String).join('|');
@@ -1207,11 +1229,42 @@ function rsMapRing(id,book,unit,app,v=rsMapCellData(id,book,unit,app)){
  const title=rsMapNames[app.id]+' · Unit '+unit.unit_number+' · '+label+(mission?' · Active mission':'');
  return '<button type="button" class="rs-map-ring" data-state="'+v.state+'" data-mission="'+mission+'" data-rs-ring="'+esc(id)+'" data-rs-ring-title="'+esc((book.book_title||'Textbook')+' · Unit '+unit.unit_number+' · '+rsMapNames[app.id])+'" data-rs-ring-detail="'+esc(label+(mission?' · Active mission':'')+(v.detail?' — '+v.detail:''))+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+ring+'</button>';
 }
+function rsBookRows(studentId,book){
+ const snapshot=rosterCurriculum.index;
+ let cache=snapshot&&rsMapRowsCache.get(snapshot);
+ if(snapshot&&!cache){cache=new Map();rsMapRowsCache.set(snapshot,cache)}
+ const key=rsUnitKey(studentId,book.book_id,'rows');
+ if(cache?.has(key))return cache.get(key);
+ const units=rosterCurriculum.units.get(String(book.book_id))||[];
+ const rows=units.map(u=>({u,apps:rsAppProgress(studentId,book,u).map(a=>({a,v:rsMapCellData(studentId,book,u,a)}))}));
+ if(cache)cache.set(key,rows);
+ return rows;
+}
+function rsPipProgress(apps){
+ const applicable=apps.filter(({v})=>v.state!=='na');
+ const known=applicable.filter(({v})=>Number.isFinite(v.p));
+ const unknown=applicable.length-known.length;
+ if(!applicable.length)return {tone:'na',percent:null,unknown:0};
+ if(!known.length)return {tone:'unknown',percent:null,unknown};
+ const sum=known.reduce((n,{v})=>n+v.p,0);
+ // Equal weight per available app. Unverified cells cannot inflate a unit to gold.
+ const raw=sum/applicable.length,percent=Math.round(raw);
+ return {tone:raw>80?'gold':sum>0?'progress':'idle',percent,unknown};
+}
+function rsBookPips(id,book){
+ const rows=rsBookRows(id,book);
+ const pips=rows.map(({u,apps})=>{
+  const p=rsPipProgress(apps);
+  const label='Unit '+u.unit_number+' · '+(p.percent===null?(p.tone==='na'?'No content':'Progress unknown'):p.percent+'% recorded progress')+(p.unknown&&p.percent!==null?' · '+p.unknown+' unverified app(s)':'');
+  return '<span class="rs-unit-pip" data-tone="'+p.tone+'" title="'+esc(label)+'" aria-label="'+esc(label)+'">'+esc(u.unit_number)+'</span>';
+ }).join('');
+ return '<button type="button" class="rs-pip-book" data-rs-pip-book="'+esc(book.book_id)+'" data-rs-pip-student="'+esc(id)+'" aria-label="'+esc((book.book_title||'Textbook')+' · Expand unit progress')+'"><span class="rs-pip-title">'+esc(book.book_title||'Textbook')+'</span><span class="rs-pip-strip">'+(pips||'<small>No units</small>')+'</span></button>';
+}
 function rsBookCard(studentId,book){
  const units=rosterCurriculum.units.get(String(book.book_id))||[];
  if(!units.length)return '<div class="roster-book"><strong class="roster-book-title">'+esc(book.book_title||'Textbook')+'</strong><small class="roster-app-no-data">No published unit catalogue available</small></div>';
  const lesson=String(book.current_unit||'').trim(),current=Number(lesson.match(/\d+/)?.[0]);
- const rows=units.map(u=>({u,apps:rsAppProgress(studentId,book,u).map(a=>({a,v:rsMapCellData(studentId,book,u,a)}))}));
+ const rows=rsBookRows(studentId,book);
  const gold=rows.reduce((n,{apps})=>n+apps.filter(({v})=>v.state==='gold').length,0);
  return '<div class="roster-book rs-map-book"><div class="rs-map-scroll"><div class="rs-map-grid"><div class="rs-map-row rs-map-heading"><strong>Unit</strong>'+rsApps.map(([key,name])=>'<strong title="'+esc(name)+'">'+esc(rsMapNames[key])+'</strong>').join('')+'</div>'+
  rows.map(({u,apps})=>'<div class="rs-map-row'+(Number(u.unit_number)===current?' rs-map-current':'')+'"><strong title="'+esc(u.title||'')+'">'+esc(u.unit_number)+'</strong>'+apps.map(({a,v})=>rsMapRing(studentId,book,u,a,v)).join('')+'</div>').join('')+'</div></div>'+
@@ -1274,9 +1327,9 @@ function renderStudents(){
   const id=String(s.user_id),name=String(s.name||'Student'),initials=name.split(/\s+/).map(x=>x.charAt(0)).slice(0,2).join('').toUpperCase();
   const isDuplicate=duplicates.get(name.trim().toLowerCase())>1;
   const ko=String(s.korean_name||'').trim(),secondary=ko|| (isDuplicate?'ID '+id.slice(0,6):state.className);
-  const assigned=ready?rosterCurriculum.books:[];
-  const books=ready?(assigned.length?rsBookTabs(id,assigned):'<div class="roster-book">No textbooks assigned to this class</div>'):
-   '<div class="roster-book">'+esc(rosterCurriculum.error||'Loading textbook progress…')+'</div>';
+  const assigned=ready?rosterCurriculum.books:[],expanded=rsExpandedStudents.has(id);
+  const pips=ready?(assigned.length?'<div class="rs-pip-books">'+assigned.map(b=>rsBookPips(id,b)).join('')+'</div>':'<small class="roster-app-no-data">No textbooks assigned</small>'):'<small class="roster-app-no-data">'+esc(rosterCurriculum.error||'Loading textbook progress…')+'</small>';
+  const books=expanded&&ready&&assigned.length?'<div class="rs-expanded-map">'+rsBookTabs(id,assigned)+'</div>':'';
   const special=ready?rosterCurriculum.special.find(x=>String(x.student_id)===id):null;
   const extras=[];
   if(special&&Number(special.naesin_questions)>0)extras.push('내신 · '+Number(special.naesin_units||0)+' lessons');
@@ -1284,14 +1337,15 @@ function renderStudents(){
   const freeWriting=ready?rosterCurriculum.writingEntries.filter(x=>String(x.student_id)===id):[];
   const submitted=freeWriting.reduce((n,x)=>n+Number(x.submitted||0),0),drafts=freeWriting.reduce((n,x)=>n+Number(x.drafts||0),0);
   if(submitted||drafts)extras.push('Writing Genius · '+submitted+' submitted · '+drafts+' drafts');
-  return '<article class="roster-student-card" data-id="'+esc(id)+'" role="button" tabindex="0" aria-label="View '+esc(name)+' student details">'+
-   '<div class="roster-student-card-head"><div class="roster-student-identity"><div class="roster-student-avatar">'+esc(initials)+'</div><div><div class="roster-student-name">'+esc(name)+'</div><div class="roster-student-ko">'+esc(secondary)+'</div></div></div>'+
-   '<span class="roster-student-badge">'+(ready?assigned.length+' books':'Loading')+'</span></div>'+books+
+  return '<article class="roster-student-card" data-id="'+esc(id)+'" data-expanded="'+expanded+'">'+
+   '<button type="button" class="roster-student-card-head rs-card-toggle" data-rs-toggle="'+esc(id)+'" aria-expanded="'+expanded+'" aria-label="'+esc((expanded?'Collapse ':'Expand ')+name)+'"><div class="roster-student-identity"><div class="roster-student-avatar">'+esc(initials)+'</div><div><div class="roster-student-name">'+esc(name)+'</div><div class="roster-student-ko">'+esc(secondary)+'</div></div></div>'+
+   '<span class="rs-card-toggle-right"><span class="roster-student-badge">'+(ready?assigned.length+' books':'Loading')+'</span><span class="rs-card-chevron" aria-hidden="true"></span></span></button>'+pips+books+
    (extras.length?'<div class="roster-specials">'+extras.map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>':'')+
    '<div class="roster-card-actions"><button type="button" data-rs-assignments="'+esc(id)+'">Assignments · Current / History</button><button type="button" data-rs-detail="'+esc(id)+'">Full student details</button></div></article>';
  }).join('');
- document.querySelectorAll('#studentList .roster-student-card').forEach(row=>{row.onclick=e=>{if(e.target.closest('button'))return;openStudent(row.dataset.id)};row.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){e.preventDefault();openStudent(row.dataset.id)}}});
- $$('[data-rs-book]').forEach(b=>b.onclick=e=>{e.stopPropagation();rsSelectedBooks.set(b.dataset.rsBookStudent,b.dataset.rsBook);const row=b.closest('.roster-student-card');const selected=rosterCurriculum.books.find(x=>String(x.book_id)===b.dataset.rsBook);if(!row||!selected)return;row.querySelectorAll('[data-rs-book]').forEach(tab=>tab.setAttribute('aria-pressed',String(tab===b)));const old=row.querySelector('.roster-book');if(old)old.outerHTML=rsBookCard(b.dataset.rsBookStudent,selected);row.querySelectorAll('[data-rs-ring]').forEach(r=>r.onclick=event=>{event.stopPropagation();rsOpenRing(r)});});
+ $$('[data-rs-toggle]').forEach(b=>b.onclick=()=>{const id=b.dataset.rsToggle;if(rsExpandedStudents.has(id))rsExpandedStudents.delete(id);else rsExpandedStudents.add(id);renderStudents();const next=[...document.querySelectorAll('[data-rs-toggle]')].find(x=>x.dataset.rsToggle===id);next?.focus({preventScroll:true});});
+ $$('[data-rs-pip-book]').forEach(b=>b.onclick=()=>{const id=b.dataset.rsPipStudent;rsSelectedBooks.set(id,b.dataset.rsPipBook);rsExpandedStudents.add(id);renderStudents();const next=[...document.querySelectorAll('[data-rs-toggle]')].find(x=>x.dataset.rsToggle===id);next?.focus({preventScroll:true});});
+ $$('[data-rs-book]').forEach(b=>b.onclick=e=>{e.stopPropagation();rsSelectedBooks.set(b.dataset.rsBookStudent,b.dataset.rsBook);const row=b.closest('.roster-student-card');const selected=rosterCurriculum.books.find(x=>String(x.book_id)===b.dataset.rsBook);if(!row||!selected)return;row.querySelectorAll('[data-rs-book]').forEach(tab=>tab.setAttribute('aria-pressed',String(tab===b)));const old=row.querySelector('.rs-expanded-map .roster-book');if(old)old.outerHTML=rsBookCard(b.dataset.rsBookStudent,selected);row.querySelectorAll('[data-rs-ring]').forEach(r=>r.onclick=event=>{event.stopPropagation();rsOpenRing(r)});});
  $$('[data-rs-ring]').forEach(b=>b.onclick=e=>{e.stopPropagation();rsOpenRing(b)});
  $$('[data-rs-assignments]').forEach(b=>b.onclick=e=>{e.stopPropagation();rsOpenAssignments(b.dataset.rsAssignments)});
  $$('[data-rs-detail]').forEach(b=>b.onclick=e=>{e.stopPropagation();openStudent(b.dataset.rsDetail)});
