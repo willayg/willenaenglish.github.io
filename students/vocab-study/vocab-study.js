@@ -1483,12 +1483,12 @@ async function loadUnitVocabulary(book,unit){
   setVocabulary(book.book_id,unit.id,fresh);
   return fresh;
 }
-async function loadAssignedBook(assignment){
+async function loadAssignedBook(assignment,preferredUnit=''){
   if(!assignment?.book_id)return null;
   const id=assignment.book_id;
   const metaPayload=await loadBookMeta(id);
   const books=arr(metaPayload?.books),units=arr(metaPayload?.units);
-  const meta=books[0]||{},unit=resolveUnit(units,assignment);
+  const meta=books[0]||{},unit=(preferredUnit&&units.find(u=>String(u.id)===String(preferredUnit)))||resolveUnit(units,assignment);
   if(!unit)return null;
   const book=Object.assign({},assignment,{book_id:id,book_title:txt(assignment.book_title||assignment.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null});
   const items=await loadUnitVocabulary(book,unit);
@@ -1516,7 +1516,9 @@ async function resolveAssignedBooks(authData){
   const fallback=a.assignment&&a.assignment.book_id;
   let activeAssignment=list.find(x=>String(x.book_id)===String(wanted||fallback));
   if(!activeAssignment)activeAssignment=list[0];
-  const active=await loadAssignedBook(activeAssignment);
+  const q=new URLSearchParams(location.search),mapped=!focusedHomeworkId&&q.get('book')&&q.get('unit')?list.find(x=>String(x.book_id)===q.get('book')):null;
+  if(mapped)activeAssignment=mapped;
+  const active=await loadAssignedBook(activeAssignment,mapped?q.get('unit'):'');
   if(!active)throw new Error('No assigned book has available vocabulary units.');
   return{books:[active],assignments:list,activeIndex:0,deferredAssignments:list};
 }
@@ -3153,7 +3155,7 @@ async function closeSession({historyMode='back'}={}){
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
-  let bootLoaderReleased=false;
+  let bootLoaderReleased=false,bootStatus='error';
   const deepLinkAssignmentId=focusedHomeworkId;
   const openWordTestRequested=(()=>{
     try{return new URLSearchParams(location.search).get('open')==='wordtest'}catch(_){return false}
@@ -3174,7 +3176,7 @@ async function boot(){
       await loadAdminCatalog(params.bookId);
       if(!params.bookId){
         setStatus('관리자 미리보기 · 교재를 선택하세요.');
-        unitTitleEl.textContent='Choose a book above.';startBtn.disabled=true;return;
+        unitTitleEl.textContent='Choose a book above.';startBtn.disabled=true;bootStatus='ready';return;
       }
     }
     if(state.adminMode){
@@ -3255,8 +3257,9 @@ async function boot(){
       state.progressSnapshot=detail.data||null;
       renderSkillProgress();
     });
+    bootStatus='ready';
     reportStartupPerf();
-    preloadStudentSfx();
+    if('requestIdleCallback' in window)requestIdleCallback(()=>preloadStudentSfx(),{timeout:2000});else setTimeout(()=>preloadStudentSfx(),300);
 
 window.WillenaVocabStudy={version:'0.102',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
@@ -3270,6 +3273,7 @@ window.WillenaVocabStudy={version:'0.102',getState:()=>state,start:startSession,
     if(unitTitleEl)unitTitleEl.textContent='Please try again.';startBtn.disabled=true;if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
   }finally{
     if(!bootLoaderReleased){document.documentElement.classList.remove('vocab-focused-boot');endVocabLoading();}
+    window.WillenaGeniusBoot?.finish(bootStatus);
   }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
