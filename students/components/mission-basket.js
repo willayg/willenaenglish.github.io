@@ -361,7 +361,8 @@ async function mount(host,options={}){
  state.host=host;state.appFilter=options.app||null;host.dataset.missionMounted='true';host.classList.add('dashboard-mission-basket');host.setAttribute('aria-label','미션 바구니');
  state.collapsed=true;
  restoreLocalMedals();
- host.innerHTML='<div class="dm-loading">미션을 확인하고 있어요…</div>';
+ host.innerHTML=options.stableLoading?'<div class="dm-head" aria-busy="true"><button class="dm-toggle" type="button" disabled aria-expanded="false"><svg viewBox="0 0 48 48" width="35" height="35" aria-hidden="true"><path d="M8 19h32v20a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V19Z" fill="#DBF6F3" stroke="#16848C" stroke-width="2.5"/><path d="M6 14h36v7H6v-7Z" fill="#8BDFD7" stroke="#16848C" stroke-width="2.5"/><path d="m24 25 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7L24 25Z" fill="#EAB84B" stroke="#BA8D2D" stroke-width="1.2"/></svg><strong>미션 바구니</strong><span class="dm-count">…</span><span class="dm-arrow">▸</span></button></div>':'<div class="dm-loading">미션을 확인하고 있어요…</div>';
+ try{
  const results=await Promise.allSettled([standardHomework().then(rows=>state.appFilter?rows.filter(row=>row.app===state.appFilter):rows),state.appFilter&&state.appFilter!=='Grammar Genius Books'?Promise.resolve([]):grammarBookHomework(),state.appFilter&&state.appFilter!=='Sentence Genius'?Promise.resolve([]):sentences(),state.appFilter&&state.appFilter!=='Grammar Genius'?Promise.resolve([]):grammar(),state.appFilter&&state.appFilter!=='내신 명중'?Promise.resolve([]):naesin(),state.appFilter&&state.appFilter!=='Writing Genius'?Promise.resolve([]):writingDraftMissions()]);
  for(const result of results){if(result.status==='fulfilled')state.items.push(...result.value);else state.errors.push(String(result.reason))}
  const unique=new Map(state.items.map(x=>[x.id,x]));
@@ -369,6 +370,7 @@ async function mount(host,options={}){
  await resolveTeacherNames();
  render();
  if(state.errors.length)console.warn('[dashboard missions] Some feeds unavailable:',state.errors);
+ }catch(error){if(!options.stableLoading)throw error;console.warn('[mission basket] startup failed',error);const b=host.querySelector('.dm-toggle');if(b){b.disabled=false;b.removeAttribute('aria-disabled');b.querySelector('.dm-count').textContent='다시 시도';b.onclick=()=>{delete host.dataset.missionMounted;state.items=[];void mount(host,options)};}host.querySelector('.dm-head')?.removeAttribute('aria-busy');}
 }
 let refreshing=false;
 async function refresh(){
