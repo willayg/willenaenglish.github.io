@@ -23,9 +23,10 @@ const additions={
  bg:[['Royal purple',600,'#49316e'],['Aurora',1800,'#1d676a'],['Nebula',3500,'#281b52'],['Molten gold',8000,'#d98824']],
  pattern:[['Hearts',300],['Snowflakes',750],['Fire',1500],['Galaxy',3500],['Crystals',6000],['Golden aura',10000]]
 };
-for(const f of fields){f.points=f.points||f.options.map(()=>0);for(const [label,points,color] of additions[f.key]||[]){f.options.push(label);f.points.push(points);if(f.colors)f.colors.push(color)}Object.freeze(f.options);Object.freeze(f.points);if(f.colors)Object.freeze(f.colors);Object.freeze(f)}
+const starterUnlocks={"kind":[0,10,25,50,75,100,150],"body":[0,10,10,20,30,40,50,60,75,100,125,150],"hair":[0,10,20,30,40,50,75,100],"ink":[0,10,20,30,40,50,75,100,125],"eyes":[0,10,20,30,50,75,150],"mouth":[0,10,20,30,50,75,100],"gear":[0,10,20,50,75,100,500,1500,3000,5000],"bg":[0,10,20,30,40,50,75,100,125,150],"pattern":[0,10,20,40,50,75,100]};
+for(const f of fields){f.points=starterUnlocks[f.key].slice();if(f.points.length!==f.options.length)throw Error('Invalid avatar unlock table: '+f.key);for(const [label,points,color] of additions[f.key]||[]){f.options.push(label);f.points.push(points);if(f.colors)f.colors.push(color)}Object.freeze(f.options);Object.freeze(f.points);if(f.colors)Object.freeze(f.colors);Object.freeze(f)}
 Object.freeze(fields);
-const defaults=[0,0,1,0,0,0,0,0,0];
+const defaults=[0,0,0,0,0,0,0,0,0];
 const prefix='al1-';
 function encode(values){return Array.isArray(values)&&values.length===fields.length&&values.every((v,i)=>Number.isInteger(v)&&v>=0&&v<fields[i].options.length)?prefix+values.map(v=>v.toString(36)).join(''):null}
 function decode(value){if(typeof value!=='string'||!/^al1-[0-9a-z]{9}$/.test(value))return null;const v=Array.from(value.slice(prefix.length),x=>parseInt(x,36));return encode(v)===value?v:null}
