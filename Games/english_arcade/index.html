@@ -179,8 +179,12 @@
   <script src="/students/theme.js"></script>
   <!-- Game app -->
   <script type="module" src="main.js?v=20260329f"></script>
+<link rel="modulepreload" href="main.js?v=20260329f">
+<script src="/students/components/genius-app-boot.js?v=20261126-all-apps1"></script>
 </head>
 <body class="word-arcade">
+<script>window.WillenaGeniusBoot?.mountPortal?.();</script>
+
   <div id="waAutostartOverlay" aria-live="polite" aria-busy="true">
     <div class="wa-autostart-card">
       <div class="wa-spinner" aria-hidden="true"></div>
@@ -1163,5 +1167,5 @@
     })();
   </script>
 <script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
-</body>
+<script>document.addEventListener('DOMContentLoaded',()=>window.WillenaGeniusBoot?.finish?.('ready'),{once:true});</script></body>
 </html>
