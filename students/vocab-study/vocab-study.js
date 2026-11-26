@@ -1824,7 +1824,7 @@ function renderHome(){
   renderSkillProgress();
   renderMotivation();
   const progressTask=loadSkillProgress(),motivationTask=loadMotivation(state.book.book_id);
-  window.WillenaGeniusBoot?.track(Promise.allSettled([progressTask,motivationTask]));
+  window.WillenaGeniusBoot?.track?.(Promise.allSettled([progressTask,motivationTask]));
 }
 function updateProgress(){
   const total=Math.max(1,state.queue.length),current=Math.min(state.index+1,total);
@@ -3229,7 +3229,7 @@ async function boot(){
           }
         }
       })();
-      window.WillenaGeniusBoot?.track(homeworkBoot);
+      window.WillenaGeniusBoot?.track?.(homeworkBoot);
     }
     startBtn.addEventListener('click',()=>{if(confirmGoldenPractice())startSession()});
     spellingPreviewBtn?.addEventListener('click',()=>{if(confirmGoldenPractice())openSpellingMenu()});
