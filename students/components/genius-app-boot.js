@@ -3,13 +3,13 @@
 (function(){
 'use strict';
 if(window.WillenaGeniusBoot)return;
-const version='20261126-fade2';
+const version='20261126-smooth3';
 const assets={
  '/students/vocab-study/':{
-  entry:'/students/vocab-study/vocab-study.js?v=20261126-boot2',
+  entry:'/students/vocab-study/vocab-study.js?v=20261126-boot3',
   css:['/students/vocab-study/vocab-study.css?v=20261111-word-fragments5','/students/study/study.css?v=20260808-7','/students/study-v2/v2.css?v=20260814-daily1']},
  '/students/sentence-genius/':{
-  entry:'/students/sentence-genius/app.js?v=20261126-boot2',
+  entry:'/students/sentence-genius/app.js?v=20261126-boot3',
   css:['/students/sentence-genius/styles.css?v=20261111-accuracy7','/students/vocab-study/vocab-study.css?v=20261024-home-navigation4','/students/study/study.css?v=20260808-7','/students/study-v2/v2.css?v=20260814-daily1']}
 };
 const warmed=new Set();
@@ -28,60 +28,77 @@ function warm(destination){
   return true;
  }catch{return false}
 }
-const q=new URLSearchParams(location.search);
+// Only continue a real dashboard portal. Direct visits keep their normal UI.
+const KEY='willena:portal-handoff-v1';
 const pilot=Object.hasOwn(assets,location.pathname);
+const q=new URLSearchParams(location.search);
 const focused=!!(q.get('homework')||q.get('assignment_id'));
-let done=false,finishing=false,timer=0,authTask=null,started=performance.now();
-const pending=new Set();
-function track(task){
- if(!pilot||focused||done)return task;
- const p=Promise.resolve(task);pending.add(p);
- p.then(()=>pending.delete(p),()=>pending.delete(p));
- return task;
+const icons={'/students/vocab-study/':'/students/assets/icons/word-genius.svg?v=20260927-1','/students/sentence-genius/':'/students/assets/icons/sentence-genius.svg?v=20261025-sentence-path-1'};
+let handoff=null,cover=null,done=false,authTask=null,deadline=0,mission=null,started=performance.now();
+function handoffPortal(destination){
+ try{
+  const u=new URL(destination,location.href);
+  if(u.origin!==location.origin||!assets[u.pathname])return;
+  const p=document.querySelector('.lu-neon-portal');if(!p)return;
+  const read=selector=>{const e=p.querySelector(selector);return e&&!e.hidden?e.textContent:''};
+  sessionStorage.setItem(KEY,JSON.stringify({path:u.pathname+u.search,at:Date.now(),title:read('.lu-neon-name'),book:read('.lu-neon-book'),unit:read('.lu-neon-unit'),mission:read('.lu-neon-mission')}));
+ }catch{}
 }
-function release(status){
- if(done)return;done=true;clearTimeout(timer);
- const html=document.documentElement,overlay=document.getElementById('geniusBootSkeleton');
+if(pilot){
+ try{
+  const raw=sessionStorage.getItem(KEY);sessionStorage.removeItem(KEY);
+  const value=JSON.parse(raw||'null');
+  if(!focused&&value?.path===location.pathname+location.search&&Date.now()-value.at>=0&&Date.now()-value.at<8000&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)handoff=value;
+ }catch{}
+}
+function release(status='ready'){
+ if(done)return;done=true;clearTimeout(deadline);
  const detail={status,ms:Math.round(performance.now()),bootMs:Math.round(performance.now()-started)};
  window.WillenaGeniusBootMetrics=detail;
  try{performance.mark('genius-app-'+status)}catch{}
  console.info('[Genius boot]',detail);
- if(!overlay||focused){html.classList.remove('genius-app-booting');return;}
- html.classList.add('genius-app-revealing');
- html.classList.remove('genius-app-booting');
- const remove=()=>{overlay.remove();html.classList.remove('genius-app-revealing')};
- if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){remove();return;}
- // Paint the fully prepared page under the opaque cover before fading it.
- requestAnimationFrame(()=>requestAnimationFrame(()=>{overlay.classList.add('gb-fade');overlay.addEventListener('transitionend',remove,{once:true});setTimeout(remove,420)}));
+ document.documentElement.classList.remove('genius-portal-handoff');
+ if(!cover)return;
+ const el=cover;cover=null;
+ const remove=()=>el.remove();
+ // No task, font, animation, or frame callback can prevent the hard release.
+ el.classList.add('lu-neon-fade');el.addEventListener('transitionend',remove,{once:true});setTimeout(remove,260);
 }
-async function finish(status='ready'){
+function track(task){return task}
+function trackMission(task){
+ if(!done&&handoff&&task)mission=Promise.resolve(task).catch(()=>{});
+ return task;
+}
+function finish(status='ready'){
  if(done)return;
- if(status!=='ready'||focused||!pilot){release(status);return;}
- if(finishing)return;finishing=true;
- if(document.readyState==='loading')await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
- // Let DOMContentLoaded mount callbacks register their promises first.
- await Promise.resolve();
- while(pending.size&&!done)await Promise.allSettled([...pending]);
- if(done)return;
- release('ready');
+ if(status!=='ready'||!handoff||!mission){release(status);return;}
+ // Only the visible basket gets a short grace period. Never wait on
+ // achievements, historical progress, or other background network work.
+ Promise.race([mission,new Promise(r=>setTimeout(r,180))]).then(()=>release(status));
 }
 function startAuth(task){
  if(!authTask){authTask=Promise.resolve().then(task);authTask.catch(()=>{});}
  return authTask;
 }
-window.WillenaGeniusBoot={version,warm,finish,track,continue:()=>release('partial'),startAuth,getAuth:()=>authTask};
-if(!pilot||focused)return;
-document.documentElement.classList.add('genius-app-booting');
+function mountPortal(){
+ if(!handoff||done||cover||!document.body)return;
+ const el=document.createElement('div');el.className='lu-neon-portal lu-neon-continuation';el.setAttribute('role','status');
+ el.innerHTML='<div class="lu-neon-cover"></div><div class="lu-neon-intro"><div class="lu-neon-halo" aria-hidden="true"></div><div class="lu-neon-mission"></div><div class="lu-neon-icon" aria-hidden="true"><img class="lu-app-icon" alt=""></div><div class="lu-neon-name"></div><div class="lu-neon-book"></div><div class="lu-neon-unit"></div><div class="lu-neon-loading" aria-hidden="true"><i></i></div></div>';
+ const title=location.pathname.includes('vocab-study')?'WORD GENIUS':'SENTENCE GENIUS';
+ el.setAttribute('aria-label',title+' loading');
+ el.querySelector('.lu-app-icon').src=icons[location.pathname];
+ el.querySelector('.lu-neon-name').textContent=title;
+ for(const key of ['book','unit','mission']){const node=el.querySelector('.lu-neon-'+key);node.textContent=String(handoff[key]||'').slice(0,180);node.hidden=!node.textContent;}
+ cover=el;document.body.append(el);
+}
+window.WillenaGeniusBoot={version,warm,handoffPortal,mountPortal,finish,track,trackMission,startAuth,getAuth:()=>authTask};
+if(!handoff)return;
+document.documentElement.classList.add('genius-portal-handoff');
 const style=document.createElement('style');
-style.textContent=
-'html.genius-app-booting .study-app{visibility:hidden}html:not(.genius-app-booting):not(.genius-app-revealing) #geniusBootSkeleton{display:none!important}'+
-'html.genius-app-booting #vocabLoading{display:none!important}'+
-'#geniusBootSkeleton{position:fixed;inset:0;z-index:2147482000;overflow:auto;display:grid;place-items:center;background:linear-gradient(145deg,#ba347d 0%,#9b3986 36%,#087d9d 100%);color:#fff;font:700 14px Poppins,system-ui,sans-serif;padding:20px;box-sizing:border-box;opacity:1;transition:opacity 280ms ease}'+
-'#geniusBootSkeleton.gb-fade{opacity:0;pointer-events:none}.gb-splash{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;text-align:center;gap:13px;width:100%;max-width:520px;padding:35px 8px;box-sizing:border-box}.gb-halo{position:absolute;z-index:-1;left:50%;top:43%;transform:translate(-50%,-50%);width:min(85vw,390px);aspect-ratio:1;border:1px solid #ffc0e6;border-radius:50%;box-shadow:0 0 22px #7aebf577,inset 0 0 25px #7aebf555;pointer-events:none}.gb-halo:before,.gb-halo:after{content:"";position:absolute;inset:9%;border:2px solid #8ff4ff;border-radius:50%}.gb-halo:after{inset:18%;border:1px dashed #ffffff88}.gb-brand{width:clamp(76px,22vw,114px);height:clamp(76px,22vw,114px);border:3px solid #b1f1f5;border-radius:50%;background:#fff;display:grid;place-items:center;box-sizing:border-box;padding:12px}.gb-brand img{width:100%;height:100%;object-fit:contain}.gb-heading{font-size:clamp(28px,8vw,52px);line-height:1.05;font-weight:900;letter-spacing:-.045em;text-shadow:0 3px 7px #0004}.gb-status{font-size:13px;color:#fff;margin:0}.gb-retry{border:1px solid #ffffffad;border-radius:999px;padding:9px 16px;color:white;background:#ffffff24;font:inherit}.gb-retry[hidden]{display:none!important}.gb-progress{height:4px;overflow:hidden;background:#ffffff44;border-radius:20px;width:130px;margin:6px auto}.gb-progress i{display:block;width:45%;height:100%;background:#fff;border-radius:20px;animation:gb-slide .6s ease-in-out infinite alternate}@keyframes gb-slide{to{transform:translateX(120%)}}@media(prefers-reduced-motion:reduce){.gb-progress i{animation:none}#geniusBootSkeleton{transition:none}}';
+style.textContent=".lu-neon-portal{position:fixed;inset:0;z-index:99998;overflow:hidden;isolation:isolate;pointer-events:auto;color:#fff;font-family:Poppins,\"Noto Sans KR\",system-ui,sans-serif;touch-action:none}\n.lu-neon-cover{position:absolute;inset:0;background:linear-gradient(145deg,#ba347d 0%,#9b3986 36%,#087d9d 100%);opacity:0;animation:luNeonCover 480ms ease-out forwards}\n.lu-neon-rings{position:absolute;inset:0;pointer-events:none}\n.lu-neon-rings i{position:absolute;left:var(--lu-portal-x);top:var(--lu-portal-y);width:48px;height:48px;box-sizing:border-box;border:3px solid #ffc0e6;border-radius:50%;box-shadow:0 0 12px #7aebf5,inset 0 0 8px #7aebf5;opacity:0;animation:luNeonRing 560ms var(--lu-delay) cubic-bezier(.15,.65,.3,1) both}\n.lu-neon-rings i:nth-child(even){border-color:#8ff4ff;box-shadow:0 0 12px #ff95cd,inset 0 0 8px #ff95cd}\n.lu-neon-intro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:max(20px,env(safe-area-inset-top)) 22px max(20px,env(safe-area-inset-bottom));box-sizing:border-box;opacity:0;animation:luNeonArrive 320ms 480ms cubic-bezier(.2,.8,.3,1) both}\n.lu-neon-halo{position:absolute;left:50%;top:47%;width:min(110vw,560px);aspect-ratio:1;transform:translate(-50%,-50%);border:1px solid #ffc0e6;border-radius:50%;box-shadow:0 0 22px #7aebf577,inset 0 0 25px #7aebf555;opacity:.72;pointer-events:none}\n.lu-neon-halo::before,.lu-neon-halo::after{content:\"\";position:absolute;inset:9%;border:2px solid #8ff4ff;border-radius:50%}\n.lu-neon-halo::after{inset:18%;border:1px dashed #ffffff88}\n.lu-neon-icon{position:relative;width:clamp(76px,22vw,114px);height:clamp(76px,22vw,114px);display:grid;place-items:center;background:#fff;border:3px solid #b1f1f5;border-radius:50%;box-sizing:border-box;padding:12px;filter:drop-shadow(0 5px 9px #0003)}\n.lu-neon-icon .lu-app-icon{display:block;width:100%!important;height:100%!important;max-width:100%;max-height:100%;object-fit:contain;margin:0!important}\n.lu-neon-name{position:relative;font-size:clamp(28px,8vw,52px);max-width:570px;font-weight:900;letter-spacing:-.045em;line-height:1.02;color:#fff;text-shadow:0 3px 7px #0004;overflow-wrap:normal}\n.lu-neon-book{position:relative;font-size:clamp(12px,3.5vw,17px);font-weight:700;letter-spacing:.03em;color:#fff;max-width:95%;overflow-wrap:anywhere}\n.lu-neon-unit{position:relative;background:#ffffff24;border:1px solid #ffffff9c;border-radius:999px;padding:7px 19px;font-size:14px;font-weight:850;color:#fff}\n.lu-neon-mission{position:relative;font-size:13px;font-weight:850;letter-spacing:.12em;color:#fff;border-bottom:2px solid #8ff4ff;padding:3px 6px}\n.lu-neon-mission[hidden],.lu-neon-book[hidden],.lu-neon-unit[hidden]{display:none}\n.lu-neon-loading{position:absolute;bottom:max(9%,env(safe-area-inset-bottom));left:35%;width:30%;height:4px;border-radius:6px;background:#ffffff44;overflow:hidden}\n.lu-neon-loading i{display:block;width:45%;height:100%;background:#fff;border-radius:6px;animation:luNeonLoading .6s ease-in-out infinite alternate}\n@keyframes luNeonCover{0%,15%{opacity:0}100%{opacity:1}}\n@keyframes luNeonRing{0%{transform:translate(-50%,-50%) scale(.75);opacity:0}12%{opacity:.9}65%{opacity:.9}100%{transform:translate(-50%,-50%) scale(var(--lu-portal-scale));opacity:0}}\n@keyframes luNeonArrive{from{opacity:0;transform:scale(.83)}to{opacity:1;transform:scale(1)}}\n@keyframes luNeonLoading{to{transform:translateX(120%)}}\n@media(max-height:420px){.lu-neon-intro{gap:6px}.lu-neon-icon{width:64px;height:64px}.lu-neon-name{font-size:26px}.lu-neon-loading{bottom:5%}}\n@media(prefers-reduced-motion:reduce){.lu-neon-portal *{animation-duration:1ms!important;animation-delay:0ms!important}}"+
+'.lu-neon-continuation{z-index:2147482000;opacity:1;transition:opacity 220ms ease}.lu-neon-continuation .lu-neon-cover,.lu-neon-continuation .lu-neon-intro{opacity:1;animation:none;transform:none}.lu-neon-continuation.lu-neon-fade{opacity:0;pointer-events:none}html.genius-portal-handoff #vocabLoading:not([hidden]){visibility:hidden}';
 document.head.append(style);
-timer=setTimeout(()=>{
- const el=document.getElementById('geniusBootSkeleton');if(done||!el)return;
- const status=el.querySelector('.gb-status');if(status)status.textContent='연결이 느려요. 다시 시도할 수 있어요.';
- el.querySelectorAll('.gb-retry').forEach(b=>b.hidden=false);
-},15000);
+// The continuation is a bounded visual transition, not a startup gate.
+deadline=setTimeout(()=>release('timeout'),1800);
+window.addEventListener('pagehide',()=>{if(cover)cover.remove();cover=null;release('navigation')},{once:true});
 })();
