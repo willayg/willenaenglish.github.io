@@ -8,7 +8,20 @@ let books=[],identity=null,loading=false,version=0,loaded=false,selectedBook='',
 const api=async path=>{const r=await window.WillenaAPI.fetch(path,{cache:'no-store'});if(!r.ok)throw Error('Request failed');return r.json()};
 const profile=async()=>{if(identity)return identity;const who=await studentIdentity();const p=await signedInProfile(who.id);if(p.role!=='student'||!p.approved)throw Error('Student account required');return identity={...who,...p}};
 async function energy(){
-try{await profile();const snap=await safe(studentRead('student_achievement_snapshots?select=gold_word,gold_sentence,gold_writing&student_id=eq.'+encodeURIComponent((await profile()).id)+'&limit=1'));const row=snap?.[0];if(!row)throw Error('Snapshot unavailable');const count=(Number(row.gold_word)||0)+(Number(row.gold_sentence)||0)+(Number(row.gold_writing)||0);const value=(count%4)*25;by('luEnergyText').textContent=value+'%';by('luEnergyBar').setAttribute('aria-valuenow',value);by('luEnergyBar').firstElementChild.style.width=value+'%';by('luEnergyNote').textContent='Preview · 4 gold units = 1 jelly';}catch(e){by('luEnergyNote').textContent='Energy data unavailable · preview only';}}
+ try{
+  const p=await profile(), summary=await studentRead('jelly-energy-v1',{});
+  const row=summary?.students?.find(x=>String(x.student_id)===String(p.id));
+  if(!row||!Number.isFinite(row.energy_percent))throw Error('Jelly Energy unavailable');
+  const value=row.energy_percent;
+  by('luEnergyText').textContent=value+'%';
+  by('luEnergyBar').setAttribute('aria-valuenow',value);
+  by('luEnergyBar').firstElementChild.style.width=value+'%';
+  by('luEnergyNote').textContent=summary.gold_per_jelly+' gold units = 1 jelly';
+ }catch(e){
+  console.warn('[Jelly Energy]',e);
+  by('luEnergyNote').textContent='Energy data unavailable';
+ }
+}
 const apps=[
  {label:'Words',path:'/students/vocab-study/',kind:'word',icon:'word-genius.svg'},
  {label:'Sentences',path:'/students/sentence-genius/',kind:'sentence',icon:'sentence-genius.svg'},
@@ -25,11 +38,13 @@ async function studentRead(path,body){
  const token=window.WillenaAPI.getLocalAccessToken?.()||p.data?.access_token;
  if(!token)throw Error('No student token');
  const key='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
- const r=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/'+path,{cache:'no-store',headers:{apikey:key,Authorization:'Bearer '+token,'Content-Type':'application/json'},...(body?{method:'POST',body:JSON.stringify(body)}:{})});
+ const jelly=path==='jelly-energy-v1';
+ const r=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/'+(jelly?'functions/v1/':'rest/v1/')+path,{cache:'no-store',headers:{apikey:key,Authorization:'Bearer '+token,'Content-Type':'application/json',...(jelly?{'x-catalog-key':contentKey}:{})},...(body?{method:'POST',body:JSON.stringify(body)}:{})});
  if(!r.ok)throw Error('Progress source unavailable');return r.json();
 }
+const contentKey=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 async function contentRead(path){
- const key=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
+ const key=contentKey;
  const r=await fetch('https://gxwfsqxyuufqtitspfqg.supabase.co/rest/v1/'+path,{headers:{apikey:key,Authorization:'Bearer '+key},cache:'no-store'});
  if(!r.ok)throw Error('Content unavailable');return r.json();
 }
