@@ -271,7 +271,8 @@ by('luGrid').addEventListener('click',event=>{
  event.preventDefault();
  if(starLaunching)return;
  starLaunching=true;
- const url=link.href,star=link.querySelector('.lu-start-star'),rect=(star||link.querySelector('.lu-ring')||link).getBoundingClientRect();
+ const url=link.href;window.WillenaGeniusBoot?.warm(url);
+ const star=link.querySelector('.lu-start-star'),rect=(star||link.querySelector('.lu-ring')||link).getBoundingClientRect();
  const x=rect.left+rect.width/2,y=rect.top+rect.height/2;
  by('luGrid').classList.add('lu-star-launching');
  // Navigation always proceeds, even if an animation or icon fails.
@@ -312,6 +313,7 @@ hero?.addEventListener('click',event=>{
  event.preventDefault();
  if(starLaunching)return;
  starLaunching=true;
+ window.WillenaGeniusBoot?.warm(url.href);
  const rect=source.getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2;
  launchTimer=setTimeout(()=>{try{window.location.assign(url.href)}catch(error){clearMapLaunch();console.warn('[App portal launch]',error)}},1040);
  try{showNeonPortal(link,x,y,{title,icon})}catch(error){console.warn('[App portal]',error)}
