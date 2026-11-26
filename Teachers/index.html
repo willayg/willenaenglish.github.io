@@ -1401,13 +1401,26 @@ async function ccUnits(bookId){
  if(!bookId)return [];
  if(curriculum.unitCache.has(bookId))return curriculum.unitCache.get(bookId);
  const task=(async()=>{
-  const url=ccCatalog+'content_units?select=id,unit_number,title&book_id=eq.'+encodeURIComponent(bookId)+'&status=in.(review,published)&order=unit_number.asc&limit=100';
+  const url=ccCatalog+'content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(bookId)+'&status=in.(review,published)&order=unit_number.asc&limit=100';
   const res=await fetch(url,{headers:{apikey:ccCatalogKey,Authorization:'Bearer '+ccCatalogKey},cache:'no-store'});
   if(!res.ok)throw Error('Textbook units are unavailable ('+res.status+')');
   return res.json();
  })();
  curriculum.unitCache.set(bookId,task);
  try{return await task}catch(e){curriculum.unitCache.delete(bookId);throw e}
+}
+// Grammar Ten chapter progress is keyed by chapter number, not instructional lesson.
+function ccCurriculumUnits(rows){
+ if(!rows.length||!rows.every(u=>u.metadata?.subject==='grammar'&&Number.isInteger(Number(u.metadata?.chapter_number))&&Number(u.metadata.chapter_number)>0))return rows;
+ const chapters=new Map();
+ for(const u of rows){
+  const n=Number(u.metadata.chapter_number),members=chapters.get(n)||[];
+  members.push(u);chapters.set(n,members);
+ }
+ return [...chapters].sort((a,b)=>a[0]-b[0]).map(([n,members])=>{
+  const anchor=rows.find(u=>Number(u.unit_number)===n);
+  return {...(anchor||members[0]),unit_number:n,title:members[0].metadata.chapter_title||'Chapter '+n,_chapterLessons:members};
+ });
 }
 const ccClassStudents=name=>(curriculum.data?.students||[]).filter(s=>String(s.class||'').toLowerCase()===String(name).toLowerCase());
 const ccBooks=c=>(curriculum.data?.books||[]).filter(b=>b.class_id===c.id);
@@ -1526,7 +1539,7 @@ function ccSkillAvailability(book,unit,group){
  const entries=catalog[group.key];
  if(!(entries instanceof Map))return null;
  const key=group.key==='puzzles'?'book':group.key==='grammar'?String(unit.unit_number):String(unit.id);
- const value=entries.get(key);
+ const value=group.key==='grammar'&&unit._chapterLessons?unit._chapterLessons.reduce((sum,u)=>{const v=entries.get(String(u.unit_number));return sum+(typeof v==='number'?v:v?.size||0)},0):entries.get(key);
  if(value===undefined)return group.key==='puzzles'?null:false;
  // Puzzles need >=6 book words; the memory game is the smallest supported mode.
  return (typeof value==='number'?value:(value?.size||0)) >= (group.key==='puzzles'?6:1);
@@ -1574,7 +1587,7 @@ function ccCellProgress(book,unit,group,className){
 function ccCalculateCellProgress(book,unit,group,className){
  const roster=ccClassStudents(className),ids=new Set(roster.map(s=>String(s.id)));
  const rows=(curriculum.data?.progress||[]).filter(r=>String(r.book_id)===String(book.book_id)&&String(r.unit_id)===String(unit.id)&&ids.has(String(r.student_id))&&group.skills.includes(r.skill));
- const started=new Set(rows.filter(r=>Number(r.attempts)>0||Number(r.attempted_content_count)>0).map(r=>String(r.student_id)));
+ const started=new Set((group.key==='grammar'&&unit._chapterLessons?[]:rows).filter(r=>Number(r.attempts)>0||Number(r.attempted_content_count)>0).map(r=>String(r.student_id)));
  const finished=new Set(),catalog=curriculum.availability.get(String(book.book_id));
  const targetValue=catalog?.[group.key]?.get(group.key==='grammar'?String(unit.unit_number):String(unit.id));
  const target=typeof targetValue==='number'?targetValue:targetValue?.size||0;
@@ -1863,7 +1876,7 @@ function ccRenderDetail(){
  (curriculum.extraError?'<p class="cc-helper" role="alert">Grammar Genius progress could not be loaded ('+ccEscape(curriculum.extraError)+'). Refresh to retry; blank cells are not reliable.</p>':'')+
  (!curriculum.unitCache.has(book.book_id)?'<div class="cc-empty">Loading textbook units…</div>':!units.length?'<div class="cc-empty">No published or review units are available for this book.</div>':
  '<div class="cc-progress-legend"><span><i class="cc-seg-done"></i>Finished</span><span><i class="cc-seg-start"></i>In progress</span><span><i class="cc-seg-wait"></i>Not started</span></div><div class="cc-grid-scroll"><div class="cc-matrix"><div class="cc-matrix-head"><span>Unit</span>'+groups.map(g=>'<span>'+ccEscape(g.name)+'</span>').join('')+'</div>'+
- units.map(u=>'<div class="cc-matrix-row"><div class="cc-unit-name"><strong>Unit '+ccEscape(u.unit_number)+'</strong><small>'+ccEscape(u.title||'')+'</small></div>'+
+ units.map(u=>'<div class="cc-matrix-row"><div class="cc-unit-name"><strong>Unit '+ccEscape(u.unit_number)+'</strong><small>'+ccEscape(u.title||'')+'</small>'+(u._chapterLessons?'<details style="margin-top:4px;font-size:11px"><summary style="cursor:pointer">'+u._chapterLessons.length+' textbook lessons</summary>'+u._chapterLessons.map(l=>'<div>'+ccEscape(l.unit_number)+'. '+ccEscape(l.title||'')+'</div>').join('')+'</details>':'')+'</div>'+
  groups.map(g=>{
   if(g.key==='puzzles'){
    if(units[0]&&u.id!==units[0].id){
@@ -1943,7 +1956,7 @@ function ccRenderDetail(){
    if(selectedSkill==='grammar'){
     const rows=await ccRpc('teacher_curriculum_extra_activity_v1');
     if(!Array.isArray(rows))throw Error('Unexpected grammar progress response');
-    curriculum.extraActivity=rows;curriculum.extraError='';
+    curriculum.extraActivity=rows;curriculum.extraError='';ccCellProgressCache.clear();
    }
    if(selectedSkill==='puzzles')await Promise.all([ccLoadPuzzleDetail(selectedBook,selectedUnit),ccLoadJelly(selectedBook,selectedUnit,selectedSkill)]);
    else await Promise.all([ccLoadSkillDetail(selectedBook,selectedUnit),ccLoadJelly(selectedBook,selectedUnit,selectedSkill)]);
@@ -2281,7 +2294,7 @@ async function loadClassOverview(force=false){
   const allIds=[...new Set(curriculum.data.books.map(b=>b.book_id).filter(Boolean))];
   const byId=new Map();
   await Promise.all(allIds.map(async id=>{try{byId.set(id,await ccUnits(id))}catch(e){console.warn('[Class Curriculum] Catalog:',e.message)}}));
-  curriculum.data.books.forEach(b=>{b._units=byId.get(b.book_id)||[];b._className=curriculum.data.classes.find(c=>c.id===b.class_id)?.name||''});
+  curriculum.data.books.forEach(b=>{b._units=ccCurriculumUnits(byId.get(b.book_id)||[]);b._className=curriculum.data.classes.find(c=>c.id===b.class_id)?.name||''});
   // Catalog presence is separate from student progress. Unknown fetches remain white,
   // rather than incorrectly reporting that a skill is unavailable.
   try{
