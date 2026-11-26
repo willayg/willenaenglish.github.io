@@ -7,10 +7,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>Sentence Genius · 문장 지니어스</title>
 <link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
-<link rel="modulepreload" href="./app.js?v=20261126-boot2">
+<link rel="modulepreload" href="./app.js?v=20261126-boot3">
 <link rel="preconnect" href="https://fiieuiktlsivwfgyivai.supabase.co" crossorigin>
 <link rel="preconnect" href="https://gxwfsqxyuufqtitspfqg.supabase.co" crossorigin>
-<script src="/students/components/genius-app-boot.js?v=20261126-fade2"></script>
+<script src="/students/components/genius-app-boot.js?v=20261126-smooth3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -43,8 +43,7 @@
 </style>
 </head>
 <body>
-<div id="geniusBootSkeleton" role="status" aria-live="polite"><div class="gb-splash"><div class="gb-halo" aria-hidden="true"></div><span class="gb-brand"><img src="/students/assets/icons/sentence-genius.svg?v=20261025-sentence-path-1" alt=""></span><span class="gb-heading">SENTENCE GENIUS</span><p class="gb-status">학습을 준비하고 있어요…</p><div class="gb-progress" aria-hidden="true"><i></i></div><button class="gb-retry" type="button" onclick="location.reload()" hidden>다시 불러오기</button><button class="gb-retry" type="button" onclick="window.WillenaGeniusBoot?.continue?.()" hidden>계속하기</button></div></div>
-<style>html:not(.genius-app-booting):not(.genius-app-revealing) #geniusBootSkeleton{display:none!important}</style>
+<script>window.WillenaGeniusBoot?.mountPortal?.();</script>
 <div id="willenaHomeworkOpening" role="status" aria-live="polite" style="display:none"><div class="wh-card"><div class="wh-mark" aria-hidden="true"><svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="8" height="8"/><rect x="14" y="2" width="8" height="8"/><rect x="2" y="14" width="8" height="8"/><path d="M14 14h3v3h-3zM21 14v4h-3M14 21h4"/></svg></div><strong>숙제를 불러오는 중...</strong><small>Opening your homework</small><span class="wh-bar" aria-hidden="true"></span></div></div>
 <div class="study-app">
   <student-header title="문장 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
@@ -303,11 +302,11 @@
 </div>
 
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
-<script type="module">import('./app.js?v=20261126-boot2').catch(error=>{console.error('[Sentence Genius] startup module',error);const panel=document.getElementById('vocabStartupError');if(panel){panel.hidden=false;panel.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}window.WillenaHomeworkDeepLinkSplash?.hide();window.WillenaGeniusBoot?.finish('error');});</script>
+<script type="module">import('./app.js?v=20261126-boot3').catch(error=>{console.error('[Sentence Genius] startup module',error);const panel=document.getElementById('vocabStartupError');if(panel){panel.hidden=false;panel.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}window.WillenaHomeworkDeepLinkSplash?.hide();window.WillenaGeniusBoot?.finish('error');});</script>
 
-<script src="/students/components/mission-basket.js?v=20261112-conversation-route4"></script>
+<script src="/students/components/mission-basket.js?v=20261126-stable-pilot1"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
-<script>document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('appMissionBasket');if(el){const mission=window.WillenaMissionBasket?.mount(el,{app:'Sentence Genius'});window.WillenaGeniusBoot?.track?.(mission)}const achievements=window.WillenaAchievements?.refresh?.();window.WillenaGeniusBoot?.track?.(achievements)});</script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('appMissionBasket');if(el){const mission=window.WillenaMissionBasket?.mount(el,{app:'Sentence Genius',stableLoading:true});window.WillenaGeniusBoot?.trackMission?.(mission)}});</script>
 <script defer src="/students/components/live-presence.js?v=20261103-p3"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
 </body></html>
