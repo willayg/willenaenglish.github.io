@@ -121,7 +121,7 @@ let cacheKey='';
 const restore=()=>{try{const raw=JSON.parse(sessionStorage.getItem(cacheKey)||'null');if(!raw||Date.now()-raw.at>900000)return;for(const [k,m] of raw.maps||[])cache.set(k,{...m,gold:new Set(m.gold)});if(books.some(b=>String(b.id)===raw.selected))selectedBook=raw.selected;}catch{}};
 function remember(book,units,gold,results){cache.set(String(book.id),{book,units,gold,results,extra:{...extra}});try{sessionStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),selected:selectedBook,maps:[...cache].map(([k,m])=>[k,{...m,gold:[...m.gold]}])}));}catch{}}
 
-function cell(label,p,url,state='unknown',tone='cyan',mission=false){
+function cell(label,p,url,state='unknown',tone='cyan',mission=false,launch=null){
  const value=p==null||p<0?null:Math.max(0,Math.min(100,p));
  const text=value===null||value===0?'':value+'%';
  const progress=value===null?0:value;
@@ -131,7 +131,7 @@ function cell(label,p,url,state='unknown',tone='cyan',mission=false){
  (progress>0?'<circle class="lu-ring-progress" cx="32" cy="32" r="27" pathLength="100" stroke-dasharray="'+progress+' 100" transform="rotate(-90 32 32)"/>':'')+
  (gold?'<path class="lu-ring-star" d="M32 18l4.2 9 9.8 1.2-7.1 7 1.7 9.8-8.6-4.7-8.6 4.7 1.7-9.8-7.1-7 9.8-1.2z"/>':starter?'<path class="lu-start-star" d="M32 21l3.3 7 7.7 1-5.5 5.4 1.3 7.6-6.8-3.6-6.8 3.6 1.3-7.6-5.5-5.4 7.7-1z"/>':'<text x="32" y="33" dominant-baseline="middle" text-anchor="middle">'+esc(text)+'</text>')+'</svg>';
  const attrs=' class="lu-cell" data-state="'+state+'" data-mission="'+mission+'" aria-label="'+esc((gold?'100% · Completed':value===null?label:value+'%')+(mission?' · Active mission':''))+'"';
- return url?'<a'+attrs+' href="'+esc(url)+'">'+ring+'</a>':'<span'+attrs+'>'+ring+'</span>';
+ return url?'<a'+attrs+(launch?' data-launch-app="'+esc(launch.app)+'" data-launch-book="'+esc(launch.book)+'" data-launch-unit="'+esc(launch.unit)+'"':'')+' href="'+esc(url)+'">'+ring+'</a>':'<span'+attrs+'>'+ring+'</span>';
 }
 function render(book,units,wordGold,sentenceResults){
 if(starLaunching)return;
@@ -156,7 +156,7 @@ if(jellyGoldKeys!==null&&app.kind!=='puzzles'){
 }else if(p!==null&&p>=0&&state!=='gold'){state=p===100?'gold':p===0?'idle':'progress';label=p===100?'Done':p===0?'Start':'Continue';}
 if(p===-1)return cell('Unavailable',null,null,'unknown');
 const mission=missions.some(m=>m.app===names[app.kind]&&m.book===String(book.id)&&(m.unit?m.unit===String(u.id):m.number===String(u.unit_number)));
-return cell(label,p,url,state,'cyan',mission);
+return cell(label,p,url,state,'cyan',mission,{app:app.kind,book:book.title,unit:app.kind==='puzzles'?'':u.unit_number});
 }).join('');
 }).join('');
 }
@@ -223,18 +223,53 @@ async function load(){if(loading)return;loading=true;try{const p=await profile()
 function view(map){by('luApps').setAttribute('aria-pressed',String(!map));by('luMapTab').setAttribute('aria-pressed',String(map));hero.hidden=map;by('luMap').hidden=!map;try{localStorage.setItem('willena-staging-dashboard-view',map?'map':'apps')}catch{}if(map&&!loaded)void load()}
 by('luApps').onclick=()=>view(false);by('luMapTab').onclick=()=>view(true);by('luBooks').onclick=e=>{const b=e.target.closest('[data-book]');if(!b)return;if(selectedBook===b.dataset.book)return;selectedBook=b.dataset.book;bookTabs();void loadBook()};
 window.addEventListener('willena:map-missions',()=>{if(!starLaunching&&lastMap){const {book,units,wordGold,sentenceResults}=lastMap;render(book,units,wordGold,sentenceResults)}});
+const launchTitles={word:'Word Genius',sentence:'Sentence Genius',grammar:'Grammar Genius Books',talk:'Free Talking Genius',writing:'Writing Genius',puzzles:'Puzzles'};
+let portalTimer=null,launchTimer=null;
+function clearMapLaunch(){
+ clearTimeout(portalTimer);clearTimeout(launchTimer);
+ portalTimer=null;launchTimer=null;starLaunching=false;
+ document.querySelectorAll('.lu-star-burst,.lu-neon-portal').forEach(el=>el.remove());
+ by('luGrid').classList.remove('lu-star-launching');
+ by('luGrid').querySelectorAll('.lu-star-shattered').forEach(el=>{el.classList.remove('lu-star-shattered');const star=el.querySelector('.lu-start-star');if(star)star.style.opacity=''});
+}
+function showNeonPortal(link,x,y){
+ const appIndex=apps.findIndex(a=>a.kind===link.dataset.launchApp);
+ if(appIndex<0)return;
+ const portal=document.createElement('div');
+ portal.className='lu-neon-portal';
+ portal.setAttribute('role','status');
+ portal.setAttribute('aria-label',launchTitles[link.dataset.launchApp]+' loading');
+ const w=window.innerWidth,h=window.innerHeight;
+ const scale=Math.max(12,Math.hypot(Math.max(x,w-x),Math.max(y,h-y))/24+2);
+ portal.style.setProperty('--lu-portal-x',x+'px');
+ portal.style.setProperty('--lu-portal-y',y+'px');
+ portal.style.setProperty('--lu-portal-scale',String(scale));
+ portal.innerHTML='<div class="lu-neon-cover"></div><div class="lu-neon-rings" aria-hidden="true">'+Array.from({length:5},(_,i)=>'<i style="--lu-delay:'+i*65+'ms"></i>').join('')+'</div><div class="lu-neon-intro"><div class="lu-neon-halo" aria-hidden="true"></div><div class="lu-neon-mission"></div><div class="lu-neon-icon" aria-hidden="true">'+headerIcons[appIndex]+'</div><div class="lu-neon-name"></div><div class="lu-neon-book"></div><div class="lu-neon-unit"></div><div class="lu-neon-loading" aria-hidden="true"><i></i></div></div>';
+ const mission=portal.querySelector('.lu-neon-mission');
+ mission.textContent='미션';mission.hidden=link.dataset.mission!=='true';
+ portal.querySelector('.lu-neon-name').textContent=launchTitles[link.dataset.launchApp].toUpperCase();
+ portal.querySelector('.lu-neon-book').textContent=link.dataset.launchBook||'';
+ portal.querySelector('.lu-neon-unit').textContent=link.dataset.launchUnit?'UNIT '+link.dataset.launchUnit:'WHOLE BOOK';
+ document.body.appendChild(portal);
+}
 by('luGrid').addEventListener('click',event=>{
  const link=event.target.closest('a.lu-cell');
- if(!link||!link.querySelector('.lu-start-star')||event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+ if(!link||event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||!Element.prototype.animate)return;
+ if(!link.dataset.launchApp)return;
  event.preventDefault();
  if(starLaunching)return;
  starLaunching=true;
- const url=link.href,rect=link.querySelector('.lu-start-star').getBoundingClientRect();
+ const url=link.href,star=link.querySelector('.lu-start-star'),rect=(star||link.querySelector('.lu-ring')||link).getBoundingClientRect();
  const x=rect.left+rect.width/2,y=rect.top+rect.height/2;
+ by('luGrid').classList.add('lu-star-launching');
+ // Navigation always proceeds, even if an animation or icon fails.
+ launchTimer=setTimeout(()=>{try{window.location.assign(url)}catch(error){clearMapLaunch();console.warn('[Learning map launch]',error)}},star?1240:1040);
+ try{
+  if(star){
  const burst=document.createElement('div');burst.className='lu-star-burst';burst.setAttribute('aria-hidden','true');
  const colors=['#f5c84d','#ffdf78','#28b7c4','#ed76ad','#ffffff'];
- by('luGrid').classList.add('lu-star-launching');link.classList.add('lu-star-shattered');link.querySelector('.lu-start-star').style.opacity='0';
+ link.classList.add('lu-star-shattered');star.style.opacity='0';
  for(let i=0;i<100;i++){
   const p=document.createElement('span'),angle=i*2.39996323,d=20+Math.random()*Math.min(115,window.innerWidth*.28),size=3+Math.random()*8;
   p.style.cssText='left:'+x+'px;top:'+y+'px;width:'+size+'px;height:'+size+'px;background:'+colors[i%colors.length]+';';
@@ -243,7 +278,10 @@ by('luGrid').addEventListener('click',event=>{
   p.animate([{transform:'translate(-50%,-50%) scale(.5)',opacity:1},{transform:'translate('+dx*.65+'px,'+dy*.65+'px) rotate('+i*13+'deg) scale(1)',opacity:1,offset:.48},{transform:'translate('+dx+'px,'+(dy+20)+'px) rotate('+i*29+'deg) scale(.15)',opacity:0}],{duration:490+Math.random()*210,easing:'cubic-bezier(.16,.7,.4,1)',fill:'forwards'});
  }
  document.body.appendChild(burst);
- setTimeout(()=>{window.location.assign(url)},720);
+  }
+  portalTimer=setTimeout(()=>{try{showNeonPortal(link,x,y)}catch(error){console.warn('[Learning map portal]',error)}},star?200:0);
+ }catch(error){console.warn('[Learning map animation]',error)}
 });
-let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){starLaunching=false;document.querySelectorAll('.lu-star-burst').forEach(el=>el.remove());by('luGrid').classList.remove('lu-star-launching');by('luGrid').querySelectorAll('.lu-star-shattered').forEach(el=>{el.classList.remove('lu-star-shattered');const star=el.querySelector('.lu-start-star');if(star)star.style.opacity=''});void energy();if(!by('luMap').hidden)void loadBook()}});
+window.addEventListener('pagehide',clearMapLaunch);
+let initial=false;try{initial=localStorage.getItem('willena-staging-dashboard-view')==='map'}catch{}view(initial);void energy();window.addEventListener('pageshow',e=>{if(e.persisted){clearMapLaunch();void energy();if(!by('luMap').hidden)void loadBook()}});
 }
