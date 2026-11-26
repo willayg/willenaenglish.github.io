@@ -276,7 +276,7 @@ by('luGrid').addEventListener('click',event=>{
  const x=rect.left+rect.width/2,y=rect.top+rect.height/2;
  by('luGrid').classList.add('lu-star-launching');
  // Navigation always proceeds, even if an animation or icon fails.
- launchTimer=setTimeout(()=>{try{window.location.assign(url)}catch(error){clearMapLaunch();console.warn('[Learning map launch]',error)}},star?1240:1040);
+ launchTimer=setTimeout(()=>{try{window.WillenaGeniusBoot?.handoffPortal?.(url);window.location.assign(url)}catch(error){clearMapLaunch();console.warn('[Learning map launch]',error)}},star?1240:1040);
  try{
   if(star){
  const burst=document.createElement('div');burst.className='lu-star-burst';burst.setAttribute('aria-hidden','true');
@@ -315,7 +315,7 @@ hero?.addEventListener('click',event=>{
  starLaunching=true;
  window.WillenaGeniusBoot?.warm(url.href);
  const rect=source.getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2;
- launchTimer=setTimeout(()=>{try{window.location.assign(url.href)}catch(error){clearMapLaunch();console.warn('[App portal launch]',error)}},1040);
+ launchTimer=setTimeout(()=>{try{window.WillenaGeniusBoot?.handoffPortal?.(url.href);window.location.assign(url.href)}catch(error){clearMapLaunch();console.warn('[App portal launch]',error)}},1040);
  try{showNeonPortal(link,x,y,{title,icon})}catch(error){console.warn('[App portal]',error)}
 });
 window.addEventListener('pagehide',clearMapLaunch);
