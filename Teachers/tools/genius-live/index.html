@@ -156,7 +156,7 @@ body.genius-embedded .music-controls small{color:#627e88}
 body.genius-embedded main{max-width:none;margin:12px auto;padding:0 2px}
 body.genius-embedded .panel{box-shadow:none}
 @media(max-width:700px){body.genius-embedded .grid{grid-template-columns:1fr}body.genius-embedded .music-controls{width:auto}}
-</style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script></head><body><header><h1>Willena <span>Genius Live</span></h1><div class="music-controls" aria-label="Game music controls">
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script><style>.gl-student-avatar{display:inline-grid;place-items:center;vertical-align:middle;width:var(--gl-av-size,32px);height:var(--gl-av-size,32px);flex:0 0 auto;border-radius:50%;overflow:hidden;background:#e1edf2;border:1px solid #b6d7df;color:#35565b;font-weight:900;font-size:14px;line-height:1;margin-right:5px;box-sizing:border-box}.gl-student-avatar>span{pointer-events:none}.gl-student-list{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin:12px 0}.gl-student-list-item{display:inline-flex;align-items:center;gap:3px;padding:4px 8px;border-radius:12px;background:#e8f3f6;color:#35565b;font-size:12px;font-weight:700}.gl-outro-emblem .gl-student-avatar{margin:0}.gl-team-player .gl-student-avatar{margin-right:2px}.chip .gl-student-avatar,.studentchip .gl-student-avatar{float:left;margin-right:7px}</style><script src="https://students.willenaenglish.com/students/components/avatar-lab.js?v=20261127-avatar-lab-beards1"></script><script src="https://students.willenaenglish.com/students/components/avatar-renderer.js?v=20261127-genius-live-avatar1"></script><script src="https://students.willenaenglish.com/students/components/genius-live-avatar.js?v=20261127-genius-live-avatar1"></script></head><body><header><h1>Willena <span>Genius Live</span></h1><div class="music-controls" aria-label="Game music controls">
 <button id="fullscreenToggle" type="button" title="Fullscreen classroom view">⛶ Fullscreen</button><button id="musicToggle" type="button" aria-pressed="false">♫ Play music</button><button id="sfxToggle" type="button" aria-pressed="true" title="Toggle scoreboard sound effects">SFX On</button>
 <label for="musicVolume">Volume <input id="musicVolume" type="range" min="0" max="100" value="35" aria-label="Game music volume"></label>
 <small>Original game soundtrack · teacher device only</small>
@@ -336,9 +336,10 @@ function bookName(id){return catalog.find(b=>b.id===id)?.title||"Unknown book"}
 function classBooks(){const allowed=new Set(classBookIds[selectedClassId]||[]);return catalog.filter(b=>allowed.has(b.id))}
 function resetToClassBooks(){const allowed=new Set(classBookIds[selectedClassId]||[]);for(const id of [...selected.keys()])if(!allowed.has(id))selected.delete(id)}
 function selectedUnits(){return [...selected].map(([bookId,units])=>({bookId,units:[...units]})).filter(x=>x.units.length)}
-function roundStatus(){if(!state)return "";return state.status+"|"+state.questionNumber+"|"+state.answeredCount+"|"+state.players.length+"|"+state.className+"|"+state.teamCount+"|"+(state.teamNames||[]).join(",")+"|"+(state.teamLogos||[]).join(",")+"|"+state.players.map(p=>p.id+":"+p.team+":"+p.score).join(",")}
+function roundStatus(){if(!state)return "";return state.status+"|"+state.questionNumber+"|"+state.answeredCount+"|"+state.players.length+"|"+state.className+"|"+state.teamCount+"|"+(state.teamNames||[]).join(",")+"|"+(state.teamLogos||[]).join(",")+"|"+state.players.map(p=>p.id+":"+p.team+":"+p.score+":"+(p.avatar||"")).join(",")}
 function teamName(n){return state?.teamNames?.[n]||["Pink Dragons","Blue Sharks","Green Tigers","Yellow Stars","Purple Panthers","Orange Foxes","Silver Wolves","Red Falcons"][n]||"Team"}
-function leaderboard(){if(!state)return "";const teams=state.mode==="team";const list=teams?Array.from({length:state.teamCount},(_,i)=>{const members=state.players.filter(p=>p.team===i);const total=members.reduce((s,p)=>s+p.score,0);return{name:teamName(i),logo:state.teamLogos?.[i]||"⭐",score:members.length?total/members.length:0,count:members.length}}):state.players.map(p=>({name:p.name,score:p.score}));list.sort((a,b)=>b.score-a.score);return list.map((p,i)=>'<div class="score"><span>'+(i+1)+'. '+(teams?logoVisual(p.logo,24)+' ':'')+esc(p.name)+(teams?' <small class="muted">('+p.count+' players)</small>':"")+'</span><b>'+Math.round(p.score).toLocaleString()+(teams?" avg pts":" pts")+'</b></div>').join("")}
+const avatarVisual=(player,size=32)=>window.WillenaLiveAvatar?.markup(player,size)||"";
+function leaderboard(){if(!state)return "";const teams=state.mode==="team";const list=teams?Array.from({length:state.teamCount},(_,i)=>{const members=state.players.filter(p=>p.team===i);const total=members.reduce((s,p)=>s+p.score,0);return{name:teamName(i),logo:state.teamLogos?.[i]||"⭐",score:members.length?total/members.length:0,count:members.length}}):state.players.map(p=>({name:p.name,avatar:p.avatar,score:p.score}));list.sort((a,b)=>b.score-a.score);return list.map((p,i)=>'<div class="score"><span>'+(i+1)+'. '+(teams?logoVisual(p.logo,24)+' ':avatarVisual(p,30))+esc(p.name)+(teams?' <small class="muted">('+p.count+' players)</small>':"")+'</span><b>'+Math.round(p.score).toLocaleString()+(teams?" avg pts":" pts")+'</b></div>').join("")}
 function setup(){
  // Grammar Ten is a grammar-only question bank, indexed by its 31 instructional units.
  // Do not leave vocabulary/sentence selected from a previous textbook.
@@ -393,7 +394,7 @@ function attachLogoPickers(){
 }
 let selectedLobbyPlayerId=null;
 function teamControls(){
- if(state.mode!=="team")return '<p class="muted small">This is an individual game.</p>';
+ if(state.mode!=="team")return '<div class="gl-student-list">'+state.players.map(p=>'<span class="gl-student-list-item">'+avatarVisual(p,34)+esc(p.name)+'</span>').join('')+'</div>';
  const logoSelect=i=>logoPickerHtml(String(i),state.teamLogos?.[i]||TEAM_EMOJIS[i%TEAM_EMOJIS.length]);
  const manager='<div class="team-manager"><div class="row between"><strong>Manage teams ('+state.teamCount+'/8)</strong><button id="hostAddTeam" '+(state.teamCount>=8?"disabled":"")+'>+ Add team</button></div><p class="muted small">Rename teams or change their logos here. Teams can also be created by students.</p>'+
  Array.from({length:state.teamCount},(_,i)=>'<div class="team-editor"><input data-team-name="'+i+'" maxlength="24" aria-label="Name for team '+(i+1)+'" value="'+esc(teamName(i))+'">'+logoSelect(i)+'<button data-save-team="'+i+'">Save</button><button class="danger" data-remove-team="'+i+'" '+(state.teamCount<=1?"disabled":"")+'>Remove</button></div>').join("")+'</div>';
@@ -401,11 +402,11 @@ function teamControls(){
   const members=state.players.filter(p=>p.team===i);
   return '<div class="gl-team-zone" data-team-zone="'+i+'" tabindex="0" role="group" aria-label="'+esc(teamName(i))+' drop area">'+
    '<div class="gl-team-head"><div class="gl-team-heading">'+logoVisual(state.teamLogos?.[i]||"⭐",29)+'<strong>'+esc(teamName(i))+'</strong></div><span class="gl-team-number">'+members.length+' player'+(members.length===1?"":"s")+'</span></div>'+
-   '<div class="gl-team-member-list">'+(members.length?members.map(p=>'<div class="gl-team-player" data-team-player="'+esc(p.id)+'" draggable="true" role="button" tabindex="0" aria-label="Move '+esc(p.name)+' to another team" title="Drag to another team or tap to select"><span class="gl-player-handle" aria-hidden="true">⠿</span><span class="gl-team-player-label">'+esc(p.name)+'</span></div>').join(""):'<div class="gl-team-empty">Drop students here</div>')+'</div>'+
+   '<div class="gl-team-member-list">'+(members.length?members.map(p=>'<div class="gl-team-player" data-team-player="'+esc(p.id)+'" draggable="true" role="button" tabindex="0" aria-label="Move '+esc(p.name)+' to another team" title="Drag to another team or tap to select"><span class="gl-player-handle" aria-hidden="true">⠿</span>'+avatarVisual(p,30)+'<span class="gl-team-player-label">'+esc(p.name)+'</span></div>').join(""):'<div class="gl-team-empty">Drop students here</div>')+'</div>'+
    '<button type="button" class="gl-team-move" data-move-to-team="'+i+'" disabled>Move selected student here</button></div>';
  }).join("");
  const unassigned=state.players.filter(p=>p.team<0);
- const waiting=unassigned.length?'<div class="gl-team-zone" data-team-zone="-1"><div class="gl-team-head"><strong>Unassigned</strong><span class="gl-team-number">'+unassigned.length+'</span></div><div class="gl-team-member-list">'+unassigned.map(p=>'<div class="gl-team-player" data-team-player="'+esc(p.id)+'" draggable="true" role="button" tabindex="0"><span class="gl-player-handle" aria-hidden="true">⠿</span><span class="gl-team-player-label">'+esc(p.name)+'</span></div>').join("")+'</div></div>':"";
+ const waiting=unassigned.length?'<div class="gl-team-zone" data-team-zone="-1"><div class="gl-team-head"><strong>Unassigned</strong><span class="gl-team-number">'+unassigned.length+'</span></div><div class="gl-team-member-list">'+unassigned.map(p=>'<div class="gl-team-player" data-team-player="'+esc(p.id)+'" draggable="true" role="button" tabindex="0"><span class="gl-player-handle" aria-hidden="true">⠿</span>'+avatarVisual(p,30)+'<span class="gl-team-player-label">'+esc(p.name)+'</span></div>').join("")+'</div></div>':"";
  return '<p class="muted small">Drag students between teams. On a phone, tap a name and then tap the destination team.</p>'+
  manager+'<div class="team-actions"><button id="balanceTeams" '+(state.teamCount?'':'disabled')+'>Auto-balance</button><button id="randomizeTeams" '+(state.teamCount?'':'disabled')+'>Randomize Teams</button><button id="addGhosts" '+(state.teamCount?'':'disabled')+'>Add 6 ghost players (simulation)</button></div>'+
  '<div class="gl-teams-board">'+waiting+board+'</div>';
@@ -511,7 +512,7 @@ function quiz(){const q=state.question;return '<div class="grid"><section class=
  '<div class="question">'+esc(q.prompt)+'</div><div class="answers">'+q.options.map((s,i)=>'<div class="answer '+(state.status==="reveal"?(i===q.correct?"correct":"dim"):"")+'"><span class="letter">'+["A","B","C","D","E"][i]+'</span>'+esc(s)+'</div>').join("")+'</div>'+
  (state.status==="reveal"?'<p class="notice"><strong>Answer: '+esc(q.options[q.correct])+'</strong> · '+esc(q.explanation)+'</p>':'<p class="muted small">Answers remain hidden until you reveal them.</p>')+
  '<div class="row"><button id="reveal" '+(state.status!=="question"?"disabled":"")+'>Reveal Answer</button><button id="next" class="primary" '+(state.status!=="reveal"?"disabled":"")+'>'+(state.questionNumber===state.total?"Finish Game":"Next Question")+'</button><button id="cancel">End game</button></div></section>'+
- '<section class="panel"><h2>'+ (state.mode==="team"?"Team leaderboard":"Leaderboard")+'</h2>'+leaderboard()+'<h3 style="margin-top:25px">Players</h3>'+state.players.map(p=>'<div class="player">'+esc(p.name)+'<span class="tag">'+(state.answeredPlayerIds?.includes(p.id)?"Answered":"Waiting")+'</span></div>').join("")+'</section></div>'}
+ '<section class="panel"><h2>'+ (state.mode==="team"?"Team leaderboard":"Leaderboard")+'</h2>'+leaderboard()+'<h3 style="margin-top:25px">Players</h3>'+state.players.map(p=>'<div class="player"><span>'+avatarVisual(p,30)+esc(p.name)+'</span>'+'<span class="tag">'+(state.answeredPlayerIds?.includes(p.id)?"Answered":"Waiting")+'</span></div>').join("")+'</section></div>'}
 
 // Server-authoritative points: subtract this question's awards from current scores
 // to reconstruct the pre-round leaderboard even when reveal arrives via polling.
@@ -527,7 +528,7 @@ function scoreboardRows(data){
    end:members.length?total/divisor:0,start:members.length?(total-delta)/divisor:0,delta:members.length?delta/divisor:0};
  }):data.players.map(p=>{
   const delta=gains.get(p.id)||0;
-  return{id:p.id,name:p.name,logo:null,count:1,end:p.score,start:p.score-delta,delta};
+  return{id:p.id,name:p.name,avatar:p.avatar,logo:null,count:1,end:p.score,start:p.score-delta,delta};
  });
  return rows;
 }
@@ -547,7 +548,7 @@ function showRoundReveal(rows,round,total,teams){
  const label=(teams?"TEAM":"PLAYER")+" RANKINGS";
  const ordered=[...rows].sort((a,b)=>b.start-a.start||String(a.id).localeCompare(String(b.id)));
  const rowMarkup=p=>'<div class="gl-reveal-row" data-score-row="'+esc(p.id)+'">'+
-  '<span class="gl-reveal-rank">—</span><div class="gl-reveal-name">'+(p.logo?logoVisual(p.logo,44):"")+ '<span>'+esc(p.name)+'</span></div>'+
+  '<span class="gl-reveal-rank">—</span><div class="gl-reveal-name">'+(p.logo?logoVisual(p.logo,44):avatarVisual(p,44))+ '<span>'+esc(p.name)+'</span></div>'+
   '<div class="gl-reveal-score"><span class="gl-reveal-number">0</span><span class="gl-reveal-unit">'+(teams?"average pts":"points")+'</span><span class="gl-reveal-gain"></span></div></div>';
  overlay.innerHTML='<div class="gl-reveal-content"><div class="gl-scoreboard-confetti" aria-hidden="true"></div>'+
   '<div class="gl-reveal-kicker">Question '+round+' of '+total+' complete</div><h2 class="gl-reveal-title">POINTS ARE IN!</h2>'+
@@ -681,7 +682,7 @@ function podiumEntries(){
  const entries=teamGame?Array.from({length:state.teamCount},(_,i)=>{
   const people=state.players.filter(p=>p.team===i);
   return {id:i,name:teamName(i),logo:state.teamLogos?.[i]||"⭐",score:people.length?people.reduce((sum,p)=>sum+p.score,0)/people.length:0,count:people.length};
- }):state.players.map((p,i)=>({id:p.id,name:p.name,logo:null,score:p.score,count:1}));
+ }):state.players.map((p,i)=>({id:p.id,name:p.name,avatar:p.avatar,logo:null,score:p.score,count:1}));
  // Empty teams must never win or displace a team that actually participated.
  return entries.filter(x=>x.count>0).sort((a,b)=>b.score-a.score||String(a.name).localeCompare(String(b.name)));
 }
@@ -702,12 +703,12 @@ function finished(){
   const item=ranked[pos.rank-1];
   if(!item)return '<div class="gl-outro-slot '+pos.cls+'" aria-hidden="true"></div>';
   return '<div class="gl-outro-slot '+pos.cls+'">'+(pos.rank===1?'<div class="gl-outro-crown" aria-label="Winner">★ ★ ★</div>':'')+
-  '<div class="gl-outro-emblem">'+(item.logo?logoVisual(item.logo,64):'<span aria-hidden="true">★</span>')+'</div>'+
+  '<div class="gl-outro-emblem">'+(item.logo?logoVisual(item.logo,64):avatarVisual(item,64))+'</div>'+
   '<div class="gl-outro-name">'+esc(item.name)+'</div>'+
   '<div class="gl-outro-points">'+Math.round(item.score).toLocaleString()+(state.mode==="team"?" AVG PTS":" PTS")+'</div>'+
   '<div class="gl-outro-block">'+pos.rank+'</div></div>';
  }).join("");
- const extra=ranked.slice(3).map((p,i)=>'<div class="score"><span>'+(i+4)+'. '+(p.logo?logoVisual(p.logo,25)+' ':'')+esc(p.name)+'</span><b>'+Math.round(p.score).toLocaleString()+' pts</b></div>').join("");
+ const extra=ranked.slice(3).map((p,i)=>'<div class="score"><span>'+(i+4)+'. '+(p.logo?logoVisual(p.logo,25)+' ':avatarVisual(p,30))+esc(p.name)+'</span><b>'+Math.round(p.score).toLocaleString()+' pts</b></div>').join("");
  const palm='<div class="gl-outro-palm left" aria-hidden="true"><i class="trunk"></i>'+Array.from({length:5},()=>'<i class="leaf"></i>').join("")+'</div><div class="gl-outro-palm right" aria-hidden="true"><i class="trunk"></i>'+Array.from({length:5},()=>'<i class="leaf"></i>').join("")+'</div>';
  return '<section class="gl-outro" aria-label="Genius Live final standings">'+
  '<div class="gl-outro-sky"></div><div class="gl-outro-sun"></div><div class="gl-outro-mountain"></div><div class="gl-outro-grid"></div>'+palm+
@@ -715,7 +716,7 @@ function finished(){
  '<div class="gl-outro-podiums">'+podium+'</div><div class="gl-outro-bottom">CALIFORNIA SUNSET · '+esc(state.total)+' QUESTIONS COMPLETE</div></section>'+
  '<div class="gl-final-detail"><h2>Final standings</h2>'+leaderboard()+extra+
  '<details><summary style="cursor:pointer;font-weight:800;margin:14px 0">Individual scores ('+players.length+')</summary>'+
- players.map(p=>'<div class="score">'+esc(p.name)+'<b>'+Math.round(p.score).toLocaleString()+' pts</b></div>').join("")+'</details>'+
+ players.map(p=>'<div class="score"><span>'+avatarVisual(p,30)+esc(p.name)+'</span>'+'<b>'+Math.round(p.score).toLocaleString()+' pts</b></div>').join("")+'</details>'+
  '<p><button id="again" class="primary">Create another game</button></p></div>';
 }
 function paint(){if(!state){activeReveal?.close();gameMusic.setPhase("lobby");setup();return}if(state.status!=="reveal")activeReveal?.close();if(state.status==="countdown"&&lastCountdownKey!==state.pin+":"+state.questionNumber){lastCountdownKey=state.pin+":"+state.questionNumber;lastCountdownDigit=null;}gameMusic.setPhase(state.status==="countdown"?"lobby":state.status);maybeRoundReveal();maybeFinalFanfare();const key=roundStatus();if(key===lastView)return;lastView=key;$("#app").innerHTML=state.status==="lobby"?lobby():state.status==="countdown"?countdownMarkup():["question","reveal"].includes(state.status)?quiz():finished();
