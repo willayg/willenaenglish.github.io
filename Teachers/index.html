@@ -805,7 +805,7 @@ try{
 <div class="wc-dialog-actions"><button id="wcDelete" class="wc-button wc-delete" type="button" hidden>Delete</button><button class="wc-button" type="button" id="wcCancel">Cancel</button><button class="wc-button wc-primary" id="wcSave" type="submit">Save event</button></div></form></dialog>
 <div id="rosterAssignmentsOverlay" class="rs-assign-overlay" hidden><section class="rs-assign-dialog" role="dialog" aria-modal="true" aria-label="Student assignments"><div class="rs-assign-head"><div><h2 id="rosterAssignmentsTitle">Assignments</h2><p>Student mission history</p></div><button type="button" id="rosterAssignmentsClose" aria-label="Close assignments">×</button></div><div class="rs-assign-tabs"><button data-rs-assign-tab="current" class="active" type="button">Current</button><button data-rs-assign-tab="history" type="button">History</button></div><div id="rosterAssignmentsBody" class="rs-assign-body"></div></section></div>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div><div id="rsDrawerBooks" class="rs-dr-books"></div></div><button class="close" id="closeDrawer" aria-label="Close student details">×</button></div><nav id="rsDrawerTabs" role="tablist" aria-label="Student details"><button type="button" role="tab" data-rs-drawer-tab="Overview" aria-selected="false">Overview</button><button type="button" role="tab" data-rs-drawer-tab="Missions" aria-selected="false">Missions</button><button type="button" role="tab" data-rs-drawer-tab="Activity" aria-selected="false">Activity</button><button type="button" role="tab" data-rs-drawer-tab="Mistakes" aria-selected="false">Mistakes</button><button type="button" role="tab" data-rs-drawer-tab="History" aria-selected="false">History</button></nav><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.81</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.82</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -879,12 +879,14 @@ async function auth(){
   return true;
 }
 function endpoint(section,params={}){const q=new URLSearchParams({section,...params});return `${FN('progress_summary')}?${q}`}
+let rsClassTabOrder=null;
+function ccOrderedClasses(data){return Array.isArray(data?.classes)?data.classes:[]}
+function rsUseClassOrder(data){if(Array.isArray(data?.classes)){rsClassTabOrder=ccOrderedClasses(data);rsRenderClassTabs()}}
 function rsRenderClassTabs(){
  const host=$('#rsClassTabs');if(!host)return;
  const selected=$('#classSelect').value,scroll=host.scrollLeft;
- const order=['Brown','Stanford','Manchester','NY','Hawaii','Boston','Sydney','Berkeley','Chicago','Cambridge','Yale','Prince','Oxford','MIT','Pre'];
- const rank=x=>{const i=order.findIndex(n=>n.toLowerCase()===String(x).toLowerCase());return i<0?999:i};
- const classes=[...state.classes].sort((a,b)=>rank(a.name)-rank(b.name)||String(a.name).localeCompare(String(b.name)));
+ const classes=rsClassTabOrder||state.classes;
+ const picker=$('#classSelect');for(const c of classes){if(![...picker.options].some(o=>o.value===c.name))picker.add(new Option(c.display_name||c.name,c.name));}
  host.innerHTML=classes.map(c=>'<button type="button" role="tab" data-rs-class="'+esc(c.name)+'" aria-selected="'+(c.name===selected)+'" class="'+(c.name===selected?'active':'')+'">'+esc(c.display_name||c.name)+'</button>').join('');
  host.scrollLeft=scroll;
  host.querySelectorAll('[data-rs-class]').forEach(btn=>btn.onclick=()=>{if($('#classSelect').value===btn.dataset.rsClass)return;$('#classSelect').value=btn.dataset.rsClass;void loadClass()});
@@ -1062,7 +1064,7 @@ async function rsCatalogTotals(bookId,table,field,filter){
 }
 async function loadRosterCurriculum(className,force=false){
  const request=++rosterCurriculum.request;
- const cached=rsClassCache.get(className);if(!force&&cached&&Date.now()-cached.at<45000){Object.assign(rosterCurriculum,cached.data,{request,className,loading:false,error:''});renderStudents();return;}
+ const cached=rsClassCache.get(className);if(!force&&cached&&Date.now()-cached.at<45000){Object.assign(rosterCurriculum,cached.data,{request,className,loading:false,error:''});rsUseClassOrder(rosterCurriculum.overview);renderStudents();return;}
  rosterCurriculum.className=className;rosterCurriculum.loading=true;rosterCurriculum.overview=null;rosterCurriculum.error='';
  if(state.students.length)renderStudents();
  try{
@@ -1079,6 +1081,7 @@ async function loadRosterCurriculum(className,force=false){
   detailTask.catch(()=>{});
   const overview=await overviewTask;
   if(request!==rosterCurriculum.request)return;
+  rsUseClassOrder(overview);
   const c=(overview.classes||[]).find(c=>String(c.name).toLowerCase()===String(className).toLowerCase());
   const books=(overview.books||[]).filter(b=>b.class_id===c?.id);
   const unitTask=Promise.all(books.map(async b=>{
@@ -2182,7 +2185,7 @@ function ccCurrentBook(){return curriculum.data?.books.find(b=>b.id===curriculum
 function ccRenderDetail(){
  const host=ccHost();if(!host)return;
  const inAssignments=host.id==='assignmentClassGrid';
- const classes=curriculum.data?.classes||[];
+ const classes=ccOrderedClasses(curriculum.data);
  if(inAssignments&&!classes.some(x=>x.name===curriculum.selectedClass))curriculum.selectedClass=classes[0]?.name||'';
  const c=classes.find(x=>x.name===curriculum.selectedClass);
  if(!c){if(inAssignments){host.innerHTML='<div class="cc-empty">No active classes available.</div>';return;}ccRenderOverview();return}
@@ -2616,6 +2619,7 @@ async function loadClassOverview(force=false){
   if(force){curriculum.conversationEvidence=[];curriculum.unitCache.clear();curriculum.availability.clear();curriculum.wordMasteryTotals.clear();curriculum.puzzleDetail.clear();curriculum.puzzlePending.clear();curriculum.skillDetail.clear();curriculum.jellyRewards.clear();curriculum.puzzleOverview=[];curriculum.extraActivity=[];curriculum.sentenceEvidence=[];curriculum.writingUnits=[];curriculum.writingEntries=[];curriculum.wordSnapshots=[];curriculum.evidenceReady={word:false,sentence:false,writing:false,extra:false,freeconversation:false};}
   ccCellProgressCache.clear();
   curriculum.data=await ccRpc('teacher_curriculum_overview_v1');
+  rsUseClassOrder(curriculum.data);
   try{const rows=await ccRpc('teacher_curriculum_word_snapshot_overview_v1');if(!Array.isArray(rows))throw Error('Unexpected Word Genius snapshot response');curriculum.wordSnapshots=rows;curriculum.evidenceReady.word=true;}catch(e){console.warn('[Class Curriculum] Word Genius mastery:',e.message);curriculum.wordSnapshots=[];curriculum.evidenceReady.word=false;}
   try{const puzzle=await ccRpc('teacher_curriculum_puzzle_overview_v1');curriculum.puzzleOverview=Array.isArray(puzzle)?puzzle:[]}catch(e){console.warn('[Class Curriculum] Puzzle overview:',e.message);curriculum.puzzleOverview=[];}
   try{const extra=await ccRpc('teacher_curriculum_extra_activity_v1');if(!Array.isArray(extra))throw Error('Unexpected curriculum evidence response');curriculum.extraActivity=extra;curriculum.extraError='';curriculum.evidenceReady.extra=true;}catch(e){console.warn('[Class Curriculum] Grammar / Talking overview:',e.message);curriculum.extraActivity=[];curriculum.extraError=e.message||'Unavailable';curriculum.evidenceReady.extra=false;}
