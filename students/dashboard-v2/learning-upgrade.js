@@ -8,7 +8,7 @@ let books=[],identity=null,loading=false,version=0,loaded=false,selectedBook='',
 const api=async path=>{const r=await window.WillenaAPI.fetch(path,{cache:'no-store'});if(!r.ok)throw Error('Request failed');return r.json()};
 const profile=async()=>{if(identity)return identity;const who=await studentIdentity();const p=await signedInProfile(who.id);if(p.role!=='student'||!p.approved)throw Error('Student account required');return identity={...who,...p}};
 // The backend remains the source of truth for available jellies.
-let jellyEnergyPending=null,lastJellyCheck=0;
+let jellyEnergyPending=null,lastJellyCheck=0,jellyGoldKeys=null;
 const jellySeenInMemory=new Map();
 const jellySeenKey=id=>'willena:jelly-energy:celebrated:v1:'+id;
 function readJellySeen(id){
@@ -69,6 +69,10 @@ function energy(){
    by('luEnergyBar').setAttribute('aria-valuenow',value);
    by('luEnergyBar').firstElementChild.style.width=value+'%';
    renderJellyInventory(row.owed);
+   if(Number(summary.rules_version)>=3&&Array.isArray(row.verified_gold_keys)){
+    jellyGoldKeys=new Set(row.verified_gold_keys);
+    if(lastMap&&!by('luMap').hidden)render(lastMap.book,lastMap.units,lastMap.wordGold,lastMap.sentenceResults);
+   }
    // On first use, already collected jellies are not announced again.
    // Existing unclaimed rewards are announced once, as are later increases.
    const seen=readJellySeen(p.id),baseline=Math.max(seen??row.given,row.given);
@@ -139,14 +143,18 @@ by('luGrid').innerHTML='<strong>Unit</strong>'+apps.map((a,i)=>'<strong class="l
 return '<div class="lu-label" title="'+esc(u.title)+'"><strong>'+esc(u.unit_number)+'</strong></div>'+apps.map((app,j)=>{
 let p=null, label='Open',state='unknown',url=app.path;
 if(app.kind==='word'){if(wordGold.has(String(u.id))){p=100;label='Gold';state='gold';}url+=q(u);}
-if(app.kind==='sentence'){p=sentenceResults[i];url+=q(u);label=p===100?'Gold':p===null?'Open':p===-1?'N/A':p===0?'Start':'Continue';state=p===100?'gold':p===null||p===-1?'unknown':'progress';if(p===-1)return cell('Unavailable',null,null,'unknown');}
+if(app.kind==='sentence'){p=sentenceResults[i];url+=q(u);label=p===100?'Gold':p===null?'Open':p===-1?'N/A':p===0?'Start':'Continue';state=p===100?'gold':p===null||p===-1?'unknown':'progress';}
 if(app.kind==='word'&&p===null){p=extra.word?.[i]??null;}
 if(app.kind==='grammar'){p=extra.grammar?.[i]??null;url+='?book='+encodeURIComponent(book.id)+'&unit='+encodeURIComponent(u.unit_number);}
 if(app.kind==='talk'){p=extra.talk?.[i]??null;url+=q(u);}
 if(app.kind==='writing'){p=extra.writing?.[i]??null;url+=q(u);}
 if(app.kind==='puzzles'){url+=q(u);}
+const goldApp=app.kind==='talk'?'freeconversation':app.kind;
+if(jellyGoldKeys!==null&&app.kind!=='puzzles'){
+ if(jellyGoldKeys.has('gold:'+goldApp+':'+book.id+':'+u.id)){p=100;state='gold';label='Gold';}
+ else if(p!==null&&p>=0){state=p===0?'idle':'progress';label=p===0?'Start':'Continue';}
+}else if(p!==null&&p>=0&&state!=='gold'){state=p===100?'gold':p===0?'idle':'progress';label=p===100?'Done':p===0?'Start':'Continue';}
 if(p===-1)return cell('Unavailable',null,null,'unknown');
-if(p!==null&&state!=='gold'){state=p===100?'gold':p===0?'idle':'progress';label=p===100?'Done':p===0?'Start':'Continue';}
 const mission=missions.some(m=>m.app===names[app.kind]&&m.book===String(book.id)&&(m.unit?m.unit===String(u.id):m.number===String(u.unit_number)));
 return cell(label,p,url,state,'cyan',mission);
 }).join('');
@@ -185,7 +193,7 @@ pendingExtra.writing=units.map(u=>{
  if(Array.isArray(rewards)&&rewards.some(r=>String(r.book_id)===String(book.id)&&String(r.unit_id)===String(u.id)&&r.golden===true))return 100;
  if(!Array.isArray(writing))return null;
  const rows=writing.filter(r=>String(r.unit_id)===String(u.id));
- return rows.length?Math.max(...rows.map(r=>r.questions?.length?pct((r.responses||[]).slice(0,r.questions.length).filter(x=>x&&(x.feedback||x.firstFeedback)).length,r.questions.length):0)):null;
+ return rows.length?Math.max(...rows.map(r=>r.questions?.length?pct((r.responses||[]).slice(0,r.questions.length).filter(x=>x?.feedback?.grade==='correct').length,r.questions.length):0)):null;
 });
 pendingExtra.word=units.map(()=>null);pendingExtra.talk=units.map(()=>null);
 for(let i=0;i<units.length;i+=3){
