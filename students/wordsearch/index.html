@@ -17,8 +17,12 @@
 <script type="module" src="/students/components/student-header.js?v=20261116-p4-visible-scenery2"></script>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
 <script src="/students/components/homework-deeplink-splash.js?v=20261105-pass2-displayfix1"></script>
+<link rel="modulepreload" href="./wordsearch.js?v=20261126-portal-rollout1">
+<script src="/students/components/genius-app-boot.js?v=20261126-all-apps1"></script>
 </head>
 <body>
+<script>window.WillenaGeniusBoot?.mountPortal?.();</script>
+
 <div id="willenaHomeworkOpening" role="status" aria-live="polite" style="display:none"><div class="wh-card"><div class="wh-mark" aria-hidden="true"><svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="8" height="8"/><rect x="14" y="2" width="8" height="8"/><rect x="2" y="14" width="8" height="8"/><path d="M14 14h3v3h-3zM21 14v4h-3M14 21h4"/></svg></div><strong>숙제를 불러오는 중...</strong><small>Opening your homework</small><span class="wh-bar" aria-hidden="true"></span></div></div>
 <div class="app-shell">
   <student-header title="Word Games" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
@@ -294,7 +298,7 @@
   <div class="app-rev" aria-label="Revision">Rev 1.010</div>
 </div>
 <script src="./mix-deck-skins.js?v=20260929-02"></script>
-<script type="module" src="./wordsearch.js?v=20261125-maplink1"></script>
+<script type="module" src="./wordsearch.js?v=20261126-portal-rollout1"></script>
 <script defer src="/students/components/live-presence.js?v=20261103-p3"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
 </body>
