@@ -263,4 +263,4 @@ if(focusedTaskId){
   }
 }
 perf.mark('ui');preloadCardStats().then(async()=>{perf.mark('stats');await refreshVisibleStats()}).catch(e=>{console.warn('[test-prep-v2] background stats failed',e);perf.mark('stats')})}catch(e){console.error('[test-prep-v2] boot failed',e);error(e.message||'앱을 시작하지 못했습니다.');perf.update()}finally{window.WillenaHomeworkDeepLinkSplash?.hide()}}
-void boot().finally(()=>window.WillenaGeniusBoot?.finish?.('ready'));
+boot();
