@@ -273,12 +273,14 @@ function simulateBook(id){
 
 navigation=createNavigation(applyRoute);
 async function boot(){
+  let bootStatus='error';
   screens.visible('home');
   screens.notice('교재를 불러오는 중…');
   try{
-    state.student=await studentIdentity();
-    if(!state.student.id)throw Error('Student login is required');
-    const profile=await signedInProfile(state.student.id);
+    const early=window.WillenaGeniusBoot?.getAuth();
+    const identity=early?await early:await (async()=>{const student=await studentIdentity();if(!student.id)throw Error('Student login is required');return {student,profile:await signedInProfile(student.id)}})();
+    state.student=identity.student;
+    const profile=identity.profile;
     state.teacher=profile.approved&&['teacher','admin'].includes(profile.role);
     if(!state.teacher&&profile.className.toLowerCase()==='teacher'){
       // Staff users must never fall through into a fake "Teacher" student class.
@@ -288,24 +290,33 @@ async function boot(){
       // Load teacher-only class catalog. The class RPC checks the signed-in
       // JWT's role server-side; students cannot call it.
       let classError='';
-      try{state.simClasses=await loadTeacherClasses()}
-      catch(error){classError=error.message;console.warn('[Sentence Genius] teacher classes',error)}
-      try{state.simCatalog=await loadTeacherBookCatalog()}
-      catch(error){console.warn('[Sentence Genius] textbook catalog',error);
-        if(!classError)classError='Textbook catalog: '+error.message}
+      const [classResult,catalogResult]=await Promise.allSettled([loadTeacherClasses(),loadTeacherBookCatalog()]);
+      if(classResult.status==='fulfilled')state.simClasses=classResult.value;else{classError=classResult.reason?.message||'Classes unavailable';console.warn('[Sentence Genius] teacher classes',classResult.reason)}
+      if(catalogResult.status==='fulfilled')state.simCatalog=catalogResult.value;else{console.warn('[Sentence Genius] textbook catalog',catalogResult.reason);if(!classError)classError='Textbook catalog: '+(catalogResult.reason?.message||'Unavailable')}
       screens.teacherSetup(state.simClasses,state.simCatalog);
       screens.teacherStatus(classError?'Could not load all preview options: '+classError:
         'Select a class to inspect its books and homework, or switch to any textbook.');
       screens.home([]);
       screens.notice('');
       await navigation.start();
+      bootStatus='ready';
       return;
     }
     if(!state.student.className)state.student.className=profile.className;
     if(!state.student.className)throw Error('Student class is missing');
-    const [bookResult,homeworkResult]=await Promise.allSettled([
-      assignedBooks(state.student.className),loadSentenceHomework()
-    ]);
+    const params=new URLSearchParams(location.search);
+    const deep=!!(geniusHomeworkFromUrl()||(params.get('book')&&params.get('unit'))||history.state?.willenaSentenceGeniusNav?.screen==='book'||history.state?.route?.screen==='book'||history.state?.route?.screen==='activity');
+    const bookTask=assignedBooks(state.student.className),homeworkTask=Promise.allSettled([loadSentenceHomework()]).then(r=>r[0]);
+    // For a normal home launch, show the verified class books as soon as they arrive.
+    // Homework and restored activity routes still wait for their full assignment data.
+    const bookResult=await Promise.allSettled([bookTask]).then(r=>r[0]);
+    const earlyBooks=bookResult.status==='fulfilled'?bookResult.value:[];
+    if(!deep&&earlyBooks.length){
+      state.books=earlyBooks; screens.home(state.books);screens.notice('');
+      await navigation.start();
+      bootStatus='ready';window.WillenaGeniusBoot?.finish('ready');
+    }
+    const homeworkResult=await homeworkTask;
     const base=bookResult.status==='fulfilled'?bookResult.value:[];
     state.homework=homeworkResult.status==='fulfilled'?homeworkResult.value:[];
     if(bookResult.status==='rejected')console.warn('[Sentence Genius] regular books unavailable',bookResult.reason);
@@ -318,11 +329,10 @@ async function boot(){
     screens.home(state.books);
     screens.homework(state.homework);
     void refreshHomeAchievements();
-    screens.notice(state.books.length?'':'현재 배정된 교재가 없습니다.');
+    if(navigation.current().screen==='home')screens.notice(state.books.length?'':'현재 배정된 교재가 없습니다.');
     await navigation.start();
     // A homework mission may deep-link to an assigned book and unit. Verify
     // the book belongs to this student's real assignment before opening.
-    const params=new URLSearchParams(location.search);
     const assigned=geniusHomeworkFromUrl();
     const hw=assigned&&state.homework.find(row=>String(row.id)===assigned);
     if(hw)await openHomeworkSession(hw);
@@ -332,6 +342,7 @@ async function boot(){
        await openBook(homeworkBook,{unitId:homeworkUnit});
      }
     }
+    bootStatus='ready';
   }catch(error){
     console.warn('[Sentence Genius] startup failed',error);
     if(/session|expired|401|auth|unauthor/i.test(String(error.message))){
@@ -341,6 +352,7 @@ async function boot(){
     screens.notice('교재를 불러올 수 없습니다: '+error.message);
   }finally{
     window.WillenaHomeworkDeepLinkSplash?.hide();
+    window.WillenaGeniusBoot?.finish(bootStatus);
   }
 }
 void boot();
