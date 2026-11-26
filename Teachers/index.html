@@ -363,6 +363,13 @@ try{
 #view-students .roster-student-card[data-expanded="true"]{contain-intrinsic-size:auto 500px}
 #view-students .roster-student-card{cursor:default;align-self:start}
 #view-students .roster-student-card:hover{transform:none}
+#view-students #studentsSubtabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:4px 0 14px}
+#view-students #studentsSubtabs button{font-size:clamp(13px,1.8vw,17px);padding:14px 8px;min-height:48px;white-space:normal;line-height:1.25}
+#view-students .rs-tracking-toolbar{display:grid;gap:9px;margin:0 0 14px;min-width:0}
+#view-students #rsClassTabs{position:relative;min-width:0;margin:0;padding:3px 2px 8px}
+#view-students #rsClassTabs button{padding:10px 15px}
+#view-students .rs-tracking-toolbar #searchInput{width:100%;max-width:none;min-width:0;min-height:42px;margin:0}
+#view-students .rs-tracking-toolbar [hidden]{display:none!important}
 #view-students .rs-card-toggle{width:100%;text-align:left;background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;align-items:center}
 #view-students .rs-card-toggle:focus-visible,.rs-pip-book:focus-visible{outline:2px solid #29a6b1;outline-offset:3px;border-radius:8px}
 .rs-card-toggle-right{display:flex;align-items:center;gap:9px;flex:none}
@@ -395,7 +402,7 @@ try{
   <button class="class-leaders-tab" type="button" data-students-tab="live" role="tab" aria-selected="false">Live Classroom</button>
 </div>
 <div id="studentTrackingPanel">
-<div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><select class="control" id="rosterAssignmentFilter" aria-label="Filter by assignment progress"><option value="all">All students</option><option value="assigned">Has assignments</option><option value="not_started">Not started</option><option value="in_progress">In progress</option><option value="complete">All assignments complete</option><option value="none">No assignments</option></select><button class="control" id="refreshBtn">Refresh</button></div></div>
+<div class="rs-tracking-toolbar"><div id="rsClassTabs" class="cc-assignment-class-tabs" role="tablist" aria-label="Classes"><span class="roster-app-no-data">Loading classes…</span></div><input class="control search" id="searchInput" type="search" placeholder="Search student…" aria-label="Search students"><div hidden aria-hidden="true"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><select class="control" id="rosterAssignmentFilter" aria-label="Filter by assignment progress"><option value="all">All students</option><option value="assigned">Has assignments</option><option value="not_started">Not started</option><option value="in_progress">In progress</option><option value="complete">All assignments complete</option><option value="none">No assignments</option></select><button class="control" id="refreshBtn" type="button">Refresh</button></div></div>
 <div class="panel roster-workspace"><div class="panel-head"><div><div class="panel-title" id="panelTitle">Class Students</div><div class="panel-sub" id="statusText"></div><div id="rosterSummary" class="roster-books-simple"></div></div><span class="count-pill" id="studentCount">0 students</span></div><div class="student-list" id="studentList"><div class="empty">Loading…</div></div></div>
 </div>
 <div id="studentLivePanel" hidden>
@@ -798,7 +805,7 @@ try{
 <div class="wc-dialog-actions"><button id="wcDelete" class="wc-button wc-delete" type="button" hidden>Delete</button><button class="wc-button" type="button" id="wcCancel">Cancel</button><button class="wc-button wc-primary" id="wcSave" type="submit">Save event</button></div></form></dialog>
 <div id="rosterAssignmentsOverlay" class="rs-assign-overlay" hidden><section class="rs-assign-dialog" role="dialog" aria-modal="true" aria-label="Student assignments"><div class="rs-assign-head"><div><h2 id="rosterAssignmentsTitle">Assignments</h2><p>Student mission history</p></div><button type="button" id="rosterAssignmentsClose" aria-label="Close assignments">×</button></div><div class="rs-assign-tabs"><button data-rs-assign-tab="current" class="active" type="button">Current</button><button data-rs-assign-tab="history" type="button">History</button></div><div id="rosterAssignmentsBody" class="rs-assign-body"></div></section></div>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div><div id="rsDrawerBooks" class="rs-dr-books"></div></div><button class="close" id="closeDrawer" aria-label="Close student details">×</button></div><nav id="rsDrawerTabs" role="tablist" aria-label="Student details"><button type="button" role="tab" data-rs-drawer-tab="Overview" aria-selected="false">Overview</button><button type="button" role="tab" data-rs-drawer-tab="Missions" aria-selected="false">Missions</button><button type="button" role="tab" data-rs-drawer-tab="Activity" aria-selected="false">Activity</button><button type="button" role="tab" data-rs-drawer-tab="Mistakes" aria-selected="false">Mistakes</button><button type="button" role="tab" data-rs-drawer-tab="History" aria-selected="false">History</button></nav><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.80</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.81</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -872,7 +879,18 @@ async function auth(){
   return true;
 }
 function endpoint(section,params={}){const q=new URLSearchParams({section,...params});return `${FN('progress_summary')}?${q}`}
-async function loadClasses(){try{const j=await api(endpoint('teacher_classes'));state.classes=j.classes||[];$('#classSelect').innerHTML='<option value="">Select class</option>'+state.classes.map(c=>`<option value="${esc(c.name)}">${esc(c.name)} (${c.student_count})</option>`).join('');const puzzleClass=$('#puzzleClass');if(puzzleClass)puzzleClass.innerHTML='<option value="">All classes</option>'+state.classes.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');if(state.classes.length){state.className=state.classes[0].name;$('#classSelect').value=state.className;await loadClass()}}catch(e){$('#classSelect').innerHTML='<option>Could not load classes</option>';$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load students.'}}
+function rsRenderClassTabs(){
+ const host=$('#rsClassTabs');if(!host)return;
+ const selected=$('#classSelect').value,scroll=host.scrollLeft;
+ const order=['Brown','Stanford','Manchester','NY','Hawaii','Boston','Sydney','Berkeley','Chicago','Cambridge','Yale','Prince','Oxford','MIT','Pre'];
+ const rank=x=>{const i=order.findIndex(n=>n.toLowerCase()===String(x).toLowerCase());return i<0?999:i};
+ const classes=[...state.classes].sort((a,b)=>rank(a.name)-rank(b.name)||String(a.name).localeCompare(String(b.name)));
+ host.innerHTML=classes.map(c=>'<button type="button" role="tab" data-rs-class="'+esc(c.name)+'" aria-selected="'+(c.name===selected)+'" class="'+(c.name===selected?'active':'')+'">'+esc(c.display_name||c.name)+'</button>').join('');
+ host.scrollLeft=scroll;
+ host.querySelectorAll('[data-rs-class]').forEach(btn=>btn.onclick=()=>{if($('#classSelect').value===btn.dataset.rsClass)return;$('#classSelect').value=btn.dataset.rsClass;void loadClass()});
+ const active=host.querySelector('.active');if(active){const left=active.offsetLeft-host.offsetLeft;if(left<host.scrollLeft||left+active.offsetWidth>host.scrollLeft+host.clientWidth)host.scrollLeft=Math.max(0,left-8)}
+}
+async function loadClasses(){try{const j=await api(endpoint('teacher_classes'));state.classes=j.classes||[];$('#classSelect').innerHTML='<option value="">Select class</option>'+state.classes.map(c=>`<option value="${esc(c.name)}">${esc(c.name)} (${c.student_count})</option>`).join('');const puzzleClass=$('#puzzleClass');if(puzzleClass)puzzleClass.innerHTML='<option value="">All classes</option>'+state.classes.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');if(state.classes.length){state.className=state.classes[0].name;$('#classSelect').value=state.className;await loadClass()}else rsRenderClassTabs()}catch(e){$('#classSelect').innerHTML='<option>Could not load classes</option>';$('#rsClassTabs').textContent='Could not load classes';$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load students.'}}
 
 const rosterAssignments={className:'',loading:false,error:'',items:[],history:[],request:0};
 const assignmentModeLabels={quiz:'Quiz',spelling_coach:'Spelling Coach',spelling_test:'Spelling Test',speaking:'Speaking'};
@@ -1354,6 +1372,7 @@ function renderStudents(){
 async function loadClass(force=false){
   force=force===true;
   const name=$('#classSelect').value;if(!name)return;
+  rsRenderClassTabs();
   const request=(state.rosterRequest||0)+1;state.rosterRequest=request;
   state.className=name;state.days=Number($('#daysSelect').value)||30;state.students=[];state.rosterLoading=true;
   ++rosterAssignments.request;Object.assign(rosterAssignments,{className:name,loading:true,error:'',items:[],history:[]});
