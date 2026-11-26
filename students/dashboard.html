@@ -177,7 +177,7 @@ html.leaderboard-only #learningUpgrade{display:none!important}
 .lu-neon-book{position:relative;font-size:clamp(12px,3.5vw,17px);font-weight:700;letter-spacing:.03em;color:#fff;max-width:95%;overflow-wrap:anywhere}
 .lu-neon-unit{position:relative;background:#ffffff24;border:1px solid #ffffff9c;border-radius:999px;padding:7px 19px;font-size:14px;font-weight:850;color:#fff}
 .lu-neon-mission{position:relative;font-size:13px;font-weight:850;letter-spacing:.12em;color:#fff;border-bottom:2px solid #8ff4ff;padding:3px 6px}
-.lu-neon-mission[hidden]{display:none}
+.lu-neon-mission[hidden],.lu-neon-book[hidden],.lu-neon-unit[hidden]{display:none}
 .lu-neon-loading{position:absolute;bottom:max(9%,env(safe-area-inset-bottom));left:35%;width:30%;height:4px;border-radius:6px;background:#ffffff44;overflow:hidden}
 .lu-neon-loading i{display:block;width:45%;height:100%;background:#fff;border-radius:6px;animation:luNeonLoading .6s ease-in-out infinite alternate}
 @keyframes luNeonCover{0%,15%{opacity:0}100%{opacity:1}}
@@ -247,7 +247,7 @@ html.leaderboard-only #learningUpgrade{display:none!important}
 </style>
 <script type="module" src="/students/components/dashboard-inbox-bridge.js?v=20261101-settings-only3"></script><script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
-<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script><script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script><script type="module" src="/students/dashboard-v2/learning-upgrade.js?v=20261126-map-speed1"></script><script>
+<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script><script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script><script type="module" src="/students/dashboard-v2/learning-upgrade.js?v=20261126-main-portal1"></script><script>
 (function(){
  const panel=document.getElementById('luEnergyPanel'),toggle=document.getElementById('luEnergyToggle');
  if(!panel||!toggle)return;
