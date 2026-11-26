@@ -15,8 +15,12 @@
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261116-p4-visible-scenery2"></script><script src="/students/components/homework-deeplink-splash.js?v=20261105-pass2-displayfix1"></script>
+<link rel="modulepreload" href="./books.js?v=20261126-portal-rollout1">
+<script src="/students/components/genius-app-boot.js?v=20261126-all-apps1"></script>
 </head>
 <body>
+<script>window.WillenaGeniusBoot?.mountPortal?.();</script>
+
 <div id="willenaHomeworkOpening" role="status" aria-live="polite" style="display:none"><div class="wh-card"><div class="wh-mark" aria-hidden="true"><svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="8" height="8"/><rect x="14" y="2" width="8" height="8"/><rect x="2" y="14" width="8" height="8"/><path d="M14 14h3v3h-3zM21 14v4h-3M14 21h4"/></svg></div><strong>숙제를 불러오는 중...</strong><small>Opening your homework</small><span class="wh-bar" aria-hidden="true"></span></div></div><div class="study-app grammar-book-shell">
 <student-header title="문법 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
 <div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
@@ -70,8 +74,8 @@
 <footer class="grammar-shell-version">Grammar Genius · Books · v2.10</footer>
 </div>
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
-<script src="/students/components/mission-basket.js?v=20261112-conversation-route4"></script>
-<script src="/students/components/student-achievements.js?v=20261103-grammar-gold1"></script><script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script><script type="module" src="./engine.js?v=1"></script><script type="module" src="./books.js?v=20261120-discard-unfinished1"></script>
+<script src="/students/components/mission-basket.js?v=20261126-stable-pilot1"></script>
+<script src="/students/components/student-achievements.js?v=20261103-grammar-gold1"></script><script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script><script type="module" src="./engine.js?v=1"></script><script type="module" src="./books.js?v=20261126-portal-rollout1"></script>
 <script defer src="/students/components/live-presence.js?v=20261103-p3"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
 </body></html>
