@@ -691,4 +691,4 @@ window.addEventListener('popstate',()=>{
  }
  void showBook(book,false,unit).then(()=>{if(mode&&activeBook===book)void startMode(mode,{push:false})});
 });
-document.addEventListener('DOMContentLoaded',()=>{window.WillenaMissionBasket?.mount($('appMissionBasket'),{app:'Grammar Genius Books'});loadGrammarBooks()});
+document.addEventListener('DOMContentLoaded',()=>{const mission=window.WillenaMissionBasket?.mount($('appMissionBasket'),{app:'Grammar Genius Books',stableLoading:true});window.WillenaGeniusBoot?.trackMission?.(mission);void loadGrammarBooks().finally(()=>window.WillenaGeniusBoot?.finish?.('ready'))});
