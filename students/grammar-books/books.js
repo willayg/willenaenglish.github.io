@@ -1,3 +1,4 @@
+import {guideFeedback} from './grammar-guide-feedback.js?v=20261126-guide1';
 import {geniusSessionContext,geniusHomeworkFromUrl,geniusSessionHeader} from '../components/genius-session-context.js?v=20261104-a';
 import {renderStudentSessionFinish} from '../components/student-session-finish.js?v=1';
 import {capturePointOrigin,showPointAward} from '../components/student-point-feedback.js?v=20260927-startup2';
@@ -539,7 +540,7 @@ async function checkAnswer(){
   retryQueue.record(q,result.correct);
  playStudentSfx(result.correct?'correct':'wrong');
  renderer.showFeedback(result);
- if(q.explanation){const feedback=$('grammarSharedQuestionHost')?.querySelector('[data-feedback]');if(feedback){const note=document.createElement('p');note.className='grammar-book-explanation';note.textContent=q.explanation;feedback.append(note)}}
+ const explanation=guideFeedback(q);if(explanation){const feedback=$('grammarSharedQuestionHost')?.querySelector('[data-feedback]');if(feedback){const note=document.createElement('p');note.className='grammar-book-explanation';note.textContent=explanation;feedback.append(note)}}
  btn.hidden=true;$('grammarSkip').hidden=true;$('grammarNext').hidden=false;$('grammarNext').classList.add('is-next');
  $('grammarNext').textContent=position===activeQuestions.length-1?'Finish':'Next Question →';
 }
@@ -627,26 +628,26 @@ function goToModes(push=true){
  renderModeCards();window.scrollTo(0,0);
 }
 $('grammarUnitStrip')?.addEventListener('click',event=>{const el=event.target.closest('[data-unit]');if(el)selectUnit(Number(el.dataset.unit))});
+let guideEpoch=0;
 $('grammarGuideOpen')?.addEventListener('click',async()=>{
  const unit=units.find(u=>Number(u.unit_number)===activeUnit);
- const heading=$('grammarGuideHeading'),body=$('grammarGuideContent');
- heading.textContent=unit?.title||'문법 설명';
+ const book=activeBook,chapter=activeUnit,key=isTen(book)?'ten':courseKey(book),epoch=++guideEpoch;
+ const heading=$('grammarGuideHeading'),body=$('grammarGuideContent'),dialog=$('grammarGuideDialog');
+ heading.textContent=(book?.title||'문법 지니어스')+' · Unit '+chapter;
  body.textContent='문법 설명을 불러오는 중…';
- $('grammarGuideDialog').showModal();
+ if(!dialog.open)dialog.showModal();dialog.scrollTop=0;
  try{
-  if(activeBook?.title.trim()==='Grammar Ten 완성 2'){
-   const pack=await loadChapterPack();
-   const chapter=pack.chapters.find(c=>Number(c.chapter)===activeUnit);
-   if(!chapter){body.textContent='해당 단원의 설명이 없습니다.';return}
-   heading.textContent='Unit '+activeUnit+' · '+chapter.title;
-   body.textContent=chapter.explanation;
-  }else if(courseKey(activeBook)){
-   const pack=await loadCoursePacks();
-   const chapter=pack.books.find(b=>b.key===courseKey(activeBook))?.chapters.find(c=>c.unit===activeUnit);
-   heading.textContent='Unit '+activeUnit+' · '+(chapter?.title||unit?.title||'Grammar');
-   body.textContent=chapter?.grammarFocus||'문법 학습';
+  const {renderGrammarGuide}=await import('./grammar-guide-renderer.js?v=20261126-guide1');
+  if(epoch!==guideEpoch||!dialog.open||book!==activeBook||chapter!==activeUnit)return;
+  if(renderGrammarGuide(body,key,chapter))return;
+  if(isTen(book)){
+   const pack=await loadChapterPack();if(epoch!==guideEpoch||!dialog.open)return;
+   body.textContent=pack.chapters.find(c=>Number(c.chapter)===chapter)?.explanation||'해당 단원의 설명이 없습니다.';
   }else body.textContent='이 교재의 문법 설명을 준비 중입니다.';
- }catch(error){console.warn('[grammar books] explanation failed',error);body.textContent='문법 설명을 불러오지 못했어요.'}
+ }catch(error){
+  console.warn('[grammar books] explanation failed',error);
+  if(epoch===guideEpoch&&dialog.open)body.textContent='문법 설명을 불러오지 못했어요. 닫았다가 다시 열어 주세요.';
+ }
 });
 $('grammarGuideClose')?.addEventListener('click',()=>$('grammarGuideDialog').close());
 list?.addEventListener('click',e=>{const el=e.target.closest('[data-grammar-book]');if(el)showBook(books.find(b=>String(b.id)===el.dataset.grammarBook))});
