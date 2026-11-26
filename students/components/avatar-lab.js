@@ -138,19 +138,54 @@ function mount({modal,getSelected,getPoints,onChoose}){
  const button=(cls,text)=>{const e=make('button',cls,text);e.type='button';return e};
  const toolbar=make('div','al-toolbar'),launch=button('al-launch','나만의 아바타 만들기'),tile=button('al-custom-tile','');tile.hidden=true;tile.setAttribute('aria-label','Select your custom avatar');toolbar.append(launch,tile);grid.before(toolbar);
  const panel=make('section','al-panel');panel.hidden=true;panel.setAttribute('aria-label','Avatar Lab');
- const top=make('div','al-top'),back=button('al-secondary','‹ Back'),title=make('strong','','Avatar Lab'),random=button('al-secondary','Random');top.append(back,title,random);
- const preview=make('div','al-preview'),controls=make('div','al-controls'),note=make('div','al-note','Make it yours!'),use=button('al-use','Use this avatar');
- panel.append(top,preview,controls,note,use);grid.after(panel);
- let values=defaults.slice(),custom=null;
- const selects=fields.map((f,i)=>{const row=make('label','al-field'),name=make('span','',f.label),select=make('select','');f.options.forEach((n,j)=>{const o=make('option','',n);o.value=String(j);select.append(o)});row.append(name,select);controls.append(row);select.addEventListener('change',()=>{values[i]=Number(select.value);refresh()});return select});
+ const top=make('div','al-top'),back=button('al-secondary','‹ 뒤로'),title=make('strong','','Avatar Lab'),random=button('al-secondary','랜덤');top.append(back,title,random);
+ const preview=make('div','al-preview'),tabs=make('div','al-tabs'),controls=make('div','al-controls'),note=make('div','al-note'),use=button('al-use','아바타 사용하기');
+ tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','아바타 꾸미기');
+ controls.setAttribute('role','tabpanel');controls.id='al-option-panel';
+ panel.append(top,preview,tabs,controls,note,use);grid.after(panel);
+ const categories=[{"label":"캐릭터","english":"Character","fields":[0,1]},{"label":"헤어","english":"Hair","fields":[2,3]},{"label":"표정","english":"Face","fields":[4,5]},{"label":"액세서리","english":"Accessories","fields":[6]},{"label":"배경","english":"Background","fields":[7,8]}];
+ const labels=['캐릭터','피부 / 털 색상','헤어 스타일','헤어 / 포인트 색상','눈','입','액세서리','배경 색상','배경 무늬'];
+ const lockArt='<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+ let values=defaults.slice(),custom=null,category=0,tiles=[];
  function points(){const p=getPoints();return Number.isFinite(p)?p:NaN}
- function refresh(){selects.forEach((sel,i)=>{sel.value=String(values[i]);Array.from(sel.options).forEach((o,j)=>{const required=fields[i].points[j]||0;o.disabled=required>0&&!(points()>=required);o.textContent=fields[i].options[j]+(o.disabled?' · '+required.toLocaleString()+' pts (locked)':'')})});const code=encode(values);render(preview,code);const allowed=eligible(code,points());use.disabled=!allowed;note.textContent=allowed?'Choose a style, then save in the avatar picker.':'Unlock this feature with more points.'}
+ function allowed(i,j){const n=fields[i].points[j]||0;return !n||points()>=n}
+ const tabButtons=categories.map((group,i)=>{
+  const b=button('al-tab',group.label);b.id='al-tab-'+i;b.title=group.english;b.setAttribute('role','tab');b.setAttribute('aria-controls',controls.id);b.addEventListener('click',()=>switchCategory(i));tabs.append(b);return b
+ });
+ function updateTabs(){tabButtons.forEach((b,i)=>{b.classList.toggle('selected',i===category);b.setAttribute('aria-selected',String(i===category));b.tabIndex=i===category?0:-1});controls.setAttribute('aria-labelledby','al-tab-'+category)}
+ tabs.addEventListener('keydown',e=>{let i=category;if(e.key==='ArrowRight')i=(i+1)%categories.length;else if(e.key==='ArrowLeft')i=(i+categories.length-1)%categories.length;else if(e.key==='Home')i=0;else if(e.key==='End')i=categories.length-1;else return;e.preventDefault();switchCategory(i);tabButtons[i].focus()});
+ function buildOptions(){
+  tiles=[];const frag=document.createDocumentFragment();
+  for(const i of categories[category].fields){
+   const f=fields[i],section=make('section','al-option-section'),heading=make('h4','al-option-heading',labels[i]),list=make('div','al-option-grid');
+   f.options.forEach((label,j)=>{
+    const b=button('al-option',''),art=make('span','al-option-art'),name=make('span','al-option-name',label),meta=make('span','al-option-meta');
+    b.dataset.field=String(i);b.dataset.option=String(j);b.append(art,name,meta);
+    b.addEventListener('click',()=>{if(!allowed(i,j))return;values[i]=j;refresh()});
+    tiles.push({b,art,meta,i,j,label,code:null});list.append(b);
+   });section.append(heading,list);frag.append(section)
+  }
+  controls.replaceChildren(frag);controls.scrollTop=0;updateTabs();
+ }
+ function switchCategory(i){if(i!==category||!tiles.length){category=i;buildOptions()}refresh()}
+ function refresh(){
+  const code=encode(values);if(preview.dataset.avatarValue!==code)render(preview,code);
+  for(const t of tiles){
+   const {b,art,meta,i,j,label}=t,f=fields[i],required=f.points[j]||0,locked=!allowed(i,j),chosen=values[i]===j;
+   b.disabled=locked;b.dataset.locked=String(locked);b.classList.toggle('selected',chosen);b.setAttribute('aria-pressed',String(chosen));b.setAttribute('aria-label',label+(locked?' · '+required.toLocaleString()+' points required':''));
+   const key=locked?'locked-'+required:required?'unlocked':'free';
+   if(meta.dataset.state!==key){meta.dataset.state=key;meta.replaceChildren();if(locked){const icon=make('span','al-lock-icon');icon.innerHTML=lockArt;meta.append(icon,make('span','',required.toLocaleString()+' P'))}else if(required){meta.textContent='획득 완료'}else{meta.textContent='';}}
+   if(f.colors){if(t.code!==f.colors[j]){art.style.background=f.colors[j];art.classList.add('al-swatch');t.code=f.colors[j]}}
+   else{const sample=values.slice();sample[i]=j;const sampleCode=encode(sample);if(t.code!==sampleCode){art.innerHTML=svg(sampleCode);t.code=sampleCode}}
+  }
+  const ok=eligible(code,points());use.disabled=!ok;note.textContent=ok?'원하는 스타일을 골라 보세요!':'더 많은 포인트를 모아 잠금을 해제하세요.';
+ }
  function chooseCustom(){if(!custom||!eligible(custom,points()))return;onChoose(custom);sync()}
- function sync(){const v=getSelected();if(decode(v))custom=v;tile.hidden=!custom;if(custom){render(tile,custom);tile.classList.toggle('selected',v===custom);tile.disabled=!eligible(custom,points())}if(!panel.hidden)refresh()}
+ function sync(){const v=getSelected();if(decode(v))custom=v;tile.hidden=!custom;if(custom){if(tile.dataset.avatarValue!==custom)render(tile,custom);tile.classList.toggle('selected',v===custom);tile.disabled=!eligible(custom,points())}if(!panel.hidden)refresh()}
  function leave(){panel.hidden=true;grid.hidden=false;toolbar.hidden=false;actions.hidden=false;launch.focus()}
- function open(){const v=decode(getSelected())||decode(custom);values=v?v.slice():defaults.slice();toolbar.hidden=true;grid.hidden=true;actions.hidden=true;panel.hidden=false;refresh();back.focus()}
+ function open(){const v=decode(getSelected())||decode(custom);values=v?v.slice():defaults.slice();toolbar.hidden=true;grid.hidden=true;actions.hidden=true;panel.hidden=false;category=0;buildOptions();refresh();back.focus()}
  launch.addEventListener('click',open);tile.addEventListener('click',chooseCustom);back.addEventListener('click',leave);
- random.addEventListener('click',()=>{values=fields.map((f,i)=>{const opts=f.options.map((_,j)=>j).filter(j=>!f.points[j]||points()>=f.points[j]);return opts[Math.floor(Math.random()*opts.length)]});refresh()});
+ random.addEventListener('click',()=>{values=fields.map((f,i)=>{const opts=f.options.map((_,j)=>j).filter(j=>allowed(i,j));return opts[Math.floor(Math.random()*opts.length)]});refresh()});
  use.addEventListener('click',()=>{const code=encode(values);if(!eligible(code,points()))return;custom=code;onChoose(code);leave();sync()});
  const api={sync,reset(){panel.hidden=true;grid.hidden=false;toolbar.hidden=false;actions.hidden=false;custom=decode(getSelected())?getSelected():null;sync()},isOpen:()=>!panel.hidden,back:leave};
  modal.__avatarLab=api;api.reset();return api
