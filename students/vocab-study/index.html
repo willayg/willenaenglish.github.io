@@ -8,6 +8,10 @@
 <title>Willena Vocabulary Study</title>
 <script>try{const q=new URLSearchParams(location.search);if(q.get('assignment_id')||q.get('homework'))document.documentElement.classList.add('vocab-focused-boot')}catch(_){}</script>
 <link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
+<link rel="modulepreload" href="./vocab-study.js?v=20261126-boot1">
+<link rel="preconnect" href="https://fiieuiktlsivwfgyivai.supabase.co" crossorigin>
+<link rel="preconnect" href="https://gxwfsqxyuufqtitspfqg.supabase.co" crossorigin>
+<script src="/students/components/genius-app-boot.js?v=20261126-pilot1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -30,6 +34,8 @@
 <style>.app-mission-basket-slot .dashboard-mission-basket{width:100%;max-width:none;margin:12px 0 20px}.app-mission-basket-slot:empty{display:none}</style>
 </head>
 <body>
+<div id="geniusBootSkeleton" role="status" aria-live="polite"><div class="gb-head"><span class="gb-brand"><img src="/students/assets/icons/word-genius.svg?v=20260927-1" alt=""></span><span class="gb-heading">Word Genius</span><span class="gb-line" style="width:70px;height:25px"></span></div><div class="gb-body" aria-hidden="true"><div class="gb-pips"><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="gb-line gb-label"></span><div class="gb-card"><span class="gb-line"></span><span class="gb-arrow"></span></div><div class="gb-card"><span class="gb-line"></span><span class="gb-arrow"></span></div><div class="gb-card"><span class="gb-line"></span><span class="gb-arrow"></span></div></div><p class="gb-status">교재를 불러오는 중…</p><div class="gb-progress" aria-hidden="true"><i></i></div><button class="gb-retry" type="button" onclick="location.reload()" hidden>다시 불러오기</button></div>
+<style>html:not(.genius-app-booting) #geniusBootSkeleton{display:none!important}</style>
 <div class="study-app">
   <student-header title="단어 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
   <div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
@@ -250,12 +256,13 @@
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
 <script type="module" src="./theme-pips.js?v=20261101-footer1"></script>
 <script type="module">
-import('./vocab-study.js?v=20261125-maplink1').catch(error=>{
+import('./vocab-study.js?v=20261126-boot1').catch(error=>{
   console.error('[Vocab Study] module load',error);
   const panel=document.getElementById('vocabStartupError');
   if(panel){panel.hidden=false;panel.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}
   const loader=document.getElementById('vocabLoading');
   if(loader){loader.hidden=true;loader.setAttribute('aria-hidden','true');}
+  window.WillenaGeniusBoot?.finish('error');
 });
 </script>
 
