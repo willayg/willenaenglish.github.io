@@ -49,4 +49,4 @@ async function run(){
   }
  }catch(error){status.classList.add('error');status.textContent=error.message||'교재를 불러오지 못했습니다. 다시 로그인해 주세요.';}
 }
-run();
+void run().finally(()=>window.WillenaGeniusBoot?.finish?.('ready'));
