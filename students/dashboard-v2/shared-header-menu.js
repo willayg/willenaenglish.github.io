@@ -11,7 +11,7 @@ function boot(){
   close.addEventListener('click',hide);
   modal.addEventListener('click',e=>{if(e.target===modal)hide()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')hide()});
-  $('#profileEditBtn')?.addEventListener('click',()=>{location.href='/students/profile.html'});
+  $('#profileEditBtn')?.addEventListener('click',()=>{if(!window.WillenaGeniusBoot?.switchApp?.('/students/profile.html',document.querySelector('.header .avatar')?.textContent.trim()))location.href='/students/profile.html'});
   $('#logoutBig')?.addEventListener('click',async()=>{
     try{
       sessionStorage.removeItem('missionModalShownV3');
