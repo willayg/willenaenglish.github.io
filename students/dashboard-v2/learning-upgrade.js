@@ -301,9 +301,13 @@ if(ticket!==version)return;extra=pendingExtra;render(book,units,gold,results);re
 async function load(){if(loading)return;loading=true;try{const p=await profile();books=await assignedBooks(p.className);if(!cacheKey){cacheKey='willena-learning-map-v4:'+p.id;restore()}if(!books.some(b=>String(b.id)===selectedBook))selectedBook=String(books[0]?.id||'');bookTabs();if(!books.length){by('luStatus').textContent='No assigned books.';return}await loadBook();loaded=true;}catch(e){by('luStatus').textContent='Curriculum unavailable. Try Refresh.';}finally{loading=false}}
 // Show the map guide once per student per browser, only when the map is visible.
 const mapLegend=by('luMapLegend');
-let legendInitialized=false,legendPending=null,legendInteracted=false;
+let legendInitialized=false,legendPending=null,legendInteracted=false,legendAutoClose=null;
 const legendSeenMemory=new Set();
-mapLegend?.querySelector('summary')?.addEventListener('click',()=>{legendInteracted=true});
+function cancelLegendAutoClose(){
+ if(legendAutoClose!==null){clearTimeout(legendAutoClose);legendAutoClose=null;}
+}
+mapLegend?.querySelector('summary')?.addEventListener('click',()=>{legendInteracted=true;cancelLegendAutoClose()});
+window.addEventListener('pagehide',cancelLegendAutoClose);
 function initMapLegend(){
  if(!mapLegend||legendInitialized||legendPending||by('luMap').hidden)return;
  legendPending=profile().then(p=>{
@@ -311,7 +315,13 @@ function initMapLegend(){
   const key='willena:map-legend:seen:v1:'+String(p.id);
   let seen=legendSeenMemory.has(key);
   try{seen=seen||localStorage.getItem(key)==='1'}catch{}
-  if(!legendInteracted)mapLegend.open=!seen;
+  if(!legendInteracted){
+   mapLegend.open=!seen;
+   if(!seen)legendAutoClose=setTimeout(()=>{
+    legendAutoClose=null;
+    if(!legendInteracted)mapLegend.open=false;
+   },10000);
+  }
   legendInitialized=true;legendSeenMemory.add(key);
   try{localStorage.setItem(key,'1')}catch{}
  }).catch(()=>{}).finally(()=>{legendPending=null});
