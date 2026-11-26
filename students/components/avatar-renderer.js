@@ -12,7 +12,7 @@ const illustrated=animals.map(([emoji,name],i)=>({id:id('an',i),name}));
 const characters=Object.freeze([{"id":"ft-bunny-1","name":"Bunny Fox Classic","character":"bunny","characterName":"Bunny Fox","unlockPoints":100},{"id":"ft-bunny-2","name":"Bunny Fox Aviator","character":"bunny","characterName":"Bunny Fox","unlockPoints":100},{"id":"ft-bunny-3","name":"Bunny Fox Wink","character":"bunny","characterName":"Bunny Fox","unlockPoints":100},{"id":"ft-pigfish-1","name":"Pigfish Classic","character":"pigfish","characterName":"Pigfish","unlockPoints":300},{"id":"ft-pigfish-2","name":"Pigfish Diver","character":"pigfish","characterName":"Pigfish","unlockPoints":300},{"id":"ft-pigfish-3","name":"Pigfish Pirate","character":"pigfish","characterName":"Pigfish","unlockPoints":300},{"id":"ft-willi-1","name":"Willo Classic","character":"willi","characterName":"Willo","unlockPoints":0},{"id":"ft-willi-2","name":"Willo Star","character":"willi","characterName":"Willo","unlockPoints":0},{"id":"ft-willi-3","name":"Willo Bubbles","character":"willi","characterName":"Willo","unlockPoints":0},{"id":"ft-willy-1","name":"AI Willi Classic","character":"willy","characterName":"AI Willi","unlockPoints":0},{"id":"ft-willy-2","name":"AI Willi Cool","character":"willy","characterName":"AI Willi","unlockPoints":0},{"id":"ft-willy-3","name":"AI Willi Pixel","character":"willy","characterName":"AI Willi","unlockPoints":0},{"id":"ft-dusk-1","name":"Dusk Classic","character":"dusk","characterName":"Dusk","unlockPoints":5000},{"id":"ft-dusk-2","name":"Dusk Goggles","character":"dusk","characterName":"Dusk","unlockPoints":5000},{"id":"ft-dusk-3","name":"Dusk Star","character":"dusk","characterName":"Dusk","unlockPoints":5000},{"id":"ft-steve-1","name":"Sergeant Steve Classic","character":"steve","characterName":"Sergeant Steve","unlockPoints":8000},{"id":"ft-steve-2","name":"Sergeant Steve Cool","character":"steve","characterName":"Sergeant Steve","unlockPoints":8000},{"id":"ft-steve-3","name":"Sergeant Steve Furious","character":"steve","characterName":"Sergeant Steve","unlockPoints":8000}].map(Object.freeze));
 const choices=Object.freeze([...characters,...illustrated,...originals,...classic.map(([id,name])=>({id,name}))].map(Object.freeze));
 const characterMap=new Map(characters.map(c=>[c.id,c]));
-function eligible(value,points){const c=characterMap.get(value);return !c||c.unlockPoints===0||(Number.isFinite(points)&&points>=c.unlockPoints);}
+function eligible(value,points){if(typeof value==='string'&&value.startsWith('al1-'))return !!window.WillenaAvatarLab?.eligible(value,points);const c=characterMap.get(value);return !c||c.unlockPoints===0||(Number.isFinite(points)&&points>=c.unlockPoints);}
 const strip=v=>String(v||'').trim().replace(/\uFE0F/g,'');
 const legacy=Object.freeze(Object.fromEntries([...animals.map(([emoji],i)=>[strip(emoji),id('an',i)]),...classic.map(([emoji])=>[strip(emoji),emoji]),...Object.entries({"🐲":"wa09","🙂":"wa11","😀":"wa11","😃":"wa11","😄":"wa11","😊":"wa11","🤖":"wa11","🧑‍🚀":"wa12","👨‍🚀":"wa12","👩‍🚀":"wa12","😺":"wa13","😸":"wa13","🥟":"wa18","🍞":"wa20"})]));
 function index(value){
@@ -23,13 +23,14 @@ function index(value){
 }
 function normalize(value){
  const v=strip(value);
- if(characterMap.has(v)||index(v)>=0)return v;
+ if(window.WillenaAvatarLab?.decode(v)||characterMap.has(v)||index(v)>=0)return v;
  return Object.hasOwn(legacy,v)?legacy[v]:'wa11';
 }
 function render(el,value){
  if(!el)return;
  const v=normalize(value),i=index(v);
  el.dataset.avatarValue=v;
+ if(window.WillenaAvatarLab?.render(el,v))return;
  if(characterMap.has(v)){
   const j=characters.findIndex(c=>c.id===v),art=document.createElement('span');art.setAttribute('aria-hidden','true');art.style.cssText='display:block;width:100%;height:100%;max-width:100%;max-height:100%;aspect-ratio:1;flex:none;border-radius:50%;background-image:url("/students/assets/avatars/free-talking-avatars.svg?v=1");background-repeat:no-repeat;background-size:300% 600%;background-position:'+((j%3)*50)+'% '+(Math.floor(j/3)*20)+'%;';el.dataset.avatarArt='1';el.style.padding='0';el.replaceChildren(art);return;
  }
