@@ -51,10 +51,15 @@ h2{font-size:16px;margin:28px 0 12px;letter-spacing:-.3px;font-weight:800}
 .footer{font-size:11px;color:#949c9a;text-align:center;padding-top:21px}.empty{padding:19px;text-align:center;color:#74847c}
 @media(max-width:700px){.toolbar label{flex:1 1 130px}.toolbar .spacer{display:none}.paper-stage{margin:12px 6px;padding:11px;border-radius:12px}.page{padding:26px 19px}.report-head h1{font-size:36px}.hero strong{font-size:37px}.meta{font-size:10px}.legend{gap:9px}}
 @media print{@page{size:A4;margin:9mm}html,body{background:#fff!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.toolbar,#notice,.screen-only{display:none!important}.paper-stage{background:#f0ece2!important;max-width:none;margin:0;padding:6mm;box-shadow:none;border-radius:0}.page{background:#faf9f5!important;box-shadow:none;border:1px solid #e7e3d9;padding:8mm 10mm;min-height:0}.skill{padding:10px 0}.bar span{print-color-adjust:exact;-webkit-print-color-adjust:exact}.report-head{padding-bottom:7px}.hero{padding:12px 0 17px}.line{padding:9px 0}h2{margin-top:16px}.stamp-wrap{margin-top:12px}}
+.report-access{font-size:11px;font-weight:700;color:#607b82;align-self:center;padding:5px 8px;border:1px solid #d6e6e8;border-radius:8px;background:#f3f8f9;white-space:nowrap}
+.report-access[data-edit="true"]{background:#e8f6ec;color:#247b58;border-color:#c4e5d0}
+html.embedded{background:#f5f9fa}html.embedded .toolbar{padding:12px;position:sticky;top:0;z-index:2}html.embedded .toolbar [hidden]{display:none!important}html.embedded .paper-stage{margin:16px auto 28px}
+@media(max-width:600px){html.embedded .toolbar{gap:7px}html.embedded .toolbar label{flex:1 1 100px}html.embedded .toolbar select,html.embedded .toolbar input{min-width:0;width:100%}html.embedded .paper-stage{margin:10px 5px}}
 </style></head>
 <body>
 <div class="toolbar">
- <a href="/Teachers/">← 교사 대시보드</a>
+ <a id="reportBack" href="/Teachers/">← 교사 대시보드</a>
+ <span id="reportAccess" class="report-access" role="status">권한 확인 중</span>
  <label>학습 월<input type="month" id="month"></label>
  <label>반 선택<select id="class"><option value="">전체 반</option></select></label>
  <label>학생 선택<select id="student" disabled><option>먼저 데이터를 불러오세요</option></select></label>
@@ -93,7 +98,11 @@ const key='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const commentEndpoint=endpoint.replace('teacher-student-report','teacher-monthly-ai-report');
 let all=[],dataReady=false,request=0,notes=new Map(),activeStudent='',loadedStart='';
 const commentJobs=new Map(),commentErrors=new Map(),currentHashes=new Map();
-let commentTimer=0;
+let commentTimer=0,canEdit=false,accessKnown=false;
+const embedded=new URLSearchParams(location.search).get("embedded")==="1";
+if(embedded){document.documentElement.classList.add("embedded");$("reportBack").hidden=true;}
+function paintAccess(){const el=$("reportAccess");el.textContent=!accessKnown?"권한 확인 중":canEdit?"관리자 · 편집 가능":"교사 · 읽기 전용";el.dataset.edit=String(canEdit);}
+paintAccess();
 function status(msg,error=false){$('notice').textContent=msg;$('notice').classList.toggle('error',error);$('notice').hidden=!msg;}
 function valid(token){if(!token||token.split('.').length!==3)return false;try{const c=JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return Number(c.exp)*1000>Date.now()+30000;}catch{return false;}}
 async function teacherToken(){
@@ -186,18 +195,19 @@ function currentCommentKey(){
 }
 function syncComment(k){
  const saved=notes.get(k),busy=commentJobs.has(k),err=commentErrors.get(k)||'',hash=currentHashes.get(k);
- $('comment').textContent=saved?.comment||(err?'AI 리포트를 불러오지 못했습니다.':'학습 기록을 분석하고 있습니다…');
+ $('comment').textContent=saved?.comment||(err?'AI 리포트를 불러오지 못했습니다.':accessKnown&&!canEdit&&!busy?'아직 저장된 AI 리포트가 없습니다. 관리자에게 작성을 요청해 주세요.':'학습 기록을 불러오고 있습니다…');
  $('comment').classList.toggle('pending',!saved?.comment);
- $('generateComment').hidden=busy||(!saved&&!err);
+ $('generateComment').hidden=!canEdit||busy||(!saved&&!err);
  $('generateComment').disabled=busy;
  $('generateComment').textContent=saved?'다시 작성':'다시 시도';
- $('commentStatus').textContent=busy?'AI Willi가 이번 달 기록을 확인하고 있습니다.':err||(saved?(hash&&saved.facts_hash!==hash?'저장된 이후 학습 기록이 변경되었습니다. 필요하면 다시 작성하세요.':'저장된 월간 리포트'):'');
+ $('commentStatus').textContent=busy?'AI Willi가 이번 달 기록을 확인하고 있습니다.':err||(saved?(hash&&saved.facts_hash!==hash?(canEdit?'저장된 이후 학습 기록이 변경되었습니다. 필요하면 다시 작성하세요.':'저장된 이후 학습 기록이 변경되었습니다. 관리자에게 문의하세요.'):'저장된 월간 리포트'):'');
  $('print').disabled=!saved?.comment||busy||!dataReady;
 }
 async function callComment(token,payload){
  const res=await fetch(commentEndpoint,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+token},body:JSON.stringify(payload)});
  const body=await res.json().catch(()=>({}));
- if(!res.ok||body.success!==true)throw new Error('월간 리포트 저장소에 연결하지 못했습니다.');
+ if(!res.ok||body.success!==true)throw new Error(body.error||'월간 리포트 저장소에 연결하지 못했습니다.');
+ accessKnown=true;canEdit=body.can_edit===true;paintAccess();
  return body.report;
 }
 async function factsHash(facts){
@@ -218,7 +228,7 @@ function reportFacts(s){
 }
 async function generateComment(force=false){
  const k=currentCommentKey(),student=activeStudent,month=loadedStart,s=all.find(x=>x.student_id===student);
- if(!k||!s||commentJobs.has(k))return;
+ if(!k||!s||commentJobs.has(k)||(force&&!canEdit))return;
  const existing=notes.get(k);
  if(force&&existing&&!window.confirm('저장된 리포트를 새 AI 리포트로 바꾸시겠습니까?'))return;
  if(!force&&commentErrors.has(k))return;
@@ -226,13 +236,16 @@ async function generateComment(force=false){
  try{
   const facts=reportFacts(s),hash=await factsHash(facts);
   currentHashes.set(k,hash);
-  if(!force&&existing)return;
+  if(!force&&existing&&accessKnown)return;
   const token=await teacherToken();
   if(!force){
    const saved=await callComment(token,{action:'get',student_id:student,month});
    if(saved?.comment){notes.set(k,saved);return;}
    if(currentCommentKey()!==k)return;
+  }else{
+   await callComment(token,{action:'get',student_id:student,month});
   }
+  if(!canEdit)return;
   if(typeof window.WillenaAPI?.fetch!=='function')throw new Error('AI 연결을 준비하지 못했습니다.');
   const system='당신은 윌레나 영어학원의 AI Willi입니다. 주어진 한 달의 익명 온라인 학습 집계만 바탕으로 학부모에게 전달할 한국어 학습 리포트를 작성하세요. 따뜻하고 구체적인 존댓말로 2~4문장, 약 150~240자, 한 단락만 작성하세요. 실제 기록에 있는 노력과 성과를 먼저 언급하고, 근거가 있을 때 실천 가능한 다음 학습 목표 한 가지를 제안하세요. first는 첫 정답, fixed는 연습 후 해결, verified는 정답으로 확인되었으나 첫 시도 여부는 알 수 없음, pending은 추가 연습 필요입니다. 합산이나 수치를 언급할 경우 정확히 계산하세요. 단일 월 기록이므로 이전 달 대비 향상을 주장하지 마세요. 기록이 없는 활동은 미참여나 능력 부족으로 단정하지 마세요. 내신만 있는 경우 일반 학습일 0을 학습 부족으로 해석하지 마세요. 데이터가 적으면 기록이 제한적이라고 중립적으로 말하세요. 교실 태도, 출석, 성격, 발음 수준, 실력 향상을 지어내지 마세요. 제목, 마크다운, 이모지, 학생 이름, 서명 없이 본문만 반환하세요.';
   const resp=await window.WillenaAPI.fetch('/.netlify/functions/openai_proxy',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({endpoint:'chat/completions',payload:{model:'gpt-5.6-luna',reasoning_effort:'low',max_completion_tokens:500,messages:[{role:'system',content:system},{role:'user',content:JSON.stringify(facts)}]}})});
@@ -251,7 +264,7 @@ async function generateComment(force=false){
  }
 }
 async function load(){
- clearTimeout(commentTimer);commentErrors.clear();
+ clearTimeout(commentTimer);commentErrors.clear();accessKnown=false;canEdit=false;paintAccess();
  const sequence=++request;dataReady=false;$('reload').disabled=true;$('paper').hidden=true;$('print').disabled=true;status('교사 인증 및 학습 기록 불러오는 중…');
  try{
   const token=await teacherToken();const range=monthRange();
@@ -272,7 +285,7 @@ const now=new Date();const korea=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia
 $('month').value=korea.find(x=>x.type==='year').value+'-'+korea.find(x=>x.type==='month').value;
 $('month').addEventListener('change',load);$('reload').addEventListener('click',load);$('class').addEventListener('change',choose);
 $('student').addEventListener('change',()=>{activeStudent=$('student').value;render()});
-$('generateComment').addEventListener('click',()=>{const k=currentCommentKey();if(!k)return;commentErrors.delete(k);generateComment(notes.has(k));});
+$('generateComment').addEventListener('click',()=>{const k=currentCommentKey();if(!k||!canEdit)return;commentErrors.delete(k);generateComment(notes.has(k));});
 $('print').addEventListener('click',()=>{if(dataReady&&notes.get(currentCommentKey())?.comment&&!commentJobs.has(currentCommentKey()))window.print()});
 load();
 })();
