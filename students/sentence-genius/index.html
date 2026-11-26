@@ -7,6 +7,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>Sentence Genius · 문장 지니어스</title>
 <link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
+<link rel="modulepreload" href="./app.js?v=20261126-boot1">
+<link rel="preconnect" href="https://fiieuiktlsivwfgyivai.supabase.co" crossorigin>
+<link rel="preconnect" href="https://gxwfsqxyuufqtitspfqg.supabase.co" crossorigin>
+<script src="/students/components/genius-app-boot.js?v=20261126-pilot1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -22,6 +26,7 @@
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
+<script>window.WillenaGeniusBoot?.startAuth(async()=>{const m=await import("./content.js?v=sg-no-approval-v4.1");const student=await m.studentIdentity();if(!student.id)throw Error("Student login is required");return {student,profile:await m.signedInProfile(student.id)}});</script>
 
 <script type="module" src="/students/components/student-header.js?v=20261116-p4-visible-scenery2"></script>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
@@ -38,6 +43,8 @@
 </style>
 </head>
 <body>
+<div id="geniusBootSkeleton" role="status" aria-live="polite"><div class="gb-head"><span class="gb-brand"><img src="/students/assets/icons/sentence-genius.svg?v=20261025-sentence-path-1" alt=""></span><span class="gb-heading">Sentence Genius</span><span class="gb-line" style="width:70px;height:25px"></span></div><div class="gb-body" aria-hidden="true"><div class="gb-pips"><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="gb-line gb-label"></span><div class="gb-card"><span class="gb-line"></span><span class="gb-arrow"></span></div><div class="gb-card"><span class="gb-line"></span><span class="gb-arrow"></span></div><div class="gb-card"><span class="gb-line"></span><span class="gb-arrow"></span></div></div><p class="gb-status">교재를 불러오는 중…</p><div class="gb-progress" aria-hidden="true"><i></i></div><button class="gb-retry" type="button" onclick="location.reload()" hidden>다시 불러오기</button></div>
+<style>html:not(.genius-app-booting) #geniusBootSkeleton{display:none!important}</style>
 <div id="willenaHomeworkOpening" role="status" aria-live="polite" style="display:none"><div class="wh-card"><div class="wh-mark" aria-hidden="true"><svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="8" height="8"/><rect x="14" y="2" width="8" height="8"/><rect x="2" y="14" width="8" height="8"/><path d="M14 14h3v3h-3zM21 14v4h-3M14 21h4"/></svg></div><strong>숙제를 불러오는 중...</strong><small>Opening your homework</small><span class="wh-bar" aria-hidden="true"></span></div></div>
 <div class="study-app">
   <student-header title="문장 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
@@ -296,7 +303,7 @@
 </div>
 
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20261101-footer1"></script>
-<script type="module" src="./app.js?v=20261125-all-attempts1"></script>
+<script type="module">import('./app.js?v=20261126-boot1').catch(error=>{console.error('[Sentence Genius] startup module',error);const panel=document.getElementById('vocabStartupError');if(panel){panel.hidden=false;panel.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}window.WillenaHomeworkDeepLinkSplash?.hide();window.WillenaGeniusBoot?.finish('error');});</script>
 
 <script src="/students/components/mission-basket.js?v=20261112-conversation-route4"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
