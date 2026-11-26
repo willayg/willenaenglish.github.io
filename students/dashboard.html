@@ -134,12 +134,13 @@ html.leaderboard-only #learningUpgrade{display:none!important}
 #learningUpgrade .lu-grid>.lu-cell[data-mission=true]::after{content:"미션";position:absolute;z-index:2;top:-6px;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;min-width:32px;height:17px;padding:0 6px;box-sizing:border-box;border:1.5px solid #fff;border-radius:999px;background:#d94f94;color:#fff;font:800 10px/1 Poppins,"Noto Sans KR",system-ui,sans-serif;white-space:nowrap;pointer-events:none}
 
 /* Learning map legend: native disclosure, independent of map progress and scrolling. */
-#learningUpgrade .lu-map-legend{margin:0 0 13px;border:1px solid #b9dfe3;border-radius:14px;background:#f4fbfc;color:#244c50;overflow:hidden;text-align:left}
+#learningUpgrade .lu-map-legend{box-sizing:border-box;margin:0 0 13px;border:1px solid #b9dfe3;border-radius:14px;background:#f4fbfc;color:#244c50;overflow:hidden;text-align:left}
 #learningUpgrade .lu-map-legend>summary{display:flex;align-items:center;gap:8px;padding:10px 12px;min-height:40px;box-sizing:border-box;color:#267a83;font:800 14px/1.25 Poppins,"Noto Sans KR",system-ui,sans-serif;cursor:pointer;list-style:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #learningUpgrade .lu-map-legend>summary::-webkit-details-marker{display:none}
 #learningUpgrade .lu-map-legend>summary:focus-visible{outline:2px solid #27b7c4;outline-offset:-3px;border-radius:12px}
 #learningUpgrade .lu-map-legend>summary>svg{flex:none}
-#learningUpgrade .lu-legend-chevron{margin-left:auto}
+#learningUpgrade .lu-legend-chevron{margin-left:auto;transition:transform .22s ease}
+@media(prefers-reduced-motion:reduce){#learningUpgrade .lu-legend-chevron{transition:none}}
 #learningUpgrade .lu-map-legend[open] .lu-legend-chevron{transform:rotate(180deg)}
 #learningUpgrade .lu-legend-body{padding:0 12px 10px}
 #learningUpgrade .lu-legend-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
@@ -283,7 +284,7 @@ html.leaderboard-only #learningUpgrade{display:none!important}
 </style>
 <script type="module" src="/students/components/dashboard-inbox-bridge.js?v=20261126-visible-notice1"></script><script defer src="/students/components/live-presence.js?v=20261103-p3b"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
-<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script><script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script><script src="/students/components/genius-app-boot.js?v=20261126-guide1"></script><script type="module" src="/students/dashboard-v2/learning-upgrade.js?v=20261126-legend-autoclose1"></script><script>
+<script defer src="/students/pwa/install.js?v=1"></script><script type="module" src="/students/characters-v2/collection.js?v=20261116-p4-visible-scenery2"></script><script src="/students/study/study-progress.js?v=20261104-owner-guard1"></script><script src="/students/components/genius-app-boot.js?v=20261126-guide1"></script><script type="module" src="/students/dashboard-v2/learning-upgrade.js?v=20261126-legend-slide1"></script><script>
 (function(){
  const panel=document.getElementById('luEnergyPanel'),toggle=document.getElementById('luEnergyToggle');
  if(!panel||!toggle)return;
