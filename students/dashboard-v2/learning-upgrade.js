@@ -56,22 +56,6 @@ if(jellyDialog){
   by('luEnergyPanel')?.scrollIntoView({block:'center',behavior:'auto'});
  });
 }
-// One-time UI-only test for the approved A / Test account.
-const jellyPreviewId='5ff64b5e-85dc-4f3b-8438-1ae75084a0f4';
-const jellyPreviewKey='willena:jelly-preview:20261126:'+jellyPreviewId;
-let jellyPreviewShown=false;
-function previewJellyPending(id){
- if(String(id)!==jellyPreviewId||jellyPreviewShown)return false;
- try{return localStorage.getItem(jellyPreviewKey)!=='1'}catch{return true}
-}
-function markJellyPreview(){
- jellyPreviewShown=true;
- try{localStorage.setItem(jellyPreviewKey,'1')}catch{}
-}
-function maybeJellyPreview(id,count=0){
- if(!previewJellyPending(id))return;
- if(showJellyCelebration(1,count+1))markJellyPreview();
-}
 function energy(){
  if(jellyEnergyPending)return jellyEnergyPending;
  lastJellyCheck=Date.now();
@@ -90,18 +74,9 @@ function energy(){
    const seen=readJellySeen(p.id),baseline=Math.max(seen??row.given,row.given);
    const delta=Math.min(row.owed,Math.max(0,row.earned-baseline));
    if(delta>0){
-    if(showJellyCelebration(delta,row.owed)){
-     rememberJellySeen(p.id,row.earned);
-     if(previewJellyPending(p.id))markJellyPreview();
-    }
-   }else{
-    rememberJellySeen(p.id,row.earned);
-    maybeJellyPreview(p.id,row.owed);
-   }
-  }catch(e){
-   console.warn('[Jelly Energy]',e);
-   if(identity)maybeJellyPreview(identity.id);
-  }
+    if(showJellyCelebration(delta,row.owed))rememberJellySeen(p.id,row.earned);
+   }else rememberJellySeen(p.id,row.earned);
+  }catch(e){console.warn('[Jelly Energy]',e);}
  })().finally(()=>{jellyEnergyPending=null});
  return jellyEnergyPending;
 }
