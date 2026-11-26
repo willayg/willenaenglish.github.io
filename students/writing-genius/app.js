@@ -1034,4 +1034,4 @@ function installTeacherRewardPreview(){
  layer.querySelector('.wg-demo-reset').onclick=()=>{claim.hidden=false;result.textContent='';result.classList.remove('is-playing');layer.querySelector('.wg-demo-message-body').hidden=true};
 }
 installTeacherRewardPreview();
-void bootstrap();
+void bootstrap().finally(()=>window.WillenaGeniusBoot?.finish?.('ready'));
