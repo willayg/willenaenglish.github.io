@@ -291,7 +291,7 @@ body .frame.v1{--accent:#19aabb;--accent2:#ce5aa0;--surface:linear-gradient(115d
  .frame.v1 .hero-actions{gap:8px;flex-wrap:wrap}
  .frame.v1 .hero-actions .hero-contact{font-size:12px;padding:10px 13px}
 }
-</style></head>
+</style><link rel="stylesheet" href="/admissions/march-2027/popup.css?v=1"></head>
 <body>
 
 <div class="frame v1" id="frame">
@@ -413,4 +413,4 @@ function go(i){slide=(i+4)%4;renderSlide();restart()}
 el("prev").onclick=()=>go(slide-1);el("next").onclick=()=>go(slide+1);
 let touch=null;el("swipeArea").addEventListener("touchstart",e=>{touch=e.touches[0].clientX},{passive:true});el("swipeArea").addEventListener("touchend",e=>{if(touch!==null){let dx=e.changedTouches[0].clientX-touch;if(Math.abs(dx)>50)go(slide+(dx<0?1:-1));touch=null}},{passive:true});document.addEventListener("visibilitychange",()=>{if(document.hidden)clearInterval(timer);else restart()});document.querySelector(".hero").addEventListener("mouseenter",()=>clearInterval(timer));document.querySelector(".hero").addEventListener("mouseleave",restart);
 renderJourney();renderSlide();restart();
-</script></body></html>
+</script><script defer src="/admissions/march-2027/popup.js?v=1"></script></body></html>
