@@ -2,7 +2,7 @@
 'use strict';
 if(!window.WillenaAPI||window.__willenaLeaderboardDetails)return;
 window.__willenaLeaderboardDetails=true;
-const store={global:null,class:null};
+const store=Object.create(null);
 const originalFetch=WillenaAPI.fetch.bind(WillenaAPI);
 WillenaAPI.fetch=async function(url,opts){
   const response=await originalFetch(url,opts);
@@ -12,8 +12,9 @@ WillenaAPI.fetch=async function(url,opts){
     if(u.includes('section=leaderboard_stars_global'))scope='global';
     else if(u.includes('section=leaderboard_stars_class'))scope='class';
     if(scope){
+      const metric=new URL(u,location.href).searchParams.get('metric')||'super';
       const clone=response.clone();
-      clone.json().then(data=>{if(data&&Array.isArray(data.leaderboard)){store[scope]=data;queueMicrotask(decorate)}}).catch(()=>{});
+      clone.json().then(data=>{if(data&&Array.isArray(data.leaderboard)){store[scope+'|'+metric]=data;queueMicrotask(decorate)}}).catch(()=>{});
     }
   }catch{}
   return response;
@@ -39,7 +40,7 @@ function decorate(){
   if(!root)return;
   const scope=document.querySelector('.scope-tabs .tab.active')?.dataset.scope||'global';
   const metric=document.querySelector('.metric-tab.active')?.dataset.metric||'super';
-  const data=store[scope];
+  const data=store[scope+'|'+metric];
   if(!data)return;
   const entries=sorted(data,metric);
   const rows=[...root.querySelectorAll('.row')];
