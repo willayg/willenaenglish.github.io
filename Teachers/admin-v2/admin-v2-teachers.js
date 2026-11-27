@@ -1,15 +1,31 @@
 // Restricted teacher account manager. Authorization is enforced server-side.
-const API='/.netlify/functions/teacher_management';
+const API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/teacher-management-owner-v1';
+const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+let tokenRefresh=null;
 const root=document.getElementById('view-teachers-manager');
 const nav=document.querySelector('[data-view="teachers-manager"]');
 const $=(s,r=root)=>r.querySelector(s);
 let people=[],loaded=false,activeTab='active',actorId=null,actorIsOwner=false;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;'}[c]));
+async function freshToken(){
+ if(!tokenRefresh)tokenRefresh=(async()=>{
+  const fn=window.WillenaAPI?.fetch||window.fetch.bind(window);
+  const response=await fn('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.success||!data.access_token)throw Error('Session could not be refreshed. Please sign in again.');
+  window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');
+  return data.access_token;
+ })().finally(()=>{tokenRefresh=null});
+ return tokenRefresh;
+}
 async function request(action,body){
- const fn=window.WillenaAPI?.fetch||window.fetch.bind(window);
- const response=await fn(API+'?action='+encodeURIComponent(action),{method:body?'POST':'GET',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+ let token=window.WillenaAPI?.getLocalAccessToken?.()||null;
+ if(!token)token=await freshToken();
+ const send=t=>fetch(API+'?action='+encodeURIComponent(action),{method:body?'POST':'GET',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','apikey':API_KEY,'Authorization':'Bearer '+t},...(body?{body:JSON.stringify(body)}:{})});
+ let response=await send(token);
+ if(response.status===401){token=await freshToken();response=await send(token)}
  const data=await response.json().catch(()=>({}));
- if(!response.ok||data.success!==true)throw Error(data.error||'Teacher manager request failed ('+response.status+')');
+ if(!response.ok||data.success!==true)throw Error(data.error||data.message||'Teacher manager request failed ('+response.status+')');
  return data;
 }
 function message(value,error=false){const el=$('#tmMessage');el.textContent=value;el.style.color=error?'#b83d64':'#53757f';}
