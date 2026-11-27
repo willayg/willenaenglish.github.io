@@ -124,9 +124,9 @@ async function supabaseRpc(env, functionName, body = {}) {
 
 // Get first of month ISO string
 function getMonthStartIso() {
-  const now = new Date();
-  const firstUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
-  return firstUtc.toISOString();
+  const kstOffset = 9 * 60 * 60 * 1000;
+  const seoul = new Date(Date.now() + kstOffset);
+  return new Date(Date.UTC(seoul.getUTCFullYear(), seoul.getUTCMonth(), 1) - kstOffset).toISOString();
 }
 
 // Parse summary JSON
@@ -259,7 +259,7 @@ function needsSummary(summary) {
   return true;
 }
 
-async function synthesizeSummaries(env, sessions) {
+async function synthesizeSummaries(env, sessions, strict = false) {
   const missing = (sessions || []).filter(s => needsSummary(s.summary)).map(s => s.session_id).filter(Boolean);
   if (!missing.length) return;
 
@@ -279,6 +279,7 @@ async function synthesizeSummaries(env, sessions) {
       });
     } catch (e) {
       console.error('[progress-summary] Attempt fetch error during summary synthesis:', e.message);
+      if (strict) throw e;
     }
   }
 
@@ -296,7 +297,7 @@ async function synthesizeSummaries(env, sessions) {
   });
 }
 
-async function fetchSessionsForUsers(env, userIds, firstOfMonthIso) {
+async function fetchSessionsForUsers(env, userIds, firstOfMonthIso, strict = false) {
   if (!userIds || !userIds.length) return [];
   
   const sessions = [];
@@ -325,12 +326,13 @@ async function fetchSessionsForUsers(env, userIds, firstOfMonthIso) {
         offset += batchSize;
       } catch (e) {
         console.error('[progress-summary] Sessions fetch error:', e.message);
+        if (strict) throw e;
         break;
       }
     }
   }
   
-  await synthesizeSummaries(env, sessions);
+  await synthesizeSummaries(env, sessions, strict);
   return sessions;
 }
 
@@ -389,6 +391,61 @@ async function setToCache(env, key, data, ttlSeconds) {
   } catch (e) {
     console.error('[progress-summary] Cache write error:', e.message);
   }
+}
+
+// A single full, month-keyed dataset is shared by all monthly leaderboards.
+// Never truncate candidates by ordinary points before ranking a different metric.
+const REPORT_CLASSES = new Map(['Brown','Stanford','Manchester','New York','Hawaii','Boston','Sydney','Berkeley','Chicago','Cambridge','Yale','Princeton','Oxford','MIT','Pre-Harvard'].map(c => [c.toLowerCase(), c]));
+const classKey = value => String(value || '').trim().toLowerCase();
+function rankMonthly(entries, metric = 'super') {
+  const field = metric === 'points' ? 'points' : metric === 'stars' ? 'stars' : 'superScore';
+  const secondary = metric === 'stars' ? 'points' : 'stars';
+  return [...entries].sort((a,b) =>
+    b[field]-a[field] || b[secondary]-a[secondary] ||
+    b.points-a.points || String(a.name || 'Student').localeCompare(String(b.name || 'Student')) ||
+    String(a.user_id).localeCompare(String(b.user_id))
+  ).map((row,i) => ({...row, rank:i+1}));
+}
+
+async function monthlyLeaderboard(env) {
+  const since = getMonthStartIso();
+  const key = 'lb:monthly:shared:v3:' + since;
+  const cached = await getFromCache(env,key);
+  if (cached && Array.isArray(cached.leaderboard)) return cached;
+  const profiles = [];
+  for (let offset=0;;offset+=1000) {
+    const page = await supabaseSelect(env,'profiles',
+      'select=id,name,class,avatar,korean_name,username&role=eq.student&approved=eq.true&or=(is_ghost.is.null,is_ghost.eq.false)&order=id.asc&limit=1000&offset='+offset);
+    profiles.push(...page.filter(p => !p.username || p.username.length>1));
+    if (page.length<1000) break;
+  }
+  const ids=profiles.map(p=>p.id);
+  // Existing grouped SQL RPC returns the same dated attempt-point sum without
+  // downloading every attempt into the Worker.
+  const [sessions,pointRows]=await Promise.all([
+    fetchSessionsForUsers(env,ids,since,true),
+    ids.length ? supabaseRpc(env,'get_progress_points_totals_v1',{p_user_ids:ids,p_since:since}) : []
+  ]);
+  const points=new Map(pointRows.map(r=>[r.user_id,Number(r.points)||0]));
+  const leaderboard=buildLeaderboard(profiles,buildStarsByUserMap(sessions),points);
+  const data={timeframe:'month',cached_at:new Date().toISOString(),leaderboard};
+  await setToCache(env,key,data,CLASS_CACHE_TTL_SECONDS);
+  return data;
+}
+
+function classLeaderRows(entries) {
+  const counts=new Map();
+  return rankMonthly(entries,'super').flatMap(e=>{
+    const key=classKey(e.class), cls=REPORT_CLASSES.get(key);
+    if (!cls || (e.points<=0 && e.stars<=0)) return [];
+    const rank=(counts.get(key)||0)+1;
+    counts.set(key,rank);
+    return rank===1 || e.rank<=10 ? [{
+      user_id:e.user_id,class_name:cls,student_name:e.name||'Student',
+      korean_name:e.korean_name||'',points:e.points,stars:e.stars,
+      super_points:e.superScore,class_rank:rank,global_rank:e.rank
+    }] : [];
+  });
 }
 
 export default {
@@ -546,6 +603,51 @@ export default {
         return jsonResponse(sessions || [], 200, origin, RESPONSE_CACHE_SECONDS);
       }
       
+      // The live teacher report and both student scopes share this exact
+      // monthly dataset, including the same cache and Seoul month boundary.
+      if (section === 'leaderboard_class_winners' ||
+          (url.searchParams.get('timeframe') === 'month' &&
+           ['leaderboard_stars','leaderboard_stars_global','leaderboard_stars_class'].includes(section))) {
+        const isReport=section==='leaderboard_class_winners';
+        if (isReport) {
+          const [profile]=await supabaseSelect(env,'profiles','select=role,approved&id=eq.'+encodeURIComponent(userId));
+          if (!profile?.approved || !['teacher','admin'].includes(profile.role)) {
+            return jsonResponse({success:false,error:'Teacher access required'},403,origin);
+          }
+        }
+        let cls=url.searchParams.get('class') || null;
+        if (!isReport && section==='leaderboard_stars_class' && !cls) {
+          const [profile]=await supabaseSelect(env,'profiles','select=class&id=eq.'+encodeURIComponent(userId));
+          cls=profile?.class || null;
+          if (!cls || cls.trim().length<=1) return jsonResponse({success:true,leaderboard:[],class:null},200,origin);
+        }
+        const data=await monthlyLeaderboard(env);
+        const payload={success:true,timeframe:'month',cached_at:data.cached_at};
+        if (isReport) {
+          return new Response(JSON.stringify({...payload,live:true,rows:classLeaderRows(data.leaderboard)}),{
+            headers:{'Content-Type':'application/json','Cache-Control':'private, no-store',...getCorsHeaders(origin)}
+          });
+        }
+        const pool=cls ? data.leaderboard.filter(e=>classKey(e.class)===classKey(cls)) : data.leaderboard;
+        const metric=url.searchParams.get('metric');
+        const limit=cls?5:15;
+        let chosen;
+        if (['super','points','stars'].includes(metric)) {
+          const ranked=rankMonthly(pool,metric);
+          chosen=ranked.filter((e,i)=>i<limit||e.user_id===userId);
+        } else {
+          // Backwards compatibility: older clients sort locally on metric changes.
+          // Include every metric's genuine leaders, not only the points leaders.
+          const metrics=['super','points','stars'];
+          const ids=new Set(metrics.flatMap(m=>rankMonthly(pool,m).slice(0,limit).map(e=>e.user_id)));
+          ids.add(userId);
+          chosen=rankMonthly(pool,'super').filter(e=>ids.has(e.user_id));
+        }
+        return new Response(JSON.stringify({...payload,class:cls,leaderboard:chosen.map(e=>({...e,self:e.user_id===userId}))}),{
+          headers:{'Content-Type':'application/json','Cache-Control':'private, no-store',...getCorsHeaders(origin)}
+        });
+      }
+
       // ===== LEADERBOARD STARS (global or class) =====
       if (section === 'leaderboard_stars' || section === 'leaderboard_stars_global') {
         const timeframe = url.searchParams.get('timeframe') || 'all';
