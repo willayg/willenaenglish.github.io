@@ -862,11 +862,30 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const typingStatus=el('p','df-muted df-writing-progress');
   const targetLine=el('p','df-writing-current-line');
   const input=el('textarea','df-input df-writing-line-input');
-  input.dataset.willenaTextEntry='writing';input.dataset.inputLanguage='en';
+  input.dataset.willenaTextEntry='writing';input.dataset.inputLanguage='en';input.dataset.willenaFastTyping='true';
   input.rows=2;input.placeholder='위 문장을 입력하세요.';
   input.autocomplete='off';input.spellcheck=false;
   const lineCheck=el('button','wg-button wg-secondary df-typing-line-confirm','다음 문장');
   lineCheck.type='button';lineCheck.setAttribute('data-willena-keep-keyboard','');
+  // Keep the editable field native and independent from feedback. Only compare on explicit actions.
+  const finalGuide=el('div','df-correction-guide df-final-correction-guide');finalGuide.hidden=true;
+  finalGuide.setAttribute('data-willena-keep-keyboard','');
+  let selectedIssue=0;
+  const showFinalIssues=(jump=false,delta=0,absolute=null)=>{
+   const target=scriptLines[typingIndex];if(!target)return;
+   const value=input.value;
+   const issues=typedComparable(value)===typedComparable(target)?[]:correctionRanges(target,value);
+   finalGuide.replaceChildren();finalGuide.hidden=false;
+   if(!issues.length){finalGuide.append(el('strong','df-correction-done','모두 수정했어요! 확인을 눌러 주세요.'));return}
+   selectedIssue=absolute===null?(Math.min(selectedIssue,issues.length-1)+delta+issues.length)%issues.length:Math.min(absolute,issues.length-1);
+   const selected=issues[selectedIssue];
+   const heading=el('div','df-correction-heading');heading.append(el('strong','','수정할 부분 '+issues.length+'개'),el('span','',(selectedIssue+1)+' / '+issues.length+' · '+selected.label));
+   const buttonFor=(label,fn)=>{const b=el('button','df-correction-control',label);b.type='button';b.addEventListener('pointerdown',e=>e.preventDefault());b.addEventListener('click',fn);return b};
+   const chips=el('div','df-correction-chips');issues.forEach((issue,i)=>{const b=buttonFor((i+1)+'. '+(issue.extra||issue.missing||'문장'),()=>showFinalIssues(true,0,i));b.classList.add(issue.kind);b.setAttribute('aria-pressed',String(i===selectedIssue));chips.append(b)});
+   const controls=el('div','df-correction-controls');controls.append(buttonFor('이전 오류',()=>showFinalIssues(true,-1)),buttonFor('오류 선택',()=>showFinalIssues(true)),buttonFor('다음 오류',()=>showFinalIssues(true,1)));
+   finalGuide.append(heading,chips,controls);
+   if(jump){let start=selected.start,end=selected.end;if(/[a-z0-9]/i.test((selected.extra||'')+(selected.missing||''))){while(start>0&&/[a-z0-9’']/i.test(value[start-1]))start--;while(end<value.length&&/[a-z0-9’']/i.test(value[end]))end++}input.focus({preventScroll:true});input.setSelectionRange(start,end)}
+  };
   const renderTypingLine=()=>{
    const done=typingIndex>=scriptLines.length;
    typingStatus.textContent=done?'모든 문장을 입력했어요. 제출할 수 있어요.':(typingIndex+1)+' / '+scriptLines.length+' · 현재 문장을 입력하세요.';
@@ -874,19 +893,20 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    input.hidden=done;lineCheck.hidden=done;
    // The previous line may have installed an editable difference mirror.
    // Restore the native field for each fresh target; do not carry its highlights over.
-   clearEditableDifferences(input);
+   finalGuide.hidden=true;finalGuide.replaceChildren();selectedIssue=0;
    if(!done){input.value=typedLines[typingIndex]||'';lineCheck.textContent=typingIndex===scriptLines.length-1?'마지막 문장 확인':'다음 문장'}
    lineNodes.forEach((node,i)=>{
     node.classList.toggle('is-complete',i<typingIndex);
     node.classList.toggle('is-current',i===typingIndex&&!done);
    });
    if(!done&&typedMode){input.focus({preventScroll:true})}
+   if(done)input.blur();
   };
   lineCheck.addEventListener('click',()=>{
    if(typingIndex>=scriptLines.length)return;
    const typed=input.value.trim(),target=scriptLines[typingIndex];
    if(typedComparable(typed)!==typedComparable(target)){
-    markEditableDifferences(input,target);
+    showFinalIssues(true);
     status('현재 문장에서 다른 부분을 수정하세요.',true);return;
    }
    typedLines[typingIndex]=typed;typingIndex++;saveTypedLines();
@@ -897,7 +917,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   input.addEventListener('keydown',event=>{
    if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();lineCheck.click()}
   });
-  typeArea.append(typingStatus,targetLine,input,lineCheck);
+  typeArea.append(typingStatus,targetLine,input,finalGuide,lineCheck);
   const speakStatus=el('p','df-muted','마이크를 누르고 현재 문장을 읽어 주세요. 문장마다 이어서 진행할 수 있어요.');
   const nextSpokenLine=el('button','wg-button wg-secondary df-speech-next','다음 문장');
   nextSpokenLine.type='button';nextSpokenLine.hidden=true;
