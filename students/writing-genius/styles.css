@@ -1056,7 +1056,7 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-correction-chips [aria-pressed=true]{outline:2px solid #168c98;outline-offset:1px}
 .writing-genius #wgDiaryFlow .df-correction-done{color:#16844d}
 @media (min-width:700px) and (pointer:coarse){
- body.writing-genius #willenaSharedKeyboard .wkb-key{height:48px}
- body.writing-genius #willenaSharedKeyboard .wkb-row{margin:5px 0}
- body.writing-genius.willena-kb-open .app,body.writing-genius.willena-kb-open .shell{padding-bottom:350px!important}
+ body:has(.writing-genius) #willenaSharedKeyboard .wkb-key{height:48px}
+ body:has(.writing-genius) #willenaSharedKeyboard .wkb-row{margin:5px 0}
+ body.willena-kb-open:has(.writing-genius) .app,body.willena-kb-open:has(.writing-genius) .shell{padding-bottom:350px!important}
 }
