@@ -1064,3 +1064,16 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 /* Final practice: real textarea, no live mirror, no expensive typing-time visual effects. */
 .writing-genius #wgDiaryFlow .df-final-type .df-writing-line-input{color:var(--ink,#173f46)!important;-webkit-text-fill-color:var(--ink,#173f46)!important;caret-color:#165861!important;transition:none!important;animation:none!important;box-shadow:none!important;}
 .writing-genius #wgDiaryFlow .df-final-correction-guide{contain:layout style;}
+
+/* Final practice editor: large writing surface; integrated, tappable correction view. */
+.writing-genius #wgDiaryFlow .df-final-type{width:100%;max-width:820px;gap:8px}
+.writing-genius #wgDiaryFlow .df-final-editor{position:relative;width:100%;min-width:0}
+.writing-genius #wgDiaryFlow .df-final-type .df-writing-line-input{display:block;width:100%;height:clamp(144px,23vh,210px);min-height:144px;max-height:none;padding:16px 18px;font-size:clamp(1.2rem,2.7vw,1.45rem);line-height:1.65;overflow-y:auto}
+.writing-genius #wgDiaryFlow .df-final-inline-errors{position:absolute;inset:0;overflow:auto;box-sizing:border-box;background:#fff;border:2px solid #e2b34f;border-radius:12px;padding:12px 16px;color:#173f46;white-space:pre-wrap;overflow-wrap:anywhere;font-size:clamp(1.2rem,2.7vw,1.45rem);line-height:1.85;pointer-events:none}
+.writing-genius #wgDiaryFlow .df-inline-error{display:inline-block;vertical-align:baseline;min-height:44px;min-width:44px;padding:3px 6px;border:0;border-radius:7px;font:inherit;line-height:1.4;font-weight:700;white-space:pre-wrap;cursor:pointer;pointer-events:auto;touch-action:manipulation}
+.writing-genius #wgDiaryFlow .df-inline-error.is-extra{background:#ffe59a;color:#8a481b}
+.writing-genius #wgDiaryFlow .df-inline-error.is-missing{background:#f9d6e8;color:#a8326a}
+.writing-genius #wgDiaryFlow .df-final-correction-strip{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin:0;font-size:.87rem;color:#42636b}
+.writing-genius #wgDiaryFlow .df-final-correction-nav{display:flex;gap:6px}
+.writing-genius #wgDiaryFlow .df-final-error-nav{min-height:44px;padding:6px 12px;border:1px solid #a6d9df;border-radius:8px;background:white;color:#167781;font-weight:700;touch-action:manipulation}
+@media(min-width:700px) and (pointer:coarse){.writing-genius #wgDiaryFlow .df-final-type .df-writing-line-input{height:190px;min-height:170px}}
