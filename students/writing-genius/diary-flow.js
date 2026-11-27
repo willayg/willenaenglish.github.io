@@ -121,7 +121,31 @@ function markEditableDifferences(input,expected){
  input.addEventListener('input',schedule);input.addEventListener('scroll',scroll);
  controller.refresh(true);
 }
-const split=s=>(String(s||'').match(/[^.!?\n]+[.!?]+(?=\s|$)/g)||[]).map(x=>x.trim()).filter(x=>/[a-z]/i.test(x));
+const legacySplit=s=>(String(s||'').match(/[^.!?\n]+[.!?]+(?=\s|$)/g)||[]).map(x=>x.trim()).filter(x=>/[a-z]/i.test(x));
+function splitWritingSentences(value){
+ const text=String(value||'').replace(/\r\n?/g,'\n');
+ const out=[];let start=0;
+ const emit=end=>{const line=text.slice(start,end).trim();if(/[a-z]/i.test(line))out.push(line)};
+ for(let i=0;i<text.length;i++){
+  const ch=text[i];
+  if(ch==='\n'){emit(i);start=i+1;continue}
+  if(!'.!?'.includes(ch))continue;
+  if(ch==='.'&&/\d/.test(text[i-1]||'')&&/\d/.test(text[i+1]||''))continue;
+  let end=i+1;
+  while(end<text.length&&/[.!?]/.test(text[end]))end++;
+  while(end<text.length&&/["'”’)\]]/.test(text[end]))end++;
+  if(end<text.length&&!/\s/.test(text[end]))continue;
+  if(ch==='.'&&end===i+1){
+   const tail=text.slice(start,i+1);
+   const following=text.slice(end).match(/^[ \t]+([A-Za-z])/);
+   if(following&&(/\b(?:Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)\.$/i.test(tail)||/\b[A-Z]\.$/.test(tail)))continue;
+   if(following&&/[a-z]/.test(following[1])&&/\b(?:a\.m|p\.m|e\.g|i\.e|etc)\.$/i.test(tail))continue;
+  }
+  emit(end);start=end;i=end-1;
+ }
+ emit(text.length);return out;
+}
+const split=splitWritingSentences;
 // Speech transcripts write times differently from lesson text (11am vs 11:00 a.m.).
 // Canonicalize common clock readings before word-level edit-distance scoring.
 function speechWords(value){
@@ -432,14 +456,15 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   if(choice==='custom'&&String(customLines[i]||'').trim())return customLines[i].trim();
   return choice==='original'?change.original:choice==='last'&&change.clarified_better?change.clarified_better:change.better;
  }
+ function reviewLines(){return Array.isArray(feedback?.review_lines)?feedback.review_lines:feedback?.review_version===2?legacySplit(current.body):split(current.body)}
  function correctionForLine(corrections,line,i){
   const indexed=corrections.findIndex(x=>Number.isInteger(x.sentence_index)&&x.sentence_index===i);
   return indexed>=0?indexed:corrections.findIndex(x=>!Number.isInteger(x.sentence_index)&&(norm(x.original)===norm(line)||line.toLowerCase().includes(String(x.original).trim().toLowerCase())));
  }
  function construct(){
   const corrections=(feedback?.improvements||[]).filter(x=>x.original&&x.better);
-  const original=split(current.body);
-  finalLines=original.map((line,i)=>{const ci=correctionForLine(corrections,line,i);return ci>=0?selectedText(corrections[ci],ci):line});
+  const original=reviewLines();
+  finalLines=original.map((line,i)=>{const ci=correctionForLine(corrections,line,i);return ci>=0?selectedText(corrections[ci],ci):String(customLines['line:'+i]||line)});
   (feedback?.expressions||[]).forEach((x,i)=>{
    if(selectedExpressions[i]&&String(expressionEdits[i]||x.english||'').trim())finalLines.push(String(expressionEdits[i]||x.english).trim());
   });
@@ -472,7 +497,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     const i=correctionForLine(changes,line,lineIndex);
     return i>=0?{text:selectedText(changes[i],i),changed:selectedText(changes[i],i)!==line}: {text:line,changed:false};
   };
-  const originalLines=split(current.body);
+  const originalLines=reviewLines();
   const corrected=originalLines.map(correctedLine);
   const preview=el('section','df-revision-preview');
   preview.append(el('h3','','AI Corrections · 수정된 문장'));
@@ -582,7 +607,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
  function summary(){reviewSentence(0)}
  function reviewSentence(sentenceIndex){
   construct();
-  const originals=split(current.body);
+  const originals=reviewLines();
   if(sentenceIndex>=originals.length){expressionPage();return}
   screen('review','3 · Review · '+(sentenceIndex+1)+' / '+originals.length);
   const line=originals[sentenceIndex];
@@ -608,7 +633,13 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   const next=()=>reviewSentence(sentenceIndex+1);
   if(sentenceIndex>0)button('이전 문장',()=>reviewSentence(sentenceIndex-1)).classList.add('df-skip-action');
   else button('이전',write).classList.add('df-skip-action');
-  if(!change){button('다음 문장',next,true).classList.add('df-confirm-action');return}
+  if(!change){
+   if(assessment?.status==='unclear'){
+    const edit=el('textarea','df-revision-input');edit.dataset.willenaTextEntry='writing';edit.dataset.inputLanguage='en';edit.value=customLines['line:'+sentenceIndex]||line;revised.append(edit);
+    button('수정한 문장 사용',()=>{const value=edit.value.trim();if(!/[a-z]/i.test(value)){status('영어 문장을 입력하세요.',true);return}customLines['line:'+sentenceIndex]=value;finalDraftText='';saveChoices();next()},true).classList.add('df-confirm-action');
+    button('원래 문장 유지',()=>{delete customLines['line:'+sentenceIndex];finalDraftText='';saveChoices();next()});
+   }else button('다음 문장',next,true).classList.add('df-confirm-action');return
+  }
   const controls=el('div','df-review-decision-buttons');stage.append(controls);
   const option=(label,fn)=>{
    const b=el('button','wg-button wg-secondary',label);b.type='button';b.addEventListener('click',fn);controls.append(b);return b;
@@ -675,7 +706,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    field.addEventListener('input',()=>{expressionEdits[i]=field.value;finalDraftText='';saveChoices()});
    card.append(toggle,field);stage.append(card);
   });
-  button('이전',()=>reviewSentence(Math.max(0,split(current.body).length-1))).classList.add('df-skip-action');
+  button('이전',()=>reviewSentence(Math.max(0,reviewLines().length-1))).classList.add('df-skip-action');
   button('다음',finalDraft,true).classList.add('df-confirm-action');
  }
  function finalDraft(){
