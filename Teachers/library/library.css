@@ -5,3 +5,22 @@
 .quick-drop strong{font-size:14px;font-weight:600;color:var(--accent)}.quick-drop span{font-size:12px;color:#6b858d}
 .quick-drop:hover,.file-dragging .quick-drop{background:#e3f2f4;border-color:var(--accent)}.file-dragging{border-color:var(--accent);box-shadow:0 0 0 2px #237f8922}
 #reportUploadPanel #reports .empty{padding:13px 4px 0}#reportUploadPanel #reports:not(:empty){margin-top:4px}
+
+/* Import review: controls remain visible independently of the scrollable roster. */
+#importDialog[open]{display:flex;flex-direction:column;overflow:hidden;padding:0;max-height:88dvh}
+#importDialog .import-top{flex:0 0 auto;background:#fff;padding:15px 20px 10px;border-bottom:1px solid var(--line);z-index:2}
+#importDialog .import-top .dialog-head{margin:0}
+.import-top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#importMessage{margin:7px 0 0;min-height:0;overflow-wrap:anywhere}
+#importMessage:empty{display:none}
+#importBody{min-height:0;overflow:auto;overscroll-behavior:contain;padding:16px 20px 20px}
+#confirmImport{white-space:normal}
+.library-language{display:inline-flex;align-items:center;gap:2px;padding:3px;margin-right:9px;border:1px solid #ffffff35;border-radius:20px;background:#ffffff13;flex:none;white-space:nowrap}
+.library-language button{font:600 11px/1.2 Poppins,system-ui,sans-serif;min-height:30px;padding:6px 9px;border-radius:16px;background:transparent;color:#e4edf0}
+.library-language button[aria-pressed="true"]{background:#fff;color:#344954}
+.library-language button:hover:not([aria-pressed="true"]){background:#ffffff20}
+html[data-library-language="both"] th{white-space:normal}
+html[data-library-language="both"] .panel-head{align-items:center}
+@media(max-width:760px){.library-language{gap:0;margin-right:5px;padding:2px}.library-language button{font-size:10px;padding:5px 6px;min-height:27px}}
+@media(max-width:600px){#importDialog .import-top{padding:12px 13px 9px}#importBody{padding:12px 13px 15px}.import-top-actions{gap:5px}#confirmImport{font-size:12px}.import-top .dialog-head h2{font-size:15px}}
+@media(max-width:460px){.library-language button{font-size:9px;padding:5px}.library-language{margin-right:3px}.teacher-header:has(.library-language) .th-switch a{padding:5px;font-size:10px}.teacher-header:has(.library-language) .th-brand img{width:30px}}
