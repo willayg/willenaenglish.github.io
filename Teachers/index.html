@@ -1455,14 +1455,7 @@ async function loadPuzzleInsights(force=false){
 function normalizeLeaderboardEntries(raw){
   return (Array.isArray(raw)?raw:[]).map(e=>({...e,name:e.name||'Student',stars:Number(e.stars)||0,points:Number(e.points)||0,superScore:Number.isFinite(Number(e.superScore))?Number(e.superScore):Math.round(((Number(e.stars)||0)*(Number(e.points)||0))/1000)}));
 }
-function leaderboardSorted(data,metric){
-  const list=normalizeLeaderboardEntries(data?.leaderboard);
-  return list.sort((a,b)=>{
-    if(metric==='points')return b.points-a.points||b.stars-a.stars||String(a.name).localeCompare(String(b.name));
-    if(metric==='stars')return b.stars-a.stars||b.points-a.points||String(a.name).localeCompare(String(b.name));
-    return b.superScore-a.superScore||b.stars-a.stars||b.points-a.points||String(a.name).localeCompare(String(b.name));
-  });
-}
+function leaderboardSorted(data,metric){return normalizeLeaderboardEntries(data?.leaderboard).sort((a,b)=>a.rank-b.rank)}
 function leaderboardScore(e,metric){
   if(metric==='points')return `${e.points.toLocaleString()} pts`;
   if(metric==='stars')return `${e.stars.toLocaleString()} ★`;
@@ -1475,24 +1468,40 @@ function renderTeacherLeaderboard(data,scope,metric){
   if(!rows.length){$('#teacherLeaderboard').innerHTML='<div class="empty">No leaderboard data yet.</div>';return}
   $('#teacherLeaderboard').innerHTML=rows.map((e,i)=>`<div class="student-row leaderboard-row"><div class="leader-rank">${i+1}</div><div class="student-main"><div class="student-name">${esc(e.name)}${e.self?' · You':''}</div><div class="student-meta">${e.class?esc(e.class):''}</div></div><div class="leader-score">${esc(leaderboardScore(e,metric))}</div></div>`).join('');
 }
+let teacherLeaderboardRequest=0;
+async function fetchCanonicalMonthlyLeaderboard(section,metric='super'){
+  const url='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/willena-monthly-leaderboard-v2?'+new URLSearchParams({section,metric});
+  const access=()=>window.WillenaAPI?.getLocalAccessToken?.()||null;
+  async function refreshToken(){
+    const refreshUrl=FN('supabase_auth')+'?action=refresh&_='+Date.now();
+    const r=window.WillenaAPI?.fetch?await window.WillenaAPI.fetch(refreshUrl,{cache:'no-store'}):await fetch(refreshUrl,{credentials:'include',cache:'no-store'});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok&&d.success&&d.access_token){window.WillenaAPI?.setLocalTokens?.(d.access_token,'');return d.access_token}return null;
+  }
+  let token=access()||await refreshToken();
+  if(!token)throw Error('Sign in again to view leaderboard.');
+  const request=t=>fetch(url,{headers:{Authorization:'Bearer '+t},credentials:'omit',cache:'no-store'});
+  let r=await request(token);
+  if(r.status===401){token=await refreshToken();if(token)r=await request(token)}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||j.success!==true)throw Error(j.error||'Leaderboard unavailable');
+  return j;
+}
 async function loadTeacherLeaderboard(force=false){
   const scope=$('#leaderScope')?.value||'global',metric=$('#leaderMetric')?.value||'super';
-  const key=`${scope}|${metric}`;
-  if(!force&&state.leaderboardLoadedKey===key&&state.leaderboardData){renderTeacherLeaderboard(state.leaderboardData,scope,metric);return}
+  const request=++teacherLeaderboardRequest;
   $('#teacherLeaderboard').innerHTML='<div class="empty">Loading leaderboard…</div>';
   try{
     const section=scope==='class'?'leaderboard_stars_class':'leaderboard_stars_global';
-    const params=new URLSearchParams({section,timeframe:'month'});
-    const url=`${FN('progress_summary')}?${params}`;
-    const r=window.WillenaAPI?.fetch?await window.WillenaAPI.fetch(url,{credentials:'include',cache:'no-store'}):await fetch(url,{credentials:'include',cache:'no-store'});
-    const j=await r.json().catch(()=>({}));
-    if(!r.ok||j.success===false)throw Error(j.error||`Request failed (${r.status})`);
-    state.leaderboardLoadedKey=key;
-    state.leaderboardData=j;
+    const j=await fetchCanonicalMonthlyLeaderboard(section,metric);
+    if(request!==teacherLeaderboardRequest)return;
+    if(!Array.isArray(j.leaderboard))throw Error('Invalid leaderboard response');
+    state.leaderboardLoadedKey=scope+'|'+metric;state.leaderboardData=j;
     renderTeacherLeaderboard(j,scope,metric);
   }catch(e){
+    if(request!==teacherLeaderboardRequest)return;
     state.leaderboardLoadedKey=null;state.leaderboardData=null;
-    $('#teacherLeaderboard').innerHTML=`<div class="empty">${esc(e.message)}</div>`;
+    $('#teacherLeaderboard').innerHTML='<div class="empty">'+esc(e.message)+'</div>';
   }
 }
 const CLASS_LEADER_ORDER=['Brown','Stanford','Manchester','New York','Hawaii','Boston','Sydney','Berkeley','Chicago','Cambridge','Yale','Princeton','Oxford','MIT','Pre-Harvard'];
@@ -1503,7 +1512,9 @@ async function loadClassLeaders(){
   const currentKey=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'}).slice(0,7);
   const isCurrent=month===currentKey;
   let data;
-  try {
+  if(isCurrent){
+    data=await fetchCanonicalMonthlyLeaderboard('class_leaders');
+  }else{
     const token=window.WillenaAPI?.getLocalAccessToken?.() || (()=>{try{return document.cookie.split('; ').find(c=>c.startsWith('sb_access='))?.split('=').slice(1).join('=')||null}catch{return null}})();
     if(!token)throw new Error('Teacher access token unavailable. Sign in again to view snapshots.');
     const url='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-insights?'+new URLSearchParams({action:'class_leaders',month});
@@ -1511,36 +1522,6 @@ async function loadClassLeaders(){
     const payload=await response.json().catch(()=>({}));
     if(!response.ok||payload.success===false)throw new Error(payload.error||'Snapshot request failed ('+response.status+')');
     data=payload;
-  } catch(primaryError) {
-    // The teacher-insights gateway does not yet recognize this newer section.
-    // For the LIVE month, reuse the same authenticated working endpoint as the
-    // existing leaderboard rather than leaving the whole panel broken.
-    if(!isCurrent) throw new Error('The historical snapshot service is not deployed yet. '+primaryError.message);
-    // Existing leaderboard returns only its top 15 globally. Fetch class leaders
-    // individually so less-active classes cannot disappear from this report.
-    const live=await api(endpoint('leaderboard_stars_global',{timeframe:'month'}));
-    const top=leaderboardSorted(live,'super').filter(e=>CLASS_LEADER_ORDER.some(c=>c.toLowerCase()===String(e.class||'').trim().toLowerCase()));
-    const overall=new Map(top.map((e,i)=>[String(e.user_id||e.name+'|'+e.class),i+1]));
-    const responses=await Promise.all(CLASS_LEADER_ORDER.map(async cls=>{
-      try{
-        const j=await api(endpoint('leaderboard_stars_global',{timeframe:'month',class:cls}));
-        const entries=leaderboardSorted(j,'super').filter(e=>String(e.class||'').trim().toLowerCase()===cls.toLowerCase());
-        return {cls,first:entries[0]||null};
-      }catch{return {cls,first:null}}
-    }));
-    const rows=[];
-    for(const {cls,first} of responses){
-      if(!first)continue;
-      const id=String(first.user_id||first.name+'|'+first.class);
-      rows.push({class_name:cls,student_name:first.name||'Student',korean_name:first.korean_name||'',super_points:first.superScore||0,class_rank:1,global_rank:overall.get(id)||null});
-    }
-    const winners=new Set(rows.map(r=>r.class_name.toLowerCase()+'|'+r.student_name));
-    top.slice(0,10).forEach((e,i)=>{
-      const cls=CLASS_LEADER_ORDER.find(c=>c.toLowerCase()===String(e.class||'').trim().toLowerCase());
-      if(!cls||winners.has(cls.toLowerCase()+'|'+e.name))return;
-      rows.push({class_name:cls,student_name:e.name||'Student',korean_name:e.korean_name||'',super_points:e.superScore||0,class_rank:2,global_rank:i+1});
-    });
-    data={rows,live:true};
   }
   const rows=Array.isArray(data.rows)?data.rows:[];
   const byClass=new Map();
@@ -1548,7 +1529,7 @@ async function loadClassLeaders(){
   root.innerHTML=CLASS_LEADER_ORDER.map(cls=>{
     const group=byClass.get(cls.toLowerCase())||[];
     if(!group.length)return '<div class="class-leader-row"><strong>'+esc(cls)+'</strong><span class="cl-kr">No qualifying activity</span><span></span><span></span></div>';
-    return group.map((r,i)=>'<div class="class-leader-row"><strong>'+(!i?esc(cls):'<span class="cl-extra">↳ Top 10</span>')+'</strong><div><span class="cl-name">'+esc(r.student_name)+'</span><span class="cl-kr">'+esc(r.korean_name||'')+'</span>'+((Number(r.global_rank)<=10)?'<div class="cl-top">Overall top 10</div>':'')+'</div><span class="cl-score">'+Number(r.super_points||0).toLocaleString()+'</span><span class="cl-rank">#'+esc(r.global_rank)+' overall</span></div>').join('');
+    return group.map((r,i)=>'<div class="class-leader-row"><strong>'+(!i?esc(cls):'<span class="cl-extra">↳ Top 10</span>')+'</strong><div><span class="cl-name">'+esc(r.student_name)+'</span><span class="cl-kr">'+esc(r.korean_name||'')+'</span>'+((r.global_rank!=null&&Number(r.global_rank)<=10)?'<div class="cl-top">Overall top 10</div>':'')+'</div><span class="cl-score">'+Number(r.super_points||0).toLocaleString()+'</span><span class="cl-rank">#'+esc(r.global_rank)+' overall</span></div>').join('');
   }).join('');
   $('#classLeaderCount').textContent=rows.length+' winners';
  }catch(err){root.innerHTML='<div class="empty">'+esc(err.message)+'</div>';$('#classLeaderCount').textContent='Unavailable'}
