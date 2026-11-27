@@ -1,7 +1,8 @@
 #march-invitation{box-sizing:border-box;position:fixed;inset:0;margin:auto;padding:0;border:0;background:transparent;color:#242122;width:min(590px,calc(100vw - 28px));max-width:none;max-height:calc(100dvh - 28px);overflow:auto;overscroll-behavior:contain;filter:drop-shadow(0 16px 26px #17152755);font-family:"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 #march-invitation::backdrop{background:#24212b80;backdrop-filter:blur(3px)}
 #march-invitation *{box-sizing:border-box}
-#march-invitation .march-envelope{position:relative;isolation:isolate;padding:42px 14px 73px;background:linear-gradient(145deg,#c4e000,#b0d900 45%,#ec0876 45%);clip-path:polygon(0 19%,45% 0,55% 0,100% 19%,100% 100%,0 100%);border-radius:22px}
+#march-invitation .march-envelope{position:relative;isolation:isolate;padding:42px 14px 73px;background:transparent;border-radius:22px}
+#march-invitation .march-envelope::before{content:'';position:absolute;inset:0;z-index:0;background:linear-gradient(145deg,#c4e000,#b0d900 45%,#ec0876 45%);clip-path:polygon(0 19%,45% 0,55% 0,100% 19%,100% 100%,0 100%);border-radius:22px}
 #march-invitation .march-card{position:relative;z-index:1;text-align:center;background:#fffaf3;border-radius:18px 18px 5px 5px;padding:36px 28px 52px;box-shadow:0 0 18px #672b5329}
 #march-invitation .march-close{position:absolute;top:7px;right:10px;background:none;border:0;color:#555;font:30px/1 sans-serif;cursor:pointer;padding:6px 10px}
 #march-invitation .march-kicker{font-size:clamp(11px,2.5vw,16px);font-weight:800;letter-spacing:.12em;color:#df0875;margin-bottom:18px}
