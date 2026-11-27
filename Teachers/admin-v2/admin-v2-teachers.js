@@ -33,6 +33,7 @@ function render(){
   const status=document.createElement('span');status.className='tm-state '+(teacher.approved?'active':'retired');status.textContent=teacher.approved?'Active':'Retired';
   item.append(details,status);
   if(teacher.role==='teacher'){
+   const edit=document.createElement('button');edit.type='button';edit.className='control';edit.textContent='Edit';edit.onclick=()=>editTeacher(teacher);item.append(edit);
    const action=document.createElement('button');action.type='button';action.className='control';
    action.textContent=teacher.approved?'Retire':'Reactivate';
    action.onclick=async()=>{
@@ -49,6 +50,71 @@ function render(){
  }
  if(!items.length)list.textContent=q?'No matching teachers.':activeTab==='archive'?'No archived accounts.':'No active teachers.';
 }
+
+function editTeacher(teacher){
+ const dialog=document.createElement('dialog');
+ dialog.setAttribute('aria-labelledby','tmEditTitle');
+ Object.assign(dialog.style,{width:'min(440px, calc(100% - 32px))',maxHeight:'85dvh',overflow:'auto',boxSizing:'border-box',border:'1px solid #d4e3e8',borderRadius:'16px',padding:'22px',background:'#fff',color:'#294b58',boxShadow:'0 16px 60px #203b4933'});
+ const title=document.createElement('h2');title.id='tmEditTitle';title.textContent='Edit teacher';title.style.margin='0 0 6px';
+ const form=document.createElement('form');form.className='tm-form';
+ const field=(label,value,options={})=>{
+  const wrap=document.createElement('label');wrap.textContent=label;
+  const input=document.createElement('input');Object.assign(input,options);input.value=value??'';wrap.append(input);form.append(wrap);return input;
+ };
+ const name=field('Full name',teacher.name,{required:true,maxLength:120,autocomplete:'off'});
+ const username=field('Username',teacher.username,{maxLength:80,autocomplete:'off'});
+ const email=field('Login email',teacher.email,{type:'email',readOnly:true});email.style.background='#f4f7f8';
+ const note=document.createElement('small');note.textContent='Login email is read-only. Teaching history and class assignments are preserved.';form.append(note);
+ const feedback=document.createElement('small');feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
+ const actions=document.createElement('div');Object.assign(actions.style,{display:'flex',gap:'8px',flexWrap:'wrap'});
+ const button=(label,type='button')=>{const b=document.createElement('button');b.type=type;b.className='control';b.textContent=label;return b};
+ const save=button('Save changes','submit');save.classList.add('admin-primary');
+ const cancel=button('Cancel');actions.append(save,cancel);form.append(actions);
+ const divider=document.createElement('hr');divider.style.cssText='border:0;border-top:1px solid #e1e9ed;margin:18px 0 6px';
+ const passwordForm=document.createElement('form');passwordForm.className='tm-form';
+ const pwLabel=document.createElement('label');pwLabel.textContent='New password';
+ const password=document.createElement('input');password.type='password';password.minLength=8;password.required=true;password.autocomplete='new-password';pwLabel.append(password);
+ const pwNote=document.createElement('small');pwNote.textContent='Optional. Reset separately only when the teacher needs a new password.';
+ const reset=button('Reset password','submit');passwordForm.append(pwLabel,pwNote,reset);
+ dialog.append(title,form,divider,passwordForm,feedback);root.append(dialog);
+ let busy=false;
+ const lock=value=>{busy=value;[name,username,password,save,cancel,reset].forEach(el=>el.disabled=value)};
+ const tell=(value,error=false)=>{feedback.textContent=value;feedback.style.color=error?'#b83d64':'#28785d'};
+ cancel.onclick=()=>dialog.close();
+ dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault()});
+ dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();if(busy)return;
+  const nextName=name.value.trim(),nextUsername=username.value.trim();
+  if(!nextName){tell('Full name is required.',true);return}
+  const payload={user_id:teacher.id};
+  if(nextName!==String(teacher.name??''))payload.name=nextName;
+  if(nextUsername!==String(teacher.username??'')){
+   if(!nextUsername){tell('Username cannot be blank when changing it.',true);return}
+   payload.username=nextUsername;
+  }
+  if(Object.keys(payload).length===1){dialog.close();return}
+  lock(true);tell('Saving changes…');
+  try{
+   await request('update',payload);
+   Object.assign(teacher,payload.name!==undefined?{name:payload.name}:{},payload.username!==undefined?{username:payload.username.toLowerCase()}:{});
+   render();dialog.close();message('Teacher details saved.');
+   await refresh().catch(()=>message('Teacher details saved. Refresh the list if needed.'));
+  }catch(err){tell(err.message,true)}
+  finally{lock(false)}
+ });
+ passwordForm.addEventListener('submit',async e=>{
+  e.preventDefault();if(busy)return;
+  if(password.value.length<8){tell('Password must be at least 8 characters.',true);return}
+  if(!confirm('Reset the password for '+(teacher.name||teacher.username)+'?'))return;
+  lock(true);tell('Resetting password…');
+  try{await request('reset_password',{user_id:teacher.id,password:password.value});password.value='';tell('Password reset successfully.');}
+  catch(err){tell(err.message,true)}
+  finally{lock(false)}
+ });
+ dialog.showModal();
+}
+
 async function refresh(){const data=await request('list');people=data.teachers||[];loaded=true;render();}
 export async function checkAccess(){
  if(!root||!nav)return;
