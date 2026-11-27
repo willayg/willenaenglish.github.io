@@ -1060,3 +1060,7 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
  body:has(.writing-genius) #willenaSharedKeyboard .wkb-row{margin:5px 0}
  body.willena-kb-open:has(.writing-genius) .app,body.willena-kb-open:has(.writing-genius) .shell{padding-bottom:350px!important}
 }
+
+/* Final practice: real textarea, no live mirror, no expensive typing-time visual effects. */
+.writing-genius #wgDiaryFlow .df-final-type .df-writing-line-input{color:var(--ink,#173f46)!important;-webkit-text-fill-color:var(--ink,#173f46)!important;caret-color:#165861!important;transition:none!important;animation:none!important;box-shadow:none!important;}
+.writing-genius #wgDiaryFlow .df-final-correction-guide{contain:layout style;}
