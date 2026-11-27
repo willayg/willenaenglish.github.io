@@ -1482,7 +1482,7 @@ async function loadTeacherLeaderboard(force=false){
   $('#teacherLeaderboard').innerHTML='<div class="empty">Loading leaderboard…</div>';
   try{
     const section=scope==='class'?'leaderboard_stars_class':'leaderboard_stars_global';
-    const params=new URLSearchParams({section,timeframe:'month',metric});
+    const params=new URLSearchParams({section,timeframe:'month'});
     const url=`${FN('progress_summary')}?${params}`;
     const r=window.WillenaAPI?.fetch?await window.WillenaAPI.fetch(url,{credentials:'include',cache:'no-store'}):await fetch(url,{credentials:'include',cache:'no-store'});
     const j=await r.json().catch(()=>({}));
@@ -1503,32 +1503,52 @@ async function loadClassLeaders(){
   const currentKey=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'}).slice(0,7);
   const isCurrent=month===currentKey;
   let data;
-  if(isCurrent){
-    // Live class awards must come from the same full monthly scoring dataset
-    // as the student leaderboard, never the separate daily-stats snapshot path.
-    const url=endpoint('leaderboard_class_winners',{timeframe:'month'});
-    const response=window.WillenaAPI?.fetch
-      ? await window.WillenaAPI.fetch(url,{credentials:'include',cache:'no-store'})
-      : await fetch(url,{credentials:'include',cache:'no-store'});
-    const payload=await response.json().catch(()=>({}));
-    if(!response.ok||payload.success!==true||!Array.isArray(payload.rows))throw Error(payload.error||'Live class leaderboard unavailable ('+response.status+')');
-    data=payload;
-  }else{
+  try {
     const token=window.WillenaAPI?.getLocalAccessToken?.() || (()=>{try{return document.cookie.split('; ').find(c=>c.startsWith('sb_access='))?.split('=').slice(1).join('=')||null}catch{return null}})();
-    if(!token)throw Error('Teacher access token unavailable. Sign in again to view snapshots.');
+    if(!token)throw new Error('Teacher access token unavailable. Sign in again to view snapshots.');
     const url='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-insights?'+new URLSearchParams({action:'class_leaders',month});
     const response=await fetch(url,{headers:{Authorization:'Bearer '+token},cache:'no-store'});
     const payload=await response.json().catch(()=>({}));
-    if(!response.ok||payload.success!==true)throw Error(payload.error||'Snapshot request failed ('+response.status+')');
+    if(!response.ok||payload.success===false)throw new Error(payload.error||'Snapshot request failed ('+response.status+')');
     data=payload;
+  } catch(primaryError) {
+    // The teacher-insights gateway does not yet recognize this newer section.
+    // For the LIVE month, reuse the same authenticated working endpoint as the
+    // existing leaderboard rather than leaving the whole panel broken.
+    if(!isCurrent) throw new Error('The historical snapshot service is not deployed yet. '+primaryError.message);
+    // Existing leaderboard returns only its top 15 globally. Fetch class leaders
+    // individually so less-active classes cannot disappear from this report.
+    const live=await api(endpoint('leaderboard_stars_global',{timeframe:'month'}));
+    const top=leaderboardSorted(live,'super').filter(e=>CLASS_LEADER_ORDER.some(c=>c.toLowerCase()===String(e.class||'').trim().toLowerCase()));
+    const overall=new Map(top.map((e,i)=>[String(e.user_id||e.name+'|'+e.class),i+1]));
+    const responses=await Promise.all(CLASS_LEADER_ORDER.map(async cls=>{
+      try{
+        const j=await api(endpoint('leaderboard_stars_global',{timeframe:'month',class:cls}));
+        const entries=leaderboardSorted(j,'super').filter(e=>String(e.class||'').trim().toLowerCase()===cls.toLowerCase());
+        return {cls,first:entries[0]||null};
+      }catch{return {cls,first:null}}
+    }));
+    const rows=[];
+    for(const {cls,first} of responses){
+      if(!first)continue;
+      const id=String(first.user_id||first.name+'|'+first.class);
+      rows.push({class_name:cls,student_name:first.name||'Student',korean_name:first.korean_name||'',super_points:first.superScore||0,class_rank:1,global_rank:overall.get(id)||null});
+    }
+    const winners=new Set(rows.map(r=>r.class_name.toLowerCase()+'|'+r.student_name));
+    top.slice(0,10).forEach((e,i)=>{
+      const cls=CLASS_LEADER_ORDER.find(c=>c.toLowerCase()===String(e.class||'').trim().toLowerCase());
+      if(!cls||winners.has(cls.toLowerCase()+'|'+e.name))return;
+      rows.push({class_name:cls,student_name:e.name||'Student',korean_name:e.korean_name||'',super_points:e.superScore||0,class_rank:2,global_rank:i+1});
+    });
+    data={rows,live:true};
   }
   const rows=Array.isArray(data.rows)?data.rows:[];
   const byClass=new Map();
   for(const row of rows){const key=String(row.class_name||'').toLowerCase();if(!byClass.has(key))byClass.set(key,[]);byClass.get(key).push(row)}
   root.innerHTML=CLASS_LEADER_ORDER.map(cls=>{
-    const group=(byClass.get(cls.toLowerCase())||[]).sort((a,b)=>Number(a.class_rank)-Number(b.class_rank));
+    const group=byClass.get(cls.toLowerCase())||[];
     if(!group.length)return '<div class="class-leader-row"><strong>'+esc(cls)+'</strong><span class="cl-kr">No qualifying activity</span><span></span><span></span></div>';
-    return group.map((r,i)=>'<div class="class-leader-row"><strong>'+(!i?esc(cls):'<span class="cl-extra">↳ Top 10</span>')+'</strong><div><span class="cl-name">'+esc(r.student_name)+'</span><span class="cl-kr">'+esc(r.korean_name||'')+'</span>'+((r.global_rank!=null&&Number(r.global_rank)<=10)?'<div class="cl-top">Overall top 10</div>':'')+'</div><span class="cl-score">'+Number(r.super_points||0).toLocaleString()+'</span><span class="cl-rank">#'+esc(r.global_rank)+' overall</span></div>').join('');
+    return group.map((r,i)=>'<div class="class-leader-row"><strong>'+(!i?esc(cls):'<span class="cl-extra">↳ Top 10</span>')+'</strong><div><span class="cl-name">'+esc(r.student_name)+'</span><span class="cl-kr">'+esc(r.korean_name||'')+'</span>'+((Number(r.global_rank)<=10)?'<div class="cl-top">Overall top 10</div>':'')+'</div><span class="cl-score">'+Number(r.super_points||0).toLocaleString()+'</span><span class="cl-rank">#'+esc(r.global_rank)+' overall</span></div>').join('');
   }).join('');
   $('#classLeaderCount').textContent=rows.length+' winners';
  }catch(err){root.innerHTML='<div class="empty">'+esc(err.message)+'</div>';$('#classLeaderCount').textContent='Unavailable'}
