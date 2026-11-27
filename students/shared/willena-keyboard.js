@@ -110,12 +110,14 @@ function backspace(){
   if(!active||active.disabled)return;
   const v=String(active.value||''),{start,end}=selectionRange();
   if(start!==end){
+    if(active.dataset.willenaFastTyping==='true'){active.setRangeText('',start,end,'end');active.dispatchEvent(new Event('input',{bubbles:true}));return}
     active.value=v.slice(0,start)+v.slice(end);
     active.dispatchEvent(new Event('input',{bubbles:true}));
     restoreCaret(start);
     return;
   }
   if(start<=0)return;
+  if(active.dataset.willenaFastTyping==='true'){active.setRangeText('',start-1,end,'end');active.dispatchEvent(new Event('input',{bubbles:true}));return}
   active.value=v.slice(0,start-1)+v.slice(end);
   active.dispatchEvent(new Event('input',{bubbles:true}));
   restoreCaret(start-1);
@@ -201,7 +203,7 @@ function watchDetach(){
   if(detachWatch)clearInterval(detachWatch);
   detachWatch=setInterval(()=>{
     if(!keyboard||keyboard.hidden){clearInterval(detachWatch);detachWatch=0;return}
-    if(!active?.isConnected||active.disabled)hideWillenaKeyboard();
+    if(!active?.isConnected||active.disabled||(active.dataset.willenaFastTyping==='true'&&active.hidden))hideWillenaKeyboard();
   },300);
 }
 
@@ -321,7 +323,7 @@ function onFocusIn(e){
   const el=e.target;if(!isRendererField(el))return;
   active=el;prepareField(el);if(isAppField(el))showFor(el);else hideWillenaKeyboard();
 }
-function onInput(e){if(!isRendererField(e.target))return;active=e.target;scheduleEnterUpdate()}
+function onInput(e){if(!isRendererField(e.target))return;active=e.target;if(active.dataset.willenaFastTyping==='true')return;scheduleEnterUpdate()}
 function onKeyDown(e){
   const el=e.target;if(!isAppField(el))return;active=el;
   if(e.ctrlKey||e.metaKey||e.altKey)return;
