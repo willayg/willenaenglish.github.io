@@ -54,7 +54,7 @@ exports.handler = async (event) => {
 
   const { data: actorProfile, error: actorProfileError } = await admin
     .from('profiles')
-    .select('id, role, approved')
+    .select('id, role, approved, is_owner')
     .eq('id', actor.id)
     .single();
 
@@ -62,6 +62,7 @@ exports.handler = async (event) => {
     return respond(event, 403, { success: false, error: 'Admin access required' });
   }
 
+  const actorIsOwner = actorProfile.is_owner === true;
   const qs = event.queryStringParameters || {};
   const action = safeText(qs.action, 50);
   let body = {};
@@ -74,11 +75,11 @@ exports.handler = async (event) => {
     if (action === 'list' && event.httpMethod === 'GET') {
       const { data, error } = await admin
         .from('profiles')
-        .select('id, name, username, email, role, approved, created_at')
+        .select('id, name, username, email, role, approved, created_at, is_owner')
         .in('role', ['teacher', 'admin'])
         .order('name', { ascending: true });
       if (error) throw error;
-      return respond(event, 200, { success: true, actor_id: actor.id, teachers: data || [] });
+      return respond(event, 200, { success: true, actor_id: actor.id, actor_is_owner: actorIsOwner, teachers: data || [] });
     }
 
     if (action === 'create' && event.httpMethod === 'POST') {
@@ -94,6 +95,7 @@ exports.handler = async (event) => {
       if (!name) return respond(event, 400, { success: false, error: 'Name is required' });
       if (!['teacher', 'admin'].includes(role)) return respond(event, 400, { success: false, error: 'Invalid role' });
 
+      if (role === 'admin' && !actorIsOwner) return respond(event, 403, { success: false, error: 'Only owners can create admin accounts' });
       const { data: created, error: createError } = await admin.auth.admin.createUser({
         email,
         password,
@@ -124,13 +126,16 @@ exports.handler = async (event) => {
 
       const { data: existing, error: existingError } = await admin
         .from('profiles')
-        .select('id, role')
+        .select('id, role, approved, is_owner')
         .eq('id', userId)
         .single();
       if (existingError || !existing || !['teacher', 'admin'].includes(String(existing.role).toLowerCase())) {
         return respond(event, 404, { success: false, error: 'Teacher account not found' });
       }
 
+      if (existing.is_owner && userId !== actor.id && !actorIsOwner) return respond(event, 403, { success: false, error: 'Owner account is protected' });
+      if (existing.role === 'admin' && userId !== actor.id && !actorIsOwner) return respond(event, 403, { success: false, error: 'Only owners can edit other admins' });
+      if (existing.is_owner && (body.approved === false || (body.role !== undefined && body.role !== 'admin'))) return respond(event, 403, { success: false, error: 'Owner cannot be demoted or retired' });
       const update = {};
       if (body.name !== undefined) update.name = safeText(body.name, 120);
       if (body.username !== undefined) update.username = safeText(body.username, 80).toLowerCase();
@@ -138,6 +143,7 @@ exports.handler = async (event) => {
       if (body.role !== undefined) {
         const role = String(body.role).toLowerCase();
         if (!['teacher', 'admin'].includes(role)) return respond(event, 400, { success: false, error: 'Invalid role' });
+        if (role !== existing.role && !actorIsOwner) return respond(event, 403, { success: false, error: 'Only owners can change roles' });
         if (userId === actor.id && role !== 'admin') return respond(event, 400, { success: false, error: 'You cannot remove your own admin role' });
         update.role = role;
       }
@@ -154,8 +160,10 @@ exports.handler = async (event) => {
       const password = String(body.password || '');
       if (!userId) return respond(event, 400, { success: false, error: 'Missing user ID' });
       if (password.length < 8) return respond(event, 400, { success: false, error: 'Password must be at least 8 characters' });
-      const { data: existing } = await admin.from('profiles').select('role').eq('id', userId).single();
+      const { data: existing } = await admin.from('profiles').select('role, is_owner').eq('id', userId).single();
       if (!existing || !['teacher', 'admin'].includes(String(existing.role).toLowerCase())) return respond(event, 404, { success: false, error: 'Teacher account not found' });
+      if (existing.is_owner && userId !== actor.id && !actorIsOwner) return respond(event, 403, { success: false, error: 'Owner account is protected' });
+      if (existing.role === 'admin' && userId !== actor.id && !actorIsOwner) return respond(event, 403, { success: false, error: 'Only owners can reset admin passwords' });
       const { error } = await admin.auth.admin.updateUserById(userId, { password });
       if (error) throw error;
       return respond(event, 200, { success: true });
@@ -165,8 +173,10 @@ exports.handler = async (event) => {
       const userId = safeText(body.user_id, 80);
       if (!userId) return respond(event, 400, { success: false, error: 'Missing user ID' });
       if (userId === actor.id) return respond(event, 400, { success: false, error: 'You cannot delete your own account' });
-      const { data: existing } = await admin.from('profiles').select('role').eq('id', userId).single();
+      const { data: existing } = await admin.from('profiles').select('role, is_owner').eq('id', userId).single();
       if (!existing || !['teacher', 'admin'].includes(String(existing.role).toLowerCase())) return respond(event, 404, { success: false, error: 'Teacher account not found' });
+      if (existing.is_owner) return respond(event, 403, { success: false, error: 'Owner account cannot be deleted' });
+      if (existing.role === 'admin' && !actorIsOwner) return respond(event, 403, { success: false, error: 'Only owners can delete admin accounts' });
       const { error: authDeleteError } = await admin.auth.admin.deleteUser(userId);
       if (authDeleteError) throw authDeleteError;
       await admin.from('profiles').delete().eq('id', userId);
