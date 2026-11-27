@@ -97,7 +97,7 @@ const endpoint='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/teacher-st
 const key='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const commentEndpoint=endpoint.replace('teacher-student-report','teacher-monthly-ai-report');
 let all=[],dataReady=false,request=0,notes=new Map(),activeStudent='',loadedStart='';
-const commentJobs=new Map(),commentErrors=new Map(),currentHashes=new Map();
+const commentJobs=new Map(),commentErrors=new Map(),currentHashes=new Map(),legacyHashes=new Map();
 let commentTimer=0,canEdit=false,accessKnown=false;
 const embedded=new URLSearchParams(location.search).get("embedded")==="1";
 if(embedded){document.documentElement.classList.add("embedded");$("reportBack").hidden=true;}
@@ -194,13 +194,13 @@ function currentCommentKey(){
  return activeStudent+'|'+loadedStart;
 }
 function syncComment(k){
- const saved=notes.get(k),busy=commentJobs.has(k),err=commentErrors.get(k)||'',hash=currentHashes.get(k);
+ const saved=notes.get(k),busy=commentJobs.has(k),err=commentErrors.get(k)||'',hash=currentHashes.get(k),legacyHash=legacyHashes.get(k);
  $('comment').textContent=saved?.comment||(err?'AI 리포트를 불러오지 못했습니다.':accessKnown&&!canEdit&&!busy?'아직 저장된 AI 리포트가 없습니다. 관리자에게 작성을 요청해 주세요.':'학습 기록을 불러오고 있습니다…');
  $('comment').classList.toggle('pending',!saved?.comment);
  $('generateComment').hidden=!canEdit||busy||(!saved&&!err);
  $('generateComment').disabled=busy;
  $('generateComment').textContent=saved?'다시 작성':'다시 시도';
- $('commentStatus').textContent=busy?'AI Willi가 이번 달 기록을 확인하고 있습니다.':err||(saved?(hash&&saved.facts_hash!==hash?(canEdit?'저장된 이후 학습 기록이 변경되었습니다. 필요하면 다시 작성하세요.':'저장된 이후 학습 기록이 변경되었습니다. 관리자에게 문의하세요.'):'저장된 월간 리포트'):'');
+ $('commentStatus').textContent=busy?'AI Willi가 이번 달 기록을 확인하고 있습니다.':err||(saved?(hash&&saved.facts_hash!==hash?(saved.facts_hash===legacyHash?(canEdit?'이전 말투로 저장된 리포트입니다. 다시 작성을 누르면 새 선생님 말투로 변경됩니다.':'이전 말투로 저장된 리포트입니다. 관리자에게 다시 작성을 요청해 주세요.'):(canEdit?'학습 기록 또는 작성 방식이 변경되었습니다. 필요하면 다시 작성하세요.':'학습 기록 또는 작성 방식이 변경되었습니다. 관리자에게 문의하세요.')):'저장된 월간 리포트'):'');
  $('print').disabled=!saved?.comment||busy||!dataReady;
 }
 async function callComment(token,payload){
@@ -238,12 +238,12 @@ async function generateComment(force=false){
  const k=currentCommentKey(),student=activeStudent,month=loadedStart,s=all.find(x=>x.student_id===student);
  if(!k||!s||commentJobs.has(k)||(force&&!canEdit))return;
  const existing=notes.get(k);
- if(force&&existing&&!window.confirm('저장된 리포트를 새 AI 리포트로 바꾸시겠습니까?'))return;
+ if(force&&existing&&!window.confirm('저장된 리포트를 새로운 선생님 말투로 다시 작성하시겠습니까?'))return;
  if(!force&&commentErrors.has(k))return;
  const job={};commentJobs.set(k,job);commentErrors.delete(k);syncComment(k);
  try{
-  const facts=reportFacts(s),hash=await factsHash(facts);
-  currentHashes.set(k,hash);
+  const facts=reportFacts(s),legacyHash=await factsHash(facts),hash=await factsHash({style:'teacher-friendly-v2',facts});
+  legacyHashes.set(k,legacyHash);currentHashes.set(k,hash);
   if(!force&&existing&&accessKnown)return;
   const token=await teacherToken();
   if(!force){
@@ -255,7 +255,7 @@ async function generateComment(force=false){
   }
   if(!canEdit)return;
   if(typeof window.WillenaAPI?.fetch!=='function')throw new Error('AI 연결을 준비하지 못했습니다.');
-  const system="당신은 윌레나 영어학원의 AI Willi입니다. 주어진 한 달의 익명 온라인 학습 집계만 바탕으로 학부모에게 전달할 한국어 학습 리포트를 작성하세요. 아이의 학습 과정을 세심하게 살펴주는 친절하고 전문적인 선생님의 존댓말로 작성하세요. 첫 문장은 반드시 '이번 달'로 시작하고 실제 학생 이름은 쓰지 마세요(화면에서 영어 이름을 붙입니다). '~했어요', '~하고 있습니다', '~해 보면 좋겠습니다', '~을 추천드려요' 등을 자연스럽게 사용하고, 기계적인 수치 나열이나 과도한 칭찬, 유아적인 표현을 피하세요. 학습 내용과 실제 성과를 먼저 설명하고, 근거가 있는 보완점과 구체적이고 실천 가능한 다음 학습 방법을 친절하게 안내하세요. 학습 기록이 충분하면 2~4개의 짧은 문단, 약 250~450자로 작성하고 문단 사이에는 빈 줄을 넣으세요. 기록이 적으면 더 짧게 작성하세요. 중요한 수치만 자연스럽게 활용하고 first는 첫 시도 정답, fixed는 연습 후 해결, verified는 정답으로 확인되었으나 첫 시도 여부는 알 수 없음, pending은 추가 연습 필요라는 의미를 구분하세요. 합산이나 수치를 언급할 경우 정확히 계산하세요. 단일 월 기록이므로 이전 달 대비 향상을 주장하지 마세요. 기록이 없는 영역은 언급하지 말고 미참여나 능력 부족으로 단정하지 마세요. 내신만 있는 경우 일반 학습일 0을 학습 부족으로 해석하지 마세요. 데이터가 적으면 기록이 제한적이라고 중립적으로 설명하세요. 교실 태도, 출석, 성격, 발음 수준, 실력 향상, 학습 세부 내용이나 오류 유형을 지어내지 마세요. 시작한 활동과 완료한 활동을 구분하세요. 제목, 마크다운, 이모지, 서명 없이 본문만 반환하세요.";
+  const system="당신은 윌레나 영어학원의 AI Willi입니다. 주어진 한 달의 익명 온라인 학습 집계만 바탕으로 학부모에게 전달할 한국어 학습 리포트를 작성하세요. 아이의 학습 과정을 세심하게 살펴주는 친절하고 전문적인 선생님의 존댓말로 작성하세요. 첫 문장은 반드시 '이번 달'로 시작하고 실제 학생 이름은 쓰지 마세요(화면에서 영어 이름을 붙입니다). '~했어요', '~하고 있습니다', '~해 보면 좋겠습니다', '~을 추천드려요' 등을 자연스럽게 사용하고, '기록되었으며', '확인되었습니다', '수행하였습니다' 같은 보고서식 수동 표현을 피하세요. 예를 들어 '추가 연습 필요 8개가 확인되었습니다'보다는 '조금 더 연습하면 좋을 문항이 8개 있었어요'처럼 표현하세요. 첫 문단과 마지막 조언에는 자연스러운 해요체 또는 친절한 권유 표현을 반드시 사용하세요. 기계적인 수치 나열이나 과도한 칭찬, 유아적인 표현을 피하세요. 학습 내용과 실제 성과를 먼저 설명하고, 근거가 있는 보완점과 구체적이고 실천 가능한 다음 학습 방법을 친절하게 안내하세요. 학습 기록이 충분하면 2~4개의 짧은 문단, 약 250~450자로 작성하고 문단 사이에는 빈 줄을 넣으세요. 기록이 적으면 더 짧게 작성하세요. 중요한 수치만 자연스럽게 활용하고 first는 첫 시도 정답, fixed는 연습 후 해결, verified는 정답으로 확인되었으나 첫 시도 여부는 알 수 없음, pending은 추가 연습 필요라는 의미를 구분하세요. 합산이나 수치를 언급할 경우 정확히 계산하세요. 단일 월 기록이므로 이전 달 대비 향상을 주장하지 마세요. 기록이 없는 영역은 언급하지 말고 미참여나 능력 부족으로 단정하지 마세요. 내신만 있는 경우 일반 학습일 0을 학습 부족으로 해석하지 마세요. 데이터가 적으면 기록이 제한적이라고 중립적으로 설명하세요. 교실 태도, 출석, 성격, 발음 수준, 실력 향상, 학습 세부 내용이나 오류 유형을 지어내지 마세요. 시작한 활동과 완료한 활동을 구분하세요. 제목, 마크다운, 이모지, 서명 없이 본문만 반환하세요.";
   const resp=await window.WillenaAPI.fetch('/.netlify/functions/openai_proxy',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({endpoint:'chat/completions',payload:{model:'gpt-5.6-luna',reasoning_effort:'low',max_completion_tokens:850,messages:[{role:'system',content:system},{role:'user',content:JSON.stringify(facts)}]}})});
   const body=await resp.json().catch(()=>({}));
   const data=body.data||body;
