@@ -34,42 +34,92 @@ function renderWritingDiff(host,expected,actual){
  host.hidden=false;
 }
 
+const editControllers=new WeakMap();
+function correctionRanges(expected,actual){
+ const a=String(expected||''),b=String(actual||'');
+ const eq=(x,y)=>x.toLowerCase().replace(/[’‘]/g,"'")===y.toLowerCase().replace(/[’‘]/g,"'");
+ if(a.length>300||b.length>300)return [{start:0,end:b.length,label:'문장 다시 확인',kind:'wrong'}];
+ const dp=Array.from({length:a.length+1},()=>new Uint16Array(b.length+1));
+ for(let i=a.length-1;i>=0;i--)for(let j=b.length-1;j>=0;j--)dp[i][j]=eq(a[i],b[j])?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);
+ const ranges=[];let i=0,j=0,group=null;
+ const flush=()=>{if(group){ranges.push(group);group=null}};
+ while(i<a.length||j<b.length){
+  if(i<a.length&&j<b.length&&eq(a[i],b[j])){flush();i++;j++;continue}
+  if(!group)group={start:j,end:j,missing:'',extra:''};
+  if(i<a.length&&(j===b.length||dp[i+1][j]>=dp[i][j+1]))group.missing+=a[i++];
+  else{group.extra+=b[j++];group.end=j}
+ }
+ flush();
+ return ranges.map(r=>({...r,kind:r.extra?'wrong':'missing',label:r.extra&&r.missing?'철자 수정':r.extra?'불필요한 글자':/^[.,!?;:'"’]+$/.test(r.missing)?'문장 부호':'빠진 글자'}));
+}
+function clearEditableDifferences(input){
+ const controller=editControllers.get(input);
+ if(controller){controller.dispose();editControllers.delete(input)}
+}
 function markEditableDifferences(input,expected){
  if(!input||!('value' in input))return;
- let wrapper=input.closest('.df-edit-highlight-wrap');
- if(!wrapper){
-  wrapper=document.createElement('div');wrapper.className='df-edit-highlight-wrap';
-  input.parentNode.insertBefore(wrapper,input);wrapper.append(input);
-  const mirror=el('div','df-edit-highlight-mirror');mirror.setAttribute('aria-hidden','true');
-  wrapper.insertBefore(mirror,input);
-  input.addEventListener('scroll',()=>{mirror.scrollTop=input.scrollTop;mirror.scrollLeft=input.scrollLeft});
-  input.addEventListener('input',()=>paint());
- }
- const mirror=wrapper.querySelector('.df-edit-highlight-mirror');
- // Retain the native textarea's selection, keyboard, cursor and accessibility.
- const paint=()=>{
-  const actual=input.value;const a=[...String(expected||'')],b=[...actual];
-  const same=(x,y)=>String(x).toLowerCase().replace(/[’‘]/g,"'")===String(y).toLowerCase().replace(/[’‘]/g,"'");
-  const n=a.length,m=b.length;
-  if(n>300||m>300){mirror.textContent=actual;return}
-  const dp=Array.from({length:n+1},()=>new Uint16Array(m+1));
-  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=same(a[i],b[j])?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);
-  mirror.replaceChildren();let i=0,j=0;
-  while(i<n||j<m){
-   if(i<n&&j<m&&same(a[i],b[j])){mirror.append(document.createTextNode(b[j]));i++;j++}
-   else if(i<n&&(j===m||dp[i+1][j]>=dp[i][j+1])){
-    const missing=el('span','df-edit-missing','');
-    missing.title='빠진 글자: '+a[i];mirror.append(missing);i++;
-   }else{
-    mirror.append(el('span','df-edit-wrong',b[j]));j++;
-   }
-  }
-  mirror.append(document.createTextNode('\u200b'));
-  mirror.scrollTop=input.scrollTop;mirror.scrollLeft=input.scrollLeft;
- };
+ const existing=editControllers.get(input);
+ if(existing&&existing.expected===expected){existing.refresh(true);return}
+ clearEditableDifferences(input);
+ const wrap=el('div','df-edit-highlight-wrap is-diff-active');
+ const mirror=el('div','df-edit-highlight-mirror');mirror.setAttribute('aria-hidden','true');
+ const guide=el('div','df-correction-guide');guide.setAttribute('data-willena-keep-keyboard','');
+ input.parentNode.insertBefore(wrap,input);wrap.append(mirror,input);wrap.after(guide);
  const style=getComputedStyle(input);
  for(const prop of ['font','letterSpacing','lineHeight','padding','textAlign','whiteSpace','tabSize','wordSpacing'])mirror.style[prop]=style[prop];
- wrapper.classList.add('is-diff-active');paint();input.focus();
+ let frame=0,ranges=[],selected=0,lastValue=null;
+ const scroll=()=>{mirror.scrollTop=input.scrollTop;mirror.scrollLeft=input.scrollLeft};
+ const select=n=>{
+  if(!ranges.length)return;
+  selected=(n+ranges.length)%ranges.length;
+  const r=ranges[selected],value=input.value;let start=r.start,end=r.end;
+  if((r.extra||r.missing)&&/[a-z0-9]/i.test((r.extra||'')+(r.missing||''))){
+   while(start>0&&/[a-z0-9'’]/i.test(value[start-1]))start--;
+   while(end<value.length&&/[a-z0-9'’]/i.test(value[end]))end++;
+  }
+  input.focus({preventScroll:true});input.setSelectionRange(start,end);renderGuide();
+ };
+ const makeButton=(label,fn)=>{
+  const b=el('button','df-correction-control',label);b.type='button';
+  b.addEventListener('pointerdown',e=>e.preventDefault());b.addEventListener('click',fn);return b;
+ };
+ function renderGuide(){
+  guide.replaceChildren();
+  if(!ranges.length){guide.append(el('strong','df-correction-done','모두 수정했어요! 확인을 눌러 주세요.'));return}
+  const r=ranges[selected]||ranges[0];
+  const heading=el('div','df-correction-heading');
+  heading.append(el('strong','', '수정할 부분 '+ranges.length+'개'),el('span','', (selected+1)+' / '+ranges.length+' · '+r.label));
+  const controls=el('div','df-correction-controls');
+  controls.append(makeButton('이전 오류',()=>select(selected-1)),makeButton('오류 선택',()=>select(selected)),makeButton('다음 오류',()=>select(selected+1)));
+  const chips=el('div','df-correction-chips');
+  ranges.forEach((x,i)=>{const b=makeButton((i+1)+'. '+(x.extra||x.missing||'문장'),()=>select(i));b.classList.add(x.kind);b.setAttribute('aria-pressed',String(i===selected));chips.append(b)});
+  guide.append(heading,chips,controls);
+ }
+ function paint(force=false){
+  if(!input.isConnected){dispose();return}
+  const value=input.value;if(!force&&lastValue===value)return;lastValue=value;
+  ranges=typedComparable(value)===typedComparable(expected)?[]:correctionRanges(expected,value);
+  selected=Math.min(selected,Math.max(0,ranges.length-1));
+  const frag=document.createDocumentFragment();let pos=0;
+  for(const r of ranges){
+   if(r.start>pos)frag.append(document.createTextNode(value.slice(pos,r.start)));
+   if(r.end>r.start)frag.append(el('span','df-edit-wrong',value.slice(r.start,r.end)));
+   if(r.missing){const marker=el('span','df-edit-missing','');marker.title='빠진 글자: '+r.missing;frag.append(marker)}
+   pos=r.end;
+  }
+  frag.append(document.createTextNode(value.slice(pos)+'\u200b'));
+  mirror.replaceChildren(frag);scroll();renderGuide();
+ }
+ function schedule(){if(!frame)frame=requestAnimationFrame(()=>{frame=0;paint()})}
+ function dispose(){
+  if(frame)cancelAnimationFrame(frame);
+  input.removeEventListener('input',schedule);input.removeEventListener('scroll',scroll);
+  if(wrap.parentNode){wrap.before(input);wrap.remove()}guide.remove();
+ }
+ const controller={expected,dispose,refresh(jump){paint(true);if(jump)select(selected)}};
+ editControllers.set(input,controller);
+ input.addEventListener('input',schedule);input.addEventListener('scroll',scroll);
+ controller.refresh(true);
 }
 const split=s=>(String(s||'').match(/[^.!?\n]+[.!?]+(?=\s|$)/g)||[]).map(x=>x.trim()).filter(x=>/[a-z]/i.test(x));
 // Speech transcripts write times differently from lesson text (11am vs 11:00 a.m.).
@@ -382,16 +432,14 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   if(choice==='custom'&&String(customLines[i]||'').trim())return customLines[i].trim();
   return choice==='original'?change.original:choice==='last'&&change.clarified_better?change.clarified_better:change.better;
  }
+ function correctionForLine(corrections,line,i){
+  const indexed=corrections.findIndex(x=>Number.isInteger(x.sentence_index)&&x.sentence_index===i);
+  return indexed>=0?indexed:corrections.findIndex(x=>!Number.isInteger(x.sentence_index)&&(norm(x.original)===norm(line)||line.toLowerCase().includes(String(x.original).trim().toLowerCase())));
+ }
  function construct(){
   const corrections=(feedback?.improvements||[]).filter(x=>x.original&&x.better);
   const original=split(current.body);
-  finalLines=original.map(line=>{
-   for(let i=0;i<corrections.length;i++){
-    const x=corrections[i];
-    if(norm(line)===norm(x.original)||line.toLowerCase().includes(String(x.original).trim().toLowerCase()))return selectedText(x,i);
-   }
-   return line;
-  });
+  finalLines=original.map((line,i)=>{const ci=correctionForLine(corrections,line,i);return ci>=0?selectedText(corrections[ci],ci):line});
   (feedback?.expressions||[]).forEach((x,i)=>{
    if(selectedExpressions[i]&&String(expressionEdits[i]||x.english||'').trim())finalLines.push(String(expressionEdits[i]||x.english).trim());
   });
@@ -420,8 +468,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   stage.append(info);
   const changes=feedback?.improvements||[];
   const sourceParagraphs=String(current.body||'').split(/\n\s*\n/).filter(x=>x.trim());
-  const correctedLine=line=>{
-    const i=changes.findIndex(x=>norm(x.original)===norm(line));
+  const correctedLine=(line,lineIndex)=>{
+    const i=correctionForLine(changes,line,lineIndex);
     return i>=0?{text:selectedText(changes[i],i),changed:selectedText(changes[i],i)!==line}: {text:line,changed:false};
   };
   const originalLines=split(current.body);
@@ -539,7 +587,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   screen('review','3 · Review · '+(sentenceIndex+1)+' / '+originals.length);
   const line=originals[sentenceIndex];
   const corrections=(feedback?.improvements||[]).filter(x=>x.original&&x.better);
-  const correctionIndex=corrections.findIndex(x=>norm(x.original)===norm(line)||line.toLowerCase().includes(String(x.original).trim().toLowerCase()));
+  const correctionIndex=correctionForLine(corrections,line,sentenceIndex);
   const change=correctionIndex>=0?corrections[correctionIndex]:null;
   stage.append(el('h2','df-heading','문장 검토'));
   stage.append(el('p','df-muted','내 문장과 수정된 문장을 비교한 다음 선택하세요.'));
@@ -547,13 +595,15 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   originalCard.append(el('strong','df-review-label','내가 쓴 문장'),el('p','df-review-original',line));
   stage.append(originalCard);
   const revised=el('section','df-review-item');
-  revised.append(el('strong','df-review-label',change?'AI Willi 수정 문장':'수정할 부분이 없어요'));
+  const assessment=feedback?.sentence_assessments?.find(x=>x.sentence_index===sentenceIndex);
+  revised.append(el('strong','df-review-label',change?'AI Willi 수정 문장':assessment?.status==='correct'?'수정할 부분이 없어요':assessment?.status==='unclear'?'뜻을 다시 확인해 보세요':'추천 수정 없음'));
   const better=el('p','df-review-better');
   if(change)changedText(line,selectedText(change,correctionIndex),better);
   else better.textContent=line;
   revised.append(better);
   if(change?.translation_ko)revised.append(el('p','df-review-korean',change.translation_ko));
   if(change?.why_ko)revised.append(el('p','df-review-explanation',change.why_ko));
+  if(!change&&assessment?.status==='unclear')revised.append(el('p','df-review-explanation',assessment.why_ko||'무슨 뜻인지 조금 더 자세히 써 보세요.'));
   stage.append(revised);
   const next=()=>reviewSentence(sentenceIndex+1);
   if(sentenceIndex>0)button('이전 문장',()=>reviewSentence(sentenceIndex-1)).classList.add('df-skip-action');
@@ -806,6 +856,9 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   // Each accepted line is collected into one final passage for server validation.
   let typingIndex=0;
   const typedLines=Array(scriptLines.length).fill('');
+  const typingCacheKey='willena-writing-lines:'+current.id;
+  try{const saved=JSON.parse(localStorage.getItem(typingCacheKey)||'null');if(saved?.body===current.body&&Array.isArray(saved.lines)){while(typingIndex<scriptLines.length&&typeof saved.lines[typingIndex]==='string'&&typedComparable(saved.lines[typingIndex])===typedComparable(scriptLines[typingIndex])){typedLines[typingIndex]=saved.lines[typingIndex];typingIndex++}}}catch{}
+  const saveTypedLines=()=>{try{localStorage.setItem(typingCacheKey,JSON.stringify({body:current.body,lines:typedLines.slice(0,typingIndex)}))}catch{}};
   const typingStatus=el('p','df-muted df-writing-progress');
   const targetLine=el('p','df-writing-current-line');
   const input=el('textarea','df-input df-writing-line-input');
@@ -813,7 +866,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   input.rows=2;input.placeholder='위 문장을 입력하세요.';
   input.autocomplete='off';input.spellcheck=false;
   const lineCheck=el('button','wg-button wg-secondary df-typing-line-confirm','다음 문장');
-  lineCheck.type='button';
+  lineCheck.type='button';lineCheck.setAttribute('data-willena-keep-keyboard','');
   const renderTypingLine=()=>{
    const done=typingIndex>=scriptLines.length;
    typingStatus.textContent=done?'모든 문장을 입력했어요. 제출할 수 있어요.':(typingIndex+1)+' / '+scriptLines.length+' · 현재 문장을 입력하세요.';
@@ -821,11 +874,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    input.hidden=done;lineCheck.hidden=done;
    // The previous line may have installed an editable difference mirror.
    // Restore the native field for each fresh target; do not carry its highlights over.
-   const previousMirror=input.closest('.df-edit-highlight-wrap');
-   if(previousMirror){
-    previousMirror.parentNode.insertBefore(input,previousMirror);
-    previousMirror.remove();
-   }
+   clearEditableDifferences(input);
    if(!done){input.value=typedLines[typingIndex]||'';lineCheck.textContent=typingIndex===scriptLines.length-1?'마지막 문장 확인':'다음 문장'}
    lineNodes.forEach((node,i)=>{
     node.classList.toggle('is-complete',i<typingIndex);
@@ -840,7 +889,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     markEditableDifferences(input,target);
     status('현재 문장에서 다른 부분을 수정하세요.',true);return;
    }
-   typedLines[typingIndex]=typed;typingIndex++;
+   typedLines[typingIndex]=typed;typingIndex++;saveTypedLines();
    status('');
    renderTypingLine();
    if(typingIndex===scriptLines.length)finishButton.disabled=false;
@@ -1012,7 +1061,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    // A successful award is already handled by finish; render the stored result below.
    if(completionPhase==='done'){
     // The reward response is held by finish's successful call in the current invocation.
-    if(completionResult)rewardCard(completionResult);
+    if(completionResult){try{localStorage.removeItem('willena-writing-lines:'+current.id)}catch{}rewardCard(completionResult)}
     status('완료했습니다!');
     showTeacherFeedback();
    }
