@@ -139,19 +139,28 @@ function safeParseSummary(input) {
 // Derive stars from session summary
 function deriveStars(summary) {
   const s = summary || {};
-  // Explicit reward stars are authoritative. This is required for activities
-  // such as puzzle gimmes where completion can still be 100% but the star
-  // reward is intentionally reduced.
-  if (typeof s.stars === 'number') return s.stars;
+  const isWordTestStudy = !!s.assignment_id || s.reward_scheme === 'word-test-study-v1' || Number(s.star_cap) === 10;
   let acc = null;
-  
+
   if (typeof s.accuracy === 'number') acc = s.accuracy;
+  else if (typeof s.percent === 'number') acc = s.percent / 100;
   else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) {
     acc = s.score / s.total;
   } else if (typeof s.score === 'number' && typeof s.max === 'number' && s.max > 0) {
     acc = s.score / s.max;
   }
-  
+
+  // Assigned Word Test Study sections are worth up to 10 stars.
+  // Recalculate from saved accuracy so older assignment sessions are upgraded
+  // without backfilling or duplicating reward rows.
+  if (isWordTestStudy) {
+    if (acc !== null) return Math.max(0, Math.min(10, Math.floor(Math.max(0, Math.min(1, acc)) * 10 + 1e-9)));
+    if (typeof s.stars === 'number') return Math.max(0, Math.min(10, Math.floor(s.stars)));
+    return 0;
+  }
+
+  if (typeof s.stars === 'number') return Math.max(0, Math.min(5, Math.floor(s.stars)));
+
   if (acc !== null) {
     if (acc >= 1) return 5;
     if (acc >= 0.95) return 4;
@@ -160,36 +169,26 @@ function deriveStars(summary) {
     if (acc >= 0.60) return 1;
     return 0;
   }
+
   return 0;
 }
 
 // Calculate total stars for users from sessions
 function buildStarsByUserMap(sessions) {
-  const bestKey = new Map();
-  
+  const totals = new Map();
+
   (sessions || []).forEach(sess => {
     if (!sess || !sess.user_id) return;
-    const list = (sess.list_name || '').trim();
-    const mode = (sess.mode || '').trim();
-    if (!list || !mode) return;
-    
+
     const parsed = safeParseSummary(sess.summary);
     if (parsed && parsed.completed === false) return;
-    
+
     const stars = deriveStars(parsed);
     if (stars <= 0) return;
-    
-    const composite = `${sess.user_id}||${list}||${mode}`;
-    const prev = bestKey.get(composite) || 0;
-    if (stars > prev) bestKey.set(composite, stars);
+
+    totals.set(sess.user_id, (totals.get(sess.user_id) || 0) + stars);
   });
-  
-  const totals = new Map();
-  bestKey.forEach((value, composite) => {
-    const [uid] = composite.split('||');
-    totals.set(uid, (totals.get(uid) || 0) + value);
-  });
-  
+
   return totals;
 }
 
@@ -603,51 +602,6 @@ export default {
         return jsonResponse(sessions || [], 200, origin, RESPONSE_CACHE_SECONDS);
       }
       
-      // The live teacher report and both student scopes share this exact
-      // monthly dataset, including the same cache and Seoul month boundary.
-      if (section === 'leaderboard_class_winners' ||
-          (url.searchParams.get('timeframe') === 'month' &&
-           ['leaderboard_stars','leaderboard_stars_global','leaderboard_stars_class'].includes(section))) {
-        const isReport=section==='leaderboard_class_winners';
-        if (isReport) {
-          const [profile]=await supabaseSelect(env,'profiles','select=role,approved&id=eq.'+encodeURIComponent(userId));
-          if (!profile?.approved || !['teacher','admin'].includes(profile.role)) {
-            return jsonResponse({success:false,error:'Teacher access required'},403,origin);
-          }
-        }
-        let cls=url.searchParams.get('class') || null;
-        if (!isReport && section==='leaderboard_stars_class' && !cls) {
-          const [profile]=await supabaseSelect(env,'profiles','select=class&id=eq.'+encodeURIComponent(userId));
-          cls=profile?.class || null;
-          if (!cls || cls.trim().length<=1) return jsonResponse({success:true,leaderboard:[],class:null},200,origin);
-        }
-        const data=await monthlyLeaderboard(env);
-        const payload={success:true,timeframe:'month',cached_at:data.cached_at};
-        if (isReport) {
-          return new Response(JSON.stringify({...payload,live:true,rows:classLeaderRows(data.leaderboard)}),{
-            headers:{'Content-Type':'application/json','Cache-Control':'private, no-store',...getCorsHeaders(origin)}
-          });
-        }
-        const pool=cls ? data.leaderboard.filter(e=>classKey(e.class)===classKey(cls)) : data.leaderboard;
-        const metric=url.searchParams.get('metric');
-        const limit=cls?5:15;
-        let chosen;
-        if (['super','points','stars'].includes(metric)) {
-          const ranked=rankMonthly(pool,metric);
-          chosen=ranked.filter((e,i)=>i<limit||e.user_id===userId);
-        } else {
-          // Backwards compatibility: older clients sort locally on metric changes.
-          // Include every metric's genuine leaders, not only the points leaders.
-          const metrics=['super','points','stars'];
-          const ids=new Set(metrics.flatMap(m=>rankMonthly(pool,m).slice(0,limit).map(e=>e.user_id)));
-          ids.add(userId);
-          chosen=rankMonthly(pool,'super').filter(e=>ids.has(e.user_id));
-        }
-        return new Response(JSON.stringify({...payload,class:cls,leaderboard:chosen.map(e=>({...e,self:e.user_id===userId}))}),{
-          headers:{'Content-Type':'application/json','Cache-Control':'private, no-store',...getCorsHeaders(origin)}
-        });
-      }
-
       // ===== LEADERBOARD STARS (global or class) =====
       if (section === 'leaderboard_stars' || section === 'leaderboard_stars_global') {
         const timeframe = url.searchParams.get('timeframe') || 'all';
@@ -666,20 +620,7 @@ export default {
             self: entry.user_id === userId,
           }));
 
-          let shaped;
-          if (classFilter) {
-            const top = lb.slice(0, 5);
-            const me = lb.find(e => e.user_id === userId);
-            shaped = top;
-            if (me && !top.some(e => e.user_id === me.user_id)) shaped = [...top, me];
-          } else {
-            const topLimit = 15;
-            shaped = lb.slice(0, topLimit);
-            if (userId) {
-              const me = lb.find(e => e.user_id === userId);
-              if (me && !shaped.some(e => e.user_id === me.user_id)) shaped = [...shaped, me];
-            }
-          }
+          const shaped = lb;
           
           return jsonResponse({
             success: true,
@@ -720,20 +661,7 @@ export default {
           self: entry.user_id === userId,
         }));
 
-        let shaped;
-        if (classFilter) {
-          const top = withSelf.slice(0, 5);
-          const me = withSelf.find(e => e.user_id === userId);
-          shaped = top;
-          if (me && !top.some(e => e.user_id === me.user_id)) shaped = [...top, me];
-        } else {
-          const topLimit = 15;
-          shaped = withSelf.slice(0, topLimit);
-          if (userId) {
-            const me = withSelf.find(e => e.user_id === userId);
-            if (me && !shaped.some(e => e.user_id === me.user_id)) shaped = [...shaped, me];
-          }
-        }
+        const shaped = withSelf;
         
         return jsonResponse({
           success: true,
@@ -781,9 +709,7 @@ export default {
             ...entry,
             self: entry.user_id === userId,
           }));
-          const top = withSelf.slice(0, 5);
-          const me = withSelf.find(e => e.user_id === userId);
-          const shaped = me && !top.some(e => e.user_id === me.user_id) ? [...top, me] : top;
+          const shaped = withSelf;
           
           return jsonResponse({
             success: true,
@@ -820,9 +746,7 @@ export default {
           ...entry,
           self: entry.user_id === userId,
         }));
-        const top = withSelf.slice(0, 5);
-        const me = withSelf.find(e => e.user_id === userId);
-        const shaped = me && !top.some(e => e.user_id === me.user_id) ? [...top, me] : top;
+        const shaped = withSelf;
         
         return jsonResponse({
           success: true,
