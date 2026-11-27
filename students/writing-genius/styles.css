@@ -1044,3 +1044,19 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .wg-viewer-edit-form #wgViewerEditStatus{font-size:.82rem;color:var(--vocab-muted,#6f8190);margin:2px 0;min-height:1em}
 .wg-viewer-edit-actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}
 @media(max-width:600px){.wg-viewer-edit-actions>.wg-button{flex:1}}
+
+/* Writing Genius: guided correction controls */
+.writing-genius #wgDiaryFlow .df-correction-guide{display:grid;gap:8px;padding:10px;background:#f2fbfc;border:1px solid #b7e5e9;border-radius:12px;text-align:left}
+.writing-genius #wgDiaryFlow .df-correction-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:.85rem;color:#315b64}
+.writing-genius #wgDiaryFlow .df-correction-controls,.writing-genius #wgDiaryFlow .df-correction-chips{display:flex;flex-wrap:wrap;gap:7px}
+.writing-genius #wgDiaryFlow .df-correction-control{min-height:44px;min-width:44px;padding:8px 12px;border:1px solid #a6d9df;border-radius:10px;color:#24545b;background:#fff;font-weight:700;cursor:pointer;touch-action:manipulation}
+.writing-genius #wgDiaryFlow .df-correction-controls .df-correction-control{flex:1}
+.writing-genius #wgDiaryFlow .df-correction-chips .wrong{background:#fff0b8;border-color:#e5be4a}
+.writing-genius #wgDiaryFlow .df-correction-chips .missing{background:#fce0ef;border-color:#e999bf}
+.writing-genius #wgDiaryFlow .df-correction-chips [aria-pressed=true]{outline:2px solid #168c98;outline-offset:1px}
+.writing-genius #wgDiaryFlow .df-correction-done{color:#16844d}
+@media (min-width:700px) and (pointer:coarse){
+ body:has(.writing-genius) #willenaSharedKeyboard .wkb-key{height:48px}
+ body:has(.writing-genius) #willenaSharedKeyboard .wkb-row{margin:5px 0}
+ body.willena-kb-open:has(.writing-genius) .app,body.willena-kb-open:has(.writing-genius) .shell{padding-bottom:350px!important}
+}
