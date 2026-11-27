@@ -49,26 +49,28 @@ function draw() {
   const event = byId('event'); event.hidden = !seminar;
   event.textContent = year===2027 ? '2027년 1월 9일(토) 오전 11시 · 대은로 83 루비프라자 6층' : '등록된 설명회 일정이 없습니다.';
   const confirmed = records.filter(row => row.confirmed_at);
-  const list = seminar ? confirmed : records;
+  const waiting = records.filter(row => row.renewal_received !== false);
+  const march = records.filter(row => row.march_applied_at);
+  const list = seminar ? records.filter(row => row.confirmed_at || row.march_applied_at) : waiting;
   const counts = seminar
-    ? [['안내 대상',confirmed.length],['안내 완료',confirmed.filter(r=>r.notified_at).length],['신청 완료',confirmed.filter(r=>r.seminar_applied_at).length]]
-    : [['접수',records.length],['확인 대기',records.length-confirmed.length],['연장 확정',confirmed.length]];
+    ? [['3월 입학 신청',march.length],['안내 대상',confirmed.length],['안내 완료',confirmed.filter(r=>r.notified_at).length],['설명회 신청',confirmed.filter(r=>r.seminar_applied_at).length]]
+    : [['접수',waiting.length],['확인 대기',waiting.filter(r=>!r.confirmed_at).length],['연장 확정',waiting.filter(r=>r.confirmed_at).length]];
   byId('counts').replaceChildren(...(loaded ? counts.map(([label,n])=>{
     const span=element('span',label); span.append(element('b',n+'명'));return span;
   }) : []));
-  const columns = seminar ? ['학생 이름','보호자 연락처','안내 상태','설명회 신청'] : ['학생 이름','출생연도 / 학년','보호자 연락처','접수 일시','연장 상태','설명회 안내'];
+  const columns = seminar ? ['학생 이름','보호자 연락처','3월 입학 신청','입학 신청 일시','안내 상태','설명회 신청'] : ['학생 이름','출생연도 / 학년','보호자 연락처','접수 일시','연장 상태','설명회 안내'];
   byId('head').replaceChildren(...columns.map(title=>{const th=element('th',title);th.scope='col';return th;}));
   const q = byId('search').value.replace(/[\s-]/g,'').toLowerCase();
   const matches = list.filter(r=>!q||r.student_name.replace(/\s/g,'').toLowerCase().includes(q)||r.guardian_phone.includes(q));
   byId('body').replaceChildren(...matches.map(r=>{
     const row=element('tr'), name=button(r.student_name,()=>openDetail(r),'adm-row-btn');
-    if(seminar) addCells(row,[name,phone(r.guardian_phone),badge(r.notified_at?'안내 완료':'안내 전',!!r.notified_at),badge(r.seminar_applied_at?'신청 완료':'미신청',!!r.seminar_applied_at)]);
+    if(seminar) addCells(row,[name,phone(r.guardian_phone),badge(r.march_applied_at?'신청 완료':'미신청',!!r.march_applied_at),date(r.march_applied_at),badge(r.notified_at?'안내 완료':r.confirmed_at?'안내 전':'확인 대기',!!r.notified_at),badge(r.seminar_applied_at?'신청 완료':'미신청',!!r.seminar_applied_at)]);
     else addCells(row,[name,r.birth_grade,phone(r.guardian_phone),date(r.created_at),badge(r.confirmed_at?'연장 확정':'확인 대기',!!r.confirmed_at),r.confirmed_at?'안내 대상':'—']);
     return row;
   }));
   const empty=byId('empty');
   empty.hidden=!loaded||matches.length>0;
-  empty.textContent=q?'검색 결과가 없습니다.':(seminar?'대기 연장이 확정된 학생이 여기에 표시됩니다.':'접수된 대기 연장 신청이 없습니다.');
+  empty.textContent=q?'검색 결과가 없습니다.':(seminar?'3월 입학 신청자 또는 대기 연장 확정 학생이 여기에 표시됩니다.':'접수된 대기 연장 신청이 없습니다.');
 }
 
 async function refresh({silent=false}={}) {
@@ -88,6 +90,7 @@ async function refresh({silent=false}={}) {
 function openDetail(row) {
   const fields=byId('fields');
   const pairs=[['출생연도 / 학년',row.birth_grade],['보호자 연락처',phone(row.guardian_phone)],['현재 유치원 또는 학교',row.school],['접수 일시',date(row.created_at)],['학원에 전할 내용',row.parent_note||'—']];
+  if(row.march_applied_at){const m=row.march_application||{};pairs.push(['3월 입학 신청 일시',date(row.march_applied_at)],['입학 신청 학년',m.birth_grade||row.birth_grade],['입학 신청 학교',m.school||row.school],['입학 신청 메모',m.parent_note||'—']);}
   if(row.confirmed_at)pairs.push(['연장 확정',date(row.confirmed_at)]);
   if(row.notified_at)pairs.push(['안내 완료',date(row.notified_at)]);
   if(row.seminar_applied_at)pairs.push(['설명회 신청',date(row.seminar_applied_at)]);
@@ -95,7 +98,7 @@ function openDetail(row) {
   fields.replaceChildren(...pairs.flatMap(([label,value])=>[element('dt',label),element('dd',value)]));
   byId('link-label').hidden=true; byId('link').value=''; byId('action-status').textContent='';
   const actions=byId('actions'); actions.replaceChildren();
-  if(!row.confirmed_at) actions.append(button('연장 확정',()=>change('confirm',row),'primary'));
+  if(!row.confirmed_at) actions.append(button(row.renewal_received===false?'대기 확인 · 안내 대상 확정':'연장 확정',()=>change('confirm',row),'primary'));
   if(row.confirmed_at && tab==='seminar' && row.invitation_key) {
     const url = 'https://willenaenglish.com/admissions/briefing-2027/#'+row.invitation_key;
     actions.append(button('초대 링크 복사',async()=>{
@@ -110,7 +113,7 @@ function openDetail(row) {
 
 async function change(action,row) {
   if(changing)return;
-  if(action==='remove'&&!window.confirm(row.student_name+' 학생의 대기 연장 신청과 설명회 내역을 삭제할까요?'))return;
+  if(action==='remove'&&!window.confirm(row.student_name+' 학생의 입학·대기·설명회 내역을 삭제할까요?'))return;
   if(action==='confirm'&&!window.confirm(row.student_name+' 학생을 기존 대기 명단과 대조하셨나요? 확정하면 설명회 안내 대상이 됩니다.'))return;
   changing=true; const cohort=year;
   byId('actions').querySelectorAll('button').forEach(b=>{b.disabled=true;});byId('action-status').textContent='저장 중…';

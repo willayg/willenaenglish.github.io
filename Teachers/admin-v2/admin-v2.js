@@ -58,7 +58,7 @@ function activateView(view){
   if(view!=='enquiries')import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.closeEnquiriesDrawer()).catch(()=>{});
 
   if(view==='admissions'){
-    import('./admissions.js?v=1').then(m=>m.openAdmissions()).catch(()=>{ $('#admission-message').textContent='입학 관리 화면을 불러오지 못했습니다. 페이지를 다시 열어 주세요.' });
+    import('./admissions.js?v=20261127-march').then(m=>m.openAdmissions()).catch(()=>{ $('#admission-message').textContent='입학 관리 화면을 불러오지 못했습니다. 페이지를 다시 열어 주세요.' });
   }
   if(view==='enquiries'){
     if(!enquiriesModulePromise)enquiriesModulePromise=import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.mountEnquiries());

@@ -1,6 +1,6 @@
 // Public forms write through narrowly scoped RPCs; staff RPCs use the caller's JWT and database RLS.
 const origins = new Set(['https://willenaenglish.com', 'https://www.willenaenglish.com']);
-const publicActions = new Set(['renew', 'invitation', 'apply']);
+const publicActions = new Set(['renew', 'march', 'invitation', 'apply']);
 const staffActions = new Set(['list', 'confirm', 'notified', 'remove']);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const base = Deno.env.get('SUPABASE_URL')!;
@@ -47,12 +47,12 @@ function field(value: unknown, max: number) {
 
 async function publicAction(action: string, input: Record<string,unknown>, origin: string) {
   const unavailable = () => respond({error:'접수 상태를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.'},503,origin);
-  if (action === 'renew') {
+  if (action === 'renew' || action === 'march') {
     const name = field(input.student,50), grade = field(input.birth,50), school = field(input.school,80);
     const note = field(input.note ?? '',400), phone = field(input.phone,22)?.replace(/[\s()-]/g,'');
     if (!name || !grade || !school || !phone || !/^0\d{8,10}$/.test(phone) || note === null || input.consent !== true || input.website)
       return respond({error:'학생 정보, 보호자 연락처와 동의 항목을 확인해 주세요.'},400,origin);
-    const result = await rpc('submit_admission_renewal_2027',
+    const result = await rpc(action === 'march' ? 'submit_march_admission_2027' : 'submit_admission_renewal_2027',
       {p_name:name,p_grade:grade,p_phone:phone,p_school:school,p_note:note,p_consent:true},service,'Bearer '+service);
     if (!result.ok) return unavailable();
     const state = await result.json();
