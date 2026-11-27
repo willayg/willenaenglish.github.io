@@ -52,10 +52,11 @@ function makeCenter({ mode, title }) {
   if (mode === 'dashboard') {
     const sw = document.createElement('nav');
     sw.className = 'th-switch';
-    sw.setAttribute('aria-label', 'Teacher and admin apps');
+    sw.setAttribute('aria-label', 'Staff apps');
     sw.innerHTML = `
       <a data-th-teacher href="/Teachers/dashboard-v2/">Teacher</a>
       <a data-th-admin href="/Teachers/admin-v2/" hidden>Admin</a>
+      <a data-th-library href="/Teachers/library/" hidden>Library</a>
     `;
     center.appendChild(sw);
   } else {
@@ -93,10 +94,13 @@ function applyDashboardState(root, identity, activeApp) {
 
   const isAdmin = identity.role === 'admin';
   admin.hidden = !isAdmin;
+  const library = root.querySelector('[data-th-library]');
+  if (library) library.hidden = !['teacher','admin'].includes(identity.role);
 
   const current = activeApp || (location.pathname.includes('/admin') ? 'admin' : 'teacher');
   teacher.classList.toggle('active', current === 'teacher');
   admin.classList.toggle('active', current === 'admin');
+  if (library) library.classList.toggle('active', current === 'library');
 }
 
 export async function mountTeacherHeader(options = {}) {
