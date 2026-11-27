@@ -1517,7 +1517,7 @@ function classAwardsRender(){
  $('#classAwardsCount').textContent=classAwardsDraft.length+' recipient'+(classAwardsDraft.length===1?'':'s');
  $('#classAwardsPrint').disabled=!classAwardsDraft.length;
  list.innerHTML=classAwardsDraft.length?classAwardsDraft.map((r,i)=>'<div class="award-recipient"><div><strong>'+esc(r.student_name)+'</strong> '+esc(r.korean_name||'')+'<small>'+esc(r.class_name)+' · '+esc(classAwardTitle(r))+'</small></div><button type="button" class="control" data-award-remove="'+i+'" aria-label="Remove '+esc(r.student_name)+'">Remove</button></div>').join(''):'<div class="empty">No recipients selected.</div>';
- $('#classAwardsList [data-award-remove]').forEach(b=>b.onclick=()=>{classAwardsDraft.splice(Number(b.dataset.awardRemove),1);classAwardsRender()});
+ $$('#classAwardsList [data-award-remove]').forEach(b=>b.onclick=()=>{classAwardsDraft.splice(Number(b.dataset.awardRemove),1);classAwardsRender()});
  classAwardsRenderRoster();
 }
 function classAwardsRenderRoster(){
