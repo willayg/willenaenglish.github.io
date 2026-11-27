@@ -9,6 +9,7 @@
   <h2 id="march-title" tabindex="-1" autofocus>2027년 3월<br>신규반 입학 신청 안내</h2>
   <p>오랜 시간 윌레나를 기다려 주셔서 진심으로 감사드립니다.</p>
   <p>2027년 3월 신규반 입학을 희망하시는 기존 대기 가정에서는 아래 버튼을 통해 입학 신청을 해주시기 바랍니다.</p>
+  <p class="march-deadline"><span>신청 기한</span> 12월 2일(수)까지</p>
   <a class="march-apply" href="/admissions/march-2027/">2027년 3월 신입생반 입학 신청 <span aria-hidden="true">›</span></a>
   <p class="march-note">입학 신청 후 오리엔테이션에 대한 안내를 드릴 예정입니다.</p>
   <p class="march-waitlist-note">이번 입학 신청은 윌레나에 기존 대기 중인 학생을 대상으로 진행됩니다. 신규 입학을 희망하시는 가정은 학원으로 문의해 주시면 정성껏 안내해 드리겠습니다.</p>

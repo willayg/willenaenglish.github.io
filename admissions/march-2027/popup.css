@@ -20,3 +20,7 @@ html:has(#march-invitation[open]){overflow:hidden}
 #march-invitation #march-title:focus{outline:none;}
 
 #march-invitation .march-waitlist-note{font-size:clamp(11px,2.8vw,13px);line-height:1.65;font-weight:600;color:#666;margin:12px 0 0;word-break:keep-all;}
+
+#march-invitation .march-deadline{display:flex;align-items:center;justify-content:center;gap:10px;margin:20px 0 0;font-size:clamp(14px,3.7vw,18px);font-weight:800;color:#242122;line-height:1.5}
+#march-invitation .march-deadline span{background:#d6ed5b;border-radius:5px;padding:3px 9px;font-size:.85em;white-space:nowrap}
+#march-invitation .march-apply{margin-top:12px}
