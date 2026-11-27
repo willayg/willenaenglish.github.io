@@ -103,9 +103,8 @@ function restoreCaret(pos){
 function replaceSelection(text){
   if(!active||active.disabled)return;
   const v=String(active.value||''),{start,end}=selectionRange(),next=v.slice(0,start)+text+v.slice(end),pos=start+text.length;
-  active.value=next;
+  try{active.setRangeText(text,start,end,'end')}catch{active.value=next;restoreCaret(pos)}
   active.dispatchEvent(new Event('input',{bubbles:true}));
-  restoreCaret(pos);
 }
 function backspace(){
   if(!active||active.disabled)return;
@@ -309,6 +308,7 @@ function showFor(el){
 }
 function onPointerDown(e){
   if(keyboard?.contains(e.target))return;
+  if(e.target.closest?.('[data-willena-keep-keyboard]'))return;
   const el=e.target.closest?.('[data-willena-text-entry]');
   if(el){
     prepareField(el);
