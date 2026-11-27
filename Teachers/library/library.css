@@ -24,3 +24,23 @@ html[data-library-language="both"] .panel-head{align-items:center}
 @media(max-width:760px){.library-language{gap:0;margin-right:5px;padding:2px}.library-language button{font-size:10px;padding:5px 6px;min-height:27px}}
 @media(max-width:600px){#importDialog .import-top{padding:12px 13px 9px}#importBody{padding:12px 13px 15px}.import-top-actions{gap:5px}#confirmImport{font-size:12px}.import-top .dialog-head h2{font-size:15px}}
 @media(max-width:460px){.library-language button{font-size:9px;padding:5px}.library-language{margin-right:3px}.teacher-header:has(.library-language) .th-switch a{padding:5px;font-size:10px}.teacher-header:has(.library-language) .th-brand img{width:30px}}
+
+.report-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.match-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:14px 0}
+.match-overview>div{border:1px solid var(--line);background:#f6fafb;padding:12px;border-radius:9px}
+.match-overview strong{display:block;font-size:24px;line-height:1.2;color:var(--accent)}
+.match-overview span{font-size:12px;color:#57717b}
+.match-overview .needs-review{background:#fff7e9;border-color:#ecd6b2}
+.match-overview .needs-review strong{color:#96651d}
+.match-file-meta{grid-template-columns:minmax(145px,1fr) minmax(0,1.4fr);align-items:end}
+.match-dates{margin:0}
+.match-success{background:#eaf7f1;border:1px solid #cbe9d8;color:#26634d;font-weight:600;padding:10px 12px;border-radius:8px;margin:10px 0;font-size:13px}
+.match-details{border:1px solid var(--line);border-radius:9px;margin:10px 0;overflow:hidden}
+.match-details summary{cursor:pointer;padding:12px;background:#f5f9fa;font-weight:600;color:var(--ink);list-style:none;display:flex;align-items:center;gap:7px}
+.match-details summary::-webkit-details-marker{display:none}
+.match-details summary:before{content:'▸';color:var(--accent)}
+.match-details[open] summary:before{content:'▾'}
+.match-details summary strong{margin-left:auto;color:var(--accent)}
+.excluded-details summary{color:#70848a}
+#accountDialog .filters{margin:12px 0}
+@media(max-width:650px){.report-actions{width:100%}.report-actions button{flex:1}.match-file-meta{grid-template-columns:1fr}.match-overview>div{padding:9px}.match-overview strong{font-size:21px}}

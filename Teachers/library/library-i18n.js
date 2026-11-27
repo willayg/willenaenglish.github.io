@@ -1,5 +1,13 @@
 // Library-only EN / 한국어 / bilingual display. Never translate stored values or student names.
 const translations={
+ "Manage Raz-Kids Accounts":"라즈키즈 계정 관리","Ready to import":"가져오기 가능","Need attention":"확인 필요","Excluded":"제외","Saved link":"저장된 연결","Automatic match":"자동 연결","Selected":"선택 완료",
+ "A teacher account label could not be identified. Choose its source before importing.":"교사 계정을 자동으로 확인하지 못했습니다. 가져오기 전에 교사 계정을 선택하세요.",
+ "All active records are matched. Ready to import.":"재원생 기록이 모두 연결되었습니다. 가져올 수 있습니다.",
+ "Only these accounts need your attention.":"아래 계정만 확인해 주세요.","Review automatic matches":"자동 연결 확인","Excluded accounts":"제외된 계정",
+ "Files parsed. Review only the accounts that need attention.":"파일을 읽었습니다. 확인이 필요한 계정만 확인해 주세요.",
+ "Teacher account":"교사 계정","Status":"상태","All teacher accounts":"전체 교사 계정","Find an account":"계정 검색","No matching accounts":"검색 결과가 없습니다.",
+ "Saved account links are reused every month. Inactive students are excluded automatically.":"저장된 계정 연결은 매월 재사용됩니다. 비활성 학생은 자동으로 제외됩니다.",
+
  "Willena Library":"윌레나 도서관","WILLENA LIBRARY":"윌레나 도서관","Teacher workspace":"교직원 업무 공간","Teacher":"교사","Admin":"관리자","Library":"도서관",
  "Checking staff login…":"교직원 로그인 확인 중…","Retry":"다시 시도","Unable to verify login. Retry.":"로그인을 확인할 수 없습니다. 다시 시도해 주세요.",
  "Raz-Kids":"라즈키즈","Monthly reading awards":"월간 독서 시상","Month":"월","Monthly reports":"월간 활동 기록","Import CSV":"CSV 가져오기",
@@ -30,6 +38,8 @@ const translations={
 const months={January:1,February:2,March:3,April:4,May:5,June:6,July:7,August:8,September:9,October:10,November:11,December:12};
 const dateText=t=>t.replace(/\b(January|February|March|April|May|June|July|August|September|October|November|December) (\d{4})\b/g,(_,m,y)=>y+'년 '+months[m]+'월');
 const patterns=[
+ [/^(\d+) records · (\d+) ready$/,m=>'기록 '+m[1]+'개 · '+m[2]+'개 준비 완료'],
+
  [/^(\d+) students have multiple account reports; excluded from automatic ranking until reviewed\.$/,m=>m[1]+'명의 학생에게 계정 중복 기록이 있습니다. 확인 전까지 자동 순위에서 제외됩니다.'],
  [/^No reports imported for (.+)\.$/,m=>dateText(m[1])+'에 가져온 기록이 없습니다.'],
  [/^Confirmed · (\d+) Gold · (\d+) Silver$/,m=>'확정 · 금상 '+m[1]+'명 · 은상 '+m[2]+'명'],
@@ -52,7 +62,7 @@ export function localText(value){const raw=String(value??'');if(mode==='en'||!ra
 const nodes=new WeakMap(),attrs=new WeakMap();
 function applyText(node){const parent=node.parentElement;if(!parent||parent.closest('[data-no-translate],script,style,textarea,.certificate,.library-language'))return;const current=node.nodeValue;let entry=nodes.get(node);if(!entry||current!==entry.last)entry={original:current,last:current};const next=localText(entry.original);entry.last=next;nodes.set(node,entry);if(current!==next)node.nodeValue=next}
 function applyAttrs(el){if(el.closest('[data-no-translate],.certificate,.library-language'))return;let saved=attrs.get(el)||{};for(const attr of ['placeholder','aria-label','title']){if(!el.hasAttribute(attr))continue;const current=el.getAttribute(attr);let entry=saved[attr];if(!entry||current!==entry.last)entry={original:current,last:current};const next=localText(entry.original);entry.last=next;saved[attr]=entry;if(current!==next)el.setAttribute(attr,next)}attrs.set(el,saved)}
-function roots(){return ['#app','#boot','#importDialog','#awardDialog','#classAwardsPrintOverlay .award-toolbar','#teacher-header .th-switch','#teacher-header .th-brand-copy small'].map(x=>document.querySelector(x)).filter(Boolean)}
+function roots(){return ['#app','#boot','#importDialog','#awardDialog','#accountDialog','#classAwardsPrintOverlay .award-toolbar','#teacher-header .th-switch','#teacher-header .th-brand-copy small'].map(x=>document.querySelector(x)).filter(Boolean)}
 let observer=null;let pending=false;
 function refresh(){pending=false;observer?.disconnect();document.documentElement.dataset.libraryLanguage=mode;document.documentElement.lang=mode==='ko'?'ko':'en';for(const root of roots()){const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while(n=walker.nextNode())applyText(n);applyAttrs(root);for(const el of root.querySelectorAll('[placeholder],[aria-label],[title]'))applyAttrs(el);observer?.observe(root,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','aria-label','title']})}observer?.observe(document.body,{childList:true});document.querySelectorAll('.library-language button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===mode)))}
 function queueRefresh(){if(!pending){pending=true;queueMicrotask(refresh)}}
