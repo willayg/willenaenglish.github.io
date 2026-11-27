@@ -3,7 +3,7 @@ const API='/.netlify/functions/teacher_management';
 const root=document.getElementById('view-teachers-manager');
 const nav=document.querySelector('[data-view="teachers-manager"]');
 const $=(s,r=root)=>r.querySelector(s);
-let people=[],loaded=false,activeTab='active';
+let people=[],loaded=false,activeTab='active',actorId=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;'}[c]));
 async function request(action,body){
  const fn=window.WillenaAPI?.fetch||window.fetch.bind(window);
@@ -28,12 +28,12 @@ function render(){
   const item=document.createElement('div');item.className='tm-person';
   const details=document.createElement('div');details.className='tm-person-details';
   const title=document.createElement('strong');title.textContent=teacher.name||teacher.username||'Teacher';
-  const sub=document.createElement('small');sub.textContent=[teacher.username,teacher.email,teacher.role==='admin'?'Admin':''].filter(Boolean).join(' · ');
+  const sub=document.createElement('small');sub.textContent=[teacher.username,teacher.email,teacher.role==='admin'?'Admin':'Teacher'].filter(Boolean).join(' · ');
   details.append(title,sub);
   const status=document.createElement('span');status.className='tm-state '+(teacher.approved?'active':'retired');status.textContent=teacher.approved?'Active':'Retired';
   item.append(details,status);
+  const edit=document.createElement('button');edit.type='button';edit.className='control';edit.textContent='Edit';edit.onclick=()=>editTeacher(teacher);item.append(edit);
   if(teacher.role==='teacher'){
-   const edit=document.createElement('button');edit.type='button';edit.className='control';edit.textContent='Edit';edit.onclick=()=>editTeacher(teacher);item.append(edit);
    const action=document.createElement('button');action.type='button';action.className='control';
    action.textContent=teacher.approved?'Retire':'Reactivate';
    action.onclick=async()=>{
@@ -51,6 +51,15 @@ function render(){
  if(!items.length)list.textContent=q?'No matching teachers.':activeTab==='archive'?'No archived accounts.':'No active teachers.';
 }
 
+function roleField(value,locked=false){
+ const label=document.createElement('label');label.textContent='Role';
+ const select=document.createElement('select');select.className='control';select.setAttribute('aria-label','Role');
+ select.style.cssText='width:100%;min-height:42px;box-sizing:border-box;background:#fff;color:#294b58;border:1px solid #d4e3e8;border-radius:10px;padding:10px;font:inherit';
+ for(const [id,name] of [['teacher','Teacher'],['admin','Admin']]){const option=document.createElement('option');option.value=id;option.textContent=name;select.append(option)}
+ select.value=value;select.disabled=locked;label.append(select);
+ const hint=document.createElement('small');hint.textContent=locked?'You cannot remove your own admin access.':'Admin grants administrative access.';label.append(hint);
+ return {label,select};
+}
 function editTeacher(teacher){
  const dialog=document.createElement('dialog');
  dialog.setAttribute('aria-labelledby','tmEditTitle');
@@ -64,6 +73,8 @@ function editTeacher(teacher){
  const name=field('Full name',teacher.name,{required:true,maxLength:120,autocomplete:'off'});
  const username=field('Username',teacher.username,{maxLength:80,autocomplete:'off'});
  const email=field('Login email',teacher.email,{type:'email',readOnly:true});email.style.background='#f4f7f8';
+ const ownAccount=!actorId||String(teacher.id)===String(actorId);
+ const {label:roleLabel,select:role}=roleField(teacher.role,ownAccount);form.append(roleLabel);
  const note=document.createElement('small');note.textContent='Login email is read-only. Teaching history and class assignments are preserved.';form.append(note);
  const feedback=document.createElement('small');feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
  const actions=document.createElement('div');Object.assign(actions.style,{display:'flex',gap:'8px',flexWrap:'wrap'});
@@ -76,9 +87,9 @@ function editTeacher(teacher){
  const password=document.createElement('input');password.type='password';password.minLength=8;password.required=true;password.autocomplete='new-password';pwLabel.append(password);
  const pwNote=document.createElement('small');pwNote.textContent='Optional. Reset separately only when the teacher needs a new password.';
  const reset=button('Reset password','submit');passwordForm.append(pwLabel,pwNote,reset);
- dialog.append(title,form,divider,passwordForm,feedback);root.append(dialog);
+ dialog.append(title,form);if(teacher.role==='teacher')dialog.append(divider,passwordForm);dialog.append(feedback);root.append(dialog);
  let busy=false;
- const lock=value=>{busy=value;[name,username,password,save,cancel,reset].forEach(el=>el.disabled=value)};
+ const lock=value=>{busy=value;[name,username,password,save,cancel,reset].forEach(el=>el.disabled=value);role.disabled=value||ownAccount};
  const tell=(value,error=false)=>{feedback.textContent=value;feedback.style.color=error?'#b83d64':'#28785d'};
  cancel.onclick=()=>dialog.close();
  dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault()});
@@ -93,11 +104,16 @@ function editTeacher(teacher){
    if(!nextUsername){tell('Username cannot be blank when changing it.',true);return}
    payload.username=nextUsername;
   }
+  if(!ownAccount&&role.value!==teacher.role){
+   if(!['teacher','admin'].includes(role.value)){tell('Select a valid role.',true);return}
+   if(!confirm('Change '+(teacher.name||teacher.username)+' to '+(role.value==='admin'?'Admin? This grants administrative access.':'Teacher? This removes administrative access.')))return;
+   payload.role=role.value;
+  }
   if(Object.keys(payload).length===1){dialog.close();return}
   lock(true);tell('Saving changes…');
   try{
    await request('update',payload);
-   Object.assign(teacher,payload.name!==undefined?{name:payload.name}:{},payload.username!==undefined?{username:payload.username.toLowerCase()}:{});
+   Object.assign(teacher,payload.name!==undefined?{name:payload.name}:{},payload.username!==undefined?{username:payload.username.toLowerCase()}:{},payload.role!==undefined?{role:payload.role}:{});
    render();dialog.close();message('Teacher details saved.');
    await refresh().catch(()=>message('Teacher details saved. Refresh the list if needed.'));
   }catch(err){tell(err.message,true)}
@@ -115,7 +131,7 @@ function editTeacher(teacher){
  dialog.showModal();
 }
 
-async function refresh(){const data=await request('list');people=data.teachers||[];loaded=true;render();}
+async function refresh(){const data=await request('list');people=data.teachers||[];actorId=data.actor_id||null;loaded=true;render();}
 export async function checkAccess(){
  if(!root||!nav)return;
  try{await refresh();nav.hidden=false;nav.style.removeProperty('display');}
@@ -128,12 +144,16 @@ export async function open(){
 $('#tmSearch')?.addEventListener('input',render);
 root.querySelectorAll('[data-tm-tab]').forEach(button=>button.addEventListener('click',()=>{activeTab=button.dataset.tmTab;render()}));
 $('#tmRefresh')?.addEventListener('click',()=>refresh().catch(e=>message(e.message,true)));
-$('#tmCreateForm')?.addEventListener('submit',async e=>{
+const createForm=$('#tmCreateForm');
+let createRole;
+if(createForm){const field=roleField('teacher');createRole=field.select;createForm.insertBefore(field.label,$('#tmPassword').closest('label'));}
+createForm?.addEventListener('submit',async e=>{
  e.preventDefault();const form=e.currentTarget;const button=$('#tmCreate');button.disabled=true;message('Creating teacher…');
  try{
-  const payload={name:$('#tmName').value.trim(),email:$('#tmEmail').value.trim(),username:$('#tmUsername').value.trim(),password:$('#tmPassword').value};
+  const payload={name:$('#tmName').value.trim(),email:$('#tmEmail').value.trim(),username:$('#tmUsername').value.trim(),password:$('#tmPassword').value,role:createRole?.value||'teacher'};
   if(!payload.name||!payload.email||payload.password.length<8)throw Error('Provide a name, email and password of at least 8 characters.');
-  await request('create',payload);form.reset();await refresh();message('Teacher added successfully.');
+  if(payload.role==='admin'&&!confirm('Create an Admin account with administrative access?'))return;
+  await request('create',payload);form.reset();if(createRole)createRole.value='teacher';await refresh();message('Teacher added successfully.');
  }catch(err){message(err.message,true)}
  finally{button.disabled=false}
 });
