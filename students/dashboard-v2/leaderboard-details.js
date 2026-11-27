@@ -2,22 +2,8 @@
 'use strict';
 if(!window.WillenaAPI||window.__willenaLeaderboardDetails)return;
 window.__willenaLeaderboardDetails=true;
-const store={global:null,class:null};
-const originalFetch=WillenaAPI.fetch.bind(WillenaAPI);
-WillenaAPI.fetch=async function(url,opts){
-  const response=await originalFetch(url,opts);
-  try{
-    const u=String(url||'');
-    let scope=null;
-    if(u.includes('section=leaderboard_stars_global'))scope='global';
-    else if(u.includes('section=leaderboard_stars_class'))scope='class';
-    if(scope){
-      const clone=response.clone();
-      clone.json().then(data=>{if(data&&Array.isArray(data.leaderboard)){store[scope]=data;queueMicrotask(decorate)}}).catch(()=>{});
-    }
-  }catch{}
-  return response;
-};
+const store=Object.create(null);
+window.addEventListener('willena:leaderboard-data',e=>{const {scope,metric,data}=e.detail||{};if(scope&&metric&&Array.isArray(data?.leaderboard)){store[scope+'|'+metric]=data;queueMicrotask(decorate)}});
 function maskKorean(value){
   const s=String(value||'').trim();
   if(!s)return'';
@@ -26,20 +12,13 @@ function maskKorean(value){
   if(chars.length===2)return chars[0]+'*';
   return chars[0]+'*'.repeat(chars.length-2)+chars[chars.length-1];
 }
-function sorted(data,metric){
-  const list=(data?.leaderboard||[]).map(e=>({...e,stars:Number(e.stars)||0,points:Number(e.points)||0,superScore:Number.isFinite(Number(e.superScore))?Number(e.superScore):Math.round(((Number(e.stars)||0)*(Number(e.points)||0))/1000)}));
-  return list.sort((a,b)=>{
-    if(metric==='points')return b.points-a.points||b.stars-a.stars||String(a.name||'').localeCompare(String(b.name||''));
-    if(metric==='stars')return b.stars-a.stars||b.points-a.points||String(a.name||'').localeCompare(String(b.name||''));
-    return b.superScore-a.superScore||b.stars-a.stars||b.points-a.points||String(a.name||'').localeCompare(String(b.name||''));
-  });
-}
+function sorted(data,metric){return [...(data?.leaderboard||[])].sort((a,b)=>a.rank-b.rank)}
 function decorate(){
   const root=document.querySelector('#leaderRows');
   if(!root)return;
   const scope=document.querySelector('.scope-tabs .tab.active')?.dataset.scope||'global';
   const metric=document.querySelector('.metric-tab.active')?.dataset.metric||'super';
-  const data=store[scope];
+  const data=store[scope+'|'+metric];
   if(!data)return;
   const entries=sorted(data,metric);
   const rows=[...root.querySelectorAll('.row')];
