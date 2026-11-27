@@ -1503,30 +1503,7 @@ async function loadClassLeaders(){
   const currentKey=new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'}).slice(0,7);
   const isCurrent=month===currentKey;
   let data;
-  if(isCurrent){
-    // Consume the existing student dashboard's global monthly leaderboard.
-    // Do not recalculate rewards or query the daily stats table.
-    const url=endpoint('leaderboard_stars_global',{timeframe:'month',metric:'super'});
-    const response=window.WillenaAPI?.fetch?await window.WillenaAPI.fetch(url,{credentials:'include',cache:'no-store'}):await fetch(url,{credentials:'include',cache:'no-store'});
-    const payload=await response.json().catch(()=>({}));
-    if(!response.ok||payload.success!==true||!Array.isArray(payload.leaderboard))throw Error(payload.error||'Could not load the student leaderboard');
-    const ranked=leaderboardSorted(payload,'super');
-    const classes=new Map(CLASS_LEADER_ORDER.map(cls=>[cls.toLowerCase(),cls]));
-    const classCounts=new Map();
-    const rows=[];
-    ranked.forEach((e,i)=>{
-      const key=String(e.class||'').trim().toLowerCase();
-      const cls=classes.get(key);
-      if(!cls)return;
-      const classRank=(classCounts.get(key)||0)+1;
-      classCounts.set(key,classRank);
-      const globalRank=i+1;
-      if(classRank!==1&&globalRank>10)return;
-      if(e.points<=0&&e.stars<=0)return;
-      rows.push({user_id:e.user_id,class_name:cls,student_name:e.name,korean_name:e.korean_name||'',super_points:e.superScore,class_rank:classRank,global_rank:globalRank});
-    });
-    data={rows,live:true};
-  }else{
+  try {
     const token=window.WillenaAPI?.getLocalAccessToken?.() || (()=>{try{return document.cookie.split('; ').find(c=>c.startsWith('sb_access='))?.split('=').slice(1).join('=')||null}catch{return null}})();
     if(!token)throw new Error('Teacher access token unavailable. Sign in again to view snapshots.');
     const url='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-insights?'+new URLSearchParams({action:'class_leaders',month});
@@ -1534,6 +1511,36 @@ async function loadClassLeaders(){
     const payload=await response.json().catch(()=>({}));
     if(!response.ok||payload.success===false)throw new Error(payload.error||'Snapshot request failed ('+response.status+')');
     data=payload;
+  } catch(primaryError) {
+    // The teacher-insights gateway does not yet recognize this newer section.
+    // For the LIVE month, reuse the same authenticated working endpoint as the
+    // existing leaderboard rather than leaving the whole panel broken.
+    if(!isCurrent) throw new Error('The historical snapshot service is not deployed yet. '+primaryError.message);
+    // Existing leaderboard returns only its top 15 globally. Fetch class leaders
+    // individually so less-active classes cannot disappear from this report.
+    const live=await api(endpoint('leaderboard_stars_global',{timeframe:'month'}));
+    const top=leaderboardSorted(live,'super').filter(e=>CLASS_LEADER_ORDER.some(c=>c.toLowerCase()===String(e.class||'').trim().toLowerCase()));
+    const overall=new Map(top.map((e,i)=>[String(e.user_id||e.name+'|'+e.class),i+1]));
+    const responses=await Promise.all(CLASS_LEADER_ORDER.map(async cls=>{
+      try{
+        const j=await api(endpoint('leaderboard_stars_global',{timeframe:'month',class:cls}));
+        const entries=leaderboardSorted(j,'super').filter(e=>String(e.class||'').trim().toLowerCase()===cls.toLowerCase());
+        return {cls,first:entries[0]||null};
+      }catch{return {cls,first:null}}
+    }));
+    const rows=[];
+    for(const {cls,first} of responses){
+      if(!first)continue;
+      const id=String(first.user_id||first.name+'|'+first.class);
+      rows.push({class_name:cls,student_name:first.name||'Student',korean_name:first.korean_name||'',super_points:first.superScore||0,class_rank:1,global_rank:overall.get(id)||null});
+    }
+    const winners=new Set(rows.map(r=>r.class_name.toLowerCase()+'|'+r.student_name));
+    top.slice(0,10).forEach((e,i)=>{
+      const cls=CLASS_LEADER_ORDER.find(c=>c.toLowerCase()===String(e.class||'').trim().toLowerCase());
+      if(!cls||winners.has(cls.toLowerCase()+'|'+e.name))return;
+      rows.push({class_name:cls,student_name:e.name||'Student',korean_name:e.korean_name||'',super_points:e.superScore||0,class_rank:2,global_rank:i+1});
+    });
+    data={rows,live:true};
   }
   const rows=Array.isArray(data.rows)?data.rows:[];
   const byClass=new Map();
