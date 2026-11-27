@@ -18,3 +18,5 @@ html:has(#march-invitation[open]){overflow:hidden}
 @media(max-height:600px){#march-invitation .march-envelope{padding-top:20px;padding-bottom:45px}#march-invitation .march-card{padding-top:27px;padding-bottom:30px}#march-invitation .march-fold{height:65px}#march-invitation .march-seal{bottom:7px;width:32px;height:32px;font-size:17px}}
 /* The heading receives initial dialog focus for screen readers, not a visible browser focus ring. Interactive controls retain keyboard focus outlines. */
 #march-invitation #march-title:focus{outline:none;}
+
+#march-invitation .march-waitlist-note{font-size:clamp(11px,2.8vw,13px);line-height:1.65;font-weight:600;color:#666;margin:12px 0 0;word-break:keep-all;}
