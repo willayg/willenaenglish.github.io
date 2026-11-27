@@ -118,6 +118,7 @@ exports.handler = async (event) => {
       .from('profiles')
       .select('id, email')
       .eq('id', student_id)
+      .eq('role', 'student')
       .single();
 
     if (fetchError || !student) {
