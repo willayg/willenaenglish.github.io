@@ -1,6 +1,6 @@
-import {todayKST,dayOfWeek,ATTENDANCE,JOURNAL} from './daily-register.js?v=2';
+import {todayKST,dayOfWeek,ATTENDANCE,JOURNAL} from './daily-register.js?v=3';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const A={'present':'✓','late_5_10':'L','late_10_15':'LL','late_15_plus':'LLL','absent':'ㅡ','exception':'EX'};
+const A={'present':'✓','late_5':'5m','late_10':'10m','late_15':'15m','late_20':'20m','late_5_10':'L','late_10_15':'LL','late_15_plus':'LLL','absent':'ㅡ','exception':'EX'};
 const J={'done':'O','in_progress':'ING','not_done':'X','book_report':'BR'};
 export function monthDays(month,weekdays){const d=new Date(month+'-01T00:00:00Z'),out=[];while(d.toISOString().slice(0,7)===month){const key=d.toISOString().slice(0,10);if(weekdays.includes(dayOfWeek(key)))out.push(key);d.setUTCDate(d.getUTCDate()+1)}return out}
 export function monthlyRows(students,records,cls){const by=new Map();for(const s of students)if(s.class===cls)by.set(s.id,{id:s.id,name:s.name||s.korean_name||'Unnamed',ko:s.korean_name||'',historical:false});for(const r of records)if(r.class_name===cls&&!by.has(r.student_id))by.set(r.student_id,{id:r.student_id,name:r.student_name||r.korean_name||'Unnamed',ko:r.korean_name||'',historical:true});return [...by.values()].sort((a,b)=>a.name.localeCompare(b.name)||a.id.localeCompare(b.id))}

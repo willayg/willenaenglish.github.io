@@ -1,6 +1,9 @@
 // Shared Library register module. The schedule and all records are staff-only data.
-export const ATTENDANCE=[['','Not marked'],['present','Present'],['late_5_10','Late 5–10m'],['late_10_15','Late 10–15m'],['late_15_plus','Late 15m+'],['absent','Absent'],['exception','Approved exception']];
+export const ATTENDANCE=[['','Not marked'],['present','Present'],['late_5','Late 5m'],['late_10','Late 10m'],['late_15','Late 15m'],['late_20','Late 20m'],['late_5_10','Late 5–10m'],['late_10_15','Late 10–15m'],['late_15_plus','Late 15m+'],['absent','Absent'],['exception','Approved exception']];
 export const JOURNAL=[['','Not marked'],['done','Done'],['in_progress','In progress'],['not_done','Not done'],['book_report','Book report']];
+export const LATE_STEPS=['late_5','late_10','late_15','late_20'];
+export function nextLate(value){const at=LATE_STEPS.indexOf(value);return LATE_STEPS[(at+1)%LATE_STEPS.length]}
+export function nextRegisterStatus(field,action,current){return action==='late'&&field==='attendance'?nextLate(current):action==='clear'||action===current?null:action}
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const kstNow=()=>new Date(Date.now()+9*3600000).toISOString();
 export const todayKST=()=>kstNow().slice(0,10);
@@ -41,8 +44,13 @@ export function mountDailyRegister({root,api,getStudents}){
  }
  function setError(e){d.error=e?.message||String(e);syncStatus()}
  function rowMarkup(r){
-  const options=(values,value)=>values.map(([v,l])=>'<option value="'+esc(v)+'"'+((value??'')===v?' selected':'')+'>'+esc(l)+'</option>').join('');
-  return '<tr><td class="register-name"><strong data-no-translate>'+esc(r.student_name)+'</strong><small data-no-translate>'+esc(r.korean_name&&r.korean_name!==r.student_name?r.korean_name:'')+'</small>'+(r.historical?'<small>Previous class record</small>':'')+'</td><td><select class="reg-select" data-field="attendance" data-id="'+esc(r.student_id)+'" data-class="'+esc(r.class_name)+'" data-state="'+esc(r.attendance||'')+'" aria-label="Attendance">'+options(ATTENDANCE,r.attendance)+'</select></td><td><select class="reg-select" data-field="journal" data-id="'+esc(r.student_id)+'" data-class="'+esc(r.class_name)+'" data-state="'+esc(r.journal||'')+'" aria-label="Journal" '+(r.attendance==='absent'?'disabled':'')+'>'+options(JOURNAL,r.journal)+'</select></td></tr>';
+  const att=r.attendance||'',jour=r.journal||'',late=att.startsWith('late_'),absent=att==='absent';
+  const lateLabel=({late_5:'5m',late_10:'10m',late_15:'15m',late_20:'20m',late_5_10:'5–10m',late_10_15:'10–15m',late_15_plus:'15m+'})[att]||'Late';
+  const button=(field,action,label,active,style,title,disabled=false)=>'<button type="button" class="reg-choice '+style+(active?' is-selected':'')+'" data-field="'+field+'" data-action="'+action+'" data-id="'+esc(r.student_id)+'" data-class="'+esc(r.class_name)+'" aria-pressed="'+active+'" aria-label="'+esc(title)+'" title="'+esc(title)+'" '+(disabled?'disabled':'')+'>'+label+'</button>';
+  const clear=(field,disabled)=>button(field,'clear','<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 8a6 6 0 1 1 1 6M4 3v5h5"/></svg>',false,'reg-clear','Clear status',disabled);
+  const attendance=button('attendance','present','Present',att==='present','reg-green','Present')+button('attendance','late',lateLabel,late,'reg-amber','Cycle late: 5 → 10 → 15 → 20 minutes')+button('attendance','absent','Absent',absent,'reg-red','Absent')+button('attendance','exception','Exception',att==='exception','reg-purple','Approved exception')+clear('attendance',!att);
+  const journal=button('journal','done','Done',jour==='done','reg-green','Done',absent)+button('journal','in_progress','In progress',jour==='in_progress','reg-amber','In progress',absent)+button('journal','not_done','Not done',jour==='not_done','reg-red','Not done',absent)+button('journal','book_report','Book report',jour==='book_report','reg-blue','Book report',absent)+clear('journal',!jour||absent);
+  return '<tr><td class="register-name"><strong data-no-translate>'+esc(r.student_name)+'</strong><small data-no-translate>'+esc(r.korean_name&&r.korean_name!==r.student_name?r.korean_name:'')+'</small>'+(r.historical?'<small>Previous class record</small>':'')+'</td><td><div class="reg-choices" role="group" aria-label="Attendance">'+attendance+'</div></td><td><div class="reg-choices" role="group" aria-label="Journal">'+journal+'</div></td></tr>';
  }
  function render(){
   const list=slots(),slot=activeSlot();dateInput.value=d.date;dateInput.max=todayKST();
@@ -65,7 +73,14 @@ export function mountDailyRegister({root,api,getStudents}){
   content.innerHTML=html;
   $$('[data-slot]').forEach(el=>el.onclick=()=>{d.manual=true;d.slot=Number(el.dataset.slot);render()});
   $('#registerAuto').onclick=()=>{d.manual=false;d.slot=chooseSlot(slots(),localMinute());render()};
-  $$('[data-field]').forEach(el=>el.onchange=()=>{patch(el.dataset.id,el.dataset.class,{[el.dataset.field]:el.value||null});render();scheduleSave()});
+  $$('[data-field]').forEach(el=>el.onclick=()=>{
+   const {id,field,action}=el.dataset,cls=el.dataset.class;
+   const current=d.records.find(r=>r.student_id===id)?.[field]||null;
+   patch(id,cls,{[field]:nextRegisterStatus(field,action,current)});
+   render();scheduleSave();
+   const replacement=$$('[data-field]').find(b=>b.dataset.id===id&&b.dataset.field===field&&b.dataset.action===action);
+   if(replacement&&!replacement.disabled)replacement.focus({preventScroll:true});
+  });
   $$('[data-all-present]').forEach(el=>el.onclick=()=>{for(const r of classRows(getStudents(),d.records,el.dataset.allPresent))if(!r.attendance)patch(r.student_id,r.class_name,{attendance:'present'});render();scheduleSave()});
   $$('[data-all-done]').forEach(el=>el.onclick=()=>{for(const r of classRows(getStudents(),d.records,el.dataset.allDone))if(r.attendance&&r.attendance!=='absent'&&!r.journal)patch(r.student_id,r.class_name,{journal:'done'});render();scheduleSave()});
   syncStatus();

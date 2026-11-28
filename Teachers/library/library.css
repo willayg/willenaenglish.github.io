@@ -154,3 +154,23 @@ dialog:not([open]){display:none!important}
 /* Library Time is one sidebar section with two local views. */
 .library-time-tabs{margin:0 0 18px;padding:0 0 9px;gap:6px}.library-time-tabs button{min-width:98px}.library-time-tabs button[aria-selected=true]{background:var(--accent);color:white}.library-time-tabs button:not([aria-selected=true]){background:#fff;border-color:var(--line)}
 @media(max-width:700px){.library-time-tabs{margin-bottom:12px}.library-time-tabs button{flex:1;min-width:0}}
+
+/* Desktop-first direct register buttons. Unselected choices are neutral. */
+.register-table{min-width:870px;table-layout:fixed}
+.register-table th:first-child{width:18%}.register-table th:nth-child(2),.register-table th:nth-child(3){width:41%}
+.register-table td{padding:8px 6px}
+.reg-choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 27px;gap:4px;align-items:stretch}
+.reg-choice{min-width:0;min-height:43px;padding:6px 3px;border-radius:8px;border:1px solid #e0e7e9;background:#f4f6f7;color:#657b84;font-size:11px;font-weight:600;line-height:1.25;overflow-wrap:anywhere;transition:background .1s,border-color .1s}
+.reg-choice:not(:disabled):hover{background:#e7eef0;border-color:#bccdd1}
+.reg-choice.is-selected{font-weight:700}
+.reg-choice.reg-green.is-selected{background:#dff1e6;color:#25724e;border-color:#80bd9a}
+.reg-choice.reg-amber.is-selected{background:#fff0d0;color:#93661b;border-color:#dcb665}
+.reg-choice.reg-red.is-selected{background:#f9dce0;color:#a44250;border-color:#d79aa6}
+.reg-choice.reg-purple.is-selected{background:#e8e5f5;color:#61518f;border-color:#aaa0cf}
+.reg-choice.reg-blue.is-selected{background:#dcebf7;color:#356e9d;border-color:#91b9da}
+.reg-choice:disabled{opacity:.32;cursor:not-allowed}
+.reg-choice.reg-clear{background:transparent;color:#83969d;border:0;padding:4px;display:grid;place-items:center}
+.reg-clear svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.month-cell[data-state=late_5],.month-cell[data-state=late_10],.month-legend i[data-state=late_5],.month-legend i[data-state=late_10]{background:#fff2d4;color:#997018}
+.month-cell[data-state=late_15],.month-cell[data-state=late_20],.month-legend i[data-state=late_15],.month-legend i[data-state=late_20]{background:#ffe4cb;color:#ab591f}
+@media(min-width:1100px){.reg-choice{font-size:12px;min-height:46px;padding:8px 4px}.reg-choices{gap:6px;grid-template-columns:repeat(4,minmax(0,1fr)) 30px}}

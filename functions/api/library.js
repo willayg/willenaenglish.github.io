@@ -43,7 +43,7 @@ export async function onRequest({request}){try{
  if(Number(request.headers.get('Content-Length')||0)>2000000)fail('Upload too large',413);const raw=await request.text();if(raw.length>2000000)fail('Upload too large',413);let b;try{b=JSON.parse(raw)}catch{fail('Invalid JSON')}
  if(action==='register-save'){
  if(!dateOk(b.date)||!Array.isArray(b.rows)||!b.rows.length||b.rows.length>200)fail('Invalid register batch');
- const seen=new Set(),att=['present','late_5_10','late_10_15','late_15_plus','absent','exception'],jour=['done','in_progress','not_done','book_report'];
+ const seen=new Set(),att=['present','late_5','late_10','late_15','late_20','late_5_10','late_10_15','late_15_plus','absent','exception'],jour=['done','in_progress','not_done','book_report'];
  const rows=b.rows.map(r=>{if(!r||!uuid.test(r.student_id||'')||seen.has(r.student_id))fail('Invalid register row');seen.add(r.student_id);const x={student_id:r.student_id,class_name:str(r.class_name,100)};if(!x.class_name)fail('Invalid register row');for(const [k,values] of [['attendance',att],['journal',jour]])if(Object.hasOwn(r,k)){if(r[k]!==null&&!values.includes(r[k]))fail('Invalid register status');x[k]=r[k]}if(!Object.hasOwn(x,'attendance')&&!Object.hasOwn(x,'journal'))fail('Invalid register row');return x});
  return json(await db(a,'rpc/library_save_register_v1','POST',{p_date:b.date,p_rows:rows}));
  }

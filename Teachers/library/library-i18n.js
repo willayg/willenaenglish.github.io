@@ -1,5 +1,7 @@
 // Library-only EN / 한국어 / bilingual display. Never translate stored values or student names.
 const translations={
+ "Late 5m":"5분 지각","Late 10m":"10분 지각","Late 15m":"15분 지각","Late 20m":"20분 지각","5m":"5분","10m":"10분","15m":"15분","20m":"20분","5–10m":"5~10분","10–15m":"10~15분","15m+":"15분 이상","Exception":"예외","Clear status":"기록 지우기","Cycle late: 5 → 10 → 15 → 20 minutes":"누를 때마다 지각 시간 변경: 5 → 10 → 15 → 20분",
+
  "Expand sidebar":"사이드바 펼치기","Collapse sidebar":"사이드바 접기","Library request timed out. Please retry.":"라이브러리 응답 시간이 초과되었습니다. 다시 시도하세요.",
 
  "Monthly":"월간","Monthly register":"월간 출석부","Attendance and journal history":"출석 및 독서 기록 내역","Register view":"기록 보기","Recorded entries":"기록된 항목","Students":"학생",
