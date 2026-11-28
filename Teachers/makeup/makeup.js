@@ -39,7 +39,7 @@ function renderSelected(){
  $('#selected').textContent=chosen.length?chosen.length+'명 선택됨':'학생을 선택하세요.';
  $('#selectedStudents').innerHTML=chosen.map(s=>'<button type="button" data-remove-student="'+esc(s.id)+'">'+esc(s.name||s.korean_name)+' · '+esc(s.class)+' <span aria-hidden="true">×</span></button>').join('');
  $$('[data-remove-student]').forEach(b=>b.onclick=()=>{S.selected.delete(b.dataset.removeStudent);renderStudents()});
- $('#save').textContent=chosen.length>1?chosen.length+'명 저장':'저장';
+ $('#save').textContent=chosen.length?chosen.length+'명 저장':'저장';$('#save').disabled=S.busy||!chosen.length;
 }
 function priorAbsence(s){return S.records.find(r=>r.student_id===s.id&&r.class_name===s.class&&r.missed_date===$('#missed').value)}
 function selectable(s){const old=priorAbsence(s);return !old||(old.status==='pending'&&S.editStatus==='scheduled')}
@@ -51,7 +51,7 @@ function renderStudents(){
  const rows=visibleStudents(),eligible=rows.filter(selectable),all=eligible.length>0&&eligible.every(s=>S.selected.has(s.id));
  $('#pickCount').textContent=rows.length+'명';
  $('#selectClass').disabled=!eligible.length;
- $('#selectClass').textContent=all?'표시된 학생 선택 해제':'표시된 학생 모두 선택';
+ $('#selectClass').textContent=all?'전체 선택 해제':S.pickClass&&!$('#studentSearch').value.trim()?S.pickClass+' 전체 선택':'표시된 학생 모두 선택';
  $('#students').innerHTML=rows.length?rows.map(s=>{
  const picked=S.selected.has(s.id),old=priorAbsence(s),allowed=selectable(s);
  return '<button type="button" data-student="'+esc(s.id)+'" aria-pressed="'+picked+'" '+(!allowed?'disabled':'')+'><span><span class="student-check" aria-hidden="true">'+(picked?'✓':'')+'</span>'+esc(person(s))+'</span><small>'+esc(old?(old.status==='pending'&&allowed?'미정 · 예약 가능':'등록됨 · '+labels[old.status]):s.class)+'</small></button>'
@@ -66,7 +66,7 @@ function open(record=null,booking=false){
  S.editing=record;S.selected.clear();S.pickClass=S.cls||'';$('#editorTitle').textContent=record?'보강 수정':booking?'보강 예약':'결석 등록';$('#pick').hidden=!!record;$('#selectedStudents').hidden=!!record;$('#studentSearch').value='';$('#selected').textContent=record?person(record)+' · '+record.class_name:'';
  $('#missed').disabled=!!record;$('#missed').max=today();$('#missed').value=record?.missed_date||today();$('#makeupDate').value=record?.makeup_date|| (booking?today():'');$('#makeupTime').value=record?.makeup_time?.slice(0,5)||'';$('#notes').value=record?.notes||'';$('#reason').value=record?.absence_reason||'';
  editTeacher(record?.teacher_id||'');
- editType(record?.makeup_type||'regular');editStatus(record?.status||(booking?'scheduled':'pending'));msg('#editMessage');if(!record)renderStudents();else $('#save').textContent='저장';$('#editor').showModal();
+ editType(record?.makeup_type||'regular');editStatus(record?.status||(booking?'scheduled':'pending'));msg('#editMessage');$('#editor').classList.toggle('editing-single',!!record);if(!record)renderStudents();else{$('#save').textContent='저장';$('#save').disabled=false}$('#editor').showModal();
 }
 function setRecord(r){if(!r)throw Error('Save returned no record');const i=S.records.findIndex(x=>x.id===r.id);if(i<0)S.records.push(r);else S.records[i]=r;render()}
 async function complete(r,b){if(S.busy||!r)return;S.busy=true;b.disabled=true;msg('#message');try{const data=await api('update',{id:r.id,updated_at:r.updated_at,status:'completed',makeup_date:r.makeup_date,makeup_time:r.makeup_time,notes:r.notes,makeup_type:r.makeup_type,teacher_id:r.teacher_id,absence_reason:r.absence_reason});setRecord(data.record)}catch(e){msg('#message',e.message)}finally{S.busy=false;b.disabled=false}}
@@ -75,11 +75,11 @@ $('#form').onsubmit=async e=>{
  if(!r&&!S.selected.size){msg('#editMessage','학생을 선택하세요.');return}
  if(S.selected.size>150){msg('#editMessage','한 번에 최대 150명을 선택할 수 있습니다.');return}
  const b={status:S.editStatus,makeup_type:S.editType,teacher_id:S.editTeacher||null,absence_reason:$('#reason').value,makeup_date:$('#makeupDate').value,makeup_time:$('#makeupTime').value,notes:$('#notes').value,...(r?{id:r.id,updated_at:r.updated_at}:{student_ids:[...S.selected],missed_date:$('#missed').value})};
- S.busy=true;$('#save').disabled=true;msg('#editMessage');
+ S.busy=true;$('#save').disabled=true;$('#form').classList.add('saving');msg('#editMessage');
  try{const data=await api(r?'update':'create-batch',b);
   const records=r?[data.record]:data.records;if(!Array.isArray(records)||records.length!==(r?1:b.student_ids.length)||records.some(x=>!x))throw Error('저장 결과를 확인할 수 없습니다.');
   for(const rec of records){const i=S.records.findIndex(x=>x.id===rec.id);if(i<0)S.records.push(rec);else S.records[i]=rec}S.status=b.status==='scheduled'?'scheduled':b.status==='pending'?'pending':b.status;S.cls='';$('#search').value='';render();$('#editor').close();
- }catch(e){msg('#editMessage',e.message)}finally{S.busy=false;$('#save').disabled=false}
+ }catch(e){msg('#editMessage',e.message)}finally{S.busy=false;$('#form').classList.remove('saving');$('#save').disabled=!S.editing&&!S.selected.size}
 };
 $('#clearSelected').onclick=()=>{S.selected.clear();renderStudents()};
 $('#selectClass').onclick=()=>{const rows=visibleStudents().filter(selectable),all=rows.every(s=>S.selected.has(s.id));for(const s of rows){if(all)S.selected.delete(s.id);else S.selected.add(s.id)}renderStudents()};
