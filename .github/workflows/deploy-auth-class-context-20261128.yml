@@ -1,0 +1,38 @@
+name: Deploy Auth Class Context Repair
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-auth-class-context-20261128.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: deploy-supabase-auth
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0ccf065f978befdd90b7270184f155073988a0b1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax check
+        run: node --input-type=module --check < cloudflare-workers/supabase-auth/src/index.js
+      - name: Deploy authentication Worker
+        working-directory: cloudflare-workers/supabase-auth
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Verify anonymous identity is rejected
+        run: |
+          base=https://supabase-auth.willena.workers.dev/
+          code=$(curl -sS -o /dev/null -w '%{http_code}' "$base?action=whoami")
+          test "$code" = 401
+          code=$(curl -sS -o /dev/null -w '%{http_code}' "$base?action=get_profile")
+          test "$code" = 401
