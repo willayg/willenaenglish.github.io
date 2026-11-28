@@ -237,28 +237,6 @@ export default {
         }, 200, origin);
       }
       
-      // ===== WHOAMI (verify cookie session and return user basics) =====
-      if (action === 'whoami' && request.method === 'GET') {
-        const cookieHeader = request.headers.get('Cookie') || '';
-        const cookies = parseCookies(cookieHeader);
-        const token = cookies['sb_access'];
-        
-        if (!token) {
-          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
-        }
-        
-        const user = await verifyToken(env, token);
-        if (!user) {
-          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
-        }
-        
-        return jsonResponse({
-          success: true,
-          user_id: user.id,
-          email: user.email,
-        }, 200, origin);
-      }
-      
       // ===== GET EMAIL BY USERNAME =====
       if (action === 'get_email_by_username') {
         const username = url.searchParams.get('username');
@@ -378,41 +356,20 @@ export default {
         return jsonResponse({ success: true, profile_id: data[0].id }, 200, origin);
       }
       
-      // ===== WHOAMI =====
+      // ===== WHOAMI: verified identity and class context =====
       if (action === 'whoami' && request.method === 'GET') {
-        // Support multiple token sources:
-        // 1. Cookie (production)
-        // 2. Authorization header (API calls)
-        // 3. Query param (local dev fallback when cookies don't work cross-origin)
-        const cookieHeader = request.headers.get('Cookie') || '';
-        const cookies = parseCookies(cookieHeader);
-        const authHeader = request.headers.get('Authorization') || '';
-        const tokenFromQuery = url.searchParams.get('token');
-        
-        let token = cookies['sb_access'];
-        if (!token && authHeader.startsWith('Bearer ')) {
-          token = authHeader.slice(7);
-        }
-        if (!token && tokenFromQuery) {
-          token = tokenFromQuery;
-        }
-        
-        if (!token) {
-          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
-        }
-        
-        const user = await verifyToken(env, token);
-        if (!user) {
-          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
-        }
-        
-        return jsonResponse({
-          success: true,
-          user_id: user.id,
-          email: user.email,
-        }, 200, origin);
+        const cookies = parseCookies(request.headers.get('Cookie') || '');
+        const bearer = (request.headers.get('Authorization') || '').match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+        let user = await verifyToken(env, cookies['sb_access'] || bearer);
+        if (!user?.id && bearer && bearer !== cookies['sb_access']) user = await verifyToken(env, bearer);
+        if (!user?.id) return jsonResponse({ success:false, error:'Not signed in' },401,origin);
+        const profile = await fetchProfile(env,user.id,'id,name,username,avatar,class,role,approved');
+        if (profile?.approved !== true) return jsonResponse({success:false,error:'Approved account required'},403,origin);
+        return jsonResponse({success:true,user_id:user.id,email:user.email,
+          name:profile.name,username:profile.username,avatar:profile.avatar,
+          class:profile.class,role:profile.role,approved:true},200,origin);
       }
-      
+
       // ===== GET PROFILE NAME =====
       if (action === 'get_profile_name' && request.method === 'GET') {
         // Support multiple token sources (same as whoami)
