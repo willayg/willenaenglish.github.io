@@ -1,5 +1,8 @@
 // Library-only EN / 한국어 / bilingual display. Never translate stored values or student names.
 const translations={
+ "Past date · Check enrolment changes.":"이전 날짜 · 반 변경 여부를 확인하세요.",
+ "Past dates show the current class roster plus any previously saved records. Check enrolment changes before editing.":"이전 날짜에는 현재 반 명단과 저장된 이전 기록이 표시됩니다. 수정 전 반 변경 여부를 확인하세요.",
+
  "Late 5m":"5분 지각","Late 10m":"10분 지각","Late 15m":"15분 지각","Late 20m":"20분 지각","5m":"5분","10m":"10분","15m":"15분","20m":"20분","5–10m":"5~10분","10–15m":"10~15분","15m+":"15분 이상","Exception":"예외","Clear status":"기록 지우기","Cycle late: 5 → 10 → 15 → 20 minutes":"누를 때마다 지각 시간 변경: 5 → 10 → 15 → 20분",
 
  "Expand sidebar":"사이드바 펼치기","Collapse sidebar":"사이드바 접기","Library request timed out. Please retry.":"라이브러리 응답 시간이 초과되었습니다. 다시 시도하세요.",

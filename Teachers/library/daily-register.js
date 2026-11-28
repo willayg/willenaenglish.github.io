@@ -53,33 +53,39 @@ export function mountDailyRegister({root,api,getStudents}){
   return '<tr><td class="register-name"><strong data-no-translate>'+esc(r.student_name)+'</strong><small data-no-translate>'+esc(r.korean_name&&r.korean_name!==r.student_name?r.korean_name:'')+'</small>'+(r.historical?'<small>Previous class record</small>':'')+'</td><td><div class="reg-choices" role="group" aria-label="Attendance">'+attendance+'</div></td><td><div class="reg-choices" role="group" aria-label="Journal">'+journal+'</div></td></tr>';
  }
  function render(){
+  const scrollPositions=new Map($$('[data-register-scroll]').map(el=>[el.dataset.registerScroll,el.scrollLeft]));
   const list=slots(),slot=activeSlot();dateInput.value=d.date;dateInput.max=todayKST();
   $('#registerPrev').disabled=d.loading;$('#registerToday').disabled=d.loading;$('#registerNext').disabled=d.loading||d.date>=todayKST();
   if(d.loading){content.innerHTML='<div class="empty">Loading register…</div>';syncStatus();return}
   if(!d.loaded){content.innerHTML='<div class="empty">Could not load the register.</div><button class="secondary" id="registerReload">Reload register</button>';$('#registerReload').onclick=()=>loadDate(d.date);syncStatus();return}
   if(!list.length){content.innerHTML='<section class="panel register-weekend"><h2>No scheduled Library Time</h2><p class="muted">Choose a school day to view the register.</p><button class="secondary" id="previousSchoolDay">Previous school day</button></section>';$('#previousSchoolDay').onclick=()=>changeDate(previousSchoolDay(d.date,d.schedule));syncStatus();return}
   const current=d.date===todayKST()?list.find(s=>localMinute()>=s.start&&localMinute()<s.end):null;
-  let html='<div class="register-slots" role="group" aria-label="Library time slots">'+list.map(s=>{const count=s.classes.reduce((n,c)=>n+classRows(getStudents(),d.records,c).filter(r=>!!r.attendance).length,0),total=s.classes.reduce((n,c)=>n+classRows(getStudents(),d.records,c).length,0);return '<button type="button" class="slot-button '+(s.start===d.slot?'selected':'')+'" data-slot="'+s.start+'" aria-pressed="'+(s.start===d.slot)+'"><strong data-no-translate>'+timeLabel(s.start)+'</strong><small data-no-translate>'+s.classes.length+' · '+(count+'/'+total)+'</small>'+(current?.start===s.start?'<span>Now</span>':'')+'</button>'}).join('')+'</div>';
+  let html='<div class="register-slots" role="group" aria-label="Library time slots">'+list.map(s=>'<button type="button" class="slot-button '+(s.start===d.slot?'selected':'')+(current?.start===s.start?' is-current':'')+'" data-slot="'+s.start+'" aria-pressed="'+(s.start===d.slot)+'" title="'+esc(s.classes.join(' / '))+'"><strong data-no-translate>'+timeLabel(s.start)+'</strong></button>').join('')+'</div>';
   if(!slot){content.innerHTML=html;syncStatus();return}
   const groups=slot.classes.map(cls=>({cls,rows:classRows(getStudents(),d.records,cls)})),rows=groups.flatMap(g=>g.rows);
   const count=value=>rows.filter(r=>value(r)).length;
-  const metrics=[['Present',count(r=>r.attendance==='present')],['Late',count(r=>r.attendance?.startsWith('late_'))],['Absent',count(r=>r.attendance==='absent')],['Approved exception',count(r=>r.attendance==='exception')],['Not marked',count(r=>!r.attendance)]];
-  if(d.date!==todayKST())html+='<div class="notice">Past dates show the current class roster plus any previously saved records. Check enrolment changes before editing.</div>';
-  html+='<div class="register-session-title"><div><h2 data-no-translate>'+timeLabel(slot.start)+'–'+timeLabel(slot.end)+'</h2><p class="muted">20-minute Library Time</p></div><button class="secondary" id="registerAuto" type="button">Follow current time</button></div><div class="register-metrics">'+metrics.map(([l,n])=>'<div class="metric"><span class="muted">'+l+'</span><strong>'+n+'</strong></div>').join('')+'</div>';
+  const metrics=[['Present',count(r=>r.attendance==='present')],['Late',count(r=>r.attendance?.startsWith('late_'))],['Absent',count(r=>r.attendance==='absent')],['Exception',count(r=>r.attendance==='exception')],['Not marked',count(r=>!r.attendance)]];
+  if(d.date!==todayKST())html+='<p class="register-past muted" title="Past dates show the current class roster plus any previously saved records. Check enrolment changes before editing.">Past date · Check enrolment changes.</p>';
+  html+='<div class="register-session-title"><div><h2 data-no-translate>'+timeLabel(slot.start)+'–'+timeLabel(slot.end)+'</h2></div><button class="secondary" id="registerAuto" type="button">Follow current time</button></div><div class="register-metrics">'+metrics.map(([l,n])=>'<div class="metric"><span>'+l+'</span><strong>'+n+'</strong></div>').join('')+'</div>';
   for(const g of groups){
    const eligibleRows=g.rows.filter(r=>r.attendance&&r.attendance!=='absent'),completed=eligibleRows.filter(r=>r.journal==='done'||r.journal==='book_report').length,eligible=eligibleRows.length;
-   html+='<section class="panel register-class"><div class="panel-head"><div><h2 data-no-translate>'+esc(g.cls)+'</h2><p class="muted">'+g.rows.length+' students</p></div><div class="register-bulk"><button type="button" class="secondary" data-all-present="'+esc(g.cls)+'" '+(!g.rows.some(r=>!r.attendance)?'disabled':'')+'>Mark unmarked present</button><button type="button" class="secondary" data-all-done="'+esc(g.cls)+'" '+(!g.rows.some(r=>r.attendance&&r.attendance!=='absent'&&!r.journal)?'disabled':'')+'>Mark journals done</button></div></div><div class="register-progress"><span>Journal completion</span><strong>'+completed+'/'+eligible+'</strong></div><div class="register-track"><div style="width:'+Math.min(100,eligible?completed/eligible*100:0)+'%"></div></div>'+(g.rows.length?'<div class="table-wrap"><table class="register-table"><thead><tr><th>Student</th><th>Attendance</th><th>Journal</th></tr></thead><tbody>'+g.rows.map(rowMarkup).join('')+'</tbody></table></div>':'<div class="empty">No students in this class.</div>')+'</section>';
+   html+='<section class="panel register-class"><div class="panel-head"><div><h2 data-no-translate>'+esc(g.cls)+'</h2><p class="muted">'+g.rows.length+' students</p></div><div class="register-bulk"><button type="button" class="secondary" data-all-present="'+esc(g.cls)+'" '+(!g.rows.some(r=>!r.attendance)?'disabled':'')+'>Mark unmarked present</button><button type="button" class="secondary" data-all-done="'+esc(g.cls)+'" '+(!g.rows.some(r=>r.attendance&&r.attendance!=='absent'&&!r.journal)?'disabled':'')+'>Mark journals done</button></div></div><div class="register-progress"><span>Journal completion</span><strong>'+completed+'/'+eligible+'</strong></div><div class="register-track"><div style="width:'+Math.min(100,eligible?completed/eligible*100:0)+'%"></div></div>'+(g.rows.length?'<div class="table-wrap register-table-scroll" data-register-scroll="'+esc(g.cls)+'"><table class="register-table"><thead><tr><th>Student</th><th>Attendance</th><th>Journal</th></tr></thead><tbody>'+g.rows.map(rowMarkup).join('')+'</tbody></table></div>':'<div class="empty">No students in this class.</div>')+'</section>';
   }
   content.innerHTML=html;
+  const restoreScroll=()=>$$('[data-register-scroll]').forEach(el=>{if(scrollPositions.has(el.dataset.registerScroll))el.scrollLeft=scrollPositions.get(el.dataset.registerScroll)});
+  restoreScroll();
   $$('[data-slot]').forEach(el=>el.onclick=()=>{d.manual=true;d.slot=Number(el.dataset.slot);render()});
   $('#registerAuto').onclick=()=>{d.manual=false;d.slot=chooseSlot(slots(),localMinute());render()};
   $$('[data-field]').forEach(el=>el.onclick=()=>{
    const {id,field,action}=el.dataset,cls=el.dataset.class;
    const current=d.records.find(r=>r.student_id===id)?.[field]||null;
    patch(id,cls,{[field]:nextRegisterStatus(field,action,current)});
+   const left=new Map($$('[data-register-scroll]').map(el=>[el.dataset.registerScroll,el.scrollLeft]));
    render();scheduleSave();
    const replacement=$$('[data-field]').find(b=>b.dataset.id===id&&b.dataset.field===field&&b.dataset.action===action);
    if(replacement&&!replacement.disabled)replacement.focus({preventScroll:true});
+   // Some browsers still scroll focused controls; restore each class independently.
+   $$('[data-register-scroll]').forEach(el=>{if(left.has(el.dataset.registerScroll))el.scrollLeft=left.get(el.dataset.registerScroll)});
   });
   $$('[data-all-present]').forEach(el=>el.onclick=()=>{for(const r of classRows(getStudents(),d.records,el.dataset.allPresent))if(!r.attendance)patch(r.student_id,r.class_name,{attendance:'present'});render();scheduleSave()});
   $$('[data-all-done]').forEach(el=>el.onclick=()=>{for(const r of classRows(getStudents(),d.records,el.dataset.allDone))if(r.attendance&&r.attendance!=='absent'&&!r.journal)patch(r.student_id,r.class_name,{journal:'done'});render();scheduleSave()});

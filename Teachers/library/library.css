@@ -177,3 +177,36 @@ dialog:not([open]){display:none!important}
 
 /* Full Korean button labels, using the available desktop width. */
 .register-table{min-width:900px}.reg-choice{font-size:13px;word-break:keep-all;overflow-wrap:normal;padding:7px 4px;min-height:44px}.reg-choice>span{display:block}.reg-choice.reg-clear{padding:4px}.reg-choice.reg-clear>span{display:grid;place-items:center}.reg-choice.reg-amber>span{white-space:normal}@media(min-width:1100px){.reg-choice{font-size:14px;min-height:46px}}
+
+/* Compact Library Time toolbar: keep attention on the student rows. */
+.library-time-tabs{margin:0 0 9px;padding:0 0 6px;gap:5px}
+.library-time-tabs button{min-width:82px;min-height:34px;padding:6px 14px;font-size:12px}
+.register-top{margin:0 0 2px;gap:8px;align-items:center}
+.register-top h1{font-size:21px;line-height:1.25;letter-spacing:-.025em}
+.register-date-controls{align-items:center;gap:5px}
+.register-date-controls button,.register-date-controls input{min-height:34px;padding:5px 9px;font-size:12px;border-radius:7px}
+.register-date-controls .date-arrow{font-size:18px;padding:3px 10px;min-width:32px}
+.register-date-controls input{max-width:145px}
+.register-savebar{min-height:16px;margin:3px 0;gap:6px}
+#registerStatus{font-size:10px;line-height:1.3}
+#registerSave{min-height:30px;padding:4px 9px;font-size:11px}
+.register-slots{grid-template-columns:repeat(auto-fit,minmax(53px,1fr));gap:5px;margin:7px 0 8px}
+.slot-button{min-height:35px;height:35px;padding:5px 3px;gap:0;border-radius:7px}
+.slot-button strong{font-size:12px;line-height:1.2}
+.slot-button.is-current:not(.selected){border-color:#237f89;box-shadow:inset 0 -2px #237f89}
+.register-past{font-size:10px;margin:2px 0 6px;line-height:1.35}
+.register-session-title{margin:5px 0 6px;gap:6px}
+.register-session-title h2{font-size:15px}
+#registerAuto{min-height:30px;padding:4px 10px;font-size:11px;border-radius:7px}
+.register-metrics{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:5px 0 10px}
+.register-metrics .metric{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:7px 9px;border-radius:7px;min-width:0}
+.register-metrics .metric span{font-size:11px;color:#637d85;line-height:1.2;overflow-wrap:anywhere}
+.register-metrics .metric strong{font-size:17px;margin:0;line-height:1.2;flex-shrink:0}
+.register-class{padding:13px;margin-bottom:10px}
+.register-class .panel-head{margin-bottom:6px}
+.register-class .panel-head h2{font-size:16px}
+.register-class .panel-head .muted{font-size:11px}
+.register-bulk button{min-height:33px;padding:5px 10px;font-size:11px}
+.register-track{height:4px;margin:4px 0 8px}
+.register-table-scroll{overflow-anchor:none;overscroll-behavior-x:contain}
+@media(max-width:600px){.library-time-tabs button{min-width:0}.register-top h1{font-size:19px}.register-date-controls{width:auto;flex-wrap:nowrap}.register-date-controls input{max-width:135px;width:auto}.register-slots{grid-template-columns:repeat(5,minmax(0,1fr))}.register-metrics{grid-template-columns:repeat(5,minmax(0,1fr))}.register-metrics .metric{padding:5px;flex-direction:column;align-items:center;gap:3px}.register-metrics .metric span{font-size:10px;text-align:center}.register-metrics .metric strong{font-size:16px}.register-class{padding:9px}}

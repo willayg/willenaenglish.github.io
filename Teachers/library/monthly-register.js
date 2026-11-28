@@ -1,4 +1,4 @@
-import {todayKST,dayOfWeek,ATTENDANCE,JOURNAL} from './daily-register.js?v=4';
+import {todayKST,dayOfWeek,ATTENDANCE,JOURNAL} from './daily-register.js?v=5';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const A={'present':'✓','late_5':'5m','late_10':'10m','late_15':'15m','late_20':'20m','late_5_10':'L','late_10_15':'LL','late_15_plus':'LLL','absent':'ㅡ','exception':'EX'};
 const J={'done':'O','in_progress':'ING','not_done':'X','book_report':'BR'};
