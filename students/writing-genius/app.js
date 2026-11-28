@@ -1,7 +1,8 @@
+import {writingReadiness,writingReadinessError} from './writing-readiness.js?v=20261128-word-energy1';
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
-import {createDiaryFlow} from './diary-flow.js?v=20261127-review-accuracy4';
+import {createDiaryFlow} from './diary-flow.js?v=20261128-word-energy1';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {installWillenaKeyboard,hideWillenaKeyboard} from '/students/shared/willena-keyboard.js?v=20261127-final-fast2';
 import {createSentencePractice} from './sentence-practice.js?v=20261104-unit-tab-label1';
@@ -826,9 +827,9 @@ function diaryStatus(message='',error=false){
 async function reviewDiary(){
  if(diaryBusy||!state.active||state.active.kind!=='diary')return;
  diaryStatus('');
- const lines=fullDiarySentences($('wgBody').value);
- if(lines.length<6||lines.length>30||lines.some(line=>wordCount(line)<2)){
-  diaryStatus('6~30개의 완성된 영어 문장을 써 주세요. 각 문장에 마침표, 물음표 또는 느낌표가 필요해요.',true);
+ const readiness=writingReadiness(state.active,$('wgBody').value);
+ if(!readiness.ready){
+  diaryStatus(writingReadinessError(readiness),true);
   $('wgDiaryReviewStatus').scrollIntoView({block:'nearest'});
   $('wgBody').focus();return;
  }

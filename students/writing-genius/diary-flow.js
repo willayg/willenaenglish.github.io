@@ -1,3 +1,4 @@
+import {MAX_WRITING_CHARS,splitWritingSentences,writingPracticeLines,writingReadiness,writingReadinessError,writingGoal} from './writing-readiness.js?v=20261128-word-energy1';
 import {playStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
 import {AI_WILLY_HEAD_SVG} from '/students/free-talking-genius/willy-svg.js';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
@@ -122,29 +123,6 @@ function markEditableDifferences(input,expected){
  controller.refresh(true);
 }
 const legacySplit=s=>(String(s||'').match(/[^.!?\n]+[.!?]+(?=\s|$)/g)||[]).map(x=>x.trim()).filter(x=>/[a-z]/i.test(x));
-function splitWritingSentences(value){
- const text=String(value||'').replace(/\r\n?/g,'\n');
- const out=[];let start=0;
- const emit=end=>{const line=text.slice(start,end).trim();if(/[a-z]/i.test(line))out.push(line)};
- for(let i=0;i<text.length;i++){
-  const ch=text[i];
-  if(ch==='\n'){emit(i);start=i+1;continue}
-  if(!'.!?'.includes(ch))continue;
-  if(ch==='.'&&/\d/.test(text[i-1]||'')&&/\d/.test(text[i+1]||''))continue;
-  let end=i+1;
-  while(end<text.length&&/[.!?]/.test(text[end]))end++;
-  while(end<text.length&&/["'”’)\]]/.test(text[end]))end++;
-  if(end<text.length&&!/\s/.test(text[end]))continue;
-  if(ch==='.'&&end===i+1){
-   const tail=text.slice(start,i+1);
-   const following=text.slice(end).match(/^[ \t]+([A-Za-z])/);
-   if(following&&(/\b(?:Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)\.$/i.test(tail)||/\b[A-Z]\.$/.test(tail)))continue;
-   if(following&&/[a-z]/.test(following[1])&&/\b(?:a\.m|p\.m|e\.g|i\.e|etc)\.$/i.test(tail))continue;
-  }
-  emit(end);start=end;i=end-1;
- }
- emit(text.length);return out;
-}
 const split=splitWritingSentences;
 // Speech transcripts write times differently from lesson text (11am vs 11:00 a.m.).
 // Canonicalize common clock readings before word-level edit-distance scoring.
@@ -324,7 +302,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    else titleInput.value=current.title||'';
    guide.textContent=assigned?(current.prompt_text||'선생님의 글쓰기 안내를 확인하세요.'):(active?active.guide:'Write about anything you like. What happened? How did you feel?');
    const example=active||ideas[0];
-   exampleTitle.textContent=example.en||example.title;exampleText.textContent=example.example||'Write at least 8 sentences about this topic. Introduce the idea, develop it with details, and finish clearly.';
+   exampleTitle.textContent=example.en||example.title;exampleText.textContent=example.example||('Aim for '+writingGoal(current.kind)+' words. Introduce the idea, develop it with details, and finish clearly.');
    [...menu.querySelectorAll('[data-topic-index]')].forEach(btn=>btn.classList.toggle('is-selected',btn.dataset.topicIndex===String(active?ideas.indexOf(active):-1)));
   }
   const closeMenu=()=>{menu.hidden=true;choose.setAttribute('aria-expanded','false')};
@@ -369,18 +347,41 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   render();
   button('다음',async()=>{if(!current.title.trim()){status('제목을 써 주세요.',true);return}try{await persist();write()}catch(e){status(e.message,true)}},true);
  }
+ function writingEnergy(entry){
+  const wrap=el('div','df-word-energy');
+  const header=el('div','df-word-energy-header');
+  const label=el('span','df-word-energy-title','글쓰기 에너지');
+  const count=el('span','df-word-energy-count');
+  const meter=el('progress','df-word-energy-meter');
+  meter.setAttribute('aria-label','글쓰기 에너지');
+  const hint=el('p','df-word-energy-hint');
+  hint.setAttribute('aria-live','polite');
+  header.append(label,count);wrap.append(header,meter,hint);
+  return {wrap,update(value){
+   const result=writingReadiness(entry,value);
+   const {count:n,goal,ready,legacy,tooLong}=result;
+   count.textContent=n+' / '+goal+' 단어';
+   meter.max=goal;meter.value=Math.min(n,goal);
+   wrap.classList.toggle('is-ready',ready);
+   const message=tooLong?'글이 너무 길어요. 내용을 조금 줄여 주세요.'
+     :ready?(legacy&&n<goal?'이전에 저장한 글로 계속할 수 있어요.':'AI Willi에게 보여 줄 준비 완료!')
+     :('목표: 영어 단어 '+goal+'개');
+   if(hint.textContent!==message)hint.textContent=message;
+   return result;
+  }};
+ }
  function write(){
   screen('write','2 · Write');
-  const count=el('span','df-count');const area=el('textarea','df-textarea');area.value=current.body||'';area.placeholder=current.kind==='topic'?'Write at least 8 sentences. Use paragraphs for the beginning, middle and ending.':'Write 6–30 complete sentences.';area.maxLength=12000;
+  const energy=writingEnergy(current);const area=el('textarea','df-textarea');area.value=current.body||'';area.placeholder='Aim for '+writingGoal(current.kind)+' words. Focus on your ideas first.';area.maxLength=MAX_WRITING_CHARS;
   if(current.kind==='topic'){const guide=el('p','df-topic-write-guide','Beginning: introduce your idea or characters. Middle: develop the story or explain with details. Ending: finish clearly. Start a new paragraph for each part.');stage.append(guide)}
   if(/^homework-/.test(current.prompt_key||'')){const note=el('section','df-assigned-instructions');note.style.cssText='white-space:pre-wrap;margin:12px 0;padding:14px;border:1px solid #b7e8ed;border-radius:12px;background:#f3fcfd;color:#244a54';note.append(el('strong','','선생님 안내 · Teacher instructions'),el('p','',current.prompt_text||'선생님이 지정한 주제로 글을 쓰세요.'));stage.prepend(note)}
-   function update(){current.body=area.value;const n=split(area.value).length;count.textContent=n+' sentences';count.classList.toggle('is-invalid',n<(current.kind==='topic'?8:6)||n>30)}
+   function update(){current.body=area.value;energy.update(area.value)}
   captureDraft=()=>{current.body=area.value};
-  area.addEventListener('input',()=>{update();clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{void persist().catch(e=>status(e.message,true))},1800)});update();stage.append(area,count);
+  area.addEventListener('input',()=>{update();clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{void persist().catch(e=>status(e.message,true))},1800)});update();stage.append(area,energy.wrap);
   button('이전',topic);
   button('저장',async()=>{if(busy)return;busy=true;try{await persist();status('임시 저장됨 ✓')}catch(e){status(e.message,true)}finally{busy=false}});
   button('AI Willi 확인',async()=>{
-   const count=split(current.body).length;if(count<(current.kind==='topic'?8:6)||count>30){status(current.kind==='topic'?'완성된 영어 문장을 8–30개 작성해 주세요.':'완성된 영어 문장 6–30개 작성해 주세요.',true);return}
+   const readiness=energy.update(current.body);if(!readiness.ready){status(writingReadinessError(readiness),true);return}
    if(busy)return;busy=true;
    reviewLoading();
    try{await persist();feedback=await review(current);finalDraftText='';summary()}
@@ -542,13 +543,13 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     sections=[lines.slice(0,start).join(' '),lines.slice(start,end).join(' '),lines.slice(end).join(' ')];
   }
   const correctedSection=text=>split(text).map(line=>correctedLine(line).text).join(' ');
-  const fields=[];const counter=el('p','df-count');
+  const fields=[];const energy=writingEnergy(current);
   const initial=sections.map(correctedSection);
   const cacheKey='wg:topic:draft2:'+current.id+':'+String(feedback.review_round||1);
   try{const saved=JSON.parse(localStorage.getItem(cacheKey)||'null');if(Array.isArray(saved)&&saved.length===3&&saved.every(x=>typeof x==='string'))sections=saved;else sections=initial}catch{sections=initial}
   const allText=()=>fields.map(x=>x.value.trim()).filter(Boolean).join('\n\n');
   captureDraft=()=>{current.body=allText()};
-  function update(){const n=split(allText()).length;counter.textContent=n+' sentences';counter.classList.toggle('is-invalid',n<8||n>30);try{localStorage.setItem(cacheKey,JSON.stringify(fields.map(x=>x.value)))}catch{}}
+  function update(){energy.update(allText());try{localStorage.setItem(cacheKey,JSON.stringify(fields.map(x=>x.value)))}catch{}}
   roles.forEach((role,i)=>{
     const advice=structure[role]||{};
     const box=el('section','df-revision-section'+(advice.needs_work?' needs-work':''));
@@ -586,12 +587,12 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    }
    stage.append(box);
   }
-  stage.append(counter);update();
+  stage.append(energy.wrap);update();
   button('이전',summary);
   button('임시 저장',async()=>{if(busy)return;busy=true;try{current.body=allText();await persist();status('임시 저장됨 ✓')}catch(e){status(e.message,true)}finally{busy=false}});
   button('Final AI Review · 마지막 확인',async()=>{
-    const body=allText(),n=split(body).length;
-    if(n<8||n>30){status('8–30개의 완성된 문장이 필요해요.',true);return}
+    const body=allText(),readiness=energy.update(body);
+    if(!readiness.ready){status(writingReadinessError(readiness),true);return}
     if(busy)return;busy=true;
     try{
       current.body=body;await persist();reviewLoading();
@@ -719,11 +720,13 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   stage.append(el('p','df-muted','수정한 글을 전체로 확인하고, 필요한 부분은 직접 고치세요.'));
   const area=el('textarea','df-textarea df-final-passage');
   area.dataset.willenaTextEntry='writing';area.dataset.inputLanguage='en';
-  const assembled=finalLines.join(' ');
+  const assembled=finalLines.join('\n');
   area.value=finalDraftText||assembled;
-  area.maxLength=12000;stage.append(area);
+  const energy=writingEnergy(current);
+  area.maxLength=MAX_WRITING_CHARS;stage.append(area,energy.wrap);
+  energy.update(area.value);
   captureDraft=null;
-  area.addEventListener('input',()=>{finalDraftText=area.value});
+  area.addEventListener('input',()=>{finalDraftText=area.value;energy.update(area.value)});
   button('이전',expressionPage).classList.add('df-skip-action');
   if(current.kind==='topic'&&Number(feedback?.review_round||1)<2){
    button('두 번째 AI 검토 (선택)',()=>{finalDraftText=area.value;secondDraft()}).classList.add('df-second-review-button');
@@ -731,13 +734,13 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   button('최종 글 확인',async()=>{
    if(busy)return;
    const polished=area.value.trim();
-   const n=split(polished).length;
-   if(n<(current.kind==='topic'?8:6)||n>30){status('완성된 문장을 '+(current.kind==='topic'?'8':'6')+'~30개 입력해 주세요.',true);return}
+   const readiness=energy.update(polished);
+   if(!readiness.ready){status(writingReadinessError(readiness),true);return}
    busy=true;status('최종 글을 저장하고 있어요…');
    try{
     const saved=await finalizeDraft(current,polished);
     current.body=saved.body||polished;
-    finalDraftText=current.body;finalLines=split(current.body);
+    finalDraftText=current.body;finalLines=writingPracticeLines(current.body);
     current._speechSaved=false;
     spoken=[];typedUsed=false;speechSkipped=false;
     finalPractice();
@@ -853,8 +856,10 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   // Retain the original teleprompter presentation for the final full-passage activity.
   // This is one reading, not a second per-sentence exercise.
   const reference=el('div','df-final-script df-final-teleprompter');
+  reference.setAttribute('role','region');
   reference.setAttribute('aria-label','최종 글 텔레프롬프터');
-  const scriptLines=split(current.body);
+  const scriptLines=writingPracticeLines(current.body);
+  const lineWord=scriptLines.length===split(current.body).length?'문장':'줄';
   const lineNodes=scriptLines.map((line,i)=>{
    const p=el('p','df-final-tele-line'+(i===0?' is-current':''),line);
    reference.append(p);return p;
@@ -869,7 +874,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
     node.classList.toggle('is-complete',i<speechLineIndex);
     node.classList.toggle('is-current',i===speechLineIndex);
    });
-   reference.setAttribute('aria-label','현재 읽을 문장 '+Math.min(speechLineIndex+1,scriptLines.length)+' / '+scriptLines.length);
+   reference.setAttribute('aria-label',speechLineIndex>=scriptLines.length?'읽기 연습 완료':'현재 읽을 '+lineWord+' '+(speechLineIndex+1)+' / '+scriptLines.length);
   };
   const lineMatch=(target,candidate)=>{
    const targetWords=speechWords(target),said=speechWords(candidate);
@@ -891,8 +896,12 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   try{const saved=JSON.parse(localStorage.getItem(typingCacheKey)||'null');if(saved?.body===current.body&&Array.isArray(saved.lines)){while(typingIndex<scriptLines.length&&typeof saved.lines[typingIndex]==='string'&&typedComparable(saved.lines[typingIndex])===typedComparable(scriptLines[typingIndex])){typedLines[typingIndex]=saved.lines[typingIndex];typingIndex++}}}catch{}
   const saveTypedLines=()=>{try{localStorage.setItem(typingCacheKey,JSON.stringify({body:current.body,lines:typedLines.slice(0,typingIndex)}))}catch{}};
   const typingStatus=el('p','df-muted df-writing-progress');
+  typingStatus.setAttribute('role','status');
   const targetLine=el('p','df-writing-current-line');
+  targetLine.id='df-writing-practice-target';
   const input=el('textarea','df-input df-writing-line-input');
+  input.setAttribute('aria-label','현재 '+lineWord+' 입력');
+  input.setAttribute('aria-describedby',targetLine.id);
   input.dataset.willenaTextEntry='writing';input.dataset.inputLanguage='en';input.dataset.willenaFastTyping='true';
   input.rows=4;input.placeholder='위 문장을 입력하세요.';
   input.autocomplete='off';input.spellcheck=false;
@@ -957,13 +966,14 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
   };
   const renderTypingLine=()=>{
    const done=typingIndex>=scriptLines.length;
-   typingStatus.textContent=done?'모든 문장을 입력했어요. 제출할 수 있어요.':(typingIndex+1)+' / '+scriptLines.length+' · 현재 문장을 입력하세요.';
-   targetLine.textContent=done?'모든 문장 입력 완료':scriptLines[typingIndex];
+   typingStatus.textContent=done?'모두 입력했어요. 제출할 수 있어요.':(typingIndex+1)+' / '+scriptLines.length+' · 현재 '+lineWord+'을 입력하세요.';
+   targetLine.textContent=done?'모든 '+lineWord+' 입력 완료':scriptLines[typingIndex];
+   reference.setAttribute('aria-label',done?'쓰기 연습 완료':'현재 입력할 '+lineWord+' '+(typingIndex+1)+' / '+scriptLines.length);
    editor.hidden=done;input.hidden=done;lineCheck.hidden=done;
    // The previous line may have installed an editable difference mirror.
    // Restore the native field for each fresh target; do not carry its highlights over.
    finalGuide.hidden=true;finalGuide.replaceChildren();hideErrorView();correctionView.replaceChildren();selectedIssue=0;
-   if(!done){input.value=typedLines[typingIndex]||'';lineCheck.textContent=typingIndex===scriptLines.length-1?'마지막 문장 확인':'다음 문장'}
+   if(!done){input.value=typedLines[typingIndex]||'';lineCheck.textContent=typingIndex===scriptLines.length-1?'마지막 '+lineWord+' 확인':'다음 '+lineWord}
    lineNodes.forEach((node,i)=>{
     node.classList.toggle('is-complete',i<typingIndex);
     node.classList.toggle('is-current',i===typingIndex&&!done);
@@ -987,8 +997,8 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();lineCheck.click()}
   });
   typeArea.append(typingStatus,targetLine,editor,finalGuide,lineCheck);
-  const speakStatus=el('p','df-muted','마이크를 누르고 현재 문장을 읽어 주세요. 문장마다 이어서 진행할 수 있어요.');
-  const nextSpokenLine=el('button','wg-button wg-secondary df-speech-next','다음 문장');
+  const speakStatus=el('p','df-muted','마이크를 누르고 현재 '+lineWord+'을 읽어 주세요.');
+  const nextSpokenLine=el('button','wg-button wg-secondary df-speech-next','다음 '+lineWord);
   nextSpokenLine.type='button';nextSpokenLine.hidden=true;
   speakArea.append(speakStatus,nextSpokenLine);
   stage.append(speakArea,typeArea);
@@ -1164,5 +1174,5 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,teacherFeedb
    showTeacherFeedback();
   }finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};completionPhase=entry.status==='submitted'?'reward':'practice';completionResult=null;feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];typedIndexes=new Set();typedUsed=false;typedMode=false;reviewSkipped=false;finalDraftText='';speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback?.finalized_from_body){finalLines=split(current.body);finalDraftText=current.body;finalPractice()}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry,_speechSaved:entry.status==='submitted'};completionPhase=entry.status==='submitted'?'reward':'practice';completionResult=null;feedback=saved?.original_body===entry.body&&saved?.feedback?.review_version===2&&(entry.kind!=='topic'||saved.feedback.reviewed_title===entry.title)?saved.feedback:null;choices={};captureDraft=null;loadChoices();spoken=[];typedIndexes=new Set();typedUsed=false;typedMode=false;reviewSkipped=false;finalDraftText='';speechSkipped=false;index=0;root.hidden=false;if(entry.status==='submitted'){void complete()}else if(feedback?.finalized_from_body){finalLines=writingPracticeLines(current.body);finalDraftText=current.body;finalPractice()}else if(feedback)summary();else topic()},close};
 }

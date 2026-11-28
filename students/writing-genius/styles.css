@@ -1077,3 +1077,14 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-final-correction-nav{display:flex;gap:6px}
 .writing-genius #wgDiaryFlow .df-final-error-nav{min-height:44px;padding:6px 12px;border:1px solid #a6d9df;border-radius:8px;background:white;color:#167781;font-weight:700;touch-action:manipulation}
 @media(min-width:700px) and (pointer:coarse){.writing-genius #wgDiaryFlow .df-final-type .df-writing-line-input{height:190px;min-height:170px}}
+
+/* Writing Genius: a visible word goal, independent of punctuation. */
+.df-word-energy{display:grid;gap:.42rem;margin:10px 0 16px;color:inherit}
+.df-word-energy-header{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;font-size:.9rem;font-weight:700}
+.df-word-energy-count{font-variant-numeric:tabular-nums;white-space:nowrap}
+.df-word-energy-meter{appearance:none;-webkit-appearance:none;width:100%;height:11px;border:0;border-radius:999px;overflow:hidden;background:#f3dce8;--wg-word-fill:#c64783}
+.df-word-energy-meter::-webkit-progress-bar{background:#f3dce8;border-radius:999px}
+.df-word-energy-meter::-webkit-progress-value{background:var(--wg-word-fill);border-radius:999px}
+.df-word-energy-meter::-moz-progress-bar{background:var(--wg-word-fill);border-radius:999px}
+.df-word-energy.is-ready .df-word-energy-meter{--wg-word-fill:#22784d}
+.df-word-energy-hint{margin:0;font-size:.8rem;font-weight:600}
