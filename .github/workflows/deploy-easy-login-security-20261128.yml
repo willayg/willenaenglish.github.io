@@ -1,0 +1,35 @@
+name: Deploy Easy Login Security
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-easy-login-security-20261128.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: deploy-verify-student
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: d1bee5c35fe73b03c937647024e1baed76879b26
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax check
+        run: node --input-type=module --check < cloudflare-workers/verify-student/src/index.js
+      - name: Deploy verify-student Worker
+        working-directory: cloudflare-workers/verify-student
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Check malformed login rejection without student data
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' https://verify-student.willena.workers.dev/)
+          test "$code" = 400
