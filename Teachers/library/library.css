@@ -72,3 +72,37 @@ html[data-library-language="both"] .panel-head{align-items:center}
 #awardBody{min-height:0;overflow:auto;padding:16px 20px 20px}
 .award-rule-body{padding:12px}.award-counts{grid-template-columns:repeat(2,1fr);margin:12px 0}
 @media(max-width:600px){#awardDialog .import-top{padding:12px 13px 9px}#awardBody{padding:12px 13px 15px}.prize-class-grid{grid-template-columns:1fr}.award-panel .actions{flex-wrap:wrap}.award-panel .actions button{flex:1}}
+
+/* Shared daily Library Time register */
+.library-tabs{display:flex;gap:7px;align-items:center;border-bottom:1px solid #cadde0;padding:0 0 10px;margin-bottom:18px}
+.library-tabs button{background:transparent;color:#52717a;border:1px solid transparent;border-radius:9px;min-height:42px;padding:9px 18px}
+.library-tabs button[aria-selected=true]{background:#237f89;color:#fff}
+.register-top{margin-bottom:8px}
+.register-date-controls{display:flex;align-items:end;gap:7px;flex-wrap:wrap}
+.register-date-controls input{max-width:168px}
+.register-date-controls .date-arrow{font-size:23px;line-height:1;padding:6px 13px}
+.register-savebar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:30px;margin:7px 0}
+#registerStatus{font-size:12px;color:#237f89}
+.register-slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(85px,1fr));gap:7px;margin:12px 0 17px}
+.slot-button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;justify-content:center;background:white;border:1px solid #c9dfe3;color:#344954;min-height:66px;padding:10px 5px}
+.slot-button strong{font-size:14px;font-variant-numeric:tabular-nums}.slot-button small{font-size:10px;opacity:.7}.slot-button span{font-size:10px;font-weight:700;color:inherit}
+.slot-button.selected{background:#237f89;color:white;border-color:#237f89}
+.register-session-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:10px 0}
+.register-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:10px 0 14px}
+.register-metrics .metric{padding:12px}.register-metrics .metric strong{font-size:25px;margin-top:2px}
+.register-metrics .metric:nth-child(2) strong{color:#ad741b}.register-metrics .metric:nth-child(3) strong{color:#ad4756}.register-metrics .metric:nth-child(4) strong{color:#53699f}.register-metrics .metric:nth-child(5) strong{color:#748a92}
+.register-class .panel-head{gap:9px}.register-bulk{display:flex;flex-wrap:wrap;gap:7px}.register-bulk button{font-size:12px;min-height:40px;padding:8px 10px}
+.register-progress{display:flex;justify-content:space-between;align-items:center;color:#648087;font-size:11px}
+.register-track{height:6px;background:#e8f0f2;border-radius:8px;overflow:hidden;margin:6px 0 12px}.register-track>div{height:100%;background:#37a48b;border-radius:8px}
+.register-table{table-layout:fixed}.register-table th:first-child{width:32%}.register-table td{padding:8px 6px}.register-name{overflow-wrap:anywhere}.register-name strong{font-size:14px}
+.reg-select{width:100%;min-width:0;min-height:45px;padding:8px 4px;font-size:12px;font-weight:600;background:#f0f3f4;border-color:#e1e7e9}
+.reg-select[data-state="present"],.reg-select[data-state="done"]{background:#dff1e6;color:#25724e;border-color:#cbe3d4}
+.reg-select[data-state="late_5_10"],.reg-select[data-state="in_progress"]{background:#fff2d4;color:#906b19;border-color:#eedbac}
+.reg-select[data-state="late_10_15"],.reg-select[data-state="late_15_plus"]{background:#ffe4cb;color:#a65c21;border-color:#f2ccaa}
+.reg-select[data-state="absent"],.reg-select[data-state="not_done"]{background:#f9dce0;color:#a44250;border-color:#eec4ca}
+.reg-select[data-state="exception"],.reg-select[data-state="book_report"]{background:#e4e9f8;color:#53699f;border-color:#d0d9f1}
+.reg-select:disabled{opacity:.55}
+.register-weekend{display:grid;justify-items:start;gap:12px;padding:23px}
+@media(max-width:600px){.register-slots{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.slot-button{min-height:56px}.slot-button strong{font-size:12px}.register-metrics{gap:5px}.register-metrics .metric{padding:8px 5px}.register-metrics .metric strong{font-size:22px}.register-bulk{width:100%}.register-bulk button{flex:1}.register-table th:first-child{width:30%}.register-table td{padding:6px 3px}.reg-select{font-size:11px}.register-date-controls{width:100%;justify-content:flex-start}.register-date-controls label{flex:1}.register-date-controls input{width:100%;max-width:none}}
+
+@media(max-width:520px){.register-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}

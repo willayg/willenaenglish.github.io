@@ -33,11 +33,19 @@ export async function onRequest({request}){try{
  const a=await auth(request);
  if(request.method==='GET'){
  if(action==='setup'){const [students,accounts,hints]=await Promise.all([roster(a),all(a,'library_raz_accounts_v2',{select:'id,source_account,account_key,account_name,screen_name,student_id',order:'id.asc'}),all(a,'library_raz_roster_hints_v2',{select:'student_id,source_account,english_alias',order:'student_id.asc'})]);return json({students,accounts,hints})}
+ if(action==='register-schedule'){return json({schedule:await all(a,'library_session_schedule_v1',{select:'class_name,start_time,duration_minutes,weekdays',order:'start_time.asc,class_name.asc'})})}
+ if(action==='register-day'){const date=url.searchParams.get('month');if(!dateOk(date))fail('Invalid register date');return json({records:await all(a,'library_daily_register_v1',{select:'session_date,student_id,class_name,student_name,korean_name,attendance,journal,updated_at',session_date:'eq.'+date,order:'class_name.asc,student_id.asc'})})}
  if(action==='award-history'){const rows=await all(a,'library_reading_awards_v2',{select:'month,recipients,updated_at',order:'month.desc'});return json({history:rows.map(x=>({month:x.month,updated_at:x.updated_at,gold:(x.recipients||[]).filter(r=>r.award==='Gold').length,silver:(x.recipients||[]).filter(r=>r.award==='Silver').length}))})}
  if(action==='month'){const month=url.searchParams.get('month');if(!monthOk(month))fail('Invalid month');const [results,awards]=await Promise.all([all(a,'library_raz_monthly_v2',{select:'*,library_raz_accounts_v2(student_id,source_account,screen_name,account_name)',month:'eq.'+month,order:'account_id.asc'}),db(a,path('library_reading_awards_v2',{select:'*',month:'eq.'+month}))]);return json({results,awards:awards[0]||null})}
  fail('Unknown action',404);
  }
  if(Number(request.headers.get('Content-Length')||0)>2000000)fail('Upload too large',413);const raw=await request.text();if(raw.length>2000000)fail('Upload too large',413);let b;try{b=JSON.parse(raw)}catch{fail('Invalid JSON')}
+ if(action==='register-save'){
+ if(!dateOk(b.date)||!Array.isArray(b.rows)||!b.rows.length||b.rows.length>200)fail('Invalid register batch');
+ const seen=new Set(),att=['present','late_5_10','late_10_15','late_15_plus','absent','exception'],jour=['done','in_progress','not_done','book_report'];
+ const rows=b.rows.map(r=>{if(!r||!uuid.test(r.student_id||'')||seen.has(r.student_id))fail('Invalid register row');seen.add(r.student_id);const x={student_id:r.student_id,class_name:str(r.class_name,100)};if(!x.class_name)fail('Invalid register row');for(const [k,values] of [['attendance',att],['journal',jour]])if(Object.hasOwn(r,k)){if(r[k]!==null&&!values.includes(r[k]))fail('Invalid register status');x[k]=r[k]}if(!Object.hasOwn(x,'attendance')&&!Object.hasOwn(x,'journal'))fail('Invalid register row');return x});
+ return json(await db(a,'rpc/library_save_register_v1','POST',{p_date:b.date,p_rows:rows}));
+ }
  if(action==='import'){if(!Array.isArray(b.files)||!b.files.length||b.files.length>30)fail('Select up to 30 CSV files');const files=b.files.map(cleanFile);return json(await db(a,'rpc/library_import_raz_v2','POST',{p_files:files}))}
  if(action==='awards'){
  if(!monthOk(b.month)||!Array.isArray(b.recipients)||b.recipients.length>500)fail('Invalid award list');

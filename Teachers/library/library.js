@@ -1,4 +1,5 @@
-import {initLibraryLanguage,mountLibraryLanguage,localText} from './library-i18n.js?v=3';
+import {mountDailyRegister} from './daily-register.js?v=1';
+import {initLibraryLanguage,mountLibraryLanguage,localText} from './library-i18n.js?v=4';
 import {mountTeacherHeader} from '/components/teacher-header/teacher-header.js?v=20261127-raz2';
 import {ensureTeacherSession,ensureAuthRefresh} from '/Teachers/auth-refresh.js?v=20261021-sessionfix1';
 import {norm,points,parseRaz,ranked,calculateAwards,matchFile,inferSource} from './raz-core.js?v=3';
@@ -11,6 +12,7 @@ const opt=(v,l,sel=false)=>'<option value="'+esc(v)+'"'+(sel?' selected':'')+'>'
 const name=s=>s?(s.name||s.korean_name||'Unnamed')+(s.korean_name&&s.name!==s.korean_name?' · '+s.korean_name:''):'Inactive student';
 const person=id=>S.students.find(s=>s.id===id);
 const ranks=()=>ranked(S.students,S.results);
+let dailyRegister=null;
 const empty=t=>'<div class="empty">'+esc(t)+'</div>';
 const metric=(l,v)=>'<div class="metric"><span class="muted">'+esc(l)+'</span><strong>'+esc(v)+'</strong></div>';
 function table(headers,rows){return '<div class="table-wrap"><table><thead><tr>'+headers.map(x=>'<th>'+esc(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'}
@@ -44,7 +46,7 @@ function renderAwards(){
  $('#awards').innerHTML=awardCoverageHTML(c)+(changed?'<div class="notice warning">New reading reports arrived after confirmation. Review and reconfirm before printing.</div>':'')+(!a&&c.imported.length?'<div class="muted small">Provisional results. Confirm only after all reports have been checked.</div>':'')+awardCards(rec,c);
 }
 function render(){const old=$('#class').value,classes=[...new Set(ranks().map(x=>x.cls))].sort();$('#class').innerHTML=opt('','All classes')+classes.map(c=>opt(c,c,c===old)).join('');renderReports();renderResults();renderAwards()}
-async function load(full=false){const run=++S.run;$('#upload').disabled=true;$('#manageAccounts').disabled=true;$('#quickDrop').disabled=true;$('#prepare').disabled=true;$('#awardHistory').disabled=true;$('#goldPDF').disabled=true;$('#silverPDF').disabled=true;msg('#status','Loading…');try{const [m,setup]=await Promise.all([api('month',undefined,S.month+'-01'),full?api('setup'):null]);if(run!==S.run)return;if(setup){S.students=setup.students||[];S.accounts=setup.accounts||[];S.hints=setup.hints||[]}S.results=m.results||[];S.awards=m.awards;render();$('#upload').disabled=false;$('#manageAccounts').disabled=false;$('#quickDrop').disabled=false;$('#awardHistory').disabled=false;msg('#status')}catch(e){if(run===S.run){S.results=[];S.awards=null;render();$('#prepare').disabled=true;$('#goldPDF').disabled=true;$('#silverPDF').disabled=true;msg('#status',e.message,true)}throw e}}
+async function load(full=false){const run=++S.run;$('#upload').disabled=true;$('#manageAccounts').disabled=true;$('#quickDrop').disabled=true;$('#prepare').disabled=true;$('#awardHistory').disabled=true;$('#goldPDF').disabled=true;$('#silverPDF').disabled=true;msg('#status','Loading…');try{const [m,setup]=await Promise.all([api('month',undefined,S.month+'-01'),full?api('setup'):null]);if(run!==S.run)return;if(setup){S.students=setup.students||[];S.accounts=setup.accounts||[];S.hints=setup.hints||[];dailyRegister?.refreshRoster()}S.results=m.results||[];S.awards=m.awards;render();$('#upload').disabled=false;$('#manageAccounts').disabled=false;$('#quickDrop').disabled=false;$('#awardHistory').disabled=false;msg('#status')}catch(e){if(run===S.run){S.results=[];S.awards=null;render();$('#prepare').disabled=true;$('#goldPDF').disabled=true;$('#silverPDF').disabled=true;msg('#status',e.message,true)}throw e}}
 async function addFiles(list){if(S.parsing||S.busy)return;S.parsing=true;$('#confirmImport').disabled=true;try{if(S.files.length+list.length>30)throw Error('Maximum 30 CSVs');const next=[];for(const file of list){if(file.size>2e6)throw Error('File too large');const rows=parseRaz(await file.text()),dates=file.name.match(/(\d{4}-\d{2}-\d{2})[_ ](\d{4}-\d{2}-\d{2})/),source=inferSource(rows,S.students,S.accounts,S.hints);const f={filename:file.name,source,month:dates?.[1]||S.month+'-01',through:dates?.[2]||(S.month===today.slice(0,7)?today:S.month+'-01'),rows};matchFile(f,S.students,S.accounts,S.hints);next.push(f)}S.files.push(...next);renderImport();msg('#importMessage','Files parsed. Review only the accounts that need attention.')}catch(e){msg('#importMessage',e.message,true)}finally{S.parsing=false;$('#confirmImport').disabled=S.busy||!S.files.length}}
 
 function renderImport(){
@@ -158,5 +160,22 @@ function setupQuickUpload(){
  window.addEventListener('dragend',clear);
 }
 
-async function boot(){$('#retry').hidden=true;$('#bootText').textContent='Checking staff login…';try{const u=await ensureTeacherSession();if(!u?.success){if(u?.temporary)throw Error('Unable to verify login. Retry.');sessionStorage.setItem('teacher:returnTo','/Teachers/library/');location.replace('/Teachers/login.html');return}ensureAuthRefresh();const header=await mountTeacherHeader({target:'#teacher-header',mode:'dashboard',activeApp:'library'});mountLibraryLanguage(header.root);$('#month').value=S.month;await load(true);$('#boot').hidden=true;$('#app').hidden=false}catch(e){$('#bootText').textContent=e.message;$('#retry').hidden=false}}
+async function boot(){$('#retry').hidden=true;$('#bootText').textContent='Checking staff login…';try{const u=await ensureTeacherSession();if(!u?.success){if(u?.temporary)throw Error('Unable to verify login. Retry.');sessionStorage.setItem('teacher:returnTo','/Teachers/library/');location.replace('/Teachers/login.html');return}ensureAuthRefresh();const header=await mountTeacherHeader({target:'#teacher-header',mode:'dashboard',activeApp:'library'});mountLibraryLanguage(header.root);$('#month').value=S.month;await load(true);$('#boot').hidden=true;$('#app').hidden=false;initRegisterTabs()}catch(e){$('#bootText').textContent=e.message;$('#retry').hidden=false}}
+
+let activeLibraryTab='today',registerTabBusy=false;
+function initRegisterTabs(){
+ if(dailyRegister)return;
+ dailyRegister=mountDailyRegister({root:$('#todayView'),api,getStudents:()=>S.students});
+ async function switchTab(tab){if(registerTabBusy)return;registerTabBusy=true;try{
+   if(activeLibraryTab==='today'&&tab!=='today'&&!await dailyRegister.hide())return;
+   activeLibraryTab=tab;$('#todayView').hidden=tab!=='today';$('#razView').hidden=tab!=='raz';
+   $('[data-library-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.libraryTab===tab)));
+   if(tab==='today')await dailyRegister.show();
+   try{localStorage.setItem('willena.library.tab',tab)}catch{}
+ }finally{registerTabBusy=false}}
+ $('[data-library-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.libraryTab));
+ let initial='today';try{if(localStorage.getItem('willena.library.tab')==='raz')initial='raz'}catch{}
+ switchTab(initial);
+}
+
 initLibraryLanguage();$('#confirmImport').onclick=saveImport;$('#manageAccounts').onclick=openAccountList;$('#accountSearch').oninput=renderAccountList;$('#accountSource').onchange=renderAccountList;$('#retry').onclick=boot;$('#month').onchange=()=>{if(!$('#month').value)return;S.month=$('#month').value;load().catch(()=>{})};$('#class').onchange=renderResults;$('#search').oninput=renderResults;setupQuickUpload();$('#prepare').onclick=openAwards;$('#confirmAwards').onclick=saveAwards;$('#awardHistory').onclick=openAwardHistory;$('#goldPDF').onclick=()=>certificatePrint('Gold');$('#silverPDF').onclick=()=>certificatePrint('Silver');$$('[data-close]').forEach(b=>b.onclick=()=>{if(!S.busy&&!S.parsing)$('#'+b.dataset.close).close()});['importDialog','awardDialog','accountDialog','historyDialog'].forEach(id=>$('#'+id).addEventListener('cancel',e=>{if(S.busy||S.parsing)e.preventDefault()}));boot();

@@ -1,5 +1,9 @@
 // Library-only EN / 한국어 / bilingual display. Never translate stored values or student names.
 const translations={
+ "Past dates show the current class roster plus any previously saved records. Check enrolment changes before editing.":"이전 날짜에는 현재 반 명단과 저장된 기록이 표시됩니다. 수정 전에 학생의 반 이동 및 등록 변경을 확인하세요.",
+
+ "Today":"오늘","Library Time":"라이브러리 시간","Daily attendance & reading journals":"일일 출석 및 독서 기록","Date":"날짜","Previous day":"이전 날짜","Next day":"다음 날짜","Save changes":"변경사항 저장","Retry save":"저장 재시도","Loading register…":"출석부 불러오는 중…","Saving register…":"출석부 저장 중…","Unsaved changes":"저장되지 않은 변경사항","All changes saved":"모든 변경사항 저장 완료","Could not load the register.":"출석부를 불러올 수 없습니다.","Reload register":"출석부 다시 불러오기","Register save incomplete. Retry.":"저장이 완료되지 않았습니다. 다시 시도하세요.","No scheduled Library Time":"예정된 라이브러리 수업이 없습니다.","Choose a school day to view the register.":"수업일을 선택하여 출석부를 확인하세요.","Previous school day":"이전 수업일","Library sections":"라이브러리 메뉴","Library time slots":"라이브러리 시간대","Now":"현재","20-minute Library Time":"20분 라이브러리 시간","Follow current time":"현재 시간으로 이동","Present":"출석","Late":"지각","Absent":"결석","Not marked":"미기록","Late 5–10m":"5~10분 지각","Late 10–15m":"10~15분 지각","Late 15m+":"15분 이상 지각","Approved exception":"승인된 예외","Journal":"독서 기록","Done":"완료","In progress":"진행 중","Not done":"미완료","Book report":"북리포트","Attendance":"출석","Previous class record":"이전 반 기록","Mark unmarked present":"미기록 학생 출석 처리","Mark journals done":"미기록 독서 기록 완료","Journal completion":"독서 기록 완료","No students in this class.":"이 반에 학생이 없습니다.","Invalid register batch":"잘못된 출석부 요청입니다.","Invalid register row":"잘못된 학생 기록입니다.","Invalid register status":"잘못된 기록 상태입니다.","Invalid register date":"잘못된 출석부 날짜입니다.",
+
  "Prize history":"시상 기록","Review & confirm prizes":"수상자 확인 및 확정","Edit confirmed prizes":"확정 수상자 수정","Imported reading records":"가져온 독서 기록","Library roster coverage is unknown.":"도서관 전체 학생 명단을 확인할 수 없습니다.","All known roster students have a valid report.":"명단의 모든 학생 기록을 확인했습니다.","Report end dates differ.":"기록 종료일이 서로 다릅니다.",
  "Import reading reports to calculate prize candidates.":"독서 기록을 가져와 수상 후보자를 계산하세요.","No qualifier":"기준 충족자 없음","New reading reports arrived after confirmation. Review and reconfirm before printing.":"수상자 확정 후 새 독서 기록이 들어왔습니다. 인쇄 전에 다시 확인하고 확정하세요.",
  "Provisional results. Confirm only after all reports have been checked.":"임시 결과입니다. 모든 기록 확인 후 확정하세요.","Preview Gold PDF":"금상 PDF 미리보기","Preview Silver PDF":"은상 PDF 미리보기","Qualifying rules":"수상 기준",
@@ -47,6 +51,8 @@ const translations={
 const months={January:1,February:2,March:3,April:4,May:5,June:6,July:7,August:8,September:9,October:10,November:11,December:12};
 const dateText=t=>t.replace(/\b(January|February|March|April|May|June|July|August|September|October|November|December) (\d{4})\b/g,(_,m,y)=>y+'년 '+months[m]+'월');
 const patterns=[
+ [/^(\d+) students$/,m=>m[1]+'명'],
+
  [/^Provisional candidates · (\d+) Gold · (\d+) Silver$/,m=>'임시 후보 · 금상 '+m[1]+'명 · 은상 '+m[2]+'명'],
  [/^(\d+) roster students still need a valid report\.$/,m=>'명단의 학생 '+m[1]+'명에게 유효한 기록이 필요합니다.'],
  [/^Earliest report through (.+)$/,m=>'가장 이른 기록 종료일 '+m[1]],
