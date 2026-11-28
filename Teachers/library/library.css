@@ -127,3 +127,26 @@ html[data-library-language="both"] .panel-head{align-items:center}
 .month-cell[data-state=absent],.month-cell[data-state=not_done],.month-legend i[data-state=absent],.month-legend i[data-state=not_done]{background:#f9dce0;color:#ad3f51}
 .month-cell[data-state=exception],.month-cell[data-state=book_report],.month-legend i[data-state=exception],.month-legend i[data-state=book_report]{background:#e4e9f8;color:#53699f}
 .month-legend{display:flex;gap:8px 15px;flex-wrap:wrap;font-size:11px;color:#57717b}.month-legend span{display:flex;align-items:center;gap:4px}.month-legend i{font-style:normal;min-width:24px;padding:3px 5px;border-radius:4px;background:#f0f5f6;color:#647e86;text-align:center}
+
+/* Match the Teachers/Admin rail; no duplicated dashboard-wide styles. */
+.library-layout{width:100%;margin:0;display:grid;grid-template-columns:70px minmax(0,1fr);min-height:calc(100dvh - 64px);align-items:start}
+.library-layout.sidebar-expanded{grid-template-columns:190px minmax(0,1fr)}
+.library-layout .rail{background:#eef1f5;color:#596171;padding:8px 8px 12px;min-height:calc(100dvh - 64px);max-height:calc(100dvh - 64px);position:sticky;top:64px;display:flex;flex-direction:column;gap:7px;border-right:1px solid #dfe4e8;overflow:auto}
+.library-rail-nav{display:flex;flex-direction:column;gap:7px;min-width:0}
+.library-layout .nav{border:0;background:transparent;color:#596171;border-radius:11px;padding:7px 3px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;font-weight:700;cursor:pointer;white-space:nowrap;min-height:66px;overflow:hidden}
+.library-layout .nav:hover{background:#f8fafb;color:var(--ink)}
+.library-layout .nav.active{background:#fff;color:var(--ink);box-shadow:0 4px 14px rgba(24,32,48,.06)}
+.library-layout .nav-icon{flex:0 0 36px;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#f8fbfc;color:#2b7f89}
+.library-layout .nav.active .nav-icon{background:#dff5f7;color:#1f7480}
+.library-layout .nav-icon svg{width:23px;height:23px;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.library-layout .library-nav-label{font-size:9px;line-height:1.15;width:100%;white-space:normal;overflow-wrap:anywhere;color:#596b73}
+.library-layout.sidebar-expanded .nav{flex-direction:row;justify-content:flex-start;gap:10px;padding:10px 11px;min-height:52px;text-align:left}
+.library-layout.sidebar-expanded .library-nav-label{font-size:13px;width:auto;text-align:left}
+.library-layout .rail-spacer{flex:1}
+.library-layout .rail-collapse-toggle{border:0;background:#fff;color:#2b7f89;width:40px;height:36px;min-height:36px;border-radius:9px;display:grid;place-items:center;cursor:pointer;margin:0 auto 3px;font-size:23px;line-height:1;padding:0;box-shadow:0 3px 10px rgba(24,32,48,.05)}
+.library-layout.sidebar-expanded .rail-collapse-toggle{margin-left:auto;margin-right:0}
+.library-layout.sidebar-expanded .rail-collapse-toggle span{transform:rotate(180deg)}
+.library-workspace{width:100%;min-width:0;max-width:1200px;margin:0 auto;padding:20px 28px 32px}
+@media(max-width:1100px){.library-workspace{padding:18px 20px 28px}}
+@media(max-width:700px){.library-layout,.library-layout.sidebar-expanded{display:block;min-height:calc(100dvh - 62px)}.library-layout .rail{position:fixed;inset:auto 0 0 0;z-index:50;min-height:0;max-height:none;height:calc(64px + env(safe-area-inset-bottom,0px));padding:3px 8px env(safe-area-inset-bottom,0px);background:#344954;border:0;display:block;overflow:visible}.library-layout .rail-collapse-toggle,.library-layout .rail-spacer{display:none}.library-rail-nav{flex-direction:row;justify-content:space-around;gap:4px;height:100%}.library-layout .nav,.library-layout.sidebar-expanded .nav{flex:1;min-height:0;flex-direction:column;justify-content:center;gap:2px;padding:4px;background:transparent;color:#c8d5d9;box-shadow:none}.library-layout .nav.active{background:#ffffff14;color:white}.library-layout .nav-icon,.library-layout .nav.active .nav-icon{background:transparent;color:inherit;width:27px;height:27px;flex-basis:27px}.library-layout .library-nav-label,.library-layout.sidebar-expanded .library-nav-label{font-size:10px;text-align:center;color:inherit}.library-workspace{padding:14px 10px calc(80px + env(safe-area-inset-bottom,0px))}}
+dialog:not([open]){display:none!important}

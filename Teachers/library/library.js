@@ -1,6 +1,6 @@
 import {mountDailyRegister} from './daily-register.js?v=2';
 import {mountMonthlyRegister} from './monthly-register.js?v=1';
-import {initLibraryLanguage,mountLibraryLanguage,localText} from './library-i18n.js?v=5';
+import {initLibraryLanguage,mountLibraryLanguage,localText} from './library-i18n.js?v=6';
 import {mountTeacherHeader} from '/components/teacher-header/teacher-header.js?v=20261127-raz2';
 import {ensureTeacherSession,ensureAuthRefresh} from '/Teachers/auth-refresh.js?v=20261021-sessionfix1';
 import {norm,points,parseRaz,ranked,calculateAwards,matchFile,inferSource} from './raz-core.js?v=3';
@@ -18,7 +18,19 @@ const empty=t=>'<div class="empty">'+esc(t)+'</div>';
 const metric=(l,v)=>'<div class="metric"><span class="muted">'+esc(l)+'</span><strong>'+esc(v)+'</strong></div>';
 function table(headers,rows){return '<div class="table-wrap"><table><thead><tr>'+headers.map(x=>'<th>'+esc(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'}
 function msg(id,text='',bad=false){$(id).textContent=text;$(id).classList.toggle('error',bad)}
-async function api(action,body,month){const headers={};try{const t=localStorage.getItem('sb_access_token');if(t&&t.includes('.'))headers.Authorization='Bearer '+t}catch{}if(body!==undefined)headers['Content-Type']='application/json';const req=()=>fetch('/api/library?'+new URLSearchParams({action,...(month?{month}:{} )}),{method:body===undefined?'GET':'POST',credentials:'include',cache:'no-store',headers,body:body===undefined?undefined:JSON.stringify(body)});let r=await req();if(r.status===401){await ensureTeacherSession();try{const t=localStorage.getItem('sb_access_token');if(t&&t.includes('.'))headers.Authorization='Bearer '+t}catch{}r=await req()}const d=await r.json().catch(()=>({error:'Library API unavailable'}));if(!r.ok)throw Error(d.error||'Request failed');return d}
+async function api(action,body,month){
+ const headers={};const setToken=()=>{try{const t=localStorage.getItem('sb_access_token');if(t&&t.includes('.'))headers.Authorization='Bearer '+t}catch{}};setToken();
+ if(body!==undefined)headers['Content-Type']='application/json';
+ const req=async()=>{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);try{const r=await fetch('/api/library?'+new URLSearchParams({action,...(month?{month}:{})}),{method:body===undefined?'GET':'POST',credentials:'include',cache:'no-store',headers,body:body===undefined?undefined:JSON.stringify(body),signal:controller.signal});const data=await r.json().catch(e=>{if(controller.signal.aborted)throw e;return {error:'Library API unavailable'}});return {r,data}}catch(e){if(controller.signal.aborted)throw Error('Library request timed out. Please retry.');throw e}finally{clearTimeout(timer)}};
+ let {r,data}=await req();if(r.status===401){await ensureTeacherSession();setToken();({r,data}=await req())}if(!r.ok)throw Error(data.error||'Request failed');return data
+}
+let setupPending=null,setupReady=false;
+async function ensureSetup(force=false){
+ if(setupPending)return setupPending;
+ if(setupReady&&!force)return;
+ setupPending=(async()=>{const setup=await api('setup');S.students=setup.students||[];S.accounts=setup.accounts||[];S.hints=setup.hints||[];setupReady=true;dailyRegister?.refreshRoster()})();
+ try{await setupPending}finally{setupPending=null}
+}
 function renderResults(){const all=ranks(),q=norm($('#search').value),cls=$('#class').value,rows=all.filter(x=>(!cls||x.cls===cls)&&(!q||[x.s.name,x.s.korean_name,x.s.username,x.cls].some(v=>norm(v).includes(q))));const imported=all.filter(x=>x.r);$('#stats').innerHTML=metric('Imported students',imported.length)+metric('Active readers',imported.filter(x=>x.score>0).length)+metric('Reading points',imported.reduce((n,x)=>n+x.score,0).toLocaleString());const multi=all.filter(x=>x.multiple).length;$('#results').innerHTML=(multi?'<div class="notice warning">'+multi+' students have multiple account reports; excluded from automatic ranking until reviewed.</div>':'')+(rows.length?table(['Rank','Student','Class','Listen','Read','Rec.','Points','Through'],rows.map(x=>'<tr><td class="rank">'+esc(x.rank??'—')+'</td><td class="namecell"><strong data-no-translate>'+esc(x.s.name||x.s.korean_name)+'</strong><small data-no-translate>'+esc(x.s.korean_name)+'</small></td><td data-no-translate>'+esc(x.cls)+'</td>'+['listens','reads','recordings'].map(k=>'<td class="num">'+esc(x.r?x.r[k]:'—')+'</td>').join('')+'<td class="num points">'+esc(x.multiple?'Review':x.score??'—')+'</td><td>'+esc(x.r?x.r.through_date.slice(5):x.multiple?'Multiple accounts':'Not imported')+'</td></tr>')):empty('No matching students'))}
 function renderReports(){const files=new Map();for(const r of S.results){const source=r.library_raz_accounts_v2?.source_account||'Unknown',key=JSON.stringify([source,r.through_date,r.filename]);const f=files.get(key)||{source,date:r.through_date,filename:r.filename,count:0};f.count++;files.set(key,f)}$('#reports').innerHTML=files.size?[...files.values()].sort((a,b)=>a.source.localeCompare(b.source)).map(f=>'<div class="report-row"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2h11l5 5v15H4zM14 2v6h6M7 12h10m-10 4h10m-5-4v8"/></svg><div><strong>'+esc(f.source)+' · '+esc(f.date)+'</strong><span class="report-meta">'+esc(f.filename)+' · '+f.count+' student records</span></div><span class="pill">Imported</span></div>').join(''):empty('No reports imported for '+label(S.month)+'.')}
 
@@ -47,7 +59,7 @@ function renderAwards(){
  $('#awards').innerHTML=awardCoverageHTML(c)+(changed?'<div class="notice warning">New reading reports arrived after confirmation. Review and reconfirm before printing.</div>':'')+(!a&&c.imported.length?'<div class="muted small">Provisional results. Confirm only after all reports have been checked.</div>':'')+awardCards(rec,c);
 }
 function render(){const old=$('#class').value,classes=[...new Set(ranks().map(x=>x.cls))].sort();$('#class').innerHTML=opt('','All classes')+classes.map(c=>opt(c,c,c===old)).join('');renderReports();renderResults();renderAwards()}
-async function load(full=false){const run=++S.run;$('#upload').disabled=true;$('#manageAccounts').disabled=true;$('#quickDrop').disabled=true;$('#prepare').disabled=true;$('#awardHistory').disabled=true;$('#goldPDF').disabled=true;$('#silverPDF').disabled=true;msg('#status','Loading…');try{const [m,setup]=await Promise.all([api('month',undefined,S.month+'-01'),full?api('setup'):null]);if(run!==S.run)return;if(setup){S.students=setup.students||[];S.accounts=setup.accounts||[];S.hints=setup.hints||[];dailyRegister?.refreshRoster()}S.results=m.results||[];S.awards=m.awards;render();$('#upload').disabled=false;$('#manageAccounts').disabled=false;$('#quickDrop').disabled=false;$('#awardHistory').disabled=false;msg('#status')}catch(e){if(run===S.run){S.results=[];S.awards=null;render();$('#prepare').disabled=true;$('#goldPDF').disabled=true;$('#silverPDF').disabled=true;msg('#status',e.message,true)}throw e}}
+async function load(full=false){const run=++S.run;$('#upload').disabled=true;$('#manageAccounts').disabled=true;$('#quickDrop').disabled=true;$('#prepare').disabled=true;$('#awardHistory').disabled=true;$('#goldPDF').disabled=true;$('#silverPDF').disabled=true;msg('#status','Loading…');try{const [m]=await Promise.all([api('month',undefined,S.month+'-01'),ensureSetup(full)]);if(run!==S.run)return;S.results=m.results||[];S.awards=m.awards;render();$('#upload').disabled=false;$('#manageAccounts').disabled=false;$('#quickDrop').disabled=false;$('#awardHistory').disabled=false;msg('#status')}catch(e){if(run===S.run){S.results=[];S.awards=null;render();$('#prepare').disabled=true;$('#goldPDF').disabled=true;$('#silverPDF').disabled=true;msg('#status',e.message,true)}throw e}}
 async function addFiles(list){if(S.parsing||S.busy)return;S.parsing=true;$('#confirmImport').disabled=true;try{if(S.files.length+list.length>30)throw Error('Maximum 30 CSVs');const next=[];for(const file of list){if(file.size>2e6)throw Error('File too large');const rows=parseRaz(await file.text()),dates=file.name.match(/(\d{4}-\d{2}-\d{2})[_ ](\d{4}-\d{2}-\d{2})/),source=inferSource(rows,S.students,S.accounts,S.hints);const f={filename:file.name,source,month:dates?.[1]||S.month+'-01',through:dates?.[2]||(S.month===today.slice(0,7)?today:S.month+'-01'),rows};matchFile(f,S.students,S.accounts,S.hints);next.push(f)}S.files.push(...next);renderImport();msg('#importMessage','Files parsed. Review only the accounts that need attention.')}catch(e){msg('#importMessage',e.message,true)}finally{S.parsing=false;$('#confirmImport').disabled=S.busy||!S.files.length}}
 
 function renderImport(){
@@ -161,22 +173,30 @@ function setupQuickUpload(){
  window.addEventListener('dragend',clear);
 }
 
-async function boot(){$('#retry').hidden=true;$('#bootText').textContent='Checking staff login…';try{const u=await ensureTeacherSession();if(!u?.success){if(u?.temporary)throw Error('Unable to verify login. Retry.');sessionStorage.setItem('teacher:returnTo','/Teachers/library/');location.replace('/Teachers/login.html');return}ensureAuthRefresh();const header=await mountTeacherHeader({target:'#teacher-header',mode:'dashboard',activeApp:'library'});mountLibraryLanguage(header.root);$('#month').value=S.month;await load(true);$('#boot').hidden=true;$('#app').hidden=false;initRegisterTabs()}catch(e){$('#bootText').textContent=e.message;$('#retry').hidden=false}}
+async function boot(){$('#retry').hidden=true;$('#bootText').textContent='Checking staff login…';try{const u=await ensureTeacherSession();if(!u?.success){if(u?.temporary)throw Error('Unable to verify login. Retry.');sessionStorage.setItem('teacher:returnTo','/Teachers/library/');location.replace('/Teachers/login.html');return}ensureAuthRefresh();const header=await mountTeacherHeader({target:'#teacher-header',mode:'dashboard',activeApp:'library'});mountLibraryLanguage(header.root);$('#month').value=S.month;await ensureSetup();initRegisterTabs();$('#boot').hidden=true;$('#app').hidden=false;load().catch(()=>{})}catch(e){$('#bootText').textContent=e.message;$('#retry').hidden=false}}
 
-let activeLibraryTab='today',registerTabBusy=false;
+let activeLibraryTab='today',navigationRequest=0;
 function initRegisterTabs(){
  if(dailyRegister)return;
+ const shell=$('#app'),toggle=$('#libraryRailToggle');
+ let expanded=false;try{expanded=localStorage.getItem('willena.library.sidebarExpanded')==='1'}catch{}
+ const setExpanded=value=>{expanded=value;shell.classList.toggle('sidebar-expanded',value);toggle.setAttribute('aria-expanded',String(value));toggle.setAttribute('aria-label',value?'Collapse sidebar':'Expand sidebar');try{localStorage.setItem('willena.library.sidebarExpanded',value?'1':'0')}catch{}};
+ setExpanded(expanded);toggle.onclick=()=>setExpanded(!expanded);
  dailyRegister=mountDailyRegister({root:$('#todayView'),api,getStudents:()=>S.students});
  const monthlyRegister=mountMonthlyRegister({root:$('#monthlyView'),api,getStudents:()=>S.students,openDay:(date,className)=>switchTab('today',{date,className})});
- async function switchTab(tab,target){if(registerTabBusy)return;registerTabBusy=true;try{
-   if(activeLibraryTab==='today'&&tab!=='today'&&!await dailyRegister.hide())return;
-   activeLibraryTab=tab;$('#todayView').hidden=tab!=='today';$('#monthlyView').hidden=tab!=='monthly';$('#razView').hidden=tab!=='raz';
-   $('[data-library-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.libraryTab===tab)));
-   if(tab==='today')await dailyRegister.show(target);
-   if(tab==='monthly')await monthlyRegister.show();
-   try{localStorage.setItem('willena.library.tab',tab)}catch{}
- }finally{registerTabBusy=false}}
- $('[data-library-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.libraryTab));
+ async function switchTab(tab,target){
+  if(!['today','monthly','raz'].includes(tab))return;
+  const token=++navigationRequest;
+  // Flush unsaved daily changes, but never lock navigation on a view's data fetch.
+  if(activeLibraryTab==='today'&&tab!=='today'){
+   const safe=await dailyRegister.hide();if(!safe||token!==navigationRequest)return;
+  }
+  activeLibraryTab=tab;$('#todayView').hidden=tab!=='today';$('#monthlyView').hidden=tab!=='monthly';$('#razView').hidden=tab!=='raz';
+  $$('[data-library-tab]').forEach(b=>{const active=b.dataset.libraryTab===tab;b.setAttribute('aria-selected',String(active));b.classList.toggle('active',active)});
+  try{localStorage.setItem('willena.library.tab',tab)}catch{}
+  try{if(tab==='today')await dailyRegister.show(target);if(tab==='monthly')await monthlyRegister.show()}catch(e){console.error('Library view could not load',e);if(token===navigationRequest){const id=tab==='today'?'#registerStatus':tab==='monthly'?'#registerMonthStatus':'#status';msg(id,e.message||'Could not load the register.',true)}}
+ }
+ $$('[data-library-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.libraryTab));
  let initial='today';try{const saved=localStorage.getItem('willena.library.tab');if(['today','monthly','raz'].includes(saved))initial=saved}catch{}
  switchTab(initial);
 }

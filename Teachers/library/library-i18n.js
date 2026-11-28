@@ -1,5 +1,7 @@
 // Library-only EN / 한국어 / bilingual display. Never translate stored values or student names.
 const translations={
+ "Expand sidebar":"사이드바 펼치기","Collapse sidebar":"사이드바 접기","Library request timed out. Please retry.":"라이브러리 응답 시간이 초과되었습니다. 다시 시도하세요.",
+
  "Monthly":"월간","Monthly register":"월간 출석부","Attendance and journal history":"출석 및 독서 기록 내역","Register view":"기록 보기","Recorded entries":"기록된 항목","Students":"학생",
  "Select a date cell to open that day’s register. Blank cells are not marked, not automatically present.":"날짜 셀을 선택하면 해당 일자의 출석부를 열 수 있습니다. 빈칸은 미기록이며 자동 출석이 아닙니다.",
  "Past months include the current roster plus saved historical records. Unmarked days are not used for attendance grades.":"과거 월에는 현재 반 명단과 저장된 이전 기록이 표시됩니다. 미기록 날짜는 출석 평가에 반영하지 않습니다.",
