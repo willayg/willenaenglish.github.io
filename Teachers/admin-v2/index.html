@@ -25,7 +25,7 @@
 <body>
 <div id="teacher-header"></div>
 <script type="module">
-import { mountTeacherHeader } from '/components/teacher-header/teacher-header.js?v=20261127-raz2';
+import { mountTeacherHeader } from '/components/teacher-header/teacher-header.js?v=20261128-sharedmakeup1';
 mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admin' })
   .catch((e)=>console.error('Teacher header init failed', e));
 </script>
@@ -39,7 +39,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
 <button class="nav" data-view="biweekly"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Biweekly Reports</span></button>
     <button class="nav" type="button" data-view="enquiries" title="Website enquiries"><span class="nav-icon enq-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 8 8 6 8-6"/><path d="M8 3h8"/></svg><span id="adminEnquiryCount" class="enq-unread" hidden>0</span></span><span>문의 관리</span></button>
     <button class="nav" type="button" data-view="admissions" title="입학 관리"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10H3z"/></svg></span><span>입학 관리</span></button>
-    <button type="button" class="nav" data-view="staff-calendar" title="Shared Willena Calendar"><span class="nav-icon" aria-hidden="true">▦</span><span>Willena Calendar</span></button><button class="nav" type="button" data-view="teachers-manager" hidden style="display:none"><span class="nav-icon" aria-hidden="true">♙</span><span>Teachers Manager</span></button><div class="rail-spacer"></div>
+    <button type="button" class="nav" onclick="location.assign('/Teachers/library/')" title="Library"><span class="nav-icon" aria-hidden="true">▤</span><span>Library</span></button><button type="button" class="nav" onclick="location.assign('/Teachers/makeup/')" title="보강"><span class="nav-icon" aria-hidden="true">↻</span><span>보강</span></button><button type="button" class="nav" data-view="staff-calendar" title="Shared Willena Calendar"><span class="nav-icon" aria-hidden="true">▦</span><span>Willena Calendar</span></button><button class="nav" type="button" data-view="teachers-manager" hidden style="display:none"><span class="nav-icon" aria-hidden="true">♙</span><span>Teachers Manager</span></button><div class="rail-spacer"></div>
   </aside>
   <main class="workspace">
 <section class="view" id="view-staff-calendar" aria-label="Shared Willena Calendar">

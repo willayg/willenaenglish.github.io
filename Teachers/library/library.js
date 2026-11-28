@@ -1,7 +1,7 @@
 import {mountDailyRegister} from './daily-register.js?v=5';
 import {mountMonthlyRegister} from './monthly-register.js?v=4';
 import {initLibraryLanguage,mountLibraryLanguage,localText} from './library-i18n.js?v=8';
-import {mountTeacherHeader} from '/components/teacher-header/teacher-header.js?v=20261127-raz2';
+import {mountTeacherHeader} from '/components/teacher-header/teacher-header.js?v=20261128-sharedmakeup1';
 import {ensureTeacherSession,ensureAuthRefresh} from '/Teachers/auth-refresh.js?v=20261021-sessionfix1';
 import {norm,points,parseRaz,ranked,calculateAwards,matchFile,inferSource} from './raz-core.js?v=3';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
