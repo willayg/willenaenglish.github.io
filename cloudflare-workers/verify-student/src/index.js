@@ -43,128 +43,25 @@ function jsonResponse(data, status = 200, origin = '') {
   });
 }
 
-function normalize(val) {
-  return (val || '')
-    .toString()
-    .trim()
-    .normalize('NFC')
-    .replace(/\s+/g, '')
-    .toLowerCase();
-}
-
-function buildIlikePattern(val) {
-  if (!val) return null;
-  const escaped = val.replace(/[%_]/g, ch => `\\${ch}`);
-  return `%${escaped}%`;
-}
-
-function getClientIp(request) {
-  const h = request.headers;
-  return (h.get('x-forwarded-for') || h.get('x-real-ip') || '').split(',')[0].trim() || 'unknown';
-}
-
-const RATE = { ip: new Map(), user: new Map() };
-const MAX_FAILED = 5;
-const WINDOW_MS = 15 * 60 * 1000;
-const LOCKOUT_MS = 5 * 60 * 1000;
-
-function checkRate(map, key, success) {
-  const now = Date.now();
-  let entry = map.get(key);
-  if (!entry) {
-    entry = { count: 0, firstAt: now, lockedUntil: 0 };
-    map.set(key, entry);
-  }
-
-  if (entry.lockedUntil && entry.lockedUntil > now) {
-    return { blocked: true, retryAfterMs: entry.lockedUntil - now };
-  }
-
-  if (success) {
-    map.delete(key);
-    return { blocked: false };
-  }
-
-  if (now - entry.firstAt > WINDOW_MS) {
-    entry.count = 0;
-    entry.firstAt = now;
-  }
-
-  entry.count += 1;
-  if (entry.count >= MAX_FAILED) {
-    entry.lockedUntil = now + LOCKOUT_MS;
-    return { blocked: true, retryAfterMs: LOCKOUT_MS };
-  }
-
-  return { blocked: false };
-}
-
-function isBlocked(map, key) {
-  const entry = map.get(key);
-  if (!entry) return false;
-  return entry.lockedUntil && entry.lockedUntil > Date.now();
-}
-
-async function fetchCandidates(env, koreanPattern, englishPattern, limit = 50) {
-  const params = new URLSearchParams();
-  params.set('role', 'eq.student');
-  params.set('select', 'id,username,email,name,korean_name,phone');
-  params.set('limit', String(limit));
-  if (koreanPattern) params.set('korean_name', `ilike.${koreanPattern}`);
-  if (englishPattern) params.set('name', `ilike.${englishPattern}`);
-
-  const url = `${env.SUPABASE_URL}/rest/v1/profiles?${params.toString()}`;
-  const resp = await fetch(url, {
-    headers: {
-      apikey: env.SUPABASE_SERVICE_KEY,
-      Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-    },
+// Single database transaction verifies identity and serializes attempts by
+// canonical student identity across all Cloudflare locations.
+async function verifyIdentity(env, korean, english, code, ip) {
+  const r=await fetch(env.SUPABASE_URL+'/rest/v1/rpc/easy_login_verify_v1',{
+    method:'POST',headers:{apikey:env.SUPABASE_SERVICE_KEY,Authorization:'Bearer '+env.SUPABASE_SERVICE_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({p_korean:korean,p_english:english,p_code:code,p_ip:ip}),
+    signal:AbortSignal.timeout(10000)
   });
-
-  if (!resp.ok) {
-    const msg = await resp.text();
-    throw new Error(`Supabase query failed: ${resp.status} ${msg}`);
-  }
-
-  return await resp.json();
+  if(!r.ok)throw Error('Identity verification unavailable');
+  return await r.json();
 }
-
-async function insertAudit(env, record) {
+async function recordSessionOutcome(env,id,success) {
   try {
-    const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/auth_password_audit`, {
-      method: 'POST',
-      headers: {
-        apikey: env.SUPABASE_SERVICE_KEY,
-        Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
-      },
-      body: JSON.stringify([record]),
+    const r=await fetch(env.SUPABASE_URL+'/rest/v1/auth_password_audit',{
+      method:'POST',headers:{apikey:env.SUPABASE_SERVICE_KEY,Authorization:'Bearer '+env.SUPABASE_SERVICE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify({student_id:id,source:'verify_student',action:'easy_login_session',success,note:success?'session_issued':'session_failed',timestamp:new Date().toISOString()})
     });
-    if (!resp.ok) {
-      const txt = await resp.text();
-      console.warn('[verify-student] audit insert failed:', resp.status, txt);
-    }
-  } catch (e) {
-    console.warn('[verify-student] audit insert threw:', e.message);
-  }
-}
-
-function matchRecord(row, normalizedKoreanInput, normalizedEnglishInput, normalizedAuthCode) {
-  if (!row || !row.phone) return false;
-  const nk = normalize(row.korean_name);
-  const ne = normalize(row.name);
-  const koreanMatches = normalizedKoreanInput
-    ? nk.includes(normalizedKoreanInput) || normalizedKoreanInput.includes(nk)
-    : false;
-  const englishMatches = normalizedEnglishInput
-    ? ne.includes(normalizedEnglishInput) || normalizedEnglishInput.includes(ne)
-    : false;
-  if (!koreanMatches || !englishMatches) return false;
-
-  const phoneDigits = String(row.phone).replace(/\D/g, '');
-  if (phoneDigits.length < 4) return false;
-  return phoneDigits.slice(-4) === normalizedAuthCode;
+    if(!r.ok)console.warn('Easy Login session audit failed',r.status);
+  } catch { console.warn('Easy Login session audit unavailable'); }
 }
 
 export default {
@@ -196,94 +93,57 @@ export default {
       return jsonResponse({ success: false, error: 'Missing required fields' }, 400, origin);
     }
 
-    const koreanNameValue = String(korean_name).trim();
-    const englishNameValue = String(name).trim();
-    const normalizedKoreanInput = normalize(koreanNameValue);
-    const normalizedEnglishInput = normalize(englishNameValue);
-    const normalizedAuthCode = String(auth_code).replace(/\D/g, '').slice(-4);
-
-    if (normalizedAuthCode.length !== 4) {
-      return jsonResponse({ success: false, error: 'Authentication code must be 4 digits.' }, 400, origin);
-    }
-
-    const clientIp = getClientIp(request);
-    const userKey = `user:${normalizedKoreanInput}|${normalizedEnglishInput}`;
-
-    // Rate-limit checks (do not increment yet)
-    if (isBlocked(RATE.ip, clientIp)) {
-      return jsonResponse({ success: false, error: 'Too many requests from this IP. Try again later.' }, 429, origin);
-    }
-
-    if (isBlocked(RATE.user, userKey)) {
-      return jsonResponse({ success: false, error: 'Too many attempts for this user. Try again later.' }, 429, origin);
-    }
-
-    const patternVariants = [
-      { korean: buildIlikePattern(koreanNameValue), english: buildIlikePattern(englishNameValue) },
-      { korean: null, english: buildIlikePattern(englishNameValue) },
-      { korean: buildIlikePattern(koreanNameValue), english: null }
-    ].filter(v => v.korean || v.english);
-
-    let records = [];
-    let lastErr = null;
-
+    const koreanNameValue=String(korean_name).trim();
+    const englishNameValue=String(name).trim();
+    const code=String(auth_code).replace(/\D/g,'');
+    if(code.length!==4 || !koreanNameValue || !englishNameValue || koreanNameValue.length>100 || englishNameValue.length>100)
+      return jsonResponse({success:false,error:'Authentication code must be 4 digits.'},400,origin);
+    let result;
     try {
-      for (const variant of patternVariants) {
-        const data = await fetchCandidates(env, variant.korean, variant.english, 50);
-        if (Array.isArray(data) && data.length) {
-          records = data;
-          break;
-        }
+      result=await verifyIdentity(env,koreanNameValue,englishNameValue,code,request.headers.get('CF-Connecting-IP')||null);
+    } catch {
+      return jsonResponse({success:false,error:'로그인 서비스를 잠시 사용할 수 없습니다. 다시 시도해 주세요.'},503,origin);
+    }
+    if(result?.status==='locked'){
+      const seconds=Math.max(1,Math.min(300,Number(result.retry_after_seconds)||300));
+      const response=jsonResponse({success:false,error:'로그인 시도가 너무 많습니다. '+Math.ceil(seconds/60)+'분 후 다시 시도해 주세요.',retry_after_seconds:seconds},429,origin);
+      response.headers.set('Retry-After',String(seconds));
+      return response;
+    }
+    if(result?.status!=='ok'||!result.student?.id)
+      return jsonResponse({success:false,error:'Student not found. Please check your information.'},404,origin);
+    const match=result.student;
+
+    // Passwordless easy login: issue a real Supabase session without changing
+    // the student's password. A password change invalidates other devices.
+    if (body.login === true) {
+      if (!match.email) { await recordSessionOutcome(env,match.id,false); return jsonResponse({ success: false, error: 'Student email is missing.' }, 400, origin); }
+      try {
+        const generated = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/generate_link`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json',apikey:env.SUPABASE_SERVICE_KEY,
+            Authorization:`Bearer ${env.SUPABASE_SERVICE_KEY}`},
+          body: JSON.stringify({type:'magiclink',email:match.email})
+        });
+        const link = await generated.json();
+        if (!generated.ok || !link.hashed_token) throw Error('Could not create sign-in token');
+        const verified = await fetch(`${env.SUPABASE_URL}/auth/v1/verify`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json',apikey:env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_KEY},
+          body:JSON.stringify({type:'magiclink',token_hash:link.hashed_token})
+        });
+        const session=await verified.json();
+        if(!verified.ok || !session.access_token || !session.refresh_token || session.user?.id!==match.id)
+          throw Error('Could not establish student session');
+        await recordSessionOutcome(env,match.id,true);
+        return jsonResponse({success:true,student:{id:match.id,username:match.username,email:match.email,
+          name:match.name,korean_name:match.korean_name},session:{access_token:session.access_token,refresh_token:session.refresh_token}},200,origin);
+      } catch (e) {
+        await recordSessionOutcome(env,match.id,false);
+        console.error('[verify-student] passwordless login failed');
+        return jsonResponse({success:false,error:'Could not establish student session'},502,origin);
       }
-
-      if (!records.length) {
-        const fallback = await fetchCandidates(env, null, null, 25);
-        records = Array.isArray(fallback) ? fallback : [];
-      }
-    } catch (e) {
-      lastErr = e;
     }
-
-    if (!records.length && lastErr) {
-      return jsonResponse({ success: false, error: 'Database error occurred.' }, 500, origin);
-    }
-
-    const match = records.find(row => matchRecord(row, normalizedKoreanInput, normalizedEnglishInput, normalizedAuthCode));
-    const hadNameMatches = records.length > 0;
-    const hasPhoneData = records.some(r => r && r.phone);
-
-    if (!match) {
-      await insertAudit(env, {
-        user_id: null,
-        actor: null,
-        source: 'verify_student',
-        ip: clientIp,
-        action: 'easy_login_attempt',
-        success: false,
-        timestamp: new Date().toISOString(),
-        note: 'not_found',
-        extra: JSON.stringify({ matchedOnName: hadNameMatches, anyPhonePresent: hasPhoneData })
-      });
-
-      checkRate(RATE.ip, clientIp, false);
-      checkRate(RATE.user, userKey, false);
-
-      return jsonResponse({ success: false, error: 'Student not found. Please check your information.' }, 404, origin);
-    }
-
-    await insertAudit(env, {
-      user_id: match.id,
-      actor: match.username,
-      source: 'verify_student',
-      ip: clientIp,
-      action: 'easy_login_attempt',
-      success: true,
-      timestamp: new Date().toISOString(),
-      note: 'success'
-    });
-
-    checkRate(RATE.ip, clientIp, true);
-    checkRate(RATE.user, userKey, true);
 
     return jsonResponse({
       success: true,
