@@ -1,6 +1,6 @@
 import {playStudentSfx} from '../shared/student-sfx.js?v=20260926-v0001';
 class StudentRewardCelebration extends HTMLElement {
-  static get observedAttributes(){return ['percent','stars','star-max','points','label','points-only'];}
+  static get observedAttributes(){return ['percent','stars','star-max','points','label','points-only','stars-only'];}
 
   constructor(){
     super();
@@ -34,6 +34,7 @@ class StudentRewardCelebration extends HTMLElement {
     const points=Math.max(0,Math.round(this.numberAttr('points',0,1000000)));
     const label=this.getAttribute('label')||'SESSION REWARD';
     const pointsOnly=this.hasAttribute('points-only');
+    const starsOnly=!pointsOnly&&this.hasAttribute('stars-only');
     const starHtml=Array.from({length:starMax},(_,i)=>
       '<span class="star '+(i<stars?'earned':'empty')+'" data-star="'+i+'" aria-hidden="true">'+(i<stars?'★':'☆')+'</span>'
     ).join('');
@@ -51,7 +52,7 @@ class StudentRewardCelebration extends HTMLElement {
         .star.pop{animation:star-pop .38s cubic-bezier(.2,.9,.35,1.35) both}
         .star.final-pop{animation:final-pop .5s cubic-bezier(.2,.9,.35,1.45) both}
         .awards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-        .awards.points-only{grid-template-columns:minmax(0,1fr);max-width:240px;margin:0 auto}
+        .awards.points-only,.awards.stars-only{grid-template-columns:minmax(0,1fr);max-width:240px;margin:0 auto}
         .award{border:1px solid var(--reward-border,#dff2f4);border-radius:15px;background:#fff;padding:11px 8px}
         .award strong{display:block;font-size:1.35rem;font-weight:900;color:var(--reward-accent,#de5b94)}
         .award span{display:block;margin-top:1px;font-size:.72rem;font-weight:800;color:var(--reward-muted,#789095)}
@@ -61,12 +62,12 @@ class StudentRewardCelebration extends HTMLElement {
         @media(max-width:420px){.reward{padding:18px 12px}.stars{gap:4px}.awards{gap:7px}}
         @media(prefers-reduced-motion:reduce){.star.pop,.star.final-pop{animation:none}}
       </style>
-      <section class="reward" aria-label="${pointsOnly?points+' points earned':stars+' stars and '+points+' points earned'}">
+      <section class="reward" aria-label="${pointsOnly?points+' points earned':starsOnly?stars+' stars earned':stars+' stars and '+points+' points earned'}">
         <div class="label">${this.escape(label)}</div>
         ${pointsOnly?'':'<div class="percent">'+percent+'%</div><div class="stars" aria-hidden="true">'+starHtml+'</div>'}
-        <div class="awards ${pointsOnly?'points-only':''}">
+        <div class="awards ${pointsOnly?'points-only':starsOnly?'stars-only':''}">
           ${pointsOnly?'':'<div class="award"><strong>+'+stars+'</strong><span>STARS</span></div>'}
-          <div class="award"><strong>+${points}</strong><span>POINTS</span></div>
+          ${starsOnly?'':`<div class="award"><strong>+${points}</strong><span>POINTS</span></div>`}
         </div>
         ${!pointsOnly&&stars===0?'<div class="none">60% 이상이면 별을 받을 수 있어요.</div>':''}
       </section>`;
