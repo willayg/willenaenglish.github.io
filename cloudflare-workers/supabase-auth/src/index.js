@@ -127,7 +127,7 @@ async function verifyToken(env, token) {
 // Fetch profile from database
 async function fetchProfile(env, userId, fields = '*') {
   const resp = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=${fields}`,
+    `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=${fields}`,
     {
       headers: {
         'apikey': env.SUPABASE_SERVICE_KEY,
@@ -184,6 +184,34 @@ export default {
     };
     
     try {
+      // Authorize service-role reads and writes before any privileged query.
+      // Easy Login now installs a verified passwordless session; never reset
+      // a student's password through this retired public action.
+      if (action === 'set_student_password') {
+        return jsonResponse({ success:false, error:'Legacy password reset disabled' }, 410, origin);
+      }
+      const scopedProfileActions = ['get_profile','get_profile_id','get_role'];
+      const worksheetActions = ['list_worksheets','save_worksheet','delete_worksheet'];
+      if (scopedProfileActions.includes(action) || worksheetActions.includes(action)) {
+        const cookies = parseCookies(request.headers.get('Cookie') || '');
+        const bearer = (request.headers.get('Authorization') || '').match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+        const caller = await verifyToken(env, cookies['sb_access'] || bearer);
+        if (!caller?.id) return jsonResponse({success:false,error:'Not signed in'},401,origin);
+        const profile = await fetchProfile(env, caller.id, 'id,role,approved,is_owner');
+        if (profile?.approved !== true) return jsonResponse({success:false,error:'Approved account required'},403,origin);
+        const staff = ['teacher','admin','owner'].includes(String(profile.role).toLowerCase());
+        if (worksheetActions.includes(action) && !staff)
+          return jsonResponse({success:false,error:'Staff access required'},403,origin);
+        if (scopedProfileActions.includes(action)) {
+          const target = url.searchParams.get(action === 'get_profile_id' ? 'auth_user_id' : 'user_id') || caller.id;
+          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(target))
+            return jsonResponse({success:false,error:'Invalid profile ID'},400,origin);
+          if (target !== caller.id && !staff)
+            return jsonResponse({success:false,error:'Profile access denied'},403,origin);
+          url.searchParams.set(action === 'get_profile_id' ? 'auth_user_id' : 'user_id', target);
+        }
+      }
+
       // ===== DEBUG =====
       if (action === 'debug') {
         return jsonResponse({
@@ -834,62 +862,6 @@ export default {
         return jsonResponse({ success: true }, 200, origin);
       }
       
-      // ===== SET STUDENT PASSWORD (Easy Login flow) =====
-      // This is called after verify_student succeeds to set a temporary password
-      // so the student can be logged in via username/password flow
-      if (action === 'set_student_password' && request.method === 'POST') {
-        const body = await request.json();
-        const { student_id, password } = body;
-
-        if (!student_id || !password) {
-          return jsonResponse({ success: false, error: 'Missing student_id or password' }, 400, origin);
-        }
-
-        if (String(password).length < 6) {
-          return jsonResponse({ success: false, error: 'Password too short' }, 400, origin);
-        }
-
-        // Verify the student exists and is a student role
-        const profileResp = await fetch(
-          `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(student_id)}&select=id,role,approved`,
-          {
-            headers: {
-              'apikey': env.SUPABASE_SERVICE_KEY,
-              'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-            },
-          }
-        );
-
-        const profiles = await profileResp.json();
-        if (!profiles || !profiles[0]) {
-          return jsonResponse({ success: false, error: 'Student not found' }, 404, origin);
-        }
-
-        const profile = profiles[0];
-        if (profile.role !== 'student') {
-          return jsonResponse({ success: false, error: 'Not a student account' }, 403, origin);
-        }
-
-        // Update password using admin API
-        const updateResp = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${student_id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': env.SUPABASE_SERVICE_KEY,
-            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-          },
-          body: JSON.stringify({ password }),
-        });
-
-        if (!updateResp.ok) {
-          const errText = await updateResp.text();
-          console.error('[set_student_password] Update failed:', updateResp.status, errText);
-          return jsonResponse({ success: false, error: 'Password update failed' }, 400, origin);
-        }
-
-        return jsonResponse({ success: true }, 200, origin);
-      }
-
       // ===== ACTION NOT FOUND =====
       return jsonResponse({ success: false, error: 'Action not found' }, 404, origin);
       
