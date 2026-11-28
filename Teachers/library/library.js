@@ -1,5 +1,6 @@
-import {mountDailyRegister} from './daily-register.js?v=1';
-import {initLibraryLanguage,mountLibraryLanguage,localText} from './library-i18n.js?v=4';
+import {mountDailyRegister} from './daily-register.js?v=2';
+import {mountMonthlyRegister} from './monthly-register.js?v=1';
+import {initLibraryLanguage,mountLibraryLanguage,localText} from './library-i18n.js?v=5';
 import {mountTeacherHeader} from '/components/teacher-header/teacher-header.js?v=20261127-raz2';
 import {ensureTeacherSession,ensureAuthRefresh} from '/Teachers/auth-refresh.js?v=20261021-sessionfix1';
 import {norm,points,parseRaz,ranked,calculateAwards,matchFile,inferSource} from './raz-core.js?v=3';
@@ -166,15 +167,17 @@ let activeLibraryTab='today',registerTabBusy=false;
 function initRegisterTabs(){
  if(dailyRegister)return;
  dailyRegister=mountDailyRegister({root:$('#todayView'),api,getStudents:()=>S.students});
- async function switchTab(tab){if(registerTabBusy)return;registerTabBusy=true;try{
+ const monthlyRegister=mountMonthlyRegister({root:$('#monthlyView'),api,getStudents:()=>S.students,openDay:(date,className)=>switchTab('today',{date,className})});
+ async function switchTab(tab,target){if(registerTabBusy)return;registerTabBusy=true;try{
    if(activeLibraryTab==='today'&&tab!=='today'&&!await dailyRegister.hide())return;
-   activeLibraryTab=tab;$('#todayView').hidden=tab!=='today';$('#razView').hidden=tab!=='raz';
+   activeLibraryTab=tab;$('#todayView').hidden=tab!=='today';$('#monthlyView').hidden=tab!=='monthly';$('#razView').hidden=tab!=='raz';
    $('[data-library-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.libraryTab===tab)));
-   if(tab==='today')await dailyRegister.show();
+   if(tab==='today')await dailyRegister.show(target);
+   if(tab==='monthly')await monthlyRegister.show();
    try{localStorage.setItem('willena.library.tab',tab)}catch{}
  }finally{registerTabBusy=false}}
  $('[data-library-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.libraryTab));
- let initial='today';try{if(localStorage.getItem('willena.library.tab')==='raz')initial='raz'}catch{}
+ let initial='today';try{const saved=localStorage.getItem('willena.library.tab');if(['today','monthly','raz'].includes(saved))initial=saved}catch{}
  switchTab(initial);
 }
 

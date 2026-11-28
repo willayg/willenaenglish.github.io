@@ -106,3 +106,24 @@ html[data-library-language="both"] .panel-head{align-items:center}
 @media(max-width:600px){.register-slots{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.slot-button{min-height:56px}.slot-button strong{font-size:12px}.register-metrics{gap:5px}.register-metrics .metric{padding:8px 5px}.register-metrics .metric strong{font-size:22px}.register-bulk{width:100%}.register-bulk button{flex:1}.register-table th:first-child{width:30%}.register-table td{padding:6px 3px}.reg-select{font-size:11px}.register-date-controls{width:100%;justify-content:flex-start}.register-date-controls label{flex:1}.register-date-controls input{width:100%;max-width:none}}
 
 @media(max-width:520px){.register-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.register-mode{margin-bottom:12px}.register-mode button.selected{background:var(--accent);color:white}
+#registerMonthStatus{font-size:12px;color:var(--accent);margin:8px 0}
+.register-month-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.register-month-summary>div{background:#f4f9fa;border:1px solid var(--line);border-radius:9px;padding:10px}
+.register-month-summary strong{display:block;color:var(--accent);font-size:24px}
+.register-month-summary span{color:#647e86;font-size:12px}
+.month-register-scroll{max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0}
+.month-register-table{width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
+.month-register-table th,.month-register-table td{padding:4px;text-align:center;white-space:nowrap}
+.month-register-table .month-student{position:sticky;left:0;background:#f8fbfc;text-align:left;z-index:1;padding:8px 10px;min-width:118px;max-width:180px;box-shadow:1px 0 #dce8ea}
+.month-register-table thead .month-student{z-index:2}.month-register-table .month-student strong{display:block;font-size:12px}.month-register-table .month-student small{display:block;font-weight:400;color:#6b858d;font-size:10px}
+.month-register-table .month-today{background:#d6eef0;color:#237f89}
+.month-cell{width:38px;height:37px;min-height:37px;padding:2px!important;font-size:11px;border:1px solid #e1e9eb;border-radius:6px;color:#799097;background:#f8fafb}
+.month-cell:disabled{opacity:.35;cursor:default}
+.month-cell[data-state=present],.month-cell[data-state=done],.month-legend i[data-state=present],.month-legend i[data-state=done]{background:#dff1e6;color:#25724e}
+.month-cell[data-state=late_5_10],.month-cell[data-state=in_progress],.month-legend i[data-state=late_5_10],.month-legend i[data-state=in_progress]{background:#fff2d4;color:#997018}
+.month-cell[data-state=late_10_15],.month-cell[data-state=late_15_plus],.month-legend i[data-state=late_10_15],.month-legend i[data-state=late_15_plus]{background:#ffe4cb;color:#ab591f}
+.month-cell[data-state=absent],.month-cell[data-state=not_done],.month-legend i[data-state=absent],.month-legend i[data-state=not_done]{background:#f9dce0;color:#ad3f51}
+.month-cell[data-state=exception],.month-cell[data-state=book_report],.month-legend i[data-state=exception],.month-legend i[data-state=book_report]{background:#e4e9f8;color:#53699f}
+.month-legend{display:flex;gap:8px 15px;flex-wrap:wrap;font-size:11px;color:#57717b}.month-legend span{display:flex;align-items:center;gap:4px}.month-legend i{font-style:normal;min-width:24px;padding:3px 5px;border-radius:4px;background:#f0f5f6;color:#647e86;text-align:center}

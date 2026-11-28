@@ -47,7 +47,7 @@ export function mountDailyRegister({root,api,getStudents}){
  function render(){
   const list=slots(),slot=activeSlot();dateInput.value=d.date;dateInput.max=todayKST();
   $('#registerPrev').disabled=d.loading;$('#registerToday').disabled=d.loading;$('#registerNext').disabled=d.loading||d.date>=todayKST();
-  if(!d.schedule||d.loading){content.innerHTML='<div class="empty">Loading register…</div>';syncStatus();return}
+  if(d.loading){content.innerHTML='<div class="empty">Loading register…</div>';syncStatus();return}
   if(!d.loaded){content.innerHTML='<div class="empty">Could not load the register.</div><button class="secondary" id="registerReload">Reload register</button>';$('#registerReload').onclick=()=>loadDate(d.date);syncStatus();return}
   if(!list.length){content.innerHTML='<section class="panel register-weekend"><h2>No scheduled Library Time</h2><p class="muted">Choose a school day to view the register.</p><button class="secondary" id="previousSchoolDay">Previous school day</button></section>';$('#previousSchoolDay').onclick=()=>changeDate(previousSchoolDay(d.date,d.schedule));syncStatus();return}
   const current=d.date===todayKST()?list.find(s=>localMinute()>=s.start&&localMinute()<s.end):null;
@@ -100,5 +100,5 @@ export function mountDailyRegister({root,api,getStudents}){
  $('#registerToday').onclick=()=>changeDate(todayKST());$('#registerPrev').onclick=()=>shift(-1);$('#registerNext').onclick=()=>shift(1);retry.onclick=()=>flush().catch(()=>{});
  window.addEventListener('beforeunload',e=>{if(hasPending()){e.preventDefault();e.returnValue=''}});
  setInterval(()=>{if(!d.visible||d.loading||!d.loaded||d.manual||hasPending())return;if(d.date!==todayKST()){changeDate(todayKST());return}const next=chooseSlot(slots(),localMinute());if(next!==d.slot){d.slot=next;render()}},15000);
- return {async show(){d.visible=true;if(!hasPending())await loadDate(d.date);else render()},async hide(){try{await flush();d.visible=false;return true}catch{return false}},refreshRoster(){if(d.loaded&&d.visible)render()}};
+ return {async show(target){d.visible=true;if(!hasPending()){await loadDate(target?.date||d.date);if(target?.className&&d.loaded){const wanted=slots().find(s=>s.classes.includes(target.className));if(wanted){d.slot=wanted.start;d.manual=true;render()}}}else render()},async hide(){try{await flush();d.visible=false;return true}catch{return false}},refreshRoster(){if(d.loaded&&d.visible)render()}};
 }
