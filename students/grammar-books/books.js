@@ -1,7 +1,6 @@
 import {guideFeedback} from './grammar-guide-feedback.js?v=20261126-guide1';
 import {geniusSessionContext,geniusHomeworkFromUrl,geniusSessionHeader} from '../components/genius-session-context.js?v=20261104-a';
 import {renderStudentSessionFinish} from '../components/student-session-finish.js?v=1';
-import {capturePointOrigin,showPointAward} from '../components/student-point-feedback.js?v=20260927-startup2';
 import {createMissedOnlyRetry} from '../vocab-study/vocab-pass-flow.js?v=20261103-missed-only1';
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 import {grammarEngine} from './engine.js?v=1';
@@ -62,7 +61,7 @@ function beginRewardSession(mode){
  const reviewOnly=goldChapter(activeUnit);
  rewardSession={id:window.crypto?.randomUUID?.()||('grammar-'+Date.now()+'-'+Math.random().toString(16).slice(2)),
   chapter:activeUnit,mode,startedAt:new Date().toISOString(),firstCorrect:0,
-  points:0,awardedIds:new Set(),reviewOnly,completed:false};
+  awardedIds:new Set(),reviewOnly,completed:false};
 }
 async function completeRewardSession(){
  const reward=rewardSession;
@@ -70,8 +69,7 @@ async function completeRewardSession(){
  reward.completed=true;
  const percent=Math.round(reward.firstCorrect/roundTotal()*100);
  const stars=reward.reviewOnly?0:starsForPercent(percent);
- const points=reward.reviewOnly?0:reward.points;
- if(reward.reviewOnly)return {percent,stars,points};
+ if(reward.reviewOnly)return {percent,stars};
  const bookId=isTen(activeBook)?TEN_BOOK_ID:activeBook?.id;
  const chapterUnit=units.find(u=>Number(u.unit_number)===Number(reward.chapter));
  const unitId=chapterUnit?.subunits?.[0]?.id||chapterUnit?.id;
@@ -85,7 +83,7 @@ async function completeRewardSession(){
   reward_list_name:listName,reward_list_size:roundTotal(),reward_started_at:reward.startedAt,
   reward_summary:{
    completed:true,stars,accuracy:reward.firstCorrect/roundTotal(),percent,
-   score:reward.firstCorrect,total:roundTotal(),points_earned:points,
+   score:reward.firstCorrect,total:roundTotal(),points_earned:0,
    book_id:bookId,unit_id:unitId,assignment_id:null,session_source:'student',
    grammar_mode:reward.mode,grammar_chapter:reward.chapter,
    reward_scheme:'grammar-books-v1',star_cap:5
@@ -102,7 +100,7 @@ async function completeRewardSession(){
   window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.id,mode:'grammar_books_'+reward.mode,list_name:listName,list_size:roundTotal()}}));
   window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:stars}}));
   try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
-  return {percent,stars,points};
+  return {percent,stars};
  }catch(error){
   reward.completed=false;
   console.warn('[Grammar Books] reward save failed',error);
@@ -210,12 +208,12 @@ function showGrammarReward(reward){
  const mount=$('grammarRewardMount');
  if(!mount)return;
  mount.replaceChildren();
- if(!reward||!(reward.points||reward.stars))return;
+ if(!reward?.stars)return;
  const celebration=document.createElement('student-reward-celebration');
  celebration.setAttribute('percent',String(reward.percent));
  celebration.setAttribute('stars',String(reward.stars));
  celebration.setAttribute('star-max','5');
- celebration.setAttribute('points',String(reward.points));
+ celebration.setAttribute('stars-only','');
  celebration.setAttribute('label','SESSION REWARD');
  mount.append(celebration);
 }
@@ -530,10 +528,6 @@ async function checkAnswer(){
   if(activeHomework)homeworkAttemptIds.add(q.id)
   if(rewardSession&&!rewardSession.awardedIds.has(q.id)){
    rewardSession.awardedIds.add(q.id);
-   if(!rewardSession.reviewOnly){
-    rewardSession.points+=2;
-    showPointAward({amount:2,origin:capturePointOrigin($('grammarSharedQuestionHost'))}).catch(()=>{});
-   }
    if(!retryingWrong)rewardSession.firstCorrect++;
   }
  }
@@ -556,8 +550,7 @@ async function finishRound(){
  if(completed&&rewardSession){
   const percent=Math.round(rewardSession.firstCorrect/roundTotal()*100);
   showGrammarReward({
-   percent,stars:rewardSession.reviewOnly?0:starsForPercent(percent),
-   points:rewardSession.reviewOnly?0:rewardSession.points
+   percent,stars:rewardSession.reviewOnly?0:starsForPercent(percent)
   });
  }
  if(completed){
@@ -586,7 +579,7 @@ async function finishRound(){
    try{await completeRewardSession()}
    catch(error){
     console.error('[Grammar Books] award save failed',error);
-    showFinishSaveWarning('별과 포인트 저장을 확인하지 못했어요.');
+    showFinishSaveWarning('별 저장을 확인하지 못했어요.');
    }
    void window.WillenaMissionBasket?.recordCompletedActivity?.('grammar-'+(courseKey(activeBook)||'ten2')+'-unit-'+activeUnit+'-'+activeMode,'Grammar Genius Books');
    void window.WillenaAchievements?.refresh?.();
