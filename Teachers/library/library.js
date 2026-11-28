@@ -1,7 +1,7 @@
 import {mountDailyRegister} from './daily-register.js?v=5';
 import {mountMonthlyRegister} from './monthly-register.js?v=4';
 import {initLibraryLanguage,mountLibraryLanguage,localText} from './library-i18n.js?v=8';
-import {mountTeacherHeader} from '/components/teacher-header/teacher-header.js?v=20261128-sharedmakeup1';
+import {mountTeacherHeader} from '/components/teacher-header/teacher-header.js?v=20261128-makeupembed2';
 import {ensureTeacherSession,ensureAuthRefresh} from '/Teachers/auth-refresh.js?v=20261021-sessionfix1';
 import {norm,points,parseRaz,ranked,calculateAwards,matchFile,inferSource} from './raz-core.js?v=3';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -185,21 +185,22 @@ function initRegisterTabs(){
  dailyRegister=mountDailyRegister({root:$('#todayView'),api,getStudents:()=>S.students});
  const monthlyRegister=mountMonthlyRegister({root:$('#monthlyView'),api,getStudents:()=>S.students,openDay:(date,className)=>switchTab('today',{date,className})});
  async function switchTab(tab,target){
-  if(!['today','monthly','raz'].includes(tab))return;
+  if(!['today','monthly','raz','makeup'].includes(tab))return;
   const token=++navigationRequest;
   // Flush unsaved daily changes, but never lock navigation on a view's data fetch.
   if(activeLibraryTab==='today'&&tab!=='today'){
    const safe=await dailyRegister.hide();if(!safe||token!==navigationRequest)return;
   }
-  activeLibraryTab=tab;if(tab!=='raz')lastRegisterTab=tab;$('#libraryTimeView').hidden=tab==='raz';$('#todayView').hidden=tab!=='today';$('#monthlyView').hidden=tab!=='monthly';$('#razView').hidden=tab!=='raz';
-  $$('[data-library-section]').forEach(b=>{const active=b.dataset.librarySection===(tab==='raz'?'raz':'register');b.setAttribute('aria-selected',String(active));b.classList.toggle('active',active)});
+  activeLibraryTab=tab;const registerTab=['today','monthly'].includes(tab);if(registerTab)lastRegisterTab=tab;$('#libraryTimeView').hidden=!registerTab;$('#todayView').hidden=tab!=='today';$('#monthlyView').hidden=tab!=='monthly';$('#razView').hidden=tab!=='raz';$('#makeupView').hidden=tab!=='makeup';
+  if(tab==='makeup'){const frame=$('#libraryMakeupFrame');if(!frame.getAttribute('src'))frame.setAttribute('src',frame.dataset.src);else frame.contentWindow?.postMessage({type:'willena:makeup:activate'},location.origin)}
+  $$('[data-library-section]').forEach(b=>{const active=b.dataset.librarySection===(registerTab?'register':tab);b.setAttribute('aria-selected',String(active));b.classList.toggle('active',active)});
   $$('[data-library-tab]').forEach(b=>{const active=b.dataset.libraryTab===lastRegisterTab;b.setAttribute('aria-selected',String(active));b.classList.toggle('active',active)});
   try{localStorage.setItem('willena.library.tab',tab);localStorage.setItem('willena.library.registerTab',lastRegisterTab)}catch{}
   try{if(tab==='today')await dailyRegister.show(target);if(tab==='monthly')await monthlyRegister.show()}catch(e){console.error('Library view could not load',e);if(token===navigationRequest){const id=tab==='today'?'#registerStatus':tab==='monthly'?'#registerMonthStatus':'#status';msg(id,e.message||'Could not load the register.',true)}}
  }
  $$('[data-library-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.libraryTab));
- $$('[data-library-section]').forEach(b=>b.onclick=()=>switchTab(b.dataset.librarySection==='raz'?'raz':lastRegisterTab));
- let initial='today';try{const saved=localStorage.getItem('willena.library.tab'),sub=localStorage.getItem('willena.library.registerTab');if(['today','monthly'].includes(sub))lastRegisterTab=sub;if(['today','monthly','raz'].includes(saved))initial=saved}catch{}
+ $$('[data-library-section]').forEach(b=>b.onclick=()=>switchTab(b.dataset.librarySection==='register'?lastRegisterTab:b.dataset.librarySection));
+ let initial='today';try{const saved=localStorage.getItem('willena.library.tab'),sub=localStorage.getItem('willena.library.registerTab');if(['today','monthly'].includes(sub))lastRegisterTab=sub;if(['today','monthly','raz','makeup'].includes(saved))initial=saved}catch{}
  switchTab(initial);
 }
 

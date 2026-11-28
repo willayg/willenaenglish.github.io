@@ -57,7 +57,6 @@ function makeCenter({ mode, title }) {
       <a data-th-teacher href="/Teachers/dashboard-v2/">Teacher</a>
       <a data-th-admin href="/Teachers/admin-v2/" hidden>Admin</a>
       <a data-th-library href="/Teachers/library/" hidden>Library</a>
-      <a data-th-makeup href="/Teachers/makeup/" hidden>보강</a>
     `;
     center.appendChild(sw);
   } else {
@@ -98,13 +97,10 @@ function applyDashboardState(root, identity, activeApp) {
   const library = root.querySelector('[data-th-library]');
   if (library) library.hidden = !['teacher','admin'].includes(identity.role);
 
-  const makeup = root.querySelector('[data-th-makeup]');
-  if (makeup) makeup.hidden = !['teacher','admin'].includes(identity.role);
   const current = activeApp || (location.pathname.includes('/admin') ? 'admin' : 'teacher');
   teacher.classList.toggle('active', current === 'teacher');
   admin.classList.toggle('active', current === 'admin');
   if (library) library.classList.toggle('active', current === 'library');
-  if (makeup) makeup.classList.toggle('active', current === 'makeup');
 }
 
 export async function mountTeacherHeader(options = {}) {

@@ -54,6 +54,7 @@ async function ensureLevelTests(){
 }
 function activateView(view){
   setView(view);
+  if(view==='makeup'){const frame=$('#adminMakeupFrame');if(frame){if(!frame.getAttribute('src'))frame.setAttribute('src',frame.dataset.src);else frame.contentWindow?.postMessage({type:'willena:makeup:activate'},location.origin)}}
   if(view==='monthly-reports'){const frame=$('#adminMonthlyReportsFrame');if(frame&&!frame.getAttribute('src'))frame.setAttribute('src',frame.dataset.src);}
   if(view!=='enquiries')import('./admin-v2-enquiries.js?v=20261112-scroll2').then(m=>m.closeEnquiriesDrawer()).catch(()=>{});
 

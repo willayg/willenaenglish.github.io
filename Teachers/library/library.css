@@ -266,3 +266,7 @@ dialog:not([open]){display:none!important}
  #razView .quick-drop{min-height:48px}
  #razView .report-row{gap:6px}
 }
+
+/* Shared academy makeup workspace. */
+.library-makeup-frame{display:block;width:100%;height:calc(100dvh - 115px);min-height:460px;border:0;background:transparent}
+@media(max-width:760px){.library-makeup-frame{height:calc(100dvh - 155px);min-height:330px}}
