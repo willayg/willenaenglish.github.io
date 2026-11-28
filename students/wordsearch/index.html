@@ -17,7 +17,7 @@
 <script type="module" src="/students/components/student-header.js?v=20261127-animal-art1"></script>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
 <script src="/students/components/homework-deeplink-splash.js?v=20261105-pass2-displayfix1"></script>
-<link rel="modulepreload" href="./wordsearch.js?v=20261126-portal-rollout1">
+<link rel="modulepreload" href="./wordsearch.js?v=20261128-puzzle-receipt1">
 <script src="/students/components/avatar-renderer.js?v=20261127-animal-art1"></script><script src="/students/components/genius-app-boot.js?v=20261127-originals-only1"></script>
 </head>
 <body>
@@ -53,7 +53,7 @@
             <span id="modeLabel" class="eyebrow">WORD SEARCH</span>
             <strong id="puzzleProgress">0 / 10 found</strong>
           </div>
-          <span id="sessionPoints" class="session-points">+0 pts</span>
+          <span id="sessionPoints" class="session-points">0 without help</span>
           <div class="head-buttons">
             <button id="cheatFinishBtn" class="cheat-btn" type="button" hidden>Finish Puzzle</button>
             <button id="newPuzzleBtn" class="new-btn" type="button">New Puzzle</button>
@@ -289,16 +289,17 @@
       <div class="win-copy">
         <span class="complete-kicker">PUZZLE COMPLETE</span>
         <strong id="winTitle">You did it!</strong>
-        <span id="completePoints">You found every word.</span>
+        <span id="completePoints" role="status">You found every word.</span>
       </div>
       <div id="rewardCelebration"></div>
+      <button id="retryRewardBtn" type="button" hidden>Retry saving reward</button>
       <button id="playAgainBtn" type="button">Play Again</button>
     </dialog>
   </main>
   <div class="app-rev" aria-label="Revision">Rev 1.010</div>
 </div>
 <script src="./mix-deck-skins.js?v=20260929-02"></script>
-<script type="module" src="./wordsearch.js?v=20261126-portal-rollout1"></script>
+<script type="module" src="./wordsearch.js?v=20261128-puzzle-receipt1"></script>
 <script defer src="/students/components/live-presence.js?v=20261103-p3"></script>
 <script defer src="/students/components/idle-identity-check.js?v=20261104-tab-v6"></script>
 </body>

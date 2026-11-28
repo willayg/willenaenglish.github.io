@@ -34,8 +34,14 @@ async function loadEmojiMappings() {
   return emojiMap;
 }
 
+export function runReadAndFindMode(context) {
+  return runMultiChoiceMode(context, 'read');
+}
+
 // Multiple Choice (Mixed): randomly alternates between Kor→Eng and Eng→Kor each round
-export async function runMultiChoiceMode({ wordList, gameArea, startGame, listName = null }) {
+export async function runMultiChoiceMode({ wordList, gameArea, startGame, listName = null }, replayMode = 'multi_choice') {
+  // Read & Find accepts the first visible tap; setupChoiceButtons still locks each question after one answer.
+  const answerOptions = { minAnswerLatencyMs: replayMode === 'read' ? 0 : 120 };
   const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
   let score = 0;
   let idx = 0;
@@ -145,7 +151,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
         <button id="playAgainMultiMixed" style="display:none;font-size:1.1em;padding:12px 28px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button>
   ${document.getElementById('gameStage') ? '' : `<button id=\"tryMoreMultiMixed\" style=\"font-size:1.05em;padding:10px 22px;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;margin-left:12px;\">Return</button>`}
       </div>`;
-      document.getElementById('playAgainMultiMixed').onclick = () => startGame('multi_choice');
+      document.getElementById('playAgainMultiMixed').onclick = () => startGame(replayMode);
       const tryMoreMulti = document.getElementById('tryMoreMultiMixed');
       if (tryMoreMulti) {
         tryMoreMulti.onclick = () => {
@@ -154,7 +160,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
           if (window.WordArcade?.startModeSelector) {
             window.WordArcade.startModeSelector();
           } else {
-            startGame('multi_choice', { shuffle: true });
+            startGame(replayMode, { shuffle: true });
           }
         };
       }
@@ -213,7 +219,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
           <div id="multiScoreMixed" style="margin-top:6px;text-align:center;font-size:1.1em;font-weight:700;color:#19777e;">${isReview ? '' : `Score: ${score}`}</div>
         </div>`;
 
-  setupChoiceButtons(gameArea, { minAnswerLatencyMs: 120 });
+  setupChoiceButtons(gameArea, answerOptions);
       document.querySelectorAll('#multiChoicesMixed .multi-pic-btn').forEach(btn => {
         btn.onclick = () => {
           if (questionLocked) return;
@@ -261,7 +267,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
         </div>`;
 
       document.querySelectorAll('#multiChoicesMixed .choice-btn').forEach(btn => { btn.style.height = '12vh'; });
-  setupChoiceButtons(gameArea, { minAnswerLatencyMs: 120 });
+  setupChoiceButtons(gameArea, answerOptions);
       document.querySelectorAll('#multiChoicesMixed .multi-choice-btn').forEach(btn => {
         btn.onclick = () => {
           if (questionLocked) return;
@@ -328,7 +334,7 @@ export async function runMultiChoiceMode({ wordList, gameArea, startGame, listNa
     </div>`;
 
     document.querySelectorAll('#multiChoicesMixed .choice-btn').forEach(btn => { btn.style.height = '12vh'; });
-  setupChoiceButtons(gameArea, { minAnswerLatencyMs: 120 });
+  setupChoiceButtons(gameArea, answerOptions);
     document.querySelectorAll('#multiChoicesMixed .multi-choice-btn').forEach(btn => {
       btn.onclick = () => {
         if (questionLocked) return;

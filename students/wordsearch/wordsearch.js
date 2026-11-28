@@ -1,5 +1,3 @@
-import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
-
 const PUZZLE_SFX={
   correct:'/Games/english_arcade/assets/audio/right-answer.mp3',
   wrong:'/Games/english_arcade/assets/audio/wrong-answer.mp3',
@@ -66,12 +64,13 @@ const gameArea=$('gameArea');
 const completeCard=$('completeCard');
 const completePoints=$('completePoints');
 const rewardCelebration=$('rewardCelebration');
+const retryRewardBtn=$('retryRewardBtn');
 const cheatFinishBtn=$('cheatFinishBtn');
 const CHEAT_MODE=new URLSearchParams(location.search).get('cheat')==='1';
 
 const state={
   auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],studentLevel:null,rewardContext:null,ready:false,buildToken:0,grid:[],size:GRID_TARGET,placements:[],
-  found:new Set(),gimmes:new Set(),bogglePaths:new Map(),boggleReveals:new Set(),drag:null,sessionId:null,startedAt:null,saving:false,mode:(['boggle','wordsearch','crossword','mixmatch'].includes(new URLSearchParams(location.search).get('mode'))?new URLSearchParams(location.search).get('mode'):'boggle'),gridSize:8,activeCrossword:null,crosswordCursor:0,cheatCompletion:false,matchFirst:null,matchLocked:false,matchDeckStyle:null,
+  found:new Set(),gimmes:new Set(),bogglePaths:new Map(),boggleReveals:new Set(),drag:null,sessionId:null,startedAt:null,mode:(['boggle','wordsearch','crossword','mixmatch'].includes(new URLSearchParams(location.search).get('mode'))?new URLSearchParams(location.search).get('mode'):'boggle'),gridSize:8,activeCrossword:null,crosswordCursor:0,cheatCompletion:false,matchFirst:null,matchLocked:false,matchDeckStyle:null,
   modeSnapshots:new Map()
 };
 
@@ -664,7 +663,6 @@ async function chooseMatchCard(card){
     state.found.add(index);
     updateProgress();
     playPuzzleSfx('correct');
-    showPointAward({amount:POINTS_PER_WORD,origin:capturePointOrigin(card)});
     if(state.found.size===state.placements.length)await finishPuzzle();
     return;
   }
@@ -720,7 +718,7 @@ function earnedPuzzleStars(){
 function updateProgress(){
   const verb=state.mode==='crossword'?'solved':(state.mode==='mixmatch'?'matched':'found');
   progressEl.textContent=state.found.size+' / '+state.placements.length+' '+verb;
-  sessionPointsEl.textContent='+'+earnedPuzzlePoints()+' pts';
+  sessionPointsEl.textContent=Math.max(0,state.found.size-state.gimmes.size)+' without help';
 }
 function cellAt(row,col){return gridEl.querySelector('.cell[data-row="'+row+'"][data-col="'+col+'"]')}
 function coordsBetween(start,end){
@@ -800,37 +798,69 @@ async function markFound(index,originEl,selectedCoords=null){
   setTimeout(()=>chip?.classList.remove('just-found'),450);
   updateProgress();
   playPuzzleSfx('correct');
-  showPointAward({amount:POINTS_PER_WORD,origin:capturePointOrigin(originEl||cellAt(...placement.coords[placement.coords.length-1]))});
   if(state.found.size===state.placements.length){
     await finishPuzzle();
   }
 }
 async function finishPuzzle(){
   playPuzzleSfx('complete');
-  const points=earnedPuzzlePoints();
-  const stars=earnedPuzzleStars();
-  const completeLabel=state.mode==='crossword'?'Crossword complete!':(state.mode==='boggle'?'Boggle complete!':(state.mode==='mixmatch'?'Memory Game complete!':'Word search complete!'));
-  completePoints.textContent=completeLabel+' You earned '+stars+' star'+(stars===1?'':'s')+'.';
-  rewardCelebration.innerHTML=
-    '<student-reward-celebration percent="100" stars="'+stars+'" star-max="5" points="'+points+'" label="PUZZLE REWARD"></student-reward-celebration>';
-  if(typeof completeCard.showModal==='function')completeCard.showModal();
-  else completeCard.setAttribute('open','');
-  await saveReward();
-  await markAssignedPuzzleCompleted();
+  // Snapshot this round so a late response cannot update a newer puzzle.
+  const round={
+    id:state.sessionId,mode:state.mode,startedAt:state.startedAt,total:state.placements.length,
+    gimmes:state.gimmes.size,stars:earnedPuzzleStars(),starCap:puzzleStarCap(),
+    requestedPoints:earnedPuzzlePoints(),gridSize:state.mode==='wordsearch'?state.gridSize:null,
+    assignmentId:new URLSearchParams(location.search).get('homework'),
+    skipHomework:state.cheatCompletion||CHEAT_MODE,points:null,sessionSaved:false
+  };
+  const label=round.mode==='crossword'?'Crossword complete!':(round.mode==='boggle'?'Boggle complete!':(round.mode==='mixmatch'?'Memory Game complete!':'Word search complete!'));
+  rewardCelebration.replaceChildren();
+  retryRewardBtn.hidden=true;
+  const save=async()=>{
+    if(round.saving)return;
+    round.saving=true;
+    retryRewardBtn.hidden=true;
+    completePoints.textContent=label+' Saving your reward…';
+    try { await saveReward(round); }
+    catch(error){ console.warn('[Word Games] round reward not confirmed',error); }
+    finally { round.saving=false; }
+    if(state.sessionId!==round.id)return;
+    const starsText=round.sessionSaved?' '+round.stars+' stars saved.':' Stars not yet confirmed.';
+    const pointsText=round.points===null?' Points not yet confirmed.':' +'+round.points+' pts saved.';
+    completePoints.textContent=label+starsText+pointsText;
+    retryRewardBtn.hidden=round.sessionSaved&&round.points!==null&&round.savedPoints===round.points;
+    if(round.sessionSaved&&!round.celebrated){
+      round.celebrated=true;
+      const celebration=document.createElement('student-reward-celebration');
+      for(const [key,value] of Object.entries({percent:100,stars:round.stars,'star-max':5,points:round.points??0,label:'PUZZLE REWARD'})){
+        if(key!=='points'||round.points!==null)celebration.setAttribute(key,String(value));
+      }
+      rewardCelebration.replaceChildren(celebration);
+      if(round.assignmentId&&!round.skipHomework)void markAssignedPuzzleCompleted(round);
+    }else if(round.celebrated&&round.points!==null){
+      rewardCelebration.firstElementChild?.setAttribute('points',String(round.points));
+    }
+  };
+  retryRewardBtn.onclick=save;
+  if(!completeCard.open){
+    if(typeof completeCard.showModal==='function')completeCard.showModal();
+    else completeCard.setAttribute('open','');
+  }
+  await save();
 }
-async function markAssignedPuzzleCompleted(){
-  const assignmentId=new URLSearchParams(location.search).get('homework');
-  if(!assignmentId||state.cheatCompletion||CHEAT_MODE)return;
-  const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
-  if(!token||!state.sessionId)return;
+function rewardToken(){
+  return window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+}
+async function markAssignedPuzzleCompleted(round){
+  const token=rewardToken();
+  if(!token||!round.id)return;
   try{
     const response=await fetch(OP_URL+'/rest/v1/rpc/student_complete_puzzle_homework_v1',{
       method:'POST',cache:'no-store',
       headers:{apikey:OP_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},
-      body:JSON.stringify({p_assignment_id:assignmentId,p_mode:state.mode,p_session_id:state.sessionId,p_stars:earnedPuzzleStars()})
+      body:JSON.stringify({p_assignment_id:round.assignmentId,p_mode:round.mode,p_session_id:round.id,p_stars:round.stars})
     });
     if(!response.ok)throw Error('Puzzle mission record HTTP '+response.status);
-    window.dispatchEvent(new CustomEvent('willena:homework-progress',{detail:{assignment_id:assignmentId,completed:true}}));
+    window.dispatchEvent(new CustomEvent('willena:homework-progress',{detail:{assignment_id:round.assignmentId,completed:true}}));
   }catch(error){console.warn('[Puzzle homework] completion could not be recorded',error)}
 }
 async function resolvePuzzleRewardContext(){
@@ -844,89 +874,73 @@ async function resolvePuzzleRewardContext(){
   state.rewardContext={book_id:book.book_id,unit_id:unit.id};
   return state.rewardContext;
 }
-async function saveReward(){
-  if(state.saving||!state.sessionId)return;
-  state.saving=true;
-  const points=earnedPuzzlePoints();
-  const stars=earnedPuzzleStars();
-  let ctx=null;
-
-  try{
-    ctx=await resolvePuzzleRewardContext();
-  }catch(error){
-    console.warn('[Word Games] reward context failed',error);
-    state.saving=false;
-    return;
-  }
-
-  const listBase=state.mode==='crossword'?'Crossword':(state.mode==='boggle'?'Boggle':(state.mode==='mixmatch'?'Memory Game':'Word Search'));
-  const sessionPayload={
-    reward_only:true,
-    session_id:state.sessionId,
-    client_attempt_id:crypto.randomUUID?.()||((state.mode||'wordsearch')+'-reward-'+Date.now()),
-    book_id:ctx.book_id,
-    unit_id:ctx.unit_id,
-    skill:'puzzle',
-    response_type:'reward',
-    activity_id:state.mode,
-    reward_mode:state.mode,
-    reward_list_name:listBase+' · '+state.sessionId,
-    reward_list_size:state.placements.length,
-    reward_started_at:state.startedAt,
-    reward_summary:{
-      completed:true,stars,accuracy:1,percent:100,
-      score:state.placements.length-state.gimmes.size,total:state.placements.length,
-      points_earned:points,book_id:ctx.book_id,unit_id:ctx.unit_id,
-      assignment_id:null,session_source:'student',vocab_mode:state.mode,
-      reward_scheme:(state.mode||'wordsearch')+'-v3',star_cap:puzzleStarCap(),
-      gimmes_used:state.gimmes.size,
-      grid_size:state.mode==='wordsearch'?state.gridSize:null
-    }
-  };
-
-  let sessionSaved=false;
-  try{
-    const result=await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
-      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:sessionPayload})
-    });
-    sessionSaved=!!(result?.success??true);
-  }catch(error){
-    console.warn('[Word Games] session tracking save failed',state.mode,error);
-  }
-
-  if(points>0){
-    try{
-      const pointPayload={
-        session_id:state.sessionId,
-        client_attempt_id:crypto.randomUUID?.()||('puzzle-points-'+Date.now()),
-        book_id:ctx.book_id,
-        unit_id:ctx.unit_id,
-        skill:'puzzle',
-        response_type:'completion',
-        activity_id:state.mode+'-completion',
-        content_type:'puzzle',
-        is_correct:true,
-        score:1,
-        study_context:'independent',
-        metadata:{points_override:points,puzzle_mode:state.mode,gimmes_used:state.gimmes.size,grid_size:state.mode==='wordsearch'?state.gridSize:null}
-      };
-      await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
-        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:pointPayload})
-      });
-    }catch(error){
-      console.warn('[Word Games] point save failed',state.mode,error);
-    }
-  }
-
-  if(sessionSaved){
-    window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:state.sessionId,mode:state.mode,list_size:state.placements.length}}));
-    window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:stars}}));
-    window.dispatchEvent(new CustomEvent('points:refresh',{detail:{earned:points}}));
-    try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
-  }
-  state.saving=false;
+async function readSavedPuzzlePoints(round){
+  const token=rewardToken();
+  if(!token)throw new Error('Student sign-in required to confirm points.');
+  const query=new URLSearchParams({
+    select:'points',session_id:'eq.'+round.id,mode:'eq.study',
+    word:'eq.'+round.mode+'-completion','extra->>client_attempt_id':'eq.'+round.id,limit:'2'
+  });
+  const response=await withTimeout(fetch(OP_URL+'/rest/v1/progress_attempts?'+query,{
+    headers:{apikey:OP_KEY,Authorization:'Bearer '+token},cache:'no-store'
+  }),12000,'Puzzle point receipt');
+  if(!response.ok)throw new Error('Point receipt HTTP '+response.status);
+  const rows=await response.json();
+  if(rows.length!==1||!Number.isInteger(rows[0].points)||rows[0].points<0)throw new Error('Puzzle point receipt not found.');
+  return rows[0].points;
 }
-
+function recordPuzzleStudy(payload){
+  return apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload})
+  });
+}
+async function saveReward(round){
+  if(!round.id)return;
+  const ctx=round.context??=await resolvePuzzleRewardContext();
+  const {id,mode,stars,requestedPoints,gimmes,gridSize}=round;
+  if(round.points===null){
+    if(requestedPoints===0)round.points=0;
+    else {
+      // A stable attempt ID makes a retry safe, including when the first response timed out.
+      try {
+        await recordPuzzleStudy({
+          session_id:id,client_attempt_id:id,book_id:ctx.book_id,unit_id:ctx.unit_id,
+          skill:'puzzle',response_type:'completion',activity_id:mode+'-completion',
+          content_type:'puzzle',is_correct:true,score:1,study_context:'independent',
+          metadata:{points_override:requestedPoints,puzzle_mode:mode,gimmes_used:gimmes,grid_size:gridSize}
+        });
+      }catch(error){console.warn('[Word Games] point write not confirmed',mode,error);}
+      // The write response reports the pre-trigger value. Read the actual ledger award.
+      try { round.points=await readSavedPuzzlePoints(round); }
+      catch(error){console.warn('[Word Games] point receipt unavailable',mode,error);}
+    }
+    if(round.points!==null){
+      window.dispatchEvent(new CustomEvent('points:refresh',{detail:{earned:round.points}}));
+    }
+  }
+  if(!round.sessionSaved||round.savedPoints!==round.points){
+    const listBase=mode==='crossword'?'Crossword':(mode==='boggle'?'Boggle':(mode==='mixmatch'?'Memory Game':'Word Search'));
+    const result=await recordPuzzleStudy({
+      reward_only:true,session_id:id,book_id:ctx.book_id,unit_id:ctx.unit_id,
+      skill:'puzzle',response_type:'reward',activity_id:mode,reward_mode:mode,
+      reward_list_name:listBase+' · '+id,reward_list_size:round.total,reward_started_at:round.startedAt,
+      reward_summary:{
+        completed:true,stars,accuracy:1,percent:100,score:round.total-gimmes,total:round.total,
+        points_earned:round.points??0,points_confirmed:round.points!==null,
+        book_id:ctx.book_id,unit_id:ctx.unit_id,assignment_id:null,session_source:'student',
+        vocab_mode:mode,reward_scheme:mode+'-v3',star_cap:round.starCap,gimmes_used:gimmes,grid_size:gridSize
+      }
+    });
+    if(result?.success!==true)throw new Error('Puzzle session save not confirmed.');
+    if(!round.sessionSaved){
+      window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:id,mode,list_size:round.total}}));
+      window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:stars}}));
+      try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
+    }
+    round.sessionSaved=true;
+    round.savedPoints=round.points;
+  }
+}
 function makeCrossword(pool){
   const candidates=shuffle(pool.filter(x=>{
     const raw=txt(x.display);
@@ -1354,7 +1368,6 @@ async function checkCrosswordWord(index,origin){
   clue?.classList.add('found');
   updateProgress();
   playPuzzleSfx('correct');
-  showPointAward({amount:POINTS_PER_WORD,origin:capturePointOrigin(origin||clue)});
   if(state.found.size===state.placements.length)await finishPuzzle();
 }
 function writeCrosswordLetter(letter){

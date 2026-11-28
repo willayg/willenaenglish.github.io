@@ -1016,13 +1016,13 @@ const modeLoaders = {
   picture:        () => import('./modes/picture.js').then(m => m.runPictureMode),
   easy_picture:   () => import('./modes/easy_picture.js').then(m => m.runEasyPictureMode),
   listen_and_spell: () => import('./modes/listen_and_spell.js').then(m => m.runListenAndSpellMode),
-  multi_choice:   () => import('./modes/multi_choice.js').then(m => m.runMultiChoiceMode),
+  multi_choice:   () => import('./modes/multi_choice.js?v=20261128-read-tap').then(m => m.runMultiChoiceMode),
   level_up:       () => import('./modes/level_up.js').then(m => m.runLevelUpMode),
   time_battle:    () => import('./modes/time_battle.js').then(m => m.run),
   // Phonics modes
   listen:         () => import('./modes/phonics_listening.js').then(m => m.runPhonicsListeningMode),
   // Read & Find should be textual read (multi_choice) for phonics; picture mode remains available separately
-  read:           () => import('./modes/multi_choice.js').then(m => m.runMultiChoiceMode),
+  read:           () => import('./modes/multi_choice.js?v=20261128-read-tap').then(m => m.runReadAndFindMode),
   // True missing-letter mode (new)
   missing_letter: () => import('./modes/missing_letter.js').then(m => m.runMissingLetterMode),
   phonics_listening: () => import('./modes/phonics_listening.js').then(m => m.runPhonicsListeningMode),
