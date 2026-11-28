@@ -1508,7 +1508,12 @@ async function hydrateSecondaryBooks(list,activeBookId){
   },'secondary books');
 }
 async function resolveAssignedBooks(authData){
-  const className=txt(authData?.class);if(!className)throw new Error('No active class is assigned.');
+  let className=txt(authData?.class);
+  if(!className){
+    const own=await api('/.netlify/functions/supabase_auth?action=get_profile_name&_='+Date.now());
+    className=txt(own?.class);
+  }
+  if(!className)throw new Error('No active class is assigned.');
   const a=await assignments(className);
   const list=extractClassBookAssignments(a);
   if(!list.length)throw new Error('No active book is assigned.');
