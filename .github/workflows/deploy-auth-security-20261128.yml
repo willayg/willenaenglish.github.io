@@ -1,0 +1,44 @@
+name: Deploy Auth Security Fix
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-auth-security-20261128.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: deploy-supabase-auth
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact security fix
+        uses: actions/checkout@v4
+        with:
+          ref: 1ce6c9b3f4f2220299b8f7c9ccb3f10cdd56aa68
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check worker syntax
+        run: node --input-type=module --check < cloudflare-workers/supabase-auth/src/index.js
+      - name: Deploy Supabase auth Worker
+        working-directory: cloudflare-workers/supabase-auth
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Verify unauthenticated requests are blocked
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=https://supabase-auth.willena.workers.dev/
+          for action in get_profile get_role get_profile_id list_worksheets; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' "$base?action=$action")
+            test "$code" = 401
+          done
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' "$base?action=set_student_password")
+          test "$code" = 410
