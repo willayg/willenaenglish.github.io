@@ -5,7 +5,8 @@ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const embedded=document.documentElement.classList.contains('makeup-embedded');
 const today=()=>new Date(Date.now()+9*3600000).toISOString().slice(0,10);
 const labels={pending:'미정',scheduled:'예약',completed:'완료',waived:'보강 불필요'};
-const S={students:[],records:[],status:'open',cls:'',selected:null,editing:null,editStatus:'pending',busy:false,loading:false};
+const types={regular:'정규 보강',key_points:'키포인트',self_study:'자습 대체'};
+const S={students:[],teachers:[],records:[],status:'open',cls:'',selected:new Set(),pickClass:'',editing:null,editStatus:'pending',editType:'regular',busy:false,loading:false};
 const msg=(id,t='')=>$(id).textContent=t;
 const person=s=>[s.name||s.student_name,s.korean_name].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' · ');
 async function api(action,body){
@@ -24,21 +25,62 @@ function render(){
  const q=$('#search').value.trim().toLowerCase();
  const rows=all.filter(r=>(S.status==='all'||(S.status==='open'?['pending','scheduled'].includes(r.status):r.status===S.status))&&(!S.cls||r.class_name===S.cls)&&(!q||[r.student_name,r.korean_name,r.class_name].some(v=>String(v||'').toLowerCase().includes(q))));
  rows.sort((a,b)=>{if(a.status==='scheduled'&&b.status==='scheduled')return (a.makeup_date+a.makeup_time).localeCompare(b.makeup_date+b.makeup_time);return b.missed_date.localeCompare(a.missed_date)});
- $('#records').innerHTML=rows.length?'<div class="tableWrap"><table><thead><tr><th>학생</th><th>반</th><th>결석일</th><th>보강 일시</th><th>상태</th><th>메모</th><th>관리</th></tr></thead><tbody>'+rows.map(r=>'<tr><td><strong>'+esc(r.student_name)+'</strong><small>'+esc(r.korean_name===r.student_name?'':r.korean_name)+'</small></td><td>'+esc(r.class_name)+'</td><td>'+esc(r.missed_date)+'</td><td>'+esc(r.makeup_date?r.makeup_date+' '+r.makeup_time.slice(0,5):'—')+'</td><td><span class="state '+r.status+'">'+labels[r.status]+'</span></td><td class="note">'+esc(r.notes||'—')+'</td><td><div class="rowActions"><button type="button" class="secondary" data-edit="'+r.id+'">'+(r.status==='pending'?'예약':'수정')+'</button>'+(r.status==='scheduled'&&r.makeup_date<=today()?'<button type="button" data-complete="'+r.id+'">완료</button>':'')+'</div></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">표시할 보강 기록이 없습니다.</div>';
+ $('#records').innerHTML=rows.length?'<div class="tableWrap"><table><thead><tr><th>학생</th><th>반</th><th>결석일</th><th>보강 일시</th><th>보강 유형</th><th>담당 교사</th><th>상태</th><th>결석 사유 / 메모</th><th>관리</th></tr></thead><tbody>'+rows.map(r=>'<tr><td><strong>'+esc(r.student_name)+'</strong><small>'+esc(r.korean_name===r.student_name?'':r.korean_name)+'</small></td><td>'+esc(r.class_name)+'</td><td>'+esc(r.missed_date)+'</td><td>'+esc(r.makeup_date?r.makeup_date+' '+r.makeup_time.slice(0,5):'—')+'</td><td>'+esc(types[r.makeup_type]||types.regular)+'</td><td>'+esc(person(S.teachers.find(t=>t.id===r.teacher_id)||{})||'—')+'</td><td><span class="state '+r.status+'">'+labels[r.status]+'</span></td><td class="note">'+esc([r.absence_reason,r.notes].filter(Boolean).join('\n')||'—')+'</td><td><div class="rowActions"><button type="button" class="secondary" data-edit="'+r.id+'">'+(r.status==='pending'?'예약':'수정')+'</button>'+(r.status==='scheduled'&&r.makeup_date<=today()?'<button type="button" data-complete="'+r.id+'">완료</button>':'')+'</div></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">표시할 보강 기록이 없습니다.</div>';
  $$('[data-edit]').forEach(b=>b.onclick=()=>open(S.records.find(r=>r.id===b.dataset.edit)));
  $$('[data-complete]').forEach(b=>b.onclick=()=>complete(S.records.find(r=>r.id===b.dataset.complete),b));
 }
-async function load(){if(S.loading||S.busy)return;S.loading=true;$('#refresh').disabled=true;msg('#message','불러오는 중…');try{const data=await api('list');S.students=data.students||[];S.records=data.records||[];render();msg('#message')}catch(e){msg('#message',e.message);throw e}finally{S.loading=false;$('#refresh').disabled=false}}
-function renderStudents(){
- const q=$('#studentSearch').value.trim().toLowerCase();const rows=S.students.filter(s=>s.class&&(!q||[s.name,s.korean_name,s.class].some(v=>String(v||'').toLowerCase().includes(q)))).sort((a,b)=>person(a).localeCompare(person(b))).slice(0,80);
- $('#students').innerHTML=rows.length?rows.map(s=>'<button type="button" data-student="'+esc(s.id)+'" aria-pressed="'+(S.selected?.id===s.id)+'"><span>'+esc(person(s))+'</span><small>'+esc(s.class)+'</small></button>').join(''):'<div class="empty">학생이 없습니다.</div>';
- $$('[data-student]').forEach(b=>b.onclick=()=>{S.selected=S.students.find(s=>s.id===b.dataset.student);$('#selected').textContent=person(S.selected)+' · '+S.selected.class;renderStudents()});
+async function load(){if(S.loading||S.busy)return;S.loading=true;$('#refresh').disabled=true;msg('#message','불러오는 중…');try{const data=await api('list');S.students=data.students||[];S.teachers=data.teachers||[];S.records=data.records||[];render();msg('#message')}catch(e){msg('#message',e.message);throw e}finally{S.loading=false;$('#refresh').disabled=false}}
+function visibleStudents(){
+ const q=$('#studentSearch').value.trim().toLowerCase();
+ return S.students.filter(s=>s.class&&(!S.pickClass||s.class===S.pickClass)&&(!q||[s.name,s.korean_name,s.class].some(v=>String(v||'').toLowerCase().includes(q)))).sort((a,b)=>person(a).localeCompare(person(b)));
 }
-function editStatus(status){S.editStatus=status;$('#editStatuses').innerHTML=Object.keys(labels).map(k=>tab(k,labels[k],status,'edit-status')).join('');$$('[data-edit-status]').forEach(b=>b.onclick=()=>editStatus(b.dataset.editStatus));const has=['scheduled','completed'].includes(status);$('#schedule').hidden=!has;$('#makeupDate').required=has;$('#makeupTime').required=has;$('#makeupDate').min=$('#missed').value;$('#makeupDate').max=status==='completed'?today():''}
-function open(record=null){S.editing=record;S.selected=null;$('#editorTitle').textContent=record?'보강 수정':'결석 등록';$('#pick').hidden=!!record;$('#studentSearch').value='';$('#selected').textContent=record?person(record)+' · '+record.class_name:'';$('#missed').disabled=!!record;$('#missed').max=today();$('#missed').value=record?.missed_date||today();$('#makeupDate').value=record?.makeup_date||'';$('#makeupTime').value=record?.makeup_time?.slice(0,5)||'';$('#notes').value=record?.notes||'';editStatus(record?.status||'pending');msg('#editMessage');if(!record)renderStudents();$('#editor').showModal()}
+function renderSelected(){
+ const chosen=S.students.filter(s=>S.selected.has(s.id));
+ $('#selected').textContent=chosen.length?chosen.length+'명 선택됨':'학생을 선택하세요.';
+ $('#selectedStudents').innerHTML=chosen.map(s=>'<button type="button" data-remove-student="'+esc(s.id)+'">'+esc(s.name||s.korean_name)+' · '+esc(s.class)+' <span aria-hidden="true">×</span></button>').join('');
+ $$('[data-remove-student]').forEach(b=>b.onclick=()=>{S.selected.delete(b.dataset.removeStudent);renderStudents()});
+ $('#save').textContent=chosen.length>1?chosen.length+'명 저장':'저장';
+}
+function renderStudents(){
+ const classes=[...new Set(S.students.map(s=>s.class).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ $('#pickClasses').innerHTML=tab('','전체 반',S.pickClass,'pick-class')+classes.map(c=>tab(c,c,S.pickClass,'pick-class')).join('');
+ $$('[data-pick-class]').forEach(b=>b.onclick=()=>{S.pickClass=b.dataset.pickClass;renderStudents()});
+ const rows=visibleStudents(),all=rows.length>0&&rows.every(s=>S.selected.has(s.id));
+ $('#pickCount').textContent=rows.length+'명';
+ $('#selectClass').disabled=!rows.length;
+ $('#selectClass').textContent=all?'표시된 학생 선택 해제':'표시된 학생 모두 선택';
+ $('#students').innerHTML=rows.length?rows.map(s=>{
+ const picked=S.selected.has(s.id);
+ return '<button type="button" data-student="'+esc(s.id)+'" aria-pressed="'+picked+'"><span><span class="student-check" aria-hidden="true">'+(picked?'✓':'')+'</span>'+esc(person(s))+'</span><small>'+esc(s.class)+'</small></button>'
+ }).join(''):'<div class="empty">학생이 없습니다.</div>';
+ $$('[data-student]').forEach(b=>b.onclick=()=>{const id=b.dataset.student;if(S.selected.has(id))S.selected.delete(id);else S.selected.add(id);renderStudents()});
+ renderSelected();
+}
+function editType(type){S.editType=type;$('#editTypes').innerHTML=Object.keys(types).map(k=>tab(k,types[k],type,'edit-type')).join('');$$('[data-edit-type]').forEach(b=>b.onclick=()=>editType(b.dataset.editType))}
+function editStatus(status){S.editStatus=status;const choices=S.editing?Object.keys(labels):['pending','scheduled'];$('#editStatuses').innerHTML=choices.map(k=>tab(k,labels[k],status,'edit-status')).join('');$$('[data-edit-status]').forEach(b=>b.onclick=()=>editStatus(b.dataset.editStatus));const has=['scheduled','completed'].includes(status);$('#schedule').hidden=!has;$('#makeupDate').required=has;$('#makeupTime').required=has;$('#makeupDate').min=$('#missed').value;$('#makeupDate').max=status==='completed'?today():''}
+function open(record=null,booking=false){
+ S.editing=record;S.selected.clear();S.pickClass=S.cls||'';$('#editorTitle').textContent=record?'보강 수정':booking?'보강 예약':'결석 등록';$('#pick').hidden=!!record;$('#selectedStudents').hidden=!!record;$('#studentSearch').value='';$('#selected').textContent=record?person(record)+' · '+record.class_name:'';
+ $('#missed').disabled=!!record;$('#missed').max=today();$('#missed').value=record?.missed_date||today();$('#makeupDate').value=record?.makeup_date|| (booking?today():'');$('#makeupTime').value=record?.makeup_time?.slice(0,5)||'';$('#notes').value=record?.notes||'';$('#reason').value=record?.absence_reason||'';
+ const teacherOptions=S.teachers.map(t=>'<option value="'+esc(t.id)+'">'+esc(person(t))+'</option>');if(record?.teacher_id&&!S.teachers.some(t=>t.id===record.teacher_id))teacherOptions.push('<option value="'+esc(record.teacher_id)+'">이전 담당 교사</option>');
+ $('#teacher').innerHTML='<option value="">미정</option>'+teacherOptions.join('');$('#teacher').value=record?.teacher_id||'';
+ editType(record?.makeup_type||'regular');editStatus(record?.status||(booking?'scheduled':'pending'));msg('#editMessage');if(!record)renderStudents();else $('#save').textContent='저장';$('#editor').showModal();
+}
 function setRecord(r){if(!r)throw Error('Save returned no record');const i=S.records.findIndex(x=>x.id===r.id);if(i<0)S.records.push(r);else S.records[i]=r;render()}
-async function complete(r,b){if(S.busy||!r)return;S.busy=true;b.disabled=true;msg('#message');try{const data=await api('update',{id:r.id,updated_at:r.updated_at,status:'completed',makeup_date:r.makeup_date,makeup_time:r.makeup_time,notes:r.notes});setRecord(data.record)}catch(e){msg('#message',e.message)}finally{S.busy=false;b.disabled=false}}
-$('#form').onsubmit=async e=>{e.preventDefault();if(S.busy)return;const r=S.editing;if(!r&&!S.selected){msg('#editMessage','학생을 선택하세요.');return}const b={status:S.editStatus,makeup_date:$('#makeupDate').value,makeup_time:$('#makeupTime').value,notes:$('#notes').value,...(r?{id:r.id,updated_at:r.updated_at}:{student_id:S.selected.id,missed_date:$('#missed').value})};S.busy=true;$('#save').disabled=true;msg('#editMessage');try{const data=await api(r?'update':'create',b);setRecord(data.record);$('#editor').close()}catch(e){msg('#editMessage',e.message)}finally{S.busy=false;$('#save').disabled=false}};
+async function complete(r,b){if(S.busy||!r)return;S.busy=true;b.disabled=true;msg('#message');try{const data=await api('update',{id:r.id,updated_at:r.updated_at,status:'completed',makeup_date:r.makeup_date,makeup_time:r.makeup_time,notes:r.notes,makeup_type:r.makeup_type,teacher_id:r.teacher_id,absence_reason:r.absence_reason});setRecord(data.record)}catch(e){msg('#message',e.message)}finally{S.busy=false;b.disabled=false}}
+$('#form').onsubmit=async e=>{
+ e.preventDefault();if(S.busy)return;const r=S.editing;
+ if(!r&&!S.selected.size){msg('#editMessage','학생을 선택하세요.');return}
+ if(S.selected.size>150){msg('#editMessage','한 번에 최대 150명을 선택할 수 있습니다.');return}
+ const b={status:S.editStatus,makeup_type:S.editType,teacher_id:$('#teacher').value||null,absence_reason:$('#reason').value,makeup_date:$('#makeupDate').value,makeup_time:$('#makeupTime').value,notes:$('#notes').value,...(r?{id:r.id,updated_at:r.updated_at}:{student_ids:[...S.selected],missed_date:$('#missed').value})};
+ S.busy=true;$('#save').disabled=true;msg('#editMessage');
+ try{const data=await api(r?'update':'create-batch',b);
+  const records=r?[data.record]:data.records;if(!Array.isArray(records)||!records.length||records.some(x=>!x))throw Error('저장 결과를 확인할 수 없습니다.');
+  for(const rec of records){const i=S.records.findIndex(x=>x.id===rec.id);if(i<0)S.records.push(rec);else S.records[i]=rec}S.status=b.status==='scheduled'?'scheduled':b.status==='pending'?'pending':b.status;S.cls='';$('#search').value='';render();$('#editor').close();
+ }catch(e){msg('#editMessage',e.message)}finally{S.busy=false;$('#save').disabled=false}
+};
+$('#clearSelected').onclick=()=>{S.selected.clear();renderStudents()};
+$('#selectClass').onclick=()=>{const rows=visibleStudents(),all=rows.every(s=>S.selected.has(s.id));for(const s of rows){if(all)S.selected.delete(s.id);else S.selected.add(s.id)}renderStudents()};
+$('#book').onclick=()=>open(null,true);
 $('#missed').onchange=()=>editStatus(S.editStatus);$('#studentSearch').oninput=renderStudents;$('#search').oninput=render;$('#add').onclick=()=>open();$('#refresh').onclick=()=>load().catch(()=>{});$('#close').onclick=$('#cancel').onclick=()=>{if(!S.busy)$('#editor').close()};$('#editor').addEventListener('cancel',e=>{if(S.busy)e.preventDefault()});
 async function boot(){try{$('#retryBoot').hidden=true;const who=await ensureTeacherSession();if(!who?.success){if(who?.temporary)throw Error('Could not verify staff login');if(embedded){throw Error('Staff session expired. Sign in again in the main dashboard, then retry.')}location.replace('/Teachers/login.html?redirect=%2FTeachers%2Fmakeup%2F');return}ensureAuthRefresh();if(!embedded)await mountTeacherHeader({target:'#teacher-header',mode:'dashboard',activeApp:'library'});await load();$('#boot').hidden=true;$('#app').hidden=false}catch(e){$('#boot').firstChild.nodeValue=e.message+' ';$('#retryBoot').hidden=false}}
 if(embedded)window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==window.parent||e.data?.type!=='willena:makeup:activate')return;if(!$('#app').hidden&&!$('#editor').open&&!S.busy)load().catch(()=>{})});
