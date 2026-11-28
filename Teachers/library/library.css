@@ -210,3 +210,59 @@ dialog:not([open]){display:none!important}
 .register-track{height:4px;margin:4px 0 8px}
 .register-table-scroll{overflow-anchor:none;overscroll-behavior-x:contain}
 @media(max-width:600px){.library-time-tabs button{min-width:0}.register-top h1{font-size:19px}.register-date-controls{width:auto;flex-wrap:nowrap}.register-date-controls input{max-width:135px;width:auto}.register-slots{grid-template-columns:repeat(5,minmax(0,1fr))}.register-metrics{grid-template-columns:repeat(5,minmax(0,1fr))}.register-metrics .metric{padding:5px;flex-direction:column;align-items:center;gap:3px}.register-metrics .metric span{font-size:10px;text-align:center}.register-metrics .metric strong{font-size:16px}.register-class{padding:9px}}
+
+
+/* Raz-Kids: compact desktop-first workspace, scoped to its own tab. */
+#razView>.top{margin:0 0 9px;gap:8px;align-items:center}
+#razView>.top h1{font-size:21px;line-height:1.25;letter-spacing:-.025em}
+#razView>.top .eyebrow,#razView>.top p.muted{display:none}
+#razView>.top>label{display:flex;align-items:center;gap:7px;font-size:12px}
+#razView #month{width:190px;max-width:100%;min-height:34px;padding:5px 9px;font-size:12px;border-radius:7px}
+#razView #stats{gap:6px;margin-bottom:10px}
+#razView #stats .metric{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;padding:8px 10px;border-radius:8px}
+#razView #stats .metric .muted{font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+#razView #stats .metric strong{font-size:20px;line-height:1.2;margin:0;flex-shrink:0}
+#razView .panel{padding:12px 14px;margin-bottom:10px;border-radius:10px}
+#razView .panel-head{gap:8px;margin-bottom:8px}
+#razView .panel-head h2{font-size:16px;line-height:1.35}
+#razView .panel-head .muted{font-size:11px;line-height:1.4;margin-top:2px}
+#razView .report-actions,#razView .filters,#razView .actions{gap:6px}
+#razView .report-actions button,#razView .filters input,#razView .filters select,#razView .actions button{font-size:12px;min-height:34px;padding:6px 10px;border-radius:7px}
+#razView .quick-drop{display:grid;grid-template-columns:20px auto;justify-content:center;align-items:center;column-gap:8px;row-gap:2px;min-height:48px;padding:8px 10px;border-width:1px;border-radius:8px}
+#razView .quick-drop svg{width:19px;height:19px;grid-row:1 / span 2}
+#razView .quick-drop strong{font-size:12px;line-height:1.4;text-align:left}
+#razView .quick-drop span{font-size:10px;line-height:1.3;text-align:left}
+#razView #reports:not(:empty){margin-top:2px}
+#razView .report-row{padding:7px 0;gap:8px;flex-wrap:nowrap}
+#razView .report-row svg{width:23px;height:23px}
+#razView .report-row strong{font-size:12px;line-height:1.4}
+#razView .report-meta{font-size:10px;line-height:1.35}
+#razView .pill{padding:3px 7px;font-size:10px}
+#razView .award-coverage{margin:6px 0;padding:7px 10px;gap:10px;border-radius:7px}
+#razView .award-coverage>strong{font-size:19px}
+#razView .award-coverage span,#razView .award-coverage small{font-size:11px;line-height:1.4}
+#razView .prize-class-grid{gap:7px;margin:8px 0}
+#razView .prize-class{border-radius:8px}
+#razView .prize-class header{padding:7px 9px;font-size:12px}
+#razView .prize-lane{padding:8px}
+#razView .prize-lane>span:first-child{font-size:11px;margin-bottom:4px}
+#razView .prize-person{margin:3px 0}
+#razView .prize-person strong,#razView .prize-score{font-size:12px}
+#razView .prize-person small{font-size:10px}
+#razView .small{margin:2px 0 7px}
+#razView .notice{padding:7px 9px;margin:6px 0}
+#razView .actions{margin-top:7px}
+#razView .empty{padding:12px 4px}
+#razView #status:empty{display:none}
+#razView th,#razView td{padding:7px 8px}
+@media(max-width:600px){
+ #razView>.top h1{font-size:19px}
+ #razView #month{width:165px}
+ #razView #stats .metric{flex-direction:column;align-items:flex-start;gap:3px;padding:7px}
+ #razView #stats .metric .muted{font-size:11px}
+ #razView #stats .metric strong{font-size:19px}
+ #razView .panel{padding:10px}
+ #razView .report-actions button{flex:1 1 auto;white-space:normal;min-width:0}
+ #razView .quick-drop{min-height:48px}
+ #razView .report-row{gap:6px}
+}
