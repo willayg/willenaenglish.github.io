@@ -61,51 +61,48 @@ function beginRewardSession(mode){
  const reviewOnly=goldChapter(activeUnit);
  rewardSession={id:window.crypto?.randomUUID?.()||('grammar-'+Date.now()+'-'+Math.random().toString(16).slice(2)),
   chapter:activeUnit,mode,startedAt:new Date().toISOString(),firstCorrect:0,
+  bookId:isTen(activeBook)?TEN_BOOK_ID:activeBook?.id,answers:Object.create(null),
   awardedIds:new Set(),reviewOnly,completed:false};
 }
-async function completeRewardSession(){
- const reward=rewardSession;
- if(!reward||reward.completed)return null;
+async function completeRewardSession(reward=rewardSession){
+ if(!reward||reward.completed||reward.reviewOnly)return null;
+ const answers=reward.answers;
+ if(!Object.keys(answers).length)return null;
  reward.completed=true;
- const percent=Math.round(reward.firstCorrect/roundTotal()*100);
- const stars=reward.reviewOnly?0:starsForPercent(percent);
- if(reward.reviewOnly)return {percent,stars};
- const bookId=isTen(activeBook)?TEN_BOOK_ID:activeBook?.id;
- const chapterUnit=units.find(u=>Number(u.unit_number)===Number(reward.chapter));
- const unitId=chapterUnit?.subunits?.[0]?.id||chapterUnit?.id;
- if(!unitId){reward.completed=false;throw Error('Original textbook unit ID unavailable for reward');}
- const listName=activeBook?.title+' · Unit '+reward.chapter+' · '+(modes.find(m=>m.id===reward.mode)?.label||reward.mode);
- const payload={
-  reward_only:true,session_id:reward.id,
-  client_attempt_id:window.crypto?.randomUUID?.()||('grammar-reward-'+Date.now()),
-  book_id:bookId,unit_id:unitId,skill:'grammar',response_type:'reward',
-  activity_id:'grammar-books-reward',reward_mode:'grammar_books_'+reward.mode,
-  reward_list_name:listName,reward_list_size:roundTotal(),reward_started_at:reward.startedAt,
-  reward_summary:{
-   completed:true,stars,accuracy:reward.firstCorrect/roundTotal(),percent,
-   score:reward.firstCorrect,total:roundTotal(),points_earned:0,
-   book_id:bookId,unit_id:unitId,assignment_id:null,session_source:'student',
-   grammar_mode:reward.mode,grammar_chapter:reward.chapter,
-   reward_scheme:'grammar-books-v1',star_cap:5
-  }
- };
  try{
-  const apiFetch=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function' ? window.WillenaAPI.fetch.bind(window.WillenaAPI) : window.fetch.bind(window);
-  const response=await apiFetch('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
-    method:'POST',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload})
+  const data=await homeworkFetch('rpc/save_grammar_books_reward_v2',{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({p_session:reward.id,p_book:reward.bookId,p_chapter:reward.chapter,
+     p_mode:reward.mode,p_answers:answers,p_first_correct:reward.firstCorrect})
   });
-  if(!response.ok)throw Error('Reward save HTTP '+response.status);
-  const data=await response.json().catch(()=>null);
-  if(data?.error||data?.success===false)throw Error(data?.error||'Reward save rejected');
-  window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.id,mode:'grammar_books_'+reward.mode,list_name:listName,list_size:roundTotal()}}));
-  window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:stars}}));
+  if(data?.success!==true||!Number.isInteger(data.points_earned)||!Number.isInteger(data.stars))
+   throw Error('Grammar reward save not confirmed');
+  window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:data.stars}}));
   try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
-  return {percent,stars};
+  return {percent:data.percent,stars:data.stars,points:data.points_earned};
  }catch(error){
   reward.completed=false;
-  console.warn('[Grammar Books] reward save failed',error);
   throw error;
  }
+}
+async function showSavedGrammarReward(reward){
+ if(!reward||reward.reviewOnly||reward.completed)return;
+ const mount=$('grammarRewardMount');
+ const controls=['grammarResultBack','grammarResultHome'].map(id=>$(id)).filter(Boolean);
+ if(mount)mount.textContent='보상을 저장하는 중…';
+ controls.forEach(button=>button.disabled=true);
+ try{
+  const result=await completeRewardSession(reward);
+  if(rewardSession===reward)showGrammarReward(result);
+ }catch(error){
+  console.warn('[Grammar Books] reward save failed',error);
+  if(!mount||rewardSession!==reward)return;
+  mount.textContent='보상을 저장하지 못했어요. ';
+  const retry=document.createElement('button');
+  retry.type='button';retry.className='vocab-done-btn';retry.textContent='다시 저장';
+  retry.onclick=()=>void showSavedGrammarReward(reward);
+  mount.append(retry);
+ }finally{controls.forEach(button=>button.disabled=false)}
 }
 async function recordAssignedGrammarHomework(chapter,mode,sessionId,ids){
  const apiFetch=window.WillenaAPI?.fetch?.bind(window.WillenaAPI);
@@ -208,12 +205,13 @@ function showGrammarReward(reward){
  const mount=$('grammarRewardMount');
  if(!mount)return;
  mount.replaceChildren();
- if(!reward?.stars)return;
+ if(!reward||!(reward.stars||reward.points))return;
  const celebration=document.createElement('student-reward-celebration');
  celebration.setAttribute('percent',String(reward.percent));
  celebration.setAttribute('stars',String(reward.stars));
  celebration.setAttribute('star-max','5');
- celebration.setAttribute('stars-only','');
+ if(reward.points>0)celebration.setAttribute('points',String(reward.points));
+ else celebration.setAttribute('stars-only','');
  celebration.setAttribute('label','SESSION REWARD');
  mount.append(celebration);
 }
@@ -501,7 +499,7 @@ async function startMode(mode,{push=true}={}){
   beginRewardSession(mode);
   rewardSession.total=all.length;
   if(courseKey(book))rewardSession.firstCorrect=masteredIds.size;
-  // A repeat session cannot award points for questions mastered in an earlier session.
+  // Already-mastered questions are not resubmitted for points.
   if(rewardSession){
    rewardSession.reviewOnly=inHomework||bestScore(chapter,mode)>=unitRoundSize();
    rewardSession.awardedIds=new Set(masteredIds);
@@ -528,6 +526,9 @@ async function checkAnswer(){
   if(activeHomework)homeworkAttemptIds.add(q.id)
   if(rewardSession&&!rewardSession.awardedIds.has(q.id)){
    rewardSession.awardedIds.add(q.id);
+   const choiceIndex=Number(response[0])-1;
+   const rawChoice=q.huntChoices?q.huntChoices[choiceIndex]?.value:q.options[choiceIndex];
+   if(typeof rawChoice==='string')rewardSession.answers[q.id]=rawChoice;
    if(!retryingWrong)rewardSession.firstCorrect++;
   }
  }
@@ -543,16 +544,8 @@ async function finishRound(){
  $('grammarRound').hidden=true;
  drawFinishScreen();
  $('grammarResult').hidden=false;
- const rewardMount=$('grammarRewardMount');
  const completed=retryQueue.pendingCount===0;
- // The same Word Genius celebration must mount immediately on session finish.
- // Persistence runs afterward; a failed request must not hide the star animation.
- if(completed&&rewardSession){
-  const percent=Math.round(rewardSession.firstCorrect/roundTotal()*100);
-  showGrammarReward({
-   percent,stars:rewardSession.reviewOnly?0:starsForPercent(percent)
-  });
- }
+ const completedReward=rewardSession;
  if(completed){
   try{
    if(isTen(activeBook)&&!currentGrammarContext().isHomework&&typeof window.WillenaMissionBasket?.recordGrammarBookRound!=='function')throw Error('Grammar progress writer unavailable');
@@ -576,11 +569,7 @@ async function finishRound(){
    showFinishSaveWarning('학습 기록이 저장되지 않았어요.');
   }
   if(completed){
-   try{await completeRewardSession()}
-   catch(error){
-    console.error('[Grammar Books] award save failed',error);
-    showFinishSaveWarning('별 저장을 확인하지 못했어요.');
-   }
+   await showSavedGrammarReward(completedReward);
    void window.WillenaMissionBasket?.recordCompletedActivity?.('grammar-'+(courseKey(activeBook)||'ten2')+'-unit-'+activeUnit+'-'+activeMode,'Grammar Genius Books');
    void window.WillenaAchievements?.refresh?.();
   }
