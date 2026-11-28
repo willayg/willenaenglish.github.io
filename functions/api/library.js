@@ -33,6 +33,7 @@ export async function onRequest({request}){try{
  const a=await auth(request);
  if(request.method==='GET'){
  if(action==='setup'){const [students,accounts,hints]=await Promise.all([roster(a),all(a,'library_raz_accounts_v2',{select:'id,source_account,account_key,account_name,screen_name,student_id',order:'id.asc'}),all(a,'library_raz_roster_hints_v2',{select:'student_id,source_account,english_alias',order:'student_id.asc'})]);return json({students,accounts,hints})}
+ if(action==='award-history'){const rows=await all(a,'library_reading_awards_v2',{select:'month,recipients,updated_at',order:'month.desc'});return json({history:rows.map(x=>({month:x.month,updated_at:x.updated_at,gold:(x.recipients||[]).filter(r=>r.award==='Gold').length,silver:(x.recipients||[]).filter(r=>r.award==='Silver').length}))})}
  if(action==='month'){const month=url.searchParams.get('month');if(!monthOk(month))fail('Invalid month');const [results,awards]=await Promise.all([all(a,'library_raz_monthly_v2',{select:'*,library_raz_accounts_v2(student_id,source_account,screen_name,account_name)',month:'eq.'+month,order:'account_id.asc'}),db(a,path('library_reading_awards_v2',{select:'*',month:'eq.'+month}))]);return json({results,awards:awards[0]||null})}
  fail('Unknown action',404);
  }

@@ -44,3 +44,31 @@ html[data-library-language="both"] .panel-head{align-items:center}
 .excluded-details summary{color:#70848a}
 #accountDialog .filters{margin:12px 0}
 @media(max-width:650px){.report-actions{width:100%}.report-actions button{flex:1}.match-file-meta{grid-template-columns:1fr}.match-overview>div{padding:9px}.match-overview strong{font-size:21px}}
+
+.award-coverage{display:flex;align-items:center;gap:12px;border:1px solid #d5e8e9;background:#f3f9fa;border-radius:9px;margin:10px 0;padding:11px 13px}
+.award-coverage.warning{background:#fff7eb;border-color:#ead4af}
+.award-coverage>strong{font-size:23px;white-space:nowrap;color:#237f89}
+.award-coverage.warning>strong{color:#93661b}
+.award-coverage span,.award-coverage small{display:block;font-size:12px;line-height:1.5}
+.award-coverage small{color:#71838a}
+.prize-class-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:12px 0}
+.prize-class{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:white}
+.prize-class header{background:#f2f7f8;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:5px}
+.prize-class header small{font-size:11px;color:#758b93}
+.prize-lanes{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#e1ebed}
+.prize-lane{background:white;padding:11px;min-width:0}
+.prize-lane>span:first-child{display:block;font-size:12px;font-weight:700;margin-bottom:7px}
+.gold-lane>span:first-child{color:#99711c}
+.silver-lane>span:first-child{color:#62737c}
+.prize-person{position:relative;padding-right:37px;overflow-wrap:anywhere;margin:6px 0}
+.prize-person strong{display:block;font-size:13px}.prize-person small{display:block;font-size:11px;color:#71848c}
+.prize-score{position:absolute;right:0;top:0;font-size:13px;font-weight:700;color:#237f89}
+.prize-button.gold-button{background:#fff3d7;border:1px solid #d9b66a;color:#815d15}
+.prize-button.silver-button{background:#eef2f5;border:1px solid #bdcbd3;color:#4a626e}
+.prize-button:disabled{opacity:.45;cursor:not-allowed}
+#awardDialog[open]{display:flex;flex-direction:column;overflow:hidden;padding:0;max-height:88dvh}
+#awardDialog .import-top{flex:0 0 auto;background:#fff;padding:15px 20px 10px;border-bottom:1px solid var(--line);z-index:2}
+#awardDialog .dialog-head{margin:0}#awardMessage:empty{display:none}#awardMessage{margin:7px 0 0;min-height:0}
+#awardBody{min-height:0;overflow:auto;padding:16px 20px 20px}
+.award-rule-body{padding:12px}.award-counts{grid-template-columns:repeat(2,1fr);margin:12px 0}
+@media(max-width:600px){#awardDialog .import-top{padding:12px 13px 9px}#awardBody{padding:12px 13px 15px}.prize-class-grid{grid-template-columns:1fr}.award-panel .actions{flex-wrap:wrap}.award-panel .actions button{flex:1}}
