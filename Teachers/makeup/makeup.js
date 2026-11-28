@@ -6,7 +6,7 @@ const embedded=document.documentElement.classList.contains('makeup-embedded');
 const today=()=>new Date(Date.now()+9*3600000).toISOString().slice(0,10);
 const labels={pending:'미정',scheduled:'예약',completed:'완료',waived:'보강 불필요'};
 const types={regular:'정규 보강',key_points:'키포인트',self_study:'자습 대체'};
-const S={students:[],teachers:[],records:[],status:'open',cls:'',selected:new Set(),pickClass:'',editing:null,editStatus:'pending',editType:'regular',busy:false,loading:false};
+const S={students:[],teachers:[],records:[],status:'open',cls:'',selected:new Set(),pickClass:'',editing:null,editStatus:'pending',editType:'regular',editTeacher:'',busy:false,loading:false};
 const msg=(id,t='')=>$(id).textContent=t;
 const person=s=>[s.name||s.student_name,s.korean_name].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' · ');
 async function api(action,body){
@@ -41,28 +41,31 @@ function renderSelected(){
  $$('[data-remove-student]').forEach(b=>b.onclick=()=>{S.selected.delete(b.dataset.removeStudent);renderStudents()});
  $('#save').textContent=chosen.length>1?chosen.length+'명 저장':'저장';
 }
+function priorAbsence(s){return S.records.find(r=>r.student_id===s.id&&r.class_name===s.class&&r.missed_date===$('#missed').value)}
+function selectable(s){const old=priorAbsence(s);return !old||(old.status==='pending'&&S.editStatus==='scheduled')}
 function renderStudents(){
+ for(const s of S.students)if(S.selected.has(s.id)&&!selectable(s))S.selected.delete(s.id);
  const classes=[...new Set(S.students.map(s=>s.class).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
  $('#pickClasses').innerHTML=tab('','전체 반',S.pickClass,'pick-class')+classes.map(c=>tab(c,c,S.pickClass,'pick-class')).join('');
  $$('[data-pick-class]').forEach(b=>b.onclick=()=>{S.pickClass=b.dataset.pickClass;renderStudents()});
- const rows=visibleStudents(),all=rows.length>0&&rows.every(s=>S.selected.has(s.id));
+ const rows=visibleStudents(),eligible=rows.filter(selectable),all=eligible.length>0&&eligible.every(s=>S.selected.has(s.id));
  $('#pickCount').textContent=rows.length+'명';
- $('#selectClass').disabled=!rows.length;
+ $('#selectClass').disabled=!eligible.length;
  $('#selectClass').textContent=all?'표시된 학생 선택 해제':'표시된 학생 모두 선택';
  $('#students').innerHTML=rows.length?rows.map(s=>{
- const picked=S.selected.has(s.id);
- return '<button type="button" data-student="'+esc(s.id)+'" aria-pressed="'+picked+'"><span><span class="student-check" aria-hidden="true">'+(picked?'✓':'')+'</span>'+esc(person(s))+'</span><small>'+esc(s.class)+'</small></button>'
+ const picked=S.selected.has(s.id),old=priorAbsence(s),allowed=selectable(s);
+ return '<button type="button" data-student="'+esc(s.id)+'" aria-pressed="'+picked+'" '+(!allowed?'disabled':'')+'><span><span class="student-check" aria-hidden="true">'+(picked?'✓':'')+'</span>'+esc(person(s))+'</span><small>'+esc(old?(old.status==='pending'&&allowed?'미정 · 예약 가능':'등록됨 · '+labels[old.status]):s.class)+'</small></button>'
  }).join(''):'<div class="empty">학생이 없습니다.</div>';
  $$('[data-student]').forEach(b=>b.onclick=()=>{const id=b.dataset.student;if(S.selected.has(id))S.selected.delete(id);else S.selected.add(id);renderStudents()});
  renderSelected();
 }
 function editType(type){S.editType=type;$('#editTypes').innerHTML=Object.keys(types).map(k=>tab(k,types[k],type,'edit-type')).join('');$$('[data-edit-type]').forEach(b=>b.onclick=()=>editType(b.dataset.editType))}
-function editStatus(status){S.editStatus=status;const choices=S.editing?Object.keys(labels):['pending','scheduled'];$('#editStatuses').innerHTML=choices.map(k=>tab(k,labels[k],status,'edit-status')).join('');$$('[data-edit-status]').forEach(b=>b.onclick=()=>editStatus(b.dataset.editStatus));const has=['scheduled','completed'].includes(status);$('#schedule').hidden=!has;$('#makeupDate').required=has;$('#makeupTime').required=has;$('#makeupDate').min=$('#missed').value;$('#makeupDate').max=status==='completed'?today():''}
+function editTeacher(id){S.editTeacher=id||'';const options=[['','미정'],...S.teachers.map(t=>[t.id,person(t)])];if(id&&!options.some(([v])=>v===id))options.push([id,'이전 담당 교사']);$('#teacherButtons').innerHTML=options.map(([v,l])=>tab(v,l,S.editTeacher,'edit-teacher')).join('');$('[data-edit-teacher]').forEach(b=>b.onclick=()=>editTeacher(b.dataset.editTeacher))}
+function editStatus(status){S.editStatus=status;const choices=S.editing?Object.keys(labels):['pending','scheduled'];$('#editStatuses').innerHTML=choices.map(k=>tab(k,labels[k],status,'edit-status')).join('');$('[data-edit-status]').forEach(b=>b.onclick=()=>{editStatus(b.dataset.editStatus);if(!S.editing)renderStudents()});const has=['scheduled','completed'].includes(status);$('#schedule').hidden=!has;$('#makeupDate').required=has;$('#makeupTime').required=has;$('#makeupDate').min=$('#missed').value;$('#makeupDate').max=status==='completed'?today():''}
 function open(record=null,booking=false){
  S.editing=record;S.selected.clear();S.pickClass=S.cls||'';$('#editorTitle').textContent=record?'보강 수정':booking?'보강 예약':'결석 등록';$('#pick').hidden=!!record;$('#selectedStudents').hidden=!!record;$('#studentSearch').value='';$('#selected').textContent=record?person(record)+' · '+record.class_name:'';
  $('#missed').disabled=!!record;$('#missed').max=today();$('#missed').value=record?.missed_date||today();$('#makeupDate').value=record?.makeup_date|| (booking?today():'');$('#makeupTime').value=record?.makeup_time?.slice(0,5)||'';$('#notes').value=record?.notes||'';$('#reason').value=record?.absence_reason||'';
- const teacherOptions=S.teachers.map(t=>'<option value="'+esc(t.id)+'">'+esc(person(t))+'</option>');if(record?.teacher_id&&!S.teachers.some(t=>t.id===record.teacher_id))teacherOptions.push('<option value="'+esc(record.teacher_id)+'">이전 담당 교사</option>');
- $('#teacher').innerHTML='<option value="">미정</option>'+teacherOptions.join('');$('#teacher').value=record?.teacher_id||'';
+ editTeacher(record?.teacher_id||'');
  editType(record?.makeup_type||'regular');editStatus(record?.status||(booking?'scheduled':'pending'));msg('#editMessage');if(!record)renderStudents();else $('#save').textContent='저장';$('#editor').showModal();
 }
 function setRecord(r){if(!r)throw Error('Save returned no record');const i=S.records.findIndex(x=>x.id===r.id);if(i<0)S.records.push(r);else S.records[i]=r;render()}
@@ -71,17 +74,17 @@ $('#form').onsubmit=async e=>{
  e.preventDefault();if(S.busy)return;const r=S.editing;
  if(!r&&!S.selected.size){msg('#editMessage','학생을 선택하세요.');return}
  if(S.selected.size>150){msg('#editMessage','한 번에 최대 150명을 선택할 수 있습니다.');return}
- const b={status:S.editStatus,makeup_type:S.editType,teacher_id:$('#teacher').value||null,absence_reason:$('#reason').value,makeup_date:$('#makeupDate').value,makeup_time:$('#makeupTime').value,notes:$('#notes').value,...(r?{id:r.id,updated_at:r.updated_at}:{student_ids:[...S.selected],missed_date:$('#missed').value})};
+ const b={status:S.editStatus,makeup_type:S.editType,teacher_id:S.editTeacher||null,absence_reason:$('#reason').value,makeup_date:$('#makeupDate').value,makeup_time:$('#makeupTime').value,notes:$('#notes').value,...(r?{id:r.id,updated_at:r.updated_at}:{student_ids:[...S.selected],missed_date:$('#missed').value})};
  S.busy=true;$('#save').disabled=true;msg('#editMessage');
  try{const data=await api(r?'update':'create-batch',b);
-  const records=r?[data.record]:data.records;if(!Array.isArray(records)||!records.length||records.some(x=>!x))throw Error('저장 결과를 확인할 수 없습니다.');
+  const records=r?[data.record]:data.records;if(!Array.isArray(records)||records.length!==(r?1:b.student_ids.length)||records.some(x=>!x))throw Error('저장 결과를 확인할 수 없습니다.');
   for(const rec of records){const i=S.records.findIndex(x=>x.id===rec.id);if(i<0)S.records.push(rec);else S.records[i]=rec}S.status=b.status==='scheduled'?'scheduled':b.status==='pending'?'pending':b.status;S.cls='';$('#search').value='';render();$('#editor').close();
  }catch(e){msg('#editMessage',e.message)}finally{S.busy=false;$('#save').disabled=false}
 };
 $('#clearSelected').onclick=()=>{S.selected.clear();renderStudents()};
-$('#selectClass').onclick=()=>{const rows=visibleStudents(),all=rows.every(s=>S.selected.has(s.id));for(const s of rows){if(all)S.selected.delete(s.id);else S.selected.add(s.id)}renderStudents()};
+$('#selectClass').onclick=()=>{const rows=visibleStudents().filter(selectable),all=rows.every(s=>S.selected.has(s.id));for(const s of rows){if(all)S.selected.delete(s.id);else S.selected.add(s.id)}renderStudents()};
 $('#book').onclick=()=>open(null,true);
-$('#missed').onchange=()=>editStatus(S.editStatus);$('#studentSearch').oninput=renderStudents;$('#search').oninput=render;$('#add').onclick=()=>open();$('#refresh').onclick=()=>load().catch(()=>{});$('#close').onclick=$('#cancel').onclick=()=>{if(!S.busy)$('#editor').close()};$('#editor').addEventListener('cancel',e=>{if(S.busy)e.preventDefault()});
+$('#missed').onchange=()=>{editStatus(S.editStatus);if(!S.editing)renderStudents()};$('#studentSearch').oninput=renderStudents;$('#search').oninput=render;$('#add').onclick=()=>open();$('#refresh').onclick=()=>load().catch(()=>{});$('#close').onclick=$('#cancel').onclick=()=>{if(!S.busy)$('#editor').close()};$('#editor').addEventListener('cancel',e=>{if(S.busy)e.preventDefault()});
 async function boot(){try{$('#retryBoot').hidden=true;const who=await ensureTeacherSession();if(!who?.success){if(who?.temporary)throw Error('Could not verify staff login');if(embedded){throw Error('Staff session expired. Sign in again in the main dashboard, then retry.')}location.replace('/Teachers/login.html?redirect=%2FTeachers%2Fmakeup%2F');return}ensureAuthRefresh();if(!embedded)await mountTeacherHeader({target:'#teacher-header',mode:'dashboard',activeApp:'library'});await load();$('#boot').hidden=true;$('#app').hidden=false}catch(e){$('#boot').firstChild.nodeValue=e.message+' ';$('#retryBoot').hidden=false}}
 if(embedded)window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==window.parent||e.data?.type!=='willena:makeup:activate')return;if(!$('#app').hidden&&!$('#editor').open&&!S.busy)load().catch(()=>{})});
 $('#retryBoot').onclick=boot;document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('#app').hidden&&!$('#editor').open)load().catch(()=>{})});boot();
