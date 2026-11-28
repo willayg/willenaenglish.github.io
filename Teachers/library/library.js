@@ -1,5 +1,5 @@
-import {mountDailyRegister} from './daily-register.js?v=3';
-import {mountMonthlyRegister} from './monthly-register.js?v=2';
+import {mountDailyRegister} from './daily-register.js?v=4';
+import {mountMonthlyRegister} from './monthly-register.js?v=3';
 import {initLibraryLanguage,mountLibraryLanguage,localText} from './library-i18n.js?v=7';
 import {mountTeacherHeader} from '/components/teacher-header/teacher-header.js?v=20261127-raz2';
 import {ensureTeacherSession,ensureAuthRefresh} from '/Teachers/auth-refresh.js?v=20261021-sessionfix1';

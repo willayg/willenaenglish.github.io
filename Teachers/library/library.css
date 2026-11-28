@@ -174,3 +174,6 @@ dialog:not([open]){display:none!important}
 .month-cell[data-state=late_5],.month-cell[data-state=late_10],.month-legend i[data-state=late_5],.month-legend i[data-state=late_10]{background:#fff2d4;color:#997018}
 .month-cell[data-state=late_15],.month-cell[data-state=late_20],.month-legend i[data-state=late_15],.month-legend i[data-state=late_20]{background:#ffe4cb;color:#ab591f}
 @media(min-width:1100px){.reg-choice{font-size:12px;min-height:46px;padding:8px 4px}.reg-choices{gap:6px;grid-template-columns:repeat(4,minmax(0,1fr)) 30px}}
+
+/* Full Korean button labels, using the available desktop width. */
+.register-table{min-width:900px}.reg-choice{font-size:13px;word-break:keep-all;overflow-wrap:normal;padding:7px 4px;min-height:44px}.reg-choice>span{display:block}.reg-choice.reg-clear{padding:4px}.reg-choice.reg-clear>span{display:grid;place-items:center}.reg-choice.reg-amber>span{white-space:normal}@media(min-width:1100px){.reg-choice{font-size:14px;min-height:46px}}
