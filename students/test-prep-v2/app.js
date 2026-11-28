@@ -13,6 +13,7 @@ import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,f
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
 import {renderMockTestPreflight,stopMockTest} from './mock-test.js?v=1.4.3';
 import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.21.0';
+import {setSessionProtection} from './session-protection.js?v=1.3.1';
 import {loadPerformanceAssignments,performanceAssignmentsForPlan,performanceAssignmentById} from './performance-source.js?v=1.0.0';
 import {startPerformanceLearning,stopPerformanceLearning} from './performance-learning.js?v=1.0.0';
 
@@ -158,6 +159,8 @@ function renderQuestion(){return getPracticeQuestionSession().render()}
 async function checkAnswer(){return getPracticeQuestionSession().check()}
 async function skipQuestion(){return getPracticeQuestionSession().skip()}
 function homeworkCompleteScreen(hw){
+ // A completed mission no longer has in-progress work to protect.
+ setSessionProtection(false);
  state.homeworkTaskId=null;setBottom('');
  root.innerHTML='<div class="card result homework-gold-result"><div class="score">★ GOLD ★</div><h2>숙제 완료!</h2><div class="statline">최종 완료 100% · 전체 정확도 '+(hw.overall_accuracy_percent??'—')+'%</div><button class="tile" id="homeworkDone" style="min-height:auto;margin-top:20px">숙제 바구니로 돌아가기</button></div>';
  $('#homeworkDone').onclick=()=>navigate({view:'home'});
