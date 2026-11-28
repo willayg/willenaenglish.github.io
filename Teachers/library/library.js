@@ -175,7 +175,7 @@ function setupQuickUpload(){
 
 async function boot(){$('#retry').hidden=true;$('#bootText').textContent='Checking staff login…';try{const u=await ensureTeacherSession();if(!u?.success){if(u?.temporary)throw Error('Unable to verify login. Retry.');sessionStorage.setItem('teacher:returnTo','/Teachers/library/');location.replace('/Teachers/login.html');return}ensureAuthRefresh();const header=await mountTeacherHeader({target:'#teacher-header',mode:'dashboard',activeApp:'library'});mountLibraryLanguage(header.root);$('#month').value=S.month;await ensureSetup();initRegisterTabs();$('#boot').hidden=true;$('#app').hidden=false;load().catch(()=>{})}catch(e){$('#bootText').textContent=e.message;$('#retry').hidden=false}}
 
-let activeLibraryTab='today',navigationRequest=0;
+let activeLibraryTab='today',lastRegisterTab='today',navigationRequest=0;
 function initRegisterTabs(){
  if(dailyRegister)return;
  const shell=$('#app'),toggle=$('#libraryRailToggle');
@@ -191,13 +191,15 @@ function initRegisterTabs(){
   if(activeLibraryTab==='today'&&tab!=='today'){
    const safe=await dailyRegister.hide();if(!safe||token!==navigationRequest)return;
   }
-  activeLibraryTab=tab;$('#todayView').hidden=tab!=='today';$('#monthlyView').hidden=tab!=='monthly';$('#razView').hidden=tab!=='raz';
-  $$('[data-library-tab]').forEach(b=>{const active=b.dataset.libraryTab===tab;b.setAttribute('aria-selected',String(active));b.classList.toggle('active',active)});
-  try{localStorage.setItem('willena.library.tab',tab)}catch{}
+  activeLibraryTab=tab;if(tab!=='raz')lastRegisterTab=tab;$('#libraryTimeView').hidden=tab==='raz';$('#todayView').hidden=tab!=='today';$('#monthlyView').hidden=tab!=='monthly';$('#razView').hidden=tab!=='raz';
+  $$('[data-library-section]').forEach(b=>{const active=b.dataset.librarySection===(tab==='raz'?'raz':'register');b.setAttribute('aria-selected',String(active));b.classList.toggle('active',active)});
+  $$('[data-library-tab]').forEach(b=>{const active=b.dataset.libraryTab===lastRegisterTab;b.setAttribute('aria-selected',String(active));b.classList.toggle('active',active)});
+  try{localStorage.setItem('willena.library.tab',tab);localStorage.setItem('willena.library.registerTab',lastRegisterTab)}catch{}
   try{if(tab==='today')await dailyRegister.show(target);if(tab==='monthly')await monthlyRegister.show()}catch(e){console.error('Library view could not load',e);if(token===navigationRequest){const id=tab==='today'?'#registerStatus':tab==='monthly'?'#registerMonthStatus':'#status';msg(id,e.message||'Could not load the register.',true)}}
  }
  $$('[data-library-tab]').forEach(b=>b.onclick=()=>switchTab(b.dataset.libraryTab));
- let initial='today';try{const saved=localStorage.getItem('willena.library.tab');if(['today','monthly','raz'].includes(saved))initial=saved}catch{}
+ $$('[data-library-section]').forEach(b=>b.onclick=()=>switchTab(b.dataset.librarySection==='raz'?'raz':lastRegisterTab));
+ let initial='today';try{const saved=localStorage.getItem('willena.library.tab'),sub=localStorage.getItem('willena.library.registerTab');if(['today','monthly'].includes(sub))lastRegisterTab=sub;if(['today','monthly','raz'].includes(saved))initial=saved}catch{}
  switchTab(initial);
 }
 
